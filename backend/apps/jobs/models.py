@@ -53,6 +53,14 @@ class Job(models.Model):
         MIDDLE = 'middle', 'Middle'
         SENIOR = 'senior', 'Senior'
 
+    class EducationLevel(models.TextChoices):
+        NONE = 'none', 'Không yêu cầu'
+        HIGH_SCHOOL = 'high_school', 'THPT'
+        INTERMEDIATE = 'intermediate', 'Trung cấp'
+        COLLEGE = 'college', 'Cao đẳng'
+        UNIVERSITY = 'university', 'Đại học'
+        POSTGRADUATE = 'postgraduate', 'Sau đại học'
+
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PENDING = 'pending', 'Pending'
@@ -64,7 +72,8 @@ class Job(models.Model):
     employer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='jobs')
     employer_profile = models.ForeignKey('employers.EmployerProfile', on_delete=models.CASCADE, related_name='jobs')
     category = models.ForeignKey(JobCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
-    location = models.ForeignKey('locations.Location', on_delete=models.PROTECT, related_name='jobs')
+    # A job can recruit at multiple locations (province and/or ward level).
+    locations = models.ManyToManyField('locations.Location', related_name='jobs', blank=True)
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     short_description = models.TextField(blank=True)
@@ -77,6 +86,9 @@ class Job(models.Model):
     work_type = models.CharField(max_length=50, choices=WorkType.choices, blank=True)
     employment_type = models.CharField(max_length=50, choices=EmploymentType.choices, blank=True)
     experience_level = models.CharField(max_length=50, choices=ExperienceLevel.choices, blank=True)
+    # Minimum education required; interpreted as "từ <level> trở lên". Blank = unspecified.
+    education_level = models.CharField(max_length=50, choices=EducationLevel.choices, blank=True)
+    number_of_vacancies = models.PositiveIntegerField(null=True, blank=True, help_text='Số lượng cần tuyển; null = không giới hạn')
     salary_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     salary_max = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=20, default='VND')
@@ -96,7 +108,6 @@ class Job(models.Model):
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['employer']),
-            models.Index(fields=['location']),
             models.Index(fields=['work_type']),
             models.Index(fields=['employment_type']),
             models.Index(fields=['experience_level']),

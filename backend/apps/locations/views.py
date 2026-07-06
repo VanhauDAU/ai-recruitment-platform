@@ -9,6 +9,7 @@ class LocationListView(generics.ListAPIView):
 
     serializer_class = LocationSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None  # bounded lookup (capped below) — return the full list in one response
 
     def get_queryset(self):
         qs = Location.objects.filter(is_active=True)
@@ -19,4 +20,4 @@ class LocationListView(generics.ListAPIView):
             qs = qs.filter(parent_id=parent)
         if search := params.get('search'):
             qs = qs.filter(name__icontains=search)
-        return qs.order_by('name')[:200]
+        return qs.order_by('name')[:500]

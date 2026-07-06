@@ -31,7 +31,8 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 1.11 | Bảng `jobs` + API public list/detail + employer CRUD | [x] Done |
 | 1.12 | Bảng `job_skills` (nested trong API jobs) | [x] Done |
 | 1.13 | Bảng `applications` + API ứng tuyển/xem/đổi trạng thái | [x] Done |
-| 1.14 | Frontend: CV builder, kho template, danh sách/chi tiết job, ứng tuyển | [ ] Chưa làm |
+| 1.14 | Frontend: CV builder, kho template, danh sách/chi tiết job, ứng tuyển | [ ] Một phần — trang chủ TopCV-style (header xanh + logo + menu + nút đăng ký/đăng nhập/đăng tuyển, hero search, mega-menu danh mục cha→con khi hover), danh sách job (bộ lọc, phân trang, **LocationFilter chọn nhiều tỉnh + phường/xã, search 2 cột, bỏ chọn tất cả**), chi tiết job; Skeleton loading + lazy-load route + theme AntD xanh. Còn thiếu CV builder, kho template, luồng ứng tuyển |
+| 1.6b | Seed job_categories (taxonomy 2 cấp: 8 ngành cha + ~33 nghề con) qua `seed_job_categories` | [x] Done |
 | 1.15 | Quy trình duyệt/publish job (status draft -> active) | [ ] Chưa làm — hiện chỉnh trực tiếp qua Django shell/admin |
 
 ## Giai đoạn 2 — AI cơ bản
@@ -95,4 +96,4 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 
 ---
 
-Cập nhật lần cuối: 2026-07-06
+Cập nhật lần cuối: 2026-07-07

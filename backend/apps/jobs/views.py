@@ -1,4 +1,4 @@
-from django.db.models import F
+from django.db.models import F, Q
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 
@@ -24,8 +24,10 @@ class JobListView(generics.ListAPIView):
         params = self.request.query_params
         if category := params.get('category'):
             qs = qs.filter(category_id=category)
-        if location := params.get('location'):
-            qs = qs.filter(location_id=location)
+        # Accepts multiple ?location= values; each id may be a province or a ward.
+        # A province id matches jobs in any of its wards (location.parent) or on the province itself.
+        if locations := params.getlist('location'):
+            qs = qs.filter(Q(location_id__in=locations) | Q(location__parent_id__in=locations))
         if work_type := params.get('work_type'):
             qs = qs.filter(work_type=work_type)
         if employment_type := params.get('employment_type'):
