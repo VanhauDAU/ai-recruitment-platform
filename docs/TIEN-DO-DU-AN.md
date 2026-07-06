@@ -23,15 +23,16 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 1.3 | Bảng `candidate_profiles` + API | [x] Done |
 | 1.4 | Bảng `employer_profiles` + API | [x] Done |
 | 1.5 | Frontend: trang đăng ký/đăng nhập, dashboard shell theo role | [x] Done |
-| 1.6 | Bảng `job_categories` | [ ] Chưa làm |
-| 1.7 | Bảng `locations` (2 cấp tỉnh/xã, seed từ dataset ngoài) | [ ] Chưa làm |
-| 1.8 | Bảng `cv_templates` | [ ] Chưa làm |
-| 1.9 | Bảng `user_cvs` (builder + upload) | [ ] Chưa làm |
-| 1.10 | Bảng `cv_skills` | [ ] Chưa làm |
-| 1.11 | Bảng `jobs` | [ ] Chưa làm |
-| 1.12 | Bảng `job_skills` | [ ] Chưa làm |
-| 1.13 | Bảng `applications` | [ ] Chưa làm |
+| 1.6 | Bảng `job_categories` + API | [x] Done |
+| 1.7 | Bảng `locations` (2 cấp tỉnh/xã, seed 34 tỉnh + 3321 xã/phường từ provinces.open-api.vn) + API tra cứu | [x] Done |
+| 1.8 | Bảng `cv_templates` + API list/detail | [x] Done |
+| 1.9 | Bảng `user_cvs` (builder + upload) + API CRUD/upload | [x] Done |
+| 1.10 | Bảng `cv_skills` (nested trong API user_cvs) | [x] Done |
+| 1.11 | Bảng `jobs` + API public list/detail + employer CRUD | [x] Done |
+| 1.12 | Bảng `job_skills` (nested trong API jobs) | [x] Done |
+| 1.13 | Bảng `applications` + API ứng tuyển/xem/đổi trạng thái | [x] Done |
 | 1.14 | Frontend: CV builder, kho template, danh sách/chi tiết job, ứng tuyển | [ ] Chưa làm |
+| 1.15 | Quy trình duyệt/publish job (status draft -> active) | [ ] Chưa làm — hiện chỉnh trực tiếp qua Django shell/admin |
 
 ## Giai đoạn 2 — AI cơ bản
 

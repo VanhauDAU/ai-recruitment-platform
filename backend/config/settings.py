@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'skills',
     'candidates',
     'employers',
+    'locations',
     'cv_templates',
     'cvs',
     'jobs',
