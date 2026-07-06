@@ -1,0 +1,10 @@
+Django==5.1.5
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.4.0
+django-cors-headers==4.6.0
+psycopg2-binary==2.9.10
+python-decouple==3.8
+PyMuPDF==1.25.1
+scikit-learn==1.6.0
+joblib==1.4.2
+pandas==2.2.3
