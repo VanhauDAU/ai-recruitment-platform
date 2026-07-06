@@ -1,7 +1,7 @@
 import { Form, Input, Button, Radio, Alert } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { register } from '../../services/authService'
+import { register } from '../../api/authService'
 
 export default function Register() {
   const navigate = useNavigate()

@@ -28,9 +28,19 @@ Chi tiết endpoint: [docs/04-api/tai-lieu-api.md](docs/04-api/tai-lieu-api.md).
 ## Cấu trúc dự án
 
 ```
-backend/    Django project (config/ + apps: accounts, skills, candidates, employers,
-            locations, cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard)
-frontend/   React + Vite app (src/pages, components, layouts, services, hooks, routes)
+backend/
+  config/       Django settings, urls (root)
+  common/       Tiện ích dùng chung, không phải app (vd. common/public_id.py)
+  apps/         Toàn bộ Django app: accounts, skills, candidates, employers, locations,
+                cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard
+frontend/
+  src/
+    pages/      Trang theo route, chia theo role: auth/, candidate/, employer/, admin/
+    components/ Component dùng chung
+    layouts/    AuthLayout, DashboardLayout
+    api/        api.js (axios + JWT interceptor), authService.js
+    hooks/      useAuth.jsx (AuthContext)
+    routes/     AppRoutes.jsx, ProtectedRoute.jsx
 docs/       Tài liệu dự án — xem docs/README.md
 ```
 
