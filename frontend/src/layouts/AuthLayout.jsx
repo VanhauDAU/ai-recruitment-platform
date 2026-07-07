@@ -1,5 +1,5 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
-import { Link, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import AuthBrandPanel from '../components/auth/AuthBrandPanel'
 import ThemeToggle from '../components/ui/ThemeToggle'
 import { useColorScheme } from '../hooks/useColorScheme'
@@ -21,15 +21,13 @@ export default function AuthLayout() {
         <AuthBrandPanel />
 
         <div className="flex flex-col">
-          <div className="flex items-center justify-between px-6 py-5 lg:px-10">
-            <Link to="/" className="text-lg font-bold">
-              AI Career <span className="text-[#00b14f]">Coach</span>
-            </Link>
+          {/* Chỉ giữ theme toggle ở góc trên phải */}
+          <div className="flex items-center justify-end px-6 py-5 lg:px-10">
             <ThemeToggle scheme={scheme} onToggle={toggleScheme} />
           </div>
 
-          <div className="flex flex-1 items-center justify-center px-6 pb-16 lg:px-10">
-            <div className="w-full max-w-sm animate-fade-slide">
+          <div className="flex flex-1 items-center justify-center px-6 pb-16 lg:px-10 xl:px-16">
+            <div className="w-full max-w-2xl animate-fade-slide">
               <Outlet />
             </div>
           </div>

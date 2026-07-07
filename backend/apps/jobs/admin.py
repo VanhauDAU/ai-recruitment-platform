@@ -5,10 +5,14 @@ from .models import Job, JobCategory, JobSkill
 
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'parent', 'status']
+    list_display = ['name', 'parent', 'icon_key', 'status']
     list_filter = ['status']
-    search_fields = ['name']
+    search_fields = ['name', 'icon_key']
     prepopulated_fields = {'slug': ('name',)}
+    fieldsets = (
+        (None, {'fields': ('name', 'slug', 'description', 'parent', 'status')}),
+        ('Homepage display', {'fields': ('icon_key', 'icon_color')}),
+    )
 
 
 class JobSkillInline(admin.TabularInline):

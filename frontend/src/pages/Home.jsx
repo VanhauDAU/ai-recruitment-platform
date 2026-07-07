@@ -7,6 +7,7 @@ import { formatNumber } from '../constants/jobOptions'
 import BannerCarousel from '../components/ui/BannerCarousel'
 import BestJobs from '../components/home/BestJobs'
 import CategoryMenu from '../components/home/CategoryMenu'
+import FeaturedIndustriesEmployers from '../components/home/FeaturedIndustriesEmployers'
 import FlashBadge from '../components/home/FlashBadge'
 import LocationFilter from '../components/job/LocationFilter'
 import MarketStats from '../components/home/MarketStats'
@@ -205,6 +206,8 @@ export default function Home() {
       <section className="pt-8">
         <FlashBadge />
       </section>
+
+      <FeaturedIndustriesEmployers />
     </div>
   )
 }

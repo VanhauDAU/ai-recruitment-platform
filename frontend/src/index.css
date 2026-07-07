@@ -176,3 +176,20 @@ body {
   opacity: 0;
   animation: barGrow 0.62s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
 }
+
+@keyframes employerMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+.animate-employer-marquee {
+  animation: employerMarquee 26s linear infinite;
+}
+
+.animate-employer-marquee:hover {
+  animation-play-state: paused;
+}

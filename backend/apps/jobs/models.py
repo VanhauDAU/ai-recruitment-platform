@@ -15,6 +15,16 @@ class JobCategory(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField(blank=True)
+    icon_key = models.CharField(
+        max_length=80,
+        blank=True,
+        help_text='Frontend icon key, e.g. sales, marketing, support, hr, it, bank.',
+    )
+    icon_color = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text='Optional CSS color for the category icon, e.g. #00b14f.',
+    )
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)

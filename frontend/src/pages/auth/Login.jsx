@@ -39,9 +39,9 @@ function LinkedInIcon() {
 }
 
 const SOCIAL_PROVIDERS = [
-  { key: 'google', label: 'Google', Icon: GoogleIcon, border: 'border-[#dadce0] hover:border-[#4285F4] hover:bg-blue-50/40' },
-  { key: 'facebook', label: 'Facebook', Icon: FacebookIcon, border: 'border-[#dadce0] hover:border-[#1877F2] hover:bg-blue-50/40' },
-  { key: 'linkedin', label: 'LinkedIn', Icon: LinkedInIcon, border: 'border-[#dadce0] hover:border-[#0A66C2] hover:bg-blue-50/40' },
+  { key: 'google', label: 'Google', Icon: GoogleIcon, span: 'col-span-12', border: 'border-[#dadce0] hover:border-[#4285F4] hover:bg-blue-50/40' },
+  { key: 'facebook', label: 'Facebook', Icon: FacebookIcon, span: 'col-span-12 sm:col-span-6', border: 'border-[#dadce0] hover:border-[#1877F2] hover:bg-blue-50/40' },
+  { key: 'linkedin', label: 'LinkedIn', Icon: LinkedInIcon, span: 'col-span-12 sm:col-span-6', border: 'border-[#dadce0] hover:border-[#0A66C2] hover:bg-blue-50/40' },
 ]
 
 export default function Login() {
@@ -97,9 +97,26 @@ export default function Login() {
         .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); }
       `}</style>
 
-      {/* Tiêu đề */}
-      <div className="login-card mb-7">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#e6f7ee] px-3 py-1 mb-4">
+      {/* Logo + Tiêu đề */}
+      <div className="login-card mb-7 text-center">
+        {/* Logo lớn */}
+        <Link to="/" className="inline-flex items-center gap-3 mb-5 group">
+          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b14f] to-[#008a3e] shadow-lg shadow-[#00b14f]/30 group-hover:shadow-[#00b14f]/50 transition-all">
+            <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" aria-hidden="true">
+              <path d="M13 3L4 14h8l-1 7 9-11h-8l1-10z" fill="white" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="text-left">
+            <span className="block text-xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
+              AI Career
+            </span>
+            <span className="block text-xl font-extrabold tracking-tight text-[#00b14f] leading-none">
+              Coach
+            </span>
+          </div>
+        </Link>
+
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#e6f7ee] px-3 py-1 mb-3">
           <span className="w-2 h-2 rounded-full bg-[#00b14f] animate-pulse" />
           <span className="text-xs font-semibold text-[#00b14f] tracking-wide">Chào mừng trở lại!</span>
         </div>
@@ -116,16 +133,16 @@ export default function Login() {
 
       {/* Social login */}
       <div className="login-field mb-5">
-        <div className="grid grid-cols-3 gap-2.5">
-          {SOCIAL_PROVIDERS.map(({ key, label, Icon, border }) => (
+        <div className="grid grid-cols-12 gap-3">
+          {SOCIAL_PROVIDERS.map(({ key, label, Icon, span, border }) => (
             <button
               key={key}
               type="button"
               aria-label={`Đăng nhập bằng ${label}`}
-              className={`social-btn flex items-center justify-center gap-2 rounded-xl border bg-white py-2.5 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
+              className={`social-btn ${span} flex h-12 items-center justify-center gap-2 rounded-xl border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
             >
               <Icon />
-              <span className="hidden sm:inline">{label}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>
@@ -174,23 +191,29 @@ export default function Login() {
           </Form.Item>
         </div>
 
-        {/* Password với Quên mật khẩu nằm cùng hàng label */}
+        {/* Password + Quên mật khẩu */}
         <div className="login-field">
+          {/* Label row: tách khỏi Form.Item để justify-between hoạt động đúng */}
+          <div className="flex items-center justify-between mb-1.5">
+            <label
+              htmlFor="login_password"
+              className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-default"
+            >
+              Mật khẩu
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-xs font-medium text-[#00b14f] hover:text-[#008a3e] hover:underline underline-offset-2 transition-colors"
+              tabIndex={-1}
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
           <Form.Item
             name="password"
-            label={
-              <div className="flex w-full items-center justify-between" style={{ width: '100%' }}>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mật khẩu</span>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-medium text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors"
-                  tabIndex={-1}
-                >
-                  Quên mật khẩu?
-                </Link>
-              </div>
-            }
+            id="login_password"
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+            className="!mb-4"
           >
             <Input.Password
               size="large"

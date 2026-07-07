@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import F, Q
+from django.db.models import Count, F, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -86,7 +86,11 @@ class JobStatsView(APIView):
                     'count': serializers.IntegerField(),
                 }),
                 'demand': inline_serializer('JobStatsDemand', many=True, fields={
+                    'id': serializers.IntegerField(),
                     'name': serializers.CharField(),
+                    'slug': serializers.CharField(),
+                    'icon_key': serializers.CharField(allow_blank=True),
+                    'icon_color': serializers.CharField(allow_blank=True),
                     'count': serializers.IntegerField(),
                 }),
                 'salary_demand': inline_serializer('JobStatsSalaryDemand', many=True, fields={
@@ -111,6 +115,15 @@ class JobStatsView(APIView):
                     'deadline': serializers.DateField(allow_null=True),
                     'published_at': serializers.DateTimeField(allow_null=True),
                     'short_description': serializers.CharField(allow_blank=True),
+                }),
+                'featured_employers': inline_serializer('JobStatsFeaturedEmployer', many=True, fields={
+                    'id': serializers.IntegerField(),
+                    'public_id': serializers.CharField(),
+                    'company_name': serializers.CharField(),
+                    'slug': serializers.CharField(),
+                    'company_logo_url': serializers.CharField(allow_blank=True),
+                    'industry': serializers.CharField(allow_blank=True),
+                    'job_count': serializers.IntegerField(),
                 }),
             },
         ),
@@ -153,7 +166,14 @@ class JobStatsView(APIView):
             ids = [top.id, *children, *grandchildren]
             count = active.filter(category_id__in=ids).count()
             if count:
-                demand.append({'name': top.name, 'count': count})
+                demand.append({
+                    'id': top.id,
+                    'name': top.name,
+                    'slug': top.slug,
+                    'icon_key': top.icon_key,
+                    'icon_color': top.icon_color,
+                    'count': count,
+                })
         demand.sort(key=lambda d: d['count'], reverse=True)
 
         salary_ranges = [
@@ -205,14 +225,37 @@ class JobStatsView(APIView):
             'short_description': j.short_description,
         } for j in latest]
 
+        featured_employers = [
+            {
+                'id': row['employer_profile_id'],
+                'public_id': row['employer_profile__public_id'],
+                'company_name': row['employer_profile__company_name'],
+                'slug': row['employer_profile__slug'],
+                'company_logo_url': row['employer_profile__company_logo_url'],
+                'industry': row['employer_profile__industry'],
+                'job_count': row['job_count'],
+            }
+            for row in active.values(
+                'employer_profile_id',
+                'employer_profile__public_id',
+                'employer_profile__company_name',
+                'employer_profile__slug',
+                'employer_profile__company_logo_url',
+                'employer_profile__industry',
+            )
+            .annotate(job_count=Count('id'))
+            .order_by('-job_count', 'employer_profile__company_name')[:18]
+        ]
+
         return Response({
             'active_jobs': active_jobs,
             'companies': companies,
             'new_jobs_24h': new_jobs_24h,
             'growth': growth,
-            'demand': demand[:6],
+            'demand': demand[:8],
             'salary_demand': salary_demand[:6],
             'latest_jobs': latest_jobs,
+            'featured_employers': featured_employers,
         })
 
 
