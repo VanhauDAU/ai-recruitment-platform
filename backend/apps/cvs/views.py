@@ -1,6 +1,7 @@
 from django.core.files.storage import default_storage
 from django.utils import timezone
-from rest_framework import generics, parsers, permissions, status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import generics, parsers, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -41,6 +42,18 @@ class UserCvUploadView(APIView):
     permission_classes = [IsCandidate]
     parser_classes = [parsers.MultiPartParser]
 
+    @extend_schema(
+        summary='Upload CV có sẵn (PDF/DOCX)',
+        request=inline_serializer(
+            'UserCvUploadRequest',
+            fields={
+                'file': serializers.FileField(help_text='File CV định dạng PDF hoặc DOCX'),
+                'title': serializers.CharField(required=False, help_text='Tên CV (mặc định lấy tên file)'),
+            },
+        ),
+        responses={201: UserCvSerializer},
+        tags=['cvs'],
+    )
     def post(self, request):
         upload = request.FILES.get('file')
         if not upload:

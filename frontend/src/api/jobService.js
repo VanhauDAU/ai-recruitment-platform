@@ -14,3 +14,8 @@ export async function getJobDetail(slug) {
 export async function getJobCategories() {
   return fetchAllPages('/jobs/categories/')
 }
+
+export async function getJobStats() {
+  const { data } = await api.get('/jobs/stats/')
+  return data
+}

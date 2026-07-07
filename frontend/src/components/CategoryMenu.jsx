@@ -112,7 +112,7 @@ export default function CategoryMenu({ categories, banner }) {
             )}
           </>
         ) : (
-          <div className="flex-1 p-5">{banner}</div>
+          <div className="flex-1 p-3">{banner}</div>
         )}
       </div>
     </div>

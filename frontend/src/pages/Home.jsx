@@ -3,10 +3,12 @@ import { Button, Input, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getJobCategories, getJobs } from '../api/jobService'
+import BannerCarousel from '../components/BannerCarousel'
 import CategoryMenu from '../components/CategoryMenu'
 import JobCard from '../components/JobCard'
 import JobCardSkeleton from '../components/JobCardSkeleton'
 import LocationFilter from '../components/LocationFilter'
+import MarketStats from '../components/MarketStats'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -28,15 +30,24 @@ export default function Home() {
       .finally(() => setLoading(false))
   }, [])
 
-  function handleSearch() {
+  function searchWith(extraLocationIds) {
     const params = new URLSearchParams()
     if (keyword) params.set('search', keyword)
-    locationIds.forEach((id) => params.append('location', id))
+    ;(extraLocationIds ?? locationIds).forEach((id) => params.append('location', id))
     navigate(`/jobs?${params.toString()}`)
   }
 
-  const banner = (
-    <div className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[#00b14f] to-[#008a3e] text-white p-6">
+  function handleSearch() {
+    searchWith()
+  }
+
+  function handleLocationApply(ids) {
+    setLocationIds(ids)
+    searchWith(ids)
+  }
+
+  const bannerSlides = [
+    <div key="stats" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[#00b14f] to-[#008a3e] text-white px-12 py-6">
       <h3 className="text-2xl font-bold">Tiếp lợi thế, nối thành công</h3>
       <p className="mt-2 text-green-50 max-w-md">
         Hệ sinh thái nhân sự ứng dụng AI: tạo CV chuyên nghiệp, phân tích CV, so khớp việc làm và luyện phỏng vấn thông minh.
@@ -51,8 +62,24 @@ export default function Home() {
           <p className="text-sm text-green-50">Danh mục ngành nghề</p>
         </div>
       </div>
-    </div>
-  )
+    </div>,
+    <div key="it" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-800 text-white px-12 py-6">
+      <p className="text-sm font-semibold text-blue-100 mb-1">TUYỂN DỤNG GẤP</p>
+      <h3 className="text-2xl font-bold">Lập trình viên &amp; Kỹ sư AI</h3>
+      <p className="mt-2 text-blue-50 max-w-md">Mức lương hấp dẫn, môi trường năng động, cơ hội thăng tiến nhanh.</p>
+      <button
+        onClick={() => navigate('/jobs?search=IT')}
+        className="mt-4 self-start bg-white text-blue-700 font-medium px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-blue-50 transition"
+      >
+        Xem việc làm IT
+      </button>
+    </div>,
+    <div key="cv" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-orange-500 to-pink-600 text-white px-12 py-6">
+      <p className="text-sm font-semibold text-orange-100 mb-1">MIỄN PHÍ</p>
+      <h3 className="text-2xl font-bold">Tạo CV chuyên nghiệp cùng AI</h3>
+      <p className="mt-2 text-orange-50 max-w-md">Chỉ mất 5 phút để có CV ấn tượng, sẵn sàng ứng tuyển.</p>
+    </div>,
+  ]
 
   return (
     <div className="pb-10">
@@ -77,7 +104,7 @@ export default function Home() {
             />
             <div className="hidden sm:block w-px bg-gray-200 my-1" />
             <div className="sm:w-72 flex items-center">
-              <LocationFilter value={locationIds} onChange={setLocationIds} size="large" />
+              <LocationFilter value={locationIds} onChange={handleLocationApply} size="large" />
             </div>
             <Button type="primary" size="large" onClick={handleSearch}>
               Tìm kiếm
@@ -87,7 +114,11 @@ export default function Home() {
       </section>
 
       <section className="max-w-6xl mx-auto px-4 -mt-6 relative z-20">
-        <CategoryMenu categories={categories} banner={banner} />
+        <CategoryMenu categories={categories} banner={<BannerCarousel slides={bannerSlides} />} />
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 pt-8">
+        <MarketStats />
       </section>
 
       <section className="max-w-6xl mx-auto px-4 py-8">

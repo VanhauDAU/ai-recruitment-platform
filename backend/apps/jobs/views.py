@@ -1,6 +1,13 @@
+from datetime import timedelta
+
 from django.db.models import F, Q
-from rest_framework import generics, permissions
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import generics, permissions, serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 from apps.employers.models import EmployerProfile
@@ -42,6 +49,95 @@ class JobListView(generics.ListAPIView):
         if search := params.get('search'):
             qs = qs.filter(title__icontains=search)
         return qs.order_by('-published_at', '-created_at')
+
+
+class JobStatsView(APIView):
+    """Aggregate stats for the homepage market dashboard (public)."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        summary='Thống kê thị trường việc làm (dashboard trang chủ)',
+        responses=inline_serializer(
+            'JobStats',
+            fields={
+                'active_jobs': serializers.IntegerField(),
+                'companies': serializers.IntegerField(),
+                'new_jobs_24h': serializers.IntegerField(),
+                'growth': inline_serializer('JobStatsGrowth', many=True, fields={
+                    'date': serializers.CharField(),
+                    'count': serializers.IntegerField(),
+                }),
+                'demand': inline_serializer('JobStatsDemand', many=True, fields={
+                    'name': serializers.CharField(),
+                    'count': serializers.IntegerField(),
+                }),
+                'latest_jobs': inline_serializer('JobStatsLatest', many=True, fields={
+                    'public_id': serializers.CharField(),
+                    'slug': serializers.CharField(),
+                    'title': serializers.CharField(),
+                    'company_name': serializers.CharField(),
+                    'location_name': serializers.CharField(),
+                }),
+            },
+        ),
+        tags=['jobs'],
+    )
+    def get(self, request):
+        now = timezone.now()
+        active = Job.objects.filter(status=Job.Status.ACTIVE).annotate(
+            published=Coalesce('published_at', 'created_at')
+        )
+
+        active_jobs = active.count()
+        companies = active.values('employer_profile').distinct().count()
+        new_jobs_24h = active.filter(published__gte=now - timedelta(days=1)).count()
+
+        # Growth: cumulative active jobs published up to the end of each of the last 7 days.
+        growth = []
+        for offset in range(6, -1, -1):
+            day = (now - timedelta(days=offset)).date()
+            cutoff = timezone.make_aware(
+                timezone.datetime(day.year, day.month, day.day, 23, 59, 59)
+            ) if timezone.is_naive(now) else now.replace(
+                year=day.year, month=day.month, day=day.day, hour=23, minute=59, second=59, microsecond=0
+            )
+            growth.append({
+                'date': day.strftime('%d/%m'),
+                'count': active.filter(published__lte=cutoff).count(),
+            })
+
+        # Demand: active jobs per top-level category (rolled up from nghề/vị trí levels).
+        demand = []
+        for top in JobCategory.objects.filter(parent__isnull=True, status=JobCategory.Status.ACTIVE):
+            children = JobCategory.objects.filter(parent=top).values_list('id', flat=True)
+            grandchildren = JobCategory.objects.filter(parent_id__in=children).values_list('id', flat=True)
+            ids = [top.id, *children, *grandchildren]
+            count = active.filter(category_id__in=ids).count()
+            if count:
+                demand.append({'name': top.name, 'count': count})
+        demand.sort(key=lambda d: d['count'], reverse=True)
+
+        latest = (
+            active.select_related('employer_profile').prefetch_related('locations')
+            .order_by('-published')[:10]
+        )
+        latest_jobs = [{
+            'public_id': j.public_id,
+            'slug': j.slug,
+            'title': j.title,
+            'company_name': j.employer_profile.company_name,
+            'location_name': (j.locations.first().name if j.locations.exists() else ''),
+        } for j in latest]
+
+        return Response({
+            'active_jobs': active_jobs,
+            'companies': companies,
+            'new_jobs_24h': new_jobs_24h,
+            'growth': growth,
+            'demand': demand[:6],
+            'latest_jobs': latest_jobs,
+        })
 
 
 class JobDetailView(generics.RetrieveAPIView):

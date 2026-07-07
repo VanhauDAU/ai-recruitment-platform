@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'drf_spectacular',
     'corsheaders',
     # Local apps
     'apps.accounts',
@@ -161,12 +162,48 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
+}
+
+# drf-spectacular (OpenAPI 3 schema + Swagger UI / ReDoc)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'AI Career Coach API',
+    'DESCRIPTION': (
+        'API cho nền tảng AI Career Coach — CV Builder, phân tích CV, '
+        'so khớp CV–Job và tuyển dụng. Dùng JWT: đăng nhập lấy access token '
+        'rồi bấm "Authorize" và nhập "Bearer <access_token>".'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+        'displayRequestDuration': True,
+    },
+    # Đặt tên enum tường minh để tránh trùng tên tự sinh (status/level dùng ở nhiều bảng)
+    'ENUM_NAME_OVERRIDES': {
+        'JobStatusEnum': 'apps.jobs.models.Job.Status',
+        'ApplicationStatusEnum': 'apps.applications.models.Application.Status',
+        # CvSkill.Level và JobSkill.MinLevel cùng tập beginner/intermediate/advanced -> 1 enum chung
+        'SkillLevelEnum': 'apps.jobs.models.JobSkill.MinLevel',
+        'LocationLevelEnum': 'apps.locations.models.Location.Level',
+    },
+    'TAGS': [
+        {'name': 'auth', 'description': 'Đăng ký, đăng nhập, JWT, tài khoản hiện tại'},
+        {'name': 'candidate', 'description': 'Hồ sơ ứng viên'},
+        {'name': 'employer', 'description': 'Hồ sơ công ty / nhà tuyển dụng'},
+        {'name': 'cvs', 'description': 'CV Builder + upload CV'},
+        {'name': 'cv-templates', 'description': 'Mẫu CV'},
+        {'name': 'jobs', 'description': 'Tin tuyển dụng, danh mục ngành nghề, thống kê'},
+        {'name': 'applications', 'description': 'Ứng tuyển & quản lý hồ sơ ứng tuyển'},
+        {'name': 'locations', 'description': 'Tra cứu địa điểm (tỉnh/xã)'},
+    ],
 }
 
 # CORS - frontend dev server (Vite default port)

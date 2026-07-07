@@ -3,3 +3,18 @@
 body {
   margin: 0;
 }
+
+@keyframes slideInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideInTop 0.5s ease;
+}
