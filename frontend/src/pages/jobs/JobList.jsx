@@ -1,7 +1,9 @@
-import { Empty, Input, Pagination, Select, Typography } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
+import { Button, Empty, Input, Pagination, Select, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getJobCategories, getJobs } from '../../api/jobService'
+import CategoryPicker from '../../components/CategoryPicker'
 import JobCard from '../../components/JobCard'
 import JobCardSkeleton from '../../components/JobCardSkeleton'
 import LocationFilter from '../../components/LocationFilter'
@@ -18,6 +20,7 @@ export default function JobList() {
 
   const page = Number(searchParams.get('page') || 1)
   const selectedLocations = searchParams.getAll('location').map(Number)
+  const selectedCategories = searchParams.getAll('category').map(Number)
 
   useEffect(() => {
     getJobCategories().then(setCategories).catch(() => {})
@@ -39,10 +42,10 @@ export default function JobList() {
     setSearchParams(next)
   }
 
-  function setLocations(ids) {
+  function setListParam(key, ids) {
     const next = new URLSearchParams(searchParams)
-    next.delete('location')
-    ids.forEach((id) => next.append('location', id))
+    next.delete(key)
+    ids.forEach((id) => next.append(key, id))
     next.delete('page')
     setSearchParams(next)
   }
@@ -58,35 +61,35 @@ export default function JobList() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex flex-col sm:flex-row gap-2 mb-6">
-        <Input.Search
+      <div className="flex flex-col md:flex-row gap-2 mb-6">
+        <div className="md:w-64">
+          <CategoryPicker
+            categories={categories}
+            value={selectedCategories}
+            onChange={(ids) => setListParam('category', ids)}
+          />
+        </div>
+        <Input
           size="large"
-          placeholder="Vị trí, công ty, từ khoá..."
+          placeholder="Vị trí tuyển dụng, tên công ty"
+          prefix={<SearchOutlined className="text-gray-400" />}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          onSearch={(value) => updateParam('search', value)}
+          onPressEnter={() => updateParam('search', keyword)}
           allowClear
+          className="flex-1"
         />
+        <div className="md:w-80">
+          <LocationFilter value={selectedLocations} onChange={(ids) => setListParam('location', ids)} size="large" />
+        </div>
+        <Button type="primary" size="large" icon={<SearchOutlined />} onClick={() => updateParam('search', keyword)}>
+          Tìm kiếm
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside className="md:col-span-1 bg-white border border-gray-200 rounded-lg p-4 h-fit space-y-4">
           <Typography.Text strong>Bộ lọc</Typography.Text>
-          <div>
-            <Typography.Text className="block mb-1 text-sm text-gray-500">Ngành nghề</Typography.Text>
-            <Select
-              className="w-full"
-              allowClear
-              placeholder="Tất cả ngành nghề"
-              value={searchParams.get('category') || undefined}
-              onChange={(v) => updateParam('category', v)}
-              options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
-            />
-          </div>
-          <div>
-            <Typography.Text className="block mb-1 text-sm text-gray-500">Địa điểm</Typography.Text>
-            <LocationFilter value={selectedLocations} onChange={setLocations} />
-          </div>
           <div>
             <Typography.Text className="block mb-1 text-sm text-gray-500">Hình thức làm việc</Typography.Text>
             <Select

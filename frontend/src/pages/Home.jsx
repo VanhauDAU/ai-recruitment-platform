@@ -1,25 +1,23 @@
-import { EnvironmentOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Input, Select, Typography } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
+import { Button, Input, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getJobCategories, getJobs } from '../api/jobService'
-import { getProvinces } from '../api/locationService'
 import CategoryMenu from '../components/CategoryMenu'
 import JobCard from '../components/JobCard'
 import JobCardSkeleton from '../components/JobCardSkeleton'
+import LocationFilter from '../components/LocationFilter'
 
 export default function Home() {
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
-  const [location, setLocation] = useState(undefined)
-  const [provinces, setProvinces] = useState([])
+  const [locationIds, setLocationIds] = useState([])
   const [categories, setCategories] = useState([])
   const [jobs, setJobs] = useState([])
   const [jobCount, setJobCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getProvinces().then(setProvinces).catch(() => {})
     getJobCategories().then(setCategories).catch(() => {})
     getJobs()
       .then((data) => {
@@ -33,7 +31,7 @@ export default function Home() {
   function handleSearch() {
     const params = new URLSearchParams()
     if (keyword) params.set('search', keyword)
-    if (location) params.set('location', location)
+    locationIds.forEach((id) => params.append('location', id))
     navigate(`/jobs?${params.toString()}`)
   }
 
@@ -78,19 +76,9 @@ export default function Home() {
               className="flex-1"
             />
             <div className="hidden sm:block w-px bg-gray-200 my-1" />
-            <Select
-              size="large"
-              variant="borderless"
-              placeholder="Địa điểm"
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              value={location}
-              onChange={setLocation}
-              className="sm:w-56 text-left"
-              suffixIcon={<EnvironmentOutlined />}
-              options={provinces.map((p) => ({ value: p.id, label: p.name }))}
-            />
+            <div className="sm:w-72 flex items-center">
+              <LocationFilter value={locationIds} onChange={setLocationIds} size="large" />
+            </div>
             <Button type="primary" size="large" onClick={handleSearch}>
               Tìm kiếm
             </Button>

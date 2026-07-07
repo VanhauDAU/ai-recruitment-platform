@@ -32,7 +32,7 @@ export default function CategoryMenu({ categories, banner }) {
             <button
               onMouseEnter={() => setActiveId(p.id)}
               onClick={() => go(p.id)}
-              className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm text-left transition ${
+              className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm text-left cursor-pointer transition ${
                 activeId === p.id
                   ? 'bg-green-50 text-[#00b14f] font-medium'
                   : 'text-gray-700 hover:bg-gray-50'
@@ -54,7 +54,7 @@ export default function CategoryMenu({ categories, banner }) {
                 <button
                   key={c.id}
                   onClick={() => go(c.id)}
-                  className="px-3 py-1.5 text-sm text-gray-700 bg-gray-50 rounded-full hover:bg-green-50 hover:text-[#00b14f] transition"
+                  className="px-3 py-1.5 text-sm text-gray-700 bg-gray-50 rounded-full cursor-pointer hover:bg-green-50 hover:text-[#00b14f] transition"
                 >
                   {c.name}
                 </button>

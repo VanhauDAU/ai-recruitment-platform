@@ -1,9 +1,10 @@
-import { EnvironmentOutlined, DollarOutlined } from '@ant-design/icons'
+import { EnvironmentOutlined, DollarOutlined, TeamOutlined } from '@ant-design/icons'
 import { Tag } from 'antd'
 import { Link } from 'react-router-dom'
-import { EMPLOYMENT_TYPE_LABELS, formatSalary } from '../constants/jobOptions'
+import { EMPLOYMENT_TYPE_LABELS, formatLocations, formatSalary } from '../constants/jobOptions'
 
 export default function JobCard({ job }) {
+  const locationLabel = formatLocations(job)
   return (
     <Link
       to={`/jobs/${job.slug}`}
@@ -22,9 +23,14 @@ export default function JobCard({ job }) {
         <span className="flex items-center gap-1">
           <DollarOutlined /> {formatSalary(job)}
         </span>
-        {job.location_name && (
+        {locationLabel && (
           <span className="flex items-center gap-1">
-            <EnvironmentOutlined /> {job.location_name}
+            <EnvironmentOutlined /> {locationLabel}
+          </span>
+        )}
+        {job.number_of_vacancies && (
+          <span className="flex items-center gap-1">
+            <TeamOutlined /> {job.number_of_vacancies} người
           </span>
         )}
       </div>

@@ -1,4 +1,10 @@
-import { ClockCircleOutlined, DollarOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import {
+  ClockCircleOutlined,
+  DollarOutlined,
+  EnvironmentOutlined,
+  ReadOutlined,
+  TeamOutlined,
+} from '@ant-design/icons'
 import { Button, Result, Skeleton, Tag, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -7,6 +13,7 @@ import {
   EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_LEVEL_LABELS,
   WORK_TYPE_LABELS,
+  formatEducation,
   formatSalary,
 } from '../../constants/jobOptions'
 import { useAuth } from '../../hooks/useAuth'
@@ -77,13 +84,22 @@ export default function JobDetail() {
           <p className="text-gray-500 mt-1">{job.company_name}</p>
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
             <span className="flex items-center gap-1"><DollarOutlined /> {formatSalary(job)}</span>
-            {job.location_name && (
-              <span className="flex items-center gap-1"><EnvironmentOutlined /> {job.location_name}</span>
+            {job.number_of_vacancies && (
+              <span className="flex items-center gap-1"><TeamOutlined /> {job.number_of_vacancies} người</span>
+            )}
+            {formatEducation(job.education_level) && (
+              <span className="flex items-center gap-1"><ReadOutlined /> {formatEducation(job.education_level)}</span>
             )}
             {job.deadline && (
               <span className="flex items-center gap-1"><ClockCircleOutlined /> Hạn nộp: {job.deadline}</span>
             )}
           </div>
+          {job.locations_detail?.length > 0 && (
+            <div className="flex items-start gap-1.5 mt-3 text-sm text-gray-600">
+              <EnvironmentOutlined className="mt-0.5" />
+              <span>{job.locations_detail.map((l) => l.name).join(' · ')}</span>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2 mt-4">
             {job.work_type && <Tag color="blue">{WORK_TYPE_LABELS[job.work_type]}</Tag>}
             {job.employment_type && <Tag color="green">{EMPLOYMENT_TYPE_LABELS[job.employment_type]}</Tag>}

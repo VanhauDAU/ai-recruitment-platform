@@ -22,6 +22,7 @@ class JobAdmin(admin.ModelAdmin):
     list_filter = ['status', 'work_type', 'employment_type', 'experience_level']
     search_fields = ['title', 'employer_profile__company_name']
     readonly_fields = ['public_id', 'view_count', 'application_count']
+    filter_horizontal = ['locations']
     inlines = [JobSkillInline]
 
 

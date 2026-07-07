@@ -20,14 +20,19 @@ class JobListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = Job.objects.filter(status=Job.Status.ACTIVE).select_related('employer_profile', 'location')
+        qs = Job.objects.filter(status=Job.Status.ACTIVE).select_related('employer_profile').prefetch_related('locations')
         params = self.request.query_params
-        if category := params.get('category'):
-            qs = qs.filter(category_id=category)
+        # Accepts multiple ?category= values at any taxonomy level;
+        # a group/nghề id also matches jobs tagged with its descendants.
+        if categories := params.getlist('category'):
+            ids = [int(c) for c in categories if c.isdigit()]
+            children = list(JobCategory.objects.filter(parent_id__in=ids).values_list('id', flat=True))
+            grandchildren = list(JobCategory.objects.filter(parent_id__in=children).values_list('id', flat=True))
+            qs = qs.filter(category_id__in=[*ids, *children, *grandchildren])
         # Accepts multiple ?location= values; each id may be a province or a ward.
-        # A province id matches jobs in any of its wards (location.parent) or on the province itself.
+        # A province id matches jobs at any of its wards (location.parent) or the province itself.
         if locations := params.getlist('location'):
-            qs = qs.filter(Q(location_id__in=locations) | Q(location__parent_id__in=locations))
+            qs = qs.filter(Q(locations__id__in=locations) | Q(locations__parent_id__in=locations)).distinct()
         if work_type := params.get('work_type'):
             qs = qs.filter(work_type=work_type)
         if employment_type := params.get('employment_type'):
@@ -43,7 +48,7 @@ class JobDetailView(generics.RetrieveAPIView):
     serializer_class = JobSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
-    queryset = Job.objects.filter(status=Job.Status.ACTIVE)
+    queryset = Job.objects.filter(status=Job.Status.ACTIVE).prefetch_related('locations', 'job_skills')
 
     def get_object(self):
         job = super().get_object()
@@ -57,7 +62,7 @@ class EmployerJobListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsEmployer]
 
     def get_queryset(self):
-        return Job.objects.filter(employer=self.request.user).order_by('-created_at')
+        return Job.objects.filter(employer=self.request.user).prefetch_related('locations').order_by('-created_at')
 
     def perform_create(self, serializer):
         try:
@@ -73,4 +78,4 @@ class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'public_id'
 
     def get_queryset(self):
-        return Job.objects.filter(employer=self.request.user)
+        return Job.objects.filter(employer=self.request.user).prefetch_related('locations', 'job_skills')
