@@ -1,4 +1,4 @@
-import { EnvironmentOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { EnvironmentOutlined, LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Popover, Skeleton } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getProvinces, getWards } from '../api/locationService'
@@ -17,6 +17,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
   const [loose, setLoose] = useState([]) // ward ids whose province is not in wardsCache yet
   const [provinceQuery, setProvinceQuery] = useState('')
   const [wardQuery, setWardQuery] = useState('')
+  const [wardView, setWardView] = useState(false) // mobile drill-down
   const provinceIds = useRef(new Set())
 
   useEffect(() => {
@@ -49,11 +50,13 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
     const grouped = groupValue(value)
     setDraft(grouped.draft)
     setLoose(grouped.loose)
+    setWardView(false)
   }, [open, provinces]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function openProvince(pid) {
     setActiveId(pid)
     setWardQuery('')
+    setWardView(true)
     if (wardsCache[pid]) return
     setLoadingWards(true)
     try {
@@ -138,10 +141,10 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
   const someWardsChecked = Array.isArray(activeDraft) && activeDraft.length > 0
 
   const panel = (
-    <div className="w-[640px] max-w-[92vw]">
-      <div className="grid grid-cols-2 divide-x divide-gray-100">
+    <div className="w-[640px] max-w-[calc(100vw-2rem)]">
+      <div className="md:grid md:grid-cols-2 md:divide-x md:divide-gray-100">
         {/* Provinces */}
-        <div className="pr-3">
+        <div className={`md:pr-3 ${wardView ? 'hidden md:block' : 'block'}`}>
           <Input
             allowClear
             placeholder="Nhập Tỉnh/Thành phố"
@@ -184,7 +187,13 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
         </div>
 
         {/* Wards of the active province */}
-        <div className="pl-3">
+        <div className={`md:pl-3 ${wardView ? 'block' : 'hidden'} md:block`}>
+          <button
+            onClick={() => setWardView(false)}
+            className="md:hidden flex items-center gap-1.5 mb-2 text-sm text-[#00b14f] cursor-pointer"
+          >
+            <LeftOutlined className="text-xs" /> Tỉnh/Thành phố
+          </button>
           <Input
             allowClear
             placeholder="Nhập Phường/Xã"

@@ -22,7 +22,7 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-8">
+      <div className="w-full px-6 h-16 flex items-center gap-8">
         <Link to="/" className="flex items-center gap-1.5 whitespace-nowrap">
           <span className="text-xl font-extrabold text-[#00b14f]">AI Career</span>
           <span className="text-xl font-extrabold text-gray-800">Coach</span>

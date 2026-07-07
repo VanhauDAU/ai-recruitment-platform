@@ -31,7 +31,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 1.11 | Bảng `jobs` + API public list/detail + employer CRUD | [x] Done |
 | 1.12 | Bảng `job_skills` (nested trong API jobs) | [x] Done |
 | 1.13 | Bảng `applications` + API ứng tuyển/xem/đổi trạng thái | [x] Done |
-| 1.14 | Frontend: CV builder, kho template, danh sách/chi tiết job, ứng tuyển | [ ] Một phần — trang chủ TopCV-style (header, hero search, mega-menu), danh sách job (bộ lọc, phân trang), chi tiết job; **CategoryPicker modal 3 cấp (nhóm nghề→nghề→vị trí, multi-select, rút gọn id khi apply)**; **LocationFilter dùng chung Home+Jobs (click tên là chọn, giữ checkbox khi mở lại, label "Tỉnh (Tất cả)"/"(n phường/xã)")**; Skeleton + lazy-load + theme AntD xanh. Còn thiếu CV builder, kho template, luồng ứng tuyển |
+| 1.14 | Frontend: CV builder, kho template, danh sách/chi tiết job, ứng tuyển | [ ] Một phần — trang chủ TopCV-style (header, hero search, mega-menu), mega-menu danh mục 3 cấp ở trang chủ (nhóm nghề→nghề→vị trí chuyên môn khi hover, có next/prev chuyển trang nhóm), danh sách job (bộ lọc, phân trang), chi tiết job; **CategoryPicker modal 3 cấp (nhóm nghề→nghề→vị trí, multi-select, rút gọn id khi apply)**; **LocationFilter dùng chung Home+Jobs (click tên là chọn, giữ checkbox khi mở lại, label "Tỉnh (Tất cả)"/"(n phường/xã)")**; Skeleton + lazy-load + theme AntD xanh. Còn thiếu CV builder, kho template, luồng ứng tuyển |
 | 1.6b | Seed job_categories (taxonomy 3 cấp: 8 nhóm nghề + 24 nghề + 61 vị trí chuyên môn) qua `seed_job_categories`; API lọc job nhận nhiều `?category=` và tự mở rộng xuống cấp con | [x] Done |
 | 1.15 | Quy trình duyệt/publish job (status draft -> active) | [ ] Chưa làm — hiện chỉnh trực tiếp qua Django shell/admin |
 

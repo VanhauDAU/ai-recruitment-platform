@@ -1,4 +1,4 @@
-import { DownOutlined, RightOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { DownOutlined, LeftOutlined, RightOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Modal } from 'antd'
 import { useMemo, useState } from 'react'
 
@@ -17,6 +17,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
   const [open, setOpen] = useState(false)
   const [sel, setSel] = useState(new Set())
   const [activeId, setActiveId] = useState(null)
+  const [detailOpen, setDetailOpen] = useState(false) // mobile drill-down
   const [query, setQuery] = useState('')
 
   const appliedLeaves = useMemo(
@@ -27,6 +28,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
   function openModal() {
     setSel(new Set(appliedLeaves))
     setActiveId((prev) => prev ?? groups[0]?.id)
+    setDetailOpen(false)
     setQuery('')
     setOpen(true)
   }
@@ -90,6 +92,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
         onCancel={() => setOpen(false)}
         footer={null}
         width={880}
+        styles={{ body: { maxWidth: '100%' } }}
         title="Chọn Nhóm nghề, Nghề hoặc Vị trí chuyên môn"
       >
         <Input
@@ -100,16 +103,18 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
           onChange={(e) => setQuery(e.target.value)}
           className="my-3"
         />
-        <div className="grid grid-cols-[280px_1fr] border border-gray-100 rounded-lg overflow-hidden">
-          <div className="border-r border-gray-100">
+        <div className="md:grid md:grid-cols-[280px_1fr] border border-gray-100 rounded-lg overflow-hidden">
+          {/* Cột NHÓM NGHỀ — trên mobile ẩn khi đã mở chi tiết */}
+          <div className={`border-r border-gray-100 ${detailOpen ? 'hidden md:block' : 'block'}`}>
             <p className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 tracking-wide">NHÓM NGHỀ</p>
-            <ul className="h-96 overflow-auto">
+            <ul className="h-80 md:h-96 overflow-auto">
               {visibleGroups.map((g) => {
                 const st = checkState(g.id)
                 return (
                   <li
                     key={g.id}
-                    onClick={() => setActiveId(g.id)}
+                    onMouseEnter={() => setActiveId(g.id)}
+                    onClick={() => { setActiveId(g.id); setDetailOpen(true) }}
                     className={`flex items-center gap-2.5 px-4 py-2.5 cursor-pointer ${
                       activeGroup?.id === g.id ? 'bg-green-50 text-[#00b14f] font-medium' : 'hover:bg-gray-50'
                     }`}
@@ -128,15 +133,22 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
             </ul>
           </div>
 
-          <div>
-            <div className="grid grid-cols-[220px_1fr] px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 tracking-wide">
-              <span>NGHỀ</span><span>VỊ TRÍ CHUYÊN MÔN</span>
+          {/* Cột NGHỀ | VỊ TRÍ — trên mobile ẩn cho tới khi chọn nhóm */}
+          <div className={`${detailOpen ? 'block' : 'hidden'} md:block`}>
+            <button
+              onClick={() => setDetailOpen(false)}
+              className="md:hidden flex items-center gap-1.5 px-4 py-2 text-sm text-[#00b14f] cursor-pointer"
+            >
+              <LeftOutlined className="text-xs" /> Nhóm nghề
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] px-4 pt-2 md:pt-3 pb-1 text-xs font-semibold text-gray-400 tracking-wide">
+              <span>NGHỀ</span><span className="hidden md:block">VỊ TRÍ CHUYÊN MÔN</span>
             </div>
-            <div className="h-96 overflow-auto divide-y divide-gray-50">
+            <div className="h-80 md:h-96 overflow-auto divide-y divide-gray-50">
               {visibleJobs.map((n) => {
                 const st = checkState(n.id)
                 return (
-                  <div key={n.id} className="grid grid-cols-[220px_1fr] gap-2 px-4 py-3">
+                  <div key={n.id} className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-2 md:gap-3 px-4 py-3">
                     <label className="flex items-start gap-2.5 cursor-pointer">
                       <Checkbox
                         checked={st.checked}
