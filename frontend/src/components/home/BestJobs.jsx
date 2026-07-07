@@ -1,0 +1,644 @@
+import {
+  BulbOutlined,
+  ClockCircleOutlined,
+  CloseOutlined,
+  DownOutlined,
+  EnvironmentOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  HeartFilled,
+  HeartOutlined,
+  SafetyCertificateOutlined,
+} from '@ant-design/icons'
+import { Dropdown, Skeleton } from 'antd'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getJobs } from '../../api/jobService'
+import { getProvinces, getWards } from '../../api/locationService'
+import {
+  SALARY_RANGES,
+  WORK_TYPE_LABELS,
+  formatLocations,
+  formatSalary,
+  stripCompanyPrefix,
+} from '../../constants/jobOptions'
+import ArrowButton from '../ui/ArrowButton'
+
+const PAGE_SIZE = 12
+const ROTATE_MS = 8000
+const PREVIEW_DELAY_MS = 500
+const LOCATION_CHIP_LIMIT = 15
+const OTHER_WARDS_VALUE = '__other_wards__'
+
+const DIMENSIONS = [
+  { key: 'location', label: 'Địa điểm' },
+  { key: 'salary', label: 'Mức lương' },
+  { key: 'experience', label: 'Kinh nghiệm' },
+  { key: 'category', label: 'Ngành nghề' },
+]
+
+// Deterministic pastel logo tints (bg / text), keyed off the company name.
+const LOGO_TINTS = [
+  ['#e6f0ff', '#2563eb'],
+  ['#eafaf1', '#16a34a'],
+  ['#fff1e6', '#ea580c'],
+  ['#fdeaf1', '#db2777'],
+  ['#f0edfb', '#7c3aed'],
+  ['#fff7e0', '#ca8a04'],
+]
+
+const shortProvince = (name = '') => name.replace(/^Thành phố |^Tỉnh /, '')
+const shortWard = (name = '') => name.replace(/^Phường |^Xã |^Đặc khu /, '')
+const textLines = (text = '') => text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+
+const EXPERIENCE_FILTER_OPTIONS = [
+  { value: null, label: 'Tất cả' },
+  { value: 'intern', label: 'Chưa có kinh nghiệm' },
+  { value: 'fresher', label: '1 năm trở xuống' },
+  { value: 'junior', label: '1 năm' },
+  { value: 'middle', label: '2 năm' },
+  { value: 'senior', label: '3 năm' },
+  { value: 'four_to_five', label: 'Từ 4 - 5 năm', apiValue: 'senior' },
+  { value: 'over_five', label: 'Trên 5 năm', apiValue: 'senior' },
+]
+
+const PRIORITY_PROVINCES = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ']
+const EMPTY_FILTERS = { location: null, salary: null, experience: null, category: null }
+
+export default function BestJobs({ categories = [] }) {
+  const navigate = useNavigate()
+  const [dimension, setDimension] = useState('location')
+  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  const [provinces, setProvinces] = useState([])
+  const [featuredWards, setFeaturedWards] = useState([])
+  const [jobs, setJobs] = useState([])
+  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [animKey, setAnimKey] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [showHint, setShowHint] = useState(true)
+  const [saved, setSaved] = useState(() => new Set())
+  const [previewJobId, setPreviewJobId] = useState(null)
+  const [previewAnchor, setPreviewAnchor] = useState(null)
+  const chipStrip = useRef(null)
+  const dragState = useRef({ active: false, startX: 0, scrollLeft: 0, dragged: false, suppressClickUntil: 0 })
+  const previewTimer = useRef(null)
+  const previewCloseTimer = useRef(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadLocations() {
+      try {
+        const provinceData = await getProvinces()
+        if (cancelled) return
+        setProvinces(provinceData)
+
+        const priority = [
+          ...PRIORITY_PROVINCES.map((name) => provinceData.find((p) => p.name.includes(name))).filter(Boolean),
+          ...provinceData,
+        ]
+        const uniquePriority = Array.from(new Map(priority.map((p) => [p.id, p])).values()).slice(0, 5)
+        const wardGroups = await Promise.all(uniquePriority.map((p) => getWards(p.id).catch(() => [])))
+        if (!cancelled) setFeaturedWards(wardGroups.flat().slice(0, LOCATION_CHIP_LIMIT))
+      } catch {
+        if (!cancelled) {
+          setProvinces([])
+          setFeaturedWards([])
+        }
+      }
+    }
+
+    loadLocations()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const parents = useMemo(() => categories.filter((c) => c.parent == null), [categories])
+
+  // Chip options for the active filter dimension.
+  const chips = useMemo(() => {
+    if (dimension === 'location') {
+      const provinceChips = provinces.slice(0, 8).map((p) => ({ value: p.id, label: shortProvince(p.name) }))
+      const provinceById = new Map(provinces.map((p) => [p.id, p]))
+      const wardChips = featuredWards.map((w) => {
+        const province = provinceById.get(w.parent)
+        return {
+          value: w.id,
+          label: province ? `${shortWard(w.name)}, ${shortProvince(province.name)}` : shortWard(w.name),
+        }
+      })
+      const locationChips = [...provinceChips, ...wardChips].slice(0, LOCATION_CHIP_LIMIT)
+      return [
+        { value: null, label: 'Tất cả' },
+        ...locationChips,
+        { value: OTHER_WARDS_VALUE, label: 'Các phường/xã còn lại', action: 'openLocations' },
+      ]
+    }
+    if (dimension === 'salary')
+      return [
+        { value: null, label: 'Tất cả' },
+        ...SALARY_RANGES.map((r) => ({ value: r.key, label: r.label })),
+        { value: 'negotiable', label: 'Thỏa thuận' },
+      ]
+    if (dimension === 'experience') return EXPERIENCE_FILTER_OPTIONS
+    return [{ value: null, label: 'Tất cả' }, ...parents.map((c) => ({ value: c.id, label: c.name }))]
+  }, [dimension, provinces, featuredWards, parents])
+
+  const activeChip = filters[dimension]
+  const {
+    location: locationFilter,
+    salary: salaryFilter,
+    experience: experienceFilter,
+    category: categoryFilter,
+  } = filters
+
+  useEffect(() => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    params.set('page', page)
+    params.set('page_size', PAGE_SIZE)
+    if (locationFilter) params.append('location', locationFilter)
+    if (categoryFilter) params.append('category', categoryFilter)
+    if (experienceFilter) {
+      const option = EXPERIENCE_FILTER_OPTIONS.find((x) => x.value === experienceFilter)
+      params.set('experience_level', option?.apiValue || experienceFilter)
+    }
+    if (salaryFilter === 'negotiable') {
+      params.set('salary_negotiable', '1')
+    } else if (salaryFilter) {
+      const r = SALARY_RANGES.find((x) => x.key === salaryFilter)
+      if (r?.gte) params.set('salary_gte', r.gte)
+      if (r?.lte) params.set('salary_lte', r.lte)
+    }
+    getJobs(params)
+      .then((data) => {
+        setJobs(data.results || data)
+        setCount(data.count ?? (data.results || data).length)
+        setAnimKey((k) => k + 1)
+      })
+      .catch(() => {
+        setJobs([])
+        setCount(0)
+      })
+      .finally(() => setLoading(false))
+  }, [categoryFilter, experienceFilter, locationFilter, page, salaryFilter])
+
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
+
+  // Auto-advance pages with a smooth fade; pause on hover.
+  useEffect(() => {
+    if (paused || totalPages <= 1) return
+    const timer = setInterval(() => setPage((p) => (p % totalPages) + 1), ROTATE_MS)
+    return () => clearInterval(timer)
+  }, [paused, totalPages])
+
+  useEffect(() => () => {
+    clearTimeout(previewTimer.current)
+    clearTimeout(previewCloseTimer.current)
+  }, [])
+
+  function pickDimension(key) {
+    setDimension(key)
+    setFilters(EMPTY_FILTERS)
+    setPage(1)
+    chipStrip.current?.scrollTo({ left: 0, behavior: 'smooth' })
+  }
+
+  function toggleChip(chip) {
+    if (chip.action === 'openLocations') {
+      navigate('/jobs')
+      return
+    }
+    setFilters((f) => ({ ...EMPTY_FILTERS, [dimension]: f[dimension] === chip.value ? null : chip.value }))
+    setPage(1)
+  }
+
+  function scrollChips(dir) {
+    const node = chipStrip.current
+    if (!node) return
+    node.scrollTo({ left: dir < 0 ? 0 : node.scrollWidth - node.clientWidth, behavior: 'smooth' })
+  }
+
+  function startChipDrag(e) {
+    const node = chipStrip.current
+    if (!node) return
+    dragState.current = {
+      ...dragState.current,
+      active: true,
+      startX: e.clientX,
+      scrollLeft: node.scrollLeft,
+      dragged: false,
+    }
+  }
+
+  function moveChipDrag(e) {
+    const node = chipStrip.current
+    if (!node || !dragState.current.active) return
+    const delta = e.clientX - dragState.current.startX
+    if (Math.abs(delta) > 4) dragState.current.dragged = true
+    node.scrollLeft = dragState.current.scrollLeft - delta
+  }
+
+  function endChipDrag() {
+    const dragged = dragState.current.dragged
+    dragState.current = {
+      ...dragState.current,
+      active: false,
+      dragged: false,
+      suppressClickUntil: dragged ? Date.now() + 140 : 0,
+    }
+  }
+
+  function toggleSave(e, id) {
+    e.preventDefault()
+    e.stopPropagation()
+    setSaved((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  function showPreviewAfterDelay(jobId, anchorRect) {
+    clearTimeout(previewTimer.current)
+    clearTimeout(previewCloseTimer.current)
+    setPreviewAnchor(anchorRect)
+    previewTimer.current = setTimeout(() => {
+      setPreviewAnchor(anchorRect)
+      setPreviewJobId(jobId)
+    }, PREVIEW_DELAY_MS)
+  }
+
+  function cancelPreviewDelay() {
+    clearTimeout(previewTimer.current)
+  }
+
+  function schedulePreviewClose() {
+    clearTimeout(previewCloseTimer.current)
+    previewCloseTimer.current = setTimeout(() => setPreviewJobId(null), 160)
+  }
+
+  function keepPreviewOpen() {
+    clearTimeout(previewCloseTimer.current)
+  }
+
+  function closePreview() {
+    clearTimeout(previewTimer.current)
+    clearTimeout(previewCloseTimer.current)
+    setPreviewJobId(null)
+  }
+
+  const dimLabel = DIMENSIONS.find((d) => d.key === dimension)?.label
+  const activeFilterCount = Object.values(filters).filter(Boolean).length
+  const goPrev = () => setPage((p) => Math.max(1, p - 1))
+  const goNext = () => setPage((p) => Math.min(totalPages, p + 1))
+
+  return (
+    <div
+      className="rounded-xl border border-gray-200 bg-white p-4 md:p-5 shadow-sm"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="text-lg md:text-xl font-bold text-gray-800">Việc làm tốt nhất</h2>
+        <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-[#00b14f]">
+          <BulbOutlined /> Gợi ý bởi AI
+        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => navigate('/jobs')} className="text-sm text-[#00b14f] hover:underline cursor-pointer">
+            Xem tất cả
+          </button>
+          <ArrowButton dir="left" disabled={page <= 1} onClick={goPrev} />
+          <ArrowButton dir="right" disabled={page >= totalPages} onClick={goNext} />
+        </div>
+      </div>
+
+      {/* Filter bar: dimension picker + horizontal chip strip */}
+      <div className="flex items-center gap-2 mb-3">
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: DIMENSIONS.map((d) => ({ key: d.key, label: d.label })),
+            onClick: ({ key }) => pickDimension(key),
+            selectedKeys: [dimension],
+          }}
+        >
+          <button className="flex shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 h-8 text-sm text-gray-600 cursor-pointer hover:border-[#00b14f]">
+            <FilterOutlined className="text-gray-400" />
+            <span className="hidden sm:inline">Lọc theo:</span>
+            <span className="font-medium text-[#00b14f]">{dimLabel}</span>
+            {activeFilterCount > 0 && (
+              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00b14f] px-1 text-[10px] font-semibold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+            <DownOutlined className="text-[10px] text-gray-400" />
+          </button>
+        </Dropdown>
+
+        <ArrowButton dir="left" onClick={() => scrollChips(-1)} />
+        <div
+          ref={chipStrip}
+          onPointerDown={startChipDrag}
+          onPointerMove={moveChipDrag}
+          onPointerUp={endChipDrag}
+          onPointerCancel={endChipDrag}
+          className="flex-1 flex items-center gap-2 overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {chips.length === 0 ? (
+            <span className="text-sm text-gray-400">Đang tải…</span>
+          ) : (
+            chips.map((c) => {
+              const active = activeChip === c.value
+              return (
+                <button
+                  key={`${c.value ?? 'all'}-${c.label}`}
+                  onClick={() => {
+                    if (Date.now() < dragState.current.suppressClickUntil) return
+                    toggleChip(c)
+                  }}
+                  className={`shrink-0 rounded-full border px-4 h-8 text-sm whitespace-nowrap transition cursor-pointer ${
+                    active
+                      ? 'bg-[#00b14f] text-white border-[#00b14f]'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-[#00b14f] hover:text-[#00b14f]'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              )
+            })
+          )}
+        </div>
+        <ArrowButton dir="right" onClick={() => scrollChips(1)} />
+      </div>
+
+      {/* Hint banner */}
+      {showHint && (
+        <div className="flex items-center gap-2 rounded-md border border-[#c3ebd5] bg-[#f0fbf5] px-3 py-2 mb-3 text-sm text-gray-600">
+          <BulbOutlined className="text-[#00b14f]" />
+          <span className="flex-1">Gợi ý: Di chuột vào tiêu đề việc làm để xem thêm thông tin chi tiết</span>
+          <CloseOutlined className="cursor-pointer text-gray-400 hover:text-gray-600" onClick={() => setShowHint(false)} />
+        </div>
+      )}
+
+      {/* Job grid */}
+      {loading && jobs.length === 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 p-3">
+              <Skeleton avatar active paragraph={{ rows: 2 }} />
+            </div>
+          ))}
+        </div>
+      ) : jobs.length === 0 ? (
+        <p className="py-10 text-center text-gray-500">Không tìm thấy việc làm phù hợp với bộ lọc.</p>
+      ) : (
+        <div key={animKey} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-slide">
+          {jobs.map((job) => {
+            const company = stripCompanyPrefix(job.company_name)
+            const [bg, fg] = LOGO_TINTS[company.length % LOGO_TINTS.length]
+            const locationLabel = formatLocations(job)
+            return (
+	              <div
+	                key={job.public_id}
+	                className="relative"
+	                onMouseLeave={schedulePreviewClose}
+	              >
+                <a
+                  href={`/jobs/${job.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative flex gap-3 rounded-lg border border-gray-200 p-3 hover:border-[#00b14f] hover:shadow-md transition"
+                >
+                  <div
+                    className="w-14 h-14 shrink-0 rounded-md border border-gray-100 flex items-center justify-center text-lg font-bold"
+                    style={{ background: bg, color: fg }}
+                  >
+                    {company.charAt(0) || '?'}
+                  </div>
+                  <div className="min-w-0 flex-1 pr-5">
+	                    <h3
+	                      onMouseEnter={(e) => showPreviewAfterDelay(job.public_id, e.currentTarget.getBoundingClientRect())}
+	                      onMouseLeave={cancelPreviewDelay}
+	                      className="font-semibold text-sm text-gray-800 leading-snug line-clamp-2 group-hover:text-[#00b14f] cursor-pointer"
+                    >
+                      {job.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 truncate mt-1">{job.company_name}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{formatSalary(job)}</span>
+                      {locationLabel && (
+                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{locationLabel}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => toggleSave(e, job.public_id)}
+                    className="absolute top-3 right-3 text-gray-300 hover:text-[#00b14f] cursor-pointer"
+                    aria-label="Lưu việc làm"
+                  >
+                    {saved.has(job.public_id) ? <HeartFilled className="text-[#00b14f]" /> : <HeartOutlined />}
+                  </button>
+                </a>
+                {previewJobId === job.public_id && (
+                  <JobPreviewPanel
+	                    job={job}
+	                    company={company}
+	                    logoBg={bg}
+	                    logoFg={fg}
+	                    anchorRect={previewAnchor}
+	                    onMouseEnter={() => {
+	                      keepPreviewOpen()
+	                      setPreviewJobId(job.public_id)
+	                    }}
+                    onMouseLeave={closePreview}
+                    onViewDetail={() => navigate(`/jobs/${job.slug}`)}
+                    onApply={() => navigate(`/jobs/${job.slug}`)}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Footer pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-5">
+          <ArrowButton dir="left" disabled={page <= 1} onClick={goPrev} />
+          <span className="text-sm text-gray-500">
+            <span className="font-semibold text-[#00b14f]">{page}</span> / {totalPages} trang
+          </span>
+          <ArrowButton dir="right" disabled={page >= totalPages} onClick={goNext} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function JobPreviewPanel({
+  job,
+  company,
+  logoBg,
+  logoFg,
+  anchorRect,
+  onMouseEnter,
+  onMouseLeave,
+  onViewDetail,
+  onApply,
+}) {
+  const [scrolled, setScrolled] = useState(false)
+  if (!anchorRect) return null
+
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const panelWidth = Math.min(520, viewportWidth - 24)
+  const panelHeight = Math.min(560, viewportHeight - 88)
+  const left = Math.max(12, Math.min(anchorRect.left - panelWidth - 14, viewportWidth - panelWidth - 12))
+  const maxTop = Math.max(76, viewportHeight - panelHeight - 12)
+  const top = Math.min(Math.max(anchorRect.top - 8, 76), maxTop)
+  const locationLabel = formatLocations(job)
+  const deadlineLabel = formatDeadline(job.deadline)
+  const sections = [
+    { title: 'Mô tả công việc', content: job.description || job.short_description },
+    { title: 'Yêu cầu ứng viên', content: job.requirements },
+    { title: 'Quyền lợi', content: job.benefits },
+    { title: 'Địa điểm làm việc', content: job.address || job.locations_detail?.map((l) => l.name).join('\n') },
+    { title: 'Thời gian làm việc', content: job.work_type ? `Hình thức: ${WORK_TYPE_LABELS[job.work_type] || job.work_type}` : '' },
+  ].filter((section) => section.content)
+
+  function handleScroll(e) {
+    const nextScrolled = e.currentTarget.scrollTop > 48
+    setScrolled((current) => (current === nextScrolled ? current : nextScrolled))
+  }
+
+  return (
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="fixed z-50 overflow-hidden rounded-xl border border-gray-100 bg-white text-left shadow-2xl shadow-black/20"
+      style={{ left, top, width: panelWidth, maxHeight: panelHeight }}
+    >
+      <div
+        className="overflow-y-auto px-5 pt-5 pb-24 [scrollbar-width:thin]"
+        style={{ maxHeight: panelHeight }}
+        onScroll={handleScroll}
+      >
+        <div
+          className={`sticky top-0 z-10 -mx-5 -mt-5 overflow-hidden border-gray-100 bg-white px-5 pt-5 transition-all duration-200 ease-out ${
+            scrolled
+              ? 'mb-4 max-h-28 translate-y-0 border-b pb-3 opacity-100'
+              : 'pointer-events-none mb-0 max-h-0 -translate-y-2 border-b-0 pb-0 opacity-0'
+          }`}
+        >
+          <p className="line-clamp-2 text-base font-semibold leading-snug text-[#17324d]">{job.title}</p>
+          <p className="mt-1 truncate text-xs uppercase text-gray-400">{job.company_name}</p>
+        </div>
+
+        <div
+          className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
+            scrolled ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'
+          }`}
+        >
+          <div className="flex gap-4 overflow-hidden">
+          <div
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-gray-100 text-2xl font-bold"
+            style={{ background: logoBg, color: logoFg }}
+          >
+            {company.charAt(0) || '?'}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-3 text-base font-semibold leading-snug text-[#17324d]">{job.title}</p>
+            <p className="mt-1 truncate text-xs uppercase text-gray-400">{job.company_name}</p>
+            <p className="mt-2 text-sm font-semibold text-[#00b14f]">{formatSalary(job)}</p>
+          </div>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {locationLabel && (
+            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-500">
+              <EnvironmentOutlined /> {locationLabel}
+            </span>
+          )}
+          {job.experience_level && (
+            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-500">
+              <SafetyCertificateOutlined /> {experienceLabel(job.experience_level)}
+            </span>
+          )}
+          {deadlineLabel && (
+            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-500">
+              <ClockCircleOutlined /> {deadlineLabel}
+            </span>
+          )}
+        </div>
+
+        <div className="mt-6 space-y-6 text-sm text-gray-700">
+          {sections.map((section) => (
+            <PreviewSection key={section.title} title={section.title} content={section.content} />
+          ))}
+        </div>
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 flex gap-3 border-t border-gray-100 bg-white/95 p-4 backdrop-blur">
+        <button
+          type="button"
+          onClick={onApply}
+          className="h-10 flex-1 cursor-pointer rounded-md border border-[#00b14f] bg-white text-sm font-semibold text-[#00b14f] transition hover:bg-green-50"
+        >
+          Ứng tuyển
+        </button>
+        <button
+          type="button"
+          onClick={onViewDetail}
+          className="inline-flex h-10 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-md bg-[#00b14f] text-sm font-semibold text-white transition hover:bg-[#009944]"
+        >
+          <EyeOutlined className="text-xs" />
+          Xem chi tiết
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PreviewSection({ title, content }) {
+  const lines = textLines(content)
+  if (lines.length === 0) return null
+  return (
+    <section>
+      <h4 className="mb-2 border-l-4 border-[#00b14f] pl-2 text-sm font-semibold text-[#17324d]">{title}</h4>
+      <div className="space-y-1.5 text-xs leading-relaxed text-gray-600">
+        {lines.map((line, index) => (
+          <p key={`${title}-${index}`} className={index === 0 ? 'font-medium text-gray-700' : ''}>
+            {line}
+          </p>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function experienceLabel(level) {
+  return EXPERIENCE_FILTER_OPTIONS.find((option) => option.value === level)?.label || 'Kinh nghiệm'
+}
+
+function formatDeadline(deadline) {
+  if (!deadline) return null
+  const deadlineDate = new Date(deadline)
+  if (Number.isNaN(deadlineDate.getTime())) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  deadlineDate.setHours(0, 0, 0, 0)
+  const diffDays = Math.ceil((deadlineDate - today) / 86_400_000)
+  if (diffDays < 0) return 'Đã hết hạn'
+  if (diffDays === 0) return 'Hết hạn hôm nay'
+  return `Còn ${diffDays} ngày`
+}

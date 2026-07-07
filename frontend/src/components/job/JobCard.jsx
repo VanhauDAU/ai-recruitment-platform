@@ -1,7 +1,7 @@
 import { EnvironmentOutlined, DollarOutlined, TeamOutlined } from '@ant-design/icons'
 import { Tag } from 'antd'
 import { Link } from 'react-router-dom'
-import { EMPLOYMENT_TYPE_LABELS, formatLocations, formatSalary } from '../constants/jobOptions'
+import { EMPLOYMENT_TYPE_LABELS, formatLocations, formatSalary } from '../../constants/jobOptions'
 
 export default function JobCard({ job }) {
   const locationLabel = formatLocations(job)

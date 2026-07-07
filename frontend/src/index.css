@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (project-wide strategy): toggled via .dark on <html>,
+   see src/hooks/useColorScheme.js. Falls back to system preference on first load. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   margin: 0;
 }
@@ -17,4 +21,158 @@ body {
 
 .animate-slide-in {
   animation: slideInTop 0.5s ease;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide {
+  animation: fadeSlide 0.45s ease;
+}
+
+@keyframes jobPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(10px);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-job-pop {
+  animation: jobPop 0.62s cubic-bezier(0.2, 0.85, 0.25, 1);
+}
+
+@keyframes jobPush {
+  from {
+    opacity: 0.65;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-job-push {
+  animation: jobPush 0.5s ease;
+}
+
+@keyframes jobExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+}
+
+.animate-job-exit {
+  animation: jobExit 0.42s ease forwards;
+}
+
+@keyframes chartRise {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-chart-rise {
+  animation: chartRise 0.45s ease;
+}
+
+@keyframes chartLineDraw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-chart-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: chartLineDraw 1s cubic-bezier(0.22, 0.9, 0.28, 1) forwards;
+}
+
+@keyframes chartAreaReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-chart-area {
+  opacity: 0;
+  animation: chartAreaReveal 0.75s ease 0.25s forwards;
+}
+
+@keyframes chartDotPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-chart-dot {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: chartDotPop 0.42s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+}
+
+@keyframes barGrow {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.08);
+  }
+  60% {
+    opacity: 1;
+    transform: scaleY(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.animate-bar-grow {
+  opacity: 0;
+  animation: barGrow 0.62s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
 }

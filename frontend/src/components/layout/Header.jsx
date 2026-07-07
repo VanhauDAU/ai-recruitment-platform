@@ -9,7 +9,7 @@ import {
 import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../../hooks/useAuth'
 
 const DASHBOARD_BY_ROLE = {
   candidate: '/candidate/dashboard',
@@ -168,7 +168,7 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
       <div className="w-full px-6 h-16 flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-1.5 whitespace-nowrap">
+        <Link to="/" className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
           <span className="text-xl font-extrabold text-[#00b14f]">AI Career</span>
           <span className="text-xl font-extrabold text-gray-800">Coach</span>
         </Link>
@@ -181,7 +181,7 @@ export default function Header() {
             <div key={m.key} className="relative flex items-center" onMouseEnter={() => setOpenKey(m.key)}>
               <button
                 onClick={() => (m.to ? navigate(m.to) : setOpenKey(m.key))}
-                className={`flex items-center gap-1 h-16 transition ${openKey === m.key ? 'text-[#00b14f]' : 'hover:text-[#00b14f]'}`}
+                className={`flex items-center gap-1 h-16 cursor-pointer transition ${openKey === m.key ? 'text-[#00b14f]' : 'hover:text-[#00b14f]'}`}
               >
                 {m.label}
                 <DownOutlined className={`text-[10px] transition-transform ${openKey === m.key ? 'rotate-180' : ''}`} />
@@ -223,15 +223,15 @@ export default function Header() {
         <div className="flex items-center gap-2 ml-auto">
           {isAuthenticated ? (
             <>
-              <Button onClick={() => navigate(DASHBOARD_BY_ROLE[user?.role] || '/')}>Trang quản lý</Button>
-              <Button onClick={logout}>Đăng xuất</Button>
+              <Button className="cursor-pointer" onClick={() => navigate(DASHBOARD_BY_ROLE[user?.role] || '/')}>Trang quản lý</Button>
+              <Button className="cursor-pointer" onClick={logout}>Đăng xuất</Button>
             </>
           ) : (
             <>
-              <Link to="/register" className="hidden sm:inline-block"><Button>Đăng ký</Button></Link>
-              <Link to="/login"><Button type="primary">Đăng nhập</Button></Link>
-              <Link to="/register" className="hidden lg:inline-block">
-                <Button ghost type="primary">Đăng tuyển &amp; tìm hồ sơ</Button>
+              <Link to="/register" className="hidden sm:inline-block cursor-pointer"><Button className="cursor-pointer">Đăng ký</Button></Link>
+              <Link to="/login" className="cursor-pointer"><Button className="cursor-pointer" type="primary">Đăng nhập</Button></Link>
+              <Link to="/register" className="hidden lg:inline-block cursor-pointer">
+                <Button className="cursor-pointer" ghost type="primary">Đăng tuyển &amp; tìm hồ sơ</Button>
               </Link>
             </>
           )}

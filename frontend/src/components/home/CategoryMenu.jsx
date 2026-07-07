@@ -1,6 +1,7 @@
-import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { RightOutlined } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ArrowButton from '../ui/ArrowButton'
 
 const GROUPS_PER_PAGE = 6
 
@@ -25,12 +26,6 @@ export default function CategoryMenu({ categories, banner }) {
   }
 
   if (parents.length === 0) return banner || null
-
-  const arrowBtn =
-    'w-8 h-8 flex items-center justify-center rounded-full border transition-all duration-150 ' +
-    'disabled:border-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed ' +
-    'enabled:border-[#00b14f] enabled:text-[#00b14f] enabled:cursor-pointer ' +
-    'enabled:hover:bg-[#00b14f] enabled:hover:text-white enabled:hover:shadow-md enabled:hover:shadow-green-200 enabled:active:scale-90'
 
   return (
     <div
@@ -64,12 +59,8 @@ export default function CategoryMenu({ categories, banner }) {
               <span className="text-[#00b14f]">{page + 1}</span>/{totalPages}
             </span>
             <div className="ml-auto flex gap-2">
-              <button className={arrowBtn} disabled={page === 0} onClick={() => changePage(page - 1)}>
-                <LeftOutlined className="text-xs" />
-              </button>
-              <button className={arrowBtn} disabled={page === totalPages - 1} onClick={() => changePage(page + 1)}>
-                <RightOutlined className="text-xs" />
-              </button>
+              <ArrowButton dir="left" disabled={page === 0} onClick={() => changePage(page - 1)} />
+              <ArrowButton dir="right" disabled={page === totalPages - 1} onClick={() => changePage(page + 1)} />
             </div>
           </div>
         )}

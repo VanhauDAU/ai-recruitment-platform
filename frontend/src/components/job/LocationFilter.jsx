@@ -1,7 +1,7 @@
 import { EnvironmentOutlined, LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Popover, Skeleton } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getProvinces, getWards } from '../api/locationService'
+import { getProvinces, getWards } from '../../api/locationService'
 
 // Selection model: draft[provinceId] = 'ALL' | number[] (specific ward ids).
 // Applied value (props.value) is a flat id list — a province id means the whole
@@ -255,15 +255,41 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
   return (
     <Popover open={open} onOpenChange={setOpen} trigger="click" placement="bottomLeft" content={panel}>
       <button
-        className={`w-full flex items-center gap-2 border border-gray-300 rounded-lg px-3 text-left bg-white cursor-pointer hover:border-[#00b14f] transition ${
-          size === 'large' ? 'h-10 text-base' : 'h-8 text-sm'
-        }`}
+        className={`w-full flex items-center gap-2 border rounded-xl px-3 text-left bg-white cursor-pointer transition-all group ${
+          open
+            ? 'border-[#00b14f] ring-2 ring-[#00b14f]/15'
+            : 'border-gray-200 hover:border-[#00b14f]'
+        } ${size === 'large' ? 'h-12 text-base' : 'h-8 text-sm'}`}
       >
-        <EnvironmentOutlined className="text-gray-400" />
-        <span className={`flex-1 truncate ${triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
-          {triggerLabel || 'Tất cả địa điểm'}
+        {/* Pin icon với nền xanh nhạt */}
+        <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#e6f7ee] shrink-0">
+          <EnvironmentOutlined className="text-[#00b14f] text-sm" />
         </span>
-        <RightOutlined className="text-[10px] text-gray-300 rotate-90" />
+
+        {/* Label */}
+        <span className={`flex-1 truncate font-medium ${triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
+          {triggerLabel || 'Địa điểm'}
+        </span>
+
+        {/* Mũi tên xuống */}
+        <span
+          className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full transition-all ${
+            open ? 'bg-[#00b14f]/10 text-[#00b14f]' : 'text-gray-400 group-hover:text-[#00b14f]'
+          }`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </span>
       </button>
     </Popover>
   )

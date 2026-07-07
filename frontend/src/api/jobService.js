@@ -19,3 +19,11 @@ export async function getJobStats() {
   const { data } = await api.get('/jobs/stats/')
   return data
 }
+
+// Autocomplete từ khóa theo nội dung nhập (tên việc làm / tên công ty).
+export async function getJobSuggestions(q, searchBy = 'title') {
+  const params = { q }
+  if (searchBy === 'company') params.search_by = 'company'
+  const { data } = await api.get('/jobs/suggest/', { params })
+  return data.suggestions || []
+}

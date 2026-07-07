@@ -46,8 +46,25 @@ class JobListView(generics.ListAPIView):
             qs = qs.filter(employment_type=employment_type)
         if experience_level := params.get('experience_level'):
             qs = qs.filter(experience_level=experience_level)
+        # Salary range overlap (values in VND): a job matches when its band
+        # intersects [salary_gte, salary_lte].
+        if params.get('salary_negotiable') in ['1', 'true', 'True']:
+            qs = qs.filter(Q(is_salary_visible=False) | (Q(salary_min__isnull=True) & Q(salary_max__isnull=True)))
+        if salary_gte := params.get('salary_gte'):
+            qs = qs.filter(Q(salary_max__gte=salary_gte) | Q(salary_max__isnull=True, salary_min__gte=salary_gte))
+        if salary_lte := params.get('salary_lte'):
+            qs = qs.filter(Q(salary_min__lte=salary_lte) | Q(salary_min__isnull=True, salary_max__lte=salary_lte))
         if search := params.get('search'):
-            qs = qs.filter(title__icontains=search)
+            # search_by: 'title' (mặc định) | 'company' | 'both'
+            search_by = params.get('search_by', 'title')
+            if search_by == 'company':
+                qs = qs.filter(employer_profile__company_name__icontains=search)
+            elif search_by == 'both':
+                qs = qs.filter(
+                    Q(title__icontains=search) | Q(employer_profile__company_name__icontains=search)
+                )
+            else:
+                qs = qs.filter(title__icontains=search)
         return qs.order_by('-published_at', '-created_at')
 
 
@@ -72,12 +89,28 @@ class JobStatsView(APIView):
                     'name': serializers.CharField(),
                     'count': serializers.IntegerField(),
                 }),
+                'salary_demand': inline_serializer('JobStatsSalaryDemand', many=True, fields={
+                    'name': serializers.CharField(),
+                    'count': serializers.IntegerField(),
+                }),
                 'latest_jobs': inline_serializer('JobStatsLatest', many=True, fields={
                     'public_id': serializers.CharField(),
                     'slug': serializers.CharField(),
                     'title': serializers.CharField(),
                     'company_name': serializers.CharField(),
                     'location_name': serializers.CharField(),
+                    'location_names': serializers.ListField(child=serializers.CharField()),
+                    'work_type': serializers.CharField(allow_blank=True),
+                    'employment_type': serializers.CharField(allow_blank=True),
+                    'experience_level': serializers.CharField(allow_blank=True),
+                    'salary_min': serializers.DecimalField(max_digits=14, decimal_places=2, allow_null=True),
+                    'salary_max': serializers.DecimalField(max_digits=14, decimal_places=2, allow_null=True),
+                    'currency': serializers.CharField(),
+                    'is_salary_visible': serializers.BooleanField(),
+                    'number_of_vacancies': serializers.IntegerField(allow_null=True),
+                    'deadline': serializers.DateField(allow_null=True),
+                    'published_at': serializers.DateTimeField(allow_null=True),
+                    'short_description': serializers.CharField(allow_blank=True),
                 }),
             },
         ),
@@ -93,18 +126,23 @@ class JobStatsView(APIView):
         companies = active.values('employer_profile').distinct().count()
         new_jobs_24h = active.filter(published__gte=now - timedelta(days=1)).count()
 
-        # Growth: cumulative active jobs published up to the end of each of the last 7 days.
+        # Growth: active jobs published per day over the last 7 days.
         growth = []
         for offset in range(6, -1, -1):
             day = (now - timedelta(days=offset)).date()
-            cutoff = timezone.make_aware(
+            day_start = timezone.make_aware(
+                timezone.datetime(day.year, day.month, day.day, 0, 0, 0)
+            ) if timezone.is_naive(now) else now.replace(
+                year=day.year, month=day.month, day=day.day, hour=0, minute=0, second=0, microsecond=0
+            )
+            day_end = timezone.make_aware(
                 timezone.datetime(day.year, day.month, day.day, 23, 59, 59)
             ) if timezone.is_naive(now) else now.replace(
                 year=day.year, month=day.month, day=day.day, hour=23, minute=59, second=59, microsecond=0
             )
             growth.append({
                 'date': day.strftime('%d/%m'),
-                'count': active.filter(published__lte=cutoff).count(),
+                'count': active.filter(published__gte=day_start, published__lte=day_end).count(),
             })
 
         # Demand: active jobs per top-level category (rolled up from nghề/vị trí levels).
@@ -118,6 +156,31 @@ class JobStatsView(APIView):
                 demand.append({'name': top.name, 'count': count})
         demand.sort(key=lambda d: d['count'], reverse=True)
 
+        salary_ranges = [
+            ('Dưới 10 triệu', None, 10_000_000),
+            ('10 - 15 triệu', 10_000_000, 15_000_000),
+            ('15 - 20 triệu', 15_000_000, 20_000_000),
+            ('20 - 25 triệu', 20_000_000, 25_000_000),
+            ('25 - 30 triệu', 25_000_000, 30_000_000),
+            ('30 - 50 triệu', 30_000_000, 50_000_000),
+            ('Trên 50 triệu', 50_000_000, None),
+        ]
+        salary_demand = []
+        for name, gte, lte in salary_ranges:
+            bucket = active
+            if gte is not None:
+                bucket = bucket.filter(Q(salary_max__gte=gte) | Q(salary_max__isnull=True, salary_min__gte=gte))
+            if lte is not None:
+                bucket = bucket.filter(Q(salary_min__lte=lte) | Q(salary_min__isnull=True, salary_max__lte=lte))
+            count = bucket.count()
+            if count:
+                salary_demand.append({'name': name, 'count': count})
+        negotiable_count = active.filter(
+            Q(is_salary_visible=False) | (Q(salary_min__isnull=True) & Q(salary_max__isnull=True))
+        ).count()
+        if negotiable_count:
+            salary_demand.append({'name': 'Thỏa thuận', 'count': negotiable_count})
+
         latest = (
             active.select_related('employer_profile').prefetch_related('locations')
             .order_by('-published')[:10]
@@ -128,6 +191,18 @@ class JobStatsView(APIView):
             'title': j.title,
             'company_name': j.employer_profile.company_name,
             'location_name': (j.locations.first().name if j.locations.exists() else ''),
+            'location_names': [location.name for location in j.locations.all()],
+            'work_type': j.work_type,
+            'employment_type': j.employment_type,
+            'experience_level': j.experience_level,
+            'salary_min': j.salary_min,
+            'salary_max': j.salary_max,
+            'currency': j.currency,
+            'is_salary_visible': j.is_salary_visible,
+            'number_of_vacancies': j.number_of_vacancies,
+            'deadline': j.deadline,
+            'published_at': j.published,
+            'short_description': j.short_description,
         } for j in latest]
 
         return Response({
@@ -136,8 +211,43 @@ class JobStatsView(APIView):
             'new_jobs_24h': new_jobs_24h,
             'growth': growth,
             'demand': demand[:6],
+            'salary_demand': salary_demand[:6],
             'latest_jobs': latest_jobs,
         })
+
+
+class JobSuggestView(APIView):
+    """Gợi ý từ khóa tìm kiếm dựa trên nội dung nhập (tên việc làm hoặc tên công ty)."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        summary='Gợi ý từ khóa tìm kiếm việc làm (autocomplete)',
+        responses=inline_serializer('JobSuggest', fields={
+            'suggestions': serializers.ListField(child=serializers.CharField()),
+        }),
+        tags=['jobs'],
+    )
+    def get(self, request):
+        q = request.query_params.get('q', '').strip()
+        if not q:
+            return Response({'suggestions': []})
+        field = 'employer_profile__company_name' if request.query_params.get('search_by') == 'company' else 'title'
+        values = (
+            Job.objects.filter(status=Job.Status.ACTIVE, **{f'{field}__icontains': q})
+            .values_list(field, flat=True)
+            .distinct()
+        )
+        # Bỏ trùng (không phân biệt hoa thường), ưu tiên các mục bắt đầu bằng từ khóa.
+        ql = q.lower()
+        seen, starts, contains = set(), [], []
+        for value in values:
+            k = (value or '').strip()
+            if not k or k.lower() in seen:
+                continue
+            seen.add(k.lower())
+            (starts if k.lower().startswith(ql) else contains).append(k)
+        return Response({'suggestions': (starts + contains)[:10]})
 
 
 class JobDetailView(generics.RetrieveAPIView):
