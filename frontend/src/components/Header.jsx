@@ -3,8 +3,8 @@ import {
   CompassOutlined, DollarOutlined, DownOutlined, EditOutlined, ExperimentOutlined,
   FileDoneOutlined, FileProtectOutlined, HighlightOutlined, IdcardOutlined, LikeOutlined,
   LineChartOutlined, MobileOutlined, OrderedListOutlined, ProfileOutlined, ReadOutlined,
-  RiseOutlined, RocketOutlined, SafetyCertificateOutlined, SafetyOutlined, SearchOutlined,
-  SnippetsOutlined, StarOutlined, UploadOutlined, WalletOutlined,
+  RightOutlined, RiseOutlined, RocketOutlined, SafetyCertificateOutlined, SafetyOutlined,
+  SearchOutlined, SnippetsOutlined, StarOutlined, UploadOutlined, WalletOutlined,
 } from '@ant-design/icons'
 import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
@@ -188,9 +188,9 @@ export default function Header() {
               </button>
 
               {openKey === m.key && (
-                <div className="absolute top-full left-0 bg-white rounded-xl border border-gray-100 shadow-xl p-5 flex gap-10 w-max max-w-[calc(100vw-3rem)] z-40">
+                <div className="absolute top-full left-0 bg-white rounded-xl border border-gray-100 shadow-xl py-4 flex divide-x divide-gray-100 w-max max-w-[calc(100vw-3rem)] z-40">
                   {m.columns.map((col, ci) => (
-                    <div key={ci} className="space-y-5">
+                    <div key={ci} className="px-6 space-y-5">
                       {col.map((g, gi) => (
                         <div key={gi}>
                           {g.title && (
@@ -201,11 +201,12 @@ export default function Header() {
                               <button
                                 key={it.label}
                                 onClick={() => handleItem(it)}
-                                className="flex items-start gap-2.5 py-1.5 text-sm text-gray-700 hover:text-[#00b14f] cursor-pointer text-left leading-snug max-w-[240px]"
+                                className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[#00b14f] cursor-pointer text-left leading-snug"
                               >
-                                {it.icon && <span className="text-[#00b14f] text-base leading-5 shrink-0">{it.icon}</span>}
-                                <span>{it.label}</span>
+                                {it.icon && <span className="text-[#00b14f] text-base shrink-0">{it.icon}</span>}
+                                <span className="max-w-[220px]">{it.label}</span>
                                 {it.badge && <Tag color="green" className="!mr-0 !text-[10px] !leading-4 shrink-0">{it.badge}</Tag>}
+                                <RightOutlined className="text-[10px] text-[#00b14f] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                               </button>
                             ))}
                           </div>
