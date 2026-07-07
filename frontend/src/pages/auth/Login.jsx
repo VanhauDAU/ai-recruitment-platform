@@ -97,38 +97,12 @@ export default function Login() {
         .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); }
       `}</style>
 
-      {/* Logo + Tiêu đề */}
+      {/* Tiêu đề */}
       <div className="login-card mb-7 text-center">
-        {/* Logo lớn */}
-        <Link to="/" className="inline-flex items-center gap-3 mb-5 group">
-          <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b14f] to-[#008a3e] shadow-lg shadow-[#00b14f]/30 group-hover:shadow-[#00b14f]/50 transition-all">
-            <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" aria-hidden="true">
-              <path d="M13 3L4 14h8l-1 7 9-11h-8l1-10z" fill="white" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div className="text-left">
-            <span className="block text-xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
-              AI Career
-            </span>
-            <span className="block text-xl font-extrabold tracking-tight text-[#00b14f] leading-none">
-              Coach
-            </span>
-          </div>
-        </Link>
-
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#e6f7ee] px-3 py-1 mb-3">
-          <span className="w-2 h-2 rounded-full bg-[#00b14f] animate-pulse" />
-          <span className="text-xs font-semibold text-[#00b14f] tracking-wide">Chào mừng trở lại!</span>
-        </div>
-        <h2 className="text-[1.75rem] font-extrabold leading-tight text-gray-900 dark:text-white">
-          Đăng nhập vào<br />
-          <span className="bg-gradient-to-r from-[#00b14f] to-[#008a3e] bg-clip-text text-transparent">
-            AI Career Coach
-          </span>
+        <img src="/logo.png" alt="AI Career Coach" className="mx-auto mb-3 h-14 w-14 object-contain" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          Chào mừng quay trở lại
         </h2>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Nhập thông tin tài khoản để tiếp tục hành trình nghề nghiệp của bạn.
-        </p>
       </div>
 
       {/* Social login */}

@@ -123,10 +123,6 @@ function FloatingBubbleBelt({ employers, navigate }) {
     return { employer, size, top }
   })
 
-  // Total width of ONE original set (used for animation translate)
-  // We'll let CSS handle it with translate(-50%) on a 200% wide track
-  const stripCount = employers.length
-
   return (
     <div
       className="relative mt-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"

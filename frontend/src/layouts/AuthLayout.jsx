@@ -1,12 +1,8 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
 import { Outlet } from 'react-router-dom'
-import AuthBrandPanel from '../components/auth/AuthBrandPanel'
 import ThemeToggle from '../components/ui/ThemeToggle'
 import { useColorScheme } from '../hooks/useColorScheme'
 
-// Scoped to auth pages only: slightly softer radius than the app default (8px),
-// plus the dark algorithm when the user toggles dark mode. Does not affect
-// dashboard/admin screens, which keep the global ConfigProvider token in App.jsx.
 export default function AuthLayout() {
   const [scheme, toggleScheme] = useColorScheme()
 
@@ -17,21 +13,26 @@ export default function AuthLayout() {
         token: { borderRadius: 12 },
       }}
     >
-      <div className="grid min-h-[100dvh] bg-white text-gray-900 lg:grid-cols-2 dark:bg-zinc-950 dark:text-gray-100">
-        <AuthBrandPanel />
+      {/* Nền toàn trang — flex-col để main chiếm phần còn lại */}
+      <div
+        className="flex min-h-[100dvh] flex-col text-gray-900 dark:text-gray-100"
+        style={{ background: '#F7F7F7' }}
+      >
+        {/* Thanh trên: ThemeToggle */}
+        <header className="flex justify-end px-6 py-4 lg:px-12">
+          <ThemeToggle scheme={scheme} onToggle={toggleScheme} />
+        </header>
 
-        <div className="flex flex-col">
-          {/* Chỉ giữ theme toggle ở góc trên phải */}
-          <div className="flex items-center justify-end px-6 py-5 lg:px-10">
-            <ThemeToggle scheme={scheme} onToggle={toggleScheme} />
+        {/* Vùng giữa trang — chiếm hết chiều cao còn lại và căn giữa */}
+        <main className="flex flex-1 items-center justify-center px-4 py-8">
+          {/* Container form — nền trắng, bo tròn */}
+          <div
+            className="w-full max-w-[560px] animate-fade-slide rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.07)] dark:bg-zinc-900 dark:shadow-none"
+            style={{ padding: '2.5rem 2.75rem' }}
+          >
+            <Outlet />
           </div>
-
-          <div className="flex flex-1 items-center justify-center px-6 pb-16 lg:px-10 xl:px-16">
-            <div className="w-full max-w-2xl animate-fade-slide">
-              <Outlet />
-            </div>
-          </div>
-        </div>
+        </main>
       </div>
     </ConfigProvider>
   )

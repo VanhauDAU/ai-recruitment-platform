@@ -52,7 +52,7 @@ function useLatestJobsFeed(jobs, enabled) {
 
   useEffect(() => {
     if (!enabled || !jobs.length) {
-      setFeed([])
+      setFeed((prev) => (prev.length ? [] : prev))
       return undefined
     }
     const seedCount = Math.min(FEED_SIZE, jobs.length)
@@ -94,7 +94,7 @@ export default function MarketStats() {
     getJobStats().then(setStats).catch(() => {})
   }, [])
 
-  const latest = stats?.latest_jobs || []
+  const latest = useMemo(() => stats?.latest_jobs || [], [stats])
   const feed = useLatestJobsFeed(latest, hasEnteredView)
 
   const today = new Date().toLocaleDateString('vi-VN')
