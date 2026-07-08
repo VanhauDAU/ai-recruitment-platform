@@ -6,6 +6,39 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-07
+
+#### Added — Tài liệu API Swagger + dashboard thống kê trang chủ
+
+- Tích hợp `drf-spectacular` (OpenAPI 3): Swagger UI tại `/api/docs/`, ReDoc tại `/api/redoc/`, schema tại `/api/schema/`. Cấu hình JWT Bearer để "Authorize" thử API ngay trên trình duyệt, gom endpoint theo tag tiếng Việt, đặt tên enum tường minh (`ENUM_NAME_OVERRIDES`) để schema sạch (0 warning/error). Annotate 2 APIView đặc biệt (`UserCvUploadView` upload multipart, `JobStatsView`) bằng `@extend_schema`.
+- Endpoint `GET /api/jobs/stats/` (public): thống kê cho dashboard trang chủ — số việc làm đang tuyển, số công ty, việc làm mới trong 24h, chuỗi tăng trưởng 7 ngày (cộng dồn job active theo ngày), nhu cầu tuyển dụng theo nhóm ngành (cuộn lên từ danh mục 3 cấp), và 10 việc làm mới nhất.
+- Frontend: section `MarketStats` trên trang chủ (thẻ nền xanh đậm) gồm mascot + danh sách "Việc làm mới nhất" tự xoay 10 giây/lần, 3 ô số liệu nhanh, biểu đồ đường tăng trưởng và biểu đồ cột nhu cầu theo ngành (vẽ bằng SVG, bảng màu kiểm định CVD theo skill dataviz). Banner cạnh danh mục đổi thành `BannerCarousel` (tự trượt 5s, nút trước/sau, dot, dừng khi hover). Áp dụng bộ lọc địa điểm ở trang chủ tìm ngay không cần bấm "Tìm kiếm".
+- Lệnh `seed_demo_jobs` tạo 8 công ty demo + ~30 tin tuyển dụng active (trải theo ngày/ngành/địa điểm) để dashboard và danh sách job có dữ liệu minh hoạ; re-runnable, có cờ `--clear`.
+
+#### Added — Trang chủ, danh sách/chi tiết job kiểu TopCV (Giai đoạn 1.14)
+
+- Trang chủ (`Home.jsx`): hero xanh với ô tìm kiếm (từ khoá + `LocationFilter`), banner quảng cáo dạng carousel (`BannerCarousel` — tự trượt mỗi 5 giây, dừng khi hover, nút trước/sau, dot điều hướng, 3 slide mẫu), mega-menu danh mục 3 cấp (`CategoryMenu` — hover một nhóm nghề hiện nghề + vị trí chuyên môn ở 2 cột bên phải, phân trang nhóm nghề bằng nút mũi tên có hiệu ứng hover), lưới "Việc làm mới nhất".
+- Trang danh sách job (`pages/jobs/JobList.jsx`, route `/jobs`): thanh tìm kiếm trên cùng gồm `CategoryPicker` (modal chọn danh mục 3 cấp, multi-select, tự rút gọn về id nhóm/nghề khi chọn đủ toàn bộ danh mục con), ô từ khoá, `LocationFilter`, nút Tìm kiếm; sidebar lọc thêm hình thức làm việc/loại hình/cấp bậc; phân trang kết quả.
+- Trang chi tiết job (`pages/jobs/JobDetail.jsx`, route `/jobs/:slug`): hiển thị đầy đủ mô tả công việc, số lượng cần tuyển, yêu cầu học vấn, danh sách nhiều địa điểm tuyển, nút Ứng tuyển (điều hướng sang đăng nhập nếu chưa có tài khoản).
+- Component dùng chung mới: `Header`/`Footer` (mega-menu dropdown theo từng mục Việc làm/Tạo CV/Công cụ/Cẩm nang nghề nghiệp — có icon, vách ngăn giữa các cột, mũi tên hiệu ứng khi hover từng mục), `JobCard`/`JobCardSkeleton`, `MainLayout`, `CategoryMenu`, `CategoryPicker` (modal 3 cấp, chuyển sang chế độ drill-down 1 cột trên mobile), `LocationFilter` (chọn nhiều tỉnh/thành + phường/xã cùng lúc, 2 ô tìm kiếm, drill-down mobile, nhãn "Tỉnh (Tất cả)"/"Tỉnh (n phường/xã)"), `BannerCarousel`.
+- `api/jobService.js`, `api/locationService.js`, `api/pagination.js` (helper `fetchAllPages()` gộp toàn bộ trang của một endpoint bị phân trang thành 1 mảng), `constants/jobOptions.js` (nhãn tiếng Việt cho work_type/employment_type/experience_level/education_level, hàm `formatSalary`/`formatEducation`/`formatLocations`).
+- Toàn bộ trang chuyển sang lazy-load (`React.lazy` + `Suspense` trong `AppRoutes.jsx`), thay `Spin` bằng Ant Design `Skeleton` cho danh sách job, theme Ant Design đổi màu chủ đạo sang xanh `#00b14f` qua `ConfigProvider`.
+- Áp dụng bộ lọc địa điểm ở trang chủ giờ tìm kiếm ngay khi bấm "Áp dụng" trong popover, không cần bấm thêm nút "Tìm kiếm".
+
+#### Changed — Job hỗ trợ nhiều địa điểm, số lượng tuyển, yêu cầu học vấn
+
+- `Job.location` (ForeignKey, PROTECT) đổi thành `Job.locations` (ManyToManyField tới `locations.Location`) — một tin tuyển dụng có thể tuyển nhiều tỉnh/phường cùng lúc; migration tự động chuyển dữ liệu `location` cũ sang bảng M2M trước khi xoá cột, không mất dữ liệu job đã tạo trước đó.
+- Thêm `Job.number_of_vacancies` (số lượng cần tuyển) và `Job.education_level` (yêu cầu học vấn tối thiểu: none/high_school/intermediate/college/university/postgraduate).
+- API `/api/jobs/` nhận nhiều `?location=` (id tỉnh hoặc phường/xã — id tỉnh tự khớp mọi job ở các phường/xã trực thuộc) và nhiều `?category=` (id ở bất kỳ cấp nào trong danh mục 3 cấp, tự mở rộng xuống các danh mục con).
+- `JobSerializer` đổi trường ghi `location`/đọc `location_name` thành `locations` (ghi, nhận danh sách id) và `locations_detail` (đọc, danh sách object `{id, name, level}`).
+- `job_categories` reseed thành taxonomy 3 cấp qua `seed_job_categories` (nhóm nghề → nghề → vị trí chuyên môn: 8 nhóm, 24 nghề, 61 vị trí); danh mục 2 cấp cũ chuyển `status=inactive` thay vì xoá.
+- `/api/locations/` tắt phân trang (`pagination_class = None`, giới hạn 500 bản ghi/lần) — endpoint tra cứu tỉnh/phường trả trọn danh sách trong 1 lần gọi thay vì phân trang 20/trang.
+
+#### Fixed
+
+- `getProvinces()`/`getJobCategories()` gọi thẳng `.map()` lên response bị lỗi vì `/api/locations/` và `/api/jobs/categories/` bị phân trang mặc định (`PAGE_SIZE=20`) trong khi có 34 tỉnh/nhiều danh mục hơn 1 trang — thêm `fetchAllPages()` gộp hết các trang trước khi trả về component.
+- `CategoryPicker`/`LocationFilter` bị tràn và không thao tác được bằng cảm ứng trên mobile do hiển thị nhiều cột cố định (280px/640px) — chuyển sang chế độ drill-down 1 cột có nút quay lại khi ở màn hình nhỏ, giữ nguyên nhiều cột trên desktop.
+
 ### 2026-07-06
 
 #### Added — Khởi tạo dự án + nền tảng (Giai đoạn 0 + 4 bảng đầu Giai đoạn 1)

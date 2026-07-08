@@ -1,4 +1,4 @@
-# AI Career Coach Platform
+# ProCV Platform
 
 Website hỗ trợ tạo CV, phân tích CV và luyện phỏng vấn thông minh ứng dụng AI. Đồ án tốt nghiệp CNTT.
 
@@ -18,12 +18,12 @@ Chi tiết endpoint: [docs/04-api/tai-lieu-api.md](docs/04-api/tai-lieu-api.md).
 
 ## Công nghệ chính
 
-| Thành phần | Công nghệ |
-|---|---|
-| Frontend | ReactJS + Vite, Tailwind CSS, Ant Design |
-| Backend | Django + Django REST Framework, JWT (simplejwt) |
-| Database | PostgreSQL |
-| AI | PyMuPDF, scikit-learn (đang triển khai ở Giai đoạn 2) |
+| Thành phần | Công nghệ                                             |
+| ---------- | ----------------------------------------------------- |
+| Frontend   | ReactJS + Vite, Tailwind CSS, Ant Design              |
+| Backend    | Django + Django REST Framework, JWT (simplejwt)       |
+| Database   | PostgreSQL                                            |
+| AI         | PyMuPDF, scikit-learn (đang triển khai ở Giai đoạn 2) |
 
 ## Cấu trúc dự án
 

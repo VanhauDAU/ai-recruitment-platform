@@ -27,6 +27,9 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
+RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
+RECAPTCHA_SCORE_THRESHOLD = config('RECAPTCHA_SCORE_THRESHOLD', default=0.5, cast=float)
+
 
 # Application definition
 
@@ -40,6 +43,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'drf_spectacular',
     'corsheaders',
     # Local apps
     'apps.accounts',
@@ -54,6 +58,7 @@ INSTALLED_APPS = [
     'apps.interviews',
     'apps.ai_core',
     'apps.dashboard',
+    'apps.sitecontent',
 ]
 
 MIDDLEWARE = [
@@ -144,6 +149,8 @@ STATIC_URL = 'static/'
 # Media files (uploaded CVs, template thumbnails)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_PUBLIC_BASE_URL = config('MEDIA_PUBLIC_BASE_URL', default='')
+IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024, cast=int)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -159,14 +166,54 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'apps.common.pagination.StandardPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/min',
+        'register': '5/min',
+    },
 }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
+}
+
+# drf-spectacular (OpenAPI 3 schema + Swagger UI / ReDoc)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ProCV API',
+    'DESCRIPTION': (
+        'API cho nền tảng ProCV — CV Builder, phân tích CV, '
+        'so khớp CV–Job và tuyển dụng. Dùng JWT: đăng nhập lấy access token '
+        'rồi bấm "Authorize" và nhập "Bearer <access_token>".'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+        'displayRequestDuration': True,
+    },
+    # Đặt tên enum tường minh để tránh trùng tên tự sinh (status/level dùng ở nhiều bảng)
+    'ENUM_NAME_OVERRIDES': {
+        'JobStatusEnum': 'apps.jobs.models.Job.Status',
+        'ApplicationStatusEnum': 'apps.applications.models.Application.Status',
+        # CvSkill.Level và JobSkill.MinLevel cùng tập beginner/intermediate/advanced -> 1 enum chung
+        'SkillLevelEnum': 'apps.jobs.models.JobSkill.MinLevel',
+        'LocationLevelEnum': 'apps.locations.models.Location.Level',
+    },
+    'TAGS': [
+        {'name': 'auth', 'description': 'Đăng ký, đăng nhập, JWT, tài khoản hiện tại'},
+        {'name': 'candidate', 'description': 'Hồ sơ ứng viên'},
+        {'name': 'employer', 'description': 'Hồ sơ công ty / nhà tuyển dụng'},
+        {'name': 'cvs', 'description': 'CV Builder + upload CV'},
+        {'name': 'cv-templates', 'description': 'Mẫu CV'},
+        {'name': 'jobs', 'description': 'Tin tuyển dụng, danh mục ngành nghề, thống kê'},
+        {'name': 'applications', 'description': 'Ứng tuyển & quản lý hồ sơ ứng tuyển'},
+        {'name': 'locations', 'description': 'Tra cứu địa điểm (tỉnh/xã)'},
+    ],
 }
 
 # CORS - frontend dev server (Vite default port)

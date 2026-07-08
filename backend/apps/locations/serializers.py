@@ -6,4 +6,4 @@ from .models import Location
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ['id', 'code', 'level', 'name', 'ward_type', 'province_type', 'parent', 'slug']
+        fields = ['id', 'code', 'level', 'name', 'ward_type', 'province_type', 'parent', 'slug', 'merged_from']
