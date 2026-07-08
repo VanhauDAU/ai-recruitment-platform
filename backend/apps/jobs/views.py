@@ -89,8 +89,7 @@ class JobStatsView(APIView):
                     'id': serializers.IntegerField(),
                     'name': serializers.CharField(),
                     'slug': serializers.CharField(),
-                    'icon_key': serializers.CharField(allow_blank=True),
-                    'icon_color': serializers.CharField(allow_blank=True),
+                    'logo_url': serializers.CharField(allow_blank=True),
                     'count': serializers.IntegerField(),
                 }),
                 'salary_demand': inline_serializer('JobStatsSalaryDemand', many=True, fields={
@@ -170,8 +169,7 @@ class JobStatsView(APIView):
                     'id': top.id,
                     'name': top.name,
                     'slug': top.slug,
-                    'icon_key': top.icon_key,
-                    'icon_color': top.icon_color,
+                    'logo_url': top.logo_url,
                     'count': count,
                 })
         demand.sort(key=lambda d: d['count'], reverse=True)
@@ -252,7 +250,7 @@ class JobStatsView(APIView):
             'companies': companies,
             'new_jobs_24h': new_jobs_24h,
             'growth': growth,
-            'demand': demand[:8],
+            'demand': demand[:24],
             'salary_demand': salary_demand[:6],
             'latest_jobs': latest_jobs,
             'featured_employers': featured_employers,

@@ -2,6 +2,7 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import AuthLogo from '../../components/auth/AuthLogo'
 import { useAuth } from '../../hooks/useAuth'
 
 const HOME_BY_ROLE = {
@@ -99,7 +100,7 @@ export default function Login() {
 
       {/* Tiêu đề */}
       <div className="login-card mb-7 text-center">
-        <img src="/logo.png" alt="AI Career Coach" className="mx-auto mb-3 h-14 w-14 object-contain" />
+        <AuthLogo className="mb-3" />
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           Chào mừng quay trở lại
         </h2>
@@ -113,7 +114,7 @@ export default function Login() {
               key={key}
               type="button"
               aria-label={`Đăng nhập bằng ${label}`}
-              className={`social-btn ${span} flex h-12 items-center justify-center gap-2 rounded-xl border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
+              className={`social-btn ${span} flex h-11 items-center justify-center gap-2 rounded-full border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
             >
               <Icon />
               <span>{label}</span>
@@ -160,7 +161,7 @@ export default function Login() {
               autoComplete="email"
               prefix={<MailOutlined className="text-[#00b14f]" />}
               placeholder="ten@congty.com"
-              className="!rounded-xl !h-12 !text-base"
+              className="!rounded-full !h-11 !text-base"
             />
           </Form.Item>
         </div>
@@ -194,7 +195,7 @@ export default function Login() {
               autoComplete="current-password"
               prefix={<LockOutlined className="text-[#00b14f]" />}
               placeholder="Nhập mật khẩu của bạn"
-              className="!rounded-xl !h-12 !text-base"
+              className="!rounded-full !h-11 !text-base"
             />
           </Form.Item>
         </div>
@@ -204,7 +205,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="submit-btn w-full flex items-center justify-center gap-2.5 rounded-xl px-6 py-3.5 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            className="submit-btn w-full flex items-center justify-center gap-2.5 rounded-full px-6 py-3.5 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

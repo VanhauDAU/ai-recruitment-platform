@@ -11,6 +11,7 @@ const ROTATE_MS = 3500
 const ITEM_H = 72   // height của mỗi card (px)
 const GAP    = 8    // khoảng cách giữa các card (px)
 const SLOT   = ITEM_H + GAP
+const FLASH_BADGE_COVER_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/box-flash-badge/cover.png'
 const pad = (n) => String(n).padStart(2, '0')
 
 function useCountdown() {
@@ -259,8 +260,14 @@ export default function FlashBadge() {
         {/* ── Cột phải: Badge + CTA ── */}
         <div className="flex flex-col items-center justify-center text-center">
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-[#5dffa3]/20 blur-2xl scale-125" />
-            <LightningBadge />
+            <div className="absolute inset-0 rounded-full bg-[#5dffa3]/25 blur-2xl scale-110" />
+            <img
+              src={FLASH_BADGE_COVER_URL}
+              alt="Huy hiệu Sấm Chớp"
+              className="relative z-10 h-auto w-44 max-w-full drop-shadow-[0_16px_32px_rgba(0,0,0,0.28)]"
+              loading="lazy"
+              draggable={false}
+            />
           </div>
           <p className="mt-3 text-sm font-medium leading-snug text-green-50/90">
             Danh sách tin đăng đạt
@@ -276,42 +283,5 @@ export default function FlashBadge() {
         </div>
       </div>
     </div>
-  )
-}
-
-function LightningBadge() {
-  return (
-    <svg
-      viewBox="0 0 140 150"
-      className="w-32 h-auto drop-shadow-[0_12px_30px_rgba(0,0,0,0.3)]"
-      role="img"
-      aria-label="Huy hiệu Sấm Chớp"
-    >
-      <defs>
-        <linearGradient id="badgeFace2" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#7fffba" />
-          <stop offset="50%" stopColor="#1fbf63" />
-          <stop offset="100%" stopColor="#0a6630" />
-        </linearGradient>
-        <linearGradient id="badgeEdge2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#0a7a3a" stopOpacity="0.3" />
-        </linearGradient>
-        <linearGradient id="bolt2" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="60%" stopColor="#ffe27a" />
-          <stop offset="100%" stopColor="#ffa500" />
-        </linearGradient>
-        <filter id="glow2">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <polygon points="70,4 130,37 130,107 70,144 10,107 10,37" fill="url(#badgeEdge2)" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
-      <polygon points="70,14 121,43 121,101 70,132 19,101 19,43" fill="url(#badgeFace2)" />
-      <polygon points="70,14 121,43 121,72 70,72" fill="rgba(255,255,255,0.12)" />
-      <polygon points="70,14 121,43 121,101 70,132 19,101 19,43" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-      <path d="M80 38 L51 82 L68 82 L59 114 L93 65 L74 65 Z" fill="url(#bolt2)" filter="url(#glow2)" stroke="rgba(10,102,48,0.2)" strokeWidth="0.5" strokeLinejoin="round" />
-    </svg>
   )
 }

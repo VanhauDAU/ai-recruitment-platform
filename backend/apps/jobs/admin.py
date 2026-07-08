@@ -1,18 +1,30 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import Job, JobCategory, JobSkill
 
 
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'parent', 'icon_key', 'status']
+    list_display = ['name', 'parent', 'logo_preview', 'status']
     list_filter = ['status']
-    search_fields = ['name', 'icon_key']
+    search_fields = ['name', 'logo_url']
     prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ['logo_preview']
     fieldsets = (
         (None, {'fields': ('name', 'slug', 'description', 'parent', 'status')}),
-        ('Homepage display', {'fields': ('icon_key', 'icon_color')}),
+        ('Homepage display', {'fields': ('logo_url', 'logo_preview')}),
     )
+
+    @admin.display(description='Logo')
+    def logo_preview(self, obj):
+        if not obj.logo_url:
+            return '-'
+        return format_html(
+            '<img src="{}" alt="{}" style="height: 36px; max-width: 72px; object-fit: contain;" />',
+            obj.logo_url,
+            obj.name,
+        )
 
 
 class JobSkillInline(admin.TabularInline):

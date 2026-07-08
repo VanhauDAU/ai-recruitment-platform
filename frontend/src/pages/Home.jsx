@@ -9,6 +9,7 @@ import BestJobs from '../components/home/BestJobs'
 import CategoryMenu from '../components/home/CategoryMenu'
 import FeaturedIndustriesEmployers from '../components/home/FeaturedIndustriesEmployers'
 import FlashBadge from '../components/home/FlashBadge'
+import HotlineConsultation from '../components/home/HotlineConsultation'
 import LocationFilter from '../components/job/LocationFilter'
 import MarketStats from '../components/home/MarketStats'
 import SearchDropdown, { saveHistory } from '../components/ui/SearchDropdown'
@@ -114,12 +115,13 @@ export default function Home() {
 
   return (
     <div className="pb-10">
-      <section className="relative bg-[#00a94d] text-white">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(0,122,55,0.96)_0%,rgba(0,177,79,0.94)_50%,rgba(20,145,111,0.92)_100%)]" />
-          <div className="absolute inset-0 opacity-35 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.28)_1px,transparent_0)] bg-[length:28px_28px]" />
+      <section id="section-header" className="text-white">
+        <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
+          <div className="absolute left-1/2 top-0 h-64 w-[760px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.32)_1px,transparent_0)] bg-[length:30px_30px]" />
+          <div className="absolute bottom-[-120px] right-[18%] h-72 w-72 rounded-full bg-emerald-300/25 blur-3xl" />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 pt-12 pb-16 text-center">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 pt-12 pb-16 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold text-green-50 shadow-sm backdrop-blur">
             <FireOutlined className="text-amber-200" />
             {formatNumber(jobCount)} việc làm đang tuyển hôm nay
@@ -208,6 +210,7 @@ export default function Home() {
       </section>
 
       <FeaturedIndustriesEmployers />
+      <HotlineConsultation />
     </div>
   )
 }

@@ -8,6 +8,57 @@ body {
   margin: 0;
 }
 
+#section-header {
+  background:
+    linear-gradient(180deg, #002b33 0%, rgba(0, 43, 51, 0.25) 100%),
+    linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+}
+
+#section-header::before,
+#section-header::after {
+  content: "";
+  height: 100%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: min(317px, 42vw);
+  z-index: 0;
+}
+
+#section-header::before {
+  background-image: url("https://static.topcv.vn/v4/image/welcome/section-header/section_header_before_bg.png");
+  background-repeat: no-repeat;
+  background-size: calc(100% + 23px);
+  left: 0;
+  opacity: 0.95;
+}
+
+#section-header::after {
+  background-image: url("https://static.topcv.vn/v4/image/welcome/section-header/section_header_after_bg.png");
+  background-position: 100%;
+  background-repeat: no-repeat;
+  background-size: calc(100% - 120px);
+  opacity: 0.95;
+  right: 0;
+}
+
+@media (max-width: 768px) {
+  #section-header::before {
+    opacity: 0.45;
+    width: 46vw;
+  }
+
+  #section-header::after {
+    opacity: 0.35;
+    width: 52vw;
+  }
+}
+
 @keyframes slideInTop {
   from {
     opacity: 0;

@@ -3,6 +3,7 @@ import { Alert, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/authService'
+import AuthLogo from '../../components/auth/AuthLogo'
 
 function GoogleIcon() {
   return (
@@ -92,29 +93,26 @@ export default function Register() {
       `}</style>
 
       {/* Tiêu đề */}
-      <div className="reg-card mb-7 text-center">
-        
-        <h2 className="text-[1.75rem] font-extrabold leading-tight text-gray-900 dark:text-white">
-          Tạo tài khoản<br />
-          <span className="bg-gradient-to-r from-[#00b14f] to-[#008a3e] bg-clip-text text-transparent">
-            AI Career Coach
-          </span>
+      <div className="reg-card mb-4 text-center">
+        <AuthLogo className="mb-2" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          Đăng ký
         </h2>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Tạo tài khoản miễn phí, tìm kiếm hơn 60.000 việc làm.
         </p>
       </div>
 
       {mode === 'social' ? (
         <>
-          <div className="reg-field mb-5">
+          <div className="reg-field mb-3">
             <div className="grid grid-cols-12 gap-3">
               {SOCIAL_PROVIDERS.map(({ key, label, Icon, span, border }) => (
                 <button
                   key={key}
                   type="button"
                   aria-label={`Đăng ký bằng ${label}`}
-                  className={`reg-social-btn ${span} flex h-12 items-center justify-center gap-2 rounded-xl border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
+                  className={`reg-social-btn ${span} flex h-11 items-center justify-center gap-2 rounded-full border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
                 >
                   <Icon />
                   <span>{label}</span>
@@ -123,7 +121,7 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="reg-field flex items-center gap-3 mb-5">
+          <div className="reg-field flex items-center gap-3 mb-3">
             <div className="divider-line" />
             <span className="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-widest">Hoặc</span>
             <div className="divider-line" />
@@ -136,7 +134,7 @@ export default function Register() {
                 setError('')
                 setMode('email')
               }}
-              className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-[#00b14f] bg-white px-6 text-sm font-bold text-[#00b14f] transition hover:bg-green-50 cursor-pointer dark:bg-zinc-800"
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-[#00b14f] bg-white px-6 text-sm font-bold text-[#00b14f] transition hover:bg-green-50 cursor-pointer dark:bg-zinc-800"
             >
               <MailOutlined />
               Đăng ký bằng email
@@ -155,12 +153,13 @@ export default function Register() {
                 name="full_name"
                 label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Họ và tên</span>}
                 rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+                className="!mb-3"
               >
                 <Input
                   size="large"
                   prefix={<UserOutlined className="text-[#00b14f]" />}
                   placeholder="Nguyễn Văn A"
-                  className="!rounded-xl !h-12 !text-base"
+                  className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
             </div>
@@ -173,13 +172,14 @@ export default function Register() {
                   { required: true, message: 'Vui lòng nhập email' },
                   { type: 'email', message: 'Email không hợp lệ' },
                 ]}
+                className="!mb-3"
               >
                 <Input
                   size="large"
                   autoComplete="email"
                   prefix={<MailOutlined className="text-[#00b14f]" />}
                   placeholder="ten@email.com"
-                  className="!rounded-xl !h-12 !text-base"
+                  className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
             </div>
@@ -192,13 +192,14 @@ export default function Register() {
                   { required: true, message: 'Vui lòng nhập mật khẩu' },
                   { min: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
                 ]}
+                className="!mb-3"
               >
                 <Input.Password
                   size="large"
                   autoComplete="new-password"
                   prefix={<LockOutlined className="text-[#00b14f]" />}
                   placeholder="Tối thiểu 8 ký tự"
-                  className="!rounded-xl !h-12 !text-base"
+                  className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
             </div>
@@ -217,13 +218,14 @@ export default function Register() {
                     },
                   }),
                 ]}
+                className="!mb-3"
               >
                 <Input.Password
                   size="large"
                   autoComplete="new-password"
                   prefix={<LockOutlined className="text-[#00b14f]" />}
                   placeholder="Nhập lại mật khẩu"
-                  className="!rounded-xl !h-12 !text-base"
+                  className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
             </div>
@@ -266,11 +268,11 @@ export default function Register() {
               </Form.Item>
             </div>
 
-            <div className="reg-field pt-1">
+            <div className="reg-field">
               <button
                 type="submit"
                 disabled={loading}
-                className="reg-submit w-full flex items-center justify-center gap-2.5 rounded-xl px-6 py-3.5 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="reg-submit w-full flex items-center justify-center gap-2.5 rounded-full px-6 py-3 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -292,7 +294,7 @@ export default function Register() {
             </div>
           </Form>
 
-          <div className="reg-field flex items-center gap-3 my-5">
+          <div className="reg-field flex items-center gap-3 my-3">
             <div className="divider-line" />
             <span className="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-widest">Hoặc</span>
             <div className="divider-line" />
@@ -305,7 +307,7 @@ export default function Register() {
                 setError('')
                 setMode('social')
               }}
-              className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white px-6 text-sm font-bold text-gray-700 transition hover:border-[#00b14f] hover:bg-green-50 hover:text-[#00b14f] cursor-pointer dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200"
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-gray-200 bg-white px-6 text-sm font-bold text-gray-700 transition hover:border-[#00b14f] hover:bg-green-50 hover:text-[#00b14f] cursor-pointer dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200"
             >
               <ArrowRightOutlined className="text-xs" />
               Đăng ký bằng tài khoản mạng xã hội
@@ -315,7 +317,7 @@ export default function Register() {
       )}
 
       {/* Login link */}
-      <div className="reg-field mt-6 text-center">
+      <div className="reg-field mt-4 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Đã có tài khoản?{' '}
           <Link to="/login" className="font-semibold text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors">
@@ -325,7 +327,7 @@ export default function Register() {
       </div>
 
       {/* Support hotline */}
-      <div className="reg-field mt-5 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="reg-field mt-3 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed text-center">
           Bạn có gặp khó khăn khi tạo tài khoản?{' '}
           Vui lòng gọi tới số{' '}

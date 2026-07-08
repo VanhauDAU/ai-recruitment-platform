@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons'
 import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 const DASHBOARD_BY_ROLE = {
@@ -155,8 +155,14 @@ const NAV_MENUS = [
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { message } = App.useApp()
   const [openKey, setOpenKey] = useState(null)
+
+  function isMenuActive(menu) {
+    if (!menu.to) return false
+    return location.pathname === menu.to || location.pathname.startsWith(`${menu.to}/`)
+  }
 
   function handleItem(it) {
     setOpenKey(null)
@@ -177,47 +183,60 @@ export default function Header() {
           className="hidden md:flex items-stretch gap-6 text-sm font-medium text-gray-700 flex-1"
           onMouseLeave={() => setOpenKey(null)}
         >
-          {NAV_MENUS.map((m) => (
-            <div key={m.key} className="relative flex items-center" onMouseEnter={() => setOpenKey(m.key)}>
-              <button
-                onClick={() => (m.to ? navigate(m.to) : setOpenKey(m.key))}
-                className={`flex items-center gap-1 h-16 cursor-pointer transition ${openKey === m.key ? 'text-[#00b14f]' : 'hover:text-[#00b14f]'}`}
-              >
-                {m.label}
-                <DownOutlined className={`text-[10px] transition-transform ${openKey === m.key ? 'rotate-180' : ''}`} />
-              </button>
+          {NAV_MENUS.map((m) => {
+            const active = isMenuActive(m)
+            return (
+              <div key={m.key} className="relative flex items-center" onMouseEnter={() => setOpenKey(m.key)}>
+                <button
+                  onClick={() => (m.to ? navigate(m.to) : setOpenKey(m.key))}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative flex h-16 cursor-pointer items-center gap-1 px-1 transition ${
+                    active || openKey === m.key
+                      ? 'text-[#00b14f]'
+                      : 'hover:text-[#00b14f]'
+                  }`}
+                >
+                  {m.label}
+                  <DownOutlined className={`text-[10px] transition-transform ${openKey === m.key ? 'rotate-180' : ''}`} />
+                  <span
+                    className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-[#00b14f] transition-all duration-200 ${
+                      active ? 'w-full opacity-100' : 'w-0 opacity-0'
+                    }`}
+                  />
+                </button>
 
-              {openKey === m.key && (
-                <div className="absolute top-full left-0 bg-white rounded-xl border border-gray-100 shadow-xl py-4 flex divide-x divide-gray-100 w-max max-w-[calc(100vw-3rem)] z-40">
-                  {m.columns.map((col, ci) => (
-                    <div key={ci} className="px-6 space-y-5">
-                      {col.map((g, gi) => (
-                        <div key={gi}>
-                          {g.title && (
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{g.title}</p>
-                          )}
-                          <div className={g.cols === 2 ? 'grid grid-cols-2 gap-x-8' : ''}>
-                            {g.items.map((it) => (
-                              <button
-                                key={it.label}
-                                onClick={() => handleItem(it)}
-                                className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[#00b14f] cursor-pointer text-left leading-snug"
-                              >
-                                {it.icon && <span className="text-[#00b14f] text-base shrink-0">{it.icon}</span>}
-                                <span className="max-w-[220px]">{it.label}</span>
-                                {it.badge && <Tag color="green" className="!mr-0 !text-[10px] !leading-4 shrink-0">{it.badge}</Tag>}
-                                <RightOutlined className="text-[10px] text-[#00b14f] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                              </button>
-                            ))}
+                {openKey === m.key && (
+                  <div className="absolute top-full left-0 bg-white rounded-xl border border-gray-100 shadow-xl py-4 flex divide-x divide-gray-100 w-max max-w-[calc(100vw-3rem)] z-40">
+                    {m.columns.map((col, ci) => (
+                      <div key={ci} className="px-6 space-y-5">
+                        {col.map((g, gi) => (
+                          <div key={gi}>
+                            {g.title && (
+                              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{g.title}</p>
+                            )}
+                            <div className={g.cols === 2 ? 'grid grid-cols-2 gap-x-8' : ''}>
+                              {g.items.map((it) => (
+                                <button
+                                  key={it.label}
+                                  onClick={() => handleItem(it)}
+                                  className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[#00b14f] cursor-pointer text-left leading-snug"
+                                >
+                                  {it.icon && <span className="text-[#00b14f] text-base shrink-0">{it.icon}</span>}
+                                  <span className="max-w-[220px]">{it.label}</span>
+                                  {it.badge && <Tag color="green" className="!mr-0 !text-[10px] !leading-4 shrink-0">{it.badge}</Tag>}
+                                  <RightOutlined className="text-[10px] text-[#00b14f] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -228,10 +247,10 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link to="/register" className="hidden sm:inline-block cursor-pointer"><Button className="cursor-pointer">Đăng ký</Button></Link>
-              <Link to="/login" className="cursor-pointer"><Button className="cursor-pointer" type="primary">Đăng nhập</Button></Link>
+              <Link to="/register" className="hidden sm:inline-block cursor-pointer"><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
+              <Link to="/login" className="cursor-pointer"><Button className="cursor-pointer" type="primary" shape="round">Đăng nhập</Button></Link>
               <Link to="/register" className="hidden lg:inline-block cursor-pointer">
-                <Button className="cursor-pointer" ghost type="primary">Đăng tuyển &amp; tìm hồ sơ</Button>
+                <Button className="cursor-pointer" ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button>
               </Link>
             </>
           )}
