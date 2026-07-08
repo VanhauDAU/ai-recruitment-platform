@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.postgres.aggregates import StringAgg
 from django.db.models import Count, F, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -54,8 +55,10 @@ class JobListView(generics.ListAPIView):
             qs = qs.filter(experience_years__in=experience_years)
         if weekend := params.get('weekend_policy'):
             qs = qs.filter(weekend_policy='' if weekend == 'not_mentioned' else weekend)
+        # industries là M2M (1 công ty có thể nhiều lĩnh vực) — filter vẫn single-select
+        # theo id, match job nếu công ty có lĩnh vực đó trong số các lĩnh vực của mình.
         if industry := params.get('industry'):
-            qs = qs.filter(employer_profile__industry__iexact=industry)
+            qs = qs.filter(employer_profile__industries__id=industry)
         # Salary range overlap (values in VND): a job matches when its band
         # intersects [salary_gte, salary_lte].
         if params.get('salary_negotiable') in ['1', 'true', 'True']:
@@ -236,6 +239,26 @@ class JobStatsView(APIView):
             'short_description': j.short_description,
         } for j in latest]
 
+        top_employers = list(
+            active.values(
+                'employer_profile_id',
+                'employer_profile__public_id',
+                'employer_profile__company_name',
+                'employer_profile__slug',
+                'employer_profile__company_logo_url',
+            )
+            .annotate(job_count=Count('id'))
+            .order_by('-job_count', 'employer_profile__company_name')[:18]
+        )
+        # industries là M2M nên lấy riêng (join thẳng vào values() ở trên sẽ nhân đôi dòng
+        # theo số lĩnh vực); gộp tên các lĩnh vực của mỗi công ty bằng dấu phẩy để hiển thị.
+        industry_names = {
+            row['id']: row['names']
+            for row in EmployerProfile.objects.filter(id__in=[e['employer_profile_id'] for e in top_employers])
+            .values('id')
+            .annotate(names=StringAgg('industries__name', delimiter=', ', distinct=True))
+        }
+
         featured_employers = [
             {
                 'id': row['employer_profile_id'],
@@ -243,19 +266,10 @@ class JobStatsView(APIView):
                 'company_name': row['employer_profile__company_name'],
                 'slug': row['employer_profile__slug'],
                 'company_logo_url': row['employer_profile__company_logo_url'],
-                'industry': row['employer_profile__industry'],
+                'industry': industry_names.get(row['employer_profile_id']) or '',
                 'job_count': row['job_count'],
             }
-            for row in active.values(
-                'employer_profile_id',
-                'employer_profile__public_id',
-                'employer_profile__company_name',
-                'employer_profile__slug',
-                'employer_profile__company_logo_url',
-                'employer_profile__industry',
-            )
-            .annotate(job_count=Count('id'))
-            .order_by('-job_count', 'employer_profile__company_name')[:18]
+            for row in top_employers
         ]
 
         return Response({

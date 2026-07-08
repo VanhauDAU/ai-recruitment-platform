@@ -45,7 +45,9 @@ const SOCIAL_PROVIDERS = [
   { key: 'linkedin', label: 'LinkedIn', Icon: LinkedInIcon, span: 'col-span-12 sm:col-span-6', border: 'border-[#dadce0] hover:border-[#0A66C2] hover:bg-blue-50/40' },
 ]
 
-export default function Login() {
+// `onSuccess`: nếu truyền (vd. khi nhúng trong modal), gọi callback thay vì điều hướng
+// tới dashboard — để nơi gọi tự xử lý (đóng modal, ở lại trang, lưu bộ lọc...).
+export default function Login({ onSuccess }) {
   const { login } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState('')
@@ -56,7 +58,8 @@ export default function Login() {
     setLoading(true)
     try {
       const user = await login(values)
-      navigate(HOME_BY_ROLE[user.role] || '/')
+      if (onSuccess) onSuccess(user)
+      else navigate(HOME_BY_ROLE[user.role] || '/')
     } catch {
       setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
     } finally {

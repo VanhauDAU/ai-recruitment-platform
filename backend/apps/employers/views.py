@@ -1,12 +1,10 @@
 from rest_framework import generics, permissions
 from rest_framework.exceptions import NotFound
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 
-from .models import EmployerProfile
-from .serializers import EmployerProfileSerializer
+from .models import EmployerProfile, Industry
+from .serializers import EmployerProfileSerializer, IndustrySerializer
 
 
 class MyEmployerProfileView(generics.RetrieveUpdateAPIView):
@@ -28,16 +26,10 @@ class CreateEmployerProfileView(generics.CreateAPIView):
         serializer.save(user=self.request.user)
 
 
-class IndustryListView(APIView):
-    """Danh sách lĩnh vực công ty (distinct) cho bộ lọc "Lĩnh vực công ty"."""
+class IndustryListView(generics.ListAPIView):
+    """Danh sách lĩnh vực công ty cho bộ lọc "Lĩnh vực công ty" (chỉ những lĩnh vực đang có công ty)."""
 
+    serializer_class = IndustrySerializer
     permission_classes = [permissions.AllowAny]
-
-    def get(self, request):
-        industries = (
-            EmployerProfile.objects.exclude(industry='')
-            .order_by('industry')
-            .values_list('industry', flat=True)
-            .distinct()
-        )
-        return Response(list(industries))
+    pagination_class = None
+    queryset = Industry.objects.filter(employers__isnull=False).distinct()

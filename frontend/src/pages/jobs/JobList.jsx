@@ -3,22 +3,25 @@ import {
   BellOutlined,
   DownOutlined,
   FilterOutlined,
-  PushpinOutlined,
   RightOutlined,
+  PushpinOutlined,
   SearchOutlined,
   UpOutlined,
 } from '@ant-design/icons'
-import { Button, Checkbox, Empty, Input, InputNumber, Pagination, Select, message } from 'antd'
+import { Button, Checkbox, Empty, Input, InputNumber, Modal, Pagination, Select, Skeleton, Tooltip, message } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getIndustries, getJobCategories, getJobStats, getJobs } from '../../api/jobService'
-import { getProvinces } from '../../api/locationService'
+import { getLocationsByIds, getProvinces } from '../../api/locationService'
 import CategoryPicker from '../../components/job/CategoryPicker'
 import JobCard from '../../components/job/JobCard'
 import JobCardSkeleton from '../../components/job/JobCardSkeleton'
 import LocationFilter from '../../components/job/LocationFilter'
 import SearchDropdown, { SEARCH_BY_TABS, saveHistory } from '../../components/ui/SearchDropdown'
+import { useAuth } from '../../hooks/useAuth'
+import useDebouncedValue from '../../hooks/useDebouncedValue'
 import { useHideOnScroll } from '../../hooks/useHideOnScroll'
+import Login from '../auth/Login'
 import {
   EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_YEARS_LABELS,
@@ -30,14 +33,16 @@ import {
 } from '../../constants/jobOptions'
 
 const PAGE_SIZE = 20
-// Params thuộc sidebar "Lọc nâng cao" — bị xoá bởi nút "Xóa lọc" (giữ search/location).
-const FILTER_KEYS = [
-  'category', 'work_type', 'employment_type', 'experience_level',
-  'salary_gte', 'salary_lte', 'salary_negotiable', 'ordering',
-  'weekend_policy', 'experience_years', 'position_level', 'industry',
-]
+const SALARY_UNIT = 1_000_000
 const SAVED_FILTER_KEY = 'saved_job_filter'
 const VISIBLE_GROUPS = 6
+
+// URL gọn (như TopCV) <-> param API backend. URL dùng key ngắn + gộp nhiều giá trị
+// bằng dấu phẩy; `toApiParams` khai triển lại thành đúng param backend cần.
+const SIMPLE_MAP = { wt: 'work_type', et: 'employment_type', level: 'position_level', weekend: 'weekend_policy', nganh: 'industry', sort: 'ordering' }
+const LIST_MAP = { cat: 'category', exp: 'experience_years' }
+// Key filter trên URL (dùng cho "Xóa lọc" và kiểm tra đang có lọc).
+const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'weekend', 'nganh', 'salary', 'sort']
 
 function parseIdList(values) {
   return values
@@ -50,13 +55,44 @@ function getLocationIds(params) {
   return parseIdList([...params.getAll('location'), params.get('locations')])
 }
 
-function buildJobParams(params) {
-  const next = new URLSearchParams(params)
-  const locationIds = getLocationIds(params)
-  next.delete('location')
-  next.delete('locations')
-  locationIds.forEach((id) => next.append('location', id))
-  return next
+// Đọc param nhiều giá trị dạng "a,b,c" trên URL.
+function getCommaList(params, key) {
+  const raw = params.get(key)
+  return raw ? raw.split(',').filter(Boolean) : []
+}
+
+// salary=10-15 | 10- | -15 | nego  (đơn vị triệu VND).
+function decodeSalary(v) {
+  if (!v) return null
+  if (v === 'nego') return { nego: true }
+  const [a, b] = v.split('-')
+  return { gte: a ? Number(a) * SALARY_UNIT : null, lte: b ? Number(b) * SALARY_UNIT : null }
+}
+function encodeSalary(gte, lte) {
+  if (!gte && !lte) return null
+  return `${gte ? gte / SALARY_UNIT : ''}-${lte ? lte / SALARY_UNIT : ''}`
+}
+
+// URL gọn -> URLSearchParams gửi cho API backend.
+function toApiParams(params) {
+  const api = new URLSearchParams()
+  for (const k of ['search', 'search_by', 'page']) {
+    if (params.get(k)) api.set(k, params.get(k))
+  }
+  for (const [short, backend] of Object.entries(SIMPLE_MAP)) {
+    if (params.get(short)) api.set(backend, params.get(short))
+  }
+  for (const [short, backend] of Object.entries(LIST_MAP)) {
+    getCommaList(params, short).forEach((x) => api.append(backend, x))
+  }
+  getLocationIds(params).forEach((id) => api.append('location', id))
+  const sal = decodeSalary(params.get('salary'))
+  if (sal?.nego) api.set('salary_negotiable', '1')
+  else if (sal) {
+    if (sal.gte) api.set('salary_gte', sal.gte)
+    if (sal.lte) api.set('salary_lte', sal.lte)
+  }
+  return api
 }
 
 function slugifyVietnamese(text = '') {
@@ -74,6 +110,32 @@ function shortLocationName(name = '') {
   return name.replace(/^Thành phố |^Tỉnh /, '')
 }
 
+function locationDisplayName(location) {
+  if (!location) return ''
+  if (location.level === 'province') return shortLocationName(location.name)
+  return location.name
+}
+
+function joinLimitedLocationNames(locations, limit) {
+  const names = locations.map(locationDisplayName).filter(Boolean)
+  if (!names.length) return ''
+  if (!Number.isFinite(limit) || names.length <= limit) return names.join(', ')
+  return `${names.slice(0, limit).join(', ')},...`
+}
+
+function formatLocationGroups(groups, { maxGroups = 2, maxWards = 2 } = {}) {
+  if (!groups.length) return ''
+  const visibleGroups = Number.isFinite(maxGroups) ? groups.slice(0, maxGroups) : groups
+  const labels = visibleGroups.map(({ province, wards, allProvince }) => {
+    if (!province) return joinLimitedLocationNames(wards, maxWards)
+    if (allProvince || !wards.length) return locationDisplayName(province)
+    return `${locationDisplayName(province)} (${joinLimitedLocationNames(wards, maxWards)})`
+  }).filter(Boolean)
+  if (!labels.length) return ''
+  const suffix = Number.isFinite(maxGroups) && groups.length > maxGroups ? ',...' : ''
+  return `${labels.join(', ')}${suffix}`
+}
+
 function pathForLocation(ids, provinces) {
   if (!ids.length) return '/viec-lam'
   const province = provinces.find((p) => ids.includes(p.id))
@@ -85,6 +147,17 @@ function FilterSection({ title, children }) {
     <div className="border-t border-dashed border-gray-200 pt-4">
       <h4 className="mb-3 text-[15px] font-semibold text-gray-800">{title}</h4>
       {children}
+    </div>
+  )
+}
+
+// Vài dòng chip/checkbox giả — đặt tạm chỗ cho phần lọc còn đang tải dữ liệu (danh mục, lĩnh vực...).
+function FilterSkeleton({ rows = 4 }) {
+  return (
+    <div className="space-y-2.5">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton.Input key={i} active size="small" style={{ width: `${70 - i * 8}%` }} block />
+      ))}
     </div>
   )
 }
@@ -136,6 +209,7 @@ export default function JobList() {
   const [categories, setCategories] = useState([])
   const [demandCounts, setDemandCounts] = useState({})
   const [provinces, setProvinces] = useState([])
+  const [selectedLocationDetails, setSelectedLocationDetails] = useState([])
   const [data, setData] = useState({ results: [], count: 0 })
   const [loading, setLoading] = useState(true)
   const [keyword, setKeyword] = useState(searchParams.get('search') || '')
@@ -145,8 +219,13 @@ export default function JobList() {
   const [salaryFrom, setSalaryFrom] = useState(null) // triệu
   const [salaryTo, setSalaryTo] = useState(null)
   const [industries, setIndustries] = useState([])
+  const [sidebarLoading, setSidebarLoading] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const searchBoxRef = useRef(null)
+  const latestSearchParamsRef = useRef(searchParams)
+  const lastSearchParamRef = useRef(searchParams.get('search') || '')
+  const { isAuthenticated } = useAuth()
 
   // Thanh tìm kiếm sticky né header (header tự ẩn khi cuộn xuống); sidebar dính ngay dưới nó.
   const headerVisible = useHideOnScroll()
@@ -155,9 +234,11 @@ export default function JobList() {
 
   const page = Number(searchParams.get('page') || 1)
   const selectedLocations = getLocationIds(searchParams)
-  const selectedCategories = searchParams.getAll('category').map(Number)
+  const selectedLocationKey = selectedLocations.join(',')
+  const selectedCategories = getCommaList(searchParams, 'cat').map(Number)
   const searchBy = searchParams.get('search_by') || 'title'
-  const ordering = searchParams.get('ordering') || ''
+  const ordering = searchParams.get('sort') || ''
+  const debouncedKeyword = useDebouncedValue(keyword, 450)
 
   const groups = useMemo(() => categories.filter((c) => !c.parent), [categories])
   const childrenOf = useMemo(() => {
@@ -167,24 +248,70 @@ export default function JobList() {
   }, [categories])
 
   useEffect(() => {
-    getJobCategories().then(setCategories).catch(() => {})
-    getJobStats()
-      .then((s) => setDemandCounts(Object.fromEntries((s.demand || []).map((d) => [d.id, d.count]))))
-      .catch(() => {})
-    getProvinces().then(setProvinces).catch(() => {})
-    getIndustries().then(setIndustries).catch(() => {})
+    setSidebarLoading(true)
+    Promise.allSettled([
+      getJobCategories().then(setCategories),
+      getJobStats().then((s) => setDemandCounts(Object.fromEntries((s.demand || []).map((d) => [d.id, d.count])))),
+      getProvinces().then(setProvinces),
+      getIndustries().then(setIndustries),
+    ]).finally(() => setSidebarLoading(false))
   }, [])
 
   useEffect(() => {
-    setKeyword(searchParams.get('search') || '')
+    latestSearchParamsRef.current = searchParams
+    const nextSearch = searchParams.get('search') || ''
+    if (nextSearch !== lastSearchParamRef.current) {
+      lastSearchParamRef.current = nextSearch
+      setKeyword(nextSearch)
+    }
   }, [searchParams])
 
   useEffect(() => {
+    const nextKeyword = debouncedKeyword.trim()
+    const currentParams = latestSearchParamsRef.current
+    if (nextKeyword === (currentParams.get('search') || '')) return
+
+    const next = new URLSearchParams(currentParams)
+    if (nextKeyword) next.set('search', nextKeyword)
+    else next.delete('search')
+    next.delete('page')
+    setSearchParams(next)
+  }, [debouncedKeyword, setSearchParams])
+
+  useEffect(() => {
+    if (!selectedLocations.length) {
+      setSelectedLocationDetails([])
+      return
+    }
+    let cancelled = false
+    getLocationsByIds(selectedLocations)
+      .then((items) => {
+        if (!cancelled) setSelectedLocationDetails(items)
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedLocationDetails([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedLocationKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    getJobs(buildJobParams(searchParams))
-      .then(setData)
-      .catch(() => setData({ results: [], count: 0 }))
-      .finally(() => setLoading(false))
+    getJobs(toApiParams(searchParams))
+      .then((items) => {
+        if (!cancelled) setData(items)
+      })
+      .catch(() => {
+        if (!cancelled) setData({ results: [], count: 0 })
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [searchParams])
 
   // Gợi ý "Có N việc làm tại Hà Nội" khi chưa lọc địa điểm (đếm với cùng bộ lọc hiện tại).
@@ -196,7 +323,7 @@ export default function JobList() {
     const hn = provinces.find((p) => p.name.includes('Hà Nội'))
     if (!hn) return undefined
     let cancelled = false
-    const params = buildJobParams(searchParams)
+    const params = toApiParams(searchParams)
     params.delete('page')
     params.append('location', hn.id)
     params.set('page_size', '1')
@@ -220,10 +347,11 @@ export default function JobList() {
     setSearchParams(next)
   }
 
-  function setListParam(key, ids) {
+  // Ghi param nhiều giá trị dạng gọn "a,b,c" (rỗng thì xoá hẳn key).
+  function setCommaParam(key, values) {
     const next = new URLSearchParams(searchParams)
-    next.delete(key)
-    ids.forEach((id) => next.append(key, id))
+    if (values.length) next.set(key, values.join(','))
+    else next.delete(key)
     next.delete('page')
     setSearchParams(next)
   }
@@ -240,8 +368,8 @@ export default function JobList() {
   }
 
   function toggleCategory(id) {
-    setListParam(
-      'category',
+    setCommaParam(
+      'cat',
       selectedCategories.includes(id) ? selectedCategories.filter((c) => c !== id) : [...selectedCategories, id],
     )
   }
@@ -259,11 +387,8 @@ export default function JobList() {
   }
 
   function toggleExperienceYears(value) {
-    const current = searchParams.getAll('experience_years')
-    setListParam(
-      'experience_years',
-      current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
-    )
+    const current = getCommaList(searchParams, 'exp')
+    setCommaParam('exp', current.includes(value) ? current.filter((v) => v !== value) : [...current, value])
   }
 
   function clearFilters() {
@@ -275,37 +400,49 @@ export default function JobList() {
     setSalaryTo(null)
   }
 
-  function saveFilter() {
+  function persistFilter() {
     localStorage.setItem(SAVED_FILTER_KEY, searchParams.toString())
+  }
+
+  function saveFilter() {
+    if (!isAuthenticated) {
+      setLoginModalOpen(true) // chưa đăng nhập -> mở modal đăng nhập, không rời trang
+      return
+    }
+    persistFilter()
     message.success('Đã lưu bộ lọc hiện tại')
   }
 
-  // ── Mức lương: radio bucket / thoả thuận / khoảng tự nhập ─────────
-  const gte = searchParams.get('salary_gte') || ''
-  const lte = searchParams.get('salary_lte') || ''
-  const matchedRange = SALARY_RANGES.find((r) => String(r.gte ?? '') === gte && String(r.lte ?? '') === lte)
-  const salaryKey = searchParams.get('salary_negotiable')
+  // Đăng nhập xong ngay trong modal -> lưu bộ lọc & đóng, vẫn ở lại trang việc làm.
+  function handleLoginSuccess() {
+    setLoginModalOpen(false)
+    persistFilter()
+    message.success('Đăng nhập thành công. Đã lưu bộ lọc.')
+  }
+
+  // ── Mức lương: 1 param URL gọn `salary` (bucket / thoả thuận / khoảng tự nhập) ─────
+  const salaryDec = decodeSalary(searchParams.get('salary'))
+  const matchedRange = SALARY_RANGES.find(
+    (r) => (r.gte ?? null) === (salaryDec?.gte ?? null) && (r.lte ?? null) === (salaryDec?.lte ?? null),
+  )
+  const salaryKey = salaryDec?.nego
     ? 'nego'
     : matchedRange
       ? matchedRange.key
-      : gte || lte
+      : salaryDec?.gte || salaryDec?.lte
         ? 'custom'
         : ''
 
   function onSalaryChange(key) {
-    if (key === 'nego') {
-      updateParams({ salary_negotiable: '1', salary_gte: null, salary_lte: null })
-      return
-    }
+    if (!key) return updateParams({ salary: null })
+    if (key === 'nego') return updateParams({ salary: 'nego' })
     const r = SALARY_RANGES.find((x) => x.key === key)
-    updateParams({ salary_negotiable: null, salary_gte: r?.gte ?? null, salary_lte: r?.lte ?? null })
+    return updateParams({ salary: encodeSalary(r?.gte, r?.lte) })
   }
 
   function applyCustomSalary() {
     updateParams({
-      salary_negotiable: null,
-      salary_gte: salaryFrom ? salaryFrom * 1_000_000 : null,
-      salary_lte: salaryTo ? salaryTo * 1_000_000 : null,
+      salary: encodeSalary(salaryFrom ? salaryFrom * SALARY_UNIT : null, salaryTo ? salaryTo * SALARY_UNIT : null),
     })
   }
 
@@ -325,7 +462,36 @@ export default function JobList() {
     return chain
   })()
   const catName = catChain.at(-1)?.name || null
-  const contextLabel = searchParams.get('search') || catName || ''
+  const selectedLocationDetailMap = new Map(selectedLocationDetails.map((location) => [location.id, location]))
+  const selectedLocationGroupsMap = new Map()
+  selectedLocations.forEach((locationId) => {
+    const location = selectedLocationDetailMap.get(locationId)
+    if (!location) return
+    if (location.level === 'province') {
+      const group = selectedLocationGroupsMap.get(location.id) || { province: location, wards: [], allProvince: false }
+      selectedLocationGroupsMap.set(location.id, { ...group, province: location, allProvince: true })
+      return
+    }
+    if (location.level === 'ward') {
+      const province = provinces.find((p) => p.id === location.parent)
+      const groupKey = province?.id || `ward-${location.id}`
+      const group = selectedLocationGroupsMap.get(groupKey) || { province, wards: [], allProvince: false }
+      if (!group.allProvince && !group.wards.some((ward) => ward.id === location.id)) {
+        group.wards.push(location)
+      }
+      selectedLocationGroupsMap.set(groupKey, group)
+    }
+  })
+  const selectedLocationGroups = [...selectedLocationGroupsMap.values()]
+  const locationSummary = formatLocationGroups(selectedLocationGroups)
+  const fullLocationSummary = formatLocationGroups(selectedLocationGroups, { maxGroups: Infinity, maxWards: Infinity })
+  const locationContext = locationSummary ? `tại ${locationSummary} mới (sau sáp nhập)` : ''
+  const fullLocationContext = fullLocationSummary ? `tại ${fullLocationSummary} mới (sau sáp nhập)` : ''
+  const searchLabel = searchParams.get('search') || ''
+  const contextLabel = searchLabel || catName || locationContext
+  const fullContextLabel = searchLabel || catName || fullLocationContext
+  const isLocationContext = !searchLabel && !catName && Boolean(locationContext)
+  const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
   const visibleGroups = showAllGroups ? groups : groups.slice(0, VISIBLE_GROUPS)
 
   return (
@@ -340,7 +506,7 @@ export default function JobList() {
             <CategoryPicker
               categories={categories}
               value={selectedCategories}
-              onChange={(ids) => setListParam('category', ids)}
+              onChange={(ids) => setCommaParam('cat', ids)}
             />
           </div>
           <div ref={searchBoxRef} className="relative flex flex-1 flex-col gap-2 md:flex-row">
@@ -382,18 +548,39 @@ export default function JobList() {
       <div className="max-w-6xl mx-auto px-4 py-5">
         {/* ── Heading + breadcrumb + nút thông báo ── */}
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              Tuyển dụng <span className="text-[#00b14f]">{loading ? '…' : formatNumber(count)} việc làm</span>
-              {contextLabel && ` ${contextLabel}`}
-              <span className="ml-2 text-sm font-normal text-gray-400">
-                [Update {new Date().toLocaleDateString('vi-VN')}]
+          <div className="min-w-0 flex-1">
+            <h1 className="flex min-w-0 items-center gap-x-1.5 overflow-hidden whitespace-nowrap text-lg font-semibold text-gray-900">
+              <span className="shrink-0">Tuyển dụng</span>
+              {loading ? (
+                <Skeleton.Input active size="small" style={{ width: 90, verticalAlign: 'middle' }} />
+              ) : (
+                <span className="shrink-0 text-[#00b14f]">{formatNumber(count)} việc làm</span>
+              )}
+              {!loading && contextLabel && (
+                <Tooltip title={fullContextLabel || contextLabel}>
+                  <span className={`min-w-0 truncate ${isLocationContext ? 'text-[#00b14f]' : ''}`}>
+                    {contextLabel}
+                  </span>
+                </Tooltip>
+              )}
+              <span className="shrink-0 text-sm font-semibold text-gray-700">
+                {updateLabel}
               </span>
             </h1>
-            <nav className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-gray-500">
-              <Link to="/" className="hover:text-[#00b14f]">Trang chủ</Link>
-              <RightOutlined className="text-[10px] text-gray-300" />
-              {catChain.length === 0 ? (
+            <nav className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-sm text-gray-500">
+              <Link to="/" className="shrink-0 hover:text-[#00b14f]">Trang chủ</Link>
+              <RightOutlined className="shrink-0 text-[10px] text-gray-300" />
+              {locationSummary ? (
+                <>
+                  <Link to="/viec-lam" className="shrink-0 hover:text-[#00b14f]">Việc làm</Link>
+                  <RightOutlined className="shrink-0 text-[10px] text-gray-300" />
+                  <Tooltip title={`${fullLocationSummary} mới (sau sáp nhập)`}>
+                    <span className="min-w-0 truncate text-gray-700">
+                      {locationSummary} mới (sau sáp nhập)
+                    </span>
+                  </Tooltip>
+                </>
+              ) : catChain.length === 0 ? (
                 <span>Việc làm</span>
               ) : (
                 catChain.map((c, i) => (
@@ -402,7 +589,7 @@ export default function JobList() {
                     {i < catChain.length - 1 ? (
                       <button
                         type="button"
-                        onClick={() => setListParam('category', [c.id])}
+                        onClick={() => setCommaParam('cat', [c.id])}
                         className="cursor-pointer hover:text-[#00b14f]"
                       >
                         {i === 0 ? `Việc làm ${c.name}` : c.name}
@@ -427,7 +614,7 @@ export default function JobList() {
         {hanoiSuggest?.count > 0 && (
           <button
             type="button"
-            onClick={() => setListParam('location', [hanoiSuggest.id])}
+            onClick={() => setLocationParam([hanoiSuggest.id])}
             className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition hover:border-[#00b14f]"
           >
             Có <b>{formatNumber(hanoiSuggest.count)}</b> việc làm tại Hà Nội.
@@ -435,20 +622,22 @@ export default function JobList() {
           </button>
         )}
 
-        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
           {/* ── Sidebar lọc nâng cao: dính viewport, có thanh cuộn riêng khi dài hơn màn hình ── */}
           <aside
             style={{ '--sb-top': `${sidebarTop}px` }}
-            className="filter-sidebar rounded-xl border border-gray-200 bg-white p-4 transition-[top] duration-300 lg:sticky lg:top-[var(--sb-top)] lg:max-h-[calc(100vh-var(--sb-top)-1rem)] lg:overflow-y-scroll"
+            className="filter-sidebar flex flex-col rounded-xl border border-gray-200 bg-white transition-[top] duration-300 h-[calc(100dvh-180px)] lg:sticky lg:top-[var(--sb-top)] lg:h-[calc(100dvh-var(--sb-top)-1rem)]"
           >
             <style>{`
-              .filter-sidebar { scrollbar-width: thin; scrollbar-color: transparent transparent; }
-              .filter-sidebar:hover { scrollbar-color: #d1d5db transparent; }
-              .filter-sidebar::-webkit-scrollbar { width: 4px; }
-              .filter-sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; transition: background 0.2s; }
-              .filter-sidebar:hover::-webkit-scrollbar-thumb { background: #d1d5db; }
-              .filter-sidebar::-webkit-scrollbar-track { background: transparent; }
+              .filter-sidebar-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+              .filter-sidebar-scroll:hover { scrollbar-color: #d1d5db transparent; }
+              .filter-sidebar-scroll::-webkit-scrollbar { width: 4px; }
+              .filter-sidebar-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; transition: background 0.2s; }
+              .filter-sidebar-scroll:hover::-webkit-scrollbar-thumb { background: #d1d5db; }
+              .filter-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
             `}</style>
+            {/* Scrollable filter sections */}
+            <div className="filter-sidebar-scroll flex-1 overflow-y-auto p-4">
             <div className="mb-4 flex items-center gap-2">
               <FilterOutlined className="text-[#00b14f]" />
               <span className="text-base font-bold text-gray-900">Lọc nâng cao</span>
@@ -465,8 +654,8 @@ export default function JobList() {
               }
             >
               <SingleChips
-                value={searchParams.get('weekend_policy') || ''}
-                onChange={(v) => updateParams({ weekend_policy: v })}
+                value={searchParams.get('weekend') || ''}
+                onChange={(v) => updateParams({ weekend: v })}
                 options={WEEKEND_POLICY_OPTIONS}
                 allLabel="Không lọc"
               />
@@ -474,6 +663,9 @@ export default function JobList() {
 
             <div className="mt-4" />
             <FilterSection title="Theo danh mục nghề">
+              {sidebarLoading ? (
+                <FilterSkeleton rows={6} />
+              ) : (
               <div className="space-y-2">
                 {visibleGroups.map((g) => {
                   const kids = childrenOf[g.id] || []
@@ -531,14 +723,15 @@ export default function JobList() {
                   </button>
                 )}
               </div>
+              )}
             </FilterSection>
 
             <div className="mt-4">
               <FilterSection title="Kinh nghiệm">
                 <MultiChips
-                  values={searchParams.getAll('experience_years')}
+                  values={getCommaList(searchParams, 'exp')}
                   onToggle={toggleExperienceYears}
-                  onClear={() => setListParam('experience_years', [])}
+                  onClear={() => setCommaParam('exp', [])}
                   options={Object.entries(EXPERIENCE_YEARS_LABELS)}
                 />
               </FilterSection>
@@ -546,16 +739,20 @@ export default function JobList() {
 
             <div className="mt-4">
               <FilterSection title="Lĩnh vực công ty">
-                <Select
-                  className="w-full"
-                  allowClear
-                  showSearch
-                  placeholder="Tất cả lĩnh vực"
-                  suffixIcon={<BankOutlined className="text-gray-400" />}
-                  value={searchParams.get('industry') || undefined}
-                  onChange={(v) => updateParams({ industry: v })}
-                  options={industries.map((name) => ({ value: name, label: name }))}
-                />
+                {sidebarLoading ? (
+                  <Skeleton.Input active size="default" block />
+                ) : (
+                  <Select
+                    className="w-full"
+                    allowClear
+                    showSearch
+                    placeholder="Tất cả lĩnh vực"
+                    suffixIcon={<BankOutlined className="text-gray-400" />}
+                    value={searchParams.get('nganh') || undefined}
+                    onChange={(v) => updateParams({ nganh: v })}
+                    options={industries.map((ind) => ({ value: String(ind.id), label: ind.name }))}
+                  />
+                )}
               </FilterSection>
             </div>
 
@@ -586,8 +783,8 @@ export default function JobList() {
             <div className="mt-4">
               <FilterSection title="Cấp bậc">
                 <SingleChips
-                  value={searchParams.get('position_level') || ''}
-                  onChange={(v) => updateParams({ position_level: v })}
+                  value={searchParams.get('level') || ''}
+                  onChange={(v) => updateParams({ level: v })}
                   options={Object.entries(POSITION_LEVEL_LABELS)}
                 />
               </FilterSection>
@@ -596,8 +793,8 @@ export default function JobList() {
             <div className="mt-4">
               <FilterSection title="Hình thức làm việc">
                 <SingleChips
-                  value={searchParams.get('work_type') || ''}
-                  onChange={(v) => updateParams({ work_type: v })}
+                  value={searchParams.get('wt') || ''}
+                  onChange={(v) => updateParams({ wt: v })}
                   options={Object.entries(WORK_TYPE_LABELS)}
                 />
               </FilterSection>
@@ -606,23 +803,32 @@ export default function JobList() {
             <div className="mt-4">
               <FilterSection title="Loại hình làm việc">
                 <SingleChips
-                  value={searchParams.get('employment_type') || ''}
-                  onChange={(v) => updateParams({ employment_type: v })}
+                  value={searchParams.get('et') || ''}
+                  onChange={(v) => updateParams({ et: v })}
                   options={Object.entries(EMPLOYMENT_TYPE_LABELS)}
                 />
               </FilterSection>
             </div>
 
-            {/* Thanh hành động dính đáy sidebar (như TopCV) — luôn thấy khi cuộn bộ lọc. */}
-            <div className="sticky bottom-0 -mx-4 -mb-4 mt-5 flex gap-2 border-t border-gray-100 bg-white px-4 py-3">
-              <Button block disabled={!hasFilters} onClick={clearFilters} className="!rounded-full">
-                Xóa lọc
+            </div>{/* end scrollable */}
+
+            {/* Action buttons — always visible at bottom, outside scroll area */}
+            <div className="sticky bottom-0 z-10 flex shrink-0 gap-2 rounded-b-xl border-t border-gray-100 bg-white/95 px-4 py-3 shadow-[0_-12px_24px_rgba(15,23,42,0.08)] backdrop-blur">
+              <Button
+                block
+                disabled={!hasFilters}
+                onClick={clearFilters}
+                className="!rounded-full"
+                danger={hasFilters}
+              >
+                Xóa lọc{hasFilters ? ` (${[...searchParams.entries()].filter(([k]) => !['search','search_by','page','ordering'].includes(k)).length})` : ''}
               </Button>
               <Button
                 block
+                type="primary"
                 icon={<PushpinOutlined />}
                 onClick={saveFilter}
-                className="!rounded-full !border-[#00b14f] !text-[#00b14f] hover:!bg-green-50"
+                className="!rounded-full !bg-[#00b14f] !border-[#00b14f] hover:!bg-[#008a3e]"
               >
                 Lưu bộ lọc
               </Button>
@@ -630,7 +836,7 @@ export default function JobList() {
           </aside>
 
           {/* ── Danh sách việc làm ── */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-1">
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-gray-500">Tìm kiếm theo:</span>
@@ -657,7 +863,7 @@ export default function JobList() {
                 <span className="shrink-0 text-sm text-gray-500">Sắp xếp theo:</span>
                 <Select
                   value={ordering}
-                  onChange={(v) => updateParams({ ordering: v })}
+                  onChange={(v) => updateParams({ sort: v })}
                   className="w-40"
                   options={[
                     { value: '', label: 'Mới nhất' },
@@ -680,7 +886,12 @@ export default function JobList() {
             ) : (
               <div className="space-y-3">
                 {results.map((job) => (
-                  <JobCard key={job.public_id} job={job} />
+                  <JobCard
+                    key={job.public_id}
+                    job={job}
+                    isAuthenticated={isAuthenticated}
+                    onRequireLogin={() => setLoginModalOpen(true)}
+                  />
                 ))}
               </div>
             )}
@@ -704,6 +915,22 @@ export default function JobList() {
           </div>
         </div>
       </div>
+
+      {/* Modal đăng nhập — tái dùng đúng component Login (Google/Facebook/email...). */}
+      <Modal
+        open={loginModalOpen}
+        onCancel={() => setLoginModalOpen(false)}
+        footer={null}
+        centered
+        width={640}
+        destroyOnClose
+        styles={{
+          container: { borderRadius: 28, padding: 0, overflow: 'hidden' },
+          body: { padding: '40px 48px 36px' },
+        }}
+      >
+        <Login onSuccess={handleLoginSuccess} />
+      </Modal>
     </div>
   )
 }

@@ -7,3 +7,8 @@ export async function getProvinces() {
 export async function getWards(provinceId) {
   return fetchAllPages('/locations/', { level: 'ward', parent: provinceId })
 }
+
+export async function getLocationsByIds(ids = []) {
+  if (!ids.length) return []
+  return fetchAllPages('/locations/', { ids: ids.join(',') })
+}

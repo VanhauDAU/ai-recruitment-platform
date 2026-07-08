@@ -14,6 +14,10 @@ class LocationListView(generics.ListAPIView):
     def get_queryset(self):
         qs = Location.objects.filter(is_active=True)
         params = self.request.query_params
+        if ids := params.get('ids'):
+            id_list = [int(x) for x in ids.split(',') if x.strip().isdigit()]
+            if id_list:
+                return qs.filter(id__in=id_list).order_by('level', 'name')[:500]
         if level := params.get('level'):
             qs = qs.filter(level=level)
         if parent := params.get('parent'):

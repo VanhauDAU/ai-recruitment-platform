@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { getJobSuggestions, getJobs } from '../../api/jobService'
 import { companyInitial, formatNumber, formatSalary } from '../../constants/jobOptions'
+import useDebouncedValue from '../../hooks/useDebouncedValue'
 
 const HISTORY_KEY = 'search_history'
 const MAX_HISTORY = 8
@@ -93,6 +94,7 @@ export default function SearchDropdown({
   const [loading, setLoading] = useState(true)
   const [rect, setRect] = useState(null)
   const dropdownRef = useRef(null)
+  const debouncedKeyword = useDebouncedValue(keyword, 250)
 
   // Render in a portal on <body> so the panel escapes the hero header's stacking
   // context (isolation:isolate + overflow:hidden) — otherwise it gets clipped and
@@ -120,7 +122,7 @@ export default function SearchDropdown({
 
     let cancelled = false
     setLoading(true)
-    const q = keyword.trim()
+    const q = debouncedKeyword.trim()
     const base = q ? { search: q, by: searchBy } : hist[0] ? { search: hist[0].q, by: hist[0].by } : null
 
     async function load() {
@@ -149,32 +151,28 @@ export default function SearchDropdown({
       }
     }
 
-    const timer = setTimeout(load, q ? 220 : 0)
+    load()
     return () => {
       cancelled = true
-      clearTimeout(timer)
     }
-  }, [open, keyword, searchBy])
+  }, [open, debouncedKeyword, searchBy])
 
   // Keyword autocomplete from the backend, driven by the typed text (not a fixed list).
   useEffect(() => {
     if (!open) return undefined
-    const q = keyword.trim()
+    const q = debouncedKeyword.trim()
     if (!q) {
       setKeywordSuggestions([])
       return undefined
     }
     let cancelled = false
-    const timer = setTimeout(() => {
-      getJobSuggestions(q, searchBy)
-        .then((list) => !cancelled && setKeywordSuggestions(list.slice(0, MAX_KEYWORD_SUGGESTIONS)))
-        .catch(() => !cancelled && setKeywordSuggestions([]))
-    }, 220)
+    getJobSuggestions(q, searchBy)
+      .then((list) => !cancelled && setKeywordSuggestions(list.slice(0, MAX_KEYWORD_SUGGESTIONS)))
+      .catch(() => !cancelled && setKeywordSuggestions([]))
     return () => {
       cancelled = true
-      clearTimeout(timer)
     }
-  }, [open, keyword, searchBy])
+  }, [open, debouncedKeyword, searchBy])
 
   // Click outside → close.
   useEffect(() => {
