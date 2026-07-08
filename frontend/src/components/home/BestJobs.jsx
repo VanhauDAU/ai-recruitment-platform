@@ -169,9 +169,7 @@ export default function BestJobs({ categories = [] }) {
     if (salaryFilter === 'negotiable') {
       params.set('salary_negotiable', '1')
     } else if (salaryFilter) {
-      const r = SALARY_RANGES.find((x) => x.key === salaryFilter)
-      if (r?.gte) params.set('salary_gte', r.gte)
-      if (r?.lte) params.set('salary_lte', r.lte)
+      params.set('salary_bucket', salaryFilter)
     }
     getJobs(params)
       .then((data) => {

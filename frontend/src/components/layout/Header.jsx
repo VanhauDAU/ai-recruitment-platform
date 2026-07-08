@@ -162,6 +162,11 @@ export default function Header() {
   const { message } = App.useApp()
   const [openKey, setOpenKey] = useState(null)
   const headerVisible = useHideOnScroll()
+  const hideOnScroll =
+    location.pathname === '/viec-lam'
+    || location.pathname === '/jobs'
+    || location.pathname.startsWith('/viec-lam/tai/')
+  const shouldShowHeader = !hideOnScroll || headerVisible
 
   function isMenuActive(menu) {
     if (!menu.to) return false
@@ -179,7 +184,7 @@ export default function Header() {
   return (
     <header
       className={`bg-white border-b border-gray-200 sticky top-0 z-30 transition-transform duration-300 ${
-        headerVisible ? 'translate-y-0' : '-translate-y-full'
+        shouldShowHeader ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
       <div className="w-full px-6 h-16 flex items-center gap-8">

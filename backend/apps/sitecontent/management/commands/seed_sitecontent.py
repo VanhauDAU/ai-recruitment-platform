@@ -3,6 +3,10 @@ from django.core.management.base import BaseCommand
 from apps.sitecontent.models import Banner, LinkGroup, LinkItem, SiteSetting
 
 # Cấu hình mẫu để trang chạy ngay; admin chỉnh/thêm sau qua trang quản trị.
+PROCV_LOGO_URL = '/images/logo/logo_proCV_2000_2000.png'
+LEGACY_BRAND_VALUES = {'', '/images/logo/aicareer-logo.svg', '/favicon.svg', '/images/logo/logo_proCV_2000_600.png'}
+BRAND_ASSET_KEYS = {'brand_logo_url', 'brand_logo_mark_url', 'brand_favicon_url'}
+
 SETTINGS = [
     (
         'site_name',
@@ -15,21 +19,21 @@ SETTINGS = [
         'brand_logo_url',
         'Logo đầy đủ',
         SiteSetting.Group.APPEARANCE,
-        '/images/logo/aicareer-logo.svg',
+        PROCV_LOGO_URL,
         'URL logo dạng ngang/wordmark dùng ở header. Có thể dùng static asset hoặc media URL nội bộ.',
     ),
     (
         'brand_logo_mark_url',
         'Logo biểu tượng',
         SiteSetting.Group.APPEARANCE,
-        '/favicon.svg',
+        PROCV_LOGO_URL,
         'URL logo vuông/icon dùng ở màn đăng nhập, favicon fallback hoặc nơi thiếu diện tích.',
     ),
     (
         'brand_favicon_url',
         'Favicon',
         SiteSetting.Group.APPEARANCE,
-        '/favicon.svg',
+        PROCV_LOGO_URL,
         'URL favicon cho tab trình duyệt.',
     ),
     (
@@ -88,8 +92,11 @@ class Command(BaseCommand):
                     if getattr(setting, field) != next_value:
                         setattr(setting, field, next_value)
                         changed = True
+                if key in BRAND_ASSET_KEYS and setting.value in LEGACY_BRAND_VALUES:
+                    setting.value = value
+                    changed = True
                 if changed:
-                    setting.save(update_fields=['label', 'group', 'description', 'updated_at'])
+                    setting.save(update_fields=['label', 'group', 'value', 'description', 'updated_at'])
             self.stdout.write(f'{"+ " if created else "= "}setting {key}')
 
         for key, title, source, order, items in LINK_GROUPS:

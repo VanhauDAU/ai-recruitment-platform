@@ -17,6 +17,41 @@ from .models import Job, JobCategory
 from .serializers import JobCategorySerializer, JobSerializer
 
 
+SALARY_BUCKETS = [
+    ('u10', 'Dưới 10 triệu', None, 10_000_000),
+    ('10-15', '10 - 15 triệu', 10_000_000, 15_000_000),
+    ('15-20', '15 - 20 triệu', 15_000_000, 20_000_000),
+    ('20-25', '20 - 25 triệu', 20_000_000, 25_000_000),
+    ('25-30', '25 - 30 triệu', 25_000_000, 30_000_000),
+    ('30-50', '30 - 50 triệu', 30_000_000, 50_000_000),
+    ('o50', 'Trên 50 triệu', 50_000_000, None),
+]
+
+
+def filter_salary_bucket(qs, bucket_key):
+    """Homepage salary chips: bucket jobs by their displayed upper salary.
+
+    This avoids "Dưới 10 triệu" showing jobs like 10-25tr just because their
+    lower bound intersects 10tr.
+    """
+
+    bucket = next((item for item in SALARY_BUCKETS if item[0] == bucket_key), None)
+    if not bucket:
+        raise ValidationError({'salary_bucket': 'Invalid salary bucket.'})
+
+    _, _, lower, upper = bucket
+    qs = (
+        qs.filter(is_salary_visible=True)
+        .exclude(salary_min__isnull=True, salary_max__isnull=True)
+        .annotate(salary_bucket_value=Coalesce('salary_max', 'salary_min'))
+    )
+    if lower is not None:
+        qs = qs.filter(salary_bucket_value__gt=lower)
+    if upper is not None:
+        qs = qs.filter(salary_bucket_value__lte=upper)
+    return qs
+
+
 class JobCategoryListView(generics.ListAPIView):
     serializer_class = JobCategorySerializer
     permission_classes = [permissions.AllowAny]
@@ -61,14 +96,17 @@ class JobListView(generics.ListAPIView):
         # theo id, match job nếu công ty có lĩnh vực đó trong số các lĩnh vực của mình.
         if industry := params.get('industry'):
             qs = qs.filter(employer_profile__industries__id=industry)
-        # Salary range overlap (values in VND): a job matches when its band
-        # intersects [salary_gte, salary_lte].
         if params.get('salary_negotiable') in ['1', 'true', 'True']:
             qs = qs.filter(Q(is_salary_visible=False) | (Q(salary_min__isnull=True) & Q(salary_max__isnull=True)))
-        if salary_gte := params.get('salary_gte'):
-            qs = qs.filter(Q(salary_max__gte=salary_gte) | Q(salary_max__isnull=True, salary_min__gte=salary_gte))
-        if salary_lte := params.get('salary_lte'):
-            qs = qs.filter(Q(salary_min__lte=salary_lte) | Q(salary_min__isnull=True, salary_max__lte=salary_lte))
+        elif salary_bucket := params.get('salary_bucket'):
+            qs = filter_salary_bucket(qs, salary_bucket)
+        else:
+            # Salary range overlap (values in VND): a job matches when its band
+            # intersects [salary_gte, salary_lte]. Used by the advanced job list.
+            if salary_gte := params.get('salary_gte'):
+                qs = qs.filter(Q(salary_max__gte=salary_gte) | Q(salary_max__isnull=True, salary_min__gte=salary_gte))
+            if salary_lte := params.get('salary_lte'):
+                qs = qs.filter(Q(salary_min__lte=salary_lte) | Q(salary_min__isnull=True, salary_max__lte=salary_lte))
         if search := params.get('search'):
             # search_by: 'title' (mặc định) | 'company' | 'both'
             search_by = params.get('search_by', 'title')
@@ -192,22 +230,9 @@ class JobStatsView(APIView):
                 })
         demand.sort(key=lambda d: d['count'], reverse=True)
 
-        salary_ranges = [
-            ('Dưới 10 triệu', None, 10_000_000),
-            ('10 - 15 triệu', 10_000_000, 15_000_000),
-            ('15 - 20 triệu', 15_000_000, 20_000_000),
-            ('20 - 25 triệu', 20_000_000, 25_000_000),
-            ('25 - 30 triệu', 25_000_000, 30_000_000),
-            ('30 - 50 triệu', 30_000_000, 50_000_000),
-            ('Trên 50 triệu', 50_000_000, None),
-        ]
         salary_demand = []
-        for name, gte, lte in salary_ranges:
-            bucket = active
-            if gte is not None:
-                bucket = bucket.filter(Q(salary_max__gte=gte) | Q(salary_max__isnull=True, salary_min__gte=gte))
-            if lte is not None:
-                bucket = bucket.filter(Q(salary_min__lte=lte) | Q(salary_min__isnull=True, salary_max__lte=lte))
+        for key, name, _gte, _lte in SALARY_BUCKETS:
+            bucket = filter_salary_bucket(active, key)
             count = bucket.count()
             if count:
                 salary_demand.append({'name': name, 'count': count})
