@@ -1,11 +1,26 @@
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
+
+from apps.common.media_storage import delete_local_media_url, save_image_upload
 
 from .models import Job, JobCategory, JobSkill
 
 
+class JobCategoryAdminForm(forms.ModelForm):
+    upload_logo = forms.FileField(
+        required=False,
+        help_text='Upload logo vào storage nội bộ. Nếu có file mới, hệ thống sẽ cập nhật logo_url.',
+    )
+
+    class Meta:
+        model = JobCategory
+        fields = '__all__'
+
+
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
+    form = JobCategoryAdminForm
     list_display = ['name', 'parent', 'logo_preview', 'status']
     list_filter = ['status']
     search_fields = ['name', 'logo_url']
@@ -13,8 +28,18 @@ class JobCategoryAdmin(admin.ModelAdmin):
     readonly_fields = ['logo_preview']
     fieldsets = (
         (None, {'fields': ('name', 'slug', 'description', 'parent', 'status')}),
-        ('Homepage display', {'fields': ('logo_url', 'logo_preview')}),
+        ('Homepage display', {'fields': ('upload_logo', 'logo_url', 'logo_preview')}),
     )
+
+    def save_model(self, request, obj, form, change):
+        upload = form.cleaned_data.get('upload_logo')
+        old_url = obj.logo_url
+        if upload:
+            saved = save_image_upload(upload, 'jobs/categories/logos', request=request)
+            obj.logo_url = saved['url']
+        super().save_model(request, obj, form, change)
+        if upload:
+            delete_local_media_url(old_url)
 
     @admin.display(description='Logo')
     def logo_preview(self, obj):

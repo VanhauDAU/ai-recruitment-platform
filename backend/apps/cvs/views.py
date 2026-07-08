@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.core.files.storage import default_storage
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -6,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from apps.common.media_storage import media_public_url
 
 from .models import UserCv
 from .serializers import UserCvSerializer
@@ -63,8 +66,8 @@ class UserCvUploadView(APIView):
         if file_type not in ALLOWED_UPLOAD_TYPES:
             return Response({'file': 'Only PDF or DOCX files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        path = default_storage.save(f'cvs/uploads/{upload.name}', upload)
-        file_url = default_storage.url(path)
+        path = default_storage.save(f'cvs/uploads/{request.user.public_id}/{uuid4().hex}.{file_type}', upload)
+        file_url = media_public_url(path, request=request)
 
         cv = UserCv.objects.create(
             user=request.user,

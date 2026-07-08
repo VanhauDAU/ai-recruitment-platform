@@ -4,9 +4,43 @@ from apps.sitecontent.models import Banner, LinkGroup, LinkItem, SiteSetting
 
 # Cấu hình mẫu để trang chạy ngay; admin chỉnh/thêm sau qua trang quản trị.
 SETTINGS = [
-    ('site_name', 'Tên site', SiteSetting.Group.GENERAL, 'AI Career Coach'),
-    ('hotline', 'Hotline hỗ trợ', SiteSetting.Group.CONTACT, '1900 1234'),
-    ('support_email', 'Email hỗ trợ', SiteSetting.Group.CONTACT, 'support@aicareercoach.vn'),
+    (
+        'site_name',
+        'Tên site',
+        SiteSetting.Group.GENERAL,
+        'ProCV',
+        'Tên thương hiệu hiển thị ở header, footer và các màn đăng nhập/đăng ký.',
+    ),
+    (
+        'brand_logo_url',
+        'Logo đầy đủ',
+        SiteSetting.Group.APPEARANCE,
+        '/images/logo/aicareer-logo.svg',
+        'URL logo dạng ngang/wordmark dùng ở header. Có thể dùng static asset hoặc media URL nội bộ.',
+    ),
+    (
+        'brand_logo_mark_url',
+        'Logo biểu tượng',
+        SiteSetting.Group.APPEARANCE,
+        '/favicon.svg',
+        'URL logo vuông/icon dùng ở màn đăng nhập, favicon fallback hoặc nơi thiếu diện tích.',
+    ),
+    (
+        'brand_favicon_url',
+        'Favicon',
+        SiteSetting.Group.APPEARANCE,
+        '/favicon.svg',
+        'URL favicon cho tab trình duyệt.',
+    ),
+    (
+        'brand_primary_color',
+        'Màu thương hiệu chính',
+        SiteSetting.Group.APPEARANCE,
+        '#00b14f',
+        'Mã màu hex dùng làm biến --brand-primary cho giao diện.',
+    ),
+    ('hotline', 'Hotline hỗ trợ', SiteSetting.Group.CONTACT, '1900 1234', ''),
+    ('support_email', 'Email hỗ trợ', SiteSetting.Group.CONTACT, 'support@aicareercoach.vn', ''),
 ]
 
 # (key, title, source, order, [items]) — items chỉ dùng cho source=manual.
@@ -43,10 +77,19 @@ class Command(BaseCommand):
     help = 'Tạo dữ liệu cấu hình & cụm link mặc định (idempotent).'
 
     def handle(self, *args, **options):
-        for key, label, group, value in SETTINGS:
-            _, created = SiteSetting.objects.get_or_create(
-                key=key, defaults={'label': label, 'group': group, 'value': value}
+        for key, label, group, value, description in SETTINGS:
+            setting, created = SiteSetting.objects.get_or_create(
+                key=key,
+                defaults={'label': label, 'group': group, 'value': value, 'description': description},
             )
+            if not created:
+                changed = False
+                for field, next_value in {'label': label, 'group': group, 'description': description}.items():
+                    if getattr(setting, field) != next_value:
+                        setattr(setting, field, next_value)
+                        changed = True
+                if changed:
+                    setting.save(update_fields=['label', 'group', 'description', 'updated_at'])
             self.stdout.write(f'{"+ " if created else "= "}setting {key}')
 
         for key, title, source, order, items in LINK_GROUPS:

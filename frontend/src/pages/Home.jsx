@@ -14,6 +14,7 @@ import HotlineConsultation from '../components/home/HotlineConsultation'
 import LocationFilter from '../components/job/LocationFilter'
 import MarketStats from '../components/home/MarketStats'
 import SearchDropdown, { saveHistory } from '../components/ui/SearchDropdown'
+import { useSiteSettings } from '../hooks/useSiteSettings'
 
 const SUGGESTED_JOBS = [
   'Lập trình viên React',
@@ -69,6 +70,7 @@ function PromoBanner({ banner, navigate }) {
 }
 
 export default function Home() {
+  const { siteName } = useSiteSettings()
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [searchBy, setSearchBy] = useState('title')
@@ -161,7 +163,7 @@ export default function Home() {
           </div>
 
           <Typography.Title level={1} className="!text-white !mb-3 !mt-5 !text-3xl md:!text-4xl !font-extrabold">
-            AI Career Coach — Tạo CV, Tìm việc làm, Tuyển dụng hiệu quả
+            {siteName} — Tạo CV, Tìm việc làm, Tuyển dụng hiệu quả
           </Typography.Title>
           <Typography.Paragraph className="!text-green-50 !text-base md:!text-lg !mb-0">
             Tiếp lợi thế, nối thành công cùng nền tảng nhân sự ứng dụng AI.

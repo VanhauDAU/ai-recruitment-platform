@@ -9,6 +9,7 @@ import {
 import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import BrandLogo from '../brand/BrandLogo'
 import { useAuth } from '../../hooks/useAuth'
 import { useHideOnScroll } from '../../hooks/useHideOnScroll'
 
@@ -182,10 +183,7 @@ export default function Header() {
       }`}
     >
       <div className="w-full px-6 h-16 flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
-          <span className="text-xl font-extrabold text-[#00b14f]">AI Career</span>
-          <span className="text-xl font-extrabold text-gray-800">Coach</span>
-        </Link>
+        <BrandLogo className="whitespace-nowrap cursor-pointer" imageClassName="h-9 max-w-[190px]" />
 
         <nav
           className="hidden md:flex items-stretch gap-6 text-sm font-medium text-gray-700 flex-1"

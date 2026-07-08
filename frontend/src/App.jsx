@@ -3,6 +3,7 @@ import { BrowserRouter, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { AuthProvider } from './hooks/useAuth'
 import AppRoutes from './routes/AppRoutes'
+import SiteSettingsProvider from './components/site/SiteSettingsProvider'
 
 const theme = {
   token: {
@@ -33,10 +34,12 @@ function App() {
     <ConfigProvider theme={theme}>
       <AntApp>
         <BrowserRouter>
-          <AuthProvider>
-            <ScrollRestorationGuard />
-            <AppRoutes />
-          </AuthProvider>
+          <SiteSettingsProvider>
+            <AuthProvider>
+              <ScrollRestorationGuard />
+              <AppRoutes />
+            </AuthProvider>
+          </SiteSettingsProvider>
         </BrowserRouter>
       </AntApp>
     </ConfigProvider>

@@ -24,9 +24,12 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/login/` | Đăng nhập, nhận access/refresh JWT |
 | POST | `/api/auth/refresh/` | Làm mới access token |
 | GET | `/api/auth/me/` | Thông tin tài khoản hiện tại |
+| POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
 | GET/PUT | `/api/candidate/profile/` | Xem/cập nhật hồ sơ ứng viên (tự tạo khi cần) |
 | GET/PUT | `/api/employer/profile/` | Xem/cập nhật hồ sơ công ty |
 | POST | `/api/employer/profile/create/` | Tạo hồ sơ công ty |
+| POST | `/api/employer/profile/logo/` | Upload logo công ty vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
+| POST | `/api/employer/profile/cover/` | Upload cover công ty vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
 | GET | `/api/jobs/categories/` | Danh sách ngành nghề (taxonomy 3 cấp: nhóm nghề/nghề/vị trí chuyên môn), public, có phân trang mặc định |
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |

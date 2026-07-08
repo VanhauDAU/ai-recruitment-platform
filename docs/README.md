@@ -1,16 +1,16 @@
-# Tài liệu dự án — AI Career Coach Platform
+# Tài liệu dự án — ProCV Platform
 
 > [TIEN-DO-DU-AN.md](TIEN-DO-DU-AN.md) — theo dõi tiến độ toàn bộ dự án theo từng giai đoạn.
 
-| Thư mục | Tài liệu | Nội dung |
-|---|---|---|
-| [01-phan-tich](01-phan-tich/) | [phan-tich-yeu-cau.md](01-phan-tich/phan-tich-yeu-cau.md) | Phân tích yêu cầu, bài toán, đối tượng người dùng (PRD) |
-| [02-tong-quan](02-tong-quan/) | [tong-quan-he-thong.md](02-tong-quan/tong-quan-he-thong.md) | Tổng quan hệ thống, kiến trúc, phạm vi MVP |
-| [03-database](03-database/) | [thiet-ke-database.md](03-database/thiet-ke-database.md) | Thiết kế database, ERD, quy ước đặt tên |
-| [04-api](04-api/) | [tai-lieu-api.md](04-api/tai-lieu-api.md) | Tài liệu API (endpoint, request/response) |
-| [05-huong-dan](05-huong-dan/) | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md) | Hướng dẫn cài đặt, chạy dự án local |
-| [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Hướng dẫn deploy, Docker, môi trường production |
-| [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md) | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
-| [08-frontend](08-frontend/) | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md) | Cấu trúc frontend, component, quy ước code |
+| Thư mục                         | Tài liệu                                                         | Nội dung                                                                |
+| ------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [01-phan-tich](01-phan-tich/)   | [phan-tich-yeu-cau.md](01-phan-tich/phan-tich-yeu-cau.md)        | Phân tích yêu cầu, bài toán, đối tượng người dùng (PRD)                 |
+| [02-tong-quan](02-tong-quan/)   | [tong-quan-he-thong.md](02-tong-quan/tong-quan-he-thong.md)      | Tổng quan hệ thống, kiến trúc, phạm vi MVP                              |
+| [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
+| [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
+| [05-huong-dan](05-huong-dan/)   | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md)        | Hướng dẫn cài đặt, chạy dự án local                                     |
+| [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Hướng dẫn deploy, Docker, môi trường production                         |
+| [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
+| [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 
 Nội dung chi tiết sẽ được bổ sung dần theo từng bước triển khai.

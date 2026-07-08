@@ -1,5 +1,6 @@
 import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useNavigate } from 'react-router-dom'
+import BrandLogo from '../components/brand/BrandLogo'
 import { useAuth } from '../hooks/useAuth'
 
 const { Header, Sider, Content } = Layout
@@ -31,7 +32,14 @@ export default function DashboardLayout() {
   return (
     <Layout className="min-h-screen">
       <Sider breakpoint="lg" collapsedWidth="0">
-        <div className="text-white text-center py-4 font-semibold">AI Career Coach</div>
+        <div className="flex justify-center px-4 py-4">
+          <BrandLogo
+            dark
+            className="max-w-full justify-center"
+            imageClassName="h-8 max-w-[168px]"
+            textClassName="text-sm"
+          />
+        </div>
         <Menu
           theme="dark"
           mode="inline"

@@ -5,6 +5,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/authService'
 import AuthLogo from '../../components/auth/AuthLogo'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 function GoogleIcon() {
   return (
@@ -38,6 +39,7 @@ const SOCIAL_PROVIDERS = [
 ]
 
 export default function Register() {
+  const { siteName } = useSiteSettings()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
@@ -273,7 +275,7 @@ export default function Register() {
                     >
                       Chính sách quyền riêng tư
                     </a>{' '}
-                    của AI Career Coach.
+                    của {siteName}.
                   </span>
                 </Checkbox>
               </Form.Item>

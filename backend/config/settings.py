@@ -149,6 +149,8 @@ STATIC_URL = 'static/'
 # Media files (uploaded CVs, template thumbnails)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_PUBLIC_BASE_URL = config('MEDIA_PUBLIC_BASE_URL', default='')
+IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024, cast=int)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -181,9 +183,9 @@ SIMPLE_JWT = {
 
 # drf-spectacular (OpenAPI 3 schema + Swagger UI / ReDoc)
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'AI Career Coach API',
+    'TITLE': 'ProCV API',
     'DESCRIPTION': (
-        'API cho nền tảng AI Career Coach — CV Builder, phân tích CV, '
+        'API cho nền tảng ProCV — CV Builder, phân tích CV, '
         'so khớp CV–Job và tuyển dụng. Dùng JWT: đăng nhập lấy access token '
         'rồi bấm "Authorize" và nhập "Bearer <access_token>".'
     ),
