@@ -1,4 +1,4 @@
-import { EnvironmentOutlined, LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { CloseOutlined, EnvironmentOutlined, LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Popover, Skeleton } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getProvinces, getWards } from '../../api/locationService'
@@ -112,6 +112,15 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
       else ids.push(...v)
     }
     onChange(ids)
+    setOpen(false)
+  }
+
+  function clearSelected(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDraft({})
+    setLoose([])
+    onChange([])
     setOpen(false)
   }
 
@@ -270,6 +279,22 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
         <span className={`flex-1 truncate font-medium ${triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
           {triggerLabel || 'Địa điểm'}
         </span>
+
+        {value.length > 0 && (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="Xóa địa điểm đã chọn"
+            title="Xóa địa điểm"
+            onClick={clearSelected}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') clearSelected(e)
+            }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] text-gray-400 transition hover:bg-gray-100 hover:text-[#00b14f]"
+          >
+            <CloseOutlined />
+          </span>
+        )}
 
         {/* Mũi tên xuống */}
         <span

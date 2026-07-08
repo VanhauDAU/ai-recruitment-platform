@@ -322,7 +322,7 @@ export default function FeaturedIndustriesEmployers() {
                         <button
                           key={category.id}
                           type="button"
-                          onClick={() => navigate(`/viec-lam?category=${category.id}`)}
+                          onClick={() => navigate(`/viec-lam?cat=${category.id}`)}
                           className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[#00b14f] hover:bg-white hover:shadow-md hover:shadow-emerald-100"
                         >
                           {logoUrl && (

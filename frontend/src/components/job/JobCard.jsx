@@ -25,6 +25,19 @@ function getSaved() {
   }
 }
 
+// Lưu/bỏ lưu việc làm (localStorage) — dùng chung cho JobCard và JobQuickView.
+export function useSavedJob(publicId) {
+  const [saved, setSaved] = useState(() => getSaved().has(publicId))
+  function toggle() {
+    const set = getSaved()
+    if (set.has(publicId)) set.delete(publicId)
+    else set.add(publicId)
+    localStorage.setItem(SAVED_KEY, JSON.stringify([...set]))
+    setSaved(set.has(publicId))
+  }
+  return [saved, toggle]
+}
+
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
 function postedLabel(job) {
   const at = job.published_at || job.created_at
@@ -38,7 +51,7 @@ function postedLabel(job) {
 
 function Chip({ children }) {
   return (
-    <span className="inline-flex max-w-full items-center truncate rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-600">
+    <span className="inline-flex max-w-full items-center truncate rounded-full bg-white/70 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-emerald-100 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent">
       {children}
     </span>
   )
@@ -79,9 +92,12 @@ function RequirementTooltip({ details }) {
   )
 }
 
-export default function JobCard({ job, isAuthenticated = true, onRequireLogin }) {
+// `onQuickView`: click vào card (ngoài tiêu đề) / nút "Xem nhanh" mở panel xem nhanh
+// thay vì sang trang chi tiết (tiêu đề vẫn là link sang trang chi tiết).
+// `compact`: bản gọn cho cột danh sách khi panel xem nhanh đang mở; `active`: card đang xem.
+export default function JobCard({ job, isAuthenticated = true, onRequireLogin, onQuickView, compact = false, active = false }) {
   const navigate = useNavigate()
-  const [saved, setSaved] = useState(() => getSaved().has(job.public_id))
+  const [saved, toggleSaved] = useSavedJob(job.public_id)
   const [hovered, setHovered] = useState(false)
   const locationLabel = formatLocations(job)
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
@@ -112,11 +128,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin })
       onRequireLogin?.()
       return
     }
-    const set = getSaved()
-    if (saved) set.delete(job.public_id)
-    else set.add(job.public_id)
-    localStorage.setItem(SAVED_KEY, JSON.stringify([...set]))
-    setSaved(!saved)
+    toggleSaved()
   }
 
   function handleApply(e) {
@@ -125,14 +137,28 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin })
     navigate(`/viec-lam/${job.slug}`)
   }
 
+  // Click card / nút "Xem nhanh": mở panel nếu có, ngược lại vào trang chi tiết.
+  function handleQuickView(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onQuickView) onQuickView(job)
+    else navigate(`/viec-lam/${job.slug}`)
+  }
+
   return (
-    <Link
-      to={`/viec-lam/${job.slug}`}
+    <div
+      onClick={handleQuickView}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative flex gap-4 rounded-xl border border-emerald-200 bg-white p-4 transition hover:border-[#00b14f] hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00b14f]/25"
+      className={`group relative flex cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00b14f]/25 ${
+        compact ? 'p-3' : 'p-4'
+      } ${active ? 'border-[#00b14f] bg-white shadow-md shadow-emerald-600/10' : 'border-emerald-300 bg-emerald-50/65 hover:border-[#00b14f]'}`}
     >
-      <div className="flex h-20 w-20 md:h-24 md:w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
+      <div
+        className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white ${
+          compact ? 'h-14 w-14' : 'h-20 w-20 md:h-24 md:w-24'
+        }`}
+      >
         {job.company_logo_url ? (
           <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
         ) : (
@@ -143,9 +169,15 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin })
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
+        <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
           <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[#00b14f]">
-            {job.title}
+            <Link
+              to={`/viec-lam/${job.slug}`}
+              onClick={(e) => e.stopPropagation()}
+              className="hover:underline underline-offset-2"
+            >
+              {job.title}
+            </Link>
           </h3>
           <span className="shrink-0 text-sm font-semibold text-[#00b14f]">{formatSalary(job)}</span>
         </div>
@@ -156,7 +188,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin })
           {job.experience_level && <Chip>{EXPERIENCE_LEVEL_LABELS[job.experience_level]}</Chip>}
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-dashed border-gray-100 pt-2.5 pr-0 md:pr-28">
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-emerald-100 pt-2.5 transition-colors group-hover:border-gray-200/70">
           <Tooltip
             placement="topLeft"
             title={<RequirementTooltip details={requirementDetails} />}
@@ -176,7 +208,18 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin })
             </p>
           </Tooltip>
           <span className="flex shrink-0 items-center gap-3">
-            {posted && <span className="text-xs text-gray-400">{posted}</span>}
+            {posted && !compact && <span className="text-xs text-gray-400">{posted}</span>}
+            {!compact && (
+              <button
+                type="button"
+                onClick={handleApply}
+                className={`hidden origin-center cursor-pointer rounded-full bg-[#00b14f] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#008a3e] hover:shadow-lg hover:shadow-emerald-600/25 md:inline-flex ${
+                  hovered ? 'translate-y-0 scale-100 opacity-100 delay-75' : 'pointer-events-none translate-y-2 scale-95 opacity-0'
+                }`}
+              >
+                Ứng tuyển
+              </button>
+            )}
             <Tooltip title={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
               <button
                 type="button"
@@ -190,15 +233,17 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin })
           </span>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={handleApply}
-        className={`absolute bottom-4 right-4 cursor-pointer rounded-full bg-[#00b14f] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-[#008a3e] ${
-          hovered ? 'inline-flex translate-y-0 opacity-100' : 'pointer-events-none hidden translate-y-1 opacity-0'
-        }`}
-      >
-        Ứng tuyển
-      </button>
-    </Link>
+      {!compact && (
+        <button
+          type="button"
+          onClick={handleQuickView}
+          className={`absolute right-4 top-[52px] hidden origin-center cursor-pointer items-center gap-1 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-[#00b14f] shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md md:inline-flex ${
+            hovered ? 'translate-y-0 scale-100 opacity-100' : 'pointer-events-none translate-y-2 scale-95 opacity-0'
+          }`}
+        >
+          Xem nhanh <span className={`text-base leading-none transition-transform duration-300 ${hovered ? 'translate-x-0.5' : ''}`}>»</span>
+        </button>
+      )}
+    </div>
   )
 }

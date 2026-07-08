@@ -47,6 +47,8 @@ class JobListView(generics.ListAPIView):
             qs = qs.filter(employment_type=employment_type)
         if experience_level := params.get('experience_level'):
             qs = qs.filter(experience_level=experience_level)
+        if education_level := params.get('education_level'):
+            qs = qs.filter(education_level=education_level)
         # Bộ lọc kiểu TopCV: cấp bậc, kinh nghiệm theo năm (chọn nhiều),
         # chế độ thứ 7 ('not_mentioned' = tin không đề cập), lĩnh vực công ty.
         if position_level := params.get('position_level'):

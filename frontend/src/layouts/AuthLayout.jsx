@@ -1,5 +1,6 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
 import { Outlet, useLocation } from 'react-router-dom'
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import ThemeToggle from '../components/ui/ThemeToggle'
 import { useColorScheme } from '../hooks/useColorScheme'
 
@@ -15,25 +16,27 @@ export default function AuthLayout() {
         token: { borderRadius: 12 },
       }}
     >
-      <div
-        className="flex min-h-[100dvh] flex-col text-gray-900 dark:text-gray-100"
-        style={{ background: '#F7F7F7' }}
-      >
-        <header className="flex justify-end px-6 py-4 lg:px-12">
-          <ThemeToggle scheme={scheme} onToggle={toggleScheme} />
-        </header>
+      <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
+        <div
+          className="flex min-h-[100dvh] flex-col text-gray-900 dark:text-gray-100"
+          style={{ background: '#F7F7F7' }}
+        >
+          <header className="flex justify-end px-6 py-4 lg:px-12">
+            <ThemeToggle scheme={scheme} onToggle={toggleScheme} />
+          </header>
 
-        <main className="flex flex-1 items-center justify-center px-4 py-6">
-          <div
-            className={`w-full animate-fade-slide rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.07)] dark:bg-zinc-900 dark:shadow-none ${
-              isRegister ? 'max-w-[680px]' : 'max-w-[560px]'
-            }`}
-            style={{ padding: isRegister ? '2.5rem 3rem' : '2.5rem 2.75rem' }}
-          >
-            <Outlet />
-          </div>
-        </main>
-      </div>
+          <main className="flex flex-1 items-center justify-center px-4 py-6">
+            <div
+              className={`w-full animate-fade-slide rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.07)] dark:bg-zinc-900 dark:shadow-none ${
+                isRegister ? 'max-w-[680px]' : 'max-w-[560px]'
+              }`}
+              style={{ padding: isRegister ? '2.5rem 3rem' : '2.5rem 2.75rem' }}
+            >
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </GoogleReCaptchaProvider>
     </ConfigProvider>
   )
 }

@@ -1,6 +1,7 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthLogo from '../../components/auth/AuthLogo'
 import { useAuth } from '../../hooks/useAuth'
@@ -50,18 +51,30 @@ const SOCIAL_PROVIDERS = [
 export default function Login({ onSuccess }) {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function onFinish(values) {
+    if (!executeRecaptcha) {
+      setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      const user = await login(values)
+      const captchaToken = await executeRecaptcha('login')
+      const user = await login({ ...values, captcha_token: captchaToken })
       if (onSuccess) onSuccess(user)
       else navigate(HOME_BY_ROLE[user.role] || '/')
-    } catch {
-      setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+    } catch (err) {
+      if (err.response?.status === 429) {
+        setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
+      } else if (err.response?.data?.captcha_token) {
+        setError(err.response.data.captcha_token.join(' '))
+      } else {
+        setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+      }
     } finally {
       setLoading(false)
     }

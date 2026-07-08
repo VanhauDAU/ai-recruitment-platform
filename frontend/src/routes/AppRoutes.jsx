@@ -1,6 +1,6 @@
-import { Spin } from 'antd'
 import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import PageLoading from '../components/ui/PageLoading'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import MainLayout from '../layouts/MainLayout'
@@ -16,17 +16,9 @@ const EmployerDashboard = lazy(() => import('../pages/employer/Dashboard'))
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'))
 const NotFound = lazy(() => import('../pages/NotFound'))
 
-function RouteFallback() {
-  return (
-    <div className="flex justify-center py-20">
-      <Spin size="large" />
-    </div>
-  )
-}
-
 export default function AppRoutes() {
   return (
-    <Suspense fallback={<RouteFallback />}>
+    <Suspense fallback={<PageLoading />}>
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />

@@ -1,22 +1,34 @@
 import {
+  AppstoreOutlined,
   BankOutlined,
   BellOutlined,
+  CalendarOutlined,
+  CloseOutlined,
+  DollarOutlined,
   DownOutlined,
+  FieldTimeOutlined,
   FilterOutlined,
+  InfoCircleFilled,
+  LaptopOutlined,
+  ReadOutlined,
   RightOutlined,
+  RocketOutlined,
   PushpinOutlined,
   SearchOutlined,
   UpOutlined,
 } from '@ant-design/icons'
 import { Button, Checkbox, Empty, Input, InputNumber, Modal, Pagination, Select, Skeleton, Tooltip, message } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getIndustries, getJobCategories, getJobStats, getJobs } from '../../api/jobService'
-import { getLocationsByIds, getProvinces } from '../../api/locationService'
+import { getLocationsByIds, getProvinces, getWards } from '../../api/locationService'
 import CategoryPicker from '../../components/job/CategoryPicker'
 import JobCard from '../../components/job/JobCard'
 import JobCardSkeleton from '../../components/job/JobCardSkeleton'
+import JobQuickView from '../../components/job/JobQuickView'
 import LocationFilter from '../../components/job/LocationFilter'
+import ArrowButton from '../../components/ui/ArrowButton'
 import SearchDropdown, { SEARCH_BY_TABS, saveHistory } from '../../components/ui/SearchDropdown'
 import { useAuth } from '../../hooks/useAuth'
 import useDebouncedValue from '../../hooks/useDebouncedValue'
@@ -203,6 +215,84 @@ function MultiChips({ values, onToggle, onClear, options, allLabel = 'Tất cả
   )
 }
 
+// Thẻ ngành nghề/lối tắt trong dải "khám phá nhanh" dưới thanh tìm kiếm (kiểu TopCV).
+// `img` = logo ngành (nếu có); ngược lại dùng `icon` (node) trên nền tròn.
+function ShortcutCard({ icon, img, label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex w-[128px] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-xl border bg-white px-2 py-3.5 text-center transition ${
+        active ? 'border-[#00b14f] bg-green-50/60' : 'border-gray-200 hover:border-[#00b14f] hover:shadow-sm'
+      }`}
+    >
+      <span
+        className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-lg ${
+          img ? 'bg-white ring-1 ring-gray-100' : active ? 'bg-[#00b14f] text-white' : 'bg-emerald-50 text-[#00b14f]'
+        }`}
+      >
+        {img ? <img src={img} alt="" className="h-7 w-7 object-contain" loading="lazy" /> : icon}
+      </span>
+      <span className="line-clamp-2 h-8 text-xs font-medium leading-snug text-gray-700">{label}</span>
+    </button>
+  )
+}
+
+function PlaceHighlight({ children }) {
+  return (
+    <span className="rounded bg-amber-100 px-1 font-semibold text-amber-900 ring-1 ring-amber-200/70">
+      {children}
+    </span>
+  )
+}
+
+function PlaceList({ items }) {
+  return items.map((item, index) => (
+    <span key={item}>
+      {index > 0 && ', '}
+      <PlaceHighlight>{item}</PlaceHighlight>
+    </span>
+  ))
+}
+
+function WardSuggestionCard({ wards, onSelect }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!wards.length) return null
+  const visibleWards = expanded ? wards : wards.slice(0, 3)
+  const canExpand = wards.length > 3
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-gray-800">Gợi ý phường xã:</h3>
+        {canExpand && (
+          <button
+            type="button"
+            aria-label={expanded ? 'Thu gọn gợi ý phường xã' : 'Xem thêm gợi ý phường xã'}
+            onClick={() => setExpanded((value) => !value)}
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-[#00b14f]"
+          >
+            <DownOutlined className={`text-xs transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          </button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {visibleWards.map((ward) => (
+          <button
+            key={ward.id}
+            type="button"
+            onClick={() => onSelect(ward.id)}
+            className="cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:border-[#00b14f] hover:bg-green-50 hover:text-[#00b14f]"
+          >
+            {ward.name}
+            {ward.provinceName && <span className="ml-1 text-gray-400">tại {ward.provinceName}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -222,7 +312,15 @@ export default function JobList() {
   const [sidebarLoading, setSidebarLoading] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [quickViewJob, setQuickViewJob] = useState(null) // job đang mở panel "Xem nhanh" (null = layout thường)
+  const [dismissedNotice, setDismissedNotice] = useState(null) // id tỉnh đã đóng banner sáp nhập
+  const [noticeExpanded, setNoticeExpanded] = useState(false)
+  const [noExpCount, setNoExpCount] = useState(null)
+  const [suggestedWards, setSuggestedWards] = useState([])
   const searchBoxRef = useRef(null)
+  const shortcutScrollerRef = useRef(null)
+  const [canScrollShortcutsLeft, setCanScrollShortcutsLeft] = useState(false)
+  const [canScrollShortcutsRight, setCanScrollShortcutsRight] = useState(false)
   const latestSearchParamsRef = useRef(searchParams)
   const lastSearchParamRef = useRef(searchParams.get('search') || '')
   const { isAuthenticated } = useAuth()
@@ -247,6 +345,20 @@ export default function JobList() {
     return m
   }, [categories])
 
+  // Bật/tắt nút mũi tên trái/phải của dải "khám phá nhanh" theo vị trí cuộn thực tế.
+  useEffect(() => {
+    const el = shortcutScrollerRef.current
+    if (!el) return undefined
+    updateShortcutScrollState()
+    el.addEventListener('scroll', updateShortcutScrollState, { passive: true })
+    window.addEventListener('resize', updateShortcutScrollState)
+    return () => {
+      el.removeEventListener('scroll', updateShortcutScrollState)
+      window.removeEventListener('resize', updateShortcutScrollState)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sidebarLoading, groups.length])
+
   useEffect(() => {
     setSidebarLoading(true)
     Promise.allSettled([
@@ -255,6 +367,20 @@ export default function JobList() {
       getProvinces().then(setProvinces),
       getIndustries().then(setIndustries),
     ]).finally(() => setSidebarLoading(false))
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    getJobs({ experience_years: 'none', page_size: 1 })
+      .then((items) => {
+        if (!cancelled) setNoExpCount(items.count ?? (items.results || items).length)
+      })
+      .catch(() => {
+        if (!cancelled) setNoExpCount(null)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
@@ -391,6 +517,20 @@ export default function JobList() {
     setCommaParam('exp', current.includes(value) ? current.filter((v) => v !== value) : [...current, value])
   }
 
+  // Cuộn ngang bằng nút mũi tên; trình duyệt đã tự hỗ trợ kéo cảm ứng/trackpad qua overflow-x-auto.
+  // (Trước đây tự bắt pointer để kéo bằng chuột, nhưng setPointerCapture đôi khi nuốt luôn click
+  // của thẻ bên dưới con trỏ -> chọn nhầm/không chọn được nhiều thẻ. Bỏ hẳn để click luôn đáng tin cậy.)
+  function updateShortcutScrollState() {
+    const el = shortcutScrollerRef.current
+    if (!el) return
+    setCanScrollShortcutsLeft(el.scrollLeft > 4)
+    setCanScrollShortcutsRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  function scrollShortcuts(direction) {
+    shortcutScrollerRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' })
+  }
+
   function clearFilters() {
     const next = new URLSearchParams(searchParams)
     FILTER_KEYS.forEach((k) => next.delete(k))
@@ -483,6 +623,17 @@ export default function JobList() {
     }
   })
   const selectedLocationGroups = [...selectedLocationGroupsMap.values()]
+  const suggestedProvinces = selectedLocationGroups
+    .map((group) => group.province)
+    .filter(Boolean)
+    .filter((province, index, items) => items.findIndex((item) => item.id === province.id) === index)
+  // Chọn đúng 1 tỉnh/thành -> hiện banner thông báo địa danh hành chính mới (sau sáp nhập 1/7/2025).
+  const singleProvince = selectedLocationGroups.length === 1 ? selectedLocationGroups[0].province : null
+  const showMergeNotice = singleProvince && dismissedNotice !== singleProvince.id
+  // Tên tỉnh viết thường ở giữa câu ("Tỉnh Đồng Nai" -> "tỉnh Đồng Nai"); merged_from = các tỉnh cũ hợp thành.
+  const provName = singleProvince ? singleProvince.name.charAt(0).toLowerCase() + singleProvince.name.slice(1) : ''
+  const mergedFrom = singleProvince?.merged_from || []
+  const selectedWardNames = selectedLocationGroups.flatMap((group) => group.allProvince ? [] : group.wards.map(locationDisplayName))
   const locationSummary = formatLocationGroups(selectedLocationGroups)
   const fullLocationSummary = formatLocationGroups(selectedLocationGroups, { maxGroups: Infinity, maxWards: Infinity })
   const locationContext = locationSummary ? `tại ${locationSummary} mới (sau sáp nhập)` : ''
@@ -493,6 +644,73 @@ export default function JobList() {
   const isLocationContext = !searchLabel && !catName && Boolean(locationContext)
   const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
   const visibleGroups = showAllGroups ? groups : groups.slice(0, VISIBLE_GROUPS)
+  const wardSuggestionInsertIndex = useMemo(() => {
+    if (results.length < 3) return 1
+    const min = Math.max(1, Math.floor(results.length * 0.35))
+    const max = Math.max(min, Math.floor(results.length * 0.7))
+    const hash = selectedLocationKey.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), results.length)
+    return min + (hash % (max - min + 1))
+  }, [selectedLocationKey, results.length])
+
+  // ── Dải "khám phá nhanh" dưới thanh tìm kiếm (lối tắt lọc, kiểu TopCV) ──
+  const expYears = getCommaList(searchParams, 'exp')
+  const toggleParam = (key, value) => updateParams({ [key]: searchParams.get(key) === value ? null : value })
+  const shortcutSpecials = [
+    { key: 'intern', label: 'Việc thực tập sinh', icon: <ReadOutlined />, active: searchParams.get('level') === 'intern', onClick: () => toggleParam('level', 'intern') },
+    { key: 'part-time', label: 'Part-time, thời vụ', icon: <FieldTimeOutlined />, active: searchParams.get('et') === 'part_time', onClick: () => toggleParam('et', 'part_time') },
+  ]
+  const quickPills = [
+    { key: 'salary', label: 'Ưu tiên việc lương cao', icon: <DollarOutlined />, active: ordering === 'salary_desc', onClick: () => toggleParam('sort', 'salary_desc') },
+    { key: 'remote', label: 'Làm việc từ xa', icon: <LaptopOutlined />, active: searchParams.get('wt') === 'remote', onClick: () => toggleParam('wt', 'remote') },
+    { key: 'weekend', label: 'Nghỉ thứ 7', icon: <CalendarOutlined />, active: searchParams.get('weekend') === 'off_saturday', onClick: () => toggleParam('weekend', 'off_saturday') },
+    {
+      key: 'no-exp',
+      label: `${noExpCount == null ? '...' : formatNumber(noExpCount)} việc làm không cần kinh nghiệm`,
+      icon: <RocketOutlined />,
+      active: expYears.includes('none'),
+      onClick: () => toggleExperienceYears('none'),
+    },
+  ]
+  const openAllCategories = () => {
+    setShowAllGroups(true)
+    document.getElementById('cat-filter')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  useEffect(() => {
+    if (!suggestedProvinces.length) {
+      setSuggestedWards([])
+      return
+    }
+
+    let cancelled = false
+    Promise.all(suggestedProvinces.map((province) => getWards(province.id).then((wards) => ({ province, wards }))))
+      .then((groups) => {
+        if (cancelled) return
+        const selected = new Set(selectedLocations)
+        const candidates = groups.flatMap(({ province, wards }) => (
+          wards
+            .filter((ward) => !selected.has(ward.id))
+            .map((ward) => ({
+              ...ward,
+              provinceId: province.id,
+              provinceName: shortLocationName(province.name),
+            }))
+        ))
+        const shuffled = [...candidates].sort(() => Math.random() - 0.5)
+        setSuggestedWards(shuffled.slice(0, 12))
+      })
+      .catch(() => {
+        if (!cancelled) setSuggestedWards([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedLocationKey, selectedLocationGroups.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function selectSuggestedWard(wardId) {
+    setLocationParam([wardId])
+  }
 
   return (
     <div>
@@ -622,11 +840,134 @@ export default function JobList() {
           </button>
         )}
 
-        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr]">
-          {/* ── Sidebar lọc nâng cao: dính viewport, có thanh cuộn riêng khi dài hơn màn hình ── */}
+        {/* ── Khám phá nhanh: dải thẻ ngành nghề + hàng pill lối tắt lọc ── */}
+        <div className="relative mt-4">
+          <div
+            ref={shortcutScrollerRef}
+            className="flex gap-2.5 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {sidebarLoading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="w-[128px] shrink-0 rounded-xl border border-gray-200 bg-white px-2 py-3.5">
+                    <Skeleton active title={false} paragraph={{ rows: 2, width: ['60%', '90%'] }} />
+                  </div>
+                ))
+              : (
+                <>
+                  {shortcutSpecials.map((s) => (
+                    <ShortcutCard key={s.key} icon={s.icon} label={s.label} active={s.active} onClick={s.onClick} />
+                  ))}
+                  {groups.map((g) => (
+                    <ShortcutCard
+                      key={g.id}
+                      img={g.logo_url || undefined}
+                      icon={<AppstoreOutlined />}
+                      label={g.name}
+                      active={selectedCategories.includes(g.id)}
+                      onClick={() => toggleCategory(g.id)}
+                    />
+                  ))}
+                  <ShortcutCard icon={<AppstoreOutlined />} label="Xem tất cả ngành nghề" onClick={openAllCategories} />
+                </>
+              )}
+          </div>
+          {!sidebarLoading && canScrollShortcutsLeft && (
+            <ArrowButton
+              dir="left"
+              onClick={() => scrollShortcuts(-1)}
+              className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-md shadow-black/10"
+            />
+          )}
+          {!sidebarLoading && canScrollShortcutsRight && (
+            <ArrowButton
+              dir="right"
+              onClick={() => scrollShortcuts(1)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white shadow-md shadow-black/10"
+            />
+          )}
+        </div>
+
+        {!sidebarLoading && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {quickPills.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                onClick={p.onClick}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+                  p.active
+                    ? 'border-[#00b14f] bg-green-50 text-[#00b14f]'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-[#00b14f] hover:text-[#00b14f]'
+                }`}
+              >
+                {p.icon}
+                {p.label}
+                <RightOutlined className="text-[10px]" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Banner địa danh hành chính mới: chỉ hiện khi lọc đúng 1 tỉnh/thành ── */}
+        {showMergeNotice && (
+          <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <InfoCircleFilled className="mt-0.5 shrink-0 text-amber-500" />
+            <div className="min-w-0 flex-1">
+              <span className={noticeExpanded ? '' : 'line-clamp-1'}>
+                <b>Lưu ý:</b> Từ ngày 1/7/2025,{' '}
+                {mergedFrom.length ? (
+                  <>
+                    <PlaceHighlight>{provName}</PlaceHighlight> sau sáp nhập bao gồm phạm vi các tỉnh{' '}
+                    <PlaceList items={mergedFrom} /> cũ. Danh sách bên dưới hiển thị các việc làm tại{' '}
+                    <PlaceHighlight>{provName}</PlaceHighlight> mới, phù hợp với nhu cầu tìm việc theo đơn vị hành chính
+                    mới.
+                  </>
+                ) : (
+                  <>
+                    <PlaceHighlight>{provName}</PlaceHighlight> điều chỉnh mô hình hành chính từ quận/huyện sang{' '}
+                    <PlaceHighlight>phường/xã</PlaceHighlight>. Danh sách bên dưới hiển thị các việc làm tại{' '}
+                    <PlaceHighlight>{provName}</PlaceHighlight> theo địa danh hành chính mới, phù hợp với nhu cầu tìm
+                    việc theo đơn vị hành chính mới.
+                  </>
+                )}
+                {selectedWardNames.length > 0 && (
+                  <>
+                    {' '}Khu vực đã chọn: <PlaceList items={selectedWardNames} />.
+                  </>
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={() => setNoticeExpanded((v) => !v)}
+                className="ml-1 inline-flex cursor-pointer items-center gap-0.5 font-semibold text-amber-600 hover:text-amber-700"
+              >
+                {noticeExpanded ? 'Thu gọn' : 'Xem thêm'}
+                {noticeExpanded ? <UpOutlined className="text-[10px]" /> : <DownOutlined className="text-[10px]" />}
+              </button>
+            </div>
+            <button
+              type="button"
+              aria-label="Đóng thông báo"
+              onClick={() => setDismissedNotice(singleProvince.id)}
+              className="shrink-0 cursor-pointer p-0.5 text-amber-400 hover:text-amber-600"
+            >
+              <CloseOutlined className="text-xs" />
+            </button>
+          </div>
+        )}
+
+        {/* Không transition grid-template-columns (nội suy track width bị giật) — đổi cột tức thì,
+            phần chuyển động mượt do panel slide-in + skeleton fade đảm nhận. */}
+        <div
+          className={`mt-4 grid grid-cols-1 gap-5 ${
+            quickViewJob ? 'lg:grid-cols-[minmax(340px,400px)_1fr] lg:items-start' : 'lg:grid-cols-[300px_1fr]'
+          }`}
+        >
+          {/* ── Sidebar lọc nâng cao: ẩn khi panel "Xem nhanh" mở (danh sách job chiếm chỗ này) ── */}
+          {!quickViewJob && (
           <aside
             style={{ '--sb-top': `${sidebarTop}px` }}
-            className="filter-sidebar flex flex-col rounded-xl border border-gray-200 bg-white transition-[top] duration-300 h-[calc(100dvh-180px)] lg:sticky lg:top-[var(--sb-top)] lg:h-[calc(100dvh-var(--sb-top)-1rem)]"
+            className="filter-sidebar animate-fade-slide flex flex-col bg-transparent transition-[top] duration-300 h-[calc(100dvh-180px)] lg:sticky lg:top-[var(--sb-top)] lg:h-[calc(100dvh-var(--sb-top)-1rem)]"
           >
             <style>{`
               .filter-sidebar-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
@@ -662,6 +1003,7 @@ export default function JobList() {
             </FilterSection>
 
             <div className="mt-4" />
+            <div id="cat-filter">
             <FilterSection title="Theo danh mục nghề">
               {sidebarLoading ? (
                 <FilterSkeleton rows={6} />
@@ -725,6 +1067,7 @@ export default function JobList() {
               </div>
               )}
             </FilterSection>
+            </div>
 
             <div className="mt-4">
               <FilterSection title="Kinh nghiệm">
@@ -813,7 +1156,7 @@ export default function JobList() {
             </div>{/* end scrollable */}
 
             {/* Action buttons — always visible at bottom, outside scroll area */}
-            <div className="sticky bottom-0 z-10 flex shrink-0 gap-2 rounded-b-xl border-t border-gray-100 bg-white/95 px-4 py-3 shadow-[0_-12px_24px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="sticky bottom-0 z-10 flex shrink-0 gap-2 border-t border-gray-200/70 bg-[inherit] px-4 py-3 backdrop-blur">
               <Button
                 block
                 disabled={!hasFilters}
@@ -834,10 +1177,11 @@ export default function JobList() {
               </Button>
             </div>
           </aside>
+          )}
 
-          {/* ── Danh sách việc làm ── */}
+          {/* ── Danh sách việc làm (khi "Xem nhanh" mở: cột trái gọn, thay chỗ bộ lọc) ── */}
           <div className="lg:col-span-1">
-            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className={quickViewJob ? 'hidden' : 'mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-gray-500">Tìm kiếm theo:</span>
                 {SEARCH_BY_TABS.map((tab) => {
@@ -885,13 +1229,23 @@ export default function JobList() {
               </div>
             ) : (
               <div className="space-y-3">
-                {results.map((job) => (
-                  <JobCard
-                    key={job.public_id}
-                    job={job}
-                    isAuthenticated={isAuthenticated}
-                    onRequireLogin={() => setLoginModalOpen(true)}
-                  />
+                {results.map((job, index) => (
+                  <div key={job.public_id} className="space-y-3">
+                    <JobCard
+                      job={job}
+                      isAuthenticated={isAuthenticated}
+                      onRequireLogin={() => setLoginModalOpen(true)}
+                      onQuickView={setQuickViewJob}
+                      compact={Boolean(quickViewJob)}
+                      active={quickViewJob?.public_id === job.public_id}
+                    />
+                    {!quickViewJob && suggestedWards.length > 0 && index + 1 === wardSuggestionInsertIndex && (
+                      <WardSuggestionCard
+                        wards={suggestedWards}
+                        onSelect={selectSuggestedWard}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -902,6 +1256,7 @@ export default function JobList() {
                   current={page}
                   pageSize={PAGE_SIZE}
                   total={count}
+                  simple={Boolean(quickViewJob)}
                   onChange={(p) => {
                     const next = new URLSearchParams(searchParams)
                     next.set('page', p)
@@ -913,6 +1268,21 @@ export default function JobList() {
               </div>
             )}
           </div>
+
+          {/* ── Panel xem nhanh: dính viewport, cuộn riêng như sidebar ── */}
+          {quickViewJob && (
+            <div
+              style={{ '--sb-top': `${sidebarTop}px` }}
+              className="transition-[top] duration-300 lg:sticky lg:top-[var(--sb-top)] lg:max-h-[calc(100dvh-var(--sb-top)-1rem)] lg:overflow-y-auto lg:[scrollbar-width:thin] rounded-xl"
+            >
+              <JobQuickView
+                job={quickViewJob}
+                onClose={() => setQuickViewJob(null)}
+                isAuthenticated={isAuthenticated}
+                onRequireLogin={() => setLoginModalOpen(true)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -929,7 +1299,9 @@ export default function JobList() {
           body: { padding: '40px 48px 36px' },
         }}
       >
-        <Login onSuccess={handleLoginSuccess} />
+        <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
+          <Login onSuccess={handleLoginSuccess} />
+        </GoogleReCaptchaProvider>
       </Modal>
     </div>
   )

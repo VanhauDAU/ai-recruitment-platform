@@ -18,7 +18,7 @@ export default function CategoryMenu({ categories, banner }) {
   const totalPages = Math.ceil(parents.length / GROUPS_PER_PAGE)
   const pageParents = parents.slice(page * GROUPS_PER_PAGE, page * GROUPS_PER_PAGE + GROUPS_PER_PAGE)
   const jobs = activeId != null ? childrenOf[activeId] || [] : []
-  const go = (id) => navigate(`/viec-lam?category=${id}`)
+  const go = (id) => navigate(`/viec-lam?cat=${id}`)
 
   function changePage(next) {
     setPage(next)

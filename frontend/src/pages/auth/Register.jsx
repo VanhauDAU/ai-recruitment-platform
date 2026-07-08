@@ -1,6 +1,7 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/authService'
 import AuthLogo from '../../components/auth/AuthLogo'
@@ -38,24 +39,34 @@ const SOCIAL_PROVIDERS = [
 
 export default function Register() {
   const navigate = useNavigate()
+  const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState('social')
 
   async function onFinish(values) {
+    if (!executeRecaptcha) {
+      setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
+      const captchaToken = await executeRecaptcha('register')
       const payload = {
         full_name: values.full_name,
         email: values.email,
         password: values.password,
       }
-      await register({ ...payload, role: 'candidate' })
+      await register({ ...payload, role: 'candidate', captcha_token: captchaToken })
       navigate('/login')
     } catch (err) {
-      const data = err.response?.data
-      setError(data ? Object.values(data).flat().join(' ') : 'Đăng ký thất bại. Vui lòng thử lại.')
+      if (err.response?.status === 429) {
+        setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
+      } else {
+        const data = err.response?.data
+        setError(data ? Object.values(data).flat().join(' ') : 'Đăng ký thất bại. Vui lòng thử lại.')
+      }
     } finally {
       setLoading(false)
     }
