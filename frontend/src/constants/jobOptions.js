@@ -19,6 +19,37 @@ export const EXPERIENCE_LEVEL_LABELS = {
   senior: 'Senior',
 }
 
+// Kinh nghiệm theo năm (bộ lọc "Kinh nghiệm" — chọn nhiều, ?experience_years=).
+export const EXPERIENCE_YEARS_LABELS = {
+  none: 'Không yêu cầu',
+  under_1: 'Dưới 1 năm',
+  1: '1 năm',
+  2: '2 năm',
+  3: '3 năm',
+  4: '4 năm',
+  5: '5 năm',
+  over_5: 'Trên 5 năm',
+}
+
+// Cấp bậc tuyển dụng (?position_level=).
+export const POSITION_LEVEL_LABELS = {
+  employee: 'Nhân viên',
+  team_lead: 'Trưởng nhóm',
+  manager: 'Trưởng/Phó phòng',
+  supervisor: 'Quản lý / Giám sát',
+  branch_manager: 'Trưởng chi nhánh',
+  vice_director: 'Phó giám đốc',
+  director: 'Giám đốc',
+  intern: 'Thực tập sinh',
+}
+
+// Chế độ thứ 7 (?weekend_policy=; 'not_mentioned' = tin không đề cập).
+export const WEEKEND_POLICY_OPTIONS = [
+  ['work_saturday', 'Làm thứ 7'],
+  ['off_saturday', 'Nghỉ thứ 7'],
+  ['not_mentioned', 'Tin đăng không đề cập'],
+]
+
 export const EDUCATION_LEVEL_LABELS = {
   none: 'Không yêu cầu',
   high_school: 'THPT',

@@ -10,6 +10,7 @@ import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useHideOnScroll } from '../../hooks/useHideOnScroll'
 
 const DASHBOARD_BY_ROLE = {
   candidate: '/candidate/dashboard',
@@ -26,13 +27,14 @@ const NAV_MENUS = [
   {
     key: 'jobs',
     label: 'Việc làm',
-    to: '/jobs',
+    to: '/viec-lam',
+    activePaths: ['/jobs'],
     columns: [
       [
         {
           title: 'Việc làm',
           items: [
-            { label: 'Tìm việc làm', to: '/jobs', icon: <SearchOutlined /> },
+            { label: 'Tìm việc làm', to: '/viec-lam', icon: <SearchOutlined /> },
             soon('Việc làm đã lưu', <BookOutlined />),
             soon('Việc làm đã ứng tuyển', <FileDoneOutlined />),
             soon('Việc làm phù hợp', <LikeOutlined />),
@@ -158,21 +160,27 @@ export default function Header() {
   const location = useLocation()
   const { message } = App.useApp()
   const [openKey, setOpenKey] = useState(null)
+  const headerVisible = useHideOnScroll()
 
   function isMenuActive(menu) {
     if (!menu.to) return false
-    return location.pathname === menu.to || location.pathname.startsWith(`${menu.to}/`)
+    const paths = [menu.to, ...(menu.activePaths || [])]
+    return paths.some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`))
   }
 
   function handleItem(it) {
     setOpenKey(null)
     if (it.to) navigate(it.to)
-    else if (it.search) navigate(`/jobs?search=${encodeURIComponent(it.search)}`)
+    else if (it.search) navigate(`/viec-lam?search=${encodeURIComponent(it.search)}`)
     else message.info('Tính năng sẽ sớm ra mắt.')
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <header
+      className={`bg-white border-b border-gray-200 sticky top-0 z-30 transition-transform duration-300 ${
+        headerVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       <div className="w-full px-6 h-16 flex items-center gap-8">
         <Link to="/" className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
           <span className="text-xl font-extrabold text-[#00b14f]">AI Career</span>
@@ -247,9 +255,9 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link to="/register" className="hidden sm:inline-block cursor-pointer"><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
+              <Link to="/sign-up" className="hidden sm:inline-block cursor-pointer"><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
               <Link to="/login" className="cursor-pointer"><Button className="cursor-pointer" type="primary" shape="round">Đăng nhập</Button></Link>
-              <Link to="/register" className="hidden lg:inline-block cursor-pointer">
+              <Link to="/sign-up" className="hidden lg:inline-block cursor-pointer">
                 <Button className="cursor-pointer" ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button>
               </Link>
             </>

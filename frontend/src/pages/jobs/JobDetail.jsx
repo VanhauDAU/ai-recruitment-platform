@@ -71,7 +71,7 @@ export default function JobDetail() {
       <Result
         status="404"
         title="Không tìm thấy tin tuyển dụng"
-        extra={<Link to="/jobs"><Button type="primary">Xem việc làm khác</Button></Link>}
+        extra={<Link to="/viec-lam"><Button type="primary">Xem việc làm khác</Button></Link>}
       />
     )
   }

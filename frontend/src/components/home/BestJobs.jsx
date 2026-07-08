@@ -209,7 +209,7 @@ export default function BestJobs({ categories = [] }) {
 
   function toggleChip(chip) {
     if (chip.action === 'openLocations') {
-      navigate('/jobs')
+      navigate('/viec-lam')
       return
     }
     setFilters((f) => ({ ...EMPTY_FILTERS, [dimension]: f[dimension] === chip.value ? null : chip.value }))
@@ -313,7 +313,7 @@ export default function BestJobs({ categories = [] }) {
           <BulbOutlined /> Gợi ý bởi AI
         </span>
         <div className="ml-auto flex items-center gap-2">
-          <button onClick={() => navigate('/jobs')} className="text-sm text-[#00b14f] hover:underline cursor-pointer">
+          <button onClick={() => navigate('/viec-lam')} className="text-sm text-[#00b14f] hover:underline cursor-pointer">
             Xem tất cả
           </button>
           <ArrowButton dir="left" disabled={page <= 1} onClick={goPrev} />
@@ -413,7 +413,7 @@ export default function BestJobs({ categories = [] }) {
 	                onMouseLeave={schedulePreviewClose}
 	              >
                 <a
-                  href={`/jobs/${job.slug}`}
+                  href={`/viec-lam/${job.slug}`}
                   target="_blank"
                   rel="noreferrer"
                   className="group relative flex gap-3 rounded-lg border border-gray-200 p-3 hover:border-[#00b14f] hover:shadow-md transition"
@@ -460,8 +460,8 @@ export default function BestJobs({ categories = [] }) {
 	                      setPreviewJobId(job.public_id)
 	                    }}
                     onMouseLeave={closePreview}
-                    onViewDetail={() => navigate(`/jobs/${job.slug}`)}
-                    onApply={() => navigate(`/jobs/${job.slug}`)}
+                    onViewDetail={() => navigate(`/viec-lam/${job.slug}`)}
+                    onApply={() => navigate(`/viec-lam/${job.slug}`)}
                   />
                 )}
               </div>

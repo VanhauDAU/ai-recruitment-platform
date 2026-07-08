@@ -181,7 +181,7 @@ function FloatingBubbleBelt({ employers, navigate }) {
   const duration = Math.min(Math.max(estimatedStripWidth / 52, 88), 180)
 
   function handleEmployerClick(companyName) {
-    navigate(`/jobs?search=${encodeURIComponent(companyName)}&search_by=company`)
+    navigate(`/viec-lam?search=${encodeURIComponent(companyName)}&search_by=company`)
   }
 
   const renderBubble = ({ employer, size, top, slot }, i) => {
@@ -322,7 +322,7 @@ export default function FeaturedIndustriesEmployers() {
                         <button
                           key={category.id}
                           type="button"
-                          onClick={() => navigate(`/jobs?category=${category.id}`)}
+                          onClick={() => navigate(`/viec-lam?category=${category.id}`)}
                           className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[#00b14f] hover:bg-white hover:shadow-md hover:shadow-emerald-100"
                         >
                           {logoUrl && (
@@ -420,7 +420,7 @@ export default function FeaturedIndustriesEmployers() {
                       <button
                         key={employer.public_id}
                         type="button"
-                        onClick={() => navigate(`/jobs?search=${encodeURIComponent(employer.company_name)}&search_by=company`)}
+                        onClick={() => navigate(`/viec-lam?search=${encodeURIComponent(employer.company_name)}&search_by=company`)}
                         className="emp-card group flex items-center justify-center rounded-2xl bg-[#f8faf8] px-6 py-8 cursor-pointer"
                         style={{ minHeight: idx % 3 === 0 ? 130 : 110 }}
                       >

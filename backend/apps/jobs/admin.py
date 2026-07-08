@@ -34,8 +34,8 @@ class JobSkillInline(admin.TabularInline):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ['title', 'employer_profile', 'status', 'work_type', 'experience_level', 'created_at']
-    list_filter = ['status', 'work_type', 'employment_type', 'experience_level']
+    list_display = ['title', 'employer_profile', 'status', 'work_type', 'position_level', 'experience_years', 'created_at']
+    list_filter = ['status', 'work_type', 'employment_type', 'experience_level', 'position_level', 'experience_years', 'weekend_policy']
     search_fields = ['title', 'employer_profile__company_name']
     readonly_fields = ['public_id', 'view_count', 'application_count']
     filter_horizontal = ['locations']

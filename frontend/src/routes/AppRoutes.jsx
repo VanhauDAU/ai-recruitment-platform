@@ -30,12 +30,16 @@ export default function AppRoutes() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/viec-lam" element={<JobList />} />
+          <Route path="/viec-lam/tai/:locationSlug" element={<JobList />} />
+          <Route path="/viec-lam/:slug" element={<JobDetail />} />
           <Route path="/jobs" element={<JobList />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
         </Route>
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/sign-up" element={<Register />} />
           <Route path="/register" element={<Register />} />
         </Route>
 

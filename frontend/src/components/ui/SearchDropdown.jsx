@@ -1,5 +1,6 @@
 import { CheckOutlined, ClockCircleOutlined, CloseOutlined, FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { getJobSuggestions, getJobs } from '../../api/jobService'
 import { companyInitial, formatNumber, formatSalary } from '../../constants/jobOptions'
@@ -90,7 +91,25 @@ export default function SearchDropdown({
   const [keywordSuggestions, setKeywordSuggestions] = useState([])
   const [suggested, setSuggested] = useState([])
   const [loading, setLoading] = useState(true)
+  const [rect, setRect] = useState(null)
   const dropdownRef = useRef(null)
+
+  // Render in a portal on <body> so the panel escapes the hero header's stacking
+  // context (isolation:isolate + overflow:hidden) — otherwise it gets clipped and
+  // painted below the next section. Position is tracked from the search box.
+  useEffect(() => {
+    if (!open) return undefined
+    function update() {
+      if (wrapperRef?.current) setRect(wrapperRef.current.getBoundingClientRect())
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, true)
+    }
+  }, [open, wrapperRef])
 
   // "Jobs you might like" — follows the typed text (else the latest search, else newest),
   // then tops up with newest jobs so the list is always ≥ 5.
@@ -172,7 +191,7 @@ export default function SearchDropdown({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open, onClose, wrapperRef])
 
-  if (!open) return null
+  if (!open || !rect) return null
 
   function handleRemove(e, entry) {
     e.stopPropagation()
@@ -186,11 +205,11 @@ export default function SearchDropdown({
     setHistory([])
   }
 
-  return (
+  return createPortal(
     <div
       ref={dropdownRef}
-      className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-gray-100 bg-white text-left shadow-2xl shadow-black/10 overflow-hidden"
-      style={{ animation: 'dropdownFadeIn 0.18s ease both' }}
+      className="fixed z-[100] rounded-2xl border border-gray-100 bg-white text-left shadow-2xl shadow-black/10 overflow-hidden"
+      style={{ left: rect.left, top: rect.bottom + 8, width: rect.width, animation: 'dropdownFadeIn 0.18s ease both' }}
     >
       <style>{`@keyframes dropdownFadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
@@ -305,7 +324,7 @@ export default function SearchDropdown({
                   <button
                     onClick={() => {
                       onClose()
-                      navigate(`/jobs/${job.slug}`)
+                      navigate(`/viec-lam/${job.slug}`)
                     }}
                     className="group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-gray-50 transition-colors cursor-pointer"
                   >
@@ -326,6 +345,7 @@ export default function SearchDropdown({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

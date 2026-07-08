@@ -132,7 +132,7 @@ export default function MarketStats() {
                   overlayInnerStyle={{ width: 300 }}
                 >
                   <li
-                    onClick={() => !item.exiting && window.open(`/jobs/${item.job.slug}`, '_blank', 'noopener,noreferrer')}
+                    onClick={() => !item.exiting && window.open(`/viec-lam/${item.job.slug}`, '_blank', 'noopener,noreferrer')}
                     className={`relative flex items-center gap-3 rounded-lg bg-white/5 hover:bg-white/10 p-2.5 cursor-pointer transition ${
                       item.exiting
                         ? 'animate-job-exit pointer-events-none'

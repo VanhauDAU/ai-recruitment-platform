@@ -20,6 +20,12 @@ export async function getJobStats() {
   return data
 }
 
+// Lĩnh vực công ty (distinct) cho bộ lọc "Lĩnh vực công ty".
+export async function getIndustries() {
+  const { data } = await api.get('/employer/industries/')
+  return data
+}
+
 // Autocomplete từ khóa theo nội dung nhập (tên việc làm / tên công ty).
 export async function getJobSuggestions(q, searchBy = 'title') {
   const params = { q }

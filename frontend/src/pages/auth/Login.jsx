@@ -232,7 +232,7 @@ export default function Login() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Bạn chưa có tài khoản?{' '}
           <Link
-            to="/register"
+            to="/sign-up"
             className="font-semibold text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors"
           >
             Đăng ký ngay

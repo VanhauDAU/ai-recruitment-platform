@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'apps.interviews',
     'apps.ai_core',
     'apps.dashboard',
+    'apps.sitecontent',
 ]
 
 MIDDLEWARE = [

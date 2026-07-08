@@ -46,6 +46,16 @@ class JobListView(generics.ListAPIView):
             qs = qs.filter(employment_type=employment_type)
         if experience_level := params.get('experience_level'):
             qs = qs.filter(experience_level=experience_level)
+        # Bộ lọc kiểu TopCV: cấp bậc, kinh nghiệm theo năm (chọn nhiều),
+        # chế độ thứ 7 ('not_mentioned' = tin không đề cập), lĩnh vực công ty.
+        if position_level := params.get('position_level'):
+            qs = qs.filter(position_level=position_level)
+        if experience_years := params.getlist('experience_years'):
+            qs = qs.filter(experience_years__in=experience_years)
+        if weekend := params.get('weekend_policy'):
+            qs = qs.filter(weekend_policy='' if weekend == 'not_mentioned' else weekend)
+        if industry := params.get('industry'):
+            qs = qs.filter(employer_profile__industry__iexact=industry)
         # Salary range overlap (values in VND): a job matches when its band
         # intersects [salary_gte, salary_lte].
         if params.get('salary_negotiable') in ['1', 'true', 'True']:
@@ -65,6 +75,9 @@ class JobListView(generics.ListAPIView):
                 )
             else:
                 qs = qs.filter(title__icontains=search)
+        # ?ordering=salary_desc — lương cao nhất trước (job thoả thuận xếp cuối).
+        if params.get('ordering') == 'salary_desc':
+            return qs.order_by(F('salary_max').desc(nulls_last=True), '-published_at')
         return qs.order_by('-published_at', '-created_at')
 
 

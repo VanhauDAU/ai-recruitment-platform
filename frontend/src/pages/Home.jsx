@@ -3,6 +3,7 @@ import { Button, Input, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getJobCategories, getJobs } from '../api/jobService'
+import { getBanners } from '../api/siteService'
 import { formatNumber } from '../constants/jobOptions'
 import BannerCarousel from '../components/ui/BannerCarousel'
 import BestJobs from '../components/home/BestJobs'
@@ -23,6 +24,50 @@ const SUGGESTED_JOBS = [
   'Data Analyst',
 ]
 
+// Khớp với Banner.Theme ở backend — banner nhập qua admin chọn 1 trong 3 tông này.
+const BANNER_THEMES = {
+  green: { gradient: 'from-[#00b14f] to-[#008a3e]', text: 'text-green-50', eyebrow: 'text-green-100', button: 'text-[#008a3e] hover:bg-green-50' },
+  blue: { gradient: 'from-blue-600 to-blue-800', text: 'text-blue-50', eyebrow: 'text-blue-100', button: 'text-blue-700 hover:bg-blue-50' },
+  orange: { gradient: 'from-orange-500 to-pink-600', text: 'text-orange-50', eyebrow: 'text-orange-100', button: 'text-orange-700 hover:bg-orange-50' },
+}
+
+function normalizePublicUrl(url = '#') {
+  if (url === '/jobs') return '/viec-lam'
+  if (url.startsWith('/jobs?')) return url.replace('/jobs?', '/viec-lam?')
+  if (url.startsWith('/jobs/')) return url.replace('/jobs/', '/viec-lam/')
+  if (url === '/register') return '/sign-up'
+  return url
+}
+
+function PromoBanner({ banner, navigate }) {
+  const t = BANNER_THEMES[banner.theme] || BANNER_THEMES.green
+  const hasImage = Boolean(banner.image_url)
+  const bg = hasImage
+    ? { backgroundImage: `url(${banner.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : undefined
+  return (
+    <div
+      className={`relative h-full flex flex-col justify-center overflow-hidden rounded-md text-white px-12 py-6 ${!hasImage ? `bg-gradient-to-br ${t.gradient}` : ''}`}
+      style={bg}
+    >
+      {hasImage && <div className="absolute inset-0 bg-black/45" />}
+      <div className="relative">
+        {banner.eyebrow && <p className={`text-sm font-semibold mb-1 ${t.eyebrow}`}>{banner.eyebrow}</p>}
+        <h3 className="text-2xl font-bold">{banner.title}</h3>
+        {banner.subtitle && <p className={`mt-2 max-w-md ${t.text}`}>{banner.subtitle}</p>}
+        {banner.cta_label && (
+          <button
+            onClick={() => navigate(normalizePublicUrl(banner.cta_url || '#'))}
+            className={`mt-4 self-start bg-white font-medium px-4 py-2 rounded-lg text-sm cursor-pointer transition ${t.button}`}
+          >
+            {banner.cta_label}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
@@ -31,6 +76,7 @@ export default function Home() {
   const [categories, setCategories] = useState([])
   const [jobCount, setJobCount] = useState(0)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [banners, setBanners] = useState([])
   const searchBoxRef = useRef(null)
 
   useEffect(() => {
@@ -38,6 +84,7 @@ export default function Home() {
     getJobs()
       .then((data) => setJobCount(data.count ?? (data.results || data).length))
       .catch(() => {})
+    getBanners('home_hero').then(setBanners).catch(() => {})
   }, [])
 
   function searchWith(extraLocationIds, nextKeyword = keyword, by = searchBy) {
@@ -47,8 +94,9 @@ export default function Home() {
       params.set('search', kw)
       if (by !== 'title') params.set('search_by', by)
     }
-    ;(extraLocationIds ?? locationIds).forEach((id) => params.append('location', id))
-    navigate(`/jobs?${params.toString()}`)
+    const nextLocationIds = extraLocationIds ?? locationIds
+    if (nextLocationIds.length) params.set('locations', nextLocationIds.join(','))
+    navigate(`/viec-lam?${params.toString()}`)
   }
 
   function handleSearch() {
@@ -95,22 +143,7 @@ export default function Home() {
         </div>
       </div>
     </div>,
-    <div key="it" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-800 text-white px-12 py-6">
-      <p className="text-sm font-semibold text-blue-100 mb-1">TUYỂN DỤNG GẤP</p>
-      <h3 className="text-2xl font-bold">Lập trình viên &amp; Kỹ sư AI</h3>
-      <p className="mt-2 text-blue-50 max-w-md">Mức lương hấp dẫn, môi trường năng động, cơ hội thăng tiến nhanh.</p>
-      <button
-        onClick={() => navigate('/jobs?search=IT')}
-        className="mt-4 self-start bg-white text-blue-700 font-medium px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-blue-50 transition"
-      >
-        Xem việc làm IT
-      </button>
-    </div>,
-    <div key="cv" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-orange-500 to-pink-600 text-white px-12 py-6">
-      <p className="text-sm font-semibold text-orange-100 mb-1">MIỄN PHÍ</p>
-      <h3 className="text-2xl font-bold">Tạo CV chuyên nghiệp cùng AI</h3>
-      <p className="mt-2 text-orange-50 max-w-md">Chỉ mất 5 phút để có CV ấn tượng, sẵn sàng ứng tuyển.</p>
-    </div>,
+    ...banners.map((banner) => <PromoBanner key={banner.id} banner={banner} navigate={navigate} />),
   ]
 
   return (

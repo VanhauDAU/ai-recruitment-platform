@@ -1,5 +1,7 @@
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.exceptions import NotFound
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 
@@ -24,3 +26,18 @@ class CreateEmployerProfileView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class IndustryListView(APIView):
+    """Danh sách lĩnh vực công ty (distinct) cho bộ lọc "Lĩnh vực công ty"."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        industries = (
+            EmployerProfile.objects.exclude(industry='')
+            .order_by('industry')
+            .values_list('industry', flat=True)
+            .distinct()
+        )
+        return Response(list(industries))

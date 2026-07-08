@@ -28,6 +28,7 @@ class LocationBriefSerializer(serializers.ModelSerializer):
 class JobSerializer(serializers.ModelSerializer):
     job_skills = JobSkillSerializer(many=True, required=False)
     company_name = serializers.CharField(source='employer_profile.company_name', read_only=True)
+    company_logo_url = serializers.CharField(source='employer_profile.company_logo_url', read_only=True)
     # write: list of location ids; read: expanded objects.
     locations = serializers.PrimaryKeyRelatedField(
         many=True, write_only=True, queryset=Location.objects.all(),
@@ -37,17 +38,18 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
-            'public_id', 'slug', 'title', 'company_name', 'category',
+            'public_id', 'slug', 'title', 'company_name', 'company_logo_url', 'category',
             'locations', 'locations_detail', 'short_description', 'description',
             'responsibilities', 'requirements', 'nice_to_have', 'benefits', 'address',
             'work_type', 'employment_type', 'experience_level', 'education_level',
+            'experience_years', 'position_level', 'weekend_policy',
             'number_of_vacancies', 'salary_min', 'salary_max', 'currency',
             'is_salary_visible', 'deadline', 'status', 'view_count',
-            'application_count', 'job_skills', 'created_at', 'updated_at',
+            'application_count', 'job_skills', 'published_at', 'created_at', 'updated_at',
         ]
         read_only_fields = [
-            'public_id', 'slug', 'company_name', 'status',
-            'view_count', 'application_count', 'created_at', 'updated_at',
+            'public_id', 'slug', 'company_name', 'company_logo_url', 'status',
+            'view_count', 'application_count', 'published_at', 'created_at', 'updated_at',
         ]
 
     def create(self, validated_data):

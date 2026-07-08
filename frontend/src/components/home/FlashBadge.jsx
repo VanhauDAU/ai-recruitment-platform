@@ -12,6 +12,7 @@ const ITEM_H = 72   // height của mỗi card (px)
 const GAP    = 8    // khoảng cách giữa các card (px)
 const SLOT   = ITEM_H + GAP
 const FLASH_BADGE_COVER_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/box-flash-badge/cover.png'
+const FLASH_BADGE_INTRO_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/box-flash-badge/flash-badge-intro.png'
 const pad = (n) => String(n).padStart(2, '0')
 
 function useCountdown() {
@@ -113,7 +114,7 @@ export default function FlashBadge() {
   const containerH = VISIBLE * ITEM_H + (VISIBLE - 1) * GAP
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[#0aa14a] via-[#02893c] to-[#046b32] text-white">
+    <div className="relative overflow-hidden bg-gradient-to-br from-[#0aa14a] via-[#02893c] to-[#046b32] bg-cover bg-center text-white" style={{ backgroundImage: `url("${FLASH_BADGE_COVER_URL}")` }}>
       {/* Background decorations */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 right-1/4 h-96 w-96 rounded-full bg-[#5dffa3]/15 blur-3xl" />
@@ -219,7 +220,7 @@ export default function FlashBadge() {
                   return (
                     <div
                       key={id}
-                      onClick={() => !isOffscreen && navigate(`/jobs/${job.slug}`)}
+                      onClick={() => !isOffscreen && navigate(`/viec-lam/${job.slug}`)}
                       style={{
                         position: 'absolute',
                         width: '100%',
@@ -262,9 +263,9 @@ export default function FlashBadge() {
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-[#5dffa3]/25 blur-2xl scale-110" />
             <img
-              src={FLASH_BADGE_COVER_URL}
+              src={FLASH_BADGE_INTRO_URL}
               alt="Huy hiệu Sấm Chớp"
-              className="relative z-10 h-auto w-44 max-w-full drop-shadow-[0_16px_32px_rgba(0,0,0,0.28)]"
+              className="relative z-10 h-auto w-48 max-w-full drop-shadow-[0_16px_32px_rgba(0,0,0,0.28)]"
               loading="lazy"
               draggable={false}
             />
@@ -275,7 +276,7 @@ export default function FlashBadge() {
             <span className="font-bold text-white">Huy hiệu Sấm Chớp</span>
           </p>
           <button
-            onClick={() => navigate('/jobs')}
+            onClick={() => navigate('/viec-lam')}
             className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#02893c] shadow-md transition-all hover:bg-green-50 hover:shadow-lg hover:-translate-y-px active:scale-95 cursor-pointer"
           >
             Xem ngay <ArrowRightOutlined className="text-xs" />

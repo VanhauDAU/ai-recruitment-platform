@@ -6,7 +6,7 @@ import { useColorScheme } from '../hooks/useColorScheme'
 export default function AuthLayout() {
   const [scheme, toggleScheme] = useColorScheme()
   const { pathname } = useLocation()
-  const isRegister = pathname.startsWith('/register')
+  const isRegister = pathname.startsWith('/sign-up') || pathname.startsWith('/register')
 
   return (
     <ConfigProvider
