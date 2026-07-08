@@ -5,6 +5,26 @@ from django.utils.text import slugify
 from common.public_id import generate_public_id
 
 
+class Industry(models.Model):
+    """Lĩnh vực hoạt động (Fintech, Bán lẻ, Giáo dục...). Một công ty có thể
+    thuộc nhiều lĩnh vực cùng lúc — xem `EmployerProfile.industries`."""
+
+    name = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = 'industries'
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class EmployerProfile(models.Model):
     """Company/recruiter profile (DB doc section 2.3).
 
@@ -25,7 +45,7 @@ class EmployerProfile(models.Model):
     company_logo_url = models.TextField(blank=True)
     cover_image_url = models.TextField(blank=True)
     company_size = models.CharField(max_length=100, blank=True)
-    industry = models.CharField(max_length=255, blank=True)
+    industries = models.ManyToManyField(Industry, blank=True, related_name='employers')
     founded_year = models.IntegerField(null=True, blank=True)
     website_url = models.TextField(blank=True)
     tax_code = models.CharField(max_length=100, blank=True)

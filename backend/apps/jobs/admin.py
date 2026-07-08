@@ -1,14 +1,55 @@
+from django import forms
 from django.contrib import admin
+from django.utils.html import format_html
+
+from apps.common.media_storage import delete_local_media_url, save_image_upload
 
 from .models import Job, JobCategory, JobSkill
 
 
+class JobCategoryAdminForm(forms.ModelForm):
+    upload_logo = forms.FileField(
+        required=False,
+        help_text='Upload logo vào storage nội bộ. Nếu có file mới, hệ thống sẽ cập nhật logo_url.',
+    )
+
+    class Meta:
+        model = JobCategory
+        fields = '__all__'
+
+
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'parent', 'status']
+    form = JobCategoryAdminForm
+    list_display = ['name', 'parent', 'logo_preview', 'status']
     list_filter = ['status']
-    search_fields = ['name']
+    search_fields = ['name', 'logo_url']
     prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ['logo_preview']
+    fieldsets = (
+        (None, {'fields': ('name', 'slug', 'description', 'parent', 'status')}),
+        ('Homepage display', {'fields': ('upload_logo', 'logo_url', 'logo_preview')}),
+    )
+
+    def save_model(self, request, obj, form, change):
+        upload = form.cleaned_data.get('upload_logo')
+        old_url = obj.logo_url
+        if upload:
+            saved = save_image_upload(upload, 'jobs/categories/logos', request=request)
+            obj.logo_url = saved['url']
+        super().save_model(request, obj, form, change)
+        if upload:
+            delete_local_media_url(old_url)
+
+    @admin.display(description='Logo')
+    def logo_preview(self, obj):
+        if not obj.logo_url:
+            return '-'
+        return format_html(
+            '<img src="{}" alt="{}" style="height: 36px; max-width: 72px; object-fit: contain;" />',
+            obj.logo_url,
+            obj.name,
+        )
 
 
 class JobSkillInline(admin.TabularInline):
@@ -18,10 +59,11 @@ class JobSkillInline(admin.TabularInline):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ['title', 'employer_profile', 'status', 'work_type', 'experience_level', 'created_at']
-    list_filter = ['status', 'work_type', 'employment_type', 'experience_level']
+    list_display = ['title', 'employer_profile', 'status', 'work_type', 'position_level', 'experience_years', 'created_at']
+    list_filter = ['status', 'work_type', 'employment_type', 'experience_level', 'position_level', 'experience_years', 'weekend_policy']
     search_fields = ['title', 'employer_profile__company_name']
     readonly_fields = ['public_id', 'view_count', 'application_count']
+    filter_horizontal = ['locations']
     inlines = [JobSkillInline]
 
 

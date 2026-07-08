@@ -15,6 +15,7 @@ class JobCategory(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField(blank=True)
+    logo_url = models.TextField(blank=True, help_text='Public URL for the category logo shown on the homepage.')
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,6 +54,38 @@ class Job(models.Model):
         MIDDLE = 'middle', 'Middle'
         SENIOR = 'senior', 'Senior'
 
+    class ExperienceYears(models.TextChoices):
+        NONE = 'none', 'Không yêu cầu'
+        UNDER_1 = 'under_1', 'Dưới 1 năm'
+        ONE = '1', '1 năm'
+        TWO = '2', '2 năm'
+        THREE = '3', '3 năm'
+        FOUR = '4', '4 năm'
+        FIVE = '5', '5 năm'
+        OVER_5 = 'over_5', 'Trên 5 năm'
+
+    class PositionLevel(models.TextChoices):
+        EMPLOYEE = 'employee', 'Nhân viên'
+        TEAM_LEAD = 'team_lead', 'Trưởng nhóm'
+        MANAGER = 'manager', 'Trưởng/Phó phòng'
+        SUPERVISOR = 'supervisor', 'Quản lý / Giám sát'
+        BRANCH_MANAGER = 'branch_manager', 'Trưởng chi nhánh'
+        VICE_DIRECTOR = 'vice_director', 'Phó giám đốc'
+        DIRECTOR = 'director', 'Giám đốc'
+        INTERN = 'intern', 'Thực tập sinh'
+
+    class WeekendPolicy(models.TextChoices):
+        WORK_SATURDAY = 'work_saturday', 'Làm thứ 7'
+        OFF_SATURDAY = 'off_saturday', 'Nghỉ thứ 7'
+
+    class EducationLevel(models.TextChoices):
+        NONE = 'none', 'Không yêu cầu'
+        HIGH_SCHOOL = 'high_school', 'THPT'
+        INTERMEDIATE = 'intermediate', 'Trung cấp'
+        COLLEGE = 'college', 'Cao đẳng'
+        UNIVERSITY = 'university', 'Đại học'
+        POSTGRADUATE = 'postgraduate', 'Sau đại học'
+
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PENDING = 'pending', 'Pending'
@@ -64,7 +97,8 @@ class Job(models.Model):
     employer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='jobs')
     employer_profile = models.ForeignKey('employers.EmployerProfile', on_delete=models.CASCADE, related_name='jobs')
     category = models.ForeignKey(JobCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
-    location = models.ForeignKey('locations.Location', on_delete=models.PROTECT, related_name='jobs')
+    # A job can recruit at multiple locations (province and/or ward level).
+    locations = models.ManyToManyField('locations.Location', related_name='jobs', blank=True)
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     short_description = models.TextField(blank=True)
@@ -77,6 +111,12 @@ class Job(models.Model):
     work_type = models.CharField(max_length=50, choices=WorkType.choices, blank=True)
     employment_type = models.CharField(max_length=50, choices=EmploymentType.choices, blank=True)
     experience_level = models.CharField(max_length=50, choices=ExperienceLevel.choices, blank=True)
+    experience_years = models.CharField(max_length=20, choices=ExperienceYears.choices, blank=True, help_text='Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")')
+    position_level = models.CharField(max_length=30, choices=PositionLevel.choices, blank=True, help_text='Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")')
+    weekend_policy = models.CharField(max_length=20, choices=WeekendPolicy.choices, blank=True, help_text='Chế độ thứ 7; để trống = tin không đề cập')
+    # Minimum education required; interpreted as "từ <level> trở lên". Blank = unspecified.
+    education_level = models.CharField(max_length=50, choices=EducationLevel.choices, blank=True)
+    number_of_vacancies = models.PositiveIntegerField(null=True, blank=True, help_text='Số lượng cần tuyển; null = không giới hạn')
     salary_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     salary_max = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=20, default='VND')
@@ -96,7 +136,6 @@ class Job(models.Model):
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['employer']),
-            models.Index(fields=['location']),
             models.Index(fields=['work_type']),
             models.Index(fields=['employment_type']),
             models.Index(fields=['experience_level']),
