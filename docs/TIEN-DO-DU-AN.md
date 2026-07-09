@@ -90,6 +90,10 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 6.3 | Bảng `audit_logs` | [ ] Chưa làm |
 | 6.4 | App `sitecontent`: `SiteSetting` (config key-value JSON) + `LinkGroup`/`LinkItem` (cụm link có thứ tự, source manual/auto từ locations·categories) + Django admin + API public `/api/site/`; frontend `PopularSearches` (cụm link SEO trên footer) đọc từ API | [x] Done |
 | 6.5 | `sitecontent.Banner` (slide carousel trang chủ: eyebrow/title/subtitle/theme gradient hoặc image_url/CTA, order, is_active) + admin + API `/api/site/banners/`; `Home.jsx` render banner IT/CV từ API thay vì hardcode (slide thống kê vẫn code cứng vì cần số liệu jobCount/categories realtime) | [x] Done |
+| 6.6 | `SiteSetting` mở rộng schema-driven: thêm `value_type` (text/textarea/number/boolean/select/color/image/email/url/json/env) + `options` + `order`, 15 nhóm cài đặt (chung, trang chủ, SEO, ứng viên, NTD, việc làm, CV, email, thanh toán, bảo mật, upload, footer, liên hệ, phân quyền, AI), seed 96 keys idempotent (không ghi đè value); cache public API 1h + signal invalidation. Secrets giữ trong `.env` (type `env` chỉ báo đã cấu hình hay chưa). Chi tiết: `docs/05-huong-dan/cau-hinh-site-settings.md` | [x] Done |
+| 6.7 | API admin cấu hình: `GET/PATCH /api/site/admin/settings/` (trả theo nhóm + bulk update có validate theo value_type) + `POST /api/site/admin/settings/upload/` (upload ảnh) + permission `IsAdmin` mới trong `accounts/permissions.py` | [x] Done |
+| 6.8 | Trang React `/admin/settings`: tabs 15 nhóm, form tự sinh từ metadata (`SettingField` map value_type → control AntD), dirty-tracking + lưu theo nhóm, upload ảnh, tag Public/env; fix nav DashboardLayout (bỏ menu chết users/skills, highlight theo route) | [x] Done |
+| 6.9 | Dọn dẹp & chuẩn hóa frontend theo mô hình 3 cổng: gom cổng main vào `pages/main/` (Home, auth, jobs, candidate) cho đối xứng với `pages/employer` & `pages/admin`; đổi `PublicRoutes`→`MainRoutes` (`mainRoutes()`) cho khớp tên `EmployerRoutes`/`AdminRoutes`; migrate màu brand hardcode (`#00b14f/#008a3e/#f0fbf5` ở ~30 file) sang `var(--brand-primary/-hover/-soft)` để đổi màu qua site settings áp dụng toàn site; gỡ `settingText` trùng lặp trong `SiteSettingsProvider`; fix bug có sẵn nested `<a>` (Link bọc BrandLogo vốn đã tự render Link) ở `EmployerMarketingLayout`. Verify: lint + build pass, preview 3 cổng không lỗi | [x] Done |
 
 ## Giai đoạn 7 — Phỏng vấn AI
 
@@ -109,4 +113,4 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 
 ---
 
-Cập nhật lần cuối: 2026-07-08
+Cập nhật lần cuối: 2026-07-09

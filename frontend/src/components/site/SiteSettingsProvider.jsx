@@ -1,14 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getSiteSettings } from '../../api/siteService'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '../../contexts/siteSettingsContext'
+import { settingText } from '../../hooks/useSiteSettings'
 
 function mergeSettings(data) {
   if (!data || typeof data !== 'object') return DEFAULT_SITE_SETTINGS
   return { ...DEFAULT_SITE_SETTINGS, ...data }
 }
 
-function settingText(value, fallback = '') {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+function hexToRgb(hex) {
+  const raw = hex.trim().replace('#', '')
+  const normalized = raw.length === 3
+    ? raw.split('').map((ch) => ch + ch).join('')
+    : raw
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return null
+  return {
+    r: parseInt(normalized.slice(0, 2), 16),
+    g: parseInt(normalized.slice(2, 4), 16),
+    b: parseInt(normalized.slice(4, 6), 16),
+  }
+}
+
+function rgbToHex({ r, g, b }) {
+  return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0')).join('')}`
+}
+
+function mixWith(color, target, weight) {
+  return rgbToHex({
+    r: color.r + (target.r - color.r) * weight,
+    g: color.g + (target.g - color.g) * weight,
+    b: color.b + (target.b - color.b) * weight,
+  })
 }
 
 function ensureFaviconLink() {
@@ -47,7 +69,13 @@ export default function SiteSettingsProvider({ children }) {
 
   useEffect(() => {
     const primaryColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
+    const rgb = hexToRgb(primaryColor)
+    const hoverColor = rgb ? mixWith(rgb, { r: 0, g: 0, b: 0 }, 0.18) : primaryColor
+    const softColor = rgb ? mixWith(rgb, { r: 255, g: 255, b: 255 }, 0.9) : '#f0fbf5'
+
     document.documentElement.style.setProperty('--brand-primary', primaryColor)
+    document.documentElement.style.setProperty('--brand-primary-hover', hoverColor)
+    document.documentElement.style.setProperty('--brand-primary-soft', softColor)
   }, [settings.brand_primary_color])
 
   useEffect(() => {

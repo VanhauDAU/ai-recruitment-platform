@@ -8,15 +8,15 @@ import {
 import { Button, Result, Skeleton, Tag, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getJobDetail } from '../../api/jobService'
+import { getJobDetail } from '../../../api/jobService'
 import {
   EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_LEVEL_LABELS,
   WORK_TYPE_LABELS,
   formatEducation,
   formatSalary,
-} from '../../constants/jobOptions'
-import { useAuth } from '../../hooks/useAuth'
+} from '../../../constants/jobOptions'
+import { useAuth } from '../../../hooks/useAuth'
 
 export default function JobDetail() {
   const { slug } = useParams()

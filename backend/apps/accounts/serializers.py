@@ -34,18 +34,32 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+# Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.
+PORTAL_ROLES = {
+    'main': [User.Role.CANDIDATE],
+    'employer': [User.Role.EMPLOYER],
+    'admin': [User.Role.ADMIN],
+}
+
+
 class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Adds role/email claims to the JWT so the frontend can route by role
-    without an extra profile lookup."""
+    without an extra profile lookup. Optional `portal` rejects wrong-role
+    logins per portal (backward compatible: no portal -> no check)."""
 
     captcha_token = serializers.CharField(write_only=True)
+    portal = serializers.ChoiceField(choices=list(PORTAL_ROLES), required=False, write_only=True)
 
     def validate(self, attrs):
         request = self.context.get('request')
         remote_ip = request.META.get('REMOTE_ADDR') if request else None
         verify_recaptcha(attrs.get('captcha_token'), 'login', remote_ip)
         attrs.pop('captcha_token', None)
-        return super().validate(attrs)
+        portal = attrs.pop('portal', None)
+        data = super().validate(attrs)
+        if portal and self.user.role not in PORTAL_ROLES[portal]:
+            raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
+        return data
 
     @classmethod
     def get_token(cls, user):

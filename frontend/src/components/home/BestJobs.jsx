@@ -307,11 +307,11 @@ export default function BestJobs({ categories = [] }) {
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <h2 className="text-lg md:text-xl font-bold text-gray-800">Việc làm tốt nhất</h2>
-        <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-[#00b14f]">
+        <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-[var(--brand-primary)]">
           <BulbOutlined /> Gợi ý bởi AI
         </span>
         <div className="ml-auto flex items-center gap-2">
-          <button onClick={() => navigate('/viec-lam')} className="text-sm text-[#00b14f] hover:underline cursor-pointer">
+          <button onClick={() => navigate('/viec-lam')} className="text-sm text-[var(--brand-primary)] hover:underline cursor-pointer">
             Xem tất cả
           </button>
           <ArrowButton dir="left" disabled={page <= 1} onClick={goPrev} />
@@ -329,12 +329,12 @@ export default function BestJobs({ categories = [] }) {
             selectedKeys: [dimension],
           }}
         >
-          <button className="flex shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 h-8 text-sm text-gray-600 cursor-pointer hover:border-[#00b14f]">
+          <button className="flex shrink-0 items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 h-8 text-sm text-gray-600 cursor-pointer hover:border-[var(--brand-primary)]">
             <FilterOutlined className="text-gray-400" />
             <span className="hidden sm:inline">Lọc theo:</span>
-            <span className="font-medium text-[#00b14f]">{dimLabel}</span>
+            <span className="font-medium text-[var(--brand-primary)]">{dimLabel}</span>
             {activeFilterCount > 0 && (
-              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00b14f] px-1 text-[10px] font-semibold text-white">
+              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-primary)] px-1 text-[10px] font-semibold text-white">
                 {activeFilterCount}
               </span>
             )}
@@ -365,8 +365,8 @@ export default function BestJobs({ categories = [] }) {
                   }}
                   className={`shrink-0 rounded-full border px-4 h-8 text-sm whitespace-nowrap transition cursor-pointer ${
                     active
-                      ? 'bg-[#00b14f] text-white border-[#00b14f]'
-                      : 'bg-white text-gray-700 border-gray-200 hover:border-[#00b14f] hover:text-[#00b14f]'
+                      ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
                   }`}
                 >
                   {c.label}
@@ -380,8 +380,8 @@ export default function BestJobs({ categories = [] }) {
 
       {/* Hint banner */}
       {showHint && (
-        <div className="flex items-center gap-2 rounded-md border border-[#c3ebd5] bg-[#f0fbf5] px-3 py-2 mb-3 text-sm text-gray-600">
-          <BulbOutlined className="text-[#00b14f]" />
+        <div className="flex items-center gap-2 rounded-md border border-[#c3ebd5] bg-[var(--brand-primary-soft)] px-3 py-2 mb-3 text-sm text-gray-600">
+          <BulbOutlined className="text-[var(--brand-primary)]" />
           <span className="flex-1">Gợi ý: Di chuột vào tiêu đề việc làm để xem thêm thông tin chi tiết</span>
           <CloseOutlined className="cursor-pointer text-gray-400 hover:text-gray-600" onClick={() => setShowHint(false)} />
         </div>
@@ -414,7 +414,7 @@ export default function BestJobs({ categories = [] }) {
                   href={`/viec-lam/${job.slug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="group relative flex gap-3 rounded-lg border border-gray-200 p-3 hover:border-[#00b14f] hover:shadow-md transition"
+                  className="group relative flex gap-3 rounded-lg border border-gray-200 p-3 hover:border-[var(--brand-primary)] hover:shadow-md transition"
                 >
                   <div
                     className="w-14 h-14 shrink-0 rounded-md border border-gray-100 flex items-center justify-center text-lg font-bold"
@@ -426,7 +426,7 @@ export default function BestJobs({ categories = [] }) {
 	                    <h3
 	                      onMouseEnter={(e) => showPreviewAfterDelay(job.public_id, e.currentTarget.getBoundingClientRect())}
 	                      onMouseLeave={cancelPreviewDelay}
-	                      className="font-semibold text-sm text-gray-800 leading-snug line-clamp-2 group-hover:text-[#00b14f] cursor-pointer"
+	                      className="font-semibold text-sm text-gray-800 leading-snug line-clamp-2 group-hover:text-[var(--brand-primary)] cursor-pointer"
                     >
                       {job.title}
                     </h3>
@@ -440,10 +440,10 @@ export default function BestJobs({ categories = [] }) {
                   </div>
                   <button
                     onClick={(e) => toggleSave(e, job.public_id)}
-                    className="absolute top-3 right-3 text-gray-300 hover:text-[#00b14f] cursor-pointer"
+                    className="absolute top-3 right-3 text-gray-300 hover:text-[var(--brand-primary)] cursor-pointer"
                     aria-label="Lưu việc làm"
                   >
-                    {saved.has(job.public_id) ? <HeartFilled className="text-[#00b14f]" /> : <HeartOutlined />}
+                    {saved.has(job.public_id) ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined />}
                   </button>
                 </a>
                 {previewJobId === job.public_id && (
@@ -473,7 +473,7 @@ export default function BestJobs({ categories = [] }) {
         <div className="flex items-center justify-center gap-4 mt-5">
           <ArrowButton dir="left" disabled={page <= 1} onClick={goPrev} />
           <span className="text-sm text-gray-500">
-            <span className="font-semibold text-[#00b14f]">{page}</span> / {totalPages} trang
+            <span className="font-semibold text-[var(--brand-primary)]">{page}</span> / {totalPages} trang
           </span>
           <ArrowButton dir="right" disabled={page >= totalPages} onClick={goNext} />
         </div>
@@ -556,7 +556,7 @@ function JobPreviewPanel({
           <div className="min-w-0 flex-1">
             <p className="line-clamp-3 text-base font-semibold leading-snug text-[#17324d]">{job.title}</p>
             <p className="mt-1 truncate text-xs uppercase text-gray-400">{job.company_name}</p>
-            <p className="mt-2 text-sm font-semibold text-[#00b14f]">{formatSalary(job)}</p>
+            <p className="mt-2 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</p>
           </div>
           </div>
         </div>
@@ -590,14 +590,14 @@ function JobPreviewPanel({
         <button
           type="button"
           onClick={onApply}
-          className="h-10 flex-1 cursor-pointer rounded-md border border-[#00b14f] bg-white text-sm font-semibold text-[#00b14f] transition hover:bg-green-50"
+          className="h-10 flex-1 cursor-pointer rounded-md border border-[var(--brand-primary)] bg-white text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-green-50"
         >
           Ứng tuyển
         </button>
         <button
           type="button"
           onClick={onViewDetail}
-          className="inline-flex h-10 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-md bg-[#00b14f] text-sm font-semibold text-white transition hover:bg-[#009944]"
+          className="inline-flex h-10 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--brand-primary)] text-sm font-semibold text-white transition hover:bg-[#009944]"
         >
           <EyeOutlined className="text-xs" />
           Xem chi tiết
@@ -612,7 +612,7 @@ function PreviewSection({ title, content }) {
   if (lines.length === 0) return null
   return (
     <section>
-      <h4 className="mb-2 border-l-4 border-[#00b14f] pl-2 text-sm font-semibold text-[#17324d]">{title}</h4>
+      <h4 className="mb-2 border-l-4 border-[var(--brand-primary)] pl-2 text-sm font-semibold text-[#17324d]">{title}</h4>
       <div className="space-y-1.5 text-xs leading-relaxed text-gray-600">
         {lines.map((line, index) => (
           <p key={`${title}-${index}`} className={index === 0 ? 'font-medium text-gray-700' : ''}>

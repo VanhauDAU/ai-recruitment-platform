@@ -199,7 +199,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
         <div className={`md:pl-3 ${wardView ? 'block' : 'hidden'} md:block`}>
           <button
             onClick={() => setWardView(false)}
-            className="md:hidden flex items-center gap-1.5 mb-2 text-sm text-[#00b14f] cursor-pointer"
+            className="md:hidden flex items-center gap-1.5 mb-2 text-sm text-[var(--brand-primary)] cursor-pointer"
           >
             <LeftOutlined className="text-xs" /> Tỉnh/Thành phố
           </button>
@@ -266,13 +266,13 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
       <button
         className={`w-full flex items-center gap-2 border rounded-xl px-3 text-left bg-white cursor-pointer transition-all group ${
           open
-            ? 'border-[#00b14f] ring-2 ring-[#00b14f]/15'
-            : 'border-gray-200 hover:border-[#00b14f]'
+            ? 'border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/15'
+            : 'border-gray-200 hover:border-[var(--brand-primary)]'
         } ${size === 'large' ? 'h-12 text-base' : 'h-8 text-sm'}`}
       >
         {/* Pin icon với nền xanh nhạt */}
         <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#e6f7ee] shrink-0">
-          <EnvironmentOutlined className="text-[#00b14f] text-sm" />
+          <EnvironmentOutlined className="text-[var(--brand-primary)] text-sm" />
         </span>
 
         {/* Label */}
@@ -290,7 +290,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') clearSelected(e)
             }}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] text-gray-400 transition hover:bg-gray-100 hover:text-[#00b14f]"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] text-gray-400 transition hover:bg-gray-100 hover:text-[var(--brand-primary)]"
           >
             <CloseOutlined />
           </span>
@@ -299,7 +299,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
         {/* Mũi tên xuống */}
         <span
           className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full transition-all ${
-            open ? 'bg-[#00b14f]/10 text-[#00b14f]' : 'text-gray-400 group-hover:text-[#00b14f]'
+            open ? 'bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]' : 'text-gray-400 group-hover:text-[var(--brand-primary)]'
           }`}
         >
           <svg

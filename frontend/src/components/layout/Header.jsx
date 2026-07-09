@@ -10,14 +10,9 @@ import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import BrandLogo from '../brand/BrandLogo'
+import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 import { useHideOnScroll } from '../../hooks/useHideOnScroll'
-
-const DASHBOARD_BY_ROLE = {
-  candidate: '/candidate/dashboard',
-  employer: '/employer/dashboard',
-  admin: '/admin/dashboard',
-}
 
 // helpers to keep the menu data compact
 const job = (name) => ({ label: `Việc làm ${name}`, search: name })
@@ -188,7 +183,7 @@ export default function Header() {
       }`}
     >
       <div className="w-full px-6 h-16 flex items-center gap-8">
-        <BrandLogo className="whitespace-nowrap cursor-pointer" imageClassName="h-9 max-w-[190px]" />
+        <BrandLogo variant="full" className="whitespace-nowrap cursor-pointer" imageClassName="h-9 max-w-[190px]" />
 
         <nav
           className="hidden md:flex items-stretch gap-6 text-sm font-medium text-gray-700 flex-1"
@@ -203,14 +198,14 @@ export default function Header() {
                   aria-current={active ? 'page' : undefined}
                   className={`relative flex h-16 cursor-pointer items-center gap-1 px-1 transition ${
                     active || openKey === m.key
-                      ? 'text-[#00b14f]'
-                      : 'hover:text-[#00b14f]'
+                      ? 'text-[var(--brand-primary)]'
+                      : 'hover:text-[var(--brand-primary)]'
                   }`}
                 >
                   {m.label}
                   <DownOutlined className={`text-[10px] transition-transform ${openKey === m.key ? 'rotate-180' : ''}`} />
                   <span
-                    className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-[#00b14f] transition-all duration-200 ${
+                    className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-[var(--brand-primary)] transition-all duration-200 ${
                       active ? 'w-full opacity-100' : 'w-0 opacity-0'
                     }`}
                   />
@@ -230,12 +225,12 @@ export default function Header() {
                                 <button
                                   key={it.label}
                                   onClick={() => handleItem(it)}
-                                  className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[#00b14f] cursor-pointer text-left leading-snug"
+                                  className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[var(--brand-primary)] cursor-pointer text-left leading-snug"
                                 >
-                                  {it.icon && <span className="text-[#00b14f] text-base shrink-0">{it.icon}</span>}
+                                  {it.icon && <span className="text-[var(--brand-primary)] text-base shrink-0">{it.icon}</span>}
                                   <span className="max-w-[220px]">{it.label}</span>
                                   {it.badge && <Tag color="green" className="!mr-0 !text-[10px] !leading-4 shrink-0">{it.badge}</Tag>}
-                                  <RightOutlined className="text-[10px] text-[#00b14f] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                                  <RightOutlined className="text-[10px] text-[var(--brand-primary)] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                                 </button>
                               ))}
                             </div>
@@ -253,16 +248,17 @@ export default function Header() {
         <div className="flex items-center gap-2 ml-auto">
           {isAuthenticated ? (
             <>
-              <Button className="cursor-pointer" onClick={() => navigate(DASHBOARD_BY_ROLE[user?.role] || '/')}>Trang quản lý</Button>
+              <Button className="cursor-pointer" onClick={() => navigate(HOME_BY_ROLE[user?.role] || '/')}>Trang quản lý</Button>
               <Button className="cursor-pointer" onClick={logout}>Đăng xuất</Button>
             </>
           ) : (
             <>
               <Link to="/sign-up" className="hidden sm:inline-block cursor-pointer"><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
               <Link to="/login" className="cursor-pointer"><Button className="cursor-pointer" type="primary" shape="round">Đăng nhập</Button></Link>
-              <Link to="/sign-up" className="hidden lg:inline-block cursor-pointer">
+              {/* Sang cổng NTD: thẻ <a> để hoạt động cả khi cổng là subdomain riêng */}
+              <a href={EMPLOYER_PORTAL_URL} className="hidden lg:inline-block cursor-pointer">
                 <Button className="cursor-pointer" ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button>
-              </Link>
+              </a>
             </>
           )}
         </div>

@@ -8,6 +8,78 @@ body {
   margin: 0;
 }
 
+:root {
+  --brand-primary: #00b14f;
+  --brand-primary-hover: #008a3e;
+  --brand-primary-soft: #f0fbf5;
+}
+
+.text-\[\#00b14f\] {
+  color: var(--brand-primary) !important;
+}
+
+.hover\:text-\[\#00b14f\]:hover {
+  color: var(--brand-primary) !important;
+}
+
+.text-\[\#008a3e\],
+.hover\:text-\[\#008a3e\]:hover {
+  color: var(--brand-primary-hover) !important;
+}
+
+.bg-\[\#00b14f\] {
+  background-color: var(--brand-primary) !important;
+}
+
+.hover\:bg-\[\#00b14f\]:hover {
+  background-color: var(--brand-primary) !important;
+}
+
+.bg-\[\#008a3e\],
+.hover\:bg-\[\#008a3e\]:hover,
+.hover\:\!bg-\[\#008a3e\]:hover {
+  background-color: var(--brand-primary-hover) !important;
+}
+
+.\!bg-\[\#00b14f\] {
+  background-color: var(--brand-primary) !important;
+}
+
+.hover\:\!bg-\[\#009944\]:hover,
+.hover\:\!bg-\[\#008a3e\]:hover {
+  background-color: var(--brand-primary-hover) !important;
+}
+
+.border-\[\#00b14f\],
+.hover\:border-\[\#00b14f\]:hover,
+.\!border-\[\#00b14f\] {
+  border-color: var(--brand-primary) !important;
+}
+
+.ring-\[\#00b14f\]\/15 {
+  --tw-ring-color: color-mix(in srgb, var(--brand-primary) 15%, transparent) !important;
+}
+
+.focus-visible\:ring-\[\#00b14f\]\/25:focus-visible {
+  --tw-ring-color: color-mix(in srgb, var(--brand-primary) 25%, transparent) !important;
+}
+
+.bg-\[\#00b14f\]\/10,
+.hover\:bg-green-50:hover,
+.bg-green-50 {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+.from-\[\#00b14f\] {
+  --tw-gradient-from: var(--brand-primary) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: color-mix(in srgb, var(--brand-primary) 0%, transparent) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position)) !important;
+}
+
+.to-\[\#008a3e\] {
+  --tw-gradient-to: var(--brand-primary-hover) var(--tw-gradient-to-position) !important;
+}
+
 #section-header {
   background:
     linear-gradient(180deg, #002b33 0%, rgba(0, 43, 51, 0.25) 100%),

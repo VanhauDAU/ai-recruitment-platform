@@ -119,7 +119,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
           )}
           <Link
             to={`/viec-lam/${job.slug}`}
-            className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-[#00b14f] hover:text-[#008a3e]"
+            className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)]"
           >
             Xem chi tiết <RightOutlined className="text-[10px]" />
           </Link>
@@ -129,7 +129,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
           <button
             type="button"
             onClick={() => navigate(`/viec-lam/${job.slug}`)}
-            className="flex-1 cursor-pointer rounded-lg bg-[#00b14f] py-2.5 text-sm font-bold text-white transition hover:bg-[#008a3e]"
+            className="flex-1 cursor-pointer rounded-lg bg-[var(--brand-primary)] py-2.5 text-sm font-bold text-white transition hover:bg-[var(--brand-primary-hover)]"
           >
             Ứng tuyển ngay
           </button>
@@ -138,9 +138,9 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
               type="button"
               onClick={handleSave}
               aria-label="Lưu việc làm"
-              className="flex h-10 w-11 cursor-pointer items-center justify-center rounded-lg border border-[#00b14f] transition hover:bg-green-50"
+              className="flex h-10 w-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--brand-primary)] transition hover:bg-green-50"
             >
-              {saved ? <HeartFilled className="text-[#00b14f]" /> : <HeartOutlined className="text-[#00b14f]" />}
+              {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-[var(--brand-primary)]" />}
             </button>
           </Tooltip>
         </div>
@@ -189,7 +189,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
                 {job.company_logo_url ? (
                   <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
                 ) : (
-                  <span className="text-lg font-bold text-[#00b14f]">{companyInitial(job.company_name)}</span>
+                  <span className="text-lg font-bold text-[var(--brand-primary)]">{companyInitial(job.company_name)}</span>
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -199,9 +199,9 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
                   onClick={() =>
                     navigate(`/viec-lam?search=${encodeURIComponent(job.company_name)}&search_by=company`)
                   }
-                  className="cursor-pointer text-xs font-medium text-[#00b14f] hover:underline"
+                  className="cursor-pointer text-xs font-medium text-[var(--brand-primary)] hover:underline"
                 >
-                  Xem việc làm cùng công ty ↗
+                  Xem trang công ty ↗
                 </button>
               </div>
             </div>
