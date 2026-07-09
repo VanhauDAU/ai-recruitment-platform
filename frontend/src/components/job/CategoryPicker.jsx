@@ -81,12 +81,12 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
           onClick={openModal}
           className={`w-full h-10 flex items-center gap-2 border rounded-lg px-3 bg-white text-left cursor-pointer transition ${
             appliedLeaves.size > 0
-              ? 'border-[#00b14f] pr-8'
-              : 'border-gray-300 hover:border-[#00b14f]'
+              ? 'border-[var(--brand-primary)] pr-8'
+              : 'border-gray-300 hover:border-[var(--brand-primary)]'
           }`}
         >
-          <UnorderedListOutlined className="text-[#00b14f]" />
-          <span className="flex-1 truncate text-[#00b14f] font-medium">
+          <UnorderedListOutlined className="text-[var(--brand-primary)]" />
+          <span className="flex-1 truncate text-[var(--brand-primary)] font-medium">
             Danh mục Nghề{appliedLeaves.size > 0 && ` (${appliedLeaves.size})`}
           </span>
           {appliedLeaves.size === 0 && <DownOutlined className="text-xs text-gray-400" />}
@@ -131,7 +131,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
                     onMouseEnter={() => setActiveId(g.id)}
                     onClick={() => { setActiveId(g.id); setDetailOpen(true) }}
                     className={`flex items-center gap-2.5 px-4 py-2.5 cursor-pointer ${
-                      activeGroup?.id === g.id ? 'bg-green-50 text-[#00b14f] font-medium' : 'hover:bg-gray-50'
+                      activeGroup?.id === g.id ? 'bg-green-50 text-[var(--brand-primary)] font-medium' : 'hover:bg-gray-50'
                     }`}
                   >
                     <Checkbox
@@ -152,7 +152,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
           <div className={`${detailOpen ? 'block' : 'hidden'} md:block`}>
             <button
               onClick={() => setDetailOpen(false)}
-              className="md:hidden flex items-center gap-1.5 px-4 py-2 text-sm text-[#00b14f] cursor-pointer"
+              className="md:hidden flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--brand-primary)] cursor-pointer"
             >
               <LeftOutlined className="text-xs" /> Nhóm nghề
             </button>
@@ -170,7 +170,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
                         indeterminate={st.indeterminate}
                         onChange={() => toggle(n.id)}
                       />
-                      <span className={st.checked || st.indeterminate ? 'text-[#00b14f] font-medium' : ''}>
+                      <span className={st.checked || st.indeterminate ? 'text-[var(--brand-primary)] font-medium' : ''}>
                         {n.name}
                       </span>
                     </label>
@@ -183,8 +183,8 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
                             onClick={() => toggle(p.id)}
                             className={`px-3 py-1 rounded-full text-sm cursor-pointer transition ${
                               sel.has(p.id)
-                                ? 'bg-[#00b14f] text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-[#00b14f]'
+                                ? 'bg-[var(--brand-primary)] text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-[var(--brand-primary)]'
                             }`}
                           >
                             {p.name}

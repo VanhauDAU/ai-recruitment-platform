@@ -18,9 +18,7 @@ export default function EmployerMarketingLayout() {
     <div className="min-h-screen bg-white text-gray-900">
       <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to={employerMarketingPath('')} className="flex items-center">
-            <BrandLogo variant="full" imageClassName="h-9 max-w-[190px]" />
-          </Link>
+          <BrandLogo to={employerMarketingPath('')} variant="full" className="flex items-center" imageClassName="h-9 max-w-[190px]" />
 
           <nav className="hidden items-center gap-7 text-sm font-semibold text-gray-600 md:flex">
             {NAV_ITEMS.map((item) => (
@@ -29,7 +27,7 @@ export default function EmployerMarketingLayout() {
                 to={item.to}
                 end={item.to === employerMarketingPath('')}
                 className={({ isActive }) => (
-                  isActive ? 'text-[#00b14f]' : 'transition hover:text-[#00b14f]'
+                  isActive ? 'text-[var(--brand-primary)]' : 'transition hover:text-[var(--brand-primary)]'
                 )}
               >
                 {item.label}

@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getSiteSettings } from '../../api/siteService'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '../../contexts/siteSettingsContext'
+import { settingText } from '../../hooks/useSiteSettings'
 
 function mergeSettings(data) {
   if (!data || typeof data !== 'object') return DEFAULT_SITE_SETTINGS
   return { ...DEFAULT_SITE_SETTINGS, ...data }
-}
-
-function settingText(value, fallback = '') {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback
 }
 
 function hexToRgb(hex) {

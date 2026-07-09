@@ -3,9 +3,9 @@ import { Alert, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
-import { register } from '../../api/authService'
-import AuthLogo from '../../components/auth/AuthLogo'
-import { useSiteSettings } from '../../hooks/useSiteSettings'
+import { register } from '../../../api/authService'
+import AuthLogo from '../../../components/auth/AuthLogo'
+import { useSiteSettings } from '../../../hooks/useSiteSettings'
 
 function GoogleIcon() {
   return (
@@ -92,7 +92,7 @@ export default function Register() {
         .reg-social-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
         .reg-submit {
           position: relative; overflow: hidden;
-          background: linear-gradient(135deg, #00b14f 0%, #008a3e 100%);
+          background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
           transition: all 0.2s ease;
         }
         .reg-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,177,79,0.35); }
@@ -147,7 +147,7 @@ export default function Register() {
                 setError('')
                 setMode('email')
               }}
-              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-[#00b14f] bg-white px-6 text-sm font-bold text-[#00b14f] transition hover:bg-green-50 cursor-pointer dark:bg-zinc-800"
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-[var(--brand-primary)] bg-white px-6 text-sm font-bold text-[var(--brand-primary)] transition hover:bg-green-50 cursor-pointer dark:bg-zinc-800"
             >
               <MailOutlined />
               Đăng ký bằng email
@@ -170,7 +170,7 @@ export default function Register() {
               >
                 <Input
                   size="large"
-                  prefix={<UserOutlined className="text-[#00b14f]" />}
+                  prefix={<UserOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="Nguyễn Văn A"
                   className="!rounded-full !h-11 !text-base"
                 />
@@ -190,7 +190,7 @@ export default function Register() {
                 <Input
                   size="large"
                   autoComplete="email"
-                  prefix={<MailOutlined className="text-[#00b14f]" />}
+                  prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="ten@email.com"
                   className="!rounded-full !h-11 !text-base"
                 />
@@ -210,7 +210,7 @@ export default function Register() {
                 <Input.Password
                   size="large"
                   autoComplete="new-password"
-                  prefix={<LockOutlined className="text-[#00b14f]" />}
+                  prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="Tối thiểu 8 ký tự"
                   className="!rounded-full !h-11 !text-base"
                 />
@@ -236,7 +236,7 @@ export default function Register() {
                 <Input.Password
                   size="large"
                   autoComplete="new-password"
-                  prefix={<LockOutlined className="text-[#00b14f]" />}
+                  prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
                   placeholder="Nhập lại mật khẩu"
                   className="!rounded-full !h-11 !text-base"
                 />
@@ -262,7 +262,7 @@ export default function Register() {
                       href="https://www.topcv.vn/terms-of-service"
                       target="_blank"
                       rel="noreferrer"
-                      className="font-semibold text-[#00b14f] hover:underline"
+                      className="font-semibold text-[var(--brand-primary)] hover:underline"
                     >
                       Điều khoản dịch vụ
                     </a>{' '}
@@ -271,7 +271,7 @@ export default function Register() {
                       href="https://www.topcv.vn/dieu-khoan-bao-mat"
                       target="_blank"
                       rel="noreferrer"
-                      className="font-semibold text-[#00b14f] hover:underline"
+                      className="font-semibold text-[var(--brand-primary)] hover:underline"
                     >
                       Chính sách quyền riêng tư
                     </a>{' '}
@@ -320,7 +320,7 @@ export default function Register() {
                 setError('')
                 setMode('social')
               }}
-              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-gray-200 bg-white px-6 text-sm font-bold text-gray-700 transition hover:border-[#00b14f] hover:bg-green-50 hover:text-[#00b14f] cursor-pointer dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200"
+              className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-gray-200 bg-white px-6 text-sm font-bold text-gray-700 transition hover:border-[var(--brand-primary)] hover:bg-green-50 hover:text-[var(--brand-primary)] cursor-pointer dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200"
             >
               <ArrowRightOutlined className="text-xs" />
               Đăng ký bằng tài khoản mạng xã hội
@@ -333,7 +333,7 @@ export default function Register() {
       <div className="reg-field mt-4 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Đã có tài khoản?{' '}
-          <Link to="/login" className="font-semibold text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors">
+          <Link to="/login" className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors">
             Đăng nhập ngay
           </Link>
         </p>
@@ -344,7 +344,7 @@ export default function Register() {
         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed text-center">
           Bạn có gặp khó khăn khi tạo tài khoản?{' '}
           Vui lòng gọi tới số{' '}
-          <a href="tel:0777464347" className="inline-flex items-center gap-1 font-semibold text-[#00b14f] hover:underline">
+          <a href="tel:0777464347" className="inline-flex items-center gap-1 font-semibold text-[var(--brand-primary)] hover:underline">
             <PhoneOutlined className="text-[11px]" />
             0777 46 43 47
           </a>

@@ -73,7 +73,7 @@ export default function EmployerRegister() {
           >
             <Input
               size="large"
-              prefix={<UserOutlined className="text-[#00b14f]" />}
+              prefix={<UserOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Nguyễn Văn A"
               className="!rounded-full !h-11 !text-base"
             />
@@ -93,7 +93,7 @@ export default function EmployerRegister() {
             <Input
               size="large"
               autoComplete="email"
-              prefix={<MailOutlined className="text-[#00b14f]" />}
+              prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
               placeholder="ten@congty.com"
               className="!rounded-full !h-11 !text-base"
             />
@@ -113,7 +113,7 @@ export default function EmployerRegister() {
             <Input.Password
               size="large"
               autoComplete="new-password"
-              prefix={<LockOutlined className="text-[#00b14f]" />}
+              prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Tối thiểu 8 ký tự"
               className="!rounded-full !h-11 !text-base"
             />
@@ -139,7 +139,7 @@ export default function EmployerRegister() {
             <Input.Password
               size="large"
               autoComplete="new-password"
-              prefix={<LockOutlined className="text-[#00b14f]" />}
+              prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Nhập lại mật khẩu"
               className="!rounded-full !h-11 !text-base"
             />
@@ -160,8 +160,8 @@ export default function EmployerRegister() {
           >
             <Checkbox className="!items-start">
               <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                Tôi đã đọc và đồng ý với <span className="font-semibold text-[#00b14f]">Điều khoản dịch vụ</span> và{' '}
-                <span className="font-semibold text-[#00b14f]">Chính sách quyền riêng tư</span> của {siteName}.
+                Tôi đã đọc và đồng ý với <span className="font-semibold text-[var(--brand-primary)]">Điều khoản dịch vụ</span> và{' '}
+                <span className="font-semibold text-[var(--brand-primary)]">Chính sách quyền riêng tư</span> của {siteName}.
               </span>
             </Checkbox>
           </Form.Item>
@@ -190,7 +190,7 @@ export default function EmployerRegister() {
           Đã có tài khoản?{' '}
           <Link
             to={employerAppPath('/login')}
-            className="font-semibold text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors"
+            className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors"
           >
             Đăng nhập ngay
           </Link>

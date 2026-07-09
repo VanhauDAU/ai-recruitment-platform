@@ -1,5 +1,5 @@
-import AuthLogo from '../../components/auth/AuthLogo'
-import LoginForm from '../../components/auth/LoginForm'
+import AuthLogo from '../../../components/auth/AuthLogo'
+import LoginForm from '../../../components/auth/LoginForm'
 
 // Cổng quản trị — sau này chạy trên subdomain riêng (vd. admin.procv.vn).
 // Không có link đăng ký: tài khoản admin chỉ tạo qua backend.

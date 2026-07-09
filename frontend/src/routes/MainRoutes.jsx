@@ -6,14 +6,15 @@ import DashboardLayout from '../layouts/DashboardLayout'
 import MainLayout from '../layouts/MainLayout'
 import ProtectedRoute from './ProtectedRoute'
 
-const Home = lazy(() => import('../pages/Home'))
-const JobList = lazy(() => import('../pages/jobs/JobList'))
-const JobDetail = lazy(() => import('../pages/jobs/JobDetail'))
-const Login = lazy(() => import('../pages/auth/Login'))
-const Register = lazy(() => import('../pages/auth/Register'))
-const CandidateDashboard = lazy(() => import('../pages/candidate/Dashboard'))
+const Home = lazy(() => import('../pages/main/Home'))
+const JobList = lazy(() => import('../pages/main/jobs/JobList'))
+const JobDetail = lazy(() => import('../pages/main/jobs/JobDetail'))
+const Login = lazy(() => import('../pages/main/auth/Login'))
+const Register = lazy(() => import('../pages/main/auth/Register'))
+const CandidateDashboard = lazy(() => import('../pages/main/candidate/Dashboard'))
 
-export function publicRoutes() {
+// Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
+export function mainRoutes() {
   return [
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<Home />} />
@@ -40,5 +41,5 @@ export function publicRoutes() {
   ]
 }
 
-export default publicRoutes
+export default mainRoutes
 

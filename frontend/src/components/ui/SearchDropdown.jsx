@@ -225,8 +225,8 @@ export default function SearchDropdown({
                   onClick={() => onSearchByChange?.(tab.key)}
                   className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
                     active
-                      ? 'border-[#00b14f] bg-green-50 text-[#00b14f]'
-                      : 'border-gray-200 text-gray-600 hover:border-[#00b14f] hover:text-[#00b14f]'
+                      ? 'border-[var(--brand-primary)] bg-green-50 text-[var(--brand-primary)]'
+                      : 'border-gray-200 text-gray-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
                   }`}
                 >
                   {active && <CheckOutlined className="text-[10px]" />}
@@ -247,7 +247,7 @@ export default function SearchDropdown({
                       onClick={() => onSelect(kw, searchBy)}
                       className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-green-50 cursor-pointer"
                     >
-                      <SearchOutlined className="shrink-0 text-gray-300 group-hover:text-[#00b14f]" />
+                      <SearchOutlined className="shrink-0 text-gray-300 group-hover:text-[var(--brand-primary)]" />
                       <span className="truncate">
                         <Highlight text={kw} query={keyword.trim()} />
                       </span>
@@ -264,7 +264,7 @@ export default function SearchDropdown({
                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   Từ khóa tìm kiếm gần đây
                 </span>
-                <button onClick={clearAll} className="text-xs font-medium text-[#00b14f] hover:text-[#008a3e] cursor-pointer">
+                <button onClick={clearAll} className="text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] cursor-pointer">
                   Xóa tất cả
                 </button>
               </div>
@@ -279,7 +279,7 @@ export default function SearchDropdown({
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-gray-700">{e.q}</span>
                         {e.count > 0 && (
-                          <span className="block text-xs text-[#00b14f]">{formatNumber(e.count)} việc làm</span>
+                          <span className="block text-xs text-[var(--brand-primary)]">{formatNumber(e.count)} việc làm</span>
                         )}
                       </span>
                       <span
@@ -326,16 +326,16 @@ export default function SearchDropdown({
                     }}
                     className="group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 text-sm font-bold text-[#00b14f] ring-1 ring-emerald-100">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 text-sm font-bold text-[var(--brand-primary)] ring-1 ring-emerald-100">
                       {companyInitial(job.company_name)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-800 group-hover:text-[#00b14f] transition-colors">
+                      <p className="truncate text-sm font-medium text-gray-800 group-hover:text-[var(--brand-primary)] transition-colors">
                         {job.title}
                       </p>
                       <p className="truncate text-xs text-gray-400">{job.company_name}</p>
                     </div>
-                    <span className="shrink-0 text-xs font-semibold text-[#00b14f]">{formatSalary(job)}</span>
+                    <span className="shrink-0 text-xs font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
                   </button>
                 </li>
               ))}

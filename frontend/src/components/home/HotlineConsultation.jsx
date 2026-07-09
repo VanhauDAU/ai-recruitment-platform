@@ -79,7 +79,7 @@ export default function HotlineConsultation() {
                   onClick={() => setActiveKey(tab.key)}
                   className={`relative h-[50px] shrink-0 overflow-visible px-6 text-left text-xs font-extrabold transition md:h-[58px] md:w-[300px] md:text-base ${
                     activeTab
-                      ? 'z-20 cursor-pointer text-[#00b14f]'
+                      ? 'z-20 cursor-pointer text-[var(--brand-primary)]'
                       : 'z-10 cursor-pointer text-gray-500 hover:text-gray-600'
                   } ${index > 0 ? '-ml-8 pl-10 md:-ml-12 md:pl-16' : 'min-w-[200px] md:min-w-0'}`}
                 >
@@ -104,19 +104,19 @@ export default function HotlineConsultation() {
             <div className="relative z-10 grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
                 <h3 className="text-2xl font-extrabold leading-tight text-[#1f2937] md:text-3xl">
-                  {active.lead} <span className="text-[#00b14f]">{active.accent}</span>
+                  {active.lead} <span className="text-[var(--brand-primary)]">{active.accent}</span>
                 </h3>
 
                 <div className="mt-7 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center">
                   <a
                     href="tel:1900068889"
-                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full bg-[#039b49] px-5 text-base font-extrabold text-white shadow-lg shadow-emerald-700/20 transition hover:bg-[#008a3e]"
+                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full bg-[#039b49] px-5 text-base font-extrabold text-white shadow-lg shadow-emerald-700/20 transition hover:bg-[var(--brand-primary-hover)]"
                   >
                     {active.phone}
                   </a>
                   <a
                     href="tel:1900068889"
-                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[#00b14f] bg-white px-7 text-sm font-extrabold text-[#00b14f] transition hover:bg-green-50"
+                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-7 text-sm font-extrabold text-[var(--brand-primary)] transition hover:bg-green-50"
                   >
                     <PhoneFilled />
                     GỌI NGAY
@@ -125,10 +125,10 @@ export default function HotlineConsultation() {
 
                 <div className="mt-6 flex flex-wrap items-center gap-3 text-base font-bold text-gray-500">
                   <span>{active.emailLabel}</span>
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-[#00b14f]">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-[var(--brand-primary)]">
                     <MailFilled className="text-sm" />
                   </span>
-                  <a href={`mailto:${active.email}`} className="font-extrabold text-[#00b14f] hover:underline">
+                  <a href={`mailto:${active.email}`} className="font-extrabold text-[var(--brand-primary)] hover:underline">
                     {active.email}
                   </a>
                 </div>

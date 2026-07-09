@@ -1,7 +1,7 @@
 import { PhoneOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
-import AuthLogo from '../../components/auth/AuthLogo'
-import LoginForm from '../../components/auth/LoginForm'
+import AuthLogo from '../../../components/auth/AuthLogo'
+import LoginForm from '../../../components/auth/LoginForm'
 
 // SVG icons for social providers
 function GoogleIcon() {
@@ -84,7 +84,7 @@ export default function Login({ onSuccess }) {
           Bạn chưa có tài khoản?{' '}
           <Link
             to="/sign-up"
-            className="font-semibold text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors"
+            className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors"
           >
             Đăng ký ngay
           </Link>
@@ -99,7 +99,7 @@ export default function Login({ onSuccess }) {
           Vui lòng gọi tới số{' '}
           <a
             href="tel:0777464347"
-            className="inline-flex items-center gap-1 font-semibold text-[#00b14f] hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-[var(--brand-primary)] hover:underline"
           >
             <PhoneOutlined className="text-[11px]" />
             0777 46 43 47

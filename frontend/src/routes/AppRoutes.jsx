@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import PageLoading from '../components/ui/PageLoading'
 import { IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '../config/portals'
-import { publicRoutes } from './PublicRoutes'
+import { mainRoutes } from './MainRoutes'
 import { employerRoutes } from './EmployerRoutes'
 import { adminRoutes } from './AdminRoutes'
 
@@ -15,7 +15,7 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<PageLoading />}>
       <Routes>
-        {IS_MAIN_HOST && publicRoutes()}
+        {IS_MAIN_HOST && mainRoutes()}
         {!IS_ADMIN_HOST && employerRoutes()}
         {!IS_EMPLOYER_HOST && adminRoutes()}
 

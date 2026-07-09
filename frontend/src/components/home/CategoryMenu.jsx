@@ -42,7 +42,7 @@ export default function CategoryMenu({ categories, banner }) {
                 onClick={() => go(p.id)}
                 className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-sm text-left cursor-pointer transition ${
                   activeId === p.id
-                    ? 'bg-green-50 text-[#00b14f] font-medium'
+                    ? 'bg-green-50 text-[var(--brand-primary)] font-medium'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -56,7 +56,7 @@ export default function CategoryMenu({ categories, banner }) {
         {totalPages > 1 && (
           <div className="flex items-center px-4 py-3 border-t border-gray-100">
             <span className="text-sm font-medium text-gray-500">
-              <span className="text-[#00b14f]">{page + 1}</span>/{totalPages}
+              <span className="text-[var(--brand-primary)]">{page + 1}</span>/{totalPages}
             </span>
             <div className="ml-auto flex gap-2">
               <ArrowButton dir="left" disabled={page === 0} onClick={() => changePage(page - 1)} />
@@ -82,7 +82,7 @@ export default function CategoryMenu({ categories, banner }) {
                   <div key={j.id} className="grid grid-cols-[200px_1fr] gap-3 px-5 py-3">
                     <button
                       onClick={() => go(j.id)}
-                      className="text-left text-sm font-medium text-gray-800 hover:text-[#00b14f] cursor-pointer"
+                      className="text-left text-sm font-medium text-gray-800 hover:text-[var(--brand-primary)] cursor-pointer"
                     >
                       {j.name}
                     </button>
@@ -91,7 +91,7 @@ export default function CategoryMenu({ categories, banner }) {
                         <button
                           key={p.id}
                           onClick={() => go(p.id)}
-                          className="px-3 py-1 text-sm text-gray-600 bg-gray-50 rounded-full cursor-pointer hover:bg-green-50 hover:text-[#00b14f] transition"
+                          className="px-3 py-1 text-sm text-gray-600 bg-gray-50 rounded-full cursor-pointer hover:bg-green-50 hover:text-[var(--brand-primary)] transition"
                         >
                           {p.name}
                         </button>

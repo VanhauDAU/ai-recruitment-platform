@@ -24,14 +24,14 @@ export default function EmployerLogin() {
           Chưa có tài khoản?{' '}
           <Link
             to={employerAppPath('/register')}
-            className="font-semibold text-[#00b14f] hover:text-[#008a3e] hover:underline transition-colors"
+            className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors"
           >
             Đăng ký ngay
           </Link>
         </p>
         <p className="mt-2 text-xs text-gray-400">
           Bạn là ứng viên?{' '}
-          <a href={MAIN_LOGIN_URL} className="font-medium text-gray-500 hover:text-[#00b14f] hover:underline">
+          <a href={MAIN_LOGIN_URL} className="font-medium text-gray-500 hover:text-[var(--brand-primary)] hover:underline">
             Đăng nhập tại đây
           </a>
         </p>

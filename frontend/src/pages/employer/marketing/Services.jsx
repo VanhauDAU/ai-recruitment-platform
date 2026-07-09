@@ -22,7 +22,7 @@ export default function EmployerServices() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="max-w-3xl">
-        <span className="rounded-full bg-[#00b14f]/10 px-4 py-1.5 text-sm font-bold text-[#008a3e]">Dịch vụ</span>
+        <span className="rounded-full bg-[var(--brand-primary)]/10 px-4 py-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">Dịch vụ</span>
         <h1 className="mt-5 text-4xl font-extrabold text-gray-950">Bộ công cụ tuyển dụng cho doanh nghiệp</h1>
         <p className="mt-4 text-lg leading-8 text-gray-600">
           Bắt đầu từ những nghiệp vụ cốt lõi: đăng tin, nhận hồ sơ và quản lý trạng thái ứng viên. Các gói nâng cao có thể mở rộng sau mà không đổi lại cấu trúc cổng.
@@ -32,7 +32,7 @@ export default function EmployerServices() {
       <div className="mt-10 grid gap-5 md:grid-cols-3">
         {SERVICES.map((service) => (
           <article key={service.title} className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <CheckCircleFilled className="text-2xl text-[#00b14f]" />
+            <CheckCircleFilled className="text-2xl text-[var(--brand-primary)]" />
             <h2 className="mt-5 text-xl font-bold">{service.title}</h2>
             <p className="mt-3 leading-7 text-gray-600">{service.desc}</p>
           </article>

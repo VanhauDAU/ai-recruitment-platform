@@ -28,7 +28,7 @@ export function AuthFormStyles() {
       .social-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
       .submit-btn {
         position: relative; overflow: hidden;
-        background: linear-gradient(135deg, #00b14f 0%, #008a3e 100%);
+        background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
         transition: all 0.2s ease;
       }
       .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,177,79,0.35); }
@@ -117,7 +117,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
             <Input
               size="large"
               autoComplete="email"
-              prefix={<MailOutlined className="text-[#00b14f]" />}
+              prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
               placeholder="ten@congty.com"
               className="!rounded-full !h-11 !text-base"
             />
@@ -136,7 +136,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
             {forgotPasswordLink && (
               <Link
                 to={forgotPasswordLink}
-                className="text-xs font-medium text-[#00b14f] hover:text-[#008a3e] hover:underline underline-offset-2 transition-colors"
+                className="text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline underline-offset-2 transition-colors"
                 tabIndex={-1}
               >
                 Quên mật khẩu?
@@ -152,7 +152,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
             <Input.Password
               size="large"
               autoComplete="current-password"
-              prefix={<LockOutlined className="text-[#00b14f]" />}
+              prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Nhập mật khẩu của bạn"
               className="!rounded-full !h-11 !text-base"
             />

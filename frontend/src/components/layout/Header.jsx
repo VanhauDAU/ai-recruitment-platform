@@ -198,14 +198,14 @@ export default function Header() {
                   aria-current={active ? 'page' : undefined}
                   className={`relative flex h-16 cursor-pointer items-center gap-1 px-1 transition ${
                     active || openKey === m.key
-                      ? 'text-[#00b14f]'
-                      : 'hover:text-[#00b14f]'
+                      ? 'text-[var(--brand-primary)]'
+                      : 'hover:text-[var(--brand-primary)]'
                   }`}
                 >
                   {m.label}
                   <DownOutlined className={`text-[10px] transition-transform ${openKey === m.key ? 'rotate-180' : ''}`} />
                   <span
-                    className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-[#00b14f] transition-all duration-200 ${
+                    className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-[var(--brand-primary)] transition-all duration-200 ${
                       active ? 'w-full opacity-100' : 'w-0 opacity-0'
                     }`}
                   />
@@ -225,12 +225,12 @@ export default function Header() {
                                 <button
                                   key={it.label}
                                   onClick={() => handleItem(it)}
-                                  className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[#00b14f] cursor-pointer text-left leading-snug"
+                                  className="group flex items-center gap-2 py-1.5 text-sm text-gray-700 hover:text-[var(--brand-primary)] cursor-pointer text-left leading-snug"
                                 >
-                                  {it.icon && <span className="text-[#00b14f] text-base shrink-0">{it.icon}</span>}
+                                  {it.icon && <span className="text-[var(--brand-primary)] text-base shrink-0">{it.icon}</span>}
                                   <span className="max-w-[220px]">{it.label}</span>
                                   {it.badge && <Tag color="green" className="!mr-0 !text-[10px] !leading-4 shrink-0">{it.badge}</Tag>}
-                                  <RightOutlined className="text-[10px] text-[#00b14f] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                                  <RightOutlined className="text-[10px] text-[var(--brand-primary)] shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                                 </button>
                               ))}
                             </div>

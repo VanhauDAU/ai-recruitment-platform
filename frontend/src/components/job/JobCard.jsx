@@ -150,9 +150,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
       onClick={handleQuickView}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group relative flex cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00b14f]/25 ${
+      className={`group relative flex cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
-      } ${active ? 'border-[#00b14f] bg-white shadow-md shadow-emerald-600/10' : 'border-emerald-300 bg-emerald-50/65 hover:border-[#00b14f]'}`}
+      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : 'border-emerald-300 bg-emerald-50/65 hover:border-[var(--brand-primary)]'}`}
     >
       <div
         className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white ${
@@ -162,7 +162,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
         {job.company_logo_url ? (
           <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[#00b14f]">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[var(--brand-primary)]">
             {companyInitial(job.company_name)}
           </div>
         )}
@@ -170,7 +170,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
 
       <div className="min-w-0 flex-1">
         <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
-          <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[#00b14f]">
+          <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
             <Link
               to={`/viec-lam/${job.slug}`}
               onClick={(e) => e.stopPropagation()}
@@ -179,7 +179,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
               {job.title}
             </Link>
           </h3>
-          <span className="shrink-0 text-sm font-semibold text-[#00b14f]">{formatSalary(job)}</span>
+          <span className="shrink-0 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
         </div>
         <p className="mt-0.5 truncate text-sm text-gray-500 uppercase">{job.company_name}</p>
 
@@ -213,7 +213,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
               <button
                 type="button"
                 onClick={handleApply}
-                className={`hidden origin-center cursor-pointer rounded-full bg-[#00b14f] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#008a3e] hover:shadow-lg hover:shadow-emerald-600/25 md:inline-flex ${
+                className={`hidden origin-center cursor-pointer rounded-full bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[var(--brand-primary-hover)] hover:shadow-lg hover:shadow-emerald-600/25 md:inline-flex ${
                   hovered ? 'translate-y-0 scale-100 opacity-100 delay-75' : 'pointer-events-none translate-y-2 scale-95 opacity-0'
                 }`}
               >
@@ -225,9 +225,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
                 type="button"
                 onClick={toggleSave}
                 aria-label={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[#00b14f] hover:bg-green-50"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-green-50"
               >
-                {saved ? <HeartFilled className="text-[#00b14f]" /> : <HeartOutlined className="text-gray-400" />}
+                {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-gray-400" />}
               </button>
             </Tooltip>
           </span>
@@ -237,7 +237,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
         <button
           type="button"
           onClick={handleQuickView}
-          className={`absolute right-4 top-[52px] hidden origin-center cursor-pointer items-center gap-1 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-[#00b14f] shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md md:inline-flex ${
+          className={`absolute right-4 top-[52px] hidden origin-center cursor-pointer items-center gap-1 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-[var(--brand-primary)] shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md md:inline-flex ${
             hovered ? 'translate-y-0 scale-100 opacity-100' : 'pointer-events-none translate-y-2 scale-95 opacity-0'
           }`}
         >
