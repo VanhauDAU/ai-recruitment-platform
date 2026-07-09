@@ -8,7 +8,7 @@ Stack: ReactJS + Vite, Tailwind CSS v4, Ant Design (theme xanh `#00b14f` qua `Co
 pages/           # trang theo route
   auth/, candidate/, employer/, admin/   # chia theo role
   jobs/            # JobList.jsx (/jobs), JobDetail.jsx (/jobs/:slug)
-  Home.jsx         # trang chủ public (TopCV-style)
+  Home.jsx         # trang chủ public
 components/      # component dùng chung
   Header.jsx, Footer.jsx        # mega-menu nav (Việc làm/Tạo CV/Công cụ/Cẩm nang) + footer
   JobCard.jsx, JobCardSkeleton.jsx

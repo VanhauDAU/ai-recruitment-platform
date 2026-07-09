@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Modal, message } from 'antd'
+import { FilterOutlined } from '@ant-design/icons'
+import { Drawer, Modal, message } from 'antd'
 import { saveHistory } from '../../../components/ui/searchDropdownHistory'
 import { useAuth } from '../../../hooks/useAuth'
 import { useHideOnScroll } from '../../../hooks/useHideOnScroll'
@@ -45,6 +46,8 @@ export default function JobList() {
   const [salaryTo, setSalaryTo] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches)
   const [quickViewJob, setQuickViewJob] = useState(null)
   const [dismissedNotice, setDismissedNotice] = useState(null)
   const [noticeExpanded, setNoticeExpanded] = useState(false)
@@ -249,6 +252,12 @@ export default function JobList() {
     runSearch(nextKeyword, by)
   }
 
+  // Bấm "x" (hoặc xoá hết chữ) khi đang có search trên URL -> xoá filter ngay, không cần bấm Enter.
+  function handleKeywordChange(value) {
+    setKeyword(value)
+    if (!value && searchParams.get('search')) runSearch('')
+  }
+
   function toggleExperienceYears(value) {
     setCommaParam('exp', expYears.includes(value) ? expYears.filter((item) => item !== value) : [...expYears, value])
   }
@@ -269,6 +278,16 @@ export default function JobList() {
     FILTER_KEYS.forEach((key) => next.delete(key))
     next.delete('page')
     setSearchParams(next)
+    setSalaryFrom(null)
+    setSalaryTo(null)
+  }
+
+  // Empty-state "Xóa bộ lọc & từ khóa": reset cả filter lẫn search về danh sách đầy đủ.
+  function clearAllCriteria() {
+    const next = new URLSearchParams(searchParams)
+    ;[...FILTER_KEYS, 'search', 'search_by', 'page'].forEach((key) => next.delete(key))
+    setSearchParams(next)
+    setKeyword('')
     setSalaryFrom(null)
     setSalaryTo(null)
   }
@@ -372,6 +391,48 @@ export default function JobList() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Xem nhanh chỉ tách 2 cột trên desktop; mobile mở Drawer toàn màn hình (danh sách giữ nguyên).
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const onChange = (event) => setIsDesktop(event.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  const inlineQuickView = quickViewJob && isDesktop
+
+  // Dùng lại cho cả cột dính (desktop) và drawer lọc (mobile).
+  const filterSidebar = (
+    <JobFilterSidebar
+      childrenOf={childrenOf}
+      demandCounts={demandCounts}
+      expandedGroups={expandedGroups}
+      expYears={expYears}
+      groups={groups}
+      hasFilters={hasFilters}
+      industries={industries}
+      onApplyCustomSalary={applyCustomSalary}
+      onClearFilters={clearFilters}
+      onSaveFilter={saveFilter}
+      onSalaryChange={onSalaryChange}
+      onSetCommaParam={setCommaParam}
+      onSetExpandedGroups={setExpandedGroups}
+      onSetSalaryFrom={setSalaryFrom}
+      onSetSalaryTo={setSalaryTo}
+      onSetShowAllGroups={setShowAllGroups}
+      onToggleCategory={toggleCategory}
+      onToggleExperienceYears={toggleExperienceYears}
+      onUpdateParams={updateParams}
+      salaryFrom={salaryFrom}
+      salaryKey={salaryKey}
+      salaryTo={salaryTo}
+      searchParams={searchParams}
+      selectedCategories={selectedCategories}
+      showAllGroups={showAllGroups}
+      sidebarLoading={sidebarLoading}
+      sidebarTop={sidebarTop}
+    />
+  )
+
   return (
     <div>
       <JobSearchBar
@@ -382,7 +443,7 @@ export default function JobList() {
         onDropdownClose={() => setDropdownOpen(false)}
         onDropdownOpen={() => setDropdownOpen(true)}
         onDropdownSelect={handleDropdownSelect}
-        onKeywordChange={setKeyword}
+        onKeywordChange={handleKeywordChange}
         onLocationChange={setLocationParam}
         onRunSearch={runSearch}
         onSearchByChange={(by) => updateParams({ search_by: by === 'title' ? null : by })}
@@ -447,47 +508,27 @@ export default function JobList() {
           />
         )}
 
+        <button
+          type="button"
+          onClick={() => setFilterDrawerOpen(true)}
+          className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 shadow-sm lg:hidden"
+        >
+          <FilterOutlined className="text-[var(--brand-primary)]" />
+          Lọc nâng cao{hasFilters ? ` (${[...searchParams.entries()].filter(([key]) => !['search', 'search_by', 'page', 'ordering'].includes(key)).length})` : ''}
+        </button>
+
         <div
           className={`mt-4 grid grid-cols-1 gap-5 ${
-            quickViewJob ? 'lg:grid-cols-[minmax(340px,400px)_1fr] lg:items-start' : 'lg:grid-cols-[300px_1fr]'
+            inlineQuickView ? 'lg:grid-cols-[minmax(340px,400px)_1fr] lg:items-start' : 'lg:grid-cols-[300px_1fr]'
           }`}
         >
-          {!quickViewJob && (
-            <JobFilterSidebar
-              childrenOf={childrenOf}
-              demandCounts={demandCounts}
-              expandedGroups={expandedGroups}
-              expYears={expYears}
-              groups={groups}
-              hasFilters={hasFilters}
-              industries={industries}
-              onApplyCustomSalary={applyCustomSalary}
-              onClearFilters={clearFilters}
-              onSaveFilter={saveFilter}
-              onSalaryChange={onSalaryChange}
-              onSetCommaParam={setCommaParam}
-              onSetExpandedGroups={setExpandedGroups}
-              onSetSalaryFrom={setSalaryFrom}
-              onSetSalaryTo={setSalaryTo}
-              onSetShowAllGroups={setShowAllGroups}
-              onToggleCategory={toggleCategory}
-              onToggleExperienceYears={toggleExperienceYears}
-              onUpdateParams={updateParams}
-              salaryFrom={salaryFrom}
-              salaryKey={salaryKey}
-              salaryTo={salaryTo}
-              searchParams={searchParams}
-              selectedCategories={selectedCategories}
-              showAllGroups={showAllGroups}
-              sidebarLoading={sidebarLoading}
-              sidebarTop={sidebarTop}
-            />
-          )}
+          {!inlineQuickView && <div className="hidden lg:block">{filterSidebar}</div>}
 
           <JobResults
             count={count}
             isAuthenticated={isAuthenticated}
             loading={loading}
+            onClearAll={hasFilters || searchParamKeyword ? clearAllCriteria : undefined}
             onPageChange={handlePageChange}
             onRequireLogin={() => setLoginModalOpen(true)}
             onSearchByChange={(tabKey) => updateParams({ search_by: tabKey === 'title' ? null : tabKey })}
@@ -496,14 +537,14 @@ export default function JobList() {
             onSortChange={(sort) => updateParams({ sort })}
             ordering={ordering}
             page={page}
-            quickViewJob={quickViewJob}
+            quickViewJob={inlineQuickView ? quickViewJob : null}
             results={results}
             searchBy={searchBy}
             suggestedWards={suggestedWards}
             wardSuggestionInsertIndex={wardSuggestionInsertIndex}
           />
 
-          {quickViewJob && (
+          {inlineQuickView && (
             <div
               style={{ '--sb-top': `${sidebarTop}px` }}
               className="transition-[top] duration-300 lg:sticky lg:top-[var(--sb-top)] lg:max-h-[calc(100dvh-var(--sb-top)-1rem)] lg:overflow-y-auto lg:[scrollbar-width:thin] rounded-xl"
@@ -518,6 +559,40 @@ export default function JobList() {
           )}
         </div>
       </div>
+
+      <Drawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        placement="left"
+        width={320}
+        styles={{ body: { padding: 0 }, header: { padding: '12px 16px' } }}
+        title="Lọc nâng cao"
+        className="lg:hidden"
+      >
+        <div className="h-full [&_.filter-sidebar]:h-full">{filterSidebar}</div>
+      </Drawer>
+
+      <Drawer
+        open={Boolean(quickViewJob) && !isDesktop}
+        onClose={() => setQuickViewJob(null)}
+        placement="bottom"
+        height="92%"
+        closable={false}
+        styles={{ body: { padding: 0 } }}
+        className="lg:hidden"
+        rootClassName="[&_.ant-drawer-content]:!rounded-t-2xl [&_.ant-drawer-content]:overflow-hidden"
+      >
+        {quickViewJob && (
+          <div className="h-full overflow-y-auto [&>div]:!rounded-none [&>div]:!border-0">
+            <JobQuickView
+              job={quickViewJob}
+              onClose={() => setQuickViewJob(null)}
+              isAuthenticated={isAuthenticated}
+              onRequireLogin={() => setLoginModalOpen(true)}
+            />
+          </div>
+        )}
+      </Drawer>
 
       <Modal
         open={loginModalOpen}

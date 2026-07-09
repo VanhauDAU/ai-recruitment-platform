@@ -27,7 +27,7 @@ function Section({ title, text }) {
 }
 
 /**
- * JobQuickView — panel xem nhanh chi tiết job ngay trong trang danh sách (kiểu TopCV),
+ * JobQuickView — panel xem nhanh chi tiết job ngay trong trang danh sách,
  * không cần chuyển sang trang chi tiết. Fetch đầy đủ qua `getJobDetail` (kèm Skeleton);
  * header dùng ngay dữ liệu tóm tắt từ card nên hiện tức thì.
  */

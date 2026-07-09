@@ -44,7 +44,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Frontend: section `MarketStats` trên trang chủ (thẻ nền xanh đậm) gồm mascot + danh sách "Việc làm mới nhất" tự xoay 10 giây/lần, 3 ô số liệu nhanh, biểu đồ đường tăng trưởng và biểu đồ cột nhu cầu theo ngành (vẽ bằng SVG, bảng màu kiểm định CVD theo skill dataviz). Banner cạnh danh mục đổi thành `BannerCarousel` (tự trượt 5s, nút trước/sau, dot, dừng khi hover). Áp dụng bộ lọc địa điểm ở trang chủ tìm ngay không cần bấm "Tìm kiếm".
 - Lệnh `seed_demo_jobs` tạo 8 công ty demo + ~30 tin tuyển dụng active (trải theo ngày/ngành/địa điểm) để dashboard và danh sách job có dữ liệu minh hoạ; re-runnable, có cờ `--clear`.
 
-#### Added — Trang chủ, danh sách/chi tiết job kiểu TopCV (Giai đoạn 1.14)
+#### Added — Trang chủ, danh sách/chi tiết job (Giai đoạn 1.14)
 
 - Trang chủ (`Home.jsx`): hero xanh với ô tìm kiếm (từ khoá + `LocationFilter`), banner quảng cáo dạng carousel (`BannerCarousel` — tự trượt mỗi 5 giây, dừng khi hover, nút trước/sau, dot điều hướng, 3 slide mẫu), mega-menu danh mục 3 cấp (`CategoryMenu` — hover một nhóm nghề hiện nghề + vị trí chuyên môn ở 2 cột bên phải, phân trang nhóm nghề bằng nút mũi tên có hiệu ứng hover), lưới "Việc làm mới nhất".
 - Trang danh sách job (`pages/jobs/JobList.jsx`, route `/jobs`): thanh tìm kiếm trên cùng gồm `CategoryPicker` (modal chọn danh mục 3 cấp, multi-select, tự rút gọn về id nhóm/nghề khi chọn đủ toàn bộ danh mục con), ô từ khoá, `LocationFilter`, nút Tìm kiếm; sidebar lọc thêm hình thức làm việc/loại hình/cấp bậc; phân trang kết quả.

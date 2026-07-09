@@ -6,7 +6,8 @@ import {
   RightOutlined, RiseOutlined, RocketOutlined, SafetyCertificateOutlined, SafetyOutlined,
   SearchOutlined, SnippetsOutlined, StarOutlined, UploadOutlined, WalletOutlined,
 } from '@ant-design/icons'
-import { App, Button, Tag } from 'antd'
+import { MenuOutlined } from '@ant-design/icons'
+import { App, Button, Drawer, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import BrandLogo from '../brand/BrandLogo'
@@ -157,6 +158,8 @@ export default function Header() {
   const location = useLocation()
   const { message } = App.useApp()
   const [openKey, setOpenKey] = useState(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileKey, setMobileKey] = useState(null)
   const headerVisible = useHideOnScroll()
   const hideOnScroll =
     location.pathname === '/viec-lam'
@@ -172,10 +175,14 @@ export default function Header() {
 
   function handleItem(it) {
     setOpenKey(null)
+    setMobileOpen(false)
     if (it.to) navigate(it.to)
     else if (it.search) navigate(`/viec-lam?search=${encodeURIComponent(it.search)}`)
     else message.info('Tính năng sẽ sớm ra mắt.')
   }
+
+  // Gom item của 1 menu (columns -> groups -> items) thành danh sách phẳng cho drawer mobile.
+  const flatItems = (menu) => menu.columns.flatMap((col) => col.flatMap((group) => group.items))
 
   return (
     <header
@@ -183,8 +190,16 @@ export default function Header() {
         shouldShowHeader ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <div className="w-full px-6 h-16 flex items-center gap-8">
-        <BrandLogo variant="full" className="whitespace-nowrap cursor-pointer" imageClassName="h-9 max-w-[190px]" />
+      <div className="w-full px-4 sm:px-6 h-16 flex items-center gap-3 md:gap-8">
+        <button
+          type="button"
+          aria-label="Mở menu"
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden -ml-1 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-xl text-gray-600 hover:bg-gray-100"
+        >
+          <MenuOutlined />
+        </button>
+        <BrandLogo variant="full" className="whitespace-nowrap cursor-pointer" imageClassName="h-8 sm:h-9 max-w-[150px] sm:max-w-[190px]" />
 
         <nav
           className="hidden md:flex items-stretch gap-6 text-sm font-medium text-gray-700 flex-1"
@@ -274,6 +289,68 @@ export default function Header() {
           )}
         </div>
       </div>
+
+      <Drawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        placement="left"
+        width={300}
+        styles={{ body: { padding: 0 } }}
+        title={<BrandLogo variant="full" imageClassName="h-8 max-w-[160px]" />}
+        className="md:hidden"
+      >
+        <nav className="flex flex-col py-1">
+          {NAV_MENUS.map((m) => {
+            const expanded = mobileKey === m.key
+            return (
+              <div key={m.key} className="border-b border-gray-100">
+                <button
+                  onClick={() => setMobileKey(expanded ? null : m.key)}
+                  className="flex w-full cursor-pointer items-center justify-between px-5 py-3.5 text-left text-base font-semibold text-gray-800"
+                >
+                  {m.label}
+                  <DownOutlined className={`text-xs text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <div className="pb-2">
+                      {flatItems(m).map((it) => (
+                        <button
+                          key={it.label}
+                          onClick={() => handleItem(it)}
+                          className="flex w-full cursor-pointer items-center gap-2 py-2 pl-8 pr-5 text-left text-sm text-gray-600 hover:text-[var(--brand-primary)]"
+                        >
+                          {it.icon && <span className="text-[var(--brand-primary)] shrink-0">{it.icon}</span>}
+                          <span>{it.label}</span>
+                          {it.badge && <Tag color="green" className="!mr-0 !text-[10px] !leading-4">{it.badge}</Tag>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </nav>
+
+        <div className="flex flex-col gap-2 p-5">
+          {isAuthenticated ? (
+            user?.role === 'candidate' ? (
+              <a href={EMPLOYER_PORTAL_URL} className="text-center text-sm font-semibold text-[var(--brand-primary)]">
+                Bạn là nhà tuyển dụng? Đăng tuyển ngay »
+              </a>
+            ) : (
+              <Button block onClick={() => { setMobileOpen(false); navigate(HOME_BY_ROLE[user?.role] || '/') }}>Trang quản lý</Button>
+            )
+          ) : (
+            <>
+              <Link to="/login" onClick={() => setMobileOpen(false)}><Button block type="primary" shape="round">Đăng nhập</Button></Link>
+              <Link to="/sign-up" onClick={() => setMobileOpen(false)}><Button block shape="round">Đăng ký</Button></Link>
+              <a href={EMPLOYER_PORTAL_URL}><Button block ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button></a>
+            </>
+          )}
+        </div>
+      </Drawer>
     </header>
   )
 }
