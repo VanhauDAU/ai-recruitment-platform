@@ -6,6 +6,35 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-09
+
+#### Added — Hệ thống cài đặt admin 15 nhóm (schema-driven)
+
+- `SiteSetting` mở rộng thành nền tảng cấu hình toàn hệ thống: thêm `value_type` (text/textarea/number/boolean/select/color/image/email/url/json/env), `options` (choices cho select, `env_var` cho kiểu env), `order`; nhóm mở rộng từ 4 → 15 (chung, trang chủ, SEO, ứng viên, NTD, việc làm, CV, email, thanh toán, bảo mật, upload, footer, liên hệ, phân quyền admin, AI). Migration gộp nhóm `appearance` cũ vào `general`.
+- Seed `seed_sitecontent` viết lại: 96 keys đủ 15 nhóm, idempotent — đồng bộ metadata nhưng không ghi đè `value` admin đã chỉnh. Secrets (API key AI, SMTP, VNPay) giữ trong `.env`, DB chỉ lưu trạng thái qua kiểu `env`.
+- API admin mới: `GET/PATCH /api/site/admin/settings/` (trả cấu hình gộp theo nhóm kèm metadata; bulk update có validate theo `value_type`, từ chối key kiểu env) + `POST /api/site/admin/settings/upload/` (upload ảnh dùng chung `media_storage`); permission `IsAdmin` mới. Public `/api/site/settings/` được cache 1h, signal `post_save/post_delete` tự invalidate.
+- Trang React `/admin/settings`: tabs 15 nhóm, form tự sinh từ metadata (`SettingField` map value_type → control AntD: Switch/InputNumber/Select/ColorPicker/Upload ảnh/JSON editor/tag env), dirty-tracking + lưu theo nhóm + hoàn tác, tag "Public" cho key lộ ra frontend. Nav admin trong `DashboardLayout` bỏ 2 menu chết (users/skills), thêm "Cài đặt hệ thống", highlight theo route.
+- Tài liệu: hướng dẫn mới `docs/05-huong-dan/cau-hinh-site-settings.md` (bảng đủ 96 keys, quy ước env, quy tắc seed), cập nhật `docs/04-api/tai-lieu-api.md` và tiến độ 6.6–6.8.
+- Dọn dẹp: xoá file trùng lặp mồ côi `frontend/src/components/brand/siteSettingsContext.js`.
+
+#### Added — Storage nội bộ cho logo/ảnh upload
+
+- Thêm helper `apps.common.media_storage` để validate ảnh JPG/PNG/GIF/WebP, giới hạn dung lượng upload, lưu file qua Django `default_storage`, sinh public URL theo `MEDIA_URL`/`MEDIA_PUBLIC_BASE_URL`, và tự xóa file cũ nếu thuộc storage nội bộ.
+- Thêm cấu hình `MEDIA_PUBLIC_BASE_URL`, `IMAGE_UPLOAD_MAX_SIZE`; bổ sung API upload `POST /api/auth/avatar/`, `POST /api/employer/profile/logo/`, `POST /api/employer/profile/cover/`; upload CV cũng dùng chung hàm sinh media URL.
+- Django admin hỗ trợ upload ảnh nội bộ cho `JobCategory.logo_url` và `Banner.image_url`; frontend có helper `mediaService.js` cho multipart upload.
+- Chuẩn hóa asset ProCV: `brand_logo_url` dùng logo ngang `/images/logo/logo_proCV_2000_600.png` cho header, còn `brand_logo_mark_url`/`brand_favicon_url` dùng logo vuông `/images/logo/logo_proCV_2000_2000.png`; cập nhật default site settings, seed `sitecontent`, DB local và favicon mặc định trong `frontend/index.html`.
+
+#### Changed — Header và branding
+
+- Header chỉ ẩn khi cuộn xuống ở trang danh sách việc làm (`/viec-lam`, `/viec-lam/tai/...`, `/jobs`); trang chủ và các trang khác giữ header sticky luôn hiện.
+- Site settings/brand logo dùng fallback ProCV thống nhất; sửa bản context trùng trong `frontend/src/components/brand/siteSettingsContext.js` để không còn key sai.
+- Màu thương hiệu chính (`brand_primary_color`) từ DB nay điều khiển Ant Design `ConfigProvider` và các class màu brand phổ biến qua CSS variables (`--brand-primary`, `--brand-primary-hover`, `--brand-primary-soft`), thay vì chỉ set biến nhưng UI vẫn hardcode `#00b14f`.
+
+#### Fixed
+
+- Sửa lọc "Mức lương" trong section "Việc làm tốt nhất": thêm query `salary_bucket` cho homepage, bucket theo mức lương cao nhất hiển thị của job thay vì logic giao nhau khoảng lương. Nhờ vậy chọn "Dưới 10 triệu" không còn trả job `8 - 13tr` hoặc `10 - 25tr`.
+- Thêm test backend cho salary bucket và test upload avatar/logo công ty qua media storage; chạy lại `manage.py check`, test liên quan và `npm run build`.
+
 ### 2026-07-07
 
 #### Added — Tài liệu API Swagger + dashboard thống kê trang chủ

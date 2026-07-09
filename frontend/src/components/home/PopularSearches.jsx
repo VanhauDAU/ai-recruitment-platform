@@ -4,7 +4,7 @@ import { getLinkGroups } from '../../api/siteService'
 
 // Render Link nếu có url thật, ngược lại là span dạng link (tính năng sắp ra mắt).
 function Item({ url, children }) {
-  const cls = 'text-gray-600 hover:text-[#00b14f] transition-colors'
+  const cls = 'text-gray-600 hover:text-[var(--brand-primary)] transition-colors'
   return url ? (
     <Link to={url} className={cls}>{children}</Link>
   ) : (

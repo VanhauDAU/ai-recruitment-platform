@@ -284,10 +284,10 @@ export default function FeaturedIndustriesEmployers() {
         {industries.length > 0 && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-extrabold text-[#00b14f]">Top ngành nghề nổi bật</h2>
+              <h2 className="text-xl font-extrabold text-[var(--brand-primary)]">Top ngành nghề nổi bật</h2>
               <div className="hidden items-center gap-2 sm:flex">
                 <span className="mr-1 text-sm font-medium text-gray-500">
-                  <span className="text-[#00b14f]">{industryCarousel.page + 1}</span>/{industryGroups.length}
+                  <span className="text-[var(--brand-primary)]">{industryCarousel.page + 1}</span>/{industryGroups.length}
                 </span>
                 <ArrowButton
                   dir="left"
@@ -323,7 +323,7 @@ export default function FeaturedIndustriesEmployers() {
                           key={category.id}
                           type="button"
                           onClick={() => navigate(`/viec-lam?cat=${category.id}`)}
-                          className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[#00b14f] hover:bg-white hover:shadow-md hover:shadow-emerald-100"
+                          className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:bg-white hover:shadow-md hover:shadow-emerald-100"
                         >
                           {logoUrl && (
                             <span className="mb-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 shadow-sm transition group-hover:scale-105 group-hover:border group-hover:border-emerald-100">
@@ -337,7 +337,7 @@ export default function FeaturedIndustriesEmployers() {
                             </span>
                           )}
                           <span className="line-clamp-1 text-sm font-bold text-gray-800">{category.name}</span>
-                          <span className="mt-2 text-xs font-medium text-[#00b14f]">
+                          <span className="mt-2 text-xs font-medium text-[var(--brand-primary)]">
                             {formatNumber(category.count)} việc làm
                           </span>
                         </button>
@@ -353,10 +353,10 @@ export default function FeaturedIndustriesEmployers() {
         {logoEmployers.length > 0 && (
           <div className="mt-8">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-extrabold text-[#00b14f]">Nhà tuyển dụng nổi bật</h2>
+              <h2 className="text-xl font-extrabold text-[var(--brand-primary)]">Nhà tuyển dụng nổi bật</h2>
               <div className="hidden items-center gap-2 sm:flex">
                 <span className="mr-1 text-sm font-medium text-gray-500">
-                  <span className="text-[#00b14f]">{employerCarousel.page + 1}</span>/{employerGroups.length}
+                  <span className="text-[var(--brand-primary)]">{employerCarousel.page + 1}</span>/{employerGroups.length}
                 </span>
                 <ArrowButton
                   dir="left"
@@ -395,7 +395,7 @@ export default function FeaturedIndustriesEmployers() {
                 position: absolute;
                 bottom: 0; left: 0; right: 0;
                 height: 3px;
-                background: linear-gradient(90deg, #00b14f, #3ddc84);
+                background: linear-gradient(90deg, var(--brand-primary), #3ddc84);
                 transform: scaleX(0);
                 transform-origin: left;
                 transition: transform 0.3s ease;

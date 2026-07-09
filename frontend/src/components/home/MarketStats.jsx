@@ -129,7 +129,7 @@ export default function MarketStats() {
                   key={item.uid}
                   placement="right"
                   title={item.exiting ? null : <LatestJobTooltip job={item.job} />}
-                  overlayInnerStyle={{ width: 300 }}
+                  styles={{ inner: { width: 300 } }}
                 >
                   <li
                     onClick={() => !item.exiting && window.open(`/viec-lam/${item.job.slug}`, '_blank', 'noopener,noreferrer')}

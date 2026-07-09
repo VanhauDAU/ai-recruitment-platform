@@ -1,6 +1,7 @@
 import { Layout, Menu, Button, Typography } from 'antd'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/brand/BrandLogo'
+import { adminPath, employerAppPath } from '../config/portals'
 import { useAuth } from '../hooks/useAuth'
 
 const { Header, Sider, Content } = Layout
@@ -13,20 +14,20 @@ const NAV_ITEMS = {
     { key: '/candidate/interviews', label: 'Luyện phỏng vấn' },
   ],
   employer: [
-    { key: '/employer/dashboard', label: 'Tổng quan' },
-    { key: '/employer/jobs', label: 'Tin tuyển dụng' },
-    { key: '/employer/applications', label: 'Ứng viên' },
+    { key: employerAppPath('/dashboard'), label: 'Tổng quan' },
+    { key: employerAppPath('/jobs'), label: 'Tin tuyển dụng' },
+    { key: employerAppPath('/applications'), label: 'Ứng viên' },
   ],
   admin: [
-    { key: '/admin/dashboard', label: 'Tổng quan' },
-    { key: '/admin/users', label: 'Người dùng' },
-    { key: '/admin/skills', label: 'Kỹ năng' },
+    { key: adminPath('/dashboard'), label: 'Tổng quan' },
+    { key: adminPath('/settings'), label: 'Cài đặt hệ thống' },
   ],
 }
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const items = NAV_ITEMS[user?.role] || []
 
   return (
@@ -43,6 +44,7 @@ export default function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
+          selectedKeys={[pathname]}
           items={items}
           onClick={({ key }) => navigate(key)}
         />

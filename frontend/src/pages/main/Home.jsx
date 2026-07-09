@@ -2,19 +2,19 @@ import { FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Input, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobCategories, getJobs } from '../api/jobService'
-import { getBanners } from '../api/siteService'
-import { formatNumber } from '../constants/jobOptions'
-import BannerCarousel from '../components/ui/BannerCarousel'
-import BestJobs from '../components/home/BestJobs'
-import CategoryMenu from '../components/home/CategoryMenu'
-import FeaturedIndustriesEmployers from '../components/home/FeaturedIndustriesEmployers'
-import FlashBadge from '../components/home/FlashBadge'
-import HotlineConsultation from '../components/home/HotlineConsultation'
-import LocationFilter from '../components/job/LocationFilter'
-import MarketStats from '../components/home/MarketStats'
-import SearchDropdown, { saveHistory } from '../components/ui/SearchDropdown'
-import { useSiteSettings } from '../hooks/useSiteSettings'
+import { getJobCategories, getJobs } from '../../api/jobService'
+import { getBanners } from '../../api/siteService'
+import { formatNumber } from '../../constants/jobOptions'
+import BannerCarousel from '../../components/ui/BannerCarousel'
+import BestJobs from '../../components/home/BestJobs'
+import CategoryMenu from '../../components/home/CategoryMenu'
+import FeaturedIndustriesEmployers from '../../components/home/FeaturedIndustriesEmployers'
+import FlashBadge from '../../components/home/FlashBadge'
+import HotlineConsultation from '../../components/home/HotlineConsultation'
+import LocationFilter from '../../components/job/LocationFilter'
+import MarketStats from '../../components/home/MarketStats'
+import SearchDropdown, { saveHistory } from '../../components/ui/SearchDropdown'
+import { useSiteSettings } from '../../hooks/useSiteSettings'
 
 const SUGGESTED_JOBS = [
   'Lập trình viên React',
@@ -27,7 +27,7 @@ const SUGGESTED_JOBS = [
 
 // Khớp với Banner.Theme ở backend — banner nhập qua admin chọn 1 trong 3 tông này.
 const BANNER_THEMES = {
-  green: { gradient: 'from-[#00b14f] to-[#008a3e]', text: 'text-green-50', eyebrow: 'text-green-100', button: 'text-[#008a3e] hover:bg-green-50' },
+  green: { gradient: 'from-[var(--brand-primary)] to-[var(--brand-primary-hover)]', text: 'text-green-50', eyebrow: 'text-green-100', button: 'text-[var(--brand-primary-hover)] hover:bg-green-50' },
   blue: { gradient: 'from-blue-600 to-blue-800', text: 'text-blue-50', eyebrow: 'text-blue-100', button: 'text-blue-700 hover:bg-blue-50' },
   orange: { gradient: 'from-orange-500 to-pink-600', text: 'text-orange-50', eyebrow: 'text-orange-100', button: 'text-orange-700 hover:bg-orange-50' },
 }
@@ -129,7 +129,7 @@ export default function Home() {
     searchBy === 'company' ? 'Tên công ty' : searchBy === 'both' ? 'Vị trí tuyển dụng, tên công ty' : 'Vị trí tuyển dụng'
 
   const bannerSlides = [
-    <div key="stats" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[#00b14f] to-[#008a3e] text-white px-12 py-6">
+    <div key="stats" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-white px-12 py-6">
       <h3 className="text-2xl font-bold">Tiếp lợi thế, nối thành công</h3>
       <p className="mt-2 text-green-50 max-w-md">
         Hệ sinh thái nhân sự ứng dụng AI: tạo CV chuyên nghiệp, phân tích CV, so khớp việc làm và luyện phỏng vấn thông minh.
@@ -179,7 +179,7 @@ export default function Home() {
                   size="large"
                   variant="borderless"
                   placeholder={searchPlaceholder}
-                  prefix={<SearchOutlined className="text-[#00b14f]" />}
+                  prefix={<SearchOutlined className="text-[var(--brand-primary)]" />}
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   onFocus={() => setDropdownOpen(true)}
@@ -194,7 +194,7 @@ export default function Home() {
                   type="primary"
                   size="large"
                   onClick={handleSearch}
-                  className="!h-12 !rounded-xl !px-8 !font-bold !bg-[#00b14f] hover:!bg-[#009944] !shadow-lg !shadow-emerald-600/25"
+                  className="!h-12 !rounded-xl !px-8 !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)] !shadow-lg"
                 >
                   Tìm kiếm
                 </Button>
@@ -219,7 +219,7 @@ export default function Home() {
                 key={job}
                 type="button"
                 onClick={() => handleSuggestedJob(job)}
-                className="shrink-0 cursor-pointer rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-[#008a3e] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
+                className="shrink-0 cursor-pointer rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
               >
                 {job}
               </button>

@@ -5,3 +5,6 @@ class SitecontentConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.sitecontent'
     verbose_name = 'Cấu hình & nội dung site'
+
+    def ready(self):
+        from . import signals  # noqa: F401

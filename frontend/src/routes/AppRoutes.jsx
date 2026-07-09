@@ -1,57 +1,23 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import PageLoading from '../components/ui/PageLoading'
-import AuthLayout from '../layouts/AuthLayout'
-import DashboardLayout from '../layouts/DashboardLayout'
-import MainLayout from '../layouts/MainLayout'
-import ProtectedRoute from './ProtectedRoute'
+import { IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '../config/portals'
+import { mainRoutes } from './MainRoutes'
+import { employerRoutes } from './EmployerRoutes'
+import { adminRoutes } from './AdminRoutes'
 
-const Home = lazy(() => import('../pages/Home'))
-const JobList = lazy(() => import('../pages/jobs/JobList'))
-const JobDetail = lazy(() => import('../pages/jobs/JobDetail'))
-const Login = lazy(() => import('../pages/auth/Login'))
-const Register = lazy(() => import('../pages/auth/Register'))
-const CandidateDashboard = lazy(() => import('../pages/candidate/Dashboard'))
-const EmployerDashboard = lazy(() => import('../pages/employer/Dashboard'))
-const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'))
 const NotFound = lazy(() => import('../pages/NotFound'))
 
+// 3 zone theo host (xem src/config/portals.js): dev cùng host nên render cả 3
+// (employer prefix /tuyendung, admin prefix /admin); khi build cho subdomain,
+// zone tương ứng mount tại root và các zone khác không render.
 export default function AppRoutes() {
   return (
     <Suspense fallback={<PageLoading />}>
       <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/viec-lam" element={<JobList />} />
-          <Route path="/viec-lam/tai/:locationSlug" element={<JobList />} />
-          <Route path="/viec-lam/:slug" element={<JobDetail />} />
-          <Route path="/jobs" element={<JobList />} />
-          <Route path="/jobs/:slug" element={<JobDetail />} />
-        </Route>
-
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/sign-up" element={<Register />} />
-          <Route path="/register" element={<Register />} />
-        </Route>
-
-        <Route element={<ProtectedRoute allowedRoles={['candidate']} />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
-          </Route>
-        </Route>
-
-        <Route element={<ProtectedRoute allowedRoles={['employer']} />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-          </Route>
-        </Route>
-
-        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          </Route>
-        </Route>
+        {IS_MAIN_HOST && mainRoutes()}
+        {!IS_ADMIN_HOST && employerRoutes()}
+        {!IS_EMPLOYER_HOST && adminRoutes()}
 
         <Route path="*" element={<NotFound />} />
       </Routes>

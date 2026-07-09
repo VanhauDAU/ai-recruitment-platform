@@ -91,7 +91,7 @@ export default function ChatShowcase({
             dark ? 'border-b border-white/10 bg-white/[0.03]' : 'border-b border-gray-50 bg-gray-50/50'
           }`}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#00b14f] to-[#008a3e] text-xs font-bold text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-xs font-bold text-white">
             {avatarInitials}
           </div>
           <div className="min-w-0">
@@ -106,7 +106,7 @@ export default function ChatShowcase({
           {matchPercentage && (
             <span
               className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                dark ? 'bg-[#00b14f]/20 text-[#4ade80]' : 'bg-emerald-50 text-[#00b14f]'
+                dark ? 'bg-[var(--brand-primary)]/20 text-[#4ade80]' : 'bg-emerald-50 text-[var(--brand-primary)]'
               }`}
             >
               {matchPercentage}
@@ -131,7 +131,7 @@ function Avatar({ from }) {
   return (
     <div
       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] text-white ${
-        isCandidate ? 'bg-[#00b14f]' : 'bg-gray-400/20'
+        isCandidate ? 'bg-[var(--brand-primary)]' : 'bg-gray-400/20'
       }`}
     >
       <UserOutlined className="text-[11px]" />
@@ -147,7 +147,7 @@ function Bubble({ from, text, dark }) {
       <div
         className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[13px] leading-snug shadow-sm ${
           isCandidate
-            ? 'rounded-br-sm bg-[#00b14f] text-white'
+            ? 'rounded-br-sm bg-[var(--brand-primary)] text-white'
             : dark
             ? 'rounded-bl-sm bg-white/12 text-green-50'
             : 'rounded-bl-sm bg-gray-100 text-gray-700'
@@ -167,7 +167,7 @@ function TypingBubble({ side, dark }) {
       <div
         className={`flex items-center gap-1 rounded-2xl px-3.5 py-3 ${
           isCandidate
-            ? 'rounded-br-sm bg-[#00b14f]/80'
+            ? 'rounded-br-sm bg-[var(--brand-primary)]/80'
             : dark
             ? 'rounded-bl-sm bg-white/12'
             : 'rounded-bl-sm bg-gray-100'
