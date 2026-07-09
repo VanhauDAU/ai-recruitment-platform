@@ -1,8 +1,8 @@
 import { Empty, Pagination, Select } from 'antd'
-import JobCard from '../../../../components/job/JobCard'
-import JobCardSkeleton from '../../../../components/job/JobCardSkeleton'
-import { SEARCH_BY_TABS } from '../../../../components/ui/SearchDropdown'
+import { SEARCH_BY_TABS } from '../../../../components/ui/searchDropdownHistory'
 import { PAGE_SIZE } from '../utils/jobListParams'
+import JobCard from './JobCard'
+import JobCardSkeleton from './JobCardSkeleton'
 import WardSuggestionCard from './WardSuggestionCard'
 
 export default function JobResults({

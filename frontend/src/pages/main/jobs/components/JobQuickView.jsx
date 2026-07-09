@@ -2,7 +2,7 @@ import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-d
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getJobDetail } from '../../api/jobService'
+import { getJobDetail } from '../../../../api/jobService'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -12,8 +12,8 @@ import {
   companyInitial,
   formatLocations,
   formatSalary,
-} from '../../constants/jobOptions'
-import { useSavedJob } from './JobCard'
+} from '../../../../constants/jobOptions'
+import useSavedJob from '../hooks/useSavedJob'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.
 function Section({ title, text }) {

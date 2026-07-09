@@ -38,7 +38,7 @@ export const MAIN_LOGIN_URL = import.meta.env.VITE_MAIN_HOST
   : '/login'
 
 export const HOME_BY_ROLE = {
-  candidate: '/candidate/dashboard',
+  candidate: '/',
   employer: employerAppPath('/dashboard'),
   admin: adminPath('/dashboard'),
 }

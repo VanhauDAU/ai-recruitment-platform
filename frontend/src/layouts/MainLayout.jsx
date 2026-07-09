@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom'
-import PopularSearches from '../components/home/PopularSearches'
+import PopularSearches from '../pages/main/components/layout/PopularSearches'
 import Footer from '../components/layout/Footer'
 import Header from '../components/layout/Header'
 

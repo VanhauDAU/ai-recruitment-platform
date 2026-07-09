@@ -1,9 +1,9 @@
 import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobs } from '../../api/jobService'
-import { companyInitial, formatNumber as fmt } from '../../constants/jobOptions'
-import { useCountUp } from '../../hooks/useCountUp'
+import { getJobs } from '../../../../api/jobService'
+import { companyInitial, formatNumber as fmt } from '../../../../constants/jobOptions'
+import { useCountUp } from '../../../../hooks/useCountUp'
 
 const CYCLE_HOURS = 4
 const VISIBLE = 3

@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Modal, message } from 'antd'
-import JobQuickView from '../../../components/job/JobQuickView'
-import { saveHistory } from '../../../components/ui/SearchDropdown'
+import { saveHistory } from '../../../components/ui/searchDropdownHistory'
 import { useAuth } from '../../../hooks/useAuth'
-import useDebouncedValue from '../../../hooks/useDebouncedValue'
 import { useHideOnScroll } from '../../../hooks/useHideOnScroll'
 import { getLocationsByIds, getWards } from '../../../api/locationService'
 import { getJobs } from '../../../api/jobService'
@@ -13,6 +11,7 @@ import { SALARY_RANGES, formatNumber } from '../../../constants/jobOptions'
 import Login from '../auth/Login'
 import JobFilterSidebar from './components/JobFilterSidebar'
 import JobListHeader from './components/JobListHeader'
+import JobQuickView from './components/JobQuickView'
 import JobResults from './components/JobResults'
 import JobSearchBar from './components/JobSearchBar'
 import LocationMergeNotice from './components/LocationMergeNotice'
@@ -54,8 +53,6 @@ export default function JobList() {
   const shortcutScrollerRef = useRef(null)
   const [canScrollShortcutsLeft, setCanScrollShortcutsLeft] = useState(false)
   const [canScrollShortcutsRight, setCanScrollShortcutsRight] = useState(false)
-  const latestSearchParamsRef = useRef(searchParams)
-  const lastSearchParamRef = useRef(searchParams.get('search') || '')
   const { isAuthenticated } = useAuth()
 
   const { categories, demandCounts, industries, noExpCount, provinces, sidebarLoading } = useJobSidebarData()
@@ -73,7 +70,7 @@ export default function JobList() {
   const searchBy = searchParams.get('search_by') || 'title'
   const ordering = searchParams.get('sort') || ''
   const expYears = getCommaList(searchParams, 'exp')
-  const debouncedKeyword = useDebouncedValue(keyword, 450)
+  const searchParamKeyword = searchParams.get('search') || ''
 
   const groups = useMemo(() => categories.filter((category) => !category.parent), [categories])
   const childrenOf = useMemo(() => {
@@ -98,25 +95,8 @@ export default function JobList() {
   }, [sidebarLoading, groups.length])
 
   useEffect(() => {
-    latestSearchParamsRef.current = searchParams
-    const nextSearch = searchParams.get('search') || ''
-    if (nextSearch !== lastSearchParamRef.current) {
-      lastSearchParamRef.current = nextSearch
-      setKeyword(nextSearch)
-    }
-  }, [searchParams])
-
-  useEffect(() => {
-    const nextKeyword = debouncedKeyword.trim()
-    const currentParams = latestSearchParamsRef.current
-    if (nextKeyword === (currentParams.get('search') || '')) return
-
-    const next = new URLSearchParams(currentParams)
-    if (nextKeyword) next.set('search', nextKeyword)
-    else next.delete('search')
-    next.delete('page')
-    setSearchParams(next)
-  }, [debouncedKeyword, setSearchParams])
+    setKeyword(searchParamKeyword)
+  }, [searchParamKeyword])
 
   useEffect(() => {
     if (!selectedLocations.length) {

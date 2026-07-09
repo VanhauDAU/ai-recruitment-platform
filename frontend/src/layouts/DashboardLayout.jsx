@@ -7,12 +7,6 @@ import { useAuth } from '../hooks/useAuth'
 const { Header, Sider, Content } = Layout
 
 const NAV_ITEMS = {
-  candidate: [
-    { key: '/candidate/dashboard', label: 'Tổng quan' },
-    { key: '/candidate/cvs', label: 'Kho CV' },
-    { key: '/candidate/jobs', label: 'Việc làm' },
-    { key: '/candidate/interviews', label: 'Luyện phỏng vấn' },
-  ],
   employer: [
     { key: employerAppPath('/dashboard'), label: 'Tổng quan' },
     { key: employerAppPath('/jobs'), label: 'Tin tuyển dụng' },

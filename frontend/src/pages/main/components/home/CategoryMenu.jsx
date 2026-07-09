@@ -1,7 +1,7 @@
 import { RightOutlined } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ArrowButton from '../ui/ArrowButton'
+import ArrowButton from '../../../../components/ui/ArrowButton'
 
 const GROUPS_PER_PAGE = 6
 
