@@ -10,6 +10,7 @@ import { App, Button, Tag } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import BrandLogo from '../brand/BrandLogo'
+import CandidateUserMenu from './CandidateUserMenu'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 import { useHideOnScroll } from '../../hooks/useHideOnScroll'
@@ -245,8 +246,18 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2 ml-auto">
-          {isAuthenticated ? (
+        <div className="flex items-center gap-4 ml-auto">
+          {isAuthenticated && user?.role === 'candidate' ? (
+            <>
+              <CandidateUserMenu user={user} logout={logout} />
+              <div className="hidden lg:block border-l border-gray-200 pl-4 leading-tight">
+                <p className="text-xs text-gray-500">Bạn là nhà tuyển dụng?</p>
+                <a href={EMPLOYER_PORTAL_URL} className="text-sm font-semibold text-[var(--brand-primary)] hover:underline">
+                  Đăng tuyển ngay »
+                </a>
+              </div>
+            </>
+          ) : isAuthenticated ? (
             <>
               <Button className="cursor-pointer" onClick={() => navigate(HOME_BY_ROLE[user?.role] || '/')}>Trang quản lý</Button>
               <Button className="cursor-pointer" onClick={logout}>Đăng xuất</Button>
