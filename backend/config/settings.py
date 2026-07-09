@@ -234,14 +234,29 @@ CACHES = {
     }
 }
 
-# Email — mặc định in ra console khi dev; cấu hình SMTP qua .env khi deploy.
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+# Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
+# Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là
+# tự chuyển sang gửi thật (không cần đổi thêm gì). EMAIL_TIMEOUT chặn request treo
+# khi SMTP chậm/không phản hồi.
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ProCV <no-reply@procv.vn>')
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_HOST_USER
+    else 'django.core.mail.backends.console.EmailBackend',
+)
+# Người gửi hiển thị; tên có thể override runtime qua site setting `email_from_name`.
+# `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
+EMAIL_FROM_NAME = config('EMAIL_FROM_NAME', default='') or 'ProCV'
+EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # URL frontend để dựng link xác thực trong email.
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')

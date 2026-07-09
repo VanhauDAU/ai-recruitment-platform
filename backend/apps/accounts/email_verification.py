@@ -8,7 +8,7 @@ không cần bảng/migration cho luồng này.
 import secrets
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.utils.html import escape
 
 from apps.sitecontent.models import SiteSetting
@@ -72,11 +72,19 @@ def _verification_link(token):
     return f"{settings.FRONTEND_URL.rstrip('/')}/tai-khoan/xac-thuc-email?token={token}"
 
 
+def _from_email():
+    """Người gửi hiển thị; ưu tiên tên do admin đặt trong site setting."""
+    name = _setting('email_from_name', settings.EMAIL_FROM_NAME)
+    return f'{name} <{settings.EMAIL_FROM_ADDRESS}>' if name else settings.EMAIL_FROM_ADDRESS
+
+
 def send_verification_email(user):
-    """Sinh token, dựng link và gửi email xác thực cho user."""
+    """Sinh token, dựng link và gửi email xác thực (HTML + text) cho user."""
     token = issue_token(user)
     link = _verification_link(token)
     site_name = _setting('site_name', 'ProCV')
+    support_email = _setting('support_email', '')
+    hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
 
     subject = f'Xác thực địa chỉ email của bạn tại {site_name}'
@@ -84,7 +92,7 @@ def send_verification_email(user):
         f'Xin chào {name},\n\n'
         f'Vui lòng xác thực địa chỉ email của bạn bằng cách mở liên kết dưới đây:\n'
         f'{link}\n\n'
-        f'Liên kết có hiệu lực trong 24 giờ. Nếu bạn không tạo tài khoản tại '
+        f'Liên kết có hiệu lực trong {hours} giờ. Nếu bạn không tạo tài khoản tại '
         f'{site_name}, vui lòng bỏ qua email này.'
     )
     html = f"""
@@ -100,16 +108,17 @@ def send_verification_email(user):
           </a>
         </p>
         <p style="font-size:13px;color:#666">Hoặc mở liên kết: <br>{link}</p>
-        <p style="font-size:12px;color:#999">Liên kết có hiệu lực trong 24 giờ.</p>
+        <p style="font-size:12px;color:#999">Liên kết có hiệu lực trong {hours} giờ.</p>
       </div>
     """
 
-    send_mail(
-        subject,
-        text,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        html_message=html,
-        fail_silently=False,
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=text,
+        from_email=_from_email(),
+        to=[user.email],
+        reply_to=[support_email] if support_email else None,
     )
+    message.attach_alternative(html, 'text/html')
+    message.send(fail_silently=False)
     return token
