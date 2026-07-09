@@ -13,31 +13,32 @@ const Login = lazy(() => import('../pages/auth/Login'))
 const Register = lazy(() => import('../pages/auth/Register'))
 const CandidateDashboard = lazy(() => import('../pages/candidate/Dashboard'))
 
-export default function PublicRoutes() {
-  return (
-    <>
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/viec-lam" element={<JobList />} />
-        <Route path="/viec-lam/tai/:locationSlug" element={<JobList />} />
-        <Route path="/viec-lam/:slug" element={<JobDetail />} />
-        <Route path="/jobs" element={<JobList />} />
-        <Route path="/jobs/:slug" element={<JobDetail />} />
-      </Route>
+export function publicRoutes() {
+  return [
+    <Route key="main" element={<MainLayout />}>
+      <Route path="/" element={<Home />} />
+      <Route path="/viec-lam" element={<JobList />} />
+      <Route path="/viec-lam/tai/:locationSlug" element={<JobList />} />
+      <Route path="/viec-lam/:slug" element={<JobDetail />} />
+      <Route path="/jobs" element={<JobList />} />
+      <Route path="/jobs/:slug" element={<JobDetail />} />
+    </Route>,
 
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/sign-up" element={<Register />} />
-        <Route path="/register" element={<Register />} />
-      </Route>
+    <Route key="auth" element={<AuthLayout />}>
+      <Route path="/login" element={<Login />} />
+      <Route path="/sign-up" element={<Register />} />
+      <Route path="/register" element={<Register />} />
+    </Route>,
 
-      <Route element={<ProtectedRoute allowedRoles={['candidate']} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
-        </Route>
+    <Route key="candidate" element={<ProtectedRoute allowedRoles={['candidate']} />}>
+      <Route element={<DashboardLayout />}>
+        <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
       </Route>
+    </Route>,
 
-      <Route path="/employer/dashboard" element={<Navigate to={employerAppPath('/dashboard')} replace />} />
-    </>
-  )
+    <Route key="employer-redirect" path="/employer/dashboard" element={<Navigate to={employerAppPath('/dashboard')} replace />} />,
+  ]
 }
+
+export default publicRoutes
+

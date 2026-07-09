@@ -2,9 +2,9 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import PageLoading from '../components/ui/PageLoading'
 import { IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '../config/portals'
-import AdminRoutes from './AdminRoutes'
-import EmployerRoutes from './EmployerRoutes'
-import PublicRoutes from './PublicRoutes'
+import { publicRoutes } from './PublicRoutes'
+import { employerRoutes } from './EmployerRoutes'
+import { adminRoutes } from './AdminRoutes'
 
 const NotFound = lazy(() => import('../pages/NotFound'))
 
@@ -15,9 +15,9 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<PageLoading />}>
       <Routes>
-        {IS_MAIN_HOST && <PublicRoutes />}
-        {!IS_ADMIN_HOST && <EmployerRoutes />}
-        {!IS_EMPLOYER_HOST && <AdminRoutes />}
+        {IS_MAIN_HOST && publicRoutes()}
+        {!IS_ADMIN_HOST && employerRoutes()}
+        {!IS_EMPLOYER_HOST && adminRoutes()}
 
         <Route path="*" element={<NotFound />} />
       </Routes>

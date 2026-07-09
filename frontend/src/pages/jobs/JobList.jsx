@@ -1083,7 +1083,7 @@ export default function JobList() {
             <div className="mt-4">
               <FilterSection title="Lĩnh vực công ty">
                 {sidebarLoading ? (
-                  <Skeleton.Input active size="default" block />
+                  <Skeleton.Input active size="medium" block />
                 ) : (
                   <Select
                     className="w-full"
@@ -1293,7 +1293,7 @@ export default function JobList() {
         footer={null}
         centered
         width={640}
-        destroyOnClose
+        destroyOnHidden
         styles={{
           container: { borderRadius: 28, padding: 0, overflow: 'hidden' },
           body: { padding: '40px 48px 36px' },
