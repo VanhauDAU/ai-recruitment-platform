@@ -15,21 +15,50 @@ class SiteSetting(models.Model):
     """
 
     class Group(models.TextChoices):
-        GENERAL = 'general', 'Chung'
-        CONTACT = 'contact', 'Liên hệ'
-        APPEARANCE = 'appearance', 'Giao diện'
+        GENERAL = 'general', 'Cài đặt chung'
+        HOMEPAGE = 'homepage', 'Giao diện trang chủ'
         SEO = 'seo', 'SEO'
+        CANDIDATE = 'candidate', 'Tài khoản ứng viên'
+        EMPLOYER = 'employer', 'Nhà tuyển dụng'
+        JOBS = 'jobs', 'Việc làm'
+        CV = 'cv', 'Hồ sơ / CV'
+        EMAIL = 'email', 'Email & thông báo'
+        PAYMENT = 'payment', 'Thanh toán / gói dịch vụ'
+        SECURITY = 'security', 'Bảo mật'
+        UPLOAD = 'upload', 'Upload file / media'
+        FOOTER = 'footer', 'Footer'
+        CONTACT = 'contact', 'Liên hệ / hỗ trợ'
+        ADMIN_ROLES = 'admin_roles', 'Phân quyền admin'
+        AI = 'ai', 'Cài đặt AI'
+
+    class ValueType(models.TextChoices):
+        TEXT = 'text', 'Chuỗi ngắn'
+        TEXTAREA = 'textarea', 'Đoạn văn'
+        NUMBER = 'number', 'Số'
+        BOOLEAN = 'boolean', 'Bật/tắt'
+        SELECT = 'select', 'Chọn một'
+        COLOR = 'color', 'Màu'
+        IMAGE = 'image', 'Ảnh'
+        EMAIL = 'email', 'Email'
+        URL = 'url', 'URL'
+        JSON = 'json', 'JSON'
+        ENV = 'env', 'Cấu hình qua .env'
 
     key = models.SlugField(max_length=100, unique=True, help_text='Định danh dùng ở code/frontend, vd: site_name')
     label = models.CharField(max_length=200, help_text='Tên hiển thị trong trang quản trị')
     group = models.CharField(max_length=30, choices=Group.choices, default=Group.GENERAL)
     value = models.JSONField(default=dict, blank=True)
+    value_type = models.CharField(max_length=20, choices=ValueType.choices, default=ValueType.TEXT,
+                                  help_text='Kiểu dữ liệu để trang quản trị tự render form phù hợp')
+    options = models.JSONField(default=dict, blank=True,
+                               help_text='select: {"choices": [{"value","label"}]}; env: {"env_var": "TÊN_BIẾN"}')
+    order = models.PositiveSmallIntegerField(default=0, help_text='Thứ tự hiển thị trong nhóm')
     description = models.CharField(max_length=300, blank=True)
     is_public = models.BooleanField(default=True, help_text='Cho phép trả về qua API công khai')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['group', 'key']
+        ordering = ['group', 'order', 'key']
         verbose_name = 'Cấu hình site'
         verbose_name_plural = 'Cấu hình site'
 

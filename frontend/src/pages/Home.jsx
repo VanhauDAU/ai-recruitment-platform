@@ -194,7 +194,7 @@ export default function Home() {
                   type="primary"
                   size="large"
                   onClick={handleSearch}
-                  className="!h-12 !rounded-xl !px-8 !font-bold !bg-[#00b14f] hover:!bg-[#009944] !shadow-lg !shadow-emerald-600/25"
+                  className="!h-12 !rounded-xl !px-8 !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)] !shadow-lg"
                 >
                   Tìm kiếm
                 </Button>

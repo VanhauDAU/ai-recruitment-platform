@@ -746,7 +746,7 @@ export default function JobList() {
               type="primary"
               size="large"
               onClick={() => runSearch()}
-              className="!h-11 !rounded-lg !px-8 !font-bold !bg-[#00b14f] hover:!bg-[#009944]"
+              className="!h-11 !rounded-lg !px-8 !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)]"
             >
               Tìm kiếm
             </Button>
@@ -1171,7 +1171,7 @@ export default function JobList() {
                 type="primary"
                 icon={<PushpinOutlined />}
                 onClick={saveFilter}
-                className="!rounded-full !bg-[#00b14f] !border-[#00b14f] hover:!bg-[#008a3e]"
+                className="!rounded-full !bg-[var(--brand-primary)] !border-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)]"
               >
                 Lưu bộ lọc
               </Button>
