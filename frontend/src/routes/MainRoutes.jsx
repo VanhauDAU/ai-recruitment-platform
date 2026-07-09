@@ -9,6 +9,7 @@ const JobList = lazy(() => import('../pages/main/jobs/JobList'))
 const JobDetail = lazy(() => import('../pages/main/jobs/JobDetail'))
 const Login = lazy(() => import('../pages/main/auth/Login'))
 const Register = lazy(() => import('../pages/main/auth/Register'))
+const VerifyEmail = lazy(() => import('../pages/main/account/VerifyEmail'))
 
 // Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
 export function mainRoutes() {
@@ -20,6 +21,7 @@ export function mainRoutes() {
       <Route path="/viec-lam/:slug" element={<JobDetail />} />
       <Route path="/jobs" element={<JobList />} />
       <Route path="/jobs/:slug" element={<JobDetail />} />
+      <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmail />} />
     </Route>,
 
     <Route key="auth" element={<AuthLayout />}>

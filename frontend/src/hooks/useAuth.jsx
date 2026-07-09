@@ -26,13 +26,20 @@ export function AuthProvider({ children }) {
     return currentUser
   }
 
+  // Lấy lại thông tin user hiện tại (sau khi đăng ký auto-login, đổi email, xác thực...).
+  async function refreshUser() {
+    const currentUser = await authService.me()
+    setUser(currentUser)
+    return currentUser
+  }
+
   function logout() {
     authService.logout()
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   )

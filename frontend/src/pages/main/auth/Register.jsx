@@ -5,6 +5,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../../api/authService'
 import AuthLogo from '../../../components/auth/AuthLogo'
+import { useAuth } from '../../../hooks/useAuth'
 import { useSiteSettings } from '../../../hooks/useSiteSettings'
 
 function GoogleIcon() {
@@ -40,6 +41,7 @@ const SOCIAL_PROVIDERS = [
 
 export default function Register() {
   const { siteName } = useSiteSettings()
+  const { refreshUser } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
@@ -60,8 +62,10 @@ export default function Register() {
         email: values.email,
         password: values.password,
       }
-      await register({ ...payload, role: 'candidate', captcha_token: captchaToken })
-      navigate('/login')
+      await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
+      // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
+      await refreshUser()
+      navigate('/')
     } catch (err) {
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')

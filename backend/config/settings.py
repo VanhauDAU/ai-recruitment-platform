@@ -172,6 +172,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
         'register': '5/min',
+        'verify_email': '5/min',
     },
 }
 
@@ -222,3 +223,29 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv(),
 )
+
+# Redis cache — lưu token xác thực email + cooldown gửi lại (tự hết hạn theo TTL)
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {'CLIENT_CLASS': 'django_redis.client.DefaultClient'},
+    }
+}
+
+# Email — mặc định in ra console khi dev; cấu hình SMTP qua .env khi deploy.
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ProCV <no-reply@procv.vn>')
+
+# URL frontend để dựng link xác thực trong email.
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
+# Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
+EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
+EMAIL_VERIFICATION_RESEND_COOLDOWN = config('EMAIL_VERIFICATION_RESEND_COOLDOWN', default=60, cast=int)
