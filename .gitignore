@@ -11,6 +11,13 @@ env/
 backend/staticfiles/
 backend/media/
 db.sqlite3
+celerybeat-schedule*
+*.rdb
+
+# Python tooling
+.coverage
+.pytest_cache/
+htmlcov/
 
 # Node
 node_modules/

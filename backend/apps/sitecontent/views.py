@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
-from apps.common.media_storage import (
+from common.media_storage import (
     delete_local_media_url,
     media_storage_path,
     media_url_from_value,

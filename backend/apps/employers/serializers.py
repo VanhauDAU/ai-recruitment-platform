@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.common.media_storage import media_url_from_value
+from common.media_storage import media_url_from_value
 
 from .models import EmployerProfile, Industry
 

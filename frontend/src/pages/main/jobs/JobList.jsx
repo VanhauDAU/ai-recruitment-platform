@@ -84,6 +84,11 @@ export default function JobList() {
     return map
   }, [categories])
 
+  // "Khám phá nhanh" là lối vào duyệt việc, không phải một phần của kết quả:
+  // ẩn khi user đã gõ từ khoá (đã biết rõ muốn gì), còn lọc theo địa điểm/ngành
+  // vẫn là duyệt nên giữ lại. Không có ngành nghề nào thì cũng không có gì để gợi ý.
+  const showQuickExplore = !searchParamKeyword && (sidebarLoading || groups.length > 0)
+
   useEffect(() => {
     const el = shortcutScrollerRef.current
     if (!el) return undefined
@@ -94,8 +99,9 @@ export default function JobList() {
       el.removeEventListener('scroll', updateShortcutScrollState)
       window.removeEventListener('resize', updateShortcutScrollState)
     }
+    // showQuickExplore: scroller unmount/mount lại thì phải gắn lại listener.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sidebarLoading, groups.length])
+  }, [sidebarLoading, groups.length, showQuickExplore])
 
   useEffect(() => {
     setKeyword(searchParamKeyword)
@@ -479,23 +485,25 @@ export default function JobList() {
           </button>
         )}
 
-        <QuickExplore
-          canScrollLeft={canScrollShortcutsLeft}
-          canScrollRight={canScrollShortcutsRight}
-          expYears={expYears}
-          groups={groups}
-          noExpCount={noExpCount}
-          onOpenAllCategories={openAllCategories}
-          onScroll={scrollShortcuts}
-          onToggleCategory={toggleCategory}
-          onToggleExperienceYears={toggleExperienceYears}
-          onToggleParam={toggleParam}
-          ordering={ordering}
-          scrollerRef={shortcutScrollerRef}
-          searchParams={searchParams}
-          selectedCategories={selectedCategories}
-          sidebarLoading={sidebarLoading}
-        />
+        {showQuickExplore && (
+          <QuickExplore
+            canScrollLeft={canScrollShortcutsLeft}
+            canScrollRight={canScrollShortcutsRight}
+            expYears={expYears}
+            groups={groups}
+            noExpCount={noExpCount}
+            onOpenAllCategories={openAllCategories}
+            onScroll={scrollShortcuts}
+            onToggleCategory={toggleCategory}
+            onToggleExperienceYears={toggleExperienceYears}
+            onToggleParam={toggleParam}
+            ordering={ordering}
+            scrollerRef={shortcutScrollerRef}
+            searchParams={searchParams}
+            selectedCategories={selectedCategories}
+            sidebarLoading={sidebarLoading}
+          />
+        )}
 
         {showMergeNotice && (
           <LocationMergeNotice

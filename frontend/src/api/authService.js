@@ -28,6 +28,25 @@ export async function changeEmail(email) {
   return data
 }
 
+// ---- Đặt lại mật khẩu ----
+
+// Luôn trả về cùng một thông điệp, kể cả email chưa đăng ký (chống dò email).
+export async function requestPasswordReset({ email, captcha_token }) {
+  const { data } = await api.post('/auth/password-reset/', { email, captcha_token })
+  return data
+}
+
+// Kiểm tra link còn hiệu lực trước khi hiện form (không tiêu token).
+export async function validatePasswordResetToken(token) {
+  const { data } = await api.get('/auth/password-reset/validate/', { params: { token } })
+  return data
+}
+
+export async function confirmPasswordReset({ token, password }) {
+  const { data } = await api.post('/auth/password-reset/confirm/', { token, password })
+  return data
+}
+
 export async function login({ email, password, captcha_token, portal }) {
   const { data } = await api.post('/auth/login/', { email, password, captcha_token, ...(portal && { portal }) })
   const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())

@@ -16,12 +16,14 @@ Frontend chia thành 3 cổng (portal), cấu hình tập trung ở `config/port
 
 ```
 pages/           # trang theo 3 cổng
-  main/            # Home.jsx, jobs/ (JobList, JobDetail), auth/ (Login, Register, OAuthCallback), account/ (VerifyEmail)
+  main/            # Home.jsx, jobs/ (JobList, JobDetail), auth/ (Login, Register, OAuthCallback,
+                   #   ForgotPassword, ResetPassword — dùng chung cho cả 3 cổng), account/ (VerifyEmail)
   employer/        # marketing/ (Landing, Services, Pricing) + app/ (Login, Register, Dashboard)
   admin/           # app/ (Settings, ...)
 components/      # component dùng chung
   layout/          # Header, CandidateUserMenu, ...
-  auth/            # LoginForm (dùng chung 3 cổng), SocialLoginButtons (Google/FB/LinkedIn), AuthLogo
+  auth/            # LoginForm (dùng chung 3 cổng), SocialLoginButtons (Google/FB/LinkedIn), AuthLogo,
+                   #   PasswordRequirements + passwordValidation (rule mật khẩu dùng chung register/reset)
   ui/, admin/, site/, ...
   CategoryPicker / LocationFilter   # overlay nhiều cột, drill-down 1 cột trên mobile
   BannerCarousel   # banner tự trượt (5s), prev/next, dot
@@ -31,8 +33,9 @@ api/             # api.js (axios + JWT interceptor + refresh), authService.js (k
                  # errorMessage.js (getApiErrorMessage + getOAuthErrorMessage), pagination.js (fetchAllPages)
 config/          # portals.js — 3 cổng: base path, getAuthStorageKeys(portal), HOME_BY_ROLE, getCurrentPortal
 constants/       # jobOptions.js — label tiếng Việt + formatSalary/formatEducation/formatLocations
-hooks/           # useAuth.jsx (AuthContext: user, login, logout, refreshUser)
-routes/          # AppRoutes.jsx (lazy-load + Suspense; render mainRoutes/employerRoutes/adminRoutes theo host)
+contexts/        # React context/provider dùng toàn app (AuthProvider, SiteSettingsContext)
+hooks/           # Hook tái sử dụng (useAuth, useColorScheme, ...)
+routes/          # AppRoutes + route definitions; lazyPages.jsx quản lý page-level code splitting
                  # ProtectedRoute.jsx (chặn theo allowedRoles)
 ```
 
@@ -45,7 +48,7 @@ routes/          # AppRoutes.jsx (lazy-load + Suspense; render mainRoutes/employ
 - Gọi API qua `api/`, không gọi axios trực tiếp trong component.
 - Route theo role bọc trong `<ProtectedRoute allowedRoles={[...]}>`; trang public (Home, jobs) bọc trong `MainLayout`.
 - Access/refresh token lưu ở `localStorage`; refresh tự động khi access token hết hạn (401).
-- Trang/route dùng `React.lazy` + `Suspense` (xem `AppRoutes.jsx`) để tách chunk theo trang.
+- Trang/route dùng `React.lazy` qua registry `routes/lazyPages.jsx` và `Suspense` ở `AppRoutes.jsx` để tách chunk theo trang.
 - Loading state dùng Ant Design `Skeleton` (không dùng `Spin` cho khung nội dung có cấu trúc) để tránh giật layout.
 - Component chỉ tách ra khi thực sự dùng lại ở nhiều nơi (ví dụ `LocationFilter` dùng chung ở Home và `/jobs`) — không tách sớm.
 - Trên mobile, các overlay nhiều cột (`CategoryPicker`, `LocationFilter`) chuyển sang drill-down 1 cột (nút "←" quay lại) thay vì hiển thị nhiều cột song song như desktop.

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
-from apps.common.media_storage import delete_local_media_url, save_image_upload
+from common.media_storage import delete_local_media_url, save_image_upload
 
 from .models import EmployerProfile, Industry
 from .serializers import EmployerProfileSerializer, IndustrySerializer

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage, getOAuthErrorMessage } from '../../api/errorMessage'
-import { HOME_BY_ROLE } from '../../config/portals'
+import { HOME_BY_ROLE, MAIN_FORGOT_PASSWORD_URL } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 
 // Style animation/nút dùng chung cho các trang auth (login + register các cổng).
@@ -51,7 +51,12 @@ export function AuthFormStyles() {
  * - `forgotPasswordLink`: null để ẩn (cổng admin).
  * - `onSuccess`: nếu truyền (vd. nhúng trong modal), gọi callback thay vì điều hướng.
  */
-export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPasswordLink = '/forgot-password' }) {
+export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL }) {
+  // Cổng NTD/admin chạy subdomain riêng -> link tuyệt đối, không đi qua router.
+  const ForgotLink = forgotPasswordLink?.startsWith('http') ? 'a' : Link
+  const forgotLinkProps = forgotPasswordLink?.startsWith('http')
+    ? { href: forgotPasswordLink }
+    : { to: forgotPasswordLink }
   const { login, logout } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
@@ -143,13 +148,13 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
               Mật khẩu
             </label>
             {forgotPasswordLink && (
-              <Link
-                to={forgotPasswordLink}
+              <ForgotLink
+                {...forgotLinkProps}
                 className="text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline underline-offset-2 transition-colors"
                 tabIndex={-1}
               >
                 Quên mật khẩu?
-              </Link>
+              </ForgotLink>
             )}
           </div>
           <Form.Item

@@ -1,0 +1,106 @@
+"""Celery tasks for authentication emails, backed by AuthEmailJob outbox rows."""
+
+import logging
+from datetime import timedelta
+
+from celery import shared_task
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from . import email_verification, password_reset
+from .models import AuthEmailJob
+
+logger = logging.getLogger(__name__)
+
+MAX_DELIVERY_ATTEMPTS = 4
+STALE_SENDING_AFTER = timedelta(minutes=5)
+
+
+def queue_auth_email(kind, user):
+    """Persist an email job before asking Celery to process it.
+
+    If the broker is temporarily unavailable after commit, Celery Beat will pick
+    up the pending row later instead of losing a verification/reset email.
+    """
+    job = AuthEmailJob.objects.create(user=user, kind=kind)
+
+    def dispatch():
+        try:
+            deliver_auth_email_job.delay(job.pk)
+        except Exception:  # noqa: BLE001 - the persisted outbox row is the fallback
+            logger.exception('Không thể đưa auth email job %s vào hàng đợi.', job.pk)
+
+    transaction.on_commit(dispatch)
+    return job
+
+
+def _send(job):
+    if job.kind == AuthEmailJob.Kind.VERIFICATION:
+        if not job.user.email_verified:
+            email_verification.send_verification_email(job.user)
+        return
+    if job.kind == AuthEmailJob.Kind.PASSWORD_RESET:
+        password_reset.send_password_reset_email(job.user)
+        return
+    raise ValueError(f'Unsupported authentication email kind: {job.kind}')
+
+
+@shared_task(bind=True, max_retries=MAX_DELIVERY_ATTEMPTS - 1)
+def deliver_auth_email_job(self, job_id):
+    """Deliver one outbox row with idempotent state transitions and retry."""
+    now = timezone.now()
+    with transaction.atomic():
+        job = (
+            AuthEmailJob.objects.select_for_update()
+            .select_related('user')
+            .filter(pk=job_id)
+            .first()
+        )
+        if job is None or job.status == AuthEmailJob.Status.SENT:
+            return
+        if job.status == AuthEmailJob.Status.SENDING and job.started_at and now - job.started_at < STALE_SENDING_AFTER:
+            return
+
+        job.status = AuthEmailJob.Status.SENDING
+        job.started_at = now
+        job.attempts += 1
+        job.save(update_fields=['status', 'started_at', 'attempts', 'updated_at'])
+
+    try:
+        _send(job)
+    except Exception as exc:  # noqa: BLE001 - retry transient SMTP/provider errors
+        exhausted = job.attempts >= MAX_DELIVERY_ATTEMPTS
+        AuthEmailJob.objects.filter(pk=job.pk).update(
+            status=AuthEmailJob.Status.FAILED if exhausted else AuthEmailJob.Status.PENDING,
+            last_error=str(exc)[:2000],
+        )
+        if exhausted:
+            logger.exception('Auth email job %s thất bại sau %s lần thử.', job.pk, job.attempts)
+            raise
+        raise self.retry(exc=exc, countdown=min(2 ** job.attempts, 60))
+
+    AuthEmailJob.objects.filter(pk=job.pk).update(
+        status=AuthEmailJob.Status.SENT,
+        sent_at=timezone.now(),
+        last_error='',
+    )
+
+
+@shared_task
+def dispatch_pending_auth_email_jobs():
+    """Safety net for jobs left pending after a broker/worker interruption."""
+    stale_before = timezone.now() - STALE_SENDING_AFTER
+    jobs = AuthEmailJob.objects.filter(
+        Q(status=AuthEmailJob.Status.PENDING)
+        | Q(status=AuthEmailJob.Status.SENDING, started_at__lt=stale_before)
+    ).values_list('pk', flat=True)[:100]
+
+    dispatched = 0
+    for job_id in jobs:
+        try:
+            deliver_auth_email_job.delay(job_id)
+            dispatched += 1
+        except Exception:  # noqa: BLE001 - leave row for the next Beat sweep
+            logger.exception('Không thể dispatch lại auth email job %s.', job_id)
+    return dispatched

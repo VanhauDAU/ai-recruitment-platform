@@ -1,0 +1,8 @@
+# Optional dependencies for the planned AI/CV-analysis module.
+# Install this file instead of requirements.txt when developing AI features.
+-r requirements.txt
+
+PyMuPDF==1.25.1
+scikit-learn==1.6.0
+joblib==1.4.2
+pandas==2.2.3

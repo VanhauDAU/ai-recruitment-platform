@@ -1,18 +1,14 @@
-import { lazy } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 import { adminPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import ProtectedRoute from './ProtectedRoute'
-
-const AdminLogin = lazy(() => import('../pages/admin/app/Login'))
-const AdminDashboard = lazy(() => import('../pages/admin/app/Dashboard'))
-const AdminSettings = lazy(() => import('../pages/admin/app/Settings'))
+import { AdminDashboardPage, AdminLoginPage, AdminSettingsPage } from './lazyPages'
 
 export function adminRoutes() {
   return [
     <Route key="admin-auth" element={<AuthLayout />}>
-      <Route path={adminPath('/login')} element={<AdminLogin />} />
+      <Route path={adminPath('/login')} element={<AdminLoginPage />} />
     </Route>,
 
     <Route key="admin-redirect-root" path="/admin" element={<Navigate to={adminPath('/login')} replace />} />,
@@ -23,8 +19,8 @@ export function adminRoutes() {
 
     <Route key="admin-protected" element={<ProtectedRoute allowedRoles={['admin']} loginPath={adminPath('/login')} />}>
       <Route element={<DashboardLayout />}>
-        <Route path={adminPath('/dashboard')} element={<AdminDashboard />} />
-        <Route path={adminPath('/settings')} element={<AdminSettings />} />
+        <Route path={adminPath('/dashboard')} element={<AdminDashboardPage />} />
+        <Route path={adminPath('/settings')} element={<AdminSettingsPage />} />
       </Route>
     </Route>,
   ]

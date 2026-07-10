@@ -34,7 +34,7 @@ Chi tiết endpoint: [docs/04-api/tai-lieu-api.md](docs/04-api/tai-lieu-api.md).
 ```
 backend/
   config/       Django settings, urls (root)
-  common/       Tiện ích dùng chung, không phải app (vd. common/public_id.py)
+  common/       Tiện ích hạ tầng dùng chung, không phải Django app
   apps/         Toàn bộ Django app: accounts, skills, candidates, employers, locations,
                 cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard
 frontend/
@@ -44,7 +44,8 @@ frontend/
     layouts/    AuthLayout, DashboardLayout, MainLayout, EmployerMarketingLayout
     api/        api.js (axios + JWT interceptor), authService.js, ...
     config/     portals.js — cấu hình 3 cổng (base path, token key, điều hướng theo role)
-    hooks/      useAuth.jsx (AuthContext)
+    contexts/   React providers/context dùng toàn ứng dụng
+    hooks/      Hooks tái sử dụng, chỉ chứa logic hook
     routes/     AppRoutes.jsx (mainRoutes/employerRoutes/adminRoutes), ProtectedRoute.jsx
 docs/       Tài liệu dự án — xem docs/README.md
 ```
@@ -55,7 +56,14 @@ docs/       Tài liệu dự án — xem docs/README.md
 # Backend
 cd backend
 source venv/bin/activate
+brew services start redis
 python manage.py runserver 8000        # http://localhost:8000
+
+# Worker gửi email auth (terminal riêng, chạy từ backend/)
+celery -A config worker -l info -Q auth-email
+
+# Quét lại email job bị gián đoạn (terminal riêng, chạy từ backend/)
+celery -A config beat -l info
 
 # Frontend (terminal khác)
 cd frontend
@@ -64,7 +72,24 @@ npm run dev                            # http://localhost:5173
 
 Hướng dẫn cài đặt đầy đủ từ đầu (venv, PostgreSQL, seed dữ liệu): [docs/05-huong-dan/huong-dan-cai-dat.md](docs/05-huong-dan/huong-dan-cai-dat.md).
 
-**Tài khoản admin có sẵn:** `admin@aicareercoach.local` / `Admin@12345` (Django admin tại `/admin/`).
+Tạo tài khoản quản trị riêng bằng `python manage.py createsuperuser`; không lưu credential mặc định trong source code.
+
+## Kiểm tra chất lượng
+
+```bash
+# Backend
+cd backend
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test
+
+# Frontend
+cd frontend
+npm run lint
+npm test
+npm run build
+npm run test:e2e
+```
 
 ## Tài liệu
 
