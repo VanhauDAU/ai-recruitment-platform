@@ -1,9 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as authService from '../api/authService'
 import { adminPath, employerAppPath, getCurrentPortal } from '../config/portals'
-
-const AuthContext = createContext(null)
+import AuthContext from './authContext'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -37,10 +36,20 @@ export function AuthProvider({ children }) {
   }, [logout])
 
   async function login(credentials) {
-    await authService.login(credentials)
-    const currentUser = await authService.me()
-    setUser(currentUser)
-    return currentUser
+    try {
+      await authService.login(credentials)
+      const currentUser = await authService.me()
+      setUser(currentUser)
+      return currentUser
+    } catch (error) {
+      authService.logout(credentials.portal)
+      setUser(null)
+      throw error
+    }
+  }
+
+  function setAuthenticatedUser(user) {
+    setUser(user)
   }
 
   // Lấy lại thông tin user hiện tại (sau khi đăng ký auto-login, đổi email, xác thực...).
@@ -51,14 +60,10 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, setAuthenticatedUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
-}
+export default AuthProvider

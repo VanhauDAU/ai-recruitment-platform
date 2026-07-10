@@ -21,4 +21,13 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    environment: 'jsdom',
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
+    setupFiles: './src/test/setup.js',
+    css: false,
+    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
+  },
 })

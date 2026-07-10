@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../../../api/errorMessage'
-import { register } from '../../../api/authService'
+import { logout as clearStoredAuth, register } from '../../../api/authService'
 import AuthLogo from '../../../components/auth/AuthLogo'
 import { AuthFormStyles } from '../../../components/auth/LoginForm'
 import PasswordRequirements from '../../../components/auth/PasswordRequirements'
@@ -39,6 +39,9 @@ export default function EmployerRegister() {
         role: 'employer',
         captcha_token: captchaToken,
       })
+      // Cổng employer yêu cầu người dùng đăng nhập lại, nên không giữ JWT vừa
+      // được backend cấp trong response đăng ký.
+      clearStoredAuth('employer')
       navigate(employerAppPath('/login'))
     } catch (err) {
       if (err.response?.status === 429) {

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
-from apps.common.media_storage import media_url_from_value
+from common.media_storage import media_url_from_value
 from apps.employers.models import EmployerProfile
 
 from .models import Job, JobCategory

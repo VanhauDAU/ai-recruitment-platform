@@ -14,7 +14,7 @@ import { useSiteSettings } from '../../../hooks/useSiteSettings'
 
 export default function Register() {
   const { siteName } = useSiteSettings()
-  const { refreshUser } = useAuth()
+  const { setAuthenticatedUser } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
@@ -37,9 +37,9 @@ export default function Register() {
         email: values.email,
         password: values.password,
       }
-      await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
+      const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
-      await refreshUser()
+      setAuthenticatedUser(result.user)
       navigate('/')
     } catch (err) {
       if (err.response?.status === 429) {

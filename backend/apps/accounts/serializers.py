@@ -4,14 +4,15 @@ from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from apps.common.media_storage import media_url_from_value
+from common.media_storage import media_url_from_value
 
 from .captcha import verify_recaptcha
 from .models import User
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
+def password_field():
+    """Cùng một bộ rule mật khẩu cho đăng ký và đặt lại mật khẩu."""
+    return serializers.CharField(
         write_only=True,
         max_length=25,
         validators=[
@@ -22,6 +23,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             ),
         ],
     )
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = password_field()
     role = serializers.ChoiceField(choices=[User.Role.CANDIDATE, User.Role.EMPLOYER])
     captcha_token = serializers.CharField(write_only=True)
 
@@ -29,6 +34,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'password', 'role', 'full_name', 'captcha_token']
         extra_kwargs = {'full_name': {'required': False}}
+
+    def validate_email(self, value):
+        """Chuẩn hoá + chặn trùng không phân biệt hoa/thường.
+
+        `UniqueValidator` mặc định của ModelSerializer so sánh phân biệt hoa/thường
+        nên `Hau@gmail.com` lọt qua dù đã có `hau@gmail.com`, rồi vỡ ở ràng buộc
+        `uniq_users_email_lower` dưới DB thành lỗi 500.
+        """
+        value = User.objects.normalize_email(value)
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
+        return value
 
     def validate(self, attrs):
         request = self.context.get('request')
@@ -69,6 +86,28 @@ class ChangeEmailSerializer(serializers.Serializer):
         if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
             raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
         return value
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Yêu cầu gửi link đặt lại mật khẩu. Không kiểm tra email có tồn tại hay
+    không — view luôn trả cùng một thông điệp để tránh lộ danh sách email."""
+
+    email = serializers.EmailField()
+    captcha_token = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        remote_ip = request.META.get('REMOTE_ADDR') if request else None
+        verify_recaptcha(attrs.get('captcha_token'), 'password_reset', remote_ip)
+        return attrs
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Đổi token trong link lấy mật khẩu mới. Token đã đủ vai trò xác thực nên
+    không cần captcha ở bước này."""
+
+    token = serializers.CharField(write_only=True)
+    password = password_field()
 
 
 # Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.

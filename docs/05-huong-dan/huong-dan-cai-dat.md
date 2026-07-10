@@ -4,6 +4,7 @@
 - Python 3.13
 - Node.js 20.19+ hoặc 22.12+ (Vite 8 yêu cầu các bản này)
 - PostgreSQL 16
+- Redis 7+
 
 ## PostgreSQL (macOS, Homebrew)
 
@@ -31,6 +32,8 @@ cd backend
 python3.13 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+# Chỉ khi phát triển module AI/CV analysis:
+# pip install -r requirements-ai.txt
 cp .env.example .env   # chỉnh DB_USER/DB_PASSWORD nếu khác PostgreSQL local
 python manage.py migrate
 
@@ -48,6 +51,17 @@ python manage.py createsuperuser
 python manage.py runserver 8000
 ```
 
+Email xác thực và reset password được gửi bất đồng bộ. Chạy thêm hai process từ
+thư mục `backend`:
+
+```bash
+# Terminal worker: xử lý queue email auth
+venv/bin/celery -A config worker -l info -Q auth-email
+
+# Terminal beat: quét lại job pending khi broker/worker từng bị gián đoạn
+venv/bin/celery -A config beat -l info
+```
+
 Ghi chú:
 - `seed_locations` lấy dữ liệu tỉnh/xã từ `provinces.open-api.vn`, nên cần có internet khi chạy lần đầu.
 - Các lệnh seed hiện tại đều có thể chạy lại. Riêng `seed_demo_jobs` sẽ xoá dữ liệu demo cũ có email `@demo.local` rồi tạo lại.
@@ -62,6 +76,8 @@ cd backend
 source venv/bin/activate
 python manage.py runserver 8000
 ```
+
+Đồng thời giữ Redis, Celery worker và Celery Beat hoạt động như phần trên.
 
 ## Frontend
 
