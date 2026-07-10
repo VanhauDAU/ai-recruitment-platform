@@ -14,7 +14,7 @@ import {
   formatLocations,
   formatSalary,
 } from '../../../../constants/jobOptions'
-import useSavedJob from '../hooks/useSavedJob'
+import { useSavedJob } from '../../../../hooks/useSavedJobs'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
 function postedLabel(job) {

@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
 
-from .models import Banner, LinkGroup, SiteSetting
+from .models import Banner, Feedback, LinkGroup, SiteSetting
 
 
 class SiteSettingSerializer(serializers.ModelSerializer):
@@ -60,3 +60,18 @@ class BannerSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         return media_url_from_value(obj.image_url, request=self.context.get('request'))
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['id', 'category', 'content', 'satisfaction', 'phone', 'email', 'page_url', 'created_at']
+        read_only_fields = ['id', 'created_at']
+        extra_kwargs = {
+            'content': {'trim_whitespace': True, 'max_length': 2000},
+        }
+
+    def validate_content(self, value):
+        if len(value.strip()) < 10:
+            raise serializers.ValidationError('Mô tả góp ý cần ít nhất 10 ký tự.')
+        return value.strip()

@@ -14,7 +14,7 @@ const SECTIONS = [
   {
     key: 'search', title: 'Quản lý tìm việc', icon: <IdcardOutlined />, dot: true,
     items: [
-      { label: 'Việc làm đã lưu' },
+      { label: 'Việc làm đã lưu', to: '/viec-lam-da-luu' },
       { label: 'Việc làm đã ứng tuyển' },
       { label: 'Việc làm phù hợp với bạn' },
       { label: 'Cài đặt gợi ý việc làm' },

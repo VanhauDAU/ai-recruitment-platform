@@ -5,7 +5,7 @@ from django import forms
 
 from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
 
-from .models import Banner, LinkGroup, LinkItem, SiteSetting
+from .models import Banner, Feedback, LinkGroup, LinkItem, SiteSetting
 
 
 class SiteSettingAdminForm(forms.ModelForm):
@@ -99,3 +99,19 @@ class BannerAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
         if old_url != obj.image_url:
             delete_local_media_url(old_url)
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ['created_at', 'category', 'short_content', 'satisfaction', 'phone', 'email', 'user', 'status']
+    list_filter = ['status', 'category', 'satisfaction', 'created_at']
+    list_editable = ['status']
+    search_fields = ['content', 'email', 'phone']
+    readonly_fields = ['user', 'category', 'content', 'satisfaction', 'phone', 'email', 'page_url', 'created_at']
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(description='Nội dung')
+    def short_content(self, obj):
+        return obj.content[:80] + ('…' if len(obj.content) > 80 else '')

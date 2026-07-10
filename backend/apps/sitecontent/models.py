@@ -1,5 +1,6 @@
 import re
 
+from django.conf import settings
 from django.db import models
 
 # Bỏ tiền tố đơn vị hành chính để nhãn gọn: "Thành phố Cần Thơ" -> "Cần Thơ".
@@ -167,3 +168,54 @@ class Banner(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Feedback(models.Model):
+    """Góp ý sản phẩm gửi từ nút nổi "Góp ý" ở các trang công khai.
+
+    Khách chưa đăng nhập vẫn gửi được nên `user` để null; lúc đó `phone`/`email`
+    (đều không bắt buộc) là cách duy nhất để phản hồi lại họ. Admin xử lý bằng
+    cách chuyển `status`.
+    """
+
+    class Category(models.TextChoices):
+        UI_UX = 'ui_ux', 'Giao diện, trải nghiệm'
+        FEATURE = 'feature', 'Tính năng sản phẩm'
+        JOB_QUALITY = 'job_quality', 'Chất lượng tin tuyển dụng'
+        ACCOUNT = 'account', 'Tài khoản & bảo mật'
+        PERFORMANCE = 'performance', 'Tốc độ, hiệu năng'
+        OTHER = 'other', 'Khác'
+
+    class Satisfaction(models.TextChoices):
+        VERY_UNSATISFIED = 'very_unsatisfied', 'Rất không hài lòng'
+        UNSATISFIED = 'unsatisfied', 'Không hài lòng'
+        NEUTRAL = 'neutral', 'Bình thường'
+        SATISFIED = 'satisfied', 'Hài lòng'
+        VERY_SATISFIED = 'very_satisfied', 'Rất hài lòng'
+
+    class Status(models.TextChoices):
+        NEW = 'new', 'Mới'
+        IN_PROGRESS = 'in_progress', 'Đang xử lý'
+        RESOLVED = 'resolved', 'Đã xử lý'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='feedbacks', help_text='Null nếu khách gửi khi chưa đăng nhập')
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.FEATURE,
+                                help_text='Chủ đề cần góp ý')
+    content = models.TextField(help_text='Mô tả góp ý')
+    satisfaction = models.CharField(max_length=20, choices=Satisfaction.choices, blank=True,
+                                    help_text='Mức hài lòng người dùng chọn (nếu có)')
+    phone = models.CharField(max_length=20, blank=True, help_text='Số điện thoại nhận phản hồi (khách)')
+    email = models.EmailField(blank=True, help_text='Email nhận phản hồi (để trống nếu không cần phản hồi)')
+    page_url = models.CharField(max_length=500, blank=True, help_text='Trang người dùng đang xem lúc gửi')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['status', '-created_at'])]
+        verbose_name = 'Góp ý / Hỗ trợ'
+        verbose_name_plural = 'Góp ý / Hỗ trợ'
+
+    def __str__(self):
+        return f'{self.get_category_display()} - {self.content[:50]}'

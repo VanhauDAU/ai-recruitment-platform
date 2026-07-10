@@ -7,7 +7,7 @@ import { getProvinces, getWards } from '../../api/locationService'
 // Applied value (props.value) is a flat id list — a province id means the whole
 // province, a ward id means that single ward. Regrouping ids back into draft
 // uses provinces + wardsCache (kept across open/close so re-opening restores checkboxes).
-export default function LocationFilter({ value = [], onChange, size = 'middle' }) {
+export default function LocationFilter({ value = [], onChange, size = 'middle', displayLabel = '' }) {
   const [open, setOpen] = useState(false)
   const [provinces, setProvinces] = useState([])
   const [wardsCache, setWardsCache] = useState({})
@@ -276,8 +276,8 @@ export default function LocationFilter({ value = [], onChange, size = 'middle' }
         </span>
 
         {/* Label */}
-        <span className={`flex-1 truncate font-medium ${triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
-          {triggerLabel || 'Địa điểm'}
+        <span className={`flex-1 truncate font-medium ${displayLabel || triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
+          {displayLabel || triggerLabel || 'Địa điểm'}
         </span>
 
         {value.length > 0 && (
