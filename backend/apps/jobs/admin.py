@@ -59,8 +59,10 @@ class JobSkillInline(admin.TabularInline):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ['title', 'employer_profile', 'status', 'work_type', 'position_level', 'experience_years', 'created_at']
-    list_filter = ['status', 'work_type', 'employment_type', 'experience_level', 'position_level', 'experience_years', 'weekend_policy']
+    list_display = ['title', 'employer_profile', 'status', 'tier', 'is_hot', 'is_urgent', 'has_flash_badge', 'created_at']
+    list_filter = ['status', 'tier', 'is_hot', 'is_urgent', 'has_flash_badge', 'work_type', 'employment_type', 'experience_level', 'position_level', 'experience_years', 'weekend_policy']
+    # Gán hạng tin + nhãn ngay trên danh sách, không cần mở từng job.
+    list_editable = ['tier', 'is_hot', 'is_urgent', 'has_flash_badge']
     search_fields = ['title', 'employer_profile__company_name']
     readonly_fields = ['public_id', 'view_count', 'application_count']
     filter_horizontal = ['locations']

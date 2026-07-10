@@ -96,6 +96,18 @@ class Job(models.Model):
         CLOSED = 'closed', 'Closed'
         REJECTED = 'rejected', 'Rejected'
 
+    class Tier(models.TextChoices):
+        """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
+
+        Admin gán qua Django admin; về sau (giai đoạn gói dịch vụ NTD) sẽ gán
+        tự động theo gói đã mua. Tách riêng khỏi các nhãn HOT/GẤP vì hạng là
+        single-choice còn nhãn gắn kèm được nhiều cái cùng lúc.
+        """
+
+        STANDARD = 'standard', 'Tin thường'
+        FEATURED = 'featured', 'Tin nổi bật'
+        TOP = 'top', 'Tin TOP'
+
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     employer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='jobs')
     employer_profile = models.ForeignKey('employers.EmployerProfile', on_delete=models.CASCADE, related_name='jobs')
@@ -125,6 +137,12 @@ class Job(models.Model):
     currency = models.CharField(max_length=20, default='VND')
     is_salary_visible = models.BooleanField(default=True)
     deadline = models.DateField(null=True, blank=True)
+    # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
+    # suy ra từ employer_profile.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.
+    tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
+    is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
+    is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
+    has_flash_badge = models.BooleanField(default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh')
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     view_count = models.IntegerField(default=0)
     application_count = models.IntegerField(default=0)

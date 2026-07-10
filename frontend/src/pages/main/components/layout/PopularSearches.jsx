@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getLinkGroups } from '../../../../api/siteService'
+import { useSiteSettings } from '../../../../hooks/useSiteSettings'
 
 // Render Link nếu có url thật, ngược lại là span dạng link (tính năng sắp ra mắt).
 function Item({ url, children }) {
@@ -31,12 +32,13 @@ function Group({ title, items }) {
 
 export default function PopularSearches() {
   const [groups, setGroups] = useState([])
+  const { settings } = useSiteSettings()
 
   useEffect(() => {
     getLinkGroups('footer_seo').then(setGroups).catch(() => {})
   }, [])
 
-  if (!groups.length) return null
+  if (settings.home_show_popular_searches === false || !groups.length) return null
 
   return (
     <section className="border-t border-gray-200 bg-white">
