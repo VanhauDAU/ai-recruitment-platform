@@ -15,7 +15,10 @@ class JobCategory(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField(blank=True)
-    logo_url = models.TextField(blank=True, help_text='Public URL for the category logo shown on the homepage.')
+    logo_url = models.TextField(
+        blank=True,
+        help_text='Storage key nội bộ hoặc URL ngoài; API tự resolve storage key thành URL public.',
+    )
     parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)

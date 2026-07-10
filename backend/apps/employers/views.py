@@ -60,7 +60,8 @@ class EmployerProfileImageUploadView(APIView):
         old_url = getattr(profile, self.field_name)
         saved = save_image_upload(upload, f'employers/{profile.public_id}/{self.media_directory}', request=request)
 
-        setattr(profile, self.field_name, saved['url'])
+        # Lưu key của storage thay vì URL tuyệt đối phụ thuộc localhost/domain.
+        setattr(profile, self.field_name, saved['path'])
         profile.save(update_fields=[self.field_name, 'updated_at'])
         delete_local_media_url(old_url)
 

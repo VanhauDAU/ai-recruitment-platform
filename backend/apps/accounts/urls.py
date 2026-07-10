@@ -6,6 +6,9 @@ from .views import (
     ChangeEmailView,
     LoginView,
     MeView,
+    OAuthCallbackView,
+    OAuthCompleteView,
+    OAuthStartView,
     RegisterView,
     VerificationConfirmView,
     VerificationSendView,
@@ -20,4 +23,7 @@ urlpatterns = [
     path('verify/send/', VerificationSendView.as_view(), name='auth-verify-send'),
     path('verify/confirm/', VerificationConfirmView.as_view(), name='auth-verify-confirm'),
     path('change-email/', ChangeEmailView.as_view(), name='auth-change-email'),
+    path('oauth/<str:provider>/start/', OAuthStartView.as_view(), name='auth-oauth-start'),
+    path('oauth/<str:provider>/callback/', OAuthCallbackView.as_view(), name='auth-oauth-callback'),
+    path('oauth/complete/', OAuthCompleteView.as_view(), name='auth-oauth-complete'),
 ]

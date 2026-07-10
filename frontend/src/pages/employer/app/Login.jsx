@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import AuthLogo from '../../../components/auth/AuthLogo'
 import LoginForm from '../../../components/auth/LoginForm'
+import SocialLoginButtons from '../../../components/auth/SocialLoginButtons'
 import { employerAppPath, MAIN_LOGIN_URL } from '../../../config/portals'
 
 // Cổng nhà tuyển dụng — sau này chạy trên subdomain riêng (vd. tuyendung.procv.vn).
@@ -15,6 +16,19 @@ export default function EmployerLogin() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Đăng tin tuyển dụng và tìm kiếm hồ sơ ứng viên.
         </p>
+      </div>
+
+      {/* Social login — cổng NTD chỉ hỗ trợ Google */}
+      <div className="login-field mb-5">
+        <SocialLoginButtons portal="employer" action="Đăng nhập" />
+      </div>
+
+      <div className="login-field flex items-center gap-3 mb-5">
+        <div className="divider-line" />
+        <span className="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-widest">
+          hoặc đăng nhập bằng email
+        </span>
+        <div className="divider-line" />
       </div>
 
       <LoginForm portal="employer" expectedRoles={['employer']} />

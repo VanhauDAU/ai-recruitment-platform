@@ -2,8 +2,8 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icon
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useNavigate } from 'react-router-dom'
-import { getApiErrorMessage } from '../../api/errorMessage'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { getApiErrorMessage, getOAuthErrorMessage } from '../../api/errorMessage'
 import { HOME_BY_ROLE } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -55,7 +55,9 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const { login, logout } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
-  const [error, setError] = useState('')
+  const [searchParams] = useSearchParams()
+  // Lỗi từ luồng social login (OAuthCallback quay về kèm ?oauth_error=).
+  const [error, setError] = useState(() => getOAuthErrorMessage(searchParams.get('oauth_error')))
   const [loading, setLoading] = useState(false)
 
   async function onFinish(values) {

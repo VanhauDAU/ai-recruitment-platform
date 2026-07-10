@@ -36,6 +36,24 @@ export async function login({ email, password, captcha_token, portal }) {
   return data
 }
 
+// ---- Social login (OAuth) ----
+
+// URL bắt đầu luồng OAuth (full-page redirect sang backend -> provider).
+export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
+  const params = new URLSearchParams({ portal })
+  if (next) params.set('next', next)
+  return `${api.defaults.baseURL}/auth/oauth/${provider}/start/?${params}`
+}
+
+// Đổi one_time_code (backend redirect về kèm ?code=) lấy JWT + user.
+export async function completeOAuth(code, portal) {
+  const { data } = await api.post('/auth/oauth/complete/', { code })
+  const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
+  localStorage.setItem(access, data.access)
+  localStorage.setItem(refresh, data.refresh)
+  return data
+}
+
 export async function me() {
   const { data } = await api.get('/auth/me/')
   return data

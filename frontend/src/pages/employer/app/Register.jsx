@@ -7,10 +7,11 @@ import { getApiErrorMessage } from '../../../api/errorMessage'
 import { register } from '../../../api/authService'
 import AuthLogo from '../../../components/auth/AuthLogo'
 import { AuthFormStyles } from '../../../components/auth/LoginForm'
+import SocialLoginButtons from '../../../components/auth/SocialLoginButtons'
 import { employerAppPath } from '../../../config/portals'
 import { useSiteSettings } from '../../../hooks/useSiteSettings'
 
-// Đăng ký tài khoản Nhà tuyển dụng (role=employer) — form email thuần, không social.
+// Đăng ký tài khoản Nhà tuyển dụng (role=employer) — email hoặc Google.
 export default function EmployerRegister() {
   const { siteName } = useSiteSettings()
   const navigate = useNavigate()
@@ -62,6 +63,19 @@ export default function EmployerRegister() {
       {error && (
         <Alert type="error" message={error} showIcon className="mb-4 !rounded-xl login-field" closable onClose={() => setError('')} />
       )}
+
+      {/* Social login — cổng NTD chỉ hỗ trợ Google */}
+      <div className="login-field mb-5">
+        <SocialLoginButtons portal="employer" action="Đăng ký" />
+      </div>
+
+      <div className="login-field flex items-center gap-3 mb-5">
+        <div className="divider-line" />
+        <span className="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-widest">
+          hoặc đăng ký bằng email
+        </span>
+        <div className="divider-line" />
+      </div>
 
       <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
         <div className="login-field">

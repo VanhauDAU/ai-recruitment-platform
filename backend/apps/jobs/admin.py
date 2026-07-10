@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 
-from apps.common.media_storage import delete_local_media_url, save_image_upload
+from apps.common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
 
 from .models import Job, JobCategory, JobSkill
 
@@ -33,12 +33,12 @@ class JobCategoryAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         upload = form.cleaned_data.get('upload_logo')
-        old_url = obj.logo_url
+        old_url = JobCategory.objects.filter(pk=obj.pk).values_list('logo_url', flat=True).first() if change else ''
         if upload:
             saved = save_image_upload(upload, 'jobs/categories/logos', request=request)
-            obj.logo_url = saved['url']
+            obj.logo_url = saved['path']
         super().save_model(request, obj, form, change)
-        if upload:
+        if old_url != obj.logo_url:
             delete_local_media_url(old_url)
 
     @admin.display(description='Logo')
@@ -47,7 +47,7 @@ class JobCategoryAdmin(admin.ModelAdmin):
             return '-'
         return format_html(
             '<img src="{}" alt="{}" style="height: 36px; max-width: 72px; object-fit: contain;" />',
-            obj.logo_url,
+            media_url_from_value(obj.logo_url, request=None),
             obj.name,
         )
 

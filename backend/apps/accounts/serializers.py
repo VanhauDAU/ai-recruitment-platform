@@ -2,6 +2,8 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from apps.common.media_storage import media_url_from_value
+
 from .captcha import verify_recaptcha
 from .models import User
 
@@ -28,6 +30,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -35,6 +39,9 @@ class UserSerializer(serializers.ModelSerializer):
             'status', 'provider', 'email_verified', 'date_joined',
         ]
         read_only_fields = fields
+
+    def get_avatar_url(self, obj):
+        return media_url_from_value(obj.avatar_url, request=self.context.get('request'))
 
 
 class ChangeEmailSerializer(serializers.Serializer):

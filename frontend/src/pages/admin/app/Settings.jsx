@@ -9,6 +9,7 @@ export default function AdminSettings() {
   const [groups, setGroups] = useState(null)
   const [values, setValues] = useState({})
   const [initial, setInitial] = useState({})
+  const [pendingImageFiles, setPendingImageFiles] = useState({})
   const [activeGroup, setActiveGroup] = useState('general')
   const [saving, setSaving] = useState(false)
 
@@ -26,8 +27,11 @@ export default function AdminSettings() {
   }, [])
 
   const dirtyKeys = useMemo(
-    () => Object.keys(values).filter((k) => !isEqual(values[k], initial[k])),
-    [values, initial]
+    () => Array.from(new Set([
+      ...Object.keys(values).filter((k) => !isEqual(values[k], initial[k])),
+      ...Object.keys(pendingImageFiles),
+    ])),
+    [values, initial, pendingImageFiles]
   )
 
   const dirtyInGroup = (group) =>
@@ -41,12 +45,34 @@ export default function AdminSettings() {
     )
     setSaving(true)
     try {
-      const { updated, errors } = await updateAdminSettings(changed)
+      const groupImageFiles = Object.fromEntries(
+        group.settings
+          .filter((s) => s.value_type === 'image' && pendingImageFiles[s.key])
+          .map((s) => [s.key, pendingImageFiles[s.key]])
+      )
+      const { updated, errors, values: savedValues, display_values: displayValues } = await updateAdminSettings(changed, groupImageFiles)
       if (Object.keys(errors || {}).length) {
         message.error(Object.entries(errors).map(([k, e]) => `${k}: ${e}`).join(' · '))
       }
       if (updated?.length) {
-        setInitial((prev) => ({ ...prev, ...Object.fromEntries(updated.map((k) => [k, values[k]])) }))
+        const nextValues = Object.fromEntries(updated.map((k) => [k, savedValues?.[k] ?? values[k]]))
+        setValues((prev) => ({ ...prev, ...nextValues }))
+        setInitial((prev) => ({ ...prev, ...nextValues }))
+        setPendingImageFiles((prev) => {
+          const next = { ...prev }
+          updated.forEach((key) => delete next[key])
+          return next
+        })
+        if (displayValues) {
+          setGroups((prev) => prev.map((item) => ({
+            ...item,
+            settings: item.settings.map((setting) => (
+              displayValues[setting.key] !== undefined
+                ? { ...setting, value: savedValues?.[setting.key] ?? setting.value, display_value: displayValues[setting.key] }
+                : setting
+            )),
+          })))
+        }
         message.success('Đã lưu cấu hình.')
       }
     } catch {
@@ -61,6 +87,11 @@ export default function AdminSettings() {
       ...prev,
       ...Object.fromEntries(group.settings.map((s) => [s.key, initial[s.key]])),
     }))
+    setPendingImageFiles((prev) => {
+      const next = { ...prev }
+      group.settings.forEach((s) => delete next[s.key])
+      return next
+    })
   }
 
   const handleTabChange = (key) => {
@@ -108,6 +139,13 @@ export default function AdminSettings() {
                   setting={setting}
                   value={values[setting.key]}
                   onChange={(v) => setValues((prev) => ({ ...prev, [setting.key]: v }))}
+                  pendingFile={pendingImageFiles[setting.key]}
+                  onFileSelected={(file) => setPendingImageFiles((prev) => {
+                    const next = { ...prev }
+                    if (file) next[setting.key] = file
+                    else delete next[setting.key]
+                    return next
+                  })}
                 />
               </div>
             </div>

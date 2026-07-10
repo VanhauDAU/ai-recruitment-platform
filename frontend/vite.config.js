@@ -6,7 +6,8 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5173,
+    // PORT do tool preview cấp khi 5173 bận; dev bình thường vẫn là 5173.
+    port: Number(process.env.PORT) || 5173,
   },
   build: {
     rollupOptions: {

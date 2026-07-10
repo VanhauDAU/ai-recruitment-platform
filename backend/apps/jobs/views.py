@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from apps.common.media_storage import media_url_from_value
 from apps.employers.models import EmployerProfile
 
 from .models import Job, JobCategory
@@ -241,7 +242,7 @@ class JobStatsView(APIView):
                     'id': top.id,
                     'name': top.name,
                     'slug': top.slug,
-                    'logo_url': top.logo_url,
+                    'logo_url': media_url_from_value(top.logo_url, request=request),
                     'count': count,
                 })
         demand.sort(key=lambda d: d['count'], reverse=True)
@@ -308,7 +309,9 @@ class JobStatsView(APIView):
                 'public_id': row['employer_profile__public_id'],
                 'company_name': row['employer_profile__company_name'],
                 'slug': row['employer_profile__slug'],
-                'company_logo_url': row['employer_profile__company_logo_url'],
+                'company_logo_url': media_url_from_value(
+                    row['employer_profile__company_logo_url'], request=request,
+                ),
                 'industry': industry_names.get(row['employer_profile_id']) or '',
                 'job_count': row['job_count'],
             }

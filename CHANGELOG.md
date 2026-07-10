@@ -6,6 +6,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-10
+
+#### Added — Social login (OAuth Google / Facebook / LinkedIn)
+
+- Đăng nhập mạng xã hội theo **OAuth Authorization Code Flow qua backend callback**: ứng viên dùng Google/Facebook/LinkedIn, nhà tuyển dụng chỉ Google, admin không có. App chạy được ngay cả khi chưa cấu hình credential — nút social chỉ báo "chưa cấu hình" khi bấm.
+- Backend: model `SocialAccount` (`user`, `provider`, `provider_user_id`, `email`, `raw_profile`, unique `(provider, provider_user_id)`); `User.Provider` thêm `facebook`/`linkedin`. Service `apps/accounts/oauth.py`: build authorize URL, `state` chống CSRF lưu Redis TTL 10 phút (one-shot), đổi code lấy token, đọc + chuẩn hoá profile (OIDC cho Google/LinkedIn, Graph cho Facebook), `one_time_code` Redis TTL 60s.
+- Endpoints mới: `GET /api/auth/oauth/<provider>/start/?portal&next` (redirect sang provider), `GET /api/auth/oauth/<provider>/callback/` (verify state → tạo/liên kết user → redirect frontend kèm code), `POST /api/auth/oauth/complete/` (đổi one_time_code lấy `{user, access, refresh}`, throttle 10/min).
+- Luật tài khoản: có `SocialAccount` → đăng nhập luôn; email trùng **cùng vai trò** → tự liên kết (đánh dấu `email_verified=True`, giữ mật khẩu cũ); email trùng **khác vai trò** → chặn "Tài khoản không thuộc cổng này"; user mới → vai trò theo cổng, `email_verified=True`, mật khẩu unusable. Tham số `next` chỉ nhận path nội bộ (chặn absolute/`//`).
+- Frontend: component chung `SocialLoginButtons` (full-page redirect sang start URL, `next` = trang hiện tại trừ trang auth), trang `OAuthCallback` dùng chung 2 cổng (`/oauth/callback`, `/tuyendung/app/oauth/callback`; guard chống StrictMode gọi effect 2 lần vì code one-shot), lưu token đúng portal key, lỗi → quay về trang login của cổng kèm `?oauth_error=` hiển thị trong Alert (map mã lỗi → tiếng Việt ở `errorMessage.js`). Login/Register cổng NTD thêm nút Google + divider.
+- Cấu hình `.env`: `OAUTH_{GOOGLE,FACEBOOK,LINKEDIN}_CLIENT_ID/SECRET`, `OAUTH_FACEBOOK_GRAPH_VERSION`, `OAUTH_MAIN/EMPLOYER_CALLBACK_URL`, `OAUTH_STATE_TTL`, `OAUTH_CODE_TTL`. Hướng dẫn lấy key từng provider: `docs/05-huong-dan/social-login.md`.
+- Test: 13 test OAuth backend (portal rules, tạo/liên kết/chặn theo vai trò, state one-shot, one_time_code one-shot, chặn `next` absolute).
+
+#### Changed — Media lưu storage key thay vì URL tuyệt đối
+
+- Toàn bộ tham chiếu ảnh (`User.avatar_url`, `EmployerProfile.company_logo_url`/`cover_image_url`, `JobCategory.logo_url`, `Banner.image_url`, `SiteSetting` kiểu image, `UserCv.file_url`/`pdf_url`/`thumbnail_url`) nay lưu **storage key** (vd `site/settings/logo.png`) trong DB thay vì URL tuyệt đối; serializer resolve ra URL công khai theo domain/CDN **tại thời điểm trả API** qua `media_url_from_value`. Nhờ vậy đổi domain hoặc bật `MEDIA_PUBLIC_BASE_URL` không còn để lại `localhost:8000` cũ trong dữ liệu/cache.
+- `apps/common/media_storage` thêm `media_storage_path` (đọc được cả key mới, `/media/...` cũ và URL `http://localhost:8000/media/...` legacy, chống path traversal, chỉ nhận host media hợp lệ để không xoá nhầm ảnh bên thứ ba), `normalise_media_value`, `media_url_from_value`. Xoá file cũ khi thay ảnh chỉ chạy sau `transaction.on_commit`.
+- Command mới `normalize_media_references` (dry-run mặc định, `--apply` để ghi) chuyển dữ liệu URL legacy sẵn có sang storage key; URL ngoài hệ thống giữ nguyên.
+- `POST /api/site/admin/settings/upload/` nay resize ảnh theo `UPLOAD_MAX_DIMENSIONS` (favicon giới hạn 256×256, dùng Pillow) và trả `{key, value, url}`; upload avatar/logo/cover cũng lưu storage key.
+
+#### Changed — Tối ưu hiệu năng frontend (đợt 1)
+
+- Favicon: `frontend/index.html` từng trỏ ảnh logo 2000×2000 nặng **957KB** tải mọi trang. Dựng `favicon-32.png` (1.9KB) + `apple-touch-icon.png` (18.8KB) resize từ đúng logo ProCV bằng Pillow; đặt làm default ở `index.html`, `siteSettingsContext.js` và seed `sitecontent`. Fix cả tầng runtime (`SiteSettingsProvider` ghi đè `<link rel=icon>` từ `brand_favicon_url`) lẫn seed idempotent để không revert về ảnh nặng.
+- Vite: tách vendor `react` (react/react-dom/react-router-dom/scheduler) thành chunk riêng qua `manualChunks` (dạng **function** — Vite 8 dùng rolldown) để cache độc lập qua các lần deploy; cố ý **không** gom antd vào 1 chunk để tránh kéo antd trang admin vào initial load.
+- Thêm dependency `Pillow==11.3.0` (resize favicon + ảnh upload).
+
 ### 2026-07-09
 
 #### Added — Hệ thống cài đặt admin 15 nhóm (schema-driven)

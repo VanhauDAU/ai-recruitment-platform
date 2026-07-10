@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.common.media_storage import media_url_from_value
+
 from .models import CvSkill, UserCv
 
 
@@ -14,6 +16,9 @@ class CvSkillSerializer(serializers.ModelSerializer):
 
 class UserCvSerializer(serializers.ModelSerializer):
     cv_skills = CvSkillSerializer(many=True, read_only=True)
+    file_url = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
 
     class Meta:
         model = UserCv
@@ -35,3 +40,12 @@ class UserCvSerializer(serializers.ModelSerializer):
         if self.instance is None and not attrs.get('template'):
             raise serializers.ValidationError('template is required to create a CV.')
         return attrs
+
+    def get_file_url(self, obj):
+        return media_url_from_value(obj.file_url, request=self.context.get('request'))
+
+    def get_pdf_url(self, obj):
+        return media_url_from_value(obj.pdf_url, request=self.context.get('request'))
+
+    def get_thumbnail_url(self, obj):
+        return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))

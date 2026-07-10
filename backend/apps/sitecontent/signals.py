@@ -4,7 +4,7 @@ from django.dispatch import receiver
 
 from .models import SiteSetting
 
-PUBLIC_SETTINGS_CACHE_KEY = 'site_settings_public'
+PUBLIC_SETTINGS_CACHE_KEY = 'site_settings_public_v2'
 
 
 @receiver(post_save, sender=SiteSetting)
