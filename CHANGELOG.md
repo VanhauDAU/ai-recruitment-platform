@@ -8,6 +8,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-10
 
+#### Added — Ghi nhận `last_login`
+
+- `User.last_login` (có sẵn từ `AbstractUser` nhưng chưa từng được cập nhật vì JWT không đi qua `django.contrib.auth.login()`) nay được set ở cả 3 luồng phát token: đăng nhập email/mật khẩu (`RoleTokenObtainPairSerializer.validate`, chỉ set sau khi qua được kiểm tra `portal` — sai mật khẩu hoặc sai cổng không tính là đăng nhập), đăng ký auto-login và social login (cả hai qua `_issue_tokens()`). Expose thêm field `last_login` trong `UserSerializer`.
+- Test: 5 test mới (`LastLoginTests`) cho cả 3 luồng + 2 case âm (sai mật khẩu, sai cổng không set). Phát hiện và sửa 2 vấn đề cô lập test khi viết: Django test runner luôn ép `DEBUG=False` (cần override tường minh để bypass captcha khi test), và `ScopedRateThrottle` dùng chung cache Redis thật nên phải override `CACHES` sang `LocMemCache` để không cộng dồn số lần gọi `/api/auth/login/` giữa các lần chạy test.
+
 #### Added — Social login (OAuth Google / Facebook / LinkedIn)
 
 - Đăng nhập mạng xã hội theo **OAuth Authorization Code Flow qua backend callback**: ứng viên dùng Google/Facebook/LinkedIn, nhà tuyển dụng chỉ Google, admin không có. App chạy được ngay cả khi chưa cấu hình credential — nút social chỉ báo "chưa cấu hình" khi bấm.
