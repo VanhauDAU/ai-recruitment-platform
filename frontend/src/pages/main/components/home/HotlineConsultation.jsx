@@ -1,6 +1,6 @@
 import { MailFilled, PhoneFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
-import ChatShowcase from '../ui/ChatShowcase'
+import ChatShowcase from '../../../../components/ui/ChatShowcase'
 
 const HOTLINE_BG_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/job-new/hotline_bg.png'
 

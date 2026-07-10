@@ -1,8 +1,8 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
-import CategoryPicker from '../../../../components/job/CategoryPicker'
 import LocationFilter from '../../../../components/job/LocationFilter'
 import SearchDropdown from '../../../../components/ui/SearchDropdown'
+import CategoryPicker from './CategoryPicker'
 
 export default function JobSearchBar({
   categories,

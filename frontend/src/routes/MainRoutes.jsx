@@ -2,16 +2,15 @@ import { lazy } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
-import DashboardLayout from '../layouts/DashboardLayout'
 import MainLayout from '../layouts/MainLayout'
-import ProtectedRoute from './ProtectedRoute'
 
 const Home = lazy(() => import('../pages/main/Home'))
 const JobList = lazy(() => import('../pages/main/jobs/JobList'))
 const JobDetail = lazy(() => import('../pages/main/jobs/JobDetail'))
 const Login = lazy(() => import('../pages/main/auth/Login'))
 const Register = lazy(() => import('../pages/main/auth/Register'))
-const CandidateDashboard = lazy(() => import('../pages/main/candidate/Dashboard'))
+const VerifyEmail = lazy(() => import('../pages/main/account/VerifyEmail'))
+const OAuthCallback = lazy(() => import('../pages/main/auth/OAuthCallback'))
 
 // Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
 export function mainRoutes() {
@@ -23,6 +22,7 @@ export function mainRoutes() {
       <Route path="/viec-lam/:slug" element={<JobDetail />} />
       <Route path="/jobs" element={<JobList />} />
       <Route path="/jobs/:slug" element={<JobDetail />} />
+      <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmail />} />
     </Route>,
 
     <Route key="auth" element={<AuthLayout />}>
@@ -31,15 +31,10 @@ export function mainRoutes() {
       <Route path="/register" element={<Register />} />
     </Route>,
 
-    <Route key="candidate" element={<ProtectedRoute allowedRoles={['candidate']} />}>
-      <Route element={<DashboardLayout />}>
-        <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
-      </Route>
-    </Route>,
+    <Route key="oauth-callback" path="/oauth/callback" element={<OAuthCallback portal="main" loginPath="/login" />} />,
 
     <Route key="employer-redirect" path="/employer/dashboard" element={<Navigate to={employerAppPath('/dashboard')} replace />} />,
   ]
 }
 
 export default mainRoutes
-

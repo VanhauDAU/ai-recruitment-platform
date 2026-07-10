@@ -1,14 +1,20 @@
 from rest_framework import serializers
 
+from apps.common.media_storage import media_url_from_value
 from apps.locations.models import Location
 
 from .models import Job, JobCategory, JobSkill
 
 
 class JobCategorySerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = JobCategory
         fields = ['id', 'name', 'slug', 'description', 'logo_url', 'parent']
+
+    def get_logo_url(self, obj):
+        return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
 
 class JobSkillSerializer(serializers.ModelSerializer):
@@ -28,7 +34,7 @@ class LocationBriefSerializer(serializers.ModelSerializer):
 class JobSerializer(serializers.ModelSerializer):
     job_skills = JobSkillSerializer(many=True, required=False)
     company_name = serializers.CharField(source='employer_profile.company_name', read_only=True)
-    company_logo_url = serializers.CharField(source='employer_profile.company_logo_url', read_only=True)
+    company_logo_url = serializers.SerializerMethodField()
     # write: list of location ids; read: expanded objects.
     locations = serializers.PrimaryKeyRelatedField(
         many=True, write_only=True, queryset=Location.objects.all(),
@@ -73,3 +79,6 @@ class JobSerializer(serializers.ModelSerializer):
 
     def _sync_job_skills(self, job, job_skills_data):
         JobSkill.objects.bulk_create([JobSkill(job=job, **item) for item in job_skills_data])
+
+    def get_company_logo_url(self, obj):
+        return media_url_from_value(obj.employer_profile.company_logo_url, request=self.context.get('request'))

@@ -13,30 +13,8 @@ import {
   formatEducation,
   formatLocations,
   formatSalary,
-} from '../../constants/jobOptions'
-
-const SAVED_KEY = 'saved_jobs'
-
-function getSaved() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'))
-  } catch {
-    return new Set()
-  }
-}
-
-// Lưu/bỏ lưu việc làm (localStorage) — dùng chung cho JobCard và JobQuickView.
-export function useSavedJob(publicId) {
-  const [saved, setSaved] = useState(() => getSaved().has(publicId))
-  function toggle() {
-    const set = getSaved()
-    if (set.has(publicId)) set.delete(publicId)
-    else set.add(publicId)
-    localStorage.setItem(SAVED_KEY, JSON.stringify([...set]))
-    setSaved(set.has(publicId))
-  }
-  return [saved, toggle]
-}
+} from '../../../../constants/jobOptions'
+import useSavedJob from '../hooks/useSavedJob'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
 function postedLabel(job) {

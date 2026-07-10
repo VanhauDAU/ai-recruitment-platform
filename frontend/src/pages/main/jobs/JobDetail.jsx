@@ -77,10 +77,10 @@ export default function JobDetail() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="md:col-span-2 space-y-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{job.title}</h1>
           <p className="text-gray-500 mt-1">{job.company_name}</p>
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
             <span className="flex items-center gap-1"><DollarOutlined /> {formatSalary(job)}</span>
@@ -115,8 +115,8 @@ export default function JobDetail() {
       </div>
 
       <div className="md:col-span-1">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-20 space-y-4">
-          <Button type="primary" size="large" block onClick={handleApply}>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 md:sticky md:top-20 space-y-4">
+          <Button type="primary" size="large" block onClick={handleApply} className="!hidden md:!block">
             Ứng tuyển ngay
           </Button>
           <div>
@@ -130,6 +130,13 @@ export default function JobDetail() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Thanh ứng tuyển cố định cho mobile */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-3 md:hidden">
+        <Button type="primary" size="large" block onClick={handleApply}>
+          Ứng tuyển ngay
+        </Button>
       </div>
     </div>
   )

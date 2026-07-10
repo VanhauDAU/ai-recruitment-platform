@@ -8,8 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
-from apps.common.media_storage import media_public_url
-
 from .models import UserCv
 from .serializers import UserCvSerializer
 
@@ -67,14 +65,14 @@ class UserCvUploadView(APIView):
             return Response({'file': 'Only PDF or DOCX files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
 
         path = default_storage.save(f'cvs/uploads/{request.user.public_id}/{uuid4().hex}.{file_type}', upload)
-        file_url = media_public_url(path, request=request)
-
         cv = UserCv.objects.create(
             user=request.user,
             cv_type=UserCv.CvType.UPLOADED,
             source=UserCv.Source.UPLOADED,
             title=request.data.get('title') or upload.name,
-            file_url=file_url,
+            # Chỉ lưu storage key. URL public được serializer tạo theo môi
+            # trường hiện tại (local, domain production hoặc CDN).
+            file_url=path,
             file_name=upload.name,
             file_type=file_type,
             status=UserCv.Status.UPLOADED,

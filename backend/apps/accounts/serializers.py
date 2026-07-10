@@ -1,6 +1,9 @@
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from apps.common.media_storage import media_url_from_value
 
 from .captcha import verify_recaptcha
 from .models import User
@@ -28,10 +31,33 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url', 'status', 'date_joined']
+        fields = [
+            'id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
+            'status', 'provider', 'email_verified', 'date_joined', 'last_login',
+        ]
         read_only_fields = fields
+
+    def get_avatar_url(self, obj):
+        return media_url_from_value(obj.avatar_url, request=self.context.get('request'))
+
+
+class ChangeEmailSerializer(serializers.Serializer):
+    """Đổi email khi tài khoản chưa xác thực (reset email_verified và gửi lại link)."""
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        value = User.objects.normalize_email(value)
+        user = self.context['request'].user
+        if value.lower() == user.email.lower():
+            raise serializers.ValidationError('Email mới trùng với email hiện tại.')
+        if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
+        return value
 
 
 # Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.
@@ -59,6 +85,7 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         if portal and self.user.role not in PORTAL_ROLES[portal]:
             raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
+        update_last_login(None, self.user)
         return data
 
     @classmethod

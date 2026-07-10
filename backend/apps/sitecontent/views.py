@@ -1,14 +1,21 @@
+import json
 import re
 
 from django.core.cache import cache
 from django.db import transaction
 from rest_framework import generics, permissions, status
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
-from apps.common.media_storage import save_image_upload
+from apps.common.media_storage import (
+    delete_local_media_url,
+    media_storage_path,
+    media_url_from_value,
+    normalise_media_value,
+    save_image_upload,
+)
 
 from .models import Banner, LinkGroup, SiteSetting
 from .serializers import AdminSiteSettingSerializer, BannerSerializer, LinkGroupSerializer
@@ -28,9 +35,17 @@ class SiteSettingListView(APIView):
     def get(self, request):
         data = cache.get(PUBLIC_SETTINGS_CACHE_KEY)
         if data is None:
-            data = {s.key: s.value for s in SiteSetting.objects.filter(is_public=True)}
+            data = {
+                s.key: (s.value, s.value_type == SiteSetting.ValueType.IMAGE)
+                for s in SiteSetting.objects.filter(is_public=True)
+            }
             cache.set(PUBLIC_SETTINGS_CACHE_KEY, data, 60 * 60)
-        return Response(data)
+        # Cache storage keys, không cache URL tuyệt đối. Nhờ vậy thay domain/CDN
+        # không làm database hay cache giữ lại localhost/domain cũ.
+        return Response({
+            key: media_url_from_value(value, request=request) if is_image else value
+            for key, (value, is_image) in data.items()
+        })
 
 
 def _validate_value(setting, value):
@@ -57,55 +72,129 @@ class AdminSiteSettingView(APIView):
     """GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt value."""
 
     permission_classes = [IsAdmin]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get(self, request):
         by_group = {}
         for setting in SiteSetting.objects.order_by('group', 'order', 'key'):
             by_group.setdefault(setting.group, []).append(setting)
         groups = [
-            {'key': key, 'label': label, 'settings': AdminSiteSettingSerializer(by_group.get(key, []), many=True).data}
+            {
+                'key': key,
+                'label': label,
+                'settings': AdminSiteSettingSerializer(
+                    by_group.get(key, []), many=True, context={'request': request},
+                ).data,
+            }
             for key, label in SiteSetting.Group.choices
         ]
         return Response({'groups': groups})
 
     def patch(self, request):
         values = request.data.get('values')
+        if isinstance(values, str):
+            try:
+                values = json.loads(values)
+            except json.JSONDecodeError:
+                values = None
         if not isinstance(values, dict):
             return Response({'detail': 'Body phải có dạng {"values": {key: value}}.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        settings_map = {s.key: s for s in SiteSetting.objects.filter(key__in=values.keys())}
-        updated, errors = [], {}
-        with transaction.atomic():
-            for key, value in values.items():
-                setting = settings_map.get(key)
-                if setting is None:
-                    errors[key] = 'Không tồn tại key này.'
-                    continue
-                value, error = _validate_value(setting, value)
-                if error:
-                    errors[key] = error
-                    continue
-                if setting.value != value:
-                    setting.value = value
+        image_uploads = {}
+        for field_name, upload in request.FILES.items():
+            match = re.fullmatch(r'files\[(.+)]', field_name)
+            image_uploads[match.group(1) if match else field_name] = upload
+
+        keys = set(values.keys()) | set(image_uploads.keys())
+        settings_map = {s.key: s for s in SiteSetting.objects.filter(key__in=keys)}
+        updated, errors, saved_values, display_values, saved_paths = [], {}, {}, {}, []
+        try:
+            with transaction.atomic():
+                for key, value in values.items():
+                    if key in image_uploads:
+                        continue
+                    setting = settings_map.get(key)
+                    if setting is None:
+                        errors[key] = 'Không tồn tại key này.'
+                        continue
+                    value, error = _validate_value(setting, value)
+                    if error:
+                        errors[key] = error
+                        continue
+                    if setting.value_type == SiteSetting.ValueType.IMAGE:
+                        value = normalise_media_value(value)
+                    if setting.value != value:
+                        old_value = setting.value
+                        setting.value = value
+                        setting.save(update_fields=['value', 'updated_at'])
+                        # Chỉ xoá file cũ sau khi transaction đã commit. URL ngoài
+                        # hệ thống sẽ không bao giờ bị động tới.
+                        if media_storage_path(old_value) != media_storage_path(value):
+                            transaction.on_commit(
+                                lambda old_value=old_value: delete_local_media_url(old_value)
+                            )
+                    updated.append(key)
+                    saved_values[key] = setting.value
+                    if setting.value_type == SiteSetting.ValueType.IMAGE:
+                        display_values[key] = media_url_from_value(setting.value, request=request)
+
+                for key, upload in image_uploads.items():
+                    setting = settings_map.get(key)
+                    if setting is None:
+                        errors[key] = 'Không tồn tại key này.'
+                        continue
+                    if setting.value_type != SiteSetting.ValueType.IMAGE:
+                        errors[key] = 'Cấu hình này không phải kiểu ảnh.'
+                        continue
+
+                    saved = save_image_upload(
+                        upload,
+                        'site/settings',
+                        request=request,
+                        max_dimensions=UPLOAD_MAX_DIMENSIONS.get(key),
+                    )
+                    saved_paths.append(saved['path'])
+                    old_value = setting.value
+                    setting.value = saved['path']
                     setting.save(update_fields=['value', 'updated_at'])
-                updated.append(key)
-        return Response({'updated': updated, 'errors': errors},
+                    if media_storage_path(old_value) != saved['path']:
+                        transaction.on_commit(
+                            lambda old_value=old_value: delete_local_media_url(old_value)
+                        )
+                    updated.append(key)
+                    saved_values[key] = setting.value
+                    display_values[key] = media_url_from_value(setting.value, request=request)
+        except Exception:
+            for path in saved_paths:
+                delete_local_media_url(path)
+            raise
+
+        return Response({'updated': updated, 'errors': errors, 'values': saved_values, 'display_values': display_values},
                         status=status.HTTP_400_BAD_REQUEST if errors and not updated else status.HTTP_200_OK)
 
 
+# Setting nào cần giới hạn kích thước pixel lúc upload (tránh admin upload ảnh
+# gốc to làm icon nhỏ, nặng trang mà không hay biết — vd favicon).
+UPLOAD_MAX_DIMENSIONS = {
+    'brand_favicon_url': (256, 256),
+}
+
+
 class AdminSettingUploadView(APIView):
-    """Upload ảnh cho setting kiểu image (logo, favicon, ảnh OG...)."""
+    """Endpoint cũ: upload riêng từng ảnh.
+
+    Luồng admin hiện dùng PATCH /admin/settings/ để lưu thủ công theo nút
+    "Lưu thay đổi", nên endpoint này không còn ghi setting để tránh auto-save.
+    """
 
     permission_classes = [IsAdmin]
     parser_classes = [MultiPartParser]
 
     def post(self, request):
-        upload = request.FILES.get('file')
-        if upload is None:
-            return Response({'detail': 'Thiếu file upload.'}, status=status.HTTP_400_BAD_REQUEST)
-        saved = save_image_upload(upload, 'site/settings', request=request)
-        return Response({'url': saved['url']}, status=status.HTTP_201_CREATED)
+        return Response({
+            'detail': 'Endpoint này đã ngưng dùng. Hãy gửi file cùng PATCH /api/site/admin/settings/ khi bấm lưu.'
+        }, status=status.HTTP_410_GONE)
 
 
 class LinkGroupListView(generics.ListAPIView):

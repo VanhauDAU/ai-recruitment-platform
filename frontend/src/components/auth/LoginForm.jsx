@@ -1,8 +1,9 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
 import { Alert, Form, Input } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { getApiErrorMessage, getOAuthErrorMessage } from '../../api/errorMessage'
 import { HOME_BY_ROLE } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -54,8 +55,20 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const { login, logout } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
-  const [error, setError] = useState('')
+  const [searchParams] = useSearchParams()
+  // Lỗi từ luồng social login (OAuthCallback quay về kèm ?oauth_error=).
+  const [error, setError] = useState(() => getOAuthErrorMessage(searchParams.get('oauth_error')))
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!searchParams.has('oauth_error')) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('oauth_error')
+    navigate(
+      { search: nextParams.toString() ? `?${nextParams.toString()}` : '' },
+      { replace: true },
+    )
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function onFinish(values) {
     if (!executeRecaptcha) {
@@ -77,12 +90,8 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     } catch (err) {
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
-      } else if (err.response?.data?.captcha_token) {
-        setError(err.response.data.captcha_token.join(' '))
-      } else if (err.response?.data?.detail) {
-        setError(err.response.data.detail)
       } else {
-        setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+        setError(getApiErrorMessage(err, 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.'))
       }
     } finally {
       setLoading(false)

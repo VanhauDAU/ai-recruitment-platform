@@ -12,6 +12,7 @@ const EmployerPricing = lazy(() => import('../pages/employer/marketing/Pricing')
 const EmployerLogin = lazy(() => import('../pages/employer/app/Login'))
 const EmployerRegister = lazy(() => import('../pages/employer/app/Register'))
 const EmployerDashboard = lazy(() => import('../pages/employer/app/Dashboard'))
+const OAuthCallback = lazy(() => import('../pages/main/auth/OAuthCallback'))
 
 export function employerRoutes() {
   return [
@@ -25,6 +26,12 @@ export function employerRoutes() {
       <Route path={employerAppPath('/login')} element={<EmployerLogin />} />
       <Route path={employerAppPath('/register')} element={<EmployerRegister />} />
     </Route>,
+
+    <Route
+      key="employer-oauth-callback"
+      path={employerAppPath('/oauth/callback')}
+      element={<OAuthCallback portal="employer" loginPath={employerAppPath('/login')} />}
+    />,
 
     <Route key="employer-redirect-login" path={employerMarketingPath('/login')} element={<Navigate to={employerAppPath('/login')} replace />} />,
     <Route key="employer-redirect-register" path={employerMarketingPath('/register')} element={<Navigate to={employerAppPath('/register')} replace />} />,

@@ -21,10 +21,16 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | POST | `/api/auth/register/` | Đăng ký tài khoản (candidate/employer) |
-| POST | `/api/auth/login/` | Đăng nhập, nhận access/refresh JWT |
+| POST | `/api/auth/login/` | Đăng nhập, nhận access/refresh JWT (kèm `portal` để chặn sai vai trò theo cổng) |
 | POST | `/api/auth/refresh/` | Làm mới access token |
 | GET | `/api/auth/me/` | Thông tin tài khoản hiện tại |
-| POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
+| POST | `/api/auth/verify/send/` | Gửi lại email xác thực (429 kèm `retry_after` khi còn cooldown) |
+| POST | `/api/auth/verify/confirm/` | Xác nhận email bằng `token` trong link (public) |
+| POST | `/api/auth/change-email/` | Đổi email → reset xác thực + gửi lại link |
+| POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`; DB lưu storage key) |
+| GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
+| GET | `/api/auth/oauth/{provider}/callback/` | Provider gọi lại; verify state, tạo/liên kết user, redirect về trang callback frontend kèm `one_time_code` (hoặc `?error=`) |
+| POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PUT | `/api/candidate/profile/` | Xem/cập nhật hồ sơ ứng viên (tự tạo khi cần) |
 | GET/PUT | `/api/employer/profile/` | Xem/cập nhật hồ sơ công ty |
 | POST | `/api/employer/profile/create/` | Tạo hồ sơ công ty |
@@ -50,4 +56,6 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/site/banners/?placement=home_hero` | Banner đang bật theo order, public |
 | GET | `/api/site/admin/settings/` | **Admin**: toàn bộ cấu hình gộp theo 15 nhóm `{groups: [{key, label, settings: [...]}]}`, mỗi setting kèm metadata (`value_type`, `options`, `order`, `is_public`, `env_configured`) để frontend tự render form |
 | PATCH | `/api/site/admin/settings/` | **Admin**: bulk update, body `{"values": {key: value}}`, validate theo `value_type` (boolean/number/color hex/select choices), từ chối key kiểu `env` → `{"updated": [...], "errors": {...}}` |
-| POST | `/api/site/admin/settings/upload/` | **Admin**: upload ảnh cho setting kiểu image (multipart `file`) → `{"url"}` |
+| POST | `/api/site/admin/settings/upload/` | **Admin**: upload ảnh cho setting kiểu image (multipart `file` + `key`) → `{"key", "value", "url"}`; ảnh favicon tự resize về tối đa 256×256 |
+
+**Quy ước ảnh (media):** DB lưu **storage key** (vd `site/settings/logo.png`), không lưu URL tuyệt đối; API resolve ra URL công khai theo domain/CDN hiện tại tại thời điểm trả về. Đổi domain hoặc bật `MEDIA_PUBLIC_BASE_URL` không cần sửa dữ liệu. Chuyển dữ liệu URL cũ sang key bằng `python manage.py normalize_media_references --apply`.
