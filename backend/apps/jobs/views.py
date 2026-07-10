@@ -11,12 +11,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import IsCandidate, IsEmployer
 from common.media_storage import media_url_from_value
 from apps.employers.models import EmployerProfile
 
-from .models import Job, JobCategory
-from .serializers import JobCategorySerializer, JobSerializer
+from .models import Job, JobCategory, SavedJob
+from .serializers import JobCategorySerializer, JobSerializer, SavedJobSerializer
 
 
 SALARY_BUCKETS = [
@@ -377,6 +377,39 @@ class JobDetailView(generics.RetrieveAPIView):
         Job.objects.filter(pk=job.pk).update(view_count=F('view_count') + 1)
         job.refresh_from_db(fields=['view_count'])
         return job
+
+
+class SavedJobListCreateView(generics.ListCreateAPIView):
+    """GET: toàn bộ tin đã lưu của ứng viên. POST {"job": "jb_xxx"}: lưu tin.
+
+    Không phân trang: frontend cần trọn bộ id đã lưu để tô trạng thái trái tim
+    trên mọi job card và đếm badge trên nút nổi.
+    """
+
+    serializer_class = SavedJobSerializer
+    permission_classes = [IsCandidate]
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            SavedJob.objects.filter(candidate=self.request.user)
+            .select_related('job__employer_profile')
+            .prefetch_related('job__locations', 'job__job_skills__skill')
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(candidate=self.request.user)
+
+
+class SavedJobDestroyView(generics.DestroyAPIView):
+    """DELETE /jobs/saved/<job_public_id>/ — bỏ lưu tin."""
+
+    permission_classes = [IsCandidate]
+    lookup_field = 'job__public_id'
+    lookup_url_kwarg = 'public_id'
+
+    def get_queryset(self):
+        return SavedJob.objects.filter(candidate=self.request.user)
 
 
 class EmployerJobListCreateView(generics.ListCreateAPIView):

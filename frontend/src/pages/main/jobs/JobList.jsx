@@ -234,10 +234,28 @@ export default function JobList() {
     next.delete('location')
     next.delete('locations')
     if (ids.length) next.set('locations', ids.join(','))
+    const nextKeyword = keyword.trim()
+    if (nextKeyword) next.set('search', nextKeyword)
+    else next.delete('search')
+    if (searchBy === 'title') next.delete('search_by')
     next.delete('page')
     const pathname = pathForLocation(ids, provinces)
     const query = next.toString()
     navigate(query ? `${pathname}?${query}` : pathname)
+  }
+
+  function selectSuggestedLocation(provinceName) {
+    const province = provinces.find((item) => item.name.includes(provinceName))
+    if (!province) return
+    setLocationParam([province.id])
+  }
+
+  function openLocationPicker() {
+    document.querySelector('#job-location-filter > button')?.click()
+  }
+
+  function jumpToResults() {
+    document.getElementById('job-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   function toggleCategory(id) {
@@ -457,24 +475,31 @@ export default function JobList() {
         searchBy={searchBy}
         searchTop={searchTop}
         selectedCategories={selectedCategories}
+        selectedLocationLabel={locationSummary || (selectedLocations.length ? 'Đang tải địa điểm...' : '')}
         selectedLocations={selectedLocations}
       />
 
       <div className="max-w-6xl mx-auto px-4 py-5">
         <JobListHeader
           catChain={catChain}
+          activeSearchKeyword={searchLabel}
           contextLabel={contextLabel}
           count={count}
           fullContextLabel={fullContextLabel}
           fullLocationSummary={fullLocationSummary}
+          hasSelectedLocation={selectedLocations.length > 0}
           isLocationContext={isLocationContext}
           loading={loading}
           locationSummary={locationSummary}
           onCategorySelect={(id) => setCommaParam('cat', [id])}
+          onJumpToResults={jumpToResults}
+          onLocationPickerOpen={openLocationPicker}
+          onSuggestedLocationSelect={selectSuggestedLocation}
+          searchSuggestion={keyword.trim()}
           updateLabel={updateLabel}
         />
 
-        {hanoiSuggest?.count > 0 && (
+        {!selectedLocations.length && hanoiSuggest?.count > 0 && (
           <button
             type="button"
             onClick={() => setLocationParam([hanoiSuggest.id])}
@@ -526,7 +551,8 @@ export default function JobList() {
         </button>
 
         <div
-          className={`mt-4 grid grid-cols-1 gap-5 ${
+          id="job-results"
+          className={`mt-4 scroll-mt-40 grid grid-cols-1 gap-5 ${
             inlineQuickView ? 'lg:grid-cols-[minmax(340px,400px)_1fr] lg:items-start' : 'lg:grid-cols-[300px_1fr]'
           }`}
         >

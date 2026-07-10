@@ -4,7 +4,7 @@ from django.utils.html import format_html
 
 from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
 
-from .models import Job, JobCategory, JobSkill
+from .models import Job, JobCategory, JobSkill, SavedJob
 
 
 class JobCategoryAdminForm(forms.ModelForm):
@@ -71,3 +71,11 @@ class JobAdmin(admin.ModelAdmin):
 class JobSkillAdmin(admin.ModelAdmin):
     list_display = ['job', 'skill', 'importance', 'weight']
     list_filter = ['importance']
+
+
+@admin.register(SavedJob)
+class SavedJobAdmin(admin.ModelAdmin):
+    list_display = ['candidate', 'job', 'created_at']
+    search_fields = ['candidate__email', 'job__title']
+    autocomplete_fields = ['job']
+    readonly_fields = ['created_at']

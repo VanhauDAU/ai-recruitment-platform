@@ -9,10 +9,16 @@ export default function JobListHeader({
   count,
   fullContextLabel,
   fullLocationSummary,
+  hasSelectedLocation,
   isLocationContext,
   loading,
   locationSummary,
   onCategorySelect,
+  onJumpToResults,
+  onLocationPickerOpen,
+  onSuggestedLocationSelect,
+  activeSearchKeyword,
+  searchSuggestion,
   updateLabel,
 }) {
   return (
@@ -68,6 +74,81 @@ export default function JobListHeader({
             ))
           )}
         </nav>
+        {hasSelectedLocation ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {locationSummary ? (
+              <button
+                type="button"
+                onClick={onJumpToResults}
+                title={fullLocationSummary ? `Xem việc làm tại ${fullLocationSummary}` : undefined}
+                className="group inline-flex max-w-full cursor-pointer flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm text-gray-700 shadow-sm transition hover:border-[var(--brand-primary)] hover:bg-white sm:rounded-full sm:px-4"
+              >
+                {loading ? (
+                  <>
+                    <span>Đang tìm việc làm phù hợp tại</span>
+                    <strong className="text-gray-900">{locationSummary}</strong>
+                    <span>...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Có</span>
+                    <strong className="text-gray-900">{formatNumber(count)} việc làm</strong>
+                    {activeSearchKeyword && (
+                      <strong className="max-w-56 truncate text-gray-900" title={activeSearchKeyword}>
+                        “{activeSearchKeyword}”
+                      </strong>
+                    )}
+                    <span>tại</span>
+                    <strong className="max-w-64 truncate text-gray-900">{locationSummary}.</strong>
+                    <span className="font-semibold text-[var(--brand-primary)] group-hover:underline">Xem ngay →</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-500">
+                Đang cập nhật địa điểm...
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onLocationPickerOpen}
+              className="cursor-pointer px-1 py-1 text-sm font-medium text-gray-500 hover:text-[var(--brand-primary)] hover:underline"
+            >
+              Đổi địa điểm
+            </button>
+          </div>
+        ) : searchSuggestion ? (
+          <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-gray-600">
+            <span>Xem việc làm</span>
+            <span className="max-w-56 truncate font-semibold text-gray-900" title={searchSuggestion}>
+              {searchSuggestion}
+            </span>
+            <span>tại</span>
+            <button
+              type="button"
+              onClick={() => onSuggestedLocationSelect('Hà Nội')}
+              className="cursor-pointer font-medium text-[var(--brand-primary)] hover:underline"
+            >
+              Hà Nội
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={() => onSuggestedLocationSelect('Hồ Chí Minh')}
+              className="cursor-pointer font-medium text-[var(--brand-primary)] hover:underline"
+            >
+              Hồ Chí Minh
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              type="button"
+              onClick={onLocationPickerOpen}
+              className="cursor-pointer font-medium text-[var(--brand-primary)] hover:underline"
+            >
+              Chọn tỉnh thành của tôi →
+            </button>
+          </div>
+        ) : null}
       </div>
       <span
         title="Sắp ra mắt"

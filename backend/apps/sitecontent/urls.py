@@ -4,6 +4,7 @@ from .views import (
     AdminSettingUploadView,
     AdminSiteSettingView,
     BannerListView,
+    FeedbackCreateView,
     LinkGroupListView,
     SiteSettingListView,
 )
@@ -14,4 +15,5 @@ urlpatterns = [
     path('admin/settings/upload/', AdminSettingUploadView.as_view(), name='site-admin-settings-upload'),
     path('link-groups/', LinkGroupListView.as_view(), name='site-link-groups'),
     path('banners/', BannerListView.as_view(), name='site-banners'),
+    path('feedback/', FeedbackCreateView.as_view(), name='site-feedback'),
 ]

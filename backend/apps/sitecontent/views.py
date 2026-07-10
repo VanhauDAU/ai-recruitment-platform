@@ -6,6 +6,7 @@ from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
@@ -18,7 +19,12 @@ from common.media_storage import (
 )
 
 from .models import Banner, LinkGroup, SiteSetting
-from .serializers import AdminSiteSettingSerializer, BannerSerializer, LinkGroupSerializer
+from .serializers import (
+    AdminSiteSettingSerializer,
+    BannerSerializer,
+    FeedbackSerializer,
+    LinkGroupSerializer,
+)
 from .signals import PUBLIC_SETTINGS_CACHE_KEY
 
 _HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')
@@ -223,3 +229,18 @@ class BannerListView(generics.ListAPIView):
         if placement := self.request.query_params.get('placement'):
             qs = qs.filter(placement=placement)
         return qs
+
+
+class FeedbackCreateView(generics.CreateAPIView):
+    """Nhận góp ý sản phẩm từ nút nổi "Góp ý". Khách chưa đăng nhập vẫn gửi được."""
+
+    serializer_class = FeedbackSerializer
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'feedback'
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        # Người đã đăng nhập bỏ trống ô email -> lấy email tài khoản để còn phản hồi được.
+        email = serializer.validated_data.get('email') or (user.email if user else '')
+        serializer.save(user=user, email=email)
