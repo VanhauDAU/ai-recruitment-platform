@@ -174,6 +174,7 @@ REST_FRAMEWORK = {
         'login': '5/min',
         'register': '5/min',
         'verify_email': '5/min',
+        'oauth': '10/min',
     },
 }
 
@@ -265,3 +266,20 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
 EMAIL_VERIFICATION_RESEND_COOLDOWN = config('EMAIL_VERIFICATION_RESEND_COOLDOWN', default=60, cast=int)
+
+# Social login (OAuth Authorization Code Flow qua backend callback).
+# Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).
+OAUTH_GOOGLE_CLIENT_ID = config('OAUTH_GOOGLE_CLIENT_ID', default='')
+OAUTH_GOOGLE_CLIENT_SECRET = config('OAUTH_GOOGLE_CLIENT_SECRET', default='')
+OAUTH_FACEBOOK_CLIENT_ID = config('OAUTH_FACEBOOK_CLIENT_ID', default='')
+OAUTH_FACEBOOK_CLIENT_SECRET = config('OAUTH_FACEBOOK_CLIENT_SECRET', default='')
+OAUTH_FACEBOOK_GRAPH_VERSION = config('OAUTH_FACEBOOK_GRAPH_VERSION', default='v21.0')
+OAUTH_LINKEDIN_CLIENT_ID = config('OAUTH_LINKEDIN_CLIENT_ID', default='')
+OAUTH_LINKEDIN_CLIENT_SECRET = config('OAUTH_LINKEDIN_CLIENT_SECRET', default='')
+# Trang callback phía frontend (backend redirect về đây kèm one_time_code hoặc error).
+OAUTH_MAIN_CALLBACK_URL = config('OAUTH_MAIN_CALLBACK_URL', default=f'{FRONTEND_URL}/oauth/callback')
+OAUTH_EMPLOYER_CALLBACK_URL = config(
+    'OAUTH_EMPLOYER_CALLBACK_URL', default=f'{FRONTEND_URL}/tuyendung/app/oauth/callback'
+)
+OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)       # state chống CSRF: 10 phút
+OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)          # one_time_code đổi JWT: 60s

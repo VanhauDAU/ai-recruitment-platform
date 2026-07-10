@@ -564,7 +564,7 @@ export default function JobList() {
         open={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
         placement="left"
-        width={320}
+        size={320}
         styles={{ body: { padding: 0 }, header: { padding: '12px 16px' } }}
         title="Lọc nâng cao"
         className="lg:hidden"
@@ -576,7 +576,7 @@ export default function JobList() {
         open={Boolean(quickViewJob) && !isDesktop}
         onClose={() => setQuickViewJob(null)}
         placement="bottom"
-        height="92%"
+        size="92%"
         closable={false}
         styles={{ body: { padding: 0 } }}
         className="lg:hidden"

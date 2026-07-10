@@ -3,6 +3,7 @@ import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
+import { getApiErrorMessage } from '../../api/errorMessage'
 import { HOME_BY_ROLE } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -77,12 +78,8 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     } catch (err) {
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
-      } else if (err.response?.data?.captcha_token) {
-        setError(err.response.data.captcha_token.join(' '))
-      } else if (err.response?.data?.detail) {
-        setError(err.response.data.detail)
       } else {
-        setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+        setError(getApiErrorMessage(err, 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.'))
       }
     } finally {
       setLoading(false)

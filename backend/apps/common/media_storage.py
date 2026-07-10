@@ -1,9 +1,12 @@
+from io import BytesIO
 from pathlib import PurePosixPath
 from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from PIL import Image
 from rest_framework.exceptions import ValidationError
 
 
@@ -37,17 +40,51 @@ def validate_image_upload(upload):
     raise ValidationError({'file': 'Only JPG, PNG, GIF, or WebP images are supported.'})
 
 
-def save_image_upload(upload, directory, request=None):
+def _downscale_if_needed(upload, extension, max_dimensions):
+    """Resize ảnh raster nếu vượt max_dimensions (giữ tỉ lệ). GIF (animation) bỏ qua.
+
+    Trả None nếu không cần resize (ảnh đã đủ nhỏ), để dùng lại file upload gốc.
+    """
+    if extension == 'gif':
+        return None
+
+    max_w, max_h = max_dimensions
+    upload.seek(0)
+    image = Image.open(upload)
+    if image.width <= max_w and image.height <= max_h:
+        upload.seek(0)
+        return None
+
+    image.load()
+    image.thumbnail((max_w, max_h), Image.LANCZOS)
+    save_format = 'PNG' if extension == 'png' else image.format
+    if save_format == 'JPEG' and image.mode in ('RGBA', 'P'):
+        image = image.convert('RGB')
+
+    buffer = BytesIO()
+    image.save(buffer, format=save_format, optimize=True)
+    buffer.seek(0)
+    return ContentFile(buffer.read())
+
+
+def save_image_upload(upload, directory, request=None, max_dimensions=None):
     extension, content_type = validate_image_upload(upload)
     safe_directory = str(PurePosixPath(directory.strip('/')))
     filename = f'{uuid4().hex}.{extension}'
-    path = default_storage.save(f'{safe_directory}/{filename}', upload)
+
+    file_to_save = upload
+    if max_dimensions:
+        resized = _downscale_if_needed(upload, extension, max_dimensions)
+        if resized is not None:
+            file_to_save = resized
+
+    path = default_storage.save(f'{safe_directory}/{filename}', file_to_save)
 
     return {
         'path': path,
         'url': media_public_url(path, request=request),
         'content_type': content_type,
-        'size': upload.size,
+        'size': file_to_save.size,
         'name': upload.name,
     }
 

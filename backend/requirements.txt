@@ -8,6 +8,7 @@ requests==2.32.3
 psycopg2-binary==2.9.10
 python-decouple==3.8
 PyMuPDF==1.25.1
+Pillow==11.3.0
 scikit-learn==1.6.0
 joblib==1.4.2
 pandas==2.2.3

@@ -129,7 +129,7 @@ export default function CandidateUserMenu({ user, logout }) {
   const userPanel = (
     <div className="w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
       <div className="flex items-center gap-3 px-5 py-4">
-        <Avatar size={56} src={user?.avatar_url} icon={<IdcardOutlined />} />
+        <Avatar size={56} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-gray-900">{user?.full_name || 'Ứng viên'}</p>
           {verified ? (
@@ -178,7 +178,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
       <Dropdown open={open} onOpenChange={setOpen} trigger={['hover']} placement="bottomRight" popupRender={() => userPanel} mouseLeaveDelay={0.2}>
         <button className="flex cursor-pointer items-center gap-1">
-          <Avatar size={38} src={user?.avatar_url} icon={<IdcardOutlined />} />
+          <Avatar size={38} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
           <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? '-rotate-90' : 'rotate-90'}`} />
         </button>
       </Dropdown>

@@ -38,6 +38,8 @@ class User(AbstractUser):
     class Provider(models.TextChoices):
         LOCAL = 'local', 'Local'
         GOOGLE = 'google', 'Google'
+        FACEBOOK = 'facebook', 'Facebook'
+        LINKEDIN = 'linkedin', 'LinkedIn'
         GITHUB = 'github', 'GitHub'
 
     username = None
@@ -94,3 +96,27 @@ class User(AbstractUser):
     @property
     def is_admin_role(self):
         return self.role == self.Role.ADMIN
+
+
+class SocialAccount(models.Model):
+    """Liên kết tài khoản mạng xã hội (OAuth) với user.
+
+    Một user có thể liên kết nhiều provider; mỗi danh tính provider
+    (provider, provider_user_id) chỉ thuộc về đúng một user.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='social_accounts')
+    provider = models.CharField(max_length=50, choices=User.Provider.choices)
+    provider_user_id = models.CharField(max_length=255)
+    email = models.EmailField(blank=True)
+    raw_profile = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['provider', 'provider_user_id'], name='uq_social_provider_uid'),
+        ]
+
+    def __str__(self):
+        return f'{self.provider}:{self.provider_user_id} -> {self.user_id}'

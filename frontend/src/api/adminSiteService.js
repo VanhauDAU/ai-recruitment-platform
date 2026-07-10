@@ -10,9 +10,10 @@ export async function updateAdminSettings(values) {
   return data
 }
 
-export async function uploadSettingImage(file) {
+export async function uploadSettingImage(file, key) {
   const formData = new FormData()
   formData.append('file', file)
+  if (key) formData.append('key', key)
   const { data } = await api.post('/site/admin/settings/upload/', formData)
   return data
 }

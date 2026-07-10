@@ -94,6 +94,13 @@ class AdminSiteSettingView(APIView):
                         status=status.HTTP_400_BAD_REQUEST if errors and not updated else status.HTTP_200_OK)
 
 
+# Setting nào cần giới hạn kích thước pixel lúc upload (tránh admin upload ảnh
+# gốc to làm icon nhỏ, nặng trang mà không hay biết — vd favicon).
+UPLOAD_MAX_DIMENSIONS = {
+    'brand_favicon_url': (256, 256),
+}
+
+
 class AdminSettingUploadView(APIView):
     """Upload ảnh cho setting kiểu image (logo, favicon, ảnh OG...)."""
 
@@ -104,7 +111,8 @@ class AdminSettingUploadView(APIView):
         upload = request.FILES.get('file')
         if upload is None:
             return Response({'detail': 'Thiếu file upload.'}, status=status.HTTP_400_BAD_REQUEST)
-        saved = save_image_upload(upload, 'site/settings', request=request)
+        max_dimensions = UPLOAD_MAX_DIMENSIONS.get(request.data.get('key'))
+        saved = save_image_upload(upload, 'site/settings', request=request, max_dimensions=max_dimensions)
         return Response({'url': saved['url']}, status=status.HTTP_201_CREATED)
 
 

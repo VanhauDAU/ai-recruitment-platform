@@ -3,6 +3,7 @@ import { Alert, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
+import { getApiErrorMessage } from '../../../api/errorMessage'
 import { register } from '../../../api/authService'
 import AuthLogo from '../../../components/auth/AuthLogo'
 import { useAuth } from '../../../hooks/useAuth'
@@ -70,8 +71,7 @@ export default function Register() {
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
       } else {
-        const data = err.response?.data
-        setError(data ? Object.values(data).flat().join(' ') : 'Đăng ký thất bại. Vui lòng thử lại.')
+        setError(getApiErrorMessage(err, 'Đăng ký thất bại. Vui lòng thử lại.'))
       }
     } finally {
       setLoading(false)

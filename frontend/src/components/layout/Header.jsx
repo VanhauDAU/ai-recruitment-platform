@@ -294,7 +294,7 @@ export default function Header() {
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         placement="left"
-        width={300}
+        size={300}
         styles={{ body: { padding: 0 } }}
         title={<BrandLogo variant="full" imageClassName="h-8 max-w-[160px]" />}
         className="md:hidden"

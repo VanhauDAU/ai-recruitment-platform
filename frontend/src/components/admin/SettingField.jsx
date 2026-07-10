@@ -12,13 +12,13 @@ function ColorInput({ value, onChange }) {
   )
 }
 
-function ImageInput({ value, onChange }) {
+function ImageInput({ value, onChange, settingKey }) {
   const [uploading, setUploading] = useState(false)
 
   const customRequest = async ({ file, onSuccess, onError }) => {
     setUploading(true)
     try {
-      const { url } = await uploadSettingImage(file)
+      const { url } = await uploadSettingImage(file, settingKey)
       onChange(url)
       onSuccess(url)
     } catch (err) {
@@ -82,7 +82,7 @@ export default function SettingField({ setting, value, onChange }) {
     case 'color':
       return <ColorInput value={value} onChange={onChange} />
     case 'image':
-      return <ImageInput value={value || ''} onChange={onChange} />
+      return <ImageInput value={value || ''} onChange={onChange} settingKey={setting.key} />
     case 'textarea':
       return <Input.TextArea value={value} onChange={(e) => onChange(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} />
     case 'json':
