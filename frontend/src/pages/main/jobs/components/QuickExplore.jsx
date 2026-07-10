@@ -88,13 +88,17 @@ export default function QuickExplore({
       active: searchParams.get('weekend') === 'off_saturday',
       onClick: () => onToggleParam('weekend', 'off_saturday'),
     },
-    {
-      key: 'no-exp',
-      label: `${noExpCount == null ? '...' : formatNumber(noExpCount)} việc làm không cần kinh nghiệm`,
-      icon: <RocketOutlined />,
-      active: expYears.includes('none'),
-      onClick: () => onToggleExperienceYears('none'),
-    },
+    // Pill kèm số chỉ có nghĩa khi đã biết số và số > 0; chưa có thì ẩn hẳn
+    // thay vì hiện "... việc làm" / "0 việc làm".
+    ...(noExpCount
+      ? [{
+          key: 'no-exp',
+          label: `${formatNumber(noExpCount)} việc làm không cần kinh nghiệm`,
+          icon: <RocketOutlined />,
+          active: expYears.includes('none'),
+          onClick: () => onToggleExperienceYears('none'),
+        }]
+      : []),
   ]
 
   return (
@@ -151,7 +155,13 @@ export default function QuickExplore({
         )}
       </div>
 
-      {!sidebarLoading && (
+      {sidebarLoading ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[168, 132, 108, 232].map((width) => (
+            <Skeleton.Button key={width} active size="small" style={{ width, borderRadius: 9999 }} />
+          ))}
+        </div>
+      ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           {quickPills.map((pill) => (
             <button
@@ -174,3 +184,4 @@ export default function QuickExplore({
     </>
   )
 }
+

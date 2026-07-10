@@ -6,18 +6,22 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../../../api/errorMessage'
 import { register } from '../../../api/authService'
 import AuthLogo from '../../../components/auth/AuthLogo'
+import PasswordRequirements from '../../../components/auth/PasswordRequirements'
+import { passwordValidationRule } from '../../../components/auth/passwordValidation'
 import SocialLoginButtons from '../../../components/auth/SocialLoginButtons'
 import { useAuth } from '../../../hooks/useAuth'
 import { useSiteSettings } from '../../../hooks/useSiteSettings'
 
 export default function Register() {
   const { siteName } = useSiteSettings()
-  const { refreshUser } = useAuth()
+  const { setAuthenticatedUser } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState('social')
+  const [form] = Form.useForm()
+  const password = Form.useWatch('password', form) || ''
 
   async function onFinish(values) {
     if (!executeRecaptcha) {
@@ -33,9 +37,9 @@ export default function Register() {
         email: values.email,
         password: values.password,
       }
-      await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
+      const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
-      await refreshUser()
+      setAuthenticatedUser(result.user)
       navigate('/')
     } catch (err) {
       if (err.response?.status === 429) {
@@ -122,7 +126,7 @@ export default function Register() {
             <Alert type="error" message={error} showIcon className="mb-4 !rounded-xl reg-field" closable onClose={() => setError('')} />
           )}
 
-          <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+          <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
             <div className="reg-field">
               <Form.Item
                 name="full_name"
@@ -165,18 +169,19 @@ export default function Register() {
                 label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mật khẩu</span>}
                 rules={[
                   { required: true, message: 'Vui lòng nhập mật khẩu' },
-                  { min: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
+                  { validator: passwordValidationRule },
                 ]}
-                className="!mb-3"
+                className="!mb-1"
               >
                 <Input.Password
                   size="large"
                   autoComplete="new-password"
                   prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
-                  placeholder="Tối thiểu 8 ký tự"
+                  placeholder="Nhập mật khẩu"
                   className="!rounded-full !h-11 !text-base"
                 />
               </Form.Item>
+              <PasswordRequirements password={password} />
             </div>
 
             <div className="reg-field">

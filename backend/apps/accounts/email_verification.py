@@ -8,10 +8,11 @@ không cần bảng/migration cho luồng này.
 import secrets
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 from django.utils.html import escape
 
-from apps.sitecontent.models import SiteSetting
+from common.cache_utils import atomic_pop
+
+from .mailing import frontend_link, send_html_email, site_setting
 
 _TOKEN_PREFIX = 'email_verify:token:'
 _COOLDOWN_PREFIX = 'email_verify:cooldown:'
@@ -25,12 +26,6 @@ def _cooldown_key(user_id):
     return f'{_COOLDOWN_PREFIX}{user_id}'
 
 
-def _setting(key, default=''):
-    obj = SiteSetting.objects.filter(key=key).first()
-    value = obj.value if obj else None
-    return value if isinstance(value, str) and value.strip() else default
-
-
 def issue_token(user):
     """Sinh token mới cho user và lưu vào Redis với TTL cấu hình."""
     from django.core.cache import cache
@@ -42,16 +37,9 @@ def issue_token(user):
 
 def consume_token(token):
     """Đổi token lấy user_id (dùng một lần). Trả None nếu sai/hết hạn."""
-    from django.core.cache import cache
-
     if not token:
         return None
-    key = _token_key(token)
-    user_id = cache.get(key)
-    if user_id is None:
-        return None
-    cache.delete(key)
-    return user_id
+    return atomic_pop(_token_key(token))
 
 
 def cooldown_remaining(user):
@@ -68,22 +56,16 @@ def start_cooldown(user):
     cache.set(_cooldown_key(user.pk), 1, settings.EMAIL_VERIFICATION_RESEND_COOLDOWN)
 
 
-def _verification_link(token):
-    return f"{settings.FRONTEND_URL.rstrip('/')}/tai-khoan/xac-thuc-email?token={token}"
-
-
-def _from_email():
-    """Người gửi hiển thị; ưu tiên tên do admin đặt trong site setting."""
-    name = _setting('email_from_name', settings.EMAIL_FROM_NAME)
-    return f'{name} <{settings.EMAIL_FROM_ADDRESS}>' if name else settings.EMAIL_FROM_ADDRESS
-
-
 def send_verification_email(user):
     """Sinh token, dựng link và gửi email xác thực (HTML + text) cho user."""
     token = issue_token(user)
-    link = _verification_link(token)
-    site_name = _setting('site_name', 'ProCV')
-    support_email = _setting('support_email', '')
+    is_employer = user.role == 'employer'
+    link = frontend_link(
+        settings.EMPLOYER_EMAIL_VERIFICATION_PATH if is_employer else '/tai-khoan/xac-thuc-email',
+        base_url=settings.EMPLOYER_FRONTEND_URL if is_employer else settings.FRONTEND_URL,
+        token=token,
+    )
+    site_name = site_setting('site_name', 'ProCV')
     hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
 
@@ -112,13 +94,5 @@ def send_verification_email(user):
       </div>
     """
 
-    message = EmailMultiAlternatives(
-        subject=subject,
-        body=text,
-        from_email=_from_email(),
-        to=[user.email],
-        reply_to=[support_email] if support_email else None,
-    )
-    message.attach_alternative(html, 'text/html')
-    message.send(fail_silently=False)
+    send_html_email(subject=subject, text=text, html=html, to=user.email)
     return token

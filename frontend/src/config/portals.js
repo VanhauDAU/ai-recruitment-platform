@@ -37,6 +37,12 @@ export const MAIN_LOGIN_URL = import.meta.env.VITE_MAIN_HOST
   ? `https://${import.meta.env.VITE_MAIN_HOST}/login`
   : '/login'
 
+// Luồng quên/đặt lại mật khẩu chỉ tồn tại ở cổng main (link trong email trỏ về
+// FRONTEND_URL), nên các cổng khác phải link tuyệt đối sang host chính.
+export const MAIN_FORGOT_PASSWORD_URL = import.meta.env.VITE_MAIN_HOST
+  ? `https://${import.meta.env.VITE_MAIN_HOST}/forgot-password`
+  : '/forgot-password'
+
 export const HOME_BY_ROLE = {
   candidate: '/',
   employer: employerAppPath('/dashboard'),

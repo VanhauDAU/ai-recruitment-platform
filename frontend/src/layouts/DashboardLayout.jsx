@@ -1,5 +1,6 @@
 import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import EmailVerificationBanner from '../components/auth/EmailVerificationBanner'
 import BrandLogo from '../components/brand/BrandLogo'
 import { adminPath, employerAppPath } from '../config/portals'
 import { useAuth } from '../hooks/useAuth'
@@ -48,6 +49,9 @@ export default function DashboardLayout() {
           <Typography.Text>{user?.email}</Typography.Text>
           <Button onClick={logout}>Đăng xuất</Button>
         </Header>
+        {user?.role === 'employer' && (
+          <EmailVerificationBanner verificationPath={employerAppPath('/xac-thuc-email')} />
+        )}
         <Content className="p-6">
           <Outlet />
         </Content>

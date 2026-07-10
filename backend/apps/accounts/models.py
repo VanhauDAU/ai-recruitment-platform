@@ -1,11 +1,32 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.functions import Lower
 
 from common.public_id import generate_public_id
 
 
 class UserManager(BaseUserManager):
+    @classmethod
+    def normalize_email(cls, email):
+        """Hạ chữ TOÀN BỘ email, không chỉ phần domain.
+
+        `BaseUserManager.normalize_email` chỉ hạ chữ phần sau `@`, nên
+        `Hau@gmail.com` và `hau@gmail.com` là 2 bản ghi khác nhau. Trong thực tế
+        không ai coi đó là 2 tài khoản, và nó từng gây ra lệch giữa các luồng:
+        đặt lại mật khẩu tra `email__iexact` (tìm thấy) còn đăng nhập tra chính
+        xác (không thấy) -> đổi mật khẩu xong vẫn không đăng nhập được.
+        """
+        return super().normalize_email(email).lower()
+
+    def get_by_natural_key(self, username):
+        """Đăng nhập không phân biệt hoa/thường.
+
+        `ModelBackend.authenticate()` gọi hàm này. Ràng buộc `uniq_users_email_lower`
+        đảm bảo `iexact` không bao giờ khớp quá 1 bản ghi.
+        """
+        return self.get(**{f'{self.model.USERNAME_FIELD}__iexact': username})
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Email is required')
@@ -75,6 +96,13 @@ class User(AbstractUser):
                 check=models.Q(role__in=['candidate', 'employer', 'admin']),
                 name='chk_users_role',
             ),
+            # `email` đã unique nhưng Postgres so sánh phân biệt hoa/thường; ràng
+            # buộc này chặn tạo thêm `Hau@gmail.com` khi đã có `hau@gmail.com`,
+            # đồng thời bảo đảm `get_by_natural_key` (iexact) chỉ khớp 1 bản ghi.
+            models.UniqueConstraint(
+                Lower('email'),
+                name='uniq_users_email_lower',
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -120,3 +148,35 @@ class SocialAccount(models.Model):
 
     def __str__(self):
         return f'{self.provider}:{self.provider_user_id} -> {self.user_id}'
+
+
+class AuthEmailJob(models.Model):
+    """Transactional outbox for security-sensitive authentication emails."""
+
+    class Kind(models.TextChoices):
+        VERIFICATION = 'verification', 'Email verification'
+        PASSWORD_RESET = 'password_reset', 'Password reset'
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        SENDING = 'sending', 'Sending'
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='auth_email_jobs')
+    kind = models.CharField(max_length=30, choices=Kind.choices)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['status', 'created_at'], name='auth_email_status_created_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.kind}:{self.user_id}:{self.status}'

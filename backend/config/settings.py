@@ -14,13 +14,18 @@ from datetime import timedelta
 from pathlib import Path
 
 from decouple import Csv, config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+ENVIRONMENT = config('ENVIRONMENT', default='development').strip().lower()
+IS_PRODUCTION = ENVIRONMENT == 'production'
+_DEFAULT_SECRET_KEY = 'django-insecure-dev-key-change-me-at-least-32-characters'
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-me')
+SECRET_KEY = config('SECRET_KEY', default=_DEFAULT_SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -29,6 +34,16 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv(
 
 RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
 RECAPTCHA_SCORE_THRESHOLD = config('RECAPTCHA_SCORE_THRESHOLD', default=0.5, cast=float)
+
+if IS_PRODUCTION:
+    if DEBUG:
+        raise ImproperlyConfigured('DEBUG phải là False khi ENVIRONMENT=production.')
+    if SECRET_KEY == _DEFAULT_SECRET_KEY:
+        raise ImproperlyConfigured('SECRET_KEY production phải được cấu hình qua biến môi trường.')
+    if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):
+        raise ImproperlyConfigured('ALLOWED_HOSTS production phải chứa domain hợp lệ.')
+    if not RECAPTCHA_SECRET_KEY:
+        raise ImproperlyConfigured('RECAPTCHA_SECRET_KEY là bắt buộc ở production.')
 
 
 # Application definition
@@ -44,6 +59,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'corsheaders',
     # Local apps
@@ -64,6 +80,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'common.security.ApiSecurityHeadersMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -120,6 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 6},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -167,21 +185,32 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'apps.common.pagination.StandardPagination',
+    'DEFAULT_PAGINATION_CLASS': 'common.pagination.StandardPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
         'register': '5/min',
         'verify_email': '5/min',
+        'password_reset': '5/min',
+        # Bucket riêng cho bước confirm: gõ sai mật khẩu mới vài lần không được
+        # phép khoá luôn việc xin link (và ngược lại) — chung IP, chung quota.
+        'password_reset_confirm': '10/min',
         'oauth': '10/min',
     },
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_TOKEN_MINUTES', default=15, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_DAYS', default=7, cast=int)),
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    # `or` để dòng .env bỏ trống (JWT_SIGNING_KEY=) vẫn rơi về SECRET_KEY: chuỗi
+    # rỗng làm PyJWT ném InvalidKeyError ở mọi lần phát token. Production vẫn bị
+    # ép phải khai báo key riêng ở khối kiểm tra IS_PRODUCTION bên dưới.
+    'SIGNING_KEY': config('JWT_SIGNING_KEY', default='') or SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # drf-spectacular (OpenAPI 3 schema + Swagger UI / ReDoc)
@@ -225,6 +254,29 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv(),
 )
+CORS_ALLOW_CREDENTIALS = False
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+# SecurityMiddleware protects Django Admin/session cookies as well as API responses.
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if config(
+    'SECURE_PROXY_SSL_HEADER_ENABLED', default=IS_PRODUCTION, cast=bool
+) else None
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=IS_PRODUCTION, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=IS_PRODUCTION, cast=bool)
+SESSION_COOKIE_HTTPONLY = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31_536_000 if IS_PRODUCTION else 0, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=IS_PRODUCTION, cast=bool)
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
+X_FRAME_OPTIONS = 'DENY'
+
+if IS_PRODUCTION:
+    jwt_signing_key = config('JWT_SIGNING_KEY', default='')
+    if not jwt_signing_key:
+        raise ImproperlyConfigured('JWT_SIGNING_KEY là bắt buộc khi ENVIRONMENT=production.')
+    if len(jwt_signing_key) < 32:
+        raise ImproperlyConfigured('JWT_SIGNING_KEY production phải có ít nhất 32 ký tự.')
 
 # Redis cache — lưu token xác thực email + cooldown gửi lại (tự hết hạn theo TTL)
 REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')
@@ -234,6 +286,26 @@ CACHES = {
         'LOCATION': REDIS_URL,
         'OPTIONS': {'CLIENT_CLASS': 'django_redis.client.DefaultClient'},
     }
+}
+
+# Celery dùng cùng Redis nhưng queue riêng cho email auth. Chạy worker và beat
+# tách process khỏi web server để SMTP không làm chậm request đăng ký/login.
+CELERY_BROKER_URL = config('CELERY_BROKER_URL', default=REDIS_URL)
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default=None)
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_ROUTES = {'apps.accounts.tasks.*': {'queue': 'auth-email'}}
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_TASK_TIME_LIMIT = 60
+CELERY_TASK_SOFT_TIME_LIMIT = 50
+CELERY_BEAT_SCHEDULE = {
+    'dispatch-pending-auth-email-jobs': {
+        'task': 'apps.accounts.tasks.dispatch_pending_auth_email_jobs',
+        'schedule': 60.0,
+    },
 }
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
@@ -262,10 +334,19 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # URL frontend để dựng link xác thực trong email.
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
+EMPLOYER_EMAIL_VERIFICATION_PATH = config(
+    'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/xac-thuc-email'
+)
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
 EMAIL_VERIFICATION_RESEND_COOLDOWN = config('EMAIL_VERIFICATION_RESEND_COOLDOWN', default=60, cast=int)
+
+# Đặt lại mật khẩu: TTL ngắn hơn xác thực email (30 phút) vì đây là luồng chiếm
+# được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
+PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
+PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
 
 # Social login (OAuth Authorization Code Flow qua backend callback).
 # Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).
@@ -283,3 +364,6 @@ OAUTH_EMPLOYER_CALLBACK_URL = config(
 )
 OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)       # state chống CSRF: 10 phút
 OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)          # one_time_code đổi JWT: 60s
+
+# API docs hữu ích ở local/staging, nhưng không public mặc định ở production.
+API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)

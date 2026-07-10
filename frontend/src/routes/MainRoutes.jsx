@@ -1,37 +1,42 @@
-import { lazy } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import MainLayout from '../layouts/MainLayout'
-
-const Home = lazy(() => import('../pages/main/Home'))
-const JobList = lazy(() => import('../pages/main/jobs/JobList'))
-const JobDetail = lazy(() => import('../pages/main/jobs/JobDetail'))
-const Login = lazy(() => import('../pages/main/auth/Login'))
-const Register = lazy(() => import('../pages/main/auth/Register'))
-const VerifyEmail = lazy(() => import('../pages/main/account/VerifyEmail'))
-const OAuthCallback = lazy(() => import('../pages/main/auth/OAuthCallback'))
+import {
+  ForgotPasswordPage,
+  HomePage,
+  JobDetailPage,
+  JobListPage,
+  MainLoginPage,
+  MainRegisterPage,
+  OAuthCallbackPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+} from './lazyPages'
 
 // Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
 export function mainRoutes() {
   return [
     <Route key="main" element={<MainLayout />}>
-      <Route path="/" element={<Home />} />
-      <Route path="/viec-lam" element={<JobList />} />
-      <Route path="/viec-lam/tai/:locationSlug" element={<JobList />} />
-      <Route path="/viec-lam/:slug" element={<JobDetail />} />
-      <Route path="/jobs" element={<JobList />} />
-      <Route path="/jobs/:slug" element={<JobDetail />} />
-      <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmail />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/viec-lam" element={<JobListPage />} />
+      <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
+      <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
+      <Route path="/jobs" element={<JobListPage />} />
+      <Route path="/jobs/:slug" element={<JobDetailPage />} />
+      <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
     </Route>,
 
     <Route key="auth" element={<AuthLayout />}>
-      <Route path="/login" element={<Login />} />
-      <Route path="/sign-up" element={<Register />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<MainLoginPage />} />
+      <Route path="/sign-up" element={<MainRegisterPage />} />
+      <Route path="/register" element={<MainRegisterPage />} />
+      {/* Dùng chung cho cả 3 cổng: link trong email luôn trỏ về host chính. */}
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
     </Route>,
 
-    <Route key="oauth-callback" path="/oauth/callback" element={<OAuthCallback portal="main" loginPath="/login" />} />,
+    <Route key="oauth-callback" path="/oauth/callback" element={<OAuthCallbackPage portal="main" loginPath="/login" />} />,
 
     <Route key="employer-redirect" path="/employer/dashboard" element={<Navigate to={employerAppPath('/dashboard')} replace />} />,
   ]

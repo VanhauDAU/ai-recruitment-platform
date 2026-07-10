@@ -8,13 +8,21 @@ import { useSiteSetting, useSiteSettings } from '../../../hooks/useSiteSettings'
 
 // Trang /tai-khoan/xac-thuc-email: có `?token=` -> xác nhận từ link email;
 // không có token -> màn gửi/gửi lại email xác thực cho tài khoản đang đăng nhập.
-export default function VerifyEmail() {
+export default function VerifyEmail({
+  homePath = '/',
+  loginPath = '/login',
+  verificationPath = '/tai-khoan/xac-thuc-email',
+}) {
   const [params] = useSearchParams()
   const token = params.get('token')
 
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-10 sm:py-16">
-      {token ? <ConfirmToken token={token} /> : <RequestVerification />}
+      {token ? (
+        <ConfirmToken token={token} homePath={homePath} loginPath={loginPath} verificationPath={verificationPath} />
+      ) : (
+        <RequestVerification homePath={homePath} loginPath={loginPath} />
+      )}
     </div>
   )
 }
@@ -28,7 +36,7 @@ function Card({ children }) {
 }
 
 // Xác nhận email bằng token trong link (không cần đăng nhập).
-function ConfirmToken({ token }) {
+function ConfirmToken({ token, homePath, loginPath, verificationPath }) {
   const { user, refreshUser } = useAuth()
   const [status, setStatus] = useState('loading')
   const [message, setMessage] = useState('')
@@ -67,7 +75,7 @@ function ConfirmToken({ token }) {
             <CheckCircleFilled className="text-5xl" style={{ color: 'var(--brand-primary)' }} />
             <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Xác thực thành công!</h2>
             <p className="mt-2 text-gray-600 dark:text-gray-300">{message}</p>
-            <Link to="/" className="mt-6">
+            <Link to={homePath} className="mt-6">
               <Button type="primary" size="large" className="!rounded-full !px-8">Vào trang chủ</Button>
             </Link>
           </>
@@ -77,7 +85,7 @@ function ConfirmToken({ token }) {
             <CloseCircleFilled className="text-5xl text-red-500" />
             <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Xác thực thất bại</h2>
             <p className="mt-2 text-gray-600 dark:text-gray-300">{message}</p>
-            <Link to={user ? '/tai-khoan/xac-thuc-email' : '/login'} className="mt-6">
+            <Link to={user ? verificationPath : loginPath} className="mt-6">
               <Button type="primary" size="large" className="!rounded-full !px-8">Gửi lại email xác thực</Button>
             </Link>
           </>
@@ -88,7 +96,7 @@ function ConfirmToken({ token }) {
 }
 
 // Màn gửi / gửi lại email xác thực cho tài khoản đang đăng nhập.
-function RequestVerification() {
+function RequestVerification({ homePath, loginPath }) {
   const { user, loading, refreshUser } = useAuth()
   const { siteName } = useSiteSettings()
   const hotline = useSiteSetting('hotline', '1900 1234')
@@ -101,8 +109,8 @@ function RequestVerification() {
   const [showChange, setShowChange] = useState(false)
 
   useEffect(() => {
-    if (!loading && !user) navigate('/login')
-  }, [loading, user, navigate])
+    if (!loading && !user) navigate(loginPath)
+  }, [loading, user, navigate, loginPath])
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -125,7 +133,7 @@ function RequestVerification() {
           <CheckCircleFilled className="text-5xl" style={{ color: 'var(--brand-primary)' }} />
           <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Email đã được xác thực</h2>
           <p className="mt-2 text-gray-600 dark:text-gray-300">Tài khoản {user.email} đã sẵn sàng sử dụng.</p>
-          <Link to="/" className="mt-6">
+          <Link to={homePath} className="mt-6">
             <Button type="primary" size="large" className="!rounded-full !px-8">Vào trang chủ</Button>
           </Link>
         </div>

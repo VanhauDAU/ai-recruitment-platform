@@ -3,7 +3,7 @@
 from django.core.management.base import BaseCommand
 
 from apps.accounts.models import User
-from apps.common.media_storage import normalise_media_value
+from common.media_storage import normalise_media_value
 from apps.cvs.models import UserCv
 from apps.employers.models import EmployerProfile
 from apps.jobs.models import JobCategory

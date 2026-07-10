@@ -21,7 +21,7 @@ def verify_recaptcha(token, action, remote_ip=None):
     try:
         response = requests.post(RECAPTCHA_VERIFY_URL, data=payload, timeout=5)
         result = response.json()
-    except requests.RequestException:
+    except (requests.RequestException, ValueError):
         raise serializers.ValidationError({'captcha_token': 'Không thể xác thực captcha, vui lòng thử lại.'})
 
     if not result.get('success'):

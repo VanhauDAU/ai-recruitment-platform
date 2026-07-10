@@ -17,6 +17,8 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 
+from common.cache_utils import atomic_pop
+
 from .models import SocialAccount, User
 
 _STATE_PREFIX = 'oauth:state:'
@@ -111,11 +113,7 @@ def create_state(provider, portal, next_path):
 def pop_state(state):
     if not state:
         return None
-    key = f'{_STATE_PREFIX}{state}'
-    data = cache.get(key)
-    if data is not None:
-        cache.delete(key)
-    return data
+    return atomic_pop(f'{_STATE_PREFIX}{state}')
 
 
 def create_one_time_code(user):
@@ -127,11 +125,7 @@ def create_one_time_code(user):
 def pop_one_time_code(code):
     if not code:
         return None
-    key = f'{_CODE_PREFIX}{code}'
-    user_id = cache.get(key)
-    if user_id is not None:
-        cache.delete(key)
-    return user_id
+    return atomic_pop(f'{_CODE_PREFIX}{code}')
 
 
 # ---- Nói chuyện với provider ----

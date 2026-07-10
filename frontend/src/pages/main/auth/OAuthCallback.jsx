@@ -13,7 +13,7 @@ import { useAuth } from '../../../hooks/useAuth'
 export default function OAuthCallback({ portal = 'main', loginPath = '/login' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { refreshUser } = useAuth()
+  const { setAuthenticatedUser } = useAuth()
   const ran = useRef(false)
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
     }
 
     completeOAuth(code, portal)
-      .then(async ({ user }) => {
-        await refreshUser()
+      .then(({ user }) => {
+        setAuthenticatedUser(user)
         const next = params.get('next')
         const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : ''
         navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })

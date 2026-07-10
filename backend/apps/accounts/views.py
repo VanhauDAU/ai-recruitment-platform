@@ -9,19 +9,24 @@ from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from apps.common.media_storage import delete_local_media_url, save_image_upload
+from common.media_storage import delete_local_media_url, save_image_upload
 
 from . import email_verification as ev
 from . import oauth
-from .models import User
+from . import password_reset as pr
+from .models import AuthEmailJob, User
 from .serializers import (
     ChangeEmailSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     RegisterSerializer,
     RoleTokenObtainPairSerializer,
     UserSerializer,
 )
+from .tasks import queue_auth_email
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +42,20 @@ def _issue_tokens(user):
     return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
 
-def _safe_send_verification(user):
-    """Gửi email xác thực + bật cooldown, nuốt lỗi để không chặn luồng chính."""
-    try:
-        ev.send_verification_email(user)
-        ev.start_cooldown(user)
-    except Exception:  # noqa: BLE001 — email hỏng không được làm hỏng đăng ký
-        logger.exception('Gửi email xác thực thất bại cho %s', user.email)
+def _revoke_refresh_tokens(user):
+    """Chặn mọi phiên đăng nhập cũ sau khi mật khẩu bị đổi.
+
+    Access token vẫn sống tới khi hết hạn (SimpleJWT không kiểm tra blacklist cho
+    access token), nhưng kẻ giữ refresh token cũ không gia hạn thêm được nữa.
+    """
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)
+
+
+def _queue_verification_email(user):
+    """Queue email xác thực sau khi request hoàn tất; không chờ SMTP."""
+    ev.start_cooldown(user)
+    return queue_auth_email(AuthEmailJob.Kind.VERIFICATION, user)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -57,7 +69,7 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        _safe_send_verification(user)
+        _queue_verification_email(user)
         return Response(
             {'user': UserSerializer(user).data, **_issue_tokens(user)},
             status=status.HTTP_201_CREATED,
@@ -133,10 +145,9 @@ class VerificationSendView(APIView):
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-        ev.send_verification_email(user)
-        ev.start_cooldown(user)
+        _queue_verification_email(user)
         return Response({
-            'detail': 'Đã gửi email xác thực. Vui lòng kiểm tra hòm thư.',
+            'detail': 'Email xác thực đang được gửi. Vui lòng kiểm tra hòm thư sau ít phút.',
             'retry_after': ev.cooldown_remaining(user),
         })
 
@@ -184,8 +195,110 @@ class ChangeEmailView(APIView):
         user.email_verified = False
         user.save(update_fields=['email', 'email_verified', 'updated_at'])
 
-        _safe_send_verification(user)
+        _queue_verification_email(user)
         return Response(UserSerializer(user).data)
+
+
+# ---- Đặt lại mật khẩu — logic token/email ở apps/accounts/password_reset.py ----
+
+# Trả về cho MỌI email (tồn tại hay không) để không biến endpoint này thành công
+# cụ dò xem địa chỉ nào đã đăng ký.
+_RESET_SENT_DETAIL = (
+    'Nếu email này đã đăng ký tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu. '
+    'Vui lòng kiểm tra hòm thư (kể cả mục Spam).'
+)
+
+
+@extend_schema(
+    summary='Gửi email chứa link đặt lại mật khẩu',
+    request=PasswordResetRequestSerializer,
+    responses={200: inline_serializer('PasswordResetRequest', {'detail': serializers.CharField()})},
+    tags=['auth'],
+)
+class PasswordResetRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_reset'
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.filter(
+            email__iexact=serializer.validated_data['email'],
+            is_deleted=False,
+            status=User.Status.ACTIVE,
+        ).first()
+
+        # Cooldown im lặng: phản hồi phải giống hệt nhau dù email có tồn tại hay
+        # không, nếu không attacker vẫn phân biệt được qua status code/thời gian.
+        # Token được sinh trong worker (lúc gửi thật), xem tasks._send.
+        if user and pr.cooldown_remaining(user) == 0:
+            pr.start_cooldown(user)
+            queue_auth_email(AuthEmailJob.Kind.PASSWORD_RESET, user)
+
+        return Response({'detail': _RESET_SENT_DETAIL})
+
+
+@extend_schema(
+    summary='Kiểm tra link đặt lại mật khẩu còn hiệu lực (không tiêu token)',
+    responses={200: inline_serializer('PasswordResetValidate', {
+        'email': serializers.EmailField(), 'role': serializers.CharField(),
+    })},
+    tags=['auth'],
+)
+class PasswordResetValidateView(APIView):
+    """Cho frontend biết nên hiện form đổi mật khẩu hay màn 'link đã hết hạn'."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        user_id = pr.peek_token(request.query_params.get('token'))
+        user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
+        if user is None:
+            return Response(
+                {'detail': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({'email': user.email, 'role': user.role})
+
+
+@extend_schema(
+    summary='Đặt mật khẩu mới bằng token trong link',
+    request=PasswordResetConfirmSerializer,
+    responses={200: inline_serializer('PasswordResetConfirm', {
+        'detail': serializers.CharField(), 'role': serializers.CharField(),
+    })},
+    tags=['auth'],
+)
+class PasswordResetConfirmView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_reset_confirm'
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        # Validate mật khẩu TRƯỚC khi tiêu token: mật khẩu yếu không được đốt link.
+        serializer.is_valid(raise_exception=True)
+
+        user_id = pr.consume_token(serializer.validated_data['token'])
+        user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
+        if user is None:
+            return Response(
+                {'detail': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(serializer.validated_data['password'])
+        fields = ['password', 'updated_at']
+        # Nhận được mail ở địa chỉ này = đã chứng minh quyền sở hữu hòm thư.
+        if not user.email_verified:
+            user.email_verified = True
+            fields.append('email_verified')
+        user.save(update_fields=fields)
+        _revoke_refresh_tokens(user)
+
+        return Response({'detail': 'Đặt lại mật khẩu thành công.', 'role': user.role})
 
 
 # ---- Social login (OAuth) — logic ở apps/accounts/oauth.py ----
@@ -200,6 +313,8 @@ class OAuthStartView(APIView):
 
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'oauth'
 
     def get(self, request, provider):
         portal = request.query_params.get('portal', 'main')

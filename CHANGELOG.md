@@ -8,6 +8,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-10
 
+#### Added — Đặt lại mật khẩu (quên mật khẩu) qua link email
+
+- Luồng 2 bước: `/forgot-password` (nhập email) → email chứa link → `/reset-password?token=` (đặt mật khẩu mới) → điều hướng về đúng cổng đăng nhập theo `role`.
+- Backend: module mới `apps/accounts/password_reset.py` — token `secrets.token_urlsafe(32)` lưu Redis, **TTL 30 phút** (ngắn hơn xác thực email 24h vì đây là luồng chiếm được tài khoản), cooldown 60s/tài khoản. Khoá `password_reset:latest:<user_id>` giữ token mới nhất nên **xin link mới là link cũ chết ngay**; token tiêu một lần qua `atomic_pop`.
+- Tách helper mail dùng chung `apps/accounts/mailing.py` (`site_setting`, `from_email`, `frontend_link`, `send_html_email`); `email_verification.py` refactor dùng lại thay vì nhân bản.
+- Endpoints mới: `POST /api/auth/password-reset/` (captcha; **luôn trả cùng một `detail`** dù email tồn tại hay không → không dò được danh sách email; cooldown xử lý im lặng để phản hồi không lệch; email đẩy qua outbox `AuthEmailJob` kind `password_reset`), `GET /api/auth/password-reset/validate/?token=` (kiểm tra link **không tiêu token**, trả `{email, role}` → hiện ngay màn "link hết hạn" thay vì bắt user gõ xong mật khẩu mới báo lỗi), `POST /api/auth/password-reset/confirm/` (validate mật khẩu **trước** khi tiêu token, để mật khẩu yếu không đốt link).
+- Sau khi đổi mật khẩu: `email_verified=True` (nhận được mail ở địa chỉ đó = đã chứng minh quyền sở hữu hòm thư) và **blacklist toàn bộ refresh token cũ** qua `rest_framework_simplejwt.token_blacklist` — phiên đăng nhập cũ không gia hạn được nữa (access token vẫn sống tới khi hết hạn vì SimpleJWT không kiểm blacklist cho access token).
+- Rule mật khẩu tách thành `password_field()` dùng chung với `RegisterSerializer` (6–25 ký tự, có hoa/thường/số, `validate_password`).
+- Frontend: 2 trang lazy `ForgotPassword.jsx` / `ResetPassword.jsx` (dùng lại `PasswordRequirements` realtime + rule "nhập lại không khớp"); thêm `MAIN_FORGOT_PASSWORD_URL` trong `portals.js` vì cổng NTD/admin chạy subdomain riêng phải link tuyệt đối về host chính — `LoginForm` render `<a>` thay `<Link>` khi link là absolute URL.
+- Env mới: `PASSWORD_RESET_TTL=1800`, `PASSWORD_RESET_RESEND_COOLDOWN=60` (đã thêm vào `.env` và `.env.example`).
+- **Bug tự gây ra rồi sửa**: ban đầu cả 3 endpoint dùng chung `throttle_scope='password_reset'` (5/phút theo IP) → gõ sai mật khẩu mới vài lần là hết quota và **không confirm được nữa** dù link còn hạn. Tách bucket riêng `password_reset_confirm` (10/phút).
+- Verify: 15 assertion qua HTTP client thật (chống dò email, cooldown im lặng, link cũ chết khi xin link mới, token dùng một lần, mật khẩu yếu không đốt token, refresh token bị blacklist, `email_verified` bật) + kiểm chứng trên browser (submit thật → 200, màn "link không còn hiệu lực", mobile 375px không tràn ngang).
+
+#### Fixed — `JWT_SIGNING_KEY` bỏ trống làm hỏng mọi lần phát token
+
+- `SIMPLE_JWT['SIGNING_KEY']` dùng `config('JWT_SIGNING_KEY', default=SECRET_KEY)`, nhưng `python-decouple` chỉ áp dụng `default` khi key **vắng mặt** — dòng `JWT_SIGNING_KEY=` (đúng như `.env.example` hướng dẫn) trả về chuỗi rỗng, khiến PyJWT ném `InvalidKeyError: HMAC key must not be empty` ở mọi lần phát token. Đổi sang `config('JWT_SIGNING_KEY', default='') or SECRET_KEY` (cùng pattern `EMAIL_FROM_ADDRESS` sẵn có); kiểm tra bắt buộc khai báo key riêng khi `ENVIRONMENT=production` vẫn giữ nguyên.
+- `.env.example`: 2 dòng `EMAIL_VERIFICATION_*` viết comment **cùng dòng với giá trị** (`86400  # 24h`) — decouple không cắt comment nên `cast=int` ném `ValueError`, ai copy nguyên xi thì backend không boot. Chuyển comment lên dòng riêng và ghi chú rõ; bổ sung `PASSWORD_RESET_*`, `OAUTH_STATE_TTL`, `OAUTH_CODE_TTL` cho khớp `settings.py`.
+
+#### Fixed — Email phân biệt hoa/thường giữa đặt lại mật khẩu và đăng nhập
+
+- `password-reset` tra user bằng `email__iexact`, còn login đi qua `authenticate()` → `get_by_natural_key()` so sánh **chính xác** (Postgres phân biệt hoa/thường), và `BaseUserManager.normalize_email()` chỉ hạ chữ phần domain chứ không hạ phần trước `@`. Hệ quả: tài khoản đăng ký `Hau@gmail.com` **đặt lại mật khẩu được nhưng đăng nhập bằng `hau@gmail.com` thì 401**.
+- Sửa: `UserManager.normalize_email()` hạ chữ **toàn bộ** địa chỉ; `UserManager.get_by_natural_key()` dùng `iexact`; thêm ràng buộc DB `UniqueConstraint(Lower('email'), name='uniq_users_email_lower')` — nếu thiếu, `iexact` có thể khớp 2 bản ghi và `authenticate()` ném `MultipleObjectsReturned` (500 thay vì 401). `RegisterSerializer.validate_email()` chặn trùng theo `iexact` để trả 400 tử tế, vì `UniqueValidator` mặc định của ModelSerializer cũng phân biệt hoa/thường và sẽ vỡ ở index DB.
+- Migration `accounts.0004_email_case_insensitive`: `RunPython` hạ chữ email cũ trước khi gắn ràng buộc, và **dừng kèm danh sách địa chỉ cụ thể** nếu môi trường đã lỡ có 2 tài khoản chỉ khác nhau hoa/thường — gộp hay xoá tài khoản nào là quyết định của con người, không phải của migration.
+- Verify: rollback về `0003` → tạo xung đột thật → migrate lại và thấy đúng `RuntimeError` mong đợi. Qua HTTP: đăng ký `Hau.Test@Example.com` lưu thành `hau.test@example.com`; login được với cả `hau.test@…`, `Hau.Test@…`, `HAU.TEST@…`; đăng ký lại khác case → 400 (không phải 500); reset bằng email chữ hoa rồi login chữ thường → 200. 25/25 test `apps.accounts` pass.
+
 #### Added — Ghi nhận `last_login`
 
 - `User.last_login` (có sẵn từ `AbstractUser` nhưng chưa từng được cập nhật vì JWT không đi qua `django.contrib.auth.login()`) nay được set ở cả 3 luồng phát token: đăng nhập email/mật khẩu (`RoleTokenObtainPairSerializer.validate`, chỉ set sau khi qua được kiểm tra `portal` — sai mật khẩu hoặc sai cổng không tính là đăng nhập), đăng ký auto-login và social login (cả hai qua `_issue_tokens()`). Expose thêm field `last_login` trong `UserSerializer`.

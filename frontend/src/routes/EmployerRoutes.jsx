@@ -1,36 +1,47 @@
-import { lazy } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath, employerMarketingPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import EmployerMarketingLayout from '../layouts/EmployerMarketingLayout'
 import ProtectedRoute from './ProtectedRoute'
-
-const EmployerLanding = lazy(() => import('../pages/employer/marketing/Landing'))
-const EmployerServices = lazy(() => import('../pages/employer/marketing/Services'))
-const EmployerPricing = lazy(() => import('../pages/employer/marketing/Pricing'))
-const EmployerLogin = lazy(() => import('../pages/employer/app/Login'))
-const EmployerRegister = lazy(() => import('../pages/employer/app/Register'))
-const EmployerDashboard = lazy(() => import('../pages/employer/app/Dashboard'))
-const OAuthCallback = lazy(() => import('../pages/main/auth/OAuthCallback'))
+import {
+  EmployerDashboardPage,
+  EmployerLandingPage,
+  EmployerLoginPage,
+  EmployerPricingPage,
+  EmployerRegisterPage,
+  EmployerServicesPage,
+  OAuthCallbackPage,
+  VerifyEmailPage,
+} from './lazyPages'
 
 export function employerRoutes() {
   return [
     <Route key="employer-marketing" element={<EmployerMarketingLayout />}>
-      <Route path={employerMarketingPath('')} element={<EmployerLanding />} />
-      <Route path={employerMarketingPath('/dich-vu')} element={<EmployerServices />} />
-      <Route path={employerMarketingPath('/bao-gia')} element={<EmployerPricing />} />
+      <Route path={employerMarketingPath('')} element={<EmployerLandingPage />} />
+      <Route path={employerMarketingPath('/dich-vu')} element={<EmployerServicesPage />} />
+      <Route path={employerMarketingPath('/bao-gia')} element={<EmployerPricingPage />} />
     </Route>,
 
     <Route key="employer-auth" element={<AuthLayout />}>
-      <Route path={employerAppPath('/login')} element={<EmployerLogin />} />
-      <Route path={employerAppPath('/register')} element={<EmployerRegister />} />
+      <Route path={employerAppPath('/login')} element={<EmployerLoginPage />} />
+      <Route path={employerAppPath('/register')} element={<EmployerRegisterPage />} />
+      <Route
+        path={employerAppPath('/xac-thuc-email')}
+        element={(
+          <VerifyEmailPage
+            homePath={employerAppPath('/dashboard')}
+            loginPath={employerAppPath('/login')}
+            verificationPath={employerAppPath('/xac-thuc-email')}
+          />
+        )}
+      />
     </Route>,
 
     <Route
       key="employer-oauth-callback"
       path={employerAppPath('/oauth/callback')}
-      element={<OAuthCallback portal="employer" loginPath={employerAppPath('/login')} />}
+      element={<OAuthCallbackPage portal="employer" loginPath={employerAppPath('/login')} />}
     />,
 
     <Route key="employer-redirect-login" path={employerMarketingPath('/login')} element={<Navigate to={employerAppPath('/login')} replace />} />,
@@ -40,7 +51,7 @@ export function employerRoutes() {
 
     <Route key="employer-protected" element={<ProtectedRoute allowedRoles={['employer']} loginPath={employerAppPath('/login')} />}>
       <Route element={<DashboardLayout />}>
-        <Route path={employerAppPath('/dashboard')} element={<EmployerDashboard />} />
+        <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
       </Route>
     </Route>,
   ]

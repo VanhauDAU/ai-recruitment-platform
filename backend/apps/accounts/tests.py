@@ -5,13 +5,15 @@ from urllib.parse import parse_qs, urlparse
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from . import oauth
-from .models import SocialAccount, User
+from . import email_verification, oauth, password_reset
+from .models import AuthEmailJob, SocialAccount, User
+from .tasks import deliver_auth_email_job
 
 
 PNG_BYTES = (
@@ -238,13 +240,13 @@ class OAuthFlowTests(APITestCase):
     CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
 )
 class LastLoginTests(APITestCase):
+    """Verify all JWT issuance flows update ``last_login`` consistently."""
+
     # Django test runner luôn ép DEBUG=False bất kể .env; bypass captcha trong
     # verify_recaptcha() chỉ áp dụng khi DEBUG=True nên phải override tường minh.
 
     def setUp(self):
         cache.clear()
-    """`last_login` không tự cập nhật qua JWT (khác session auth mặc định của
-    Django) — verify cả 3 luồng phát token đều tự set nó."""
 
     def test_password_login_updates_last_login(self):
         user = User.objects.create_user(email='login@example.com', password='Password@123')
@@ -315,3 +317,50 @@ class LastLoginTests(APITestCase):
 
         user = User.objects.get(email='social@example.com')
         self.assertIsNotNone(user.last_login)
+
+
+@override_settings(
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    FRONTEND_URL='https://main.example.test',
+    EMPLOYER_FRONTEND_URL='https://employer.example.test',
+    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/xac-thuc-email',
+)
+class AuthSecurityAndEmailTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_verification_token_is_consumed_once(self):
+        user = User.objects.create_user(email='verify@example.com', password='Password@123')
+        token = email_verification.issue_token(user)
+
+        self.assertEqual(email_verification.consume_token(token), user.pk)
+        self.assertIsNone(email_verification.consume_token(token))
+
+    def test_password_reset_token_is_consumed_once(self):
+        user = User.objects.create_user(email='reset@example.com', password='Password@123')
+        token = password_reset.issue_token(user)
+
+        self.assertEqual(password_reset.consume_token(token), user.pk)
+        self.assertIsNone(password_reset.consume_token(token))
+
+    def test_employer_verification_email_uses_employer_portal_link(self):
+        user = User.objects.create_user(
+            email='employer@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+
+        email_verification.send_verification_email(user)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('https://employer.example.test/app/xac-thuc-email?token=', mail.outbox[0].body)
+
+    def test_email_outbox_job_is_marked_sent_after_delivery(self):
+        user = User.objects.create_user(email='queue@example.com', password='Password@123')
+        job = AuthEmailJob.objects.create(user=user, kind=AuthEmailJob.Kind.VERIFICATION)
+
+        deliver_auth_email_job.run(job.pk)
+
+        job.refresh_from_db()
+        self.assertEqual(job.status, AuthEmailJob.Status.SENT)
+        self.assertEqual(job.attempts, 1)
+        self.assertIsNotNone(job.sent_at)

@@ -5,12 +5,15 @@ from apps.sitecontent.models import Banner, LinkGroup, LinkItem, SiteSetting
 # Cấu hình mẫu để trang chạy ngay; admin chỉnh/thêm sau qua trang quản trị.
 # Seed idempotent: đồng bộ metadata (label/group/type/options/order/is_public)
 # nhưng KHÔNG ghi đè value admin đã chỉnh.
-PROCV_LOGO_URL = '/images/logo/logo_proCV_2000_600.png'
-PROCV_MARK_URL = '/images/logo/logo_proCV_2000_2000.png'
+PROCV_LOGO_URL = '/images/logo/logo-full.png'
+PROCV_MARK_URL = '/images/logo/logo-mark.png'
 PROCV_FAVICON_URL = '/favicon-32.png'
 LEGACY_BRAND_VALUES = {
     '', '/images/logo/aicareer-logo.svg', '/favicon.svg',
-    '/images/logo/logo_proCV_2000_2000.png',  # favicon dùng nhầm ảnh logo full-size (957KB) — ép về bản đã resize nhẹ
+    # 2 ảnh gốc nặng (957KB/376KB) đã bị xoá khỏi frontend/public — DB nào còn
+    # trỏ vào là ảnh vỡ; seed ép về bản resize nhẹ ở trên.
+    '/images/logo/logo_proCV_2000_2000.png',
+    '/images/logo/logo_proCV_2000_600.png',
 }
 BRAND_ASSET_KEYS = {'brand_logo_url', 'brand_logo_mark_url', 'brand_favicon_url'}
 
