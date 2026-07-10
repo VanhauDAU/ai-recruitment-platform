@@ -1,3 +1,4 @@
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -36,7 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'status', 'provider', 'email_verified', 'date_joined',
+            'status', 'provider', 'email_verified', 'date_joined', 'last_login',
         ]
         read_only_fields = fields
 
@@ -84,6 +85,7 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         if portal and self.user.role not in PORTAL_ROLES[portal]:
             raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
+        update_last_login(None, self.user)
         return data
 
     @classmethod

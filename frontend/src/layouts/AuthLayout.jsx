@@ -28,7 +28,7 @@ export default function AuthLayout() {
           <main className="flex flex-1 items-center justify-center px-3 py-6 sm:px-4">
             <div
               className={`w-full animate-fade-slide rounded-3xl bg-white px-5 py-8 shadow-[0_4px_32px_rgba(0,0,0,0.07)] dark:bg-zinc-900 dark:shadow-none sm:px-10 sm:py-10 ${
-                isRegister ? 'max-w-[680px] sm:px-12' : 'max-w-[560px] sm:px-11'
+                isRegister ? 'max-w-[680px] sm:px-12' : 'max-w-[680px] sm:px-11'
               }`}
             >
               <Outlet />

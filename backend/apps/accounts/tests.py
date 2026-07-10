@@ -97,7 +97,10 @@ class OAuthFlowTests(APITestCase):
         state_data = cache.get(f'oauth:state:{query["state"][0]}')
         self.assertEqual(state_data, {'provider': 'google', 'portal': 'main', 'next': '/viec-lam'})
 
+    @override_settings(OAUTH_FACEBOOK_CLIENT_ID='', OAUTH_FACEBOOK_CLIENT_SECRET='')
     def test_start_unconfigured_provider_redirects_with_error(self):
+        # Override tường minh thay vì dựa vào .env của máy đang chạy test có
+        # đang để trống Facebook hay không (từng fail khi dev điền credential thật).
         response = self.client.get(reverse('auth-oauth-start', args=['facebook']), {'portal': 'main'})
         self.assertEqual(response.status_code, 302)
         self.assertIn('error=provider_not_configured', response.url)
@@ -223,3 +226,92 @@ class OAuthFlowTests(APITestCase):
             {'error': 'access_denied', 'state': state},
         )
         self.assertIn('error=access_denied', response.url)
+
+
+@override_settings(
+    RECAPTCHA_SECRET_KEY='',
+    DEBUG=True,
+    ALLOWED_HOSTS=['testserver'],
+    # ScopedRateThrottle (5/min cho scope 'login') dùng chung cache 'default' —
+    # nếu không cô lập, số request cộng dồn qua nhiều lần chạy test trong cùng
+    # Redis thật sẽ kích hoạt 429 giả (đã từng gặp phải khi rerun cùng phiên).
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+)
+class LastLoginTests(APITestCase):
+    # Django test runner luôn ép DEBUG=False bất kể .env; bypass captcha trong
+    # verify_recaptcha() chỉ áp dụng khi DEBUG=True nên phải override tường minh.
+
+    def setUp(self):
+        cache.clear()
+    """`last_login` không tự cập nhật qua JWT (khác session auth mặc định của
+    Django) — verify cả 3 luồng phát token đều tự set nó."""
+
+    def test_password_login_updates_last_login(self):
+        user = User.objects.create_user(email='login@example.com', password='Password@123')
+        self.assertIsNone(user.last_login)
+
+        response = self.client.post(reverse('auth-login'), {
+            'email': 'login@example.com', 'password': 'Password@123', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertIsNotNone(user.last_login)
+
+    def test_wrong_password_does_not_update_last_login(self):
+        user = User.objects.create_user(email='login2@example.com', password='Password@123')
+
+        response = self.client.post(reverse('auth-login'), {
+            'email': 'login2@example.com', 'password': 'wrong', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        user.refresh_from_db()
+        self.assertIsNone(user.last_login)
+
+    def test_wrong_portal_does_not_update_last_login(self):
+        """Sai cổng bị chặn sau khi xác thực mật khẩu đúng — không tính là đăng nhập."""
+        user = User.objects.create_user(
+            email='login3@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+
+        response = self.client.post(reverse('auth-login'), {
+            'email': 'login3@example.com', 'password': 'Password@123',
+            'captcha_token': 'x', 'portal': 'main',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertIsNone(user.last_login)
+
+    def test_register_auto_login_sets_last_login(self):
+        response = self.client.post(reverse('auth-register'), {
+            'email': 'newuser@example.com', 'password': 'Password@123',
+            'role': 'candidate', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email='newuser@example.com')
+        self.assertIsNotNone(user.last_login)
+
+    @override_settings(
+        CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+        OAUTH_GOOGLE_CLIENT_ID='test-client-id',
+        OAUTH_GOOGLE_CLIENT_SECRET='test-client-secret',
+    )
+    def test_oauth_login_sets_last_login(self):
+        cache.clear()
+        state = oauth.create_state('google', 'main', '')
+        with (
+            patch.object(oauth, 'exchange_code', return_value='provider-token'),
+            patch.object(oauth, 'fetch_profile', return_value=dict(GOOGLE_PROFILE)),
+        ):
+            callback = self.client.get(
+                reverse('auth-oauth-callback', args=['google']),
+                {'code': 'provider-code', 'state': state},
+            )
+        query = parse_qs(urlparse(callback.url).query)
+        self.client.post(reverse('auth-oauth-complete'), {'code': query['code'][0]})
+
+        user = User.objects.get(email='social@example.com')
+        self.assertIsNotNone(user.last_login)

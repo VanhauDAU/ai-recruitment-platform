@@ -1,6 +1,6 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
 import { Alert, Form, Input } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage, getOAuthErrorMessage } from '../../api/errorMessage'
@@ -59,6 +59,16 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   // Lỗi từ luồng social login (OAuthCallback quay về kèm ?oauth_error=).
   const [error, setError] = useState(() => getOAuthErrorMessage(searchParams.get('oauth_error')))
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!searchParams.has('oauth_error')) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('oauth_error')
+    navigate(
+      { search: nextParams.toString() ? `?${nextParams.toString()}` : '' },
+      { replace: true },
+    )
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function onFinish(values) {
     if (!executeRecaptcha) {

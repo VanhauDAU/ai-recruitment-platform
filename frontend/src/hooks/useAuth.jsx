@@ -1,11 +1,28 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as authService from '../api/authService'
+import { adminPath, employerAppPath, getCurrentPortal } from '../config/portals'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  const loginPathForCurrentPortal = useCallback(() => {
+    const portal = getCurrentPortal()
+    if (portal === 'employer') return employerAppPath('/login')
+    if (portal === 'admin') return adminPath('/login')
+    return '/login'
+  }, [])
+
+  const logout = useCallback(() => {
+    const portal = getCurrentPortal()
+    authService.logout(portal)
+    setUser(null)
+    navigate(loginPathForCurrentPortal(), { replace: true })
+  }, [loginPathForCurrentPortal, navigate])
 
   useEffect(() => {
     if (!authService.getAccessToken()) {
@@ -15,9 +32,9 @@ export function AuthProvider({ children }) {
     authService
       .me()
       .then(setUser)
-      .catch(() => authService.logout())
+      .catch(logout)
       .finally(() => setLoading(false))
-  }, [])
+  }, [logout])
 
   async function login(credentials) {
     await authService.login(credentials)
@@ -31,11 +48,6 @@ export function AuthProvider({ children }) {
     const currentUser = await authService.me()
     setUser(currentUser)
     return currentUser
-  }
-
-  function logout() {
-    authService.logout()
-    setUser(null)
   }
 
   return (

@@ -58,7 +58,9 @@ def _providers():
             'authorize_url': f'https://www.facebook.com/{fb_version}/dialog/oauth',
             'token_url': f'https://graph.facebook.com/{fb_version}/oauth/access_token',
             'userinfo_url': f'https://graph.facebook.com/{fb_version}/me',
-            'scope': 'email public_profile',
+            # Facebook Login Dialog dùng dấu PHẨY phân tách scope (khác chuẩn OIDC
+            # space-separated của Google/LinkedIn) — xem tài liệu Facebook Login.
+            'scope': 'email,public_profile',
         },
         'linkedin': {
             # LinkedIn OIDC ("Sign In with LinkedIn using OpenID Connect")

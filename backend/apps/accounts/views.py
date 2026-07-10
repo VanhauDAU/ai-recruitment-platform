@@ -1,6 +1,7 @@
 import logging
 from urllib.parse import urlencode
 
+from django.contrib.auth.models import update_last_login
 from django.shortcuts import redirect
 from django.urls import reverse
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -26,7 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 def _issue_tokens(user):
-    """Trả về access/refresh JWT (kèm claim role/email) cho `user`."""
+    """Trả về access/refresh JWT (kèm claim role/email) cho `user`.
+
+    Dùng cho đăng ký (auto-login) và social login — 2 luồng phát JWT không đi
+    qua `RoleTokenObtainPairSerializer` nên tự cập nhật `last_login` ở đây.
+    """
+    update_last_login(None, user)
     refresh = RoleTokenObtainPairSerializer.get_token(user)
     return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
