@@ -3,7 +3,7 @@ from rest_framework import serializers
 from common.media_storage import media_url_from_value
 from apps.locations.models import Location
 
-from .models import Job, JobCategory, JobSkill
+from .models import Job, JobCategory, JobSkill, SavedJob
 
 
 class JobCategorySerializer(serializers.ModelSerializer):
@@ -82,3 +82,23 @@ class JobSerializer(serializers.ModelSerializer):
 
     def get_company_logo_url(self, obj):
         return media_url_from_value(obj.employer_profile.company_logo_url, request=self.context.get('request'))
+
+
+class SavedJobSerializer(serializers.ModelSerializer):
+    # Ghi bằng public_id của job; đọc trả về nguyên job (JobSerializer) để trang
+    # "Việc làm đã lưu" render JobCard giống hệt trang danh sách.
+    job = serializers.SlugRelatedField(slug_field='public_id', queryset=Job.objects.all(), write_only=True)
+    job_detail = JobSerializer(source='job', read_only=True)
+
+    class Meta:
+        model = SavedJob
+        fields = ['job', 'job_detail', 'created_at']
+        read_only_fields = ['created_at']
+        # `candidate` đến từ perform_create chứ không phải request body, nên
+        # UniqueTogetherValidator tự sinh sẽ thiếu field và văng lỗi. Ràng buộc
+        # trùng đã được get_or_create bên dưới xử lý (bấm lưu 2 lần -> no-op).
+        validators = []
+
+    def create(self, validated_data):
+        saved_job, _ = SavedJob.objects.get_or_create(**validated_data)
+        return saved_job

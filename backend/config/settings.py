@@ -197,6 +197,7 @@ REST_FRAMEWORK = {
         # phép khoá luôn việc xin link (và ngược lại) — chung IP, chung quota.
         'password_reset_confirm': '10/min',
         'oauth': '10/min',
+        'feedback': '5/min',
     },
 }
 

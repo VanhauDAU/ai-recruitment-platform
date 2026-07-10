@@ -26,6 +26,21 @@ export async function getIndustries() {
   return data
 }
 
+// Việc làm đã lưu (ứng viên). Trả về [{ job_detail, created_at }] — không phân trang.
+export async function getSavedJobs() {
+  const { data } = await api.get('/jobs/saved/')
+  return data
+}
+
+export async function saveJob(publicId) {
+  const { data } = await api.post('/jobs/saved/', { job: publicId })
+  return data
+}
+
+export async function unsaveJob(publicId) {
+  await api.delete(`/jobs/saved/${publicId}/`)
+}
+
 // Autocomplete từ khóa theo nội dung nhập (tên việc làm / tên công ty).
 export async function getJobSuggestions(q, searchBy = 'title') {
   const params = { q }

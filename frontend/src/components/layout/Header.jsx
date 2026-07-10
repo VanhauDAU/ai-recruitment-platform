@@ -33,7 +33,7 @@ const NAV_MENUS = [
           title: 'Việc làm',
           items: [
             { label: 'Tìm việc làm', to: '/viec-lam', icon: <SearchOutlined /> },
-            soon('Việc làm đã lưu', <BookOutlined />),
+            { label: 'Việc làm đã lưu', icon: <BookOutlined />, action: 'saved-jobs' },
             soon('Việc làm đã ứng tuyển', <FileDoneOutlined />),
             soon('Việc làm phù hợp', <LikeOutlined />),
           ],
@@ -176,7 +176,8 @@ export default function Header() {
   function handleItem(it) {
     setOpenKey(null)
     setMobileOpen(false)
-    if (it.to) navigate(it.to)
+    if (it.action === 'saved-jobs') navigate('/viec-lam-da-luu')
+    else if (it.to) navigate(it.to)
     else if (it.search) navigate(`/viec-lam?search=${encodeURIComponent(it.search)}`)
     else message.info('Tính năng sẽ sớm ra mắt.')
   }

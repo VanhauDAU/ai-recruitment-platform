@@ -11,6 +11,7 @@ import {
   MainRegisterPage,
   OAuthCallbackPage,
   ResetPasswordPage,
+  SavedJobsPage,
   VerifyEmailPage,
 } from './lazyPages'
 
@@ -20,6 +21,7 @@ export function mainRoutes() {
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
+      <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       <Route path="/jobs" element={<JobListPage />} />

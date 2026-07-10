@@ -20,6 +20,7 @@ export default function JobSearchBar({
   searchBy,
   searchTop,
   selectedCategories,
+  selectedLocationLabel,
   selectedLocations,
 }) {
   return (
@@ -43,8 +44,13 @@ export default function JobSearchBar({
             allowClear
             className="flex-1 !h-11 !rounded-lg"
           />
-          <div className="md:w-72 [&>button]:!h-11 [&>button]:!rounded-lg">
-            <LocationFilter value={selectedLocations} onChange={onLocationChange} size="large" />
+          <div id="job-location-filter" className="md:w-72 [&>button]:!h-11 [&>button]:!rounded-lg">
+            <LocationFilter
+              value={selectedLocations}
+              onChange={onLocationChange}
+              size="large"
+              displayLabel={selectedLocationLabel}
+            />
           </div>
           <Button
             type="primary"

@@ -13,7 +13,7 @@ import {
   formatLocations,
   formatSalary,
 } from '../../../../constants/jobOptions'
-import useSavedJob from '../hooks/useSavedJob'
+import { useSavedJob } from '../../../../hooks/useSavedJobs'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.
 function Section({ title, text }) {
