@@ -1,4 +1,4 @@
-import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
+import { CheckCircleFilled, CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -96,7 +96,14 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
       {/* ── Header dính đỉnh panel: tiêu đề + đóng + hành động ── */}
       <div className="sticky top-0 z-10 rounded-t-xl border-b border-gray-100 bg-white p-5 pb-4">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-bold leading-snug text-gray-900">{job.title}</h2>
+          <h2 className="text-lg font-bold leading-snug text-gray-900">
+            {job.title}
+            {job.company_verified && (
+              <Tooltip title="Tin đã xác thực — công ty được kiểm chứng">
+                <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
+              </Tooltip>
+            )}
+          </h2>
           <button
             type="button"
             aria-label="Đóng xem nhanh"

@@ -1,4 +1,4 @@
-import { HeartFilled, HeartOutlined } from '@ant-design/icons'
+import { CheckCircleFilled, HeartFilled, HeartOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -27,11 +27,41 @@ function postedLabel(job) {
   return `Đăng ${Math.floor(days / 30)} tháng trước`
 }
 
-function Chip({ children }) {
+function Chip({ children, elevated = false }) {
+  // `elevated`: card nền xanh (featured/top) dùng chip trắng nổi trên nền;
+  // card thường nền trắng dùng chip xám để vẫn tách khỏi nền.
   return (
-    <span className="inline-flex max-w-full items-center truncate rounded-full bg-white/70 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-emerald-100 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent">
+    <span
+      className={`inline-flex max-w-full items-center truncate rounded-full px-2.5 py-1 text-xs text-gray-600 ring-1 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent ${
+        elevated ? 'bg-white/70 ring-emerald-100' : 'bg-gray-50 ring-gray-200/70'
+      }`}
+    >
       {children}
     </span>
+  )
+}
+
+// Nền + viền card theo hạng tin (admin gán): thường trắng, nổi bật/TOP xanh nhạt.
+const TIER_CARD_CLASS = {
+  standard: 'border-gray-200 bg-white hover:border-[var(--brand-primary)]',
+  featured: 'border-emerald-300 bg-emerald-50/65 hover:border-[var(--brand-primary)]',
+  top: 'border-emerald-400 bg-emerald-50/80 hover:border-[var(--brand-primary)]',
+}
+
+// Nhãn dịch vụ nhỏ đứng trước tiêu đề (TOP đi theo tier, HOT/GẤP là cờ riêng).
+function TitleBadges({ job }) {
+  return (
+    <>
+      {job.tier === 'top' && (
+        <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-red-600 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-white">TOP</span>
+      )}
+      {job.is_hot && (
+        <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-red-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-red-600 ring-1 ring-red-200">HOT</span>
+      )}
+      {job.is_urgent && (
+        <span className="mr-1.5 inline-block translate-y-[-1px] rounded bg-orange-50 px-1.5 py-0.5 align-middle text-[10px] font-bold leading-none text-orange-600 ring-1 ring-orange-200">GẤP</span>
+      )}
+    </>
   )
 }
 
@@ -78,6 +108,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
   const [saved, toggleSaved] = useSavedJob(job.public_id)
   const [hovered, setHovered] = useState(false)
   const locationLabel = formatLocations(job)
+  const elevated = job.tier === 'featured' || job.tier === 'top'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
   const posted = postedLabel(job)
   const ageRequirement = extractAgeRequirement(job.requirements)
@@ -130,25 +161,35 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
       onMouseLeave={() => setHovered(false)}
       className={`group relative flex cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
-      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : 'border-emerald-300 bg-emerald-50/65 hover:border-[var(--brand-primary)]'}`}
+      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : TIER_CARD_CLASS[job.tier] || TIER_CARD_CLASS.standard}`}
     >
-      <div
-        className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white ${
-          compact ? 'h-14 w-14' : 'h-20 w-20 md:h-24 md:w-24'
-        }`}
-      >
-        {job.company_logo_url ? (
-          <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[var(--brand-primary)]">
-            {companyInitial(job.company_name)}
-          </div>
+      <div className="relative shrink-0">
+        <div
+          className={`flex items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white ${
+            compact ? 'h-14 w-14' : 'h-20 w-20 md:h-24 md:w-24'
+          }`}
+        >
+          {job.company_logo_url ? (
+            <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[var(--brand-primary)]">
+              {companyInitial(job.company_name)}
+            </div>
+          )}
+        </div>
+        {job.has_flash_badge && (
+          <Tooltip title="Huy hiệu Sấm Chớp — nhà tuyển dụng tương tác nhanh">
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#ffda00] to-[#ff8c00] text-[10px] text-white ring-2 ring-white">
+              <ThunderboltFilled />
+            </span>
+          </Tooltip>
         )}
       </div>
 
       <div className="min-w-0 flex-1">
         <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
           <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
+            <TitleBadges job={job} />
             <Link
               to={`/viec-lam/${job.slug}`}
               onClick={(e) => e.stopPropagation()}
@@ -156,17 +197,22 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
             >
               {job.title}
             </Link>
+            {job.company_verified && (
+              <Tooltip title="Tin đã xác thực — công ty được kiểm chứng">
+                <CheckCircleFilled className="ml-1.5 translate-y-[-1px] align-middle text-sm !text-emerald-500" />
+              </Tooltip>
+            )}
           </h3>
           <span className="shrink-0 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
         </div>
         <p className="mt-0.5 truncate text-sm text-gray-500 uppercase">{job.company_name}</p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {locationLabel && <Chip>{locationLabel}</Chip>}
-          {job.experience_level && <Chip>{EXPERIENCE_LEVEL_LABELS[job.experience_level]}</Chip>}
+          {locationLabel && <Chip elevated={elevated}>{locationLabel}</Chip>}
+          {job.experience_level && <Chip elevated={elevated}>{EXPERIENCE_LEVEL_LABELS[job.experience_level]}</Chip>}
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-emerald-100 pt-2.5 transition-colors group-hover:border-gray-200/70">
+        <div className={`mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 ${elevated ? 'border-emerald-100' : 'border-gray-100'}`}>
           <Tooltip
             placement="topLeft"
             title={<RequirementTooltip details={requirementDetails} />}

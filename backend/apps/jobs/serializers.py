@@ -35,6 +35,8 @@ class JobSerializer(serializers.ModelSerializer):
     job_skills = JobSkillSerializer(many=True, required=False)
     company_name = serializers.CharField(source='employer_profile.company_name', read_only=True)
     company_logo_url = serializers.SerializerMethodField()
+    # Nhãn ✓ xác thực trên card — suy từ hồ sơ công ty, không lưu trên Job.
+    company_verified = serializers.SerializerMethodField()
     # write: list of location ids; read: expanded objects.
     locations = serializers.PrimaryKeyRelatedField(
         many=True, write_only=True, queryset=Location.objects.all(),
@@ -51,10 +53,13 @@ class JobSerializer(serializers.ModelSerializer):
             'experience_years', 'position_level', 'weekend_policy',
             'number_of_vacancies', 'salary_min', 'salary_max', 'currency',
             'is_salary_visible', 'deadline', 'status', 'view_count',
+            'tier', 'is_hot', 'is_urgent', 'has_flash_badge', 'company_verified',
             'application_count', 'job_skills', 'published_at', 'created_at', 'updated_at',
         ]
+        # tier + nhãn dịch vụ do admin gán qua Django admin, employer không tự ghi qua API.
         read_only_fields = [
-            'public_id', 'slug', 'company_name', 'company_logo_url', 'status',
+            'public_id', 'slug', 'company_name', 'company_logo_url', 'company_verified', 'status',
+            'tier', 'is_hot', 'is_urgent', 'has_flash_badge',
             'view_count', 'application_count', 'published_at', 'created_at', 'updated_at',
         ]
 
@@ -82,6 +87,9 @@ class JobSerializer(serializers.ModelSerializer):
 
     def get_company_logo_url(self, obj):
         return media_url_from_value(obj.employer_profile.company_logo_url, request=self.context.get('request'))
+
+    def get_company_verified(self, obj):
+        return bool(obj.employer_profile.verified_at)
 
 
 class SavedJobSerializer(serializers.ModelSerializer):

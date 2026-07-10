@@ -184,6 +184,8 @@ class AdminSiteSettingView(APIView):
 # gốc to làm icon nhỏ, nặng trang mà không hay biết — vd favicon).
 UPLOAD_MAX_DIMENSIONS = {
     'brand_favicon_url': (256, 256),
+    'footer_logo_url': (1600, 600),
+    'footer_qr_code_url': (1200, 1200),
 }
 
 

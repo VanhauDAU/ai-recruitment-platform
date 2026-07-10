@@ -160,13 +160,27 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 
 | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|
+| `footer_logo_url` | Logo riêng cho footer | image | "" (dùng logo chung) | ✓ |
 | `footer_description` | Mô tả ngắn ở footer | textarea | "ProCV - Nền tảng việc làm và phát triển s... | ✓ |
-| `footer_copyright` | Dòng bản quyền | text | "© 2026 ProCV. All rights reserved." | ✓ |
-| `footer_show_link_groups` | Hiện cụm link SEO | boolean | true | ✓ |
+| `footer_copyright` | Dòng bản quyền | text | "© {year} {site_name}. All rights reserved." | ✓ |
+| `footer_show_link_groups` | Hiện menu điều hướng | boolean | true | ✓ |
+| `footer_show_contact` | Hiện thông tin liên hệ | boolean | true | ✓ |
+| `footer_show_apps` | Hiện liên kết tải ứng dụng | boolean | true | ✓ |
+| `footer_show_socials` | Hiện mạng xã hội | boolean | true | ✓ |
+| `footer_company_name` | Tên pháp lý doanh nghiệp | text | "" | ✓ |
+| `footer_business_license` | Thông tin giấy phép / mã số thuế | textarea | "" | ✓ |
+| `footer_app_store_url` | Link tải trên App Store | url | "" | ✓ |
+| `footer_google_play_url` | Link tải trên Google Play | url | "" | ✓ |
+| `footer_qr_code_url` | Mã QR | image | "" | ✓ |
+| `footer_qr_label` | Nhãn dưới mã QR | text | "" | ✓ |
 | `footer_facebook_url` | Facebook | url | "" | ✓ |
 | `footer_linkedin_url` | LinkedIn | url | "" | ✓ |
 | `footer_youtube_url` | YouTube | url | "" | ✓ |
 | `footer_tiktok_url` | TikTok | url | "" | ✓ |
+
+Menu cột của footer quản lý tại **Django Admin → Cụm link**, chọn placement
+`Menu điều hướng footer`. Các mục URL rỗng vẫn hiển thị ở trạng thái đang cập nhật;
+URL bắt đầu bằng `/` được điều hướng nội bộ, URL đầy đủ mở ở tab mới.
 
 ### Liên hệ / hỗ trợ (`contact`)
 
@@ -201,4 +215,3 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 | `ai_job_match_enabled` | AI gợi ý việc phù hợp | boolean | true | ✓ |
 | `ai_interview_enabled` | AI luyện phỏng vấn | boolean | false | ✓ |
 | `ai_daily_request_limit` | Giới hạn request AI/ngày/người | number | 50 |  |
-

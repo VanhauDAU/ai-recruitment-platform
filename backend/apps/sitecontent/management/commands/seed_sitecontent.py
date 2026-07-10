@@ -145,11 +145,26 @@ SETTINGS = [
      ['pdf', 'doc', 'docx'], True, '', {}),
 
     # ---- 12. Footer ----
+    ('footer_logo_url', 'Logo riêng cho footer', G.FOOTER, T.IMAGE, '', True,
+     'Để trống để tự dùng Logo đầy đủ ở nhóm Cài đặt chung.', {}),
     ('footer_description', 'Mô tả ngắn ở footer', G.FOOTER, T.TEXTAREA,
      'ProCV - Nền tảng việc làm và phát triển sự nghiệp cùng AI dành cho người Việt.', True, '', {}),
     ('footer_copyright', 'Dòng bản quyền', G.FOOTER, T.TEXT,
-     '© 2026 ProCV. All rights reserved.', True, '', {}),
-    ('footer_show_link_groups', 'Hiện cụm link SEO', G.FOOTER, T.BOOLEAN, True, True, '', {}),
+     '© {year} {site_name}. All rights reserved.', True,
+     'Có thể dùng {year} và {site_name}; hệ thống sẽ tự thay bằng năm hiện tại và tên site.', {}),
+    ('footer_show_link_groups', 'Hiện menu điều hướng', G.FOOTER, T.BOOLEAN, True, True,
+     'Nội dung menu quản lý tại Cụm link, placement "Menu điều hướng footer".', {}),
+    ('footer_show_contact', 'Hiện thông tin liên hệ', G.FOOTER, T.BOOLEAN, True, True, '', {}),
+    ('footer_show_apps', 'Hiện liên kết tải ứng dụng', G.FOOTER, T.BOOLEAN, True, True, '', {}),
+    ('footer_show_socials', 'Hiện mạng xã hội', G.FOOTER, T.BOOLEAN, True, True, '', {}),
+    ('footer_company_name', 'Tên pháp lý doanh nghiệp', G.FOOTER, T.TEXT, '', True,
+     'Để trống nếu chưa có pháp nhân hoặc không muốn hiển thị.', {}),
+    ('footer_business_license', 'Thông tin giấy phép / mã số thuế', G.FOOTER, T.TEXTAREA, '', True, '', {}),
+    ('footer_app_store_url', 'Link tải trên App Store', G.FOOTER, T.URL, '', True, '', {}),
+    ('footer_google_play_url', 'Link tải trên Google Play', G.FOOTER, T.URL, '', True, '', {}),
+    ('footer_qr_code_url', 'Mã QR', G.FOOTER, T.IMAGE, '', True,
+     'QR tải ứng dụng hoặc dẫn về website. Để trống để ẩn.', {}),
+    ('footer_qr_label', 'Nhãn dưới mã QR', G.FOOTER, T.TEXT, '', True, '', {}),
     ('footer_facebook_url', 'Facebook', G.FOOTER, T.URL, '', True, '', {}),
     ('footer_linkedin_url', 'LinkedIn', G.FOOTER, T.URL, '', True, '', {}),
     ('footer_youtube_url', 'YouTube', G.FOOTER, T.URL, '', True, '', {}),
@@ -187,6 +202,7 @@ SETTINGS = [
 ]
 
 # (key, title, source, order, [items]) — items chỉ dùng cho source=manual.
+# Item có thể là chuỗi (URL rỗng) hoặc tuple (label, url).
 # url rỗng => frontend hiển thị "Sắp ra mắt" (tính năng chưa có).
 LINK_GROUPS = [
     ('footer-locations', 'Việc làm theo khu vực', LinkGroup.Source.LOCATIONS, 1, []),
@@ -198,6 +214,17 @@ LINK_GROUPS = [
     ('footer-tools', 'Công cụ & Tra cứu', LinkGroup.Source.MANUAL, 4, [
         'Tính lương Gross - Net', 'Tính thuế thu nhập cá nhân', 'Trắc nghiệm tính cách MBTI',
         'Tra cứu mức lương', 'Cẩm nang ngành CNTT', 'Cẩm nang ngành Logistics', 'Cẩm nang ngành Du lịch',
+    ]),
+    ('footer-about', 'Về ProCV', LinkGroup.Source.MANUAL, 1, [
+        ('Giới thiệu', ''), ('Góc báo chí', ''), ('Tuyển dụng', ''), ('Liên hệ', ''),
+    ]),
+    ('footer-career', 'Hồ sơ & Sự nghiệp', LinkGroup.Source.MANUAL, 2, [
+        ('Tìm việc làm', '/viec-lam'), ('Việc làm đã lưu', '/viec-lam-da-luu'),
+        ('Tạo CV chuyên nghiệp', ''), ('Review CV bằng AI', ''),
+    ]),
+    ('footer-employer', 'Dành cho nhà tuyển dụng', LinkGroup.Source.MANUAL, 3, [
+        ('Đăng tin tuyển dụng', '/nha-tuyen-dung'), ('Giải pháp tuyển dụng', '/nha-tuyen-dung/dich-vu'),
+        ('Bảng giá dịch vụ', '/nha-tuyen-dung/bang-gia'), ('Đăng nhập nhà tuyển dụng', '/nha-tuyen-dung/dang-nhap'),
     ]),
 ]
 
@@ -242,13 +269,39 @@ class Command(BaseCommand):
             self.stdout.write(f'{"+ " if created else "= "}setting {key}')
 
         for key, title, source, order, items in LINK_GROUPS:
-            grp, created = LinkGroup.objects.get_or_create(
-                key=key, defaults={'title': title, 'source': source, 'order': order}
+            placement = (
+                LinkGroup.Placement.FOOTER_NAV
+                if key in {'footer-about', 'footer-career', 'footer-employer'}
+                else LinkGroup.Placement.FOOTER_SEO
             )
+            grp, created = LinkGroup.objects.get_or_create(
+                key=key,
+                defaults={
+                    'title': title, 'source': source, 'placement': placement, 'order': order,
+                },
+            )
+            if not created:
+                changed_fields = []
+                for field, value in {
+                    'title': title, 'source': source, 'placement': placement, 'order': order,
+                }.items():
+                    if getattr(grp, field) != value:
+                        setattr(grp, field, value)
+                        changed_fields.append(field)
+                if changed_fields:
+                    grp.save(update_fields=changed_fields)
             self.stdout.write(f'{"+ " if created else "= "}group {key}')
             if created and source == LinkGroup.Source.MANUAL:
                 LinkItem.objects.bulk_create(
-                    [LinkItem(group=grp, label=label, url='', order=i) for i, label in enumerate(items)]
+                    [
+                        LinkItem(
+                            group=grp,
+                            label=item[0] if isinstance(item, tuple) else item,
+                            url=item[1] if isinstance(item, tuple) else '',
+                            order=i,
+                        )
+                        for i, item in enumerate(items)
+                    ]
                 )
 
         for title, eyebrow, subtitle, theme, cta_label, cta_url, order in BANNERS:

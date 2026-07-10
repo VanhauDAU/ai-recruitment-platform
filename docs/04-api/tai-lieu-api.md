@@ -55,7 +55,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/applications/employer/?job=` | Employer: xem hồ sơ ứng tuyển vào job của mình |
 | PATCH | `/api/applications/employer/{public_id}/` | Employer: cập nhật `status`/`employer_note` (tự set mốc thời gian tương ứng) |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
-| GET | `/api/site/link-groups/?placement=footer_seo` | Cụm link đang bật kèm items đã resolve, public |
+| GET | `/api/site/link-groups/?placement=footer_seo` | Cụm link SEO đang bật kèm items đã resolve, public |
+| GET | `/api/site/link-groups/?placement=footer_nav` | Các cột menu điều hướng footer, public |
 | GET | `/api/site/banners/?placement=home_hero` | Banner đang bật theo order, public |
 | GET | `/api/site/admin/settings/` | **Admin**: toàn bộ cấu hình gộp theo 15 nhóm `{groups: [{key, label, settings: [...]}]}`, mỗi setting kèm metadata (`value_type`, `options`, `order`, `is_public`, `env_configured`) để frontend tự render form |
 | PATCH | `/api/site/admin/settings/` | **Admin**: bulk update, body `{"values": {key: value}}`, validate theo `value_type` (boolean/number/color hex/select choices), từ chối key kiểu `env` → `{"updated": [...], "errors": {...}}` |
