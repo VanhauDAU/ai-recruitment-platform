@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
@@ -172,6 +173,8 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
         'register': '5/min',
+        'verify_email': '5/min',
+        'oauth': '10/min',
     },
 }
 
@@ -222,3 +225,61 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv(),
 )
+
+# Redis cache — lưu token xác thực email + cooldown gửi lại (tự hết hạn theo TTL)
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {'CLIENT_CLASS': 'django_redis.client.DefaultClient'},
+    }
+}
+
+# Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
+# Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là
+# tự chuyển sang gửi thật (không cần đổi thêm gì). EMAIL_TIMEOUT chặn request treo
+# khi SMTP chậm/không phản hồi.
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_HOST_USER
+    else 'django.core.mail.backends.console.EmailBackend',
+)
+# Người gửi hiển thị; tên có thể override runtime qua site setting `email_from_name`.
+# `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
+EMAIL_FROM_NAME = config('EMAIL_FROM_NAME', default='') or 'ProCV'
+EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# URL frontend để dựng link xác thực trong email.
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
+# Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
+EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
+EMAIL_VERIFICATION_RESEND_COOLDOWN = config('EMAIL_VERIFICATION_RESEND_COOLDOWN', default=60, cast=int)
+
+# Social login (OAuth Authorization Code Flow qua backend callback).
+# Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).
+OAUTH_GOOGLE_CLIENT_ID = config('OAUTH_GOOGLE_CLIENT_ID', default='')
+OAUTH_GOOGLE_CLIENT_SECRET = config('OAUTH_GOOGLE_CLIENT_SECRET', default='')
+OAUTH_FACEBOOK_CLIENT_ID = config('OAUTH_FACEBOOK_CLIENT_ID', default='')
+OAUTH_FACEBOOK_CLIENT_SECRET = config('OAUTH_FACEBOOK_CLIENT_SECRET', default='')
+OAUTH_FACEBOOK_GRAPH_VERSION = config('OAUTH_FACEBOOK_GRAPH_VERSION', default='v21.0')
+OAUTH_LINKEDIN_CLIENT_ID = config('OAUTH_LINKEDIN_CLIENT_ID', default='')
+OAUTH_LINKEDIN_CLIENT_SECRET = config('OAUTH_LINKEDIN_CLIENT_SECRET', default='')
+# Trang callback phía frontend (backend redirect về đây kèm one_time_code hoặc error).
+OAUTH_MAIN_CALLBACK_URL = config('OAUTH_MAIN_CALLBACK_URL', default=f'{FRONTEND_URL}/oauth/callback')
+OAUTH_EMPLOYER_CALLBACK_URL = config(
+    'OAUTH_EMPLOYER_CALLBACK_URL', default=f'{FRONTEND_URL}/tuyendung/app/oauth/callback'
+)
+OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)       # state chống CSRF: 10 phút
+OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)          # one_time_code đổi JWT: 60s

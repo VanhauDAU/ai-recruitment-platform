@@ -3,7 +3,7 @@ export const SALARY_UNIT = 1_000_000
 export const SAVED_FILTER_KEY = 'saved_job_filter'
 export const VISIBLE_GROUPS = 6
 
-// URL gọn (như TopCV) <-> param API backend. URL dùng key ngắn + gộp nhiều giá trị
+// URL gọn <-> param API backend. URL dùng key ngắn + gộp nhiều giá trị
 // bằng dấu phẩy; `toApiParams` khai triển lại thành đúng param backend cần.
 const SIMPLE_MAP = {
   wt: 'work_type',

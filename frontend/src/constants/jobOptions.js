@@ -96,6 +96,20 @@ export function formatEducation(level) {
   return `Từ ${EDUCATION_LEVEL_LABELS[level]} trở lên`
 }
 
+// Đếm ngược hạn nộp: "Đã hết hạn" / "Hết hạn hôm nay" / "Còn 5 ngày".
+export function formatDeadline(deadline) {
+  if (!deadline) return null
+  const deadlineDate = new Date(deadline)
+  if (Number.isNaN(deadlineDate.getTime())) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  deadlineDate.setHours(0, 0, 0, 0)
+  const diffDays = Math.ceil((deadlineDate - today) / 86_400_000)
+  if (diffDays < 0) return 'Đã hết hạn'
+  if (diffDays === 0) return 'Hết hạn hôm nay'
+  return `Còn ${diffDays} ngày`
+}
+
 // Compact location label for cards: "Hà Nội" or "Hà Nội +2".
 export function formatLocations(job) {
   const locs = job.locations_detail || []

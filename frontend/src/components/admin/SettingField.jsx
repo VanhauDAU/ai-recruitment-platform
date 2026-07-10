@@ -1,7 +1,6 @@
-import { useState } from 'react'
-import { Button, ColorPicker, Input, InputNumber, Select, Switch, Tag, Upload, message } from 'antd'
+import { useEffect, useState } from 'react'
+import { Button, ColorPicker, Input, InputNumber, Select, Switch, Tag, Upload } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
-import { uploadSettingImage } from '../../api/adminSiteService'
 
 function ColorInput({ value, onChange }) {
   return (
@@ -12,31 +11,42 @@ function ColorInput({ value, onChange }) {
   )
 }
 
-function ImageInput({ value, onChange }) {
-  const [uploading, setUploading] = useState(false)
+function ImageInput({ value, onChange, onFileSelected, pendingFile, previewUrl, storedValue }) {
+  const [localPreviewUrl, setLocalPreviewUrl] = useState(null)
+  const manualPreviewUrl = value !== storedValue && /^(https?:)?\//.test(value) ? value : null
+  const activePreviewUrl = localPreviewUrl || manualPreviewUrl || previewUrl
 
-  const customRequest = async ({ file, onSuccess, onError }) => {
-    setUploading(true)
-    try {
-      const { url } = await uploadSettingImage(file)
-      onChange(url)
-      onSuccess(url)
-    } catch (err) {
-      message.error('Upload ảnh thất bại.')
-      onError(err)
-    } finally {
-      setUploading(false)
+  useEffect(() => {
+    if (!pendingFile) {
+      setLocalPreviewUrl(null)
+      return undefined
     }
+    const objectUrl = URL.createObjectURL(pendingFile)
+    setLocalPreviewUrl(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [pendingFile])
+
+  const handleSelectFile = (file) => {
+    onFileSelected?.(file)
+    return false
   }
 
   return (
     <div className="flex items-center gap-3">
-      {value ? (
-        <img src={value} alt="" className="h-10 max-w-[120px] rounded border border-gray-200 object-contain bg-white p-1" />
+      {activePreviewUrl ? (
+        <img src={activePreviewUrl} alt="" className="h-10 max-w-[120px] rounded border border-gray-200 object-contain bg-white p-1" />
       ) : null}
-      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="URL ảnh" className="flex-1" />
-      <Upload accept="image/*" showUploadList={false} customRequest={customRequest}>
-        <Button icon={<UploadOutlined />} loading={uploading}>Upload</Button>
+      <Input
+        value={value}
+        onChange={(e) => {
+          onFileSelected?.(null)
+          onChange(e.target.value)
+        }}
+        placeholder="Storage key hoặc URL ảnh ngoài"
+        className="flex-1"
+      />
+      <Upload accept="image/*" showUploadList={false} beforeUpload={handleSelectFile}>
+        <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
       </Upload>
     </div>
   )
@@ -71,7 +81,7 @@ function JsonInput({ value, onChange }) {
 }
 
 /** Render control nhập liệu theo value_type của setting (schema-driven). */
-export default function SettingField({ setting, value, onChange }) {
+export default function SettingField({ setting, value, onChange, pendingFile, onFileSelected }) {
   switch (setting.value_type) {
     case 'boolean':
       return <Switch checked={!!value} onChange={onChange} />
@@ -82,7 +92,16 @@ export default function SettingField({ setting, value, onChange }) {
     case 'color':
       return <ColorInput value={value} onChange={onChange} />
     case 'image':
-      return <ImageInput value={value || ''} onChange={onChange} />
+      return (
+        <ImageInput
+          value={value || ''}
+          onChange={onChange}
+          onFileSelected={onFileSelected}
+          pendingFile={pendingFile}
+          previewUrl={setting.display_value}
+          storedValue={setting.value}
+        />
+      )
     case 'textarea':
       return <Input.TextArea value={value} onChange={(e) => onChange(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} />
     case 'json':

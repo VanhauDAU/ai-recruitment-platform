@@ -1,3 +1,4 @@
+import unicodedata
 from datetime import timedelta
 
 from django.contrib.postgres.aggregates import StringAgg
@@ -11,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from apps.common.media_storage import media_url_from_value
 from apps.employers.models import EmployerProfile
 
 from .models import Job, JobCategory
@@ -26,6 +28,21 @@ SALARY_BUCKETS = [
     ('30-50', '30 - 50 triệu', 30_000_000, 50_000_000),
     ('o50', 'Trên 50 triệu', 50_000_000, None),
 ]
+
+
+def search_q(field, text):
+    """Tìm kiếm kiểu: không dấu (unaccent 2 phía) + AND từng từ, nên nhập
+    "khach hang cham soc" vẫn khớp "Chăm sóc khách hàng"."""
+    q = Q()
+    for token in text.split():
+        q &= Q(**{f'{field}__unaccent__icontains': token})
+    return q
+
+
+def fold_accents(text):
+    """Bỏ dấu tiếng Việt phía Python (xếp hạng gợi ý): 'Chăm sóc' -> 'cham soc'."""
+    text = text.replace('đ', 'd').replace('Đ', 'D')
+    return ''.join(c for c in unicodedata.normalize('NFD', text) if not unicodedata.combining(c)).lower()
 
 
 def filter_salary_bucket(qs, bucket_key):
@@ -84,7 +101,7 @@ class JobListView(generics.ListAPIView):
             qs = qs.filter(experience_level=experience_level)
         if education_level := params.get('education_level'):
             qs = qs.filter(education_level=education_level)
-        # Bộ lọc kiểu TopCV: cấp bậc, kinh nghiệm theo năm (chọn nhiều),
+        # Bộ lọc: cấp bậc, kinh nghiệm theo năm (chọn nhiều),
         # chế độ thứ 7 ('not_mentioned' = tin không đề cập), lĩnh vực công ty.
         if position_level := params.get('position_level'):
             qs = qs.filter(position_level=position_level)
@@ -111,13 +128,13 @@ class JobListView(generics.ListAPIView):
             # search_by: 'title' (mặc định) | 'company' | 'both'
             search_by = params.get('search_by', 'title')
             if search_by == 'company':
-                qs = qs.filter(employer_profile__company_name__icontains=search)
+                qs = qs.filter(search_q('employer_profile__company_name', search))
             elif search_by == 'both':
                 qs = qs.filter(
-                    Q(title__icontains=search) | Q(employer_profile__company_name__icontains=search)
+                    search_q('title', search) | search_q('employer_profile__company_name', search)
                 )
             else:
-                qs = qs.filter(title__icontains=search)
+                qs = qs.filter(search_q('title', search))
         # ?ordering=salary_desc — lương cao nhất trước (job thoả thuận xếp cuối).
         if params.get('ordering') == 'salary_desc':
             return qs.order_by(F('salary_max').desc(nulls_last=True), '-published_at')
@@ -225,7 +242,7 @@ class JobStatsView(APIView):
                     'id': top.id,
                     'name': top.name,
                     'slug': top.slug,
-                    'logo_url': top.logo_url,
+                    'logo_url': media_url_from_value(top.logo_url, request=request),
                     'count': count,
                 })
         demand.sort(key=lambda d: d['count'], reverse=True)
@@ -292,7 +309,9 @@ class JobStatsView(APIView):
                 'public_id': row['employer_profile__public_id'],
                 'company_name': row['employer_profile__company_name'],
                 'slug': row['employer_profile__slug'],
-                'company_logo_url': row['employer_profile__company_logo_url'],
+                'company_logo_url': media_url_from_value(
+                    row['employer_profile__company_logo_url'], request=request,
+                ),
                 'industry': industry_names.get(row['employer_profile_id']) or '',
                 'job_count': row['job_count'],
             }
@@ -329,19 +348,21 @@ class JobSuggestView(APIView):
             return Response({'suggestions': []})
         field = 'employer_profile__company_name' if request.query_params.get('search_by') == 'company' else 'title'
         values = (
-            Job.objects.filter(status=Job.Status.ACTIVE, **{f'{field}__icontains': q})
+            Job.objects.filter(status=Job.Status.ACTIVE)
+            .filter(search_q(field, q))
             .values_list(field, flat=True)
             .distinct()
         )
-        # Bỏ trùng (không phân biệt hoa thường), ưu tiên các mục bắt đầu bằng từ khóa.
-        ql = q.lower()
+        # Bỏ trùng + ưu tiên mục bắt đầu bằng từ khóa — đều so không dấu, không phân biệt hoa thường.
+        ql = fold_accents(q)
         seen, starts, contains = set(), [], []
         for value in values:
             k = (value or '').strip()
-            if not k or k.lower() in seen:
+            kf = fold_accents(k)
+            if not k or kf in seen:
                 continue
-            seen.add(k.lower())
-            (starts if k.lower().startswith(ql) else contains).append(k)
+            seen.add(kf)
+            (starts if kf.startswith(ql) else contains).append(k)
         return Response({'suggestions': (starts + contains)[:10]})
 
 

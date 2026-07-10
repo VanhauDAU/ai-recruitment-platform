@@ -52,6 +52,8 @@ Ghi chú:
 - `seed_locations` lấy dữ liệu tỉnh/xã từ `provinces.open-api.vn`, nên cần có internet khi chạy lần đầu.
 - Các lệnh seed hiện tại đều có thể chạy lại. Riêng `seed_demo_jobs` sẽ xoá dữ liệu demo cũ có email `@demo.local` rồi tạo lại.
 - Nếu chưa cấu hình Google reCAPTCHA, có thể để trống `RECAPTCHA_SECRET_KEY` ở backend và `VITE_RECAPTCHA_SITE_KEY` ở frontend trong môi trường local.
+- Social login (`OAUTH_*`) có thể để trống — nút đăng nhập mạng xã hội chỉ báo "chưa cấu hình" khi bấm. Cách lấy key từng provider: [social-login.md](social-login.md).
+- Media upload cần `Pillow` (đã có trong `requirements.txt`) để resize favicon/ảnh.
 
 Khi đã cài xong từ trước, chỉ cần chạy:
 

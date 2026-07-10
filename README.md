@@ -7,6 +7,8 @@ Website hỗ trợ tạo CV, phân tích CV và luyện phỏng vấn thông min
 ## Tính năng đã hoàn thành (Giai đoạn 1 — MVP lõi)
 
 - Đăng ký/đăng nhập JWT, phân quyền theo vai trò (ứng viên / nhà tuyển dụng / admin)
+- Xác thực email qua link, social login OAuth (Google/Facebook/LinkedIn cho ứng viên, Google cho nhà tuyển dụng)
+- Bảo vệ đăng nhập/đăng ký: rate limit + Google reCAPTCHA v3
 - Hồ sơ ứng viên, hồ sơ công ty
 - Danh mục kỹ năng chuẩn, danh mục ngành nghề
 - Danh mục địa điểm hành chính Việt Nam (34 tỉnh/thành + 3.321 xã/phường, dữ liệu thật)
@@ -23,6 +25,8 @@ Chi tiết endpoint: [docs/04-api/tai-lieu-api.md](docs/04-api/tai-lieu-api.md).
 | Frontend   | ReactJS + Vite, Tailwind CSS, Ant Design              |
 | Backend    | Django + Django REST Framework, JWT (simplejwt)       |
 | Database   | PostgreSQL                                            |
+| Cache/OAuth| Redis (token xác thực email, OAuth state/one-time code) |
+| Ảnh        | Pillow (resize favicon/ảnh upload), storage nội bộ    |
 | AI         | PyMuPDF, scikit-learn (đang triển khai ở Giai đoạn 2) |
 
 ## Cấu trúc dự án
@@ -35,12 +39,13 @@ backend/
                 cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard
 frontend/
   src/
-    pages/      Trang theo route, chia theo role: auth/, candidate/, employer/, admin/
+    pages/      Trang theo 3 cổng: main/ (ứng viên + khách), employer/, admin/
     components/ Component dùng chung
-    layouts/    AuthLayout, DashboardLayout
-    api/        api.js (axios + JWT interceptor), authService.js
+    layouts/    AuthLayout, DashboardLayout, MainLayout, EmployerMarketingLayout
+    api/        api.js (axios + JWT interceptor), authService.js, ...
+    config/     portals.js — cấu hình 3 cổng (base path, token key, điều hướng theo role)
     hooks/      useAuth.jsx (AuthContext)
-    routes/     AppRoutes.jsx, ProtectedRoute.jsx
+    routes/     AppRoutes.jsx (mainRoutes/employerRoutes/adminRoutes), ProtectedRoute.jsx
 docs/       Tài liệu dự án — xem docs/README.md
 ```
 

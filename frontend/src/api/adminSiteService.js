@@ -5,14 +5,17 @@ export async function getAdminSettings() {
   return data
 }
 
-export async function updateAdminSettings(values) {
-  const { data } = await api.patch('/site/admin/settings/', { values })
-  return data
-}
+export async function updateAdminSettings(values, files = {}) {
+  if (Object.keys(files).length) {
+    const formData = new FormData()
+    formData.append('values', JSON.stringify(values))
+    Object.entries(files).forEach(([key, file]) => {
+      formData.append(`files[${key}]`, file)
+    })
+    const { data } = await api.patch('/site/admin/settings/', formData)
+    return data
+  }
 
-export async function uploadSettingImage(file) {
-  const formData = new FormData()
-  formData.append('file', file)
-  const { data } = await api.post('/site/admin/settings/upload/', formData)
+  const { data } = await api.patch('/site/admin/settings/', { values })
   return data
 }

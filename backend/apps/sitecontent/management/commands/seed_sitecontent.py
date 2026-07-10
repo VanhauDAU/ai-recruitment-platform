@@ -7,7 +7,11 @@ from apps.sitecontent.models import Banner, LinkGroup, LinkItem, SiteSetting
 # nhưng KHÔNG ghi đè value admin đã chỉnh.
 PROCV_LOGO_URL = '/images/logo/logo_proCV_2000_600.png'
 PROCV_MARK_URL = '/images/logo/logo_proCV_2000_2000.png'
-LEGACY_BRAND_VALUES = {'', '/images/logo/aicareer-logo.svg', '/favicon.svg'}
+PROCV_FAVICON_URL = '/favicon-32.png'
+LEGACY_BRAND_VALUES = {
+    '', '/images/logo/aicareer-logo.svg', '/favicon.svg',
+    '/images/logo/logo_proCV_2000_2000.png',  # favicon dùng nhầm ảnh logo full-size (957KB) — ép về bản đã resize nhẹ
+}
 BRAND_ASSET_KEYS = {'brand_logo_url', 'brand_logo_mark_url', 'brand_favicon_url'}
 
 G = SiteSetting.Group
@@ -25,8 +29,8 @@ SETTINGS = [
      'Logo dạng ngang/wordmark dùng ở header.', {}),
     ('brand_logo_mark_url', 'Logo biểu tượng', G.GENERAL, T.IMAGE, PROCV_MARK_URL, True,
      'Logo vuông/icon dùng ở màn đăng nhập hoặc nơi thiếu diện tích.', {}),
-    ('brand_favicon_url', 'Favicon', G.GENERAL, T.IMAGE, PROCV_MARK_URL, True,
-     'Icon cho tab trình duyệt.', {}),
+    ('brand_favicon_url', 'Favicon', G.GENERAL, T.IMAGE, PROCV_FAVICON_URL, True,
+     'Icon cho tab trình duyệt. Ảnh upload sẽ tự resize xuống tối đa 256x256 để tránh nặng trang.', {}),
     ('brand_primary_color', 'Màu thương hiệu chính', G.GENERAL, T.COLOR, '#00b14f', True,
      'Mã màu hex dùng làm biến --brand-primary cho giao diện.', {}),
     ('maintenance_mode', 'Chế độ bảo trì', G.GENERAL, T.BOOLEAN, False, True,

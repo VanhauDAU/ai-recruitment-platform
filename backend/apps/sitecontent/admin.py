@@ -3,7 +3,7 @@ import json
 from django.contrib import admin
 from django import forms
 
-from apps.common.media_storage import delete_local_media_url, save_image_upload
+from apps.common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
 
 from .models import Banner, LinkGroup, LinkItem, SiteSetting
 
@@ -92,10 +92,10 @@ class BannerAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         upload = form.cleaned_data.get('upload_image')
-        old_url = obj.image_url
+        old_url = Banner.objects.filter(pk=obj.pk).values_list('image_url', flat=True).first() if change else ''
         if upload:
             saved = save_image_upload(upload, 'site/banners', request=request)
-            obj.image_url = saved['url']
+            obj.image_url = saved['path']
         super().save_model(request, obj, form, change)
-        if upload:
+        if old_url != obj.image_url:
             delete_local_media_url(old_url)

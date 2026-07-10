@@ -44,4 +44,5 @@ class EmployerImageUploadTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('/media/employers/', response.data['company_logo_url'])
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.company_logo_url, response.data['company_logo_url'])
+        self.assertTrue(self.profile.company_logo_url.startswith('employers/'))
+        self.assertNotIn('://', self.profile.company_logo_url)

@@ -1,14 +1,15 @@
-import { Empty, Pagination, Select } from 'antd'
-import JobCard from '../../../../components/job/JobCard'
-import JobCardSkeleton from '../../../../components/job/JobCardSkeleton'
-import { SEARCH_BY_TABS } from '../../../../components/ui/SearchDropdown'
+import { Button, Empty, Pagination, Select } from 'antd'
+import { SEARCH_BY_TABS } from '../../../../components/ui/searchDropdownHistory'
 import { PAGE_SIZE } from '../utils/jobListParams'
+import JobCard from './JobCard'
+import JobCardSkeleton from './JobCardSkeleton'
 import WardSuggestionCard from './WardSuggestionCard'
 
 export default function JobResults({
   count,
   isAuthenticated,
   loading,
+  onClearAll,
   onPageChange,
   onRequireLogin,
   onSearchByChange,
@@ -68,8 +69,22 @@ export default function JobResults({
           ))}
         </div>
       ) : results.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white py-16">
-          <Empty description="Không tìm thấy việc làm phù hợp" />
+        <div className="rounded-xl border border-gray-200 bg-white px-6 py-16">
+          <Empty
+            description={
+              <span className="text-gray-500">
+                Rất tiếc, chưa tìm thấy công việc phù hợp với tiêu chí của bạn.
+                <br />
+                Hãy thử thay đổi từ khóa hoặc bộ lọc để mở rộng kết quả tìm kiếm.
+              </span>
+            }
+          >
+            {onClearAll && (
+              <Button type="primary" shape="round" onClick={onClearAll}>
+                Xóa bộ lọc & từ khóa
+              </Button>
+            )}
+          </Empty>
         </div>
       ) : (
         <div className="space-y-3">
