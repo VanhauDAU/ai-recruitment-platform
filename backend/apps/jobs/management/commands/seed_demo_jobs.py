@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.utils.text import slugify
 
-from apps.employers.models import EmployerProfile
+from apps.employers.models import EmployerProfile, Industry
 from apps.jobs.models import Job, JobCategory
 from apps.locations.models import Location
 
@@ -97,9 +97,12 @@ class Command(BaseCommand):
             )
             profile = EmployerProfile.objects.create(
                 user=user, company_name=cname, slug=f'{slugify(cname)}-demo-{i + 1}',
-                company_size=size, industry=industry,
+                company_size=size,
                 status=EmployerProfile.Status.APPROVED, verified_at=now,
             )
+            # industries là M2M (1.14e) nên set sau khi tạo profile.
+            industry_obj, _ = Industry.objects.get_or_create(name=industry)
+            profile.industries.set([industry_obj])
             companies.append((user, profile))
 
         job_count = 0
@@ -112,6 +115,12 @@ class Command(BaseCommand):
                 smax = smin + rnd.choice([5, 8, 10, 15]) * 1_000_000
                 days_ago = rnd.choice(day_slots)
                 published = now - timedelta(days=days_ago, hours=rnd.randint(0, 23))
+                # Hạng tin + nhãn demo: tỉ lệ mô phỏng danh sách thật (đa số tin thường,
+                # một ít nổi bật/TOP) để trang danh sách thể hiện đủ các biến thể card.
+                tier = rnd.choices(
+                    [Job.Tier.STANDARD, Job.Tier.FEATURED, Job.Tier.TOP],
+                    weights=[65, 25, 10],
+                )[0]
                 job = Job.objects.create(
                     employer=user, employer_profile=profile, category=category,
                     title=title,
@@ -129,6 +138,11 @@ class Command(BaseCommand):
                     education_level=rnd.choice(EDU_LEVELS),
                     number_of_vacancies=rnd.choice([1, 2, 3, 5, 10]),
                     salary_min=smin, salary_max=smax,
+                    tier=tier,
+                    is_hot=rnd.random() < 0.18,
+                    is_urgent=rnd.random() < 0.18,
+                    has_flash_badge=rnd.random() < 0.3,
+                    deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
                     status=Job.Status.ACTIVE, published_at=published,
                 )
                 job.locations.set(rnd.sample(provinces, rnd.randint(1, min(3, len(provinces)))))

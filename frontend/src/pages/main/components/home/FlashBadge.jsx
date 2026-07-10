@@ -101,7 +101,14 @@ export default function FlashBadge() {
   const items = useJobQueue(jobs)
 
   useEffect(() => {
-    getJobs({ page_size: 20 })
+    // Chỉ lấy tin có huy hiệu Sấm Chớp (admin gán); môi trường chưa gán tin nào
+    // thì rơi về tin mới nhất để section không trống.
+    getJobs({ flash_badge: 1, page_size: 20 })
+      .then((data) => {
+        const results = data.results || data
+        if (results.length > 0) return data
+        return getJobs({ page_size: 20 })
+      })
       .then((data) => {
         const results = data.results || data
         setJobs(results)

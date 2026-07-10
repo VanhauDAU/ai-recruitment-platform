@@ -2,7 +2,7 @@ import unicodedata
 from datetime import timedelta
 
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Count, F, Q
+from django.db.models import Case, Count, F, IntegerField, Q, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -113,6 +113,9 @@ class JobListView(generics.ListAPIView):
         # theo id, match job nếu công ty có lĩnh vực đó trong số các lĩnh vực của mình.
         if industry := params.get('industry'):
             qs = qs.filter(employer_profile__industries__id=industry)
+        # Section "Huy hiệu Sấm Chớp" ở trang chủ chỉ lấy tin có huy hiệu.
+        if params.get('flash_badge') in ['1', 'true', 'True']:
+            qs = qs.filter(has_flash_badge=True)
         if params.get('salary_negotiable') in ['1', 'true', 'True']:
             qs = qs.filter(Q(is_salary_visible=False) | (Q(salary_min__isnull=True) & Q(salary_max__isnull=True)))
         elif salary_bucket := params.get('salary_bucket'):
@@ -136,9 +139,17 @@ class JobListView(generics.ListAPIView):
             else:
                 qs = qs.filter(search_q('title', search))
         # ?ordering=salary_desc — lương cao nhất trước (job thoả thuận xếp cuối).
+        # Sắp theo lương là lựa chọn chủ động của người dùng nên không chen tier vào.
         if params.get('ordering') == 'salary_desc':
             return qs.order_by(F('salary_max').desc(nulls_last=True), '-published_at')
-        return qs.order_by('-published_at', '-created_at')
+        # Mặc định: hạng tin trước (TOP > nổi bật > thường), cùng hạng thì tin mới trước.
+        tier_weight = Case(
+            When(tier=Job.Tier.TOP, then=2),
+            When(tier=Job.Tier.FEATURED, then=1),
+            default=0,
+            output_field=IntegerField(),
+        )
+        return qs.annotate(tier_weight=tier_weight).order_by('-tier_weight', '-published_at', '-created_at')
 
 
 class JobStatsView(APIView):

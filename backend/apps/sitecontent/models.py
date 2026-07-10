@@ -82,6 +82,7 @@ class LinkGroup(models.Model):
 
     class Placement(models.TextChoices):
         FOOTER_SEO = 'footer_seo', 'Cụm link SEO (trên footer)'
+        FOOTER_NAV = 'footer_nav', 'Menu điều hướng footer'
 
     key = models.SlugField(max_length=100, unique=True)
     title = models.CharField(max_length=200)
