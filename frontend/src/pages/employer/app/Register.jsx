@@ -7,6 +7,8 @@ import { getApiErrorMessage } from '../../../api/errorMessage'
 import { register } from '../../../api/authService'
 import AuthLogo from '../../../components/auth/AuthLogo'
 import { AuthFormStyles } from '../../../components/auth/LoginForm'
+import PasswordRequirements from '../../../components/auth/PasswordRequirements'
+import { passwordValidationRule } from '../../../components/auth/passwordValidation'
 import SocialLoginButtons from '../../../components/auth/SocialLoginButtons'
 import { employerAppPath } from '../../../config/portals'
 import { useSiteSettings } from '../../../hooks/useSiteSettings'
@@ -18,6 +20,8 @@ export default function EmployerRegister() {
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [form] = Form.useForm()
+  const password = Form.useWatch('password', form) || ''
 
   async function onFinish(values) {
     if (!executeRecaptcha) {
@@ -77,7 +81,7 @@ export default function EmployerRegister() {
         <div className="divider-line" />
       </div>
 
-      <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+      <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
         <div className="login-field">
           <Form.Item
             name="full_name"
@@ -120,18 +124,19 @@ export default function EmployerRegister() {
             label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mật khẩu</span>}
             rules={[
               { required: true, message: 'Vui lòng nhập mật khẩu' },
-              { min: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
+              { validator: passwordValidationRule },
             ]}
-            className="!mb-3"
+            className="!mb-1"
           >
             <Input.Password
               size="large"
               autoComplete="new-password"
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
-              placeholder="Tối thiểu 8 ký tự"
+              placeholder="Nhập mật khẩu"
               className="!rounded-full !h-11 !text-base"
             />
           </Form.Item>
+          <PasswordRequirements password={password} />
         </div>
 
         <div className="login-field">

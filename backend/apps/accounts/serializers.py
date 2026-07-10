@@ -1,5 +1,6 @@
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -10,7 +11,17 @@ from .models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password = serializers.CharField(
+        write_only=True,
+        max_length=25,
+        validators=[
+            validate_password,
+            RegexValidator(
+                regex=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$',
+                message='Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số.',
+            ),
+        ],
+    )
     role = serializers.ChoiceField(choices=[User.Role.CANDIDATE, User.Role.EMPLOYER])
     captcha_token = serializers.CharField(write_only=True)
 
@@ -72,6 +83,11 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Adds role/email claims to the JWT so the frontend can route by role
     without an extra profile lookup. Optional `portal` rejects wrong-role
     logins per portal (backward compatible: no portal -> no check)."""
+
+    default_error_messages = {
+        **TokenObtainPairSerializer.default_error_messages,
+        'no_active_account': 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.',
+    }
 
     captcha_token = serializers.CharField(write_only=True)
     portal = serializers.ChoiceField(choices=list(PORTAL_ROLES), required=False, write_only=True)
