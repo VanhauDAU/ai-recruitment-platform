@@ -7,16 +7,10 @@ export const WORK_TYPE_LABELS = {
 export const EMPLOYMENT_TYPE_LABELS = {
   full_time: 'Toàn thời gian',
   part_time: 'Bán thời gian',
+  contract: 'Hợp đồng',
+  seasonal: 'Thời vụ',
   internship: 'Thực tập',
   freelance: 'Freelance',
-}
-
-export const EXPERIENCE_LEVEL_LABELS = {
-  intern: 'Thực tập sinh',
-  fresher: 'Fresher',
-  junior: 'Junior',
-  middle: 'Middle',
-  senior: 'Senior',
 }
 
 // Kinh nghiệm theo năm (bộ lọc "Kinh nghiệm" — chọn nhiều, ?experience_years=).
@@ -43,20 +37,20 @@ export const POSITION_LEVEL_LABELS = {
   intern: 'Thực tập sinh',
 }
 
-// Chế độ thứ 7 (?weekend_policy=; 'not_mentioned' = tin không đề cập).
-export const WEEKEND_POLICY_OPTIONS = [
-  ['work_saturday', 'Làm thứ 7'],
-  ['off_saturday', 'Nghỉ thứ 7'],
-  ['not_mentioned', 'Tin đăng không đề cập'],
-]
-
 export const EDUCATION_LEVEL_LABELS = {
   none: 'Không yêu cầu',
-  high_school: 'THPT',
+  middle_school: 'Trung học cơ sở (Cấp 2)',
+  high_school: 'Trung học phổ thông (Cấp 3)',
   intermediate: 'Trung cấp',
   college: 'Cao đẳng',
   university: 'Đại học',
-  postgraduate: 'Sau đại học',
+  postgraduate: 'Cao học',
+}
+
+export const GENDER_REQUIREMENT_LABELS = {
+  any: 'Không yêu cầu giới tính',
+  male: 'Nam',
+  female: 'Nữ',
 }
 
 // Salary buckets for the homepage filter (VND). gte/lte map to the ?salary_gte / ?salary_lte API params.
@@ -80,14 +74,15 @@ export const stripCompanyPrefix = (name = '') => name.replace(COMPANY_PREFIX_RE,
 export const companyInitial = (name = '') => stripCompanyPrefix(name).charAt(0) || '?'
 
 export function formatSalary(job) {
-  if (!job.is_salary_visible || (!job.salary_min && !job.salary_max)) return 'Thỏa thuận'
+  if (job.salary_type === 'negotiable' || (!job.salary_min && !job.salary_max)) return 'Thỏa thuận'
   const fmt = (n) => {
     const millions = Number(n) / 1_000_000
     return Number.isInteger(millions) ? `${millions}` : `${millions.toFixed(1).replace('.', ',')}`
   }
-  if (job.salary_min && job.salary_max) return `${fmt(job.salary_min)} - ${fmt(job.salary_max)}tr`
-  if (job.salary_min) return `Từ ${fmt(job.salary_min)}tr`
-  return `Đến ${fmt(job.salary_max)}tr`
+  if (job.salary_type === 'fixed') return `${fmt(job.salary_min || job.salary_max)} triệu`
+  if (job.salary_type === 'from' || (job.salary_min && !job.salary_max)) return `Từ ${fmt(job.salary_min)} triệu`
+  if (job.salary_type === 'up_to' || (!job.salary_min && job.salary_max)) return `Đến ${fmt(job.salary_max)} triệu`
+  return `${fmt(job.salary_min)} - ${fmt(job.salary_max)} triệu`
 }
 
 export function formatEducation(level) {

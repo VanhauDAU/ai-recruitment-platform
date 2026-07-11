@@ -45,7 +45,7 @@ def filter_salary_bucket(queryset, bucket_key):
 
     _, _, lower, upper = bucket
     queryset = (
-        queryset.filter(is_salary_visible=True)
+        queryset.exclude(salary_type=Job.SalaryType.NEGOTIABLE)
         .exclude(salary_min__isnull=True, salary_max__isnull=True)
         .annotate(salary_bucket_value=Coalesce('salary_max', 'salary_min'))
     )
@@ -60,7 +60,12 @@ def active_jobs_queryset():
     return (
         Job.objects.filter(status=Job.Status.ACTIVE)
         .select_related('employer_profile')
-        .prefetch_related('locations')
+        .prefetch_related(
+            'category_assignments__category',
+            'job_locations__location__parent',
+            'job_skills__skill',
+            'job_benefits__benefit',
+        )
     )
 
 
@@ -72,15 +77,14 @@ def _filter_categories(queryset, category_values):
     grandchildren = list(
         JobCategory.objects.filter(parent_id__in=children).values_list('id', flat=True)
     )
-    return queryset.filter(category_id__in=[*category_ids, *children, *grandchildren])
+    return queryset.filter(
+        category_assignments__category_id__in=[*category_ids, *children, *grandchildren]
+    ).distinct()
 
 
 def _filter_salary(queryset, params):
     if params.get('salary_negotiable') in TRUTHY_VALUES:
-        return queryset.filter(
-            Q(is_salary_visible=False)
-            | (Q(salary_min__isnull=True) & Q(salary_max__isnull=True))
-        )
+        return queryset.filter(salary_type=Job.SalaryType.NEGOTIABLE)
     if salary_bucket := params.get('salary_bucket'):
         return filter_salary_bucket(queryset, salary_bucket)
     if salary_gte := params.get('salary_gte'):
@@ -132,13 +136,13 @@ def build_job_list_queryset(params):
         queryset = _filter_categories(queryset, categories)
     if locations := params.getlist('location'):
         queryset = queryset.filter(
-            Q(locations__id__in=locations) | Q(locations__parent_id__in=locations)
+            Q(job_locations__location_id__in=locations)
+            | Q(job_locations__location__parent_id__in=locations)
         ).distinct()
 
     scalar_filters = {
         'work_type': 'work_type',
         'employment_type': 'employment_type',
-        'experience_level': 'experience_level',
         'education_level': 'education_level',
         'position_level': 'position_level',
         'industry': 'employer_profile__industries__id',
@@ -149,10 +153,6 @@ def build_job_list_queryset(params):
 
     if experience_years := params.getlist('experience_years'):
         queryset = queryset.filter(experience_years__in=experience_years)
-    if weekend := params.get('weekend_policy'):
-        queryset = queryset.filter(
-            weekend_policy='' if weekend == 'not_mentioned' else weekend
-        )
     if params.get('flash_badge') in TRUTHY_VALUES:
         queryset = queryset.filter(has_flash_badge=True)
 

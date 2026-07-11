@@ -1,9 +1,10 @@
 from datetime import timedelta
 
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from apps.employers.models import EmployerProfile
 from common.media_storage import media_url_from_value
@@ -44,8 +45,8 @@ def _category_demand(active_jobs, request):
             JobCategory.objects.filter(parent_id__in=children).values_list('id', flat=True)
         )
         count = active_jobs.filter(
-            category_id__in=[category.id, *children, *grandchildren]
-        ).count()
+            category_assignments__category_id__in=[category.id, *children, *grandchildren]
+        ).distinct().count()
         if count:
             demand.append({
                 'id': category.id,
@@ -63,42 +64,45 @@ def _salary_demand(active_jobs):
         count = filter_salary_bucket(active_jobs, key).count()
         if count:
             demand.append({'name': name, 'count': count})
-    negotiable_count = active_jobs.filter(
-        Q(is_salary_visible=False)
-        | (Q(salary_min__isnull=True) & Q(salary_max__isnull=True))
-    ).count()
+    negotiable_count = active_jobs.filter(salary_type=Job.SalaryType.NEGOTIABLE).count()
     if negotiable_count:
         demand.append({'name': 'Thỏa thuận', 'count': negotiable_count})
     return demand[:6]
 
 
-def _latest_jobs(active_jobs):
+def _latest_jobs(active_jobs, request):
     jobs = (
         active_jobs.select_related('employer_profile')
-        .prefetch_related('locations')
+        .prefetch_related('job_locations__location__parent')
         .order_by('-published')[:10]
     )
     result = []
     for job in jobs:
-        locations = list(job.locations.all())
+        province_names = list(dict.fromkeys(
+            location.location.parent.name if location.location.parent else location.location.name
+            for location in job.job_locations.all()
+        ))
         result.append({
             'public_id': job.public_id,
             'slug': job.slug,
             'title': job.title,
             'company_name': job.employer_profile.company_name,
-            'location_name': locations[0].name if locations else '',
-            'location_names': [location.name for location in locations],
+            'company_logo_url': media_url_from_value(
+                job.employer_profile.company_logo_url, request=request,
+            ),
+            'location_name': province_names[0] if province_names else '',
+            'location_names': province_names,
             'work_type': job.work_type,
             'employment_type': job.employment_type,
-            'experience_level': job.experience_level,
+            'experience_years': job.experience_years,
             'salary_min': job.salary_min,
             'salary_max': job.salary_max,
             'currency': job.currency,
-            'is_salary_visible': job.is_salary_visible,
+            'salary_type': job.salary_type,
             'number_of_vacancies': job.number_of_vacancies,
             'deadline': job.deadline,
             'published_at': job.published,
-            'short_description': job.short_description,
+            'short_description': strip_tags(job.description).strip()[:240],
         })
     return result
 
@@ -154,6 +158,6 @@ def build_job_stats(request):
         'growth': _growth_series(active_jobs, now),
         'demand': _category_demand(active_jobs, request),
         'salary_demand': _salary_demand(active_jobs),
-        'latest_jobs': _latest_jobs(active_jobs),
+        'latest_jobs': _latest_jobs(active_jobs, request),
         'featured_employers': _featured_employers(active_jobs, request),
     }

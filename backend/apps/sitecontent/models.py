@@ -149,6 +149,7 @@ class Banner(models.Model):
 
     class Placement(models.TextChoices):
         HOME_HERO = 'home_hero', 'Carousel trang chủ'
+        JOB_DETAIL_SIDEBAR = 'job_detail_sidebar', 'Thẻ ảnh sidebar trang chi tiết việc làm'
 
     placement = models.CharField(max_length=30, choices=Placement.choices, default=Placement.HOME_HERO)
     eyebrow = models.CharField(max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP')

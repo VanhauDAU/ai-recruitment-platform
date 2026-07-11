@@ -12,8 +12,9 @@ class IndustryAdmin(admin.ModelAdmin):
 
 @admin.register(EmployerProfile)
 class EmployerProfileAdmin(admin.ModelAdmin):
-    list_display = ['company_name', 'user', 'status', 'industry_names', 'created_at']
-    list_filter = ['status', 'industries']
+    list_display = ['company_name', 'user', 'status', 'has_brand_page', 'industry_names', 'created_at']
+    list_filter = ['status', 'has_brand_page', 'industries']
+    list_editable = ['has_brand_page']
     search_fields = ['company_name', 'user__email', 'tax_code']
     prepopulated_fields = {'slug': ('company_name',)}
     filter_horizontal = ['industries']

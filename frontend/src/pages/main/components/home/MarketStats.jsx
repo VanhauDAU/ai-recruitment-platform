@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getJobStats } from '../../../../api/jobService'
 import {
   EMPLOYMENT_TYPE_LABELS,
-  EXPERIENCE_LEVEL_LABELS,
+  EXPERIENCE_YEARS_LABELS,
   WORK_TYPE_LABELS,
   companyInitial,
   formatNumber as fmt,
   formatSalary,
 } from '../../../../constants/jobOptions'
+import { jobDetailPath } from '../../../../config/jobPaths'
 import { useCountUp } from '../../../../hooks/useCountUp'
 
 // Categorical palette validated for the dark-green surface (dataviz skill, CVD ΔE 27.6, contrast ≥3:1)
@@ -132,7 +133,7 @@ export default function MarketStats() {
                   styles={{ inner: { width: 300 } }}
                 >
                   <li
-                    onClick={() => !item.exiting && window.open(`/viec-lam/${item.job.slug}`, '_blank', 'noopener,noreferrer')}
+                    onClick={() => !item.exiting && window.open(jobDetailPath(item.job), '_blank', 'noopener,noreferrer')}
                     className={`relative flex items-center gap-3 rounded-lg bg-white/5 hover:bg-white/10 p-2.5 cursor-pointer transition ${
                       item.exiting
                         ? 'animate-job-exit pointer-events-none'
@@ -150,7 +151,14 @@ export default function MarketStats() {
                       className="w-9 h-9 shrink-0 rounded-md flex items-center justify-center text-sm font-bold text-white"
                       style={{ background: DEMAND_COLORS[item.job.title.length % DEMAND_COLORS.length] }}
                     >
-                      {companyInitial(item.job.company_name)}
+                      {item.job.company_logo_url ? (
+                        <img
+                          src={item.job.company_logo_url}
+                          alt={item.job.company_name}
+                          className="h-full w-full rounded-md bg-white object-contain p-0.5"
+                          loading="lazy"
+                        />
+                      ) : companyInitial(item.job.company_name)}
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{item.job.title}</p>
@@ -229,7 +237,7 @@ function LatestJobTooltip({ job }) {
   const details = [
     ['Lương', formatSalary(job)],
     ['Địa điểm', locations],
-    ['Kinh nghiệm', EXPERIENCE_LEVEL_LABELS[job.experience_level] || 'Không yêu cầu'],
+    ['Kinh nghiệm', EXPERIENCE_YEARS_LABELS[job.experience_years] || 'Không yêu cầu'],
     ['Hình thức', WORK_TYPE_LABELS[job.work_type] || 'Chưa cập nhật'],
     ['Loại việc', EMPLOYMENT_TYPE_LABELS[job.employment_type] || 'Chưa cập nhật'],
     ['Số lượng', job.number_of_vacancies ? `${fmt(job.number_of_vacancies)} vị trí` : 'Không giới hạn'],

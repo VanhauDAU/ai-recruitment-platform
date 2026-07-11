@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
-  EXPERIENCE_LEVEL_LABELS,
   EXPERIENCE_YEARS_LABELS,
   POSITION_LEVEL_LABELS,
   WORK_TYPE_LABELS,
@@ -14,6 +13,7 @@ import {
   formatLocations,
   formatSalary,
 } from '../../../../constants/jobOptions'
+import { jobDetailPath } from '../../../../config/jobPaths'
 import { useSavedJob } from '../../../../hooks/useSavedJobs'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
@@ -65,11 +65,6 @@ function TitleBadges({ job }) {
   )
 }
 
-function extractAgeRequirement(text = '') {
-  const match = text.match(/(?:từ\s*)?\d{2}\s*(?:-|–|đến|tới)\s*\d{2}\s*tuổi|\d{2}\s*tuổi/iu)
-  return match?.[0]?.replace(/\s+/g, ' ') || null
-}
-
 function yearsRequirement(job) {
   const label = EXPERIENCE_YEARS_LABELS[job.experience_years]
   if (!label) return null
@@ -103,7 +98,7 @@ function RequirementTooltip({ details }) {
 // `onQuickView`: click vào card (ngoài tiêu đề) / nút "Xem nhanh" mở panel xem nhanh
 // thay vì sang trang chi tiết (tiêu đề vẫn là link sang trang chi tiết).
 // `compact`: bản gọn cho cột danh sách khi panel xem nhanh đang mở; `active`: card đang xem.
-export default function JobCard({ job, isAuthenticated = true, onRequireLogin, onQuickView, compact = false, active = false }) {
+export default function JobCard({ job, isAuthenticated = true, onRequireLogin, onQuickView, compact = false, active = false, showQuickView = true }) {
   const navigate = useNavigate()
   const [saved, toggleSaved] = useSavedJob(job.public_id)
   const [hovered, setHovered] = useState(false)
@@ -111,7 +106,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
   const elevated = job.tier === 'featured' || job.tier === 'top'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
   const posted = postedLabel(job)
-  const ageRequirement = extractAgeRequirement(job.requirements)
+  const ageRequirement = job.age_min && job.age_max
+    ? `${job.age_min} - ${job.age_max} tuổi`
+    : job.age_min ? `Từ ${job.age_min} tuổi` : job.age_max ? `Đến ${job.age_max} tuổi` : null
   const requirementSummary = [
     yearsRequirement(job),
     ageRequirement,
@@ -120,7 +117,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
     skillRequirement(skills),
   ].filter(Boolean)
   const requirementDetails = [
-    ['Kinh nghiệm', yearsRequirement(job) || EXPERIENCE_LEVEL_LABELS[job.experience_level] || 'Không đề cập'],
+    ['Kinh nghiệm', yearsRequirement(job) || 'Không đề cập'],
     ['Độ tuổi', ageRequirement || 'Không đề cập'],
     ['Học vấn', job.education_level ? (EDUCATION_LEVEL_LABELS[job.education_level] || formatEducation(job.education_level)) : 'Không đề cập'],
     ['Cấp bậc', POSITION_LEVEL_LABELS[job.position_level] || 'Không đề cập'],
@@ -143,7 +140,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
   function handleApply(e) {
     e.preventDefault()
     e.stopPropagation()
-    navigate(`/viec-lam/${job.slug}`)
+    navigate(jobDetailPath(job))
   }
 
   // Click card / nút "Xem nhanh": mở panel nếu có, ngược lại vào trang chi tiết.
@@ -151,7 +148,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
     e.preventDefault()
     e.stopPropagation()
     if (onQuickView) onQuickView(job)
-    else navigate(`/viec-lam/${job.slug}`)
+    else navigate(jobDetailPath(job))
   }
 
   return (
@@ -191,7 +188,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
           <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
             <TitleBadges job={job} />
             <Link
-              to={`/viec-lam/${job.slug}`}
+              to={jobDetailPath(job)}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="hover:underline underline-offset-2"
             >
@@ -209,7 +208,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
 
         <div className="mt-2 flex flex-wrap gap-1.5">
           {locationLabel && <Chip elevated={elevated}>{locationLabel}</Chip>}
-          {job.experience_level && <Chip elevated={elevated}>{EXPERIENCE_LEVEL_LABELS[job.experience_level]}</Chip>}
+          {job.experience_years && <Chip elevated={elevated}>{EXPERIENCE_YEARS_LABELS[job.experience_years]}</Chip>}
         </div>
 
         <div className={`mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 ${elevated ? 'border-emerald-100' : 'border-gray-100'}`}>
@@ -257,7 +256,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
           </span>
         </div>
       </div>
-      {!compact && (
+      {!compact && showQuickView && (
         <button
           type="button"
           onClick={handleQuickView}

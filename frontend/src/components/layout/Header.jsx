@@ -84,6 +84,8 @@ export default function Header() {
   const hideOnScroll = location.pathname === '/viec-lam'
     || location.pathname === '/jobs'
     || location.pathname.startsWith('/viec-lam/tai/')
+    || (location.pathname.startsWith('/viec-lam/') && location.pathname !== '/viec-lam-da-luu')
+    || location.pathname.includes('/tuyen-dung/')
   const shouldShowHeader = !hideOnScroll || headerVisible
 
   function handleItem(item) {

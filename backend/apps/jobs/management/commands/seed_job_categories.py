@@ -55,19 +55,34 @@ class Command(BaseCommand):
         seen = []
         for group_name, jobs in SEED_CATEGORIES.items():
             group, created = JobCategory.objects.update_or_create(
-                name=group_name, defaults={'parent': None, 'status': JobCategory.Status.ACTIVE},
+                name=group_name,
+                defaults={
+                    'parent': None,
+                    'category_type': JobCategory.CategoryType.OCCUPATION_GROUP,
+                    'status': JobCategory.Status.ACTIVE,
+                },
             )
             count += created
             seen.append(group_name)
             for job_name, positions in jobs.items():
                 job, created = JobCategory.objects.update_or_create(
-                    name=job_name, defaults={'parent': group, 'status': JobCategory.Status.ACTIVE},
+                    name=job_name,
+                    defaults={
+                        'parent': group,
+                        'category_type': JobCategory.CategoryType.DOMAIN,
+                        'status': JobCategory.Status.ACTIVE,
+                    },
                 )
                 count += created
                 seen.append(job_name)
                 for pos_name in positions:
                     _, created = JobCategory.objects.update_or_create(
-                        name=pos_name, defaults={'parent': job, 'status': JobCategory.Status.ACTIVE},
+                        name=pos_name,
+                        defaults={
+                            'parent': job,
+                            'category_type': JobCategory.CategoryType.SPECIALIZATION,
+                            'status': JobCategory.Status.ACTIVE,
+                        },
                     )
                     count += created
                     seen.append(pos_name)

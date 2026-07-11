@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { getJobSuggestions, getJobs } from '../../api/jobService'
+import { jobDetailPath } from '../../config/jobPaths'
 import { companyInitial, formatNumber, formatSalary } from '../../constants/jobOptions'
 import useDebouncedValue from '../../hooks/useDebouncedValue'
 import { SEARCH_BY_TABS, getHistory, removeHistoryEntry } from './searchDropdownHistory'
@@ -281,7 +282,7 @@ export default function SearchDropdown({
                   <button
                     onClick={() => {
                       onClose()
-                      navigate(`/viec-lam/${job.slug}`)
+                      navigate(jobDetailPath(job))
                     }}
                     className="group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-gray-50 transition-colors cursor-pointer"
                   >
