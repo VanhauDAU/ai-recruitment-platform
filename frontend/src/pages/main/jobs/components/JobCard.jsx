@@ -12,10 +12,10 @@ import {
   formatEducation,
   formatLocations,
   formatSalary,
-} from '../../../../constants/jobOptions'
-import { jobDetailPath } from '../../../../config/jobPaths'
-import { useSavedJob } from '../../../../hooks/useSavedJobs'
-import SavedJobTooltipContent from '../../../../components/jobs/SavedJobTooltipContent'
+} from '@/constants/jobOptions'
+import { jobDetailPath } from '@/config/jobPaths'
+import { useSavedJob } from '@/hooks/useSavedJobs'
+import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
 function postedLabel(job) {

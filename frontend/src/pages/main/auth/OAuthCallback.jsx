@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { completeOAuth } from '../../../api/authService'
-import PageLoading from '../../../components/ui/PageLoading'
-import { HOME_BY_ROLE } from '../../../config/portals'
-import { useAuth } from '../../../hooks/useAuth'
+import { completeOAuth } from '@/api/authService'
+import PageLoading from '@/components/ui/PageLoading'
+import { HOME_BY_ROLE } from '@/config/portals'
+import { useAuth } from '@/hooks/useAuth'
 
 /**
  * Trang backend redirect về sau OAuth: đổi one_time_code lấy JWT rồi điều hướng.

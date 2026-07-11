@@ -381,4 +381,4 @@ Gom cổng main vào `pages/main/` (Home, auth, jobs, candidate) cho đối xứ
 
 ---
 
-Cập nhật lần cuối: 2026-07-11 (1.21 hoàn tất tách công ty khỏi nhà tuyển dụng A+B+C — schema mới, chuyển jobs sang company, API onboarding/công ty/duyệt, xóa bảng employer_profiles)
+Cập nhật lần cuối: 2026-07-12 (refactor frontend: alias `@/` + jsconfig, gộp `components/jobs`→`components/job`, dọn export chết/thừa, thêm `lint:fix`; fix N+1 request locations trang chủ — batch `?parent=1,2,...`; lint + 29 test + build đều pass)

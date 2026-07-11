@@ -16,9 +16,9 @@ export const IS_EMPLOYER_HOST = !!import.meta.env.VITE_EMPLOYER_HOST && host ===
 export const IS_ADMIN_HOST = !!import.meta.env.VITE_ADMIN_HOST && host === import.meta.env.VITE_ADMIN_HOST
 export const IS_MAIN_HOST = !IS_EMPLOYER_HOST && !IS_ADMIN_HOST
 
-export const EMPLOYER_MARKETING_BASE = IS_EMPLOYER_HOST ? '' : '/tuyendung'
-export const EMPLOYER_APP_BASE = `${EMPLOYER_MARKETING_BASE}/app`
-export const ADMIN_APP_BASE = IS_ADMIN_HOST ? '/app' : '/admin/app'
+const EMPLOYER_MARKETING_BASE = IS_EMPLOYER_HOST ? '' : '/tuyendung'
+const EMPLOYER_APP_BASE = `${EMPLOYER_MARKETING_BASE}/app`
+const ADMIN_APP_BASE = IS_ADMIN_HOST ? '/app' : '/admin/app'
 
 export const employerMarketingPath = (p = '') => `${EMPLOYER_MARKETING_BASE}${p}` || '/'
 export const employerAppPath = (p = '') => `${EMPLOYER_APP_BASE}${p}` || '/'

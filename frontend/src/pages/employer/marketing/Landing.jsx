@@ -1,7 +1,7 @@
 import { ArrowRightOutlined, CheckCircleFilled, TeamOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { Link } from 'react-router-dom'
-import { employerAppPath, employerMarketingPath } from '../../../config/portals'
+import { employerAppPath, employerMarketingPath } from '@/config/portals'
 
 const BENEFITS = [
   'Đăng tin tuyển dụng và quản lý hồ sơ tập trung',

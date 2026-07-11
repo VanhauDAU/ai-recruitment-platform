@@ -1,4 +1,4 @@
-import { WORK_TYPE_LABELS } from '../../../../constants/jobOptions'
+import { WORK_TYPE_LABELS } from '@/constants/jobOptions'
 
 const WEEKDAY_LABELS = {
   1: 'Thứ 2',

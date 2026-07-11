@@ -47,12 +47,6 @@ export const EDUCATION_LEVEL_LABELS = {
   postgraduate: 'Cao học',
 }
 
-export const GENDER_REQUIREMENT_LABELS = {
-  any: 'Không yêu cầu giới tính',
-  male: 'Nam',
-  female: 'Nữ',
-}
-
 // Salary buckets for the homepage filter (VND). gte/lte map to the ?salary_gte / ?salary_lte API params.
 export const SALARY_RANGES = [
   { key: 'u10', label: 'Dưới 10 triệu', lte: 10_000_000 },

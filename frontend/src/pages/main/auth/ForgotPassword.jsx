@@ -3,10 +3,10 @@ import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link } from 'react-router-dom'
-import { requestPasswordReset } from '../../../api/authService'
-import { getApiErrorMessage } from '../../../api/errorMessage'
-import AuthLogo from '../../../components/auth/AuthLogo'
-import { AuthFormStyles } from '../../../components/auth/LoginForm'
+import { requestPasswordReset } from '@/api/authService'
+import { getApiErrorMessage } from '@/api/errorMessage'
+import AuthLogo from '@/components/auth/AuthLogo'
+import { AuthFormStyles } from '@/components/auth/LoginForm'
 
 // Bước 1: nhập email -> backend gửi link đặt lại. Backend luôn trả cùng một
 // thông điệp dù email có tồn tại hay không, nên màn hình này không được suy đoán

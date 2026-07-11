@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { saveHistory } from '../../../../components/ui/searchDropdownHistory'
-import { SALARY_RANGES } from '../../../../constants/jobOptions'
+import { saveHistory } from '@/components/ui/searchDropdownHistory'
+import { SALARY_RANGES } from '@/constants/jobOptions'
 import {
   FILTER_KEYS,
   SALARY_UNIT,

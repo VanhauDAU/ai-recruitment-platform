@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getJobs } from '../../../../api/jobService'
-import { getProvinces, getWardsByParents } from '../../../../api/locationService'
+import { getJobs } from '@/api/jobService'
+import { getProvinces, getWardsByParents } from '@/api/locationService'
 import {
   BEST_JOBS_PAGE_SIZE,
   BEST_JOBS_ROTATE_MS,

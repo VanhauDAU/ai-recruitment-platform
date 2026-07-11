@@ -1,5 +1,5 @@
 import { Button, Empty, Pagination, Select } from 'antd'
-import { SEARCH_BY_TABS } from '../../../../components/ui/searchDropdownHistory'
+import { SEARCH_BY_TABS } from '@/components/ui/searchDropdownHistory'
 import { PAGE_SIZE } from '../utils/jobListParams'
 import JobCard from './JobCard'
 import JobCardSkeleton from './JobCardSkeleton'

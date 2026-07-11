@@ -2,7 +2,7 @@ import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined } from '@ant-
 import { Dropdown } from 'antd'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ArrowButton from '../../../../components/ui/ArrowButton'
+import ArrowButton from '@/components/ui/ArrowButton'
 import BestJobsResults from './BestJobsResults'
 import { BEST_JOBS_DIMENSIONS } from './bestJobsConfig'
 import useBestJobsData from './useBestJobsData'

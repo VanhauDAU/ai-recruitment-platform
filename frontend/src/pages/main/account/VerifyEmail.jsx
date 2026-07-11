@@ -2,9 +2,9 @@ import { CheckCircleFilled, CloseCircleFilled, MailOutlined, PhoneOutlined } fro
 import { Alert, Button, Form, Input, Modal, Spin } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { changeEmail, confirmVerification, sendVerificationEmail } from '../../../api/authService'
-import { useAuth } from '../../../hooks/useAuth'
-import { useSiteSetting, useSiteSettings } from '../../../hooks/useSiteSettings'
+import { changeEmail, confirmVerification, sendVerificationEmail } from '@/api/authService'
+import { useAuth } from '@/hooks/useAuth'
+import { useSiteSetting, useSiteSettings } from '@/hooks/useSiteSettings'
 
 // Trang /tai-khoan/xac-thuc-email: có `?token=` -> xác nhận từ link email;
 // không có token -> màn gửi/gửi lại email xác thực cho tài khoản đang đăng nhập.
