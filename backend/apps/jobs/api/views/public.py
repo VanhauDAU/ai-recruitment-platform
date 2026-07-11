@@ -12,15 +12,25 @@ from ...selectors.listing import (
 )
 from ...selectors.stats import build_job_stats
 from ...services import record_job_view
-from ..serializers import JobDetailSerializer, JobSerializer, SavedJobSerializer
+from ..serializers import (
+    JobDetailSerializer,
+    PublicJobListSerializer,
+    PublicJobPreviewSerializer,
+    SavedJobSerializer,
+)
 
 
 class JobListView(generics.ListAPIView):
-    serializer_class = JobSerializer
     permission_classes = [permissions.AllowAny]
 
+    def get_serializer_class(self):
+        return PublicJobPreviewSerializer if self.request.query_params.get('view') == 'preview' else PublicJobListSerializer
+
     def get_queryset(self):
-        return build_job_list_queryset(self.request.query_params)
+        return build_job_list_queryset(
+            self.request.query_params,
+            include_preview=self.request.query_params.get('view') == 'preview',
+        )
 
 
 class JobStatsView(APIView):

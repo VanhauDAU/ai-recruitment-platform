@@ -21,7 +21,8 @@ class LocationListView(generics.ListAPIView):
         if level := params.get('level'):
             qs = qs.filter(level=level)
         if parent := params.get('parent'):
-            qs = qs.filter(parent_id=parent)
+            parent_ids = [int(x) for x in str(parent).split(',') if x.strip().isdigit()]
+            qs = qs.filter(parent_id__in=parent_ids) if parent_ids else qs.none()
         if search := params.get('search'):
             qs = qs.filter(name__icontains=search)
         return qs.order_by('name')[:500]

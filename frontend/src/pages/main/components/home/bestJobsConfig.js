@@ -84,6 +84,7 @@ export function buildBestJobsParams(filters, page) {
   const params = new URLSearchParams({
     page: String(page),
     page_size: String(BEST_JOBS_PAGE_SIZE),
+    view: 'preview',
   })
   if (filters.location) params.append('location', filters.location)
   if (filters.category) params.append('category', filters.category)

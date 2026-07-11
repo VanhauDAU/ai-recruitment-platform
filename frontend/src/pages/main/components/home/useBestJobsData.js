@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getJobs } from '../../../../api/jobService'
-import { getProvinces, getWards } from '../../../../api/locationService'
+import { getProvinces, getWardsByParents } from '../../../../api/locationService'
 import {
   BEST_JOBS_PAGE_SIZE,
   BEST_JOBS_ROTATE_MS,
@@ -22,10 +22,8 @@ async function loadFeaturedLocations() {
   const uniqueProvinces = Array.from(
     new Map(prioritized.map((province) => [province.id, province])).values(),
   ).slice(0, 5)
-  const wardGroups = await Promise.all(
-    uniqueProvinces.map((province) => getWards(province.id).catch(() => [])),
-  )
-  return { provinces, featuredWards: wardGroups.flat().slice(0, 15) }
+  const wards = await getWardsByParents(uniqueProvinces.map((province) => province.id)).catch(() => [])
+  return { provinces, featuredWards: wards.slice(0, 15) }
 }
 
 export default function useBestJobsData(categories) {

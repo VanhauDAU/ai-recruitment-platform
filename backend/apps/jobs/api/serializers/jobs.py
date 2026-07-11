@@ -26,6 +26,16 @@ from .supporting import (
 )
 
 
+class JobListSkillSerializer(serializers.ModelSerializer):
+    """The only skill data displayed on public result cards."""
+
+    skill_name = serializers.CharField(source='skill.name', read_only=True)
+
+    class Meta:
+        model = JobSkill
+        fields = ['skill_name']
+
+
 class JobSerializer(serializers.ModelSerializer):
     job_skills = JobSkillSerializer(many=True, required=False)
     category_assignments = JobCategoryAssignmentSerializer(many=True, required=False)
@@ -208,6 +218,36 @@ class JobSerializer(serializers.ModelSerializer):
         return obj.salary_type != Job.SalaryType.NEGOTIABLE
 
 
+class PublicJobListSerializer(JobSerializer):
+    """Compact contract for public search, related jobs, and saved-job cards."""
+
+    job_skills = JobListSkillSerializer(many=True, read_only=True)
+
+    class Meta(JobSerializer.Meta):
+        fields = [
+            'public_id', 'slug', 'title',
+            'company_name', 'company_logo_url', 'brand_slug', 'company_verified',
+            'category', 'locations_detail', 'job_skills',
+            'work_type', 'employment_type', 'education_level', 'experience_years',
+            'position_level', 'age_min', 'age_max',
+            'salary_type', 'salary_min', 'salary_max', 'currency',
+            'number_of_vacancies', 'deadline',
+            'tier', 'is_hot', 'is_urgent', 'has_flash_badge',
+            'published_at', 'created_at',
+        ]
+        read_only_fields = fields
+
+
+class PublicJobPreviewSerializer(PublicJobListSerializer):
+    """Extra fields for the intentional hover preview on the home page only."""
+
+    class Meta(PublicJobListSerializer.Meta):
+        fields = PublicJobListSerializer.Meta.fields + [
+            'short_description', 'description', 'requirements', 'benefits',
+            'work_schedule_note', 'job_locations', 'work_schedules', 'job_benefits',
+        ]
+
+
 class JobDetailSerializer(JobSerializer):
     """Extended public detail without internal application-recipient data.
 
@@ -338,4 +378,3 @@ class EmployerJobSerializer(JobDetailSerializer):
         JobApplicationEmail.objects.bulk_create([
             JobApplicationEmail(contact=contact, **item) for item in emails
         ])
-

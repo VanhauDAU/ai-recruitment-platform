@@ -38,16 +38,15 @@ def filter_salary_bucket(queryset, bucket_key):
     return queryset
 
 
-def active_jobs_queryset():
+def active_jobs_queryset(include_preview=False):
+    """Public jobs with only relations required by the selected response contract."""
+    relations = ['job_locations__location__parent', 'job_skills__skill']
+    if include_preview:
+        relations.extend(['job_benefits__benefit', 'work_schedules'])
     return (
         Job.objects.filter(status=Job.Status.ACTIVE)
         .select_related('company')
-        .prefetch_related(
-            'category_assignments__category',
-            'job_locations__location__parent',
-            'job_skills__skill',
-            'job_benefits__benefit',
-        )
+        .prefetch_related(*relations)
     )
 
 
@@ -153,9 +152,9 @@ def _order_jobs(queryset, ordering):
     )
 
 
-def build_job_list_queryset(params):
+def build_job_list_queryset(params, include_preview=False):
     """Apply public job-list filters and ordering to the active job queryset."""
-    queryset = active_jobs_queryset()
+    queryset = active_jobs_queryset(include_preview=include_preview)
     if categories := params.getlist('category'):
         queryset = _filter_categories(queryset, categories)
     if locations := params.getlist('location'):

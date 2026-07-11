@@ -15,7 +15,7 @@ class JobCategoryApiTests(APITestCase):
         JobCategory.objects.create(name='Kế toán')
         JobCategory.objects.create(name='Lập trình')
 
-        response = self.client.get(reverse('job-category-list'))
+        response = self.client.get(reverse('job-category-list'), {'all': '1'})
 
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)

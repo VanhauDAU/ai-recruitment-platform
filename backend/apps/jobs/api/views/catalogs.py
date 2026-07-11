@@ -27,9 +27,13 @@ from ...selectors.stats import build_job_stats
 class JobCategoryListView(generics.ListAPIView):
     serializer_class = JobCategorySerializer
     permission_classes = [permissions.AllowAny]
-    # Category tree is a bounded catalogue used by every search picker.  Return
-    # it in one response instead of making the client chase every page.
-    pagination_class = None
+
+    def paginate_queryset(self, queryset):
+        # Search pickers need the whole bounded taxonomy. Keep normal pagination
+        # as the API default for other consumers.
+        if self.request.query_params.get('all') in {'1', 'true'}:
+            return None
+        return super().paginate_queryset(queryset)
 
     def get_queryset(self):
         queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE)

@@ -1,22 +1,24 @@
 import api from './api'
-import { dedupeRequest } from './requestDeduplication'
+import { cachedRequest } from './requestDeduplication'
+
+const SITE_CACHE_TTL = 5 * 60 * 1000
 
 export async function getLinkGroups(placement) {
-  return dedupeRequest(`link-groups:${placement || 'all'}`, async () => {
+  return cachedRequest(`link-groups:${placement || 'all'}`, SITE_CACHE_TTL, async () => {
     const { data } = await api.get('/site/link-groups/', { params: placement ? { placement } : {} })
     return data
   })
 }
 
 export async function getSiteSettings() {
-  return dedupeRequest('site-settings', async () => {
+  return cachedRequest('site-settings', SITE_CACHE_TTL, async () => {
     const { data } = await api.get('/site/settings/')
     return data
   })
 }
 
 export async function getBanners(placement) {
-  return dedupeRequest(`banners:${placement || 'all'}`, async () => {
+  return cachedRequest(`banners:${placement || 'all'}`, SITE_CACHE_TTL, async () => {
     const { data } = await api.get('/site/banners/', { params: placement ? { placement } : {} })
     return data
   })
