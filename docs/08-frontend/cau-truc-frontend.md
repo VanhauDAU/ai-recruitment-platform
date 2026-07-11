@@ -50,5 +50,7 @@ routes/          # AppRoutes + route definitions; lazyPages.jsx quản lý page-
 - Access/refresh token lưu ở `localStorage`; refresh tự động khi access token hết hạn (401).
 - Trang/route dùng `React.lazy` qua registry `routes/lazyPages.jsx` và `Suspense` ở `AppRoutes.jsx` để tách chunk theo trang.
 - Loading state dùng Ant Design `Skeleton` (không dùng `Spin` cho khung nội dung có cấu trúc) để tránh giật layout.
-- Component chỉ tách ra khi thực sự dùng lại ở nhiều nơi (ví dụ `LocationFilter` dùng chung ở Home và `/jobs`) — không tách sớm.
+- Component/hook dùng chung đặt ở cấp `src/components` hoặc `src/hooks`; phần chỉ phục vụ một feature đặt cạnh feature trong `pages/.../components`, `hooks`, `utils`.
+- Page chỉ điều phối dữ liệu và ghép các khối UI. Logic tải dữ liệu/stateful tách vào hook; parse/format tách thành hàm thuần có unit test.
+- File trên 300 dòng cần xem lại trách nhiệm; trên 500 dòng phải tách trừ dữ liệu khai báo hoặc mã sinh tự động có lý do rõ ràng.
 - Trên mobile, các overlay nhiều cột (`CategoryPicker`, `LocationFilter`) chuyển sang drill-down 1 cột (nút "←" quay lại) thay vì hiển thị nhiều cột song song như desktop.

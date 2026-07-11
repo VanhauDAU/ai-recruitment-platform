@@ -6,6 +6,7 @@
 | ------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | [01-phan-tich](01-phan-tich/)   | [phan-tich-yeu-cau.md](01-phan-tich/phan-tich-yeu-cau.md)        | Phân tích yêu cầu, bài toán, đối tượng người dùng (PRD)                 |
 | [02-tong-quan](02-tong-quan/)   | [tong-quan-he-thong.md](02-tong-quan/tong-quan-he-thong.md)      | Tổng quan hệ thống, kiến trúc, phạm vi MVP                              |
+| [02-tong-quan](02-tong-quan/)   | [quy-uoc-code.md](02-tong-quan/quy-uoc-code.md)                  | Quy ước cấu trúc module, DRY, trách nhiệm và kiểm tra chất lượng        |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [05-huong-dan](05-huong-dan/)   | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md)        | Hướng dẫn cài đặt, chạy dự án local                                     |
