@@ -6,14 +6,21 @@ import {
 } from '@ant-design/icons'
 import { useState } from 'react'
 import {
+  EDUCATION_LEVEL_LABELS,
+  EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_YEARS_LABELS,
+  POSITION_LEVEL_LABELS,
   WORK_TYPE_LABELS,
   formatDeadline,
   formatLocations,
   formatSalary,
 } from '../../../../constants/jobOptions'
-
-const textLines = (text = '') => text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+import {
+  jobContentLines,
+  previewBenefitLines,
+  previewLocationLines,
+  previewScheduleLines,
+} from './jobPreviewPresentation'
 
 // Panel xem nhanh nổi bên cạnh tiêu đề job khi di chuột (dùng trong BestJobs).
 export default function JobPreviewPanel({
@@ -39,13 +46,20 @@ export default function JobPreviewPanel({
   const top = Math.min(Math.max(anchorRect.top - 8, 76), maxTop)
   const locationLabel = formatLocations(job)
   const deadlineLabel = formatDeadline(job.deadline)
+  const highlights = [
+    { label: 'Hình thức', value: WORK_TYPE_LABELS[job.work_type] },
+    { label: 'Loại công việc', value: EMPLOYMENT_TYPE_LABELS[job.employment_type] },
+    { label: 'Cấp bậc', value: POSITION_LEVEL_LABELS[job.position_level] },
+    { label: 'Học vấn', value: EDUCATION_LEVEL_LABELS[job.education_level] },
+    { label: 'Số lượng tuyển', value: job.number_of_vacancies ? `${job.number_of_vacancies} người` : null },
+  ].filter((item) => item.value)
   const sections = [
-    { title: 'Mô tả công việc', content: job.description || job.short_description },
-    { title: 'Yêu cầu ứng viên', content: job.requirements },
-    { title: 'Quyền lợi', content: job.benefits },
-    { title: 'Địa điểm làm việc', content: job.job_locations?.map((location) => [location.address_detail, location.location_name, location.location_level === 'ward' && location.province_name].filter(Boolean).join(', ')).join('\n') || job.locations_detail?.map((l) => l.name).join('\n') },
-    { title: 'Thời gian làm việc', content: job.work_schedule_note || (job.work_type ? `Hình thức: ${WORK_TYPE_LABELS[job.work_type] || job.work_type}` : '') },
-  ].filter((section) => section.content)
+    { title: 'Mô tả công việc', lines: jobContentLines(job.description || job.short_description) },
+    { title: 'Yêu cầu ứng viên', lines: jobContentLines(job.requirements) },
+    { title: 'Quyền lợi', lines: previewBenefitLines(job) },
+    { title: 'Địa điểm làm việc', lines: previewLocationLines(job) },
+    { title: 'Thời gian làm việc', lines: previewScheduleLines(job) },
+  ].filter((section) => section.lines.length > 0)
 
   function handleScroll(e) {
     const nextScrolled = e.currentTarget.scrollTop > 48
@@ -120,9 +134,20 @@ export default function JobPreviewPanel({
           )}
         </div>
 
-        <div className="mt-6 space-y-6 text-sm text-gray-700">
+        {highlights.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-slate-50 p-3 sm:grid-cols-3">
+            {highlights.map((item) => (
+              <div key={item.label} className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{item.label}</p>
+                <p className="mt-0.5 truncate text-xs font-semibold text-slate-700">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-5 space-y-5 text-sm text-gray-700">
           {sections.map((section) => (
-            <PreviewSection key={section.title} title={section.title} content={section.content} />
+            <PreviewSection key={section.title} title={section.title} lines={section.lines} />
           ))}
         </div>
       </div>
@@ -148,19 +173,16 @@ export default function JobPreviewPanel({
   )
 }
 
-function PreviewSection({ title, content }) {
-  const lines = textLines(content)
+function PreviewSection({ title, lines }) {
   if (lines.length === 0) return null
   return (
     <section>
       <h4 className="mb-2 border-l-4 border-[var(--brand-primary)] pl-2 text-sm font-semibold text-[#17324d]">{title}</h4>
-      <div className="space-y-1.5 text-xs leading-relaxed text-gray-600">
+      <ul className="space-y-1.5 pl-4 text-xs leading-relaxed text-gray-600">
         {lines.map((line, index) => (
-          <p key={`${title}-${index}`} className={index === 0 ? 'font-medium text-gray-700' : ''}>
-            {line}
-          </p>
+          <li key={`${title}-${index}`} className="list-disc marker:text-[var(--brand-primary)]">{line}</li>
         ))}
-      </div>
+      </ul>
     </section>
   )
 }

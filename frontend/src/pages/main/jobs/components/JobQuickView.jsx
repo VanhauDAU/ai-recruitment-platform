@@ -15,6 +15,7 @@ import {
 } from '../../../../constants/jobOptions'
 import { jobDetailPath } from '../../../../config/jobPaths'
 import { useSavedJob } from '../../../../hooks/useSavedJobs'
+import SavedJobTooltipContent from '../../../../components/jobs/SavedJobTooltipContent'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.
 function Section({ title, text }) {
@@ -141,7 +142,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
           >
             Ứng tuyển ngay
           </button>
-          <Tooltip title={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
+          <Tooltip title={isAuthenticated ? (saved ? <SavedJobTooltipContent /> : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
             <button
               type="button"
               onClick={handleSave}

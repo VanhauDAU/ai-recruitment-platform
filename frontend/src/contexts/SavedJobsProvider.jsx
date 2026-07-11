@@ -16,6 +16,9 @@ export default function SavedJobsProvider({ children }) {
   const isCandidate = isAuthenticated && user?.role === 'candidate'
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
+  // Tín hiệu một tin vừa được lưu thành công, dùng để floating action phát
+  // animation/thông báo mà không nhầm với lần tải danh sách ban đầu.
+  const [saveSuccess, setSaveSuccess] = useState(null)
   // Tin đang chờ API save trả về: bật tim ngay để không có độ trễ khi bấm.
   const [pending, setPending] = useState(() => new Set())
 
@@ -64,6 +67,7 @@ export default function SavedJobsProvider({ children }) {
     try {
       const created = await saveJob(publicId)
       setItems((prev) => [created, ...prev.filter((item) => item.job_detail.public_id !== publicId)])
+      setSaveSuccess({ publicId, at: Date.now() })
     } catch {
       // giữ nguyên: pending được gỡ ở finally nên tim tự tắt lại
     } finally {
@@ -76,8 +80,8 @@ export default function SavedJobsProvider({ children }) {
   }, [isCandidate, savedIds, items])
 
   const value = useMemo(
-    () => ({ items, savedIds, loading, toggle, isCandidate }),
-    [items, savedIds, loading, toggle, isCandidate],
+    () => ({ items, savedIds, loading, toggle, isCandidate, saveSuccess }),
+    [items, savedIds, loading, toggle, isCandidate, saveSuccess],
   )
 
   return <SavedJobsContext.Provider value={value}>{children}</SavedJobsContext.Provider>

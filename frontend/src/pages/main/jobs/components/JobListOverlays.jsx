@@ -1,6 +1,4 @@
-import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
-import { Drawer, Modal } from 'antd'
-import Login from '../../auth/Login'
+import { Drawer } from 'antd'
 import JobQuickView from './JobQuickView'
 
 export default function JobListOverlays({
@@ -8,11 +6,8 @@ export default function JobListOverlays({
   filterSidebar,
   isAuthenticated,
   isDesktop,
-  loginModalOpen,
   quickViewJob,
   onFilterDrawerClose,
-  onLoginClose,
-  onLoginSuccess,
   onQuickViewClose,
   onRequireLogin,
 }) {
@@ -51,23 +46,6 @@ export default function JobListOverlays({
           </div>
         )}
       </Drawer>
-
-      <Modal
-        open={loginModalOpen}
-        onCancel={onLoginClose}
-        footer={null}
-        centered
-        width={640}
-        destroyOnHidden
-        styles={{
-          container: { borderRadius: 28, padding: 0, overflow: 'hidden' },
-          body: { padding: '40px 48px 36px' },
-        }}
-      >
-        <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
-          <Login onSuccess={onLoginSuccess} />
-        </GoogleReCaptchaProvider>
-      </Modal>
     </>
   )
 }

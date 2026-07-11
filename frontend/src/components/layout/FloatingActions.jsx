@@ -11,8 +11,10 @@ import {
   SafetyOutlined,
 } from '@ant-design/icons'
 import { App, Badge, Modal, Tooltip } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { useLoginPrompt } from '../../hooks/useLoginPrompt'
 import { useSavedJobs } from '../../hooks/useSavedJobs'
 import { useSiteSettings } from '../../hooks/useSiteSettings'
 import FeedbackModal from './FeedbackModal'
@@ -20,11 +22,30 @@ import FeedbackModal from './FeedbackModal'
 export default function FloatingActions() {
   const { message } = App.useApp()
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const { promptLogin } = useLoginPrompt()
   const { settings, siteName } = useSiteSettings()
-  const { items } = useSavedJobs()
+  const { items, saveSuccess } = useSavedJobs()
+
+  // Khách bấm "Việc làm đã lưu" -> popup đăng nhập rồi mới vào trang, thay vì bị đá về /login.
+  function openSavedJobs() {
+    setSupportOpen(false)
+    if (isAuthenticated) navigate('/viec-lam-da-luu')
+    else promptLogin(() => navigate('/viec-lam-da-luu'))
+  }
   const [supportOpen, setSupportOpen] = useState(false)
   const [wantOpen, setWantOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [saveNoticeOpen, setSaveNoticeOpen] = useState(false)
+  const [heartPulseKey, setHeartPulseKey] = useState(0)
+
+  useEffect(() => {
+    if (!saveSuccess) return undefined
+    setSaveNoticeOpen(true)
+    setHeartPulseKey((key) => key + 1)
+    const timer = window.setTimeout(() => setSaveNoticeOpen(false), 9000)
+    return () => window.clearTimeout(timer)
+  }, [saveSuccess])
 
   const zaloUrl = settings.contact_zalo_url
   const hotline = settings.hotline
@@ -52,18 +73,38 @@ export default function FloatingActions() {
   return (
     <>
       <div className="fixed bottom-5 right-4 z-30 flex flex-col items-end gap-2.5 md:bottom-8 md:right-6">
-        <Tooltip title="Việc làm đã lưu" placement="left">
-          <Badge count={items.length} size="small" offset={[-4, 4]}>
-            <button
-              type="button"
-              aria-label="Việc làm đã lưu"
-              onClick={() => { setSupportOpen(false); navigate('/viec-lam-da-luu') }}
-              className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-lg text-rose-500 shadow-lg shadow-gray-500/15 transition hover:-translate-y-0.5 hover:border-rose-300"
+        <div className="relative">
+          {saveNoticeOpen && (
+            <div
+              role="status"
+              className="absolute bottom-[calc(100%+12px)] right-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-emerald-100 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-emerald-900/20"
+              style={{ animation: 'savedNoticeIn 0.25s ease both' }}
             >
-              <HeartFilled />
-            </button>
-          </Badge>
-        </Tooltip>
+              <p className="font-bold text-white">Lưu tin thành công!</p>
+              <p className="mt-0.5">
+                Để xem <button type="button" onClick={openSavedJobs} className="cursor-pointer font-bold text-white underline underline-offset-2">Danh sách việc làm đã lưu</button>, click vào đây:
+              </p>
+            </div>
+          )}
+          <Tooltip title="Việc làm đã lưu" placement="left">
+            <Badge count={items.length} size="small" offset={[-4, 4]}>
+              <button
+                key={heartPulseKey}
+                type="button"
+                aria-label="Việc làm đã lưu"
+                onClick={openSavedJobs}
+                className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-lg text-rose-500 shadow-lg shadow-gray-500/15 transition hover:-translate-y-0.5 hover:border-rose-300"
+                style={{ animation: heartPulseKey ? 'savedHeartButton 0.9s cubic-bezier(.2,.8,.2,1) both' : undefined }}
+              >
+                <HeartFilled />
+              </button>
+            </Badge>
+          </Tooltip>
+          <style>{`
+            @keyframes savedHeartButton{0%{transform:scale(.72);box-shadow:0 0 0 0 rgba(16,185,129,.45)}45%{transform:scale(1.16);box-shadow:0 0 0 12px rgba(16,185,129,0)}75%{transform:scale(.96)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+            @keyframes savedNoticeIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+          `}</style>
+        </div>
 
         <button
           type="button"

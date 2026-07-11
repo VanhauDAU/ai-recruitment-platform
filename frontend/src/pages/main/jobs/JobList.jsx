@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilterOutlined } from '@ant-design/icons'
 import { message } from 'antd'
 import { useAuth } from '../../../hooks/useAuth'
+import { useLoginPrompt } from '../../../hooks/useLoginPrompt'
 import { useHideOnScroll } from '../../../hooks/useHideOnScroll'
 import { useMediaQuery } from '../../../hooks/useMediaQuery'
 import { formatNumber } from '../../../constants/jobOptions'
@@ -25,7 +26,6 @@ export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
   const [showAllGroups, setShowAllGroups] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [quickViewJob, setQuickViewJob] = useState(null)
   const [dismissedNotice, setDismissedNotice] = useState(null)
@@ -35,6 +35,7 @@ export default function JobList() {
   const [canScrollShortcutsLeft, setCanScrollShortcutsLeft] = useState(false)
   const [canScrollShortcutsRight, setCanScrollShortcutsRight] = useState(false)
   const { isAuthenticated } = useAuth()
+  const { promptLogin } = useLoginPrompt()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const { categories, demandCounts, industries, noExpCount, provinces, sidebarLoading } = useJobSidebarData()
@@ -124,17 +125,15 @@ export default function JobList() {
 
   function saveFilter() {
     if (!isAuthenticated) {
-      setLoginModalOpen(true)
+      // Đăng nhập xong lưu luôn bộ lọc vừa bấm, người dùng ở nguyên trang.
+      promptLogin(() => {
+        filters.persistFilter()
+        message.success('Đăng nhập thành công. Đã lưu bộ lọc.')
+      })
       return
     }
     filters.persistFilter()
     message.success('Đã lưu bộ lọc hiện tại')
-  }
-
-  function handleLoginSuccess() {
-    setLoginModalOpen(false)
-    filters.persistFilter()
-    message.success('Đăng nhập thành công. Đã lưu bộ lọc.')
   }
 
   const catChain = (() => {
@@ -321,7 +320,7 @@ export default function JobList() {
             loading={loading}
             onClearAll={hasFilters || searchParamKeyword ? filters.clearAllCriteria : undefined}
             onPageChange={filters.handlePageChange}
-            onRequireLogin={() => setLoginModalOpen(true)}
+            onRequireLogin={promptLogin}
             onSearchByChange={(tabKey) => filters.updateParams({ search_by: tabKey === 'title' ? null : tabKey })}
             onSelectSuggestedWard={(wardId) => filters.setLocationParam([wardId])}
             onSetQuickViewJob={setQuickViewJob}
@@ -344,7 +343,7 @@ export default function JobList() {
                 job={quickViewJob}
                 onClose={() => setQuickViewJob(null)}
                 isAuthenticated={isAuthenticated}
-                onRequireLogin={() => setLoginModalOpen(true)}
+                onRequireLogin={promptLogin}
               />
             </div>
           )}
@@ -356,13 +355,10 @@ export default function JobList() {
         filterSidebar={filterSidebar}
         isAuthenticated={isAuthenticated}
         isDesktop={isDesktop}
-        loginModalOpen={loginModalOpen}
         quickViewJob={quickViewJob}
         onFilterDrawerClose={() => setFilterDrawerOpen(false)}
-        onLoginClose={() => setLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
         onQuickViewClose={() => setQuickViewJob(null)}
-        onRequireLogin={() => setLoginModalOpen(true)}
+        onRequireLogin={promptLogin}
       />
     </div>
   )
