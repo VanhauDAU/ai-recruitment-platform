@@ -35,10 +35,19 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/auth/oauth/{provider}/callback/` | Provider gọi lại; verify state, tạo/liên kết user, redirect về trang callback frontend kèm `one_time_code` (hoặc `?error=`) |
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PUT | `/api/candidate/profile/` | Xem/cập nhật hồ sơ ứng viên (tự tạo khi cần) |
-| GET/PUT | `/api/employer/profile/` | Xem/cập nhật hồ sơ công ty |
-| POST | `/api/employer/profile/create/` | Tạo hồ sơ công ty |
-| POST | `/api/employer/profile/logo/` | Upload logo công ty vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
-| POST | `/api/employer/profile/cover/` | Upload cover công ty vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
+| GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + trạng thái onboarding 5 bước (chỉ `position_title` sửa được) |
+| POST | `/api/employer/phone/send-otp/` | Gửi mã OTP xác thực SĐT (gửi qua email tài khoản; cooldown 60s, hết hạn 10 phút) |
+| POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
+| POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân với ứng viên |
+| GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
+| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới (cần đã xác thực SĐT; người tạo là owner, hiệu lực ngay, trạng thái `unverified`) |
+| GET | `/api/employer/company/search/?q=` | Tìm công ty có sẵn theo tên / tên thương mại / MST (không dấu) |
+| POST | `/api/employer/company/join/` | Join công ty có sẵn: multipart `company` + `proof_type` (`business_registration` hoặc `authorization_and_id`) + file giấy tờ; membership `pending` chờ admin duyệt |
+| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; JPG/PNG/GIF/WebP, multipart `file`) |
+| DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
+| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty (ĐKDN, ủy quyền, định danh, DLCN...); POST multipart `doc_type` + `file` (jpeg/png/pdf) |
+| GET/POST | `/api/employer/company/update-requests/` | Yêu cầu cập nhật thông tin công ty (owner; tối đa 1 pending; đổi MST/tên bắt buộc `reason` + `proof_type`) |
+| GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
 | GET | `/api/jobs/categories/` | Danh sách ngành nghề (taxonomy 3 cấp: nhóm nghề/nghề/vị trí chuyên môn), public, có phân trang mặc định |
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |

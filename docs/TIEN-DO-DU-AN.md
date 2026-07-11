@@ -75,6 +75,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 1.19 | Đặt lại mật khẩu (quên mật khẩu) qua link email + Redis, token một lần | ✅ |
 | 1.19b | Email không phân biệt hoa/thường (normalize + `iexact` + unique constraint `Lower(email)`) | ✅ |
 | 1.20 | Trang thương hiệu (brand page): URL `/brand/<company>/tuyen-dung/<job>` + header thương hiệu | ✅ |
+| 1.21 | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](./03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt), admin actions duyệt (công ty, membership, giấy tờ, update request), employer đăng tin → `status=pending` chờ duyệt, seed + tests cập nhật (54 test pass); (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). Frontend cổng NTD sẽ xây sau trên bộ API mới | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 1
 
@@ -380,4 +381,4 @@ Gom cổng main vào `pages/main/` (Home, auth, jobs, candidate) cho đối xứ
 
 ---
 
-Cập nhật lần cuối: 2026-07-11 (1.14q chuẩn hóa schema tin tuyển dụng + 1.14r trang chi tiết việc làm bản mới)
+Cập nhật lần cuối: 2026-07-11 (1.21 hoàn tất tách công ty khỏi nhà tuyển dụng A+B+C — schema mới, chuyển jobs sang company, API onboarding/công ty/duyệt, xóa bảng employer_profiles)

@@ -2,12 +2,12 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.employers.models import EmployerProfile
+from apps.employers.models import Company
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
 
-from .models import Benefit, Job, JobCategory, Language
-from .serializers import EmployerJobSerializer, JobDetailSerializer
+from ..api.serializers import EmployerJobSerializer, JobDetailSerializer
+from ..models import Benefit, Job, JobCategory, Language
 
 
 class JobSalaryBucketFilterTests(APITestCase):
@@ -17,12 +17,12 @@ class JobSalaryBucketFilterTests(APITestCase):
             password='Password@123',
             role=User.Role.EMPLOYER,
         )
-        self.profile = EmployerProfile.objects.create(user=self.user, company_name='Acme')
+        self.company = Company.objects.create(company_name='Acme', created_by=self.user)
 
     def create_job(self, title, salary_min, salary_max):
         return Job.objects.create(
-            employer=self.user,
-            employer_profile=self.profile,
+            posted_by=self.user,
+            company=self.company,
             title=title,
             description='Description',
             salary_min=salary_min,
@@ -50,7 +50,7 @@ class EmployerJobSerializerTests(APITestCase):
             password='Password@123',
             role=User.Role.EMPLOYER,
         )
-        self.profile = EmployerProfile.objects.create(user=self.user, company_name='Acme')
+        self.company = Company.objects.create(company_name='Acme', created_by=self.user)
         self.province = Location.objects.create(
             code='01-test', level=Location.Level.PROVINCE, name='Thành phố Hà Nội',
         )
@@ -127,7 +127,7 @@ class EmployerJobSerializerTests(APITestCase):
         serializer = EmployerJobSerializer(data=self.payload())
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(employer=self.user, employer_profile=self.profile)
+        job = serializer.save(posted_by=self.user, company=self.company)
 
         self.assertEqual(job.category_assignments.count(), 2)
         self.assertEqual(job.job_locations.count(), 1)
@@ -158,7 +158,7 @@ class EmployerJobSerializerTests(APITestCase):
     def test_public_detail_does_not_expose_application_contact(self):
         serializer = EmployerJobSerializer(data=self.payload())
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(employer=self.user, employer_profile=self.profile)
+        job = serializer.save(posted_by=self.user, company=self.company)
 
         data = JobDetailSerializer(job).data
 
@@ -184,7 +184,7 @@ class EmployerJobSerializerTests(APITestCase):
         ]
         serializer = EmployerJobSerializer(data=payload)
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(employer=self.user, employer_profile=self.profile)
+        job = serializer.save(posted_by=self.user, company=self.company)
 
         data = JobDetailSerializer(job).data
 
@@ -223,8 +223,8 @@ class EmployerJobSerializerTests(APITestCase):
 
     def test_public_detail_view_model_handles_minimal_job(self):
         job = Job.objects.create(
-            employer=self.user,
-            employer_profile=self.profile,
+            posted_by=self.user,
+            company=self.company,
             title='Tuyển gấp nhân viên',
             description='Mô tả',
             status=Job.Status.ACTIVE,

@@ -1,10 +1,5 @@
-import re
-
 from django.conf import settings
 from django.db import models
-
-# Bỏ tiền tố đơn vị hành chính để nhãn gọn: "Thành phố Cần Thơ" -> "Cần Thơ".
-_PROVINCE_PREFIX = re.compile(r'^(Thành phố|Tỉnh)\s+', re.IGNORECASE)
 
 
 class SiteSetting(models.Model):
@@ -99,24 +94,6 @@ class LinkGroup(models.Model):
 
     def __str__(self):
         return self.title
-
-    def resolve_items(self):
-        """Trả về [{label, url}] đã sẵn sàng cho frontend, tuỳ theo `source`."""
-        if self.source == self.Source.LOCATIONS:
-            from apps.locations.models import Location
-
-            provinces = Location.objects.filter(level=Location.Level.PROVINCE, is_active=True).order_by('name')[: self.limit]
-            return [
-                {'label': f'Việc làm {_PROVINCE_PREFIX.sub("", p.name)}', 'url': f'/viec-lam?locations={p.id}'}
-                for p in provinces
-            ]
-        if self.source == self.Source.CATEGORIES:
-            from apps.jobs.models import JobCategory
-
-            categories = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE).order_by('name')[: self.limit]
-            return [{'label': f'Việc làm {c.name}', 'url': f'/viec-lam?category={c.id}'} for c in categories]
-        return [{'label': i.label, 'url': i.url} for i in self.items.filter(is_active=True)]
-
 
 class LinkItem(models.Model):
     """Link nhập tay thuộc một cụm `manual` (bỏ qua khi cụm tự sinh từ DB)."""

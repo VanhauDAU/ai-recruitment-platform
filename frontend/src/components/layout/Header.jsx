@@ -5,16 +5,22 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
 import { useHideOnScroll } from '../../hooks/useHideOnScroll'
+import { useLoginPrompt } from '../../hooks/useLoginPrompt'
 import BrandLogo from '../brand/BrandLogo'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
 import { HEADER_NAVIGATION } from './headerNavigationConfig'
 
-function GuestActions({ mobile = false, onSelect }) {
+function GuestActions({ mobile = false, onSelect, onLogin }) {
+  // Đăng nhập mở popup tại trang hiện tại (giữ ngữ cảnh) thay vì sang /login.
+  function handleLogin() {
+    onSelect?.()
+    onLogin()
+  }
   if (mobile) {
     return (
       <>
-        <Link to="/login" onClick={onSelect}><Button block type="primary" shape="round">Đăng nhập</Button></Link>
+        <Button block type="primary" shape="round" onClick={handleLogin}>Đăng nhập</Button>
         <Link to="/sign-up" onClick={onSelect}><Button block shape="round">Đăng ký</Button></Link>
         <a href={EMPLOYER_PORTAL_URL}><Button block ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button></a>
       </>
@@ -23,7 +29,7 @@ function GuestActions({ mobile = false, onSelect }) {
   return (
     <>
       <Link to="/sign-up" className="hidden cursor-pointer sm:inline-block"><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
-      <Link to="/login" className="cursor-pointer"><Button className="cursor-pointer" type="primary" shape="round">Đăng nhập</Button></Link>
+      <Button className="cursor-pointer" type="primary" shape="round" onClick={handleLogin}>Đăng nhập</Button>
       <a href={EMPLOYER_PORTAL_URL} className="hidden cursor-pointer lg:inline-block">
         <Button className="cursor-pointer" ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button>
       </a>
@@ -31,8 +37,8 @@ function GuestActions({ mobile = false, onSelect }) {
   )
 }
 
-function HeaderActions({ isAuthenticated, logout, navigate, user }) {
-  if (!isAuthenticated) return <GuestActions />
+function HeaderActions({ isAuthenticated, logout, navigate, user, onLogin }) {
+  if (!isAuthenticated) return <GuestActions onLogin={onLogin} />
   if (user?.role === 'candidate') {
     return (
       <>
@@ -54,11 +60,11 @@ function HeaderActions({ isAuthenticated, logout, navigate, user }) {
   )
 }
 
-function MobileActions({ isAuthenticated, navigate, onClose, user }) {
+function MobileActions({ isAuthenticated, navigate, onClose, user, onLogin }) {
   return (
     <div className="flex flex-col gap-2 p-5">
       {!isAuthenticated ? (
-        <GuestActions mobile onSelect={onClose} />
+        <GuestActions mobile onSelect={onClose} onLogin={onLogin} />
       ) : user?.role === 'candidate' ? (
         <a href={EMPLOYER_PORTAL_URL} className="text-center text-sm font-semibold text-[var(--brand-primary)]">
           Bạn là nhà tuyển dụng? Đăng tuyển ngay »
@@ -74,6 +80,7 @@ function MobileActions({ isAuthenticated, navigate, onClose, user }) {
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth()
+  const { promptLogin } = useLoginPrompt()
   const navigate = useNavigate()
   const location = useLocation()
   const { message } = App.useApp()
@@ -91,7 +98,12 @@ export default function Header() {
   function handleItem(item) {
     setOpenKey(null)
     setMobileOpen(false)
-    if (item.action === 'saved-jobs') navigate('/viec-lam-da-luu')
+    // Việc làm đã lưu yêu cầu đăng nhập — khách mở popup tại chỗ thay vì bị
+    // trang đó đá về /login.
+    if (item.action === 'saved-jobs') {
+      if (isAuthenticated) navigate('/viec-lam-da-luu')
+      else promptLogin(() => navigate('/viec-lam-da-luu'))
+    }
     else if (item.to) navigate(item.to)
     else if (item.search) navigate(`/viec-lam?search=${encodeURIComponent(item.search)}`)
     else message.info('Tính năng sẽ sớm ra mắt.')
@@ -122,6 +134,7 @@ export default function Header() {
             logout={logout}
             navigate={navigate}
             user={user}
+            onLogin={promptLogin}
           />
         </div>
       </div>
@@ -139,6 +152,7 @@ export default function Header() {
           navigate={navigate}
           onClose={() => setMobileOpen(false)}
           user={user}
+          onLogin={promptLogin}
         />
       </MobileNavigation>
     </header>

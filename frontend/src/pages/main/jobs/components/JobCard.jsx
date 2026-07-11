@@ -15,6 +15,7 @@ import {
 } from '../../../../constants/jobOptions'
 import { jobDetailPath } from '../../../../config/jobPaths'
 import { useSavedJob } from '../../../../hooks/useSavedJobs'
+import SavedJobTooltipContent from '../../../../components/jobs/SavedJobTooltipContent'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
 function postedLabel(job) {
@@ -243,7 +244,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
                 Ứng tuyển
               </button>
             )}
-            <Tooltip title={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
+            <Tooltip title={isAuthenticated ? (saved ? <SavedJobTooltipContent /> : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}>
               <button
                 type="button"
                 onClick={toggleSave}

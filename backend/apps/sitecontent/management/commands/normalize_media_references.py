@@ -5,14 +5,16 @@ from django.core.management.base import BaseCommand
 from apps.accounts.models import User
 from common.media_storage import normalise_media_value
 from apps.cvs.models import UserCv
-from apps.employers.models import EmployerProfile
+from apps.employers.models import Company, CompanyDocument, CompanyImage
 from apps.jobs.models import JobCategory
 from apps.sitecontent.models import Banner, SiteSetting
 
 
 MEDIA_FIELDS = (
     (User, ('avatar_url',)),
-    (EmployerProfile, ('company_logo_url', 'cover_image_url')),
+    (Company, ('logo_url', 'cover_image_url')),
+    (CompanyImage, ('image_url',)),
+    (CompanyDocument, ('file_url',)),
     (JobCategory, ('logo_url',)),
     (Banner, ('image_url',)),
     (SiteSetting, ('value',)),

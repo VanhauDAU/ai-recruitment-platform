@@ -1,50 +1,16 @@
 from django.db.models import F
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate, IsEmployer
-from apps.employers.models import EmployerProfile
+from apps.accounts.permissions import IsCandidate
+from common.db.search import fold_accents, search_q
 
-from .models import Benefit, Job, JobCategory, Language, SavedJob
-from .querysets import build_job_list_queryset, fold_accents, search_q
-from .serializers import (
-    BenefitSerializer,
-    EmployerJobSerializer,
-    JobCategorySerializer,
-    JobDetailSerializer,
-    JobSerializer,
-    LanguageSerializer,
-    SavedJobSerializer,
-)
-from .services import build_job_stats
-
-
-class JobCategoryListView(generics.ListAPIView):
-    serializer_class = JobCategorySerializer
-    permission_classes = [permissions.AllowAny]
-
-    def get_queryset(self):
-        queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE)
-        if category_type := self.request.query_params.get('category_type'):
-            queryset = queryset.filter(category_type=category_type)
-        return queryset
-
-
-class BenefitListView(generics.ListAPIView):
-    serializer_class = BenefitSerializer
-    permission_classes = [permissions.AllowAny]
-    pagination_class = None
-    queryset = Benefit.objects.filter(is_active=True)
-
-
-class LanguageListView(generics.ListAPIView):
-    serializer_class = LanguageSerializer
-    permission_classes = [permissions.AllowAny]
-    pagination_class = None
-    queryset = Language.objects.filter(is_active=True)
+from ...models import Job, SavedJob
+from ...selectors.listing import build_job_list_queryset
+from ...selectors.stats import build_job_stats
+from ..serializers import JobDetailSerializer, JobSerializer, SavedJobSerializer
 
 
 class JobListView(generics.ListAPIView):
@@ -136,7 +102,7 @@ class JobSuggestView(APIView):
         q = request.query_params.get('q', '').strip()
         if not q:
             return Response({'suggestions': []})
-        field = 'employer_profile__company_name' if request.query_params.get('search_by') == 'company' else 'title'
+        field = 'company__company_name' if request.query_params.get('search_by') == 'company' else 'title'
         values = (
             Job.objects.filter(status=Job.Status.ACTIVE)
             .filter(search_q(field, q))
@@ -162,7 +128,7 @@ class JobDetailView(generics.RetrieveAPIView):
     lookup_field = 'slug'
     queryset = (
         Job.objects.filter(status=Job.Status.ACTIVE)
-        .select_related('employer_profile')
+        .select_related('company')
         .prefetch_related(
             'category_assignments__category',
             'job_locations__location__parent',
@@ -170,7 +136,7 @@ class JobDetailView(generics.RetrieveAPIView):
             'work_schedules',
             'job_benefits__benefit',
             'language_requirements__language',
-            'employer_profile__industries',
+            'company__industries',
         )
     )
 
@@ -195,7 +161,7 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return (
             SavedJob.objects.filter(candidate=self.request.user)
-            .select_related('job__employer_profile')
+            .select_related('job__company')
             .prefetch_related(
                 'job__category_assignments__category',
                 'job__job_locations__location__parent',
@@ -218,43 +184,3 @@ class SavedJobDestroyView(generics.DestroyAPIView):
     def get_queryset(self):
         return SavedJob.objects.filter(candidate=self.request.user)
 
-
-class EmployerJobListCreateView(generics.ListCreateAPIView):
-    serializer_class = EmployerJobSerializer
-    permission_classes = [IsEmployer]
-
-    def get_queryset(self):
-        return (
-            Job.objects.filter(employer=self.request.user)
-            .select_related('employer_profile')
-            .prefetch_related(
-                'category_assignments__category', 'job_locations__location__parent',
-                'job_skills__skill', 'work_schedules', 'job_benefits__benefit',
-                'language_requirements__language', 'application_contact__emails',
-            )
-            .order_by('-created_at')
-        )
-
-    def perform_create(self, serializer):
-        try:
-            employer_profile = self.request.user.employer_profile
-        except EmployerProfile.DoesNotExist:
-            raise ValidationError('Create your employer profile (company) before posting a job.')
-        serializer.save(employer=self.request.user, employer_profile=employer_profile)
-
-
-class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = EmployerJobSerializer
-    permission_classes = [IsEmployer]
-    lookup_field = 'public_id'
-
-    def get_queryset(self):
-        return (
-            Job.objects.filter(employer=self.request.user)
-            .select_related('employer_profile')
-            .prefetch_related(
-                'category_assignments__category', 'job_locations__location__parent',
-                'job_skills__skill', 'work_schedules', 'job_benefits__benefit',
-                'language_requirements__language', 'application_contact__emails',
-            )
-        )

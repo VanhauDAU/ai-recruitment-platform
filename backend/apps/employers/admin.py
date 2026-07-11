@@ -1,6 +1,16 @@
 from django.contrib import admin
+from django.utils import timezone
 
-from .models import EmployerProfile, Industry
+from . import services
+from .models import (
+    Company,
+    CompanyDocument,
+    CompanyImage,
+    CompanyIndustry,
+    CompanyUpdateRequest,
+    Industry,
+    RecruiterProfile,
+)
 
 
 @admin.register(Industry)
@@ -10,15 +20,89 @@ class IndustryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
-@admin.register(EmployerProfile)
-class EmployerProfileAdmin(admin.ModelAdmin):
-    list_display = ['company_name', 'user', 'status', 'has_brand_page', 'industry_names', 'created_at']
-    list_filter = ['status', 'has_brand_page', 'industries']
-    list_editable = ['has_brand_page']
-    search_fields = ['company_name', 'user__email', 'tax_code']
-    prepopulated_fields = {'slug': ('company_name',)}
-    filter_horizontal = ['industries']
+class CompanyIndustryInline(admin.TabularInline):
+    model = CompanyIndustry
+    extra = 0
 
-    @admin.display(description='Lĩnh vực')
-    def industry_names(self, obj):
-        return ', '.join(i.name for i in obj.industries.all())
+
+class CompanyImageInline(admin.TabularInline):
+    model = CompanyImage
+    extra = 0
+
+
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ['company_name', 'tax_code', 'business_type', 'verification_status', 'has_brand_page', 'created_at']
+    list_filter = ['verification_status', 'business_type', 'has_brand_page']
+    list_editable = ['has_brand_page']
+    search_fields = ['company_name', 'trade_name', 'tax_code', 'slug']
+    prepopulated_fields = {'slug': ('company_name',)}
+    inlines = [CompanyIndustryInline, CompanyImageInline]
+    actions = ['approve_verification', 'reject_verification']
+
+    @admin.action(description='Duyệt xác thực công ty đã chọn')
+    def approve_verification(self, request, queryset):
+        for company in queryset:
+            services.verify_company(company, request.user, approve=True)
+
+    @admin.action(description='Từ chối xác thực công ty đã chọn')
+    def reject_verification(self, request, queryset):
+        for company in queryset:
+            services.verify_company(company, request.user, approve=False, reason='Từ chối qua admin')
+
+
+@admin.register(CompanyDocument)
+class CompanyDocumentAdmin(admin.ModelAdmin):
+    list_display = ['company', 'doc_type', 'uploaded_by', 'status', 'created_at']
+    list_filter = ['doc_type', 'status']
+    search_fields = ['company__company_name', 'uploaded_by__email']
+    actions = ['approve_documents', 'reject_documents']
+
+    def _review(self, request, queryset, status):
+        queryset.filter(status=CompanyDocument.Status.PENDING).update(
+            status=status, reviewed_by=request.user, reviewed_at=timezone.now()
+        )
+
+    @admin.action(description='Duyệt giấy tờ đã chọn')
+    def approve_documents(self, request, queryset):
+        self._review(request, queryset, CompanyDocument.Status.APPROVED)
+
+    @admin.action(description='Từ chối giấy tờ đã chọn')
+    def reject_documents(self, request, queryset):
+        self._review(request, queryset, CompanyDocument.Status.REJECTED)
+
+
+@admin.register(CompanyUpdateRequest)
+class CompanyUpdateRequestAdmin(admin.ModelAdmin):
+    list_display = ['company', 'requested_by', 'is_sensitive', 'status', 'created_at']
+    list_filter = ['status', 'is_sensitive']
+    search_fields = ['company__company_name', 'requested_by__email']
+    actions = ['approve_requests', 'reject_requests']
+
+    @admin.action(description='Duyệt và áp thay đổi vào công ty')
+    def approve_requests(self, request, queryset):
+        for update_request in queryset.filter(status=CompanyUpdateRequest.Status.PENDING):
+            services.apply_update_request(update_request, request.user, approve=True)
+
+    @admin.action(description='Từ chối yêu cầu cập nhật đã chọn')
+    def reject_requests(self, request, queryset):
+        for update_request in queryset.filter(status=CompanyUpdateRequest.Status.PENDING):
+            services.apply_update_request(update_request, request.user, approve=False, note='Từ chối qua admin')
+
+
+@admin.register(RecruiterProfile)
+class RecruiterProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'company', 'company_role', 'membership_status', 'verified_phone', 'created_at']
+    list_filter = ['company_role', 'membership_status']
+    search_fields = ['user__email', 'company__company_name', 'verified_phone']
+    actions = ['approve_membership', 'reject_membership']
+
+    @admin.action(description='Duyệt HR vào công ty')
+    def approve_membership(self, request, queryset):
+        for recruiter in queryset.filter(membership_status=RecruiterProfile.MembershipStatus.PENDING):
+            services.review_membership(recruiter, request.user, approve=True)
+
+    @admin.action(description='Từ chối HR vào công ty')
+    def reject_membership(self, request, queryset):
+        for recruiter in queryset.filter(membership_status=RecruiterProfile.MembershipStatus.PENDING):
+            services.review_membership(recruiter, request.user, approve=False, note='Từ chối qua admin')

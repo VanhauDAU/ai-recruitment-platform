@@ -2,6 +2,7 @@ import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Button, Result, message } from 'antd'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../../hooks/useAuth'
+import { useLoginPrompt } from '../../../hooks/useLoginPrompt'
 import { useSavedJob } from '../../../hooks/useSavedJobs'
 import JobDetailContent from './components/job-detail/JobDetailContent'
 import { JobBreadcrumbs, JobDetailSkeleton, JobHero } from './components/job-detail/JobDetailOverview'
@@ -15,12 +16,13 @@ export default function JobDetail() {
   const { slug, companySlug } = useParams()
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
+  const { promptLogin } = useLoginPrompt()
   const { job, relatedJobs, loading, notFound } = useJobDetailPageData({ slug, companySlug, navigate })
   const [saved, toggleSaved] = useSavedJob(job?.public_id)
 
   function requireCandidate() {
     if (!isAuthenticated) {
-      navigate('/login')
+      promptLogin()
       return false
     }
     if (user?.role !== 'candidate') {
@@ -72,7 +74,7 @@ export default function JobDetail() {
                 onApply={handleApply}
                 onSave={handleSave}
                 onReport={() => message.info('Cảm ơn bạn. Tính năng báo cáo chi tiết sẽ sớm được mở trong Trung tâm hỗ trợ.')}
-                onRequireLogin={() => navigate('/login')}
+                onRequireLogin={promptLogin}
               />
             </div>
             <JobDetailSidebar job={job} />

@@ -6,11 +6,11 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from apps.employers.models import EmployerProfile
+from apps.employers.models import Company
 from common.media_storage import media_url_from_value
 
-from .models import Job, JobCategory
-from .querysets import SALARY_BUCKETS, filter_salary_bucket
+from ..models import Job, JobCategory
+from .listing import SALARY_BUCKETS, filter_salary_bucket
 
 
 def _growth_series(active_jobs, now):
@@ -72,7 +72,7 @@ def _salary_demand(active_jobs):
 
 def _latest_jobs(active_jobs, request):
     jobs = (
-        active_jobs.select_related('employer_profile')
+        active_jobs.select_related('company')
         .prefetch_related('job_locations__location__parent')
         .order_by('-published')[:10]
     )
@@ -86,9 +86,9 @@ def _latest_jobs(active_jobs, request):
             'public_id': job.public_id,
             'slug': job.slug,
             'title': job.title,
-            'company_name': job.employer_profile.company_name,
+            'company_name': job.company.company_name,
             'company_logo_url': media_url_from_value(
-                job.employer_profile.company_logo_url, request=request,
+                job.company.logo_url, request=request,
             ),
             'location_name': province_names[0] if province_names else '',
             'location_names': province_names,
@@ -110,33 +110,33 @@ def _latest_jobs(active_jobs, request):
 def _featured_employers(active_jobs, request):
     employers = list(
         active_jobs.values(
-            'employer_profile_id',
-            'employer_profile__public_id',
-            'employer_profile__company_name',
-            'employer_profile__slug',
-            'employer_profile__company_logo_url',
+            'company_id',
+            'company__public_id',
+            'company__company_name',
+            'company__slug',
+            'company__logo_url',
         )
         .annotate(job_count=Count('id'))
-        .order_by('-job_count', 'employer_profile__company_name')[:18]
+        .order_by('-job_count', 'company__company_name')[:18]
     )
     industry_names = {
         row['id']: row['names']
-        for row in EmployerProfile.objects.filter(
-            id__in=[item['employer_profile_id'] for item in employers]
+        for row in Company.objects.filter(
+            id__in=[item['company_id'] for item in employers]
         )
         .values('id')
         .annotate(names=StringAgg('industries__name', delimiter=', ', distinct=True))
     }
     return [
         {
-            'id': item['employer_profile_id'],
-            'public_id': item['employer_profile__public_id'],
-            'company_name': item['employer_profile__company_name'],
-            'slug': item['employer_profile__slug'],
+            'id': item['company_id'],
+            'public_id': item['company__public_id'],
+            'company_name': item['company__company_name'],
+            'slug': item['company__slug'],
             'company_logo_url': media_url_from_value(
-                item['employer_profile__company_logo_url'], request=request,
+                item['company__logo_url'], request=request,
             ),
-            'industry': industry_names.get(item['employer_profile_id']) or '',
+            'industry': industry_names.get(item['company_id']) or '',
             'job_count': item['job_count'],
         }
         for item in employers
@@ -151,7 +151,7 @@ def build_job_stats(request):
     )
     return {
         'active_jobs': active_jobs.count(),
-        'companies': active_jobs.values('employer_profile').distinct().count(),
+        'companies': active_jobs.values('company').distinct().count(),
         'new_jobs_24h': active_jobs.filter(
             published__gte=now - timedelta(days=1)
         ).count(),
