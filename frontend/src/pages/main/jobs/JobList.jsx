@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FilterOutlined } from '@ant-design/icons'
-import { Drawer, Modal, message } from 'antd'
+import { message } from 'antd'
 import { saveHistory } from '../../../components/ui/searchDropdownHistory'
 import { useAuth } from '../../../hooks/useAuth'
 import { useHideOnScroll } from '../../../hooks/useHideOnScroll'
-import { getLocationsByIds, getWards } from '../../../api/locationService'
-import { getJobs } from '../../../api/jobService'
+import { useMediaQuery } from '../../../hooks/useMediaQuery'
 import { SALARY_RANGES, formatNumber } from '../../../constants/jobOptions'
-import Login from '../auth/Login'
 import JobFilterSidebar from './components/JobFilterSidebar'
 import JobListHeader from './components/JobListHeader'
+import JobListOverlays from './components/JobListOverlays'
 import JobQuickView from './components/JobQuickView'
 import JobResults from './components/JobResults'
 import JobSearchBar from './components/JobSearchBar'
 import LocationMergeNotice from './components/LocationMergeNotice'
 import QuickExplore from './components/QuickExplore'
 import useJobListData from './hooks/useJobListData'
+import useHanoiJobSuggestion from './hooks/useHanoiJobSuggestion'
+import useJobLocationData from './hooks/useJobLocationData'
 import useJobSidebarData from './hooks/useJobSidebarData'
 import {
   FILTER_KEYS,
@@ -29,34 +29,33 @@ import {
   getCommaList,
   getLocationIds,
   locationDisplayName,
+  mergeSearchParams,
   pathForLocation,
-  shortLocationName,
-  toApiParams,
+  removeSearchParams,
+  replaceCommaParam,
+  replaceLocationParams,
 } from './utils/jobListParams'
 
 export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [selectedLocationDetails, setSelectedLocationDetails] = useState([])
   const [keyword, setKeyword] = useState(searchParams.get('search') || '')
   const [expandedGroups, setExpandedGroups] = useState({})
   const [showAllGroups, setShowAllGroups] = useState(false)
-  const [hanoiSuggest, setHanoiSuggest] = useState(null)
   const [salaryFrom, setSalaryFrom] = useState(null)
   const [salaryTo, setSalaryTo] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
-  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches)
   const [quickViewJob, setQuickViewJob] = useState(null)
   const [dismissedNotice, setDismissedNotice] = useState(null)
   const [noticeExpanded, setNoticeExpanded] = useState(false)
-  const [suggestedWards, setSuggestedWards] = useState([])
   const searchBoxRef = useRef(null)
   const shortcutScrollerRef = useRef(null)
   const [canScrollShortcutsLeft, setCanScrollShortcutsLeft] = useState(false)
   const [canScrollShortcutsRight, setCanScrollShortcutsRight] = useState(false)
   const { isAuthenticated } = useAuth()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const { categories, demandCounts, industries, noExpCount, provinces, sidebarLoading } = useJobSidebarData()
   const { count, loading, results } = useJobListData(searchParams)
@@ -69,6 +68,16 @@ export default function JobList() {
   const page = Number(searchParams.get('page') || 1)
   const selectedLocations = getLocationIds(searchParams)
   const selectedLocationKey = selectedLocations.join(',')
+  const { selectedLocationGroups, suggestedWards } = useJobLocationData(
+    selectedLocations,
+    selectedLocationKey,
+    provinces,
+  )
+  const hanoiSuggest = useHanoiJobSuggestion(
+    searchParams,
+    provinces,
+    selectedLocations.length > 0,
+  )
   const selectedCategories = getCommaList(searchParams, 'cat').map(Number)
   const searchBy = searchParams.get('search_by') || 'title'
   const ordering = searchParams.get('sort') || ''
@@ -107,138 +116,19 @@ export default function JobList() {
     setKeyword(searchParamKeyword)
   }, [searchParamKeyword])
 
-  useEffect(() => {
-    if (!selectedLocations.length) {
-      setSelectedLocationDetails([])
-      return
-    }
-    let cancelled = false
-    getLocationsByIds(selectedLocations)
-      .then((items) => {
-        if (!cancelled) setSelectedLocationDetails(items)
-      })
-      .catch(() => {
-        if (!cancelled) setSelectedLocationDetails([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [selectedLocationKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (selectedLocations.length || !provinces.length) {
-      setHanoiSuggest(null)
-      return undefined
-    }
-    const hanoi = provinces.find((province) => province.name.includes('Hà Nội'))
-    if (!hanoi) return undefined
-    let cancelled = false
-    const params = toApiParams(searchParams)
-    params.delete('page')
-    params.append('location', hanoi.id)
-    params.set('page_size', '1')
-    getJobs(params)
-      .then((data) => !cancelled && setHanoiSuggest({ id: hanoi.id, count: data.count ?? 0 }))
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, provinces])
-
-  const selectedLocationGroups = useMemo(() => {
-    const locationMap = new Map(selectedLocationDetails.map((location) => [location.id, location]))
-    const groupsMap = new Map()
-
-    selectedLocations.forEach((locationId) => {
-      const location = locationMap.get(locationId)
-      if (!location) return
-      if (location.level === 'province') {
-        const group = groupsMap.get(location.id) || { province: location, wards: [], allProvince: false }
-        groupsMap.set(location.id, { ...group, province: location, allProvince: true })
-        return
-      }
-      if (location.level === 'ward') {
-        const province = provinces.find((item) => item.id === location.parent)
-        const groupKey = province?.id || `ward-${location.id}`
-        const group = groupsMap.get(groupKey) || { province, wards: [], allProvince: false }
-        if (!group.allProvince && !group.wards.some((ward) => ward.id === location.id)) {
-          group.wards.push(location)
-        }
-        groupsMap.set(groupKey, group)
-      }
-    })
-
-    return [...groupsMap.values()]
-  }, [provinces, selectedLocationDetails, selectedLocationKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const suggestedProvinces = useMemo(() => (
-    selectedLocationGroups
-      .map((group) => group.province)
-      .filter(Boolean)
-      .filter((province, index, items) => items.findIndex((item) => item.id === province.id) === index)
-  ), [selectedLocationGroups])
-
-  useEffect(() => {
-    if (!suggestedProvinces.length) {
-      setSuggestedWards([])
-      return
-    }
-
-    let cancelled = false
-    Promise.all(suggestedProvinces.map((province) => getWards(province.id).then((wards) => ({ province, wards }))))
-      .then((wardGroups) => {
-        if (cancelled) return
-        const selected = new Set(selectedLocations)
-        const candidates = wardGroups.flatMap(({ province, wards }) => (
-          wards
-            .filter((ward) => !selected.has(ward.id))
-            .map((ward) => ({
-              ...ward,
-              provinceId: province.id,
-              provinceName: shortLocationName(province.name),
-            }))
-        ))
-        const shuffled = [...candidates].sort(() => Math.random() - 0.5)
-        setSuggestedWards(shuffled.slice(0, 12))
-      })
-      .catch(() => {
-        if (!cancelled) setSuggestedWards([])
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [selectedLocationKey, selectedLocationGroups.length]) // eslint-disable-line react-hooks/exhaustive-deps
-
   function updateParams(entries) {
-    const next = new URLSearchParams(searchParams)
-    for (const [key, value] of Object.entries(entries)) {
-      if (value === undefined || value === null || value === '') next.delete(key)
-      else next.set(key, value)
-    }
-    next.delete('page')
-    setSearchParams(next)
+    setSearchParams(mergeSearchParams(searchParams, entries))
   }
 
   function setCommaParam(key, values) {
-    const next = new URLSearchParams(searchParams)
-    if (values.length) next.set(key, values.join(','))
-    else next.delete(key)
-    next.delete('page')
-    setSearchParams(next)
+    setSearchParams(replaceCommaParam(searchParams, key, values))
   }
 
   function setLocationParam(ids) {
-    const next = new URLSearchParams(searchParams)
-    next.delete('location')
-    next.delete('locations')
-    if (ids.length) next.set('locations', ids.join(','))
-    const nextKeyword = keyword.trim()
-    if (nextKeyword) next.set('search', nextKeyword)
-    else next.delete('search')
-    if (searchBy === 'title') next.delete('search_by')
-    next.delete('page')
+    const next = replaceLocationParams(searchParams, ids, {
+      keyword: keyword.trim(),
+      searchBy,
+    })
     const pathname = pathForLocation(ids, provinces)
     const query = next.toString()
     navigate(query ? `${pathname}?${query}` : pathname)
@@ -298,19 +188,17 @@ export default function JobList() {
   }
 
   function clearFilters() {
-    const next = new URLSearchParams(searchParams)
-    FILTER_KEYS.forEach((key) => next.delete(key))
-    next.delete('page')
-    setSearchParams(next)
+    setSearchParams(removeSearchParams(searchParams, [...FILTER_KEYS, 'page']))
     setSalaryFrom(null)
     setSalaryTo(null)
   }
 
   // Empty-state "Xóa bộ lọc & từ khóa": reset cả filter lẫn search về danh sách đầy đủ.
   function clearAllCriteria() {
-    const next = new URLSearchParams(searchParams)
-    ;[...FILTER_KEYS, 'search', 'search_by', 'page'].forEach((key) => next.delete(key))
-    setSearchParams(next)
+    setSearchParams(removeSearchParams(
+      searchParams,
+      [...FILTER_KEYS, 'search', 'search_by', 'page'],
+    ))
     setKeyword('')
     setSalaryFrom(null)
     setSalaryTo(null)
@@ -415,13 +303,6 @@ export default function JobList() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Xem nhanh chỉ tách 2 cột trên desktop; mobile mở Drawer toàn màn hình (danh sách giữ nguyên).
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
-    const onChange = (event) => setIsDesktop(event.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
   const inlineQuickView = quickViewJob && isDesktop
 
   // Dùng lại cho cả cột dính (desktop) và drawer lọc (mobile).
@@ -594,56 +475,19 @@ export default function JobList() {
         </div>
       </div>
 
-      <Drawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        placement="left"
-        size={320}
-        styles={{ body: { padding: 0 }, header: { padding: '12px 16px' } }}
-        title="Lọc nâng cao"
-        className="lg:hidden"
-      >
-        <div className="h-full [&_.filter-sidebar]:h-full">{filterSidebar}</div>
-      </Drawer>
-
-      <Drawer
-        open={Boolean(quickViewJob) && !isDesktop}
-        onClose={() => setQuickViewJob(null)}
-        placement="bottom"
-        size="92%"
-        closable={false}
-        styles={{ body: { padding: 0 } }}
-        className="lg:hidden"
-        rootClassName="[&_.ant-drawer-content]:!rounded-t-2xl [&_.ant-drawer-content]:overflow-hidden"
-      >
-        {quickViewJob && (
-          <div className="h-full overflow-y-auto [&>div]:!rounded-none [&>div]:!border-0">
-            <JobQuickView
-              job={quickViewJob}
-              onClose={() => setQuickViewJob(null)}
-              isAuthenticated={isAuthenticated}
-              onRequireLogin={() => setLoginModalOpen(true)}
-            />
-          </div>
-        )}
-      </Drawer>
-
-      <Modal
-        open={loginModalOpen}
-        onCancel={() => setLoginModalOpen(false)}
-        footer={null}
-        centered
-        width={640}
-        destroyOnHidden
-        styles={{
-          container: { borderRadius: 28, padding: 0, overflow: 'hidden' },
-          body: { padding: '40px 48px 36px' },
-        }}
-      >
-        <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
-          <Login onSuccess={handleLoginSuccess} />
-        </GoogleReCaptchaProvider>
-      </Modal>
+      <JobListOverlays
+        filterDrawerOpen={filterDrawerOpen}
+        filterSidebar={filterSidebar}
+        isAuthenticated={isAuthenticated}
+        isDesktop={isDesktop}
+        loginModalOpen={loginModalOpen}
+        quickViewJob={quickViewJob}
+        onFilterDrawerClose={() => setFilterDrawerOpen(false)}
+        onLoginClose={() => setLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        onQuickViewClose={() => setQuickViewJob(null)}
+        onRequireLogin={() => setLoginModalOpen(true)}
+      />
     </div>
   )
 }

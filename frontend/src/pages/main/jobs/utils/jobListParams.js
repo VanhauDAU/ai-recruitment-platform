@@ -18,6 +18,38 @@ const LIST_MAP = { cat: 'category', exp: 'experience_years' }
 // Key filter trên URL (dùng cho "Xóa lọc" và kiểm tra đang có lọc).
 export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'weekend', 'nganh', 'salary', 'sort']
 
+export function mergeSearchParams(current, entries, { resetPage = true } = {}) {
+  const next = new URLSearchParams(current)
+  for (const [key, value] of Object.entries(entries)) {
+    if (value === undefined || value === null || value === '') next.delete(key)
+    else next.set(key, value)
+  }
+  if (resetPage) next.delete('page')
+  return next
+}
+
+export function replaceCommaParam(current, key, values) {
+  return mergeSearchParams(current, { [key]: values.length ? values.join(',') : null })
+}
+
+export function removeSearchParams(current, keys) {
+  const next = new URLSearchParams(current)
+  keys.forEach((key) => next.delete(key))
+  return next
+}
+
+export function replaceLocationParams(current, ids, { keyword, searchBy }) {
+  const next = new URLSearchParams(current)
+  next.delete('location')
+  next.delete('locations')
+  if (ids.length) next.set('locations', ids.join(','))
+  if (keyword) next.set('search', keyword)
+  else next.delete('search')
+  if (searchBy === 'title') next.delete('search_by')
+  next.delete('page')
+  return next
+}
+
 function parseIdList(values) {
   return values
     .flatMap((value) => String(value || '').split(','))
