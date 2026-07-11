@@ -1,16 +1,18 @@
 from rest_framework.permissions import BasePermission
 
+from .services.access import is_account_accessible
+
 
 class IsCandidate(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_candidate)
+        return bool(request.user and request.user.is_authenticated and is_account_accessible(request.user) and request.user.is_candidate)
 
 
 class IsEmployer(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_employer)
+        return bool(request.user and request.user.is_authenticated and is_account_accessible(request.user) and request.user.is_employer)
 
 
 class IsAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_admin_role)
+        return bool(request.user and request.user.is_authenticated and is_account_accessible(request.user) and request.user.is_admin_role)

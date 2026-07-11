@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
-from .models import User
+from .models import SocialAccount, User
+
+
+class SocialAccountInline(admin.TabularInline):
+    model = SocialAccount
+    extra = 0
+    can_delete = False
+    readonly_fields = ['provider', 'provider_user_id', 'email', 'created_at', 'updated_at']
 
 
 @admin.register(User)
@@ -15,11 +22,13 @@ class UserAdmin(DjangoUserAdmin):
         (None, {'fields': ('email', 'password', 'public_id')}),
         ('Profile', {'fields': ('full_name', 'phone', 'avatar_url')}),
         ('Role & status', {'fields': ('role', 'status', 'is_active', 'is_staff', 'is_superuser', 'email_verified')}),
-        ('OAuth', {'fields': ('provider', 'provider_id')}),
         ('Soft delete', {'fields': ('is_deleted', 'deleted_at')}),
         ('Permissions', {'fields': ('groups', 'user_permissions')}),
         ('Timestamps', {'fields': ('date_joined', 'last_login', 'updated_at')}),
     )
+
+    filter_horizontal = ('groups', 'user_permissions')
+    inlines = [SocialAccountInline]
     add_fieldsets = (
         (None, {
             'classes': ('wide',),

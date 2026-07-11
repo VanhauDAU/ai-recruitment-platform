@@ -1,8 +1,18 @@
+"""reCAPTCHA verification integration for account entry points."""
+
 import requests
 from django.conf import settings
 from rest_framework import serializers
 
+
 RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
+
+
+def verify_request_captcha(request, action):
+    """Verify the token submitted with an HTTP request for the given action."""
+    remote_ip = request.META.get('REMOTE_ADDR') if request else None
+    token = request.data.get('captcha_token') if request else None
+    verify_recaptcha(token, action, remote_ip)
 
 
 def verify_recaptcha(token, action, remote_ip=None):
@@ -26,12 +36,7 @@ def verify_recaptcha(token, action, remote_ip=None):
 
     if not result.get('success'):
         raise serializers.ValidationError({'captcha_token': 'Xác thực captcha thất bại.'})
-
-    # `action`/`score` chỉ có trong response thật của v3 — vắng mặt nghĩa là đang
-    # dùng cặp test key chính thức của Google (luôn trả success mà không kèm 2 field
-    # này), nên bỏ qua 2 kiểm tra dưới để không chặn môi trường dev.
     if 'action' in result and result.get('action') != action:
         raise serializers.ValidationError({'captcha_token': 'Captcha không hợp lệ cho hành động này.'})
-
     if 'score' in result and result.get('score', 0) < settings.RECAPTCHA_SCORE_THRESHOLD:
         raise serializers.ValidationError({'captcha_token': 'Xác thực captcha thất bại (độ tin cậy thấp).'})

@@ -51,6 +51,48 @@ def active_jobs_queryset():
     )
 
 
+def active_job_detail_queryset():
+    """Return active jobs with every relation required by the detail serializer."""
+    return (
+        Job.objects.filter(status=Job.Status.ACTIVE)
+        .select_related('company')
+        .prefetch_related(
+            'category_assignments__category',
+            'job_locations__location__parent',
+            'job_skills__skill',
+            'work_schedules',
+            'job_benefits__benefit',
+            'language_requirements__language',
+            'company__industries',
+        )
+    )
+
+
+def suggest_job_search_terms(query, search_by=None, limit=10):
+    """Return de-duplicated autocomplete terms, prioritising prefix matches."""
+    query = (query or '').strip()
+    if not query:
+        return []
+
+    field = 'company__company_name' if search_by == 'company' else 'title'
+    values = (
+        Job.objects.filter(status=Job.Status.ACTIVE)
+        .filter(search_q(field, query))
+        .values_list(field, flat=True)
+        .distinct()
+    )
+    normalized_query = fold_accents(query)
+    seen, starts, contains = set(), [], []
+    for value in values:
+        term = (value or '').strip()
+        normalized_term = fold_accents(term)
+        if not term or normalized_term in seen:
+            continue
+        seen.add(normalized_term)
+        (starts if normalized_term.startswith(normalized_query) else contains).append(term)
+    return (starts + contains)[:limit]
+
+
 def _filter_categories(queryset, category_values):
     category_ids = [int(value) for value in category_values if value.isdigit()]
     children = list(

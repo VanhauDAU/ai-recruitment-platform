@@ -1,15 +1,17 @@
-from django.db.models import F
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
-from common.db.search import fold_accents, search_q
-
 from ...models import Job, SavedJob
-from ...selectors.listing import build_job_list_queryset
+from ...selectors.listing import (
+    active_job_detail_queryset,
+    build_job_list_queryset,
+    suggest_job_search_terms,
+)
 from ...selectors.stats import build_job_stats
+from ...services import record_job_view
 from ..serializers import JobDetailSerializer, JobSerializer, SavedJobSerializer
 
 
@@ -99,52 +101,20 @@ class JobSuggestView(APIView):
         tags=['jobs'],
     )
     def get(self, request):
-        q = request.query_params.get('q', '').strip()
-        if not q:
-            return Response({'suggestions': []})
-        field = 'company__company_name' if request.query_params.get('search_by') == 'company' else 'title'
-        values = (
-            Job.objects.filter(status=Job.Status.ACTIVE)
-            .filter(search_q(field, q))
-            .values_list(field, flat=True)
-            .distinct()
-        )
-        # Bỏ trùng + ưu tiên mục bắt đầu bằng từ khóa — đều so không dấu, không phân biệt hoa thường.
-        ql = fold_accents(q)
-        seen, starts, contains = set(), [], []
-        for value in values:
-            k = (value or '').strip()
-            kf = fold_accents(k)
-            if not k or kf in seen:
-                continue
-            seen.add(kf)
-            (starts if kf.startswith(ql) else contains).append(k)
-        return Response({'suggestions': (starts + contains)[:10]})
+        return Response({'suggestions': suggest_job_search_terms(
+            request.query_params.get('q'), request.query_params.get('search_by')
+        )})
 
 
 class JobDetailView(generics.RetrieveAPIView):
     serializer_class = JobDetailSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
-    queryset = (
-        Job.objects.filter(status=Job.Status.ACTIVE)
-        .select_related('company')
-        .prefetch_related(
-            'category_assignments__category',
-            'job_locations__location__parent',
-            'job_skills__skill',
-            'work_schedules',
-            'job_benefits__benefit',
-            'language_requirements__language',
-            'company__industries',
-        )
-    )
+    queryset = active_job_detail_queryset()
 
     def get_object(self):
         job = super().get_object()
-        Job.objects.filter(pk=job.pk).update(view_count=F('view_count') + 1)
-        job.refresh_from_db(fields=['view_count'])
-        return job
+        return record_job_view(job)
 
 
 class SavedJobListCreateView(generics.ListCreateAPIView):
@@ -183,4 +153,3 @@ class SavedJobDestroyView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return SavedJob.objects.filter(candidate=self.request.user)
-

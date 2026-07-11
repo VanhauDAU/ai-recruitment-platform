@@ -11,8 +11,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from . import email_verification, oauth, password_reset
+from . import oauth
 from .models import AuthEmailJob, SocialAccount, User
+from .services import email_verification, password_reset
 from .tasks import deliver_auth_email_job
 
 
@@ -142,7 +143,7 @@ class OAuthFlowTests(APITestCase):
 
         user = User.objects.get(email='social@example.com')
         self.assertFalse(user.has_usable_password())
-        self.assertEqual(user.provider, 'google')
+        self.assertTrue(user.social_accounts.filter(provider='google').exists())
         self.assertTrue(
             SocialAccount.objects.filter(
                 user=user, provider='google', provider_user_id='google-uid-1'
@@ -182,6 +183,13 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(first.data['user']['id'], second.data['user']['id'])
         self.assertEqual(SocialAccount.objects.count(), 1)
         self.assertEqual(User.objects.filter(email='social@example.com').count(), 1)
+
+    def test_one_user_can_link_multiple_social_providers(self):
+        user = oauth.resolve_user('google', dict(GOOGLE_PROFILE), 'main')
+        oauth.resolve_user('facebook', {
+            'id': 'facebook-uid-1', 'email': user.email, 'name': 'Nguyễn Social', 'avatar': '', 'raw': {},
+        }, 'main')
+        self.assertEqual(user.social_accounts.count(), 2)
 
     def test_profile_without_email_is_rejected(self):
         profile = dict(GOOGLE_PROFILE, email='')
@@ -285,6 +293,31 @@ class LastLoginTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
+
+    def test_banned_or_deleted_user_cannot_log_in(self):
+        for suffix, fields in (
+            ('banned', {'status': User.Status.BANNED}),
+            ('deleted', {'is_deleted': True}),
+        ):
+            user = User.objects.create_user(email=f'{suffix}@example.com', password='Password@123')
+            User.objects.filter(pk=user.pk).update(**fields)
+            response = self.client.post(reverse('auth-login'), {
+                'email': user.email, 'password': 'Password@123', 'captcha_token': 'x',
+            })
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_banned_user_cannot_reuse_access_or_refresh_token(self):
+        user = User.objects.create_user(email='revoked@example.com', password='Password@123')
+        login = self.client.post(reverse('auth-login'), {
+            'email': user.email, 'password': 'Password@123', 'captcha_token': 'x',
+        })
+        User.objects.filter(pk=user.pk).update(status=User.Status.BANNED)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {login.data["access"]}')
+        self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
+        self.client.credentials()
+        refresh = self.client.post(reverse('auth-refresh'), {'refresh': login.data['refresh']})
+        self.assertEqual(refresh.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_register_auto_login_sets_last_login(self):
         response = self.client.post(reverse('auth-register'), {

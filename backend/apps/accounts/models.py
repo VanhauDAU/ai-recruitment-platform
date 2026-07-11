@@ -73,8 +73,6 @@ class User(AbstractUser):
     full_name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=20, blank=True)
     avatar_url = models.TextField(blank=True)
-    provider = models.CharField(max_length=50, choices=Provider.choices, default=Provider.LOCAL)
-    provider_id = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)

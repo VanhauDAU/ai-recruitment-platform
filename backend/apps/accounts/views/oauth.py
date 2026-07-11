@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from .. import oauth
 from ..models import User
 from ..serializers import UserSerializer
-from .tokens import issue_tokens
+from ..services.tokens import issue_tokens
 
 
 def _oauth_error_redirect(portal, error_code):

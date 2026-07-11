@@ -1,5 +1,6 @@
 import api from './api'
 import { fetchAllPages } from './pagination'
+import { dedupeRequest } from './requestDeduplication'
 
 export async function getJobs(params = {}) {
   const { data } = await api.get('/jobs/', { params })
@@ -7,12 +8,14 @@ export async function getJobs(params = {}) {
 }
 
 export async function getJobDetail(slug) {
-  const { data } = await api.get(`/jobs/${slug}/`)
-  return data
+  return dedupeRequest(`job-detail:${slug}`, async () => {
+    const { data } = await api.get(`/jobs/${slug}/`)
+    return data
+  })
 }
 
 export async function getJobCategories() {
-  return fetchAllPages('/jobs/categories/')
+  return dedupeRequest('job-categories', () => fetchAllPages('/jobs/categories/'))
 }
 
 export async function getJobStats() {
@@ -28,8 +31,10 @@ export async function getIndustries() {
 
 // Việc làm đã lưu (ứng viên). Trả về [{ job_detail, created_at }] — không phân trang.
 export async function getSavedJobs() {
-  const { data } = await api.get('/jobs/saved/')
-  return data
+  return dedupeRequest('saved-jobs', async () => {
+    const { data } = await api.get('/jobs/saved/')
+    return data
+  })
 }
 
 export async function saveJob(publicId) {

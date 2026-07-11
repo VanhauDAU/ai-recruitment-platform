@@ -1,4 +1,4 @@
-"""Celery tasks for authentication emails, backed by AuthEmailJob outbox rows."""
+"""Transactional-outbox tasks for security-sensitive authentication emails."""
 
 import logging
 from datetime import timedelta
@@ -8,21 +8,15 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from . import email_verification, password_reset
-from .models import AuthEmailJob
+from ..models import AuthEmailJob
+from ..services import email_verification, password_reset
 
 logger = logging.getLogger(__name__)
-
 MAX_DELIVERY_ATTEMPTS = 4
 STALE_SENDING_AFTER = timedelta(minutes=5)
 
 
 def queue_auth_email(kind, user):
-    """Persist an email job before asking Celery to process it.
-
-    If the broker is temporarily unavailable after commit, Celery Beat will pick
-    up the pending row later instead of losing a verification/reset email.
-    """
     job = AuthEmailJob.objects.create(user=user, kind=kind)
 
     def dispatch():
@@ -48,20 +42,13 @@ def _send(job):
 
 @shared_task(bind=True, max_retries=MAX_DELIVERY_ATTEMPTS - 1)
 def deliver_auth_email_job(self, job_id):
-    """Deliver one outbox row with idempotent state transitions and retry."""
     now = timezone.now()
     with transaction.atomic():
-        job = (
-            AuthEmailJob.objects.select_for_update()
-            .select_related('user')
-            .filter(pk=job_id)
-            .first()
-        )
+        job = AuthEmailJob.objects.select_for_update().select_related('user').filter(pk=job_id).first()
         if job is None or job.status == AuthEmailJob.Status.SENT:
             return
         if job.status == AuthEmailJob.Status.SENDING and job.started_at and now - job.started_at < STALE_SENDING_AFTER:
             return
-
         job.status = AuthEmailJob.Status.SENDING
         job.started_at = now
         job.attempts += 1
@@ -89,18 +76,13 @@ def deliver_auth_email_job(self, job_id):
 
 @shared_task
 def dispatch_pending_auth_email_jobs():
-    """Safety net for jobs left pending after a broker/worker interruption."""
     stale_before = timezone.now() - STALE_SENDING_AFTER
     jobs = AuthEmailJob.objects.filter(
         Q(status=AuthEmailJob.Status.PENDING)
         | Q(status=AuthEmailJob.Status.SENDING, started_at__lt=stale_before)
     ).values_list('pk', flat=True)[:100]
-
-    dispatched = 0
     for job_id in jobs:
         try:
             deliver_auth_email_job.delay(job_id)
-            dispatched += 1
         except Exception:  # noqa: BLE001 - leave row for the next Beat sweep
             logger.exception('Không thể dispatch lại auth email job %s.', job_id)
-    return dispatched

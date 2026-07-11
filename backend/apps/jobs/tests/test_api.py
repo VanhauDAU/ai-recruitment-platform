@@ -10,6 +10,18 @@ from ..api.serializers import EmployerJobSerializer, JobDetailSerializer
 from ..models import Benefit, Job, JobCategory, Language
 
 
+class JobCategoryApiTests(APITestCase):
+    def test_category_catalog_is_returned_in_one_unpaginated_response(self):
+        JobCategory.objects.create(name='Kế toán')
+        JobCategory.objects.create(name='Lập trình')
+
+        response = self.client.get(reverse('job-category-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual({item['name'] for item in response.data}, {'Kế toán', 'Lập trình'})
+
+
 class JobSalaryBucketFilterTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(

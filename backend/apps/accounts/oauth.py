@@ -20,6 +20,7 @@ from django.db import transaction
 from common.cache_utils import atomic_pop
 
 from .models import SocialAccount, User
+from .services.access import is_account_accessible
 
 _STATE_PREFIX = 'oauth:state:'
 _CODE_PREFIX = 'oauth:code:'
@@ -221,7 +222,7 @@ def resolve_user(provider, profile, portal):
             user = account.user
             if user.role != role:
                 raise OAuthError('wrong_portal')
-            if not user.is_active:
+            if not is_account_accessible(user):
                 raise OAuthError('inactive')
             return user
 
@@ -233,7 +234,7 @@ def resolve_user(provider, profile, portal):
         if user:
             if user.role != role:
                 raise OAuthError('wrong_portal')
-            if not user.is_active:
+            if not is_account_accessible(user):
                 raise OAuthError('inactive')
             # Provider đã xác thực email này -> coi như email tài khoản đã xác thực.
             update_fields = []
@@ -252,8 +253,6 @@ def resolve_user(provider, profile, portal):
                 role=role,
                 full_name=profile.get('name', ''),
                 avatar_url=profile.get('avatar', ''),
-                provider=provider,
-                provider_id=profile['id'],
                 email_verified=True,
             )
 

@@ -1,8 +1,8 @@
 """Views của app accounts, tách theo mối quan tâm (khớp các module service cùng tên):
 
 - auth.py            — đăng ký, đăng nhập, me, avatar
-- verification.py    — xác thực email (../email_verification.py)
-- password_reset.py  — đặt lại mật khẩu (../password_reset.py)
+- verification.py    — xác thực email (../services/email_verification.py)
+- password_reset.py  — đặt lại mật khẩu (../services/password_reset.py)
 - oauth.py           — social login (../oauth.py)
 """
 

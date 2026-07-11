@@ -1,18 +1,25 @@
 import api from './api'
+import { dedupeRequest } from './requestDeduplication'
 
 export async function getLinkGroups(placement) {
-  const { data } = await api.get('/site/link-groups/', { params: placement ? { placement } : {} })
-  return data
+  return dedupeRequest(`link-groups:${placement || 'all'}`, async () => {
+    const { data } = await api.get('/site/link-groups/', { params: placement ? { placement } : {} })
+    return data
+  })
 }
 
 export async function getSiteSettings() {
-  const { data } = await api.get('/site/settings/')
-  return data
+  return dedupeRequest('site-settings', async () => {
+    const { data } = await api.get('/site/settings/')
+    return data
+  })
 }
 
 export async function getBanners(placement) {
-  const { data } = await api.get('/site/banners/', { params: placement ? { placement } : {} })
-  return data
+  return dedupeRequest(`banners:${placement || 'all'}`, async () => {
+    const { data } = await api.get('/site/banners/', { params: placement ? { placement } : {} })
+    return data
+  })
 }
 
 // Góp ý / báo lỗi từ nút nổi "Hỗ trợ". Khách chưa đăng nhập vẫn gửi được.
