@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FilterOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import { saveHistory } from '../../../components/ui/searchDropdownHistory'
 import { useAuth } from '../../../hooks/useAuth'
 import { useHideOnScroll } from '../../../hooks/useHideOnScroll'
 import { useMediaQuery } from '../../../hooks/useMediaQuery'
-import { SALARY_RANGES, formatNumber } from '../../../constants/jobOptions'
+import { formatNumber } from '../../../constants/jobOptions'
 import JobFilterSidebar from './components/JobFilterSidebar'
 import JobListHeader from './components/JobListHeader'
 import JobListOverlays from './components/JobListOverlays'
@@ -16,34 +14,16 @@ import JobSearchBar from './components/JobSearchBar'
 import LocationMergeNotice from './components/LocationMergeNotice'
 import QuickExplore from './components/QuickExplore'
 import useJobListData from './hooks/useJobListData'
+import useJobListFilters from './hooks/useJobListFilters'
 import useHanoiJobSuggestion from './hooks/useHanoiJobSuggestion'
 import useJobLocationData from './hooks/useJobLocationData'
 import useJobSidebarData from './hooks/useJobSidebarData'
-import {
-  FILTER_KEYS,
-  SALARY_UNIT,
-  SAVED_FILTER_KEY,
-  decodeSalary,
-  encodeSalary,
-  formatLocationGroups,
-  getCommaList,
-  getLocationIds,
-  locationDisplayName,
-  mergeSearchParams,
-  pathForLocation,
-  removeSearchParams,
-  replaceCommaParam,
-  replaceLocationParams,
-} from './utils/jobListParams'
+import { buildCategoryTree, nodeCheckState, selectedLeafSet, toggleCategoryIds } from './utils/categoryTree'
+import { formatLocationGroups, locationDisplayName } from './utils/jobListParams'
 
 export default function JobList() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const [keyword, setKeyword] = useState(searchParams.get('search') || '')
   const [expandedGroups, setExpandedGroups] = useState({})
   const [showAllGroups, setShowAllGroups] = useState(false)
-  const [salaryFrom, setSalaryFrom] = useState(null)
-  const [salaryTo, setSalaryTo] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
@@ -58,6 +38,12 @@ export default function JobList() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const { categories, demandCounts, industries, noExpCount, provinces, sidebarLoading } = useJobSidebarData()
+  const filters = useJobListFilters(provinces)
+  const {
+    expYears, hasFilters, keyword, ordering, page,
+    searchBy, searchParamKeyword, searchParams,
+    selectedCategories, selectedLocations,
+  } = filters
   const { count, loading, results } = useJobListData(searchParams)
 
   // Thanh tìm kiếm sticky né header (header tự ẩn khi cuộn xuống); sidebar dính ngay dưới nó.
@@ -65,8 +51,6 @@ export default function JobList() {
   const searchTop = headerVisible ? 64 : 0
   const sidebarTop = searchTop + 76
 
-  const page = Number(searchParams.get('page') || 1)
-  const selectedLocations = getLocationIds(searchParams)
   const selectedLocationKey = selectedLocations.join(',')
   const { selectedLocationGroups, suggestedWards } = useJobLocationData(
     selectedLocations,
@@ -78,20 +62,16 @@ export default function JobList() {
     provinces,
     selectedLocations.length > 0,
   )
-  const selectedCategories = getCommaList(searchParams, 'cat').map(Number)
-  const searchBy = searchParams.get('search_by') || 'title'
-  const ordering = searchParams.get('sort') || ''
-  const expYears = getCommaList(searchParams, 'exp')
-  const searchParamKeyword = searchParams.get('search') || ''
 
-  const groups = useMemo(() => categories.filter((category) => !category.parent), [categories])
-  const childrenOf = useMemo(() => {
-    const map = {}
-    for (const category of categories) {
-      if (category.parent) (map[category.parent] ||= []).push(category)
-    }
-    return map
-  }, [categories])
+  const categoryTree = useMemo(() => buildCategoryTree(categories), [categories])
+  const { groups, childrenOf } = categoryTree
+  // Tập lá đang chọn -> để cha/con trong bộ lọc hiển thị checked/indeterminate đúng.
+  const selectedLeaves = useMemo(
+    () => selectedLeafSet(selectedCategories, categoryTree.leavesUnder),
+    [selectedCategories, categoryTree],
+  )
+  const categoryCheckState = (id) => nodeCheckState(id, selectedLeaves, categoryTree.leavesUnder)
+  const toggleCategory = (id) => filters.setCommaParam('cat', toggleCategoryIds(id, selectedCategories, categoryTree))
 
   // "Khám phá nhanh" là lối vào duyệt việc, không phải một phần của kết quả:
   // ẩn khi user đã gõ từ khoá (đã biết rõ muốn gì), còn lọc theo địa điểm/ngành
@@ -112,32 +92,15 @@ export default function JobList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarLoading, groups.length, showQuickExplore])
 
-  useEffect(() => {
-    setKeyword(searchParamKeyword)
-  }, [searchParamKeyword])
-
-  function updateParams(entries) {
-    setSearchParams(mergeSearchParams(searchParams, entries))
+  // Dropdown gợi ý là UI cục bộ của trang: đóng nó mỗi khi một tìm kiếm được chạy.
+  function runSearch(nextKeyword, by) {
+    setDropdownOpen(false)
+    filters.runSearch(nextKeyword, by)
   }
 
-  function setCommaParam(key, values) {
-    setSearchParams(replaceCommaParam(searchParams, key, values))
-  }
-
-  function setLocationParam(ids) {
-    const next = replaceLocationParams(searchParams, ids, {
-      keyword: keyword.trim(),
-      searchBy,
-    })
-    const pathname = pathForLocation(ids, provinces)
-    const query = next.toString()
-    navigate(query ? `${pathname}?${query}` : pathname)
-  }
-
-  function selectSuggestedLocation(provinceName) {
-    const province = provinces.find((item) => item.name.includes(provinceName))
-    if (!province) return
-    setLocationParam([province.id])
+  function handleDropdownSelect(nextKeyword, by) {
+    setDropdownOpen(false)
+    filters.handleDropdownSelect(nextKeyword, by)
   }
 
   function openLocationPicker() {
@@ -146,34 +109,6 @@ export default function JobList() {
 
   function jumpToResults() {
     document.getElementById('job-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  function toggleCategory(id) {
-    setCommaParam(
-      'cat',
-      selectedCategories.includes(id) ? selectedCategories.filter((categoryId) => categoryId !== id) : [...selectedCategories, id],
-    )
-  }
-
-  function runSearch(nextKeyword = keyword, by = searchBy) {
-    saveHistory(nextKeyword, by)
-    setDropdownOpen(false)
-    updateParams({ search: nextKeyword.trim() || null, search_by: by === 'title' ? null : by })
-  }
-
-  function handleDropdownSelect(nextKeyword, by = searchBy) {
-    setKeyword(nextKeyword)
-    runSearch(nextKeyword, by)
-  }
-
-  // Bấm "x" (hoặc xoá hết chữ) khi đang có search trên URL -> xoá filter ngay, không cần bấm Enter.
-  function handleKeywordChange(value) {
-    setKeyword(value)
-    if (!value && searchParams.get('search')) runSearch('')
-  }
-
-  function toggleExperienceYears(value) {
-    setCommaParam('exp', expYears.includes(value) ? expYears.filter((item) => item !== value) : [...expYears, value])
   }
 
   function updateShortcutScrollState() {
@@ -187,68 +122,21 @@ export default function JobList() {
     shortcutScrollerRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' })
   }
 
-  function clearFilters() {
-    setSearchParams(removeSearchParams(searchParams, [...FILTER_KEYS, 'page']))
-    setSalaryFrom(null)
-    setSalaryTo(null)
-  }
-
-  // Empty-state "Xóa bộ lọc & từ khóa": reset cả filter lẫn search về danh sách đầy đủ.
-  function clearAllCriteria() {
-    setSearchParams(removeSearchParams(
-      searchParams,
-      [...FILTER_KEYS, 'search', 'search_by', 'page'],
-    ))
-    setKeyword('')
-    setSalaryFrom(null)
-    setSalaryTo(null)
-  }
-
-  function persistFilter() {
-    localStorage.setItem(SAVED_FILTER_KEY, searchParams.toString())
-  }
-
   function saveFilter() {
     if (!isAuthenticated) {
       setLoginModalOpen(true)
       return
     }
-    persistFilter()
+    filters.persistFilter()
     message.success('Đã lưu bộ lọc hiện tại')
   }
 
   function handleLoginSuccess() {
     setLoginModalOpen(false)
-    persistFilter()
+    filters.persistFilter()
     message.success('Đăng nhập thành công. Đã lưu bộ lọc.')
   }
 
-  const salaryDec = decodeSalary(searchParams.get('salary'))
-  const matchedRange = SALARY_RANGES.find(
-    (range) => (range.gte ?? null) === (salaryDec?.gte ?? null) && (range.lte ?? null) === (salaryDec?.lte ?? null),
-  )
-  const salaryKey = salaryDec?.nego
-    ? 'nego'
-    : matchedRange
-      ? matchedRange.key
-      : salaryDec?.gte || salaryDec?.lte
-        ? 'custom'
-        : ''
-
-  function onSalaryChange(key) {
-    if (!key) return updateParams({ salary: null })
-    if (key === 'nego') return updateParams({ salary: 'nego' })
-    const range = SALARY_RANGES.find((item) => item.key === key)
-    return updateParams({ salary: encodeSalary(range?.gte, range?.lte) })
-  }
-
-  function applyCustomSalary() {
-    updateParams({
-      salary: encodeSalary(salaryFrom ? salaryFrom * SALARY_UNIT : null, salaryTo ? salaryTo * SALARY_UNIT : null),
-    })
-  }
-
-  const hasFilters = FILTER_KEYS.some((key) => searchParams.has(key))
   const catChain = (() => {
     if (selectedCategories.length !== 1) return []
     const byId = Object.fromEntries(categories.map((category) => [category.id, category]))
@@ -286,21 +174,9 @@ export default function JobList() {
     return min + (hash % (max - min + 1))
   }, [selectedLocationKey, results.length])
 
-  const toggleParam = (key, value) => updateParams({ [key]: searchParams.get(key) === value ? null : value })
   const openAllCategories = () => {
     setShowAllGroups(true)
     document.getElementById('cat-filter')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-
-  function selectSuggestedWard(wardId) {
-    setLocationParam([wardId])
-  }
-
-  function handlePageChange(nextPage) {
-    const next = new URLSearchParams(searchParams)
-    next.set('page', nextPage)
-    setSearchParams(next)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const inlineQuickView = quickViewJob && isDesktop
@@ -308,6 +184,7 @@ export default function JobList() {
   // Dùng lại cho cả cột dính (desktop) và drawer lọc (mobile).
   const filterSidebar = (
     <JobFilterSidebar
+      categoryCheckState={categoryCheckState}
       childrenOf={childrenOf}
       demandCounts={demandCounts}
       expandedGroups={expandedGroups}
@@ -315,23 +192,22 @@ export default function JobList() {
       groups={groups}
       hasFilters={hasFilters}
       industries={industries}
-      onApplyCustomSalary={applyCustomSalary}
-      onClearFilters={clearFilters}
+      onApplyCustomSalary={filters.applyCustomSalary}
+      onClearFilters={filters.clearFilters}
       onSaveFilter={saveFilter}
-      onSalaryChange={onSalaryChange}
-      onSetCommaParam={setCommaParam}
+      onSalaryChange={filters.onSalaryChange}
+      onSetCommaParam={filters.setCommaParam}
       onSetExpandedGroups={setExpandedGroups}
-      onSetSalaryFrom={setSalaryFrom}
-      onSetSalaryTo={setSalaryTo}
+      onSetSalaryFrom={filters.setSalaryFrom}
+      onSetSalaryTo={filters.setSalaryTo}
       onSetShowAllGroups={setShowAllGroups}
       onToggleCategory={toggleCategory}
-      onToggleExperienceYears={toggleExperienceYears}
-      onUpdateParams={updateParams}
-      salaryFrom={salaryFrom}
-      salaryKey={salaryKey}
-      salaryTo={salaryTo}
+      onToggleExperienceYears={filters.toggleExperienceYears}
+      onUpdateParams={filters.updateParams}
+      salaryFrom={filters.salaryFrom}
+      salaryKey={filters.salaryKey}
+      salaryTo={filters.salaryTo}
       searchParams={searchParams}
-      selectedCategories={selectedCategories}
       showAllGroups={showAllGroups}
       sidebarLoading={sidebarLoading}
       sidebarTop={sidebarTop}
@@ -344,14 +220,14 @@ export default function JobList() {
         categories={categories}
         dropdownOpen={dropdownOpen}
         keyword={keyword}
-        onCategoryChange={(ids) => setCommaParam('cat', ids)}
+        onCategoryChange={(ids) => filters.setCommaParam('cat', ids)}
         onDropdownClose={() => setDropdownOpen(false)}
         onDropdownOpen={() => setDropdownOpen(true)}
         onDropdownSelect={handleDropdownSelect}
-        onKeywordChange={handleKeywordChange}
-        onLocationChange={setLocationParam}
+        onKeywordChange={filters.handleKeywordChange}
+        onLocationChange={filters.setLocationParam}
         onRunSearch={runSearch}
-        onSearchByChange={(by) => updateParams({ search_by: by === 'title' ? null : by })}
+        onSearchByChange={(by) => filters.updateParams({ search_by: by === 'title' ? null : by })}
         searchBoxRef={searchBoxRef}
         searchBy={searchBy}
         searchTop={searchTop}
@@ -372,10 +248,10 @@ export default function JobList() {
           isLocationContext={isLocationContext}
           loading={loading}
           locationSummary={locationSummary}
-          onCategorySelect={(id) => setCommaParam('cat', [id])}
+          onCategorySelect={(id) => filters.setCommaParam('cat', [id])}
           onJumpToResults={jumpToResults}
           onLocationPickerOpen={openLocationPicker}
-          onSuggestedLocationSelect={selectSuggestedLocation}
+          onSuggestedLocationSelect={filters.selectSuggestedLocation}
           searchSuggestion={keyword.trim()}
           updateLabel={updateLabel}
         />
@@ -383,7 +259,7 @@ export default function JobList() {
         {!selectedLocations.length && hanoiSuggest?.count > 0 && (
           <button
             type="button"
-            onClick={() => setLocationParam([hanoiSuggest.id])}
+            onClick={() => filters.setLocationParam([hanoiSuggest.id])}
             className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition hover:border-[var(--brand-primary)]"
           >
             Có <b>{formatNumber(hanoiSuggest.count)}</b> việc làm tại Hà Nội.
@@ -401,8 +277,8 @@ export default function JobList() {
             onOpenAllCategories={openAllCategories}
             onScroll={scrollShortcuts}
             onToggleCategory={toggleCategory}
-            onToggleExperienceYears={toggleExperienceYears}
-            onToggleParam={toggleParam}
+            onToggleExperienceYears={filters.toggleExperienceYears}
+            onToggleParam={filters.toggleParam}
             ordering={ordering}
             scrollerRef={shortcutScrollerRef}
             searchParams={searchParams}
@@ -443,13 +319,13 @@ export default function JobList() {
             count={count}
             isAuthenticated={isAuthenticated}
             loading={loading}
-            onClearAll={hasFilters || searchParamKeyword ? clearAllCriteria : undefined}
-            onPageChange={handlePageChange}
+            onClearAll={hasFilters || searchParamKeyword ? filters.clearAllCriteria : undefined}
+            onPageChange={filters.handlePageChange}
             onRequireLogin={() => setLoginModalOpen(true)}
-            onSearchByChange={(tabKey) => updateParams({ search_by: tabKey === 'title' ? null : tabKey })}
-            onSelectSuggestedWard={selectSuggestedWard}
+            onSearchByChange={(tabKey) => filters.updateParams({ search_by: tabKey === 'title' ? null : tabKey })}
+            onSelectSuggestedWard={(wardId) => filters.setLocationParam([wardId])}
             onSetQuickViewJob={setQuickViewJob}
-            onSortChange={(sort) => updateParams({ sort })}
+            onSortChange={(sort) => filters.updateParams({ sort })}
             ordering={ordering}
             page={page}
             quickViewJob={inlineQuickView ? quickViewJob : null}

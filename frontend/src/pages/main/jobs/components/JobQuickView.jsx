@@ -13,6 +13,7 @@ import {
   formatLocations,
   formatSalary,
 } from '../../../../constants/jobOptions'
+import { jobDetailPath } from '../../../../config/jobPaths'
 import { useSavedJob } from '../../../../hooks/useSavedJobs'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.
@@ -125,7 +126,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
             </span>
           )}
           <Link
-            to={`/viec-lam/${job.slug}`}
+            to={jobDetailPath(job)}
             className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)]"
           >
             Xem chi tiết <RightOutlined className="text-[10px]" />
@@ -135,7 +136,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
         <div className="mt-3 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate(`/viec-lam/${job.slug}`)}
+            onClick={() => navigate(jobDetailPath(job))}
             className="flex-1 cursor-pointer rounded-lg bg-[var(--brand-primary)] py-2.5 text-sm font-bold text-white transition hover:bg-[var(--brand-primary-hover)]"
           >
             Ứng tuyển ngay
@@ -175,18 +176,17 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
             )}
 
             <Section title="Mô tả công việc" text={d.description} />
-            <Section title="Trách nhiệm công việc" text={d.responsibilities} />
             <Section title="Yêu cầu ứng viên" text={d.requirements} />
-            <Section title="Ưu tiên thêm" text={d.nice_to_have} />
             <Section title="Quyền lợi" text={d.benefits} />
 
-            {(d.locations_detail?.length || d.address) && (
+            {d.job_locations?.length > 0 && (
               <section>
                 <h3 className="mb-1.5 text-[15px] font-bold text-gray-900">Địa điểm làm việc</h3>
-                {d.locations_detail?.length > 0 && (
-                  <p className="text-sm text-gray-700">- {d.locations_detail.map((l) => l.name).join(', ')}</p>
-                )}
-                {d.address && <p className="mt-0.5 whitespace-pre-line text-sm text-gray-700">{d.address}</p>}
+                {d.job_locations.map((location) => (
+                  <p key={location.id || `${location.location}-${location.address_detail}`} className="text-sm text-gray-700">
+                    - {[location.address_detail, location.location_name, location.location_level === 'ward' && location.province_name].filter(Boolean).join(', ')}
+                  </p>
+                ))}
               </section>
             )}
 

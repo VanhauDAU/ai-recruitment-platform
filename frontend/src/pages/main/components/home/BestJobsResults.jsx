@@ -7,6 +7,7 @@ import {
   formatSalary,
   stripCompanyPrefix,
 } from '../../../../constants/jobOptions'
+import { jobDetailPath } from '../../../../config/jobPaths'
 import { BEST_JOBS_LOGO_TINTS, BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from './bestJobsConfig'
 import JobPreviewPanel from './JobPreviewPanel'
 
@@ -80,7 +81,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
         return (
           <div key={job.public_id} className="relative" onMouseLeave={() => closePreview(160)}>
             <a
-              href={`/viec-lam/${job.slug}`}
+              href={jobDetailPath(job)}
               target="_blank"
               rel="noreferrer"
               className="group relative flex gap-3 rounded-lg border border-gray-200 p-3 transition hover:border-[var(--brand-primary)] hover:shadow-md"
@@ -89,7 +90,14 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-gray-100 text-lg font-bold"
                 style={{ background: logoBackground, color: logoColor }}
               >
-                {company.charAt(0) || '?'}
+                {job.company_logo_url ? (
+                  <img
+                    src={job.company_logo_url}
+                    alt={job.company_name}
+                    className="h-full w-full rounded-md bg-white object-contain p-1"
+                    loading="lazy"
+                  />
+                ) : company.charAt(0) || '?'}
               </div>
               <div className="min-w-0 flex-1 pr-5">
                 <h3
@@ -126,8 +134,8 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
                 anchorRect={preview.anchor}
                 onMouseEnter={() => clearTimeout(closeTimer.current)}
                 onMouseLeave={() => closePreview()}
-                onViewDetail={() => navigate(`/viec-lam/${job.slug}`)}
-                onApply={() => navigate(`/viec-lam/${job.slug}`)}
+                onViewDetail={() => navigate(jobDetailPath(job))}
+                onApply={() => navigate(jobDetailPath(job))}
               />
             )}
           </div>

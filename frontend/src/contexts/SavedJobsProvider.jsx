@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getSavedJobs, saveJob, unsaveJob } from '../../api/jobService'
-import SavedJobsContext from '../../contexts/savedJobsContext'
-import { useAuth } from '../../hooks/useAuth'
+import { getSavedJobs, saveJob, unsaveJob } from '../api/jobService'
+import SavedJobsContext from './savedJobsContext'
+import { useAuth } from '../hooks/useAuth'
 
 /**
  * Kho "việc làm đã lưu" dùng chung: trái tim trên job card, badge trên nút nổi

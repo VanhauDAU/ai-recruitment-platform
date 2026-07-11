@@ -7,8 +7,20 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from apps.employers.models import EmployerProfile, Industry
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import (
+    Benefit,
+    Job,
+    JobBenefit,
+    JobCategory,
+    JobCategoryAssignment,
+    JobLanguageRequirement,
+    JobLocation,
+    JobSkill,
+    JobWorkSchedule,
+    Language,
+)
 from apps.locations.models import Location
+from apps.skills.models import Skill
 
 User = get_user_model()
 DEMO_DOMAIN = '@demo.local'
@@ -56,10 +68,15 @@ JOBS_BY_CATEGORY = {
     ],
 }
 
+# Chỉ số công ty (trong COMPANIES) được bật trang thương hiệu: FPT, VNG, Shopee.
+BRAND_COMPANY_INDEXES = {0, 2, 5}
+
 WORK_TYPES = ['onsite', 'hybrid', 'remote']
 EMP_TYPES = ['full_time', 'full_time', 'full_time', 'part_time', 'internship']
-EXP_LEVELS = ['fresher', 'junior', 'junior', 'middle', 'senior']
+EXP_YEARS = ['none', 'under_1', '1', '2', '3', '5']
 EDU_LEVELS = ['none', 'high_school', 'college', 'university', 'university']
+# Chứng chỉ demo cho yêu cầu ngoại ngữ theo mã ngôn ngữ.
+LANGUAGE_CERTIFICATES = {'en': 'TOEIC 600+', 'ko': 'TOPIK 2', 'ja': 'JLPT N3', 'zh': 'HSK 4'}
 
 
 class Command(BaseCommand):
@@ -75,17 +92,24 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Demo data cleared.'))
             return
 
+        benefits = list(Benefit.objects.filter(is_active=True))
+        languages = list(Language.objects.filter(is_active=True))
+        skills = list(Skill.objects.all())
+
         provinces = list(Location.objects.filter(level='province', name__in=[
             'Thành phố Hà Nội', 'Thành phố Hồ Chí Minh', 'Thành phố Đà Nẵng',
             'Thành phố Hải Phòng', 'Tỉnh Bắc Ninh', 'Tỉnh Hưng Yên',
         ]))
         if not provinces:
             provinces = list(Location.objects.filter(level='province')[:6])
+        wards = list(Location.objects.filter(level='ward', parent__in=provinces).select_related('parent'))
 
         top_cats = {c.name: c for c in JobCategory.objects.filter(parent__isnull=True)}
         children_of = {}
         for name, cat in top_cats.items():
-            children_of[name] = list(JobCategory.objects.filter(parent=cat, status='active')) or [cat]
+            domains = list(JobCategory.objects.filter(parent=cat, status='active'))
+            specializations = list(JobCategory.objects.filter(parent__in=domains, status='active'))
+            children_of[name] = specializations or domains or [cat]
 
         now = timezone.now()
         rnd = random.Random(42)
@@ -98,6 +122,8 @@ class Command(BaseCommand):
             profile = EmployerProfile.objects.create(
                 user=user, company_name=cname, slug=f'{slugify(cname)}-demo-{i + 1}',
                 company_size=size,
+                # Vài công ty lớn bật trang thương hiệu để demo luồng URL /brand/...
+                has_brand_page=i in BRAND_COMPANY_INDEXES,
                 status=EmployerProfile.Status.APPROVED, verified_at=now,
             )
             # industries là M2M (1.14e) nên set sau khi tạo profile.
@@ -111,8 +137,19 @@ class Command(BaseCommand):
             for title in titles:
                 user, profile = rnd.choice(companies)
                 category = rnd.choice(children_of.get(cat_name, [None]))
-                smin = rnd.choice([8, 10, 12, 15, 18, 20]) * 1_000_000
-                smax = smin + rnd.choice([5, 8, 10, 15]) * 1_000_000
+                # ~20% tin lương thỏa thuận để trang chi tiết thể hiện đủ biến thể lương.
+                if rnd.random() < 0.2:
+                    salary_type, smin, smax = Job.SalaryType.NEGOTIABLE, None, None
+                else:
+                    salary_type = Job.SalaryType.RANGE
+                    smin = rnd.choice([8, 10, 12, 15, 18, 20]) * 1_000_000
+                    smax = smin + rnd.choice([5, 8, 10, 15]) * 1_000_000
+                if rnd.random() < 0.3:
+                    age_min, age_max = rnd.choice([18, 20, 22]), rnd.choice([30, 35, 40])
+                else:
+                    age_min = age_max = None
+                gender = rnd.choice(['male', 'female']) if rnd.random() < 0.2 else 'any'
+                work_type = rnd.choice(WORK_TYPES)
                 days_ago = rnd.choice(day_slots)
                 published = now - timedelta(days=days_ago, hours=rnd.randint(0, 23))
                 # Hạng tin + nhãn demo: tỉ lệ mô phỏng danh sách thật (đa số tin thường,
@@ -122,9 +159,8 @@ class Command(BaseCommand):
                     weights=[65, 25, 10],
                 )[0]
                 job = Job.objects.create(
-                    employer=user, employer_profile=profile, category=category,
+                    employer=user, employer_profile=profile,
                     title=title,
-                    short_description=f'{title} tại {profile.company_name}.',
                     description=(
                         f'{profile.company_name} đang tuyển {title}.\n\n'
                         'Mô tả công việc: tham gia trực tiếp vào các dự án của công ty, '
@@ -132,12 +168,14 @@ class Command(BaseCommand):
                     ),
                     requirements='Tốt nghiệp đúng chuyên ngành, có tinh thần trách nhiệm và ham học hỏi.',
                     benefits='Lương thưởng hấp dẫn, review lương định kỳ, môi trường trẻ trung năng động.',
-                    work_type=rnd.choice(WORK_TYPES),
+                    work_type=work_type,
                     employment_type=rnd.choice(EMP_TYPES),
-                    experience_level=rnd.choice(EXP_LEVELS),
+                    experience_years=rnd.choice(EXP_YEARS),
                     education_level=rnd.choice(EDU_LEVELS),
+                    gender_requirement=gender,
+                    age_min=age_min, age_max=age_max,
                     number_of_vacancies=rnd.choice([1, 2, 3, 5, 10]),
-                    salary_min=smin, salary_max=smax,
+                    salary_type=salary_type, salary_min=smin, salary_max=smax,
                     tier=tier,
                     is_hot=rnd.random() < 0.18,
                     is_urgent=rnd.random() < 0.18,
@@ -145,7 +183,70 @@ class Command(BaseCommand):
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
                     status=Job.Status.ACTIVE, published_at=published,
                 )
-                job.locations.set(rnd.sample(provinces, rnd.randint(1, min(3, len(provinces)))))
+                if category:
+                    JobCategoryAssignment.objects.create(
+                        job=job,
+                        category=category,
+                        role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
+                    )
+                    # Chuyên môn thuộc một "kiến thức chuyên ngành" -> gắn thêm tag domain.
+                    if category.parent and category.parent.category_type == JobCategory.CategoryType.DOMAIN:
+                        JobCategoryAssignment.objects.create(
+                            job=job,
+                            category=category.parent,
+                            role=JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE,
+                        )
+
+                # Tin remote demo tối đa 1 văn phòng; tin thường 1-3 địa điểm.
+                max_locations = 1 if work_type == 'remote' else min(3, len(wards))
+                location_count = rnd.randint(0, max_locations) if work_type == 'remote' else rnd.randint(1, max_locations)
+                selected_wards = rnd.sample(wards, location_count) if wards else []
+                JobLocation.objects.bulk_create([
+                    JobLocation(job=job, location=ward, address_detail=f'Tầng {rnd.randint(2, 15)}, tòa nhà số {rnd.randint(1, 200)} đường Trung Tâm')
+                    for ward in selected_wards
+                ])
+
+                # 40% tin làm 2 ca để trang chi tiết render nhiều khung giờ.
+                if rnd.random() < 0.4:
+                    JobWorkSchedule.objects.create(
+                        job=job, weekday_from=1, weekday_to=5,
+                        start_time='06:00', end_time='14:00', note='Ca sáng', sort_order=0,
+                    )
+                    JobWorkSchedule.objects.create(
+                        job=job, weekday_from=1, weekday_to=6,
+                        start_time='14:00', end_time='22:00', note='Ca chiều', sort_order=1,
+                    )
+                else:
+                    JobWorkSchedule.objects.create(
+                        job=job, weekday_from=1, weekday_to=5,
+                        start_time='08:00', end_time='17:30',
+                    )
+                if rnd.random() < 0.3:
+                    job.work_schedule_note = 'Nghỉ trưa 1 tiếng; có thể đăng ký OT theo dự án.'
+                    job.save(update_fields=['work_schedule_note'])
+
+                JobBenefit.objects.bulk_create([
+                    JobBenefit(job=job, benefit=benefit, sort_order=index)
+                    for index, benefit in enumerate(rnd.sample(benefits, min(rnd.randint(3, 5), len(benefits))))
+                ])
+                # ~35% tin yêu cầu 1-2 ngoại ngữ (có chứng chỉ + mức ưu tiên) để test render.
+                if languages and rnd.random() < 0.35:
+                    for index, language in enumerate(rnd.sample(languages, rnd.randint(1, min(2, len(languages))))):
+                        JobLanguageRequirement.objects.create(
+                            job=job, language=language,
+                            proficiency_level=rnd.choice(['basic', 'conversational', 'working', 'professional']),
+                            certificate=LANGUAGE_CERTIFICATES.get(language.code, ''),
+                            is_required=rnd.random() < 0.7,
+                            sort_order=index,
+                        )
+                if skills:
+                    JobSkill.objects.bulk_create([
+                        JobSkill(
+                            job=job, skill=skill,
+                            importance=JobSkill.Importance.REQUIRED if rnd.random() < 0.7 else JobSkill.Importance.PREFERRED,
+                        )
+                        for skill in rnd.sample(skills, min(rnd.randint(2, 4), len(skills)))
+                    ])
                 job_count += 1
 
         self.stdout.write(self.style.SUCCESS(

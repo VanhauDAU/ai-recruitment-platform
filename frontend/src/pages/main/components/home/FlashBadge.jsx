@@ -2,6 +2,7 @@ import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getJobs } from '../../../../api/jobService'
+import { jobDetailPath } from '../../../../config/jobPaths'
 import { companyInitial, formatNumber as fmt } from '../../../../constants/jobOptions'
 import { useCountUp } from '../../../../hooks/useCountUp'
 
@@ -227,7 +228,7 @@ export default function FlashBadge() {
                   return (
                     <div
                       key={id}
-                      onClick={() => !isOffscreen && navigate(`/viec-lam/${job.slug}`)}
+                      onClick={() => !isOffscreen && navigate(jobDetailPath(job))}
                       style={{
                         position: 'absolute',
                         width: '100%',
@@ -246,7 +247,14 @@ export default function FlashBadge() {
                     >
                       <div className="relative shrink-0">
                         <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#eafaf1] to-[#d1fae5] text-base font-bold text-[#02893c] shadow-sm ring-1 ring-[#02893c]/10">
-                          {companyInitial(job.company_name)}
+                          {job.company_logo_url ? (
+                            <img
+                              src={job.company_logo_url}
+                              alt={job.company_name}
+                              className="h-full w-full rounded-xl bg-white object-contain p-0.5"
+                              loading="lazy"
+                            />
+                          ) : companyInitial(job.company_name)}
                         </span>
                         <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#ffda00] to-[#ff8c00] text-[9px] text-white shadow-sm ring-2 ring-white">
                           <ThunderboltFilled />

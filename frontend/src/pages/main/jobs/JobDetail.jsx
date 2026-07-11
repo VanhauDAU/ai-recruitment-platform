@@ -1,153 +1,101 @@
-import {
-  ClockCircleOutlined,
-  DollarOutlined,
-  EnvironmentOutlined,
-  ReadOutlined,
-  TeamOutlined,
-} from '@ant-design/icons'
-import { Button, Result, Skeleton, Tag, message } from 'antd'
-import { useEffect, useState } from 'react'
+import { HeartFilled, HeartOutlined } from '@ant-design/icons'
+import { Button, Result, message } from 'antd'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getJobDetail } from '../../../api/jobService'
-import {
-  EMPLOYMENT_TYPE_LABELS,
-  EXPERIENCE_LEVEL_LABELS,
-  WORK_TYPE_LABELS,
-  formatEducation,
-  formatSalary,
-} from '../../../constants/jobOptions'
 import { useAuth } from '../../../hooks/useAuth'
+import { useSavedJob } from '../../../hooks/useSavedJobs'
+import JobDetailContent from './components/job-detail/JobDetailContent'
+import { JobBreadcrumbs, JobDetailSkeleton, JobHero } from './components/job-detail/JobDetailOverview'
+import JobDetailSearchBar from './components/job-detail/JobDetailSearchBar'
+import JobDetailSidebar from './components/job-detail/JobDetailSidebar'
+import JobDetailStickyBar from './components/job-detail/JobDetailStickyBar'
+import JobShareRail from './components/job-detail/JobShareRail'
+import useJobDetailPageData from './hooks/useJobDetailPageData'
 
 export default function JobDetail() {
-  const { slug } = useParams()
+  const { slug, companySlug } = useParams()
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuth()
-  const [job, setJob] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const { job, relatedJobs, loading, notFound } = useJobDetailPageData({ slug, companySlug, navigate })
+  const [saved, toggleSaved] = useSavedJob(job?.public_id)
 
-  useEffect(() => {
-    setLoading(true)
-    setNotFound(false)
-    getJobDetail(slug)
-      .then(setJob)
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false))
-  }, [slug])
-
-  function handleApply() {
+  function requireCandidate() {
     if (!isAuthenticated) {
       navigate('/login')
-      return
+      return false
     }
     if (user?.role !== 'candidate') {
-      message.warning('Chỉ ứng viên mới có thể ứng tuyển.')
-      return
+      message.warning('Chỉ ứng viên mới có thể sử dụng tính năng này.')
+      return false
     }
+    return true
+  }
+
+  function handleApply() {
+    if (!requireCandidate()) return
     message.info('Tính năng ứng tuyển sẽ sớm ra mắt.')
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <Skeleton active title={{ width: '50%' }} paragraph={{ rows: 3 }} />
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <Skeleton active paragraph={{ rows: 4 }} />
-          </div>
-        </div>
-        <div className="md:col-span-1 bg-white border border-gray-200 rounded-lg p-6">
-          <Skeleton.Button active block />
-          <Skeleton active title={false} paragraph={{ rows: 2 }} className="mt-4" />
-        </div>
-      </div>
-    )
+  function handleSave() {
+    if (!requireCandidate()) return
+    toggleSaved()
   }
 
-  if (notFound || !job) {
-    return (
-      <Result
-        status="404"
-        title="Không tìm thấy tin tuyển dụng"
-        extra={<Link to="/viec-lam"><Button type="primary">Xem việc làm khác</Button></Link>}
-      />
-    )
+  async function handleShare() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      message.success('Đã sao chép liên kết việc làm.')
+    } catch {
+      message.info('Bạn có thể sao chép liên kết trên thanh địa chỉ để chia sẻ.')
+    }
   }
+
+  if (loading) return <JobDetailSkeleton />
+  if (notFound || !job) return <NotFoundState />
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{job.title}</h1>
-          <p className="text-gray-500 mt-1">{job.company_name}</p>
-          <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1"><DollarOutlined /> {formatSalary(job)}</span>
-            {job.number_of_vacancies && (
-              <span className="flex items-center gap-1"><TeamOutlined /> {job.number_of_vacancies} người</span>
-            )}
-            {formatEducation(job.education_level) && (
-              <span className="flex items-center gap-1"><ReadOutlined /> {formatEducation(job.education_level)}</span>
-            )}
-            {job.deadline && (
-              <span className="flex items-center gap-1"><ClockCircleOutlined /> Hạn nộp: {job.deadline}</span>
-            )}
-          </div>
-          {job.locations_detail?.length > 0 && (
-            <div className="flex items-start gap-1.5 mt-3 text-sm text-gray-600">
-              <EnvironmentOutlined className="mt-0.5" />
-              <span>{job.locations_detail.map((l) => l.name).join(' · ')}</span>
+    <>
+      <JobDetailSearchBar />
+      <JobShareRail />
+      <JobDetailStickyBar job={job} relatedJobs={relatedJobs} onApply={handleApply} onSave={handleSave} />
+
+      <main className="bg-[#f5f7f8] pb-24 pt-5 md:pb-8">
+        <div className="mx-auto max-w-6xl px-4">
+          <JobBreadcrumbs job={job} />
+          <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            <div className="min-w-0 space-y-5">
+              <JobHero job={job} saved={saved} onApply={handleApply} onSave={handleSave} onShare={handleShare} />
+              <JobDetailContent
+                job={job}
+                relatedJobs={relatedJobs}
+                saved={saved}
+                isAuthenticated={isAuthenticated}
+                onApply={handleApply}
+                onSave={handleSave}
+                onReport={() => message.info('Cảm ơn bạn. Tính năng báo cáo chi tiết sẽ sớm được mở trong Trung tâm hỗ trợ.')}
+                onRequireLogin={() => navigate('/login')}
+              />
             </div>
-          )}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {job.work_type && <Tag color="blue">{WORK_TYPE_LABELS[job.work_type]}</Tag>}
-            {job.employment_type && <Tag color="green">{EMPLOYMENT_TYPE_LABELS[job.employment_type]}</Tag>}
-            {job.experience_level && <Tag color="purple">{EXPERIENCE_LEVEL_LABELS[job.experience_level]}</Tag>}
+            <JobDetailSidebar job={job} />
           </div>
         </div>
+      </main>
 
-        <JobSection title="Mô tả công việc" content={job.description} />
-        <JobSection title="Trách nhiệm" content={job.responsibilities} />
-        <JobSection title="Yêu cầu ứng viên" content={job.requirements} />
-        <JobSection title="Ưu tiên" content={job.nice_to_have} />
-        <JobSection title="Quyền lợi" content={job.benefits} />
-      </div>
-
-      <div className="md:col-span-1">
-        <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 md:sticky md:top-20 space-y-4">
-          <Button type="primary" size="large" block onClick={handleApply} className="!hidden md:!block">
-            Ứng tuyển ngay
-          </Button>
-          <div>
-            <p className="text-sm text-gray-500">Công ty</p>
-            <p className="font-medium">{job.company_name}</p>
-          </div>
-          {job.address && (
-            <div>
-              <p className="text-sm text-gray-500">Địa chỉ</p>
-              <p>{job.address}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Thanh ứng tuyển cố định cho mobile */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-3 md:hidden">
-        <Button type="primary" size="large" block onClick={handleApply}>
-          Ứng tuyển ngay
-        </Button>
-      </div>
-    </div>
+      <MobileActions saved={saved} onApply={handleApply} onSave={handleSave} />
+    </>
   )
 }
 
-function JobSection({ title, content }) {
-  if (!content) return null
+function NotFoundState() {
+  return <Result status="404" title="Không tìm thấy tin tuyển dụng" extra={<Link to="/viec-lam"><Button type="primary">Xem việc làm khác</Button></Link>} />
+}
+
+function MobileActions({ saved, onApply, onSave }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h2 className="font-semibold text-gray-900 mb-2">{title}</h2>
-      <p className="whitespace-pre-line text-gray-700 text-sm leading-relaxed">{content}</p>
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+      <div className="mx-auto flex max-w-6xl gap-2">
+        <button type="button" onClick={onSave} aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'} className="flex h-11 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)]">{saved ? <HeartFilled /> : <HeartOutlined />}</button>
+        <button type="button" onClick={onApply} className="h-11 flex-1 cursor-pointer rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)]">Ứng tuyển ngay</button>
+      </div>
     </div>
   )
 }
