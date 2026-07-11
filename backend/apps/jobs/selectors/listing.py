@@ -1,10 +1,10 @@
-import unicodedata
-
 from django.db.models import Case, F, IntegerField, Q, When
 from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
-from .models import Job, JobCategory
+from common.db.search import search_q
+
+from ..models import Job, JobCategory
 
 
 SALARY_BUCKETS = [
@@ -17,24 +17,6 @@ SALARY_BUCKETS = [
     ('o50', 'Trên 50 triệu', 50_000_000, None),
 ]
 TRUTHY_VALUES = {'1', 'true', 'True'}
-
-
-def search_q(field, text):
-    """Build an accent-insensitive query requiring every search token."""
-    query = Q()
-    for token in text.split():
-        query &= Q(**{f'{field}__unaccent__icontains': token})
-    return query
-
-
-def fold_accents(text):
-    """Normalize Vietnamese text for in-memory suggestion ranking."""
-    text = text.replace('đ', 'd').replace('Đ', 'D')
-    return ''.join(
-        char
-        for char in unicodedata.normalize('NFD', text)
-        if not unicodedata.combining(char)
-    ).lower()
 
 
 def filter_salary_bucket(queryset, bucket_key):
@@ -59,7 +41,7 @@ def filter_salary_bucket(queryset, bucket_key):
 def active_jobs_queryset():
     return (
         Job.objects.filter(status=Job.Status.ACTIVE)
-        .select_related('employer_profile')
+        .select_related('company')
         .prefetch_related(
             'category_assignments__category',
             'job_locations__location__parent',
@@ -106,11 +88,11 @@ def _filter_search(queryset, params):
         return queryset
     search_by = params.get('search_by', 'title')
     if search_by == 'company':
-        return queryset.filter(search_q('employer_profile__company_name', search))
+        return queryset.filter(search_q('company__company_name', search))
     if search_by == 'both':
         return queryset.filter(
             search_q('title', search)
-            | search_q('employer_profile__company_name', search)
+            | search_q('company__company_name', search)
         )
     return queryset.filter(search_q('title', search))
 
@@ -145,7 +127,7 @@ def build_job_list_queryset(params):
         'employment_type': 'employment_type',
         'education_level': 'education_level',
         'position_level': 'position_level',
-        'industry': 'employer_profile__industries__id',
+        'industry': 'company__industries__id',
     }
     for param_name, model_field in scalar_filters.items():
         if value := params.get(param_name):

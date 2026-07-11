@@ -71,7 +71,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
   }
 
   return (
-    <div key={animKey} className="grid animate-fade-slide grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div key={animKey} className="grid animate-fade-slide grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" style={{ alignItems: 'stretch' }}>
       {jobs.map((job) => {
         const company = stripCompanyPrefix(job.company_name)
         const [logoBackground, logoColor] = BEST_JOBS_LOGO_TINTS[
@@ -79,12 +79,12 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
         ]
         const locationLabel = formatLocations(job)
         return (
-          <div key={job.public_id} className="relative" onMouseLeave={() => closePreview(160)}>
+          <div key={job.public_id} className="relative h-full" onMouseLeave={() => closePreview(160)}>
             <a
               href={jobDetailPath(job)}
               target="_blank"
               rel="noreferrer"
-              className="group relative flex gap-3 rounded-lg border border-gray-200 p-3 transition hover:border-[var(--brand-primary)] hover:shadow-md"
+              className="group relative flex h-full gap-3 rounded-lg border border-gray-200 p-3 transition hover:border-[var(--brand-primary)] hover:shadow-md"
             >
               <div
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-gray-100 text-lg font-bold"
@@ -99,7 +99,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
                   />
                 ) : company.charAt(0) || '?'}
               </div>
-              <div className="min-w-0 flex-1 pr-5">
+              <div className="min-w-0 flex-1 flex flex-col pr-5">
                 <h3
                   onMouseEnter={(event) => showPreview(job.public_id, event.currentTarget.getBoundingClientRect())}
                   onMouseLeave={() => clearTimeout(previewTimer.current)}
@@ -108,7 +108,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
                   {job.title}
                 </h3>
                 <p className="mt-1 truncate text-xs text-gray-500">{job.company_name}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-auto pt-2 flex flex-wrap gap-1.5">
                   <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{formatSalary(job)}</span>
                   {locationLabel && (
                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{locationLabel}</span>

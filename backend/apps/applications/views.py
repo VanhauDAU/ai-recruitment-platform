@@ -31,7 +31,7 @@ class EmployerApplicationListView(generics.ListAPIView):
     permission_classes = [IsEmployer]
 
     def get_queryset(self):
-        qs = Application.objects.filter(job__employer=self.request.user).select_related('job', 'cv')
+        qs = Application.objects.filter(job__posted_by=self.request.user).select_related('job', 'cv')
         if job_id := self.request.query_params.get('job'):
             qs = qs.filter(job__public_id=job_id)
         return qs.order_by('-applied_at')
@@ -43,7 +43,7 @@ class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
     lookup_field = 'public_id'
 
     def get_queryset(self):
-        return Application.objects.filter(job__employer=self.request.user)
+        return Application.objects.filter(job__posted_by=self.request.user)
 
     def perform_update(self, serializer):
         new_status = serializer.validated_data.get('status')

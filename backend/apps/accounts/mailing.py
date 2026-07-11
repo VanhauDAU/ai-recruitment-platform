@@ -7,15 +7,12 @@ còn lo nội dung email của mình.
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-
-from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.selectors import get_string_setting
+from common.email import send_html_email as send_email
 
 
 def site_setting(key, default=''):
-    obj = SiteSetting.objects.filter(key=key).first()
-    value = obj.value if obj else None
-    return value if isinstance(value, str) and value.strip() else default
+    return get_string_setting(key, default)
 
 
 def from_email():
@@ -32,12 +29,11 @@ def frontend_link(path, *, base_url=None, **query):
 
 def send_html_email(*, subject, text, html, to):
     support_email = site_setting('support_email', '')
-    message = EmailMultiAlternatives(
+    return send_email(
         subject=subject,
-        body=text,
+        text=text,
+        html=html,
         from_email=from_email(),
-        to=[to],
-        reply_to=[support_email] if support_email else None,
+        to=to,
+        reply_to=support_email or None,
     )
-    message.attach_alternative(html, 'text/html')
-    message.send(fail_silently=False)

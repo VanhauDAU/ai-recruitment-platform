@@ -123,8 +123,9 @@ class Job(models.Model):
         TOP = 'top', 'Tin TOP'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    employer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='jobs')
-    employer_profile = models.ForeignKey('employers.EmployerProfile', on_delete=models.CASCADE, related_name='jobs')
+    # Tin thuộc về công ty; posted_by là HR cụ thể đã đăng (nhiều HR/công ty).
+    posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs')
+    company = models.ForeignKey('employers.Company', on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField()
@@ -158,7 +159,7 @@ class Job(models.Model):
     currency = models.CharField(max_length=20, default='VND')
     deadline = models.DateField(null=True, blank=True)
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
-    # suy ra từ employer_profile.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.
+    # suy ra từ company.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
     is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
     is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
@@ -176,14 +177,14 @@ class Job(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['status']),
-            models.Index(fields=['employer']),
+            models.Index(fields=['posted_by'], name='jobs_job_posted_by_idx'),
             models.Index(fields=['work_type']),
             models.Index(fields=['employment_type']),
             models.Index(fields=['experience_years']),
             models.Index(fields=['position_level']),
             models.Index(fields=['education_level']),
             models.Index(fields=['status', 'published_at']),
-            models.Index(fields=['employer', 'status', '-created_at']),
+            models.Index(fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'),
         ]
         constraints = [
             models.CheckConstraint(
@@ -234,217 +235,3 @@ class Job(models.Model):
         return self.title
 
 
-class JobCategoryAssignment(models.Model):
-    """One primary specialization and optional domain knowledge tags."""
-
-    class Role(models.TextChoices):
-        PRIMARY_SPECIALIZATION = 'primary_specialization', 'Vị trí chuyên môn chính'
-        DOMAIN_KNOWLEDGE = 'domain_knowledge', 'Kiến thức chuyên ngành'
-
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='category_assignments')
-    category = models.ForeignKey(JobCategory, on_delete=models.PROTECT, related_name='job_assignments')
-    role = models.CharField(max_length=30, choices=Role.choices)
-    sort_order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-        constraints = [
-            models.UniqueConstraint(fields=['job', 'category', 'role'], name='uq_job_category_assignment'),
-            models.UniqueConstraint(
-                fields=['job'],
-                condition=models.Q(role='primary_specialization'),
-                name='uq_job_primary_specialization',
-            ),
-        ]
-        indexes = [models.Index(fields=['category', 'role', 'job'])]
-
-
-class JobLocation(models.Model):
-    """A workplace address; new writes require a ward, legacy province links are preserved."""
-
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='job_locations')
-    location = models.ForeignKey(
-        'locations.Location',
-        on_delete=models.PROTECT,
-        related_name='job_workplaces',
-    )
-    address_detail = models.CharField(max_length=500, blank=True)
-    sort_order = models.PositiveSmallIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-        constraints = [
-            models.UniqueConstraint(fields=['job', 'location', 'address_detail'], name='uq_job_location_address'),
-        ]
-        indexes = [models.Index(fields=['location', 'job'])]
-
-
-class JobWorkSchedule(models.Model):
-    """One structured weekday/time range for a job posting."""
-
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='work_schedules')
-    weekday_from = models.PositiveSmallIntegerField(null=True, blank=True)
-    weekday_to = models.PositiveSmallIntegerField(null=True, blank=True)
-    start_time = models.TimeField(null=True, blank=True)
-    end_time = models.TimeField(null=True, blank=True)
-    is_overnight = models.BooleanField(default=False)
-    note = models.CharField(max_length=500, blank=True)
-    sort_order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-        constraints = [
-            models.CheckConstraint(
-                check=(models.Q(weekday_from__isnull=True) | models.Q(weekday_from__range=(1, 7))),
-                name='chk_job_schedule_weekday_from',
-            ),
-            models.CheckConstraint(
-                check=(models.Q(weekday_to__isnull=True) | models.Q(weekday_to__range=(1, 7))),
-                name='chk_job_schedule_weekday_to',
-            ),
-        ]
-
-
-class Benefit(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    slug = models.SlugField(max_length=255, unique=True, blank=True)
-    icon = models.CharField(max_length=100, blank=True)
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-    sort_order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ['sort_order', 'name']
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-
-class JobBenefit(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='job_benefits')
-    benefit = models.ForeignKey(Benefit, on_delete=models.PROTECT, related_name='job_assignments')
-    note = models.CharField(max_length=500, blank=True)
-    sort_order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-        constraints = [models.UniqueConstraint(fields=['job', 'benefit'], name='uq_job_benefit')]
-
-
-class Language(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=20, unique=True)
-    slug = models.SlugField(max_length=120, unique=True, blank=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ['name']
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-
-class JobLanguageRequirement(models.Model):
-    class ProficiencyLevel(models.TextChoices):
-        BASIC = 'basic', 'Cơ bản'
-        CONVERSATIONAL = 'conversational', 'Giao tiếp'
-        WORKING = 'working', 'Làm việc'
-        PROFESSIONAL = 'professional', 'Thành thạo'
-        NATIVE = 'native', 'Bản ngữ'
-
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='language_requirements')
-    language = models.ForeignKey(Language, on_delete=models.PROTECT, related_name='job_requirements')
-    proficiency_level = models.CharField(max_length=30, choices=ProficiencyLevel.choices, blank=True)
-    certificate = models.CharField(max_length=255, blank=True)
-    note = models.CharField(max_length=500, blank=True)
-    is_required = models.BooleanField(default=True)
-    sort_order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-        constraints = [models.UniqueConstraint(fields=['job', 'language'], name='uq_job_language')]
-        indexes = [models.Index(fields=['language', 'proficiency_level'])]
-
-
-class JobApplicationContact(models.Model):
-    """Internal notification recipient; never expose through public job APIs."""
-
-    job = models.OneToOneField(Job, on_delete=models.CASCADE, related_name='application_contact')
-    recipient_name = models.CharField(max_length=255)
-    phone = models.CharField(max_length=30)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'{self.recipient_name} - {self.job}'
-
-
-class JobApplicationEmail(models.Model):
-    contact = models.ForeignKey(JobApplicationContact, on_delete=models.CASCADE, related_name='emails')
-    email = models.EmailField()
-    sort_order = models.PositiveSmallIntegerField(default=0)
-
-    class Meta:
-        ordering = ['sort_order', 'id']
-        constraints = [models.UniqueConstraint(fields=['contact', 'email'], name='uq_job_contact_email')]
-
-
-class SavedJob(models.Model):
-    """Tin ứng viên bấm lưu (nút trái tim trên job card, panel "Việc làm đã lưu")."""
-
-    candidate = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_jobs')
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='saved_by')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        constraints = [
-            models.UniqueConstraint(fields=['candidate', 'job'], name='uq_saved_jobs_candidate_job'),
-        ]
-        indexes = [
-            models.Index(fields=['candidate', '-created_at']),
-        ]
-
-    def __str__(self):
-        return f'{self.candidate_id} - {self.job_id}'
-
-
-class JobSkill(models.Model):
-    """Skills required by a job posting (DB doc section 2.13)."""
-
-    class Importance(models.TextChoices):
-        REQUIRED = 'required', 'Required'
-        PREFERRED = 'preferred', 'Preferred'
-
-    class MinLevel(models.TextChoices):
-        BEGINNER = 'beginner', 'Beginner'
-        INTERMEDIATE = 'intermediate', 'Intermediate'
-        ADVANCED = 'advanced', 'Advanced'
-
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='job_skills')
-    skill = models.ForeignKey('skills.Skill', on_delete=models.CASCADE, related_name='job_skills')
-    importance = models.CharField(max_length=50, choices=Importance.choices, default=Importance.REQUIRED)
-    weight = models.DecimalField(max_digits=4, decimal_places=2, default=1.0)
-    min_level = models.CharField(max_length=50, choices=MinLevel.choices, blank=True)
-    min_years_experience = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['job', 'skill'], name='uq_job_skills_job_skill'),
-        ]
-
-    def __str__(self):
-        return f'{self.job_id} - {self.skill.name}'

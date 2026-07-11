@@ -1,17 +1,42 @@
 from django.urls import path
 
-from .views import (
-    CreateEmployerProfileView,
-    EmployerCoverUploadView,
-    EmployerLogoUploadView,
+from .api.views import (
+    AcceptDpaView,
+    AllIndustryListView,
+    CompanyCoverUploadView,
+    CompanyDocumentListCreateView,
+    CompanyGalleryDeleteView,
+    CompanyGalleryUploadView,
+    CompanyLogoUploadView,
+    CompanySearchView,
+    CompanyUpdateRequestListCreateView,
+    CreateCompanyView,
     IndustryListView,
-    MyEmployerProfileView,
+    JoinCompanyView,
+    MyCompanyView,
+    RecruiterMeView,
+    SendPhoneOtpView,
+    VerifyPhoneOtpView,
 )
 
 urlpatterns = [
-    path('profile/', MyEmployerProfileView.as_view(), name='employer-profile'),
-    path('profile/create/', CreateEmployerProfileView.as_view(), name='employer-profile-create'),
-    path('profile/logo/', EmployerLogoUploadView.as_view(), name='employer-profile-logo-upload'),
-    path('profile/cover/', EmployerCoverUploadView.as_view(), name='employer-profile-cover-upload'),
+    # Nhà tuyển dụng + onboarding
+    path('me/', RecruiterMeView.as_view(), name='employer-me'),
+    path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),
+    path('phone/verify/', VerifyPhoneOtpView.as_view(), name='employer-phone-verify'),
+    path('dpa/accept/', AcceptDpaView.as_view(), name='employer-dpa-accept'),
+    # Công ty
+    path('company/', MyCompanyView.as_view(), name='employer-company'),
+    path('company/create/', CreateCompanyView.as_view(), name='employer-company-create'),
+    path('company/search/', CompanySearchView.as_view(), name='employer-company-search'),
+    path('company/join/', JoinCompanyView.as_view(), name='employer-company-join'),
+    path('company/logo/', CompanyLogoUploadView.as_view(), name='employer-company-logo-upload'),
+    path('company/cover/', CompanyCoverUploadView.as_view(), name='employer-company-cover-upload'),
+    path('company/images/', CompanyGalleryUploadView.as_view(), name='employer-company-image-upload'),
+    path('company/images/<int:pk>/', CompanyGalleryDeleteView.as_view(), name='employer-company-image-delete'),
+    path('company/documents/', CompanyDocumentListCreateView.as_view(), name='employer-company-documents'),
+    path('company/update-requests/', CompanyUpdateRequestListCreateView.as_view(), name='employer-company-update-requests'),
+    # Danh mục lĩnh vực
     path('industries/', IndustryListView.as_view(), name='employer-industries'),
+    path('industries/all/', AllIndustryListView.as_view(), name='employer-industries-all'),
 ]

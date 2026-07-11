@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.utils.text import slugify
 
-from apps.employers.models import EmployerProfile, Industry
+from apps.employers.models import Company, Industry, RecruiterProfile
 from apps.jobs.models import (
     Benefit,
     Job,
@@ -26,14 +26,14 @@ User = get_user_model()
 DEMO_DOMAIN = '@demo.local'
 
 COMPANIES = [
-    ('FPT Software', '1000+ nhân viên', 'Công nghệ thông tin'),
-    ('Viettel Solutions', '1000+ nhân viên', 'Công nghệ - Viễn thông'),
-    ('VNG Corporation', '1000+ nhân viên', 'Công nghệ thông tin'),
-    ('Ngân hàng Techcombank', '1000+ nhân viên', 'Tài chính - Ngân hàng'),
-    ('Công ty CP MoMo', '500-1000 nhân viên', 'Fintech'),
-    ('Shopee Việt Nam', '1000+ nhân viên', 'Thương mại điện tử'),
-    ('Tập đoàn Vingroup', '1000+ nhân viên', 'Đa ngành'),
-    ('Công ty TNHH Quanta', '1000+ nhân viên', 'Sản xuất - Điện tử'),
+    ('FPT Software', '1000+', 'Công nghệ thông tin'),
+    ('Viettel Solutions', '1000+', 'Công nghệ - Viễn thông'),
+    ('VNG Corporation', '1000+', 'Công nghệ thông tin'),
+    ('Ngân hàng Techcombank', '1000+', 'Tài chính - Ngân hàng'),
+    ('Công ty CP MoMo', '500-1000', 'Fintech'),
+    ('Shopee Việt Nam', '1000+', 'Thương mại điện tử'),
+    ('Tập đoàn Vingroup', '1000+', 'Đa ngành'),
+    ('Công ty TNHH Quanta', '1000+', 'Sản xuất - Điện tử'),
 ]
 
 # top-level category name -> list of job titles
@@ -119,23 +119,28 @@ class Command(BaseCommand):
                 email=f'company{i + 1}{DEMO_DOMAIN}', password='demo12345',
                 role=User.Role.EMPLOYER, full_name=cname, status=User.Status.ACTIVE,
             )
-            profile = EmployerProfile.objects.create(
-                user=user, company_name=cname, slug=f'{slugify(cname)}-demo-{i + 1}',
+            company = Company.objects.create(
+                company_name=cname, slug=f'{slugify(cname)}-demo-{i + 1}',
                 company_size=size,
                 # Vài công ty lớn bật trang thương hiệu để demo luồng URL /brand/...
                 has_brand_page=i in BRAND_COMPANY_INDEXES,
-                status=EmployerProfile.Status.APPROVED, verified_at=now,
+                verification_status=Company.VerificationStatus.VERIFIED, verified_at=now,
+                created_by=user,
             )
-            # industries là M2M (1.14e) nên set sau khi tạo profile.
             industry_obj, _ = Industry.objects.get_or_create(name=industry)
-            profile.industries.set([industry_obj])
-            companies.append((user, profile))
+            company.company_industries.create(industry=industry_obj, is_primary=True)
+            RecruiterProfile.objects.create(
+                user=user, company=company,
+                company_role=RecruiterProfile.CompanyRole.OWNER,
+                membership_status=RecruiterProfile.MembershipStatus.APPROVED,
+            )
+            companies.append((user, company))
 
         job_count = 0
         day_slots = list(range(0, 12))  # spread published_at over last 12 days
         for cat_name, titles in JOBS_BY_CATEGORY.items():
             for title in titles:
-                user, profile = rnd.choice(companies)
+                user, company = rnd.choice(companies)
                 category = rnd.choice(children_of.get(cat_name, [None]))
                 # ~20% tin lương thỏa thuận để trang chi tiết thể hiện đủ biến thể lương.
                 if rnd.random() < 0.2:
@@ -159,10 +164,10 @@ class Command(BaseCommand):
                     weights=[65, 25, 10],
                 )[0]
                 job = Job.objects.create(
-                    employer=user, employer_profile=profile,
+                    posted_by=user, company=company,
                     title=title,
                     description=(
-                        f'{profile.company_name} đang tuyển {title}.\n\n'
+                        f'{company.company_name} đang tuyển {title}.\n\n'
                         'Mô tả công việc: tham gia trực tiếp vào các dự án của công ty, '
                         'phối hợp cùng đội nhóm để hoàn thành mục tiêu chung.'
                     ),
