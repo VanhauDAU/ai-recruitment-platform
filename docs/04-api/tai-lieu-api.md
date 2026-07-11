@@ -41,6 +41,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/profile/cover/` | Upload cover công ty vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`) |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
 | GET | `/api/jobs/categories/` | Danh sách ngành nghề (taxonomy 3 cấp: nhóm nghề/nghề/vị trí chuyên môn), public, có phân trang mặc định |
+| GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |
+| GET | `/api/jobs/languages/` | Danh mục ngoại ngữ (đang active), public, không phân trang |
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |
 | GET | `/api/cv-templates/` | Danh sách mẫu CV, public |
 | GET | `/api/cv-templates/{slug}/` | Chi tiết mẫu CV, public |
@@ -48,8 +50,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/PUT/PATCH/DELETE | `/api/cvs/{public_id}/` | Candidate: xem/sửa/xóa mềm CV của chính mình |
 | POST | `/api/cvs/upload/` | Candidate: upload CV có sẵn (PDF/DOCX, multipart `file`) |
 | GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=` | Danh sách job đang active, public. `category`/`location` nhận **nhiều giá trị** (`?location=1&location=2`); `category` ở bất kỳ cấp nào trong taxonomy 3 cấp tự mở rộng xuống danh mục con; `location` là id tỉnh tự khớp mọi job ở phường/xã trực thuộc. Response mỗi job có `locations_detail` (danh sách `{id, name, level}`), `number_of_vacancies`, `education_level` |
-| GET | `/api/jobs/{slug}/` | Chi tiết job (tăng `view_count`), public |
-| GET/POST | `/api/jobs/mine/` | Employer: xem/tạo tin tuyển dụng của mình (kèm `job_skills` lồng) |
+| GET | `/api/jobs/{slug}/` | Chi tiết job (tăng `view_count`), public. Ngoài dữ liệu nested thô còn trả **view-model nhóm sẵn** cho màn chi tiết: `primary_specialization`/`domain_knowledge` (`{id,name,slug}`), `workplace_groups` (nhóm theo tỉnh/thành, mỗi dòng địa chỉ có `display` ghép sẵn), `requirement_tags`, `benefit_tags`, `language_requirements[].proficiency_label` |
+| GET/POST | `/api/jobs/mine/` | Employer: xem/tạo tin tuyển dụng của mình — nested writes cho `job_skills`, `category_assignments`, `job_locations`, `work_schedules`, `job_benefits`, `language_requirements`, `application_contact` |
 | GET/PUT/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Employer: sửa/xóa tin của mình |
 | GET/POST | `/api/applications/` | Candidate: xem danh sách/ứng tuyển (job + cv theo `public_id`, chặn ứng tuyển trùng) |
 | GET | `/api/applications/employer/?job=` | Employer: xem hồ sơ ứng tuyển vào job của mình |

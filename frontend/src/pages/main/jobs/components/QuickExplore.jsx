@@ -1,6 +1,5 @@
 import {
   AppstoreOutlined,
-  CalendarOutlined,
   DollarOutlined,
   FieldTimeOutlined,
   LaptopOutlined,
@@ -80,13 +79,6 @@ export default function QuickExplore({
       icon: <LaptopOutlined />,
       active: searchParams.get('wt') === 'remote',
       onClick: () => onToggleParam('wt', 'remote'),
-    },
-    {
-      key: 'weekend',
-      label: 'Nghỉ thứ 7',
-      icon: <CalendarOutlined />,
-      active: searchParams.get('weekend') === 'off_saturday',
-      onClick: () => onToggleParam('weekend', 'off_saturday'),
     },
     // Pill kèm số chỉ có nghĩa khi đã biết số và số > 0; chưa có thì ẩn hẳn
     // thay vì hiện "... việc làm" / "0 việc làm".
@@ -184,4 +176,3 @@ export default function QuickExplore({
     </>
   )
 }
-

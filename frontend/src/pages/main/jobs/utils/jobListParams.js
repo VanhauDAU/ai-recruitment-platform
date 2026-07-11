@@ -9,14 +9,13 @@ const SIMPLE_MAP = {
   wt: 'work_type',
   et: 'employment_type',
   level: 'position_level',
-  weekend: 'weekend_policy',
   nganh: 'industry',
   sort: 'ordering',
 }
 const LIST_MAP = { cat: 'category', exp: 'experience_years' }
 
 // Key filter trên URL (dùng cho "Xóa lọc" và kiểm tra đang có lọc).
-export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'weekend', 'nganh', 'salary', 'sort']
+export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'nganh', 'salary', 'sort']
 
 export function mergeSearchParams(current, entries, { resetPage = true } = {}) {
   const next = new URLSearchParams(current)

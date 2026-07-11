@@ -1,18 +1,19 @@
 import { CloseCircleFilled, DownOutlined, LeftOutlined, RightOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Modal } from 'antd'
 import { useMemo, useState } from 'react'
+import {
+  buildCategoryTree,
+  nodeCheckState,
+  reduceToCategoryIds,
+  selectedLeafSet,
+  toggleNodeLeaves,
+} from '../utils/categoryTree'
 
 // 3-level taxonomy picker: nhóm nghề -> nghề -> vị trí chuyên môn.
 // props.value = applied category ids (any level). Internal draft = Set of LEAF ids;
 // apply() reduces back to the shortest id list (whole group/nghề when fully selected).
 export default function CategoryPicker({ categories, value = [], onChange }) {
-  const { groups, childrenOf, leavesUnder } = useMemo(() => {
-    const childrenOf = {}
-    for (const c of categories) (childrenOf[c.parent ?? 'root'] ||= []).push(c)
-    const leavesUnder = (id) =>
-      childrenOf[id]?.length ? childrenOf[id].flatMap((c) => leavesUnder(c.id)) : [id]
-    return { groups: childrenOf.root || [], childrenOf, leavesUnder }
-  }, [categories])
+  const { groups, childrenOf, leavesUnder } = useMemo(() => buildCategoryTree(categories), [categories])
 
   const [open, setOpen] = useState(false)
   const [sel, setSel] = useState(new Set())
@@ -21,7 +22,7 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
   const [query, setQuery] = useState('')
 
   const appliedLeaves = useMemo(
-    () => new Set(value.flatMap((id) => leavesUnder(id))),
+    () => selectedLeafSet(value, leavesUnder),
     [value, leavesUnder],
   )
 
@@ -33,37 +34,14 @@ export default function CategoryPicker({ categories, value = [], onChange }) {
     setOpen(true)
   }
 
-  const checkState = (id) => {
-    const leaves = leavesUnder(id)
-    const n = leaves.filter((l) => sel.has(l)).length
-    return { checked: n > 0 && n === leaves.length, indeterminate: n > 0 && n < leaves.length }
-  }
+  const checkState = (id) => nodeCheckState(id, sel, leavesUnder)
 
   function toggle(id) {
-    const leaves = leavesUnder(id)
-    const all = leaves.every((l) => sel.has(l))
-    setSel((prev) => {
-      const next = new Set(prev)
-      leaves.forEach((l) => (all ? next.delete(l) : next.add(l)))
-      return next
-    })
+    setSel((prev) => toggleNodeLeaves(id, prev, leavesUnder))
   }
 
   function apply() {
-    const ids = []
-    for (const g of groups) {
-      const gLeaves = leavesUnder(g.id)
-      if (gLeaves.every((l) => sel.has(l))) {
-        if (gLeaves.length) ids.push(g.id)
-        continue
-      }
-      for (const n of childrenOf[g.id] || []) {
-        const nLeaves = leavesUnder(n.id)
-        if (nLeaves.every((l) => sel.has(l))) ids.push(n.id)
-        else nLeaves.forEach((l) => sel.has(l) && ids.push(l))
-      }
-    }
-    onChange(ids)
+    onChange(reduceToCategoryIds(sel, groups, childrenOf, leavesUnder))
     setOpen(false)
   }
 

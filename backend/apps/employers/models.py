@@ -51,6 +51,10 @@ class EmployerProfile(models.Model):
     tax_code = models.CharField(max_length=100, blank=True)
     address = models.TextField(blank=True)
     description = models.TextField(blank=True)
+    # Trang thương hiệu (gói dịch vụ nâng cao cho NTD): bật thì tin của công ty
+    # dùng URL /brand/<slug>/tuyen-dung/<job-slug> kèm header thương hiệu.
+    # Admin gán qua Django admin, tương tự Job.tier; sau này gán theo gói dịch vụ.
+    has_brand_page = models.BooleanField(default=False, help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty')
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.PENDING)
     verified_at = models.DateTimeField(null=True, blank=True)
     rejected_reason = models.TextField(blank=True)

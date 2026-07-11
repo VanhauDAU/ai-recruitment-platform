@@ -24,6 +24,9 @@ export function mainRoutes() {
       <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
+      {/* Tin của công ty có trang thương hiệu — cùng JobDetailPage nhưng kèm
+          header thương hiệu + URL riêng /brand/... */}
+      <Route path="/brand/:companySlug/tuyen-dung/:slug" element={<JobDetailPage />} />
       <Route path="/jobs" element={<JobListPage />} />
       <Route path="/jobs/:slug" element={<JobDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />

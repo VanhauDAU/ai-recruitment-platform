@@ -6,6 +6,46 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-11
+
+#### Fixed
+
+- **Thiếu tỉnh Đà Nẵng trong danh sách địa điểm**: DB chỉ có 33/34 tỉnh — Thành phố Đà Nẵng (code 48) và toàn bộ 94 phường/xã trực thuộc không có bản ghi nào (lần seed trước không nạp đủ; lệnh `seed_locations` bọc atomic toàn bộ nên dữ liệu vào không trọn vẹn). Chạy lại `seed_locations` (idempotent theo `code`, không phá FK) + `seed_province_merges` → khôi phục đủ 34 tỉnh + 3.321 phường/xã, Đà Nẵng có `merged_from = ['Quảng Nam', 'Đà Nẵng']`. Đã xác minh qua API public và picker địa điểm trên `/viec-lam`.
+- **Bộ lọc "Theo danh mục nghề" không tự tick con khi chọn cha**: trước đây tick ô nhóm nghề chỉ lưu id nhóm còn checkbox con so khớp id riêng nên không sáng, gây hiểu nhầm là chưa chọn. Nay checkbox suy trạng thái từ tập lá đang chọn: tick cha → mọi con hiển thị checked; bỏ 1 con khi đang chọn cả nhóm → cha thành indeterminate và URL tự khai triển phần còn lại; chọn đủ các con → tự gộp lên id nhóm cho URL ngắn. Logic cây tách vào util dùng chung `pages/main/jobs/utils/categoryTree.js` (có test 8 case), `CategoryPicker` (modal) refactor dùng lại cùng util nên hành vi cha/con nhất quán giữa modal và sidebar.
+
+#### Added — Chuẩn hóa schema tin tuyển dụng (migration `jobs.0012`–`0013`)
+
+- Thay dữ liệu phẳng trên `Job` bằng các bảng quan hệ có cấu trúc: `JobCategoryAssignment` (danh mục theo vai trò — 1 **vị trí chuyên môn chính** unique/job + nhiều **kiến thức chuyên ngành**), `JobLocation` (địa điểm theo **phường/xã** + địa chỉ cụ thể; ghi mới bắt buộc ward có tỉnh cha), `JobWorkSchedule` (khung giờ cấu trúc: thứ từ/đến + giờ + `is_overnight` + ghi chú), `Benefit`/`JobBenefit` (quyền lợi chuẩn hóa), `Language`/`JobLanguageRequirement` (ngoại ngữ: 5 mức trình độ, chứng chỉ, bắt buộc/ưu tiên), `JobApplicationContact`+`JobApplicationEmail` (người nhận hồ sơ 1-5 email — nội bộ, **không expose qua API public**, có test chống lộ).
+- `Job` thêm `gender_requirement`, `age_min/age_max`, `number_of_vacancies`, `salary_type` 5 loại (thỏa thuận/khoảng/cố định/từ mức/đến mức) — ràng buộc CheckConstraint ở DB + validate chéo trong serializer theo từng loại.
+- `JobSerializer` nhận nested writes cho cả 6 quan hệ (thay thế trọn gói khi update, validate trùng lặp); field cũ frontend đang dùng (`category`, `locations_detail`, `short_description`, `is_salary_visible`) chuyển thành computed read-only. Filter `?category=` match qua `category_assignments` (giữ mở rộng cấp con).
+
+#### Added — Trang chi tiết việc làm bản mới (job detail v2)
+
+- **API view-model, không thêm cột DB**: `JobDetailSerializer` trả thêm `primary_specialization`/`domain_knowledge` (`{id,name,slug}`), `workplace_groups` (địa điểm nhóm theo tỉnh/thành, mỗi dòng có `display` ghép sẵn "địa chỉ, phường/xã"), `requirement_tags` (kinh nghiệm, tuổi, học vấn "Từ X trở lên", giới tính, kỹ năng required), `benefit_tags`, và `proficiency_label` trên `language_requirements` — frontend bỏ hẳn lớp tự suy luận `buildJobTagGroups`; dữ liệu nested thô giữ nguyên cho form employer.
+- **Nội dung theo thứ tự đọc mới** (`JobDetailContent`): tag tóm tắt (Yêu cầu/Quyền lợi/Chuyên môn — chuyên môn chính tô emerald) → mô tả → yêu cầu ứng viên → quyền lợi → **yêu cầu ngoại ngữ** ("Tiếng Hàn — Giao tiếp — TOPIK 2", nhãn "Ưu tiên" khi không bắt buộc) → **địa điểm nhóm theo tỉnh** → **thời gian làm việc render JSX** (component `WorkScheduleList` thay chuỗi HTML tự ghép — an toàn hơn, hỗ trợ nhiều ca + ghi chú) → cách thức ứng tuyển (câu cố định của sản phẩm) → CTA ứng tuyển/lưu/báo cáo. Các khối tách vào `JobDetailBlocks.jsx` (6 component nhỏ).
+- **Sidebar**: "Thông tin chung" còn đúng 5 mục Cấp bậc/Học vấn/Số lượng tuyển/Hình thức/Loại hình (bỏ "Kinh nghiệm" vì đã có ở Hero + tag yêu cầu); "Danh mục nghề liên quan" link theo **từng** category (`?cat=<id>` riêng cho chuyên môn chính và từng kiến thức chuyên ngành) thay vì mọi tag đổ về chung `job.category`.
+- **Sticky bar**: 4 anchor Chi tiết/Mô tả công việc/Địa điểm làm việc/Việc làm liên quan; 2 anchor sau **tự ẩn khi tin không có dữ liệu tương ứng** (tin remote không văn phòng, tin chưa có việc liên quan) — không còn nút cuộn chết.
+- **Mobile**: khối tag Yêu cầu thu gọn tối đa ~3 dòng + nút "Xem thêm"/"Thu gọn" (đo `scrollHeight`, chỉ hiện khi thực sự tràn; `sm:` trở lên bỏ giới hạn); sidebar xếp sau nội dung chính; giữ thanh đáy Lưu tin/Ứng tuyển ngay.
+- Seed `seed_demo_jobs` làm giàu dữ liệu demo để phủ đủ biến thể trang chi tiết: ~20% tin lương thỏa thuận, ~30% có khoảng tuổi, ~20% yêu cầu giới tính, ~35% có 1-2 ngoại ngữ (chứng chỉ theo mã: TOEIC/TOPIK/JLPT/HSK), 40% làm 2 ca (sáng/chiều), 3-5 quyền lợi, 2-4 kỹ năng, tin remote chỉ 0-1 địa điểm, kiến thức chuyên ngành gắn từ parent của vị trí chuyên môn.
+- Verify: 7/7 test `apps.jobs` (2 test mới cho view-model: nhóm địa điểm đúng 2 tỉnh + tag đúng thứ tự; tin tối giản trả mảng rỗng an toàn), 17/17 vitest, lint + `vite build` pass; kiểm chứng browser thật 4 loại tin (onsite 2 tỉnh nhiều địa chỉ, remote không địa điểm, lương thỏa thuận, 2 ngoại ngữ + 2 ca làm việc) và mobile 375px (nút Xem thêm/Thu gọn hoạt động, sticky anchor ẩn/hiện đúng theo dữ liệu).
+
+#### Added — Trang thương hiệu (brand page) cho nhà tuyển dụng
+
+- `EmployerProfile.has_brand_page` (BooleanField, migration `employers.0005`) — admin gán qua Django admin (`list_editable`, cùng khuôn với `Job.tier`); sau này sẽ gán tự động theo gói dịch vụ ở Giai đoạn 6. Bật thì toàn bộ tin tuyển dụng của công ty mở dưới URL riêng `/brand/<company-slug>/tuyen-dung/<job-slug>` kèm header thương hiệu (banner cover + logo + tên công ty), thay vì `/viec-lam/<job-slug>` thông thường.
+- `JobSerializer` thêm 2 field đọc: `brand_slug` (suy từ `employer_profile.has_brand_page`, `null` nếu công ty không bật) và `company_cover_url`.
+- Frontend: gom toàn bộ logic dựng URL chi tiết job vào **một nơi duy nhất** — `config/jobPaths.js` (`jobDetailPath(job)`), kèm test `jobPaths.test.js` (4 case: tin thường, tin có brand, thiếu `brand_slug`, job rỗng). Migrate mọi điểm gọi cũ tự ghép chuỗi `/viec-lam/${slug}` (`SearchDropdown`, `BestJobsResults`, `FlashBadge`, `MarketStats`, `JobCard`, `JobQuickView`) sang dùng hàm này, không còn nơi nào tự dựng URL job thủ công.
+- `MainRoutes` thêm route `/brand/:companySlug/tuyen-dung/:slug` (dùng chung `JobDetailPage`); `JobDetail.jsx` tự `navigate(..., { replace: true })` về đúng URL chuẩn nếu người dùng vào sai dạng URL (ví dụ vào `/viec-lam/...` của một tin có brand), và render component `BrandHeader` khi `job.brand_slug` có giá trị.
+- Seed `seed_demo_jobs`: bật `has_brand_page` cho 3 công ty demo (FPT Software, VNG Corporation, Shopee Việt Nam).
+- Verify: `manage.py test apps.jobs apps.employers` pass, `vitest run` 4/4 pass, `vite build` pass; kiểm chứng trên browser thật cả 2 luồng — tin công ty có brand page redirect đúng sang `/brand/...` và hiện header thương hiệu; tin công ty thường giữ nguyên `/viec-lam/...`, không phát sinh header thừa.
+
+#### Changed — Tối ưu cấu trúc code (theo quy ước `docs/02-tong-quan/quy-uoc-code.md`)
+
+- Backend: tách `apps/accounts/views.py` (395 dòng, trộn 4 mối quan tâm) thành package `apps/accounts/views/` gồm `auth.py` (đăng ký/đăng nhập/me/avatar), `verification.py` (xác thực email), `password_reset.py` (đặt lại mật khẩu), `oauth.py` (social login) — mỗi module views khớp 1-1 với module service cùng tên có sẵn; helper JWT dùng chung (`issue_tokens`, `revoke_refresh_tokens`) tách vào `views/tokens.py`; `views/__init__.py` re-export nên `urls.py` và mọi import bên ngoài giữ nguyên.
+- Frontend: `JobList.jsx` 493 → 367 dòng — toàn bộ logic đọc/ghi bộ lọc lên URL (search/category/location/salary/experience/sort/page, clear, persist) gom vào hook mới `pages/main/jobs/hooks/useJobListFilters.js` (184 dòng), page chỉ còn ghép UI + state cục bộ (dropdown, drawer, quick view); state đóng dropdown giữ ở page vì là UI, bọc quanh `runSearch` của hook.
+- Frontend: `FloatingActions.jsx` 343 → 178 dòng — form góp ý sản phẩm (chip chủ đề, emoji hài lòng, phone/email khách vãng lai, submit + constants khớp backend) tách thành `components/layout/FeedbackModal.jsx` (179 dòng), thêm reset form theo mỗi lần mở qua `useEffect` thay vì reset thủ công trước khi mở.
+- Frontend: dọn 2 file lệch quy ước — `PopularSearches.jsx` chuyển từ `pages/main/components/layout/` (xoá luôn thư mục trùng tên gây nhầm với `components/layout/`) về `components/layout/` vì nó là thành phần của `MainLayout`, không phải của trang nào; `SavedJobsProvider.jsx` chuyển từ `components/job/` về `contexts/` nằm cạnh `AuthProvider` và `savedJobsContext.js` theo đúng convention provider.
+- Verify: backend 30/30 test + `check` + `makemigrations --check` sạch; frontend lint + 17/17 unit test + build pass; kiểm chứng browser: bộ lọc URL (`?cat=&wt=`) render đúng breadcrumb/pill/đếm filter, nút "Xóa bộ lọc & từ khóa" reset sạch URL, modal "Bạn muốn?" → form góp ý mở đúng, tim việc đã lưu + footer PopularSearches vẫn hiển thị.
+
 ### 2026-07-10
 
 #### Added — Đặt lại mật khẩu (quên mật khẩu) qua link email

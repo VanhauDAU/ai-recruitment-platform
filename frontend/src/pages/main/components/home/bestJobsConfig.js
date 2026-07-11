@@ -23,13 +23,14 @@ export const BEST_JOBS_LOGO_TINTS = [
 
 export const EXPERIENCE_FILTER_OPTIONS = [
   { value: null, label: 'Tất cả' },
-  { value: 'intern', label: 'Chưa có kinh nghiệm' },
-  { value: 'fresher', label: '1 năm trở xuống' },
-  { value: 'junior', label: '1 năm' },
-  { value: 'middle', label: '2 năm' },
-  { value: 'senior', label: '3 năm' },
-  { value: 'four_to_five', label: 'Từ 4 - 5 năm', apiValue: 'senior' },
-  { value: 'over_five', label: 'Trên 5 năm', apiValue: 'senior' },
+  { value: 'none', label: 'Chưa có kinh nghiệm' },
+  { value: 'under_1', label: 'Dưới 1 năm' },
+  { value: '1', label: '1 năm' },
+  { value: '2', label: '2 năm' },
+  { value: '3', label: '3 năm' },
+  { value: '4', label: '4 năm' },
+  { value: '5', label: '5 năm' },
+  { value: 'over_5', label: 'Trên 5 năm' },
 ]
 
 export const EMPTY_BEST_JOBS_FILTERS = {
@@ -87,8 +88,7 @@ export function buildBestJobsParams(filters, page) {
   if (filters.location) params.append('location', filters.location)
   if (filters.category) params.append('category', filters.category)
   if (filters.experience) {
-    const option = EXPERIENCE_FILTER_OPTIONS.find((item) => item.value === filters.experience)
-    params.set('experience_level', option?.apiValue || filters.experience)
+    params.set('experience_years', filters.experience)
   }
   if (filters.salary === 'negotiable') params.set('salary_negotiable', '1')
   else if (filters.salary) params.set('salary_bucket', filters.salary)

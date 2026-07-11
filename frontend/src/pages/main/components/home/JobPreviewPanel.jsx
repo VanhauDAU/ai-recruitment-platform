@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons'
 import { useState } from 'react'
 import {
-  EXPERIENCE_LEVEL_LABELS,
+  EXPERIENCE_YEARS_LABELS,
   WORK_TYPE_LABELS,
   formatDeadline,
   formatLocations,
@@ -43,8 +43,8 @@ export default function JobPreviewPanel({
     { title: 'Mô tả công việc', content: job.description || job.short_description },
     { title: 'Yêu cầu ứng viên', content: job.requirements },
     { title: 'Quyền lợi', content: job.benefits },
-    { title: 'Địa điểm làm việc', content: job.address || job.locations_detail?.map((l) => l.name).join('\n') },
-    { title: 'Thời gian làm việc', content: job.work_type ? `Hình thức: ${WORK_TYPE_LABELS[job.work_type] || job.work_type}` : '' },
+    { title: 'Địa điểm làm việc', content: job.job_locations?.map((location) => [location.address_detail, location.location_name, location.location_level === 'ward' && location.province_name].filter(Boolean).join(', ')).join('\n') || job.locations_detail?.map((l) => l.name).join('\n') },
+    { title: 'Thời gian làm việc', content: job.work_schedule_note || (job.work_type ? `Hình thức: ${WORK_TYPE_LABELS[job.work_type] || job.work_type}` : '') },
   ].filter((section) => section.content)
 
   function handleScroll(e) {
@@ -85,7 +85,14 @@ export default function JobPreviewPanel({
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-gray-100 text-2xl font-bold"
             style={{ background: logoBg, color: logoFg }}
           >
-            {company.charAt(0) || '?'}
+            {job.company_logo_url ? (
+              <img
+                src={job.company_logo_url}
+                alt={job.company_name}
+                className="h-full w-full rounded-lg bg-white object-contain p-1"
+                loading="lazy"
+              />
+            ) : company.charAt(0) || '?'}
           </div>
           <div className="min-w-0 flex-1">
             <p className="line-clamp-3 text-base font-semibold leading-snug text-[#17324d]">{job.title}</p>
@@ -101,9 +108,9 @@ export default function JobPreviewPanel({
               <EnvironmentOutlined /> {locationLabel}
             </span>
           )}
-          {job.experience_level && (
+          {job.experience_years && (
             <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-500">
-              <SafetyCertificateOutlined /> {EXPERIENCE_LEVEL_LABELS[job.experience_level] || job.experience_level}
+              <SafetyCertificateOutlined /> {EXPERIENCE_YEARS_LABELS[job.experience_years]}
             </span>
           )}
           {deadlineLabel && (

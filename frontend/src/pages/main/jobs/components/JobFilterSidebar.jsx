@@ -5,7 +5,6 @@ import {
   EXPERIENCE_YEARS_LABELS,
   POSITION_LEVEL_LABELS,
   SALARY_RANGES,
-  WEEKEND_POLICY_OPTIONS,
   WORK_TYPE_LABELS,
   formatNumber,
 } from '../../../../constants/jobOptions'
@@ -13,6 +12,7 @@ import { VISIBLE_GROUPS } from '../utils/jobListParams'
 import { FilterSection, FilterSkeleton, MultiChips, SingleChips } from './FilterControls'
 
 export default function JobFilterSidebar({
+  categoryCheckState,
   childrenOf,
   demandCounts,
   expandedGroups,
@@ -36,7 +36,6 @@ export default function JobFilterSidebar({
   salaryKey,
   salaryTo,
   searchParams,
-  selectedCategories,
   showAllGroups,
   sidebarLoading,
   sidebarTop,
@@ -62,25 +61,6 @@ export default function JobFilterSidebar({
           <span className="text-base font-bold text-gray-900">Lọc nâng cao</span>
         </div>
 
-        <FilterSection
-          title={
-            <span className="inline-flex items-center gap-1.5">
-              Nghỉ thứ 7
-              <span className="rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-teal-400 px-2 py-0.5 text-[10px] font-bold text-white">
-                AI ✦
-              </span>
-            </span>
-          }
-        >
-          <SingleChips
-            value={searchParams.get('weekend') || ''}
-            onChange={(value) => onUpdateParams({ weekend: value })}
-            options={WEEKEND_POLICY_OPTIONS}
-            allLabel="Không lọc"
-          />
-        </FilterSection>
-
-        <div className="mt-4" />
         <div id="cat-filter">
           <FilterSection title="Theo danh mục nghề">
             {sidebarLoading ? (
@@ -90,11 +70,13 @@ export default function JobFilterSidebar({
                 {visibleGroups.map((group) => {
                   const kids = childrenOf[group.id] || []
                   const open = expandedGroups[group.id]
+                  const groupState = categoryCheckState(group.id)
                   return (
                     <div key={group.id}>
                       <div className="flex items-center justify-between gap-1">
                         <Checkbox
-                          checked={selectedCategories.includes(group.id)}
+                          checked={groupState.checked}
+                          indeterminate={groupState.indeterminate}
                           onChange={() => onToggleCategory(group.id)}
                           className="min-w-0 flex-1 [&_span:last-child]:!pr-0"
                         >
@@ -120,16 +102,20 @@ export default function JobFilterSidebar({
                       </div>
                       {open && (
                         <div className="mt-1.5 ml-6 space-y-1.5">
-                          {kids.map((category) => (
-                            <Checkbox
-                              key={category.id}
-                              checked={selectedCategories.includes(category.id)}
-                              onChange={() => onToggleCategory(category.id)}
-                              className="!flex"
-                            >
-                              <span className="text-sm text-gray-600">{category.name}</span>
-                            </Checkbox>
-                          ))}
+                          {kids.map((category) => {
+                            const childState = categoryCheckState(category.id)
+                            return (
+                              <Checkbox
+                                key={category.id}
+                                checked={childState.checked}
+                                indeterminate={childState.indeterminate}
+                                onChange={() => onToggleCategory(category.id)}
+                                className="!flex"
+                              >
+                                <span className="text-sm text-gray-600">{category.name}</span>
+                              </Checkbox>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
