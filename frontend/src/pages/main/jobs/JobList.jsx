@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilterOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import { useAuth } from '@/features/auth'
 import { useLoginPrompt } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { formatNumber } from '@/entities/job'
@@ -34,7 +34,7 @@ export default function JobList() {
   const shortcutScrollerRef = useRef(null)
   const [canScrollShortcutsLeft, setCanScrollShortcutsLeft] = useState(false)
   const [canScrollShortcutsRight, setCanScrollShortcutsRight] = useState(false)
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useSession()
   const { promptLogin } = useLoginPrompt()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 

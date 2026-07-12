@@ -4,17 +4,14 @@ import AuthGuard from '@/app/router/guards/AuthGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   EmployerDashboardPage,
-  EmployerMarketingLayout,
   EmployerLandingPage,
   EmployerLoginPage,
   EmployerPricingPage,
   EmployerRegisterPage,
   EmployerServicesPage,
-  OAuthCallbackPage,
-  VerifyEmailPage,
-  AuthLayout,
-  DashboardLayout,
-} from '../routePages'
+} from '../lazy/employer.pages'
+import { OAuthCallbackPage, VerifyEmailPage } from '../lazy/main.pages'
+import { AuthLayout, DashboardLayout, EmployerMarketingLayout } from '../lazy/layouts'
 
 export function employerRoutes() {
   return [

@@ -3,17 +3,17 @@ import { BrowserRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmailVerificationBanner from './EmailVerificationBanner'
 
-const { useAuth } = vi.hoisted(() => ({ useAuth: vi.fn() }))
+const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
-vi.mock('../model/use-auth', () => ({ useAuth }))
+vi.mock('@/entities/session', () => ({ useSession }))
 
 describe('EmailVerificationBanner', () => {
   beforeEach(() => {
-    useAuth.mockReset()
+    useSession.mockReset()
   })
 
   it('shows for an unverified account even when the API does not provide provider', () => {
-    useAuth.mockReturnValue({ user: { email_verified: false } })
+    useSession.mockReturnValue({ user: { email_verified: false } })
 
     render(
       <BrowserRouter>
@@ -26,7 +26,7 @@ describe('EmailVerificationBanner', () => {
   })
 
   it('does not show for a verified account', () => {
-    useAuth.mockReturnValue({ user: { email_verified: true } })
+    useSession.mockReturnValue({ user: { email_verified: true } })
 
     render(
       <BrowserRouter>

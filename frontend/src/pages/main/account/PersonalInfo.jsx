@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { App, Button, Form, Input } from 'antd'
 import { updateProfile } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { useAuth } from '@/features/auth'
+import { useSession } from '@/entities/session'
 
 // Số điện thoại VN: 0 hoặc +84 rồi 9-10 chữ số (khớp validate backend).
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
@@ -10,7 +10,7 @@ const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
 // Trang "Cài đặt thông tin cá nhân": sửa họ tên + SĐT nhiều lần; email khoá
 // (đổi email đi qua luồng xác thực riêng). Card trắng trên nền xám của layout.
 export default function PersonalInfo() {
-  const { user, setAuthenticatedUser } = useAuth()
+  const { user, setCurrentUser } = useSession()
   const { message } = App.useApp()
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
@@ -22,7 +22,7 @@ export default function PersonalInfo() {
         full_name: values.full_name.trim(),
         phone: (values.phone || '').trim(),
       })
-      setAuthenticatedUser(updated)
+      setCurrentUser(updated)
       form.setFieldsValue({ full_name: updated.full_name, phone: updated.phone })
       message.success('Đã lưu thông tin cá nhân.')
     } catch (error) {

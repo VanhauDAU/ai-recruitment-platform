@@ -5,7 +5,7 @@ import {
 import { App, Avatar, Switch } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 // Cột phải của layout tài khoản (theo ảnh mẫu): thẻ chào + trạng thái tìm việc,
@@ -21,7 +21,7 @@ export default function ProfileSidebar() {
 }
 
 function GreetingCard() {
-  const { user } = useAuth()
+  const { user } = useSession()
   const verified = user?.email_verified
 
   return (

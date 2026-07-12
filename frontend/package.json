@@ -8,11 +8,16 @@
     "build": "vite build",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "check:architecture": "depcruise src --config .dependency-cruiser.cjs",
+    "quality": "npm run lint && npm run check:architecture && npm run test && npm run build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:smoke": "playwright test tests/e2e/smoke",
+    "test:e2e:ui": "playwright test --ui",
+    "check:bundle-budget": "node scripts/check-bundle-budget.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
@@ -32,6 +37,8 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/coverage-v8": "^4.1.10",
+    "dependency-cruiser": "^17.4.3",
     "jsdom": "^29.1.1",
     "oxlint": "^1.71.0",
     "tailwindcss": "^4.3.2",

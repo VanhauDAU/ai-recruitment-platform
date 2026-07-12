@@ -33,5 +33,28 @@ export default defineConfig({
     setupFiles: './src/test/setup.js',
     css: false,
     exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      include: [
+        'src/app/router/guards/**/*.{js,jsx}',
+        'src/entities/session/**/*.{js,jsx}',
+        'src/features/auth/api/**/*.js',
+        'src/features/auth/model/return-url.js',
+        'src/features/saved-jobs/**/*.{js,jsx}',
+        'src/features/search-jobs/**/*.{js,jsx}',
+        'src/shared/api/client.js',
+        'src/shared/api/error-mapper.js',
+        'src/shared/api/request-deduplication.js',
+        'src/shared/api/token-store.js',
+      ],
+      exclude: ['**/*.test.{js,jsx}', 'src/**/tests/**'],
+      thresholds: {
+        lines: 75,
+        functions: 70,
+        branches: 65,
+        statements: 75,
+      },
+    },
   },
 })

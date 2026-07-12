@@ -14,7 +14,8 @@ import {
 import { App, Badge, Modal, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth, useLoginPrompt } from '@/features/auth'
+import { useLoginPrompt } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { useSiteSettings } from '@/entities/site-settings'
 import { FeedbackModal } from '@/features/submit-feedback'
@@ -23,7 +24,7 @@ export default function FloatingActions() {
   const { message } = App.useApp()
   const navigate = useNavigate()
   const location = useLocation()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useSession()
   const { promptLogin } = useLoginPrompt()
   const { settings, siteName } = useSiteSettings()
   const { items, saveSuccess } = useSavedJobs()

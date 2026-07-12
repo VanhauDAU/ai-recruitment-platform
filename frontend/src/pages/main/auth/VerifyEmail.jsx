@@ -2,7 +2,8 @@ import { CheckCircleFilled, CloseCircleFilled, MailOutlined, PhoneOutlined } fro
 import { Alert, Button, Form, Input, Modal, Spin } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { changeEmail, confirmVerification, sendVerificationEmail, useAuth } from '@/features/auth'
+import { changeEmail, confirmVerification, sendVerificationEmail } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { useSiteSetting, useSiteSettings } from '@/entities/site-settings'
 
 // Trang /tai-khoan/xac-thuc-email: có `?token=` -> xác nhận từ link email;
@@ -36,7 +37,7 @@ function Card({ children }) {
 
 // Xác nhận email bằng token trong link (không cần đăng nhập).
 function ConfirmToken({ token, homePath, loginPath, verificationPath }) {
-  const { user, refreshUser } = useAuth()
+  const { user, refreshSession } = useSession()
   const [status, setStatus] = useState('loading')
   const [message, setMessage] = useState('')
   const ran = useRef(false)
@@ -49,7 +50,7 @@ function ConfirmToken({ token, homePath, loginPath, verificationPath }) {
         setStatus('success')
         setMessage(res.detail || 'Xác thực email thành công.')
         try {
-          await refreshUser()
+          await refreshSession()
         } catch {
           /* chưa đăng nhập ở tab này — không sao, token đã xác nhận trên server */
         }
@@ -58,7 +59,7 @@ function ConfirmToken({ token, homePath, loginPath, verificationPath }) {
         setStatus('error')
         setMessage(err.response?.data?.detail || 'Liên kết xác thực không hợp lệ hoặc đã hết hạn.')
       })
-  }, [token, refreshUser])
+  }, [token, refreshSession])
 
   return (
     <Card>
@@ -96,7 +97,7 @@ function ConfirmToken({ token, homePath, loginPath, verificationPath }) {
 
 // Màn gửi / gửi lại email xác thực cho tài khoản đang đăng nhập.
 function RequestVerification({ homePath, loginPath }) {
-  const { user, loading, refreshUser } = useAuth()
+  const { user, loading, refreshSession } = useSession()
   const { siteName } = useSiteSettings()
   const hotline = useSiteSetting('hotline', '1900 1234')
   const supportEmail = useSiteSetting('support_email', 'support@procv.vn')
@@ -160,7 +161,7 @@ function RequestVerification({ homePath, loginPath }) {
   }
 
   async function handleChanged() {
-    await refreshUser()
+    await refreshSession()
     setCooldown(60)
     setFeedback({ type: 'success', msg: 'Đã gửi email xác thực tới địa chỉ email mới.' })
   }

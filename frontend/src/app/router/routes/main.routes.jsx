@@ -5,7 +5,6 @@ import AuthGuard from '@/app/router/guards/AuthGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   AccountPlaceholderPage,
-  AuthLayout,
   BlogCategoryPage,
   BlogDetailPage,
   BlogHomePage,
@@ -15,7 +14,6 @@ import {
   JobDetailPage,
   JobListPage,
   MainLoginPage,
-  MainLayout,
   MainRegisterPage,
   OAuthCallbackPage,
   PersonalInfoPage,
@@ -23,7 +21,8 @@ import {
   ResetPasswordPage,
   SavedJobsPage,
   VerifyEmailPage,
-} from '../routePages'
+} from '../lazy/main.pages'
+import { AuthLayout, MainLayout } from '../lazy/layouts'
 
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu; key nào
 // chưa có ở đây thì dùng AccountPlaceholderPage.

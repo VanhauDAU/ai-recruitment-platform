@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
-import { blogCategoryPath } from '../lib/blog-paths'
+import { blogCategoryPath } from '@/entities/blog'
 
 // Thanh danh mục nằm ngang: lăn chuột để lướt hoặc bấm next/previous.
 // Không có chip "Tất cả" — bấm logo mục "Cẩm nang" trên breadcrumb/menu là về /blog.

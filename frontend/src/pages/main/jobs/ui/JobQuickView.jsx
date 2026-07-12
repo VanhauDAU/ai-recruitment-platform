@@ -39,7 +39,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
   const navigate = useNavigate()
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [saved, toggleSaved] = useSavedJob(job.public_id)
+  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
 
   useEffect(() => {
     let cancelled = false
@@ -144,8 +144,9 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
             <button
               type="button"
               onClick={handleSave}
+              disabled={savePending}
               aria-label="Lưu việc làm"
-              className="flex h-10 w-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--brand-primary)] transition hover:bg-green-50"
+              className="flex h-10 w-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--brand-primary)] transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-[var(--brand-primary)]" />}
             </button>

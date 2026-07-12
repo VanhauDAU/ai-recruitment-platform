@@ -11,13 +11,13 @@ import {
   passwordValidationRule,
   register,
   SocialLoginButtons,
-  useAuth,
 } from '@/features/auth'
 import { useSiteSettings } from '@/entities/site-settings'
+import { useSession } from '@/entities/session'
 
 export default function Register() {
   const { siteName } = useSiteSettings()
-  const { setAuthenticatedUser } = useAuth()
+  const { setCurrentUser } = useSession()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { executeRecaptcha } = useGoogleReCaptcha()
@@ -48,7 +48,7 @@ export default function Register() {
       }
       const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
-      setAuthenticatedUser(result.user)
+      setCurrentUser(result.user)
       navigate(getReturnUrl(searchParams) || '/', { replace: true })
     } catch (err) {
       clearPasswords()

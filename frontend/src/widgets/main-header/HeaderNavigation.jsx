@@ -12,7 +12,7 @@ import {
 import { Drawer, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { getBlogCategories, getBlogHome } from '@/entities/blog'
-import { blogCategoryPath, blogPostPath } from '../../pages/main/blog/lib/blog-paths'
+import { blogCategoryPath, blogPostPath } from '@/entities/blog'
 import { BrandLogo } from '@/entities/site-settings'
 import { flattenMenuItems, isMenuActive } from './header-navigation-config'
 

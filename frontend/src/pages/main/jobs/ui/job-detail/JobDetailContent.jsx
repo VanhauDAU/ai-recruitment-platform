@@ -15,7 +15,7 @@ import RichJobContent from './RichJobContent'
 
 const APPLY_GUIDE = 'Ứng viên nộp hồ sơ trực tuyến bằng cách bấm Ứng tuyển ngay dưới đây.'
 
-export default function JobDetailContent({ job, relatedJobs, saved, isAuthenticated, onApply, onSave, onReport, onRequireLogin }) {
+export default function JobDetailContent({ job, relatedJobs, saved, savePending, isAuthenticated, onApply, onSave, onReport, onRequireLogin }) {
   return (
     <>
       <DetailSection id="job-detail-content" title="Chi tiết tin tuyển dụng">
@@ -34,7 +34,7 @@ export default function JobDetailContent({ job, relatedJobs, saved, isAuthentica
           <h3 className="mb-2 text-sm font-bold text-slate-800">Cách thức ứng tuyển</h3>
           <p className="text-sm leading-6 text-slate-700">{APPLY_GUIDE}</p>
         </section>
-        <JobClosingActions deadline={job.deadline} saved={saved} onApply={onApply} onSave={onSave} onReport={onReport} />
+        <JobClosingActions deadline={job.deadline} saved={saved} savePending={savePending} onApply={onApply} onSave={onSave} onReport={onReport} />
       </DetailSection>
 
       <JobQualityRating jobId={job.public_id} />
@@ -52,8 +52,8 @@ function JobText({ id, title, content }) {
   return <section id={id} className={id ? 'scroll-mt-20' : undefined}><h3 className="mb-2 text-sm font-bold text-slate-800">{title}</h3><RichJobContent html={content} /></section>
 }
 
-function JobClosingActions({ deadline, saved, onApply, onSave, onReport }) {
-  return <div className="border-t border-slate-100 pt-5">{deadline && <p className="text-sm text-slate-600">Hạn nộp hồ sơ: <strong className="text-slate-800">{formatJobDate(deadline)} ({formatDeadline(deadline)})</strong></p>}<div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={onApply} className="inline-flex h-10 cursor-pointer items-center rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)]">Ứng tuyển ngay</button><button type="button" onClick={onSave} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-emerald-50">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button><button type="button" onClick={onReport} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-gray-500 hover:text-red-600"><FlagOutlined /> Báo cáo tin tuyển dụng</button></div></div>
+function JobClosingActions({ deadline, saved, savePending, onApply, onSave, onReport }) {
+  return <div className="border-t border-slate-100 pt-5">{deadline && <p className="text-sm text-slate-600">Hạn nộp hồ sơ: <strong className="text-slate-800">{formatJobDate(deadline)} ({formatDeadline(deadline)})</strong></p>}<div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={onApply} className="inline-flex h-10 cursor-pointer items-center rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)]">Ứng tuyển ngay</button><button type="button" onClick={onSave} disabled={savePending} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button><button type="button" onClick={onReport} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-gray-500 hover:text-red-600"><FlagOutlined /> Báo cáo tin tuyển dụng</button></div></div>
 }
 
 function RelatedJobs({ jobs, isAuthenticated, onRequireLogin }) {
