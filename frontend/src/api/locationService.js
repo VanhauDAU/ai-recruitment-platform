@@ -1,5 +1,5 @@
-import { fetchAllPages } from './pagination'
-import { cachedRequest } from './requestDeduplication'
+import { fetchAllPages } from '@/shared/api/pagination'
+import { cachedRequest } from '@/shared/api/requestDeduplication'
 
 const LOCATION_CACHE_TTL = 10 * 60 * 1000
 

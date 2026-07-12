@@ -1,9 +1,10 @@
 import { Navigate, Route } from 'react-router-dom'
-import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '../config/candidateMenu'
+import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/features/account'
 import { employerAppPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import MainLayout from '../layouts/MainLayout'
-import ProtectedRoute from './ProtectedRoute'
+import AuthGuard from '@/app/router/guards/AuthGuard'
+import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   AccountPlaceholderPage,
   BlogCategoryPage,
@@ -55,19 +56,21 @@ export function mainRoutes() {
       {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
           nhập. Route con sinh từ config/candidateMenu.jsx (một nguồn duy nhất);
           khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
-      <Route element={<ProtectedRoute allowedRoles={['candidate']} />}>
-        <Route element={<CandidateAccountLayout />}>
-          <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
-          {ACCOUNT_LAYOUT_ITEMS.map((item) => {
-            const Page = ACCOUNT_PAGE_BY_KEY[item.key]
-            return (
-              <Route
-                key={item.key}
-                path={item.path}
-                element={Page ? <Page /> : <AccountPlaceholderPage title={item.label} />}
-              />
-            )
-          })}
+      <Route element={<AuthGuard />}>
+        <Route element={<RoleGuard allowedRoles={['candidate']} />}>
+          <Route element={<CandidateAccountLayout />}>
+            <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
+            {ACCOUNT_LAYOUT_ITEMS.map((item) => {
+              const Page = ACCOUNT_PAGE_BY_KEY[item.key]
+              return (
+                <Route
+                  key={item.key}
+                  path={item.path}
+                  element={Page ? <Page /> : <AccountPlaceholderPage title={item.label} />}
+                />
+              )
+            })}
+          </Route>
         </Route>
       </Route>
     </Route>,

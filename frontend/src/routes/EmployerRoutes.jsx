@@ -3,7 +3,8 @@ import { employerAppPath, employerMarketingPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
 import EmployerMarketingLayout from '../layouts/EmployerMarketingLayout'
-import ProtectedRoute from './ProtectedRoute'
+import AuthGuard from '@/app/router/guards/AuthGuard'
+import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   EmployerDashboardPage,
   EmployerLandingPage,
@@ -49,9 +50,11 @@ export function employerRoutes() {
     <Route key="employer-redirect-dashboard" path={employerMarketingPath('/dashboard')} element={<Navigate to={employerAppPath('/dashboard')} replace />} />,
     <Route key="employer-app-root" path={employerAppPath('')} element={<Navigate to={employerAppPath('/login')} replace />} />,
 
-    <Route key="employer-protected" element={<ProtectedRoute allowedRoles={['employer']} loginPath={employerAppPath('/login')} />}>
-      <Route element={<DashboardLayout />}>
-        <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
+    <Route key="employer-authenticated" element={<AuthGuard loginPath={employerAppPath('/login')} />}>
+      <Route element={<RoleGuard allowedRoles={['employer']} loginPath={employerAppPath('/login')} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
+        </Route>
       </Route>
     </Route>,
   ]

@@ -2,8 +2,9 @@ from rest_framework import generics
 
 from apps.accounts.permissions import IsCandidate
 
-from .models import CandidateProfile
 from .serializers import CandidateProfileSerializer
+from .selectors import candidate_profile_for_user
+from .services import update_candidate_profile
 
 
 class MyCandidateProfileView(generics.RetrieveUpdateAPIView):
@@ -11,5 +12,7 @@ class MyCandidateProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsCandidate]
 
     def get_object(self):
-        profile, _ = CandidateProfile.objects.get_or_create(user=self.request.user)
-        return profile
+        return candidate_profile_for_user(self.request.user)
+
+    def perform_update(self, serializer):
+        update_candidate_profile(serializer)

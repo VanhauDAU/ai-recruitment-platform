@@ -2,7 +2,7 @@
 
 Phạm vi (theo PRD mục 8.4 — Docker chỉ đưa vào ở giai đoạn cuối, sau khi các chức năng chính chạy ổn local):
 - Dockerfile cho backend, docker-compose cho backend + PostgreSQL
-- Biến môi trường production (SECRET_KEY, ALLOWED_HOSTS, DB, CORS, Redis, EMAIL_*, RECAPTCHA_*, OAUTH_* + callback URL, MEDIA_PUBLIC_BASE_URL) — đối chiếu `backend/.env.example`
+- Biến môi trường production (SECRET_KEY, ALLOWED_HOSTS, DB, CORS, Redis, EMAIL_*, RECAPTCHA_*, OAUTH_* + callback URL, MEDIA_PUBLIC_BASE_URL) — đối chiếu `backend/.env.example`; đặt `ENVIRONMENT=production` và `DJANGO_SETTINGS_MODULE=config.settings.production`
 - Gợi ý hosting: Vercel (frontend) + Render/Railway (backend) hoặc Docker Compose tự host
 
 Chưa triển khai — sẽ làm sau khi các module chính (CV, jobs, applications, AI) hoàn thiện.

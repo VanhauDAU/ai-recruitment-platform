@@ -27,6 +27,23 @@ Nếu PostgreSQL local dùng user/password khác, chỉnh lại các biến `DB_
 
 ## Backend
 
+### Chọn môi trường Django
+
+Entry point local mặc định là `config.settings.development`; không cần đặt biến
+thêm để chạy các lệnh `manage.py`. Khi cần chọn tường minh:
+
+```bash
+# CI/test: cache LocMem, email in-memory và Celery eager
+DJANGO_SETTINGS_MODULE=config.settings.test python manage.py test
+
+# Production: bắt buộc ENVIRONMENT=production và đầy đủ biến bảo mật
+ENVIRONMENT=production DJANGO_SETTINGS_MODULE=config.settings.production python manage.py check
+```
+
+Không dùng `config.settings.production` cho local: module này dừng ngay nếu
+`DEBUG=True`, thiếu `SECRET_KEY`, `ALLOWED_HOSTS`, `RECAPTCHA_SECRET_KEY` hoặc
+`JWT_SIGNING_KEY` hợp lệ.
+
 ```bash
 cd backend
 python3.13 -m venv venv
