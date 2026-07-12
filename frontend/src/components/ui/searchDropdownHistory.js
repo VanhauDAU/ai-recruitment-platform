@@ -1,4 +1,4 @@
-import { getJobs } from '../../api/jobService'
+import { getJobs } from '@/features/jobs'
 
 const HISTORY_KEY = 'search_history'
 const MAX_HISTORY = 8

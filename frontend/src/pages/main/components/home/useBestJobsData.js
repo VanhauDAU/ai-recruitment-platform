@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getJobs } from '@/api/jobService'
+import { getJobs } from '@/features/jobs'
 import { getProvinces, getWardsByParents } from '@/api/locationService'
 import {
   BEST_JOBS_PAGE_SIZE,

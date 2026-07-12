@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
-import { getJobs } from '@/api/jobService'
+import { getJobs, jobDetailPath } from '@/features/jobs'
 import { companyInitial, formatLocations, formatSalary, stripCompanyPrefix } from '@/constants/jobOptions'
-import { jobDetailPath } from '@/config/jobPaths'
 import JobPreviewPanel from '@/pages/main/components/home/JobPreviewPanel'
 import { BEST_JOBS_LOGO_TINTS } from '@/pages/main/components/home/bestJobsConfig'
 

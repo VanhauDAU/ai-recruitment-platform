@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getSavedJobs, saveJob, unsaveJob } from '../api/jobService'
+import { getSavedJobs, saveJob, unsaveJob } from '@/features/jobs'
 import SavedJobsContext from './savedJobsContext'
 import { useAuth } from '../hooks/useAuth'
 

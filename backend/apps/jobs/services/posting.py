@@ -21,3 +21,9 @@ def create_pending_job(serializer, user):
         company=recruiter.company,
         status=Job.Status.PENDING,
     )
+
+
+@transaction.atomic
+def update_employer_job(serializer):
+    """Persist an employer's existing job through the domain mutation boundary."""
+    return serializer.save()

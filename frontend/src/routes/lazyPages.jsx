@@ -6,9 +6,9 @@ const lazyFeaturePage = (loadFeature, loaderName) => lazy(() => loadFeature()
 // Central registry for route-level code splitting. Route definition files only
 // describe navigation, while this module only exports React components.
 export const HomePage = lazy(() => import('../pages/main/Home'))
-export const JobListPage = lazy(() => import('../pages/main/jobs/JobList'))
-export const JobDetailPage = lazy(() => import('../pages/main/jobs/JobDetail'))
-export const SavedJobsPage = lazy(() => import('../pages/main/jobs/SavedJobs'))
+export const JobListPage = lazyFeaturePage(() => import('@/features/jobs/routes'), 'loadJobListPage')
+export const JobDetailPage = lazyFeaturePage(() => import('@/features/jobs/routes'), 'loadJobDetailPage')
+export const SavedJobsPage = lazyFeaturePage(() => import('@/features/jobs/routes'), 'loadSavedJobsPage')
 export const MainLoginPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadLoginPage')
 export const MainRegisterPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadRegisterPage')
 export const VerifyEmailPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadVerifyEmailPage')

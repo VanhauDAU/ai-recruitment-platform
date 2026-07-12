@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getIndustries, getJobCategories, getJobStats, getJobs } from '@/api/jobService'
+import { getIndustries, getJobCategories, getJobStats, getJobs } from '@/features/jobs'
 import { getProvinces } from '@/api/locationService'
 
 export default function useJobSidebarData() {

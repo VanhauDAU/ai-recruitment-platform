@@ -1,7 +1,7 @@
 import { ArrowUpOutlined, BarChartOutlined, RiseOutlined } from '@ant-design/icons'
 import { Select, Skeleton, Tooltip } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getJobStats } from '@/api/jobService'
+import { getJobStats, jobDetailPath } from '@/features/jobs'
 import {
   EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_YEARS_LABELS,
@@ -10,7 +10,6 @@ import {
   formatNumber as fmt,
   formatSalary,
 } from '@/constants/jobOptions'
-import { jobDetailPath } from '@/config/jobPaths'
 import { useCountUp } from '@/hooks/useCountUp'
 
 // Categorical palette validated for the dark-green surface (dataviz skill, CVD ΔE 27.6, contrast ≥3:1)

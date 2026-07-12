@@ -7,7 +7,7 @@ import {
   formatSalary,
   stripCompanyPrefix,
 } from '@/constants/jobOptions'
-import { jobDetailPath } from '@/config/jobPaths'
+import { jobDetailPath } from '@/features/jobs'
 import { useAuth } from '@/hooks/useAuth'
 import { useLoginPrompt } from '@/hooks/useLoginPrompt'
 import { useSavedJobs } from '@/hooks/useSavedJobs'

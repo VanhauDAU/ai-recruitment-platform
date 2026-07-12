@@ -13,7 +13,7 @@ import {
   formatLocations,
   formatSalary,
 } from '@/constants/jobOptions'
-import { jobDetailPath } from '@/config/jobPaths'
+import { jobDetailPath } from '@/features/jobs'
 import { useSavedJob } from '@/hooks/useSavedJobs'
 import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 
