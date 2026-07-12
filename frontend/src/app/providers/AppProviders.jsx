@@ -1,9 +1,7 @@
 import { App as AntApp, ConfigProvider } from 'antd'
 import { useMemo } from 'react'
 import { AuthProvider } from '@/features/auth'
-import SiteSettingsProvider from '@/components/site/SiteSettingsProvider'
-import { DEFAULT_SITE_SETTINGS } from '@/contexts/siteSettingsContext'
-import { settingText, useSiteSettings } from '@/hooks/useSiteSettings'
+import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
 
 function ThemedProviders({ children }) {
   const { settings } = useSiteSettings()

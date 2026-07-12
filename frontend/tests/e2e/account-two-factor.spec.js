@@ -36,7 +36,7 @@ test.describe('candidate account features', () => {
     await expect(page.getByRole('heading', { name: 'Chào mừng quay trở lại' })).toBeVisible()
   })
 
-  test('loads the profile page from the account feature and saves profile data', async ({ page }) => {
+  test('loads the profile page and saves profile data', async ({ page }) => {
     await authenticateCandidate(page)
     await page.goto('/tai-khoan/thong-tin-ca-nhan')
 
@@ -46,7 +46,7 @@ test.describe('candidate account features', () => {
     await expect(page.getByText('Đã lưu thông tin cá nhân.')).toBeVisible()
   })
 
-  test('enables two-factor authentication through its feature route', async ({ page }) => {
+  test('enables two-factor authentication through the account route', async ({ page }) => {
     await authenticateCandidate(page)
     await page.route('**/api/auth/two-factor/setup/send/', (route) => route.fulfill({
       contentType: 'application/json', body: JSON.stringify({ email: candidate.email, expires_in: 180 }),

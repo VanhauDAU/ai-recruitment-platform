@@ -13,9 +13,19 @@ npm run build
 npm run test:e2e
 ```
 
-Copy `.env.example` to `.env` before local development. Route-level pages are
-lazy-loaded through `src/routes/lazyPages.jsx`; reusable UI belongs in
-`src/components`, while feature-only components stay next to their page.
+Copy `.env.example` to `.env` before local development.
 
-See [`../docs/08-frontend/cau-truc-frontend.md`](../docs/08-frontend/cau-truc-frontend.md)
-for the portal layout and code conventions.
+Source code follows a simplified Feature-Sliced Design:
+
+```text
+src/
+├── app/       # providers, router, route layouts
+├── pages/     # route-level pages for main, employer and admin portals
+├── widgets/   # larger portal UI blocks
+├── features/  # user actions
+├── entities/  # business-domain modules
+└── shared/    # framework-agnostic infrastructure and UI
+```
+
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for dependency rules and file
+conventions.

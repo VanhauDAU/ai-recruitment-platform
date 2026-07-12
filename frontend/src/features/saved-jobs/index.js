@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import SavedJobsProvider from './model/SavedJobsProvider'
-import SavedJobsContext from './model/savedJobsContext'
+import SavedJobsContext from './model/saved-jobs-context'
 
 const EMPTY = {
   items: [],

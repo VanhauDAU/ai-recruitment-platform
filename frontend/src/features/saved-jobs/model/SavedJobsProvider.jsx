@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getSavedJobs, saveJob, unsaveJob } from '@/features/jobs'
+import { getSavedJobs, saveJob, unsaveJob } from '@/features/save-job'
 import { useAuth } from '@/features/auth'
-import SavedJobsContext from './savedJobsContext'
+import SavedJobsContext from './saved-jobs-context'
 
 const CHANNEL_NAME = 'procv:saved-jobs'
 const EVENT_NAME = 'procv:saved-jobs:changed'

@@ -1,7 +1,7 @@
 import { CheckCircleFilled } from '@ant-design/icons'
 import { Button } from 'antd'
 import { Link } from 'react-router-dom'
-import { employerAppPath, employerMarketingPath } from '@/config/portals'
+import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 
 const SERVICES = [
   {
