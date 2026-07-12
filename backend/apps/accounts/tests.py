@@ -47,6 +47,57 @@ class AvatarUploadTests(APITestCase):
         self.assertNotIn('://', user.avatar_url)
 
 
+class ProfileUpdateTests(APITestCase):
+    """PATCH /auth/me/: sửa họ tên + SĐT nhiều lần, email không đổi."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='candidate@example.com', password='Password@123', full_name='Tên Cũ',
+        )
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('auth-me')
+
+    def test_update_name_and_phone(self):
+        response = self.client.patch(self.url, {'full_name': 'Lê Văn Hậu', 'phone': '0912345678'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['full_name'], 'Lê Văn Hậu')
+        self.assertEqual(response.data['phone'], '0912345678')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.full_name, 'Lê Văn Hậu')
+        self.assertEqual(self.user.phone, '0912345678')
+
+    def test_can_update_multiple_times(self):
+        self.client.patch(self.url, {'full_name': 'Lần 1', 'phone': '0900000001'})
+        response = self.client.patch(self.url, {'full_name': 'Lần 2', 'phone': '0900000002'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.full_name, 'Lần 2')
+        self.assertEqual(self.user.phone, '0900000002')
+
+    def test_email_is_read_only(self):
+        response = self.client.patch(
+            self.url, {'full_name': 'Ai Đó', 'email': 'hacker@evil.com'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'candidate@example.com')
+
+    def test_invalid_phone_rejected(self):
+        response = self.client.patch(self.url, {'full_name': 'Hợp Lệ', 'phone': 'abc'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('phone', response.data)
+
+    def test_blank_name_rejected(self):
+        response = self.client.patch(self.url, {'full_name': '   '})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('full_name', response.data)
+
+    def test_requires_authentication(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.patch(self.url, {'full_name': 'X'})
+        self.assertIn(response.status_code, (401, 403))
+
+
 GOOGLE_PROFILE = {
     'id': 'google-uid-1',
     'email': 'social@example.com',

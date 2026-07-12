@@ -4,15 +4,21 @@ import { useAuth } from '../../hooks/useAuth'
 
 export default function EmailVerificationBanner({ verificationPath }) {
   const { user } = useAuth()
-  if (!user || user.email_verified || user.provider !== 'local') return null
+
+  // `provider` không còn có trong dữ liệu user từ API. Tài khoản OAuth đã được
+  // backend đánh dấu xác thực khi đăng nhập, nên chỉ cần dựa vào trạng thái này.
+  if (!user || user.email_verified) return null
 
   return (
-    <div className="border-b border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40">
-      <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-2.5 text-center text-sm text-amber-800 dark:text-amber-200">
-        <WarningFilled className="text-amber-500" />
+    <div className="relative bg-red-600 text-white">
+      <div className="mx-auto flex max-w-7xl items-center justify-center gap-2 px-10 py-2.5 text-center text-sm">
+        <WarningFilled className="shrink-0 text-white/90" />
         <span>
           Tài khoản của bạn chưa được xác thực. Vui lòng xác thực tài khoản{' '}
-          <Link to={verificationPath} className="font-semibold underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-100">
+          <Link
+            to={verificationPath}
+            className="font-semibold !text-white !underline underline-offset-2 hover:!text-white"
+          >
             tại đây
           </Link>
           .
