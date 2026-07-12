@@ -9,15 +9,15 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ..models import AuthEmailJob
-from ..services import email_verification, password_reset
+from ..services import email_verification, password_reset, two_factor
 
 logger = logging.getLogger(__name__)
 MAX_DELIVERY_ATTEMPTS = 4
 STALE_SENDING_AFTER = timedelta(minutes=5)
 
 
-def queue_auth_email(kind, user):
-    job = AuthEmailJob.objects.create(user=user, kind=kind)
+def queue_auth_email(kind, user, context=None):
+    job = AuthEmailJob.objects.create(user=user, kind=kind, context=context or {})
 
     def dispatch():
         try:
@@ -36,6 +36,9 @@ def _send(job):
         return
     if job.kind == AuthEmailJob.Kind.PASSWORD_RESET:
         password_reset.send_password_reset_email(job.user)
+        return
+    if job.kind == AuthEmailJob.Kind.TWO_FACTOR:
+        two_factor.send_two_factor_email(job.user, job.context.get('purpose', two_factor.PURPOSE_LOGIN))
         return
     raise ValueError(f'Unsupported authentication email kind: {job.kind}')
 

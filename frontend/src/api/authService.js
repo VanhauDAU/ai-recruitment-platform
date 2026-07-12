@@ -50,9 +50,44 @@ export async function confirmPasswordReset({ token, password }) {
 
 export async function login({ email, password, captcha_token, portal }) {
   const { data } = await api.post('/auth/login/', { email, password, captcha_token, ...(portal && { portal }) })
+  if (data.access && data.refresh) {
+    const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
+    localStorage.setItem(access, data.access)
+    localStorage.setItem(refresh, data.refresh)
+  }
+  return data
+}
+
+export async function verifyTwoFactorLogin({ challenge, code, portal }) {
+  const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code })
   const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
   localStorage.setItem(access, data.access)
   localStorage.setItem(refresh, data.refresh)
+  return data
+}
+
+export async function resendTwoFactorLogin(challenge) {
+  const { data } = await api.post('/auth/two-factor/login/resend/', { challenge })
+  return data
+}
+
+export async function sendTwoFactorSetupCode() {
+  const { data } = await api.post('/auth/two-factor/setup/send/')
+  return data
+}
+
+export async function confirmTwoFactorSetup(code) {
+  const { data } = await api.post('/auth/two-factor/setup/confirm/', { code })
+  return data
+}
+
+export async function sendTwoFactorDisableCode() {
+  const { data } = await api.post('/auth/two-factor/disable/send/')
+  return data
+}
+
+export async function confirmTwoFactorDisable(code) {
+  const { data } = await api.post('/auth/two-factor/disable/confirm/', { code })
   return data
 }
 
@@ -68,9 +103,11 @@ export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
 // Đổi one_time_code (backend redirect về kèm ?code=) lấy JWT + user.
 export async function completeOAuth(code, portal) {
   const { data } = await api.post('/auth/oauth/complete/', { code })
-  const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
-  localStorage.setItem(access, data.access)
-  localStorage.setItem(refresh, data.refresh)
+  if (data.access && data.refresh) {
+    const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
+    localStorage.setItem(access, data.access)
+    localStorage.setItem(refresh, data.refresh)
+  }
   return data
 }
 
@@ -80,6 +117,13 @@ export async function me() {
     const { data } = await api.get('/auth/me/')
     return data
   })
+}
+
+// Cập nhật họ tên + SĐT của tài khoản hiện tại (email không đổi ở đây).
+// Backend trả về user đầy đủ để cập nhật thẳng vào auth context.
+export async function updateProfile({ full_name, phone }) {
+  const { data } = await api.patch('/auth/me/', { full_name, phone })
+  return data
 }
 
 export function logout(portal = getCurrentPortal()) {

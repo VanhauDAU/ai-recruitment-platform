@@ -5,14 +5,21 @@ from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 from common.media_storage import delete_local_media_url, save_image_upload
 
-from ..models import User
-from ..serializers import RegisterSerializer, RoleTokenObtainPairSerializer, UserSerializer
+from ..models import AuthEmailJob, User
+from ..serializers import (
+    LoginCredentialsSerializer,
+    ProfileUpdateSerializer,
+    RegisterSerializer,
+    RoleTokenObtainPairSerializer,
+    UserSerializer,
+)
 from ..services import verify_request_captcha
 from ..services.tokens import issue_tokens
+from ..services import two_factor
+from ..tasks import queue_auth_email
 from .verification import queue_verification_email
 
 
@@ -35,23 +42,53 @@ class RegisterView(generics.CreateAPIView):
         )
 
 
-class LoginView(TokenObtainPairView):
-    serializer_class = RoleTokenObtainPairSerializer
+class LoginView(APIView):
+    serializer_class = LoginCredentialsSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
         verify_request_captcha(request, 'login')
-        return super().post(request, *args, **kwargs)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+        if user.two_factor_enabled:
+            challenge = two_factor.start_login_challenge(user, serializer.portal)
+            queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
+            return Response(
+                {
+                    'two_factor_required': True,
+                    'challenge': challenge,
+                    'email': user.email,
+                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN),
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+        return Response(issue_tokens(user))
 
 
-class MeView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+class MeView(generics.RetrieveUpdateAPIView):
+    """GET: thông tin tài khoản hiện tại. PATCH: cập nhật họ tên + SĐT.
+
+    Chỉ nhận PATCH (không PUT) vì chỉ sửa một phần hồ sơ; email không đổi ở đây.
+    """
+
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'patch']
 
     def get_object(self):
         return self.request.user
+
+    def get_serializer_class(self):
+        return ProfileUpdateSerializer if self.request.method == 'PATCH' else UserSerializer
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        # Trả về UserSerializer đầy đủ để frontend cập nhật thẳng auth context.
+        return Response(UserSerializer(request.user, context=self.get_serializer_context()).data)
 
 
 class AvatarUploadView(APIView):

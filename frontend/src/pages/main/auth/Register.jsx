@@ -23,8 +23,13 @@ export default function Register() {
   const [form] = Form.useForm()
   const password = Form.useWatch('password', form) || ''
 
+  function clearPasswords() {
+    form.resetFields(['password', 'confirm_password'])
+  }
+
   async function onFinish(values) {
     if (!executeRecaptcha) {
+      clearPasswords()
       setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
       return
     }
@@ -42,6 +47,7 @@ export default function Register() {
       setAuthenticatedUser(result.user)
       navigate('/')
     } catch (err) {
+      clearPasswords()
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
       } else {
@@ -126,7 +132,7 @@ export default function Register() {
             <Alert type="error" message={error} showIcon className="mb-4 !rounded-xl reg-field" closable onClose={() => setError('')} />
           )}
 
-          <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
+          <Form form={form} layout="vertical" onFinish={onFinish} onFinishFailed={clearPasswords} requiredMark={false}>
             <div className="reg-field">
               <Form.Item
                 name="full_name"

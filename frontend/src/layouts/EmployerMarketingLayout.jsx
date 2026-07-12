@@ -1,5 +1,6 @@
 import { Button } from 'antd'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import EmailVerificationBanner from '../components/auth/EmailVerificationBanner'
 import BrandLogo from '../components/brand/BrandLogo'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '../config/portals'
 import { useAuth } from '../hooks/useAuth'
@@ -53,6 +54,7 @@ export default function EmployerMarketingLayout() {
           </div>
         </div>
       </header>
+      <EmailVerificationBanner verificationPath={employerAppPath('/xac-thuc-email')} />
 
       <main>
         <Outlet />

@@ -6,6 +6,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage, getOAuthErrorMessage } from '../../api/errorMessage'
 import { HOME_BY_ROLE, MAIN_FORGOT_PASSWORD_URL } from '../../config/portals'
 import { useAuth } from '../../hooks/useAuth'
+import { resendTwoFactorLogin } from '../../api/authService'
+import TwoFactorCodeModal from './TwoFactorCodeModal'
 
 // Style animation/nút dùng chung cho các trang auth (login + register các cổng).
 export function AuthFormStyles() {
@@ -57,13 +59,19 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const forgotLinkProps = forgotPasswordLink?.startsWith('http')
     ? { href: forgotPasswordLink }
     : { to: forgotPasswordLink }
-  const { login, logout } = useAuth()
+  const { login, logout, completeTwoFactorLogin } = useAuth()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [searchParams] = useSearchParams()
   // Lỗi từ luồng social login (OAuthCallback quay về kèm ?oauth_error=).
   const [error, setError] = useState(() => getOAuthErrorMessage(searchParams.get('oauth_error')))
   const [loading, setLoading] = useState(false)
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
+  const [form] = Form.useForm()
+
+  function clearPassword() {
+    form.resetFields(['password'])
+  }
 
   useEffect(() => {
     if (!searchParams.has('oauth_error')) return
@@ -77,6 +85,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
 
   async function onFinish(values) {
     if (!executeRecaptcha) {
+      clearPassword()
       setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
       return
     }
@@ -84,8 +93,15 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     setLoading(true)
     try {
       const captchaToken = await executeRecaptcha('login')
-      const user = await login({ ...values, captcha_token: captchaToken, portal })
+      const result = await login({ ...values, captcha_token: captchaToken, portal })
+      if (result.two_factor_required) {
+        clearPassword()
+        setTwoFactorChallenge({ ...result, portal })
+        return
+      }
+      const user = result
       if (expectedRoles && !expectedRoles.includes(user.role)) {
+        clearPassword()
         logout()
         setError('Tài khoản không có quyền truy cập cổng này.')
         return
@@ -93,6 +109,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
       if (onSuccess) onSuccess(user)
       else navigate(HOME_BY_ROLE[user.role] || '/')
     } catch (err) {
+      clearPassword()
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
       } else {
@@ -101,6 +118,23 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleTwoFactorConfirm(code) {
+    const user = await completeTwoFactorLogin({
+      challenge: twoFactorChallenge.challenge,
+      code,
+      portal: twoFactorChallenge.portal,
+    })
+    if (expectedRoles && !expectedRoles.includes(user.role)) {
+      logout()
+      setTwoFactorChallenge(null)
+      setError('Tài khoản không có quyền truy cập cổng này.')
+      return
+    }
+    setTwoFactorChallenge(null)
+    if (onSuccess) onSuccess(user)
+    else navigate(HOME_BY_ROLE[user.role] || '/')
   }
 
   return (
@@ -118,7 +152,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
         />
       )}
 
-      <Form layout="vertical" onFinish={onFinish} requiredMark={false} className="space-y-0">
+      <Form form={form} layout="vertical" onFinish={onFinish} onFinishFailed={clearPassword} requiredMark={false} className="space-y-0">
         <div className="login-field">
           <Form.Item
             name="email"
@@ -198,6 +232,15 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
           </button>
         </div>
       </Form>
+
+      <TwoFactorCodeModal
+        open={Boolean(twoFactorChallenge)}
+        email={twoFactorChallenge?.email}
+        expiresIn={twoFactorChallenge?.expires_in || 180}
+        onCancel={() => setTwoFactorChallenge(null)}
+        onConfirm={handleTwoFactorConfirm}
+        onResend={() => resendTwoFactorLogin(twoFactorChallenge.challenge)}
+      />
     </>
   )
 }

@@ -14,6 +14,14 @@ from .password_reset import (
     PasswordResetValidateView,
 )
 from .verification import ChangeEmailView, VerificationConfirmView, VerificationSendView
+from .two_factor import (
+    TwoFactorDisableConfirmView,
+    TwoFactorDisableSendView,
+    TwoFactorLoginResendView,
+    TwoFactorLoginVerifyView,
+    TwoFactorSetupConfirmView,
+    TwoFactorSetupSendView,
+)
 
 __all__ = [
     'AvatarUploadView',
@@ -29,4 +37,10 @@ __all__ = [
     'RegisterView',
     'VerificationConfirmView',
     'VerificationSendView',
+    'TwoFactorLoginResendView',
+    'TwoFactorLoginVerifyView',
+    'TwoFactorDisableConfirmView',
+    'TwoFactorDisableSendView',
+    'TwoFactorSetupConfirmView',
+    'TwoFactorSetupSendView',
 ]
