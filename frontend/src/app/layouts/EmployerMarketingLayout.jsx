@@ -1,6 +1,7 @@
 import { Button } from 'antd'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { EmailVerificationBanner, useAuth } from '@/features/auth'
+import { EmailVerificationBanner } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '@/shared/config/portals'
 
@@ -11,7 +12,7 @@ const NAV_ITEMS = [
 ]
 
 export default function EmployerMarketingLayout() {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user } = useSession()
   const navigate = useNavigate()
 
   return (

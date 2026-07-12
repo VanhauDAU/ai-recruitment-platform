@@ -1,3 +1,6 @@
+> Status: Completed by PR #28.
+> This document is retained for historical context only.
+
 # Frontend FSD — Giai đoạn 0–1
 
 ## Route inventory giữ nguyên

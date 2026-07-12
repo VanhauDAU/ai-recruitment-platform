@@ -8,7 +8,7 @@ import { getProvinces } from '@/entities/location'
 import { getBlogPinnedPosts } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
-import { blogPostPath } from '../lib/blog-paths'
+import { blogPostPath } from '@/entities/blog'
 
 const ALL_PROVINCES = ''
 

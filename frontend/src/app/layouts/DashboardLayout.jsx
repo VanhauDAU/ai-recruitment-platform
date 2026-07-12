@@ -1,6 +1,7 @@
 import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { EmailVerificationBanner, useAuth } from '@/features/auth'
+import { EmailVerificationBanner } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath, employerAppPath } from '@/shared/config/portals'
 
@@ -19,7 +20,7 @@ const NAV_ITEMS = {
 }
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout } = useSession()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const items = NAV_ITEMS[user?.role] || []

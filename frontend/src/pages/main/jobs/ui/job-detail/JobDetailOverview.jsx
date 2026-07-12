@@ -40,7 +40,7 @@ export function JobBreadcrumbs({ job }) {
   )
 }
 
-export function JobHero({ job, saved, onApply, onSave, onShare }) {
+export function JobHero({ job, saved, onApply, onSave, onShare, savePending }) {
   const locations = job.locations_detail?.map((location) => location.name).join(' · ') || EMPTY_LABEL
   const deadline = formatDeadline(job.deadline)
   const experience = EXPERIENCE_YEARS_LABELS[job.experience_years] || EMPTY_LABEL
@@ -78,7 +78,7 @@ export function JobHero({ job, saved, onApply, onSave, onShare }) {
 
         <div className="mt-5 flex gap-2 sm:gap-3">
           <button type="button" onClick={onApply} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)]"><SafetyCertificateOutlined /> Ứng tuyển ngay</button>
-          <button type="button" onClick={onSave} className="hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
+          <button type="button" onClick={onSave} disabled={savePending} className="hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
         </div>
       </div>
     </section>

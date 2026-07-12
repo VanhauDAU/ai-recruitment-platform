@@ -1,9 +1,9 @@
 import { WarningFilled } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../model/use-auth'
+import { useSession } from '@/entities/session'
 
 export default function EmailVerificationBanner({ verificationPath }) {
-  const { user } = useAuth()
+  const { user } = useSession()
 
   // `provider` không còn có trong dữ liệu user từ API. Tài khoản OAuth đã được
   // backend đánh dấu xác thực khi đăng nhập, nên chỉ cần dựa vào trạng thái này.

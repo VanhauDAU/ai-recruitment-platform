@@ -2,7 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import BlogCard, { BlogCardHero, BlogCardRow } from './BlogCard'
 import { SectionHeading } from './FeaturedPosts'
-import { blogCategoryPath } from '../lib/blog-paths'
+import { blogCategoryPath } from '@/entities/blog'
 
 // Một section danh mục trên trang /blog: tiêu đề + nút xem tất cả + 4 bài mới
 // nhất. `variant` xoay vòng để các section có bố cục khác nhau.

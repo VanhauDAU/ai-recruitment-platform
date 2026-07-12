@@ -1,6 +1,6 @@
 import { App as AntApp, ConfigProvider } from 'antd'
 import { useMemo } from 'react'
-import { AuthProvider } from '@/features/auth'
+import { SessionProvider } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
 
 function ThemedProviders({ children }) {
@@ -17,13 +17,13 @@ function ThemedProviders({ children }) {
   return (
     <ConfigProvider theme={theme}>
       <AntApp>
-        <AuthProvider>{children}</AuthProvider>
+        <SessionProvider>{children}</SessionProvider>
       </AntApp>
     </ConfigProvider>
   )
 }
 
-// Điểm tập trung của provider tree. BrowserRouter ở App.jsx vì AuthProvider
+// Điểm tập trung của provider tree. BrowserRouter ở App.jsx vì SessionProvider
 // dùng navigation, còn mọi provider ứng dụng được giữ ở đây.
 export default function AppProviders({ children }) {
   return (

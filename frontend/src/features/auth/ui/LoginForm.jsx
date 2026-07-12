@@ -5,8 +5,9 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
 import { HOME_BY_ROLE, MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
-import { useAuth } from '../model/use-auth'
-import { resendTwoFactorLogin, TwoFactorCodeModal } from '@/features/two-factor'
+import { useSession } from '@/entities/session'
+import { login, resendTwoFactorLogin, verifyTwoFactorLogin } from '../api/auth.api'
+import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { getReturnUrl } from '../model/return-url'
 
 // Style animation/nút dùng chung cho các trang auth (login + register các cổng).
@@ -59,7 +60,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const forgotLinkProps = forgotPasswordLink?.startsWith('http')
     ? { href: forgotPasswordLink }
     : { to: forgotPasswordLink }
-  const { login, logout, completeTwoFactorLogin } = useAuth()
+  const { logout, refreshSession } = useSession()
   const navigate = useNavigate()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [searchParams] = useSearchParams()
@@ -104,7 +105,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
         setTwoFactorChallenge({ ...result, portal })
         return
       }
-      const user = result
+      const user = await refreshSession()
       if (expectedRoles && !expectedRoles.includes(user.role)) {
         clearPassword()
         logout()
@@ -126,11 +127,12 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   }
 
   async function handleTwoFactorConfirm(code) {
-    const user = await completeTwoFactorLogin({
+    await verifyTwoFactorLogin({
       challenge: twoFactorChallenge.challenge,
       code,
       portal: twoFactorChallenge.portal,
     })
+    const user = await refreshSession()
     if (expectedRoles && !expectedRoles.includes(user.role)) {
       logout()
       setTwoFactorChallenge(null)

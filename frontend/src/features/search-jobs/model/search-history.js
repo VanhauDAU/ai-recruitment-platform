@@ -45,3 +45,7 @@ export function removeHistoryEntry(entry) {
   const updated = getHistory().filter((item) => !(item.q === entry.q && item.by === entry.by))
   localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
 }
+
+export function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY)
+}

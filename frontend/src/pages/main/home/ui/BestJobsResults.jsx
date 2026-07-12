@@ -10,8 +10,8 @@ import {
   stripCompanyPrefix,
 } from '@/entities/job'
 import { jobDetailPath, SavedJobTooltipContent } from '@/entities/job'
-import { useAuth } from '@/features/auth'
 import { useLoginPrompt } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 
@@ -29,11 +29,11 @@ function LoadingGrid() {
 
 export default function BestJobsResults({ animKey, jobs, loading }) {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useSession()
   const { promptLogin } = useLoginPrompt()
   // Dùng chung kho "việc làm đã lưu" với trang danh sách/nút nổi để trạng thái tim
   // và badge luôn khớp; trước đây trang chủ dùng state cục bộ nên bấm không lưu thật.
-  const { savedIds, toggle } = useSavedJobs()
+  const { savedIds, pendingJobIds, toggle } = useSavedJobs()
   const [preview, setPreview] = useState({ jobId: null, anchor: null })
   const previewTimer = useRef(null)
   const closeTimer = useRef(null)
@@ -128,7 +128,8 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
               >
               <button
                 onClick={(event) => toggleSave(event, job.public_id)}
-                className="absolute right-3 top-3 cursor-pointer text-gray-300 hover:text-[var(--brand-primary)]"
+                disabled={pendingJobIds.has(job.public_id)}
+                className="absolute right-3 top-3 cursor-pointer text-gray-300 hover:text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={savedIds.has(job.public_id) ? 'Đã lưu việc làm' : 'Lưu việc làm'}
               >
                 {savedIds.has(job.public_id)

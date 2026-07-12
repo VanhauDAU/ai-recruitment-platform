@@ -1,0 +1,5 @@
+# Chủ repository hiện tại. Khi có team chuyên trách, thay từng dòng bằng GitHub team phù hợp.
+/frontend/src/app/              @VanhauDAU
+/frontend/src/shared/api/       @VanhauDAU
+/frontend/src/entities/session/ @VanhauDAU
+/.github/workflows/             @VanhauDAU

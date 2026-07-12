@@ -9,7 +9,7 @@ import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import { BlogCardRow } from './ui/BlogCard'
 import BlogInlineBanner from './ui/BlogInlineBanner'
 import FeaturedPosts, { SectionHeading } from './ui/FeaturedPosts'
-import { BLOG_ROOT } from './lib/blog-paths'
+import { BLOG_ROOT } from '@/entities/blog'
 
 const PAGE_SIZE = 12
 
