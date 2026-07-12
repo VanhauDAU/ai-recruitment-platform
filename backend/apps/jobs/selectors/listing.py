@@ -2,7 +2,7 @@ from django.db.models import Case, F, IntegerField, Q, When
 from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
-from common.db.search import search_q
+from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategory
 

@@ -1,7 +1,22 @@
-import { DownOutlined, RightOutlined } from '@ant-design/icons'
+import {
+  BookOutlined,
+  BulbOutlined,
+  CompassOutlined,
+  DownOutlined,
+  DollarOutlined,
+  LineChartOutlined,
+  ReadOutlined,
+  RightOutlined,
+  RocketOutlined,
+} from '@ant-design/icons'
 import { Drawer, Tag } from 'antd'
+import { useEffect, useState } from 'react'
+import { getBlogCategories, getBlogHome } from '@/api/blogService'
+import { blogCategoryPath, blogPostPath } from '@/pages/main/blog/blogPaths'
 import BrandLogo from '../brand/BrandLogo'
 import { flattenMenuItems, isMenuActive } from './headerNavigationConfig'
+
+const HANDBOOK_ICONS = [CompassOutlined, BulbOutlined, DollarOutlined, ReadOutlined, RocketOutlined, LineChartOutlined]
 
 function NavigationItem({ item, onSelect, mobile = false }) {
   return (
@@ -54,34 +69,119 @@ export function DesktopNavigation({ menus, openKey, pathname, onOpen, onSelect }
               <span className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-[var(--brand-primary)] transition-all duration-200 ${
                 active ? 'w-full opacity-100' : 'w-0 opacity-0'
               }`} />
+              {open && menu.key === 'handbook' && (
+                <span className="absolute -bottom-2 left-1/2 z-50 h-4 w-4 -translate-x-1/2 rotate-45 rounded-sm border-l border-t border-gray-100 bg-white" />
+              )}
             </button>
 
             {open && (
-              <div className="absolute left-0 top-full z-40 flex w-max max-w-[calc(100vw-3rem)] divide-x divide-gray-100 rounded-xl border border-gray-100 bg-white py-4 shadow-xl">
-                {menu.columns.map((column, columnIndex) => (
-                  <div key={columnIndex} className="space-y-5 px-6">
-                    {column.map((group, groupIndex) => (
-                      <div key={groupIndex}>
-                        {group.title && (
-                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            {group.title}
-                          </p>
-                        )}
-                        <div className={group.cols === 2 ? 'grid grid-cols-2 gap-x-8' : ''}>
-                          {group.items.map((item) => (
-                            <NavigationItem key={item.label} item={item} onSelect={onSelect} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
+              menu.key === 'handbook'
+                ? <HandbookDropdown onSelect={onSelect} />
+                : <StandardDropdown menu={menu} onSelect={onSelect} />
             )}
           </div>
         )
       })}
     </nav>
+  )
+}
+
+function StandardDropdown({ menu, onSelect }) {
+  return (
+    <div className="absolute left-0 top-full z-40 flex w-max max-w-[calc(100vw-3rem)] divide-x divide-gray-100 rounded-xl border border-gray-100 bg-white py-4 shadow-xl">
+      {menu.columns.map((column, columnIndex) => (
+        <div key={columnIndex} className="space-y-5 px-6">
+          {column.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              {group.title && (
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  {group.title}
+                </p>
+              )}
+              <div className={group.cols === 2 ? 'grid grid-cols-2 gap-x-8' : ''}>
+                {group.items.map((item) => (
+                  <NavigationItem key={item.label} item={item} onSelect={onSelect} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function HandbookDropdown({ onSelect }) {
+  const [categories, setCategories] = useState([])
+  const [featured, setFeatured] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    getBlogCategories().then((data) => { if (!cancelled) setCategories(data || []) }).catch(() => {})
+    getBlogHome().then((data) => { if (!cancelled) setFeatured((data?.featured || []).slice(0, 2)) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <div className="absolute left-1/2 top-full z-40 grid w-[min(52rem,calc(100vw-2rem))] -translate-x-1/2 grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-slate-900/15">
+      <div className="border-r border-slate-100 p-4">
+        <div className="space-y-0.5">
+          {categories.length > 0 ? categories.map((category, index) => {
+            const Icon = HANDBOOK_ICONS[index % HANDBOOK_ICONS.length]
+            return (
+              <button
+                key={category.slug}
+                type="button"
+                onClick={() => onSelect({ to: blogCategoryPath(category.slug) })}
+                className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm text-[var(--brand-primary)] transition group-hover:bg-white">
+                  <Icon />
+                </span>
+                <span className="truncate">{category.name}</span>
+              </button>
+            )
+          }) : (
+            Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-11 animate-pulse rounded-lg bg-slate-100" />)
+          )}
+        </div>
+      </div>
+
+      <div className="p-5">
+        <h3 className="text-sm font-bold text-slate-800">Bài viết nổi bật</h3>
+        <div className="mt-3 space-y-3">
+          {featured.length > 0 ? featured.map((post) => (
+            <button
+              key={post.public_id}
+              type="button"
+              onClick={() => onSelect({ to: blogPostPath(post.slug) })}
+              className="group flex w-full cursor-pointer gap-3 rounded-xl p-1 text-left transition hover:bg-slate-50"
+            >
+              <span className="h-[76px] w-[112px] shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                {post.thumbnail_url ? (
+                  <img src={post.thumbnail_url} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-lg font-black text-[var(--brand-primary)]/35"><BookOutlined /></span>
+                )}
+              </span>
+              <span className="min-w-0 pt-0.5">
+                <span className="line-clamp-2 block text-sm font-semibold leading-5 text-slate-700 transition group-hover:text-[var(--brand-primary)]">{post.title}</span>
+                {post.excerpt && <span className="mt-1 line-clamp-2 block text-xs leading-4 text-slate-500">{post.excerpt}</span>}
+              </span>
+            </button>
+          )) : (
+            Array.from({ length: 2 }).map((_, index) => <div key={index} className="h-[76px] animate-pulse rounded-xl bg-slate-100" />)
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => onSelect({ to: '/blog' })}
+          className="mt-4 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-[var(--brand-primary)] transition hover:gap-3"
+        >
+          Xem thêm bài viết nổi bật <RightOutlined className="text-xs" />
+        </button>
+      </div>
+    </div>
   )
 }
 

@@ -22,6 +22,28 @@ class JobCategoryApiTests(APITestCase):
         self.assertEqual({item['name'] for item in response.data}, {'Kế toán', 'Lập trình'})
 
 
+class JobSuggestionApiTests(APITestCase):
+    def test_suggest_returns_matching_active_job_titles(self):
+        user = User.objects.create_user(
+            email='suggest-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        company = Company.objects.create(company_name='Acme', created_by=user)
+        Job.objects.create(
+            posted_by=user,
+            company=company,
+            title='Nhân viên chăm sóc khách hàng',
+            description='Description',
+            status=Job.Status.ACTIVE,
+        )
+
+        response = self.client.get(reverse('job-suggest'), {'q': 'nhan'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['suggestions'], ['Nhân viên chăm sóc khách hàng'])
+
+
 class JobSalaryBucketFilterTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(

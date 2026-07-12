@@ -33,6 +33,7 @@ export default function JobPreviewPanel({
   onMouseLeave,
   onViewDetail,
   onApply,
+  side = 'left',
 }) {
   const [scrolled, setScrolled] = useState(false)
   if (!anchorRect) return null
@@ -41,7 +42,10 @@ export default function JobPreviewPanel({
   const viewportHeight = window.innerHeight
   const panelWidth = Math.min(520, viewportWidth - 24)
   const panelHeight = Math.min(560, viewportHeight - 88)
-  const left = Math.max(12, Math.min(anchorRect.left - panelWidth - 14, viewportWidth - panelWidth - 12))
+  const preferredLeft = side === 'right'
+    ? anchorRect.right + 14
+    : anchorRect.left - panelWidth - 14
+  const left = Math.max(12, Math.min(preferredLeft, viewportWidth - panelWidth - 12))
   const maxTop = Math.max(76, viewportHeight - panelHeight - 12)
   const top = Math.min(Math.max(anchorRect.top - 8, 76), maxTop)
   const locationLabel = formatLocations(job)
