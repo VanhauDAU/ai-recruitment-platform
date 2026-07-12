@@ -5,7 +5,7 @@ import EmailVerificationBanner from './EmailVerificationBanner'
 
 const { useAuth } = vi.hoisted(() => ({ useAuth: vi.fn() }))
 
-vi.mock('../../hooks/useAuth', () => ({ useAuth }))
+vi.mock('../model/useAuth', () => ({ useAuth }))
 
 describe('EmailVerificationBanner', () => {
   beforeEach(() => {

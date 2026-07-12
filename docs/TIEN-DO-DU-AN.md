@@ -30,8 +30,8 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R0 | Khóa baseline: tag `baseline-refactor-start`, quality suite xanh (74 BE + 31 FE test), bundle report, script inventory hotspot | ✅ |
 | R1 | CI (frontend/backend workflow + Postgres/Redis), `scripts/check_all.sh` 1 lệnh, 5 ADR, PR template | ✅ |
 | R2 | Tách hạ tầng API frontend (`shared/api`): client/tokenStore/errorMapper/pagination/dedup + re-export tương thích + boundary check axios | ✅ |
-| R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | 🟡 Phần 1 xong: `features/auth` (api+model+pages) + bản đồ flow. Còn: auth components, `features/account`, `features/two-factor` |
-| R4 | App providers, router, guard đơn trách nhiệm | ⬜ |
+| R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | ✅ `features/auth`, `features/account`, `features/two-factor` hoàn chỉnh; giữ re-export tương thích tới R10. Unit 34/34, Accounts 37/37, E2E 12/12, lint/build xanh |
+| R4 | App providers, router, guard đơn trách nhiệm | 🟡 4.1–4.4 xong: `AppProviders`, `AppRouter`, `AuthGuard`, `RoleGuard` và loading shell; còn returnUrl + OnboardingGuard |
 | R5 | Pilot Jobs theo lát cắt dọc | ⬜ |
 | R6 | Applications/Saved jobs + server state | ⬜ |
 | R7 | Tách Django settings theo môi trường | ⬜ |
@@ -433,4 +433,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-12 (refactor frontend: alias `@/` + jsconfig, gộp `components/jobs`→`components/job`, dọn export chết/thừa, thêm `lint:fix`; fix N+1 request locations trang chủ — batch `?parent=1,2,...`; fix CLS "poor" (SavedJobs 0.68, JobList/JobDetail 0.41 → 0) bằng `min-h-screen` trên `<main>` MainLayout để neo footer/PopularSearches dưới fold, tránh sticky-footer nhảy khi nội dung async về; lint + 29 test + build đều pass)
+Cập nhật lần cuối: 2026-07-13 (hoàn tất R3: feature hóa Auth/Account/2FA, giữ re-export tương thích tới R10, bổ sung regression Account/2FA; bắt đầu R4 với provider/router/guard đơn trách nhiệm và loading shell; frontend 34 unit test + 12 E2E, backend accounts 37 test, lint/build đều pass)

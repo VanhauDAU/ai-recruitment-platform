@@ -2,7 +2,8 @@ import { Navigate, Route } from 'react-router-dom'
 import { adminPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
-import ProtectedRoute from './ProtectedRoute'
+import AuthGuard from '@/app/router/guards/AuthGuard'
+import RoleGuard from '@/app/router/guards/RoleGuard'
 import { AdminDashboardPage, AdminLoginPage, AdminSettingsPage } from './lazyPages'
 
 export function adminRoutes() {
@@ -17,10 +18,12 @@ export function adminRoutes() {
     <Route key="admin-redirect-settings" path="/admin/settings" element={<Navigate to={adminPath('/settings')} replace />} />,
     <Route key="admin-app-root" path={adminPath('')} element={<Navigate to={adminPath('/login')} replace />} />,
 
-    <Route key="admin-protected" element={<ProtectedRoute allowedRoles={['admin']} loginPath={adminPath('/login')} />}>
-      <Route element={<DashboardLayout />}>
-        <Route path={adminPath('/dashboard')} element={<AdminDashboardPage />} />
-        <Route path={adminPath('/settings')} element={<AdminSettingsPage />} />
+    <Route key="admin-authenticated" element={<AuthGuard loginPath={adminPath('/login')} />}>
+      <Route element={<RoleGuard allowedRoles={['admin']} loginPath={adminPath('/login')} />}>
+        <Route element={<DashboardLayout />}>
+          <Route path={adminPath('/dashboard')} element={<AdminDashboardPage />} />
+          <Route path={adminPath('/settings')} element={<AdminSettingsPage />} />
+        </Route>
       </Route>
     </Route>,
   ]

@@ -3,6 +3,18 @@ import { getCurrentPortal } from '@/config/portals'
 import { dedupeRequest } from '@/shared/api/requestDeduplication'
 import { clearSession, getAccessToken as readAccessToken, setTokens } from '@/shared/api/tokenStore'
 
+// Các API 2FA và account đã thuộc feature riêng. Re-export tại đây để contract
+// tạm thời của `@/api/authService` không thay đổi trong compatibility window.
+export {
+  confirmTwoFactorDisable,
+  confirmTwoFactorSetup,
+  resendTwoFactorLogin,
+  sendTwoFactorDisableCode,
+  sendTwoFactorSetupCode,
+  verifyTwoFactorLogin,
+} from '@/features/two-factor/api/twoFactorService'
+export { updateProfile } from '@/features/account/api/accountService'
+
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })
   // Backend trả về access/refresh -> đăng nhập ngay để dẫn thẳng vào trang (chưa xác thực email).
@@ -55,37 +67,6 @@ export async function login({ email, password, captcha_token, portal }) {
   return data
 }
 
-export async function verifyTwoFactorLogin({ challenge, code, portal }) {
-  const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code })
-  setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
-  return data
-}
-
-export async function resendTwoFactorLogin(challenge) {
-  const { data } = await api.post('/auth/two-factor/login/resend/', { challenge })
-  return data
-}
-
-export async function sendTwoFactorSetupCode() {
-  const { data } = await api.post('/auth/two-factor/setup/send/')
-  return data
-}
-
-export async function confirmTwoFactorSetup(code) {
-  const { data } = await api.post('/auth/two-factor/setup/confirm/', { code })
-  return data
-}
-
-export async function sendTwoFactorDisableCode() {
-  const { data } = await api.post('/auth/two-factor/disable/send/')
-  return data
-}
-
-export async function confirmTwoFactorDisable(code) {
-  const { data } = await api.post('/auth/two-factor/disable/confirm/', { code })
-  return data
-}
-
 // ---- Social login (OAuth) ----
 
 // URL bắt đầu luồng OAuth (full-page redirect sang backend -> provider).
@@ -110,13 +91,6 @@ export async function me() {
     const { data } = await api.get('/auth/me/')
     return data
   })
-}
-
-// Cập nhật họ tên + SĐT của tài khoản hiện tại (email không đổi ở đây).
-// Backend trả về user đầy đủ để cập nhật thẳng vào auth context.
-export async function updateProfile({ full_name, phone }) {
-  const { data } = await api.patch('/auth/me/', { full_name, phone })
-  return data
 }
 
 export function logout(portal = getCurrentPortal()) {

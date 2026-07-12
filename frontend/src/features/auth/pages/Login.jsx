@@ -1,8 +1,8 @@
 import { PhoneOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
-import AuthLogo from '@/components/auth/AuthLogo'
-import LoginForm from '@/components/auth/LoginForm'
-import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
+import AuthLogo from '../components/AuthLogo'
+import LoginForm from '../components/LoginForm'
+import SocialLoginButtons from '../components/SocialLoginButtons'
 
 // Cổng ứng viên. `onSuccess`: nếu truyền (vd. khi nhúng trong modal), gọi callback
 // thay vì điều hướng tới dashboard — để nơi gọi tự xử lý (đóng modal, ở lại trang...).

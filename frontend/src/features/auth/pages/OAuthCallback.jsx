@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { completeOAuth } from '@/api/authService'
+import { completeOAuth } from '../api/authService'
 import PageLoading from '@/components/ui/PageLoading'
 import { HOME_BY_ROLE } from '@/config/portals'
-import { useAuth } from '@/hooks/useAuth'
-import { resendTwoFactorLogin } from '@/api/authService'
-import TwoFactorCodeModal from '@/components/auth/TwoFactorCodeModal'
+import { useAuth } from '../model/useAuth'
+import { resendTwoFactorLogin, TwoFactorCodeModal } from '@/features/two-factor'
 
 /**
  * Trang backend redirect về sau OAuth: đổi one_time_code lấy JWT rồi điều hướng.

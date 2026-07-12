@@ -2,12 +2,12 @@ import { CheckCircleFilled, CloseCircleFilled, LockOutlined } from '@ant-design/
 import { Alert, Form, Input, Spin } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { confirmPasswordReset, validatePasswordResetToken } from '@/api/authService'
+import { confirmPasswordReset, validatePasswordResetToken } from '../api/authService'
 import { getApiErrorMessage } from '@/api/errorMessage'
-import AuthLogo from '@/components/auth/AuthLogo'
-import { AuthFormStyles } from '@/components/auth/LoginForm'
-import PasswordRequirements from '@/components/auth/PasswordRequirements'
-import { passwordValidationRule } from '@/components/auth/passwordValidation'
+import AuthLogo from '../components/AuthLogo'
+import { AuthFormStyles } from '../components/LoginForm'
+import PasswordRequirements from '../components/PasswordRequirements'
+import { passwordValidationRule } from '../components/passwordValidation'
 import { adminPath, EMPLOYER_LOGIN_URL, MAIN_LOGIN_URL } from '@/config/portals'
 
 // Sau khi đổi mật khẩu, đưa user về đúng cổng đăng nhập của role họ.

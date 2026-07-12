@@ -1,11 +1,7 @@
-import { ConfigProvider, App as AntApp } from 'antd'
 import { BrowserRouter, useLocation } from 'react-router-dom'
-import { useEffect, useMemo } from 'react'
-import { AuthProvider } from './features/auth'
-import AppRoutes from './routes/AppRoutes'
-import SiteSettingsProvider from './components/site/SiteSettingsProvider'
-import { DEFAULT_SITE_SETTINGS } from './contexts/siteSettingsContext'
-import { settingText, useSiteSettings } from './hooks/useSiteSettings'
+import { useEffect } from 'react'
+import AppProviders from './app/providers/AppProviders'
+import AppRouter from './app/router/AppRouter'
 
 function ScrollRestorationGuard() {
   const { pathname, search } = useLocation()
@@ -23,35 +19,13 @@ function ScrollRestorationGuard() {
   return null
 }
 
-function ThemedApp() {
-  const { settings } = useSiteSettings()
-  const primaryColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
-  const theme = useMemo(() => ({
-    token: {
-      colorPrimary: primaryColor,
-      borderRadius: 8,
-      fontFamily: 'Inter, system-ui, sans-serif',
-    },
-  }), [primaryColor])
-
-  return (
-    <ConfigProvider theme={theme}>
-      <AntApp>
-        <AuthProvider>
-          <ScrollRestorationGuard />
-          <AppRoutes />
-        </AuthProvider>
-      </AntApp>
-    </ConfigProvider>
-  )
-}
-
 function App() {
   return (
     <BrowserRouter>
-      <SiteSettingsProvider>
-        <ThemedApp />
-      </SiteSettingsProvider>
+      <AppProviders>
+        <ScrollRestorationGuard />
+        <AppRouter />
+      </AppProviders>
     </BrowserRouter>
   )
 }

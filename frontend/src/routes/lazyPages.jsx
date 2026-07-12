@@ -1,25 +1,28 @@
 import { lazy } from 'react'
 
+const lazyFeaturePage = (loadFeature, loaderName) => lazy(() => loadFeature()
+  .then((feature) => feature[loaderName]()))
+
 // Central registry for route-level code splitting. Route definition files only
 // describe navigation, while this module only exports React components.
 export const HomePage = lazy(() => import('../pages/main/Home'))
 export const JobListPage = lazy(() => import('../pages/main/jobs/JobList'))
 export const JobDetailPage = lazy(() => import('../pages/main/jobs/JobDetail'))
 export const SavedJobsPage = lazy(() => import('../pages/main/jobs/SavedJobs'))
-export const MainLoginPage = lazy(() => import('../features/auth/pages/Login'))
-export const MainRegisterPage = lazy(() => import('../features/auth/pages/Register'))
-export const VerifyEmailPage = lazy(() => import('../features/auth/pages/VerifyEmail'))
-export const CandidateAccountLayout = lazy(() => import('../pages/main/candidate/CandidateAccountLayout'))
-export const AccountPlaceholderPage = lazy(() => import('../pages/main/candidate/components/AccountPlaceholder'))
+export const MainLoginPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadLoginPage')
+export const MainRegisterPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadRegisterPage')
+export const VerifyEmailPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadVerifyEmailPage')
+export const CandidateAccountLayout = lazyFeaturePage(() => import('@/features/account/routes'), 'loadCandidateAccountLayout')
+export const AccountPlaceholderPage = lazyFeaturePage(() => import('@/features/account/routes'), 'loadAccountPlaceholderPage')
 // Các trang tài khoản đã xây thật (map theo item.key trong candidateMenu).
-export const PersonalInfoPage = lazy(() => import('../pages/main/candidate/pages/PersonalInfo'))
-export const TwoFactorAuthenticationPage = lazy(() => import('../pages/main/candidate/pages/TwoFactorAuthentication'))
+export const PersonalInfoPage = lazyFeaturePage(() => import('@/features/account/routes'), 'loadPersonalInfoPage')
+export const TwoFactorAuthenticationPage = lazyFeaturePage(() => import('@/features/two-factor/routes'), 'loadTwoFactorAuthenticationPage')
 export const BlogHomePage = lazy(() => import('../pages/main/blog/BlogHome'))
 export const BlogCategoryPage = lazy(() => import('../pages/main/blog/BlogCategory'))
 export const BlogDetailPage = lazy(() => import('../pages/main/blog/BlogDetail'))
-export const ForgotPasswordPage = lazy(() => import('../features/auth/pages/ForgotPassword'))
-export const ResetPasswordPage = lazy(() => import('../features/auth/pages/ResetPassword'))
-export const OAuthCallbackPage = lazy(() => import('../features/auth/pages/OAuthCallback'))
+export const ForgotPasswordPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadForgotPasswordPage')
+export const ResetPasswordPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadResetPasswordPage')
+export const OAuthCallbackPage = lazyFeaturePage(() => import('@/features/auth/routes'), 'loadOAuthCallbackPage')
 
 export const EmployerLandingPage = lazy(() => import('../pages/employer/marketing/Landing'))
 export const EmployerServicesPage = lazy(() => import('../pages/employer/marketing/Services'))
