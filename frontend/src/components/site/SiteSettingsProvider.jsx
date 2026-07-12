@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getSiteSettings } from '../../api/siteService'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '../../contexts/siteSettingsContext'
 import { settingText } from '../../hooks/useSiteSettings'
@@ -43,29 +43,44 @@ function ensureFaviconLink() {
   return link
 }
 
+const RETRY_DELAYS_MS = [250, 750]
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export default function SiteSettingsProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULT_SITE_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const requestId = useRef(0)
+
+  const loadSettings = useCallback(async () => {
+    const currentRequest = ++requestId.current
+    setLoading(true)
+    setError(null)
+
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+      try {
+        const data = await getSiteSettings()
+        if (currentRequest === requestId.current) setSettings(mergeSettings(data))
+        break
+      } catch (nextError) {
+        if (attempt === RETRY_DELAYS_MS.length) {
+          if (currentRequest === requestId.current) setError(nextError)
+          break
+        }
+        await wait(RETRY_DELAYS_MS[attempt])
+      }
+    }
+
+    if (currentRequest === requestId.current) setLoading(false)
+  }, [])
 
   useEffect(() => {
-    let ignore = false
-
-    getSiteSettings()
-      .then((data) => {
-        if (!ignore) setSettings(mergeSettings(data))
-      })
-      .catch((err) => {
-        if (!ignore) setError(err)
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false)
-      })
-
-    return () => {
-      ignore = true
-    }
-  }, [])
+    loadSettings()
+    return () => { requestId.current += 1 }
+  }, [loadSettings])
 
   useEffect(() => {
     const primaryColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
@@ -84,7 +99,10 @@ export default function SiteSettingsProvider({ children }) {
     ensureFaviconLink().href = faviconUrl
   }, [settings.brand_favicon_url])
 
-  const value = useMemo(() => ({ settings, loading, error }), [settings, loading, error])
+  const value = useMemo(
+    () => ({ settings, loading, error, retry: loadSettings }),
+    [settings, loading, error, loadSettings],
+  )
 
   return (
     <SiteSettingsContext.Provider value={value}>

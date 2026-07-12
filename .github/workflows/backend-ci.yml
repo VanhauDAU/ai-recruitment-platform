@@ -53,6 +53,7 @@ jobs:
       REDIS_URL: redis://127.0.0.1:6379/1
       SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
       DEBUG: 'True'
+      DJANGO_SETTINGS_MODULE: config.settings.test
 
     steps:
       - uses: actions/checkout@v4

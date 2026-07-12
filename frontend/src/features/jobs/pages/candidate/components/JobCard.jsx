@@ -14,7 +14,7 @@ import {
   formatSalary,
 } from '@/constants/jobOptions'
 import { jobDetailPath } from '@/features/jobs'
-import { useSavedJob } from '@/hooks/useSavedJobs'
+import { useSavedJob } from '@/features/saved-jobs'
 import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…

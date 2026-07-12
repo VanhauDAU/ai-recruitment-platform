@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { getJobs } from '@/features/jobs'
 import { useAuth } from '@/hooks/useAuth'
-import { useSavedJobs } from '@/hooks/useSavedJobs'
+import { useSavedJobs } from '@/features/saved-jobs'
 import JobCard from './components/JobCard'
 import JobCardSkeleton from './components/JobCardSkeleton'
 

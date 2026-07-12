@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useLoginPrompt } from '../../hooks/useLoginPrompt'
-import { useSavedJobs } from '../../hooks/useSavedJobs'
+import { useSavedJobs } from '@/features/saved-jobs'
 import { useSiteSettings } from '../../hooks/useSiteSettings'
 import FeedbackModal from './FeedbackModal'
 

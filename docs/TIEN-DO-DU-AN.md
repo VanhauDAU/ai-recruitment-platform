@@ -33,9 +33,9 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | ✅ `features/auth`, `features/account`, `features/two-factor` hoàn chỉnh; giữ re-export tương thích tới R10. Unit 34/34, Accounts 37/37, E2E 12/12, lint/build xanh |
 | R4 | App providers, router, guard đơn trách nhiệm | ✅ `AppProviders`, `AppRouter`, Auth/Role/Onboarding guard, loading shell và returnUrl an toàn; OnboardingGuard chờ R9 tích hợp status/route |
 | R5 | Pilot Jobs theo lát cắt dọc | 🟡 Tách candidate feature + backend boundary; còn UI CRUD employer |
-| R6 | Applications/Saved jobs + server state | ⬜ |
-| R7 | Tách Django settings theo môi trường | ⬜ |
-| R8 | Dọn backend theo hotspot | ⬜ |
+| R6 | Applications/Saved jobs + server state | 🟡 Feature state/API và transition backend; còn UI nghiệp vụ |
+| R7 | Tách Django settings theo môi trường | ✅ base/development/test/production, CI test settings và production validation giữ nguyên |
+| R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard/AI chưa có use case, Sitecontent để lát cắt riêng |
 | R9 | Onboarding theo kiến trúc mới | ⬜ |
 | R10 | Cleanup, bundle, tài liệu | ⬜ |
 
@@ -433,4 +433,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-13 (R5: tách candidate Jobs/API và backend boundary; 48 frontend unit, 9 Jobs backend, 16 E2E; lint/build xanh)
+Cập nhật lần cuối: 2026-07-13 (R5–R8: Jobs/Applications feature hóa, settings theo môi trường và dọn hotspot Candidate/CV; backend 81 test xanh)

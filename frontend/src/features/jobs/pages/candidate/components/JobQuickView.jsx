@@ -13,7 +13,7 @@ import {
   formatLocations,
   formatSalary,
 } from '@/constants/jobOptions'
-import { useSavedJob } from '@/hooks/useSavedJobs'
+import { useSavedJob } from '@/features/saved-jobs'
 import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.

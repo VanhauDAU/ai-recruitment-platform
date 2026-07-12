@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions
+from rest_framework import generics
+from rest_framework.exceptions import ValidationError
 
 from apps.accounts.permissions import IsCandidate, IsEmployer
 
@@ -9,7 +10,11 @@ from .selectors import (
     employer_application_queryset,
     employer_applications_queryset,
 )
-from .services import create_application, update_application_status
+from .services import (
+    InvalidApplicationStatusTransition,
+    create_application,
+    update_application_status,
+)
 
 
 class CandidateApplicationListCreateView(generics.ListCreateAPIView):
@@ -40,4 +45,7 @@ class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
         return employer_application_queryset(self.request.user)
 
     def perform_update(self, serializer):
-        update_application_status(serializer)
+        try:
+            update_application_status(serializer)
+        except InvalidApplicationStatusTransition as error:
+            raise ValidationError({'status': str(error)}) from error

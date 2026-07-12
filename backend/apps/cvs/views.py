@@ -1,17 +1,13 @@
-from uuid import uuid4
-
-from django.core.files.storage import default_storage
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
-from .models import UserCv
 from .serializers import UserCvSerializer
-
-ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
+from .selectors import candidate_cvs_queryset
+from .services import UnsupportedCvUpload, archive_cv, create_builder_cv, upload_cv
 
 
 class UserCvListCreateView(generics.ListCreateAPIView):
@@ -19,10 +15,10 @@ class UserCvListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
-        return UserCv.objects.filter(user=self.request.user, is_deleted=False)
+        return candidate_cvs_queryset(self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user, cv_type=UserCv.CvType.BUILDER, source=UserCv.Source.BUILDER)
+        create_builder_cv(serializer, self.request.user)
 
 
 class UserCvDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -31,12 +27,10 @@ class UserCvDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'public_id'
 
     def get_queryset(self):
-        return UserCv.objects.filter(user=self.request.user, is_deleted=False)
+        return candidate_cvs_queryset(self.request.user)
 
     def perform_destroy(self, instance):
-        instance.is_deleted = True
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=['is_deleted', 'deleted_at'])
+        archive_cv(instance)
 
 
 class UserCvUploadView(APIView):
@@ -60,21 +54,8 @@ class UserCvUploadView(APIView):
         if not upload:
             return Response({'file': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        file_type = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
-        if file_type not in ALLOWED_UPLOAD_TYPES:
-            return Response({'file': 'Only PDF or DOCX files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        path = default_storage.save(f'cvs/uploads/{request.user.public_id}/{uuid4().hex}.{file_type}', upload)
-        cv = UserCv.objects.create(
-            user=request.user,
-            cv_type=UserCv.CvType.UPLOADED,
-            source=UserCv.Source.UPLOADED,
-            title=request.data.get('title') or upload.name,
-            # Chỉ lưu storage key. URL public được serializer tạo theo môi
-            # trường hiện tại (local, domain production hoặc CDN).
-            file_url=path,
-            file_name=upload.name,
-            file_type=file_type,
-            status=UserCv.Status.UPLOADED,
-        )
+        try:
+            cv = upload_cv(request.user, upload, request.data.get('title', ''))
+        except UnsupportedCvUpload as error:
+            raise ValidationError({'file': str(error)}) from error
         return Response(UserCvSerializer(cv).data, status=status.HTTP_201_CREATED)
