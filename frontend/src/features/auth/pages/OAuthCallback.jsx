@@ -5,6 +5,7 @@ import PageLoading from '@/components/ui/PageLoading'
 import { HOME_BY_ROLE } from '@/config/portals'
 import { useAuth } from '../model/useAuth'
 import { resendTwoFactorLogin, TwoFactorCodeModal } from '@/features/two-factor'
+import { getSafeReturnUrl, withReturnUrl } from '../model/returnUrl'
 
 /**
  * Trang backend redirect về sau OAuth: đổi one_time_code lấy JWT rồi điều hướng.
@@ -24,8 +25,10 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
 
     const error = params.get('error')
     const code = params.get('code')
+    const next = getSafeReturnUrl(params.get('next'))
     if (error || !code) {
-      navigate(`${loginPath}?oauth_error=${encodeURIComponent(error || 'invalid_code')}`, { replace: true })
+      const loginTarget = withReturnUrl(loginPath, next)
+      navigate(`${loginTarget}${loginTarget.includes('?') ? '&' : '?'}oauth_error=${encodeURIComponent(error || 'invalid_code')}`, { replace: true })
       return
     }
 
@@ -37,11 +40,13 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
         }
         const { user } = result
         setAuthenticatedUser(user)
-        const next = params.get('next')
-        const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : ''
+        const safeNext = getSafeReturnUrl(params.get('next'))
         navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
       })
-      .catch(() => navigate(`${loginPath}?oauth_error=complete_failed`, { replace: true }))
+      .catch(() => {
+        const loginTarget = withReturnUrl(loginPath, next)
+        navigate(`${loginTarget}${loginTarget.includes('?') ? '&' : '?'}oauth_error=complete_failed`, { replace: true })
+      })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function confirmTwoFactor(code) {
@@ -50,8 +55,7 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
       code,
       portal: twoFactorChallenge.portal,
     })
-    const next = params.get('next')
-    const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : ''
+    const safeNext = getSafeReturnUrl(params.get('next'))
     navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
   }
 

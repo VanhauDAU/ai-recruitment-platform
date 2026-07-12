@@ -7,6 +7,7 @@ import { getApiErrorMessage, getOAuthErrorMessage } from '../../../api/errorMess
 import { HOME_BY_ROLE, MAIN_FORGOT_PASSWORD_URL } from '../../../config/portals'
 import { useAuth } from '../model/useAuth'
 import { resendTwoFactorLogin, TwoFactorCodeModal } from '@/features/two-factor'
+import { getReturnUrl } from '../model/returnUrl'
 
 // Style animation/nút dùng chung cho các trang auth (login + register các cổng).
 export function AuthFormStyles() {
@@ -67,6 +68,11 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const [loading, setLoading] = useState(false)
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
   const [form] = Form.useForm()
+  const returnUrl = getReturnUrl(searchParams)
+
+  function navigateAfterLogin(user) {
+    navigate(returnUrl || HOME_BY_ROLE[user.role] || '/', { replace: true })
+  }
 
   function clearPassword() {
     form.resetFields(['password'])
@@ -106,7 +112,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
         return
       }
       if (onSuccess) onSuccess(user)
-      else navigate(HOME_BY_ROLE[user.role] || '/')
+      else navigateAfterLogin(user)
     } catch (err) {
       clearPassword()
       if (err.response?.status === 429) {
@@ -133,7 +139,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     }
     setTwoFactorChallenge(null)
     if (onSuccess) onSuccess(user)
-    else navigate(HOME_BY_ROLE[user.role] || '/')
+    else navigateAfterLogin(user)
   }
 
   return (

@@ -31,7 +31,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R1 | CI (frontend/backend workflow + Postgres/Redis), `scripts/check_all.sh` 1 lệnh, 5 ADR, PR template | ✅ |
 | R2 | Tách hạ tầng API frontend (`shared/api`): client/tokenStore/errorMapper/pagination/dedup + re-export tương thích + boundary check axios | ✅ |
 | R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | ✅ `features/auth`, `features/account`, `features/two-factor` hoàn chỉnh; giữ re-export tương thích tới R10. Unit 34/34, Accounts 37/37, E2E 12/12, lint/build xanh |
-| R4 | App providers, router, guard đơn trách nhiệm | 🟡 4.1–4.4 xong: `AppProviders`, `AppRouter`, `AuthGuard`, `RoleGuard` và loading shell; còn returnUrl + OnboardingGuard |
+| R4 | App providers, router, guard đơn trách nhiệm | ✅ `AppProviders`, `AppRouter`, Auth/Role/Onboarding guard, loading shell và returnUrl an toàn; OnboardingGuard chờ R9 tích hợp status/route |
 | R5 | Pilot Jobs theo lát cắt dọc | ⬜ |
 | R6 | Applications/Saved jobs + server state | ⬜ |
 | R7 | Tách Django settings theo môi trường | ⬜ |
@@ -433,4 +433,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-13 (hoàn tất R3: feature hóa Auth/Account/2FA, giữ re-export tương thích tới R10, bổ sung regression Account/2FA; bắt đầu R4 với provider/router/guard đơn trách nhiệm và loading shell; frontend 34 unit test + 12 E2E, backend accounts 37 test, lint/build đều pass)
+Cập nhật lần cuối: 2026-07-13 (hoàn tất R3–R4: feature hóa Auth/Account/2FA; tách provider/router/guard, loading shell, returnUrl an toàn và policy onboarding không loop; giữ re-export tương thích tới R10; frontend 46 unit test + 14 E2E, backend accounts 37 test, lint/build đều pass)

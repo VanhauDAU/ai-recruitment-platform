@@ -2,7 +2,7 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutl
 import { Alert, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage } from '@/api/errorMessage'
 import { register } from '../api/authService'
 import AuthLogo from '../components/AuthLogo'
@@ -11,11 +11,13 @@ import { passwordValidationRule } from '../components/passwordValidation'
 import SocialLoginButtons from '../components/SocialLoginButtons'
 import { useAuth } from '../model/useAuth'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { getReturnUrl } from '../model/returnUrl'
 
 export default function Register() {
   const { siteName } = useSiteSettings()
   const { setAuthenticatedUser } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -45,7 +47,7 @@ export default function Register() {
       const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
       setAuthenticatedUser(result.user)
-      navigate('/')
+      navigate(getReturnUrl(searchParams) || '/', { replace: true })
     } catch (err) {
       clearPasswords()
       if (err.response?.status === 429) {
@@ -306,7 +308,7 @@ export default function Register() {
       <div className="reg-field mt-4 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Đã có tài khoản?{' '}
-          <Link to="/login" className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors">
+          <Link to={`/login${searchParams.toString() ? `?${searchParams.toString()}` : ''}`} className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors">
             Đăng nhập ngay
           </Link>
         </p>

@@ -1,4 +1,5 @@
 import { oauthStartUrl } from '../api/authService'
+import { getReturnUrl } from '../model/returnUrl'
 
 function GoogleIcon() {
   return (
@@ -37,7 +38,8 @@ const PROVIDERS = {
 // (vd. login nhúng trong modal ở trang việc làm).
 function defaultNext() {
   const { pathname, search } = window.location
-  return /\/(login|sign-up|register)$/.test(pathname) ? '' : pathname + search
+  if (!/\/(login|sign-up|register)$/.test(pathname)) return pathname + search
+  return getReturnUrl(new URLSearchParams(search))
 }
 
 /**

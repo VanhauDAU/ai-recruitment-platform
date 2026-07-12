@@ -27,6 +27,15 @@ async function authenticateCandidate(page) {
 }
 
 test.describe('candidate account features', () => {
+  test('preserves the protected URL as returnUrl before redirecting to login', async ({ page }) => {
+    await page.route('**/api/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
+
+    await page.goto('/tai-khoan/xac-minh-hai-buoc?source=header')
+
+    await expect(page).toHaveURL(/\/login\?returnUrl=%2Ftai-khoan%2Fxac-minh-hai-buoc%3Fsource%3Dheader/)
+    await expect(page.getByRole('heading', { name: 'Chào mừng quay trở lại' })).toBeVisible()
+  })
+
   test('loads the profile page from the account feature and saves profile data', async ({ page }) => {
     await authenticateCandidate(page)
     await page.goto('/tai-khoan/thong-tin-ca-nhan')
