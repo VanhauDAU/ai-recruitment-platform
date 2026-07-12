@@ -1,8 +1,7 @@
 import { ArrowRightOutlined, CloseOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { settingText, useSiteSettings } from '@/hooks/useSiteSettings'
-import { DEFAULT_SITE_SETTINGS } from '@/contexts/siteSettingsContext'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 const BENEFITS = [
   {

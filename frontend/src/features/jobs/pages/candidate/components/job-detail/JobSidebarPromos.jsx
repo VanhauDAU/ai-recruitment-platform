@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getBanners } from '@/api/siteService'
+import { getBanners } from '@/entities/site-settings'
 
 const THEME_CLASS = {
   green: 'from-emerald-700 to-emerald-500',

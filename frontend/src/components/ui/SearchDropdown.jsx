@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { getJobSuggestions, getJobs, jobDetailPath } from '@/features/jobs'
-import { companyInitial, formatNumber, formatSalary } from '../../constants/jobOptions'
-import useDebouncedValue from '../../hooks/useDebouncedValue'
+import { companyInitial, formatNumber, formatSalary } from '@/entities/job'
+import useDebouncedValue from '@/shared/hooks/useDebouncedValue'
 import { SEARCH_BY_TABS, getHistory, removeHistoryEntry } from './searchDropdownHistory'
 
 const MIN_SUGGESTED = 6

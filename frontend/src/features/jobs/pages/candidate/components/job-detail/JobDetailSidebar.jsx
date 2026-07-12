@@ -6,7 +6,7 @@ import {
   POSITION_LEVEL_LABELS,
   WORK_TYPE_LABELS,
   companyInitial,
-} from '@/constants/jobOptions'
+} from '@/entities/job'
 import JobSafetyTips from './JobSafetyTips'
 import JobSidebarPromos from './JobSidebarPromos'
 

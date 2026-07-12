@@ -1,5 +1,5 @@
 import api from '@/shared/api/client'
-import { getCurrentPortal } from '@/config/portals'
+import { getCurrentPortal } from '@/shared/config/portals'
 import { setTokens } from '@/shared/api/tokenStore'
 
 export async function verifyTwoFactorLogin({ challenge, code, portal }) {

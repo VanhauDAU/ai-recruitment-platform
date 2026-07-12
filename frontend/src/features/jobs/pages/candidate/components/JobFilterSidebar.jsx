@@ -7,7 +7,7 @@ import {
   SALARY_RANGES,
   WORK_TYPE_LABELS,
   formatNumber,
-} from '@/constants/jobOptions'
+} from '@/entities/job'
 import { VISIBLE_GROUPS } from '../utils/jobListParams'
 import { FilterSection, FilterSkeleton, MultiChips, SingleChips } from './FilterControls'
 

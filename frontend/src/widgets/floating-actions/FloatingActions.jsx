@@ -14,11 +14,10 @@ import {
 import { App, Badge, Modal, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/features/auth'
-import { useLoginPrompt } from '../../hooks/useLoginPrompt'
+import { useAuth, useLoginPrompt } from '@/features/auth'
 import { useSavedJobs } from '@/features/saved-jobs'
-import { useSiteSettings } from '../../hooks/useSiteSettings'
-import FeedbackModal from './FeedbackModal'
+import { useSiteSettings } from '@/entities/site-settings'
+import { FeedbackModal } from '@/features/submit-feedback'
 
 export default function FloatingActions() {
   const { message } = App.useApp()

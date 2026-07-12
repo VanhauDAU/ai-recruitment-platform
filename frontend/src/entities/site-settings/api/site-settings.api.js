@@ -23,9 +23,3 @@ export async function getBanners(placement) {
     return data
   })
 }
-
-// Góp ý / báo lỗi từ nút nổi "Hỗ trợ". Khách chưa đăng nhập vẫn gửi được.
-export async function submitFeedback(payload) {
-  const { data } = await api.post('/site/feedback/', payload)
-  return data
-}

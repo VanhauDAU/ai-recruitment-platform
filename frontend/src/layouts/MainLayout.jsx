@@ -1,10 +1,9 @@
 import { Outlet } from 'react-router-dom'
-import { EmailVerificationBanner } from '@/features/auth'
+import { EmailVerificationBanner, LoginPromptProvider } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
-import LoginPromptProvider from '../contexts/LoginPromptProvider'
-import FloatingActions from '../components/layout/FloatingActions'
-import Footer from '../components/layout/Footer'
-import Header from '../components/layout/Header'
+import FloatingActions from '../widgets/floating-actions/FloatingActions'
+import Footer from '../widgets/main-footer/Footer'
+import Header from '../widgets/main-header/Header'
 import PopularSearches from '../components/layout/PopularSearches'
 
 export default function MainLayout() {

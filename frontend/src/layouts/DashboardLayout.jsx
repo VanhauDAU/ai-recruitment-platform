@@ -2,7 +2,7 @@ import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { EmailVerificationBanner, useAuth } from '@/features/auth'
 import BrandLogo from '../components/brand/BrandLogo'
-import { adminPath, employerAppPath } from '../config/portals'
+import { adminPath, employerAppPath } from '@/shared/config/portals'
 
 const { Header, Sider, Content } = Layout
 

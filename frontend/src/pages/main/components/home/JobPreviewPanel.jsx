@@ -14,7 +14,7 @@ import {
   formatDeadline,
   formatLocations,
   formatSalary,
-} from '@/constants/jobOptions'
+} from '@/entities/job'
 import {
   jobContentLines,
   previewBenefitLines,

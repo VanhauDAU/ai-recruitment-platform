@@ -1,9 +1,9 @@
 import { App, Button, Form, Input, Modal } from 'antd'
 import { useEffect, useState } from 'react'
 import { getApiErrorMessage } from '@/shared/api/errorMapper'
-import { submitFeedback } from '../../api/siteService'
+import { submitFeedback } from '@/features/submit-feedback'
 import { useAuth } from '@/features/auth'
-import { useSiteSettings } from '../../hooks/useSiteSettings'
+import { useSiteSettings } from '@/entities/site-settings'
 
 // Chủ đề góp ý — khớp Feedback.Category ở backend.
 const FEEDBACK_TOPICS = [

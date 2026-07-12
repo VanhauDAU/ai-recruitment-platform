@@ -8,7 +8,7 @@ import AuthLogo from '../components/AuthLogo'
 import { AuthFormStyles } from '../components/LoginForm'
 import PasswordRequirements from '../components/PasswordRequirements'
 import { passwordValidationRule } from '../components/passwordValidation'
-import { adminPath, EMPLOYER_LOGIN_URL, MAIN_LOGIN_URL } from '@/config/portals'
+import { adminPath, EMPLOYER_LOGIN_URL, MAIN_LOGIN_URL } from '@/shared/config/portals'
 
 // Sau khi đổi mật khẩu, đưa user về đúng cổng đăng nhập của role họ.
 const LOGIN_URL_BY_ROLE = {

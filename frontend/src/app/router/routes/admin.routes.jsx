@@ -1,10 +1,10 @@
 import { Navigate, Route } from 'react-router-dom'
-import { adminPath } from '../config/portals'
-import AuthLayout from '../layouts/AuthLayout'
-import DashboardLayout from '../layouts/DashboardLayout'
+import { adminPath } from '@/shared/config/portals'
+import AuthLayout from '../../../layouts/AuthLayout'
+import DashboardLayout from '../../../layouts/DashboardLayout'
 import AuthGuard from '@/app/router/guards/AuthGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
-import { AdminDashboardPage, AdminLoginPage, AdminSettingsPage } from './lazyPages'
+import { AdminDashboardPage, AdminLoginPage, AdminSettingsPage } from '../routePages'
 
 export function adminRoutes() {
   return [

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getLinkGroups } from '../../api/siteService'
-import { useSiteSettings } from '../../hooks/useSiteSettings'
+import { getLinkGroups } from '@/entities/site-settings'
+import { useSiteSettings } from '@/entities/site-settings'
 
 // Render Link nếu có url thật, ngược lại là span dạng link (tính năng sắp ra mắt).
 function Item({ url, children }) {

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
-import { DEFAULT_SITE_SETTINGS } from '../../contexts/siteSettingsContext'
-import { settingText, useSiteSettings } from '../../hooks/useSiteSettings'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 export default function BrandLogo({
   variant = 'full',

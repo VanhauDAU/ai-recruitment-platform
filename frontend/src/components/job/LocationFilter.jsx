@@ -1,7 +1,7 @@
 import { CloseOutlined, EnvironmentOutlined, LeftOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Input, Popover, Skeleton } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getProvinces, getWards } from '../../api/locationService'
+import { getProvinces, getWards } from '@/entities/location'
 
 // Selection model: draft[provinceId] = 'ALL' | number[] (specific ward ids).
 // Applied value (props.value) is a flat id list — a province id means the whole

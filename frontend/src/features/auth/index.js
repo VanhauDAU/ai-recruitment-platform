@@ -2,6 +2,8 @@
 // sâu vào file nội bộ (ADR 0001).
 export { AuthProvider } from './model/AuthProvider'
 export { useAuth } from './model/useAuth'
+export { default as LoginPromptProvider } from './model/LoginPromptProvider'
+export { default as useLoginPrompt } from './model/useLoginPrompt'
 export { default as authContext } from './model/authContext'
 export { default as AuthLogo } from './components/AuthLogo'
 export { default as EmailVerificationBanner } from './components/EmailVerificationBanner'

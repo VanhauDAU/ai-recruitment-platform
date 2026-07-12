@@ -2,7 +2,7 @@ import { ConfigProvider, theme as antdTheme } from 'antd'
 import { Outlet, useLocation } from 'react-router-dom'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import ThemeToggle from '../components/ui/ThemeToggle'
-import { useColorScheme } from '../hooks/useColorScheme'
+import { useColorScheme } from '@/shared/hooks/useColorScheme'
 
 export default function AuthLayout() {
   const [scheme, toggleScheme] = useColorScheme()

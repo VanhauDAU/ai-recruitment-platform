@@ -12,9 +12,8 @@ import {
 } from '@ant-design/icons'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getLinkGroups } from '../../api/siteService'
-import { DEFAULT_SITE_SETTINGS } from '../../contexts/siteSettingsContext'
-import { settingText, useSiteSettings } from '../../hooks/useSiteSettings'
+import { getLinkGroups } from '@/entities/site-settings'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 function SmartLink({ href, className = '', children, ...props }) {
   if (!href) {

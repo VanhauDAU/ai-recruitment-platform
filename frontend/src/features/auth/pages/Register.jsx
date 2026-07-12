@@ -10,7 +10,7 @@ import PasswordRequirements from '../components/PasswordRequirements'
 import { passwordValidationRule } from '../components/passwordValidation'
 import SocialLoginButtons from '../components/SocialLoginButtons'
 import { useAuth } from '../model/useAuth'
-import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { useSiteSettings } from '@/entities/site-settings'
 import { getReturnUrl } from '../model/returnUrl'
 
 export default function Register() {

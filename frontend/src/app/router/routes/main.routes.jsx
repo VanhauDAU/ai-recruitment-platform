@@ -1,8 +1,8 @@
 import { Navigate, Route } from 'react-router-dom'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/features/account'
-import { employerAppPath } from '../config/portals'
-import AuthLayout from '../layouts/AuthLayout'
-import MainLayout from '../layouts/MainLayout'
+import { employerAppPath } from '@/shared/config/portals'
+import AuthLayout from '../../../layouts/AuthLayout'
+import MainLayout from '../../../layouts/MainLayout'
 import AuthGuard from '@/app/router/guards/AuthGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
@@ -23,7 +23,7 @@ import {
   ResetPasswordPage,
   SavedJobsPage,
   VerifyEmailPage,
-} from './lazyPages'
+} from '../routePages'
 
 // Trang tài khoản đã xây thật, map theo item.key trong candidateMenu; key nào
 // chưa có ở đây thì dùng AccountPlaceholderPage.

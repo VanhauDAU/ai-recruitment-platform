@@ -14,7 +14,7 @@ import {
   EXPERIENCE_YEARS_LABELS,
   formatDeadline,
   formatSalary,
-} from '@/constants/jobOptions'
+} from '@/entities/job'
 import { formatJobDate } from '../../utils/jobDetailPresentation'
 
 const EMPTY_LABEL = 'Chưa cập nhật'

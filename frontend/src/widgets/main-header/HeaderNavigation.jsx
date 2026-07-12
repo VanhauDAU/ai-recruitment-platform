@@ -11,9 +11,9 @@ import {
 } from '@ant-design/icons'
 import { Drawer, Tag } from 'antd'
 import { useEffect, useState } from 'react'
-import { getBlogCategories, getBlogHome } from '@/api/blogService'
-import { blogCategoryPath, blogPostPath } from '@/pages/main/blog/blogPaths'
-import BrandLogo from '../brand/BrandLogo'
+import { getBlogCategories, getBlogHome } from '@/entities/blog'
+import { blogCategoryPath, blogPostPath } from '../../pages/main/blog/blogPaths'
+import BrandLogo from '../../components/brand/BrandLogo'
 import { flattenMenuItems, isMenuActive } from './headerNavigationConfig'
 
 const HANDBOOK_ICONS = [CompassOutlined, BulbOutlined, DollarOutlined, ReadOutlined, RocketOutlined, LineChartOutlined]

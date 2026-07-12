@@ -1,4 +1,4 @@
-import { WORK_TYPE_LABELS } from '@/constants/jobOptions'
+import { WORK_TYPE_LABELS } from '@/entities/job'
 
 const WEEKDAY_LABELS = {
   1: 'Thứ 2',
@@ -68,4 +68,3 @@ export function previewBenefitLines(job) {
     [item.benefit_name, item.note].filter(Boolean).join(': ')
   )))
 }
-

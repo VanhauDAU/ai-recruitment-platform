@@ -12,7 +12,7 @@ import {
   companyInitial,
   formatLocations,
   formatSalary,
-} from '@/constants/jobOptions'
+} from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 

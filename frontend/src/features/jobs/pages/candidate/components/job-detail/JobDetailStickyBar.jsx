@@ -1,6 +1,6 @@
 import { FileTextOutlined, HeartOutlined, SendOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
-import { useHideOnScroll } from '@/hooks/useHideOnScroll'
+import { useHideOnScroll } from '@/shared/hooks/useHideOnScroll'
 
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })

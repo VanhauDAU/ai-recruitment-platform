@@ -1,10 +1,10 @@
 import api from '@/shared/api/client'
-import { getCurrentPortal } from '@/config/portals'
+import { getCurrentPortal } from '@/shared/config/portals'
 import { dedupeRequest } from '@/shared/api/requestDeduplication'
 import { clearSession, getAccessToken as readAccessToken, setTokens } from '@/shared/api/tokenStore'
 
-// Các API 2FA và account đã thuộc feature riêng. Re-export tại đây để contract
-// tạm thời của `@/api/authService` không thay đổi trong compatibility window.
+// Các API 2FA và account đã thuộc feature riêng; auth giữ các endpoint xác thực
+// còn lại và tái xuất contract công khai để consumer chỉ cần dùng feature này.
 export {
   confirmTwoFactorDisable,
   confirmTwoFactorSetup,

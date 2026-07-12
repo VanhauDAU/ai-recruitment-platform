@@ -1,8 +1,8 @@
 import { ToolOutlined } from '@ant-design/icons'
 
 // Trang giữ chỗ cho các mục chưa xây trong layout tài khoản. Khi đào sâu từng
-// trang, tạo component thật trong `pages/main/candidate/pages/` rồi thay
-// element tương ứng ở MainRoutes — không cần sửa layout hay sidebar.
+// mục, thay bằng component thật qua route public của feature mà không sửa
+// layout hay sidebar.
 export default function AccountPlaceholder({ title }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

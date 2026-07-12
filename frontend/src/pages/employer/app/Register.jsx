@@ -13,8 +13,8 @@ import {
   SocialLoginButtons,
 } from '@/features/auth'
 import { getApiErrorMessage } from '@/shared/api/errorMapper'
-import { employerAppPath } from '@/config/portals'
-import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { employerAppPath } from '@/shared/config/portals'
+import { useSiteSettings } from '@/entities/site-settings'
 
 // Đăng ký tài khoản Nhà tuyển dụng (role=employer) — email hoặc Google.
 export default function EmployerRegister() {

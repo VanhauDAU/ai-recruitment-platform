@@ -6,8 +6,7 @@ import { App, Avatar, Switch } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
-import { settingText, useSiteSettings } from '@/hooks/useSiteSettings'
-import { DEFAULT_SITE_SETTINGS } from '@/contexts/siteSettingsContext'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 
 // Cột phải của layout tài khoản (theo ảnh mẫu): thẻ chào + trạng thái tìm việc,
 // cho phép NTD tìm hồ sơ, banner app và thẻ chất lượng CV.

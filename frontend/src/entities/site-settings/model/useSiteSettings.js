@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '../contexts/siteSettingsContext'
+import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from './siteSettingsContext'
 
 export function settingText(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback

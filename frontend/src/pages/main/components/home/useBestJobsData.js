@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getJobs } from '@/features/jobs'
-import { getProvinces, getWardsByParents } from '@/api/locationService'
+import { getProvinces, getWardsByParents } from '@/entities/location'
 import {
   BEST_JOBS_PAGE_SIZE,
   BEST_JOBS_ROTATE_MS,

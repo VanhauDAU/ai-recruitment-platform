@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as authService from '../api/authService'
 import { verifyTwoFactorLogin } from '@/features/two-factor'
-import { adminPath, employerAppPath, getCurrentPortal } from '@/config/portals'
+import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import AuthContext from './authContext'
 
 export function AuthProvider({ children }) {

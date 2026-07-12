@@ -1,4 +1,4 @@
-import { SALARY_RANGES } from '@/constants/jobOptions'
+import { SALARY_RANGES } from '@/entities/job'
 
 export const BEST_JOBS_PAGE_SIZE = 12
 export const BEST_JOBS_ROTATE_MS = 8000

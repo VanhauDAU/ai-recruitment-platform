@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import LoginPromptContext from '../contexts/loginPromptContext'
+import LoginPromptContext from './loginPromptContext'
 
 // `const { promptLogin } = useLoginPrompt()` — mở popup đăng nhập tại chỗ.
 // Fallback no-op nếu dùng ngoài LoginPromptProvider (vd. trong test).

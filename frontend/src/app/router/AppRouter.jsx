@@ -1,10 +1,10 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import PageLoading from '@/components/ui/PageLoading'
-import { IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '@/config/portals'
-import { mainRoutes } from '@/routes/MainRoutes'
-import { employerRoutes } from '@/routes/EmployerRoutes'
-import { adminRoutes } from '@/routes/AdminRoutes'
+import { IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '@/shared/config/portals'
+import { mainRoutes } from './routes/main.routes'
+import { employerRoutes } from './routes/employer.routes'
+import { adminRoutes } from './routes/admin.routes'
 
 const NotFound = lazy(() => import('@/pages/NotFound'))
 

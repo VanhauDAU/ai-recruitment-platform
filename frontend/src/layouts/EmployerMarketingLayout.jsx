@@ -2,7 +2,7 @@ import { Button } from 'antd'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { EmailVerificationBanner, useAuth } from '@/features/auth'
 import BrandLogo from '../components/brand/BrandLogo'
-import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '../config/portals'
+import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '@/shared/config/portals'
 
 const NAV_ITEMS = [
   { label: 'Trang chủ', to: employerMarketingPath('') },

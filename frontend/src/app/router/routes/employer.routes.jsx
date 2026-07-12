@@ -1,8 +1,8 @@
 import { Navigate, Route } from 'react-router-dom'
-import { employerAppPath, employerMarketingPath } from '../config/portals'
-import AuthLayout from '../layouts/AuthLayout'
-import DashboardLayout from '../layouts/DashboardLayout'
-import EmployerMarketingLayout from '../layouts/EmployerMarketingLayout'
+import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
+import AuthLayout from '../../../layouts/AuthLayout'
+import DashboardLayout from '../../../layouts/DashboardLayout'
+import EmployerMarketingLayout from '../../../layouts/EmployerMarketingLayout'
 import AuthGuard from '@/app/router/guards/AuthGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
@@ -14,7 +14,7 @@ import {
   EmployerServicesPage,
   OAuthCallbackPage,
   VerifyEmailPage,
-} from './lazyPages'
+} from '../routePages'
 
 export function employerRoutes() {
   return [

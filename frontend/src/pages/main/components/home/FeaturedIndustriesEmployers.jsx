@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getJobStats } from '@/features/jobs'
-import { formatNumber } from '@/constants/jobOptions'
+import { formatNumber } from '@/entities/job'
 import ArrowButton from '@/components/ui/ArrowButton'
 
 function logoUrlFor(employer) {

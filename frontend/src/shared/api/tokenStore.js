@@ -1,7 +1,7 @@
 // Nơi DUY NHẤT đọc/ghi/xóa JWT theo portal (main/employer/admin).
 // Key namespace lấy từ config/portals (getAuthStorageKeys) — hạ tầng token
 // không tự chế key để tránh ghi sai portal. Xem ADR 0002.
-import { getAuthStorageKeys, getCurrentPortal } from '@/config/portals'
+import { getAuthStorageKeys, getCurrentPortal } from '@/shared/config/portals'
 
 // Key phiên cũ trước khi tách namespace theo portal — dọn ở logout thủ công.
 const LEGACY_KEYS = ['access_token', 'refresh_token']
