@@ -1,12 +1,11 @@
 import { Navigate, Route } from 'react-router-dom'
-import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/features/account'
+import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
 import { employerAppPath } from '@/shared/config/portals'
-import AuthLayout from '../../../layouts/AuthLayout'
-import MainLayout from '../../../layouts/MainLayout'
 import AuthGuard from '@/app/router/guards/AuthGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   AccountPlaceholderPage,
+  AuthLayout,
   BlogCategoryPage,
   BlogDetailPage,
   BlogHomePage,
@@ -16,6 +15,7 @@ import {
   JobDetailPage,
   JobListPage,
   MainLoginPage,
+  MainLayout,
   MainRegisterPage,
   OAuthCallbackPage,
   PersonalInfoPage,
@@ -25,14 +25,14 @@ import {
   VerifyEmailPage,
 } from '../routePages'
 
-// Trang tài khoản đã xây thật, map theo item.key trong candidateMenu; key nào
+// Trang tài khoản đã xây thật, map theo item.key trong candidate-menu; key nào
 // chưa có ở đây thì dùng AccountPlaceholderPage.
 const ACCOUNT_PAGE_BY_KEY = {
   'personal-info': PersonalInfoPage,
   'two-factor': TwoFactorAuthenticationPage,
 }
 
-// Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
+// Route cổng main (ứng viên + khách). Xem thêm employer.routes/admin.routes.
 export function mainRoutes() {
   return [
     <Route key="main" element={<MainLayout />}>
@@ -54,7 +54,7 @@ export function mainRoutes() {
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
 
       {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
-          nhập. Route con sinh từ config/candidateMenu.jsx (một nguồn duy nhất);
+          nhập. Route con sinh từ entities/account/config (một nguồn duy nhất);
           khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>

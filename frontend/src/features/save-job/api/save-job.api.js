@@ -1,5 +1,5 @@
 import api from '@/shared/api/client'
-import { dedupeRequest, invalidateRequestCache } from '@/shared/api/requestDeduplication'
+import { dedupeRequest, invalidateRequestCache } from '@/shared/api/request-deduplication'
 
 export async function getSavedJobs() {
   return dedupeRequest('saved-jobs', async () => {

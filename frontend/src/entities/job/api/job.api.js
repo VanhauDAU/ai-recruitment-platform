@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 import { fetchAllPages } from '@/shared/api/pagination'
-import { cachedRequest, dedupeRequest } from '@/shared/api/requestDeduplication'
+import { cachedRequest, dedupeRequest } from '@/shared/api/request-deduplication'
 
 const CATALOG_CACHE_TTL = 5 * 60 * 1000
 const STATS_CACHE_TTL = 60 * 1000

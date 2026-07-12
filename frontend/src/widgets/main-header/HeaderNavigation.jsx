@@ -12,9 +12,9 @@ import {
 import { Drawer, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { getBlogCategories, getBlogHome } from '@/entities/blog'
-import { blogCategoryPath, blogPostPath } from '../../pages/main/blog/blogPaths'
-import BrandLogo from '../../components/brand/BrandLogo'
-import { flattenMenuItems, isMenuActive } from './headerNavigationConfig'
+import { blogCategoryPath, blogPostPath } from '../../pages/main/blog/lib/blog-paths'
+import { BrandLogo } from '@/entities/site-settings'
+import { flattenMenuItems, isMenuActive } from './header-navigation-config'
 
 const HANDBOOK_ICONS = [CompassOutlined, BulbOutlined, DollarOutlined, ReadOutlined, RocketOutlined, LineChartOutlined]
 

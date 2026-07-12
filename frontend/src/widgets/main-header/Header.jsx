@@ -4,17 +4,17 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useAuth, useLoginPrompt } from '@/features/auth'
-import { useHideOnScroll } from '@/shared/hooks/useHideOnScroll'
-import BrandLogo from '../../components/brand/BrandLogo'
+import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
+import { BrandLogo } from '@/entities/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
-import { HEADER_NAVIGATION } from './headerNavigationConfig'
+import { HEADER_NAVIGATION } from './header-navigation-config'
 
-function GuestActions({ mobile = false, onSelect, onLogin }) {
-  // Đăng nhập mở popup tại trang hiện tại (giữ ngữ cảnh) thay vì sang /login.
+function GuestActions({ mobile = false, onSelect, navigate }) {
+  // Đăng nhập chuyển sang trang /login.
   function handleLogin() {
     onSelect?.()
-    onLogin()
+    navigate('/login')
   }
   if (mobile) {
     return (
@@ -36,8 +36,8 @@ function GuestActions({ mobile = false, onSelect, onLogin }) {
   )
 }
 
-function HeaderActions({ isAuthenticated, logout, navigate, user, onLogin }) {
-  if (!isAuthenticated) return <GuestActions onLogin={onLogin} />
+function HeaderActions({ isAuthenticated, logout, navigate, user }) {
+  if (!isAuthenticated) return <GuestActions navigate={navigate} />
   if (user?.role === 'candidate') {
     return (
       <>
@@ -59,11 +59,11 @@ function HeaderActions({ isAuthenticated, logout, navigate, user, onLogin }) {
   )
 }
 
-function MobileActions({ isAuthenticated, navigate, onClose, user, onLogin }) {
+function MobileActions({ isAuthenticated, navigate, onClose, user }) {
   return (
     <div className="flex flex-col gap-2 p-5">
       {!isAuthenticated ? (
-        <GuestActions mobile onSelect={onClose} onLogin={onLogin} />
+        <GuestActions mobile onSelect={onClose} navigate={navigate} />
       ) : user?.role === 'candidate' ? (
         <a href={EMPLOYER_PORTAL_URL} className="text-center text-sm font-semibold text-[var(--brand-primary)]">
           Bạn là nhà tuyển dụng? Đăng tuyển ngay »
@@ -133,7 +133,6 @@ export default function Header() {
             logout={logout}
             navigate={navigate}
             user={user}
-            onLogin={promptLogin}
           />
         </div>
       </div>
@@ -151,7 +150,6 @@ export default function Header() {
           navigate={navigate}
           onClose={() => setMobileOpen(false)}
           user={user}
-          onLogin={promptLogin}
         />
       </MobileNavigation>
     </header>

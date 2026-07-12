@@ -5,11 +5,11 @@ import { Link, useParams } from 'react-router-dom'
 import { getBanners } from '@/entities/site-settings'
 import { getBlogCategories, getBlogPosts } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
-import { BlogCategoryNav } from './components/BlogCategoryBar'
-import { BlogCardRow } from './components/BlogCard'
-import BlogInlineBanner from './components/BlogInlineBanner'
-import FeaturedPosts, { SectionHeading } from './components/FeaturedPosts'
-import { BLOG_ROOT } from './blogPaths'
+import { BlogCategoryNav } from './ui/BlogCategoryBar'
+import { BlogCardRow } from './ui/BlogCard'
+import BlogInlineBanner from './ui/BlogInlineBanner'
+import FeaturedPosts, { SectionHeading } from './ui/FeaturedPosts'
+import { BLOG_ROOT } from './lib/blog-paths'
 
 const PAGE_SIZE = 12
 

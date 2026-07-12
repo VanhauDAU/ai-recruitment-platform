@@ -1,5 +1,5 @@
 import api from '@/shared/api/client'
-import { cachedRequest } from '@/shared/api/requestDeduplication'
+import { cachedRequest } from '@/shared/api/request-deduplication'
 
 const SITE_CACHE_TTL = 5 * 60 * 1000
 

@@ -1,7 +1,7 @@
 // Axios instance dùng chung + interceptor auth/refresh. Đây là hạ tầng HTTP:
 // KHÔNG biết endpoint nghiệp vụ (domain service tự khai path). Xem ADR 0002.
 import axios from 'axios'
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './tokenStore'
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './token-store'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 

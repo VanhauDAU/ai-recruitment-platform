@@ -16,7 +16,7 @@ async function mockJobListDependencies(page) {
   })
 }
 
-test('job list loads from the jobs feature after a direct route refresh', async ({ page }) => {
+test('job list loads after a direct route refresh', async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await mockJobListDependencies(page)

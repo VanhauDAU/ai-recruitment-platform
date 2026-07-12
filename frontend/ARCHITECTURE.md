@@ -1,6 +1,6 @@
 # Frontend architecture
 
-Frontend đang chuyển dần sang Feature-Sliced Design giản lược:
+Frontend dùng Feature-Sliced Design giản lược:
 
 ```text
 app → pages → widgets → features → entities → shared
@@ -16,24 +16,36 @@ app → pages → widgets → features → entities → shared
 ## Dependency và public API
 
 Layer chỉ import từ layer phía dưới. Không deep-import module khác: dùng
-`@/features/<name>`, `@/entities/<name>` hoặc `@/shared/<segment>` qua `index.js`.
-`routes.js` là ngoại lệ có chủ đích cho lazy loader công khai.
+`@/features/<name>` hoặc `@/entities/<name>` qua public `index.js`. Module thuần
+trong `shared` được import trực tiếp theo segment, ví dụ
+`@/shared/ui/PageLoading` hoặc `@/shared/api/error-mapper`, để giữ route chunk
+nhỏ và tránh barrel kéo UI không liên quan vào entry bundle.
+
+Page không import nội bộ của page khác. UI dùng chung có domain thuộc `entities`;
+UI thuần không biết domain thuộc `shared/ui`.
 
 ## Quy ước đặt file
 
 - Folder mới: `kebab-case`; React component: `PascalCase.jsx`; hook: `use-*.js`.
 - API domain: `<domain>.api.js` trong feature/entity sở hữu endpoint.
 - Test đặt gần code được test.
-- Không tạo file mới ở legacy `api`, `components`, `contexts`, `hooks`, `layouts`,
-  `routes` trừ sửa lỗi trong lúc migration. Mỗi đợt di chuyển phải cập nhật route
-  inventory, test liên quan và xóa shim ngay khi không còn consumer.
+- Segment chuẩn: `api`, `model`, `ui`, `lib`, `config`; không tạo thư mục gốc
+  ngoài các layer đã định nghĩa.
+- Route page nằm trong `pages`; route layout nằm trong `app/layouts`.
+- Không giữ shim, barrel hoặc module dự phòng khi không còn runtime consumer.
 
 ## Migration hiện tại
 
-`app`, `features`, `entities`, `shared` và các widget cổng chính đã dùng được
-trong production. State site settings thuộc `entities/site-settings`; login
-prompt thuộc `features/auth`; portal config thuộc `shared/config`; metadata và
-formatter việc làm thuộc `entities/job`.
+```text
+src/
+├── app/       # providers, router, lazy route layouts
+├── pages/     # admin, employer, main/{account,auth,blog,home,jobs}
+├── widgets/   # header, footer, floating actions, popular searches
+├── features/  # auth và các hành động người dùng
+├── entities/  # account, blog, job, location, site-settings
+├── shared/    # api client, config, hooks, UI thuần
+└── test/      # test setup
+```
 
-Các `components` và `layouts` legacy còn lại sẽ được chuyển theo lát cắt có test
-liên quan; không di chuyển hàng loạt hoặc đổi URL/UI trong một PR.
+Các layout và page đều lazy-load theo portal. Không còn thư mục legacy ở cấp
+`src`, route loader shim hoặc feature trộn page/API như `features/jobs`.

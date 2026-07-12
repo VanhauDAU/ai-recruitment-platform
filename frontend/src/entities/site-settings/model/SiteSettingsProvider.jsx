@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getSiteSettings } from '@/entities/site-settings'
-import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from './siteSettingsContext'
-import { settingText } from './useSiteSettings'
+import { getSiteSettings } from '../api/site-settings.api'
+import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from './site-settings-context'
+import { settingText } from './use-site-settings'
 
 function mergeSettings(data) {
   if (!data || typeof data !== 'object') return DEFAULT_SITE_SETTINGS

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, Skeleton, Tag, Tabs, Typography, message } from 'antd'
 import { getAdminSettings, updateAdminSettings } from '@/features/manage-site-settings'
-import SettingField from '@/components/admin/SettingField'
+import { SettingField } from '@/features/manage-site-settings'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 

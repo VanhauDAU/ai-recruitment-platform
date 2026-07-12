@@ -1,7 +1,7 @@
 import { App, Button, Form, Input, Modal } from 'antd'
 import { useEffect, useState } from 'react'
-import { getApiErrorMessage } from '@/shared/api/errorMapper'
-import { submitFeedback } from '@/features/submit-feedback'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { submitFeedback } from '../api/submit-feedback.api'
 import { useAuth } from '@/features/auth'
 import { useSiteSettings } from '@/entities/site-settings'
 

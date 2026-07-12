@@ -1,11 +1,10 @@
 import { Modal, Skeleton } from 'antd'
 import { Suspense, lazy, useCallback, useMemo, useRef, useState } from 'react'
-import LoginPromptContext from './loginPromptContext'
+import LoginPromptContext from './login-prompt-context'
 
 // Lazy để reCAPTCHA + form đăng nhập không nằm trong bundle chính (chỉ nạp khi
 // mở popup), giữ mọi trang cổng ứng viên nhẹ.
-const LazyLoginModalContent = lazy(() => import('@/features/auth/routes')
-  .then(({ loadLoginModalContent }) => loadLoginModalContent()))
+const LazyLoginModalContent = lazy(() => import('../ui/LoginModalContent'))
 
 /**
  * Popup đăng nhập dùng chung cho cả cổng ứng viên: bất kỳ hành động nào cần

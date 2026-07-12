@@ -1,2 +1,6 @@
 export * from './api/job.api'
-export * from './lib/jobOptions'
+export * from './lib/job-paths'
+export * from './lib/job-options'
+export * from './lib/job-presentation'
+export { default as JobPreviewPanel } from './ui/JobPreviewPanel'
+export { default as SavedJobTooltipContent } from './ui/SavedJobTooltipContent'

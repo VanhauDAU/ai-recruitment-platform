@@ -12,7 +12,7 @@ import {
   register,
   SocialLoginButtons,
 } from '@/features/auth'
-import { getApiErrorMessage } from '@/shared/api/errorMapper'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { useSiteSettings } from '@/entities/site-settings'
 
