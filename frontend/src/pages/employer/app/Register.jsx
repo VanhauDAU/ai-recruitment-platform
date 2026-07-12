@@ -3,13 +3,16 @@ import { Alert, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate } from 'react-router-dom'
-import { getApiErrorMessage } from '@/api/errorMessage'
-import { logout as clearStoredAuth, register } from '@/api/authService'
-import AuthLogo from '@/components/auth/AuthLogo'
-import { AuthFormStyles } from '@/components/auth/LoginForm'
-import PasswordRequirements from '@/components/auth/PasswordRequirements'
-import { passwordValidationRule } from '@/components/auth/passwordValidation'
-import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
+import {
+  AuthFormStyles,
+  AuthLogo,
+  logout as clearStoredAuth,
+  passwordValidationRule,
+  PasswordRequirements,
+  register,
+  SocialLoginButtons,
+} from '@/features/auth'
+import { getApiErrorMessage } from '@/shared/api/errorMapper'
 import { employerAppPath } from '@/config/portals'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
 

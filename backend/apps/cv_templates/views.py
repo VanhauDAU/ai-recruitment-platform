@@ -1,17 +1,17 @@
 from rest_framework import generics, permissions
 
-from .models import CvTemplate
 from .serializers import CvTemplateSerializer
+from .selectors import active_cv_templates_queryset
 
 
 class CvTemplateListView(generics.ListAPIView):
     serializer_class = CvTemplateSerializer
     permission_classes = [permissions.AllowAny]
-    queryset = CvTemplate.objects.filter(status=CvTemplate.Status.ACTIVE)
+    queryset = active_cv_templates_queryset()
 
 
 class CvTemplateDetailView(generics.RetrieveAPIView):
     serializer_class = CvTemplateSerializer
     permission_classes = [permissions.AllowAny]
-    queryset = CvTemplate.objects.filter(status=CvTemplate.Status.ACTIVE)
+    queryset = active_cv_templates_queryset()
     lookup_field = 'slug'

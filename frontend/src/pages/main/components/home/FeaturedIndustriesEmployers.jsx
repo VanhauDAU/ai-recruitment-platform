@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobStats } from '@/api/jobService'
+import { getJobStats } from '@/features/jobs'
 import { formatNumber } from '@/constants/jobOptions'
 import ArrowButton from '@/components/ui/ArrowButton'
 

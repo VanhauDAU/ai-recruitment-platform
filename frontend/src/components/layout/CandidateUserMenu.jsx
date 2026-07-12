@@ -5,7 +5,7 @@ import {
 import { App, Avatar, Badge, Dropdown } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/config/candidateMenu'
+import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/features/account'
 
 // Section lấy từ config dùng chung với sidebar trang tài khoản (một nguồn duy nhất).
 // Nhóm A (search, cv) mở/đóng độc lập; nhóm B (email, account, upgrade) là accordion: mở 1 đóng 2 còn lại.

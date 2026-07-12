@@ -1,4 +1,4 @@
-import api from './api'
+import api from '@/shared/api/client'
 
 export async function getAdminSettings() {
   const { data } = await api.get('/site/admin/settings/')

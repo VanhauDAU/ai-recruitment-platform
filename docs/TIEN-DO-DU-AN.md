@@ -8,76 +8,96 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 
 ## Tổng quan
 
-| Giai đoạn                      | Tiến độ   |                              |
-| ------------------------------ | --------- | ---------------------------- |
-| 0 — Khởi tạo dự án             | 5/5       | ✅ Hoàn thành                |
-| 1 — MVP lõi                    | 40/42     | 🟡 Còn 1.14 (một phần), 1.15 |
-| 2 — AI cơ bản                  | 0/8       | ⬜                           |
-| 3 — Tối ưu tìm kiếm / matching | 0/2       | ⬜                           |
-| 4 — CV nâng cao                | 0/2       | ⬜                           |
-| 5 — Tuyển dụng nâng cao        | 1/3       | 🟡                           |
-| 6 — Thương mại & quản trị      | 10/13     | 🟡                           |
-| 7 — Phỏng vấn AI               | 0/4       | ⬜                           |
-| 8 — Deployment                 | 0/2       | ⬜                           |
-| **Tổng**                       | **56/81** |                              |
+| Giai đoạn | Tiến độ | Trạng thái |
+| --- | --- | --- |
+| 0 — Khởi tạo dự án | 5/5 | ✅ Hoàn thành |
+| 1 — MVP lõi | 40/42 | 🟡 Còn 1.14 (một phần), 1.15 |
+| 2 — AI cơ bản | 0/8 | ⬜ |
+| 3 — Tối ưu tìm kiếm / matching | 0/2 | ⬜ |
+| 4 — CV nâng cao | 0/2 | ⬜ |
+| 5 — Tuyển dụng nâng cao | 1/3 | 🟡 |
+| 6 — Thương mại & quản trị | 10/13 | 🟡 |
+| 7 — Phỏng vấn AI | 0/4 | ⬜ |
+| 8 — Deployment | 0/2 | ⬜ |
+| **Tổng** | **56/81** | |
+
+## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
+
+Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích. Chi tiết baseline: [docs/09-refactor/baseline](./09-refactor/baseline/README.md); quyết định kiến trúc: [docs/adr](./adr/).
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| R0 | Khóa baseline: tag `baseline-refactor-start`, quality suite xanh (74 BE + 31 FE test), bundle report, script inventory hotspot | ✅ |
+| R1 | CI (frontend/backend workflow + Postgres/Redis), `scripts/check_all.sh` 1 lệnh, 5 ADR, PR template | ✅ |
+| R2 | Tách hạ tầng API frontend (`shared/api`): client/tokenStore/errorMapper/pagination/dedup + re-export tương thích + boundary check axios | ✅ |
+| R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | ✅ `features/auth`, `features/account`, `features/two-factor` hoàn chỉnh; giữ re-export tương thích tới R10. Unit 34/34, Accounts 37/37, E2E 12/12, lint/build xanh |
+| R4 | App providers, router, guard đơn trách nhiệm | ✅ `AppProviders`, `AppRouter`, Auth/Role/Onboarding guard, loading shell và returnUrl an toàn; OnboardingGuard chờ R9 tích hợp status/route |
+| R5 | Pilot Jobs theo lát cắt dọc | 🟡 Tách candidate feature + backend boundary; còn UI CRUD employer |
+| R6 | Applications/Saved jobs + server state | 🟡 Feature state/API và transition backend; còn UI nghiệp vụ |
+| R7 | Tách Django settings theo môi trường | ✅ base/development/test/production, CI test settings và production validation giữ nguyên |
+| R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard/AI chưa có use case, Sitecontent để lát cắt riêng |
+| R9 | Onboarding theo kiến trúc mới | ⏭ Bỏ qua trong đợt này, sẽ triển khai lại riêng |
+| R10 | Cleanup, bundle, tài liệu | ✅ Xóa compatibility layer, CI feature boundary, bundle review và tài liệu |
+
+> Lưu ý: nhánh dựa trên `#23`, cần hòa hợp `origin/main` (`#24`) trước khi merge refactor về `main`.
 
 ## Giai đoạn 0 — Khởi tạo dự án
 
-| #   | Công việc                                                  | Trạng thái |
-| --- | ---------------------------------------------------------- | ---------- |
-| 0.1 | Chốt công nghệ (ReactJS+Vite, Django+DRF, PostgreSQL, JWT) | ✅         |
-| 0.2 | Scaffold Django project + apps skeleton                    | ✅         |
-| 0.3 | Scaffold React + Vite + Tailwind + Ant Design              | ✅         |
-| 0.4 | Cấu trúc `docs/` theo chủ đề                               | ✅         |
-| 0.5 | README, CHANGELOG, hướng dẫn cài đặt local                 | ✅         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 0.1 | Chốt công nghệ (ReactJS+Vite, Django+DRF, PostgreSQL, JWT) | ✅ |
+| 0.2 | Scaffold Django project + apps skeleton | ✅ |
+| 0.3 | Scaffold React + Vite + Tailwind + Ant Design | ✅ |
+| 0.4 | Cấu trúc `docs/` theo chủ đề | ✅ |
+| 0.5 | README, CHANGELOG, hướng dẫn cài đặt local | ✅ |
 
 ## Giai đoạn 1 — MVP lõi
 
-| #     | Công việc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Trạng thái |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| 1.1   | Bảng `users` (custom User, role, JWT auth)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ✅         |
-| 1.2   | Bảng `skills` (nguồn kỹ năng chuẩn, seed data)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | ✅         |
-| 1.3   | Bảng `candidate_profiles` + API                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | ✅         |
-| 1.4   | Bảng `employer_profiles` + API                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | ✅         |
-| 1.5   | Frontend: trang đăng ký/đăng nhập, dashboard shell theo role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ✅         |
-| 1.5b  | Xác thực email qua link + Redis (auto-login sau đăng ký, cooldown gửi lại, SMTP provider-agnostic)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | ✅         |
-| 1.6   | Bảng `job_categories` + API                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | ✅         |
-| 1.6b  | Seed taxonomy danh mục 3 cấp (8 nhóm + 24 nghề + 61 vị trí); filter nhận nhiều `?category=` tự mở rộng cấp con                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | ✅         |
-| 1.7   | Bảng `locations` (2 cấp tỉnh/xã, seed 34 tỉnh + 3321 xã/phường) + API tra cứu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ✅         |
-| 1.8   | Bảng `cv_templates` + API list/detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ✅         |
-| 1.9   | Bảng `user_cvs` (builder + upload) + API CRUD/upload                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | ✅         |
-| 1.10  | Bảng `cv_skills` (nested trong API user_cvs)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ✅         |
-| 1.11  | Bảng `jobs` + API public list/detail + employer CRUD                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | ✅         |
-| 1.12  | Bảng `job_skills` (nested trong API jobs)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | ✅         |
-| 1.13  | Bảng `applications` + API ứng tuyển/xem/đổi trạng thái                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | ✅         |
-| 1.14  | Frontend cổng ứng viên: xong trang chủ + danh sách/chi tiết job; **còn thiếu CV builder, kho template, luồng ứng tuyển**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | 🟡         |
-| 1.14b | Redesign trang danh sách việc làm (search xanh, sidebar lọc nâng cao, JobCard mới, sort lương)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | ✅         |
-| 1.14c | Bộ lọc đầy đủ: kinh nghiệm theo năm, cấp bậc, nghỉ thứ 7, lĩnh vực công ty                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ✅         |
-| 1.14d | Header tự ẩn khi cuộn, thanh tìm kiếm sticky, chip lọc, URL bộ lọc rút gọn                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ✅         |
-| 1.14e | Tách `Industry` thành model riêng + M2M (1 công ty nhiều lĩnh vực)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | ✅         |
-| 1.14f | Skeleton loading toàn diện cho trang việc làm                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ✅         |
-| 1.14g | Dải "khám phá nhanh" dưới thanh tìm kiếm (thẻ lối tắt + pill)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ✅         |
-| 1.14h | Banner thông báo địa danh hành chính mới (sáp nhập 1/7/2025) + filter `?education_level=`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | ✅         |
-| 1.14i | Dữ liệu sáp nhập tỉnh 2025 (63→34) vào `Location.merged_from` + seed command                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ✅         |
-| 1.14j | Sửa cuộn ngang dải "khám phá nhanh": bỏ drag tự chế, dùng scroll gốc + nút mũi tên                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | ✅         |
-| 1.14k | Panel "Xem nhanh" job 2 cột (`JobQuickView`, danh sách compact bên trái)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | ✅         |
-| 1.14l | Header ứng viên sau đăng nhập: chuông + avatar dropdown hover, accordion section                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | ✅         |
-| 1.14m | Responsive mobile toàn site chính (Drawer nav, Drawer lọc, bottom-sheet xem nhanh)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | ✅         |
-| 1.14n | Tìm kiếm tiếng Việt không dấu/đảo từ (Postgres `unaccent`) + empty-state kiểu TopCV                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | ✅         |
-| 1.14o | Việc làm đã lưu (trang riêng, API `SavedJob`, đồng bộ đa thiết bị) + cụm nút nổi Góp ý/Hỗ trợ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ✅         |
-| 1.14p | Phân hạng tin (tier standard/featured/top) + nhãn HOT/GẤP/⚡/✓ xác thực                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | ✅         |
-| 1.14q | Chuẩn hóa schema tin tuyển dụng: danh mục theo vai trò, địa điểm phường/xã, lịch làm việc, quyền lợi, ngoại ngữ, liên hệ nhận hồ sơ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | ✅         |
-| 1.14r | Trang chi tiết việc làm bản mới: view-model API nhóm sẵn + tag tóm tắt, ngoại ngữ, địa điểm nhóm tỉnh, lịch JSX, sticky anchor động                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | ✅         |
-| 1.15  | Quy trình duyệt/publish job (status draft → active) — hiện chỉnh trực tiếp qua Django shell/admin                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ⬜         |
-| 1.16  | Bảo vệ login/register: rate limit theo IP + Google reCAPTCHA v3 invisible                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | ✅         |
-| 1.17  | Social login Google/Facebook/LinkedIn (OAuth Authorization Code Flow qua backend)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ✅         |
-| 1.18  | Ghi nhận `last_login` ở cả 3 luồng phát token (login, đăng ký, social)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | ✅         |
-| 1.19  | Đặt lại mật khẩu (quên mật khẩu) qua link email + Redis, token một lần                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | ✅         |
-| 1.19b | Email không phân biệt hoa/thường (normalize + `iexact` + unique constraint `Lower(email)`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ✅         |
-| 1.20  | Trang thương hiệu (brand page): URL `/brand/<company>/tuyen-dung/<job>` + header thương hiệu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ✅         |
-| 1.21  | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](./03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt), admin actions duyệt (công ty, membership, giấy tờ, update request), employer đăng tin → `status=pending` chờ duyệt, seed + tests cập nhật (54 test pass); (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). Frontend cổng NTD sẽ xây sau trên bộ API mới | ✅         |
-| 1.22  | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅         |
-| 1.23  | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 1.1 | Bảng `users` (custom User, role, JWT auth) | ✅ |
+| 1.2 | Bảng `skills` (nguồn kỹ năng chuẩn, seed data) | ✅ |
+| 1.3 | Bảng `candidate_profiles` + API | ✅ |
+| 1.4 | Bảng `employer_profiles` + API | ✅ |
+| 1.5 | Frontend: trang đăng ký/đăng nhập, dashboard shell theo role | ✅ |
+| 1.5b | Xác thực email qua link + Redis (auto-login sau đăng ký, cooldown gửi lại, SMTP provider-agnostic) | ✅ |
+| 1.6 | Bảng `job_categories` + API | ✅ |
+| 1.6b | Seed taxonomy danh mục 3 cấp (8 nhóm + 24 nghề + 61 vị trí); filter nhận nhiều `?category=` tự mở rộng cấp con | ✅ |
+| 1.7 | Bảng `locations` (2 cấp tỉnh/xã, seed 34 tỉnh + 3321 xã/phường) + API tra cứu | ✅ |
+| 1.8 | Bảng `cv_templates` + API list/detail | ✅ |
+| 1.9 | Bảng `user_cvs` (builder + upload) + API CRUD/upload | ✅ |
+| 1.10 | Bảng `cv_skills` (nested trong API user_cvs) | ✅ |
+| 1.11 | Bảng `jobs` + API public list/detail + employer CRUD | ✅ |
+| 1.12 | Bảng `job_skills` (nested trong API jobs) | ✅ |
+| 1.13 | Bảng `applications` + API ứng tuyển/xem/đổi trạng thái | ✅ |
+| 1.14 | Frontend cổng ứng viên: xong trang chủ + danh sách/chi tiết job; **còn thiếu CV builder, kho template, luồng ứng tuyển** | 🟡 |
+| 1.14b | Redesign trang danh sách việc làm (search xanh, sidebar lọc nâng cao, JobCard mới, sort lương) | ✅ |
+| 1.14c | Bộ lọc đầy đủ: kinh nghiệm theo năm, cấp bậc, nghỉ thứ 7, lĩnh vực công ty | ✅ |
+| 1.14d | Header tự ẩn khi cuộn, thanh tìm kiếm sticky, chip lọc, URL bộ lọc rút gọn | ✅ |
+| 1.14e | Tách `Industry` thành model riêng + M2M (1 công ty nhiều lĩnh vực) | ✅ |
+| 1.14f | Skeleton loading toàn diện cho trang việc làm | ✅ |
+| 1.14g | Dải "khám phá nhanh" dưới thanh tìm kiếm (thẻ lối tắt + pill) | ✅ |
+| 1.14h | Banner thông báo địa danh hành chính mới (sáp nhập 1/7/2025) + filter `?education_level=` | ✅ |
+| 1.14i | Dữ liệu sáp nhập tỉnh 2025 (63→34) vào `Location.merged_from` + seed command | ✅ |
+| 1.14j | Sửa cuộn ngang dải "khám phá nhanh": bỏ drag tự chế, dùng scroll gốc + nút mũi tên | ✅ |
+| 1.14k | Panel "Xem nhanh" job 2 cột (`JobQuickView`, danh sách compact bên trái) | ✅ |
+| 1.14l | Header ứng viên sau đăng nhập: chuông + avatar dropdown hover, accordion section | ✅ |
+| 1.14m | Responsive mobile toàn site chính (Drawer nav, Drawer lọc, bottom-sheet xem nhanh) | ✅ |
+| 1.14n | Tìm kiếm tiếng Việt không dấu/đảo từ (Postgres `unaccent`) + empty-state kiểu TopCV | ✅ |
+| 1.14o | Việc làm đã lưu (trang riêng, API `SavedJob`, đồng bộ đa thiết bị) + cụm nút nổi Góp ý/Hỗ trợ | ✅ |
+| 1.14p | Phân hạng tin (tier standard/featured/top) + nhãn HOT/GẤP/⚡/✓ xác thực | ✅ |
+| 1.14q | Chuẩn hóa schema tin tuyển dụng: danh mục theo vai trò, địa điểm phường/xã, lịch làm việc, quyền lợi, ngoại ngữ, liên hệ nhận hồ sơ | ✅ |
+| 1.14r | Trang chi tiết việc làm bản mới: view-model API nhóm sẵn + tag tóm tắt, ngoại ngữ, địa điểm nhóm tỉnh, lịch JSX, sticky anchor động | ✅ |
+| 1.15 | Quy trình duyệt/publish job (status draft → active) — hiện chỉnh trực tiếp qua Django shell/admin | ⬜ |
+| 1.16 | Bảo vệ login/register: rate limit theo IP + Google reCAPTCHA v3 invisible | ✅ |
+| 1.17 | Social login Google/Facebook/LinkedIn (OAuth Authorization Code Flow qua backend) | ✅ |
+| 1.18 | Ghi nhận `last_login` ở cả 3 luồng phát token (login, đăng ký, social) | ✅ |
+| 1.19 | Đặt lại mật khẩu (quên mật khẩu) qua link email + Redis, token một lần | ✅ |
+| 1.19b | Email không phân biệt hoa/thường (normalize + `iexact` + unique constraint `Lower(email)`) | ✅ |
+| 1.20 | Trang thương hiệu (brand page): URL `/brand/<company>/tuyen-dung/<job>` + header thương hiệu | ✅ |
+| 1.21 | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](./03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt), admin actions duyệt (công ty, membership, giấy tờ, update request), employer đăng tin → `status=pending` chờ duyệt, seed + tests cập nhật (54 test pass); (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). Frontend cổng NTD sẽ xây sau trên bộ API mới | ✅ |
+| 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
+| 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 1
 
@@ -272,56 +292,56 @@ Trang thật đầu tiên trong khung 1.22 (thay `AccountPlaceholder`). **Backen
 
 ## Giai đoạn 2 — AI cơ bản
 
-| #   | Công việc                                                            | Trạng thái |
-| --- | -------------------------------------------------------------------- | ---------- |
-| 2.1 | Bảng `cv_analysis`                                                   | ⬜         |
-| 2.2 | Bảng `match_results`                                                 | ⬜         |
-| 2.3 | Bảng `ai_suggestions`                                                | ⬜         |
-| 2.4 | Bảng `ai_usage_logs`                                                 | ⬜         |
-| 2.5 | `ai_core/cv_parser.py` — đọc CV PDF (PyMuPDF)                        | ⬜         |
-| 2.6 | `ai_core/skill_extractor.py` — trích xuất kỹ năng                    | ⬜         |
-| 2.7 | Dataset + train model phân loại nhóm kỹ năng (`skill_classifier.py`) | ⬜         |
-| 2.8 | `ai_core/job_matcher.py` — công thức match_score thống nhất          | ⬜         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 2.1 | Bảng `cv_analysis` | ⬜ |
+| 2.2 | Bảng `match_results` | ⬜ |
+| 2.3 | Bảng `ai_suggestions` | ⬜ |
+| 2.4 | Bảng `ai_usage_logs` | ⬜ |
+| 2.5 | `ai_core/cv_parser.py` — đọc CV PDF (PyMuPDF) | ⬜ |
+| 2.6 | `ai_core/skill_extractor.py` — trích xuất kỹ năng | ⬜ |
+| 2.7 | Dataset + train model phân loại nhóm kỹ năng (`skill_classifier.py`) | ⬜ |
+| 2.8 | `ai_core/job_matcher.py` — công thức match_score thống nhất | ⬜ |
 
 ## Giai đoạn 3 — Tối ưu tìm kiếm / matching
 
-| #   | Công việc                                      | Trạng thái |
-| --- | ---------------------------------------------- | ---------- |
-| 3.1 | Bảng `embeddings` (pgvector)                   | ⬜         |
-| 3.2 | Semantic matching CV-JD (Sentence Transformer) | ⬜         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 3.1 | Bảng `embeddings` (pgvector) | ⬜ |
+| 3.2 | Semantic matching CV-JD (Sentence Transformer) | ⬜ |
 
 ## Giai đoạn 4 — CV nâng cao
 
-| #   | Công việc                         | Trạng thái |
-| --- | --------------------------------- | ---------- |
-| 4.1 | Bảng `cv_versions` (undo/restore) | ⬜         |
-| 4.2 | Bảng `cv_exports` + export PDF    | ⬜         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 4.1 | Bảng `cv_versions` (undo/restore) | ⬜ |
+| 4.2 | Bảng `cv_exports` + export PDF | ⬜ |
 
 ## Giai đoạn 5 — Tuyển dụng nâng cao
 
-| #   | Công việc                                                                     | Trạng thái |
-| --- | ----------------------------------------------------------------------------- | ---------- |
-| 5.1 | Bảng `saved_jobs` — xem chi tiết ở mục 1.14o (làm cùng đợt "Việc làm đã lưu") | ✅         |
-| 5.2 | Bảng `application_status_history`                                             | ⬜         |
-| 5.3 | Bảng `notifications`                                                          | ⬜         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 5.1 | Bảng `saved_jobs` — xem chi tiết ở mục 1.14o (làm cùng đợt "Việc làm đã lưu") | ✅ |
+| 5.2 | Bảng `application_status_history` | ⬜ |
+| 5.3 | Bảng `notifications` | ⬜ |
 
 ## Giai đoạn 6 — Thương mại & quản trị
 
-| #    | Công việc                                                                                        | Trạng thái |
-| ---- | ------------------------------------------------------------------------------------------------ | ---------- |
-| 6.1  | Bảng `subscription_plans`                                                                        | ⬜         |
-| 6.2  | Bảng `user_subscriptions` (quota AI)                                                             | ⬜         |
-| 6.3  | Bảng `audit_logs`                                                                                | ⬜         |
-| 6.4  | App `sitecontent`: `SiteSetting` + `LinkGroup`/`LinkItem` + admin + API public `/api/site/`      | ✅         |
-| 6.5  | `sitecontent.Banner` (carousel trang chủ cấu hình từ admin) + API `/api/site/banners/`           | ✅         |
-| 6.6  | `SiteSetting` schema-driven: 11 value_type, 15 nhóm, seed 96 keys, cache 1h                      | ✅         |
-| 6.7  | API admin cấu hình: `GET/PATCH /api/site/admin/settings/` + upload ảnh + permission `IsAdmin`    | ✅         |
-| 6.8  | Trang React `/admin/settings`: tabs 15 nhóm, form tự sinh từ metadata                            | ✅         |
-| 6.9  | Chuẩn hóa frontend 3 cổng (`pages/main/`) + migrate màu brand sang CSS var                       | ✅         |
-| 6.10 | Tách `BestJobs.jsx` (643→478 dòng): `JobPreviewPanel` ra file riêng, dùng label chuẩn            | ✅         |
-| 6.11 | Tối ưu performance đợt 1: favicon 957KB→1.9KB, chặn upload favicon nặng, tách vendor chunk react | ✅         |
-| 6.12 | Cẩm nang nghề nghiệp (blog): app `blog` + API public + trang `/blog` + phân quyền biên tập | ✅         |
-| 6.13 | Redesign giao diện blog kiểu TopCV: magazine /blog, danh mục load-more, chi tiết nền xám card trắng | ✅         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 6.1 | Bảng `subscription_plans` | ⬜ |
+| 6.2 | Bảng `user_subscriptions` (quota AI) | ⬜ |
+| 6.3 | Bảng `audit_logs` | ⬜ |
+| 6.4 | App `sitecontent`: `SiteSetting` + `LinkGroup`/`LinkItem` + admin + API public `/api/site/` | ✅ |
+| 6.5 | `sitecontent.Banner` (carousel trang chủ cấu hình từ admin) + API `/api/site/banners/` | ✅ |
+| 6.6 | `SiteSetting` schema-driven: 11 value_type, 15 nhóm, seed 96 keys, cache 1h | ✅ |
+| 6.7 | API admin cấu hình: `GET/PATCH /api/site/admin/settings/` + upload ảnh + permission `IsAdmin` | ✅ |
+| 6.8 | Trang React `/admin/settings`: tabs 15 nhóm, form tự sinh từ metadata | ✅ |
+| 6.9 | Chuẩn hóa frontend 3 cổng (`pages/main/`) + migrate màu brand sang CSS var | ✅ |
+| 6.10 | Tách `BestJobs.jsx` (643→478 dòng): `JobPreviewPanel` ra file riêng, dùng label chuẩn | ✅ |
+| 6.11 | Tối ưu performance đợt 1: favicon 957KB→1.9KB, chặn upload favicon nặng, tách vendor chunk react | ✅ |
+| 6.12 | Cẩm nang nghề nghiệp (blog): app `blog` + API public + trang `/blog` + phân quyền biên tập | ✅ |
+| 6.13 | Redesign giao diện blog kiểu TopCV: magazine /blog, danh mục load-more, chi tiết nền xám card trắng | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 6
 
@@ -397,20 +417,20 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ## Giai đoạn 7 — Phỏng vấn AI
 
-| #   | Công việc                                       | Trạng thái |
-| --- | ----------------------------------------------- | ---------- |
-| 7.1 | Bảng `interview_question_bank`                  | ⬜         |
-| 7.2 | Bảng `interview_sessions`                       | ⬜         |
-| 7.3 | Bảng `interview_questions`                      | ⬜         |
-| 7.4 | Bảng `interview_answers` + chấm điểm rule-based | ⬜         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 7.1 | Bảng `interview_question_bank` | ⬜ |
+| 7.2 | Bảng `interview_sessions` | ⬜ |
+| 7.3 | Bảng `interview_questions` | ⬜ |
+| 7.4 | Bảng `interview_answers` + chấm điểm rule-based | ⬜ |
 
 ## Giai đoạn 8 — Deployment
 
-| #   | Công việc                                                  | Trạng thái |
-| --- | ---------------------------------------------------------- | ---------- |
-| 8.1 | Dockerfile backend + docker-compose (backend + PostgreSQL) | ⬜         |
-| 8.2 | Deploy (Vercel + Render/Railway hoặc Docker tự host)       | ⬜         |
+| # | Công việc | Trạng thái |
+| --- | --- | --- |
+| 8.1 | Dockerfile backend + docker-compose (backend + PostgreSQL) | ⬜ |
+| 8.2 | Deploy (Vercel + Render/Railway hoặc Docker tự host) | ⬜ |
 
 ---
 
-Cập nhật lần cuối: 2026-07-12 (refactor frontend: alias `@/` + jsconfig, gộp `components/jobs`→`components/job`, dọn export chết/thừa, thêm `lint:fix`; fix N+1 request locations trang chủ — batch `?parent=1,2,...`; fix CLS "poor" (SavedJobs 0.68, JobList/JobDetail 0.41 → 0) bằng `min-h-screen` trên `<main>` MainLayout để neo footer/PopularSearches dưới fold, tránh sticky-footer nhảy khi nội dung async về; lint + 29 test + build đều pass)
+Cập nhật lần cuối: 2026-07-13 (R5–R8, R10: feature hóa, settings môi trường, dọn hotspot và cleanup/bundle; R9 được để lại để làm mới riêng)

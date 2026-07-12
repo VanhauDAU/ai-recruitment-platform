@@ -1,5 +1,5 @@
-import api from './api'
-import { cachedRequest, dedupeRequest } from './requestDeduplication'
+import api from '@/shared/api/client'
+import { cachedRequest, dedupeRequest } from '@/shared/api/requestDeduplication'
 
 const CATALOG_CACHE_TTL = 5 * 60 * 1000
 

@@ -34,4 +34,5 @@ export const SiteSettingsContext = createContext({
   settings: DEFAULT_SITE_SETTINGS,
   loading: false,
   error: null,
+  retry: () => {},
 })

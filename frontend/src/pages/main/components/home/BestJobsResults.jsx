@@ -7,10 +7,10 @@ import {
   formatSalary,
   stripCompanyPrefix,
 } from '@/constants/jobOptions'
-import { jobDetailPath } from '@/config/jobPaths'
-import { useAuth } from '@/hooks/useAuth'
+import { jobDetailPath } from '@/features/jobs'
+import { useAuth } from '@/features/auth'
 import { useLoginPrompt } from '@/hooks/useLoginPrompt'
-import { useSavedJobs } from '@/hooks/useSavedJobs'
+import { useSavedJobs } from '@/features/saved-jobs'
 import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 import { BEST_JOBS_LOGO_TINTS, BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from './bestJobsConfig'
 import JobPreviewPanel from './JobPreviewPanel'
