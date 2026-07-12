@@ -14,6 +14,12 @@ from .views import (
     RegisterView,
     VerificationConfirmView,
     VerificationSendView,
+    TwoFactorDisableConfirmView,
+    TwoFactorDisableSendView,
+    TwoFactorLoginResendView,
+    TwoFactorLoginVerifyView,
+    TwoFactorSetupConfirmView,
+    TwoFactorSetupSendView,
 )
 from .views.tokens import AccountTokenRefreshView
 
@@ -26,6 +32,12 @@ urlpatterns = [
     path('verify/send/', VerificationSendView.as_view(), name='auth-verify-send'),
     path('verify/confirm/', VerificationConfirmView.as_view(), name='auth-verify-confirm'),
     path('change-email/', ChangeEmailView.as_view(), name='auth-change-email'),
+    path('two-factor/setup/send/', TwoFactorSetupSendView.as_view(), name='auth-two-factor-setup-send'),
+    path('two-factor/setup/confirm/', TwoFactorSetupConfirmView.as_view(), name='auth-two-factor-setup-confirm'),
+    path('two-factor/disable/send/', TwoFactorDisableSendView.as_view(), name='auth-two-factor-disable-send'),
+    path('two-factor/disable/confirm/', TwoFactorDisableConfirmView.as_view(), name='auth-two-factor-disable-confirm'),
+    path('two-factor/login/resend/', TwoFactorLoginResendView.as_view(), name='auth-two-factor-login-resend'),
+    path('two-factor/login/verify/', TwoFactorLoginVerifyView.as_view(), name='auth-two-factor-login-verify'),
     path('password-reset/', PasswordResetRequestView.as_view(), name='auth-password-reset'),
     path('password-reset/validate/', PasswordResetValidateView.as_view(), name='auth-password-reset-validate'),
     path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='auth-password-reset-confirm'),

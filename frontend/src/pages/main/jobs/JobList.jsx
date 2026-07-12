@@ -309,7 +309,7 @@ export default function JobList() {
         <div
           id="job-results"
           className={`mt-4 scroll-mt-40 grid grid-cols-1 gap-5 ${
-            inlineQuickView ? 'lg:grid-cols-[minmax(340px,400px)_1fr] lg:items-start' : 'lg:grid-cols-[300px_1fr]'
+            inlineQuickView ? 'lg:grid-cols-[minmax(340px,400px)_minmax(0,1fr)] lg:items-start' : 'lg:grid-cols-[300px_minmax(0,1fr)]'
           }`}
         >
           {!inlineQuickView && <div className="hidden lg:block">{filterSidebar}</div>}

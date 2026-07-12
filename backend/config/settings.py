@@ -191,6 +191,8 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
+        'two_factor': '5/min',
+        'two_factor_verify': '10/min',
         'register': '5/min',
         'verify_email': '5/min',
         'password_reset': '5/min',
@@ -349,6 +351,9 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN = config('EMAIL_VERIFICATION_RESEND_COOLDOWN'
 # được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
 PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
 PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
+
+# Xác minh hai bước qua mã email: mã ngắn, chỉ dùng một lần và hết hạn sau 3 phút.
+TWO_FACTOR_CODE_TTL = config('TWO_FACTOR_CODE_TTL', default=60 * 3, cast=int)
 
 # Social login (OAuth Authorization Code Flow qua backend callback).
 # Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).

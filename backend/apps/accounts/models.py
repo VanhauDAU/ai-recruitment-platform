@@ -75,6 +75,7 @@ class User(AbstractUser):
     avatar_url = models.TextField(blank=True)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
+    two_factor_enabled = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -154,6 +155,7 @@ class AuthEmailJob(models.Model):
     class Kind(models.TextChoices):
         VERIFICATION = 'verification', 'Email verification'
         PASSWORD_RESET = 'password_reset', 'Password reset'
+        TWO_FACTOR = 'two_factor', 'Two-factor authentication code'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
@@ -166,6 +168,7 @@ class AuthEmailJob(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     attempts = models.PositiveSmallIntegerField(default=0)
     last_error = models.TextField(blank=True)
+    context = models.JSONField(default=dict, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

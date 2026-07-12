@@ -5,14 +5,14 @@ import {
 import { App, Avatar, Badge, Dropdown } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CANDIDATE_MENU } from '@/config/candidateMenu'
+import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/config/candidateMenu'
 
 // Section lấy từ config dùng chung với sidebar trang tài khoản (một nguồn duy nhất).
 // Nhóm A (search, cv) mở/đóng độc lập; nhóm B (email, account, upgrade) là accordion: mở 1 đóng 2 còn lại.
 const GROUP_B = ['email', 'account', 'upgrade']
 const SECTIONS = CANDIDATE_MENU
 
-function Section({ section, open, onToggle, onItem }) {
+function Section({ section, open, onToggle, onItem, user }) {
   return (
     <div className="border-b border-gray-100 last:border-b-0">
       <button
@@ -34,11 +34,11 @@ function Section({ section, open, onToggle, onItem }) {
           <div className="pb-2">
             {section.items.map((it) => (
               <button
-                key={it.label}
+                key={it.key || it.label}
                 onClick={() => onItem(it)}
                 className="flex w-full cursor-pointer items-center rounded-lg py-2 pl-[52px] pr-5 text-left text-sm text-slate-900 transition-colors hover:bg-[var(--brand-primary-soft)]"
               >
-                {it.label}
+                {candidateMenuItemLabel(it, user)}
               </button>
             ))}
           </div>
@@ -106,7 +106,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
       <div className="border-t border-gray-100 px-2">
         {SECTIONS.map((s) => (
-          <Section key={s.key} section={s} open={openKeys.has(s.key)} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
+          <Section key={s.key} section={s} user={user} open={openKeys.has(s.key)} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
         ))}
       </div>
 

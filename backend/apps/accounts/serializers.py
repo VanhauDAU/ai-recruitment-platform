@@ -1,9 +1,8 @@
-from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
 
 from common.media_storage import media_url_from_value
 
@@ -60,7 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'status', 'email_verified', 'date_joined', 'last_login',
+            'status', 'email_verified', 'two_factor_enabled', 'date_joined', 'last_login',
         ]
         read_only_fields = fields
 
@@ -136,13 +135,15 @@ PORTAL_ROLES = {
 }
 
 
-class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Adds role/email claims to the JWT so the frontend can route by role
-    without an extra profile lookup. Optional `portal` rejects wrong-role
-    logins per portal (backward compatible: no portal -> no check)."""
+class LoginCredentialsSerializer(TokenObtainSerializer):
+    """Xác thực email/mật khẩu mà chưa phát JWT.
+
+    Tách bước này khỏi ``TokenObtainPairSerializer`` để tài khoản bật 2FA không
+    nhận refresh token trước khi mã email được xác nhận.
+    """
 
     default_error_messages = {
-        **TokenObtainPairSerializer.default_error_messages,
+        **TokenObtainSerializer.default_error_messages,
         'no_active_account': 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.',
     }
 
@@ -152,13 +153,17 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         attrs.pop('captcha_token', None)
         portal = attrs.pop('portal', None)
+        self.portal = portal
         data = super().validate(attrs)
         if not is_account_accessible(self.user):
             raise AuthenticationFailed(self.error_messages['no_active_account'], 'no_active_account')
         if portal and self.user.role not in PORTAL_ROLES[portal]:
             raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
-        update_last_login(None, self.user)
         return data
+
+
+class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """JWT claims dùng chung cho mọi luồng phát token thành công."""
 
     @classmethod
     def get_token(cls, user):

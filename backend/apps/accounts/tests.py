@@ -13,7 +13,7 @@ from rest_framework.test import APITestCase
 
 from . import oauth
 from .models import AuthEmailJob, SocialAccount, User
-from .services import email_verification, password_reset
+from .services import email_verification, password_reset, two_factor
 from .tasks import deliver_auth_email_job
 
 
@@ -448,3 +448,73 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertEqual(job.status, AuthEmailJob.Status.SENT)
         self.assertEqual(job.attempts, 1)
         self.assertIsNotNone(job.sent_at)
+
+
+@override_settings(
+    RECAPTCHA_SECRET_KEY='',
+    DEBUG=True,
+    ALLOWED_HOSTS=['testserver'],
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+    TWO_FACTOR_CODE_TTL=180,
+)
+class TwoFactorAuthenticationTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(email='twofactor@example.com', password='Password@123')
+
+    def test_user_can_enable_two_factor_with_email_code(self):
+        self.client.force_authenticate(user=self.user)
+        sent = self.client.post(reverse('auth-two-factor-setup-send'))
+
+        self.assertEqual(sent.status_code, status.HTTP_200_OK)
+        self.assertEqual(sent.data['expires_in'], 180)
+        code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_SETUP))
+        self.assertRegex(code, r'^\d{6}$')
+
+        confirmed = self.client.post(reverse('auth-two-factor-setup-confirm'), {'code': code})
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK)
+        self.assertTrue(confirmed.data['two_factor_enabled'])
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.two_factor_enabled)
+        self.assertIsNone(cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_SETUP)))
+
+    def test_two_factor_login_only_issues_tokens_after_correct_code(self):
+        self.user.two_factor_enabled = True
+        self.user.save(update_fields=['two_factor_enabled'])
+
+        login = self.client.post(reverse('auth-login'), {
+            'email': self.user.email, 'password': 'Password@123', 'captcha_token': 'x', 'portal': 'main',
+        })
+        self.assertEqual(login.status_code, status.HTTP_202_ACCEPTED)
+        self.assertTrue(login.data['two_factor_required'])
+        self.assertNotIn('access', login.data)
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.last_login)
+
+        challenge = login.data['challenge']
+        code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN))
+        wrong_code = '000001' if code == '000000' else '000000'
+        wrong = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong_code})
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+
+        verified = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code})
+        self.assertEqual(verified.status_code, status.HTTP_200_OK)
+        self.assertIn('access', verified.data)
+        self.assertIn('refresh', verified.data)
+        self.user.refresh_from_db()
+        self.assertIsNotNone(self.user.last_login)
+
+    def test_user_can_disable_two_factor_with_email_code(self):
+        self.user.two_factor_enabled = True
+        self.user.save(update_fields=['two_factor_enabled'])
+        self.client.force_authenticate(user=self.user)
+
+        sent = self.client.post(reverse('auth-two-factor-disable-send'))
+        self.assertEqual(sent.status_code, status.HTTP_200_OK)
+        code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_DISABLE))
+
+        confirmed = self.client.post(reverse('auth-two-factor-disable-confirm'), {'code': code})
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK)
+        self.assertFalse(confirmed.data['two_factor_enabled'])
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.two_factor_enabled)

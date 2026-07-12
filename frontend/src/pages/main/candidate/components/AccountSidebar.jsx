@@ -2,13 +2,15 @@ import { CaretRightOutlined } from '@ant-design/icons'
 import { App } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { CANDIDATE_MENU, findGroupKeyByPath } from '@/config/candidateMenu'
+import { CANDIDATE_MENU, candidateMenuItemLabel, findGroupKeyByPath } from '@/config/candidateMenu'
+import { useAuth } from '@/hooks/useAuth'
 
 // Sidebar trái của layout tài khoản: accordion CHỈ MỞ 1 NHÓM một lúc (mở nhóm
 // này thì nhóm kia tự đóng), có animation, hover và trạng thái active theo
 // route hiện tại. Dữ liệu menu dùng chung với dropdown avatar trên header.
 export default function AccountSidebar({ onNavigate }) {
   const { pathname } = useLocation()
+  const { user } = useAuth()
   const { message } = App.useApp()
   // Mặc định mở nhóm chứa trang đang xem; vào lại trang khác thì mở nhóm đó.
   const [openKey, setOpenKey] = useState(() => findGroupKeyByPath(pathname) || CANDIDATE_MENU[0].key)
@@ -37,13 +39,14 @@ export default function AccountSidebar({ onNavigate }) {
           onToggle={() => setOpenKey((current) => (current === group.key ? null : group.key))}
           onTodoClick={handleTodoClick}
           onNavigate={onNavigate}
+          user={user}
         />
       ))}
     </nav>
   )
 }
 
-function SidebarGroup({ group, open, activePath, onToggle, onTodoClick, onNavigate }) {
+function SidebarGroup({ group, open, activePath, onToggle, onTodoClick, onNavigate, user }) {
   const hasActiveChild = group.items.some((item) => item.path === activePath)
 
   return (
@@ -71,7 +74,7 @@ function SidebarGroup({ group, open, activePath, onToggle, onTodoClick, onNaviga
           <ul className="pb-2">
             {group.items.map((item) => (
               <li key={item.key}>
-                <SidebarItem item={item} active={item.path === activePath} onTodoClick={onTodoClick} onNavigate={onNavigate} />
+                <SidebarItem item={item} user={user} active={item.path === activePath} onTodoClick={onTodoClick} onNavigate={onNavigate} />
               </li>
             ))}
           </ul>
@@ -81,7 +84,7 @@ function SidebarGroup({ group, open, activePath, onToggle, onTodoClick, onNaviga
   )
 }
 
-function SidebarItem({ item, active, onTodoClick, onNavigate }) {
+function SidebarItem({ item, user, active, onTodoClick, onNavigate }) {
   // Text menu luôn màu đen; active nhận biết bằng nền brand-soft + thanh dọc trái.
   // Dùng `!text-slate-900` vì item là thẻ <a> (Link), nếu không sẽ bị màu link
   // mặc định của AntD đè lên.
@@ -89,7 +92,7 @@ function SidebarItem({ item, active, onTodoClick, onNavigate }) {
   if (item.todo) {
     return (
       <button type="button" onClick={onTodoClick} className={`${base} cursor-pointer hover:bg-slate-50`}>
-        {item.label}
+        {candidateMenuItemLabel(item, user)}
         <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Sắp có</span>
       </button>
     )
@@ -106,7 +109,7 @@ function SidebarItem({ item, active, onTodoClick, onNavigate }) {
           : 'hover:bg-[var(--brand-primary-soft)]/60'
       }`}
     >
-      {item.label}
+      {candidateMenuItemLabel(item, user)}
     </Link>
   )
 }

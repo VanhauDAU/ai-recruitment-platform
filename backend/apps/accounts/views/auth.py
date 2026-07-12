@@ -5,12 +5,12 @@ from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 from common.media_storage import delete_local_media_url, save_image_upload
 
-from ..models import User
+from ..models import AuthEmailJob, User
 from ..serializers import (
+    LoginCredentialsSerializer,
     ProfileUpdateSerializer,
     RegisterSerializer,
     RoleTokenObtainPairSerializer,
@@ -18,6 +18,8 @@ from ..serializers import (
 )
 from ..services import verify_request_captcha
 from ..services.tokens import issue_tokens
+from ..services import two_factor
+from ..tasks import queue_auth_email
 from .verification import queue_verification_email
 
 
@@ -40,15 +42,30 @@ class RegisterView(generics.CreateAPIView):
         )
 
 
-class LoginView(TokenObtainPairView):
-    serializer_class = RoleTokenObtainPairSerializer
+class LoginView(APIView):
+    serializer_class = LoginCredentialsSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
         verify_request_captcha(request, 'login')
-        return super().post(request, *args, **kwargs)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+        if user.two_factor_enabled:
+            challenge = two_factor.start_login_challenge(user, serializer.portal)
+            queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
+            return Response(
+                {
+                    'two_factor_required': True,
+                    'challenge': challenge,
+                    'email': user.email,
+                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN),
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+        return Response(issue_tokens(user))
 
 
 class MeView(generics.RetrieveUpdateAPIView):

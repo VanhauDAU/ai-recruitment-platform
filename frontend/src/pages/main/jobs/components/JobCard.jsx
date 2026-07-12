@@ -157,7 +157,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
       onClick={handleQuickView}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group relative flex cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
+      className={`group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
       } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : TIER_CARD_CLASS[job.tier] || TIER_CARD_CLASS.standard}`}
     >
@@ -186,7 +186,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
 
       <div className="min-w-0 flex-1">
         <div className={`flex items-start justify-between gap-3 ${compact ? 'flex-col gap-1' : ''}`}>
-          <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
+          <h3 className="min-w-0 font-semibold text-gray-900 leading-snug line-clamp-2 transition-colors group-hover:text-[var(--brand-primary)]">
             <TitleBadges job={job} />
             <Link
               to={jobDetailPath(job)}

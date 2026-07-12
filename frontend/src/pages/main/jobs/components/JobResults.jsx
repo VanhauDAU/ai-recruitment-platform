@@ -25,7 +25,7 @@ export default function JobResults({
   wardSuggestionInsertIndex,
 }) {
   return (
-    <div className="lg:col-span-1">
+    <div className="min-w-0 lg:col-span-1">
       <div className={quickViewJob ? 'hidden' : 'mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between'}>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-gray-500">Tìm kiếm theo:</span>

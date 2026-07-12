@@ -11,9 +11,11 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .. import oauth
-from ..models import User
+from ..models import AuthEmailJob, User
 from ..serializers import UserSerializer
+from ..services import two_factor
 from ..services.tokens import issue_tokens
+from ..tasks import queue_auth_email
 
 
 def _oauth_error_redirect(portal, error_code):
@@ -104,5 +106,17 @@ class OAuthCompleteView(APIView):
             return Response(
                 {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        if user.two_factor_enabled:
+            challenge = two_factor.start_login_challenge(user, '')
+            queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
+            return Response(
+                {
+                    'two_factor_required': True,
+                    'challenge': challenge,
+                    'email': user.email,
+                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN),
+                },
+                status=status.HTTP_202_ACCEPTED,
             )
         return Response({'user': UserSerializer(user).data, **issue_tokens(user)})
