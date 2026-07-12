@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { App, Button, Form, Input } from 'antd'
 import { updateProfile } from '../api/accountService'
-import { getApiErrorMessage } from '@/api/errorMessage'
+import { getApiErrorMessage } from '@/shared/api/errorMapper'
 import { useAuth } from '@/features/auth'
 
 // Số điện thoại VN: 0 hoặc +84 rồi 9-10 chữ số (khớp validate backend).

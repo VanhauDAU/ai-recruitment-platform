@@ -8,7 +8,7 @@ import {
   stripCompanyPrefix,
 } from '@/constants/jobOptions'
 import { jobDetailPath } from '@/features/jobs'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/features/auth'
 import { useLoginPrompt } from '@/hooks/useLoginPrompt'
 import { useSavedJobs } from '@/features/saved-jobs'
 import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'

@@ -1,9 +1,8 @@
 import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import EmailVerificationBanner from '../components/auth/EmailVerificationBanner'
+import { EmailVerificationBanner, useAuth } from '@/features/auth'
 import BrandLogo from '../components/brand/BrandLogo'
 import { adminPath, employerAppPath } from '../config/portals'
-import { useAuth } from '../hooks/useAuth'
 
 const { Header, Sider, Content } = Layout
 

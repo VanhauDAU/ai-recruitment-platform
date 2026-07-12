@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom'
-import AuthLogo from '@/components/auth/AuthLogo'
-import LoginForm from '@/components/auth/LoginForm'
-import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
+import { AuthLogo, LoginForm, SocialLoginButtons } from '@/features/auth'
 import { employerAppPath, MAIN_LOGIN_URL } from '@/config/portals'
 
 // Cổng nhà tuyển dụng — sau này chạy trên subdomain riêng (vd. tuyendung.procv.vn).

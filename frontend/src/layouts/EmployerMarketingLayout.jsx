@@ -1,9 +1,8 @@
 import { Button } from 'antd'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import EmailVerificationBanner from '../components/auth/EmailVerificationBanner'
+import { EmailVerificationBanner, useAuth } from '@/features/auth'
 import BrandLogo from '../components/brand/BrandLogo'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '../config/portals'
-import { useAuth } from '../hooks/useAuth'
 
 const NAV_ITEMS = [
   { label: 'Trang chủ', to: employerMarketingPath('') },

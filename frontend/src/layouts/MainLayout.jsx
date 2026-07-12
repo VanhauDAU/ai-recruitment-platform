@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom'
+import { EmailVerificationBanner } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
-import EmailVerificationBanner from '../components/auth/EmailVerificationBanner'
 import LoginPromptProvider from '../contexts/LoginPromptProvider'
 import FloatingActions from '../components/layout/FloatingActions'
 import Footer from '../components/layout/Footer'

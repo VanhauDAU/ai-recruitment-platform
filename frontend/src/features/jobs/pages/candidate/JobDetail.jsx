@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Button, Result, message } from 'antd'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/features/auth'
 import { useLoginPrompt } from '@/hooks/useLoginPrompt'
 import { useSavedJob } from '@/features/saved-jobs'
 import JobDetailContent from './components/job-detail/JobDetailContent'

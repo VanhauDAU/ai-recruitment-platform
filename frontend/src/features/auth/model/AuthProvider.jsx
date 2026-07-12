@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import * as authService from '@/features/auth/api/authService'
+import * as authService from '../api/authService'
 import { verifyTwoFactorLogin } from '@/features/two-factor'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/config/portals'
 import AuthContext from './authContext'

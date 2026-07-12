@@ -36,8 +36,8 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R6 | Applications/Saved jobs + server state | 🟡 Feature state/API và transition backend; còn UI nghiệp vụ |
 | R7 | Tách Django settings theo môi trường | ✅ base/development/test/production, CI test settings và production validation giữ nguyên |
 | R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard/AI chưa có use case, Sitecontent để lát cắt riêng |
-| R9 | Onboarding theo kiến trúc mới | ⬜ |
-| R10 | Cleanup, bundle, tài liệu | ⬜ |
+| R9 | Onboarding theo kiến trúc mới | ⏭ Bỏ qua trong đợt này, sẽ triển khai lại riêng |
+| R10 | Cleanup, bundle, tài liệu | ✅ Xóa compatibility layer, CI feature boundary, bundle review và tài liệu |
 
 > Lưu ý: nhánh dựa trên `#23`, cần hòa hợp `origin/main` (`#24`) trước khi merge refactor về `main`.
 
@@ -433,4 +433,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-13 (R5–R8: Jobs/Applications feature hóa, settings theo môi trường và dọn hotspot Candidate/CV; backend 81 test xanh)
+Cập nhật lần cuối: 2026-07-13 (R5–R8, R10: feature hóa, settings môi trường, dọn hotspot và cleanup/bundle; R9 được để lại để làm mới riêng)

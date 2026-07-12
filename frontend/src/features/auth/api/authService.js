@@ -12,8 +12,8 @@ export {
   sendTwoFactorDisableCode,
   sendTwoFactorSetupCode,
   verifyTwoFactorLogin,
-} from '@/features/two-factor/api/twoFactorService'
-export { updateProfile } from '@/features/account/api/accountService'
+} from '@/features/two-factor'
+export { updateProfile } from '@/features/account'
 
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })

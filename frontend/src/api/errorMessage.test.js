@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getApiErrorMessage } from './errorMessage'
+import { getApiErrorMessage } from '@/shared/api/errorMapper'
 
 describe('getApiErrorMessage', () => {
   it('translates the default SimpleJWT credentials error', () => {

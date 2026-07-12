@@ -14,7 +14,7 @@ import {
 import { App, Badge, Modal, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuth } from '@/features/auth'
 import { useLoginPrompt } from '../../hooks/useLoginPrompt'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { useSiteSettings } from '../../hooks/useSiteSettings'

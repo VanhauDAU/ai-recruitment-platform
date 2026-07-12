@@ -37,6 +37,10 @@ jobs:
         working-directory: .
         run: bash scripts/check_api_boundary.sh
 
+      - name: Feature boundary (không deep-import feature khác)
+        working-directory: .
+        run: bash scripts/check_feature_boundary.sh
+
       - name: Lint (oxlint)
         run: npm run lint
 

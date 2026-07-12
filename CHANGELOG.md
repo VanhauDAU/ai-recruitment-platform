@@ -6,6 +6,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-13
+
+#### Changed
+
+- Hoàn tất đợt tái cấu trúc R3–R8 và R10: feature hóa auth/account/2FA/jobs/applications/saved jobs, tách Django settings theo môi trường, và đưa Candidate/CV/CV template về selector/service khi có use case thực tế.
+- Xóa compatibility re-export đã hết hạn ở frontend; consumer dùng public API của `features/*` hoặc `shared/api/*`. Frontend CI kiểm tra thêm feature boundary để chặn deep import alias xuyên feature.
+- Giữ R9 onboarding ngoài đợt cleanup để triển khai lại theo thiết kế mới.
+
 ### 2026-07-11
 
 #### Fixed

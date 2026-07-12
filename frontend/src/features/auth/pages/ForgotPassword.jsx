@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link } from 'react-router-dom'
 import { requestPasswordReset } from '../api/authService'
-import { getApiErrorMessage } from '@/api/errorMessage'
+import { getApiErrorMessage } from '@/shared/api/errorMapper'
 import AuthLogo from '../components/AuthLogo'
 import { AuthFormStyles } from '../components/LoginForm'
 

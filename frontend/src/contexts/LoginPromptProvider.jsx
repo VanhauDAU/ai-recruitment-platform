@@ -4,7 +4,8 @@ import LoginPromptContext from './loginPromptContext'
 
 // Lazy để reCAPTCHA + form đăng nhập không nằm trong bundle chính (chỉ nạp khi
 // mở popup), giữ mọi trang cổng ứng viên nhẹ.
-const LoginModalContent = lazy(() => import('../components/auth/LoginModalContent'))
+const LazyLoginModalContent = lazy(() => import('@/features/auth/routes')
+  .then(({ loadLoginModalContent }) => loadLoginModalContent()))
 
 /**
  * Popup đăng nhập dùng chung cho cả cổng ứng viên: bất kỳ hành động nào cần
@@ -53,7 +54,7 @@ export default function LoginPromptProvider({ children }) {
         }}
       >
         <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
-          <LoginModalContent onSuccess={handleSuccess} />
+          <LazyLoginModalContent onSuccess={handleSuccess} />
         </Suspense>
       </Modal>
     </LoginPromptContext.Provider>
