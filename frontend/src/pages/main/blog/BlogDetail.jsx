@@ -10,7 +10,7 @@ import BlogRelatedJobs from './ui/BlogRelatedJobs'
 import BlogShareRail from './ui/BlogShareRail'
 import BlogSidebar from './ui/BlogSidebar'
 import BlogToc from './ui/BlogToc'
-import { BLOG_ROOT, blogCategoryPath, formatBlogDate } from './lib/blog-paths'
+import { BLOG_ROOT, blogCategoryPath, formatBlogDate } from '@/entities/blog'
 
 export default function BlogDetail() {
   const { slug } = useParams()

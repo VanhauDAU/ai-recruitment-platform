@@ -3,14 +3,14 @@ import { App } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CANDIDATE_MENU, candidateMenuItemLabel, findGroupKeyByPath } from '@/entities/account'
-import { useAuth } from '@/features/auth'
+import { useSession } from '@/entities/session'
 
 // Sidebar trái của layout tài khoản: accordion CHỈ MỞ 1 NHÓM một lúc (mở nhóm
 // này thì nhóm kia tự đóng), có animation, hover và trạng thái active theo
 // route hiện tại. Dữ liệu menu dùng chung với dropdown avatar trên header.
 export default function AccountSidebar({ onNavigate }) {
   const { pathname } = useLocation()
-  const { user } = useAuth()
+  const { user } = useSession()
   const { message } = App.useApp()
   // Mặc định mở nhóm chứa trang đang xem; vào lại trang khác thì mở nhóm đó.
   const [openKey, setOpenKey] = useState(() => findGroupKeyByPath(pathname) || CANDIDATE_MENU[0].key)

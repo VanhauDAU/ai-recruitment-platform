@@ -2,7 +2,7 @@ import { App, Button, Form, Input, Modal } from 'antd'
 import { useEffect, useState } from 'react'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { submitFeedback } from '../api/submit-feedback.api'
-import { useAuth } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { useSiteSettings } from '@/entities/site-settings'
 
 // Chủ đề góp ý — khớp Feedback.Category ở backend.
@@ -28,7 +28,7 @@ const SATISFACTIONS = [
 // ngoài AntD Form (UI dạng chip/emoji) nên validate chủ đề thủ công.
 export default function FeedbackModal({ open, onClose }) {
   const { message } = App.useApp()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useSession()
   const { siteName } = useSiteSettings()
   const [topic, setTopic] = useState(null)
   const [topicError, setTopicError] = useState(false)

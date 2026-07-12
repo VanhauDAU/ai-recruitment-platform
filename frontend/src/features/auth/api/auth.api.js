@@ -1,13 +1,12 @@
 import api from '@/shared/api/client'
 import { getCurrentPortal } from '@/shared/config/portals'
-import { dedupeRequest } from '@/shared/api/request-deduplication'
-import { clearSession, getAccessToken as readAccessToken, setTokens } from '@/shared/api/token-store'
+import { clearSession, setSession } from '@/entities/session'
 
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })
   // Backend trả về access/refresh -> đăng nhập ngay để dẫn thẳng vào trang (chưa xác thực email).
   if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+    setSession({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   }
   return data
 }
@@ -50,8 +49,19 @@ export async function confirmPasswordReset({ token, password }) {
 export async function login({ email, password, captcha_token, portal }) {
   const { data } = await api.post('/auth/login/', { email, password, captcha_token, ...(portal && { portal }) })
   if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+    setSession({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   }
+  return data
+}
+
+export async function verifyTwoFactorLogin({ challenge, code, portal }) {
+  const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code })
+  setSession({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+  return data
+}
+
+export async function resendTwoFactorLogin(challenge) {
+  const { data } = await api.post('/auth/two-factor/login/resend/', { challenge })
   return data
 }
 
@@ -68,23 +78,11 @@ export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
 export async function completeOAuth(code, portal) {
   const { data } = await api.post('/auth/oauth/complete/', { code })
   if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+    setSession({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   }
   return data
 }
 
-export async function me() {
-  const token = readAccessToken()
-  return dedupeRequest(`auth-me:${token || 'anonymous'}`, async () => {
-    const { data } = await api.get('/auth/me/')
-    return data
-  })
-}
-
 export function logout(portal = getCurrentPortal()) {
   clearSession(portal)
-}
-
-export function getAccessToken(portal = getCurrentPortal()) {
-  return readAccessToken(portal)
 }

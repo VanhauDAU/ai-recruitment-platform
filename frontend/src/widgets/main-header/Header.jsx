@@ -3,7 +3,8 @@ import { App, Button } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
-import { useAuth, useLoginPrompt } from '@/features/auth'
+import { useLoginPrompt } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { BrandLogo } from '@/entities/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
@@ -78,7 +79,7 @@ function MobileActions({ isAuthenticated, navigate, onClose, user }) {
 }
 
 export default function Header() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout } = useSession()
   const { promptLogin } = useLoginPrompt()
   const navigate = useNavigate()
   const location = useLocation()

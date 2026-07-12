@@ -1,8 +1,8 @@
 import { Typography } from 'antd'
-import { useAuth } from '@/features/auth'
+import { useSession } from '@/entities/session'
 
 export default function EmployerDashboard() {
-  const { user } = useAuth()
+  const { user } = useSession()
   return (
     <div>
       <Typography.Title level={3}>Chào {user?.full_name || user?.email}</Typography.Title>

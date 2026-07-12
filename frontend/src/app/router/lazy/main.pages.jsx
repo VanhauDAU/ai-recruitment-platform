@@ -1,0 +1,20 @@
+/* oxlint-disable react/only-export-components -- Lazy route registry exports component values. */
+import { lazy } from 'react'
+
+export const HomePage = lazy(() => import('@/pages/main/home/Home'))
+export const JobListPage = lazy(() => import('@/pages/main/jobs/JobList'))
+export const JobDetailPage = lazy(() => import('@/pages/main/jobs/JobDetail'))
+export const SavedJobsPage = lazy(() => import('@/pages/main/jobs/SavedJobs'))
+export const MainLoginPage = lazy(() => import('@/pages/main/auth/Login'))
+export const MainRegisterPage = lazy(() => import('@/pages/main/auth/Register'))
+export const VerifyEmailPage = lazy(() => import('@/pages/main/auth/VerifyEmail'))
+export const CandidateAccountLayout = lazy(() => import('@/pages/main/account/CandidateAccountLayout'))
+export const AccountPlaceholderPage = lazy(() => import('@/pages/main/account/AccountPlaceholder'))
+export const PersonalInfoPage = lazy(() => import('@/pages/main/account/PersonalInfo'))
+export const TwoFactorAuthenticationPage = lazy(() => import('@/pages/main/account/TwoFactorAuthentication'))
+export const BlogHomePage = lazy(() => import('@/pages/main/blog/BlogHome'))
+export const BlogCategoryPage = lazy(() => import('@/pages/main/blog/BlogCategory'))
+export const BlogDetailPage = lazy(() => import('@/pages/main/blog/BlogDetail'))
+export const ForgotPasswordPage = lazy(() => import('@/pages/main/auth/ForgotPassword'))
+export const ResetPasswordPage = lazy(() => import('@/pages/main/auth/ResetPassword'))
+export const OAuthCallbackPage = lazy(() => import('@/pages/main/auth/OAuthCallback'))

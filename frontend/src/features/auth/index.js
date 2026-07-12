@@ -1,7 +1,5 @@
 // Public API của feature auth. Code ngoài feature nên import từ đây, không đi
 // sâu vào file nội bộ (ADR 0001).
-export { AuthProvider } from './model/AuthProvider'
-export { useAuth } from './model/use-auth'
 export { default as LoginPromptProvider } from './model/LoginPromptProvider'
 export { default as useLoginPrompt } from './model/use-login-prompt'
 export { default as AuthLogo } from './ui/AuthLogo'

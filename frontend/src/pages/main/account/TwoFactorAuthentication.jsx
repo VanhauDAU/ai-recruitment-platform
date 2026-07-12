@@ -5,15 +5,15 @@ import {
   confirmTwoFactorSetup,
   sendTwoFactorDisableCode,
   sendTwoFactorSetupCode,
-  TwoFactorCodeModal,
 } from '@/features/two-factor'
-import { useAuth } from '@/features/auth'
+import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
+import { useSession } from '@/entities/session'
 
 const SETUP_ILLUSTRATION = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/icon/icon-shield-gears.png'
 const SUCCESS_ILLUSTRATION = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/icon/icon-shield-check.png'
 
 export default function TwoFactorAuthentication() {
-  const { user, setAuthenticatedUser } = useAuth()
+  const { user, setCurrentUser } = useSession()
   const [modalOpen, setModalOpen] = useState(false)
   const [success, setSuccess] = useState(false)
   const [sending, setSending] = useState(false)
@@ -40,7 +40,7 @@ export default function TwoFactorAuthentication() {
 
   async function confirmAction(code) {
     const updatedUser = action === 'disable' ? await confirmTwoFactorDisable(code) : await confirmTwoFactorSetup(code)
-    setAuthenticatedUser(updatedUser)
+    setCurrentUser(updatedUser)
     setSuccess(true)
   }
 

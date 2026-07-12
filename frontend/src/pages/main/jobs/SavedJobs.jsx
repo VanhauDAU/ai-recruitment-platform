@@ -3,8 +3,8 @@ import { Button } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { getJobs } from '@/entities/job'
-import { useAuth } from '@/features/auth'
 import { useSavedJobs } from '@/features/saved-jobs'
+import { useSession } from '@/entities/session'
 import JobCard from './ui/JobCard'
 import JobCardSkeleton from './ui/JobCardSkeleton'
 
@@ -38,7 +38,7 @@ function dominantCategory(items) {
 }
 
 export default function SavedJobs() {
-  const { loading: authLoading, isAuthenticated } = useAuth()
+  const { loading: authLoading, isAuthenticated } = useSession()
   const { items, loading, isCandidate } = useSavedJobs()
   const [similar, setSimilar] = useState([])
   const [similarLoading, setSimilarLoading] = useState(false)

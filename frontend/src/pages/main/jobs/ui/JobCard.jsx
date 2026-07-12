@@ -100,7 +100,7 @@ function RequirementTooltip({ details }) {
 // `compact`: bản gọn cho cột danh sách khi panel xem nhanh đang mở; `active`: card đang xem.
 export default function JobCard({ job, isAuthenticated = true, onRequireLogin, onQuickView, compact = false, active = false, showQuickView = true }) {
   const navigate = useNavigate()
-  const [saved, toggleSaved] = useSavedJob(job.public_id)
+  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
   const [hovered, setHovered] = useState(false)
   const locationLabel = formatLocations(job)
   const elevated = job.tier === 'featured' || job.tier === 'top'
@@ -247,8 +247,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
               <button
                 type="button"
                 onClick={toggleSave}
+                disabled={savePending}
                 aria-label={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-green-50"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-gray-400" />}
               </button>

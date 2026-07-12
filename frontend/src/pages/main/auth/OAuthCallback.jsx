@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { completeOAuth, getSafeReturnUrl, useAuth, withReturnUrl } from '@/features/auth'
+import { completeOAuth, getSafeReturnUrl, resendTwoFactorLogin, verifyTwoFactorLogin, withReturnUrl } from '@/features/auth'
+import { useSession } from '@/entities/session'
 import PageLoading from '@/shared/ui/PageLoading'
 import { HOME_BY_ROLE } from '@/shared/config/portals'
-import { resendTwoFactorLogin, TwoFactorCodeModal } from '@/features/two-factor'
+import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 
 /**
  * Trang backend redirect về sau OAuth: đổi one_time_code lấy JWT rồi điều hướng.
@@ -13,7 +14,7 @@ import { resendTwoFactorLogin, TwoFactorCodeModal } from '@/features/two-factor'
 export default function OAuthCallback({ portal = 'main', loginPath = '/login' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { setAuthenticatedUser, completeTwoFactorLogin } = useAuth()
+  const { refreshSession, setCurrentUser } = useSession()
   const ran = useRef(false)
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
 
@@ -37,7 +38,7 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
           return
         }
         const { user } = result
-        setAuthenticatedUser(user)
+        setCurrentUser(user)
         const safeNext = getSafeReturnUrl(params.get('next'))
         navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
       })
@@ -48,11 +49,12 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function confirmTwoFactor(code) {
-    const user = await completeTwoFactorLogin({
+    await verifyTwoFactorLogin({
       challenge: twoFactorChallenge.challenge,
       code,
       portal: twoFactorChallenge.portal,
     })
+    const user = await refreshSession()
     const safeNext = getSafeReturnUrl(params.get('next'))
     navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
   }

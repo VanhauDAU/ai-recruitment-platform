@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { blogPostPath, formatBlogDate } from '../lib/blog-paths'
+import { blogPostPath, formatBlogDate } from '@/entities/blog'
 
 export function PostThumb({ post, className = '' }) {
   return (
