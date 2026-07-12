@@ -13,6 +13,9 @@ Thiết kế nâng cấp chuyên sâu cho quy trình đăng tin và trang chi ti
 Kế hoạch tách công ty khỏi nhà tuyển dụng (nhiều HR/công ty, onboarding xác thực kiểu TopCV):
 [Kế hoạch thiết kế lại công ty & nhà tuyển dụng](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md).
 
+Thiết kế database cho Cẩm nang nghề nghiệp (blog `/blog`: bài viết, danh mục, thẻ, bài ghim sidebar, banner):
+[Kế hoạch database cẩm nang nghề nghiệp - blog](./ke-hoach-database-cam-nang-nghe-nghiep-blog.md).
+
 ## Bảng đã triển khai
 
 | Bảng | App Django | Ghi chú |

@@ -14,7 +14,9 @@ export default function MainLayout() {
         <div className="min-h-screen flex flex-col bg-gray-50">
           <Header />
           <EmailVerificationBanner verificationPath="/tai-khoan/xac-thuc-email" />
-          <main className="flex-1">
+          {/* min-h-screen giữ footer + PopularSearches luôn nằm dưới fold, kể cả khi
+              nội dung async chưa về — tránh footer bị đẩy xuống gây layout shift (CLS). */}
+          <main className="flex-1 min-h-screen">
             <Outlet />
           </main>
           <PopularSearches />
