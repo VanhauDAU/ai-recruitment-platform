@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth, withReturnUrl } from '@/features/auth'
-import PageLoading from '@/components/ui/PageLoading'
+import PageLoading from '@/shared/ui/PageLoading'
 
 // Chỉ quyết định trạng thái session. Role/portal được giao cho RoleGuard.
 export default function AuthGuard({ loginPath = '/login', children }) {

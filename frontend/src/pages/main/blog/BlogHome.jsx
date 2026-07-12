@@ -1,13 +1,13 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Empty, Skeleton } from 'antd'
 import { Link } from 'react-router-dom'
-import { getBanners } from '@/api/siteService'
-import { getBlogCategories, getBlogHome } from '@/api/blogService'
-import { settingText, useSiteSettings } from '@/hooks/useSiteSettings'
-import { BlogCategoryNav } from './components/BlogCategoryBar'
-import BlogInlineBanner from './components/BlogInlineBanner'
-import CategorySection from './components/CategorySection'
-import FeaturedPosts from './components/FeaturedPosts'
+import { getBanners } from '@/entities/site-settings'
+import { getBlogCategories, getBlogHome } from '@/entities/blog'
+import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { BlogCategoryNav } from './ui/BlogCategoryBar'
+import BlogInlineBanner from './ui/BlogInlineBanner'
+import CategorySection from './ui/CategorySection'
+import FeaturedPosts from './ui/FeaturedPosts'
 
 // Trang /blog kiểu magazine: khối nổi bật + mỗi danh mục một section (bố cục
 // xoay vòng, nền xen kẽ), banner "ảnh giả button" chèn giữa các section.
