@@ -29,7 +29,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 |---|---|---|
 | R0 | Khóa baseline: tag `baseline-refactor-start`, quality suite xanh (74 BE + 31 FE test), bundle report, script inventory hotspot | ✅ |
 | R1 | CI (frontend/backend workflow + Postgres/Redis), `scripts/check_all.sh` 1 lệnh, 5 ADR, PR template | ✅ |
-| R2 | Tách hạ tầng API frontend (`shared/api`) | ⬜ |
+| R2 | Tách hạ tầng API frontend (`shared/api`): client/tokenStore/errorMapper/pagination/dedup + re-export tương thích + boundary check axios | ✅ |
 | R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | ⬜ |
 | R4 | App providers, router, guard đơn trách nhiệm | ⬜ |
 | R5 | Pilot Jobs theo lát cắt dọc | ⬜ |

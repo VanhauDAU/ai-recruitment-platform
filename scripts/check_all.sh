@@ -35,6 +35,9 @@ python manage.py test
 popd >/dev/null
 
 # ---- Frontend ----
+step "Frontend: ranh giới API (axios chỉ trong shared/api)"
+"$ROOT/scripts/check_api_boundary.sh"
+
 step "Frontend: lint"
 npm --prefix frontend run lint
 

@@ -1,13 +1,3 @@
-import api from './api'
-
-export async function fetchAllPages(url, params) {
-  let response = await api.get(url, { params })
-  const results = [...(response.data.results || response.data)]
-  let nextUrl = response.data.next
-  while (nextUrl) {
-    response = await api.get(nextUrl)
-    results.push(...(response.data.results || response.data))
-    nextUrl = response.data.next
-  }
-  return results
-}
+// Re-export tương thích: đã chuyển sang shared/api/pagination. Sẽ xóa ở PR
+// cleanup (Giai đoạn 10). Xem ADR 0002.
+export * from '@/shared/api/pagination'

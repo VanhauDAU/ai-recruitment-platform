@@ -1,14 +1,13 @@
 import api from './api'
-import { getAuthStorageKeys, getCurrentPortal } from '../config/portals'
+import { getCurrentPortal } from '../config/portals'
 import { dedupeRequest } from './requestDeduplication'
+import { clearSession, getAccessToken as readAccessToken, setTokens } from '@/shared/api/tokenStore'
 
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })
   // Backend trả về access/refresh -> đăng nhập ngay để dẫn thẳng vào trang (chưa xác thực email).
   if (data.access && data.refresh) {
-    const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
-    localStorage.setItem(access, data.access)
-    localStorage.setItem(refresh, data.refresh)
+    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   }
   return data
 }
@@ -51,18 +50,14 @@ export async function confirmPasswordReset({ token, password }) {
 export async function login({ email, password, captcha_token, portal }) {
   const { data } = await api.post('/auth/login/', { email, password, captcha_token, ...(portal && { portal }) })
   if (data.access && data.refresh) {
-    const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
-    localStorage.setItem(access, data.access)
-    localStorage.setItem(refresh, data.refresh)
+    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   }
   return data
 }
 
 export async function verifyTwoFactorLogin({ challenge, code, portal }) {
   const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code })
-  const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
-  localStorage.setItem(access, data.access)
-  localStorage.setItem(refresh, data.refresh)
+  setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   return data
 }
 
@@ -104,15 +99,13 @@ export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
 export async function completeOAuth(code, portal) {
   const { data } = await api.post('/auth/oauth/complete/', { code })
   if (data.access && data.refresh) {
-    const { access, refresh } = getAuthStorageKeys(portal || getCurrentPortal())
-    localStorage.setItem(access, data.access)
-    localStorage.setItem(refresh, data.refresh)
+    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
   }
   return data
 }
 
 export async function me() {
-  const token = getAccessToken()
+  const token = readAccessToken()
   return dedupeRequest(`auth-me:${token || 'anonymous'}`, async () => {
     const { data } = await api.get('/auth/me/')
     return data
@@ -127,14 +120,9 @@ export async function updateProfile({ full_name, phone }) {
 }
 
 export function logout(portal = getCurrentPortal()) {
-  const { access, refresh } = getAuthStorageKeys(portal)
-  localStorage.removeItem(access)
-  localStorage.removeItem(refresh)
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
+  clearSession(portal)
 }
 
 export function getAccessToken(portal = getCurrentPortal()) {
-  const { access } = getAuthStorageKeys(portal)
-  return localStorage.getItem(access)
+  return readAccessToken(portal)
 }

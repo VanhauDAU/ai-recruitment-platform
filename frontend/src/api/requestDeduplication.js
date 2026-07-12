@@ -1,35 +1,3 @@
-// React Strict Mode intentionally re-runs effects in development.  Keep one
-// in-flight GET per resource so that it cannot duplicate network traffic or
-// side effects such as a job-detail view counter.
-const inFlight = new Map()
-const cache = new Map()
-
-export function dedupeRequest(key, request) {
-  const existing = inFlight.get(key)
-  if (existing) return existing
-
-  const promise = Promise.resolve().then(request)
-  inFlight.set(key, promise)
-  promise.then(
-    () => inFlight.delete(key),
-    () => inFlight.delete(key),
-  )
-  return promise
-}
-
-// Cache slow-changing public catalogues across components and routes.  This is
-// deliberately separate from `dedupeRequest`: dynamic job searches continue
-// to hit the API, while shared metadata is reused for a short, explicit TTL.
-export function cachedRequest(key, ttlMs, request) {
-  const cached = cache.get(key)
-  if (cached && cached.expiresAt > Date.now()) return Promise.resolve(cached.value)
-
-  return dedupeRequest(key, request).then((value) => {
-    cache.set(key, { value, expiresAt: Date.now() + ttlMs })
-    return value
-  })
-}
-
-export function invalidateRequestCache(key) {
-  cache.delete(key)
-}
+// Re-export tương thích: đã chuyển sang shared/api/requestDeduplication. Sẽ xóa
+// ở PR cleanup (Giai đoạn 10). Xem ADR 0002.
+export * from '@/shared/api/requestDeduplication'
