@@ -13,6 +13,7 @@ export const CandidateAccountLayout = lazy(() => import('../pages/main/candidate
 export const AccountPlaceholderPage = lazy(() => import('../pages/main/candidate/components/AccountPlaceholder'))
 // Các trang tài khoản đã xây thật (map theo item.key trong candidateMenu).
 export const PersonalInfoPage = lazy(() => import('../pages/main/candidate/pages/PersonalInfo'))
+export const TwoFactorAuthenticationPage = lazy(() => import('../pages/main/candidate/pages/TwoFactorAuthentication'))
 export const BlogHomePage = lazy(() => import('../pages/main/blog/BlogHome'))
 export const BlogCategoryPage = lazy(() => import('../pages/main/blog/BlogCategory'))
 export const BlogDetailPage = lazy(() => import('../pages/main/blog/BlogDetail'))

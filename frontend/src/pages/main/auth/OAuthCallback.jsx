@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { completeOAuth } from '@/api/authService'
 import PageLoading from '@/components/ui/PageLoading'
 import { HOME_BY_ROLE } from '@/config/portals'
 import { useAuth } from '@/hooks/useAuth'
+import { resendTwoFactorLogin } from '@/api/authService'
+import TwoFactorCodeModal from '@/components/auth/TwoFactorCodeModal'
 
 /**
  * Trang backend redirect về sau OAuth: đổi one_time_code lấy JWT rồi điều hướng.
@@ -13,8 +15,9 @@ import { useAuth } from '@/hooks/useAuth'
 export default function OAuthCallback({ portal = 'main', loginPath = '/login' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { setAuthenticatedUser } = useAuth()
+  const { setAuthenticatedUser, completeTwoFactorLogin } = useAuth()
   const ran = useRef(false)
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
 
   useEffect(() => {
     if (ran.current) return // StrictMode chạy effect 2 lần — one_time_code chỉ dùng được 1 lần
@@ -28,7 +31,12 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
     }
 
     completeOAuth(code, portal)
-      .then(({ user }) => {
+      .then((result) => {
+        if (result.two_factor_required) {
+          setTwoFactorChallenge({ ...result, portal })
+          return
+        }
+        const { user } = result
         setAuthenticatedUser(user)
         const next = params.get('next')
         const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : ''
@@ -37,5 +45,26 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
       .catch(() => navigate(`${loginPath}?oauth_error=complete_failed`, { replace: true }))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <PageLoading />
+  async function confirmTwoFactor(code) {
+    const user = await completeTwoFactorLogin({
+      challenge: twoFactorChallenge.challenge,
+      code,
+      portal: twoFactorChallenge.portal,
+    })
+    const next = params.get('next')
+    const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : ''
+    navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
+  }
+
+  return <>
+    <PageLoading />
+    <TwoFactorCodeModal
+      open={Boolean(twoFactorChallenge)}
+      email={twoFactorChallenge?.email}
+      expiresIn={twoFactorChallenge?.expires_in || 180}
+      onCancel={() => navigate(loginPath, { replace: true })}
+      onConfirm={confirmTwoFactor}
+      onResend={() => resendTwoFactorLogin(twoFactorChallenge.challenge)}
+    />
+  </>
 }

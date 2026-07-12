@@ -37,7 +37,8 @@ export function AuthProvider({ children }) {
 
   async function login(credentials) {
     try {
-      await authService.login(credentials)
+      const result = await authService.login(credentials)
+      if (result.two_factor_required) return result
       const currentUser = await authService.me()
       setUser(currentUser)
       return currentUser
@@ -46,6 +47,13 @@ export function AuthProvider({ children }) {
       setUser(null)
       throw error
     }
+  }
+
+  async function completeTwoFactorLogin({ challenge, code, portal }) {
+    await authService.verifyTwoFactorLogin({ challenge, code, portal })
+    const currentUser = await authService.me()
+    setUser(currentUser)
+    return currentUser
   }
 
   function setAuthenticatedUser(user) {
@@ -60,7 +68,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, setAuthenticatedUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, setAuthenticatedUser, completeTwoFactorLogin, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   )

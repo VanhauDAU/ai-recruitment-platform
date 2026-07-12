@@ -18,6 +18,7 @@ import {
   MainRegisterPage,
   OAuthCallbackPage,
   PersonalInfoPage,
+  TwoFactorAuthenticationPage,
   ResetPasswordPage,
   SavedJobsPage,
   VerifyEmailPage,
@@ -27,6 +28,7 @@ import {
 // chưa có ở đây thì dùng AccountPlaceholderPage.
 const ACCOUNT_PAGE_BY_KEY = {
   'personal-info': PersonalInfoPage,
+  'two-factor': TwoFactorAuthenticationPage,
 }
 
 // Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
