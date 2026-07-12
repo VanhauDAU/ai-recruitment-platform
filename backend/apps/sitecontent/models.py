@@ -26,6 +26,7 @@ class SiteSetting(models.Model):
         CONTACT = 'contact', 'Liên hệ / hỗ trợ'
         ADMIN_ROLES = 'admin_roles', 'Phân quyền admin'
         AI = 'ai', 'Cài đặt AI'
+        BLOG = 'blog', 'Cẩm nang nghề nghiệp (Blog)'
 
     class ValueType(models.TextChoices):
         TEXT = 'text', 'Chuỗi ngắn'
@@ -127,6 +128,10 @@ class Banner(models.Model):
     class Placement(models.TextChoices):
         HOME_HERO = 'home_hero', 'Carousel trang chủ'
         JOB_DETAIL_SIDEBAR = 'job_detail_sidebar', 'Thẻ ảnh sidebar trang chi tiết việc làm'
+        BLOG_SIDEBAR = 'blog_sidebar', 'Banner sidebar bài viết cẩm nang'
+        # Banner "ảnh giả button": cả khối là 1 link (cta_url), chèn giữa các
+        # section trang /blog và trang danh mục.
+        BLOG_INLINE = 'blog_inline', 'Banner chèn giữa trang cẩm nang'
 
     placement = models.CharField(max_length=30, choices=Placement.choices, default=Placement.HOME_HERO)
     eyebrow = models.CharField(max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP')
@@ -136,6 +141,10 @@ class Banner(models.Model):
     theme = models.CharField(max_length=20, choices=Theme.choices, default=Theme.GREEN)
     cta_label = models.CharField(max_length=100, blank=True, help_text='Để trống nếu banner không có nút bấm')
     cta_url = models.CharField(max_length=300, blank=True)
+    # Nút phụ — hiện chỉ banner sidebar blog cần 2 nút (Tạo CV + Tìm việc ngay);
+    # banner 1 nút để trống cặp này.
+    cta_secondary_label = models.CharField(max_length=100, blank=True, help_text='Nút thứ hai (vd banner blog có 2 nút)')
+    cta_secondary_url = models.CharField(max_length=300, blank=True)
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

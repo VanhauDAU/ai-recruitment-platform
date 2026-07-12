@@ -16,10 +16,10 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 3 — Tối ưu tìm kiếm / matching | 0/2       | ⬜                           |
 | 4 — CV nâng cao                | 0/2       | ⬜                           |
 | 5 — Tuyển dụng nâng cao        | 1/3       | 🟡                           |
-| 6 — Thương mại & quản trị      | 8/11      | 🟡                           |
+| 6 — Thương mại & quản trị      | 10/13     | 🟡                           |
 | 7 — Phỏng vấn AI               | 0/4       | ⬜                           |
 | 8 — Deployment                 | 0/2       | ⬜                           |
-| **Tổng**                       | **52/77** |                              |
+| **Tổng**                       | **54/79** |                              |
 
 ## Giai đoạn 0 — Khởi tạo dự án
 
@@ -304,6 +304,8 @@ Sửa bất đối xứng phát hiện ở 1.19: `password-reset` tra user bằn
 | 6.9  | Chuẩn hóa frontend 3 cổng (`pages/main/`) + migrate màu brand sang CSS var                       | ✅         |
 | 6.10 | Tách `BestJobs.jsx` (643→478 dòng): `JobPreviewPanel` ra file riêng, dùng label chuẩn            | ✅         |
 | 6.11 | Tối ưu performance đợt 1: favicon 957KB→1.9KB, chặn upload favicon nặng, tách vendor chunk react | ✅         |
+| 6.12 | Cẩm nang nghề nghiệp (blog): app `blog` + API public + trang `/blog` + phân quyền biên tập | ✅         |
+| 6.13 | Redesign giao diện blog kiểu TopCV: magazine /blog, danh mục load-more, chi tiết nền xám card trắng | ✅         |
 
 ### Ghi chú chi tiết — Giai đoạn 6
 
@@ -360,6 +362,20 @@ Gom cổng main vào `pages/main/` (Home, auth, jobs, candidate) cho đối xứ
 <summary><b>6.11</b> — Tối ưu performance (đợt 1)</summary>
 
 (1) favicon **957KB** (PNG 2000×2000, `logo_proCV_2000_2000.png`) tải mọi trang — sửa 2 lớp: **data** (`SiteSetting.brand_favicon_url` trong DB, ghi đè `<link rel="icon">` runtime qua `SiteSettingsProvider`, override cả static tag trong `index.html`) VÀ **code** (`seed_sitecontent.py` idempotent sẽ ép giá trị này về `PROCV_MARK_URL` cũ nếu để nguyên `/favicon.svg` — SVG đó lại là icon tím `#863bff` của brand cũ "aicareer", sai màu thương hiệu). Fix thật: dựng `favicon-32.png` (1.9KB) + `apple-touch-icon.png` (18.8KB) từ đúng logo ProCV bằng Pillow resize, set làm default mới ở seed script + `DEFAULT_SITE_SETTINGS` (`siteSettingsContext.js`) + `index.html`; (2) chặn tận gốc admin upload favicon nặng trong tương lai: `AdminSettingUploadView` nhận thêm `key`, `UPLOAD_MAX_DIMENSIONS = {'brand_favicon_url': (256,256)}` tự resize qua `save_image_upload(..., max_dimensions=...)` (`apps/common/media_storage.py`, dùng Pillow — thêm dependency `Pillow==11.3.0`), test thực nghiệm 957KB→30KB tự động; (3) tách vendor `react` (react/react-dom/react-router-dom/scheduler) thành chunk riêng qua `manualChunks` (dạng **function** vì Vite 8 dùng rolldown) để cache độc lập qua các lần deploy — **cố ý KHÔNG gom antd vào 1 chunk** vì sẽ kéo antd trang admin vào initial load (thử nghiệm cho chunk antd monolithic 344KB gz, đã bỏ); antd để Vite tự tách theo route (vd `Settings` 48KB gz chỉ tải ở route admin). Verify: backend test (`sitecontent`+`accounts`) pass, `manage.py check` pass, build+lint frontend pass, favicon-32.png/apple-touch-icon.png trả 200 đúng dung lượng nhỏ, API public settings trả `brand_favicon_url=/favicon-32.png`. Backlog còn lại (react-query cache API, brotli precompress, WebP/AVIF cho ảnh khác, bundle analyzer, cache-control CDN) ghi trong memory.
+
+</details>
+
+<details>
+<summary><b>6.12</b> — Cẩm nang nghề nghiệp (blog)</summary>
+
+App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, `Post` với `public_id`/slug SEO/`content` HTML rich-text/`related_job_category` FK sang `jobs.JobCategory`/vòng đời `draft→pending→published→archived`, `Tag` M2M, `PinnedPost` ghim theo `placement` cho khối "Tài liệu hỗ trợ tìm việc"). Mở rộng `sitecontent.Banner` thêm placement `blog_sidebar` + cặp `cta_secondary_*` (banner 2 nút Tạo CV/Tìm việc) và group setting `blog` (`blog_page_title`/`blog_meta_description`/`blog_support_docs_title`). **API public read-only** `/api/blog/` (list lọc `category`/`tag`/`q` không dấu, chi tiết theo slug tăng view, `categories`, `pinned`) + endpoint upload ảnh nội dung cho editor (`/api/blog/admin/uploads/`, permission `CanEditBlog`). **Phân quyền** dùng Django Groups: `blog_editor` (soạn/sửa bài của mình, gửi duyệt) + `blog_manager` (duyệt/publish + quản lý danh mục/thẻ/ghim), custom permission `can_publish_post`; PostAdmin lọc queryset theo author và giới hạn choices status cho người không có quyền publish. **Frontend** `/blog`, `/blog/danh-muc/:slug`, `/blog/:slug` (breadcrumb, thanh danh mục ngang cuộn + next/prev, share rail dính copy/FB/in/Twitter + nút mở mục lục drawer, mục lục sinh từ heading h2/h3 với scroll-to + thu gọn, `BlogContent` sanitize HTML + gắn id heading, khối việc làm liên quan theo `related_job_category` + nút xem tất cả, thẻ, cột phải: widget tìm việc nhanh + tài liệu hỗ trợ ghim + banner) + nối menu header "Cẩm nang nghề nghiệp" vào route thật. Seed `seed_blog` (6 danh mục, setting, 2 group quyền) idempotent. Kế hoạch chi tiết: `docs/03-database/ke-hoach-database-cam-nang-nghe-nghiep-blog.md`. Verify: `manage.py check` + smoke test 7 endpoint API 200, preview browser list/filter/detail desktop+mobile không lỗi console.
+
+</details>
+
+<details>
+<summary><b>6.13</b> — Redesign giao diện blog kiểu TopCV</summary>
+
+**Backend:** `Banner` thêm placement `blog_inline` (banner "ảnh giả button" — cả khối là 1 link, chèn giữa các section); endpoint `GET /api/blog/home/` trả featured 4 bài + section theo danh mục (4 bài/danh mục) trong 1 request; seed thêm `blog_benefits` (JSON: 3 lợi ích + CTA cho khối "Lợi ích khi sử dụng &lt;site&gt;"). **Trang `/blog` kiểu magazine** (`BlogHome.jsx`): khối "Bài viết nổi bật" 2 cột 5/5 (1 bài lớn + 3 bài dọc), mỗi danh mục một section 4 bài với 3 biến thể bố cục xoay vòng + nút "Xem tất cả", dải nền full-bleed xen kẽ trắng/`--brand-primary-soft`, banner inline chèn sau mỗi 2 section. **Trang danh mục** (`BlogCategory.jsx`): featured 4 bài của danh mục + 2 banner cạnh nhau + "Danh sách bài viết" với skeleton loader và nút "Xem thêm" nạp nối tiếp (append, không paginate) + banner cuối trang. **Trang chi tiết**: nền `#f7f9fc` — mọi khối bọc card trắng; section đầu "Lợi ích khi sử dụng &lt;site&gt;" (3 item + CTA, đọc từ setting); share rail gom 2 nhóm khung bo tròn (chia sẻ / mục lục); mục lục đánh số `1.`/`1.1` + thu gọn mượt bằng `grid-template-rows` transition; input tìm việc có gợi ý (debounce 250ms qua `/jobs/suggest/`) + option "Tất cả tỉnh/thành phố" tường minh; nút banner sidebar kiểu solid/outline có icon. **Chung**: bỏ chip "Tất cả" (/blog là tất cả), thanh danh mục sticky `top-16` dưới header trên mọi trang blog + lăn chuột để lướt ngang + nền trắng, mọi item bài viết/banner mở `_blank`, hover = zoom ảnh (`scale-110`) + nổi khối (translate + shadow) + đổi màu tiêu đề, màu đều từ CSS var thương hiệu. Verify: 6/6 test backend pass, build + lint pass, preview desktop + mobile 3 trang không lỗi console, bấm "Xem thêm" nạp đúng trang kế (8→14 bài, nút tự ẩn khi hết).
 
 </details>
 

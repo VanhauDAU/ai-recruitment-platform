@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'apps.ai_core',
     'apps.dashboard',
     'apps.sitecontent',
+    'apps.blog',
 ]
 
 MIDDLEWARE = [

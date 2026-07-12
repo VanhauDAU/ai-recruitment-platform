@@ -3,6 +3,9 @@ import { employerAppPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import MainLayout from '../layouts/MainLayout'
 import {
+  BlogCategoryPage,
+  BlogDetailPage,
+  BlogHomePage,
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
@@ -29,6 +32,11 @@ export function mainRoutes() {
       <Route path="/brand/:companySlug/tuyen-dung/:slug" element={<JobDetailPage />} />
       <Route path="/jobs" element={<JobListPage />} />
       <Route path="/jobs/:slug" element={<JobDetailPage />} />
+      {/* Cẩm nang nghề nghiệp (blog). "danh-muc" là segment tĩnh nên ưu tiên
+          hơn /blog/:slug, không cần lo thứ tự khai báo. */}
+      <Route path="/blog" element={<BlogHomePage />} />
+      <Route path="/blog/danh-muc/:categorySlug" element={<BlogCategoryPage />} />
+      <Route path="/blog/:slug" element={<BlogDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
     </Route>,
 

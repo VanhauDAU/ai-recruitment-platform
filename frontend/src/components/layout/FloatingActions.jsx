@@ -9,10 +9,11 @@ import {
   QuestionCircleOutlined,
   RightOutlined,
   SafetyOutlined,
+  UpOutlined,
 } from '@ant-design/icons'
 import { App, Badge, Modal, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useLoginPrompt } from '../../hooks/useLoginPrompt'
 import { useSavedJobs } from '../../hooks/useSavedJobs'
@@ -22,6 +23,7 @@ import FeedbackModal from './FeedbackModal'
 export default function FloatingActions() {
   const { message } = App.useApp()
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated } = useAuth()
   const { promptLogin } = useLoginPrompt()
   const { settings, siteName } = useSiteSettings()
@@ -38,6 +40,7 @@ export default function FloatingActions() {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [saveNoticeOpen, setSaveNoticeOpen] = useState(false)
   const [heartPulseKey, setHeartPulseKey] = useState(0)
+  const [showScrollTop, setShowScrollTop] = useState(false)
 
   useEffect(() => {
     if (!saveSuccess) return undefined
@@ -46,6 +49,17 @@ export default function FloatingActions() {
     const timer = window.setTimeout(() => setSaveNoticeOpen(false), 9000)
     return () => window.clearTimeout(timer)
   }, [saveSuccess])
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/blog')) {
+      setShowScrollTop(false)
+      return undefined
+    }
+    const update = () => setShowScrollTop(window.scrollY > 420)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+  }, [location.pathname])
 
   const zaloUrl = settings.contact_zalo_url
   const hotline = settings.hotline
@@ -73,6 +87,18 @@ export default function FloatingActions() {
   return (
     <>
       <div className="fixed bottom-5 right-4 z-30 flex flex-col items-end gap-2.5 md:bottom-8 md:right-6">
+        {showScrollTop && (
+          <Tooltip title="Lên đầu trang" placement="left">
+            <button
+              type="button"
+              aria-label="Lên đầu trang"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-base text-slate-600 shadow-lg shadow-gray-500/15 transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+            >
+              <UpOutlined />
+            </button>
+          </Tooltip>
+        )}
         <div className="relative">
           {saveNoticeOpen && (
             <div
