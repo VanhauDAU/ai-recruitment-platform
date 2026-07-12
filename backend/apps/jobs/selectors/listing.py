@@ -2,7 +2,7 @@ from django.db.models import Case, F, IntegerField, Q, When
 from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
-from common.db.search import search_q
+from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategory
 
@@ -38,7 +38,20 @@ def filter_salary_bucket(queryset, bucket_key):
     return queryset
 
 
-def active_jobs_queryset():
+def active_jobs_queryset(include_preview=False):
+    """Public jobs with only relations required by the selected response contract."""
+    relations = ['job_locations__location__parent', 'job_skills__skill']
+    if include_preview:
+        relations.extend(['job_benefits__benefit', 'work_schedules'])
+    return (
+        Job.objects.filter(status=Job.Status.ACTIVE)
+        .select_related('company')
+        .prefetch_related(*relations)
+    )
+
+
+def active_job_detail_queryset():
+    """Return active jobs with every relation required by the detail serializer."""
     return (
         Job.objects.filter(status=Job.Status.ACTIVE)
         .select_related('company')
@@ -46,9 +59,37 @@ def active_jobs_queryset():
             'category_assignments__category',
             'job_locations__location__parent',
             'job_skills__skill',
+            'work_schedules',
             'job_benefits__benefit',
+            'language_requirements__language',
+            'company__industries',
         )
     )
+
+
+def suggest_job_search_terms(query, search_by=None, limit=10):
+    """Return de-duplicated autocomplete terms, prioritising prefix matches."""
+    query = (query or '').strip()
+    if not query:
+        return []
+
+    field = 'company__company_name' if search_by == 'company' else 'title'
+    values = (
+        Job.objects.filter(status=Job.Status.ACTIVE)
+        .filter(search_q(field, query))
+        .values_list(field, flat=True)
+        .distinct()
+    )
+    normalized_query = fold_accents(query)
+    seen, starts, contains = set(), [], []
+    for value in values:
+        term = (value or '').strip()
+        normalized_term = fold_accents(term)
+        if not term or normalized_term in seen:
+            continue
+        seen.add(normalized_term)
+        (starts if normalized_term.startswith(normalized_query) else contains).append(term)
+    return (starts + contains)[:limit]
 
 
 def _filter_categories(queryset, category_values):
@@ -111,9 +152,9 @@ def _order_jobs(queryset, ordering):
     )
 
 
-def build_job_list_queryset(params):
+def build_job_list_queryset(params, include_preview=False):
     """Apply public job-list filters and ordering to the active job queryset."""
-    queryset = active_jobs_queryset()
+    queryset = active_jobs_queryset(include_preview=include_preview)
     if categories := params.getlist('category'):
         queryset = _filter_categories(queryset, categories)
     if locations := params.getlist('location'):

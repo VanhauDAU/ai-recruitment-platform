@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getIndustries, getJobCategories, getJobStats, getJobs } from '../../../../api/jobService'
-import { getProvinces } from '../../../../api/locationService'
+import { getIndustries, getJobCategories, getJobStats, getJobs } from '@/api/jobService'
+import { getProvinces } from '@/api/locationService'
 
 export default function useJobSidebarData() {
   const [categories, setCategories] = useState([])

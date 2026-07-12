@@ -1,5 +1,5 @@
 import { FlagOutlined, HeartFilled, HeartOutlined } from '@ant-design/icons'
-import { formatDeadline } from '../../../../../constants/jobOptions'
+import { formatDeadline } from '@/constants/jobOptions'
 import { formatJobDate } from '../../utils/jobDetailPresentation'
 import JobCard from '../JobCard'
 import {

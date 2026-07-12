@@ -104,7 +104,7 @@ export function toApiParams(params) {
   return api
 }
 
-export function slugifyVietnamese(text = '') {
+function slugifyVietnamese(text = '') {
   return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

@@ -6,12 +6,12 @@ import {
   formatLocations,
   formatSalary,
   stripCompanyPrefix,
-} from '../../../../constants/jobOptions'
-import { jobDetailPath } from '../../../../config/jobPaths'
-import { useAuth } from '../../../../hooks/useAuth'
-import { useLoginPrompt } from '../../../../hooks/useLoginPrompt'
-import { useSavedJobs } from '../../../../hooks/useSavedJobs'
-import SavedJobTooltipContent from '../../../../components/jobs/SavedJobTooltipContent'
+} from '@/constants/jobOptions'
+import { jobDetailPath } from '@/config/jobPaths'
+import { useAuth } from '@/hooks/useAuth'
+import { useLoginPrompt } from '@/hooks/useLoginPrompt'
+import { useSavedJobs } from '@/hooks/useSavedJobs'
+import SavedJobTooltipContent from '@/components/job/SavedJobTooltipContent'
 import { BEST_JOBS_LOGO_TINTS, BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from './bestJobsConfig'
 import JobPreviewPanel from './JobPreviewPanel'
 

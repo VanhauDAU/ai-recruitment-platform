@@ -88,7 +88,8 @@ class BannerAdmin(admin.ModelAdmin):
     list_filter = ['placement', 'theme', 'is_active']
     list_editable = ['order', 'is_active']
     search_fields = ['title', 'eyebrow']
-    fields = ['placement', 'eyebrow', 'title', 'subtitle', 'upload_image', 'image_url', 'theme', 'cta_label', 'cta_url', 'order', 'is_active']
+    fields = ['placement', 'eyebrow', 'title', 'subtitle', 'upload_image', 'image_url', 'theme',
+              'cta_label', 'cta_url', 'cta_secondary_label', 'cta_secondary_url', 'order', 'is_active']
 
     def save_model(self, request, obj, form, change):
         upload = form.cleaned_data.get('upload_image')

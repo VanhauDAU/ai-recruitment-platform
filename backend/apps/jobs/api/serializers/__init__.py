@@ -1,7 +1,13 @@
 """Public serializers grouped by jobs use case."""
 
 from .catalogs import BenefitSerializer, LanguageSerializer
-from .jobs import EmployerJobSerializer, JobDetailSerializer, JobSerializer
+from .jobs import (
+    EmployerJobSerializer,
+    JobDetailSerializer,
+    JobSerializer,
+    PublicJobListSerializer,
+    PublicJobPreviewSerializer,
+)
 from .saved import SavedJobSerializer
 from .supporting import (
     JobApplicationContactSerializer,
@@ -13,6 +19,7 @@ from .supporting import (
     JobLocationSerializer,
     JobSkillSerializer,
     JobWorkScheduleSerializer,
+    PublicJobCategorySerializer,
 )
 
 __all__ = [
@@ -30,5 +37,8 @@ __all__ = [
     'JobSkillSerializer',
     'JobWorkScheduleSerializer',
     'LanguageSerializer',
+    'PublicJobListSerializer',
+    'PublicJobCategorySerializer',
+    'PublicJobPreviewSerializer',
     'SavedJobSerializer',
 ]

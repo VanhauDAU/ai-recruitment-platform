@@ -33,6 +33,13 @@ class JobCategorySerializer(serializers.ModelSerializer):
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
 
+class PublicJobCategorySerializer(JobCategorySerializer):
+    """Taxonomy fields used by public search and navigation only."""
+
+    class Meta(JobCategorySerializer.Meta):
+        fields = ['id', 'name', 'logo_url', 'parent']
+
+
 class JobSkillSerializer(serializers.ModelSerializer):
     skill_name = serializers.CharField(source='skill.name', read_only=True)
 
@@ -172,4 +179,3 @@ class JobApplicationContactSerializer(serializers.ModelSerializer):
         if len(normalized) != len(set(normalized)):
             raise serializers.ValidationError('Email nhận hồ sơ không được trùng nhau.')
         return emails
-

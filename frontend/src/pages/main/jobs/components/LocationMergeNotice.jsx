@@ -1,6 +1,6 @@
 import { CloseOutlined, DownOutlined, InfoCircleFilled, UpOutlined } from '@ant-design/icons'
 
-export function PlaceHighlight({ children }) {
+function PlaceHighlight({ children }) {
   return (
     <span className="rounded bg-amber-100 px-1 font-semibold text-amber-900 ring-1 ring-amber-200/70">
       {children}
@@ -8,7 +8,7 @@ export function PlaceHighlight({ children }) {
   )
 }
 
-export function PlaceList({ items }) {
+function PlaceList({ items }) {
   return items.map((item, index) => (
     <span key={item}>
       {index > 0 && ', '}

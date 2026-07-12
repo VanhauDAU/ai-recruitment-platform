@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getJobDetail, getJobs } from '../../../../api/jobService'
-import { jobDetailPath } from '../../../../config/jobPaths'
+import { getJobDetail, getJobs } from '@/api/jobService'
+import { jobDetailPath } from '@/config/jobPaths'
 
 export default function useJobDetailPageData({ slug, companySlug, navigate }) {
   const [job, setJob] = useState(null)

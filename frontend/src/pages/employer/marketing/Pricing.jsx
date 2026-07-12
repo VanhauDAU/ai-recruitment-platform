@@ -1,7 +1,7 @@
 import { CheckOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { Link } from 'react-router-dom'
-import { employerAppPath } from '../../../config/portals'
+import { employerAppPath } from '@/config/portals'
 
 const PLANS = [
   {

@@ -13,6 +13,9 @@ Thiết kế nâng cấp chuyên sâu cho quy trình đăng tin và trang chi ti
 Kế hoạch tách công ty khỏi nhà tuyển dụng (nhiều HR/công ty, onboarding xác thực kiểu TopCV):
 [Kế hoạch thiết kế lại công ty & nhà tuyển dụng](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md).
 
+Thiết kế database cho Cẩm nang nghề nghiệp (blog `/blog`: bài viết, danh mục, thẻ, bài ghim sidebar, banner):
+[Kế hoạch database cẩm nang nghề nghiệp - blog](./ke-hoach-database-cam-nang-nghe-nghiep-blog.md).
+
 ## Bảng đã triển khai
 
 | Bảng | App Django | Ghi chú |
@@ -42,6 +45,10 @@ Kế hoạch tách công ty khỏi nhà tuyển dụng (nhiều HR/công ty, onb
 | `languages`, `job_language_requirements` | `backend/apps/jobs` | Yêu cầu ngoại ngữ, trình độ/chứng chỉ và mức bắt buộc |
 | `job_application_contacts`, `job_application_emails` | `backend/apps/jobs` | Người nhận hồ sơ nội bộ và tối đa 5 email; không trả qua public API |
 | `applications` | `backend/apps/applications` | UNIQUE(candidate, job) — chặn ứng tuyển trùng ở cả serializer lẫn DB constraint |
+| `blog_postcategory` | `backend/apps/blog` | Danh mục bài viết cẩm nang (taxonomy phẳng 1 cấp), seed 6 danh mục qua `seed_blog` |
+| `blog_post` | `backend/apps/blog` | Bài viết blog: `public_id`, slug SEO, `content` HTML, FK `related_job_category`→`jobs.JobCategory`, vòng đời draft→pending→published→archived, permission `can_publish_post` |
+| `blog_tag`, `blog_post_tags` | `backend/apps/blog` | Thẻ bài viết + M2M UNIQUE(post, tag) |
+| `blog_pinnedpost` | `backend/apps/blog` | Bài ghim theo `placement` (khối "Tài liệu hỗ trợ tìm việc"), FK trỏ thẳng bài viết |
 
 **Ghi chú triển khai khác PRD/DB doc:**
 - PRD mục 13.2 không liệt kê app riêng cho `job_categories`/`locations`/`skills`/`employer_profiles` — đã tách thành app Django riêng (`jobs` chứa job_categories, `locations`, `skills`, `employers`) để tránh phụ thuộc vòng và rõ trách nhiệm từng app.

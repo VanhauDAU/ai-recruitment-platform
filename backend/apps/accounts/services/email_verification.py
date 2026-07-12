@@ -1,0 +1,71 @@
+"""Email verification token and delivery workflow."""
+
+import secrets
+
+from django.conf import settings
+from django.core.cache import cache
+from django.utils.html import escape
+
+from common.cache_utils import atomic_pop
+
+from ..models import User
+from .mailing import frontend_link, send_html_email, site_setting
+
+_TOKEN_PREFIX = 'email_verify:token:'
+_COOLDOWN_PREFIX = 'email_verify:cooldown:'
+
+
+def _token_key(token):
+    return f'{_TOKEN_PREFIX}{token}'
+
+
+def _cooldown_key(user_id):
+    return f'{_COOLDOWN_PREFIX}{user_id}'
+
+
+def issue_token(user):
+    token = secrets.token_urlsafe(32)
+    cache.set(_token_key(token), user.pk, settings.EMAIL_VERIFICATION_TTL)
+    return token
+
+
+def consume_token(token):
+    return atomic_pop(_token_key(token)) if token else None
+
+
+def cooldown_remaining(user):
+    ttl = cache.ttl(_cooldown_key(user.pk))
+    return ttl if ttl and ttl > 0 else 0
+
+
+def start_cooldown(user):
+    cache.set(_cooldown_key(user.pk), 1, settings.EMAIL_VERIFICATION_RESEND_COOLDOWN)
+
+
+def send_verification_email(user):
+    token = issue_token(user)
+    is_employer = user.role == User.Role.EMPLOYER
+    link = frontend_link(
+        settings.EMPLOYER_EMAIL_VERIFICATION_PATH if is_employer else '/tai-khoan/xac-thuc-email',
+        base_url=settings.EMPLOYER_FRONTEND_URL if is_employer else settings.FRONTEND_URL,
+        token=token,
+    )
+    site_name = site_setting('site_name', 'ProCV')
+    hours = settings.EMAIL_VERIFICATION_TTL // 3600
+    name = user.full_name or user.email
+    subject = f'Xác thực địa chỉ email của bạn tại {site_name}'
+    text = (
+        f'Xin chào {name},\n\nVui lòng xác thực địa chỉ email của bạn bằng cách mở liên kết dưới đây:\n'
+        f'{link}\n\nLiên kết có hiệu lực trong {hours} giờ. Nếu bạn không tạo tài khoản tại '
+        f'{site_name}, vui lòng bỏ qua email này.'
+    )
+    html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
+      <h2 style="color:#00b14f">Xác thực email của bạn</h2>
+      <p>Xin chào <strong>{escape(name)}</strong>,</p>
+      <p>Cảm ơn bạn đã đăng ký tài khoản tại {escape(site_name)}. Nhấn nút bên dưới để xác thực địa chỉ email.</p>
+      <p style="text-align:center;margin:28px 0"><a href="{link}" style="background:#00b14f;color:#fff;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:bold;display:inline-block">Xác thực email</a></p>
+      <p style="font-size:13px;color:#666">Hoặc mở liên kết: <br>{link}</p>
+      <p style="font-size:12px;color:#999">Liên kết có hiệu lực trong {hours} giờ.</p>
+    </div>'''
+    send_html_email(subject=subject, text=text, html=html, to=user.email)
+    return token

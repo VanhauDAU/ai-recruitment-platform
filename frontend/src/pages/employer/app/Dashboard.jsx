@@ -1,5 +1,5 @@
 import { Typography } from 'antd'
-import { useAuth } from '../../../hooks/useAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function EmployerDashboard() {
   const { user } = useAuth()

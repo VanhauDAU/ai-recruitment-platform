@@ -8,8 +8,8 @@ import {
   RocketOutlined,
 } from '@ant-design/icons'
 import { Skeleton } from 'antd'
-import ArrowButton from '../../../../components/ui/ArrowButton'
-import { formatNumber } from '../../../../constants/jobOptions'
+import ArrowButton from '@/components/ui/ArrowButton'
+import { formatNumber } from '@/constants/jobOptions'
 
 function ShortcutCard({ icon, img, label, active, onClick }) {
   return (

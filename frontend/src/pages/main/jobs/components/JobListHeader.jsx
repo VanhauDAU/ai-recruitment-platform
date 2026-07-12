@@ -1,7 +1,7 @@
 import { BellOutlined, RightOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { Link } from 'react-router-dom'
-import { formatNumber } from '../../../../constants/jobOptions'
+import { formatNumber } from '@/constants/jobOptions'
 
 export default function JobListHeader({
   catChain,

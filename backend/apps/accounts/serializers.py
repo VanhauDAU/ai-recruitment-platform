@@ -2,12 +2,13 @@ from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
 from rest_framework import serializers
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from common.media_storage import media_url_from_value
 
-from .captcha import verify_recaptcha
 from .models import User
+from .services.access import is_account_accessible
 
 
 def password_field():
@@ -47,12 +48,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
         return value
 
-    def validate(self, attrs):
-        request = self.context.get('request')
-        remote_ip = request.META.get('REMOTE_ADDR') if request else None
-        verify_recaptcha(attrs.get('captcha_token'), 'register', remote_ip)
-        return attrs
-
     def create(self, validated_data):
         validated_data.pop('captcha_token', None)
         return User.objects.create_user(**validated_data)
@@ -65,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'status', 'provider', 'email_verified', 'date_joined', 'last_login',
+            'status', 'email_verified', 'date_joined', 'last_login',
         ]
         read_only_fields = fields
 
@@ -94,12 +89,6 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
     captcha_token = serializers.CharField(write_only=True)
-
-    def validate(self, attrs):
-        request = self.context.get('request')
-        remote_ip = request.META.get('REMOTE_ADDR') if request else None
-        verify_recaptcha(attrs.get('captcha_token'), 'password_reset', remote_ip)
-        return attrs
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
@@ -132,12 +121,11 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
     portal = serializers.ChoiceField(choices=list(PORTAL_ROLES), required=False, write_only=True)
 
     def validate(self, attrs):
-        request = self.context.get('request')
-        remote_ip = request.META.get('REMOTE_ADDR') if request else None
-        verify_recaptcha(attrs.get('captcha_token'), 'login', remote_ip)
         attrs.pop('captcha_token', None)
         portal = attrs.pop('portal', None)
         data = super().validate(attrs)
+        if not is_account_accessible(self.user):
+            raise AuthenticationFailed(self.error_messages['no_active_account'], 'no_active_account')
         if portal and self.user.role not in PORTAL_ROLES[portal]:
             raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
         update_last_login(None, self.user)

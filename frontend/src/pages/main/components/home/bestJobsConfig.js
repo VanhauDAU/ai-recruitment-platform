@@ -1,9 +1,9 @@
-import { SALARY_RANGES } from '../../../../constants/jobOptions'
+import { SALARY_RANGES } from '@/constants/jobOptions'
 
 export const BEST_JOBS_PAGE_SIZE = 12
 export const BEST_JOBS_ROTATE_MS = 8000
 export const BEST_JOBS_PREVIEW_DELAY_MS = 500
-export const OTHER_WARDS_VALUE = '__other_wards__'
+const OTHER_WARDS_VALUE = '__other_wards__'
 
 export const BEST_JOBS_DIMENSIONS = [
   { key: 'location', label: 'Địa điểm' },
@@ -21,7 +21,7 @@ export const BEST_JOBS_LOGO_TINTS = [
   ['#fff7e0', '#ca8a04'],
 ]
 
-export const EXPERIENCE_FILTER_OPTIONS = [
+const EXPERIENCE_FILTER_OPTIONS = [
   { value: null, label: 'Tất cả' },
   { value: 'none', label: 'Chưa có kinh nghiệm' },
   { value: 'under_1', label: 'Dưới 1 năm' },
@@ -84,6 +84,7 @@ export function buildBestJobsParams(filters, page) {
   const params = new URLSearchParams({
     page: String(page),
     page_size: String(BEST_JOBS_PAGE_SIZE),
+    view: 'preview',
   })
   if (filters.location) params.append('location', filters.location)
   if (filters.category) params.append('category', filters.category)

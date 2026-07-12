@@ -114,23 +114,22 @@ export const HEADER_NAVIGATION = [
   {
     key: 'handbook',
     label: 'Cẩm nang nghề nghiệp',
+    to: '/blog',
     columns: [
       [{
         items: [
-          soon('Định hướng nghề nghiệp', <CompassOutlined />),
-          soon('Bí kíp tìm việc', <BulbOutlined />),
-          soon('Chế độ lương thưởng', <DollarOutlined />),
-          soon('Kiến thức chuyên ngành', <ReadOutlined />),
-          soon('Hành trang nghề nghiệp', <RocketOutlined />),
-          soon('Thị trường & xu hướng tuyển dụng', <LineChartOutlined />),
+          { label: 'Định hướng nghề nghiệp', to: '/blog/danh-muc/dinh-huong-nghe-nghiep', icon: <CompassOutlined /> },
+          { label: 'Bí kíp tìm việc', to: '/blog/danh-muc/bi-kip-tim-viec', icon: <BulbOutlined /> },
+          { label: 'Chế độ lương thưởng', to: '/blog/danh-muc/che-do-luong-thuong', icon: <DollarOutlined /> },
+          { label: 'Kiến thức chuyên ngành', to: '/blog/danh-muc/kien-thuc-chuyen-nganh', icon: <ReadOutlined /> },
+          { label: 'Hành trang nghề nghiệp', to: '/blog/danh-muc/hanh-trang-nghe-nghiep', icon: <RocketOutlined /> },
+          { label: 'Thị trường & xu hướng tuyển dụng', to: '/blog/danh-muc/thi-truong-xu-huong-tuyen-dung', icon: <LineChartOutlined /> },
         ],
       }],
       [{
-        title: 'Bài viết nổi bật',
+        title: 'Cẩm nang',
         items: [
-          soon('Lương Net là gì? Quy đổi Net sang Gross'),
-          soon('Tải miễn phí các mẫu đơn xin nghỉ phép chuẩn'),
-          soon('Xem thêm bài viết nổi bật →'),
+          { label: 'Tất cả bài viết', to: '/blog', icon: <ReadOutlined /> },
         ],
       }],
     ],

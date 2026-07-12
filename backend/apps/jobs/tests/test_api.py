@@ -10,6 +10,40 @@ from ..api.serializers import EmployerJobSerializer, JobDetailSerializer
 from ..models import Benefit, Job, JobCategory, Language
 
 
+class JobCategoryApiTests(APITestCase):
+    def test_category_catalog_is_returned_in_one_unpaginated_response(self):
+        JobCategory.objects.create(name='Kế toán')
+        JobCategory.objects.create(name='Lập trình')
+
+        response = self.client.get(reverse('job-category-list'), {'all': '1'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual({item['name'] for item in response.data}, {'Kế toán', 'Lập trình'})
+
+
+class JobSuggestionApiTests(APITestCase):
+    def test_suggest_returns_matching_active_job_titles(self):
+        user = User.objects.create_user(
+            email='suggest-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        company = Company.objects.create(company_name='Acme', created_by=user)
+        Job.objects.create(
+            posted_by=user,
+            company=company,
+            title='Nhân viên chăm sóc khách hàng',
+            description='Description',
+            status=Job.Status.ACTIVE,
+        )
+
+        response = self.client.get(reverse('job-suggest'), {'q': 'nhan'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['suggestions'], ['Nhân viên chăm sóc khách hàng'])
+
+
 class JobSalaryBucketFilterTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(

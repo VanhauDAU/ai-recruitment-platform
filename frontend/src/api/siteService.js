@@ -1,18 +1,27 @@
 import api from './api'
+import { cachedRequest } from './requestDeduplication'
+
+const SITE_CACHE_TTL = 5 * 60 * 1000
 
 export async function getLinkGroups(placement) {
-  const { data } = await api.get('/site/link-groups/', { params: placement ? { placement } : {} })
-  return data
+  return cachedRequest(`link-groups:${placement || 'all'}`, SITE_CACHE_TTL, async () => {
+    const { data } = await api.get('/site/link-groups/', { params: placement ? { placement } : {} })
+    return data
+  })
 }
 
 export async function getSiteSettings() {
-  const { data } = await api.get('/site/settings/')
-  return data
+  return cachedRequest('site-settings', SITE_CACHE_TTL, async () => {
+    const { data } = await api.get('/site/settings/')
+    return data
+  })
 }
 
 export async function getBanners(placement) {
-  const { data } = await api.get('/site/banners/', { params: placement ? { placement } : {} })
-  return data
+  return cachedRequest(`banners:${placement || 'all'}`, SITE_CACHE_TTL, async () => {
+    const { data } = await api.get('/site/banners/', { params: placement ? { placement } : {} })
+    return data
+  })
 }
 
 // Góp ý / báo lỗi từ nút nổi "Hỗ trợ". Khách chưa đăng nhập vẫn gửi được.

@@ -1,5 +1,6 @@
 import api from './api'
 import { getAuthStorageKeys, getCurrentPortal } from '../config/portals'
+import { dedupeRequest } from './requestDeduplication'
 
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })
@@ -74,8 +75,11 @@ export async function completeOAuth(code, portal) {
 }
 
 export async function me() {
-  const { data } = await api.get('/auth/me/')
-  return data
+  const token = getAccessToken()
+  return dedupeRequest(`auth-me:${token || 'anonymous'}`, async () => {
+    const { data } = await api.get('/auth/me/')
+    return data
+  })
 }
 
 export function logout(portal = getCurrentPortal()) {

@@ -11,7 +11,8 @@ from common.media_storage import delete_local_media_url, save_image_upload
 
 from ..models import User
 from ..serializers import RegisterSerializer, RoleTokenObtainPairSerializer, UserSerializer
-from .tokens import issue_tokens
+from ..services import verify_request_captcha
+from ..services.tokens import issue_tokens
 from .verification import queue_verification_email
 
 
@@ -25,6 +26,7 @@ class RegisterView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        verify_request_captcha(request, 'register')
         user = serializer.save()
         queue_verification_email(user)
         return Response(
@@ -38,6 +40,10 @@ class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'login'
+
+    def post(self, request, *args, **kwargs):
+        verify_request_captcha(request, 'login')
+        return super().post(request, *args, **kwargs)
 
 
 class MeView(generics.RetrieveAPIView):

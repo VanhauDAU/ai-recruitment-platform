@@ -2,8 +2,8 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobCategories } from '../../../../../api/jobService'
-import LocationFilter from '../../../../../components/job/LocationFilter'
+import { getJobCategories } from '@/api/jobService'
+import LocationFilter from '@/components/job/LocationFilter'
 import CategoryPicker from '../CategoryPicker'
 
 // Thanh tìm kiếm độc lập cho trang chi tiết: giữ người dùng trong ngữ cảnh

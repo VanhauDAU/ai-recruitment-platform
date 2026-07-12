@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     'apps.ai_core',
     'apps.dashboard',
     'apps.sitecontent',
+    'apps.blog',
 ]
 
 MIDDLEWARE = [
@@ -180,7 +181,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'apps.accounts.authentication.AccountJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -297,14 +298,14 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_DEFAULT_QUEUE = 'default'
-CELERY_TASK_ROUTES = {'apps.accounts.tasks.*': {'queue': 'auth-email'}}
+CELERY_TASK_ROUTES = {'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'}}
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
 CELERY_BEAT_SCHEDULE = {
     'dispatch-pending-auth-email-jobs': {
-        'task': 'apps.accounts.tasks.dispatch_pending_auth_email_jobs',
+        'task': 'apps.accounts.tasks.auth_email.dispatch_pending_auth_email_jobs',
         'schedule': 60.0,
     },
 }

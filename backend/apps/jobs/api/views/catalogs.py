@@ -28,6 +28,13 @@ class JobCategoryListView(generics.ListAPIView):
     serializer_class = JobCategorySerializer
     permission_classes = [permissions.AllowAny]
 
+    def paginate_queryset(self, queryset):
+        # Search pickers need the whole bounded taxonomy. Keep normal pagination
+        # as the API default for other consumers.
+        if self.request.query_params.get('all') in {'1', 'true'}:
+            return None
+        return super().paginate_queryset(queryset)
+
     def get_queryset(self):
         queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE)
         if category_type := self.request.query_params.get('category_type'):
@@ -47,4 +54,3 @@ class LanguageListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     pagination_class = None
     queryset = Language.objects.filter(is_active=True)
-

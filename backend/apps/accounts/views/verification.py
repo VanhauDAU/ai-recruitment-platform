@@ -1,4 +1,4 @@
-"""Xác thực email: gửi/xác nhận link, đổi email — logic token ở ../email_verification.py."""
+"""Xác thực email: gửi/xác nhận link, đổi email — workflow ở services/."""
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
@@ -6,9 +6,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .. import email_verification as ev
 from ..models import AuthEmailJob, User
 from ..serializers import ChangeEmailSerializer, UserSerializer
+from ..services import email_verification as ev
 from ..tasks import queue_auth_email
 
 
@@ -64,7 +64,7 @@ class VerificationConfirmView(APIView):
                 {'detail': 'Liên kết xác thực không hợp lệ hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        user = User.objects.filter(pk=user_id).first()
+        user = User.objects.filter(pk=user_id, is_deleted=False).first()
         if user is None:
             return Response({'detail': 'Không tìm thấy tài khoản.'}, status=status.HTTP_400_BAD_REQUEST)
         if not user.email_verified:

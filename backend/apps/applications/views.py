@@ -1,18 +1,15 @@
-from django.utils import timezone
 from rest_framework import generics, permissions
 
 from apps.accounts.permissions import IsCandidate, IsEmployer
 
 from .models import Application
 from .serializers import ApplicationSerializer, ApplicationStatusUpdateSerializer
-
-STATUS_TIMESTAMP_FIELD = {
-    Application.Status.VIEWED: 'viewed_at',
-    Application.Status.SHORTLISTED: 'shortlisted_at',
-    Application.Status.INTERVIEWED: 'interviewed_at',
-    Application.Status.REJECTED: 'rejected_at',
-    Application.Status.ACCEPTED: 'accepted_at',
-}
+from .selectors import (
+    candidate_applications_queryset,
+    employer_application_queryset,
+    employer_applications_queryset,
+)
+from .services import create_application, update_application_status
 
 
 class CandidateApplicationListCreateView(generics.ListCreateAPIView):
@@ -20,10 +17,10 @@ class CandidateApplicationListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
-        return Application.objects.filter(candidate=self.request.user).select_related('job', 'cv').order_by('-applied_at')
+        return candidate_applications_queryset(self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(candidate=self.request.user)
+        create_application(serializer, self.request.user)
 
 
 class EmployerApplicationListView(generics.ListAPIView):
@@ -31,10 +28,7 @@ class EmployerApplicationListView(generics.ListAPIView):
     permission_classes = [IsEmployer]
 
     def get_queryset(self):
-        qs = Application.objects.filter(job__posted_by=self.request.user).select_related('job', 'cv')
-        if job_id := self.request.query_params.get('job'):
-            qs = qs.filter(job__public_id=job_id)
-        return qs.order_by('-applied_at')
+        return employer_applications_queryset(self.request.user, self.request.query_params.get('job'))
 
 
 class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
@@ -43,11 +37,7 @@ class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
     lookup_field = 'public_id'
 
     def get_queryset(self):
-        return Application.objects.filter(job__posted_by=self.request.user)
+        return employer_application_queryset(self.request.user)
 
     def perform_update(self, serializer):
-        new_status = serializer.validated_data.get('status')
-        extra_fields = {}
-        if new_status and (timestamp_field := STATUS_TIMESTAMP_FIELD.get(new_status)):
-            extra_fields[timestamp_field] = timezone.now()
-        serializer.save(**extra_fields)
+        update_application_status(serializer)

@@ -1,4 +1,4 @@
-"""Đặt lại mật khẩu qua link email — logic token/cooldown ở ../password_reset.py."""
+"""Đặt lại mật khẩu qua link email — workflow ở services/password_reset.py."""
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
@@ -6,11 +6,12 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .. import password_reset as pr
 from ..models import AuthEmailJob, User
 from ..serializers import PasswordResetConfirmSerializer, PasswordResetRequestSerializer
+from ..services import verify_request_captcha
+from ..services import password_reset as pr
+from ..services.tokens import revoke_refresh_tokens
 from ..tasks import queue_auth_email
-from .tokens import revoke_refresh_tokens
 
 # Trả về cho MỌI email (tồn tại hay không) để không biến endpoint này thành công
 # cụ dò xem địa chỉ nào đã đăng ký.
@@ -34,6 +35,7 @@ class PasswordResetRequestView(APIView):
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+        verify_request_captcha(request, 'password_reset')
 
         user = User.objects.filter(
             email__iexact=serializer.validated_data['email'],
