@@ -1,11 +1,15 @@
 import { Navigate, Route } from 'react-router-dom'
+import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '../config/candidateMenu'
 import { employerAppPath } from '../config/portals'
 import AuthLayout from '../layouts/AuthLayout'
 import MainLayout from '../layouts/MainLayout'
+import ProtectedRoute from './ProtectedRoute'
 import {
+  AccountPlaceholderPage,
   BlogCategoryPage,
   BlogDetailPage,
   BlogHomePage,
+  CandidateAccountLayout,
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
@@ -13,10 +17,17 @@ import {
   MainLoginPage,
   MainRegisterPage,
   OAuthCallbackPage,
+  PersonalInfoPage,
   ResetPasswordPage,
   SavedJobsPage,
   VerifyEmailPage,
 } from './lazyPages'
+
+// Trang tài khoản đã xây thật, map theo item.key trong candidateMenu; key nào
+// chưa có ở đây thì dùng AccountPlaceholderPage.
+const ACCOUNT_PAGE_BY_KEY = {
+  'personal-info': PersonalInfoPage,
+}
 
 // Route cổng main (ứng viên + khách). Xem thêm EmployerRoutes / AdminRoutes.
 export function mainRoutes() {
@@ -38,6 +49,25 @@ export function mainRoutes() {
       <Route path="/blog/danh-muc/:categorySlug" element={<BlogCategoryPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
+
+      {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
+          nhập. Route con sinh từ config/candidateMenu.jsx (một nguồn duy nhất);
+          khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
+      <Route element={<ProtectedRoute allowedRoles={['candidate']} />}>
+        <Route element={<CandidateAccountLayout />}>
+          <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
+          {ACCOUNT_LAYOUT_ITEMS.map((item) => {
+            const Page = ACCOUNT_PAGE_BY_KEY[item.key]
+            return (
+              <Route
+                key={item.key}
+                path={item.path}
+                element={Page ? <Page /> : <AccountPlaceholderPage title={item.label} />}
+              />
+            )
+          })}
+        </Route>
+      </Route>
     </Route>,
 
     <Route key="auth" element={<AuthLayout />}>

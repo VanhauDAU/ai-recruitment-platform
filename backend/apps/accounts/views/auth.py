@@ -10,7 +10,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from common.media_storage import delete_local_media_url, save_image_upload
 
 from ..models import User
-from ..serializers import RegisterSerializer, RoleTokenObtainPairSerializer, UserSerializer
+from ..serializers import (
+    ProfileUpdateSerializer,
+    RegisterSerializer,
+    RoleTokenObtainPairSerializer,
+    UserSerializer,
+)
 from ..services import verify_request_captcha
 from ..services.tokens import issue_tokens
 from .verification import queue_verification_email
@@ -46,12 +51,27 @@ class LoginView(TokenObtainPairView):
         return super().post(request, *args, **kwargs)
 
 
-class MeView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+class MeView(generics.RetrieveUpdateAPIView):
+    """GET: thông tin tài khoản hiện tại. PATCH: cập nhật họ tên + SĐT.
+
+    Chỉ nhận PATCH (không PUT) vì chỉ sửa một phần hồ sơ; email không đổi ở đây.
+    """
+
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'patch']
 
     def get_object(self):
         return self.request.user
+
+    def get_serializer_class(self):
+        return ProfileUpdateSerializer if self.request.method == 'PATCH' else UserSerializer
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        # Trả về UserSerializer đầy đủ để frontend cập nhật thẳng auth context.
+        return Response(UserSerializer(request.user, context=self.get_serializer_context()).data)
 
 
 class AvatarUploadView(APIView):

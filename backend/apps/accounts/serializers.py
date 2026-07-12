@@ -68,6 +68,35 @@ class UserSerializer(serializers.ModelSerializer):
         return media_url_from_value(obj.avatar_url, request=self.context.get('request'))
 
 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """Cập nhật thông tin cá nhân ứng viên: chỉ họ tên và số điện thoại.
+
+    Email KHÔNG đổi ở đây (đổi email đi qua luồng xác thực riêng
+    `ChangeEmailSerializer`). Họ tên và SĐT sửa được nhiều lần.
+    """
+
+    full_name = serializers.CharField(
+        max_length=255, trim_whitespace=True,
+        error_messages={'blank': 'Vui lòng nhập họ và tên.', 'required': 'Vui lòng nhập họ và tên.'},
+    )
+    phone = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, trim_whitespace=True,
+        validators=[RegexValidator(
+            regex=r'^(0|\+84)\d{9,10}$',
+            message='Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).',
+        )],
+    )
+
+    class Meta:
+        model = User
+        fields = ['full_name', 'phone']
+
+    def validate_full_name(self, value):
+        if len(value.strip()) < 2:
+            raise serializers.ValidationError('Họ và tên cần ít nhất 2 ký tự.')
+        return value.strip()
+
+
 class ChangeEmailSerializer(serializers.Serializer):
     """Đổi email khi tài khoản chưa xác thực (reset email_verified và gửi lại link)."""
 

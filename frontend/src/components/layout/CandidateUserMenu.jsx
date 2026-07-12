@@ -1,58 +1,16 @@
 import {
-  BellOutlined, CaretRightOutlined, CheckCircleFilled, CrownOutlined, FileTextOutlined,
-  IdcardOutlined, LogoutOutlined, MailOutlined, MessageOutlined, SafetyOutlined, WarningFilled,
+  BellOutlined, CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
+  LogoutOutlined, MessageOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { App, Avatar, Badge, Dropdown } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { CANDIDATE_MENU } from '@/config/candidateMenu'
 
-// Mỗi section -> tiêu đề + danh sách item. `to` điều hướng, thiếu `to` = tính năng sắp ra mắt.
+// Section lấy từ config dùng chung với sidebar trang tài khoản (một nguồn duy nhất).
 // Nhóm A (search, cv) mở/đóng độc lập; nhóm B (email, account, upgrade) là accordion: mở 1 đóng 2 còn lại.
 const GROUP_B = ['email', 'account', 'upgrade']
-
-const SECTIONS = [
-  {
-    key: 'search', title: 'Quản lý tìm việc', icon: <IdcardOutlined />, dot: true,
-    items: [
-      { label: 'Việc làm đã lưu', to: '/viec-lam-da-luu' },
-      { label: 'Việc làm đã ứng tuyển' },
-      { label: 'Việc làm phù hợp với bạn' },
-      { label: 'Cài đặt gợi ý việc làm' },
-    ],
-  },
-  {
-    key: 'cv', title: 'Quản lý CV & Cover letter', icon: <FileTextOutlined />, dot: true,
-    items: [
-      { label: 'CV của tôi' },
-      { label: 'Cover Letter của tôi' },
-      { label: 'Nhà tuyển dụng muốn kết nối với bạn' },
-      { label: 'Nhà tuyển dụng xem hồ sơ' },
-    ],
-  },
-  {
-    key: 'email', title: 'Cài đặt email & thông báo', icon: <MailOutlined />,
-    items: [
-      { label: 'Cài đặt thông báo việc làm' },
-      { label: 'Cài đặt nhận email' },
-    ],
-  },
-  {
-    key: 'account', title: 'Cá nhân & Bảo mật', icon: <SafetyOutlined />, dot: true,
-    items: [
-      { label: 'Cài đặt thông tin cá nhân' },
-      { label: 'Cài đặt bảo mật' },
-      { label: 'Đổi mật khẩu' },
-      { label: 'Xác minh hai bước' },
-    ],
-  },
-  {
-    key: 'upgrade', title: 'Nâng cấp tài khoản', icon: <CrownOutlined />,
-    items: [
-      { label: 'Nâng cấp tài khoản VIP' },
-      { label: 'Kích hoạt quà tặng' },
-    ],
-  },
-]
+const SECTIONS = CANDIDATE_MENU
 
 function Section({ section, open, onToggle, onItem }) {
   return (
@@ -67,7 +25,7 @@ function Section({ section, open, onToggle, onItem }) {
             <span className="absolute -bottom-0.5 -right-1 h-2 w-2 rounded-full bg-[var(--brand-primary)] ring-2 ring-white" />
           )}
         </span>
-        <span className="flex-1 text-sm font-semibold text-gray-800">{section.title}</span>
+        <span className="flex-1 text-sm font-semibold text-slate-900">{section.title}</span>
         <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? 'rotate-90' : ''}`} />
       </button>
       {/* Animation mượt: grid-rows 0fr -> 1fr, không cần biết chiều cao nội dung */}
@@ -78,7 +36,7 @@ function Section({ section, open, onToggle, onItem }) {
               <button
                 key={it.label}
                 onClick={() => onItem(it)}
-                className="flex w-full cursor-pointer items-center rounded-lg py-2 pl-[52px] pr-5 text-left text-sm text-gray-600 transition-colors hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+                className="flex w-full cursor-pointer items-center rounded-lg py-2 pl-[52px] pr-5 text-left text-sm text-slate-900 transition-colors hover:bg-[var(--brand-primary-soft)]"
               >
                 {it.label}
               </button>
@@ -112,8 +70,9 @@ export default function CandidateUserMenu({ user, logout }) {
 
   function handleItem(it) {
     setOpen(false)
-    if (it.to) navigate(it.to)
-    else message.info('Tính năng sẽ sớm ra mắt.')
+    if (it.todo || !it.path) message.info('Tính năng sẽ sớm ra mắt.')
+    else if (it.blank) window.open(it.path, '_blank', 'noopener')
+    else navigate(it.path)
   }
 
   const notifPanel = (

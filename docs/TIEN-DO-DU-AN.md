@@ -11,7 +11,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | Giai đoạn                      | Tiến độ   |                              |
 | ------------------------------ | --------- | ---------------------------- |
 | 0 — Khởi tạo dự án             | 5/5       | ✅ Hoàn thành                |
-| 1 — MVP lõi                    | 38/40     | 🟡 Còn 1.14 (một phần), 1.15 |
+| 1 — MVP lõi                    | 40/42     | 🟡 Còn 1.14 (một phần), 1.15 |
 | 2 — AI cơ bản                  | 0/8       | ⬜                           |
 | 3 — Tối ưu tìm kiếm / matching | 0/2       | ⬜                           |
 | 4 — CV nâng cao                | 0/2       | ⬜                           |
@@ -19,7 +19,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 6 — Thương mại & quản trị      | 10/13     | 🟡                           |
 | 7 — Phỏng vấn AI               | 0/4       | ⬜                           |
 | 8 — Deployment                 | 0/2       | ⬜                           |
-| **Tổng**                       | **54/79** |                              |
+| **Tổng**                       | **56/81** |                              |
 
 ## Giai đoạn 0 — Khởi tạo dự án
 
@@ -76,6 +76,8 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 1.19b | Email không phân biệt hoa/thường (normalize + `iexact` + unique constraint `Lower(email)`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ✅         |
 | 1.20  | Trang thương hiệu (brand page): URL `/brand/<company>/tuyen-dung/<job>` + header thương hiệu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ✅         |
 | 1.21  | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](./03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt), admin actions duyệt (công ty, membership, giấy tờ, update request), employer đăng tin → `status=pending` chờ duyệt, seed + tests cập nhật (54 test pass); (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). Frontend cổng NTD sẽ xây sau trên bộ API mới | ✅         |
+| 1.22  | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅         |
+| 1.23  | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅         |
 
 ### Ghi chú chi tiết — Giai đoạn 1
 
@@ -251,6 +253,20 @@ Sửa bất đối xứng phát hiện ở 1.19: `password-reset` tra user bằn
 <summary><b>1.20</b> — Trang thương hiệu (brand page)</summary>
 
 `EmployerProfile.has_brand_page` (BooleanField, admin gán qua Django admin/`list_editable`, tương tự `Job.tier`; sau này gán theo gói dịch vụ ở Giai đoạn 6) — bật thì tin tuyển dụng của công ty mở dưới URL riêng `/brand/<company-slug>/tuyen-dung/<job-slug>` kèm header thương hiệu (banner cover + logo + tên công ty) thay vì `/viec-lam/<job-slug>` thường. `JobSerializer` thêm `brand_slug` (suy từ `employer_profile.has_brand_page`, null nếu tắt) + `company_cover_url`; frontend gom logic dựng URL job vào **một nơi duy nhất** `config/jobPaths.js` (`jobDetailPath(job)`, có test `jobPaths.test.js` — 4 case) và migrate toàn bộ điểm gọi cũ (`SearchDropdown`, `BestJobsResults`, `FlashBadge`, `MarketStats`, `JobCard`, `JobQuickView`) sang dùng hàm này thay vì tự ghép chuỗi `/viec-lam/${slug}`; `MainRoutes` thêm route `/brand/:companySlug/tuyen-dung/:slug` (cùng `JobDetailPage`), `JobDetail.jsx` tự redirect (`replace`) về đúng URL chuẩn nếu vào sai dạng, và render `BrandHeader` khi `job.brand_slug` có giá trị. Seed `seed_demo_jobs` bật brand page cho 3 công ty demo (FPT, VNG, Shopee), migration `0005_employerprofile_has_brand_page`. Verify: `manage.py test apps.jobs apps.employers` pass, `vitest run` 4/4 pass, `vite build` pass, kiểm chứng trên browser thật cả 2 luồng (tin công ty có brand → redirect đúng `/brand/...` + hiện header; tin công ty thường → giữ nguyên `/viec-lam/...`, không có header thừa).
+
+</details>
+
+<details>
+<summary><b>1.22</b> — Khung layout 3 cột trang tài khoản ứng viên</summary>
+
+Dựng khung + cấu trúc code cho cụm trang cài đặt candidate (theo tài liệu "Cài đặt trang candidate" 12/07/2026) — nội dung từng trang sẽ đào sâu sau. **Một nguồn dữ liệu duy nhất** `config/candidateMenu.jsx`: 5 nhóm menu (Quản lý tìm việc / CV & Cover letter / Email & thông báo / Cá nhân & Bảo mật / Nâng cấp tài khoản) với quy ước item `path` + `blank` (trang khác layout, mở tab mới: Việc làm đã lưu, NTD muốn kết nối, VIP, quà tặng) + `todo` (chưa xây → "Sắp có"); dropdown avatar header (`CandidateUserMenu`) refactor bỏ SECTIONS hard-code để dùng chung config này, và **route con cũng sinh từ config** (thêm trang mới = sửa 1 file). `CandidateAccountLayout` (3 cột 3/6/3, nền `#f7f9fc`): trái `AccountSidebar` — accordion **chỉ mở 1 nhóm/lần** (mở nhóm này nhóm kia tự đóng) animation `grid-template-rows`, hover + active (nền brand-soft + thanh dọc trái), tự mở nhóm chứa route hiện tại; giữa `<Outlet/>` (mỗi trang 1 file riêng khi xây thật, tạm thời `AccountPlaceholder`); phải `ProfileSidebar` — card chào (avatar + badge VERIFIED + trạng thái xác thực), hàng "Gợi ý việc làm" + nút bật, khối "Đang Tắt/Bật tìm việc" (Switch + 2 dòng lợi ích), "Cho phép NTD tìm kiếm hồ sơ" (đếm CV + Quản lý danh sách), banner tải app QR, card "CV của bạn đã đủ tốt?" (đếm lượt xem) — các toggle mới đổi state cục bộ, wiring API đánh dấu `TODO(candidate-settings)`. Routes: `/tai-khoan` redirect trang mặc định, 11 route con `/tai-khoan/<slug>` bọc `ProtectedRoute allowedRoles=['candidate']`, nằm trong `MainLayout` (header/footer chung); `document.title` theo trang. Mobile: sidebar thu vào Drawer (nút "Danh mục"), cột phải dồn xuống dưới. Verify: build + lint pass, đăng nhập candidate demo trên browser — redirect, accordion mở-1-đóng-kia, active state, Drawer mobile, title đổi theo trang, console sạch. Menu text để **màu đen** toàn bộ (yêu cầu người dùng 12/07); item là `<Link>` nên phải dùng `!text-slate-900` để không bị màu link mặc định của AntD đè.
+
+</details>
+
+<details>
+<summary><b>1.23</b> — Trang "Cài đặt thông tin cá nhân"</summary>
+
+Trang thật đầu tiên trong khung 1.22 (thay `AccountPlaceholder`). **Backend:** `MeView` nâng từ `RetrieveAPIView` → `RetrieveUpdateAPIView` (`http_method_names=['get','patch']`), thêm `ProfileUpdateSerializer` chỉ nhận `full_name` + `phone` (email KHÔNG đổi ở đây — đổi email đi qua luồng `ChangeEmailSerializer` có xác thực), validate SĐT VN `^(0|\+84)\d{9,10}$` + họ tên ≥2 ký tự; PATCH trả về `UserSerializer` đầy đủ để frontend cập nhật thẳng auth context. Sửa được **nhiều lần**. **Frontend:** `pages/main/candidate/pages/PersonalInfo.jsx` (AntD Form, validation client khớp backend, ô Email `disabled` + ghi chú, nút Lưu; lỗi 400 theo field gắn vào đúng ô qua `form.setFields`); `authService.updateProfile()` PATCH `/auth/me/`; sau lưu gọi `setAuthenticatedUser(updated)` → cột phải (ProfileSidebar) đổi tên **live**. Route map theo `item.key` (`ACCOUNT_PAGE_BY_KEY` trong MainRoutes) — key nào chưa có trang thật thì vẫn dùng placeholder. Verify: 6/6 test `ProfileUpdateTests` (sửa tên/SĐT, nhiều lần, email read-only, SĐT sai → 400, tên rỗng → 400, cần đăng nhập); build + lint pass; browser: đăng nhập candidate demo → sửa tên + SĐT hợp lệ lưu thành công (DB đổi, email giữ nguyên), SĐT sai hiện lỗi đỏ, cột phải cập nhật live, responsive mobile 375px, console sạch.
 
 </details>
 
