@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import * as authService from '../api/authService'
-import { adminPath, employerAppPath, getCurrentPortal } from '../config/portals'
+import * as authService from '@/features/auth/api/authService'
+import { adminPath, employerAppPath, getCurrentPortal } from '@/config/portals'
 import AuthContext from './authContext'
 
 export function AuthProvider({ children }) {

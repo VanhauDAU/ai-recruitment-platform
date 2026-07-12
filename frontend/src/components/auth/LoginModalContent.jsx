@@ -1,5 +1,5 @@
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
-import Login from '../../pages/main/auth/Login'
+import Login from '@/features/auth/pages/Login'
 
 // Gom reCAPTCHA + form đăng nhập vào một module để lazy-load cùng nhau — giữ cả
 // hai ra khỏi bundle chính (chỉ nạp khi mở popup đăng nhập). Xem LoginPromptProvider.

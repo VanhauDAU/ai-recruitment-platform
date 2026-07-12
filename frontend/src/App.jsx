@@ -1,7 +1,7 @@
 import { ConfigProvider, App as AntApp } from 'antd'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { useEffect, useMemo } from 'react'
-import AuthProvider from './contexts/AuthProvider'
+import { AuthProvider } from './features/auth'
 import AppRoutes from './routes/AppRoutes'
 import SiteSettingsProvider from './components/site/SiteSettingsProvider'
 import { DEFAULT_SITE_SETTINGS } from './contexts/siteSettingsContext'
