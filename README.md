@@ -80,6 +80,14 @@ Tạo tài khoản quản trị riêng bằng `python manage.py createsuperuser`
 
 ## Kiểm tra chất lượng
 
+Một lệnh kiểm tra toàn repo (khớp với CI — backend check/migration/test + frontend lint/test/build):
+
+```bash
+./scripts/check_all.sh
+```
+
+Hoặc chạy thủ công từng phần:
+
 ```bash
 # Backend
 cd backend
@@ -94,6 +102,9 @@ npm test
 npm run build
 npm run test:e2e
 ```
+
+CI (GitHub Actions) tự chạy `backend-ci` và `frontend-ci` trên mọi pull request đụng
+tới `backend/` hoặc `frontend/`. Quyết định kiến trúc của đợt tái cấu trúc: [docs/adr/](docs/adr/).
 
 ## Tài liệu
 

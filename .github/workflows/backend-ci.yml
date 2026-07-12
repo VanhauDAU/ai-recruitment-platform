@@ -1,0 +1,77 @@
+name: Backend CI
+
+# Quality gate cho backend: system check + kiểm tra migration treo + test suite.
+# Cần Postgres (migration bật extension unaccent) và Redis (cache/Celery broker).
+on:
+  push:
+    branches: [main, 'feature/**', 'epic/**']
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_career_coach
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Trùng default trong config/settings.py; chỉ trỏ HOST về service CI.
+      DB_NAME: ai_career_coach
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      REDIS_URL: redis://127.0.0.1:6379/1
+      SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
+      DEBUG: 'True'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Migration state (không được có migration treo)
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Test suite
+        run: python manage.py test --verbosity 2

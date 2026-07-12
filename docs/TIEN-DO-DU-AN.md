@@ -21,6 +21,26 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 8 — Deployment                 | 0/2       | ⬜                           |
 | **Tổng**                       | **56/81** |                              |
 
+## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
+
+Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích. Chi tiết baseline: [docs/09-refactor/baseline](./09-refactor/baseline/README.md); quyết định kiến trúc: [docs/adr](./adr/).
+
+| GĐ | Nội dung | Trạng thái |
+|---|---|---|
+| R0 | Khóa baseline: tag `baseline-refactor-start`, quality suite xanh (74 BE + 31 FE test), bundle report, script inventory hotspot | ✅ |
+| R1 | CI (frontend/backend workflow + Postgres/Redis), `scripts/check_all.sh` 1 lệnh, 5 ADR, PR template | ✅ |
+| R2 | Tách hạ tầng API frontend (`shared/api`) | ⬜ |
+| R3 | Tái cấu trúc Auth/Account/2FA thành `features/*` | ⬜ |
+| R4 | App providers, router, guard đơn trách nhiệm | ⬜ |
+| R5 | Pilot Jobs theo lát cắt dọc | ⬜ |
+| R6 | Applications/Saved jobs + server state | ⬜ |
+| R7 | Tách Django settings theo môi trường | ⬜ |
+| R8 | Dọn backend theo hotspot | ⬜ |
+| R9 | Onboarding theo kiến trúc mới | ⬜ |
+| R10 | Cleanup, bundle, tài liệu | ⬜ |
+
+> Lưu ý: nhánh dựa trên `#23`, cần hòa hợp `origin/main` (`#24`) trước khi merge refactor về `main`.
+
 ## Giai đoạn 0 — Khởi tạo dự án
 
 | #   | Công việc                                                  | Trạng thái |
