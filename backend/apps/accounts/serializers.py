@@ -1,4 +1,5 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
@@ -54,17 +55,29 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
+    job_preferences_configured = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'status', 'email_verified', 'two_factor_enabled', 'date_joined', 'last_login',
+            'status', 'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'date_joined', 'last_login',
         ]
         read_only_fields = fields
 
     def get_avatar_url(self, obj):
         return media_url_from_value(obj.avatar_url, request=self.context.get('request'))
+
+    def get_job_preferences_configured(self, obj):
+        if not obj.is_candidate:
+            return False
+        try:
+            return obj.candidate_profile.job_preferences_configured
+        except ObjectDoesNotExist:
+            # Tolerate a legacy candidate created before its profile signal was
+            # introduced; the candidate endpoint will create the profile once.
+            return False
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):

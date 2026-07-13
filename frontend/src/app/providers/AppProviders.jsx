@@ -16,7 +16,7 @@ function ThemedProviders({ children }) {
 
   return (
     <ConfigProvider theme={theme}>
-      <AntApp>
+      <AntApp message={{ maxCount: 1, duration: 3, top: 72, className: 'app-toast' }}>
         <SessionProvider>{children}</SessionProvider>
       </AntApp>
     </ConfigProvider>

@@ -1,5 +1,6 @@
 import { Button, Input, Modal } from 'antd'
 import { useEffect, useState } from 'react'
+import { sanitizeTwoFactorCode, TWO_FACTOR_CODE_LENGTH } from './two-factor-code'
 
 const SUCCESS_ILLUSTRATION = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/icon/icon-shield-check.png'
 
@@ -41,7 +42,7 @@ export default function TwoFactorCodeModal({
   }, [open, remaining, success])
 
   async function handleConfirm() {
-    if (code.length !== 6 || remaining <= 0) return
+    if (code.length !== TWO_FACTOR_CODE_LENGTH || remaining <= 0) return
     setSubmitting(true)
     setError('')
     try {
@@ -80,11 +81,22 @@ export default function TwoFactorCodeModal({
         <div className="text-center">
           <h2 className="text-2xl font-bold text-slate-800">Nhập mã xác minh</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">Chúng tôi đã gửi mã xác minh tới <strong>{email}</strong><br />Bạn vui lòng kiểm tra email để lấy mã.</p>
-          <Input aria-label="Mã xác minh 6 chữ số" value={code} maxLength={6} inputMode="numeric" autoComplete="one-time-code" placeholder="Nhập mã 6 ký tự" onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))} onPressEnter={handleConfirm} className="!mt-6 !h-15 !rounded-full !text-center !text-2xl !tracking-[0.3em]" />
+          <Input.OTP
+            aria-label="Mã xác minh 6 chữ số"
+            autoComplete="one-time-code"
+            className="!mt-6 !w-full !justify-center"
+            formatter={sanitizeTwoFactorCode}
+            length={TWO_FACTOR_CODE_LENGTH}
+            onChange={(value) => setCode(sanitizeTwoFactorCode(value))}
+            onInput={(cells) => setCode(sanitizeTwoFactorCode(cells.join('')))}
+            type="text"
+            inputMode="numeric"
+            value={code}
+          />
           <p className={`mt-2 text-sm ${remaining ? 'text-slate-700' : 'font-medium text-red-500'}`}>{remaining ? <>Mã hết hạn sau: <strong>{displayRemaining(remaining)}</strong></> : 'Mã đã hết hạn. Vui lòng gửi lại mã.'}</p>
           <p className="mt-1 text-sm text-slate-600">Chưa nhận được mã? <button type="button" onClick={handleResend} disabled={resending} className="cursor-pointer font-semibold text-[var(--brand-primary)] disabled:cursor-wait disabled:opacity-60">{resending ? 'Đang gửi...' : 'Gửi lại mã'}</button></p>
           {error && <p role="alert" className="mt-3 text-sm text-red-500">{error}</p>}
-          <div className="mt-3 grid grid-cols-2 gap-5"><Button size="large" shape="round" onClick={onCancel} disabled={submitting}>Hủy</Button><Button type="primary" size="large" shape="round" onClick={handleConfirm} loading={submitting} disabled={code.length !== 6 || remaining <= 0}>Xác nhận</Button></div>
+          <div className="mt-3 grid grid-cols-2 gap-5"><Button size="large" shape="round" onClick={onCancel} disabled={submitting}>Hủy</Button><Button type="primary" size="large" shape="round" onClick={handleConfirm} loading={submitting} disabled={code.length !== TWO_FACTOR_CODE_LENGTH || remaining <= 0}>Xác nhận</Button></div>
         </div>
       )}
     </Modal>

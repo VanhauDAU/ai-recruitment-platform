@@ -8,6 +8,51 @@ body {
   margin: 0;
 }
 
+/* Keep validation feedback useful under repeated clicks: one current toast,
+   with a compact surface that does not cover the form. */
+.app-toast {
+  left: 50%;
+  max-width: min(calc(100vw - 32px), 420px);
+  transform: translateX(-50%);
+  width: max-content;
+}
+
+.app-toast .ant-message-notice-content {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  max-width: 100%;
+  padding: 11px 16px;
+}
+
+.app-toast .ant-message-custom-content {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.app-toast .anticon {
+  font-size: 17px;
+}
+
+@media (max-width: 640px) {
+  .app-toast {
+    max-width: calc(100vw - 24px);
+  }
+
+  .app-toast .ant-message-notice-content {
+    border-radius: 12px;
+    font-size: 13px;
+    padding: 10px 13px;
+  }
+}
+
 :root {
   --brand-primary: #00b14f;
   --brand-primary-hover: #008a3e;

@@ -6,6 +6,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-14
+
+#### Added
+
+- Hoàn tất onboarding ứng viên và trang cài đặt gợi ý việc làm dùng chung workflow preference: modal chọn vị trí chuyên môn responsive, giới tính tại settings qua candidate profile, validation/toast rõ ràng và cột hồ sơ sticky trên desktop.
+- Thêm entity frontend `candidate-profile` cho contract `GET/PATCH /api/candidate/profile/` và regression API test; cập nhật E2E route cho form settings và validation trên desktop/mobile.
+
+#### Changed
+
+- Đồng bộ contract `desired_salary_vnd`: frontend và backend đều bắt buộc lương kỳ vọng là số nguyên VND lớn hơn 0; backend thêm regression test cho payload thiếu lương.
+- Chuẩn hóa toast toàn app: tối đa một thông báo hiện hành để không chồng nhiều lỗi khi người dùng click liên tục.
+
 ### 2026-07-13
 
 #### Changed

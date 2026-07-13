@@ -45,7 +45,7 @@ export default function CandidateAccountLayout() {
             <Outlet />
           </main>
 
-          <div className="mt-4 lg:col-span-3 lg:mt-0">
+          <div className="mt-4 lg:sticky lg:top-20 lg:col-span-3 lg:mt-0 lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto lg:[scrollbar-width:thin]">
             <ProfileSidebar />
           </div>
         </div>
