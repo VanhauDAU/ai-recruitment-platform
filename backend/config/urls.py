@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/skills/', include('apps.skills.urls')),
     path('api/site/', include('apps.sitecontent.urls')),
     path('api/blog/', include('apps.blog.urls')),
+    path('api/privacy/', include('apps.privacy.urls')),
 ]
 
 if settings.API_DOCS_ENABLED:

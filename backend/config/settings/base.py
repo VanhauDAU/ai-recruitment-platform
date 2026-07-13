@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'apps.dashboard',
     'apps.sitecontent',
     'apps.blog',
+    'apps.privacy',
 ]
 
 MIDDLEWARE = [
@@ -179,6 +180,8 @@ REST_FRAMEWORK = {
         'password_reset_confirm': '10/min',
         'oauth': '10/min',
         'feedback': '5/min',
+        'consent': '20/hour',
+        'job_view': '120/hour',
     },
 }
 
@@ -236,8 +239,23 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:5173,http://127.0.0.1:5173',
     cast=Csv(),
 )
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+# Consent is stored in a signed, HttpOnly first-party cookie.  The browser may
+# retain a non-sensitive mirror only to render the UI, but the backend cookie is
+# always the source of truth for analytics processing.
+CONSENT_POLICY_VERSION = config('CONSENT_POLICY_VERSION', default=1, cast=int)
+CONSENT_COOKIE_NAME = config('CONSENT_COOKIE_NAME', default='procv_consent')
+CONSENT_COOKIE_MAX_AGE = 180 * 24 * 60 * 60
+CONSENT_COOKIE_SECURE = IS_PRODUCTION
+CONSENT_COOKIE_SAMESITE = 'Lax'
+
+JOB_VIEW_DEDUP_TTL_SECONDS = config('JOB_VIEW_DEDUP_TTL_SECONDS', default=24 * 60 * 60, cast=int)
+JOB_VIEWER_COOKIE_NAME = config('JOB_VIEWER_COOKIE_NAME', default='procv_viewer_id')
+JOB_VIEWER_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
+JOB_VIEWER_COOKIE_SECURE = IS_PRODUCTION
+JOB_VIEWER_COOKIE_SAMESITE = 'Lax'
 
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)

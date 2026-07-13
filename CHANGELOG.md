@@ -12,11 +12,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 - Hoàn tất onboarding ứng viên và trang cài đặt gợi ý việc làm dùng chung workflow preference: modal chọn vị trí chuyên môn responsive, giới tính tại settings qua candidate profile, validation/toast rõ ràng và cột hồ sơ sticky trên desktop.
 - Thêm entity frontend `candidate-profile` cho contract `GET/PATCH /api/candidate/profile/` và regression API test; cập nhật E2E route cho form settings và validation trên desktop/mobile.
+- Thêm Cookie Consent Foundation: signed HttpOnly consent cookie, API public `GET/POST /api/privacy/consent/`, provider toàn ứng dụng, banner/modal responsive, trang `/chinh-sach-cookie`, điểm mở lại tại footer và gate cho color scheme/search history.
+- Thêm Job View Tracking consent-aware: GET chi tiết việc làm không còn tăng view; `POST /api/jobs/{slug}/views/` dùng consent backend, viewer cookie ký số, Redis Lua dedupe 24 giờ và DB atomic increment.
+- Bổ sung inventory cookie/browser storage, tài liệu API/rollout và regression test cho consent, GET read-only, consent-required và first view.
 
 #### Changed
 
 - Đồng bộ contract `desired_salary_vnd`: frontend và backend đều bắt buộc lương kỳ vọng là số nguyên VND lớn hơn 0; backend thêm regression test cho payload thiếu lương.
 - Chuẩn hóa toast toàn app: tối đa một thông báo hiện hành để không chồng nhiều lỗi khi người dùng click liên tục.
+- CORS giữ origin allowlist nhưng cho phép credential riêng cho consent/tracking first-party cookie.
+- Bỏ feature flag job-view tracking dư thừa: tracking chạy khi và chỉ khi Analytics consent hợp lệ; `.env.example` không chứa secret hoặc thông tin database mẫu có thể bị dùng nhầm.
+- Consent settings không gửi lại POST nếu lựa chọn không thay đổi, tránh đốt quota khi mở lại modal; lỗi `429` hiện thời gian chờ cụ thể thay vì thông báo chung.
+- Môi trường development không áp dụng throttle cho consent để QA có thể đổi lựa chọn liên tục; production vẫn giữ giới hạn `20/hour`.
 
 ### 2026-07-13
 
