@@ -1,9 +1,13 @@
+from django.conf import settings
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from apps.privacy.services import load_consent
 from ...models import Job, SavedJob
 from ...selectors.listing import (
     active_job_detail_queryset,
@@ -11,7 +15,7 @@ from ...selectors.listing import (
     suggest_job_search_terms,
 )
 from ...selectors.stats import build_job_stats
-from ...services import record_job_view
+from ...services.engagement import record_consented_job_view, set_viewer_cookie
 from ..serializers import (
     JobDetailSerializer,
     PublicJobListSerializer,
@@ -122,9 +126,38 @@ class JobDetailView(generics.RetrieveAPIView):
     lookup_field = 'slug'
     queryset = active_job_detail_queryset()
 
-    def get_object(self):
-        job = super().get_object()
-        return record_job_view(job)
+
+
+class JobViewCreateView(APIView):
+    """Explicit, consent-aware engagement endpoint. GET detail remains read-only."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'job_view'
+
+    @extend_schema(
+        summary='Ghi nhận lượt xem việc làm khi đã đồng ý Analytics',
+        responses=inline_serializer(
+            'JobViewResult',
+            fields={
+                'counted': serializers.BooleanField(),
+                'view_count': serializers.IntegerField(),
+                'reason': serializers.CharField(required=False),
+            },
+        ),
+        tags=['jobs'],
+    )
+    def post(self, request, slug):
+        job = get_object_or_404(active_job_detail_queryset(), slug=slug)
+        consent = load_consent(request)
+        if not consent or not consent['analytics']:
+            return Response({'counted': False, 'view_count': job.view_count, 'reason': 'consent_required'})
+
+        result = record_consented_job_view(request, job)
+        viewer_id = result.pop('viewer_id', None)
+        response = Response(result)
+        set_viewer_cookie(response, viewer_id)
+        return response
 
 
 class SavedJobListCreateView(generics.ListCreateAPIView):

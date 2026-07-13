@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -43,6 +45,54 @@ class JobSuggestionApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['suggestions'], ['Nhân viên chăm sóc khách hàng'])
 
+
+class JobViewTrackingApiTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='view-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.company = Company.objects.create(company_name='Views Inc.', created_by=self.user)
+        self.job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Backend Engineer',
+            description='Build reliable APIs.',
+            status=Job.Status.ACTIVE,
+        )
+
+    def test_get_detail_has_no_view_count_side_effect(self):
+        response = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.view_count, 0)
+
+    def test_tracking_requires_analytics_consent_and_does_not_set_viewer_cookie(self):
+        response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['reason'], 'consent_required')
+        self.assertNotIn('procv_viewer_id', response.cookies)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.view_count, 0)
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=True)
+    def test_first_consented_view_increments_once_and_sets_viewer_cookie(self, _claim_first_view):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'counted': True, 'view_count': 1})
+        self.assertIn('procv_viewer_id', response.cookies)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.view_count, 1)
 
 class JobSalaryBucketFilterTests(APITestCase):
     def setUp(self):

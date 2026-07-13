@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { getJobDetail, getJobs, jobDetailPath } from '@/entities/job'
+import { useConsent } from '@/entities/consent'
+import { getJobDetail, getJobs, jobDetailPath, recordJobView } from '@/entities/job'
 
 export default function useJobDetailPageData({ slug, companySlug, navigate }) {
+  const { consent, status: consentStatus } = useConsent()
   const [job, setJob] = useState(null)
   const [relatedJobs, setRelatedJobs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,6 +34,20 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
     const current = companySlug ? `/brand/${companySlug}/tuyen-dung/${slug}` : `/viec-lam/${slug}`
     if (current !== canonical) navigate(canonical, { replace: true })
   }, [job, companySlug, slug, navigate])
+
+  useEffect(() => {
+    if (consentStatus !== 'ready' || !consent.analytics || !job?.slug) return undefined
+    let cancelled = false
+    recordJobView(job.slug)
+      .then((result) => {
+        if (!cancelled && typeof result?.view_count === 'number') {
+          setJob((current) => (current ? { ...current, view_count: result.view_count } : current))
+        }
+      })
+      // Tracking is progressive enhancement: never make the job detail fail.
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [consent.analytics, consentStatus, job?.slug])
 
   useEffect(() => {
     if (!job?.category) {

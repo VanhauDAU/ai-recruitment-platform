@@ -16,6 +16,7 @@ import {
   MainLoginPage,
   MainRegisterPage,
   OAuthCallbackPage,
+  CookiePolicyPage,
   OnboardUserPage,
   OnboardUserSettingPage,
   PersonalInfoPage,
@@ -49,6 +50,7 @@ export function mainRoutes() {
       <Route path="/brand/:companySlug/tuyen-dung/:slug" element={<JobDetailPage />} />
       <Route path="/jobs" element={<JobListPage />} />
       <Route path="/jobs/:slug" element={<JobDetailPage />} />
+      <Route path="/chinh-sach-cookie" element={<CookiePolicyPage />} />
       {/* Cẩm nang nghề nghiệp (blog). "danh-muc" là segment tĩnh nên ưu tiên
           hơn /blog/:slug, không cần lo thứ tự khai báo. */}
       <Route path="/blog" element={<BlogHomePage />} />

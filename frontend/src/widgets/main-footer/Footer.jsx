@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getLinkGroups } from '@/entities/site-settings'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
+import { CookieSettingsButton } from '@/features/cookie-consent'
 
 function SmartLink({ href, className = '', children, ...props }) {
   if (!href) {
@@ -202,7 +203,11 @@ export default function Footer() {
               {businessLicense && <p className="mt-1 whitespace-pre-line">{businessLicense}</p>}
             </div>
           )}
-          <p>{copyright}</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p>{copyright}</p>
+            <Link to="/chinh-sach-cookie" className="font-semibold text-slate-600 transition-colors hover:text-[var(--brand-primary)]">Chính sách cookie</Link>
+            <CookieSettingsButton />
+          </div>
         </div>
       </div>
     </footer>

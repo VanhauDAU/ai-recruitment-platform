@@ -1,6 +1,7 @@
 import {
   CheckCircleFilled,
   EnvironmentOutlined,
+  EyeOutlined,
   HeartFilled,
   HeartOutlined,
   SafetyCertificateOutlined,
@@ -13,6 +14,7 @@ import { Link } from 'react-router-dom'
 import {
   EXPERIENCE_YEARS_LABELS,
   formatDeadline,
+  formatNumber,
   formatSalary,
 } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
@@ -74,6 +76,10 @@ export function JobHero({ job, saved, onApply, onSave, onShare, savePending }) {
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           {deadline && <span className="text-gray-500">Hạn nộp hồ sơ: <strong className="font-semibold text-slate-700">{formatJobDate(job.deadline)} ({deadline})</strong></span>}
+          <span className="inline-flex items-center gap-1.5 text-gray-500" title={`${formatNumber(job.view_count)} lượt xem`}>
+            <EyeOutlined className="text-[var(--brand-primary)]" />
+            {formatNumber(job.view_count)} lượt xem
+          </span>
         </div>
 
         <div className="mt-5 flex gap-2 sm:gap-3">

@@ -35,6 +35,12 @@ function renderDropdown(props = {}) {
 describe('SearchDropdown', () => {
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('procv_consent_v1', JSON.stringify({
+      necessary: true,
+      preferences: true,
+      analytics: false,
+      marketing: false,
+    }))
     mocks.getJobs.mockReset()
     mocks.getJobSuggestions.mockReset()
     mocks.getJobs.mockResolvedValue([])
