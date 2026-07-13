@@ -36,7 +36,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R6 | Applications/Saved jobs + server state | 🟡 Feature state/API và transition backend; còn UI nghiệp vụ |
 | R7 | Tách Django settings theo môi trường | ✅ base/development/test/production, CI test settings và production validation giữ nguyên |
 | R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard/AI chưa có use case, Sitecontent để lát cắt riêng |
-| R9 | Onboarding theo kiến trúc mới | ⏭ Bỏ qua trong đợt này, sẽ triển khai lại riêng |
+| R9 | Onboarding theo kiến trúc mới | ✅ Form preference dùng chung onboarding/settings, API preference có transaction + consent, responsive modal chọn vị trí, regression desktop/mobile |
 | R10 | Cleanup, bundle, tài liệu | ✅ Xóa compatibility layer, CI feature boundary, bundle review và tài liệu |
 
 > Lưu ý: nhánh dựa trên `#23`, cần hòa hợp `origin/main` (`#24`) trước khi merge refactor về `main`.
@@ -98,6 +98,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.21 | Tách công ty khỏi nhà tuyển dụng ([kế hoạch](./03-database/ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)): **Giai đoạn A + B xong** — (A) models `companies`/`company_industries`/`company_images`/`company_documents`/`company_update_requests`/`recruiter_profiles`/`phone_otps` + migration đổ 9 `employer_profiles` sang (gộp theo tax_code, size chuẩn hóa bucket); (B) `jobs` chuyển FK `employer_profile`→`company`, `employer`→`posted_by` (backfill migration 0014–0016), bộ API mới `/api/employer/*` (onboarding 5 bước, OTP SĐT qua email, tạo/tìm/join công ty kèm giấy tờ, update request chờ duyệt), admin actions duyệt (công ty, membership, giấy tờ, update request), employer đăng tin → `status=pending` chờ duyệt, seed + tests cập nhật (54 test pass); (C) xóa model + bảng `employer_profiles` (migration `employers.0008`, phụ thuộc `jobs.0016`). Frontend cổng NTD sẽ xây sau trên bộ API mới | ✅ |
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
+| 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 1
 
@@ -290,6 +291,24 @@ Trang thật đầu tiên trong khung 1.22 (thay `AccountPlaceholder`). **Backen
 
 </details>
 
+<details>
+<summary><b>1.24</b> — Onboarding và cài đặt gợi ý việc làm</summary>
+
+Hoàn tất R9 theo cấu trúc `app → pages → features → entities → shared`. Backend
+giữ domain trong `apps/candidates`: preference và consent được thay thế trong
+một transaction qua `PUT /api/candidate/job-preferences/`; lương kỳ vọng được
+đồng bộ thành field bắt buộc ở serializer và có regression test cho payload
+thiếu lương. Frontend dùng entity `candidate-preferences` cho preference và
+entity `candidate-profile` cho giới tính; form workflow thuộc feature
+`configure-job-preferences`, còn onboarding/account page chỉ compose và điều
+phối điều hướng. Bộ chọn vị trí chuyển sang modal responsive có tìm kiếm, tab
+nhóm nghề, giới hạn 1–5 lựa chọn và xác nhận rõ ràng. Trang settings có giới
+tính, gửi lỗi field bằng tiếng Việt, toast chỉ hiện một thông báo hiện hành, và
+cột hồ sơ bên phải sticky trên desktop. Verify: backend candidate tests, frontend
+lint/architecture/unit/build và E2E router desktop/mobile.
+
+</details>
+
 ## Giai đoạn 2 — AI cơ bản
 
 | # | Công việc | Trạng thái |
@@ -433,4 +452,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-13 (R5–R8, R10: feature hóa, settings môi trường, dọn hotspot và cleanup/bundle; R9 được để lại để làm mới riêng)
+Cập nhật lần cuối: 2026-07-14 (R9: onboarding và settings preference hoàn tất; đồng bộ contract frontend/backend, responsive và regression test)
