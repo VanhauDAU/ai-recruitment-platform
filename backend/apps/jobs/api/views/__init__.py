@@ -4,6 +4,7 @@ from .catalogs import BenefitListView, JobCategoryListView, LanguageListView
 from .employer import EmployerJobDetailView, EmployerJobListCreateView
 from .public import (
     JobDetailView,
+    JobViewCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
@@ -17,6 +18,7 @@ __all__ = [
     'EmployerJobListCreateView',
     'JobCategoryListView',
     'JobDetailView',
+    'JobViewCreateView',
     'JobListView',
     'JobStatsView',
     'JobSuggestView',

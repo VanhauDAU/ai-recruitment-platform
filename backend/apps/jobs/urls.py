@@ -6,6 +6,7 @@ from .api.views import (
     EmployerJobListCreateView,
     JobCategoryListView,
     JobDetailView,
+    JobViewCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
@@ -24,6 +25,7 @@ urlpatterns = [
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),
     path('mine/', EmployerJobListCreateView.as_view(), name='employer-job-list-create'),
     path('mine/<str:public_id>/', EmployerJobDetailView.as_view(), name='employer-job-detail'),
+    path('<slug:slug>/views/', JobViewCreateView.as_view(), name='job-view-create'),
     path('', JobListView.as_view(), name='job-list'),
     path('<slug:slug>/', JobDetailView.as_view(), name='job-detail'),
 ]

@@ -99,6 +99,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
+| 1.25 | Cookie consent + job view tracking: signed cookie, UI tùy chỉnh, policy, optional-storage gate và deduplicated tracking | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 1
 
@@ -309,6 +310,30 @@ lint/architecture/unit/build và E2E router desktop/mobile.
 
 </details>
 
+<details>
+<summary><b>1.25</b> — Cookie consent và job view tracking</summary>
+
+Hoàn tất theo hai lát cắt độc lập. `apps/privacy` là nguồn sự thật cho consent:
+`GET/POST /api/privacy/consent/` dùng cookie ký số `HttpOnly`, policy version 1,
+TTL 180 ngày, bắt buộc `necessary=true` và xóa viewer cookie khi rút Analytics.
+Consent được throttle `20/hour` ở production; development tắt throttle để QA có
+thể thay đổi lựa chọn liên tục mà không bị khóa modal.
+Frontend đặt `ConsentProvider` ở app root, `CookieConsentLayer` ở cạnh router để
+phủ mọi layout; banner/modal responsive theo mẫu, footer mở lại cài đặt và route
+`/chinh-sach-cookie` công khai inventory. `color-scheme` và `search_history`
+chỉ persist/đọc khi Preferences được đồng ý.
+
+Job detail GET đã bỏ side effect. `POST /api/jobs/{slug}/views/` kiểm tra signed
+consent ở backend, chỉ phát `procv_viewer_id` ngẫu nhiên/ký số khi Analytics
+đúng, Redis Lua atomically dedupe key viewer/user trong 24 giờ rồi mới `F()` tăng
+PostgreSQL. Redis lỗi fail closed. Tracking luôn hoạt động khi Analytics consent
+hợp lệ; CORS vẫn allowlist origin và bật credential cho hai request cookie.
+Verify: 16 backend tests (privacy + jobs), `check`,
+`makemigrations --check`, 85 frontend tests, lint, architecture và production
+build đều pass.
+
+</details>
+
 ## Giai đoạn 2 — AI cơ bản
 
 | # | Công việc | Trạng thái |
@@ -452,4 +477,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-14 (R9: onboarding và settings preference hoàn tất; đồng bộ contract frontend/backend, responsive và regression test)
+Cập nhật lần cuối: 2026-07-14 (R9 onboarding/settings hoàn tất; thêm Cookie Consent Foundation và job view tracking consent-aware)

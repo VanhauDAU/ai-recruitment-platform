@@ -2,6 +2,7 @@ import { App as AntApp, ConfigProvider } from 'antd'
 import { useMemo } from 'react'
 import { SessionProvider } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
+import { ConsentProvider } from '@/entities/consent'
 
 function ThemedProviders({ children }) {
   const { settings } = useSiteSettings()
@@ -17,7 +18,9 @@ function ThemedProviders({ children }) {
   return (
     <ConfigProvider theme={theme}>
       <AntApp message={{ maxCount: 1, duration: 3, top: 72, className: 'app-toast' }}>
-        <SessionProvider>{children}</SessionProvider>
+        <ConsentProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </ConsentProvider>
       </AntApp>
     </ConfigProvider>
   )

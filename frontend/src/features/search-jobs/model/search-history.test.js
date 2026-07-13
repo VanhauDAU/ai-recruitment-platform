@@ -9,6 +9,12 @@ import { clearHistory, getHistory, removeHistoryEntry, saveHistory } from './sea
 describe('search history', () => {
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('procv_consent_v1', JSON.stringify({
+      necessary: true,
+      preferences: true,
+      analytics: false,
+      marketing: false,
+    }))
   })
 
   it('returns an empty array when storage has no history', () => {
@@ -51,5 +57,18 @@ describe('search history', () => {
     localStorage.setItem('search_history', '{invalid')
 
     expect(getHistory()).toEqual([])
+  })
+
+  it('does not retain history when preference consent is withdrawn', () => {
+    localStorage.setItem('search_history', JSON.stringify([{ q: 'React', by: 'title', count: null }]))
+    localStorage.setItem('procv_consent_v1', JSON.stringify({
+      necessary: true,
+      preferences: false,
+      analytics: false,
+      marketing: false,
+    }))
+
+    expect(getHistory()).toEqual([])
+    expect(localStorage.getItem('search_history')).toBeNull()
   })
 })
