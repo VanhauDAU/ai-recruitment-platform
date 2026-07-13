@@ -73,6 +73,17 @@ describe('SearchDropdown', () => {
     expect(onSelect).toHaveBeenCalledWith('React developer', 'title')
   })
 
+  it('shows keyword suggestions above search history and caps the dropdown height', async () => {
+    localStorage.setItem('search_history', JSON.stringify([{ q: 'React', by: 'title', count: 2 }]))
+    mocks.getJobSuggestions.mockResolvedValue(['React developer'])
+    renderDropdown({ keyword: 'react' })
+
+    const suggestionsHeading = await screen.findByText('Từ khóa gợi ý')
+    const historyHeading = screen.getByText('Từ khóa tìm kiếm gần đây')
+    expect(suggestionsHeading.compareDocumentPosition(historyHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByTestId('search-dropdown')).toHaveClass('max-h-[min(32rem,calc(100dvh-1.5rem))]', 'overflow-y-auto')
+  })
+
   it('does not request keyword suggestions for a short keyword', async () => {
     renderDropdown({ keyword: 'r' })
 
