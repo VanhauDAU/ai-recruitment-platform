@@ -16,19 +16,23 @@ import {
   MainLoginPage,
   MainRegisterPage,
   OAuthCallbackPage,
+  OnboardUserPage,
+  OnboardUserSettingPage,
   PersonalInfoPage,
+  JobPreferenceSettingsPage,
   TwoFactorAuthenticationPage,
   ResetPasswordPage,
   SavedJobsPage,
   VerifyEmailPage,
 } from '../lazy/main.pages'
-import { AuthLayout, MainLayout } from '../lazy/layouts'
+import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu; key nào
 // chưa có ở đây thì dùng AccountPlaceholderPage.
 const ACCOUNT_PAGE_BY_KEY = {
   'personal-info': PersonalInfoPage,
   'two-factor': TwoFactorAuthenticationPage,
+  'suggestion-settings': JobPreferenceSettingsPage,
 }
 
 // Route cổng main (ứng viên + khách). Xem thêm employer.routes/admin.routes.
@@ -70,6 +74,15 @@ export function mainRoutes() {
               )
             })}
           </Route>
+        </Route>
+      </Route>
+    </Route>,
+
+    <Route key="candidate-onboarding" element={<AuthGuard />}>
+      <Route element={<RoleGuard allowedRoles={['candidate']} />}>
+        <Route element={<OnboardingLayout />}>
+          <Route path="/onboard-user" element={<OnboardUserPage />} />
+          <Route path="/onboard-user-setting" element={<OnboardUserSettingPage />} />
         </Route>
       </Route>
     </Route>,

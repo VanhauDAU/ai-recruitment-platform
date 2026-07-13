@@ -16,6 +16,9 @@ Kế hoạch tách công ty khỏi nhà tuyển dụng (nhiều HR/công ty, onb
 Thiết kế database cho Cẩm nang nghề nghiệp (blog `/blog`: bài viết, danh mục, thẻ, bài ghim sidebar, banner):
 [Kế hoạch database cẩm nang nghề nghiệp - blog](./ke-hoach-database-cam-nang-nghe-nghiep-blog.md).
 
+Thiết kế onboarding và preference tìm việc cho ứng viên:
+[Kế hoạch onboarding ứng viên](./ke-hoach-onboarding-ung-vien.md).
+
 ## Bảng đã triển khai
 
 | Bảng | App Django | Ghi chú |

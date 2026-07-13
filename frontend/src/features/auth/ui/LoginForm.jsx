@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
-import { HOME_BY_ROLE, MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
+import { MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
 import { useSession } from '@/entities/session'
 import { login, resendTwoFactorLogin, verifyTwoFactorLogin } from '../api/auth.api'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { getReturnUrl } from '../model/return-url'
+import { getPasswordLoginDestination } from '../model/password-login-destination'
 
 // Style animation/nút dùng chung cho các trang auth (login + register các cổng).
 export function AuthFormStyles() {
@@ -72,7 +73,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const returnUrl = getReturnUrl(searchParams)
 
   function navigateAfterLogin(user) {
-    navigate(returnUrl || HOME_BY_ROLE[user.role] || '/', { replace: true })
+    navigate(getPasswordLoginDestination({ user, returnUrl }), { replace: true })
   }
 
   function clearPassword() {
