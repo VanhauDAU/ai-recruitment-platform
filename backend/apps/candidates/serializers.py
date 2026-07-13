@@ -52,7 +52,7 @@ class CandidateJobPreferenceSerializer(serializers.ModelSerializer):
             'desired_position_other': {
                 'required': False, 'allow_null': True, 'allow_blank': True, 'trim_whitespace': True,
             },
-            'desired_salary_vnd': {'required': False, 'allow_null': True, 'min_value': 1},
+            'desired_salary_vnd': {'required': True, 'allow_null': False, 'min_value': 1},
             'willing_to_relocate': {'required': False, 'allow_null': True},
             'experience_level': {'required': True, 'allow_blank': False},
         }

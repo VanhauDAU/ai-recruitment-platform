@@ -137,3 +137,13 @@ class CandidateProfileApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('desired_salary_vnd', response.data)
         self.assertFalse(CandidateConsent.objects.exists())
+
+    def test_job_preference_requires_salary_without_partial_save(self):
+        payload = self.preference_payload()
+        payload.pop('desired_salary_vnd')
+
+        response = self.client.put('/api/candidate/job-preferences/', payload, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('desired_salary_vnd', response.data)
+        self.assertFalse(CandidateConsent.objects.exists())

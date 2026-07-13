@@ -16,7 +16,7 @@ export default function OnboardingLayout() {
       }}
     >
       <header className="flex h-14 shrink-0 items-center bg-white/95 px-6 shadow-sm backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3  mx-auto">
           <BrandLogo imageClassName="h-8 max-w-[160px]" />
           <span className="hidden h-5 w-px bg-slate-300 sm:block" />
           <span className="hidden text-sm text-slate-500 sm:block">Tiếp lợi thế, nối thành công</span>

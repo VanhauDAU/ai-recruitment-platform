@@ -19,8 +19,8 @@ Các yêu cầu chính:
 
 - Chọn từ 1 đến 5 vị trí chuyên môn trong taxonomy `job_categories`.
 - Có thể nhập thêm một vị trí tự do; chuỗi được `trim`, chuỗi rỗng thành `NULL`.
-- Lương kỳ vọng là VND/tháng, tùy chọn; nếu nhập phải là số nguyên lớn hơn 0.
-  Giá trị `0` bị từ chối vì không phân biệt được với chưa khai báo.
+- Lương kỳ vọng là VND/tháng, bắt buộc, là số nguyên lớn hơn 0. Giá trị `0`
+  bị từ chối.
 - Kinh nghiệm và ít nhất một tỉnh/thành là bắt buộc khi hoàn thành.
 - Hai consent AI và hiển thị với nhà tuyển dụng không được tick sẵn, đồng thời
   phải lưu được quyết định, thời điểm và phiên bản chính sách.
@@ -42,7 +42,7 @@ Các yêu cầu chính:
 | `locations` | Có, 2 cấp tỉnh/xã | Chỉ nhận `province`, active. |
 | `GET /api/jobs/categories/?all=1&category_type=specialization` | Có | Catalog chọn vị trí chuyên môn. |
 | `GET /api/locations/?level=province` | Có | Catalog chọn nơi làm việc. |
-| `/tai-khoan/cai-dat-goi-y-viec-lam` | Route/menu đã có | Hiện là placeholder; sẽ dùng cùng form preference. |
+| `/tai-khoan/cai-dat-goi-y-viec-lam` | Route/menu đã có | Đã dùng chung form preference; bổ sung giới tính từ candidate profile, sidebar hồ sơ sticky trên desktop. |
 
 ### Không còn trong source nhưng phải dọn trước khi triển khai
 
@@ -192,7 +192,7 @@ Các lỗi contract tối thiểu:
 
 - `desired_specialization_ids`: bắt buộc, 1–5, không trùng, chỉ specialization active.
 - `desired_position_other`: optional; trim, `null` khi trống, tối đa 255 ký tự.
-- `desired_salary_vnd`: optional integer; nếu có thì `>= 1`, không nhận float,
+- `desired_salary_vnd`: bắt buộc, integer `>= 1`, không nhận `null`, float,
   số âm hay `0`.
 - `experience_level`: bắt buộc, thuộc enum candidate.
 - `preferred_province_ids`: bắt buộc, không trùng, chỉ province active.
@@ -252,9 +252,17 @@ nhật nhu cầu.
   cờ cấu hình và catalog mapping.
 - Frontend feature: workflow lưu preference dùng chung cho onboarding và trang
   cài đặt; không tạo feature state machine/skip, không import feature chéo.
-- Page: `pages/main/onboarding/*`; lazy registry
-  `app/router/lazy/main.pages.jsx`; routes trong `main.routes.jsx`; layout ở
-  `app`; không thêm gate theo nguồn đăng nhập hay state-machine onboarding.
+- Page: `pages/main/onboarding/*` và `pages/main/account/JobPreferenceSettings.jsx`;
+  lazy registry `app/router/lazy/main.pages.jsx`; routes trong
+  `main.routes.jsx`; layout ở `app`; không thêm gate theo nguồn đăng nhập hay
+  state-machine onboarding.
+
+Giới tính vẫn thuộc `CandidateProfile`, không được nhét vào preference chỉ vì
+hai phần cùng xuất hiện trong trang settings. Vì vậy settings dùng endpoint
+profile riêng bên cạnh endpoint preference. Nếu sau này cần bảo đảm hai phần
+luôn lưu cùng thành công hoặc cùng thất bại, bổ sung một use case/service
+candidate gộp với transaction rõ ràng thay vì làm serializer preference nhận
+field profile.
 
 Test tối thiểu gồm: candidate-only permission, toàn bộ validation
 list/salary/location, rollback khi payload lỗi, consent không tự grant,

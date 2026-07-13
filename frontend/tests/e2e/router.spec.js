@@ -71,6 +71,7 @@ test.describe('portal route registries', () => {
           ai_recommendation_consent: false,
           recruiter_visibility_consent: false,
         },
+        '/api/candidate/profile/': { gender: 'female' },
         '/api/jobs/categories/': {
           count: 3,
           results: [
@@ -100,16 +101,19 @@ test.describe('portal route registries', () => {
     if (testInfo.project.name === 'desktop-chromium') {
       await expect(page.getByText('Phát triển phần mềm', { exact: true })).toBeVisible()
       await expect(page.getByText('Lập trình viên', { exact: true })).toBeVisible()
-      await page.getByText('Kinh doanh', { exact: true }).hover()
+      await page.getByRole('button', { name: 'Kinh doanh' }).click()
       await expect(page.getByText('Tư vấn bán hàng', { exact: true })).toBeVisible()
-      await page.getByText('Công nghệ thông tin', { exact: true }).hover()
+      await page.getByRole('button', { name: 'Công nghệ thông tin' }).click()
       await page.getByRole('button', { name: 'Lập trình viên' }).click()
-      await page.getByRole('button', { name: 'Chọn (1/5)' }).click()
+      await page.getByRole('button', { name: 'Xác nhận' }).click()
       await expect(page.locator('#root').getByText('Lập trình viên', { exact: true })).toBeVisible()
     }
 
     await page.goto('/tai-khoan/cai-dat-goi-y-viec-lam')
-    await expect(page.getByRole('switch', { name: 'Có Không' })).toBeChecked()
+    await expect(page.getByRole('radio', { name: 'Nữ' })).toBeChecked()
+    await expect(page.getByRole('checkbox', { name: 'Tôi có thể thay đổi địa điểm làm việc' })).toBeChecked()
+    await page.getByRole('button', { name: 'Cập nhật' }).click()
+    await expect(page.getByRole('alert').getByText('Vui lòng chọn ít nhất một vị trí chuyên môn.')).toBeVisible()
   })
 
   test('renders the not-found route for an unknown URL', async ({ page }) => {

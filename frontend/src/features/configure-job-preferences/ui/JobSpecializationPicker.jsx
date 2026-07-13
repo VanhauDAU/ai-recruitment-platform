@@ -1,5 +1,5 @@
-import { CloseCircleFilled, DownOutlined, RightOutlined, SearchOutlined, UnorderedListOutlined, UpOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Input } from 'antd'
+import { CheckOutlined, CloseCircleFilled, DownOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { Button, Checkbox, Input, Modal } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import {
   buildJobPreferenceTaxonomy,
@@ -29,9 +29,9 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
     ? taxonomy.groups.filter(matchesDeep)
     : taxonomy.groups
   const activeGroup = visibleGroups.find((group) => group.id === activeGroupId) || visibleGroups[0]
-  const jobs = (taxonomy.childrenByParent.get(activeGroup?.id) || []).filter(
-    (job) => !normalizedQuery || matchesDeep(job),
-  )
+  const jobs = normalizedQuery
+    ? visibleGroups.flatMap((group) => taxonomy.childrenByParent.get(group.id) || []).filter(matchesDeep)
+    : taxonomy.childrenByParent.get(activeGroup?.id) || []
 
   useEffect(() => {
     if (!open) return
@@ -63,7 +63,7 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
   }
 
   return (
-    <div className="relative">
+    <div>
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
@@ -109,69 +109,65 @@ export default function JobSpecializationPicker({ categories, disabled, onChange
             <CloseCircleFilled />
           </button>
         )}
-        {open ? <UpOutlined className="shrink-0 text-xs text-slate-500" /> : <DownOutlined className="shrink-0 text-xs text-slate-400" />}
+        <DownOutlined className={`shrink-0 text-xs transition ${open ? 'rotate-180 text-slate-500' : 'text-slate-400'}`} />
       </div>
 
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-3 w-full overflow-hidden rounded-[22px] border border-slate-100 bg-white shadow-2xl shadow-slate-900/15">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
-            <h2 className="text-base font-bold text-slate-700">Chọn Vị trí chuyên môn</h2>
-            <button type="button" aria-label="Đóng danh mục vị trí chuyên môn" onClick={() => setOpen(false)} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><CloseCircleFilled /></button>
-          </div>
-          <div className="px-4 pb-3 pt-2 sm:px-5">
-            <Input allowClear value={query} onChange={(event) => setQuery(event.target.value)} prefix={<SearchOutlined className="text-slate-400" />} placeholder="Nhập từ khoá để tìm Vị trí chuyên môn" className="!h-9 !rounded-full" />
-          </div>
-          <div className="grid grid-cols-[minmax(180px,30%)_1fr] border-y border-slate-100">
-            <div className="border-r border-slate-100">
-              <p className="px-4 pb-2 pt-3 text-xs font-semibold tracking-wide text-slate-400">NHÓM NGHỀ</p>
-              <ul className="max-h-72 overflow-auto">
-                {visibleGroups.map((group) => {
-                  const ids = taxonomy.specializationsUnder(group.id)
-                  const state = selectionState(ids, selectedIds)
-                  const disabledGroup = !state.checked && !canSelect(ids)
-                  return (
-                    <li key={group.id} onMouseEnter={() => setActiveGroupId(group.id)} className={`flex cursor-pointer items-center gap-2.5 px-4 py-2.5 ${activeGroup?.id === group.id ? 'bg-emerald-50 font-medium text-[var(--brand-primary)]' : 'hover:bg-slate-50'}`}>
-                      <Checkbox checked={state.checked} indeterminate={state.indeterminate} disabled={disabledGroup} onChange={() => toggleSpecializations(ids)} />
-                      <span className="flex-1">{group.name}</span>
-                      <RightOutlined className="text-[10px] text-slate-400" />
-                    </li>
-                  )
-                })}
-              </ul>
+        <Modal
+          open
+          footer={null}
+          onCancel={() => setOpen(false)}
+          title={<div><span>Chọn vị trí chuyên môn</span><span className="ml-2 text-sm font-normal text-slate-400">Tối đa {MAX_DESIRED_SPECIALIZATIONS} vị trí</span></div>}
+          width={900}
+          style={{ maxWidth: 'calc(100vw - 24px)', top: 12 }}
+          className="[&_.ant-modal-body]:!p-0"
+        >
+          <div className="flex max-h-[calc(100dvh-130px)] flex-col">
+            <div className="border-b border-slate-100 px-4 py-3 sm:px-5">
+              <Input allowClear autoFocus value={query} onChange={(event) => setQuery(event.target.value)} prefix={<SearchOutlined className="text-slate-400" />} placeholder="Tìm theo nhóm nghề, nghề hoặc vị trí chuyên môn" className="!h-10 !rounded-xl" />
             </div>
-            <div>
-              <div className="grid grid-cols-[minmax(180px,35%)_1fr] gap-3 px-4 pb-2 pt-3 text-xs font-semibold tracking-wide text-slate-400">
-                <span>NGHỀ</span><span>VỊ TRÍ CHUYÊN MÔN</span>
-              </div>
-              <div className="max-h-72 divide-y divide-slate-100 overflow-auto">
+            <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-5">
+              {!normalizedQuery && (
+                <div className="mb-5">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400">NHÓM NGHỀ</p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {visibleGroups.map((group) => (
+                      <button key={group.id} type="button" onClick={() => setActiveGroupId(group.id)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm transition ${activeGroup?.id === group.id ? 'border-emerald-600 bg-emerald-50 font-medium text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}>{group.name}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-3">
                 {jobs.map((job) => {
                   const ids = taxonomy.specializationsUnder(job.id)
                   const state = selectionState(ids, selectedIds)
                   const disabledJob = !state.checked && !canSelect(ids)
+                  const specializations = (taxonomy.childrenByParent.get(job.id) || []).filter((item) => item.category_type === 'specialization' && (!normalizedQuery || normalize(item.name).includes(normalizedQuery)))
                   return (
-                    <div key={job.id} className="grid grid-cols-[minmax(180px,35%)_1fr] gap-3 px-4 py-3">
-                      <label className="flex cursor-pointer items-start gap-2.5">
+                    <section key={job.id} className="rounded-xl border border-slate-200 p-3 sm:p-4">
+                      <label className="flex cursor-pointer items-start gap-2.5 text-sm font-semibold text-slate-700">
                         <Checkbox checked={state.checked} indeterminate={state.indeterminate} disabled={disabledJob} onChange={() => toggleSpecializations(ids)} />
-                        <span className={state.checked || state.indeterminate ? 'font-medium text-[var(--brand-primary)]' : ''}>{job.name}</span>
+                        <span>{job.name}</span>
                       </label>
-                      <div className="flex flex-wrap gap-2">
-                        {(taxonomy.childrenByParent.get(job.id) || []).filter((item) => item.category_type === 'specialization' && (!normalizedQuery || normalize(item.name).includes(normalizedQuery))).map((specialization) => {
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {specializations.map((specialization) => {
                           const selected = selectedIds.has(specialization.id)
                           const disabledSpecialization = !selected && selectedIds.size >= MAX_DESIRED_SPECIALIZATIONS
-                          return <button key={specialization.id} type="button" disabled={disabledSpecialization} onClick={() => toggleSpecializations([specialization.id])} className={`rounded-full px-3 py-1 text-sm transition ${selected ? 'bg-[var(--brand-primary)] text-white' : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-[var(--brand-primary)]'} disabled:cursor-not-allowed disabled:opacity-50`}>{specialization.name}</button>
+                          return <button key={specialization.id} type="button" disabled={disabledSpecialization} onClick={() => toggleSpecializations([specialization.id])} className={`rounded-lg border px-3 py-2 text-left text-sm transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'} disabled:cursor-not-allowed disabled:opacity-40`}>{selected && <CheckOutlined className="mr-1.5 text-xs" />}{specialization.name}</button>
                         })}
                       </div>
-                    </div>
+                    </section>
                   )
                 })}
+                {!jobs.length && <p className="py-10 text-center text-sm text-slate-500">Không tìm thấy vị trí chuyên môn phù hợp.</p>}
               </div>
             </div>
+            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <Button type="link" disabled={!selectedIds.size} onClick={() => setSelectedIds(new Set())}>Bỏ chọn tất cả</Button>
+              <div className="flex items-center justify-between gap-3 sm:justify-end"><span className="text-sm text-slate-500">Đã chọn {selectedIds.size}/{MAX_DESIRED_SPECIALIZATIONS}</span><div className="flex gap-2"><Button onClick={() => setOpen(false)}>Hủy</Button><Button type="primary" onClick={apply}>Xác nhận</Button></div></div>
+            </div>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 sm:px-5">
-            <Button type="link" disabled={!selectedIds.size} onClick={() => setSelectedIds(new Set())}>Bỏ chọn tất cả ({selectedIds.size})</Button>
-            <div className="flex gap-2"><Button shape="round" onClick={() => setOpen(false)}>Hủy</Button><Button type="primary" shape="round" onClick={apply}>Chọn ({selectedIds.size}/{MAX_DESIRED_SPECIALIZATIONS})</Button></div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )
