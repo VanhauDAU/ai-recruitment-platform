@@ -9,10 +9,10 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
+  # Sáu job bên dưới là required checks của PR. Không lọc theo paths ở đây:
+  # khi workflow bị skip, GitHub không tạo status và PR ngoài frontend bị kẹt
+  # ở "Waiting for status to be reported".
   pull_request:
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
 
 defaults:
   run:
