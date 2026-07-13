@@ -18,14 +18,14 @@ app → pages → widgets → features → entities → shared
 
 ## Chọn nơi đặt code
 
-| Nhu cầu | Vị trí |
-| --- | --- |
-| Route-level composition theo portal | `frontend/src/pages/{main,employer,admin}` |
-| Provider, router, guard, layout, lazy registry | `frontend/src/app` |
-| Hành động/workflow người dùng | `frontend/src/features/<action>` |
-| Domain model, API hoặc UI domain tái sử dụng | `frontend/src/entities/<domain>` |
-| Khối UI lớn ghép nhiều domain | `frontend/src/widgets/<name>` |
-| UI nguyên tử hoặc hạ tầng không biết domain | `frontend/src/shared` |
+| Nhu cầu                                        | Vị trí                                     |
+| ---------------------------------------------- | ------------------------------------------ |
+| Route-level composition theo portal            | `frontend/src/pages/{main,employer,admin}` |
+| Provider, router, guard, layout, lazy registry | `frontend/src/app`                         |
+| Hành động/workflow người dùng                  | `frontend/src/features/<action>`           |
+| Domain model, API hoặc UI domain tái sử dụng   | `frontend/src/entities/<domain>`           |
+| Khối UI lớn ghép nhiều domain                  | `frontend/src/widgets/<name>`              |
+| UI nguyên tử hoặc hạ tầng không biết domain    | `frontend/src/shared`                      |
 
 Không tạo `utils` chung không có owner. Component chỉ dùng một page/feature phải
 đặt gần owner thay vì đưa vào `shared`.
