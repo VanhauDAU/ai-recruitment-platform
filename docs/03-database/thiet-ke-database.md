@@ -34,9 +34,13 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `company_update_requests` | `backend/apps/employers` | Cập nhật công ty chờ duyệt; đổi MST/tên bắt buộc lý do + giấy tờ; tối đa 1 request pending/công ty |
 | `recruiter_profiles` | `backend/apps/employers` | 1-1 user, FK company (PROTECT, gán rồi không đổi); membership owner/member + trạng thái duyệt; `verified_phone` partial unique |
 | `phone_otps` | `backend/apps/employers` | OTP xác thực SĐT (hash, expires, attempts) — gửi qua email trước khi có SMS gateway |
-| `job_categories` | `backend/apps/jobs` | Danh mục ngành nghề, self-referential parent, taxonomy 3 cấp (nhóm nghề → nghề → vị trí chuyên môn: 8/24/61), seed qua `seed_job_categories` |
+| `job_categories`, `job_category_localizations` | `backend/apps/jobs` | Taxonomy 3 cấp có public identity; localization/alias 4 ngôn ngữ cấu hình trong admin, picker CV chỉ đọc vị trí chuyên môn và `name_vi` |
 | `locations` | `backend/apps/locations` | 2 cấp tỉnh/xã, seed thật qua `seed_locations` (provinces.open-api.vn) |
-| `cv_templates` | `backend/apps/cv_templates` | Quản lý qua Django admin, API chỉ đọc (list/detail) |
+| `cv_templates` | `backend/apps/cv_templates` | Identity/catalogue; version published hiện hành, localization và legacy dual-read fields |
+| `cv_categories`, `cv_template_category_links` | `backend/apps/cv_templates` | Taxonomy many-to-many style/feature/position/audience; link giữ thứ tự theo template |
+| `cv_colors`, `cv_template_color_links` | `backend/apps/cv_templates` | Palette màu dùng lại; link theo template giữ thumbnail/preview URL, thứ tự và đúng tối đa một màu mặc định |
+| `cv_template_versions`, `cv_template_sections` | `backend/apps/cv_templates` | Renderer/layout/style contract bất biến sau publish và mapping section theo region |
+| `cv_content_blueprints`, `cv_sample_contents` | `backend/apps/cv_templates` | Blueprint generic theo locale/experience; curated sample là optional override theo vị trí. Resolver tạo canonical preview dùng chung cho mọi template |
 | `user_cvs` | `backend/apps/cvs` | CV builder + upload (PDF/DOCX), soft-delete |
 | `cv_skills` | `backend/apps/cvs` | Nested trong API `user_cvs` |
 | `jobs` | `backend/apps/jobs` | Tin tuyển dụng lõi đã tinh gọn; lương dùng `salary_type`, có tuổi, giới tính, học vấn, kinh nghiệm và số lượng tuyển |

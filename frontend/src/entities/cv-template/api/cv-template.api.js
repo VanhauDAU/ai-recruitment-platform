@@ -30,3 +30,22 @@ export async function getCvSampleContents(locale = 'vi-VN') {
   const { data } = await api.get('/v2/cv-sample-contents/', { params: { locale } })
   return results(data)
 }
+
+export async function getCvSampleContent(publicId) {
+  const { data } = await api.get(`/v2/cv-sample-contents/${publicId}/`)
+  return data
+}
+
+export async function getCvPositionOptions(query = '') {
+  const { data } = await api.get('/v2/cv-position-options/', {
+    params: query ? { q: query } : undefined,
+  })
+  return results(data)
+}
+
+export async function getCvPositionPreview(positionPublicId, locale = 'vi-VN') {
+  const { data } = await api.get('/v2/cv-position-preview/', {
+    params: { position_public_id: positionPublicId, locale },
+  })
+  return data
+}

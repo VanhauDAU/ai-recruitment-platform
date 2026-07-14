@@ -1,94 +1,92 @@
-import { FileTextOutlined, FormOutlined } from '@ant-design/icons'
-import { Alert, Form, Input, Modal, Radio, Select, Spin, message } from 'antd'
-import { useEffect, useState } from 'react'
-import { getCvSampleContents } from '@/entities/cv-template'
-import { useSession } from '@/entities/session'
-import { createCvFromTemplate } from '../api/create-cv.api'
-import { createCvErrorMessage } from '../api/create-cv.errors'
+import { Modal, Spin } from 'antd'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { CvDocumentPreview } from '@/entities/cv'
+import { getCvTemplate } from '@/entities/cv-template'
+import { buildDocumentFromSampleContent, buildSamplePreviewDocument } from '../model/sample-preview'
+import CvSourcePanel from './CvSourcePanel'
 
-export default function UseTemplateModal({ template, open, onClose, onCreated, locale = 'vi-VN' }) {
-  const [form] = Form.useForm()
-  const { user, isAuthenticated } = useSession()
-  const [source, setSource] = useState('blank')
-  const [samples, setSamples] = useState([])
-  const [loadingSamples, setLoadingSamples] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+export default function UseTemplateModal({ template, themeColor, open, onClose, onCreated, locale = 'vi-VN' }) {
+  const [detail, setDetail] = useState(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const [sampleContent, setSampleContent] = useState(null)
+  const previewWrapRef = useRef(null)
+  const [previewZoom, setPreviewZoom] = useState(1)
+
+  // Co bản A4 (~842px cả padding) vừa khít chiều ngang cột trái, không cuộn ngang.
+  useEffect(() => {
+    if (!open) return undefined
+    const element = previewWrapRef.current
+    if (!element) return undefined
+    const fit = () => setPreviewZoom(Math.min(1, element.clientWidth / 842))
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [open, loadingDetail])
 
   useEffect(() => {
-    if (!open) return
-    form.setFieldsValue({ title: template ? `CV ${template.display_name}` : '' })
-    setSource('blank')
-    setLoadingSamples(true)
-    getCvSampleContents(locale)
-      .then(setSamples)
-      .catch(() => setSamples([]))
-      .finally(() => setLoadingSamples(false))
-  }, [form, locale, open, template])
+    if (!open || !template) return
+    setDetail(null)
+    setSampleContent(null)
+    setLoadingDetail(true)
+    let cancelled = false
+    getCvTemplate(template.slug, locale)
+      .then((data) => !cancelled && setDetail(data))
+      .catch(() => !cancelled && setDetail(null))
+      .finally(() => !cancelled && setLoadingDetail(false))
+    return () => {
+      cancelled = true
+    }
+  }, [open, template, locale])
 
-  const submit = async () => {
-    if (!isAuthenticated || user?.role !== 'candidate') {
-      message.warning('Hãy đăng nhập bằng tài khoản ứng viên để tạo CV.')
-      return
+  const previewDocument = useMemo(() => {
+    if (!detail) return null
+    if (sampleContent) {
+      return buildDocumentFromSampleContent(detail, sampleContent, themeColor)
     }
-    if (!user?.email_verified) {
-      message.warning('Bạn cần xác thực email trước khi tạo CV.')
-      return
-    }
-    const values = await form.validateFields()
-    setSubmitting(true)
-    try {
-      const cv = await createCvFromTemplate({
-        title: values.title,
-        template_public_id: template.public_id,
-        language: locale,
-        ...(source === 'sample' ? { sample_content_public_id: values.sample_content_public_id } : {}),
-      })
-      message.success('Đã tạo CV. Bạn có thể bắt đầu chỉnh sửa ngay.')
-      onCreated?.(cv)
-    } catch (error) {
-      message.error(createCvErrorMessage(error))
-    } finally {
-      setSubmitting(false)
-    }
-  }
+    return buildSamplePreviewDocument(detail, themeColor)
+  }, [detail, sampleContent, themeColor])
+
+  if (!template) return null
 
   return (
     <Modal
-      title={template ? `Dùng mẫu “${template.display_name}”` : 'Dùng mẫu CV'}
       open={open}
       onCancel={onClose}
-      onOk={submit}
-      okText="Tạo CV"
-      cancelText="Để sau"
-      confirmLoading={submitting}
+      footer={null}
+      width={1200}
+      style={{ top: 24, maxWidth: '96vw' }}
       destroyOnHidden
+      transitionName="modal-slide-down"
     >
-      <p className="mb-4 text-sm text-slate-500">Chọn một khởi đầu. Nội dung và bố cục sẽ được lưu vào bản nháp riêng của bạn.</p>
-      <Form form={form} layout="vertical" requiredMark={false}>
-        <Form.Item label="Tên CV" name="title" rules={[{ required: true, message: 'Nhập tên CV' }]}>
-          <Input maxLength={255} />
-        </Form.Item>
-        <Form.Item label="Cách bắt đầu">
-          <Radio.Group value={source} onChange={(event) => setSource(event.target.value)} className="grid w-full grid-cols-2 gap-2">
-            <Radio.Button value="blank" className="!flex !h-auto !items-center !justify-center !py-3"><FormOutlined /> Tạo từ đầu</Radio.Button>
-            <Radio.Button value="sample" className="!flex !h-auto !items-center !justify-center !py-3"><FileTextOutlined /> Dùng nội dung mẫu</Radio.Button>
-          </Radio.Group>
-        </Form.Item>
-        {source === 'sample' && (
-          <Form.Item name="sample_content_public_id" label="Nội dung mẫu" rules={[{ required: true, message: 'Chọn nội dung mẫu' }]}>
-            <Select
-              loading={loadingSamples}
-              notFoundContent={loadingSamples ? <Spin size="small" /> : 'Chưa có nội dung mẫu phù hợp'}
-              placeholder="Chọn nội dung mẫu"
-              options={samples.map((sample) => ({
-                value: sample.public_id,
-                label: `${sample.title}${sample.experience_level !== 'unspecified' ? ` · ${sample.experience_level}` : ''}`,
-              }))}
-            />
-          </Form.Item>
-        )}
-      </Form>
-      {!user?.email_verified && isAuthenticated && <Alert type="warning" showIcon message="Cần xác thực email trước khi tạo CV" />}
+      {/* Container flex/grid âm để đẩy sát lề Modal padding mặc định */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 -mx-6 -my-5 min-h-[75vh]">
+        <div className="p-6 lg:col-span-7">
+          <h2 className="mb-3 text-lg font-bold text-slate-900">Mẫu CV {template.display_name}</h2>
+          <div ref={previewWrapRef} className="h-[72vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-[#f8fafc]">
+            {loadingDetail || !previewDocument ? (
+              <div className="flex h-full items-center justify-center">
+                {loadingDetail ? <Spin /> : <p className="text-sm text-slate-500">Không tải được bản xem trước.</p>}
+              </div>
+            ) : (
+              <div style={{ zoom: previewZoom }}>
+                <CvDocumentPreview document={previewDocument} rendererKey={detail.renderer?.key} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:col-span-3 bg-slate-50 border-t lg:border-t-0 lg:border-l border-slate-200 p-6">
+          <h3 className="mb-3.5 text-base font-bold text-[var(--brand-primary)]">Bạn muốn tạo CV từ?</h3>
+          <CvSourcePanel
+            template={template}
+            locale={locale}
+            themeColor={themeColor}
+            onCreated={onCreated}
+            onSampleContentChange={setSampleContent}
+          />
+        </div>
+      </div>
     </Modal>
   )
 }

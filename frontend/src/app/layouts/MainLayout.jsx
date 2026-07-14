@@ -9,7 +9,21 @@ import { PopularSearches } from '@/widgets/popular-searches'
 
 export default function MainLayout() {
   const { pathname } = useLocation()
-  const isCvRoute = pathname.startsWith('/cvs/')
+  const isCvRoute = pathname.startsWith('/cvs/') || pathname.startsWith('/cv/')
+
+  if (isCvRoute) {
+    return (
+      <SavedJobsProvider>
+        <LoginPromptProvider>
+          <div className="min-h-screen flex flex-col bg-gray-50">
+            <main className="flex-1">
+              <Outlet />
+            </main>
+          </div>
+        </LoginPromptProvider>
+      </SavedJobsProvider>
+    )
+  }
 
   return (
     <SavedJobsProvider>
@@ -17,7 +31,7 @@ export default function MainLayout() {
         <div className="min-h-screen flex flex-col bg-gray-50">
           <Header />
           <EmailVerificationBanner verificationPath="/tai-khoan/xac-thuc-email" />
-          {!isCvRoute && <JobPreferencesReminder />}
+          <JobPreferencesReminder />
           {/* min-h-screen giữ footer + PopularSearches luôn nằm dưới fold, kể cả khi
               nội dung async chưa về — tránh footer bị đẩy xuống gây layout shift (CLS). */}
           <main className="flex-1 min-h-screen">

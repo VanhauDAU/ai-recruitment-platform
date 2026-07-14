@@ -1,34 +1,75 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { get, post, put, remove } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn() }))
+const { get, patch, post, put, remove } = vi.hoisted(() => ({
+  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
+}))
 
-vi.mock('@/shared/api/client', () => ({ default: { get, post, put, delete: remove } }))
+vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
 
 import {
   createCvSharedLink,
   createCvPdfExport,
+  deleteCv,
+  duplicateCv,
   downloadCvPdf,
   getCv,
+  getArchivedCvs,
   getCvDraft,
   getCvOwnerView,
   getCvPdfExport,
   getCvSharedLinks,
   getCvVersions,
   getSharedCv,
+  importCvFile,
   publishCvVersion,
   revokeCvSharedLink,
   retryCvPdfExport,
+  restoreCv,
   saveCvVersion,
   switchCvTemplate,
+  renameCv,
+  setDefaultCv,
   updateCvDraft,
 } from './cv.api'
 
 describe('CV V2 API', () => {
   beforeEach(() => {
     get.mockReset()
+    patch.mockReset()
     post.mockReset()
     put.mockReset()
     remove.mockReset()
+  })
+
+  it('keeps account-library metadata and file imports on V2', async () => {
+    patch.mockResolvedValue({ data: { public_id: 'cv_1', title: 'Renamed' } })
+    post.mockResolvedValue({ data: { public_id: 'cv_2', source: 'imported' } })
+    remove.mockResolvedValue({})
+    const file = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' })
+
+    await expect(renameCv('cv_1', 'Renamed')).resolves.toMatchObject({ title: 'Renamed' })
+    await expect(setDefaultCv('cv_1', true)).resolves.toMatchObject({ public_id: 'cv_1' })
+    await expect(importCvFile(file, 'Imported')).resolves.toMatchObject({ source: 'imported' })
+    await expect(deleteCv('cv_1')).resolves.toBeUndefined()
+
+    expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
+    expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
+    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData))
+    expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
+  })
+
+  it('uses explicit V2 duplicate and archive-restore contracts', async () => {
+    post.mockResolvedValueOnce({ data: { public_id: 'cv_copy' } })
+    get.mockResolvedValueOnce({ data: { results: [{ public_id: 'cv_archived' }] } })
+    post.mockResolvedValueOnce({ data: { public_id: 'cv_archived', lifecycle_status: 'draft' } })
+
+    await expect(duplicateCv('cv_1', 'Copy')).resolves.toMatchObject({ public_id: 'cv_copy' })
+    await expect(getArchivedCvs()).resolves.toEqual([{ public_id: 'cv_archived' }])
+    await expect(restoreCv('cv_archived')).resolves.toMatchObject({ lifecycle_status: 'draft' })
+
+    expect(post).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/duplicate/', { title: 'Copy' })
+    expect(get).toHaveBeenCalledWith('/v2/cvs/archived/')
+    expect(post).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_archived/restore/', {})
   })
 
   it('uses draft optimistic locking and creates versions only through save-version', async () => {

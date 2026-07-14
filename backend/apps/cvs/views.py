@@ -5,14 +5,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from common.api_deprecation import LegacyApiDeprecationMixin
 from .serializers import UserCvSerializer
 from .selectors import candidate_cvs_queryset
 from .services import UnsupportedCvUpload, archive_cv, create_builder_cv, update_builder_cv, upload_cv
 
 
-class UserCvListCreateView(generics.ListCreateAPIView):
+class UserCvListCreateView(LegacyApiDeprecationMixin, generics.ListCreateAPIView):
     serializer_class = UserCvSerializer
     permission_classes = [IsCandidate]
+    deprecation_contract = 'cvs-v1'
+    deprecation_successor = '/api/v2/cvs/'
 
     def get_queryset(self):
         return candidate_cvs_queryset(self.request.user)
@@ -21,10 +24,12 @@ class UserCvListCreateView(generics.ListCreateAPIView):
         create_builder_cv(serializer, self.request.user)
 
 
-class UserCvDetailView(generics.RetrieveUpdateDestroyAPIView):
+class UserCvDetailView(LegacyApiDeprecationMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserCvSerializer
     permission_classes = [IsCandidate]
     lookup_field = 'public_id'
+    deprecation_contract = 'cvs-v1'
+    deprecation_successor = '/api/v2/cvs/'
 
     def get_queryset(self):
         return candidate_cvs_queryset(self.request.user)
@@ -36,9 +41,11 @@ class UserCvDetailView(generics.RetrieveUpdateDestroyAPIView):
         update_builder_cv(serializer, self.request.user)
 
 
-class UserCvUploadView(APIView):
+class UserCvUploadView(LegacyApiDeprecationMixin, APIView):
     permission_classes = [IsCandidate]
     parser_classes = [parsers.MultiPartParser]
+    deprecation_contract = 'cvs-v1'
+    deprecation_successor = '/api/v2/cvs/imports/'
 
     @extend_schema(
         summary='Upload CV có sẵn (PDF/DOCX)',

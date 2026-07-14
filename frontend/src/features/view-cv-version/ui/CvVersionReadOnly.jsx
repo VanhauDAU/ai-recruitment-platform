@@ -1,5 +1,7 @@
-import { Alert, Skeleton, Tag } from 'antd'
+import { Alert, Skeleton } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { CopyOutlined, EditOutlined } from '@ant-design/icons'
 import { CvDocumentPreview } from '@/entities/cv'
 
 function documentFromVersion(version) {
@@ -11,7 +13,7 @@ function documentFromVersion(version) {
   }
 }
 
-function CvVersionReadOnly({ load, heading, inaccessibleMessage }) {
+function CvVersionReadOnly({ load, inaccessibleMessage, isOwner, publicId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(false)
 
@@ -27,28 +29,94 @@ function CvVersionReadOnly({ load, heading, inaccessibleMessage }) {
     return () => { active = false }
   }, [load])
 
-  if (error) return <main className="mx-auto max-w-4xl px-4 py-12"><Alert type="error" showIcon title={inaccessibleMessage} /></main>
-  if (!data) return <main className="mx-auto max-w-6xl px-4 py-10"><Skeleton active paragraph={{ rows: 12 }} /></main>
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      message.success('Đã sao chép liên kết CV vào bộ nhớ tạm.')
+    } catch {
+      message.error('Không thể sao chép liên kết.')
+    }
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-12">
+        <Alert type="error" showIcon message={inaccessibleMessage} />
+      </main>
+    )
+  }
+
+  if (!data) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <Skeleton active paragraph={{ rows: 12 }} />
+      </main>
+    )
+  }
 
   const { cv, version } = data
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <header className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-[var(--brand-primary)]">{heading}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-3"><h1 className="text-2xl font-extrabold text-slate-900">{cv.title}</h1><Tag color="blue">Phiên bản {version.version_number}</Tag></div>
-        <p className="mt-2 text-sm text-slate-500">Nội dung chỉ đọc từ phiên bản đã lưu, không phải bản nháp đang chỉnh sửa.</p>
+    <div
+      className="min-h-screen w-full bg-cover bg-center bg-fixed flex flex-col relative"
+      style={{ backgroundImage: "url('https://www.topcv.vn/v4/image/cv_builder/background/bg_5.png')" }}
+    >
+      {/* Lớp phủ tối nhẹ tăng độ tương phản */}
+      <div className="absolute inset-0 bg-black/10 pointer-events-none" />
+
+      {/* Thanh công cụ tối mờ cố định ở trên đầu */}
+      <header className="pointer-events-none fixed top-0 inset-x-0 h-12 bg-[#1a1a1a]/90 text-white flex items-center justify-between px-6 z-50 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.15)]">
+        <h1 className="text-[13px] font-medium text-slate-200 truncate">
+          Xem CV Online của {cv.title || 'Ứng viên'}
+        </h1>
+        <div className="pointer-events-auto flex items-center gap-3">
+          {isOwner && publicId && (
+            <Link
+              to={`/cvs/${publicId}/edit`}
+              className="flex items-center gap-1.5 rounded bg-white/10 hover:bg-white/20 transition-all px-3 py-1.5 text-xs font-bold !text-white cursor-pointer border border-transparent hover:scale-105"
+              style={{ color: '#ffffff' }}
+            >
+              <EditOutlined /> Sửa CV
+            </Link>
+          )}
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 rounded bg-white/10 hover:bg-white/20 transition-all px-3 py-1.5 text-xs font-bold text-white cursor-pointer border border-transparent hover:scale-105"
+          >
+            <CopyOutlined /> Copy CV
+          </button>
+        </div>
       </header>
-      <CvDocumentPreview document={documentFromVersion(version)} rendererKey={version.template_renderer_key} />
-    </main>
+
+      {/* Vùng cuộn chứa tài liệu A4 xem trước */}
+      <main className="flex-1 w-full pt-16 pb-12 flex justify-center items-start overflow-y-auto px-4 z-10">
+        <div className="shadow-[0_24px_64px_rgba(0,0,0,0.35)] rounded-sm bg-white overflow-hidden w-[820px] max-w-full">
+          <CvDocumentPreview document={documentFromVersion(version)} rendererKey={version.template_renderer_key} />
+        </div>
+      </main>
+    </div>
   )
 }
 
 export function OwnerCvVersionView({ publicId, loadOwnerView }) {
   const load = useCallback(() => loadOwnerView(publicId), [loadOwnerView, publicId])
-  return <CvVersionReadOnly load={load} heading="CV của bạn" inaccessibleMessage="Không thể xem CV này." />
+  return (
+    <CvVersionReadOnly
+      load={load}
+      inaccessibleMessage="Không thể xem CV này."
+      isOwner={true}
+      publicId={publicId}
+    />
+  )
 }
 
 export function SharedCvVersionView({ token, loadSharedView }) {
   const load = useCallback(() => loadSharedView(token), [loadSharedView, token])
-  return <CvVersionReadOnly load={load} heading="CV được chia sẻ" inaccessibleMessage="Liên kết chia sẻ không tồn tại hoặc đã hết hạn." />
+  return (
+    <CvVersionReadOnly
+      load={load}
+      inaccessibleMessage="Liên kết chia sẻ không tồn tại hoặc đã hết hạn."
+      isOwner={false}
+    />
+  )
 }

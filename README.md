@@ -43,14 +43,13 @@ backend/
                 cv_templates, cvs, jobs, applications, interviews, ai_core, dashboard
 frontend/
   src/
-    pages/      Trang theo 3 cổng: main/ (ứng viên + khách), employer/, admin/
-    components/ Component dùng chung
-    layouts/    AuthLayout, DashboardLayout, MainLayout, EmployerMarketingLayout
-    api/        api.js (axios + JWT interceptor), authService.js, ...
-    config/     portals.js — cấu hình 3 cổng (base path, token key, điều hướng theo role)
-    contexts/   React providers/context dùng toàn ứng dụng
-    hooks/      Hooks tái sử dụng, chỉ chứa logic hook
-    routes/     AppRoutes.jsx (mainRoutes/employerRoutes/adminRoutes), ProtectedRoute.jsx
+    app/        Composition root: providers, layouts, guards, router/lazy registry
+    pages/      Route composition theo 3 cổng: main/, employer/, admin/
+    widgets/    Khối UI lớn ghép nhiều feature/entity
+    features/   Workflow/hành động người dùng (auth, tạo/sửa/xuất CV, ...)
+    entities/   Domain API/model/UI tái sử dụng (cv, cv-template, job, session, ...)
+    shared/     HTTP client, config, hooks và UI nguyên tử không biết domain
+    test/       Vitest setup
 docs/       Tài liệu dự án — xem docs/README.md
 ```
 
@@ -107,6 +106,10 @@ CI (GitHub Actions) tự chạy `backend-ci` và `frontend-ci` trên mọi pull 
 tới `backend/` hoặc `frontend/`. Quyết định kiến trúc của đợt tái cấu trúc: [docs/adr/](docs/adr/).
 
 ## Tài liệu
+
+- [Tài liệu dự án](docs/README.md)
+- [Kiến trúc CV Builder](docs/03-database/cv-builder-architecture-foundation.md)
+- [Kế hoạch CV Builder](docs/03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md)
 
 Xem [docs/README.md](docs/README.md) cho toàn bộ tài liệu: phân tích, tổng quan, database, API, deployment, thuật toán AI, frontend.
 

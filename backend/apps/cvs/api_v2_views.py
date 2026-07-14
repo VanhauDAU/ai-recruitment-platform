@@ -5,18 +5,22 @@ import re
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404
-from rest_framework import generics, permissions, status
+from rest_framework import generics, parsers, permissions, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from apps.cv_templates.services import PositionContentUnavailable
 
 from .api_v2_serializers import (
     CvDraftSerializer,
     CvDraftWriteSerializer,
+    CvV2DuplicateSerializer,
     CvExportCreateSerializer,
     CvExportSerializer,
+    CvV2ImportSerializer,
+    CvV2MetadataUpdateSerializer,
     CvSharedLinkCreateSerializer,
     CvSharedLinkSerializer,
     CvTemplateSwitchSerializer,
@@ -27,7 +31,13 @@ from .api_v2_serializers import (
     SharedCvVersionSerializer,
 )
 from .models import CvDraft, CvExport, CvSharedLink, UserCv
-from .selectors import candidate_cv_by_public_id, candidate_cv_versions_queryset, candidate_cvs_queryset
+from .selectors import (
+    candidate_archived_cv_by_public_id,
+    candidate_archived_cvs_queryset,
+    candidate_cv_by_public_id,
+    candidate_cv_versions_queryset,
+    candidate_cvs_queryset,
+)
 from .services import (
     CvLifecyclePolicyError,
     CvExportPermissionError,
@@ -36,8 +46,12 @@ from .services import (
     CvSharePermissionError,
     CvShareUnavailableError,
     StaleDraftError,
+    UnsupportedCvUpload,
+    archive_cv,
     create_shared_link,
     create_v2_cv,
+    duplicate_cv,
+    import_v2_cv,
     export_download_ready,
     owner_cv_export,
     owner_view_version,
@@ -45,8 +59,10 @@ from .services import (
     resolve_shared_link,
     revoke_shared_link,
     retry_cv_export,
+    restore_cv,
     save_draft_as_version,
     switch_draft_template,
+    update_cv_metadata,
     update_draft,
 )
 
@@ -104,7 +120,11 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
                 template=serializer.validated_data['template_public_id'],
                 language=serializer.validated_data['language'],
                 sample_content=serializer.validated_data.get('sample_content_public_id'),
+                position=serializer.validated_data.get('position_public_id'),
+                theme_color=serializer.validated_data.get('theme_color'),
             )
+        except PositionContentUnavailable as error:
+            raise ValidationError({'position_public_id': str(error)}) from error
         except CvLifecyclePolicyError as error:
             raise PermissionDenied(str(error)) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
@@ -116,6 +136,77 @@ class CvV2DetailView(CandidateV2CvMixin, APIView):
     def get(self, request, public_id):
         return Response(CvV2Serializer(self.get_cv()).data)
 
+    def patch(self, request, public_id):
+        cv = self.get_cv()
+        serializer = CvV2MetadataUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        updated_cv = update_cv_metadata(cv=cv, actor=request.user, **serializer.validated_data)
+        return Response(CvV2Serializer(updated_cv).data)
+
+    def delete(self, request, public_id):
+        archive_cv(self.get_cv())
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CvV2ArchivedListView(generics.ListAPIView):
+    permission_classes = [IsCandidate]
+    serializer_class = CvV2Serializer
+
+    def get_queryset(self):
+        return candidate_archived_cvs_queryset(self.request.user)
+
+
+class CvV2RestoreView(APIView):
+    permission_classes = [IsCandidate]
+
+    def post(self, request, public_id):
+        try:
+            cv = candidate_archived_cv_by_public_id(request.user, public_id)
+        except UserCv.DoesNotExist as error:
+            raise Http404 from error
+        try:
+            restored_cv = restore_cv(cv=cv, actor=request.user)
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
+        return Response(CvV2Serializer(restored_cv).data)
+
+
+class CvV2DuplicateView(CandidateV2CvMixin, APIView):
+    model = UserCv
+
+    def post(self, request, public_id):
+        serializer = CvV2DuplicateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            duplicate = duplicate_cv(
+                cv=self.get_cv(),
+                actor=request.user,
+                title=serializer.validated_data.get('title', ''),
+            )
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
+        return Response(CvV2Serializer(duplicate).data, status=status.HTTP_201_CREATED)
+
+
+class CvV2ImportView(APIView):
+    """Import a user-owned PDF/DOCX without exposing a storage URL."""
+
+    permission_classes = [IsCandidate]
+    parser_classes = [parsers.MultiPartParser]
+
+    def post(self, request):
+        serializer = CvV2ImportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            cv = import_v2_cv(
+                actor=request.user,
+                upload=serializer.validated_data['file'],
+                title=serializer.validated_data.get('title', ''),
+            )
+        except UnsupportedCvUpload as error:
+            raise ValidationError({'file': str(error)}) from error
+        return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
+
 
 def read_only_cv_payload(cv, version):
     return {
@@ -123,6 +214,7 @@ def read_only_cv_payload(cv, version):
             'public_id': cv.public_id,
             'title': cv.title,
             'language': cv.language,
+            'is_default': cv.is_default,
         },
         'version': SharedCvVersionSerializer(version).data,
     }

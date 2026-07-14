@@ -52,8 +52,24 @@ class InvalidApplicationStatusTransition(ValueError):
 
 
 @transaction.atomic
+def create_application_record(*, candidate, job, cv, cover_letter='', source_version=None):
+    """Persist one candidate application and its immutable selected CV snapshot."""
+    snapshot = create_application_snapshot(cv, candidate, source_version=source_version)
+    return Application.objects.create(
+        candidate=candidate,
+        job=job,
+        cv=cv,
+        submitted_cv_version=snapshot,
+        submitted_cv_title=cv.title,
+        submitted_cv_source=cv.source,
+        submitted_at=timezone.now(),
+        cover_letter=cover_letter,
+    )
+
+
+@transaction.atomic
 def create_application(serializer, candidate):
-    """Persist an application and freeze the candidate's chosen CV in one transaction."""
+    """Compatibility adapter for the legacy application serializer."""
     cv = serializer.validated_data['cv']
     snapshot = create_application_snapshot(cv, candidate)
     return serializer.save(

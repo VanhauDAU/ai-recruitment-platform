@@ -10,7 +10,7 @@ test('public smoke: home and jobs routes load', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
 })
 
-test('public smoke: CV template catalogue opens a template detail and use modal', async ({ page }) => {
+test('public smoke: CV template colors change preview and detail offers the create flow', async ({ page }) => {
   await mockPublicApi(page)
   const card = {
     public_id: 'tpl_modern',
@@ -20,17 +20,45 @@ test('public smoke: CV template catalogue opens a template detail and use modal'
     thumbnail_url: '',
     is_premium: false,
     theme_color: '#00A66A',
+    colors: [
+      { public_id: 'green', slug: 'green', name: 'Xanh', hex_code: '#00A66A', preview_url: '/green.png', is_default: true },
+      { public_id: 'blue', slug: 'blue', name: 'Xanh dương', hex_code: '#2255AA', preview_url: '/blue.png', is_default: false },
+    ],
     categories: [{ public_id: 'cat_style', slug: 'modern', name: 'Hiện đại', type: 'style' }],
     tags: [{ public_id: 'cat_ats', slug: 'ats', name: 'Thân thiện ATS', type: 'feature' }],
   }
   await page.route('http://localhost:8000/api/v2/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const url = new URL(route.request().url())
+    const path = url.pathname
     const body = path === '/api/v2/cv-templates/'
       ? { count: 1, results: [card] }
       : path === '/api/v2/cv-templates/modern/'
         ? { ...card, preview_url: '', renderer: { key: 'classic_single_column_v1', version: '1', schema_version: 1, capabilities: {} }, sections: [] }
         : path === '/api/v2/cv-templates/modern/related/'
           ? []
+          : path === '/api/v2/cv-position-options/'
+            ? [
+                { public_id: 'jobcat_customer_service', name_vi: 'Nhân viên CSKH' },
+                { public_id: 'jobcat_frontend', name_vi: 'Frontend Developer' },
+              ]
+            : path === '/api/v2/cv-position-preview/'
+              ? {
+                  position_public_id: url.searchParams.get('position_public_id'),
+                  name_vi: 'Nhân viên CSKH',
+                  locale: url.searchParams.get('locale'),
+                  source: 'blueprint',
+                  content_json: {
+                    locale: url.searchParams.get('locale'),
+                    personal_info: {
+                      full_name: '',
+                      headline: url.searchParams.get('locale') === 'en-US'
+                        ? 'Customer Service Representative'
+                        : 'Nhân viên CSKH',
+                      email: '', phone: '', address: '', links: [],
+                    },
+                    sections: [],
+                  },
+                }
           : path === '/api/v2/cv-categories/' || path === '/api/v2/cv-sample-contents/'
             ? []
             : {}
@@ -38,14 +66,27 @@ test('public smoke: CV template catalogue opens a template detail and use modal'
   })
 
   await page.goto('/mau-cv')
-  await expect(page.getByRole('heading', { name: 'Chọn mẫu CV, khởi đầu thật tự tin' })).toBeVisible()
-  await expect(page.getByText('Modern', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Dùng mẫu' }).click()
-  await expect(page.getByText('Dùng mẫu “Modern”')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Mẫu CV xin việc/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Xem trước Modern' })).toHaveAttribute('src', '/green.png')
+  await page.getByRole('radio', { name: 'Xanh dương' }).hover()
+  await expect(page.getByRole('img', { name: 'Xem trước Modern' })).toHaveAttribute('src', '/blue.png')
+  const cardText = page.getByText('Modern', { exact: true })
+  await cardText.hover()
+  await page.getByRole('button', { name: 'Dùng mẫu' }).click({ force: true })
+  await expect(page.getByText('Mẫu CV Modern')).toBeVisible()
+  await expect(page.getByText('Bạn muốn tạo CV từ?')).toBeVisible()
+  await page.getByRole('button', { name: /Nội dung CV mẫu/ }).click()
+  await expect(page.getByText('Nhân viên CSKH', { exact: true }).first()).toBeVisible()
+  await page.getByRole('combobox').click()
+  await page.getByRole('combobox').fill('Frontend')
+  await expect(page.getByRole('option', { name: 'Frontend Developer' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Tiếng Anh' }).click()
+  await expect(page.getByText('Customer Service Representative')).toBeVisible()
 
-  await page.goto('/mau-cv/modern')
+  await page.goto('/mau-cv/chi-tiet/modern')
   await expect(page.getByRole('heading', { name: 'Modern' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Dùng mẫu này' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Tạo CV', exact: true })).toBeVisible()
 })
 
 test('public smoke: a shared CV link renders its immutable version', async ({ page }) => {

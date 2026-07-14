@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from apps.jobs.models import JobCategory
+
 from .models import CvCategory, CvSampleContent, CvTemplate
 
 
@@ -20,10 +22,27 @@ def _catalog_groups(template):
     return categories, tags
 
 
+def _catalog_colors(template):
+    return [
+        {
+            'public_id': link.color.public_id,
+            'name': link.color.name,
+            'slug': link.color.slug,
+            'hex_code': link.color.hex_code,
+            'thumbnail_url': link.thumbnail_url or template.thumbnail_url,
+            'preview_url': link.preview_url or link.thumbnail_url or template.preview_url or template.thumbnail_url,
+            'is_default': link.is_default,
+        }
+        for link in getattr(template, 'catalog_color_links', [])
+    ]
+
+
 class CvTemplateCardSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     theme_color = serializers.SerializerMethodField()
+    color_variants = serializers.SerializerMethodField()
+    colors = serializers.SerializerMethodField()
     categories = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
 
@@ -31,7 +50,7 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         model = CvTemplate
         fields = [
             'public_id', 'slug', 'display_name', 'description', 'thumbnail_url',
-            'is_premium', 'theme_color', 'categories', 'tags',
+            'is_premium', 'theme_color', 'color_variants', 'colors', 'categories', 'tags',
         ]
         read_only_fields = fields
 
@@ -44,7 +63,15 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         return localization.description if localization else template.description
 
     def get_theme_color(self, template):
-        return template.current_published_version.default_style_json.get('theme_color', '#00A66A')
+        colors = _catalog_colors(template)
+        default = next((item for item in colors if item['is_default']), colors[0] if colors else None)
+        return default['hex_code'] if default else template.current_published_version.default_style_json.get('theme_color', '#00A66A')
+
+    def get_color_variants(self, template):
+        return [item['hex_code'] for item in _catalog_colors(template)] or [self.get_theme_color(template)]
+
+    def get_colors(self, template):
+        return _catalog_colors(template)
 
     def get_categories(self, template):
         return _catalog_groups(template)[0]
@@ -93,8 +120,43 @@ class CvCategorySerializer(serializers.ModelSerializer):
 
 class CvSampleContentCardSerializer(serializers.ModelSerializer):
     job_category_name = serializers.CharField(source='job_category.name', read_only=True)
+    job_category_slug = serializers.CharField(source='job_category.slug', read_only=True)
+    position_name_vi = serializers.SerializerMethodField()
+    position_name = serializers.SerializerMethodField()
+
+    def get_position_name_vi(self, obj):
+        return obj.position_name_vi or (obj.job_category.name if obj.job_category_id else obj.title)
+
+    def get_position_name(self, obj):
+        content = obj.content_json if isinstance(obj.content_json, dict) else {}
+        personal_info = content.get('personal_info', {})
+        if isinstance(personal_info, dict) and personal_info.get('headline'):
+            return personal_info['headline']
+        return obj.job_category.name if obj.job_category_id else obj.title
 
     class Meta:
         model = CvSampleContent
-        fields = ['public_id', 'title', 'locale', 'experience_level', 'job_category_name']
+        fields = [
+            'public_id', 'title', 'locale', 'experience_level', 'job_category_name',
+            'job_category_slug', 'position_name_vi', 'position_name',
+        ]
         read_only_fields = fields
+
+
+class CvSampleContentDetailSerializer(CvSampleContentCardSerializer):
+    class Meta(CvSampleContentCardSerializer.Meta):
+        fields = CvSampleContentCardSerializer.Meta.fields + ['content_json', 'schema_version']
+        read_only_fields = fields
+
+
+class CvPositionOptionSerializer(serializers.ModelSerializer):
+    name_vi = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobCategory
+        fields = ['public_id', 'name_vi']
+        read_only_fields = fields
+
+    def get_name_vi(self, obj):
+        localizations = getattr(obj, 'cv_picker_localizations', [])
+        return localizations[0].display_name if localizations else obj.name

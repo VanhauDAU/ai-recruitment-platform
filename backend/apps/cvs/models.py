@@ -45,6 +45,13 @@ class UserCv(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cvs')
     template = models.ForeignKey('cv_templates.CvTemplate', on_delete=models.SET_NULL, null=True, blank=True, related_name='cvs')
+    position = models.ForeignKey(
+        'jobs.JobCategory',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='candidate_cvs',
+    )
     cv_type = models.CharField(max_length=50, choices=CvType.choices)
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.BUILDER)
     title = models.CharField(max_length=255)
@@ -119,6 +126,11 @@ class UserCv(models.Model):
             models.CheckConstraint(
                 check=models.Q(status__in=['draft', 'uploaded', 'processing', 'analyzed', 'failed']),
                 name='chk_user_cvs_status',
+            ),
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(is_default=True, is_deleted=False),
+                name='uq_user_active_default_cv',
             ),
         ]
 

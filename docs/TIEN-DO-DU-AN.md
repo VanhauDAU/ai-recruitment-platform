@@ -379,8 +379,12 @@ build đều pass.
 
 | # | Công việc | Trạng thái |
 | --- | --- | --- |
-| 4.1 | Bảng `cv_versions` (undo/restore) | ⬜ |
-| 4.2 | Bảng `cv_exports` + export PDF | ⬜ |
+| 4.1 | `cv_versions` + draft/history/owner/share lifecycle | ✅ |
+| 4.2 | `cv_exports` + immutable PDF export | ✅ |
+| 4.3 | Template taxonomy/color many-to-many + preview asset theo màu | ✅ |
+| 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/archive/restore/default) | ✅ — V2 workflow, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
+| 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
+| 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — V2 upload PDF/DOCX xong, còn parse/LinkedIn/AI review |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -388,6 +392,54 @@ build đều pass.
 <summary><b>CVB-0</b> — Stabilization (runtime + migration + tạo CV)</summary>
 
 **Migration snapshot application (expand → backfill → contract):** tách `applications.0004` gộp thành `0004_application_snapshot_expand` (thêm cột nullable) + `0005_application_snapshot_backfill` (chỉ dữ liệu, `atomic=False`, **idempotent** — reuse `cvv-application-{pk}` thay vì tạo trùng) + `0006_application_snapshot_contract` (guard hết NULL rồi mới NOT NULL + index). Lỗi thật đã tái hiện trên PostgreSQL 16: bản gộp cũ crash `duplicate key cvv-application-1` khi reverse→re-apply (đúng kiểu "merge nhiều lần vẫn lỗi"); bản tách xử lý đúng. Thêm `apps/applications/tests_migrations.py` — test nâng cấp qua `MigrationExecutor` seed application legacy ở `0003` rồi migrate lên mới nhất, chạy trên Postgres thật (vào CI qua `manage.py test`). **Khóa Python 3.11:** `.python-version` (root + backend), CI 3.13→3.11, `scripts/bootstrap-backend.sh`, `docs/setup-development.md`. **Error mapping tạo CV:** `createCvErrorMessage` map cụ thể backend-down / template chưa publish / sample sai / email chưa xác thực / 401·403·404·409·5xx (trước đây lỗi field 400 của DRF rơi vào message chung), có unit test, nối vào `UseTemplateModal`. Verify: backend `check` + `makemigrations --check` + 141 test pass; frontend lint + architecture + 125 unit test + build pass; **không `--fake`, không reset DB**.
+
+</details>
+
+<details>
+<summary><b>CVB-0.2</b> — 🟡 CV API V1→V2 cutover</summary>
+
+V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/archive, `POST /api/v2/cvs/imports/` cho PDF/DOCX, `POST …/duplicate/` cho builder CV và archive list/restore owner-only trong restore window. Trang “CV của tôi” gọi entity API V2, upload nhận phản hồi backend thật và không còn gọi V1. V1 vẫn chạy để client cũ không gãy, nhưng trả `Deprecation`, `Sunset`, successor `Link` và event telemetry tối thiểu không chứa PII. Không tạo `/api/v1/`, không redirect request ghi; chỉ chuyển sang `410` trong release riêng sau khi telemetry cho thấy usage V1 bằng 0.
+
+</details>
+
+<details>
+<summary><b>CVB-4</b> — ✅ Candidate application chọn version</summary>
+
+Job detail compose feature `apply-for-job`; feature đọc CV owner, buộc candidate
+chọn một `CvVersion` bất biến và gửi `POST /api/v2/applications/`. Backend xác
+thực job active, CV owner/active, version thuộc đúng CV và loại trừ internal
+`application_snapshot`; transaction tạo snapshot từ đúng version được chọn mà
+không làm đổi draft/latest/published pointer. V1 applications không bị đổi hoặc
+redirect trong lát cắt này. Verify: 46 backend application/CV tests, 131
+frontend unit tests và 22 smoke desktop/mobile.
+
+</details>
+
+<details>
+<summary><b>CVB-0.1</b> — Hardening stabilization (idempotent migration + preflight + repair)</summary>
+
+**bootstrap-backend.sh:** phát hiện `backend/venv` cũ sai phiên bản (đọc `venv/bin/python`) và **từ chối cài dependencies** vào venv đó (kèm hướng dẫn), thêm cờ `--recreate` để xóa+tạo lại, và chốt chặn cuối kiểm tra interpreter active đúng 3.11 trước khi `pip install`. **Migration idempotent (khôi phục DB partial-failure):** `0004` bọc trong `SeparateDatabaseAndState` — state vẫn là 4 `AddField` (nên `makemigrations --check` sạch + DB mới không đổi) nhưng DB-side là DDL có guard `IF NOT EXISTS`/kiểm tra cột nên chạy lại trên DB đã có sẵn cột (do migration cũ chạy dở, chưa ghi) là no-op thay vì crash "column already exists"; `0006` index tạo bằng `CREATE INDEX IF NOT EXISTS` + `SET NOT NULL` vốn idempotent; `0005` backfill khi **tái sử dụng** snapshot nay kiểm tra đúng `cv_id` và `version_kind='application_snapshot'`, sai thì raise loud thay vì mislink nhầm CV cho recruiter. **Preflight command** `manage.py cv_snapshot_preflight` (chỉ đọc): báo cáo migration state, cột/index tồn tại, số application thiếu snapshot, và inconsistency (snapshot sai cv_id/kind, orphan `cvv-application-{pk}`); exit 1 khi có vấn đề để CI/deploy chặn; cờ `--repair` chạy backfill idempotent có guard (không drop/reset/`--fake`). **Tests:** `tests_migrations.py` phủ 6 ca — clean / legacy / **partial migration** (cột tồn tại nhưng chưa ghi) / **snapshot đã tồn tại** (reuse không nhân đôi) / **repair hai lần** (idempotent) / **mismatch bị từ chối**; `tests_v2.py` thêm 2 test khẳng định tạo CV trắng + từ sample trả `201` và dựng đủ `UserCv` + `CvVersion` initial + `CvDraft`. Verify đầy đủ: `check` + `makemigrations --check` + `migrate` + **148 backend test**; frontend lint + architecture + **125 test (coverage 84.65%)** + build + **18 e2e smoke**; `git diff --check` sạch. DB local: healthy trước và sau (preflight OK, 0 thiếu snapshot, 0 inconsistency).
+
+</details>
+
+<details>
+<summary><b>CVB-1</b> — ✅ Redesign trang mẫu CV + create flow</summary>
+
+**Trang `/mau-cv`:** breadcrumb/tiêu đề theo locale, grid 3 cột, infinite scroll, filter category/tag từ API, card màu và related templates. `UseTemplateModal` cùng trang detail compose `CvSourcePanel`; preview dùng renderer thật, blank/sample map vào `POST /api/v2/cvs/`. Các nguồn previous CV/upload/restore vẫn được ghi rõ là chưa có backend và không được coi là hoàn tất. Verify hiện tại: lint + architecture, 127 unit tests, build và 18 smoke E2E desktop/mobile pass.
+
+</details>
+
+<details>
+<summary><b>CVB-1.1</b> — ✅ URL theo ngôn ngữ + nội dung mẫu theo vị trí</summary>
+
+**URL kho mẫu theo ngôn ngữ:** `/mau-cv`, `/mau-cv-tieng-anh|nhat|trung` cùng route detail/category; locale-paths là một nguồn ánh xạ. Position picker đọc 61 `JobCategory` specialization, chỉ hiển thị `name_vi` có tìm kiếm và giữ opaque `public_id`. Baseline localization có đủ 4 locale. Preview resolver dùng curated sample nếu có, nếu không dùng blueprint admin-configurable; một canonical document render trên mọi template, không nhân sample theo template.
+
+</details>
+
+<details>
+<summary><b>CVB-1.2</b> — ✅ Category/color từ database và lưu màu vào CV</summary>
+
+`CvTemplate` liên kết nhiều-nhiều với `CvCategory` và `CvColor` qua hai bảng link. Link màu giữ `thumbnail_url`, `preview_url`, `sort_order`, `is_default`; public API trả `colors[]`, card hover/focus đổi đúng asset URL. `POST /api/v2/cvs/` nhận `theme_color`, validate màu active thuộc template rồi ghi vào initial version/draft. Migration `cv_templates.0004` backfill JSON cũ, seed chuyển category legacy và tạo palette; admin quản lý registry + inline link. `theme_color`/`color_variants` vẫn được giữ tương thích trong giai đoạn dual-read, không còn là nguồn chuẩn của frontend mới. Chi tiết và backlog: [kế hoạch CV Builder](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
 
 </details>
 
@@ -507,4 +559,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-14 (CV Builder Giai đoạn 0 — stabilization: tách migration snapshot expand/backfill/contract + test nâng cấp, khóa Python 3.11, error mapping tạo CV)
+Cập nhật lần cuối: 2026-07-15 (CVB-1.1 — position-driven picker từ taxonomy, 61 vị trí × 4 localization, blueprint/curated resolver dùng chung mọi template, popup A4 fit-width không cuộn ngang)
