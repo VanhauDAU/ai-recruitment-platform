@@ -5,6 +5,7 @@ import json
 
 from django.db import transaction
 from django.db.models import Max
+from django.utils import timezone
 
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import canonicalize_legacy_cv_data, validate_cv_document
@@ -126,6 +127,10 @@ def create_version(
 @transaction.atomic
 def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_lock_version, client_session_id=''):
     """Autosave with compare-and-swap semantics; raises on stale client state."""
+    if cv.is_deleted or cv.lifecycle_status == UserCv.LifecycleStatus.ARCHIVED:
+        from .lifecycle import CvLifecyclePolicyError
+
+        raise CvLifecyclePolicyError('Archived or deleted CVs cannot be changed.')
     validate_cv_document(
         content_json=content_json,
         layout_json=layout_json,
@@ -140,9 +145,17 @@ def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_l
         lock_version=expected_lock_version + 1,
         client_session_id=client_session_id,
         updated_by=actor,
+        updated_at=timezone.now(),
     )
     if updated != 1:
         raise StaleDraftError('This draft was updated in another session. Refresh and merge before saving.')
+    # V2 is the canonical writer, but V1 clients continue to read these legacy
+    # projections during the controlled dual-write migration window.
+    UserCv.objects.filter(pk=cv.pk).update(
+        cv_data=content_json,
+        style_config=style_json,
+        updated_at=timezone.now(),
+    )
     return CvDraft.objects.get(cv=cv)
 
 
@@ -151,23 +164,28 @@ def sync_legacy_builder_draft(cv, actor):
     if cv.cv_type != UserCv.CvType.BUILDER:
         return None
     content, layout, style = canonicalize_legacy_cv_data(cv.cv_data, cv.style_config, cv.language)
+    draft = CvDraft.objects.filter(cv=cv).first()
+    # A V2 autosave mirrors canonical content into the legacy projection. If a
+    # legacy client later edits metadata/content, it must not silently discard
+    # the V2 region layout that legacy never knew how to represent.
+    if draft is not None and isinstance(cv.cv_data, dict) and cv.cv_data.get('schema_version') == 1:
+        layout = draft.layout_json
     validate_cv_document(
         content_json=content,
         layout_json=layout,
         style_json=style,
         schema_version=1,
     )
-    draft, _ = CvDraft.objects.get_or_create(
-        cv=cv,
-        defaults={
-            'base_version': cv.latest_version,
-            'content_json': content,
-            'layout_json': layout,
-            'style_json': style,
-            'updated_by': actor,
-        },
-    )
-    if draft.pk:
+    if draft is None:
+        return CvDraft.objects.create(
+            cv=cv,
+            base_version=cv.latest_version,
+            content_json=content,
+            layout_json=layout,
+            style_json=style,
+            updated_by=actor,
+        )
+    else:
         draft.content_json = content
         draft.layout_json = layout
         draft.style_json = style

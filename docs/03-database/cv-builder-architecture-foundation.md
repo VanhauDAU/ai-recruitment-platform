@@ -28,6 +28,11 @@ renderer version, schema/layout/style defaults và capabilities. Component khôn
 được lưu trong database: `renderer_key` chỉ map tới renderer đã deploy trong
 `apps.cv_templates.renderers`.
 
+Sau khi một `CvTemplateVersion` được published, ORM không cho sửa renderer,
+schema, layout/style/default/capability hoặc section của version đó; chỉ được
+chuyển version sang `retired`. Vì vậy CV đã ghim version sẽ không thay đổi cách
+render do một lần chỉnh template sau này.
+
 `CvSectionDefinition` là registry DB, được seed từ registry code
 template-agnostic. `CvTemplateSection` chỉ cấu hình section theo region/version,
 không định nghĩa một schema content riêng cho từng template.
@@ -48,3 +53,54 @@ không định nghĩa một schema content riêng cho từng template.
 
 Giới hạn đã biết của backfill: ứng dụng cũ chỉ nhận được snapshot “best
 available at migration time”; không thể tái tạo nội dung lịch sử trước đó.
+
+## API V2 lifecycle
+
+Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
+`/api/cvs/` để autosave:
+
+- `POST /api/v2/cvs/` tạo CV từ một template published;
+- `GET|PUT /api/v2/cvs/{public_id}/draft/` đọc/autosave canonical draft;
+- `POST /api/v2/cvs/{public_id}/save-version/` tạo `manual_save` immutable;
+- `POST /api/v2/cvs/{public_id}/publish/` tạo `published` immutable;
+- `GET /api/v2/cvs/{public_id}/versions/` đọc history immutable;
+- `GET /api/v2/recruiter/applications/{application_public_id}/cv/` chỉ trả
+  `submitted_cv_version` khi recruiter là người đăng Job hoặc member đã duyệt
+  của công ty.
+
+`PUT draft`, save và publish bắt buộc gửi `If-Match:
+"lock-version-N"`. Stale lock trả `409` cùng `current_lock_version`; client
+phải reload/merge thay vì ghi đè. Autosave không tạo `CvVersion`.
+
+## Template Catalog và Create CV Flow
+
+Public catalogue chỉ đọc `CvTemplate` đang `active`, có lifecycle `published`,
+localization đang active và `current_published_version` đang `published`. Các
+route V2 là:
+
+- `GET /api/v2/cv-templates/?locale=vi-VN&category=...&tag=...` trả contract
+  card gọn: public ID, slug, localized name/description, thumbnail, premium,
+  theme color, categories và tags — không trả layout/style hoặc renderer config;
+- `GET /api/v2/cv-templates/{slug}/` trả metadata preview, renderer capability
+  an toàn và danh sách section, vẫn không trả configuration JSON;
+- `GET /api/v2/cv-templates/{slug}/related/`, `GET /api/v2/cv-categories/` và
+  `GET /api/v2/cv-sample-contents/` đều là public metadata có cache control/ETag.
+
+`CvCategory.category_type=feature` là tag. `CvTemplateLocalization` giữ tên,
+mô tả và SEO theo locale; `default_style_json.theme_color` của **published
+template version** là nguồn màu cho card/preview. `CvSampleContent` chỉ chứa
+canonical content theo locale/vị trí/cấp độ; public API không bao giờ trả
+`content_json`.
+
+`POST /api/v2/cvs/` nhận `template_public_id`, `language`, title và tùy chọn
+`sample_content_public_id`. Trong một transaction, service khóa template và
+sample, kiểm tra version hiện hành đúng thuộc template và đang published, clone
+canonical sample hoặc content trắng, dựng layout từ section registry, clone
+style của version, tạo `UserCv`, immutable initial `CvVersion` và `CvDraft`.
+Vì `CvVersion.template_version` được set lúc này, CV luôn ghim chính xác template
+version đã published; việc xuất bản template mới không làm thay đổi CV cũ.
+
+Frontend catalog dùng độc quyền `/api/v2/*`; sau khi tạo thành công nó điều
+hướng candidate đến `/cvs/{public_id}/edit`. Route này hiện là điểm vào bảo vệ
+cho Builder ở phase kế tiếp, không ngụ ý Builder/drag-and-drop đã được triển
+khai.

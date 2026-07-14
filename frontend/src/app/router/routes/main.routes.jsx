@@ -17,6 +17,7 @@ import {
   MainRegisterPage,
   OAuthCallbackPage,
   CookiePolicyPage,
+  CvEditorPlaceholderPage,
   OnboardUserPage,
   OnboardUserSettingPage,
   PersonalInfoPage,
@@ -24,6 +25,8 @@ import {
   TwoFactorAuthenticationPage,
   ResetPasswordPage,
   SavedJobsPage,
+  TemplateCatalogPage,
+  TemplateDetailPage,
   VerifyEmailPage,
 } from '../lazy/main.pages'
 import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
@@ -57,12 +60,17 @@ export function mainRoutes() {
       <Route path="/blog/danh-muc/:categorySlug" element={<BlogCategoryPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
+      <Route path="/mau-cv" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv/:slug" element={<TemplateDetailPage />} />
+      <Route path="/cv-templates" element={<TemplateCatalogPage />} />
+      <Route path="/cv-templates/:slug" element={<TemplateDetailPage />} />
 
       {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
           nhập. Route con sinh từ entities/account/config (một nguồn duy nhất);
           khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
+          <Route path="/cvs/:publicId/edit" element={<CvEditorPlaceholderPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
             {ACCOUNT_LAYOUT_ITEMS.map((item) => {

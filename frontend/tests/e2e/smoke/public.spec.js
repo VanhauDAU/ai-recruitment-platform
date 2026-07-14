@@ -9,3 +9,41 @@ test('public smoke: home and jobs routes load', async ({ page }) => {
   await page.goto('/viec-lam')
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
 })
+
+test('public smoke: CV template catalogue opens a template detail and use modal', async ({ page }) => {
+  await mockPublicApi(page)
+  const card = {
+    public_id: 'tpl_modern',
+    slug: 'modern',
+    display_name: 'Modern',
+    description: 'Bố cục hiện đại',
+    thumbnail_url: '',
+    is_premium: false,
+    theme_color: '#00A66A',
+    categories: [{ public_id: 'cat_style', slug: 'modern', name: 'Hiện đại', type: 'style' }],
+    tags: [{ public_id: 'cat_ats', slug: 'ats', name: 'Thân thiện ATS', type: 'feature' }],
+  }
+  await page.route('http://localhost:8000/api/v2/**', async (route) => {
+    const path = new URL(route.request().url()).pathname
+    const body = path === '/api/v2/cv-templates/'
+      ? { count: 1, results: [card] }
+      : path === '/api/v2/cv-templates/modern/'
+        ? { ...card, preview_url: '', renderer: { key: 'classic_single_column_v1', version: '1', schema_version: 1, capabilities: {} }, sections: [] }
+        : path === '/api/v2/cv-templates/modern/related/'
+          ? []
+          : path === '/api/v2/cv-categories/' || path === '/api/v2/cv-sample-contents/'
+            ? []
+            : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/mau-cv')
+  await expect(page.getByRole('heading', { name: 'Chọn mẫu CV, khởi đầu thật tự tin' })).toBeVisible()
+  await expect(page.getByText('Modern', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Dùng mẫu' }).click()
+  await expect(page.getByText('Dùng mẫu “Modern”')).toBeVisible()
+
+  await page.goto('/mau-cv/modern')
+  await expect(page.getByRole('heading', { name: 'Modern' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dùng mẫu này' })).toBeVisible()
+})

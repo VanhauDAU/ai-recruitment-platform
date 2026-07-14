@@ -51,14 +51,16 @@ export const HEADER_NAVIGATION = [
   {
     key: 'cv',
     label: 'Tạo CV',
+    to: '/mau-cv',
+    activePaths: ['/cv-templates'],
     columns: [
       [
         {
           title: 'Mẫu CV theo style',
           items: [
-            soon('Mẫu CV Đơn giản', <AppstoreOutlined />),
-            soon('Mẫu CV Ấn tượng', <CompassOutlined />),
-            soon('Mẫu CV Chuyên nghiệp', <StarOutlined />),
+            { label: 'Khám phá tất cả mẫu CV', to: '/mau-cv', icon: <AppstoreOutlined /> },
+            { label: 'Mẫu CV Đơn giản', to: '/mau-cv', icon: <CompassOutlined /> },
+            { label: 'Mẫu CV Chuyên nghiệp', to: '/mau-cv', icon: <StarOutlined /> },
             soon('Mẫu CV Harvard', <HighlightOutlined />),
           ],
         },
