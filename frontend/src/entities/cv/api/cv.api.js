@@ -1,5 +1,10 @@
 import api from '@/shared/api/client'
 
+export async function getMyCvs() {
+  const { data } = await api.get('/v2/cvs/')
+  return Array.isArray(data) ? data : data.results || []
+}
+
 export async function getCv(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/`)
   return data

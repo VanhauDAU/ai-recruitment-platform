@@ -1,15 +1,17 @@
 import { ArrowLeftOutlined, CheckCircleFilled, FileAddOutlined } from '@ant-design/icons'
 import { Button, Empty, Skeleton, Tag } from 'antd'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { CvTemplateCard, CvTemplatePreview, getCvTemplate, getRelatedCvTemplates } from '@/entities/cv-template'
 import { UseTemplateModal } from '@/features/create-cv-from-template'
-
-const LOCALE = 'vi-VN'
+import { catalogLocaleFromPath } from './locale-paths'
 
 export default function TemplateDetail() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  // pathname = /mau-cv-tieng-anh/chi-tiet/:slug → catalogLocaleFromPath vẫn detect đúng locale
+  const { locale, path: basePath } = catalogLocaleFromPath(pathname)
   const [template, setTemplate] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,7 +21,7 @@ export default function TemplateDetail() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    Promise.all([getCvTemplate(slug, LOCALE), getRelatedCvTemplates(slug, LOCALE)])
+    Promise.all([getCvTemplate(slug, locale), getRelatedCvTemplates(slug, locale)])
       .then(([detail, recommendations]) => {
         if (cancelled) return
         setTemplate(detail)
@@ -30,15 +32,15 @@ export default function TemplateDetail() {
       .catch(() => !cancelled && setTemplate(null))
       .finally(() => !cancelled && setLoading(false))
     return () => { cancelled = true }
-  }, [slug])
+  }, [slug, locale])
 
   if (loading) return <div className="mx-auto max-w-6xl px-4 py-10"><Skeleton active avatar paragraph={{ rows: 8 }} /></div>
-  if (!template) return <div className="mx-auto max-w-6xl px-4 py-16"><Empty description="Mẫu CV không tồn tại hoặc đã ngừng phát hành"><Link to="/mau-cv"><Button>Về kho mẫu</Button></Link></Empty></div>
+  if (!template) return <div className="mx-auto max-w-6xl px-4 py-16"><Empty description="Mẫu CV không tồn tại hoặc đã ngừng phát hành"><Link to={basePath}><Button>Về kho mẫu</Button></Link></Empty></div>
 
   return (
     <div className="bg-slate-50 py-6 md:py-10">
       <main className="mx-auto max-w-6xl px-4">
-        <Link to="/mau-cv" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-[var(--brand-primary)]"><ArrowLeftOutlined /> Tất cả mẫu CV</Link>
+        <Link to={basePath} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-[var(--brand-primary)]"><ArrowLeftOutlined /> Tất cả mẫu CV</Link>
         <div className="mt-5 grid gap-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,0.9fr)_minmax(20rem,1.1fr)] md:p-8">
           <div className="mx-auto w-full max-w-sm"><CvTemplatePreview template={template} /></div>
           <div className="flex flex-col">
@@ -53,10 +55,10 @@ export default function TemplateDetail() {
         </div>
 
         {related.length > 0 && (
-          <section className="mt-10"><h2 className="text-2xl font-extrabold text-slate-900">Mẫu liên quan</h2><div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">{related.map((item) => <CvTemplateCard key={item.public_id} template={item} onUse={(chosen) => { setTemplateToUse(chosen); setUseOpen(true) }} />)}</div></section>
+          <section className="mt-10"><h2 className="text-2xl font-extrabold text-slate-900">Mẫu liên quan</h2><div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">{related.map((item) => <CvTemplateCard key={item.public_id} template={item} detailBasePath={basePath} onUse={(chosen) => { setTemplateToUse(chosen); setUseOpen(true) }} />)}</div></section>
         )}
       </main>
-      <UseTemplateModal template={templateToUse} open={useOpen} onClose={() => setUseOpen(false)} onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit`)} locale={LOCALE} />
+      <UseTemplateModal template={templateToUse} open={useOpen} onClose={() => setUseOpen(false)} onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit`)} locale={locale} />
     </div>
   )
 }
