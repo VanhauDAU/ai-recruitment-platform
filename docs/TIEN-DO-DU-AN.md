@@ -391,6 +391,13 @@ build đều pass.
 
 </details>
 
+<details>
+<summary><b>CVB-0.1</b> — Hardening stabilization (idempotent migration + preflight + repair)</summary>
+
+**bootstrap-backend.sh:** phát hiện `backend/venv` cũ sai phiên bản (đọc `venv/bin/python`) và **từ chối cài dependencies** vào venv đó (kèm hướng dẫn), thêm cờ `--recreate` để xóa+tạo lại, và chốt chặn cuối kiểm tra interpreter active đúng 3.11 trước khi `pip install`. **Migration idempotent (khôi phục DB partial-failure):** `0004` bọc trong `SeparateDatabaseAndState` — state vẫn là 4 `AddField` (nên `makemigrations --check` sạch + DB mới không đổi) nhưng DB-side là DDL có guard `IF NOT EXISTS`/kiểm tra cột nên chạy lại trên DB đã có sẵn cột (do migration cũ chạy dở, chưa ghi) là no-op thay vì crash "column already exists"; `0006` index tạo bằng `CREATE INDEX IF NOT EXISTS` + `SET NOT NULL` vốn idempotent; `0005` backfill khi **tái sử dụng** snapshot nay kiểm tra đúng `cv_id` và `version_kind='application_snapshot'`, sai thì raise loud thay vì mislink nhầm CV cho recruiter. **Preflight command** `manage.py cv_snapshot_preflight` (chỉ đọc): báo cáo migration state, cột/index tồn tại, số application thiếu snapshot, và inconsistency (snapshot sai cv_id/kind, orphan `cvv-application-{pk}`); exit 1 khi có vấn đề để CI/deploy chặn; cờ `--repair` chạy backfill idempotent có guard (không drop/reset/`--fake`). **Tests:** `tests_migrations.py` phủ 6 ca — clean / legacy / **partial migration** (cột tồn tại nhưng chưa ghi) / **snapshot đã tồn tại** (reuse không nhân đôi) / **repair hai lần** (idempotent) / **mismatch bị từ chối**; `tests_v2.py` thêm 2 test khẳng định tạo CV trắng + từ sample trả `201` và dựng đủ `UserCv` + `CvVersion` initial + `CvDraft`. Verify đầy đủ: `check` + `makemigrations --check` + `migrate` + **148 backend test**; frontend lint + architecture + **125 test (coverage 84.65%)** + build + **18 e2e smoke**; `git diff --check` sạch. DB local: healthy trước và sau (preflight OK, 0 thiếu snapshot, 0 inconsistency).
+
+</details>
+
 ## Giai đoạn 5 — Tuyển dụng nâng cao
 
 | # | Công việc | Trạng thái |
@@ -507,4 +514,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-14 (CV Builder Giai đoạn 0 — stabilization: tách migration snapshot expand/backfill/contract + test nâng cấp, khóa Python 3.11, error mapping tạo CV)
+Cập nhật lần cuối: 2026-07-14 (CV Builder Giai đoạn 0 hardening — migration idempotent khôi phục DB partial-failure, preflight/repair command, bootstrap venv check, mở rộng migration tests)

@@ -45,9 +45,20 @@ def backfill_application_snapshots(apps, schema_editor):
 
         # Reuse the deterministic snapshot if a prior run already created it,
         # so the migration is safe to re-apply (expand/contract retries, or a
-        # database that previously ran the monolithic migration).
+        # database that previously ran the monolithic migration). Reusing blindly
+        # would be unsafe, so verify the existing row genuinely belongs to this
+        # application's CV and is a snapshot before linking to it — otherwise a
+        # corrupt/partial state would silently mislink the recruiter's view.
         snapshot_public_id = f'cvv-application-{application.pk}'
         snapshot = CvVersion.objects.filter(public_id=snapshot_public_id).first()
+        if snapshot is not None and (snapshot.cv_id != cv.pk or snapshot.version_kind != 'application_snapshot'):
+            raise RuntimeError(
+                f'Refusing to reuse snapshot {snapshot_public_id!r} for application '
+                f'{application.pk}: expected cv_id={cv.pk} and '
+                f"version_kind='application_snapshot', found cv_id={snapshot.cv_id} "
+                f'and version_kind={snapshot.version_kind!r}. Investigate the data '
+                f'inconsistency (see: manage.py cv_snapshot_preflight).'
+            )
         if snapshot is None:
             next_number = (CvVersion.objects.filter(cv_id=cv.pk).order_by('-version_number').values_list('version_number', flat=True).first() or 0) + 1
             snapshot = CvVersion.objects.create(

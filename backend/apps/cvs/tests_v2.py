@@ -485,6 +485,48 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Candidate')
         self.assertEqual(cv.latest_version.template_version_id, next_version.id)
 
+    def test_create_blank_builds_usercv_initial_version_and_draft(self):
+        response = self.client.post(
+            reverse('cv-v2-list-create'),
+            {'title': 'Blank CV', 'template_public_id': self.template.public_id, 'language': 'vi-VN'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        cv = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(cv.user_id, self.candidate.id)
+        # Exactly one immutable initial version.
+        versions = CvVersion.objects.filter(cv=cv)
+        self.assertEqual(versions.count(), 1)
+        self.assertEqual(cv.latest_version.version_kind, CvVersion.VersionKind.INITIAL)
+        self.assertEqual(cv.latest_version.template_version_id, self.template_version.id)
+        # A mutable draft seeded from the initial document.
+        self.assertTrue(CvDraft.objects.filter(cv=cv).exists())
+        self.assertEqual(cv.draft.content_json, cv.latest_version.content_json)
+
+    def test_create_from_sample_builds_usercv_initial_version_and_draft(self):
+        sample_content = empty_content('vi-VN')
+        sample_content['personal_info']['full_name'] = 'Sample Person'
+        sample = CvSampleContent.objects.create(
+            locale='vi-VN', title='Sample', content_json=sample_content,
+            status=CvSampleContent.Status.PUBLISHED,
+        )
+        response = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Sample CV', 'template_public_id': self.template.public_id,
+                'language': 'vi-VN', 'sample_content_public_id': sample.public_id,
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, 201, response.data)
+        cv = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
+        self.assertEqual(cv.latest_version.version_kind, CvVersion.VersionKind.INITIAL)
+        self.assertTrue(CvDraft.objects.filter(cv=cv).exists())
+        # Sample content flows into both the immutable baseline and the draft.
+        self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Person')
+        self.assertEqual(cv.latest_version.content_json['personal_info']['full_name'], 'Sample Person')
+
     def test_legacy_dual_write_does_not_discard_a_v2_layout(self):
         cv = self.create_cv()
         draft = self.client.get(self.draft_url(cv)).data
