@@ -3,8 +3,10 @@ import {
   ensureBasicEditorDocument,
   getCv,
   getCvDraft,
+  publishCvVersion,
   saveCvVersion,
   updateCvDraft,
+  validateCvDocument,
 } from '@/entities/cv'
 
 const AUTOSAVE_DELAY = 700
@@ -23,6 +25,7 @@ export default function useCvDraftEditor(publicId) {
   const [phase, setPhaseState] = useState('loading')
   const [error, setError] = useState(null)
   const [lastVersion, setLastVersion] = useState(null)
+  const [validationErrors, setValidationErrors] = useState([])
   const documentRef = useRef(null)
   const lockVersionRef = useRef(null)
   const lastSavedSignatureRef = useRef(null)
@@ -39,6 +42,7 @@ export default function useCvDraftEditor(publicId) {
     setSavePhase('loading')
     setError(null)
     setLastVersion(null)
+    setValidationErrors([])
     try {
       const [nextCv, draft] = await Promise.all([getCv(publicId), getCvDraft(publicId)])
       const rawDocument = {
@@ -104,6 +108,32 @@ export default function useCvDraftEditor(publicId) {
     return () => clearTimeout(timer)
   }, [document, phase, runAutosave])
 
+  useEffect(() => {
+    const hasUnsavedChanges = () => {
+      const documentChanged = documentRef.current && signature(documentRef.current) !== lastSavedSignatureRef.current
+      return documentChanged || ['saving', 'failed', 'conflict'].includes(phaseRef.current)
+    }
+    const warnBeforeUnload = (event) => {
+      if (!hasUnsavedChanges()) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    const warnInternalNavigation = (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !hasUnsavedChanges()) return
+      const link = event.target.closest?.('a[href]')
+      if (!link || link.target || link.download) return
+      const destination = new URL(link.href, window.location.href)
+      if (destination.origin !== window.location.origin || destination.href === window.location.href) return
+      if (!window.confirm('Bản nháp chưa được lưu. Bạn có chắc muốn rời trang?')) event.preventDefault()
+    }
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    globalThis.document.addEventListener('click', warnInternalNavigation, true)
+    return () => {
+      window.removeEventListener('beforeunload', warnBeforeUnload)
+      globalThis.document.removeEventListener('click', warnInternalNavigation, true)
+    }
+  }, [])
+
   const updateDocument = useCallback((updater) => {
     if (phaseRef.current === 'conflict') return
     setDocument((current) => {
@@ -111,6 +141,7 @@ export default function useCvDraftEditor(publicId) {
       documentRef.current = next
       return next
     })
+    setValidationErrors([])
     setSavePhase('unsaved')
   }, [setSavePhase])
 
@@ -120,13 +151,18 @@ export default function useCvDraftEditor(publicId) {
     return runAutosave()
   }, [runAutosave, setSavePhase])
 
-  const saveVersion = useCallback(async () => {
+  const commitVersion = useCallback(async (publish) => {
     if (phaseRef.current === 'conflict') return null
+    const nextValidationErrors = validateCvDocument(documentRef.current)
+    if (nextValidationErrors.length) {
+      setValidationErrors(nextValidationErrors)
+      return null
+    }
     const didAutosave = await runAutosave()
     if (!didAutosave) return null
     setError(null)
     try {
-      const version = await saveCvVersion(publicId, lockVersionRef.current)
+      const version = await (publish ? publishCvVersion : saveCvVersion)(publicId, lockVersionRef.current)
       setLastVersion(version)
       setSavePhase('saved')
       return version
@@ -148,10 +184,12 @@ export default function useCvDraftEditor(publicId) {
     phase,
     error,
     lastVersion,
+    validationErrors,
     lockVersion: lockVersionRef.current,
     updateDocument,
     retryAutosave,
     reloadDraft: load,
-    saveVersion,
+    saveVersion: () => commitVersion(false),
+    publishVersion: () => commitVersion(true),
   }
 }

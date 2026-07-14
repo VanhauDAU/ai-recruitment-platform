@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import CvSampleContent, CvTemplate, CvTemplateVersion
 
-from .models import CvVersion, UserCv
+from .models import CvDraft, CvVersion, UserCv
 from .schemas import empty_content, empty_layout, empty_style
 from .services.versions import sync_legacy_builder_draft
 
@@ -115,6 +115,23 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         cv.refresh_from_db()
         self.assertEqual(cv.draft.lock_version, 0)
+        self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
+
+    def test_save_and_publish_validate_the_draft_before_creating_a_version(self):
+        cv = self.create_cv()
+        CvDraft.objects.filter(cv=cv).update(style_json={**empty_style(), 'theme_color': 'invalid'})
+
+        save = self.client.post(
+            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            format='json', HTTP_IF_MATCH='"lock-version-0"',
+        )
+        publish = self.client.post(
+            reverse('cv-v2-publish', kwargs={'public_id': cv.public_id}),
+            format='json', HTTP_IF_MATCH='"lock-version-0"',
+        )
+
+        self.assertEqual(save.status_code, 400)
+        self.assertEqual(publish.status_code, 400)
         self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
 
     def test_candidate_ownership_and_employer_access_are_enforced(self):

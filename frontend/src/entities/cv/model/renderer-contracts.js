@@ -28,3 +28,40 @@ export function projectDocumentForRenderer({ content_json, layout_json }, render
   regions[0].sections.push(...unassignedSections)
   return { contract, regions }
 }
+
+function estimatedSectionHeight(section) {
+  const itemHeight = section.items.reduce((total, item) => {
+    const descriptionLength = JSON.stringify(item.description || item.value || '').length
+    return total + 3 + Math.ceil(descriptionLength / 90)
+  }, 0)
+  return 4 + itemHeight
+}
+
+function paginateRegion(region, pageCapacity) {
+  const pages = [[]]
+  let currentHeight = 0
+  for (const section of region.sections) {
+    const height = estimatedSectionHeight(section)
+    if (pages.at(-1).length && currentHeight + height > pageCapacity) {
+      pages.push([])
+      currentHeight = 0
+    }
+    pages.at(-1).push(section)
+    currentHeight += height
+  }
+  return pages
+}
+
+// Presentation-only pagination: it keeps section and item references intact
+// while exposing visual A4 page breaks before the browser's final layout pass.
+export function paginateRendererProjection(projection, pageCapacity = 42) {
+  const regionPages = projection.regions.map((region) => paginateRegion(region, pageCapacity))
+  const pageCount = Math.max(1, ...regionPages.map((pages) => pages.length))
+  return Array.from({ length: pageCount }, (_, index) => ({
+    number: index + 1,
+    regions: projection.regions.map((region, regionIndex) => ({
+      ...region,
+      sections: regionPages[regionIndex][index] || [],
+    })),
+  }))
+}

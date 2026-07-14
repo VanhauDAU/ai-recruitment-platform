@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addItem,
+  addSection,
   ensureBasicEditorDocument,
   getRendererContract,
+  getOrderedSections,
   projectDocumentForRenderer,
+  moveItem,
+  moveSection,
+  removeItem,
+  removeSection,
+  renameSection,
+  setSectionEnabled,
   updateStyle,
+  validateCvDocument,
 } from '@/entities/cv'
+import { paginateRendererProjection } from './renderer-contracts'
 
 function baseDocument() {
   return {
@@ -62,5 +73,76 @@ describe('canonical CV editor document', () => {
     expect(twoColumn.regions.map((region) => region.sections.map((section) => section.instance_id))).toEqual([[summary.instance_id, experience.instance_id], [skills.instance_id]])
     expect(singleDocument.content_json).toEqual(twoColumnDocument.content_json)
     expect(twoColumnDocument.content_json).toEqual(contentBeforeRendering)
+  })
+
+  it('manages sections and repeatable items by their stable IDs without using array positions as identity', () => {
+    let document = ensureBasicEditorDocument(baseDocument())
+    for (const sectionKey of ['education', 'projects', 'certifications']) document = addSection(document, sectionKey)
+
+    const sections = Object.fromEntries(document.content_json.sections.map((section) => [section.section_key, section]))
+    for (const sectionKey of ['experience', 'education', 'skills', 'projects', 'certifications']) {
+      document = { ...document, content_json: addItem(document.content_json, sections[sectionKey].instance_id) }
+    }
+
+    const allItemIds = document.content_json.sections.flatMap((section) => section.items.map((item) => item.item_id))
+    expect(new Set(allItemIds).size).toBe(allItemIds.length)
+    expect(document.content_json.sections.filter((section) => ['experience', 'education', 'skills', 'projects', 'certifications'].includes(section.section_key)).every((section) => section.items.length === 2)).toBe(true)
+
+    const experienceId = sections.experience.instance_id
+    const [firstExperienceItem, secondExperienceItem] = document.content_json.sections.find((section) => section.instance_id === experienceId).items
+    document = { ...document, content_json: moveItem(document.content_json, experienceId, secondExperienceItem.item_id, -1) }
+    expect(document.content_json.sections.find((section) => section.instance_id === experienceId).items.map((item) => item.item_id)).toEqual([secondExperienceItem.item_id, firstExperienceItem.item_id])
+
+    const contentBeforeSectionMove = JSON.parse(JSON.stringify(document.content_json))
+    const educationId = sections.education.instance_id
+    document = moveSection(document, educationId, -1)
+    expect(document.content_json).toEqual(contentBeforeSectionMove)
+    expect(getOrderedSections(document).map(({ section }) => section.instance_id)).toContain(educationId)
+
+    document = renameSection(document, educationId, 'Đào tạo')
+    document = setSectionEnabled(document, educationId, false)
+    expect(document.content_json.sections.find((section) => section.instance_id === educationId)).toMatchObject({ title: 'Đào tạo', enabled: false })
+
+    const skillsId = sections.skills.instance_id
+    const skills = document.content_json.sections.find((section) => section.instance_id === skillsId)
+    document = { ...document, content_json: removeItem(document.content_json, skillsId, skills.items[0].item_id) }
+    document = { ...document, content_json: removeItem(document.content_json, skillsId, skills.items[1].item_id) }
+    expect(document.content_json.sections.find((section) => section.instance_id === skillsId)).toMatchObject({ enabled: false, items: [] })
+
+    document = removeSection(document, educationId)
+    expect(document.content_json.sections.some((section) => section.instance_id === educationId)).toBe(false)
+    expect(document.layout_json.regions.flatMap((region) => region.section_instance_ids).includes(educationId)).toBe(false)
+  })
+
+  it('validates a canonical document before committing a version and paginates only the renderer projection', () => {
+    const valid = ensureBasicEditorDocument(baseDocument())
+    expect(validateCvDocument(valid)).toEqual([])
+
+    const invalid = JSON.parse(JSON.stringify(valid))
+    invalid.content_json.sections[1].items[0].item_id = invalid.content_json.sections[2].items[0].item_id
+    invalid.style_json.theme_color = 'red'
+    invalid.content_json.sections[1].items[0].description = { format: 'rich_text_v1', content: [{ type: 'html', text: '<strong>unsafe</strong>' }] }
+    expect(validateCvDocument(invalid)).toEqual(expect.arrayContaining([
+      'Mỗi item phải có ID duy nhất.',
+      'Màu chủ đề, phông chữ hoặc style không hợp lệ.',
+      'Kinh nghiệm làm việc có rich text không hợp lệ.',
+    ]))
+
+    const projection = {
+      regions: [{
+        id: 'main', widthPercent: 100,
+        sections: Array.from({ length: 5 }, (_, index) => ({
+          instance_id: `project_${index + 1}`,
+          section_key: 'projects',
+          items: Array.from({ length: 3 }, (_, itemIndex) => ({ item_id: `project_item_${index}_${itemIndex}`, description: { format: 'rich_text_v1', content: [{ type: 'paragraph', text: 'Nội dung dự án '.repeat(20) }] } })),
+        })),
+      }],
+    }
+    const originalProjection = JSON.parse(JSON.stringify(projection))
+    const pages = paginateRendererProjection(projection, 12)
+
+    expect(pages.length).toBeGreaterThan(1)
+    expect(pages.map((page) => page.number)).toEqual(pages.map((_, index) => index + 1))
+    expect(projection).toEqual(originalProjection)
   })
 })

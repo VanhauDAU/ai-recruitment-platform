@@ -4,7 +4,7 @@ const { get, post, put } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put:
 
 vi.mock('@/shared/api/client', () => ({ default: { get, post, put } }))
 
-import { getCv, getCvDraft, saveCvVersion, updateCvDraft } from './cv.api'
+import { getCv, getCvDraft, publishCvVersion, saveCvVersion, updateCvDraft } from './cv.api'
 
 describe('CV V2 API', () => {
   beforeEach(() => {
@@ -24,8 +24,10 @@ describe('CV V2 API', () => {
     await expect(getCvDraft('cv_1')).resolves.toEqual({ lock_version: 3, etag: '"lock-version-3"' })
     await expect(updateCvDraft('cv_1', document, 3, 'tab_a')).resolves.toEqual({ lock_version: 4, etag: '"lock-version-4"' })
     await expect(saveCvVersion('cv_1', 4)).resolves.toEqual({ public_id: 'version_4', version_kind: 'manual_save' })
+    await expect(publishCvVersion('cv_1', 4)).resolves.toEqual({ public_id: 'version_4', version_kind: 'manual_save' })
 
     expect(put).toHaveBeenCalledWith('/v2/cvs/cv_1/draft/', { ...document, client_session_id: 'tab_a' }, { headers: { 'If-Match': '"lock-version-3"' } })
     expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/save-version/', undefined, { headers: { 'If-Match': '"lock-version-4"' } })
+    expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/publish/', undefined, { headers: { 'If-Match': '"lock-version-4"' } })
   })
 })

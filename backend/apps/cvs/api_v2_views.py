@@ -2,6 +2,7 @@
 
 import re
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -141,6 +142,9 @@ class CvV2SaveVersionView(CandidateV2CvMixin, APIView):
             )
         except StaleDraftError:
             return draft_conflict_response(cv)
+        except DjangoValidationError as error:
+            detail = error.message_dict if hasattr(error, 'message_dict') else error.messages
+            raise ValidationError(detail) from error
         except CvLifecyclePolicyError as error:
             raise ValidationError({'detail': str(error)}) from error
         return Response(CvVersionSerializer(version).data, status=status.HTTP_201_CREATED)

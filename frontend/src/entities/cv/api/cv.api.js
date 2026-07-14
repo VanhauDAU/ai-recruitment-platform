@@ -28,3 +28,12 @@ export async function saveCvVersion(publicId, lockVersion) {
   )
   return data
 }
+
+export async function publishCvVersion(publicId, lockVersion) {
+  const { data } = await api.post(
+    `/v2/cvs/${publicId}/publish/`,
+    undefined,
+    { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
+  )
+  return data
+}

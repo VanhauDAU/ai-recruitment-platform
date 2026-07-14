@@ -44,11 +44,28 @@ test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ pa
 
   await page.goto('/cvs/cv_1/edit')
   await expect(page.getByRole('heading', { name: 'CV V2' })).toBeVisible()
-  await expect(page.getByLabel('Xem trước CV classic_single_column_v1')).toBeVisible()
+  await expect(page.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
 
-  const autosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
+  const initialAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
   await page.getByLabel('Họ và tên').fill('Nguyễn Bình')
-  expect((await autosaveRequest).headers()['if-match']).toBe('"lock-version-0"')
+  expect((await initialAutosaveRequest).headers()['if-match']).toBe('"lock-version-0"')
+
+  const sectionAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
+  await page.getByRole('combobox', { name: 'Thêm section', exact: true }).click()
+  await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option', { hasText: 'Học vấn' }).click()
+  await expect(page.getByRole('button', { name: 'Xác nhận thêm section' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Xác nhận thêm section' }).click()
+  await expect(page.locator('#section-education_1')).toBeVisible()
+  await page.getByLabel('Tiêu đề education_1').fill('Đào tạo')
+  await page.getByRole('button', { name: 'Thêm item education_1' }).click()
+  await page.getByRole('button', { name: 'Di chuyển item education_item_2 lên' }).click()
+  const sectionAutosave = await sectionAutosaveRequest
+  const autosavePayload = sectionAutosave.postDataJSON()
+  expect(sectionAutosave.headers()['if-match']).toBe('"lock-version-1"')
+  const education = autosavePayload.content_json.sections.find((section) => section.instance_id === 'education_1')
+  expect(education.title).toBe('Đào tạo')
+  expect(education.items.map((item) => item.item_id)).toEqual(['education_item_2', 'education_item_1'])
+  expect(autosavePayload.layout_json.regions[0].section_instance_ids).toContain('education_1')
 
   const saveVersionRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/save-version/') && request.method() === 'POST')
   await page.getByRole('button', { name: 'Lưu phiên bản' }).click()
