@@ -235,6 +235,20 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(SocialAccount.objects.count(), 1)
         self.assertEqual(User.objects.filter(email='social@example.com').count(), 1)
 
+    def test_social_login_bypasses_email_two_factor(self):
+        user = User.objects.create_user(
+            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE,
+            two_factor_enabled=True,
+        )
+
+        complete = self._complete(self._callback().url)
+
+        self.assertEqual(complete.status_code, status.HTTP_200_OK)
+        self.assertEqual(complete.data['user']['id'], user.pk)
+        self.assertIn('access', complete.data)
+        self.assertNotIn('two_factor_required', complete.data)
+        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists())
+
     def test_one_user_can_link_multiple_social_providers(self):
         user = oauth.resolve_user('google', dict(GOOGLE_PROFILE), 'main')
         oauth.resolve_user('facebook', {
@@ -372,13 +386,31 @@ class LastLoginTests(APITestCase):
 
     def test_register_auto_login_sets_last_login(self):
         response = self.client.post(reverse('auth-register'), {
-            'email': 'newuser@example.com', 'password': 'Password@123',
+            'email': 'newuser@example.com', 'password': 'Password@123456',
             'role': 'candidate', 'captcha_token': 'x',
         })
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(email='newuser@example.com')
         self.assertIsNotNone(user.last_login)
+
+    def test_register_rejects_password_shorter_than_eight_characters(self):
+        response = self.client.post(reverse('auth-register'), {
+            'email': 'short-password@example.com', 'password': 'short',
+            'role': 'candidate', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+
+    def test_register_rejects_password_without_required_character_types(self):
+        response = self.client.post(reverse('auth-register'), {
+            'email': 'weak-password@example.com', 'password': 'matkhaudai',
+            'role': 'candidate', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
 
     @override_settings(
         CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},

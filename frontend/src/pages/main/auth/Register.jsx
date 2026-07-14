@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import {
   AuthLogo,
+  getAuthDestination,
   getReturnUrl,
   PasswordRequirements,
   passwordValidationRule,
@@ -49,7 +50,7 @@ export default function Register() {
       const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
       setCurrentUser(result.user)
-      navigate(getReturnUrl(searchParams) || '/', { replace: true })
+      navigate(getAuthDestination({ user: result.user, returnUrl: getReturnUrl(searchParams) }), { replace: true })
     } catch (err) {
       clearPasswords()
       if (err.response?.status === 429) {

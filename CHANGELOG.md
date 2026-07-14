@@ -24,6 +24,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Bỏ feature flag job-view tracking dư thừa: tracking chạy khi và chỉ khi Analytics consent hợp lệ; `.env.example` không chứa secret hoặc thông tin database mẫu có thể bị dùng nhầm.
 - Consent settings không gửi lại POST nếu lựa chọn không thay đổi, tránh đốt quota khi mở lại modal; lỗi `429` hiện thời gian chờ cụ thể thay vì thông báo chung.
 - Môi trường development không áp dụng throttle cho consent để QA có thể đổi lựa chọn liên tục; production vẫn giữ giới hạn `20/hour`.
+- Đăng nhập qua Google/Facebook/LinkedIn bỏ qua email 2FA sau khi provider xác thực thành công; đăng nhập email/mật khẩu vẫn yêu cầu mã 2FA khi tài khoản đã bật.
+- Đăng ký hoặc OAuth thành công của ứng viên chưa hoàn tất preference luôn chuyển vào `/onboard-user`, kể cả khi có URL quay lại an toàn.
+- Nâng chính sách mật khẩu từ 6–25 lên 8–25 ký tự; vẫn chặn mật khẩu phổ biến và bắt buộc có chữ hoa, chữ thường, chữ số.
 
 ### 2026-07-13
 

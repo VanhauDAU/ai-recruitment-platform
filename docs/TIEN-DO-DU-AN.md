@@ -248,6 +248,8 @@ Rate limit theo IP (DRF `ScopedRateThrottle`, 5 lần/phút mỗi endpoint) + Go
 
 OAuth Authorization Code Flow qua backend callback: ứng viên Google/Facebook/LinkedIn, NTD chỉ Google, admin không có. Backend: model `SocialAccount` (unique `(provider, provider_user_id)`, migration 0002), `User.Provider` thêm facebook/linkedin; service `apps/accounts/oauth.py` (build auth URL, `state` Redis TTL 10ph chống CSRF + one-shot, exchange code, fetch + normalize profile OIDC/Graph, `one_time_code` Redis TTL 60s); endpoints `GET /auth/oauth/<provider>/start/?portal&next` (redirect provider; lỗi → redirect frontend `?error=<code>`), `GET .../callback/` (verify state → tạo/liên kết user → redirect frontend kèm code), `POST /auth/oauth/complete/` (đổi code lấy `{user, access, refresh}`, throttle 10/min). Luật liên kết: có SocialAccount → đăng nhập luôn; email trùng cùng role → tự liên kết (+set `email_verified=True`, giữ password cũ); khác role → chặn `wrong_portal`; user mới → role theo cổng, `email_verified=True`, password unusable; `next` chỉ nhận path nội bộ (chặn absolute/`//`). Env: `OAUTH_*_CLIENT_ID/SECRET` (trống → báo "chưa cấu hình", không crash), `OAUTH_MAIN/EMPLOYER_CALLBACK_URL`. Frontend: component chung `SocialLoginButtons` (gộp icon trùng lặp ở Login/Register, full-page redirect sang start URL, `next` = trang hiện tại trừ trang auth — giữ UX login modal ở trang việc làm), trang `OAuthCallback` dùng chung 2 cổng (`/oauth/callback` + `/tuyendung/app/oauth/callback`, guard StrictMode double-effect vì code chỉ dùng 1 lần), lưu token đúng portal key, lỗi → về trang login của cổng kèm `?oauth_error=` hiện trong Alert của `LoginForm` (map mã→tiếng Việt ở `errorMessage.js`); employer Login/Register thêm nút Google + divider. Test: 13 test OAuth backend (portal rules, tạo/liên kết/chặn role, state one-shot, code one-shot, chặn next absolute) — 18/18 pass; lint+build pass; verify browser: đủ 3 nút cổng main, 1 nút Google cổng NTD, click Google (chưa credential) → quay về form báo "chưa được cấu hình" đúng luồng.
 
+OAuth hoàn tất qua provider bỏ qua email 2FA; email/mật khẩu vẫn yêu cầu mã khi người dùng đã bật 2FA.
+
 </details>
 
 <details>
@@ -261,6 +263,10 @@ OAuth Authorization Code Flow qua backend callback: ứng viên Google/Facebook/
 <summary><b>1.19</b> — Đặt lại mật khẩu qua email + Redis</summary>
 
 Cùng mô hình với 1.5b nhưng siết chặt hơn vì đây là luồng chiếm được tài khoản. Backend: module `apps/accounts/password_reset.py` (token `secrets.token_urlsafe(32)` trong Redis, TTL **30 phút**, cooldown 60s/user; khoá `latest:<user_id>` giữ token mới nhất → **xin link mới là link cũ chết ngay**; tiêu token một lần bằng `atomic_pop`), tách helper mail dùng chung `apps/accounts/mailing.py` (`site_setting`/`from_email`/`frontend_link`/`send_html_email`) và refactor `email_verification.py` dùng lại. Endpoints: `POST /auth/password-reset/` (captcha, **luôn trả cùng một `detail`** dù email tồn tại hay không → chống dò email; cooldown im lặng; đẩy mail qua outbox `AuthEmailJob` kind `password_reset`), `GET /auth/password-reset/validate/?token=` (kiểm tra link **không tiêu token** → hiện ngay màn hết hạn), `POST /auth/password-reset/confirm/` (validate mật khẩu **trước** khi tiêu token để mật khẩu yếu không đốt link; đổi xong `email_verified=True` vì nhận được mail = chứng minh sở hữu hòm thư, và blacklist toàn bộ refresh token cũ qua `token_blacklist` → đăng xuất mọi thiết bị). Rule mật khẩu tách thành `password_field()` dùng chung với `RegisterSerializer`. Frontend: `/forgot-password` + `/reset-password?token=` (lazy route, dùng lại `PasswordRequirements` realtime + rule "nhập lại không khớp"), confirm trả `role` để đưa về đúng cổng đăng nhập; `MAIN_FORGOT_PASSWORD_URL` trong `portals.js` (cổng NTD/admin ở subdomain riêng phải link tuyệt đối về host chính, `LoginForm` render `<a>` thay `<Link>` khi link absolute). Env mới: `PASSWORD_RESET_TTL=1800`, `PASSWORD_RESET_RESEND_COOLDOWN=60`. **Bug tự gây ra rồi sửa**: ban đầu gán chung `throttle_scope='password_reset'` cho cả 3 endpoint → gõ sai mật khẩu vài lần là hết quota, không confirm được nữa dù link còn hạn; tách bucket riêng `password_reset_confirm` (10/phút). Verify: 15 assertion qua HTTP client thật (chống dò email, cooldown im lặng, link cũ chết, token một lần, mật khẩu yếu không đốt token, refresh token bị blacklist) + kiểm chứng UI trên browser (submit thật, màn hết hạn, mobile 375px không tràn ngang).
+
+Chính sách mật khẩu dùng chung cho đăng ký và đặt lại mật khẩu: 8–25 ký tự,
+chặn mật khẩu phổ biến/thuần số/tương tự dữ liệu tài khoản bằng Django validator;
+bắt buộc có chữ hoa, chữ thường và chữ số.
 
 </details>
 
@@ -305,7 +311,9 @@ entity `candidate-profile` cho giới tính; form workflow thuộc feature
 phối điều hướng. Bộ chọn vị trí chuyển sang modal responsive có tìm kiếm, tab
 nhóm nghề, giới hạn 1–5 lựa chọn và xác nhận rõ ràng. Trang settings có giới
 tính, gửi lỗi field bằng tiếng Việt, toast chỉ hiện một thông báo hiện hành, và
-cột hồ sơ bên phải sticky trên desktop. Verify: backend candidate tests, frontend
+cột hồ sơ bên phải sticky trên desktop. Đăng ký hoặc OAuth thành công của ứng
+viên chưa cấu hình preference luôn chuyển vào `/onboard-user`, ưu tiên hơn URL
+quay lại. Verify: backend candidate tests, frontend
 lint/architecture/unit/build và E2E router desktop/mobile.
 
 </details>
