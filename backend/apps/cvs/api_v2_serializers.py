@@ -12,6 +12,8 @@ from .schemas import validate_cv_document
 class CvV2Serializer(serializers.ModelSerializer):
     template_public_id = serializers.CharField(source='template.public_id', read_only=True)
     template_version = serializers.CharField(source='current_template_version.renderer_key', read_only=True)
+    template_renderer_key = serializers.CharField(source='current_template_version.renderer_key', read_only=True)
+    template_renderer_version = serializers.CharField(source='current_template_version.renderer_version', read_only=True)
     latest_version_public_id = serializers.CharField(source='latest_version.public_id', read_only=True)
     published_version_public_id = serializers.CharField(source='published_version.public_id', read_only=True)
 
@@ -20,6 +22,7 @@ class CvV2Serializer(serializers.ModelSerializer):
         fields = [
             'public_id', 'title', 'language', 'cv_type', 'source',
             'template_public_id', 'template_version', 'lifecycle_status',
+            'template_renderer_key', 'template_renderer_version',
             'processing_status', 'visibility', 'latest_version_public_id',
             'published_version_public_id', 'published_at', 'created_at', 'updated_at',
         ]

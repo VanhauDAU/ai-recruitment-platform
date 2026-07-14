@@ -52,6 +52,11 @@ class CvV2ApiTests(APITestCase):
         cv = self.create_cv()
         self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
 
+        detail = self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data['template_renderer_key'], 'classic_single_column_v1')
+        self.assertEqual(detail.data['template_renderer_version'], '1')
+
         draft_response = self.client.get(self.draft_url(cv))
         self.assertEqual(draft_response.status_code, 200)
         self.assertEqual(draft_response['ETag'], '"lock-version-0"')
