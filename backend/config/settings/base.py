@@ -376,3 +376,13 @@ OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)          # one_t
 
 # API docs hữu ích ở local/staging, nhưng không public mặc định ở production.
 API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)
+
+# Legacy CV endpoints remain readable/writable only during the controlled V2
+# cutover.  Keep these explicit so the response headers and runbook share one
+# source of truth; do not turn this into an HTTP redirect for write requests.
+LEGACY_CV_API_DEPRECATION_AT = config(
+    'LEGACY_CV_API_DEPRECATION_AT', default='2026-07-15T00:00:00+00:00',
+)
+LEGACY_CV_API_SUNSET_AT = config(
+    'LEGACY_CV_API_SUNSET_AT', default='2027-01-15T00:00:00+00:00',
+)

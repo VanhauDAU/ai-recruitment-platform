@@ -23,6 +23,7 @@ class CvV2Serializer(serializers.ModelSerializer):
         model = UserCv
         fields = [
             'public_id', 'title', 'language', 'cv_type', 'source',
+            'file_name', 'file_type', 'is_default',
             'template_public_id', 'template_version', 'lifecycle_status',
             'template_renderer_key', 'template_renderer_version',
             'template_capabilities',
@@ -32,11 +33,27 @@ class CvV2Serializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class CvV2MetadataUpdateSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255, required=False, trim_whitespace=True)
+    is_default = serializers.BooleanField(required=False)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('Provide at least one mutable field.')
+        return attrs
+
+
+class CvV2ImportSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    title = serializers.CharField(max_length=255, required=False, allow_blank=False, trim_whitespace=True)
+
+
 class CvV2CreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
     template_public_id = serializers.CharField(max_length=50)
     language = serializers.CharField(max_length=16, default='vi-VN')
     sample_content_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
+    theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
 
     def validate_template_public_id(self, value):
         try:
@@ -54,6 +71,15 @@ class CvV2CreateSerializer(serializers.Serializer):
         sample_content = attrs.get('sample_content_public_id')
         if sample_content is not None and sample_content.locale != attrs['language']:
             raise serializers.ValidationError({'sample_content_public_id': 'Sample locale must match language.'})
+        theme_color = attrs.get('theme_color')
+        template = attrs['template_public_id']
+        if theme_color and not template.color_links.filter(
+            color__hex_code__iexact=theme_color,
+            color__is_active=True,
+        ).exists():
+            raise serializers.ValidationError({'theme_color': 'Color is not available for this template.'})
+        if theme_color:
+            attrs['theme_color'] = theme_color.upper()
         return attrs
 
 

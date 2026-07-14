@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CvTemplateCard,
   getCvCategories,
-  getCvSampleContents,
   getCvTemplates,
 } from '@/entities/cv-template'
 import { UseTemplateModal } from '@/features/create-cv-from-template'
@@ -31,7 +30,6 @@ export default function TemplateCatalog() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [activeCategory, setActiveCategory] = useState(null)
-  const [sampleContent, setSampleContent] = useState(null)
   const [selection, setSelection] = useState(null)
   const sentinelRef = useRef(null)
 
@@ -86,23 +84,6 @@ export default function TemplateCatalog() {
       })
     return () => { cancelled = true }
   }, [locale, activeCategory, page])
-
-  // Load sample content (nội dung CV mẫu) theo ngôn ngữ + category
-  useEffect(() => {
-    let cancelled = false
-    const categorySlug = activeCategory?.slug
-    getCvSampleContents(locale)
-      .then((items) => {
-        if (cancelled) return
-        // Ưu tiên tìm sample khớp category, fallback về item đầu tiên
-        const matched = categorySlug
-          ? (items.find((i) => i.category_slug === categorySlug || i.slug === categorySlug) || items[0])
-          : items[0]
-        setSampleContent(matched || null)
-      })
-      .catch(() => !cancelled && setSampleContent(null))
-    return () => { cancelled = true }
-  }, [locale, activeCategory])
 
   useEffect(() => { document.title = 'Mẫu CV chuyên nghiệp | ProCV' }, [])
 
@@ -181,7 +162,6 @@ export default function TemplateCatalog() {
                     key={template.public_id}
                     template={template}
                     detailBasePath={basePath}
-                    sampleContent={sampleContent}
                     onUse={(tpl, color) => setSelection({ template: tpl, color })}
                   />
                 ))}

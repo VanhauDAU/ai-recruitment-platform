@@ -46,6 +46,9 @@ class CandidateCvApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['title'], 'My CV')
         self.assertTrue(response.data['file_url'].endswith('.pdf'))
+        self.assertIn('Deprecation', response)
+        self.assertIn('Sunset', response)
+        self.assertEqual(response['Link'], '</api/v2/cvs/imports/>; rel="successor-version"')
 
     def test_builder_cv_creation_uses_authenticated_candidate(self):
         template = CvTemplate.objects.create(name='Standard')
@@ -58,6 +61,20 @@ class CandidateCvApiTests(TestCase):
         cv = UserCv.objects.get(public_id=response.data['public_id'])
         self.assertIsNotNone(cv.latest_version)
         self.assertTrue(hasattr(cv, 'draft'))
+
+    def test_legacy_cv_endpoints_advertise_the_v2_successor(self):
+        response = self.client.get('/api/cvs/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Deprecation'].startswith('@'))
+        self.assertEqual(response['Link'], '</api/v2/cvs/>; rel="successor-version"')
+
+    def test_legacy_template_endpoints_advertise_the_v2_successor(self):
+        response = self.client.get('/api/cv-templates/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Deprecation'].startswith('@'))
+        self.assertEqual(response['Link'], '</api/v2/cv-templates/>; rel="successor-version"')
 
 
 class CanonicalCvDocumentTests(TestCase):

@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { get, post, put, remove } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn() }))
+const { get, patch, post, put, remove } = vi.hoisted(() => ({
+  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
+}))
 
-vi.mock('@/shared/api/client', () => ({ default: { get, post, put, delete: remove } }))
+vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
 
 import {
   createCvSharedLink,
   createCvPdfExport,
+  deleteCv,
   downloadCvPdf,
   getCv,
   getCvDraft,
@@ -15,20 +18,41 @@ import {
   getCvSharedLinks,
   getCvVersions,
   getSharedCv,
+  importCvFile,
   publishCvVersion,
   revokeCvSharedLink,
   retryCvPdfExport,
   saveCvVersion,
   switchCvTemplate,
+  renameCv,
+  setDefaultCv,
   updateCvDraft,
 } from './cv.api'
 
 describe('CV V2 API', () => {
   beforeEach(() => {
     get.mockReset()
+    patch.mockReset()
     post.mockReset()
     put.mockReset()
     remove.mockReset()
+  })
+
+  it('keeps account-library metadata and file imports on V2', async () => {
+    patch.mockResolvedValue({ data: { public_id: 'cv_1', title: 'Renamed' } })
+    post.mockResolvedValue({ data: { public_id: 'cv_2', source: 'imported' } })
+    remove.mockResolvedValue({})
+    const file = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' })
+
+    await expect(renameCv('cv_1', 'Renamed')).resolves.toMatchObject({ title: 'Renamed' })
+    await expect(setDefaultCv('cv_1', true)).resolves.toMatchObject({ public_id: 'cv_1' })
+    await expect(importCvFile(file, 'Imported')).resolves.toMatchObject({ source: 'imported' })
+    await expect(deleteCv('cv_1')).resolves.toBeUndefined()
+
+    expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
+    expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
+    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData))
+    expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
   })
 
   it('uses draft optimistic locking and creates versions only through save-version', async () => {

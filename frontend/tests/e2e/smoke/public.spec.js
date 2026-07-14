@@ -10,7 +10,7 @@ test('public smoke: home and jobs routes load', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
 })
 
-test('public smoke: CV template catalogue opens a template detail and use modal', async ({ page }) => {
+test('public smoke: CV template colors change preview and detail offers the create flow', async ({ page }) => {
   await mockPublicApi(page)
   const card = {
     public_id: 'tpl_modern',
@@ -20,6 +20,10 @@ test('public smoke: CV template catalogue opens a template detail and use modal'
     thumbnail_url: '',
     is_premium: false,
     theme_color: '#00A66A',
+    colors: [
+      { public_id: 'green', slug: 'green', name: 'Xanh', hex_code: '#00A66A', preview_url: '/green.png', is_default: true },
+      { public_id: 'blue', slug: 'blue', name: 'Xanh dương', hex_code: '#2255AA', preview_url: '/blue.png', is_default: false },
+    ],
     categories: [{ public_id: 'cat_style', slug: 'modern', name: 'Hiện đại', type: 'style' }],
     tags: [{ public_id: 'cat_ats', slug: 'ats', name: 'Thân thiện ATS', type: 'feature' }],
   }
@@ -39,6 +43,9 @@ test('public smoke: CV template catalogue opens a template detail and use modal'
 
   await page.goto('/mau-cv')
   await expect(page.getByRole('heading', { name: /Mẫu CV xin việc/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Xem trước Modern' })).toHaveAttribute('src', '/green.png')
+  await page.getByRole('radio', { name: 'Xanh dương' }).hover()
+  await expect(page.getByRole('img', { name: 'Xem trước Modern' })).toHaveAttribute('src', '/blue.png')
   const cardText = page.getByText('Modern', { exact: true })
   await cardText.hover()
   await page.getByRole('button', { name: 'Dùng mẫu' }).click({ force: true })
@@ -47,7 +54,7 @@ test('public smoke: CV template catalogue opens a template detail and use modal'
 
   await page.goto('/mau-cv/chi-tiet/modern')
   await expect(page.getByRole('heading', { name: 'Modern' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Dùng mẫu này' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Tạo CV', exact: true })).toBeVisible()
 })
 
 test('public smoke: a shared CV link renders its immutable version', async ({ page }) => {

@@ -379,8 +379,11 @@ build đều pass.
 
 | # | Công việc | Trạng thái |
 | --- | --- | --- |
-| 4.1 | Bảng `cv_versions` (undo/restore) | ⬜ |
-| 4.2 | Bảng `cv_exports` + export PDF | ⬜ |
+| 4.1 | `cv_versions` + draft/history/owner/share lifecycle | ✅ |
+| 4.2 | `cv_exports` + immutable PDF export | ✅ |
+| 4.3 | Template taxonomy/color many-to-many + preview asset theo màu | ✅ |
+| 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/archive/restore/default) | 🟡 — archive/default/rename V2 xong, còn duplicate/restore/E2E |
+| 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — V2 upload PDF/DOCX xong, còn parse/LinkedIn/AI review |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -392,6 +395,13 @@ build đều pass.
 </details>
 
 <details>
+<summary><b>CVB-0.2</b> — 🟡 CV API V1→V2 cutover</summary>
+
+V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/archive và `POST /api/v2/cvs/imports/` cho PDF/DOCX. Trang “CV của tôi” gọi entity API V2, upload nhận phản hồi backend thật và không còn gọi V1. V1 vẫn chạy để client cũ không gãy, nhưng trả `Deprecation`, `Sunset`, successor `Link` và event telemetry tối thiểu không chứa PII. Không tạo `/api/v1/`, không redirect request ghi; chỉ chuyển sang `410` trong release riêng sau khi telemetry cho thấy usage V1 bằng 0.
+
+</details>
+
+<details>
 <summary><b>CVB-0.1</b> — Hardening stabilization (idempotent migration + preflight + repair)</summary>
 
 **bootstrap-backend.sh:** phát hiện `backend/venv` cũ sai phiên bản (đọc `venv/bin/python`) và **từ chối cài dependencies** vào venv đó (kèm hướng dẫn), thêm cờ `--recreate` để xóa+tạo lại, và chốt chặn cuối kiểm tra interpreter active đúng 3.11 trước khi `pip install`. **Migration idempotent (khôi phục DB partial-failure):** `0004` bọc trong `SeparateDatabaseAndState` — state vẫn là 4 `AddField` (nên `makemigrations --check` sạch + DB mới không đổi) nhưng DB-side là DDL có guard `IF NOT EXISTS`/kiểm tra cột nên chạy lại trên DB đã có sẵn cột (do migration cũ chạy dở, chưa ghi) là no-op thay vì crash "column already exists"; `0006` index tạo bằng `CREATE INDEX IF NOT EXISTS` + `SET NOT NULL` vốn idempotent; `0005` backfill khi **tái sử dụng** snapshot nay kiểm tra đúng `cv_id` và `version_kind='application_snapshot'`, sai thì raise loud thay vì mislink nhầm CV cho recruiter. **Preflight command** `manage.py cv_snapshot_preflight` (chỉ đọc): báo cáo migration state, cột/index tồn tại, số application thiếu snapshot, và inconsistency (snapshot sai cv_id/kind, orphan `cvv-application-{pk}`); exit 1 khi có vấn đề để CI/deploy chặn; cờ `--repair` chạy backfill idempotent có guard (không drop/reset/`--fake`). **Tests:** `tests_migrations.py` phủ 6 ca — clean / legacy / **partial migration** (cột tồn tại nhưng chưa ghi) / **snapshot đã tồn tại** (reuse không nhân đôi) / **repair hai lần** (idempotent) / **mismatch bị từ chối**; `tests_v2.py` thêm 2 test khẳng định tạo CV trắng + từ sample trả `201` và dựng đủ `UserCv` + `CvVersion` initial + `CvDraft`. Verify đầy đủ: `check` + `makemigrations --check` + `migrate` + **148 backend test**; frontend lint + architecture + **125 test (coverage 84.65%)** + build + **18 e2e smoke**; `git diff --check` sạch. DB local: healthy trước và sau (preflight OK, 0 thiếu snapshot, 0 inconsistency).
@@ -399,16 +409,23 @@ build đều pass.
 </details>
 
 <details>
-<summary><b>CVB-1</b> — Redesign trang mẫu CV + popup "Dùng mẫu" theo TopCV (UI-only)</summary>
+<summary><b>CVB-1</b> — ✅ Redesign trang mẫu CV + create flow</summary>
 
-**Trang `/mau-cv`** (theo mockup TopCV trong `Kế hoạch CV Builder trang ứng viên.docx`): breadcrumb + tiêu đề + caption **động theo dropdown ngôn ngữ** ("Mẫu CV tiếng Việt/Anh/Nhật/Trung", "Mẫu CV xin việc tiếng … chuẩn {năm}", đếm số mẫu từ `count` API); danh sách 3 cột **infinite scroll** (IntersectionObserver + `page` DRF, nạp đến hết); card thêm **radio chấm màu** — hover đổi màu preview tức thì, click (hoặc nút "Dùng mẫu" khi hover ảnh) mở popup **theo màu đã chọn**. **Popup "Dùng mẫu" viết lại** (`UseTemplateModal`): modal 1200px 2 cột **7/3** — trái là **preview render HTML/CSS thật** (tái sử dụng `CvDocumentPreview` + renderer contract của CV Builder, dữ liệu mẫu tiếng Việt dựng từ `sections` của template detail, fallback bộ section chuẩn khi template chưa khai báo; cuộn riêng, phân trang A4); phải là **5 nguồn tạo CV** dạng radio card: CV đã tạo trước đó (chỉ hiện khi ứng viên có CV — list title+ngày+link "Xem CV", cần backend clone nên tạm khóa nút), nội dung mẫu {sitename} gợi ý (chips 4 ngôn ngữ + select tìm vị trí từ `cv-sample-contents`), tải từ máy tính/LinkedIn (dragger .pdf/.doc/.docx — chờ backend parse), khôi phục bản chưa lưu (disabled — chưa có local draft store), tạo từ đầu; nút **"Tạo CV" disable đến khi chọn nguồn hợp lệ**, map vào `POST /v2/cvs/` hiện có (blank/sample). Thêm `getMyCvs()` (GET `/v2/cvs/` có sẵn). **Không đổi API contract/backend.** Verify: lint + architecture + 125 test + build pass; browser thật: đổi ngôn ngữ cập nhật breadcrumb/tiêu đề/empty state, hover/click chấm màu đổi preview + mở popup đúng màu, popup render đủ section chữ sắc nét có thanh cuộn riêng, nút Tạo CV disable/enable đúng, mobile xếp dọc không vỡ layout.
+**Trang `/mau-cv`:** breadcrumb/tiêu đề theo locale, grid 3 cột, infinite scroll, filter category/tag từ API, card màu và related templates. `UseTemplateModal` cùng trang detail compose `CvSourcePanel`; preview dùng renderer thật, blank/sample map vào `POST /api/v2/cvs/`. Các nguồn previous CV/upload/restore vẫn được ghi rõ là chưa có backend và không được coi là hoàn tất. Verify hiện tại: lint + architecture, 127 unit tests, build và 18 smoke E2E desktop/mobile pass.
 
 </details>
 
 <details>
-<summary><b>CVB-1.1</b> — URL theo ngôn ngữ + biến thể màu + nội dung mẫu theo vị trí</summary>
+<summary><b>CVB-1.1</b> — ✅ URL theo ngôn ngữ + nội dung mẫu theo vị trí</summary>
 
-**URL kho mẫu theo ngôn ngữ** (kiểu TopCV): thêm route `/mau-cv-tieng-anh|nhat|trung` (+ `/:slug` chi tiết); locale suy từ pathname (`locale-paths.js` — một nguồn ánh xạ locale↔path↔label), dropdown ngôn ngữ `navigate()` đổi URL, breadcrumb/tiêu đề/danh sách item/link chi tiết cập nhật theo. **Backend `color_variants`:** thêm vào `CvTemplateCardSerializer` (đọc `default_style_json.color_variants`, fallback `[theme_color]`); vì published version bất biến, seed **publish version mới** (clone version + sections, draft→published, repoint `current_published_version`) thay vì sửa tại chỗ. **Seed `seed_cv_catalog`** (idempotent): color_variants cho template đã publish, localization đủ 4 ngôn ngữ/template (template chỉ hiện ở catalog ngôn ngữ có localization active), 36 `CvSampleContent` published (9 vị trí chuyên môn từ `jobs.JobCategory` × 4 locale, content_json qua `full_clean()` đúng canonical schema). **Popup:** preview A4 co theo chiều ngang cột trái bằng `zoom` + ResizeObserver (`min(1, width/842)`) — hết cuộn ngang, hiển thị trọn trang; select "Chọn vị trí" giờ có 9 vị trí thật từ sample contents. **Card:** khung border bao quanh toàn item (preview + chấm màu + tiêu đề + tag), tiêu đề đen `!text-black` (link toàn cục đang ăn màu brand), chấm màu từ API. Verify: browser thật — đổi dropdown → URL `/mau-cv-tieng-anh` + item hiện (localization seed), chọn vị trí → "Tạo CV" enable, preview không tràn ngang (scrollWidth == clientWidth, zoom 0.93); backend 6+N test pass, seed chạy 2 lần idempotent; frontend lint + architecture + 125 test + build pass.
+**URL kho mẫu theo ngôn ngữ:** `/mau-cv`, `/mau-cv-tieng-anh|nhat|trung` cùng route detail/category; locale-paths là một nguồn ánh xạ. `seed_cv_catalog` bảo đảm localization và sample content theo 9 vị trí × 4 locale theo cách idempotent. Preview A4 co theo container và sample chỉ tải khi người dùng chọn nguồn sample.
+
+</details>
+
+<details>
+<summary><b>CVB-1.2</b> — ✅ Category/color từ database và lưu màu vào CV</summary>
+
+`CvTemplate` liên kết nhiều-nhiều với `CvCategory` và `CvColor` qua hai bảng link. Link màu giữ `thumbnail_url`, `preview_url`, `sort_order`, `is_default`; public API trả `colors[]`, card hover/focus đổi đúng asset URL. `POST /api/v2/cvs/` nhận `theme_color`, validate màu active thuộc template rồi ghi vào initial version/draft. Migration `cv_templates.0004` backfill JSON cũ, seed chuyển category legacy và tạo palette; admin quản lý registry + inline link. `theme_color`/`color_variants` vẫn được giữ tương thích trong giai đoạn dual-read, không còn là nguồn chuẩn của frontend mới. Chi tiết và backlog: [kế hoạch CV Builder](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
 
 </details>
 

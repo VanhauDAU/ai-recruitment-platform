@@ -129,3 +129,29 @@ src/
 Route được đăng ký trong `app/router/routes`, còn page và layout được lazy-load
 theo portal. Compatibility shim đã hết consumer phải được xóa, không giữ lại để
 phòng hờ.
+
+## Ownership map — CV Builder
+
+```text
+app/router
+  → pages/main/cv-templates, pages/main/cvs, pages/main/account/MyCvs
+    → features/create-cv-from-template, edit-cv-draft, view/export-cv-version
+      → entities/cv-template, entities/cv
+        → shared/api, shared/ui
+```
+
+- `entities/cv-template` sở hữu API đọc catalogue, normalization màu và UI card
+  domain. `colors[]` từ API là nguồn chuẩn; page/feature không tự tạo palette.
+- `features/create-cv-from-template` sở hữu chọn nguồn, sample preview và POST
+  create. Màu được chọn là input của workflow, không phải state toàn app.
+- `features/edit-cv-draft` sở hữu autosave/history/section/layout editing;
+  `entities/cv` sở hữu canonical document, renderer contract và preview.
+- `pages/main/cv-templates` chỉ lấy locale/route params và compose catalogue,
+  detail, source panel/modal. `pages/main/cvs/CvEditor.jsx` chỉ lấy `publicId`
+  rồi compose editor feature.
+- `pages/main/account/MyCvs.jsx` là owner-local account UI; nó chỉ gọi public
+  API `entities/cv` (V2 metadata/archive/import/share), không gọi HTTP client
+  trực tiếp hoặc contract V1.
+- Backend compatibility fields như `theme_color`/`color_variants` có thể tồn
+  tại trong response lúc dual-read, nhưng frontend mới không được dùng chúng để
+  dựng nhiều màu giả khi `colors[]` đã có.

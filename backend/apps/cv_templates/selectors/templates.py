@@ -7,6 +7,7 @@ from ..models import (
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
+    CvTemplateColorLink,
     CvTemplateLocalization,
     CvTemplateSection,
 )
@@ -23,7 +24,12 @@ def _slugs(value):
 def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
     """Public catalogue, always tied to the current published version."""
     localizations = CvTemplateLocalization.objects.filter(locale=locale, is_active=True)
-    categories = CvTemplateCategoryLink.objects.select_related('category').filter(category__is_active=True)
+    categories = CvTemplateCategoryLink.objects.select_related('category').filter(
+        category__is_active=True,
+    ).order_by('sort_order', 'category__sort_order', 'category__name')
+    colors = CvTemplateColorLink.objects.select_related('color').filter(
+        color__is_active=True,
+    ).order_by('sort_order', 'color__sort_order', 'color__name')
     queryset = CvTemplate.objects.filter(
         status=CvTemplate.Status.ACTIVE,
         lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
@@ -33,6 +39,7 @@ def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
     ).select_related('current_published_version').prefetch_related(
         Prefetch('localizations', queryset=localizations, to_attr='catalog_localizations'),
         Prefetch('category_links', queryset=categories, to_attr='catalog_category_links'),
+        Prefetch('color_links', queryset=colors, to_attr='catalog_color_links'),
     )
     category_slugs = _slugs(category)
     if category_slugs:

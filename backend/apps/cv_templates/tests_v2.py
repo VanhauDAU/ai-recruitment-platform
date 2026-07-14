@@ -7,10 +7,12 @@ from apps.cvs.schemas import empty_content, empty_layout, empty_style
 
 from .models import (
     CvCategory,
+    CvColor,
     CvSampleContent,
     CvSectionDefinition,
     CvTemplate,
     CvTemplateCategoryLink,
+    CvTemplateColorLink,
     CvTemplateLocalization,
     CvTemplateSection,
     CvTemplateVersion,
@@ -42,6 +44,24 @@ class TemplateCatalogV2Tests(TestCase):
         )
         for category in categories:
             CvTemplateCategoryLink.objects.create(template=template, category=category)
+        green, _ = CvColor.objects.get_or_create(
+            hex_code='#00A66A', defaults={'name': 'Xanh', 'slug': 'green'},
+        )
+        blue, _ = CvColor.objects.get_or_create(
+            hex_code='#2255AA', defaults={'name': 'Xanh dương', 'slug': 'blue'},
+        )
+        CvTemplateColorLink.objects.create(
+            template=template,
+            color=green,
+            preview_url=f'/templates/{name}-green.png',
+            is_default=True,
+        )
+        CvTemplateColorLink.objects.create(
+            template=template,
+            color=blue,
+            preview_url=f'/templates/{name}-blue.png',
+            sort_order=1,
+        )
         return template
 
     def setUp(self):
@@ -72,6 +92,15 @@ class TemplateCatalogV2Tests(TestCase):
         card = response.data['results'][0]
         self.assertEqual(card['slug'], self.primary.slug)
         self.assertEqual(card['theme_color'], '#00A66A')
+        self.assertEqual(
+            [(color['slug'], color['preview_url']) for color in card['colors']],
+            [('green', '/templates/Primary-green.png'), ('blue', '/templates/Primary-blue.png')],
+        )
+        self.assertEqual(card['color_variants'], ['#00A66A', '#2255AA'])
+        self.assertCountEqual(
+            [category['slug'] for category in card['categories']],
+            ['minimal', 'professional'],
+        )
         self.assertEqual([tag['slug'] for tag in card['tags']], ['ats'])
         self.assertNotIn('default_layout_json', card)
         self.assertNotIn('renderer', card)

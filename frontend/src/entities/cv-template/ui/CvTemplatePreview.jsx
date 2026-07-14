@@ -1,7 +1,7 @@
-export default function CvTemplatePreview({ template, compact = false }) {
+export default function CvTemplatePreview({ template, compact = false, imageUrl: selectedImageUrl }) {
   const color = template?.theme_color || '#00A66A'
   const name = template?.display_name || 'Mẫu CV'
-  const imageUrl = template?.thumbnail_url || template?.preview_url
+  const imageUrl = selectedImageUrl || template?.thumbnail_url || template?.preview_url
 
   if (imageUrl) {
     return (

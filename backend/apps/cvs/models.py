@@ -120,6 +120,11 @@ class UserCv(models.Model):
                 check=models.Q(status__in=['draft', 'uploaded', 'processing', 'analyzed', 'failed']),
                 name='chk_user_cvs_status',
             ),
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(is_default=True, is_deleted=False),
+                name='uq_user_active_default_cv',
+            ),
         ]
 
     def save(self, *args, **kwargs):

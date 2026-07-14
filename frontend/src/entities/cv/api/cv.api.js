@@ -5,6 +5,28 @@ export async function getMyCvs() {
   return Array.isArray(data) ? data : data.results || []
 }
 
+export async function deleteCv(publicId) {
+  await api.delete(`/v2/cvs/${publicId}/`)
+}
+
+export async function renameCv(publicId, title) {
+  const { data } = await api.patch(`/v2/cvs/${publicId}/`, { title })
+  return data
+}
+
+export async function setDefaultCv(publicId, isDefault) {
+  const { data } = await api.patch(`/v2/cvs/${publicId}/`, { is_default: isDefault })
+  return data
+}
+
+export async function importCvFile(file, title) {
+  const body = new FormData()
+  body.append('file', file)
+  if (title) body.append('title', title)
+  const { data } = await api.post('/v2/cvs/imports/', body)
+  return data
+}
+
 export async function getCv(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/`)
   return data

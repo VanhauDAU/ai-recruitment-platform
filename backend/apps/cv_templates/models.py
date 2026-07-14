@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -45,6 +46,18 @@ class CvTemplate(models.Model):
         null=True,
         blank=True,
         related_name='+',
+    )
+    categories = models.ManyToManyField(
+        'CvCategory',
+        through='CvTemplateCategoryLink',
+        related_name='templates',
+        blank=True,
+    )
+    colors = models.ManyToManyField(
+        'CvColor',
+        through='CvTemplateColorLink',
+        related_name='templates',
+        blank=True,
     )
     archived_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_cv_templates')
@@ -99,6 +112,37 @@ class CvCategory(models.Model):
 
     def __str__(self):
         return f'{self.category_type}: {self.name}'
+
+
+class CvColor(models.Model):
+    """Reusable catalogue color; preview assets belong to the template link."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=100, unique=True)
+    hex_code = models.CharField(
+        max_length=7,
+        unique=True,
+        validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Use a six-digit hex color.')],
+    )
+    sort_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvcolor')
+        if not self.slug:
+            self.slug = slugify(f'{self.name}-{self.hex_code.lstrip("#")}')
+        self.hex_code = self.hex_code.upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.name} ({self.hex_code})'
 
 
 class CvTemplateVersion(models.Model):
@@ -206,6 +250,26 @@ class CvTemplateCategoryLink(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['template', 'category'], name='uq_cv_template_category_link'),
+        ]
+
+
+class CvTemplateColorLink(models.Model):
+    template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='color_links')
+    color = models.ForeignKey(CvColor, on_delete=models.PROTECT, related_name='template_links')
+    thumbnail_url = models.TextField(blank=True)
+    preview_url = models.TextField(blank=True)
+    is_default = models.BooleanField(default=False)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['sort_order', 'pk']
+        constraints = [
+            models.UniqueConstraint(fields=['template', 'color'], name='uq_cv_template_color_link'),
+            models.UniqueConstraint(
+                fields=['template'],
+                condition=models.Q(is_default=True),
+                name='uq_cv_template_default_color',
+            ),
         ]
 
 

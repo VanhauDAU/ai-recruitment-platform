@@ -71,7 +71,7 @@ def _content_for_create(sample_content, language):
 
 
 @transaction.atomic
-def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=None):
+def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=None, theme_color=None):
     """Create a builder CV with an immutable baseline and a mutable draft."""
     if not actor.email_verified:
         raise CvLifecyclePolicyError('Verify your email before creating a CV.')
@@ -83,6 +83,8 @@ def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=Non
     content = _content_for_create(sample_content, language)
     layout = _layout_for_content(template_version, content)
     style = deepcopy(template_version.default_style_json or empty_style())
+    if theme_color:
+        style['theme_color'] = theme_color
     validate_cv_document(
         content_json=content,
         layout_json=layout,

@@ -1,6 +1,14 @@
 """Write workflows for the CV domain."""
 
-from .cvs import UnsupportedCvUpload, archive_cv, create_builder_cv, update_builder_cv, upload_cv
+from .cvs import (
+    UnsupportedCvUpload,
+    archive_cv,
+    create_builder_cv,
+    import_v2_cv,
+    update_builder_cv,
+    update_cv_metadata,
+    upload_cv,
+)
 from .exports import (
     CvExportPermissionError,
     CvExportStateError,
@@ -33,12 +41,14 @@ __all__ = [
     'archive_cv',
     'create_application_snapshot',
     'create_builder_cv',
+    'import_v2_cv',
     'create_initial_document',
     'create_v2_cv',
     'create_shared_link',
     'request_cv_export',
     'create_version',
     'update_builder_cv',
+    'update_cv_metadata',
     'update_draft',
     'upload_cv',
     'save_draft_as_version',

@@ -36,7 +36,11 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `phone_otps` | `backend/apps/employers` | OTP xác thực SĐT (hash, expires, attempts) — gửi qua email trước khi có SMS gateway |
 | `job_categories` | `backend/apps/jobs` | Danh mục ngành nghề, self-referential parent, taxonomy 3 cấp (nhóm nghề → nghề → vị trí chuyên môn: 8/24/61), seed qua `seed_job_categories` |
 | `locations` | `backend/apps/locations` | 2 cấp tỉnh/xã, seed thật qua `seed_locations` (provinces.open-api.vn) |
-| `cv_templates` | `backend/apps/cv_templates` | Quản lý qua Django admin, API chỉ đọc (list/detail) |
+| `cv_templates` | `backend/apps/cv_templates` | Identity/catalogue; version published hiện hành, localization và legacy dual-read fields |
+| `cv_categories`, `cv_template_category_links` | `backend/apps/cv_templates` | Taxonomy many-to-many style/feature/position/audience; link giữ thứ tự theo template |
+| `cv_colors`, `cv_template_color_links` | `backend/apps/cv_templates` | Palette màu dùng lại; link theo template giữ thumbnail/preview URL, thứ tự và đúng tối đa một màu mặc định |
+| `cv_template_versions`, `cv_template_sections` | `backend/apps/cv_templates` | Renderer/layout/style contract bất biến sau publish và mapping section theo region |
+| `cv_sample_contents` | `backend/apps/cv_templates` | Canonical starter content theo vị trí, locale và experience level |
 | `user_cvs` | `backend/apps/cvs` | CV builder + upload (PDF/DOCX), soft-delete |
 | `cv_skills` | `backend/apps/cvs` | Nested trong API `user_cvs` |
 | `jobs` | `backend/apps/jobs` | Tin tuyển dụng lõi đã tinh gọn; lương dùng `salary_type`, có tuổi, giới tính, học vấn, kinh nghiệm và số lượng tuyển |

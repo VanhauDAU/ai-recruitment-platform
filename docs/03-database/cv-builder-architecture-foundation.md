@@ -1,7 +1,8 @@
 # CV Builder — Architecture Foundation
 
-Triển khai này chốt contract V1 cho CV Builder. Đây là nền tảng backend, chưa
-bao gồm Builder UI, kéo-thả nâng cao, PDF worker, shared link hoặc AI.
+Tài liệu này mô tả foundation và contract V2 hiện hành của CV Builder. Builder
+UI cơ bản, version history, shared link và PDF export đã có; AI/import pipeline
+và một số workflow candidate nâng cao vẫn nằm trong roadmap.
 
 ## Canonical document
 
@@ -37,6 +38,29 @@ render do một lần chỉnh template sau này.
 template-agnostic. `CvTemplateSection` chỉ cấu hình section theo region/version,
 không định nghĩa một schema content riêng cho từng template.
 
+### Taxonomy và màu của template
+
+Category và color là catalogue metadata, không thuộc immutable renderer config:
+
+```text
+CvTemplate ──< CvTemplateCategoryLink >── CvCategory
+CvTemplate ──< CvTemplateColorLink    >── CvColor
+```
+
+- Một template có nhiều category và một category có nhiều template. Link có
+  `sort_order`; `category_type=feature` được serialize thành `tags`, các type
+  `style`, `position`, `audience` được serialize thành `categories`.
+- `CvColor` là palette dùng lại (`name`, `slug`, `hex_code`, `is_active`).
+  `CvTemplateColorLink` sở hữu asset theo ngữ cảnh template: `thumbnail_url`,
+  `preview_url`, `sort_order`, `is_default`. DB chặn trùng template–color và
+  chặn nhiều hơn một màu mặc định cho cùng template.
+- Màu catalogue không tạo `CvTemplateVersion` mới. Khi candidate tạo CV, màu
+  đã chọn được copy vào `style_json.theme_color` của initial version/draft;
+  CV sau đó tiếp tục ghim immutable template version như trước.
+- Field `CvTemplate.category` và `default_style_json.color_variants` chỉ còn là
+  nguồn legacy/backfill. API V2 và frontend mới đọc quan hệ DB; chưa xóa field
+  cũ trong thời gian dual-read.
+
 ## Rollout migration
 
 1. **Expand**: migrations thêm bảng version/draft/template registry và các FK
@@ -60,6 +84,11 @@ Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
 `/api/cvs/` để autosave:
 
 - `POST /api/v2/cvs/` tạo CV từ một template published;
+- `GET|PATCH|DELETE /api/v2/cvs/{public_id}/` đọc metadata, đổi `title`/`is_default`
+  hoặc archive mềm CV owner. Database chỉ cho phép một CV default còn active
+  cho mỗi candidate;
+- `POST /api/v2/cvs/imports/` nhập PDF/DOCX, tạo immutable `imported` version
+  và chỉ trả metadata file, không trả storage key/URL;
 - `GET|PUT /api/v2/cvs/{public_id}/draft/` đọc/autosave canonical draft;
 - `POST /api/v2/cvs/{public_id}/save-version/` tạo `manual_save` immutable;
 - `POST /api/v2/cvs/{public_id}/publish/` tạo `published` immutable;
@@ -80,30 +109,34 @@ route V2 là:
 
 - `GET /api/v2/cv-templates/?locale=vi-VN&category=...&tag=...` trả contract
   card gọn: public ID, slug, localized name/description, thumbnail, premium,
-  theme color, categories và tags — không trả layout/style hoặc renderer config;
+  theme color, `colors[]`, categories và tags — không trả layout/style hoặc
+  renderer config. Mỗi phần tử màu gồm identity, hex, asset preview và cờ
+  mặc định;
 - `GET /api/v2/cv-templates/{slug}/` trả metadata preview, renderer capability
   an toàn và danh sách section, vẫn không trả configuration JSON;
 - `GET /api/v2/cv-templates/{slug}/related/`, `GET /api/v2/cv-categories/` và
   `GET /api/v2/cv-sample-contents/` đều là public metadata có cache control/ETag.
 
 `CvCategory.category_type=feature` là tag. `CvTemplateLocalization` giữ tên,
-mô tả và SEO theo locale; `default_style_json.theme_color` của **published
-template version** là nguồn màu cho card/preview. `CvSampleContent` chỉ chứa
-canonical content theo locale/vị trí/cấp độ; public API không bao giờ trả
-`content_json`.
+mô tả và SEO theo locale. `CvTemplateColorLink` là nguồn màu/preview cho card;
+`default_style_json.theme_color` chỉ là fallback tương thích và default style
+của renderer version. `CvSampleContent` chỉ chứa canonical content theo
+locale/vị trí/cấp độ; list API không trả `content_json`, detail sample endpoint
+chỉ được gọi khi người dùng chọn một sample cụ thể.
 
-`POST /api/v2/cvs/` nhận `template_public_id`, `language`, title và tùy chọn
-`sample_content_public_id`. Trong một transaction, service khóa template và
+`POST /api/v2/cvs/` nhận `template_public_id`, `language`, title, tùy chọn
+`sample_content_public_id` và `theme_color`. Serializer chỉ chấp nhận theme
+color active đã gán cho template. Trong một transaction, service khóa template và
 sample, kiểm tra version hiện hành đúng thuộc template và đang published, clone
 canonical sample hoặc content trắng, dựng layout từ section registry, clone
-style của version, tạo `UserCv`, immutable initial `CvVersion` và `CvDraft`.
+style của version, áp màu đã chọn, tạo `UserCv`, immutable initial `CvVersion`
+và `CvDraft`.
 Vì `CvVersion.template_version` được set lúc này, CV luôn ghim chính xác template
 version đã published; việc xuất bản template mới không làm thay đổi CV cũ.
 
 Frontend catalog dùng độc quyền `/api/v2/*`; sau khi tạo thành công nó điều
-hướng candidate đến `/cvs/{public_id}/edit`. Route này hiện là điểm vào bảo vệ
-cho Builder ở phase kế tiếp, không ngụ ý Builder/drag-and-drop đã được triển
-khai.
+hướng candidate đến `/cvs/{public_id}/edit`. Route này là page composition mỏng
+`CvEditor`, còn workflow editor nằm trong feature `edit-cv-draft`.
 
 ## CV Builder MVP cơ bản
 

@@ -29,12 +29,23 @@ def create_builder_cv(serializer, user):
 
 @transaction.atomic
 def archive_cv(instance):
-    instance.is_deleted = True
-    instance.deleted_at = timezone.now()
-    instance.save(update_fields=['is_deleted', 'deleted_at'])
+    """Archive a CV consistently for both legacy and V2 callers."""
+    cv = UserCv.objects.select_for_update().get(pk=instance.pk)
+    if cv.is_deleted:
+        return cv
+    archived_at = timezone.now()
+    cv.is_deleted = True
+    cv.deleted_at = archived_at
+    cv.archived_at = archived_at
+    cv.lifecycle_status = UserCv.LifecycleStatus.ARCHIVED
+    cv.is_default = False
+    cv.save(update_fields=[
+        'is_deleted', 'deleted_at', 'archived_at', 'lifecycle_status', 'is_default', 'updated_at',
+    ])
+    return cv
 
 
-def upload_cv(user, upload, title=''):
+def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):
     file_type = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
     if file_type not in ALLOWED_UPLOAD_TYPES:
         raise UnsupportedCvUpload('Only PDF or DOCX files are supported.')
@@ -45,7 +56,7 @@ def upload_cv(user, upload, title=''):
             cv = UserCv.objects.create(
                 user=user,
                 cv_type=UserCv.CvType.UPLOADED,
-                source=UserCv.Source.UPLOADED,
+                source=source,
                 title=title or upload.name,
                 file_url=path,
                 file_name=upload.name,
@@ -57,6 +68,43 @@ def upload_cv(user, upload, title=''):
     except Exception:
         default_storage.delete(path)
         raise
+
+
+def import_v2_cv(actor, upload, title=''):
+    """Create an uploaded CV through the explicit V2 import contract."""
+    return upload_cv(actor, upload, title, source=UserCv.Source.IMPORTED)
+
+
+@transaction.atomic
+def update_cv_metadata(*, cv, actor, title=None, is_default=None):
+    """Update the small mutable CV aggregate owned by the candidate.
+
+    Draft document changes intentionally stay on the optimistic-locking draft
+    endpoint.  The account library only needs a title and one active default
+    CV, so this service makes those invariants explicit.
+    """
+    locked_cv = UserCv.objects.select_for_update().get(pk=cv.pk)
+    if locked_cv.user_id != actor.pk:
+        raise ValueError('Only the CV owner can update its metadata.')
+
+    if is_default is True:
+        # Serialise updates across a candidate's CVs.  The database constraint
+        # below remains the final guard if this service is ever bypassed.
+        actor.__class__.objects.select_for_update().get(pk=actor.pk)
+        UserCv.objects.filter(user_id=actor.pk, is_deleted=False, is_default=True).exclude(
+            pk=locked_cv.pk,
+        ).update(is_default=False)
+
+    update_fields = []
+    if title is not None and locked_cv.title != title:
+        locked_cv.title = title
+        update_fields.append('title')
+    if is_default is not None and locked_cv.is_default != is_default:
+        locked_cv.is_default = is_default
+        update_fields.append('is_default')
+    if update_fields:
+        locked_cv.save(update_fields=[*update_fields, 'updated_at'])
+    return locked_cv
 
 
 def update_builder_cv(serializer, user):

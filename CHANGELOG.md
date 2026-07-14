@@ -6,6 +6,30 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-15
+
+#### Added
+
+- Chuẩn hóa taxonomy kho mẫu CV bằng quan hệ many-to-many `CvTemplate.categories` qua `CvTemplateCategoryLink`; bổ sung `CvColor` và `CvTemplateColorLink` để một template có nhiều màu, mỗi màu có thumbnail/preview URL, thứ tự và trạng thái mặc định riêng.
+- Public CV Template API V2 trả thêm `colors[]` từ database; Django admin có màn quản lý category/color và inline gán category/color cho từng template.
+- Migration `cv_templates.0004_cv_template_taxonomy_colors` backfill màu từ style JSON cũ sang bảng quan hệ; `seed_cv_catalog` chuyển category legacy thành link thật, seed palette màu/localization/sample content theo cách idempotent.
+- Luồng tạo CV V2 nhận tùy chọn `theme_color`, chỉ chấp nhận màu active đã gán cho template và ghi màu đã chọn vào initial version cùng draft.
+- Thêm unit/regression test cho contract category/color, URL preview theo màu và việc lưu màu vào CV; smoke test desktop/mobile phủ hover màu đổi preview và trang detail mở create flow.
+- Hoàn thiện parity cho account library ở V2: `POST /api/v2/cvs/imports/` nhận PDF/DOCX, `PATCH /api/v2/cvs/{id}/` đổi title/default CV, và `DELETE` archive CV bằng lifecycle service. Response import chỉ trả metadata file, không lộ storage URL.
+- Bổ sung constraint DB chỉ cho phép một CV mặc định còn active mỗi candidate; migration giữ CV default cập nhật gần nhất nếu dữ liệu cũ có nhiều bản ghi.
+
+#### Changed
+
+- Card mẫu CV bỏ danh sách màu fallback hard-code; hover/focus một màu dùng đúng `preview_url` của quan hệ template–color, còn compatibility fallback chỉ giữ một màu cho node API chưa migrate.
+- Trang template detail và modal dùng chung `CvSourcePanel`; màu của modal mẫu liên quan có state riêng, không làm đổi màu template chính. Catalog không còn tải sample content rồi truyền vào prop không được sử dụng.
+- Đổi tên page `CvEditorPlaceholder` thành `CvEditor` vì route `/cvs/{public_id}/edit` đã render editor thật; thu hẹp public API của entity `cv-template` bằng cách bỏ export preview component không có consumer ngoài slice.
+- Trang “CV của tôi” dùng entity API V2 cho archive, rename, default, share và import; upload gọi backend thật rồi refresh danh sách, không còn thông báo thành công bằng timeout hoặc gọi V1.
+- V1 `/api/cvs/` và `/api/cv-templates/` giữ hoạt động trong thời gian cutover nhưng mọi response đã có `Deprecation`, `Sunset`, `Link: rel="successor-version"` và event telemetry endpoint-level không ghi URL, user-agent hay định danh người dùng.
+
+#### Documentation
+
+- Cập nhật kiến trúc, API, database inventory, tiến độ và kế hoạch CV Builder theo nguồn dữ liệu category/color mới, V1→V2 cutover, các biến môi trường deprecation/sunset và phần còn lại của workflow clone/restore/import analysis.
+
 ### 2026-07-14
 
 #### Added

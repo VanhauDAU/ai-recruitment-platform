@@ -1,22 +1,31 @@
-"""Seed CV Builder catalog data: template color variants + sample contents per position.
+"""Seed CV Builder taxonomy, template colors and sample contents per position.
 
-Idempotent: color variants are only added when missing; sample contents are
-keyed by (job_category, locale) and skipped when already present.
+Idempotent: relations use get_or_create; sample contents are keyed by
+(job_category, locale) and skipped when already present.
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django.utils.text import slugify
 
 from apps.cv_templates.models import (
     CvSampleContent,
+    CvCategory,
+    CvColor,
     CvTemplate,
+    CvTemplateCategoryLink,
+    CvTemplateColorLink,
     CvTemplateLocalization,
-    CvTemplateSection,
-    CvTemplateVersion,
 )
 from apps.jobs.models import JobCategory
 
-DEFAULT_COLOR_VARIANTS = ['#1f2937', '#334e68', '#5b2333', '#0e7490']
+DEFAULT_COLORS = [
+    ('Xanh thương hiệu', 'brand-green', '#00A66A'),
+    ('Than chì', 'charcoal', '#1F2937'),
+    ('Xanh đá', 'slate-blue', '#334E68'),
+    ('Đỏ rượu', 'burgundy', '#5B2333'),
+    ('Xanh teal', 'teal', '#0E7490'),
+]
 
 SAMPLE_POSITIONS = [
     'Backend Developer',
@@ -99,6 +108,14 @@ def rich_text(value):
     return {'format': 'rich_text_v1', 'content': blocks}
 
 
+def category_type_for(name):
+    return (
+        CvCategory.CategoryType.STYLE
+        if name.casefold() in {'simple', 'modern', 'classic'}
+        else CvCategory.CategoryType.POSITION
+    )
+
+
 def build_sample_content(locale, position):
     texts = LOCALE_TEXTS[locale]
 
@@ -169,56 +186,56 @@ def build_sample_content(locale, position):
 
 
 class Command(BaseCommand):
-    help = 'Seed CV template color variants and per-position sample contents (idempotent).'
+    help = 'Seed CV template taxonomy, colors and per-position sample contents (idempotent).'
 
     @transaction.atomic
     def handle(self, *args, **options):
-        # Published versions are immutable, so adding color variants means
-        # publishing a new version cloned from the current one.
-        variants_added = 0
+        colors = []
+        for index, (name, slug, hex_code) in enumerate(DEFAULT_COLORS):
+            color, _ = CvColor.objects.get_or_create(
+                hex_code=hex_code,
+                defaults={'name': name, 'slug': slug, 'sort_order': index, 'is_active': True},
+            )
+            colors.append(color)
+
+        color_links_created = 0
         for template in CvTemplate.objects.filter(
             lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
             current_published_version__isnull=False,
         ):
             version = template.current_published_version
-            style = dict(version.default_style_json or {})
-            if style.get('color_variants'):
-                continue
-            theme = style.get('theme_color', '#00A66A')
-            style['color_variants'] = [color for color in DEFAULT_COLOR_VARIANTS if color != theme]
-            latest_number = template.versions.order_by('-version_number').first().version_number
-            new_version = CvTemplateVersion.objects.create(
-                template=template,
-                version_number=latest_number + 1,
-                version_status=CvTemplateVersion.VersionStatus.DRAFT,
-                renderer_key=version.renderer_key,
-                renderer_version=version.renderer_version,
-                schema_version=version.schema_version,
-                layout_schema=version.layout_schema,
-                style_schema=version.style_schema,
-                default_layout_json=version.default_layout_json,
-                default_style_json=style,
-                capabilities=version.capabilities,
-                content_contract=version.content_contract,
+            theme = str((version.default_style_json or {}).get('theme_color', '#00A66A')).upper()
+            theme_color, _ = CvColor.objects.get_or_create(
+                hex_code=theme,
+                defaults={
+                    'name': f'Màu {theme}',
+                    'slug': f'color-{theme.lstrip("#").lower()}',
+                },
             )
-            for section in version.sections.all():
-                CvTemplateSection.objects.create(
-                    template_version=new_version,
-                    section_definition=section.section_definition,
-                    region_key=section.region_key,
-                    default_order=section.default_order,
-                    is_required=section.is_required,
-                    is_default_enabled=section.is_default_enabled,
-                    is_draggable=section.is_draggable,
-                    use_theme_color=section.use_theme_color,
-                    config_json=section.config_json,
+            ordered_colors = [theme_color, *[color for color in colors if color.pk != theme_color.pk]]
+            has_default = template.color_links.filter(is_default=True).exists()
+            for index, color in enumerate(ordered_colors):
+                _, created = CvTemplateColorLink.objects.get_or_create(
+                    template=template,
+                    color=color,
+                    defaults={
+                        'thumbnail_url': template.thumbnail_url,
+                        'preview_url': template.preview_url or template.thumbnail_url,
+                        'is_default': index == 0 and not has_default,
+                        'sort_order': index,
+                    },
                 )
-            new_version.version_status = CvTemplateVersion.VersionStatus.PUBLISHED
-            new_version.published_at = timezone.now()
-            new_version.save(update_fields=['version_status', 'published_at'])
-            template.current_published_version = new_version
-            template.save(update_fields=['current_published_version'])
-            variants_added += 1
+                color_links_created += int(created)
+
+            # Convert legacy comma-separated category values into real links.
+            for raw_name in filter(None, (part.strip() for part in template.category.split(','))):
+                slug = slugify(raw_name)[:140]
+                category, _ = CvCategory.objects.get_or_create(
+                    category_type=category_type_for(raw_name),
+                    slug=slug,
+                    defaults={'name': raw_name},
+                )
+                CvTemplateCategoryLink.objects.get_or_create(template=template, category=category)
 
         # A template only appears in a language catalog when it has an active
         # localization for that locale, so make sure every published template
@@ -268,6 +285,6 @@ class Command(BaseCommand):
                 samples_created += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f'Done. color_variants added to {variants_added} template version(s); '
+            f'Done. {color_links_created} template color link(s) created; '
             f'{localizations_created} localization(s) and {samples_created} sample content(s) created.'
         ))

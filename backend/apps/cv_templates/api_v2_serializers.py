@@ -20,11 +20,27 @@ def _catalog_groups(template):
     return categories, tags
 
 
+def _catalog_colors(template):
+    return [
+        {
+            'public_id': link.color.public_id,
+            'name': link.color.name,
+            'slug': link.color.slug,
+            'hex_code': link.color.hex_code,
+            'thumbnail_url': link.thumbnail_url or template.thumbnail_url,
+            'preview_url': link.preview_url or link.thumbnail_url or template.preview_url or template.thumbnail_url,
+            'is_default': link.is_default,
+        }
+        for link in getattr(template, 'catalog_color_links', [])
+    ]
+
+
 class CvTemplateCardSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     theme_color = serializers.SerializerMethodField()
     color_variants = serializers.SerializerMethodField()
+    colors = serializers.SerializerMethodField()
     categories = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
 
@@ -32,7 +48,7 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         model = CvTemplate
         fields = [
             'public_id', 'slug', 'display_name', 'description', 'thumbnail_url',
-            'is_premium', 'theme_color', 'color_variants', 'categories', 'tags',
+            'is_premium', 'theme_color', 'color_variants', 'colors', 'categories', 'tags',
         ]
         read_only_fields = fields
 
@@ -45,15 +61,15 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         return localization.description if localization else template.description
 
     def get_theme_color(self, template):
-        return template.current_published_version.default_style_json.get('theme_color', '#00A66A')
+        colors = _catalog_colors(template)
+        default = next((item for item in colors if item['is_default']), colors[0] if colors else None)
+        return default['hex_code'] if default else template.current_published_version.default_style_json.get('theme_color', '#00A66A')
 
     def get_color_variants(self, template):
-        style = template.current_published_version.default_style_json
-        theme = style.get('theme_color', '#00A66A')
-        variants = style.get('color_variants')
-        if not isinstance(variants, list) or not variants:
-            return [theme]
-        return [theme] + [color for color in variants if isinstance(color, str) and color != theme]
+        return [item['hex_code'] for item in _catalog_colors(template)] or [self.get_theme_color(template)]
+
+    def get_colors(self, template):
+        return _catalog_colors(template)
 
     def get_categories(self, template):
         return _catalog_groups(template)[0]

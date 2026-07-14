@@ -7,6 +7,7 @@ from .api_v2_views import (
     CvV2ExportDownloadView,
     CvV2ExportListCreateView,
     CvV2ExportRetryView,
+    CvV2ImportView,
     CvV2ListCreateView,
     CvV2OwnerVersionView,
     CvV2PublishView,
@@ -22,6 +23,7 @@ from .api_v2_views import (
 
 urlpatterns = [
     path('shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'),
+    path('imports/', CvV2ImportView.as_view(), name='cv-v2-import'),
     path('', CvV2ListCreateView.as_view(), name='cv-v2-list-create'),
     path('<str:public_id>/', CvV2DetailView.as_view(), name='cv-v2-detail'),
     path('<str:public_id>/view/', CvV2OwnerVersionView.as_view(), name='cv-v2-owner-view'),

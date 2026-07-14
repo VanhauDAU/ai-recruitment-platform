@@ -7,13 +7,20 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.cv_templates.models import CvSampleContent, CvTemplate, CvTemplateVersion
+from apps.cv_templates.models import (
+    CvColor,
+    CvSampleContent,
+    CvTemplate,
+    CvTemplateColorLink,
+    CvTemplateVersion,
+)
 
 from .models import CvAccessLog, CvDraft, CvExport, CvSharedLink, CvVersion, UserCv
 from .pdf_renderer import build_cv_pdf_html
@@ -54,6 +61,8 @@ class CvV2ApiTests(APITestCase):
         )
         self.template.current_published_version = self.template_version
         self.template.save(update_fields=['current_published_version'])
+        self.blue = CvColor.objects.create(name='Blue', slug='blue', hex_code='#2255AA')
+        CvTemplateColorLink.objects.create(template=self.template, color=self.blue, is_default=True)
         self.client.force_authenticate(self.candidate)
 
     def create_cv(self):
@@ -166,6 +175,94 @@ class CvV2ApiTests(APITestCase):
         cv.refresh_from_db()
         self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.PUBLISHED)
         self.assertEqual(cv.published_version.public_id, published.data['public_id'])
+
+    def test_create_applies_only_a_color_available_for_the_template(self):
+        response = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Blue CV',
+                'template_public_id': self.template.public_id,
+                'language': 'vi-VN',
+                'theme_color': '#2255aa',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        cv = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(cv.draft.style_json['theme_color'], '#2255AA')
+        self.assertEqual(cv.latest_version.style_json['theme_color'], '#2255AA')
+
+        invalid = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Invalid color CV',
+                'template_public_id': self.template.public_id,
+                'language': 'vi-VN',
+                'theme_color': '#FF0000',
+            },
+            format='json',
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn('theme_color', invalid.data)
+
+    def test_import_archive_and_metadata_use_v2_without_legacy_storage_urls(self):
+        uploaded = SimpleUploadedFile('source.pdf', b'%PDF-1.4 test', content_type='application/pdf')
+        imported = self.client.post(
+            reverse('cv-v2-import'),
+            {'file': uploaded, 'title': 'Imported CV'},
+            format='multipart',
+        )
+
+        self.assertEqual(imported.status_code, 201, imported.data)
+        self.assertEqual(imported.data['source'], UserCv.Source.IMPORTED)
+        self.assertEqual(imported.data['cv_type'], UserCv.CvType.UPLOADED)
+        self.assertEqual(imported.data['file_name'], 'source.pdf')
+        self.assertNotIn('file_url', imported.data)
+        cv = UserCv.objects.get(public_id=imported.data['public_id'])
+        self.assertEqual(cv.latest_version.version_kind, CvVersion.VersionKind.IMPORTED)
+
+        metadata = self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}),
+            {'title': 'Renamed CV', 'is_default': True},
+            format='json',
+        )
+        self.assertEqual(metadata.status_code, 200, metadata.data)
+        self.assertEqual(metadata.data['title'], 'Renamed CV')
+        self.assertTrue(metadata.data['is_default'])
+
+        archived = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
+        self.assertEqual(archived.status_code, 204)
+        cv.refresh_from_db()
+        self.assertTrue(cv.is_deleted)
+        self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.ARCHIVED)
+        self.assertIsNotNone(cv.archived_at)
+        self.assertFalse(cv.is_default)
+        self.assertEqual(
+            self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code,
+            404,
+        )
+
+    def test_setting_another_default_cv_clears_the_previous_active_default(self):
+        first_cv = self.create_cv()
+        second_cv = self.create_cv()
+        first = self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': first_cv.public_id}),
+            {'is_default': True},
+            format='json',
+        )
+        second = self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': second_cv.public_id}),
+            {'is_default': True},
+            format='json',
+        )
+
+        self.assertEqual(first.status_code, 200, first.data)
+        self.assertEqual(second.status_code, 200, second.data)
+        first_cv.refresh_from_db()
+        second_cv.refresh_from_db()
+        self.assertFalse(first_cv.is_default)
+        self.assertTrue(second_cv.is_default)
 
     def test_autosave_rejects_invalid_canonical_documents_before_writing(self):
         cv = self.create_cv()

@@ -15,6 +15,7 @@ describe('create CV from template API', () => {
       template_public_id: 'cvtemplate_modern',
       sample_content_public_id: 'cvsample_designer',
       language: 'vi-VN',
+      theme_color: '#2255AA',
     }
     const created = { public_id: 'cv_new' }
     post.mockResolvedValue({ data: created })
