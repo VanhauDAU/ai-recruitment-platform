@@ -382,6 +382,15 @@ build đều pass.
 | 4.1 | Bảng `cv_versions` (undo/restore) | ⬜ |
 | 4.2 | Bảng `cv_exports` + export PDF | ⬜ |
 
+### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
+
+<details>
+<summary><b>CVB-0</b> — Stabilization (runtime + migration + tạo CV)</summary>
+
+**Migration snapshot application (expand → backfill → contract):** tách `applications.0004` gộp thành `0004_application_snapshot_expand` (thêm cột nullable) + `0005_application_snapshot_backfill` (chỉ dữ liệu, `atomic=False`, **idempotent** — reuse `cvv-application-{pk}` thay vì tạo trùng) + `0006_application_snapshot_contract` (guard hết NULL rồi mới NOT NULL + index). Lỗi thật đã tái hiện trên PostgreSQL 16: bản gộp cũ crash `duplicate key cvv-application-1` khi reverse→re-apply (đúng kiểu "merge nhiều lần vẫn lỗi"); bản tách xử lý đúng. Thêm `apps/applications/tests_migrations.py` — test nâng cấp qua `MigrationExecutor` seed application legacy ở `0003` rồi migrate lên mới nhất, chạy trên Postgres thật (vào CI qua `manage.py test`). **Khóa Python 3.11:** `.python-version` (root + backend), CI 3.13→3.11, `scripts/bootstrap-backend.sh`, `docs/setup-development.md`. **Error mapping tạo CV:** `createCvErrorMessage` map cụ thể backend-down / template chưa publish / sample sai / email chưa xác thực / 401·403·404·409·5xx (trước đây lỗi field 400 của DRF rơi vào message chung), có unit test, nối vào `UseTemplateModal`. Verify: backend `check` + `makemigrations --check` + 141 test pass; frontend lint + architecture + 125 unit test + build pass; **không `--fake`, không reset DB**.
+
+</details>
+
 ## Giai đoạn 5 — Tuyển dụng nâng cao
 
 | # | Công việc | Trạng thái |
@@ -498,4 +507,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-14 (API response DTO theo màn hình, query tối thiểu và contract test chống field dư/nhạy cảm)
+Cập nhật lần cuối: 2026-07-14 (CV Builder Giai đoạn 0 — stabilization: tách migration snapshot expand/backfill/contract + test nâng cấp, khóa Python 3.11, error mapping tạo CV)
