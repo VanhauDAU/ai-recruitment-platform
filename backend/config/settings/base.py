@@ -3,6 +3,7 @@
 from datetime import timedelta
 from pathlib import Path
 
+from corsheaders.defaults import default_headers
 from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -241,6 +242,10 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv(),
 )
 CORS_ALLOW_CREDENTIALS = True
+# Autosave and version operations use optimistic locking via If-Match.
+# Include it in the preflight allow-list so browsers can send those requests
+# from the Vite development origin.
+CORS_ALLOW_HEADERS = (*default_headers, 'if-match')
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 
 # Consent is stored in a signed, HttpOnly first-party cookie.  The browser may

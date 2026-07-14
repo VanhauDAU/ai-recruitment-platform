@@ -70,6 +70,7 @@ def _content_for_create(sample_content, language):
     return deepcopy(sample_content.content_json)
 
 
+@transaction.atomic
 def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=None):
     """Create a builder CV with an immutable baseline and a mutable draft."""
     if not actor.email_verified:

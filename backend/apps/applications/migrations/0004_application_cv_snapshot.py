@@ -56,6 +56,7 @@ def backfill_application_snapshots(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('applications', '0003_initial'),
