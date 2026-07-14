@@ -29,6 +29,16 @@ class Application(models.Model):
     candidate = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications')
     job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='applications')
     cv = models.ForeignKey('cvs.UserCv', on_delete=models.PROTECT, related_name='applications')
+    # Legacy `cv` retains the candidate's chosen CV identity.  Recruiter and
+    # export reads must use submitted_cv_version, which is immutable.
+    submitted_cv_version = models.ForeignKey(
+        'cvs.CvVersion',
+        on_delete=models.PROTECT,
+        related_name='submitted_applications',
+    )
+    submitted_cv_title = models.CharField(max_length=255, default='')
+    submitted_cv_source = models.CharField(max_length=30, default='builder')
+    submitted_at = models.DateTimeField(null=True, blank=True)
     cover_letter = models.TextField(blank=True)
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.APPLIED)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.SUBMITTED)
@@ -54,6 +64,7 @@ class Application(models.Model):
             models.Index(fields=['candidate']),
             models.Index(fields=['job']),
             models.Index(fields=['status']),
+            models.Index(fields=['submitted_cv_version'], name='idx_app_submitted_cv_version'),
         ]
 
     def save(self, *args, **kwargs):

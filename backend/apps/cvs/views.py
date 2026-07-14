@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 from .serializers import UserCvSerializer
 from .selectors import candidate_cvs_queryset
-from .services import UnsupportedCvUpload, archive_cv, create_builder_cv, upload_cv
+from .services import UnsupportedCvUpload, archive_cv, create_builder_cv, update_builder_cv, upload_cv
 
 
 class UserCvListCreateView(generics.ListCreateAPIView):
@@ -31,6 +31,9 @@ class UserCvDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         archive_cv(instance)
+
+    def perform_update(self, serializer):
+        update_builder_cv(serializer, self.request.user)
 
 
 class UserCvUploadView(APIView):

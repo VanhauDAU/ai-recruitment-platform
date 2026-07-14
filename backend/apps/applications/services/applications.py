@@ -3,6 +3,8 @@
 from django.db import transaction
 from django.utils import timezone
 
+from apps.cvs.services import create_application_snapshot
+
 from ..models import Application
 
 
@@ -49,9 +51,18 @@ class InvalidApplicationStatusTransition(ValueError):
     """Raised when an application is moved backwards or reopened."""
 
 
+@transaction.atomic
 def create_application(serializer, candidate):
-    """Persist a candidate's validated application."""
-    return serializer.save(candidate=candidate)
+    """Persist an application and freeze the candidate's chosen CV in one transaction."""
+    cv = serializer.validated_data['cv']
+    snapshot = create_application_snapshot(cv, candidate)
+    return serializer.save(
+        candidate=candidate,
+        submitted_cv_version=snapshot,
+        submitted_cv_title=cv.title,
+        submitted_cv_source=cv.source,
+        submitted_at=timezone.now(),
+    )
 
 
 @transaction.atomic

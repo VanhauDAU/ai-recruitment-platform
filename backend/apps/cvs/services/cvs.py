@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from ..models import UserCv
+from .versions import create_initial_document, sync_legacy_builder_draft
 
 ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
 
@@ -17,11 +18,13 @@ class UnsupportedCvUpload(ValueError):
 
 @transaction.atomic
 def create_builder_cv(serializer, user):
-    return serializer.save(
+    cv = serializer.save(
         user=user,
         cv_type=UserCv.CvType.BUILDER,
         source=UserCv.Source.BUILDER,
     )
+    create_initial_document(cv, user)
+    return cv
 
 
 @transaction.atomic
@@ -39,7 +42,7 @@ def upload_cv(user, upload, title=''):
     path = default_storage.save(f'cvs/uploads/{user.public_id}/{uuid4().hex}.{file_type}', upload)
     try:
         with transaction.atomic():
-            return UserCv.objects.create(
+            cv = UserCv.objects.create(
                 user=user,
                 cv_type=UserCv.CvType.UPLOADED,
                 source=UserCv.Source.UPLOADED,
@@ -49,6 +52,15 @@ def upload_cv(user, upload, title=''):
                 file_type=file_type,
                 status=UserCv.Status.UPLOADED,
             )
+            create_initial_document(cv, user, version_kind='imported')
+            return cv
     except Exception:
         default_storage.delete(path)
         raise
+
+
+def update_builder_cv(serializer, user):
+    """Persist legacy fields and mirror them into the V2 mutable draft."""
+    cv = serializer.save()
+    sync_legacy_builder_draft(cv, user)
+    return cv
