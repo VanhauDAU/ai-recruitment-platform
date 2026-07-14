@@ -19,6 +19,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Changed
 
 - Đồng bộ contract `desired_salary_vnd`: frontend và backend đều bắt buộc lương kỳ vọng là số nguyên VND lớn hơn 0; backend thêm regression test cho payload thiếu lương.
+- Sửa popup tìm kiếm desktop: cột lịch sử không còn chiếm toàn bộ chiều rộng làm bóp cột việc làm thành vùng trắng; giới hạn chiều cao theo viewport và thêm regression test cho tỷ lệ hai cột.
 - Chuẩn hóa toast toàn app: tối đa một thông báo hiện hành để không chồng nhiều lỗi khi người dùng click liên tục.
 - CORS giữ origin allowlist nhưng cho phép credential riêng cho consent/tracking first-party cookie.
 - Bỏ feature flag job-view tracking dư thừa: tracking chạy khi và chỉ khi Analytics consent hợp lệ; `.env.example` không chứa secret hoặc thông tin database mẫu có thể bị dùng nhầm.
@@ -27,6 +28,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Đăng nhập qua Google/Facebook/LinkedIn bỏ qua email 2FA sau khi provider xác thực thành công; đăng nhập email/mật khẩu vẫn yêu cầu mã 2FA khi tài khoản đã bật.
 - Đăng ký hoặc OAuth thành công của ứng viên chưa hoàn tất preference luôn chuyển vào `/onboard-user`, kể cả khi có URL quay lại an toàn.
 - Nâng chính sách mật khẩu từ 6–25 lên 8–25 ký tự; vẫn chặn mật khẩu phổ biến và bắt buộc có chữ hoa, chữ thường, chữ số.
+- Tách email xác thực và email chào mừng cho candidate: đăng ký email chỉ gửi xác thực, sau khi xác thực mới gửi chào mừng; candidate tạo lần đầu qua OAuth nhận email chào mừng ngay vì provider đã xác thực email.
+- Form đăng ký candidate kiểm tra email sau 500ms người dùng ngừng gõ, hủy request cũ để kết quả không bị ghi đè; backend có endpoint pre-check giới hạn 12 lần/phút, còn `RegisterSerializer` vẫn là lớp xác thực cuối cùng.
 
 ### 2026-07-13
 

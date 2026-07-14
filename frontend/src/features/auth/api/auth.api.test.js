@@ -12,6 +12,7 @@ vi.mock('@/shared/api/client', () => ({
 
 import {
   changeEmail,
+  checkRegistrationEmail,
   completeOAuth,
   confirmPasswordReset,
   confirmVerification,
@@ -40,6 +41,13 @@ describe('auth API session storage', () => {
 
     expect(localStorage.getItem('employer_access_token')).toBe('access-token')
     expect(localStorage.getItem('employer_refresh_token')).toBe('refresh-token')
+  })
+
+  it('checks email availability through the registration API', async () => {
+    post.mockResolvedValue({ data: { available: false } })
+
+    await expect(checkRegistrationEmail('used@example.com')).resolves.toBe(false)
+    expect(post).toHaveBeenCalledWith('/auth/register/email-availability/', { email: 'used@example.com' }, { signal: undefined })
   })
 
   it('clears the complete portal session', async () => {

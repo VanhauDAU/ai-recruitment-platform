@@ -53,6 +53,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
+class RegisterEmailAvailabilitySerializer(serializers.Serializer):
+    """Normalize the email before the debounced registration pre-check."""
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return User.objects.normalize_email(value)
+
+
 class UserSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     job_preferences_configured = serializers.SerializerMethodField()

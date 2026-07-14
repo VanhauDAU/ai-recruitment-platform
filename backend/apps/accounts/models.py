@@ -154,6 +154,7 @@ class AuthEmailJob(models.Model):
 
     class Kind(models.TextChoices):
         VERIFICATION = 'verification', 'Email verification'
+        WELCOME = 'welcome', 'Welcome email'
         PASSWORD_RESET = 'password_reset', 'Password reset'
         TWO_FACTOR = 'two_factor', 'Two-factor authentication code'
 

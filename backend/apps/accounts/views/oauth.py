@@ -14,6 +14,7 @@ from .. import oauth
 from ..models import User
 from ..serializers import UserSerializer
 from ..services.tokens import issue_tokens
+from ..tasks import queue_welcome_email
 
 
 def _oauth_error_redirect(portal, error_code):
@@ -73,9 +74,12 @@ class OAuthCallbackView(APIView):
             )
             token = oauth.exchange_code(provider, code, redirect_uri)
             profile = oauth.fetch_profile(provider, token)
-            user = oauth.resolve_user(provider, profile, portal)
+            user, created = oauth.resolve_user(provider, profile, portal, include_created=True)
         except oauth.OAuthError as exc:
             return _oauth_error_redirect(portal, exc.code)
+
+        if created:
+            queue_welcome_email(user)
 
         params = {'code': oauth.create_one_time_code(user)}
         if state_data.get('next'):

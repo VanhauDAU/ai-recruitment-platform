@@ -21,6 +21,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | Method | Endpoint | Mô tả |
 |---|---|---|
 | POST | `/api/auth/register/` | Đăng ký tài khoản (candidate/employer) |
+| POST | `/api/auth/register/email-availability/` | Kiểm tra email đã được dùng chưa cho UX form đăng ký candidate; body `{email}`, trả `{available}`; public, throttle 12/phút. Đây chỉ là pre-check — endpoint đăng ký vẫn xác thực lại để tránh race condition. |
 | POST | `/api/auth/login/` | Đăng nhập, nhận access/refresh JWT (kèm `portal` để chặn sai vai trò theo cổng) |
 | POST | `/api/auth/refresh/` | Làm mới access token |
 | GET | `/api/auth/me/` | Thông tin tài khoản hiện tại |

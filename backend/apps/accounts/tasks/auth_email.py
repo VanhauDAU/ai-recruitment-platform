@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ..models import AuthEmailJob
-from ..services import email_verification, password_reset, two_factor
+from ..services import email_verification, password_reset, two_factor, welcome
 
 logger = logging.getLogger(__name__)
 MAX_DELIVERY_ATTEMPTS = 4
@@ -29,10 +29,22 @@ def queue_auth_email(kind, user, context=None):
     return job
 
 
+def queue_welcome_email(user):
+    """Persist one candidate welcome job; employer mail uses its own workflow."""
+    if not user.is_candidate:
+        return None
+    if AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists():
+        return None
+    return queue_auth_email(AuthEmailJob.Kind.WELCOME, user)
+
+
 def _send(job):
     if job.kind == AuthEmailJob.Kind.VERIFICATION:
         if not job.user.email_verified:
             email_verification.send_verification_email(job.user)
+        return
+    if job.kind == AuthEmailJob.Kind.WELCOME:
+        welcome.send_welcome_email(job.user)
         return
     if job.kind == AuthEmailJob.Kind.PASSWORD_RESET:
         password_reset.send_password_reset_email(job.user)

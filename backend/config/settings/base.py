@@ -173,6 +173,7 @@ REST_FRAMEWORK = {
         'two_factor': '5/min',
         'two_factor_verify': '10/min',
         'register': '5/min',
+        'register_email_check': '12/min',
         'verify_email': '5/min',
         'password_reset': '5/min',
         # Bucket riêng cho bước confirm: gõ sai mật khẩu mới vài lần không được

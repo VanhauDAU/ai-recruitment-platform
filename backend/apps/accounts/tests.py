@@ -200,6 +200,7 @@ class OAuthFlowTests(APITestCase):
                 user=user, provider='google', provider_user_id='google-uid-1'
             ).exists()
         )
+        self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
 
     def test_employer_portal_creates_employer_via_google(self):
         response = self._callback(portal='employer')
@@ -301,6 +302,34 @@ class OAuthFlowTests(APITestCase):
             {'error': 'access_denied', 'state': state},
         )
         self.assertIn('error=access_denied', response.url)
+
+
+@override_settings(
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+)
+class RegisterEmailAvailabilityTests(APITestCase):
+    """Pre-check chỉ phục vụ UX; RegisterSerializer vẫn là điểm chặn cuối."""
+
+    def setUp(self):
+        cache.clear()
+        self.url = reverse('auth-register-email-availability')
+
+    def test_returns_availability_case_insensitively(self):
+        User.objects.create_user(email='existing@example.com', password='Password@123')
+
+        taken = self.client.post(self.url, {'email': 'EXISTING@example.com'})
+        available = self.client.post(self.url, {'email': 'new@example.com'})
+
+        self.assertEqual(taken.status_code, status.HTTP_200_OK)
+        self.assertEqual(taken.data, {'available': False})
+        self.assertEqual(available.status_code, status.HTTP_200_OK)
+        self.assertEqual(available.data, {'available': True})
+
+    def test_rejects_invalid_email_before_querying(self):
+        response = self.client.post(self.url, {'email': 'not-an-email'})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
 
 
 @override_settings(
@@ -480,6 +509,35 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertEqual(job.status, AuthEmailJob.Status.SENT)
         self.assertEqual(job.attempts, 1)
         self.assertIsNotNone(job.sent_at)
+
+    def test_verification_confirmation_queues_one_welcome_email(self):
+        user = User.objects.create_user(email='new@example.com', password='Password@123')
+        token = email_verification.issue_token(user)
+
+        response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+
+    def test_employer_verification_does_not_queue_candidate_welcome_email(self):
+        user = User.objects.create_user(
+            email='employer-welcome@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        token = email_verification.issue_token(user)
+
+        response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+
+    def test_welcome_email_is_delivered_from_the_outbox(self):
+        user = User.objects.create_user(email='welcome@example.com', password='Password@123', email_verified=True)
+        job = AuthEmailJob.objects.create(user=user, kind=AuthEmailJob.Kind.WELCOME)
+
+        deliver_auth_email_job.run(job.pk)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Chào mừng', mail.outbox[0].subject)
 
 
 @override_settings(

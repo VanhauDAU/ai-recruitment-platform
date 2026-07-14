@@ -11,6 +11,11 @@ export async function register({ email, password, role, full_name, captcha_token
   return data
 }
 
+export async function checkRegistrationEmail(email, { signal } = {}) {
+  const { data } = await api.post('/auth/register/email-availability/', { email }, { signal })
+  return data.available === true
+}
+
 // Xác thực email
 export async function sendVerificationEmail() {
   const { data } = await api.post('/auth/verify/send/')
