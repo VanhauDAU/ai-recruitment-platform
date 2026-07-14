@@ -93,6 +93,9 @@ export default function Header() {
     || location.pathname.startsWith('/viec-lam/tai/')
     || (location.pathname.startsWith('/viec-lam/') && location.pathname !== '/viec-lam-da-luu')
     || location.pathname.includes('/tuyen-dung/')
+    // The CV editor has long, form-heavy pages. Hide the global sticky header
+    // while scrolling there so it cannot cover controls on small viewports.
+    || location.pathname.startsWith('/cvs/')
   const shouldShowHeader = !hideOnScroll || headerVisible
 
   function handleItem(item) {
