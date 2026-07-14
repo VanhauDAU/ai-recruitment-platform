@@ -66,6 +66,19 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(self.user.full_name, 'Lê Văn Hậu')
         self.assertEqual(self.user.phone, '0912345678')
 
+    def test_me_response_contains_session_fields_only(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(set(response.data), {
+            'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
+            'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+        })
+        self.assertTrue({
+            'id', 'password', 'token', 'refresh_token', 'permissions',
+            'status', 'date_joined', 'last_login',
+        }.isdisjoint(response.data))
+
     def test_can_update_multiple_times(self):
         self.client.patch(self.url, {'full_name': 'Lần 1', 'phone': '0900000001'})
         response = self.client.patch(self.url, {'full_name': 'Lần 2', 'phone': '0900000002'})
@@ -200,6 +213,7 @@ class OAuthFlowTests(APITestCase):
                 user=user, provider='google', provider_user_id='google-uid-1'
             ).exists()
         )
+        self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
 
     def test_employer_portal_creates_employer_via_google(self):
         response = self._callback(portal='employer')
@@ -213,7 +227,7 @@ class OAuthFlowTests(APITestCase):
         )
         response = self._callback()
         complete = self._complete(response.url)
-        self.assertEqual(complete.data['user']['id'], existing.pk)
+        self.assertEqual(complete.data['user']['public_id'], str(existing.public_id))
         existing.refresh_from_db()
         self.assertTrue(existing.email_verified)  # social coi như đã xác thực email
         self.assertTrue(existing.has_usable_password())  # vẫn đăng nhập được bằng mật khẩu cũ
@@ -231,9 +245,23 @@ class OAuthFlowTests(APITestCase):
     def test_existing_social_account_logs_in_without_duplicate(self):
         first = self._complete(self._callback().url)
         second = self._complete(self._callback().url)
-        self.assertEqual(first.data['user']['id'], second.data['user']['id'])
+        self.assertEqual(first.data['user']['public_id'], second.data['user']['public_id'])
         self.assertEqual(SocialAccount.objects.count(), 1)
         self.assertEqual(User.objects.filter(email='social@example.com').count(), 1)
+
+    def test_social_login_bypasses_email_two_factor(self):
+        user = User.objects.create_user(
+            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE,
+            two_factor_enabled=True,
+        )
+
+        complete = self._complete(self._callback().url)
+
+        self.assertEqual(complete.status_code, status.HTTP_200_OK)
+        self.assertEqual(complete.data['user']['public_id'], str(user.public_id))
+        self.assertIn('access', complete.data)
+        self.assertNotIn('two_factor_required', complete.data)
+        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists())
 
     def test_one_user_can_link_multiple_social_providers(self):
         user = oauth.resolve_user('google', dict(GOOGLE_PROFILE), 'main')
@@ -287,6 +315,34 @@ class OAuthFlowTests(APITestCase):
             {'error': 'access_denied', 'state': state},
         )
         self.assertIn('error=access_denied', response.url)
+
+
+@override_settings(
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+)
+class RegisterEmailAvailabilityTests(APITestCase):
+    """Pre-check chỉ phục vụ UX; RegisterSerializer vẫn là điểm chặn cuối."""
+
+    def setUp(self):
+        cache.clear()
+        self.url = reverse('auth-register-email-availability')
+
+    def test_returns_availability_case_insensitively(self):
+        User.objects.create_user(email='existing@example.com', password='Password@123')
+
+        taken = self.client.post(self.url, {'email': 'EXISTING@example.com'})
+        available = self.client.post(self.url, {'email': 'new@example.com'})
+
+        self.assertEqual(taken.status_code, status.HTTP_200_OK)
+        self.assertEqual(taken.data, {'available': False})
+        self.assertEqual(available.status_code, status.HTTP_200_OK)
+        self.assertEqual(available.data, {'available': True})
+
+    def test_rejects_invalid_email_before_querying(self):
+        response = self.client.post(self.url, {'email': 'not-an-email'})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
 
 
 @override_settings(
@@ -372,13 +428,31 @@ class LastLoginTests(APITestCase):
 
     def test_register_auto_login_sets_last_login(self):
         response = self.client.post(reverse('auth-register'), {
-            'email': 'newuser@example.com', 'password': 'Password@123',
+            'email': 'newuser@example.com', 'password': 'Password@123456',
             'role': 'candidate', 'captcha_token': 'x',
         })
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(email='newuser@example.com')
         self.assertIsNotNone(user.last_login)
+
+    def test_register_rejects_password_shorter_than_eight_characters(self):
+        response = self.client.post(reverse('auth-register'), {
+            'email': 'short-password@example.com', 'password': 'short',
+            'role': 'candidate', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+
+    def test_register_rejects_password_without_required_character_types(self):
+        response = self.client.post(reverse('auth-register'), {
+            'email': 'weak-password@example.com', 'password': 'matkhaudai',
+            'role': 'candidate', 'captcha_token': 'x',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
 
     @override_settings(
         CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
@@ -448,6 +522,35 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertEqual(job.status, AuthEmailJob.Status.SENT)
         self.assertEqual(job.attempts, 1)
         self.assertIsNotNone(job.sent_at)
+
+    def test_verification_confirmation_queues_one_welcome_email(self):
+        user = User.objects.create_user(email='new@example.com', password='Password@123')
+        token = email_verification.issue_token(user)
+
+        response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+
+    def test_employer_verification_does_not_queue_candidate_welcome_email(self):
+        user = User.objects.create_user(
+            email='employer-welcome@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        token = email_verification.issue_token(user)
+
+        response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+
+    def test_welcome_email_is_delivered_from_the_outbox(self):
+        user = User.objects.create_user(email='welcome@example.com', password='Password@123', email_verified=True)
+        job = AuthEmailJob.objects.create(user=user, kind=AuthEmailJob.Kind.WELCOME)
+
+        deliver_auth_email_job.run(job.pk)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Chào mừng', mail.outbox[0].subject)
 
 
 @override_settings(

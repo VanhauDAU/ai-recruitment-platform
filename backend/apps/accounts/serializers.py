@@ -33,7 +33,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'password', 'role', 'full_name', 'captcha_token']
+        fields = ['email', 'password', 'role', 'full_name', 'captcha_token']
         extra_kwargs = {'full_name': {'required': False}}
 
     def validate_email(self, value):
@@ -53,16 +53,26 @@ class RegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-class UserSerializer(serializers.ModelSerializer):
+class RegisterEmailAvailabilitySerializer(serializers.Serializer):
+    """Normalize the email before the debounced registration pre-check."""
+
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return User.objects.normalize_email(value)
+
+
+class SessionUserSerializer(serializers.ModelSerializer):
+    """Authenticated-session DTO containing only fields rendered by the portals."""
+
     avatar_url = serializers.SerializerMethodField()
     job_preferences_configured = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
-            'id', 'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'status', 'email_verified', 'two_factor_enabled', 'job_preferences_configured',
-            'date_joined', 'last_login',
+            'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
+            'email_verified', 'two_factor_enabled', 'job_preferences_configured',
         ]
         read_only_fields = fields
 

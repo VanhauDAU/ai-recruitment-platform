@@ -9,7 +9,7 @@ import { useSession } from '@/entities/session'
 import { login, resendTwoFactorLogin, verifyTwoFactorLogin } from '../api/auth.api'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { getReturnUrl } from '../model/return-url'
-import { getPasswordLoginDestination } from '../model/password-login-destination'
+import { getAuthDestination } from '../model/password-login-destination'
 
 // Style animation/nút dùng chung cho các trang auth (login + register các cổng).
 export function AuthFormStyles() {
@@ -73,7 +73,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const returnUrl = getReturnUrl(searchParams)
 
   function navigateAfterLogin(user) {
-    navigate(getPasswordLoginDestination({ user, returnUrl }), { replace: true })
+    navigate(getAuthDestination({ user, returnUrl }), { replace: true })
   }
 
   function clearPassword() {

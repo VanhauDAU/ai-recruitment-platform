@@ -202,15 +202,21 @@ def fetch_profile(provider, access_token):
 
 # ---- Tạo / liên kết user ----
 
-def resolve_user(provider, profile, portal):
+def resolve_user(provider, profile, portal, *, include_created=False):
     """Tìm hoặc tạo user cho danh tính social, theo luật cổng.
 
     - Đã có SocialAccount -> dùng user đó (sai role cổng thì chặn).
     - Email trùng user hiện có cùng role -> tự liên kết.
     - Email trùng khác role -> chặn 'wrong_portal'.
     - Chưa có -> tạo user mới: role theo cổng, email_verified=True, password unusable.
+
+    ``include_created=True`` lets the caller trigger first-account side effects
+    without confusing a newly linked provider with a newly created user.
     """
     role = PORTAL_ROLE[portal]
+
+    def result(user, created):
+        return (user, created) if include_created else user
 
     with transaction.atomic():
         account = (
@@ -224,13 +230,14 @@ def resolve_user(provider, profile, portal):
                 raise OAuthError('wrong_portal')
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
-            return user
+            return result(user, False)
 
         email = User.objects.normalize_email(profile.get('email') or '')
         if not email:
             raise OAuthError('no_email')
 
         user = User.objects.filter(email__iexact=email).first()
+        created = False
         if user:
             if user.role != role:
                 raise OAuthError('wrong_portal')
@@ -255,6 +262,7 @@ def resolve_user(provider, profile, portal):
                 avatar_url=profile.get('avatar', ''),
                 email_verified=True,
             )
+            created = True
 
         SocialAccount.objects.create(
             user=user,
@@ -263,4 +271,4 @@ def resolve_user(provider, profile, portal):
             email=email,
             raw_profile=profile.get('raw', {}),
         )
-        return user
+        return result(user, created)

@@ -7,9 +7,9 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from ..models import AuthEmailJob, User
-from ..serializers import ChangeEmailSerializer, UserSerializer
+from ..serializers import ChangeEmailSerializer, SessionUserSerializer
 from ..services import email_verification as ev
-from ..tasks import queue_auth_email
+from ..tasks import queue_auth_email, queue_welcome_email
 
 
 def queue_verification_email(user):
@@ -70,13 +70,14 @@ class VerificationConfirmView(APIView):
         if not user.email_verified:
             user.email_verified = True
             user.save(update_fields=['email_verified', 'updated_at'])
+            queue_welcome_email(user)
         return Response({'detail': 'Xác thực email thành công.'})
 
 
 @extend_schema(
     summary='Đổi địa chỉ email (reset xác thực và gửi lại link)',
     request=ChangeEmailSerializer,
-    responses={200: UserSerializer},
+    responses={200: SessionUserSerializer},
     tags=['auth'],
 )
 class ChangeEmailView(APIView):
@@ -92,4 +93,4 @@ class ChangeEmailView(APIView):
         user.save(update_fields=['email', 'email_verified', 'updated_at'])
 
         queue_verification_email(user)
-        return Response(UserSerializer(user).data)
+        return Response(SessionUserSerializer(user).data)

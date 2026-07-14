@@ -179,7 +179,6 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
                 'job__category_assignments__category',
                 'job__job_locations__location__parent',
                 'job__job_skills__skill',
-                'job__job_benefits__benefit',
             )
         )
 

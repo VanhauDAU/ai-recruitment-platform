@@ -6,7 +6,7 @@
 - oauth.py           — social login (../oauth.py)
 """
 
-from .auth import AvatarUploadView, LoginView, MeView, RegisterView
+from .auth import AvatarUploadView, LoginView, MeView, RegisterEmailAvailabilityView, RegisterView
 from .oauth import OAuthCallbackView, OAuthCompleteView, OAuthStartView
 from .password_reset import (
     PasswordResetConfirmView,
@@ -35,6 +35,7 @@ __all__ = [
     'PasswordResetRequestView',
     'PasswordResetValidateView',
     'RegisterView',
+    'RegisterEmailAvailabilityView',
     'VerificationConfirmView',
     'VerificationSendView',
     'TwoFactorLoginResendView',

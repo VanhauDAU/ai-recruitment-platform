@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { completeOAuth, getSafeReturnUrl, resendTwoFactorLogin, verifyTwoFactorLogin, withReturnUrl } from '@/features/auth'
+import { completeOAuth, getAuthDestination, getSafeReturnUrl, withReturnUrl } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import PageLoading from '@/shared/ui/PageLoading'
-import { HOME_BY_ROLE } from '@/shared/config/portals'
-import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 
 /**
  * Trang backend redirect về sau OAuth: đổi one_time_code lấy JWT rồi điều hướng.
@@ -14,9 +12,8 @@ import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 export default function OAuthCallback({ portal = 'main', loginPath = '/login' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { refreshSession, setCurrentUser } = useSession()
+  const { setCurrentUser } = useSession()
   const ran = useRef(false)
-  const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
 
   useEffect(() => {
     if (ran.current) return // StrictMode chạy effect 2 lần — one_time_code chỉ dùng được 1 lần
@@ -33,14 +30,10 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
 
     completeOAuth(code, portal)
       .then((result) => {
-        if (result.two_factor_required) {
-          setTwoFactorChallenge({ ...result, portal })
-          return
-        }
         const { user } = result
         setCurrentUser(user)
         const safeNext = getSafeReturnUrl(params.get('next'))
-        navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
+        navigate(getAuthDestination({ user, returnUrl: safeNext }), { replace: true })
       })
       .catch(() => {
         const loginTarget = withReturnUrl(loginPath, next)
@@ -48,26 +41,5 @@ export default function OAuthCallback({ portal = 'main', loginPath = '/login' })
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function confirmTwoFactor(code) {
-    await verifyTwoFactorLogin({
-      challenge: twoFactorChallenge.challenge,
-      code,
-      portal: twoFactorChallenge.portal,
-    })
-    const user = await refreshSession()
-    const safeNext = getSafeReturnUrl(params.get('next'))
-    navigate(safeNext || HOME_BY_ROLE[user.role] || '/', { replace: true })
-  }
-
-  return <>
-    <PageLoading />
-    <TwoFactorCodeModal
-      open={Boolean(twoFactorChallenge)}
-      email={twoFactorChallenge?.email}
-      expiresIn={twoFactorChallenge?.expires_in || 180}
-      onCancel={() => navigate(loginPath, { replace: true })}
-      onConfirm={confirmTwoFactor}
-      onResend={() => resendTwoFactorLogin(twoFactorChallenge.challenge)}
-    />
-  </>
+  return <PageLoading />
 }

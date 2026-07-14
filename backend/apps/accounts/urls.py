@@ -12,6 +12,7 @@ from .views import (
     PasswordResetRequestView,
     PasswordResetValidateView,
     RegisterView,
+    RegisterEmailAvailabilityView,
     VerificationConfirmView,
     VerificationSendView,
     TwoFactorDisableConfirmView,
@@ -25,6 +26,7 @@ from .views.tokens import AccountTokenRefreshView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth-register'),
+    path('register/email-availability/', RegisterEmailAvailabilityView.as_view(), name='auth-register-email-availability'),
     path('login/', LoginView.as_view(), name='auth-login'),
     path('refresh/', AccountTokenRefreshView.as_view(), name='auth-refresh'),
     path('me/', MeView.as_view(), name='auth-me'),
