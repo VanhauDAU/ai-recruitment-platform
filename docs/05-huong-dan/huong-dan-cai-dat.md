@@ -1,7 +1,7 @@
 # 05 - Hướng dẫn cài đặt & chạy local
 
 ## Yêu cầu
-- Python 3.13
+- Python 3.11 (khóa qua `.python-version`; dùng đúng major/minor cho local, CI và deploy)
 - Node.js 20.19+ hoặc 22.12+ (Vite 8 yêu cầu các bản này)
 - PostgreSQL 16
 - Redis 7+
@@ -46,7 +46,7 @@ Không dùng `config.settings.production` cho local: module này dừng ngay n�
 
 ```bash
 cd backend
-python3.13 -m venv venv
+python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 # Chỉ khi phát triển module AI/CV analysis:
