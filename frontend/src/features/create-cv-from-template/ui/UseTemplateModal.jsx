@@ -4,12 +4,7 @@ import { useEffect, useState } from 'react'
 import { getCvSampleContents } from '@/entities/cv-template'
 import { useSession } from '@/entities/session'
 import { createCvFromTemplate } from '../api/create-cv.api'
-
-function errorMessage(error) {
-  const detail = error.response?.data?.detail
-  if (Array.isArray(detail)) return detail.join(', ')
-  return detail || 'Không thể tạo CV lúc này. Vui lòng thử lại.'
-}
+import { createCvErrorMessage } from '../api/create-cv.errors'
 
 export default function UseTemplateModal({ template, open, onClose, onCreated, locale = 'vi-VN' }) {
   const [form] = Form.useForm()
@@ -51,7 +46,7 @@ export default function UseTemplateModal({ template, open, onClose, onCreated, l
       message.success('Đã tạo CV. Bạn có thể bắt đầu chỉnh sửa ngay.')
       onCreated?.(cv)
     } catch (error) {
-      message.error(errorMessage(error))
+      message.error(createCvErrorMessage(error))
     } finally {
       setSubmitting(false)
     }
