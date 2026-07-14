@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from .. import oauth
 from ..models import User
-from ..serializers import UserSerializer
+from ..serializers import SessionUserSerializer
 from ..services.tokens import issue_tokens
 from ..tasks import queue_welcome_email
 
@@ -92,7 +92,7 @@ class OAuthCallbackView(APIView):
     request=inline_serializer('OAuthCompleteRequest', {'code': serializers.CharField()}),
     responses={200: inline_serializer(
         'OAuthComplete',
-        {'user': UserSerializer(), 'access': serializers.CharField(), 'refresh': serializers.CharField()},
+        {'user': SessionUserSerializer(), 'access': serializers.CharField(), 'refresh': serializers.CharField()},
     )},
     tags=['auth'],
 )
@@ -112,4 +112,4 @@ class OAuthCompleteView(APIView):
         # Social providers have completed their own identity verification.
         # Product policy: email 2FA protects password login only, so OAuth
         # completion always returns a session without an email-code challenge.
-        return Response({'user': UserSerializer(user).data, **issue_tokens(user)})
+        return Response({'user': SessionUserSerializer(user).data, **issue_tokens(user)})

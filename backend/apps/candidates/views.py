@@ -4,20 +4,32 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
 
-from .serializers import CandidateJobPreferenceSerializer, CandidateProfileSerializer
+from .serializers import (
+    CandidateJobPreferenceSerializer,
+    CandidateProfileReadSerializer,
+    CandidateProfileUpdateSerializer,
+)
 from .selectors import candidate_job_preference_for_user, candidate_profile_for_user
 from .services import replace_candidate_job_preferences, update_candidate_profile
 
 
 class MyCandidateProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = CandidateProfileSerializer
     permission_classes = [IsCandidate]
+    http_method_names = ['get', 'patch']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return CandidateProfileUpdateSerializer
+        return CandidateProfileReadSerializer
 
     def get_object(self):
         return candidate_profile_for_user(self.request.user)
 
-    def perform_update(self, serializer):
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
         update_candidate_profile(serializer)
+        return Response(CandidateProfileReadSerializer(serializer.instance).data)
 
 
 class MyCandidateJobPreferencesView(APIView):

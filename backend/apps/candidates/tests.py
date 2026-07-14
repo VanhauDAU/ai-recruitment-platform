@@ -36,18 +36,20 @@ class CandidateProfileApiTests(TestCase):
             code='00001', name='Phường Ba Đình', level=Location.Level.WARD, parent=self.province,
         )
 
-    def test_profile_is_owned_by_request_user_and_updates_through_service(self):
+    def test_profile_is_owned_by_request_user_and_returns_settings_fields_only(self):
         response = self.client.get('/api/candidate/profile/')
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(set(response.data), {'gender'})
 
         response = self.client.patch(
             '/api/candidate/profile/',
-            {'headline': 'Backend engineer', 'experience_years': '3.5'},
+            {'gender': 'male'},
             format='json',
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['headline'], 'Backend engineer')
-        self.assertEqual(str(response.data['experience_years']), '3.5')
+        self.assertEqual(response.data, {'gender': 'male'})
+        self.user.candidate_profile.refresh_from_db()
+        self.assertEqual(self.user.candidate_profile.gender, 'male')
 
     def preference_payload(self, **overrides):
         payload = {

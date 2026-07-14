@@ -4,6 +4,8 @@ Phạm vi:
 - Danh sách endpoint theo module (auth, candidate, employer, cv, jobs, applications, ai, interviews)
 - Request/response mẫu, mã lỗi
 
+Contract field theo từng màn hình: [frontend-response-contracts.md](frontend-response-contracts.md).
+
 ## Tài liệu API tương tác (Swagger / OpenAPI)
 
 Dùng `drf-spectacular` (OpenAPI 3). Chạy backend rồi mở:
@@ -35,7 +37,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
 | GET | `/api/auth/oauth/{provider}/callback/` | Provider gọi lại; verify state, tạo/liên kết user, redirect về trang callback frontend kèm `one_time_code` (hoặc `?error=`) |
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
-| GET/PUT | `/api/candidate/profile/` | Xem/cập nhật hồ sơ ứng viên (tự tạo khi cần) |
+| GET/PATCH | `/api/candidate/profile/` | Đọc/cập nhật `gender` cho onboarding và cài đặt gợi ý việc làm (tự tạo profile legacy khi cần) |
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + trạng thái onboarding 5 bước (chỉ `position_title` sửa được) |
 | POST | `/api/employer/phone/send-otp/` | Gửi mã OTP xác thực SĐT (gửi qua email tài khoản; cooldown 60s, hết hạn 10 phút) |
@@ -60,11 +62,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/cvs/` | Candidate: xem danh sách/tạo CV (builder, cần `template`) |
 | GET/PUT/PATCH/DELETE | `/api/cvs/{public_id}/` | Candidate: xem/sửa/xóa mềm CV của chính mình |
 | POST | `/api/cvs/upload/` | Candidate: upload CV có sẵn (PDF/DOCX, multipart `file`) |
-| GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=` | Danh sách job đang active, public. `category`/`location` nhận **nhiều giá trị** (`?location=1&location=2`); `category` ở bất kỳ cấp nào trong taxonomy 3 cấp tự mở rộng xuống danh mục con; `location` là id tỉnh tự khớp mọi job ở phường/xã trực thuộc. Response mỗi job có `locations_detail` (danh sách `{id, name, level}`), `number_of_vacancies`, `education_level` |
-| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Ngoài dữ liệu nested thô còn trả **view-model nhóm sẵn** cho màn chi tiết: `primary_specialization`/`domain_knowledge` (`{id,name,slug}`), `workplace_groups` (nhóm theo tỉnh/thành, mỗi dòng địa chỉ có `display` ghép sẵn), `requirement_tags`, `benefit_tags`, `language_requirements[].proficiency_label` |
+| GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=` | Danh sách job đang active, public. `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
+| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags`, `benefit_tags`, `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
-| GET/POST | `/api/jobs/mine/` | Employer: xem/tạo tin tuyển dụng của mình — nested writes cho `job_skills`, `category_assignments`, `job_locations`, `work_schedules`, `job_benefits`, `language_requirements`, `application_contact` |
+| GET/POST | `/api/jobs/mine/` | Employer: GET dùng management-list DTO gọn; POST dùng write DTO nested cho `job_skills`, `category_assignments`, `job_locations`, `work_schedules`, `job_benefits`, `language_requirements`, `application_contact` và trả detail form DTO. |
 | GET/PUT/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Employer: sửa/xóa tin của mình |
 | GET/POST | `/api/applications/` | Candidate: xem danh sách/ứng tuyển (job + cv theo `public_id`, chặn ứng tuyển trùng) |
 | GET | `/api/applications/employer/?job=` | Employer: xem hồ sơ ứng tuyển vào job của mình |

@@ -33,11 +33,11 @@ class JobCategorySerializer(serializers.ModelSerializer):
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
 
-class PublicJobCategorySerializer(JobCategorySerializer):
-    """Taxonomy fields used by public search and navigation only."""
+class JobCategoryListSerializer(JobCategorySerializer):
+    """Taxonomy DTO used by public filters and specialization pickers."""
 
     class Meta(JobCategorySerializer.Meta):
-        fields = ['id', 'name', 'logo_url', 'parent']
+        fields = ['id', 'name', 'logo_url', 'parent', 'category_type']
 
 
 class JobSkillSerializer(serializers.ModelSerializer):
@@ -105,6 +105,16 @@ class JobLocationSerializer(serializers.ModelSerializer):
         return obj.location.parent.name if obj.location.parent else obj.location.name
 
 
+class PublicJobLocationSerializer(JobLocationSerializer):
+    """Location fields rendered by quick-view/detail; excludes write metadata."""
+
+    class Meta(JobLocationSerializer.Meta):
+        fields = [
+            'id', 'location', 'location_name', 'location_level',
+            'province_name', 'address_detail',
+        ]
+
+
 class JobWorkScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobWorkSchedule
@@ -129,6 +139,16 @@ class JobWorkScheduleSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class PublicJobWorkScheduleSerializer(JobWorkScheduleSerializer):
+    """Schedule DTO for candidate-facing preview and detail pages."""
+
+    class Meta(JobWorkScheduleSerializer.Meta):
+        fields = [
+            'id', 'weekday_from', 'weekday_to', 'start_time', 'end_time',
+            'is_overnight', 'note',
+        ]
+
+
 class JobBenefitSerializer(serializers.ModelSerializer):
     benefit_name = serializers.CharField(source='benefit.name', read_only=True)
 
@@ -140,6 +160,13 @@ class JobBenefitSerializer(serializers.ModelSerializer):
         if not benefit.is_active:
             raise serializers.ValidationError('Quyền lợi đã ngừng hoạt động.')
         return benefit
+
+
+class PublicJobBenefitSerializer(JobBenefitSerializer):
+    """Benefit labels rendered by the hover preview only."""
+
+    class Meta(JobBenefitSerializer.Meta):
+        fields = ['benefit_name', 'note']
 
 
 class JobLanguageRequirementSerializer(serializers.ModelSerializer):
@@ -157,6 +184,16 @@ class JobLanguageRequirementSerializer(serializers.ModelSerializer):
         if not language.is_active:
             raise serializers.ValidationError('Ngoại ngữ đã ngừng hoạt động.')
         return language
+
+
+class PublicJobLanguageRequirementSerializer(JobLanguageRequirementSerializer):
+    """Language requirement DTO rendered by the public detail page."""
+
+    class Meta(JobLanguageRequirementSerializer.Meta):
+        fields = [
+            'id', 'language', 'language_name', 'proficiency_label',
+            'certificate', 'note', 'is_required',
+        ]
 
 
 class JobApplicationEmailSerializer(serializers.ModelSerializer):

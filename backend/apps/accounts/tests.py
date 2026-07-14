@@ -66,6 +66,19 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(self.user.full_name, 'Lê Văn Hậu')
         self.assertEqual(self.user.phone, '0912345678')
 
+    def test_me_response_contains_session_fields_only(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(set(response.data), {
+            'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
+            'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+        })
+        self.assertTrue({
+            'id', 'password', 'token', 'refresh_token', 'permissions',
+            'status', 'date_joined', 'last_login',
+        }.isdisjoint(response.data))
+
     def test_can_update_multiple_times(self):
         self.client.patch(self.url, {'full_name': 'Lần 1', 'phone': '0900000001'})
         response = self.client.patch(self.url, {'full_name': 'Lần 2', 'phone': '0900000002'})
@@ -214,7 +227,7 @@ class OAuthFlowTests(APITestCase):
         )
         response = self._callback()
         complete = self._complete(response.url)
-        self.assertEqual(complete.data['user']['id'], existing.pk)
+        self.assertEqual(complete.data['user']['public_id'], str(existing.public_id))
         existing.refresh_from_db()
         self.assertTrue(existing.email_verified)  # social coi như đã xác thực email
         self.assertTrue(existing.has_usable_password())  # vẫn đăng nhập được bằng mật khẩu cũ
@@ -232,7 +245,7 @@ class OAuthFlowTests(APITestCase):
     def test_existing_social_account_logs_in_without_duplicate(self):
         first = self._complete(self._callback().url)
         second = self._complete(self._callback().url)
-        self.assertEqual(first.data['user']['id'], second.data['user']['id'])
+        self.assertEqual(first.data['user']['public_id'], second.data['user']['public_id'])
         self.assertEqual(SocialAccount.objects.count(), 1)
         self.assertEqual(User.objects.filter(email='social@example.com').count(), 1)
 
@@ -245,7 +258,7 @@ class OAuthFlowTests(APITestCase):
         complete = self._complete(self._callback().url)
 
         self.assertEqual(complete.status_code, status.HTTP_200_OK)
-        self.assertEqual(complete.data['user']['id'], user.pk)
+        self.assertEqual(complete.data['user']['public_id'], str(user.public_id))
         self.assertIn('access', complete.data)
         self.assertNotIn('two_factor_required', complete.data)
         self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists())

@@ -9,6 +9,7 @@
 | [02-tong-quan](02-tong-quan/)   | [quy-uoc-code.md](02-tong-quan/quy-uoc-code.md)                  | Quy ước cấu trúc module, DRY, trách nhiệm và kiểm tra chất lượng        |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
+| [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
 | [05-huong-dan](05-huong-dan/)   | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md)        | Hướng dẫn cài đặt, chạy dự án local                                     |
 | [05-huong-dan](05-huong-dan/)   | [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md) | Cấu hình site settings (15 nhóm, schema-driven, quy ước env)         |

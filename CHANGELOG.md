@@ -18,6 +18,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Changed
 
+- Tối ưu response API theo use case frontend: tách DTO list/detail/write cho job và employer job, session user/candidate profile/location/blog chỉ trả field đang hiển thị; relation public dùng DTO tối thiểu và không lộ contact nhận hồ sơ hay field quản trị.
+- Tối ưu query tương ứng bằng query list/detail riêng, `select_related`, `prefetch_related`, `only` và `defer`; bổ sung regression test so sánh tập key chính xác để chặn field model mới tự lọt ra API.
 - Đồng bộ contract `desired_salary_vnd`: frontend và backend đều bắt buộc lương kỳ vọng là số nguyên VND lớn hơn 0; backend thêm regression test cho payload thiếu lương.
 - Sửa popup tìm kiếm desktop: cột lịch sử không còn chiếm toàn bộ chiều rộng làm bóp cột việc làm thành vùng trắng; giới hạn chiều cao theo viewport và thêm regression test cho tỷ lệ hai cột.
 - Chuẩn hóa toast toàn app: tối đa một thông báo hiện hành để không chồng nhiều lỗi khi người dùng click liên tục.

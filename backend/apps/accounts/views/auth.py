@@ -15,7 +15,7 @@ from ..serializers import (
     RegisterEmailAvailabilitySerializer,
     RegisterSerializer,
     RoleTokenObtainPairSerializer,
-    UserSerializer,
+    SessionUserSerializer,
 )
 from ..services import verify_request_captcha
 from ..services.tokens import issue_tokens
@@ -38,7 +38,7 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         queue_verification_email(user)
         return Response(
-            {'user': UserSerializer(user).data, **issue_tokens(user)},
+            {'user': SessionUserSerializer(user).data, **issue_tokens(user)},
             status=status.HTTP_201_CREATED,
         )
 
@@ -105,14 +105,13 @@ class MeView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
     def get_serializer_class(self):
-        return ProfileUpdateSerializer if self.request.method == 'PATCH' else UserSerializer
+        return ProfileUpdateSerializer if self.request.method == 'PATCH' else SessionUserSerializer
 
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        # Trả về UserSerializer đầy đủ để frontend cập nhật thẳng auth context.
-        return Response(UserSerializer(request.user, context=self.get_serializer_context()).data)
+        return Response(SessionUserSerializer(request.user, context=self.get_serializer_context()).data)
 
 
 class AvatarUploadView(APIView):
@@ -125,7 +124,7 @@ class AvatarUploadView(APIView):
             'AvatarUploadRequest',
             fields={'file': serializers.FileField(help_text='Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB')},
         ),
-        responses={200: UserSerializer},
+        responses={200: SessionUserSerializer},
         tags=['auth'],
     )
     def post(self, request):
@@ -143,4 +142,4 @@ class AvatarUploadView(APIView):
         user.save(update_fields=['avatar_url', 'updated_at'])
         delete_local_media_url(old_url)
 
-        return Response(UserSerializer(user).data)
+        return Response(SessionUserSerializer(user).data)

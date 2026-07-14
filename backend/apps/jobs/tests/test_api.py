@@ -8,7 +8,7 @@ from apps.employers.models import Company
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
 
-from ..api.serializers import EmployerJobSerializer, JobDetailSerializer
+from ..api.serializers import EmployerJobWriteSerializer, JobDetailSerializer
 from ..models import Benefit, Job, JobCategory, Language
 
 
@@ -22,6 +22,10 @@ class JobCategoryApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
         self.assertEqual({item['name'] for item in response.data}, {'Kế toán', 'Lập trình'})
+        self.assertEqual(
+            set(response.data[0]),
+            {'id', 'name', 'logo_url', 'parent', 'category_type'},
+        )
 
 
 class JobSuggestionApiTests(APITestCase):
@@ -126,6 +130,26 @@ class JobSalaryBucketFilterTests(APITestCase):
         titles = {job['title'] for job in response.data['results']}
         self.assertEqual(titles, {'Under 10'})
 
+    def test_list_contract_contains_card_fields_only(self):
+        self.create_job('Contract job', 10_000_000, 15_000_000)
+
+        response = self.client.get(reverse('job-list'))
+
+        self.assertEqual(response.status_code, 200)
+        item = next(job for job in response.data['results'] if job['title'] == 'Contract job')
+        self.assertEqual(set(item), {
+            'public_id', 'slug', 'title', 'company_name', 'company_logo_url',
+            'brand_slug', 'company_verified', 'category', 'locations_detail',
+            'job_skills', 'work_type', 'employment_type', 'education_level',
+            'experience_years', 'position_level', 'age_min', 'age_max',
+            'salary_type', 'salary_min', 'salary_max', 'currency', 'tier',
+            'is_hot', 'is_urgent', 'has_flash_badge', 'published_at', 'created_at',
+        })
+        self.assertTrue({
+            'description', 'requirements', 'benefits', 'application_contact',
+            'application_count', 'status', 'updated_at',
+        }.isdisjoint(item))
+
 
 class EmployerJobSerializerTests(APITestCase):
     def setUp(self):
@@ -154,6 +178,29 @@ class EmployerJobSerializerTests(APITestCase):
         self.skill = Skill.objects.create(name='Giao tiếp', group=self.skill_group)
         self.benefit = Benefit.objects.get(name='Bảo hiểm xã hội')
         self.language = Language.objects.get(code='ko')
+
+    def test_employer_list_uses_compact_management_contract(self):
+        Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Tin quản lý',
+            description='Nội dung dài không thuộc response danh sách',
+        )
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(reverse('employer-job-list-create'))
+
+        self.assertEqual(response.status_code, 200)
+        item = response.data['results'][0]
+        self.assertEqual(set(item), {
+            'public_id', 'title', 'company_name', 'locations_detail',
+            'employment_type', 'deadline', 'status', 'application_count',
+            'published_at', 'created_at', 'updated_at',
+        })
+        self.assertTrue({
+            'description', 'requirements', 'benefits', 'application_contact',
+            'job_skills', 'category_assignments',
+        }.isdisjoint(item))
 
     def payload(self):
         return {
@@ -208,7 +255,7 @@ class EmployerJobSerializerTests(APITestCase):
         }
 
     def test_nested_create_persists_complete_job_posting(self):
-        serializer = EmployerJobSerializer(data=self.payload())
+        serializer = EmployerJobWriteSerializer(data=self.payload())
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
         job = serializer.save(posted_by=self.user, company=self.company)
@@ -224,7 +271,7 @@ class EmployerJobSerializerTests(APITestCase):
     def test_new_job_location_rejects_province_only(self):
         payload = self.payload()
         payload['job_locations'][0]['location'] = self.province.pk
-        serializer = EmployerJobSerializer(data=payload)
+        serializer = EmployerJobWriteSerializer(data=payload)
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('job_locations', serializer.errors)
@@ -234,13 +281,13 @@ class EmployerJobSerializerTests(APITestCase):
         payload['application_contact']['emails'] = [
             {'email': f'hr{index}@acme.test'} for index in range(6)
         ]
-        serializer = EmployerJobSerializer(data=payload)
+        serializer = EmployerJobWriteSerializer(data=payload)
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('application_contact', serializer.errors)
 
     def test_public_detail_does_not_expose_application_contact(self):
-        serializer = EmployerJobSerializer(data=self.payload())
+        serializer = EmployerJobWriteSerializer(data=self.payload())
         self.assertTrue(serializer.is_valid(), serializer.errors)
         job = serializer.save(posted_by=self.user, company=self.company)
 
@@ -248,6 +295,10 @@ class EmployerJobSerializerTests(APITestCase):
 
         self.assertNotIn('application_contact', data)
         self.assertNotIn('hr@acme.test', str(data))
+        self.assertTrue({
+            'status', 'application_count', 'tier', 'has_flash_badge',
+            'category_assignments', 'job_skills', 'job_benefits', 'updated_at',
+        }.isdisjoint(data))
 
     def test_public_detail_exposes_grouped_view_model(self):
         payload = self.payload()
@@ -266,7 +317,7 @@ class EmployerJobSerializerTests(APITestCase):
             {'location': ward2.pk, 'address_detail': '12 Dịch Vọng'},
             {'location': ward3.pk, 'address_detail': '3 Hải Châu'},
         ]
-        serializer = EmployerJobSerializer(data=payload)
+        serializer = EmployerJobWriteSerializer(data=payload)
         self.assertTrue(serializer.is_valid(), serializer.errors)
         job = serializer.save(posted_by=self.user, company=self.company)
 

@@ -1,18 +1,20 @@
 from rest_framework import generics, permissions
 
 from .models import Location
-from .serializers import LocationSerializer
+from .serializers import LocationLookupSerializer
 
 
 class LocationListView(generics.ListAPIView):
     """Cascading lookup for address selects: ?level=province or ?level=ward&parent=<id>, plus ?search=."""
 
-    serializer_class = LocationSerializer
+    serializer_class = LocationLookupSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None  # bounded lookup (capped below) — return the full list in one response
 
     def get_queryset(self):
-        qs = Location.objects.filter(is_active=True)
+        qs = Location.objects.filter(is_active=True).only(
+            'id', 'name', 'level', 'parent_id', 'merged_from',
+        )
         params = self.request.query_params
         if ids := params.get('ids'):
             id_list = [int(x) for x in ids.split(',') if x.strip().isdigit()]
