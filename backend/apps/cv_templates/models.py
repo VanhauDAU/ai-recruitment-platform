@@ -361,6 +361,12 @@ class CvSampleContent(models.Model):
         indexes = [
             models.Index(fields=['status', 'locale', 'experience_level'], name='idx_cv_samples_catalog'),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job_category', 'locale', 'experience_level'],
+                name='uq_cv_sample_position_locale_level',
+            ),
+        ]
         ordering = ['locale', 'experience_level', 'title']
 
     def clean(self):
@@ -391,3 +397,52 @@ class CvSampleContent(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class CvContentBlueprint(models.Model):
+    """Admin-configurable generic starter content for a locale/experience pair."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    locale = models.CharField(max_length=16)
+    experience_level = models.CharField(max_length=30, default='unspecified')
+    summary_title = models.CharField(max_length=255)
+    summary_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.')
+    experience_title = models.CharField(max_length=255)
+    experience_company = models.CharField(max_length=255)
+    experience_description_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí.')
+    education_title = models.CharField(max_length=255)
+    education_degree = models.CharField(max_length=255)
+    education_institution = models.CharField(max_length=255)
+    education_description = models.TextField(blank=True)
+    skills_title = models.CharField(max_length=255)
+    skill_templates = models.JSONField(default=list, help_text='Danh sách chuỗi; có thể dùng {position}.')
+    is_active = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_cv_content_blueprints',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['locale', 'experience_level'], name='uq_cv_content_blueprint'),
+        ]
+        ordering = ['locale', 'experience_level']
+
+    def clean(self):
+        if not isinstance(self.skill_templates, list) or not all(
+            isinstance(item, str) for item in self.skill_templates
+        ):
+            raise ValidationError({'skill_templates': 'Must be a list of strings.'})
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvblueprint')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.locale} / {self.experience_level}'

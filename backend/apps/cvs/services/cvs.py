@@ -111,7 +111,7 @@ def import_v2_cv(actor, upload, title=''):
 def duplicate_cv(*, cv, actor, title=''):
     """Copy a builder CV's latest immutable version into a new independent draft."""
     source_cv = UserCv.objects.select_for_update(of=('self',)).select_related(
-        'template', 'latest_version__template_version',
+        'template', 'position', 'latest_version__template_version',
     ).get(pk=cv.pk)
     if source_cv.user_id != actor.pk:
         raise ValueError('Only the CV owner can duplicate it.')
@@ -129,6 +129,7 @@ def duplicate_cv(*, cv, actor, title=''):
     duplicate = UserCv.objects.create(
         user=actor,
         template=source_cv.template,
+        position=source_cv.position,
         cv_type=UserCv.CvType.BUILDER,
         source=UserCv.Source.BUILDER,
         title=title or f'{source_cv.title} (copy)',

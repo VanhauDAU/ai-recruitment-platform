@@ -4,12 +4,13 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.cvs.schemas import empty_content, empty_layout, empty_style
-from apps.jobs.models import JobCategory
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .management.commands.seed_cv_catalog import build_sample_content
 from .models import (
     CvCategory,
     CvColor,
+    CvContentBlueprint,
     CvSampleContent,
     CvSectionDefinition,
     CvTemplate,
@@ -76,6 +77,11 @@ class TemplateCatalogV2Tests(TestCase):
         self.related = self.create_template('Related', categories=(self.audience,), usage_count=5)
         self.english = self.create_template('English', locale='en-US')
         self.sample_category = JobCategory.objects.create(name='AI/Machine Learning Engineer', slug='ai-machine-learning-engineer')
+        JobCategoryLocalization.objects.create(
+            category=self.sample_category,
+            locale='vi-VN',
+            display_name='Kỹ sư AI/Machine Learning',
+        )
         self.sample = CvSampleContent.objects.create(
             job_category=self.sample_category,
             locale='vi-VN',
@@ -147,6 +153,51 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(content['personal_info']['headline'], 'Customer Service')
         self.assertEqual(content['sections'][1]['items'][0]['role'], 'Customer Service')
         self.assertIn('Customer Service', content['sections'][0]['items'][0]['value'])
+
+    def test_position_picker_uses_specialization_taxonomy_and_only_returns_name_vi(self):
+        JobCategory.objects.create(
+            name='Nhóm không phải vị trí',
+            category_type=JobCategory.CategoryType.OCCUPATION_GROUP,
+        )
+
+        response = self.client.get('/api/v2/cv-position-options/', {'q': 'Ky su'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [{
+            'public_id': self.sample_category.public_id,
+            'name_vi': 'Kỹ sư AI/Machine Learning',
+        }])
+
+    def test_position_preview_falls_back_to_admin_blueprint(self):
+        position = JobCategory.objects.create(name='Nhân viên CSKH')
+        JobCategoryLocalization.objects.bulk_create([
+            JobCategoryLocalization(category=position, locale='vi-VN', display_name='Nhân viên CSKH'),
+            JobCategoryLocalization(category=position, locale='en-US', display_name='Customer Service Representative'),
+        ])
+        CvContentBlueprint.objects.filter(locale='en-US', experience_level='unspecified').update(
+            summary_title='Career objective',
+            summary_template='Experience as {position}.',
+            experience_title='Work experience',
+            experience_company='ABC Company',
+            experience_description_template='Worked as {position}.',
+            education_title='Education',
+            education_degree='Bachelor degree',
+            education_institution='University',
+            education_description='Graduated.',
+            skills_title='Skills',
+            skill_templates=['{position} expertise'],
+            is_active=True,
+        )
+
+        response = self.client.get('/api/v2/cv-position-preview/', {
+            'position_public_id': position.public_id,
+            'locale': 'en-US',
+        })
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['source'], 'blueprint')
+        self.assertEqual(response.data['name_vi'], 'Nhân viên CSKH')
+        self.assertEqual(response.data['content_json']['personal_info']['headline'], 'Customer Service Representative')
 
     def test_published_template_version_and_its_sections_are_immutable(self):
         version = self.primary.current_published_version

@@ -124,20 +124,22 @@ route V2 là:
 - `GET /api/v2/cv-templates/{slug}/` trả metadata preview, renderer capability
   an toàn và danh sách section, vẫn không trả configuration JSON;
 - `GET /api/v2/cv-templates/{slug}/related/`, `GET /api/v2/cv-categories/` và
-  `GET /api/v2/cv-sample-contents/` đều là public metadata có cache control/ETag.
+  `GET /api/v2/cv-position-options/`, `GET /api/v2/cv-position-preview/` và
+  legacy `GET /api/v2/cv-sample-contents/` đều là public metadata có cache control/ETag.
 
 `CvCategory.category_type=feature` là tag. `CvTemplateLocalization` giữ tên,
 mô tả và SEO theo locale. `CvTemplateColorLink` là nguồn màu/preview cho card;
 `default_style_json.theme_color` chỉ là fallback tương thích và default style
-của renderer version. `CvSampleContent` chỉ chứa canonical content theo
-locale/vị trí/cấp độ. `position_name_vi` là nhãn dropdown tiếng Việt ổn định;
-`job_category.slug` là khóa vị trí dùng để giữ lựa chọn khi đổi locale, còn
-`content_json.personal_info.headline` và các section là nội dung preview theo
-locale. List API không trả `content_json`, detail sample endpoint chỉ được gọi
-khi người dùng chọn một sample cụ thể.
+của renderer version. Dropdown lấy `JobCategory(category_type=specialization)`;
+`public_id` là identity và `JobCategoryLocalization(vi-VN).display_name` là
+`name_vi` duy nhất được hiển thị. Resolver ưu tiên `CvSampleContent` curated,
+nếu chưa có thì kết hợp localization theo locale với `CvContentBlueprint` để
+materialize canonical content. Vì vậy vị trí mới không cần tạo sample theo từng
+template; admin chỉ cấu hình bốn tên locale và optional curated override.
 
 `POST /api/v2/cvs/` nhận `template_public_id`, `language`, title, tùy chọn
-`sample_content_public_id` và `theme_color`. Serializer chỉ chấp nhận theme
+`position_public_id` và `theme_color`. `sample_content_public_id` chỉ còn là
+compatibility input trong giai đoạn cutover. Serializer chỉ chấp nhận theme
 color active đã gán cho template. Trong một transaction, service khóa template và
 sample, kiểm tra version hiện hành đúng thuộc template và đang published, clone
 canonical sample hoặc content trắng, dựng layout từ section registry, clone

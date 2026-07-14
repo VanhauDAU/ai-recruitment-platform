@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from apps.jobs.models import JobCategory
+
 from .models import CvCategory, CvSampleContent, CvTemplate
 
 
@@ -145,3 +147,16 @@ class CvSampleContentDetailSerializer(CvSampleContentCardSerializer):
     class Meta(CvSampleContentCardSerializer.Meta):
         fields = CvSampleContentCardSerializer.Meta.fields + ['content_json', 'schema_version']
         read_only_fields = fields
+
+
+class CvPositionOptionSerializer(serializers.ModelSerializer):
+    name_vi = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobCategory
+        fields = ['public_id', 'name_vi']
+        read_only_fields = fields
+
+    def get_name_vi(self, obj):
+        localizations = getattr(obj, 'cv_picker_localizations', [])
+        return localizations[0].display_name if localizations else obj.name

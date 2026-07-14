@@ -10,6 +10,7 @@ from django.utils.text import slugify
 
 from apps.cv_templates.models import (
     CvSampleContent,
+    CvContentBlueprint,
     CvCategory,
     CvColor,
     CvTemplate,
@@ -17,7 +18,7 @@ from apps.cv_templates.models import (
     CvTemplateColorLink,
     CvTemplateLocalization,
 )
-from apps.jobs.models import JobCategory
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 DEFAULT_COLORS = [
     ('Xanh thương hiệu', 'brand-green', '#00A66A'),
@@ -238,6 +239,36 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        for category in JobCategory.objects.filter(
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+            status=JobCategory.Status.ACTIVE,
+        ):
+            JobCategoryLocalization.objects.get_or_create(
+                category=category,
+                locale=JobCategoryLocalization.Locale.VI,
+                defaults={'display_name': category.name, 'is_active': True},
+            )
+
+        for locale, texts in LOCALE_TEXTS.items():
+            CvContentBlueprint.objects.get_or_create(
+                locale=locale,
+                experience_level='unspecified',
+                defaults={
+                    'summary_title': texts['summary_title'],
+                    'summary_template': texts['summary'],
+                    'experience_title': texts['experience_title'],
+                    'experience_company': texts['exp_company'],
+                    'experience_description_template': texts['exp_desc'],
+                    'education_title': texts['education_title'],
+                    'education_degree': texts['edu_degree'],
+                    'education_institution': texts['edu_school'],
+                    'education_description': texts['edu_desc'],
+                    'skills_title': texts['skills_title'],
+                    'skill_templates': texts['skills'],
+                    'is_active': True,
+                },
+            )
+
         colors = []
         for index, (name, slug, hex_code) in enumerate(DEFAULT_COLORS):
             color, _ = CvColor.objects.get_or_create(
@@ -318,6 +349,11 @@ class Command(BaseCommand):
                 continue
             for locale in LOCALE_TEXTS:
                 localized_position = POSITION_LABELS[locale].get(name, name)
+                JobCategoryLocalization.objects.get_or_create(
+                    category=category,
+                    locale=locale,
+                    defaults={'display_name': localized_position, 'is_active': True},
+                )
                 sample, created = CvSampleContent.objects.get_or_create(
                     job_category=category,
                     locale=locale,

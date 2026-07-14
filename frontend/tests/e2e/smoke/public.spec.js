@@ -28,13 +28,37 @@ test('public smoke: CV template colors change preview and detail offers the crea
     tags: [{ public_id: 'cat_ats', slug: 'ats', name: 'Thân thiện ATS', type: 'feature' }],
   }
   await page.route('http://localhost:8000/api/v2/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const url = new URL(route.request().url())
+    const path = url.pathname
     const body = path === '/api/v2/cv-templates/'
       ? { count: 1, results: [card] }
       : path === '/api/v2/cv-templates/modern/'
         ? { ...card, preview_url: '', renderer: { key: 'classic_single_column_v1', version: '1', schema_version: 1, capabilities: {} }, sections: [] }
         : path === '/api/v2/cv-templates/modern/related/'
           ? []
+          : path === '/api/v2/cv-position-options/'
+            ? [
+                { public_id: 'jobcat_customer_service', name_vi: 'Nhân viên CSKH' },
+                { public_id: 'jobcat_frontend', name_vi: 'Frontend Developer' },
+              ]
+            : path === '/api/v2/cv-position-preview/'
+              ? {
+                  position_public_id: url.searchParams.get('position_public_id'),
+                  name_vi: 'Nhân viên CSKH',
+                  locale: url.searchParams.get('locale'),
+                  source: 'blueprint',
+                  content_json: {
+                    locale: url.searchParams.get('locale'),
+                    personal_info: {
+                      full_name: '',
+                      headline: url.searchParams.get('locale') === 'en-US'
+                        ? 'Customer Service Representative'
+                        : 'Nhân viên CSKH',
+                      email: '', phone: '', address: '', links: [],
+                    },
+                    sections: [],
+                  },
+                }
           : path === '/api/v2/cv-categories/' || path === '/api/v2/cv-sample-contents/'
             ? []
             : {}
@@ -51,6 +75,14 @@ test('public smoke: CV template colors change preview and detail offers the crea
   await page.getByRole('button', { name: 'Dùng mẫu' }).click({ force: true })
   await expect(page.getByText('Mẫu CV Modern')).toBeVisible()
   await expect(page.getByText('Bạn muốn tạo CV từ?')).toBeVisible()
+  await page.getByRole('button', { name: /Nội dung CV mẫu/ }).click()
+  await expect(page.getByText('Nhân viên CSKH', { exact: true }).first()).toBeVisible()
+  await page.getByRole('combobox').click()
+  await page.getByRole('combobox').fill('Frontend')
+  await expect(page.getByRole('option', { name: 'Frontend Developer' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Tiếng Anh' }).click()
+  await expect(page.getByText('Customer Service Representative')).toBeVisible()
 
   await page.goto('/mau-cv/chi-tiet/modern')
   await expect(page.getByRole('heading', { name: 'Modern' })).toBeVisible()

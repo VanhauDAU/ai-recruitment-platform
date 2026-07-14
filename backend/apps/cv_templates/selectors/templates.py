@@ -1,6 +1,8 @@
 """Read queries for public CV templates."""
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
+
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..models import (
     CvCategory,
@@ -84,6 +86,27 @@ def published_sample_contents_queryset(*, locale=None, experience_level=None):
     if experience_level:
         queryset = queryset.filter(experience_level=experience_level)
     return queryset
+
+
+def active_cv_position_options_queryset(query=None):
+    vi_localizations = JobCategoryLocalization.objects.filter(
+        locale=JobCategoryLocalization.Locale.VI,
+        is_active=True,
+    )
+    queryset = JobCategory.objects.filter(
+        status=JobCategory.Status.ACTIVE,
+        category_type=JobCategory.CategoryType.SPECIALIZATION,
+        localizations__locale=JobCategoryLocalization.Locale.VI,
+        localizations__is_active=True,
+    ).prefetch_related(
+        Prefetch('localizations', queryset=vi_localizations, to_attr='cv_picker_localizations'),
+    )
+    if query:
+        queryset = queryset.filter(
+            Q(localizations__display_name__unaccent__icontains=query)
+            | Q(localizations__search_aliases__unaccent__icontains=query)
+        )
+    return queryset.distinct().order_by('localizations__display_name')
 
 
 def related_published_templates(template, *, locale='vi-VN', limit=6):

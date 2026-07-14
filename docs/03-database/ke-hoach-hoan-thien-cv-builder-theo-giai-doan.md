@@ -28,7 +28,7 @@ Template catalogue → chọn nguồn/màu → initial version + draft
 | CVB-0 | Runtime, migration, create lifecycle | ✅ Hoàn tất | V2 create/draft/version, application snapshot, migration/preflight |
 | CVB-0.2 | CV API V1→V2 cutover | 🟡 Đang đo | V2 có archive/import/metadata; V1 có deprecation headers + telemetry, chưa đủ điều kiện 410/xóa |
 | CVB-1 | Template catalog đa ngôn ngữ | ✅ Hoàn tất | Filter DB, infinite scroll, detail, related, responsive |
-| CVB-1.1 | Sample content đa ngôn ngữ | ✅ Hoàn tất | Dropdown tiếng Việt ổn định; preview headline/section theo locale; sample detail tải lazy |
+| CVB-1.1 | Position-driven content đa ngôn ngữ | ✅ Hoàn tất | 61 vị trí taxonomy × 4 locale; picker `name_vi`; resolver blueprint/curated override |
 | CVB-1.2 | Category và color từ database | ✅ Hoàn tất | M2M taxonomy/color, asset theo màu, màu được lưu vào draft/version |
 | CVB-2 | Builder MVP | ✅ Hoàn tất | Canonical editor, autosave lock, history, template switch, layout resize |
 | CVB-3 | Candidate “My CV” | ✅ Hoàn tất | Archive/default/rename/import/duplicate/restore thật; smoke desktop/mobile phủ workflow chính; CTA mở owner view với export PDF immutable |
@@ -37,19 +37,19 @@ Template catalogue → chọn nguồn/màu → initial version + draft
 | CVB-6 | Production hardening | 🟡 Một phần | Share/export có; cần worker/storage/observability/retention benchmark |
 | CVB-7 | Import và AI | ⬜ Chưa làm | Parse PDF/DOCX/LinkedIn, AI writer, ATS, matching/quota/audit |
 
-## CVB-1.1 — Sample content đa ngôn ngữ
+## CVB-1.1 — Position-driven content đa ngôn ngữ
 
-- [x] Dropdown vị trí dùng `job_category_slug` làm khóa ổn định và
-  `position_name_vi` làm nhãn tiếng Việt, không đổi khi chọn English/Japanese/
-  Chinese.
-- [x] Preview lấy `content_json` của đúng `(job_category, locale)`; headline,
-  section title, mô tả và skill được seed theo locale. List API chỉ trả metadata;
-  detail mới tải canonical content.
-- [x] Migration `cv_templates.0005` bổ sung nhãn picker, seed idempotent cập
-  nhật các sample generated cũ nhưng không ghi đè nội dung đã chỉnh tay.
-- [x] Mapping `en-US` dịch cả vị trí gốc tiếng Việt (ví dụ `Chăm sóc khách
-  hàng` → `Customer Service`), tránh headline/role tiếng Việt trong preview
-  tiếng Anh.
+- [x] Dropdown đọc toàn bộ `JobCategory` active loại `specialization`, value là
+  opaque `public_id`, label duy nhất là `name_vi`; Select có input tìm kiếm.
+- [x] `JobCategoryLocalization` quản lý bốn locale và alias trong admin. Seed
+  chỉ bootstrap 61 vị trí hiện tại × 4 locale, không ghi đè nội dung admin đã duyệt.
+- [x] `CvContentBlueprint` quản lý nội dung generic theo locale/experience;
+  resolver ưu tiên curated `CvSampleContent`, nếu thiếu thì materialize từ
+  blueprint. Không nhân dữ liệu theo số template.
+- [x] Position preview và create CV dùng cùng resolver; create clone canonical
+  document vào immutable initial version/draft và lưu FK position trên CV.
+- [x] Vị trí mới: admin tạo dưới đúng taxonomy, điền bốn localization; preview
+  hoạt động ngay từ blueprint, curated sample chỉ là optional override.
 
 ## CVB-1.2 — Category và color từ database
 
@@ -74,8 +74,14 @@ Template catalogue → chọn nguồn/màu → initial version + draft
 ```bash
 cd backend
 ./venv/bin/python manage.py migrate
+./venv/bin/python manage.py seed_job_categories
 ./venv/bin/python manage.py seed_cv_catalog
 ```
+
+`seed_job_categories` chỉ bootstrap taxonomy và baseline localization; dùng
+`get_or_create` nên không ghi đè wording đã được quản trị duyệt. Sau cài đặt,
+admin quản lý tên bốn locale tại inline Job Category, nội dung generic tại CV
+Content Blueprint và optional override tại CV Sample Content.
 
 Sau backfill, admin cần gán `thumbnail_url`/`preview_url` riêng cho từng
 template–color nếu muốn ảnh thực sự khác nhau. Migration chỉ có thể dùng asset

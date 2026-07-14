@@ -13,6 +13,8 @@ const KNOWN_PHRASES = [
   [/does not have a published version|not published/i, 'Mẫu CV này chưa được xuất bản. Hãy chọn mẫu khác.'],
   [/unknown template/i, 'Mẫu CV không tồn tại hoặc đã bị gỡ. Hãy chọn lại mẫu.'],
   [/unknown sample content/i, 'Nội dung mẫu không tồn tại. Hãy chọn nội dung mẫu khác.'],
+  [/unknown active specialization/i, 'Vị trí chuyên môn không tồn tại hoặc đã ngừng hoạt động.'],
+  [/chưa được cấu hình nội dung|chưa có blueprint/i, 'Vị trí chưa có nội dung cho ngôn ngữ đã chọn.'],
   [/sample locale must match/i, 'Nội dung mẫu không cùng ngôn ngữ với CV. Hãy chọn nội dung mẫu phù hợp.'],
 ]
 

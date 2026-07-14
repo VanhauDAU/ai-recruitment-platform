@@ -7,6 +7,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.cv_templates.models import CvSampleContent, CvTemplate, CvTemplateVersion
+from apps.cv_templates.services import resolve_position_content
 
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import empty_content, empty_layout, empty_style, validate_cv_document, validate_template_layout_capabilities
@@ -59,7 +60,14 @@ def _layout_for_content(template_version, content_json):
     return layout
 
 
-def _content_for_create(sample_content, language):
+def _content_for_create(sample_content, position, language):
+    if position is not None:
+        return resolve_position_content(
+            position=position,
+            locale=language,
+            experience_level='unspecified',
+            lock=True,
+        )['content_json']
     if sample_content is None:
         return empty_content(language)
     sample_content = CvSampleContent.objects.select_for_update().get(pk=sample_content.pk)
@@ -71,7 +79,7 @@ def _content_for_create(sample_content, language):
 
 
 @transaction.atomic
-def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=None, theme_color=None):
+def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=None, position=None, theme_color=None):
     """Create a builder CV with an immutable baseline and a mutable draft."""
     if not actor.email_verified:
         raise CvLifecyclePolicyError('Verify your email before creating a CV.')
@@ -80,7 +88,7 @@ def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=Non
         'current_published_version',
     ).get(pk=template.pk)
     template_version = _published_template_version(template)
-    content = _content_for_create(sample_content, language)
+    content = _content_for_create(sample_content, position, language)
     layout = _layout_for_content(template_version, content)
     style = deepcopy(template_version.default_style_json or empty_style())
     if theme_color:
@@ -98,6 +106,7 @@ def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=Non
     cv = UserCv.objects.create(
         user=actor,
         template=template,
+        position=position,
         cv_type=UserCv.CvType.BUILDER,
         source=UserCv.Source.BUILDER,
         title=title,
@@ -118,7 +127,7 @@ def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=Non
     )
     CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
     return UserCv.objects.select_related(
-        'template', 'current_template_version', 'latest_version', 'published_version',
+        'template', 'position', 'current_template_version', 'latest_version', 'published_version',
     ).get(pk=cv.pk)
 
 

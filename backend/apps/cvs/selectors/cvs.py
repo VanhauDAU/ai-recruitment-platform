@@ -6,7 +6,7 @@ from ..models import CvVersion, UserCv
 def candidate_cvs_queryset(user):
     return (
         UserCv.objects.filter(user=user, is_deleted=False)
-        .select_related('template')
+        .select_related('template', 'position')
         .prefetch_related('cv_skills__skill')
         .order_by('-is_default', '-updated_at')
     )
@@ -16,7 +16,7 @@ def candidate_archived_cvs_queryset(user):
     """Archived CV metadata remains owner-only and is never publicly shareable."""
     return (
         UserCv.objects.filter(user=user, is_deleted=True)
-        .select_related('template', 'current_template_version', 'latest_version', 'published_version')
+        .select_related('template', 'position', 'current_template_version', 'latest_version', 'published_version')
         .order_by('-archived_at', '-updated_at')
     )
 

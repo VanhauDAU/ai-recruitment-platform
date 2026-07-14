@@ -432,7 +432,7 @@ frontend unit tests và 22 smoke desktop/mobile.
 <details>
 <summary><b>CVB-1.1</b> — ✅ URL theo ngôn ngữ + nội dung mẫu theo vị trí</summary>
 
-**URL kho mẫu theo ngôn ngữ:** `/mau-cv`, `/mau-cv-tieng-anh|nhat|trung` cùng route detail/category; locale-paths là một nguồn ánh xạ. `seed_cv_catalog` bảo đảm localization và sample content theo 9 vị trí × 4 locale theo cách idempotent. Dropdown vị trí luôn dùng nhãn tiếng Việt (`position_name_vi`) và khóa `job_category_slug` ổn định; preview A4 lấy headline, section và skill theo locale đã chọn. Sample chỉ tải khi người dùng chọn nguồn sample.
+**URL kho mẫu theo ngôn ngữ:** `/mau-cv`, `/mau-cv-tieng-anh|nhat|trung` cùng route detail/category; locale-paths là một nguồn ánh xạ. Position picker đọc 61 `JobCategory` specialization, chỉ hiển thị `name_vi` có tìm kiếm và giữ opaque `public_id`. Baseline localization có đủ 4 locale. Preview resolver dùng curated sample nếu có, nếu không dùng blueprint admin-configurable; một canonical document render trên mọi template, không nhân sample theo template.
 
 </details>
 
@@ -559,4 +559,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (CVB-1.1 — URL kho mẫu theo ngôn ngữ /mau-cv-tieng-anh|nhat|trung, `color_variants` trên template version + serializer, seed `seed_cv_catalog` (localization 4 ngôn ngữ + 36 nội dung mẫu theo 9 vị trí chuyên môn), popup A4 fit-width không cuộn ngang, card có khung + tiêu đề đen)
+Cập nhật lần cuối: 2026-07-15 (CVB-1.1 — position-driven picker từ taxonomy, 61 vị trí × 4 localization, blueprint/curated resolver dùng chung mọi template, popup A4 fit-width không cuộn ngang)

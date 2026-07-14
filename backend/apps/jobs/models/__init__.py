@@ -2,7 +2,7 @@
 
 from .benefits import Benefit, JobBenefit
 from .contacts import JobApplicationContact, JobApplicationEmail
-from .core import Job, JobCategory
+from .core import Job, JobCategory, JobCategoryLocalization
 from .details import JobCategoryAssignment, JobLocation, JobWorkSchedule
 from .languages import JobLanguageRequirement, Language
 from .saved import SavedJob
@@ -15,6 +15,7 @@ __all__ = [
     'JobApplicationEmail',
     'JobBenefit',
     'JobCategory',
+    'JobCategoryLocalization',
     'JobCategoryAssignment',
     'JobLanguageRequirement',
     'JobLocation',

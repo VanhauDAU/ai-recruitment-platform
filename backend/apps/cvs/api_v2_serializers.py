@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from apps.cv_templates.models import CvSampleContent, CvTemplate
+from apps.jobs.models import JobCategory
 
 from .models import CvDraft, CvExport, CvSharedLink, CvVersion, UserCv
 from .schemas import validate_cv_document
@@ -18,12 +19,14 @@ class CvV2Serializer(serializers.ModelSerializer):
     template_capabilities = serializers.JSONField(source='current_template_version.capabilities', read_only=True)
     latest_version_public_id = serializers.CharField(source='latest_version.public_id', read_only=True)
     published_version_public_id = serializers.CharField(source='published_version.public_id', read_only=True)
+    position_public_id = serializers.CharField(source='position.public_id', read_only=True, allow_null=True)
 
     class Meta:
         model = UserCv
         fields = [
             'public_id', 'title', 'language', 'cv_type', 'source',
             'file_name', 'file_type', 'is_default',
+            'position_public_id',
             'template_public_id', 'template_version', 'lifecycle_status',
             'template_renderer_key', 'template_renderer_version',
             'template_capabilities',
@@ -57,6 +60,7 @@ class CvV2CreateSerializer(serializers.Serializer):
     template_public_id = serializers.CharField(max_length=50)
     language = serializers.CharField(max_length=16, default='vi-VN')
     sample_content_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
+    position_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
 
     def validate_template_public_id(self, value):
@@ -71,8 +75,23 @@ class CvV2CreateSerializer(serializers.Serializer):
         except CvSampleContent.DoesNotExist as error:
             raise serializers.ValidationError('Unknown sample content.') from error
 
+    def validate_position_public_id(self, value):
+        try:
+            return JobCategory.objects.get(
+                public_id=value,
+                status=JobCategory.Status.ACTIVE,
+                category_type=JobCategory.CategoryType.SPECIALIZATION,
+            )
+        except JobCategory.DoesNotExist as error:
+            raise serializers.ValidationError('Unknown active specialization.') from error
+
     def validate(self, attrs):
         sample_content = attrs.get('sample_content_public_id')
+        position = attrs.get('position_public_id')
+        if sample_content is not None and position is not None:
+            raise serializers.ValidationError({
+                'position_public_id': 'Use position_public_id or the legacy sample_content_public_id, not both.',
+            })
         if sample_content is not None and sample_content.locale != attrs['language']:
             raise serializers.ValidationError({'sample_content_public_id': 'Sample locale must match language.'})
         theme_color = attrs.get('theme_color')

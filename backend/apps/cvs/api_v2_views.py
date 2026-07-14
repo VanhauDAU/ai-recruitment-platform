@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from apps.cv_templates.services import PositionContentUnavailable
 
 from .api_v2_serializers import (
     CvDraftSerializer,
@@ -119,8 +120,11 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
                 template=serializer.validated_data['template_public_id'],
                 language=serializer.validated_data['language'],
                 sample_content=serializer.validated_data.get('sample_content_public_id'),
+                position=serializer.validated_data.get('position_public_id'),
                 theme_color=serializer.validated_data.get('theme_color'),
             )
+        except PositionContentUnavailable as error:
+            raise ValidationError({'position_public_id': str(error)}) from error
         except CvLifecyclePolicyError as error:
             raise PermissionDenied(str(error)) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)

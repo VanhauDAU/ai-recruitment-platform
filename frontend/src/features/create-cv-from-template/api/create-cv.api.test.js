@@ -13,7 +13,7 @@ describe('create CV from template API', () => {
     const payload = {
       title: 'CV thiết kế',
       template_public_id: 'cvtemplate_modern',
-      sample_content_public_id: 'cvsample_designer',
+      position_public_id: 'jobcat_designer',
       language: 'vi-VN',
       theme_color: '#2255AA',
     }

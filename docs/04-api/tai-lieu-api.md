@@ -66,8 +66,10 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, renderer contract an toàn và section list. |
 | GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
 | GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
-| GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Metadata sample content; không trả `content_json`. `job_category_slug` là định danh ổn định; `position_name_vi` luôn là nhãn dropdown tiếng Việt; `position_name` là chức danh trong preview theo locale. |
-| GET | `/api/v2/cv-sample-contents/{public_id}/` | Detail canonical sample sau khi người dùng chọn một sample cụ thể. |
+| GET | `/api/v2/cv-position-options/?q=` | Vị trí chuyên môn active từ JobCategory; response chỉ gồm `public_id`, `name_vi`, hỗ trợ tìm theo tên/alias tiếng Việt. |
+| GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_level=` | Resolve canonical preview document: curated sample nếu có, nếu không dùng blueprint active và tên vị trí đã bản địa hóa. |
+| GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Compatibility catalogue cho client cũ; frontend mới không dùng endpoint này làm nguồn dropdown. |
+| GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
 | GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample và optional màu thuộc template. |
 | GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE archive mềm, revoke public access qua `is_deleted`. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart file`, optional `title`). Response không có storage key/URL, chỉ có `file_name`, `file_type`, `source=imported`. |
@@ -137,20 +139,19 @@ Một phần tử `colors` trong card/detail:
 thích. Client mới phải dùng `colors[]`; URL ảnh thuộc quan hệ template–color,
 không suy ra từ hex hoặc hard-code trên frontend.
 
-Sample list trả metadata tách khỏi nội dung preview:
+Position picker trả contract tối thiểu, không lộ hai cấp taxonomy trên UI:
 
 ```json
 {
-  "job_category_slug": "aimachine-learning-engineer",
-  "position_name_vi": "Kỹ sư AI/Machine Learning",
-  "position_name": "AI・機械学習エンジニア",
-  "locale": "ja-JP"
+  "public_id": "jobcat_...",
+  "name_vi": "Nhân viên CSKH"
 }
 ```
 
-Frontend dùng `job_category_slug` để giữ lựa chọn và hiển thị
-`position_name_vi`; chỉ detail sample mới tải `content_json` để renderer đổi
-headline, section và các mục nội dung theo `locale`.
+Frontend dùng `public_id` làm value và chỉ hiển thị `name_vi`. Sau khi chọn,
+frontend gọi position-preview với locale. Resolver ưu tiên curated sample; nếu
+không có, nó kết hợp `JobCategoryLocalization` và `CvContentBlueprint` để tạo
+`content_json` deterministic. Không fallback tên tiếng Việt vào preview locale khác.
 
 Payload tạo CV V2:
 
@@ -159,11 +160,12 @@ Payload tạo CV V2:
   "title": "CV Modern",
   "template_public_id": "tpl_...",
   "language": "vi-VN",
-  "sample_content_public_id": "cvsample_...",
+  "position_public_id": "jobcat_...",
   "theme_color": "#2255AA"
 }
 ```
 
-`sample_content_public_id` và `theme_color` đều optional. Nếu gửi màu không
+`position_public_id` và `theme_color` đều optional. `sample_content_public_id`
+vẫn được nhận cho client cũ nhưng không được gửi cùng `position_public_id`. Nếu gửi màu không
 active hoặc không được gán cho template, API trả `400 theme_color`. Màu hợp lệ
 được copy vào `style_json.theme_color` của initial version và draft.

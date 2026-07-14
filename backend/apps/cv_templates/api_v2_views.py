@@ -4,11 +4,15 @@ from hashlib import sha256
 
 from django.http import Http404
 from rest_framework import generics, permissions
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.jobs.models import JobCategory
+
 from .api_v2_serializers import (
     CvCategorySerializer,
+    CvPositionOptionSerializer,
     CvSampleContentCardSerializer,
     CvSampleContentDetailSerializer,
     CvTemplateCardSerializer,
@@ -17,11 +21,13 @@ from .api_v2_serializers import (
 from .models import CvTemplate
 from .selectors import (
     active_cv_categories_queryset,
+    active_cv_position_options_queryset,
     published_sample_contents_queryset,
     published_template_detail_queryset,
     published_template_queryset,
     related_published_templates,
 )
+from .services import PositionContentUnavailable, resolve_position_content
 
 
 class PublicCatalogCacheMixin:
@@ -111,3 +117,39 @@ class CvSampleContentCatalogDetailView(PublicCatalogCacheMixin, generics.Retriev
 
     def retrieve(self, request, *args, **kwargs):
         return self.cached_response(self.get_serializer(self.get_object()).data)
+
+
+class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
+    serializer_class = CvPositionOptionSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return active_cv_position_options_queryset(self.request.query_params.get('q', '').strip())
+
+    def list(self, request, *args, **kwargs):
+        return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
+
+
+class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        public_id = request.query_params.get('position_public_id', '').strip()
+        locale = request.query_params.get('locale', 'vi-VN').strip()
+        experience_level = request.query_params.get('experience_level', 'unspecified').strip()
+        if not public_id:
+            raise ValidationError({'position_public_id': 'This query parameter is required.'})
+        try:
+            position = active_cv_position_options_queryset().get(public_id=public_id)
+        except JobCategory.DoesNotExist as error:
+            raise Http404 from error
+        try:
+            resolved = resolve_position_content(
+                position=position,
+                locale=locale,
+                experience_level=experience_level,
+            )
+        except PositionContentUnavailable as error:
+            raise ValidationError({'locale': str(error)}) from error
+        return self.cached_response(resolved)

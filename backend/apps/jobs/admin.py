@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html
 
 from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
@@ -11,6 +13,7 @@ from .models import (
     JobApplicationEmail,
     JobBenefit,
     JobCategory,
+    JobCategoryLocalization,
     JobCategoryAssignment,
     JobLanguageRequirement,
     JobLocation,
@@ -32,18 +35,59 @@ class JobCategoryAdminForm(forms.ModelForm):
         fields = '__all__'
 
 
+class JobCategoryLocalizationInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        instance = self.instance
+        if (
+            instance.category_type != JobCategory.CategoryType.SPECIALIZATION
+            or instance.status != JobCategory.Status.ACTIVE
+        ):
+            return
+        configured_locales = {
+            form.cleaned_data.get('locale')
+            for form in self.forms
+            if form.cleaned_data
+            and not form.cleaned_data.get('DELETE')
+            and form.cleaned_data.get('is_active', True)
+            and form.cleaned_data.get('display_name')
+        }
+        required_locales = {choice[0] for choice in JobCategoryLocalization.Locale.choices}
+        missing = required_locales - configured_locales
+        if missing:
+            raise ValidationError(
+                f'Vị trí active phải có đủ 4 ngôn ngữ. Còn thiếu: {", ".join(sorted(missing))}.'
+            )
+
+
+class JobCategoryLocalizationInline(admin.TabularInline):
+    model = JobCategoryLocalization
+    formset = JobCategoryLocalizationInlineFormSet
+    extra = 0
+    fields = ['locale', 'display_name', 'search_aliases', 'is_active']
+
+    def get_extra(self, request, obj=None, **kwargs):
+        return 4 if obj is None else 0
+
+
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
     form = JobCategoryAdminForm
-    list_display = ['name', 'category_type', 'parent', 'logo_preview', 'status']
+    list_display = ['name', 'category_type', 'parent', 'cv_locale_readiness', 'logo_preview', 'status']
     list_filter = ['category_type', 'status']
     search_fields = ['name', 'logo_url']
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ['logo_preview']
+    readonly_fields = ['public_id', 'logo_preview']
+    inlines = [JobCategoryLocalizationInline]
     fieldsets = (
-        (None, {'fields': ('name', 'slug', 'description', 'parent', 'category_type', 'status')}),
+        (None, {'fields': ('public_id', 'name', 'slug', 'description', 'parent', 'category_type', 'status')}),
         ('Homepage display', {'fields': ('upload_logo', 'logo_url', 'logo_preview')}),
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('localizations')
 
     def save_model(self, request, obj, form, change):
         upload = form.cleaned_data.get('upload_logo')
@@ -64,6 +108,14 @@ class JobCategoryAdmin(admin.ModelAdmin):
             media_url_from_value(obj.logo_url, request=None),
             obj.name,
         )
+
+    @admin.display(description='CV locales')
+    def cv_locale_readiness(self, obj):
+        if obj.category_type != JobCategory.CategoryType.SPECIALIZATION:
+            return '-'
+        active_locales = {item.locale for item in obj.localizations.all() if item.is_active}
+        required = {choice[0] for choice in JobCategoryLocalization.Locale.choices}
+        return '4/4' if active_locales >= required else f'{len(active_locales & required)}/4'
 
 
 class JobSkillInline(admin.TabularInline):

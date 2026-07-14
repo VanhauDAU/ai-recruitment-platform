@@ -35,6 +35,13 @@ describe('createCvErrorMessage', () => {
     expect(message).toMatch(/không cùng ngôn ngữ/i)
   })
 
+  it('maps an unavailable taxonomy position', () => {
+    const message = createCvErrorMessage(withResponse(400, {
+      position_public_id: ['Unknown active specialization.'],
+    }))
+    expect(message).toMatch(/vị trí chuyên môn không tồn tại/i)
+  })
+
   it('treats 401 as an expired session', () => {
     expect(createCvErrorMessage(withResponse(401, {}))).toMatch(/đăng nhập lại/i)
   })

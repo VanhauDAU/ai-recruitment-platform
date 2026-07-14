@@ -1,9 +1,9 @@
 import { InboxOutlined, LinkedinFilled } from '@ant-design/icons'
 import { Select, Spin, Upload, message } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyCvs } from '@/entities/cv'
-import { getCvSampleContent, getCvSampleContents } from '@/entities/cv-template'
+import { getCvPositionOptions, getCvPositionPreview } from '@/entities/cv-template'
 import { useSession } from '@/entities/session'
 import { useSiteSettings } from '@/entities/site-settings'
 import { createCvFromTemplate } from '../api/create-cv.api'
@@ -15,14 +15,6 @@ const SAMPLE_LOCALES = [
   { value: 'ja-JP', label: 'Tiếng Nhật' },
   { value: 'zh-CN', label: 'Tiếng Trung' },
 ]
-
-function samplePositionKey(sample) {
-  return sample.job_category_slug || sample.position_name_vi || sample.job_category_name || sample.public_id
-}
-
-function samplePositionLabel(sample) {
-  return sample.position_name_vi || sample.job_category_name || sample.title
-}
 
 function SourceOption({ value, current, onSelect, title, note, disabled, children }) {
   const active = current === value
@@ -66,8 +58,11 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
   const [myCvs, setMyCvs] = useState([])
   const [selectedCvId, setSelectedCvId] = useState(null)
   const [sampleLocale, setSampleLocale] = useState(locale)
-  const [samples, setSamples] = useState([])
-  const [loadingSamples, setLoadingSamples] = useState(false)
+  const [positions, setPositions] = useState([])
+  const [loadingPositions, setLoadingPositions] = useState(false)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const [previewAvailable, setPreviewAvailable] = useState(false)
+  const [previewError, setPreviewError] = useState('')
   const [selectedPosition, setSelectedPosition] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -93,51 +88,55 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
   useEffect(() => {
     if (source !== 'sample') return undefined
     let cancelled = false
-    setLoadingSamples(true)
-    getCvSampleContents(sampleLocale)
+    setLoadingPositions(true)
+    getCvPositionOptions()
       .then((data) => {
         if (cancelled) return
-        setSamples(data)
+        setPositions(data)
         setSelectedPosition((current) => {
-          const options = data.map(samplePositionKey).filter(Boolean)
+          const options = data.map((position) => position.public_id).filter(Boolean)
           return current && options.includes(current) ? current : (options[0] || null)
         })
       })
-      .catch(() => !cancelled && setSamples([]))
-      .finally(() => !cancelled && setLoadingSamples(false))
+      .catch(() => !cancelled && setPositions([]))
+      .finally(() => !cancelled && setLoadingPositions(false))
     return () => {
       cancelled = true
     }
-  }, [source, sampleLocale])
-
-  const samplePublicId = useMemo(
-    () => samples.find((item) => samplePositionKey(item) === selectedPosition)?.public_id || null,
-    [samples, selectedPosition],
-  )
+  }, [source])
 
   useEffect(() => {
-    if (source !== 'sample' || !samplePublicId) {
+    if (source !== 'sample' || !selectedPosition) {
+      setPreviewAvailable(false)
+      setPreviewError('')
       onSampleContentChange?.(null)
       return undefined
     }
     let cancelled = false
-    getCvSampleContent(samplePublicId)
+    setLoadingPreview(true)
+    setPreviewAvailable(false)
+    setPreviewError('')
+    onSampleContentChange?.(null)
+    getCvPositionPreview(selectedPosition, sampleLocale)
       .then((data) => {
         if (!cancelled) {
+          setPreviewAvailable(true)
           onSampleContentChange?.(data)
         }
       })
       .catch(() => {
         if (!cancelled) {
+          setPreviewError('Vị trí này chưa được quản trị cấu hình nội dung cho ngôn ngữ đã chọn.')
           onSampleContentChange?.(null)
         }
       })
+      .finally(() => !cancelled && setLoadingPreview(false))
     return () => {
       cancelled = true
     }
-  }, [source, samplePublicId, onSampleContentChange])
+  }, [source, selectedPosition, sampleLocale, onSampleContentChange])
 
-  const canSubmit = source === 'blank' || (source === 'sample' && Boolean(samplePublicId))
+  const canSubmit = source === 'blank' || (source === 'sample' && Boolean(selectedPosition) && previewAvailable)
   const pendingBackend = source === 'previous' || source === 'upload'
 
   const submit = async () => {
@@ -156,7 +155,7 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
         template_public_id: template.public_id,
         language: source === 'sample' ? sampleLocale : locale,
         ...(themeColor ? { theme_color: themeColor } : {}),
-        ...(source === 'sample' ? { sample_content_public_id: samplePublicId } : {}),
+        ...(source === 'sample' ? { position_public_id: selectedPosition } : {}),
       })
       message.success('Đã tạo CV. Bạn có thể bắt đầu chỉnh sửa ngay.')
       onCreated?.(cv)
@@ -228,18 +227,20 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
             <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-700">Chọn vị trí</p>
             <Select
               showSearch
+              virtual={false}
               className="w-full"
               placeholder="Nhập để tìm kiếm vị trí"
-              loading={loadingSamples}
+              loading={loadingPositions || loadingPreview}
               value={selectedPosition}
               onChange={(val) => setSelectedPosition(val)}
               optionFilterProp="label"
-              notFoundContent={loadingSamples ? <Spin size="small" /> : 'Chưa có nội dung mẫu phù hợp'}
-              options={samples.map((sample) => ({
-                value: samplePositionKey(sample),
-                label: samplePositionLabel(sample),
+              notFoundContent={loadingPositions ? <Spin size="small" /> : 'Không tìm thấy vị trí chuyên môn'}
+              options={positions.map((position) => ({
+                value: position.public_id,
+                label: position.name_vi,
               }))}
             />
+            {previewError && <p className="mt-1.5 text-xs leading-5 text-amber-600">{previewError}</p>}
           </div>
         </SourceOption>
 

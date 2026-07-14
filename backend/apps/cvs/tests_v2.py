@@ -16,11 +16,13 @@ from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import (
     CvColor,
+    CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
     CvTemplateColorLink,
     CvTemplateVersion,
 )
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .models import CvAccessLog, CvDraft, CvExport, CvSharedLink, CvVersion, UserCv
 from .pdf_renderer import build_cv_pdf_html
@@ -701,6 +703,33 @@ class CvV2ApiTests(APITestCase):
         # Sample content flows into both the immutable baseline and the draft.
         self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Person')
         self.assertEqual(cv.latest_version.content_json['personal_info']['full_name'], 'Sample Person')
+
+    def test_create_from_position_resolves_blueprint_and_persists_taxonomy_identity(self):
+        position = JobCategory.objects.create(name='Nhân viên CSKH')
+        JobCategoryLocalization.objects.bulk_create([
+            JobCategoryLocalization(category=position, locale='vi-VN', display_name='Nhân viên CSKH'),
+            JobCategoryLocalization(category=position, locale='en-US', display_name='Customer Service Representative'),
+        ])
+        blueprint = CvContentBlueprint.objects.get(locale='en-US', experience_level='unspecified')
+        blueprint.summary_template = 'Build a career as {position}.'
+        blueprint.save(update_fields=['summary_template', 'updated_at'])
+
+        response = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Customer Service CV',
+                'template_public_id': self.template.public_id,
+                'language': 'en-US',
+                'position_public_id': position.public_id,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        cv = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(cv.position_id, position.id)
+        self.assertEqual(response.data['position_public_id'], position.public_id)
+        self.assertEqual(cv.draft.content_json['personal_info']['headline'], 'Customer Service Representative')
 
     def test_legacy_dual_write_does_not_discard_a_v2_layout(self):
         cv = self.create_cv()

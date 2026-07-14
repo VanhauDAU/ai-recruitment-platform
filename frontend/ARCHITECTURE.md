@@ -143,7 +143,10 @@ app/router
 - `entities/cv-template` sở hữu API đọc catalogue, normalization màu và UI card
   domain. `colors[]` từ API là nguồn chuẩn; page/feature không tự tạo palette.
 - `features/create-cv-from-template` sở hữu chọn nguồn, sample preview và POST
-  create. Màu được chọn là input của workflow, không phải state toàn app.
+  create. Position picker đọc taxonomy qua entity `cv-template`, dùng
+  `position_public_id` làm value và chỉ hiển thị `name_vi`; preview document
+  được resolve ở backend, frontend không dịch hoặc ghép content. Màu được chọn
+  là input của workflow, không phải state toàn app.
 - `features/edit-cv-draft` sở hữu autosave/history/section/layout editing;
   `entities/cv` sở hữu canonical document, renderer contract và preview.
 - `pages/main/cv-templates` chỉ lấy locale/route params và compose catalogue,
