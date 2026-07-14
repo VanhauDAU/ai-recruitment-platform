@@ -186,7 +186,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
       </Form.Item>
 
       <Form.Item name="desired_position_other" label={<span className={isOnboarding || isAccountSettings ? 'text-sm italic text-slate-600' : labelClassName}>{isOnboarding || isAccountSettings ? 'Nhập vị trí chuyên môn không có trong danh mục (nhập tối đa 5 vị trí)' : 'Vị trí chuyên môn khác'}</span>} className={fieldClassName}>
-        <AutoComplete options={specializationSuggestions} popupClassName={DROPDOWN_CLASS_NAME} filterOption={(input, option) => option.value.toLocaleLowerCase('vi-VN').includes(input.toLocaleLowerCase('vi-VN'))}>
+        <AutoComplete options={specializationSuggestions} classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }} filterOption={(input, option) => option.value.toLocaleLowerCase('vi-VN').includes(input.toLocaleLowerCase('vi-VN'))}>
           <Input maxLength={255} allowClear placeholder="Nhập tên vị trí chuyên môn" className="!h-10 !rounded-xl" />
         </AutoComplete>
       </Form.Item>
@@ -235,7 +235,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
           rules={[{ required: true, message: 'Vui lòng chọn kinh nghiệm.' }]}
           className={fieldClassName}
         >
-          <Select options={EXPERIENCE_OPTIONS} popupClassName={DROPDOWN_CLASS_NAME} placeholder="Chọn kinh nghiệm" className="!h-10 !w-full [&_.ant-select-selector]:!rounded-xl" />
+          <Select options={EXPERIENCE_OPTIONS} classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }} placeholder="Chọn kinh nghiệm" className="!h-10 !w-full [&_.ant-select-selector]:!rounded-xl" />
         </Form.Item>
       </div>
 
@@ -245,7 +245,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
         rules={[{ required: true, type: 'array', min: 1, message: 'Vui lòng chọn ít nhất một tỉnh/thành.' }]}
         className={fieldClassName}
       >
-        <Select mode="multiple" allowClear showSearch optionFilterProp="label" loading={catalogLoading} options={provinceOptions} popupClassName={DROPDOWN_CLASS_NAME} placeholder="Chọn tỉnh/thành" maxTagCount="responsive" className="!min-h-10 !w-full [&_.ant-select-selector]:!min-h-10 [&_.ant-select-selector]:!rounded-xl" />
+        <Select mode="multiple" allowClear showSearch optionFilterProp="label" loading={catalogLoading} options={provinceOptions} classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }} placeholder="Chọn tỉnh/thành" maxTagCount="responsive" className="!min-h-10 !w-full [&_.ant-select-selector]:!min-h-10 [&_.ant-select-selector]:!rounded-xl" />
       </Form.Item>
 
       {isOnboarding || isAccountSettings ? (

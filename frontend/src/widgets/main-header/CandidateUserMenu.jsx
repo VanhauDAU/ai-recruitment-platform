@@ -3,8 +3,8 @@ import {
   LogoutOutlined, MessageOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { App, Avatar, Badge, Dropdown } from 'antd'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
 
 // Section lấy từ config dùng chung với sidebar trang tài khoản (một nguồn duy nhất).
@@ -12,7 +12,7 @@ import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
 const GROUP_B = ['email', 'account', 'upgrade']
 const SECTIONS = CANDIDATE_MENU
 
-function Section({ section, open, onToggle, onItem, user }) {
+function Section({ section, open, onToggle, onItem, user, activePathname }) {
   return (
     <div className="border-b border-gray-100 last:border-b-0">
       <button
@@ -32,15 +32,23 @@ function Section({ section, open, onToggle, onItem, user }) {
       <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="overflow-hidden">
           <div className="pb-2">
-            {section.items.map((it) => (
-              <button
-                key={it.key || it.label}
-                onClick={() => onItem(it)}
-                className="flex w-full cursor-pointer items-center rounded-lg py-2 pl-[52px] pr-5 text-left text-sm text-slate-900 transition-colors hover:bg-[var(--brand-primary-soft)]"
-              >
-                {candidateMenuItemLabel(it, user)}
-              </button>
-            ))}
+            {section.items.map((it) => {
+              const isActive = it.path === activePathname
+
+              return (
+                <button
+                  key={it.key || it.label}
+                  onClick={() => onItem(it)}
+                  className={`flex w-full cursor-pointer items-center rounded-lg py-2 pl-[52px] pr-5 text-left text-sm transition-colors hover:bg-[var(--brand-primary-soft)] ${
+                    isActive
+                      ? 'bg-[var(--brand-primary-soft)] font-semibold text-[var(--brand-primary)]'
+                      : 'text-slate-900'
+                  }`}
+                >
+                  {candidateMenuItemLabel(it, user)}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -50,10 +58,25 @@ function Section({ section, open, onToggle, onItem, user }) {
 
 export default function CandidateUserMenu({ user, logout }) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [openKeys, setOpenKeys] = useState(() => new Set(['search', 'cv']))
   const verified = user?.email_verified
+
+  useEffect(() => {
+    const activeSection = SECTIONS.find((section) => section.items.some((item) => item.path === pathname))
+    if (!activeSection) return
+
+    setOpenKeys((prev) => {
+      if (prev.has(activeSection.key)) return prev
+
+      const next = new Set(prev)
+      if (GROUP_B.includes(activeSection.key)) GROUP_B.forEach((key) => next.delete(key))
+      next.add(activeSection.key)
+      return next
+    })
+  }, [pathname])
 
   function toggleSection(key) {
     setOpenKeys((prev) => {
@@ -106,7 +129,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
       <div className="border-t border-gray-100 px-2">
         {SECTIONS.map((s) => (
-          <Section key={s.key} section={s} user={user} open={openKeys.has(s.key)} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
+          <Section key={s.key} section={s} user={user} activePathname={pathname} open={openKeys.has(s.key)} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
         ))}
       </div>
 
