@@ -6,7 +6,7 @@ export default function PasswordRequirements({ password }) {
 
   const requirements = getPasswordRequirements(password)
   const items = [
-    { key: 'length', label: 'Mật khẩu từ 6 đến 25 ký tự' },
+    { key: 'length', label: 'Mật khẩu từ 8 đến 25 ký tự' },
     { key: 'composition', label: 'Bao gồm chữ hoa, chữ thường và ký tự số' },
   ]
 

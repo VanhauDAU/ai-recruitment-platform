@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from ..models import AuthEmailJob, User
 from ..serializers import ChangeEmailSerializer, UserSerializer
 from ..services import email_verification as ev
-from ..tasks import queue_auth_email
+from ..tasks import queue_auth_email, queue_welcome_email
 
 
 def queue_verification_email(user):
@@ -70,6 +70,7 @@ class VerificationConfirmView(APIView):
         if not user.email_verified:
             user.email_verified = True
             user.save(update_fields=['email_verified', 'updated_at'])
+            queue_welcome_email(user)
         return Response({'detail': 'Xác thực email thành công.'})
 
 

@@ -12,6 +12,7 @@ from ..models import AuthEmailJob, User
 from ..serializers import (
     LoginCredentialsSerializer,
     ProfileUpdateSerializer,
+    RegisterEmailAvailabilitySerializer,
     RegisterSerializer,
     RoleTokenObtainPairSerializer,
     UserSerializer,
@@ -40,6 +41,29 @@ class RegisterView(generics.CreateAPIView):
             {'user': UserSerializer(user).data, **issue_tokens(user)},
             status=status.HTTP_201_CREATED,
         )
+
+
+@extend_schema(
+    summary='Kiểm tra email có thể dùng để đăng ký',
+    request=RegisterEmailAvailabilitySerializer,
+    responses=inline_serializer(
+        'RegisterEmailAvailability',
+        fields={'available': serializers.BooleanField()},
+    ),
+    tags=['auth'],
+)
+class RegisterEmailAvailabilityView(APIView):
+    """Rate-limited UX pre-check; RegisterSerializer remains the final authority."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'register_email_check'
+
+    def post(self, request):
+        serializer = RegisterEmailAvailabilitySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        exists = User.objects.filter(email__iexact=serializer.validated_data['email']).exists()
+        return Response({'available': not exists})
 
 
 class LoginView(APIView):

@@ -86,6 +86,14 @@ describe('SearchDropdown', () => {
     expect(mocks.getJobSuggestions).not.toHaveBeenCalled()
   })
 
+  it('keeps the suggested-jobs column visible on desktop', async () => {
+    renderDropdown()
+
+    await waitFor(() => expect(mocks.getJobs).toHaveBeenCalled())
+    expect(document.body.querySelector('[class~="md:w-[420px]"]')).toHaveClass('md:shrink-0')
+    expect(document.body.querySelector('[class~="md:min-w-[360px]"]')).toBeInTheDocument()
+  })
+
   it('ignores a stale keyword suggestion response', async () => {
     let resolveFirst
     const first = new Promise((resolve) => { resolveFirst = resolve })

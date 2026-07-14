@@ -1,11 +1,13 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons'
 import { Alert, Checkbox, Form, Input } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import {
   AuthLogo,
+  checkRegistrationEmail,
+  getAuthDestination,
   getReturnUrl,
   PasswordRequirements,
   passwordValidationRule,
@@ -24,14 +26,50 @@ export default function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState('social')
+  const [emailCheck, setEmailCheck] = useState({ status: 'idle', message: '' })
   const [form] = Form.useForm()
   const password = Form.useWatch('password', form) || ''
+  const email = Form.useWatch('email', form) || ''
+
+  useEffect(() => {
+    const normalized = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setEmailCheck({ status: 'idle', message: '' })
+      return undefined
+    }
+
+    const controller = new AbortController()
+    let isCurrent = true
+    const timer = setTimeout(async () => {
+      setEmailCheck({ status: 'checking', message: 'Đang kiểm tra email...' })
+      try {
+        const available = await checkRegistrationEmail(normalized, { signal: controller.signal })
+        if (!isCurrent) return
+        setEmailCheck(available
+          ? { status: 'available', message: 'Email có thể sử dụng.' }
+          : { status: 'taken', message: 'Email này đã được sử dụng. Vui lòng dùng email khác.' })
+      } catch (err) {
+        if (!isCurrent || err.code === 'ERR_CANCELED' || controller.signal.aborted) return
+        setEmailCheck({ status: 'unavailable', message: 'Chưa thể kiểm tra email. Bạn vẫn có thể gửi form để xác nhận.' })
+      }
+    }, 500)
+
+    return () => {
+      isCurrent = false
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [email])
 
   function clearPasswords() {
     form.resetFields(['password', 'confirm_password'])
   }
 
   async function onFinish(values) {
+    if (emailCheck.status === 'taken') {
+      form.setFields([{ name: 'email', errors: ['Email này đã được sử dụng. Vui lòng dùng email khác.'] }])
+      return
+    }
     if (!executeRecaptcha) {
       clearPasswords()
       setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
@@ -49,7 +87,7 @@ export default function Register() {
       const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
       setCurrentUser(result.user)
-      navigate(getReturnUrl(searchParams) || '/', { replace: true })
+      navigate(getAuthDestination({ user: result.user, returnUrl: getReturnUrl(searchParams) }), { replace: true })
     } catch (err) {
       clearPasswords()
       if (err.response?.status === 429) {
@@ -161,6 +199,8 @@ export default function Register() {
                   { required: true, message: 'Vui lòng nhập email' },
                   { type: 'email', message: 'Email không hợp lệ' },
                 ]}
+                validateStatus={emailCheck.status === 'taken' ? 'error' : emailCheck.status === 'available' ? 'success' : undefined}
+                help={emailCheck.status === 'idle' ? undefined : emailCheck.message}
                 className="!mb-3"
               >
                 <Input
