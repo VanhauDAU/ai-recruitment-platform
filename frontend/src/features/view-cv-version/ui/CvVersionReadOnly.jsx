@@ -1,7 +1,7 @@
-import { Alert, Skeleton, message } from 'antd'
+import { Alert, Skeleton } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CopyOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons'
+import { CopyOutlined, EditOutlined } from '@ant-design/icons'
 import { CvDocumentPreview } from '@/entities/cv'
 
 function documentFromVersion(version) {
@@ -28,12 +28,6 @@ function CvVersionReadOnly({ load, inaccessibleMessage, isOwner, publicId }) {
     })
     return () => { active = false }
   }, [load])
-
-  const handleDownload = () => {
-    message.loading('Đang chuẩn bị tệp PDF tải xuống...', 1.2).then(() => {
-      message.success('Tải xuống CV PDF thành công!')
-    })
-  }
 
   const handleCopy = async () => {
     try {
@@ -71,17 +65,11 @@ function CvVersionReadOnly({ load, inaccessibleMessage, isOwner, publicId }) {
       <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
       {/* Thanh công cụ tối mờ cố định ở trên đầu */}
-      <header className="fixed top-0 inset-x-0 h-12 bg-[#1a1a1a]/90 text-white flex items-center justify-between px-6 z-50 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.15)]">
-        <div className="text-[13px] font-medium text-slate-200 truncate">
+      <header className="pointer-events-none fixed top-0 inset-x-0 h-12 bg-[#1a1a1a]/90 text-white flex items-center justify-between px-6 z-50 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.15)]">
+        <h1 className="text-[13px] font-medium text-slate-200 truncate">
           Xem CV Online của {cv.title || 'Ứng viên'}
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1.5 rounded bg-white/10 hover:bg-white/20 transition-all px-3 py-1.5 text-xs font-bold text-white cursor-pointer border border-transparent hover:scale-105"
-          >
-            <DownloadOutlined /> Tải CV PDF
-          </button>
+        </h1>
+        <div className="pointer-events-auto flex items-center gap-3">
           {isOwner && publicId && (
             <Link
               to={`/cvs/${publicId}/edit`}

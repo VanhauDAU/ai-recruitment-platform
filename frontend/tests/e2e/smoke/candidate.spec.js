@@ -209,7 +209,7 @@ test('candidate smoke: job application submits the selected immutable CV version
 
   await page.goto('/viec-lam/apply-job')
   await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
-  await page.getByRole('button', { name: 'Ứng tuyển ngay' }).first().click()
+  await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển ngay', exact: true }).click()
   await expect(page.getByRole('dialog', { name: 'Ứng tuyển: Kỹ sư phần mềm' })).toBeVisible()
   await expect(page.getByText('Phiên bản 2 (đã publish)')).toBeVisible()
 
