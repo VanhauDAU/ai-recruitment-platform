@@ -9,7 +9,9 @@ export default defineConfig({
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
+    // Use a Chromium-native mobile profile. iPhone 13 is a WebKit device;
+    // forcing it onto Chromium produces a mismatched layout/visual viewport.
+    { name: 'mobile-chromium', use: { ...devices['Pixel 5'] } },
   ],
   webServer: {
     command: 'npm run dev -- --host 127.0.0.1',

@@ -29,7 +29,7 @@ test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ pa
     const request = route.request()
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true }
+      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/v2/cvs/cv_1/'
         ? { public_id: 'cv_1', title: 'CV V2', template_renderer_key: 'classic_single_column_v1' }
         : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
@@ -51,7 +51,13 @@ test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ pa
   expect((await initialAutosaveRequest).headers()['if-match']).toBe('"lock-version-0"')
 
   const sectionAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
-  await page.getByRole('combobox', { name: 'Thêm section', exact: true }).click()
+  // Ant Design exposes the combobox as a readonly search input whose hitbox
+  // can collapse on narrow viewports. Click the visible Select wrapper instead.
+  const addSectionSelect = page.locator('.ant-select').filter({ has: page.locator('input[aria-label="Thêm section"]') })
+  await addSectionSelect.scrollIntoViewIfNeeded()
+  const addSectionBox = await addSectionSelect.boundingBox()
+  console.log('E2E DEBUG', test.info().project.use.viewport, addSectionBox, await page.evaluate(({ x, y }) => ({ width: innerWidth, height: innerHeight, scrollY: window.scrollY, visual: { width: visualViewport.width, height: visualViewport.height, scale: visualViewport.scale }, hit: document.elementFromPoint(x + 5, y + 5)?.outerHTML?.slice(0, 180) }), addSectionBox))
+  await addSectionSelect.click()
   await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option', { hasText: 'Học vấn' }).click()
   await expect(page.getByRole('button', { name: 'Xác nhận thêm section' })).toBeEnabled()
   await page.getByRole('button', { name: 'Xác nhận thêm section' }).click()
@@ -89,7 +95,7 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true }
+      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/v2/cvs/cv_1/'
         ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
         : path === '/api/v2/cvs/cv_1/versions/'

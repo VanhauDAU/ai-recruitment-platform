@@ -96,7 +96,8 @@ export default function Header() {
     // The CV editor has long, form-heavy pages. Hide the global sticky header
     // while scrolling there so it cannot cover controls on small viewports.
     || location.pathname.startsWith('/cvs/')
-  const shouldShowHeader = !hideOnScroll || headerVisible
+  const isCvRoute = location.pathname.startsWith('/cvs/')
+  const shouldShowHeader = !isCvRoute && (!hideOnScroll || headerVisible)
 
   function handleItem(item) {
     setOpenKey(null)
