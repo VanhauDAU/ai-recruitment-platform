@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { getRendererContract, paginateRendererProjection, projectDocumentForRenderer } from '../model/renderer-contracts'
 import { richTextToText } from '../model/document'
 import { getSectionDefinition } from '../model/section-registry'
+import './CvDocumentPreview.css'
 
 function SectionContent({ section }) {
   if (section.section_key === 'summary') return <p className="whitespace-pre-line text-slate-700">{section.items.map((item) => item.value || richTextToText(item.description)).filter(Boolean).join('\n')}</p>
@@ -12,7 +13,7 @@ function SectionContent({ section }) {
 
 function PreviewSection({ section, themeColor }) {
   if (!section.enabled) return null
-  return <section className="mb-5 break-inside-avoid"><h3 className="mb-2 border-b pb-1 text-sm font-bold uppercase tracking-wide" style={{ color: themeColor, borderColor: `${themeColor}55` }}>{section.title || getSectionDefinition(section.section_key)?.displayName || section.section_key}</h3><SectionContent section={section} /></section>
+  return <section className="cv-document-preview__section mb-5 break-inside-avoid"><h3 className="mb-2 border-b pb-1 text-sm font-bold uppercase tracking-wide" style={{ color: themeColor, borderColor: `${themeColor}55` }}>{section.title || getSectionDefinition(section.section_key)?.displayName || section.section_key}</h3><SectionContent section={section} /></section>
 }
 
 function A4Page({ page, document, contract, onOverflow }) {
@@ -27,12 +28,12 @@ function A4Page({ page, document, contract, onOverflow }) {
   }, [document, onOverflow, page.number])
 
   return (
-    <div className="mb-5">
-      <p className="mb-1 text-center text-xs font-semibold text-slate-500">Trang {page.number}</p>
+    <div className="cv-document-preview__page-wrap mb-5">
+      <p className="cv-document-preview__page-label mb-1 text-center text-xs font-semibold text-slate-500">Trang {page.number}</p>
       <article
         ref={ref}
         aria-label={`Xem trước CV ${contract.key} trang ${page.number}`}
-        className="mx-auto h-[297mm] w-[210mm] overflow-hidden bg-white p-[12mm] text-[11px] shadow-lg"
+        className="cv-document-preview__page mx-auto h-[297mm] w-[210mm] overflow-hidden bg-white p-[12mm] text-[11px] shadow-lg"
         style={{ fontFamily: style_json.font_family, fontSize: `${style_json.font_scale}em`, lineHeight: style_json.line_height }}
       >
         <header className="mb-6 border-l-4 pl-4" style={{ borderColor: style_json.theme_color }}>
@@ -61,8 +62,8 @@ export default function CvDocumentPreview({ document, rendererKey }) {
   }, [])
 
   return (
-    <div className="overflow-auto rounded-xl bg-slate-200 p-3 shadow-inner">
-      {overflowPages.length > 0 && <div role="alert" className="mx-auto mb-3 max-w-[210mm] rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Nội dung có thể bị tràn ở trang {overflowPages.join(', ')}. Hãy rút ngắn nội dung hoặc thêm section để Preview phân trang lại.</div>}
+    <div className="cv-document-preview overflow-auto rounded-xl bg-slate-200 p-3 shadow-inner">
+      {overflowPages.length > 0 && <div role="alert" className="cv-document-preview__overflow mx-auto mb-3 max-w-[210mm] rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Nội dung có thể bị tràn ở trang {overflowPages.join(', ')}. Hãy rút ngắn nội dung hoặc thêm section để Preview phân trang lại.</div>}
       {pages.map((page) => <A4Page key={page.number} page={page} document={document} contract={contract} onOverflow={onOverflow} />)}
     </div>
   )

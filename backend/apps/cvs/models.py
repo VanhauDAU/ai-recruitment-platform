@@ -256,6 +256,164 @@ class CvDraft(models.Model):
         )
 
 
+class CvSharedLink(models.Model):
+    """A revocable bearer link bound to one immutable CV version.
+
+    ``token_hash`` is deliberately the only persisted representation of the
+    browser token. The raw token exists solely in the create response.
+    """
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    cv = models.ForeignKey(UserCv, on_delete=models.CASCADE, related_name='shared_links')
+    version = models.ForeignKey(CvVersion, on_delete=models.PROTECT, related_name='shared_links')
+    token_hash = models.CharField(max_length=64, unique=True, editable=False)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    last_accessed_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_cv_shared_links',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['expires_at'],
+                name='idx_cv_share_active_expiry',
+                condition=models.Q(revoked_at__isnull=True),
+            ),
+            models.Index(fields=['cv', '-created_at'], name='idx_cv_share_cv_created'),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvs')
+        super().save(*args, **kwargs)
+
+
+class CvAccessLog(models.Model):
+    """Minimal sensitive-CV access audit record; never stores CV payload or raw PII."""
+
+    class ActorType(models.TextChoices):
+        OWNER = 'owner', 'Owner'
+        RECRUITER = 'recruiter', 'Recruiter'
+        ADMIN = 'admin', 'Admin'
+        ANONYMOUS = 'anonymous', 'Anonymous'
+
+    class AccessChannel(models.TextChoices):
+        OWNER_VIEW = 'owner_view', 'Owner view'
+        APPLICATION = 'application', 'Application'
+        ADMIN = 'admin', 'Admin'
+        SHARED_LINK = 'shared_link', 'Shared link'
+        EXPORT = 'export', 'Export'
+
+    cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='access_logs')
+    version = models.ForeignKey(CvVersion, on_delete=models.PROTECT, null=True, blank=True, related_name='access_logs')
+    actor_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cv_access_logs',
+    )
+    actor_type = models.CharField(max_length=30, choices=ActorType.choices)
+    access_channel = models.CharField(max_length=30, choices=AccessChannel.choices)
+    shared_link = models.ForeignKey(
+        CvSharedLink,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='access_logs',
+    )
+    ip_hash = models.CharField(max_length=64, blank=True, default='')
+    user_agent_hash = models.CharField(max_length=64, blank=True, default='')
+    accessed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['cv', '-accessed_at'], name='idx_cv_access_cv_time'),
+        ]
+
+
+class CvExport(models.Model):
+    """An asynchronous, version-bound PDF artifact.
+
+    The row is both the worker job and the durable artifact record.  It never
+    contains a CV payload or public object-storage URL: ``storage_key`` stays
+    internal and the V2 download endpoint authorizes every read.
+    """
+
+    class ExportFormat(models.TextChoices):
+        PDF = 'pdf', 'PDF'
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        PROCESSING = 'processing', 'Processing'
+        COMPLETED = 'completed', 'Completed'
+        FAILED = 'failed', 'Failed'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='exports')
+    version = models.ForeignKey(CvVersion, on_delete=models.PROTECT, related_name='exports')
+    export_format = models.CharField(max_length=20, choices=ExportFormat.choices, default=ExportFormat.PDF)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    renderer_key = models.CharField(max_length=100)
+    renderer_version = models.CharField(max_length=50)
+    # Declarative worker inputs only (page/renderer/schema), never canonical CV
+    # content. The immutable ``version`` row remains the only document source.
+    render_config = models.JSONField(default=dict)
+    render_config_hash = models.CharField(max_length=64)
+    storage_key = models.TextField(blank=True)
+    file_size_bytes = models.BigIntegerField(null=True, blank=True)
+    checksum_sha256 = models.CharField(max_length=64, blank=True)
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='requested_cv_exports',
+    )
+    queued_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    failed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['version', 'render_config_hash'],
+                name='uq_cv_export_version_render_config',
+            ),
+            models.CheckConstraint(
+                check=models.Q(export_format__in=['pdf']),
+                name='chk_cv_export_format',
+            ),
+            models.CheckConstraint(
+                check=models.Q(status__in=['pending', 'processing', 'completed', 'failed']),
+                name='chk_cv_export_status',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['status', 'queued_at'],
+                name='idx_cv_exports_pending',
+                condition=models.Q(status__in=['pending', 'processing']),
+            ),
+            models.Index(fields=['cv', '-created_at'], name='idx_cv_exports_cv_created'),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cve')
+        super().save(*args, **kwargs)
+
+
 class CvSkill(models.Model):
     """Skills detected/declared in a specific CV (DB doc section 2.9)."""
 

@@ -196,13 +196,6 @@ export function removeItem(content, instanceId, itemId) {
   return next
 }
 
-export function moveItem(content, instanceId, itemId, direction) {
-  const next = clone(content)
-  const section = sectionById(next, instanceId)
-  if (section) section.items = reorder(section.items, section.items.findIndex((item) => item.item_id === itemId), direction)
-  return next
-}
-
 export function updateStyle(style, patch) {
   return { ...clone(style), ...patch }
 }
@@ -246,6 +239,13 @@ export function validateCvDocument(document) {
         if (!instanceIds.has(instanceId) || assigned.has(instanceId)) errors.push('Layout chứa section reference không hợp lệ.')
         assigned.add(instanceId)
       }
+    }
+    const itemOrders = layout.item_orders || {}
+    if (typeof itemOrders !== 'object' || Array.isArray(itemOrders)) errors.push('Thứ tự item trong layout không hợp lệ.')
+    else for (const [sectionId, order] of Object.entries(itemOrders)) {
+      const section = content.sections.find((candidate) => candidate.instance_id === sectionId)
+      const knownItemIds = new Set(section?.items?.map((item) => item.item_id) || [])
+      if (!section || !Array.isArray(order) || order.length !== knownItemIds.size || new Set(order).size !== order.length || order.some((itemId) => !knownItemIds.has(itemId))) errors.push('Layout chứa thứ tự item không hợp lệ.')
     }
   }
   if (!style || style.schema_version !== 1 || !HEX_COLOR.test(style.theme_color || '') || !ALLOWED_FONTS.has(style.font_family) || typeof style.font_scale !== 'number' || style.font_scale < 0.8 || style.font_scale > 1.4 || typeof style.line_height !== 'number' || style.line_height < 1 || style.line_height > 2 || !style.section_overrides || typeof style.section_overrides !== 'object' || Array.isArray(style.section_overrides)) errors.push('Màu chủ đề, phông chữ hoặc style không hợp lệ.')

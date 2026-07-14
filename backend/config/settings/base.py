@@ -290,7 +290,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_DEFAULT_QUEUE = 'default'
-CELERY_TASK_ROUTES = {'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'}}
+CELERY_TASK_ROUTES = {
+    'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
+    'apps.cvs.tasks.*': {'queue': 'cv-export'},
+}
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
@@ -298,6 +301,10 @@ CELERY_TASK_SOFT_TIME_LIMIT = 50
 CELERY_BEAT_SCHEDULE = {
     'dispatch-pending-auth-email-jobs': {
         'task': 'apps.accounts.tasks.auth_email.dispatch_pending_auth_email_jobs',
+        'schedule': 60.0,
+    },
+    'dispatch-pending-cv-export-jobs': {
+        'task': 'apps.cvs.tasks.dispatch_pending_cv_export_jobs',
         'schedule': 60.0,
     },
 }

@@ -1,3 +1,5 @@
+import { getOrderedItems } from './layout'
+
 export const RENDERER_CONTRACTS = Object.freeze({
   classic_single_column_v1: { key: 'classic_single_column_v1', regions: ['main'], columns: 1 },
   classic_two_column_v1: { key: 'classic_two_column_v1', regions: ['main', 'sidebar'], columns: 2 },
@@ -9,7 +11,11 @@ export function getRendererContract(rendererKey) {
 
 export function projectDocumentForRenderer({ content_json, layout_json }, rendererKey) {
   const contract = getRendererContract(rendererKey)
-  const byId = new Map(content_json.sections.map((section) => [section.instance_id, section]))
+  const document = { content_json, layout_json }
+  const byId = new Map(content_json.sections.map((section) => [
+    section.instance_id,
+    { ...section, items: getOrderedItems(document, section) },
+  ]))
   const assignedIds = new Set()
   const configuredRegions = new Map((layout_json.regions || []).map((region) => [region.id, region]))
   const regions = contract.regions
@@ -24,7 +30,9 @@ export function projectDocumentForRenderer({ content_json, layout_json }, render
     })
 
   if (regions.length === 0) regions.push({ id: 'main', widthPercent: 100, sections: [] })
-  const unassignedSections = content_json.sections.filter((section) => !assignedIds.has(section.instance_id))
+  const unassignedSections = content_json.sections
+    .filter((section) => !assignedIds.has(section.instance_id))
+    .map((section) => byId.get(section.instance_id))
   regions[0].sections.push(...unassignedSections)
   return { contract, regions }
 }

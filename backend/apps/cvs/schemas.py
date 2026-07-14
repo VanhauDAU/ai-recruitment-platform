@@ -133,6 +133,32 @@ def validate_cv_document(*, content_json, layout_json, style_json, schema_versio
         raise ValidationError(errors)
 
 
+def validate_template_layout_capabilities(*, layout_json, capabilities):
+    """Enforce declared presentation limits without coupling to a renderer.
+
+    Template versions may opt into a resizable multi-column layout.  The
+    canonical schema remains renderer-agnostic, while this narrow validator
+    makes the template's published min/max percentages authoritative for all
+    V2 writers, not only the browser slider.
+    """
+    layout_capabilities = capabilities.get('layout', {}) if isinstance(capabilities, dict) else {}
+    resize = layout_capabilities.get('column_resize') if isinstance(layout_capabilities, dict) else None
+    if not isinstance(resize, dict) or resize.get('enabled') is not True:
+        return
+    minimum = resize.get('min_percent')
+    maximum = resize.get('max_percent')
+    if not isinstance(minimum, (int, float)) or not isinstance(maximum, (int, float)) or not 0 < minimum <= maximum < 100:
+        raise ValidationError({'template_capabilities': 'column_resize requires valid min_percent and max_percent.'})
+    regions = layout_json.get('regions', []) if isinstance(layout_json, dict) else []
+    if len(regions) < 2 or any(
+        not isinstance(region, dict) or not minimum <= region.get('width_percent', 0) <= maximum
+        for region in regions
+    ):
+        raise ValidationError({
+            'layout_json.regions': f'Column widths must stay between {minimum} and {maximum} percent for this template.',
+        })
+
+
 def _validate_json_size(value, field, errors):
     try:
         encoded = json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
@@ -280,6 +306,26 @@ def _validate_layout(layout, content, errors):
             assigned_sections.add(section_id)
     if abs(widths - 100) > 0.01:
         errors['layout_json.regions'] = 'Region widths must total 100 percent.'
+    item_orders = layout.get('item_orders', {})
+    if not isinstance(item_orders, dict):
+        errors['layout_json.item_orders'] = 'Must be an object when present.'
+        return
+    items_by_section = {
+        section.get('instance_id'): {
+            item.get('item_id') for item in section.get('items', []) if isinstance(item, dict)
+        }
+        for section in content.get('sections', []) if isinstance(section, dict)
+    } if isinstance(content, dict) else {}
+    for section_id, item_ids in item_orders.items():
+        path = f'layout_json.item_orders.{section_id}'
+        if section_id not in valid_instance_ids:
+            errors[path] = 'References an unknown section instance.'
+            continue
+        if not isinstance(item_ids, list) or any(not isinstance(item_id, str) for item_id in item_ids):
+            errors[path] = 'Must be a list of item IDs.'
+            continue
+        if len(item_ids) != len(set(item_ids)) or set(item_ids) != items_by_section.get(section_id, set()):
+            errors[path] = 'Must contain every item ID of its section exactly once.'
 
 
 def _validate_style(style, errors):

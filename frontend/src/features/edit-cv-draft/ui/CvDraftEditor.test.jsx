@@ -3,8 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CvDraftEditor from './CvDraftEditor'
 
 const mocks = vi.hoisted(() => ({
-  getCv: vi.fn(), getCvDraft: vi.fn(), updateCvDraft: vi.fn(), saveCvVersion: vi.fn(), publishCvVersion: vi.fn(),
+  getCv: vi.fn(), getCvDraft: vi.fn(), updateCvDraft: vi.fn(), saveCvVersion: vi.fn(), publishCvVersion: vi.fn(), switchCvTemplate: vi.fn(),
 }))
+const templateMocks = vi.hoisted(() => ({ getCvTemplates: vi.fn() }))
 
 vi.mock('@/entities/cv', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -13,7 +14,10 @@ vi.mock('@/entities/cv', async (importOriginal) => ({
   updateCvDraft: mocks.updateCvDraft,
   saveCvVersion: mocks.saveCvVersion,
   publishCvVersion: mocks.publishCvVersion,
+  switchCvTemplate: mocks.switchCvTemplate,
 }))
+
+vi.mock('@/entities/cv-template', () => ({ getCvTemplates: templateMocks.getCvTemplates }))
 
 function draft() {
   return {
@@ -41,11 +45,20 @@ describe('CV draft editor', () => {
       disconnect() {}
     })
     Object.values(mocks).forEach((mock) => mock.mockReset())
-    mocks.getCv.mockResolvedValue({ title: 'CV thử nghiệm', template_renderer_key: 'classic_single_column_v1' })
+    templateMocks.getCvTemplates.mockReset()
+    mocks.getCv.mockResolvedValue({
+      title: 'CV thử nghiệm', template_public_id: 'tpl_single', template_renderer_key: 'classic_single_column_v1',
+      template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true, column_resize: { enabled: true, min_percent: 25, max_percent: 75 } } },
+    })
     mocks.getCvDraft.mockResolvedValue(draft())
     mocks.updateCvDraft.mockResolvedValue({ lock_version: 1 })
     mocks.saveCvVersion.mockResolvedValue({ public_id: 'version_2', version_number: 2 })
     mocks.publishCvVersion.mockResolvedValue({ public_id: 'version_3', version_number: 3, version_kind: 'published' })
+    templateMocks.getCvTemplates.mockResolvedValue({ results: [{ public_id: 'tpl_single', display_name: 'Một cột' }, { public_id: 'tpl_two', display_name: 'Hai cột' }] })
+    mocks.switchCvTemplate.mockResolvedValue({
+      cv: { title: 'CV thử nghiệm', template_public_id: 'tpl_two', template_renderer_key: 'classic_two_column_v1', template_capabilities: { layout: { item_drag: true, column_resize: { enabled: true, min_percent: 25, max_percent: 75 } } } },
+      draft: { ...draft(), lock_version: 1, layout_json: { ...draft().layout_json, regions: [{ id: 'main', width_percent: 68, section_instance_ids: ['summary_1', 'experience_1'] }, { id: 'sidebar', width_percent: 32, section_instance_ids: ['skills_1'] }] }, style_json: { ...draft().style_json, theme_color: '#2255AA' } },
+    })
   })
 
   afterEach(() => vi.unstubAllGlobals())
@@ -85,9 +98,33 @@ describe('CV draft editor', () => {
 
     await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
       content_json: expect.objectContaining({ sections: expect.arrayContaining([
-        expect.objectContaining({ instance_id: 'experience_1', title: 'Kinh nghiệm nổi bật', items: [expect.objectContaining({ item_id: 'experience_item_2' }), expect.objectContaining({ item_id: 'experience_item_1' })] }),
+        expect.objectContaining({ instance_id: 'experience_1', title: 'Kinh nghiệm nổi bật', items: [expect.objectContaining({ item_id: 'experience_item_1' }), expect.objectContaining({ item_id: 'experience_item_2' })] }),
       ]) }),
+      layout_json: expect.objectContaining({ item_orders: expect.objectContaining({ experience_1: ['experience_item_2', 'experience_item_1'] }) }),
     }), 0, expect.any(String)), { timeout: 1500 })
+  })
+
+  it('undoes and redoes edits locally without using autosave as a history command', async () => {
+    render(<CvDraftEditor publicId="cv_1" />)
+    const fullName = await screen.findByLabelText('Họ và tên')
+    fireEvent.change(fullName, { target: { value: 'Nguyễn Hoàn tác' } })
+    expect(screen.getByLabelText('Họ và tên')).toHaveValue('Nguyễn Hoàn tác')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hoàn tác' }))
+    expect(screen.getByLabelText('Họ và tên')).toHaveValue('Nguyễn An')
+    fireEvent.click(screen.getByRole('button', { name: 'Làm lại' }))
+    expect(screen.getByLabelText('Họ và tên')).toHaveValue('Nguyễn Hoàn tác')
+  })
+
+  it('switches the published template through V2 while preserving canonical content in the returned draft', async () => {
+    render(<CvDraftEditor publicId="cv_1" />)
+    await screen.findByLabelText('Họ và tên')
+    fireEvent.mouseDown(screen.getByLabelText('Mẫu CV'))
+    fireEvent.click(await screen.findByText('Hai cột'))
+    fireEvent.click(screen.getByRole('button', { name: 'Áp dụng mẫu CV' }))
+
+    await waitFor(() => expect(mocks.switchCvTemplate).toHaveBeenCalledWith('cv_1', 'tpl_two', 0, expect.any(String)))
+    expect(screen.getByText(/classic_two_column_v1/)).toBeInTheDocument()
   })
 
   it('warns before leaving with unsaved data, retries failed autosave, and can restore the server draft', async () => {

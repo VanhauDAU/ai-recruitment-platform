@@ -16,6 +16,7 @@ class RendererContract:
     version: str
     supported_schema_versions: frozenset[int]
     allowed_regions: frozenset[str]
+    region_order: tuple[str, ...]
 
 
 RENDERER_REGISTRY = {
@@ -26,12 +27,14 @@ RENDERER_REGISTRY = {
             version='1',
             supported_schema_versions=frozenset({1}),
             allowed_regions=frozenset({'main'}),
+            region_order=('main',),
         ),
         RendererContract(
             key='classic_two_column_v1',
             version='1',
             supported_schema_versions=frozenset({1}),
             allowed_regions=frozenset({'main', 'sidebar'}),
+            region_order=('main', 'sidebar'),
         ),
     )
 }

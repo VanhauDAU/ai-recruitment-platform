@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  createDocumentHistory,
   ensureBasicEditorDocument,
   getCv,
   getCvDraft,
   publishCvVersion,
+  recordDocumentCommand,
+  redoDocumentCommand,
   saveCvVersion,
+  switchCvTemplate,
+  undoDocumentCommand,
   updateCvDraft,
   validateCvDocument,
 } from '@/entities/cv'
@@ -26,12 +31,15 @@ export default function useCvDraftEditor(publicId) {
   const [error, setError] = useState(null)
   const [lastVersion, setLastVersion] = useState(null)
   const [validationErrors, setValidationErrors] = useState([])
+  const [history, setHistoryState] = useState(() => createDocumentHistory())
   const documentRef = useRef(null)
   const lockVersionRef = useRef(null)
   const lastSavedSignatureRef = useRef(null)
   const inFlightRef = useRef(null)
   const phaseRef = useRef('loading')
   const clientSessionIdRef = useRef(sessionId())
+  const historyRef = useRef(createDocumentHistory())
+  const loadGenerationRef = useRef(0)
 
   const setSavePhase = useCallback((nextPhase) => {
     phaseRef.current = nextPhase
@@ -39,12 +47,14 @@ export default function useCvDraftEditor(publicId) {
   }, [])
 
   const load = useCallback(async () => {
+    const generation = ++loadGenerationRef.current
     setSavePhase('loading')
     setError(null)
     setLastVersion(null)
     setValidationErrors([])
     try {
       const [nextCv, draft] = await Promise.all([getCv(publicId), getCvDraft(publicId)])
+      if (generation !== loadGenerationRef.current) return
       const rawDocument = {
         schema_version: draft.schema_version,
         content_json: draft.content_json,
@@ -58,8 +68,12 @@ export default function useCvDraftEditor(publicId) {
       lastSavedSignatureRef.current = needsInitialAutosave ? signature(rawDocument) : signature(normalized)
       setDocument(normalized)
       setCv(nextCv)
+      const nextHistory = createDocumentHistory()
+      historyRef.current = nextHistory
+      setHistoryState(nextHistory)
       setSavePhase(needsInitialAutosave ? 'unsaved' : 'saved')
     } catch (loadError) {
+      if (generation !== loadGenerationRef.current) return
       setError(loadError)
       setSavePhase('failed')
     }
@@ -134,13 +148,41 @@ export default function useCvDraftEditor(publicId) {
     }
   }, [])
 
-  const updateDocument = useCallback((updater) => {
+  const updateDocument = useCallback((updater, commandLabel = 'Cập nhật CV') => {
     if (phaseRef.current === 'conflict') return
-    setDocument((current) => {
-      const next = typeof updater === 'function' ? updater(current) : updater
-      documentRef.current = next
-      return next
-    })
+    const current = documentRef.current
+    if (!current) return
+    const next = typeof updater === 'function' ? updater(current) : updater
+    if (signature(current) === signature(next)) return
+    const nextHistory = recordDocumentCommand(historyRef.current, current, next, commandLabel)
+    historyRef.current = nextHistory
+    setHistoryState(nextHistory)
+    documentRef.current = next
+    setDocument(next)
+    setValidationErrors([])
+    setSavePhase('unsaved')
+  }, [setSavePhase])
+
+  const undo = useCallback(() => {
+    if (phaseRef.current === 'conflict') return
+    const result = undoDocumentCommand(historyRef.current)
+    if (!result.document) return
+    historyRef.current = result.history
+    setHistoryState(result.history)
+    documentRef.current = result.document
+    setDocument(result.document)
+    setValidationErrors([])
+    setSavePhase('unsaved')
+  }, [setSavePhase])
+
+  const redo = useCallback(() => {
+    if (phaseRef.current === 'conflict') return
+    const result = redoDocumentCommand(historyRef.current)
+    if (!result.document) return
+    historyRef.current = result.history
+    setHistoryState(result.history)
+    documentRef.current = result.document
+    setDocument(result.document)
     setValidationErrors([])
     setSavePhase('unsaved')
   }, [setSavePhase])
@@ -178,6 +220,45 @@ export default function useCvDraftEditor(publicId) {
     }
   }, [publicId, runAutosave, setSavePhase])
 
+  const switchTemplate = useCallback(async (templatePublicId) => {
+    if (phaseRef.current === 'conflict' || !templatePublicId) return null
+    const didAutosave = await runAutosave()
+    if (!didAutosave) return null
+    setError(null)
+    setSavePhase('saving')
+    try {
+      const result = await switchCvTemplate(
+        publicId,
+        templatePublicId,
+        lockVersionRef.current,
+        clientSessionIdRef.current,
+      )
+      const nextDocument = {
+        schema_version: result.draft.schema_version,
+        content_json: result.draft.content_json,
+        layout_json: result.draft.layout_json,
+        style_json: result.draft.style_json,
+      }
+      documentRef.current = nextDocument
+      lockVersionRef.current = result.draft.lock_version
+      lastSavedSignatureRef.current = signature(nextDocument)
+      setDocument(nextDocument)
+      setCv(result.cv)
+      setValidationErrors([])
+      setSavePhase('saved')
+      return result
+    } catch (switchError) {
+      if (switchError.response?.status === 409) {
+        setError(switchError.response.data)
+        setSavePhase('conflict')
+      } else {
+        setError(switchError)
+        setSavePhase('failed')
+      }
+      return null
+    }
+  }, [publicId, runAutosave, setSavePhase])
+
   return {
     cv,
     document,
@@ -185,11 +266,16 @@ export default function useCvDraftEditor(publicId) {
     error,
     lastVersion,
     validationErrors,
+    canUndo: history.past.length > 0,
+    canRedo: history.future.length > 0,
     lockVersion: lockVersionRef.current,
     updateDocument,
+    undo,
+    redo,
     retryAutosave,
     reloadDraft: load,
     saveVersion: () => commitVersion(false),
     publishVersion: () => commitVersion(true),
+    switchTemplate,
   }
 }

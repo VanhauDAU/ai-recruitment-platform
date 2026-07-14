@@ -1,11 +1,12 @@
 """Request/response contracts for the CV lifecycle V2 API."""
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.cv_templates.models import CvSampleContent, CvTemplate
 
-from .models import CvDraft, CvVersion, UserCv
+from .models import CvDraft, CvExport, CvSharedLink, CvVersion, UserCv
 from .schemas import validate_cv_document
 
 
@@ -14,6 +15,7 @@ class CvV2Serializer(serializers.ModelSerializer):
     template_version = serializers.CharField(source='current_template_version.renderer_key', read_only=True)
     template_renderer_key = serializers.CharField(source='current_template_version.renderer_key', read_only=True)
     template_renderer_version = serializers.CharField(source='current_template_version.renderer_version', read_only=True)
+    template_capabilities = serializers.JSONField(source='current_template_version.capabilities', read_only=True)
     latest_version_public_id = serializers.CharField(source='latest_version.public_id', read_only=True)
     published_version_public_id = serializers.CharField(source='published_version.public_id', read_only=True)
 
@@ -23,6 +25,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'public_id', 'title', 'language', 'cv_type', 'source',
             'template_public_id', 'template_version', 'lifecycle_status',
             'template_renderer_key', 'template_renderer_version',
+            'template_capabilities',
             'processing_status', 'visibility', 'latest_version_public_id',
             'published_version_public_id', 'published_at', 'created_at', 'updated_at',
         ]
@@ -86,6 +89,67 @@ class CvDraftWriteSerializer(serializers.Serializer):
         return attrs
 
 
+class CvTemplateSwitchSerializer(serializers.Serializer):
+    template_public_id = serializers.CharField(max_length=50)
+    client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class CvSharedLinkCreateSerializer(serializers.Serializer):
+    version_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
+    expires_at = serializers.DateTimeField(required=False, allow_null=True)
+
+    def validate_expires_at(self, value):
+        if value is not None and value <= timezone.now():
+            raise serializers.ValidationError('Expiry must be in the future.')
+        return value
+
+
+class CvSharedLinkSerializer(serializers.ModelSerializer):
+    version_public_id = serializers.CharField(source='version.public_id', read_only=True)
+
+    class Meta:
+        model = CvSharedLink
+        fields = [
+            'public_id', 'version_public_id', 'expires_at', 'revoked_at',
+            'last_accessed_at', 'created_at',
+        ]
+        read_only_fields = fields
+
+
+class CvExportCreateSerializer(serializers.Serializer):
+    """The version is optional; service defaults to published then latest."""
+
+    version_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
+
+
+class CvExportSerializer(serializers.ModelSerializer):
+    version_public_id = serializers.CharField(source='version.public_id', read_only=True)
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CvExport
+        fields = [
+            'public_id', 'version_public_id', 'export_format', 'status',
+            'renderer_key', 'renderer_version', 'attempts', 'download_url',
+            'queued_at', 'started_at', 'completed_at', 'failed_at', 'created_at',
+        ]
+        read_only_fields = fields
+
+    def get_download_url(self, obj):
+        from django.urls import reverse
+
+        from .services import export_download_ready
+
+        if not export_download_ready(obj):
+            return None
+        url = reverse('cv-v2-export-download', kwargs={
+            'public_id': obj.cv.public_id,
+            'export_public_id': obj.public_id,
+        })
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
+
+
 class CvVersionSerializer(serializers.ModelSerializer):
     template_renderer_key = serializers.CharField(source='template_version.renderer_key', read_only=True)
     parent_version_public_id = serializers.CharField(source='parent_version.public_id', read_only=True)
@@ -97,5 +161,36 @@ class CvVersionSerializer(serializers.ModelSerializer):
             'content_json', 'layout_json', 'style_json', 'plain_text',
             'content_hash', 'template_renderer_key', 'parent_version_public_id',
             'created_at',
+        ]
+        read_only_fields = fields
+
+
+class CvVersionSummarySerializer(serializers.ModelSerializer):
+    """Small immutable history card used by owner export/version selection."""
+
+    template_renderer_key = serializers.CharField(source='template_version.renderer_key', read_only=True)
+    template_renderer_version = serializers.CharField(source='template_version.renderer_version', read_only=True)
+
+    class Meta:
+        model = CvVersion
+        fields = [
+            'public_id', 'version_number', 'version_kind', 'schema_version',
+            'template_renderer_key', 'template_renderer_version', 'created_at',
+        ]
+        read_only_fields = fields
+
+
+class SharedCvVersionSerializer(serializers.ModelSerializer):
+    """Bearer-link response: canonical rendering data only, never draft or hashes."""
+
+    template_renderer_key = serializers.CharField(source='template_version.renderer_key', read_only=True)
+    template_renderer_version = serializers.CharField(source='template_version.renderer_version', read_only=True)
+
+    class Meta:
+        model = CvVersion
+        fields = [
+            'public_id', 'version_number', 'schema_version',
+            'content_json', 'layout_json', 'style_json',
+            'template_renderer_key', 'template_renderer_version', 'created_at',
         ]
         read_only_fields = fields

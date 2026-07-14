@@ -9,7 +9,7 @@ from django.utils import timezone
 from apps.cv_templates.models import CvSampleContent, CvTemplate, CvTemplateVersion
 
 from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import empty_content, empty_layout, empty_style, validate_cv_document
+from ..schemas import empty_content, empty_layout, empty_style, validate_cv_document, validate_template_layout_capabilities
 from .versions import create_version
 
 
@@ -37,6 +37,12 @@ def _layout_for_content(template_version, content_json):
     regions = layout.get('regions', [])
     if not regions:
         return layout
+    # Template defaults describe regions only.  Instance IDs always belong to
+    # the candidate document, so never carry assignments across a switch.
+    for region in regions:
+        if isinstance(region, dict):
+            region['section_instance_ids'] = []
+    layout.pop('item_orders', None)
     regions_by_id = {region.get('id'): region for region in regions if isinstance(region, dict)}
     region_for_section = {
         section.section_definition.section_key: section.region_key
@@ -81,6 +87,10 @@ def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=Non
         layout_json=layout,
         style_json=style,
         schema_version=template_version.schema_version,
+    )
+    validate_template_layout_capabilities(
+        layout_json=layout,
+        capabilities=template_version.capabilities,
     )
     cv = UserCv.objects.create(
         user=actor,
@@ -148,3 +158,58 @@ def save_draft_as_version(*, cv, actor, expected_lock_version, publish=False):
             published_at=timezone.now(),
         )
     return version
+
+
+@transaction.atomic
+def switch_draft_template(*, cv, actor, template_public_id, expected_lock_version, client_session_id=''):
+    """Switch a mutable draft to a published template without touching content.
+
+    A template version owns its default presentation contract.  The candidate's
+    canonical content remains in the same draft; only its layout, style and
+    current template pointer change under the same optimistic-lock transaction.
+    """
+    cv, draft = _lock_draft_for_save(cv, expected_lock_version)
+    try:
+        template = CvTemplate.objects.select_for_update(of=('self',)).select_related(
+            'current_published_version',
+        ).get(public_id=template_public_id)
+    except CvTemplate.DoesNotExist as error:
+        raise CvLifecyclePolicyError('The selected template does not exist.') from error
+    template_version = _published_template_version(template)
+    content = deepcopy(draft.content_json)
+    layout = _layout_for_content(template_version, content)
+    style = deepcopy(template_version.default_style_json or empty_style())
+    validate_cv_document(
+        content_json=content,
+        layout_json=layout,
+        style_json=style,
+        schema_version=template_version.schema_version,
+    )
+    validate_template_layout_capabilities(
+        layout_json=layout,
+        capabilities=template_version.capabilities,
+    )
+
+    draft.content_json = content
+    draft.layout_json = layout
+    draft.style_json = style
+    draft.schema_version = template_version.schema_version
+    draft.lock_version += 1
+    draft.client_session_id = client_session_id
+    draft.updated_by = actor
+    draft.save(update_fields=[
+        'content_json', 'layout_json', 'style_json', 'schema_version', 'lock_version',
+        'client_session_id', 'updated_by', 'updated_at',
+    ])
+    previous_template_id = cv.template_id
+    cv.template = template
+    cv.current_template_version = template_version
+    # Preserve legacy dual-read projections while the V1 API remains available.
+    cv.cv_data = content
+    cv.style_config = style
+    cv.save(update_fields=[
+        'template', 'current_template_version', 'cv_data', 'style_config', 'updated_at',
+    ])
+    if previous_template_id != template.pk:
+        CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
+    return cv, draft

@@ -2,16 +2,26 @@ import { describe, expect, it } from 'vitest'
 import {
   addItem,
   addSection,
+  canDragItems,
+  createDocumentHistory,
   ensureBasicEditorDocument,
   getRendererContract,
+  getEditorCapabilities,
+  getOrderedItems,
   getOrderedSections,
+  moveItemInLayout,
+  moveItemToIndexInLayout,
   projectDocumentForRenderer,
-  moveItem,
   moveSection,
+  moveSectionToRegion,
+  recordDocumentCommand,
   removeItem,
   removeSection,
   renameSection,
+  resizeRegionPair,
   setSectionEnabled,
+  undoDocumentCommand,
+  redoDocumentCommand,
   updateStyle,
   validateCvDocument,
 } from '@/entities/cv'
@@ -90,8 +100,10 @@ describe('canonical CV editor document', () => {
 
     const experienceId = sections.experience.instance_id
     const [firstExperienceItem, secondExperienceItem] = document.content_json.sections.find((section) => section.instance_id === experienceId).items
-    document = { ...document, content_json: moveItem(document.content_json, experienceId, secondExperienceItem.item_id, -1) }
-    expect(document.content_json.sections.find((section) => section.instance_id === experienceId).items.map((item) => item.item_id)).toEqual([secondExperienceItem.item_id, firstExperienceItem.item_id])
+    const contentBeforeItemMove = JSON.parse(JSON.stringify(document.content_json))
+    document = moveItemInLayout(document, experienceId, secondExperienceItem.item_id, -1)
+    expect(document.content_json).toEqual(contentBeforeItemMove)
+    expect(getOrderedItems(document, document.content_json.sections.find((section) => section.instance_id === experienceId)).map((item) => item.item_id)).toEqual([secondExperienceItem.item_id, firstExperienceItem.item_id])
 
     const contentBeforeSectionMove = JSON.parse(JSON.stringify(document.content_json))
     const educationId = sections.education.instance_id
@@ -112,6 +124,70 @@ describe('canonical CV editor document', () => {
     document = removeSection(document, educationId)
     expect(document.content_json.sections.some((section) => section.instance_id === educationId)).toBe(false)
     expect(document.layout_json.regions.flatMap((region) => region.section_instance_ids).includes(educationId)).toBe(false)
+  })
+
+  it('moves sections and repeatable items, then resizes columns only through layout_json', () => {
+    let document = ensureBasicEditorDocument(baseDocument())
+    document = addSection(document, 'education')
+    document = {
+      ...document,
+      layout_json: {
+        ...document.layout_json,
+        regions: [
+          { ...document.layout_json.regions[0], id: 'main', width_percent: 68 },
+          { id: 'sidebar', width_percent: 32, section_instance_ids: [] },
+        ],
+      },
+    }
+    const experienceId = document.content_json.sections.find((section) => section.section_key === 'experience').instance_id
+    document = { ...document, content_json: addItem(document.content_json, experienceId) }
+    const experience = document.content_json.sections.find((section) => section.instance_id === experienceId)
+    const contentBeforePresentationChanges = JSON.parse(JSON.stringify(document.content_json))
+    const [firstItem, secondItem] = experience.items
+
+    document = moveSectionToRegion(document, experience.instance_id, 'sidebar', 0)
+    document = moveItemToIndexInLayout(document, experience.instance_id, secondItem.item_id, 0)
+    document = resizeRegionPair(document, 'main', 60, {
+      columnResize: true,
+      minColumnPercent: 25,
+      maxColumnPercent: 75,
+    })
+
+    expect(document.content_json).toEqual(contentBeforePresentationChanges)
+    expect(document.layout_json.regions.map((region) => [region.id, region.width_percent])).toEqual([['main', 60], ['sidebar', 40]])
+    expect(document.layout_json.regions[1].section_instance_ids).toContain(experience.instance_id)
+    expect(document.layout_json.item_orders[experience.instance_id]).toEqual([secondItem.item_id, firstItem.item_id])
+    expect(validateCvDocument(document)).toEqual([])
+
+    const projection = projectDocumentForRenderer(document, 'classic_two_column_v1')
+    const renderedExperience = projection.regions.flatMap((region) => region.sections).find((section) => section.instance_id === experience.instance_id)
+    expect(renderedExperience.items.map((item) => item.item_id)).toEqual([secondItem.item_id, firstItem.item_id])
+    expect(document.content_json).toEqual(contentBeforePresentationChanges)
+  })
+
+  it('undoes and redoes local document commands without creating an autosave command', () => {
+    const initial = ensureBasicEditorDocument(baseDocument())
+    const changed = updateStyle(initial.style_json, { theme_color: '#2255AA' })
+    const after = { ...initial, style_json: changed }
+    const history = recordDocumentCommand(createDocumentHistory(), initial, after, 'Đổi màu')
+
+    const undone = undoDocumentCommand(history)
+    expect(undone.document).toEqual(initial)
+    expect(undone.history.past).toHaveLength(0)
+    expect(undone.history.future).toHaveLength(1)
+
+    const redone = redoDocumentCommand(undone.history)
+    expect(redone.document).toEqual(after)
+    expect(redone.history.past).toHaveLength(1)
+    expect(redone.history.future).toHaveLength(0)
+  })
+
+  it('enables item drag only for registry-supported sections when the template capability allows it', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    const capabilities = getEditorCapabilities({ layout: { item_drag: true } })
+    const experience = document.content_json.sections.find((section) => section.section_key === 'experience')
+    expect(canDragItems(experience, capabilities)).toBe(true)
+    expect(canDragItems({ section_key: 'languages' }, capabilities)).toBe(false)
   })
 
   it('validates a canonical document before committing a version and paginates only the renderer projection', () => {

@@ -18,6 +18,8 @@ import {
   OAuthCallbackPage,
   CookiePolicyPage,
   CvEditorPlaceholderPage,
+  CvOwnerViewPage,
+  CvSharedViewPage,
   OnboardUserPage,
   OnboardUserSettingPage,
   PersonalInfoPage,
@@ -64,6 +66,7 @@ export function mainRoutes() {
       <Route path="/mau-cv/:slug" element={<TemplateDetailPage />} />
       <Route path="/cv-templates" element={<TemplateCatalogPage />} />
       <Route path="/cv-templates/:slug" element={<TemplateDetailPage />} />
+      <Route path="/cv/share/:token" element={<CvSharedViewPage />} />
 
       {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
           nhập. Route con sinh từ entities/account/config (một nguồn duy nhất);
@@ -71,6 +74,7 @@ export function mainRoutes() {
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
           <Route path="/cvs/:publicId/edit" element={<CvEditorPlaceholderPage />} />
+          <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
             {ACCOUNT_LAYOUT_ITEMS.map((item) => {

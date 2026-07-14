@@ -8,7 +8,7 @@ from django.db.models import Max
 from django.utils import timezone
 
 from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import canonicalize_legacy_cv_data, validate_cv_document
+from ..schemas import canonicalize_legacy_cv_data, validate_cv_document, validate_template_layout_capabilities
 
 
 class StaleDraftError(ValueError):
@@ -77,13 +77,18 @@ def create_version(
     cv = UserCv.objects.select_for_update(of=('self',)).select_related(
         'template__current_published_version',
     ).get(pk=cv.pk)
+    resolved_template_version = template_version or cv.current_template_version
     validate_cv_document(
         content_json=content_json,
         layout_json=layout_json,
         style_json=style_json,
         schema_version=1,
     )
-    resolved_template_version = template_version or cv.current_template_version
+    if resolved_template_version is not None:
+        validate_template_layout_capabilities(
+            layout_json=layout_json,
+            capabilities=resolved_template_version.capabilities,
+        )
     parent_version = parent_version if parent_version is not None else cv.latest_version
     version_number = (CvVersion.objects.filter(cv=cv).aggregate(max_number=Max('version_number'))['max_number'] or 0) + 1
     version = CvVersion(
@@ -137,6 +142,11 @@ def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_l
         style_json=style_json,
         schema_version=1,
     )
+    if cv.current_template_version_id:
+        validate_template_layout_capabilities(
+            layout_json=layout_json,
+            capabilities=cv.current_template_version.capabilities,
+        )
     updated = CvDraft.objects.filter(cv=cv, lock_version=expected_lock_version).update(
         content_json=content_json,
         layout_json=layout_json,
@@ -176,6 +186,11 @@ def sync_legacy_builder_draft(cv, actor):
         style_json=style,
         schema_version=1,
     )
+    if cv.current_template_version_id:
+        validate_template_layout_capabilities(
+            layout_json=layout,
+            capabilities=cv.current_template_version.capabilities,
+        )
     if draft is None:
         return CvDraft.objects.create(
             cv=cv,
