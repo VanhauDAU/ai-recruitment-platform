@@ -3,6 +3,7 @@
 from datetime import timedelta
 from pathlib import Path
 
+from corsheaders.defaults import default_headers
 from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -241,6 +242,10 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv(),
 )
 CORS_ALLOW_CREDENTIALS = True
+# Autosave and version operations use optimistic locking via If-Match.
+# Include it in the preflight allow-list so browsers can send those requests
+# from the Vite development origin.
+CORS_ALLOW_HEADERS = (*default_headers, 'if-match')
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 
 # Consent is stored in a signed, HttpOnly first-party cookie.  The browser may
@@ -290,7 +295,10 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_DEFAULT_QUEUE = 'default'
-CELERY_TASK_ROUTES = {'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'}}
+CELERY_TASK_ROUTES = {
+    'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
+    'apps.cvs.tasks.*': {'queue': 'cv-export'},
+}
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
@@ -298,6 +306,10 @@ CELERY_TASK_SOFT_TIME_LIMIT = 50
 CELERY_BEAT_SCHEDULE = {
     'dispatch-pending-auth-email-jobs': {
         'task': 'apps.accounts.tasks.auth_email.dispatch_pending_auth_email_jobs',
+        'schedule': 60.0,
+    },
+    'dispatch-pending-cv-export-jobs': {
+        'task': 'apps.cvs.tasks.dispatch_pending_cv_export_jobs',
         'schedule': 60.0,
     },
 }

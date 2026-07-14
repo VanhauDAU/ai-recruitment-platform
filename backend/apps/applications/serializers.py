@@ -11,17 +11,20 @@ class ApplicationSerializer(serializers.ModelSerializer):
     cv = serializers.SlugRelatedField(slug_field='public_id', queryset=UserCv.objects.filter(is_deleted=False))
     job_title = serializers.CharField(source='job.title', read_only=True)
     cv_title = serializers.CharField(source='cv.title', read_only=True)
+    submitted_cv_version = serializers.CharField(source='submitted_cv_version.public_id', read_only=True)
 
     class Meta:
         model = Application
         fields = [
-            'public_id', 'job', 'job_title', 'cv', 'cv_title', 'cover_letter',
+            'public_id', 'job', 'job_title', 'cv', 'cv_title', 'submitted_cv_version',
+            'submitted_cv_title', 'submitted_cv_source', 'submitted_at', 'cover_letter',
             'source', 'status', 'employer_note', 'candidate_note',
             'applied_at', 'viewed_at', 'shortlisted_at', 'interviewed_at',
             'rejected_at', 'accepted_at', 'updated_at',
         ]
         read_only_fields = [
             'public_id', 'source', 'status', 'employer_note',
+            'submitted_cv_version', 'submitted_cv_title', 'submitted_cv_source', 'submitted_at',
             'applied_at', 'viewed_at', 'shortlisted_at', 'interviewed_at',
             'rejected_at', 'accepted_at', 'updated_at',
         ]
