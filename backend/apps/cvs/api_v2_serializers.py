@@ -28,7 +28,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'template_renderer_key', 'template_renderer_version',
             'template_capabilities',
             'processing_status', 'visibility', 'latest_version_public_id',
-            'published_version_public_id', 'published_at', 'created_at', 'updated_at',
+            'published_version_public_id', 'published_at', 'archived_at', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
 
@@ -45,6 +45,10 @@ class CvV2MetadataUpdateSerializer(serializers.Serializer):
 
 class CvV2ImportSerializer(serializers.Serializer):
     file = serializers.FileField()
+    title = serializers.CharField(max_length=255, required=False, allow_blank=False, trim_whitespace=True)
+
+
+class CvV2DuplicateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False, allow_blank=False, trim_whitespace=True)
 
 

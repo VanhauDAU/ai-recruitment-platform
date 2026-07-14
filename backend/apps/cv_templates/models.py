@@ -338,6 +338,11 @@ class CvSampleContent(models.Model):
     locale = models.CharField(max_length=16)
     experience_level = models.CharField(max_length=30, default='unspecified')
     title = models.CharField(max_length=255)
+    # The picker is intentionally Vietnamese even when the sample content is
+    # rendered in another locale.  Keep this presentation label beside the
+    # canonical sample so the API does not make the client infer it from
+    # localized content.
+    position_name_vi = models.CharField(max_length=255, blank=True)
     content_json = models.JSONField(default=dict)
     schema_version = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)

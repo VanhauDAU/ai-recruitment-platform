@@ -382,7 +382,8 @@ build đều pass.
 | 4.1 | `cv_versions` + draft/history/owner/share lifecycle | ✅ |
 | 4.2 | `cv_exports` + immutable PDF export | ✅ |
 | 4.3 | Template taxonomy/color many-to-many + preview asset theo màu | ✅ |
-| 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/archive/restore/default) | 🟡 — archive/default/rename V2 xong, còn duplicate/restore/E2E |
+| 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/archive/restore/default) | ✅ — V2 workflow, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
+| 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — V2 upload PDF/DOCX xong, còn parse/LinkedIn/AI review |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
@@ -397,7 +398,20 @@ build đều pass.
 <details>
 <summary><b>CVB-0.2</b> — 🟡 CV API V1→V2 cutover</summary>
 
-V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/archive và `POST /api/v2/cvs/imports/` cho PDF/DOCX. Trang “CV của tôi” gọi entity API V2, upload nhận phản hồi backend thật và không còn gọi V1. V1 vẫn chạy để client cũ không gãy, nhưng trả `Deprecation`, `Sunset`, successor `Link` và event telemetry tối thiểu không chứa PII. Không tạo `/api/v1/`, không redirect request ghi; chỉ chuyển sang `410` trong release riêng sau khi telemetry cho thấy usage V1 bằng 0.
+V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/archive, `POST /api/v2/cvs/imports/` cho PDF/DOCX, `POST …/duplicate/` cho builder CV và archive list/restore owner-only trong restore window. Trang “CV của tôi” gọi entity API V2, upload nhận phản hồi backend thật và không còn gọi V1. V1 vẫn chạy để client cũ không gãy, nhưng trả `Deprecation`, `Sunset`, successor `Link` và event telemetry tối thiểu không chứa PII. Không tạo `/api/v1/`, không redirect request ghi; chỉ chuyển sang `410` trong release riêng sau khi telemetry cho thấy usage V1 bằng 0.
+
+</details>
+
+<details>
+<summary><b>CVB-4</b> — ✅ Candidate application chọn version</summary>
+
+Job detail compose feature `apply-for-job`; feature đọc CV owner, buộc candidate
+chọn một `CvVersion` bất biến và gửi `POST /api/v2/applications/`. Backend xác
+thực job active, CV owner/active, version thuộc đúng CV và loại trừ internal
+`application_snapshot`; transaction tạo snapshot từ đúng version được chọn mà
+không làm đổi draft/latest/published pointer. V1 applications không bị đổi hoặc
+redirect trong lát cắt này. Verify: 46 backend application/CV tests, 131
+frontend unit tests và 22 smoke desktop/mobile.
 
 </details>
 
@@ -418,7 +432,7 @@ V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/archive và `POST /ap
 <details>
 <summary><b>CVB-1.1</b> — ✅ URL theo ngôn ngữ + nội dung mẫu theo vị trí</summary>
 
-**URL kho mẫu theo ngôn ngữ:** `/mau-cv`, `/mau-cv-tieng-anh|nhat|trung` cùng route detail/category; locale-paths là một nguồn ánh xạ. `seed_cv_catalog` bảo đảm localization và sample content theo 9 vị trí × 4 locale theo cách idempotent. Preview A4 co theo container và sample chỉ tải khi người dùng chọn nguồn sample.
+**URL kho mẫu theo ngôn ngữ:** `/mau-cv`, `/mau-cv-tieng-anh|nhat|trung` cùng route detail/category; locale-paths là một nguồn ánh xạ. `seed_cv_catalog` bảo đảm localization và sample content theo 9 vị trí × 4 locale theo cách idempotent. Dropdown vị trí luôn dùng nhãn tiếng Việt (`position_name_vi`) và khóa `job_category_slug` ổn định; preview A4 lấy headline, section và skill theo locale đã chọn. Sample chỉ tải khi người dùng chọn nguồn sample.
 
 </details>
 

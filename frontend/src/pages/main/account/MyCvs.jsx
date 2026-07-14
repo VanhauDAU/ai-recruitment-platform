@@ -1,5 +1,4 @@
 import {
-  ArrowUpOutlined,
   CloudUploadOutlined,
   CopyOutlined,
   DeleteOutlined,
@@ -11,19 +10,23 @@ import {
   ShareAltOutlined,
   StarFilled,
   StarOutlined,
+  UndoOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Dropdown, Input, Modal, Spin, Switch, message } from 'antd'
+import { Dropdown, Input, Modal, Spin, message } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   createCvSharedLink,
   CvDocumentPreview,
   deleteCv,
+  duplicateCv,
+  getArchivedCvs,
   getCvOwnerView,
   getMyCvs,
   importCvFile,
   renameCv,
+  restoreCv,
   setDefaultCv,
 } from '@/entities/cv'
 import { useSiteSettings } from '@/entities/site-settings'
@@ -31,9 +34,9 @@ import { useSiteSettings } from '@/entities/site-settings'
 function UserCvCard({ cv, onRefresh }) {
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [searchable, setSearchable] = useState(true)
   const [isMainCv, setIsMainCv] = useState(cv.is_default || false)
   const [isRenameOpen, setIsRenameOpen] = useState(false)
+  const [title, setTitle] = useState(cv.title || '')
   const [newTitle, setNewTitle] = useState(cv.title || '')
   const previewWrapRef = useRef(null)
   const [previewZoom, setPreviewZoom] = useState(0.35)
@@ -65,6 +68,7 @@ function UserCvCard({ cv, onRefresh }) {
 
   useEffect(() => {
     setIsMainCv(cv.is_default || false)
+    setTitle(cv.title || '')
     setNewTitle(cv.title || '')
   }, [cv])
 
@@ -92,51 +96,24 @@ function UserCvCard({ cv, onRefresh }) {
     }
   }, [version])
 
-  const handleToggleSearch = (checked) => {
-    setSearchable(checked)
-    if (checked) {
-      message.success('Đã cho phép Nhà tuyển dụng tìm kiếm CV này.')
-    } else {
-      message.warning('Đã tắt chế độ Nhà tuyển dụng tìm kiếm CV này.')
-    }
-  }
-
-  // Cập nhật trạng thái CV chính trực tiếp xuống DB qua patch
   const handleToggleMain = async () => {
     const nextState = !isMainCv
     try {
       await setDefaultCv(cv.public_id, nextState)
       setIsMainCv(nextState)
-      if (nextState) {
-        message.success('Đã đặt CV này làm CV chính.')
-      } else {
-        message.success('Đã bỏ đặt CV này làm CV chính.')
-      }
+      message.success(nextState ? 'Đã đặt CV này làm CV chính.' : 'Đã bỏ đặt CV này làm CV chính.')
       onRefresh?.()
     } catch {
       message.error('Không thể cập nhật trạng thái CV chính.')
     }
   }
 
-  // Tải xuống PDF (mở bản xem để in hoặc xuất file)
   const handleDownload = () => {
-    message.loading('Đang chuẩn bị bản tải xuống...', 1).then(() => {
-      window.open(`/cvs/${cv.public_id}/view`, '_blank')
-    })
+    window.open(`/cvs/${cv.public_id}/view`, '_blank', 'noopener,noreferrer')
   }
 
-  // Đẩy top (Tính năng VIP của TopCV)
-  const handlePushTop = () => {
-    message.loading('Đang xử lý đẩy top...', 1).then(() => {
-      message.success('Đẩy top thành công! CV của bạn đã được ưu tiên hiển thị trước Nhà tuyển dụng.')
-    })
-  }
-
-  // Sao chép liên kết CV
   const handleCopyLink = async () => {
     try {
-      // A bearer token is returned only at creation time; never try to read it
-      // back from the link list or persist it in the browser.
       const { token } = await createCvSharedLink(cv.public_id)
       const shareUrl = `${window.location.origin}/cv/share/${token}`
       await navigator.clipboard.writeText(shareUrl)
@@ -146,28 +123,28 @@ function UserCvCard({ cv, onRefresh }) {
     }
   }
 
-  // Chia sẻ lên Facebook
   const handleShareFacebook = async () => {
     try {
       const { token } = await createCvSharedLink(cv.public_id)
       const shareUrl = `${window.location.origin}/cv/share/${token}`
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank')
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer')
     } catch {
-      message.error('Không thể thực hiện liên kết chia sẻ.')
+      message.error('Không thể tạo liên kết chia sẻ.')
     }
   }
 
-  // Tạo bản sao CV
-  const handleDuplicate = () => {
-    message.loading('Đang nhân bản CV...', 1.2).then(() => {
+  const handleDuplicate = async () => {
+    try {
+      await duplicateCv(cv.public_id, `${title} (Bản sao)`)
       message.success('Tạo bản sao CV thành công.')
       onRefresh?.()
-    })
+    } catch {
+      message.error('Không thể tạo bản sao CV.')
+    }
   }
 
-  // Đổi tên CV
   const handleRenameClick = () => {
-    setNewTitle(cv.title)
+    setNewTitle(title)
     setIsRenameOpen(true)
   }
 
@@ -177,7 +154,8 @@ function UserCvCard({ cv, onRefresh }) {
       return
     }
     try {
-      await renameCv(cv.public_id, newTitle.trim())
+      const updated = await renameCv(cv.public_id, newTitle.trim())
+      setTitle(updated.title)
       message.success('Đổi tên CV thành công.')
       setIsRenameOpen(false)
       onRefresh?.()
@@ -186,7 +164,6 @@ function UserCvCard({ cv, onRefresh }) {
     }
   }
 
-  // Xoá CV
   const handleDelete = () => {
     Modal.confirm({
       title: 'Xóa CV của bạn?',
@@ -197,22 +174,16 @@ function UserCvCard({ cv, onRefresh }) {
       onOk: async () => {
         try {
           await deleteCv(cv.public_id)
-          message.success('Đã xóa CV thành công.')
+          message.success('Đã đưa CV vào kho lưu trữ.')
           onRefresh?.()
         } catch {
-          message.error('Không thể xóa CV.')
+          message.error('Không thể lưu trữ CV.')
         }
       },
     })
   }
 
   const dropdownMenuItems = [
-    {
-      key: 'push-top',
-      label: 'Đẩy top',
-      icon: <ArrowUpOutlined />,
-      onClick: handlePushTop,
-    },
     {
       key: 'copy-link',
       label: 'Sao chép liên kết',
@@ -228,12 +199,12 @@ function UserCvCard({ cv, onRefresh }) {
     {
       type: 'divider',
     },
-    {
+    ...(cv.cv_type === 'builder' ? [{
       key: 'duplicate',
       label: 'Tạo bản sao',
       icon: <CopyOutlined />,
       onClick: handleDuplicate,
-    },
+    }] : []),
     {
       key: 'rename',
       label: 'Đổi tên',
@@ -249,6 +220,13 @@ function UserCvCard({ cv, onRefresh }) {
     },
   ]
 
+  // Mở CV ở tab mới khi click vào card
+  const handleCardClick = () => {
+    if (!loading && documentData) {
+      window.open(`/cvs/${cv.public_id}/view`, '_blank')
+    }
+  }
+
   const formattedDate = cv.updated_at
     ? new Date(cv.updated_at).toLocaleDateString('vi-VN', {
         day: '2-digit',
@@ -262,7 +240,7 @@ function UserCvCard({ cv, onRefresh }) {
 
   return (
     <div className="flex flex-col space-y-3">
-      {/* Viewport xem trước CV bo tròn */}
+      {/* Viewport xem trước CV */}
       <div
         ref={previewWrapRef}
         onMouseEnter={() => setHovered(true)}
@@ -270,12 +248,16 @@ function UserCvCard({ cv, onRefresh }) {
           setHovered(false)
           setIsMenuOpen(false)
         }}
-        className="group relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-slate-200/80 bg-slate-50 p-4 flex justify-center cursor-default"
+        onClick={handleCardClick}
+        className="group relative aspect-[3/4] w-full overflow-hidden flex justify-center cursor-pointer"
       >
         {/* Ngôi sao CV chính ở góc trên bên phải - Ẩn mặc định, hiện khi hover hoặc khi là CV chính */}
         <button
           type="button"
-          onClick={handleToggleMain}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleToggleMain()
+          }}
           className={[
             'absolute top-3.5 right-3.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 transition-all duration-200 cursor-pointer',
             showStar ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none',
@@ -309,23 +291,28 @@ function UserCvCard({ cv, onRefresh }) {
         {/* Hover overlay với nút thao tác nằm ở GÓC DƯỚI GIỮA, giữ trạng thái hiển thị khi mở menu */}
         {!loading && (
           <div
+            onClick={handleCardClick}
             className={[
               'absolute inset-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent flex items-end justify-center pb-5 transition-opacity duration-200',
               (hovered || isMenuOpen) ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
             ].join(' ')}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                onClick={handleDownload}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-slate-700 hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDownload()
+                }}
+                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
-                <DownloadOutlined /> Tải về
+                <DownloadOutlined /> Xem / xuất PDF
               </button>
               <Link
                 to={`/cvs/${cv.public_id}/edit`}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-slate-700 hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
                 <EditOutlined /> Chỉnh sửa
@@ -339,7 +326,8 @@ function UserCvCard({ cv, onRefresh }) {
               >
                 <button
                   type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                   style={{ backgroundColor: '#ffffff' }}
                 >
                   <EllipsisOutlined className="text-base" />
@@ -350,27 +338,14 @@ function UserCvCard({ cv, onRefresh }) {
         )}
       </div>
 
-      {/* Thông tin tiêu đề & Switch tìm kiếm */}
+      {/* Thông tin tiêu đề */}
       <div className="space-y-1 px-0.5">
         <h4 className="truncate text-sm font-bold text-slate-800">
-          {cv.title}
+          {title}
         </h4>
         <p className="text-xs text-slate-400">
           Cập nhật {formattedDate}
         </p>
-
-        {/* Switch trạng thái tìm kiếm */}
-        <div className="flex items-center gap-2 pt-1.5">
-          <Switch
-            size="small"
-            checked={searchable}
-            onChange={handleToggleSearch}
-            style={{ backgroundColor: searchable ? '#00b14f' : undefined }}
-          />
-          <span className="text-[12px] font-semibold text-slate-600">
-            Cho phép NTD tìm kiếm
-          </span>
-        </div>
       </div>
 
       {/* Modal Rename */}
@@ -381,7 +356,7 @@ function UserCvCard({ cv, onRefresh }) {
         onCancel={() => setIsRenameOpen(false)}
         okText="Lưu lại"
         cancelText="Hủy"
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="py-2.5">
           <p className="mb-2 text-xs font-semibold text-slate-500">Tên CV mới</p>
@@ -398,22 +373,63 @@ function UserCvCard({ cv, onRefresh }) {
   )
 }
 
+function ArchivedCvCard({ cv, onRefresh }) {
+  const [restoring, setRestoring] = useState(false)
+  const archivedDate = cv.archived_at
+    ? new Date(cv.archived_at).toLocaleDateString('vi-VN')
+    : 'gần đây'
+
+  const handleRestore = async () => {
+    setRestoring(true)
+    try {
+      await restoreCv(cv.public_id)
+      message.success('Đã khôi phục CV. CV sẽ không tự trở thành CV mặc định.')
+      onRefresh?.()
+    } catch (error) {
+      const detail = error?.response?.data?.detail
+      message.error(detail || 'Không thể khôi phục CV này.')
+    } finally {
+      setRestoring(false)
+    }
+  }
+
+  return (
+    <article className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="min-w-0">
+        <h4 className="truncate text-sm font-bold text-slate-800">{cv.title}</h4>
+        <p className="mt-1 text-xs text-slate-500">Đã lưu trữ {archivedDate}</p>
+      </div>
+      <button
+        type="button"
+        disabled={restoring}
+        onClick={handleRestore}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#00b14f] px-3.5 py-1.5 text-xs font-bold text-[#008a3e] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <UndoOutlined /> {restoring ? 'Đang khôi phục' : 'Khôi phục'}
+      </button>
+    </article>
+  )
+}
+
 export default function MyCvs() {
   const { siteName } = useSiteSettings()
   const navigate = useNavigate()
   const [cvs, setCvs] = useState([])
+  const [archivedCvs, setArchivedCvs] = useState([])
   const [loading, setLoading] = useState(true)
   const fileInputRef = useRef(null)
 
   const fetchCvs = () => {
     let cancelled = false
     setLoading(true)
-    getMyCvs()
-      .then((data) => {
-        if (!cancelled) setCvs(data)
+    Promise.all([getMyCvs(), getArchivedCvs()])
+      .then(([activeCvs, archived]) => {
+        if (!cancelled) setCvs(activeCvs)
+        if (!cancelled) setArchivedCvs(archived)
       })
       .catch(() => {
         if (!cancelled) setCvs([])
+        if (!cancelled) setArchivedCvs([])
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -608,6 +624,20 @@ export default function MyCvs() {
           )}
         </div>
       </section>
+
+      {archivedCvs.length > 0 && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-800 sm:text-[17px]">CV đã lưu trữ</h3>
+            <span className="text-xs font-medium text-slate-500">Có thời hạn khôi phục</span>
+          </div>
+          <div className="mt-5 space-y-3">
+            {archivedCvs.map((cv) => (
+              <ArchivedCvCard key={cv.public_id} cv={cv} onRefresh={fetchCvs} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

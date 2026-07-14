@@ -121,7 +121,7 @@ src/
 ├── pages/     # route pages theo main, employer, admin
 ├── widgets/   # các khối UI lớn ghép domain
 ├── features/  # user actions/workflows
-├── entities/  # session, account, blog, job, location, site-settings
+├── entities/  # session, account, application, blog, job, location, site-settings
 ├── shared/    # infrastructure và UI không biết domain
 └── test/      # test setup
 ```
@@ -150,8 +150,23 @@ app/router
   detail, source panel/modal. `pages/main/cvs/CvEditor.jsx` chỉ lấy `publicId`
   rồi compose editor feature.
 - `pages/main/account/MyCvs.jsx` là owner-local account UI; nó chỉ gọi public
-  API `entities/cv` (V2 metadata/archive/import/share), không gọi HTTP client
-  trực tiếp hoặc contract V1.
+  API `entities/cv` (V2 metadata/archive/import/duplicate/restore/share), không
+  gọi HTTP client trực tiếp hoặc contract V1. CTA chỉ xuất hiện khi backend
+  workflow tồn tại; không dùng timeout/local state để mô phỏng thành công.
 - Backend compatibility fields như `theme_color`/`color_variants` có thể tồn
   tại trong response lúc dual-read, nhưng frontend mới không được dùng chúng để
   dựng nhiều màu giả khi `colors[]` đã có.
+
+## Ownership map — Job application
+
+```text
+pages/main/jobs/JobDetail
+  → features/apply-for-job
+    → entities/application, entities/cv
+      → shared/api
+```
+
+- `entities/application` chỉ sở hữu application HTTP contract V2; không chứa
+  lựa chọn CV hoặc state modal.
+- `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
+  explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.

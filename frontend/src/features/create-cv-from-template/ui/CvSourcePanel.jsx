@@ -16,6 +16,14 @@ const SAMPLE_LOCALES = [
   { value: 'zh-CN', label: 'Tiếng Trung' },
 ]
 
+function samplePositionKey(sample) {
+  return sample.job_category_slug || sample.position_name_vi || sample.job_category_name || sample.public_id
+}
+
+function samplePositionLabel(sample) {
+  return sample.position_name_vi || sample.job_category_name || sample.title
+}
+
 function SourceOption({ value, current, onSelect, title, note, disabled, children }) {
   const active = current === value
   return (
@@ -87,7 +95,14 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
     let cancelled = false
     setLoadingSamples(true)
     getCvSampleContents(sampleLocale)
-      .then((data) => !cancelled && setSamples(data))
+      .then((data) => {
+        if (cancelled) return
+        setSamples(data)
+        setSelectedPosition((current) => {
+          const options = data.map(samplePositionKey).filter(Boolean)
+          return current && options.includes(current) ? current : (options[0] || null)
+        })
+      })
       .catch(() => !cancelled && setSamples([]))
       .finally(() => !cancelled && setLoadingSamples(false))
     return () => {
@@ -96,7 +111,7 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
   }, [source, sampleLocale])
 
   const samplePublicId = useMemo(
-    () => samples.find((item) => item.job_category_name === selectedPosition)?.public_id || null,
+    () => samples.find((item) => samplePositionKey(item) === selectedPosition)?.public_id || null,
     [samples, selectedPosition],
   )
 
@@ -221,8 +236,8 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
               optionFilterProp="label"
               notFoundContent={loadingSamples ? <Spin size="small" /> : 'Chưa có nội dung mẫu phù hợp'}
               options={samples.map((sample) => ({
-                value: sample.job_category_name || sample.title,
-                label: sample.job_category_name || sample.title,
+                value: samplePositionKey(sample),
+                label: samplePositionLabel(sample),
               }))}
             />
           </div>

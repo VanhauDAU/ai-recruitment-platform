@@ -1,14 +1,52 @@
-"""Recruiter-only read endpoints for immutable application CV snapshots."""
+"""V2 candidate submission and recruiter immutable-snapshot reads."""
 
 from django.http import Http404
+from django.db import IntegrityError
+from rest_framework import generics, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import IsCandidate, IsEmployer
 
-from .api_v2_serializers import RecruiterApplicationSnapshotSerializer
+from .api_v2_serializers import (
+    CandidateApplicationV2CreateSerializer,
+    CandidateApplicationV2Serializer,
+    RecruiterApplicationSnapshotSerializer,
+)
 from .models import Application
-from .selectors import recruiter_application_snapshot_queryset
+from .selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
+from .services import create_application_record
+
+
+class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsCandidate]
+
+    def get_queryset(self):
+        return candidate_applications_queryset(self.request.user)
+
+    def get_serializer_class(self):
+        return CandidateApplicationV2CreateSerializer if self.request.method == 'POST' else CandidateApplicationV2Serializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            application = create_application_record(
+                candidate=request.user,
+                job=serializer.validated_data['job'],
+                cv=serializer.validated_data['cv'],
+                source_version=serializer.validated_data['version'],
+                cover_letter=serializer.validated_data.get('cover_letter', ''),
+            )
+        except ValueError as error:
+            raise ValidationError({'version_public_id': str(error)}) from error
+        except IntegrityError:
+            return Response(
+                {'detail': 'You already applied to this job.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(CandidateApplicationV2Serializer(application).data, status=status.HTTP_201_CREATED)
 
 
 class RecruiterApplicationSnapshotView(APIView):

@@ -15,6 +15,7 @@ from apps.accounts.permissions import IsCandidate
 from .api_v2_serializers import (
     CvDraftSerializer,
     CvDraftWriteSerializer,
+    CvV2DuplicateSerializer,
     CvExportCreateSerializer,
     CvExportSerializer,
     CvV2ImportSerializer,
@@ -29,7 +30,13 @@ from .api_v2_serializers import (
     SharedCvVersionSerializer,
 )
 from .models import CvDraft, CvExport, CvSharedLink, UserCv
-from .selectors import candidate_cv_by_public_id, candidate_cv_versions_queryset, candidate_cvs_queryset
+from .selectors import (
+    candidate_archived_cv_by_public_id,
+    candidate_archived_cvs_queryset,
+    candidate_cv_by_public_id,
+    candidate_cv_versions_queryset,
+    candidate_cvs_queryset,
+)
 from .services import (
     CvLifecyclePolicyError,
     CvExportPermissionError,
@@ -42,6 +49,7 @@ from .services import (
     archive_cv,
     create_shared_link,
     create_v2_cv,
+    duplicate_cv,
     import_v2_cv,
     export_download_ready,
     owner_cv_export,
@@ -50,6 +58,7 @@ from .services import (
     resolve_shared_link,
     revoke_shared_link,
     retry_cv_export,
+    restore_cv,
     save_draft_as_version,
     switch_draft_template,
     update_cv_metadata,
@@ -135,6 +144,46 @@ class CvV2DetailView(CandidateV2CvMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class CvV2ArchivedListView(generics.ListAPIView):
+    permission_classes = [IsCandidate]
+    serializer_class = CvV2Serializer
+
+    def get_queryset(self):
+        return candidate_archived_cvs_queryset(self.request.user)
+
+
+class CvV2RestoreView(APIView):
+    permission_classes = [IsCandidate]
+
+    def post(self, request, public_id):
+        try:
+            cv = candidate_archived_cv_by_public_id(request.user, public_id)
+        except UserCv.DoesNotExist as error:
+            raise Http404 from error
+        try:
+            restored_cv = restore_cv(cv=cv, actor=request.user)
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
+        return Response(CvV2Serializer(restored_cv).data)
+
+
+class CvV2DuplicateView(CandidateV2CvMixin, APIView):
+    model = UserCv
+
+    def post(self, request, public_id):
+        serializer = CvV2DuplicateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            duplicate = duplicate_cv(
+                cv=self.get_cv(),
+                actor=request.user,
+                title=serializer.validated_data.get('title', ''),
+            )
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
+        return Response(CvV2Serializer(duplicate).data, status=status.HTTP_201_CREATED)
+
+
 class CvV2ImportView(APIView):
     """Import a user-owned PDF/DOCX without exposing a storage URL."""
 
@@ -161,6 +210,7 @@ def read_only_cv_payload(cv, version):
             'public_id': cv.public_id,
             'title': cv.title,
             'language': cv.language,
+            'is_default': cv.is_default,
         },
         'version': SharedCvVersionSerializer(version).data,
     }

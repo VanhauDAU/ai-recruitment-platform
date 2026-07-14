@@ -89,10 +89,19 @@ Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
   cho mỗi candidate;
 - `POST /api/v2/cvs/imports/` nhập PDF/DOCX, tạo immutable `imported` version
   và chỉ trả metadata file, không trả storage key/URL;
+- `POST /api/v2/cvs/{public_id}/duplicate/` chỉ clone builder CV. Service copy
+  latest immutable version sang aggregate mới có initial version + draft riêng;
+  không copy mutable draft, share link hay status published sang CV mới;
+- `GET /api/v2/cvs/archived/` và `POST /api/v2/cvs/{public_id}/restore/` là
+  owner-only. Restore không là PATCH metadata, không tự đổi default CV và chỉ
+  hợp lệ trong `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30 ngày);
 - `GET|PUT /api/v2/cvs/{public_id}/draft/` đọc/autosave canonical draft;
 - `POST /api/v2/cvs/{public_id}/save-version/` tạo `manual_save` immutable;
 - `POST /api/v2/cvs/{public_id}/publish/` tạo `published` immutable;
 - `GET /api/v2/cvs/{public_id}/versions/` đọc history immutable;
+- `GET|POST /api/v2/applications/` là candidate application contract. POST bắt
+  buộc CV và `version_public_id` cùng aggregate; service copy đúng version này
+  thành `application_snapshot` mà không đổi draft/latest/published pointer;
 - `GET /api/v2/recruiter/applications/{application_public_id}/cv/` chỉ trả
   `submitted_cv_version` khi recruiter là người đăng Job hoặc member đã duyệt
   của công ty.
@@ -121,8 +130,11 @@ route V2 là:
 mô tả và SEO theo locale. `CvTemplateColorLink` là nguồn màu/preview cho card;
 `default_style_json.theme_color` chỉ là fallback tương thích và default style
 của renderer version. `CvSampleContent` chỉ chứa canonical content theo
-locale/vị trí/cấp độ; list API không trả `content_json`, detail sample endpoint
-chỉ được gọi khi người dùng chọn một sample cụ thể.
+locale/vị trí/cấp độ. `position_name_vi` là nhãn dropdown tiếng Việt ổn định;
+`job_category.slug` là khóa vị trí dùng để giữ lựa chọn khi đổi locale, còn
+`content_json.personal_info.headline` và các section là nội dung preview theo
+locale. List API không trả `content_json`, detail sample endpoint chỉ được gọi
+khi người dùng chọn một sample cụ thể.
 
 `POST /api/v2/cvs/` nhận `template_public_id`, `language`, title, tùy chọn
 `sample_content_public_id` và `theme_color`. Serializer chỉ chấp nhận theme

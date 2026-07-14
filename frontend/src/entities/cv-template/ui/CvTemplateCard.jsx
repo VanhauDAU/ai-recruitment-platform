@@ -89,7 +89,11 @@ export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau
             title={color.name}
             onMouseEnter={() => setSelectedColor(color)}
             onFocus={() => setSelectedColor(color)}
-            onClick={() => setSelectedColor(color)}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              openWith(color)
+            }}
             className={[
               'h-3.5 w-3.5 cursor-pointer rounded-full transition-all duration-200',
               selectedColor.slug === color.slug

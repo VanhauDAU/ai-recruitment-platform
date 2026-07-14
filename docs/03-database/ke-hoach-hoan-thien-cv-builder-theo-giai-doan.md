@@ -28,13 +28,28 @@ Template catalogue → chọn nguồn/màu → initial version + draft
 | CVB-0 | Runtime, migration, create lifecycle | ✅ Hoàn tất | V2 create/draft/version, application snapshot, migration/preflight |
 | CVB-0.2 | CV API V1→V2 cutover | 🟡 Đang đo | V2 có archive/import/metadata; V1 có deprecation headers + telemetry, chưa đủ điều kiện 410/xóa |
 | CVB-1 | Template catalog đa ngôn ngữ | ✅ Hoàn tất | Filter DB, infinite scroll, detail, related, responsive |
+| CVB-1.1 | Sample content đa ngôn ngữ | ✅ Hoàn tất | Dropdown tiếng Việt ổn định; preview headline/section theo locale; sample detail tải lazy |
 | CVB-1.2 | Category và color từ database | ✅ Hoàn tất | M2M taxonomy/color, asset theo màu, màu được lưu vào draft/version |
 | CVB-2 | Builder MVP | ✅ Hoàn tất | Canonical editor, autosave lock, history, template switch, layout resize |
-| CVB-3 | Candidate “My CV” | 🟡 Đang làm | Archive/default/rename/import thật đã có; còn duplicate/restore và E2E đầy đủ |
-| CVB-4 | Apply flow | 🟡 Một phần | Snapshot có; UX chọn/confirm version khi apply cần hoàn thiện |
+| CVB-3 | Candidate “My CV” | ✅ Hoàn tất | Archive/default/rename/import/duplicate/restore thật; smoke desktop/mobile phủ workflow chính; CTA mở owner view với export PDF immutable |
+| CVB-4 | Apply flow | ✅ Hoàn tất | Candidate V2 chọn CV/version, snapshot đúng version và smoke desktop/mobile xác nhận payload |
 | CVB-5 | Admin template publishing | 🟡 Một phần | Admin taxonomy/color có; thiếu workflow draft→preview→publish→retire hoàn chỉnh |
 | CVB-6 | Production hardening | 🟡 Một phần | Share/export có; cần worker/storage/observability/retention benchmark |
 | CVB-7 | Import và AI | ⬜ Chưa làm | Parse PDF/DOCX/LinkedIn, AI writer, ATS, matching/quota/audit |
+
+## CVB-1.1 — Sample content đa ngôn ngữ
+
+- [x] Dropdown vị trí dùng `job_category_slug` làm khóa ổn định và
+  `position_name_vi` làm nhãn tiếng Việt, không đổi khi chọn English/Japanese/
+  Chinese.
+- [x] Preview lấy `content_json` của đúng `(job_category, locale)`; headline,
+  section title, mô tả và skill được seed theo locale. List API chỉ trả metadata;
+  detail mới tải canonical content.
+- [x] Migration `cv_templates.0005` bổ sung nhãn picker, seed idempotent cập
+  nhật các sample generated cũ nhưng không ghi đè nội dung đã chỉnh tay.
+- [x] Mapping `en-US` dịch cả vị trí gốc tiếng Việt (ví dụ `Chăm sóc khách
+  hàng` → `Customer Service`), tránh headline/role tiếng Việt trong preview
+  tiếng Anh.
 
 ## CVB-1.2 — Category và color từ database
 
@@ -79,23 +94,31 @@ legacy làm fallback; nó không tự sinh ảnh renderer.
 ### CVB-3 — Candidate “My CV”
 
 - [x] Chốt DTO list V2 cho metadata file/default và trạng thái empty/loading cơ bản.
-- [ ] Duplicate CV phải clone canonical content sang draft mới, không chia sẻ
-  mutable draft hoặc thay đổi version cũ.
+- [x] Duplicate builder CV clone latest immutable content sang CV/draft/version
+  mới, không chia sẻ mutable draft, share link hay published lifecycle. Upload
+  CV không có duplicate để tránh dùng chung object storage không tường minh.
 - [x] Archive/default/rename CV bằng service transaction và permission owner;
   DB chặn nhiều default active trong cùng một candidate.
 - [x] Upload PDF/DOCX chỉ báo thành công sau `POST /api/v2/cvs/imports/` thật;
   UI không mô phỏng upload bằng timeout.
-- [ ] Restore phải là use case tường minh với retention policy, không tự khôi
-  phục soft-delete qua PATCH metadata.
-- [ ] E2E desktop/mobile: list, edit, view, archive/restore và unauthorized.
+- [x] Restore là use case `POST` owner-only, không tự khôi phục soft-delete qua
+  PATCH metadata; giới hạn bằng `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30).
+- [x] Smoke desktop/mobile cho candidate library: list, view và archive/restore
+  qua contract V2; route unauthorized vẫn được phủ bởi smoke router. Các test này
+  mock API có chủ đích, còn permission/service được regression test ở backend.
+- [x] CTA từ card dẫn đến owner view, nơi feature `export-cv-pdf` chọn immutable
+  version, theo dõi job, retry và tải PDF qua endpoint owner-scoped.
 
 ### CVB-4 — Apply flow
 
-- [ ] Candidate chọn CV và immutable version trước khi confirm apply.
-- [ ] Application tiếp tục lưu `submitted_cv_version`; thay đổi draft sau apply
-  không làm đổi hồ sơ recruiter thấy.
-- [ ] UX cảnh báo CV chưa publish và hỗ trợ tạo version ngay trong flow.
-- [ ] Regression permission cho candidate/recruiter/company membership.
+- [x] Candidate chọn CV và immutable version trước khi confirm apply qua
+  `POST /api/v2/applications/`; API không tự chọn latest hoặc dùng draft.
+- [x] Application tiếp tục lưu `submitted_cv_version`; snapshot copy từ đúng
+  version đã chọn, nên thay đổi draft sau apply không làm đổi hồ sơ recruiter thấy.
+- [x] UX ưu tiên published version, cảnh báo CV chưa publish và dẫn tới editor
+  để lưu version mới trước khi xác nhận.
+- [x] Regression permission cho candidate, CV owner và recruiter/company membership.
+- [x] Smoke desktop/mobile cho modal apply: chọn version và xác nhận payload V2.
 
 ### CVB-5 — Admin template workflow
 

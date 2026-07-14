@@ -40,7 +40,7 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `cv_categories`, `cv_template_category_links` | `backend/apps/cv_templates` | Taxonomy many-to-many style/feature/position/audience; link giữ thứ tự theo template |
 | `cv_colors`, `cv_template_color_links` | `backend/apps/cv_templates` | Palette màu dùng lại; link theo template giữ thumbnail/preview URL, thứ tự và đúng tối đa một màu mặc định |
 | `cv_template_versions`, `cv_template_sections` | `backend/apps/cv_templates` | Renderer/layout/style contract bất biến sau publish và mapping section theo region |
-| `cv_sample_contents` | `backend/apps/cv_templates` | Canonical starter content theo vị trí, locale và experience level |
+| `cv_sample_contents` | `backend/apps/cv_templates` | Canonical starter content theo vị trí, locale và experience level; `position_name_vi` giữ nhãn picker tiếng Việt, `content_json` giữ preview đã dịch |
 | `user_cvs` | `backend/apps/cvs` | CV builder + upload (PDF/DOCX), soft-delete |
 | `cv_skills` | `backend/apps/cvs` | Nested trong API `user_cvs` |
 | `jobs` | `backend/apps/jobs` | Tin tuyển dụng lõi đã tinh gọn; lương dùng `salary_type`, có tuổi, giới tính, học vấn, kinh nghiệm và số lượng tuyển |

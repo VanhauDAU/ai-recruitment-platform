@@ -66,11 +66,14 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, renderer contract an toàn và section list. |
 | GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
 | GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
-| GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Metadata sample content; không trả `content_json`. |
+| GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Metadata sample content; không trả `content_json`. `job_category_slug` là định danh ổn định; `position_name_vi` luôn là nhãn dropdown tiếng Việt; `position_name` là chức danh trong preview theo locale. |
 | GET | `/api/v2/cv-sample-contents/{public_id}/` | Detail canonical sample sau khi người dùng chọn một sample cụ thể. |
 | GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample và optional màu thuộc template. |
 | GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE archive mềm, revoke public access qua `is_deleted`. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart file`, optional `title`). Response không có storage key/URL, chỉ có `file_name`, `file_type`, `source=imported`. |
+| GET | `/api/v2/cvs/archived/` | Danh sách CV archive chỉ của owner; không có public/share access. |
+| POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
+| POST | `/api/v2/cvs/{public_id}/restore/` | Khôi phục CV archive của owner trong `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30). Default CV không tự được khôi phục. |
 | GET/PUT | `/api/v2/cvs/{public_id}/draft/` | Đọc/autosave canonical draft; PUT bắt buộc `If-Match: "lock-version-N"`. |
 | PUT | `/api/v2/cvs/{public_id}/template/` | Đổi template của mutable draft, giữ canonical content và optimistic lock. |
 | POST | `/api/v2/cvs/{public_id}/save-version/` | Tạo immutable manual version từ draft hợp lệ. |
@@ -86,6 +89,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/jobs/mine/` | Employer: GET dùng management-list DTO gọn; POST dùng write DTO nested cho `job_skills`, `category_assignments`, `job_locations`, `work_schedules`, `job_benefits`, `language_requirements`, `application_contact` và trả detail form DTO. |
 | GET/PUT/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Employer: sửa/xóa tin của mình |
 | GET/POST | `/api/applications/` | Candidate: xem danh sách/ứng tuyển (job + cv theo `public_id`, chặn ứng tuyển trùng) |
+| GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id` và tùy chọn `cover_letter`; backend tạo `application_snapshot` từ đúng version đã chọn, không dùng draft hoặc tự chọn latest. |
 | GET | `/api/applications/employer/?job=` | Employer: xem hồ sơ ứng tuyển vào job của mình |
 | PATCH | `/api/applications/employer/{public_id}/` | Employer: cập nhật `status`/`employer_note` (tự set mốc thời gian tương ứng) |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
@@ -132,6 +136,21 @@ Một phần tử `colors` trong card/detail:
 `theme_color` và `color_variants` vẫn có trong response trong cửa sổ tương
 thích. Client mới phải dùng `colors[]`; URL ảnh thuộc quan hệ template–color,
 không suy ra từ hex hoặc hard-code trên frontend.
+
+Sample list trả metadata tách khỏi nội dung preview:
+
+```json
+{
+  "job_category_slug": "aimachine-learning-engineer",
+  "position_name_vi": "Kỹ sư AI/Machine Learning",
+  "position_name": "AI・機械学習エンジニア",
+  "locale": "ja-JP"
+}
+```
+
+Frontend dùng `job_category_slug` để giữ lựa chọn và hiển thị
+`position_name_vi`; chỉ detail sample mới tải `content_json` để renderer đổi
+headline, section và các mục nội dung theo `locale`.
 
 Payload tạo CV V2:
 

@@ -211,10 +211,20 @@ def sync_legacy_builder_draft(cv, actor):
     return draft
 
 
-def create_application_snapshot(cv, actor):
-    """Copy the latest immutable document for an application-owned snapshot."""
+def create_application_snapshot(cv, actor, source_version=None):
+    """Copy one selected immutable document for an application-owned snapshot."""
     cv = UserCv.objects.select_for_update(of=('self',)).select_related('latest_version').get(pk=cv.pk)
-    base_version = cv.latest_version or create_initial_document(cv, actor)
+    if source_version is None:
+        base_version = cv.latest_version or create_initial_document(cv, actor)
+    else:
+        base_version = CvVersion.objects.filter(
+            pk=source_version.pk,
+            cv=cv,
+        ).exclude(
+            version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT,
+        ).select_related('template_version').first()
+        if base_version is None:
+            raise ValueError('Select an immutable CV version owned by this CV.')
     return create_version(
         cv=cv,
         actor=actor,

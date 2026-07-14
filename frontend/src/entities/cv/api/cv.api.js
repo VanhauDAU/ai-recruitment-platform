@@ -27,6 +27,24 @@ export async function importCvFile(file, title) {
   return data
 }
 
+export async function duplicateCv(publicId, title) {
+  const { data } = await api.post(
+    `/v2/cvs/${publicId}/duplicate/`,
+    title ? { title } : {},
+  )
+  return data
+}
+
+export async function getArchivedCvs() {
+  const { data } = await api.get('/v2/cvs/archived/')
+  return Array.isArray(data) ? data : data.results || []
+}
+
+export async function restoreCv(publicId) {
+  const { data } = await api.post(`/v2/cvs/${publicId}/restore/`, {})
+  return data
+}
+
 export async function getCv(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/`)
   return data

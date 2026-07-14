@@ -2,15 +2,18 @@ from django.urls import path
 
 from .api_v2_views import (
     CvV2DetailView,
+    CvV2DuplicateView,
     CvV2DraftView,
     CvV2ExportDetailView,
     CvV2ExportDownloadView,
     CvV2ExportListCreateView,
     CvV2ExportRetryView,
     CvV2ImportView,
+    CvV2ArchivedListView,
     CvV2ListCreateView,
     CvV2OwnerVersionView,
     CvV2PublishView,
+    CvV2RestoreView,
     CvV2SaveVersionView,
     CvV2SharedLinkListCreateView,
     CvV2SharedLinkPublicView,
@@ -23,9 +26,12 @@ from .api_v2_views import (
 
 urlpatterns = [
     path('shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'),
+    path('archived/', CvV2ArchivedListView.as_view(), name='cv-v2-archived-list'),
     path('imports/', CvV2ImportView.as_view(), name='cv-v2-import'),
     path('', CvV2ListCreateView.as_view(), name='cv-v2-list-create'),
     path('<str:public_id>/', CvV2DetailView.as_view(), name='cv-v2-detail'),
+    path('<str:public_id>/duplicate/', CvV2DuplicateView.as_view(), name='cv-v2-duplicate'),
+    path('<str:public_id>/restore/', CvV2RestoreView.as_view(), name='cv-v2-restore'),
     path('<str:public_id>/view/', CvV2OwnerVersionView.as_view(), name='cv-v2-owner-view'),
     path('<str:public_id>/shared-links/', CvV2SharedLinkListCreateView.as_view(), name='cv-v2-shared-link-list-create'),
     path('<str:public_id>/shared-links/<str:link_public_id>/', CvV2SharedLinkRevokeView.as_view(), name='cv-v2-shared-link-revoke'),

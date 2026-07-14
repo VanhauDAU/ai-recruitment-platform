@@ -386,3 +386,7 @@ LEGACY_CV_API_DEPRECATION_AT = config(
 LEGACY_CV_API_SUNSET_AT = config(
     'LEGACY_CV_API_SUNSET_AT', default='2027-01-15T00:00:00+00:00',
 )
+
+# A soft-deleted CV can only be restored during this explicit retention window.
+# A later retention worker may purge expired archived records independently.
+CV_ARCHIVE_RESTORE_WINDOW_DAYS = config('CV_ARCHIVE_RESTORE_WINDOW_DAYS', default=30, cast=int)

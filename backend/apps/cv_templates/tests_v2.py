@@ -4,7 +4,9 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.cvs.schemas import empty_content, empty_layout, empty_style
+from apps.jobs.models import JobCategory
 
+from .management.commands.seed_cv_catalog import build_sample_content
 from .models import (
     CvCategory,
     CvColor,
@@ -73,9 +75,12 @@ class TemplateCatalogV2Tests(TestCase):
         )
         self.related = self.create_template('Related', categories=(self.audience,), usage_count=5)
         self.english = self.create_template('English', locale='en-US')
+        self.sample_category = JobCategory.objects.create(name='AI/Machine Learning Engineer', slug='ai-machine-learning-engineer')
         self.sample = CvSampleContent.objects.create(
+            job_category=self.sample_category,
             locale='vi-VN',
             title='Mẫu Front-end Developer',
+            position_name_vi='Kỹ sư AI/Machine Learning',
             content_json=empty_content('vi-VN'),
             status=CvSampleContent.Status.PUBLISHED,
             published_at=timezone.now(),
@@ -119,6 +124,11 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(self.client.get(f'/api/v2/cv-templates/{self.english.slug}/', {'locale': 'vi-VN'}).status_code, 404)
 
     def test_category_and_sample_catalogues_are_compact_and_public(self):
+        self.sample.content_json = {
+            **self.sample.content_json,
+            'personal_info': {'headline': 'Kỹ sư AI/Machine Learning'},
+        }
+        self.sample.save(update_fields=['content_json', 'updated_at'])
         categories = self.client.get('/api/v2/cv-categories/', {'type': 'feature'})
         samples = self.client.get('/api/v2/cv-sample-contents/', {'locale': 'vi-VN'})
 
@@ -126,7 +136,17 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual([item['slug'] for item in categories.data], ['ats'])
         self.assertEqual(samples.status_code, 200)
         self.assertEqual(samples.data[0]['public_id'], self.sample.public_id)
+        self.assertEqual(samples.data[0]['job_category_slug'], 'ai-machine-learning-engineer')
+        self.assertEqual(samples.data[0]['position_name_vi'], 'Kỹ sư AI/Machine Learning')
+        self.assertEqual(samples.data[0]['position_name'], 'Kỹ sư AI/Machine Learning')
         self.assertNotIn('content_json', samples.data[0])
+
+    def test_seed_localizes_position_content_for_english_preview(self):
+        content = build_sample_content('en-US', 'Chăm sóc khách hàng')
+
+        self.assertEqual(content['personal_info']['headline'], 'Customer Service')
+        self.assertEqual(content['sections'][1]['items'][0]['role'], 'Customer Service')
+        self.assertIn('Customer Service', content['sections'][0]['items'][0]['value'])
 
     def test_published_template_version_and_its_sections_are_immutable(self):
         version = self.primary.current_published_version
