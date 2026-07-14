@@ -6,19 +6,21 @@ from apps.locations.models import Location
 from .models import CandidateConsent, CandidateJobPreference, CandidateProfile
 
 
-class CandidateProfileSerializer(serializers.ModelSerializer):
+class CandidateProfileReadSerializer(serializers.ModelSerializer):
+    """Minimal profile data rendered by onboarding and job-preference settings."""
+
     class Meta:
         model = CandidateProfile
-        fields = [
-            'id', 'date_of_birth', 'gender', 'address', 'current_position',
-            'desired_position', 'experience_years', 'education_level',
-            'expected_salary_min', 'expected_salary_max', 'preferred_location',
-            'preferred_work_type', 'job_search_status', 'portfolio_url',
-            'github_url', 'linkedin_url', 'headline', 'bio', 'career_objective',
-            'job_preferences_configured',
-            'created_at', 'updated_at',
-        ]
-        read_only_fields = ['id', 'job_preferences_configured', 'created_at', 'updated_at']
+        fields = ['gender']
+        read_only_fields = fields
+
+
+class CandidateProfileUpdateSerializer(serializers.ModelSerializer):
+    """Write DTO for the only candidate-profile field exposed by current forms."""
+
+    class Meta:
+        model = CandidateProfile
+        fields = ['gender']
 
 
 class CandidateJobPreferenceSerializer(serializers.ModelSerializer):

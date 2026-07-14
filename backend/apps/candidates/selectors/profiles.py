@@ -5,7 +5,7 @@ from ..models import CandidateJobPreference, CandidateProfile
 
 def candidate_profile_for_user(user):
     """Return the current user's profile, creating the legacy missing row once."""
-    profile, _ = CandidateProfile.objects.select_related('user').get_or_create(user=user)
+    profile, _ = CandidateProfile.objects.only('id', 'user_id', 'gender').get_or_create(user=user)
     return profile
 
 

@@ -1,31 +1,15 @@
-from django.db.models import F
-from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import generics, permissions, serializers
-from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import generics, permissions
 
-from apps.accounts.permissions import IsCandidate, IsEmployer
-from apps.employers.models import RecruiterProfile
-
-from ...models import Benefit, Job, JobCategory, Language, SavedJob
-from common.db.search import fold_accents, search_q
-
-from ...selectors.listing import build_job_list_queryset
+from ...models import Benefit, JobCategory, Language
 from ..serializers import (
     BenefitSerializer,
-    EmployerJobSerializer,
-    JobCategorySerializer,
-    JobDetailSerializer,
-    JobSerializer,
+    JobCategoryListSerializer,
     LanguageSerializer,
-    SavedJobSerializer,
 )
-from ...selectors.stats import build_job_stats
 
 
 class JobCategoryListView(generics.ListAPIView):
-    serializer_class = JobCategorySerializer
+    serializer_class = JobCategoryListSerializer
     permission_classes = [permissions.AllowAny]
 
     def paginate_queryset(self, queryset):
@@ -36,7 +20,9 @@ class JobCategoryListView(generics.ListAPIView):
         return super().paginate_queryset(queryset)
 
     def get_queryset(self):
-        queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE)
+        queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE).only(
+            'id', 'name', 'logo_url', 'parent_id', 'category_type',
+        )
         if category_type := self.request.query_params.get('category_type'):
             queryset = queryset.filter(category_type=category_type)
         return queryset

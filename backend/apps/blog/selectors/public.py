@@ -11,6 +11,10 @@ def published_posts_queryset(params):
     qs = (
         Post.objects.filter(status=Post.Status.PUBLISHED)
         .select_related('category')
+        .only(
+            'public_id', 'title', 'slug', 'content', 'thumbnail_url',
+            'published_at', 'category_id', 'category__name', 'category__slug',
+        )
     )
     if category := params.get('category'):
         qs = qs.filter(category__slug=category)
@@ -27,12 +31,18 @@ def published_post_detail_queryset():
         Post.objects.filter(status=Post.Status.PUBLISHED)
         .select_related('category', 'related_job_category')
         .prefetch_related('tags')
+        .only(
+            'public_id', 'title', 'slug', 'thumbnail_url', 'content',
+            'published_at', 'seo_title', 'category_id',
+            'category__name', 'category__slug', 'related_job_category_id',
+            'related_job_category__name', 'related_job_category__slug',
+        )
     )
 
 
 def active_categories():
     """Danh mục đang bật cho thanh danh mục ngang."""
-    return PostCategory.objects.filter(is_active=True)
+    return PostCategory.objects.filter(is_active=True).only('id', 'name', 'slug')
 
 
 def blog_home_sections(per_section=4):
@@ -43,7 +53,14 @@ def blog_home_sections(per_section=4):
     chưa có bài). Mỗi danh mục 1 query — 6 danh mục là chấp nhận được, không
     đáng phức tạp hóa bằng window function.
     """
-    base = Post.objects.filter(status=Post.Status.PUBLISHED).select_related('category')
+    base = (
+        Post.objects.filter(status=Post.Status.PUBLISHED)
+        .select_related('category')
+        .only(
+            'public_id', 'title', 'slug', 'content', 'thumbnail_url',
+            'published_at', 'category_id', 'category__name', 'category__slug',
+        )
+    )
     featured = list(base[:per_section])
     sections = []
     for category in active_categories():
@@ -61,5 +78,6 @@ def pinned_posts(placement=PinnedPost.Placement.SUPPORT_DOCS):
             is_active=True,
             post__status=Post.Status.PUBLISHED,
         )
-        .select_related('post__category')
+        .select_related('post')
+        .only('post__title', 'post__slug')
     )

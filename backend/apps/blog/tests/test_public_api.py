@@ -32,7 +32,11 @@ class BlogPublicApiTests(APITestCase):
         self.assertIn(self.published.slug, slugs)
         self.assertNotIn(self.draft.slug, slugs)
         item = next(post for post in res.data['results'] if post['slug'] == self.published.slug)
-        self.assertNotIn('summary', item)
+        self.assertEqual(set(item), {
+            'public_id', 'title', 'slug', 'excerpt', 'thumbnail_url',
+            'category', 'published_at',
+        })
+        self.assertEqual(set(item['category']), {'name', 'slug'})
         self.assertEqual(item['excerpt'], 'Sales Nội dung')
 
     def test_filter_by_category_and_tag(self):
@@ -47,6 +51,10 @@ class BlogPublicApiTests(APITestCase):
         url = reverse('blog-post-detail', args=[self.published.slug])
         res = self.client.get(url)
         self.assertEqual(res.status_code, 200)
+        self.assertEqual(set(res.data), {
+            'public_id', 'title', 'slug', 'thumbnail_url', 'content',
+            'category', 'tags', 'related_job_category', 'published_at', 'seo_title',
+        })
         self.published.refresh_from_db()
         self.assertEqual(self.published.view_count, 1)
         draft = self.client.get(reverse('blog-post-detail', args=[self.draft.slug]))

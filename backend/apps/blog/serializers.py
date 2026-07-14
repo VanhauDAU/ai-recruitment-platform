@@ -10,9 +10,11 @@ from .models import PinnedPost, Post, PostCategory, Tag
 
 
 class PostCategorySerializer(serializers.ModelSerializer):
+    """Category link DTO used by navigation, cards, and post detail."""
+
     class Meta:
         model = PostCategory
-        fields = ['name', 'slug', 'description']
+        fields = ['name', 'slug']
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -31,7 +33,7 @@ class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['public_id', 'title', 'slug', 'excerpt', 'thumbnail_url',
-                  'category', 'published_at', 'view_count']
+                  'category', 'published_at']
 
     def get_thumbnail_url(self, obj):
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))
@@ -55,8 +57,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['public_id', 'title', 'slug', 'thumbnail_url', 'content',
-                  'category', 'tags', 'related_job_category', 'published_at', 'updated_at',
-                  'view_count', 'seo_title', 'seo_description']
+                  'category', 'tags', 'related_job_category', 'published_at', 'seo_title']
 
     def get_thumbnail_url(self, obj):
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))

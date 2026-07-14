@@ -40,14 +40,24 @@ def filter_salary_bucket(queryset, bucket_key):
 
 def active_jobs_queryset(include_preview=False):
     """Public jobs with only relations required by the selected response contract."""
-    relations = ['job_locations__location__parent', 'job_skills__skill']
+    relations = [
+        'category_assignments__category',
+        'job_locations__location__parent',
+        'job_skills__skill',
+    ]
     if include_preview:
         relations.extend(['job_benefits__benefit', 'work_schedules'])
-    return (
+    queryset = (
         Job.objects.filter(status=Job.Status.ACTIVE)
         .select_related('company')
         .prefetch_related(*relations)
     )
+    if not include_preview:
+        queryset = queryset.defer(
+            'description', 'requirements', 'benefits', 'work_schedule_note',
+            'rejected_reason',
+        )
+    return queryset
 
 
 def active_job_detail_queryset():

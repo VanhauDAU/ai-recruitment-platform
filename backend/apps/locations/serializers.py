@@ -3,7 +3,10 @@ from rest_framework import serializers
 from .models import Location
 
 
-class LocationSerializer(serializers.ModelSerializer):
+class LocationLookupSerializer(serializers.ModelSerializer):
+    """Compact address-option DTO shared by province and ward pickers."""
+
     class Meta:
         model = Location
-        fields = ['id', 'code', 'level', 'name', 'ward_type', 'province_type', 'parent', 'slug', 'merged_from']
+        fields = ['id', 'name', 'level', 'parent', 'merged_from']
+        read_only_fields = fields

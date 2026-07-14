@@ -7,7 +7,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from ..models import AuthEmailJob, User
-from ..serializers import UserSerializer
+from ..serializers import SessionUserSerializer
 from ..services import two_factor
 from ..services.tokens import issue_tokens
 from ..tasks import queue_auth_email
@@ -58,7 +58,7 @@ class TwoFactorSetupSendView(APIView):
 @extend_schema(
     summary='Xác nhận mã để bật xác minh hai bước',
     request=TwoFactorCodeSerializer,
-    responses={200: UserSerializer},
+    responses={200: SessionUserSerializer},
     tags=['auth'],
 )
 class TwoFactorSetupConfirmView(APIView):
@@ -74,7 +74,7 @@ class TwoFactorSetupConfirmView(APIView):
             return Response({'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'}, status=status.HTTP_400_BAD_REQUEST)
         user.two_factor_enabled = True
         user.save(update_fields=['two_factor_enabled', 'updated_at'])
-        return Response(UserSerializer(user, context={'request': request}).data)
+        return Response(SessionUserSerializer(user, context={'request': request}).data)
 
 
 class TwoFactorDisableSendView(APIView):
@@ -104,7 +104,7 @@ class TwoFactorDisableConfirmView(APIView):
             return Response({'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'}, status=status.HTTP_400_BAD_REQUEST)
         user.two_factor_enabled = False
         user.save(update_fields=['two_factor_enabled', 'updated_at'])
-        return Response(UserSerializer(user, context={'request': request}).data)
+        return Response(SessionUserSerializer(user, context={'request': request}).data)
 
 
 def _challenge_user(challenge):

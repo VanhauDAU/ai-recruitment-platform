@@ -23,6 +23,10 @@ from .supporting import (
     JobLocationSerializer,
     JobSkillSerializer,
     JobWorkScheduleSerializer,
+    PublicJobBenefitSerializer,
+    PublicJobLanguageRequirementSerializer,
+    PublicJobLocationSerializer,
+    PublicJobWorkScheduleSerializer,
 )
 
 
@@ -231,7 +235,6 @@ class PublicJobListSerializer(JobSerializer):
             'work_type', 'employment_type', 'education_level', 'experience_years',
             'position_level', 'age_min', 'age_max',
             'salary_type', 'salary_min', 'salary_max', 'currency',
-            'number_of_vacancies', 'deadline',
             'tier', 'is_hot', 'is_urgent', 'has_flash_badge',
             'published_at', 'created_at',
         ]
@@ -241,10 +244,15 @@ class PublicJobListSerializer(JobSerializer):
 class PublicJobPreviewSerializer(PublicJobListSerializer):
     """Extra fields for the intentional hover preview on the home page only."""
 
+    job_locations = PublicJobLocationSerializer(many=True, read_only=True)
+    work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
+    job_benefits = PublicJobBenefitSerializer(many=True, read_only=True)
+
     class Meta(PublicJobListSerializer.Meta):
         fields = PublicJobListSerializer.Meta.fields + [
             'short_description', 'description', 'requirements', 'benefits',
             'work_schedule_note', 'job_locations', 'work_schedules', 'job_benefits',
+            'number_of_vacancies', 'deadline',
         ]
 
 
@@ -268,13 +276,29 @@ class JobDetailSerializer(JobSerializer):
     workplace_groups = serializers.SerializerMethodField()
     requirement_tags = serializers.SerializerMethodField()
     benefit_tags = serializers.SerializerMethodField()
+    job_locations = PublicJobLocationSerializer(many=True, read_only=True)
+    work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
+    language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
 
-    class Meta(JobSerializer.Meta):
-        fields = JobSerializer.Meta.fields + [
-            'category_name', 'company_size', 'company_address', 'company_description',
+    class Meta:
+        model = Job
+        fields = [
+            'public_id', 'slug', 'title',
+            'company_name', 'company_logo_url', 'company_cover_url',
+            'brand_slug', 'company_verified',
+            'category', 'category_name', 'locations_detail',
+            'description', 'requirements', 'benefits', 'work_schedule_note',
+            'work_type', 'employment_type', 'education_level', 'experience_years',
+            'position_level', 'number_of_vacancies',
+            'salary_type', 'salary_min', 'salary_max', 'currency', 'deadline',
+            'view_count', 'is_hot', 'is_urgent',
+            'job_locations', 'work_schedules', 'language_requirements',
+            'published_at', 'created_at',
+            'company_size', 'company_address', 'company_description',
             'company_website_url', 'company_industries', 'primary_specialization',
             'domain_knowledge', 'workplace_groups', 'requirement_tags', 'benefit_tags',
         ]
+        read_only_fields = fields
 
     def get_category_name(self, obj):
         assignment = self._primary_assignment(obj)
@@ -347,11 +371,13 @@ class JobDetailSerializer(JobSerializer):
         return [item.benefit.name for item in obj.job_benefits.all()]
 
 
-class EmployerJobSerializer(JobDetailSerializer):
+class EmployerJobWriteSerializer(JobSerializer):
+    """Create/update DTO for the employer job form; never used for public reads."""
+
     application_contact = JobApplicationContactSerializer(required=False, allow_null=True)
 
-    class Meta(JobDetailSerializer.Meta):
-        fields = JobDetailSerializer.Meta.fields + ['application_contact']
+    class Meta(JobSerializer.Meta):
+        fields = JobSerializer.Meta.fields + ['application_contact']
 
     @transaction.atomic
     def create(self, validated_data):
@@ -378,3 +404,19 @@ class EmployerJobSerializer(JobDetailSerializer):
         JobApplicationEmail.objects.bulk_create([
             JobApplicationEmail(contact=contact, **item) for item in emails
         ])
+
+
+class EmployerJobDetailSerializer(EmployerJobWriteSerializer):
+    """Employer form read DTO, including private application recipients."""
+
+
+class EmployerJobListSerializer(PublicJobListSerializer):
+    """Compact management-table DTO; rich job content stays on the detail API."""
+
+    class Meta(PublicJobListSerializer.Meta):
+        fields = [
+            'public_id', 'title', 'company_name', 'locations_detail',
+            'employment_type', 'deadline', 'status', 'application_count',
+            'published_at', 'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
