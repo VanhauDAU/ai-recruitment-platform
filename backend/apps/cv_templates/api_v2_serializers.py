@@ -24,6 +24,7 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     theme_color = serializers.SerializerMethodField()
+    color_variants = serializers.SerializerMethodField()
     categories = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
 
@@ -31,7 +32,7 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         model = CvTemplate
         fields = [
             'public_id', 'slug', 'display_name', 'description', 'thumbnail_url',
-            'is_premium', 'theme_color', 'categories', 'tags',
+            'is_premium', 'theme_color', 'color_variants', 'categories', 'tags',
         ]
         read_only_fields = fields
 
@@ -45,6 +46,14 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
 
     def get_theme_color(self, template):
         return template.current_published_version.default_style_json.get('theme_color', '#00A66A')
+
+    def get_color_variants(self, template):
+        style = template.current_published_version.default_style_json
+        theme = style.get('theme_color', '#00A66A')
+        variants = style.get('color_variants')
+        if not isinstance(variants, list) or not variants:
+            return [theme]
+        return [theme] + [color for color in variants if isinstance(color, str) and color != theme]
 
     def get_categories(self, template):
         return _catalog_groups(template)[0]
@@ -97,4 +106,10 @@ class CvSampleContentCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = CvSampleContent
         fields = ['public_id', 'title', 'locale', 'experience_level', 'job_category_name']
+        read_only_fields = fields
+
+
+class CvSampleContentDetailSerializer(CvSampleContentCardSerializer):
+    class Meta(CvSampleContentCardSerializer.Meta):
+        fields = CvSampleContentCardSerializer.Meta.fields + ['content_json', 'schema_version']
         read_only_fields = fields

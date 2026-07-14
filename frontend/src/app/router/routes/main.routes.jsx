@@ -62,8 +62,22 @@ export function mainRoutes() {
       <Route path="/blog/danh-muc/:categorySlug" element={<BlogCategoryPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
+      {/* Kho mẫu CV theo ngôn ngữ — URL đổi theo dropdown ngôn ngữ (kiểu TopCV):
+          /mau-cv (vi), /mau-cv-tieng-anh, /mau-cv-tieng-nhat, /mau-cv-tieng-trung.
+          Khi chọn danh mục: /mau-cv-tieng-anh/mau-it (segment sau basePath).
+          TemplateCatalog tự phân biệt category slug vs template slug qua API. */}
       <Route path="/mau-cv" element={<TemplateCatalogPage />} />
-      <Route path="/mau-cv/:slug" element={<TemplateDetailPage />} />
+      <Route path="/mau-cv/:categorySlug" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv/chi-tiet/:slug" element={<TemplateDetailPage />} />
+      <Route path="/mau-cv-tieng-anh" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv-tieng-anh/:categorySlug" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv-tieng-anh/chi-tiet/:slug" element={<TemplateDetailPage />} />
+      <Route path="/mau-cv-tieng-nhat" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv-tieng-nhat/:categorySlug" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv-tieng-nhat/chi-tiet/:slug" element={<TemplateDetailPage />} />
+      <Route path="/mau-cv-tieng-trung" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv-tieng-trung/:categorySlug" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv-tieng-trung/chi-tiet/:slug" element={<TemplateDetailPage />} />
       <Route path="/cv-templates" element={<TemplateCatalogPage />} />
       <Route path="/cv-templates/:slug" element={<TemplateDetailPage />} />
       <Route path="/cv/share/:token" element={<CvSharedViewPage />} />

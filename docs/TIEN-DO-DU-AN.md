@@ -398,6 +398,20 @@ build đều pass.
 
 </details>
 
+<details>
+<summary><b>CVB-1</b> — Redesign trang mẫu CV + popup "Dùng mẫu" theo TopCV (UI-only)</summary>
+
+**Trang `/mau-cv`** (theo mockup TopCV trong `Kế hoạch CV Builder trang ứng viên.docx`): breadcrumb + tiêu đề + caption **động theo dropdown ngôn ngữ** ("Mẫu CV tiếng Việt/Anh/Nhật/Trung", "Mẫu CV xin việc tiếng … chuẩn {năm}", đếm số mẫu từ `count` API); danh sách 3 cột **infinite scroll** (IntersectionObserver + `page` DRF, nạp đến hết); card thêm **radio chấm màu** — hover đổi màu preview tức thì, click (hoặc nút "Dùng mẫu" khi hover ảnh) mở popup **theo màu đã chọn**. **Popup "Dùng mẫu" viết lại** (`UseTemplateModal`): modal 1200px 2 cột **7/3** — trái là **preview render HTML/CSS thật** (tái sử dụng `CvDocumentPreview` + renderer contract của CV Builder, dữ liệu mẫu tiếng Việt dựng từ `sections` của template detail, fallback bộ section chuẩn khi template chưa khai báo; cuộn riêng, phân trang A4); phải là **5 nguồn tạo CV** dạng radio card: CV đã tạo trước đó (chỉ hiện khi ứng viên có CV — list title+ngày+link "Xem CV", cần backend clone nên tạm khóa nút), nội dung mẫu {sitename} gợi ý (chips 4 ngôn ngữ + select tìm vị trí từ `cv-sample-contents`), tải từ máy tính/LinkedIn (dragger .pdf/.doc/.docx — chờ backend parse), khôi phục bản chưa lưu (disabled — chưa có local draft store), tạo từ đầu; nút **"Tạo CV" disable đến khi chọn nguồn hợp lệ**, map vào `POST /v2/cvs/` hiện có (blank/sample). Thêm `getMyCvs()` (GET `/v2/cvs/` có sẵn). **Không đổi API contract/backend.** Verify: lint + architecture + 125 test + build pass; browser thật: đổi ngôn ngữ cập nhật breadcrumb/tiêu đề/empty state, hover/click chấm màu đổi preview + mở popup đúng màu, popup render đủ section chữ sắc nét có thanh cuộn riêng, nút Tạo CV disable/enable đúng, mobile xếp dọc không vỡ layout.
+
+</details>
+
+<details>
+<summary><b>CVB-1.1</b> — URL theo ngôn ngữ + biến thể màu + nội dung mẫu theo vị trí</summary>
+
+**URL kho mẫu theo ngôn ngữ** (kiểu TopCV): thêm route `/mau-cv-tieng-anh|nhat|trung` (+ `/:slug` chi tiết); locale suy từ pathname (`locale-paths.js` — một nguồn ánh xạ locale↔path↔label), dropdown ngôn ngữ `navigate()` đổi URL, breadcrumb/tiêu đề/danh sách item/link chi tiết cập nhật theo. **Backend `color_variants`:** thêm vào `CvTemplateCardSerializer` (đọc `default_style_json.color_variants`, fallback `[theme_color]`); vì published version bất biến, seed **publish version mới** (clone version + sections, draft→published, repoint `current_published_version`) thay vì sửa tại chỗ. **Seed `seed_cv_catalog`** (idempotent): color_variants cho template đã publish, localization đủ 4 ngôn ngữ/template (template chỉ hiện ở catalog ngôn ngữ có localization active), 36 `CvSampleContent` published (9 vị trí chuyên môn từ `jobs.JobCategory` × 4 locale, content_json qua `full_clean()` đúng canonical schema). **Popup:** preview A4 co theo chiều ngang cột trái bằng `zoom` + ResizeObserver (`min(1, width/842)`) — hết cuộn ngang, hiển thị trọn trang; select "Chọn vị trí" giờ có 9 vị trí thật từ sample contents. **Card:** khung border bao quanh toàn item (preview + chấm màu + tiêu đề + tag), tiêu đề đen `!text-black` (link toàn cục đang ăn màu brand), chấm màu từ API. Verify: browser thật — đổi dropdown → URL `/mau-cv-tieng-anh` + item hiện (localization seed), chọn vị trí → "Tạo CV" enable, preview không tràn ngang (scrollWidth == clientWidth, zoom 0.93); backend 6+N test pass, seed chạy 2 lần idempotent; frontend lint + architecture + 125 test + build pass.
+
+</details>
+
 ## Giai đoạn 5 — Tuyển dụng nâng cao
 
 | # | Công việc | Trạng thái |
@@ -514,4 +528,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-14 (CV Builder Giai đoạn 0 hardening — migration idempotent khôi phục DB partial-failure, preflight/repair command, bootstrap venv check, mở rộng migration tests)
+Cập nhật lần cuối: 2026-07-15 (CVB-1.1 — URL kho mẫu theo ngôn ngữ /mau-cv-tieng-anh|nhat|trung, `color_variants` trên template version + serializer, seed `seed_cv_catalog` (localization 4 ngôn ngữ + 36 nội dung mẫu theo 9 vị trí chuyên môn), popup A4 fit-width không cuộn ngang, card có khung + tiêu đề đen)

@@ -30,3 +30,8 @@ export async function getCvSampleContents(locale = 'vi-VN') {
   const { data } = await api.get('/v2/cv-sample-contents/', { params: { locale } })
   return results(data)
 }
+
+export async function getCvSampleContent(publicId) {
+  const { data } = await api.get(`/v2/cv-sample-contents/${publicId}/`)
+  return data
+}
