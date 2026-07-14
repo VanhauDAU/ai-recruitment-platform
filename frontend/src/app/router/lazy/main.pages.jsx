@@ -22,3 +22,8 @@ export const ForgotPasswordPage = lazy(() => import('@/pages/main/auth/ForgotPas
 export const ResetPasswordPage = lazy(() => import('@/pages/main/auth/ResetPassword'))
 export const OAuthCallbackPage = lazy(() => import('@/pages/main/auth/OAuthCallback'))
 export const CookiePolicyPage = lazy(() => import('@/pages/main/legal/CookiePolicy'))
+export const TemplateCatalogPage = lazy(() => import('@/pages/main/cv-templates/TemplateCatalog'))
+export const TemplateDetailPage = lazy(() => import('@/pages/main/cv-templates/TemplateDetail'))
+export const CvEditorPlaceholderPage = lazy(() => import('@/pages/main/cvs/CvEditorPlaceholder'))
+export const CvOwnerViewPage = lazy(() => import('@/pages/main/cvs/CvOwnerView'))
+export const CvSharedViewPage = lazy(() => import('@/pages/main/cvs/CvSharedView'))

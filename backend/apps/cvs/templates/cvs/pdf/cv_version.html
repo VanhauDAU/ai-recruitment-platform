@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="utf-8">
+  <style>
+    /* Local font resolution keeps worker rendering deterministic and avoids a
+       network request for candidate data. The CSS fallback is deliberately
+       constrained to schema-validated font families. */
+    @font-face { font-family: "CVExportFallback"; src: local("Arial"); }
+    @page { size: A4; margin: {{ margin_mm }}mm; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+    body {
+      color: #1f2937;
+      font-family: {{ font_stack }};
+      font-size: {{ font_scale }}em;
+      line-height: {{ line_height }};
+      overflow-wrap: anywhere;
+    }
+    .cv-page { width: 100%; min-height: 100%; }
+    .cv-header { border-left: 4px solid {{ theme_color }}; margin: 0 0 6mm; padding-left: 4mm; break-inside: avoid-page; }
+    .cv-header h1 { color: #111827; font-size: 22pt; line-height: 1.1; margin: 0; }
+    .headline { color: {{ theme_color }}; font-size: 11pt; font-weight: 700; margin: 2mm 0 0; }
+    .contact { color: #4b5563; font-size: 9pt; margin: 2mm 0 0; }
+    .regions { display: grid; gap: 6mm; grid-template-columns: {% for region in regions %} minmax(0, {{ region.width_percent }}fr){% endfor %}; }
+    .section { break-inside: avoid-page; page-break-inside: avoid; margin: 0 0 5mm; overflow: visible; }
+    .section h2 { border-bottom: 1px solid {{ theme_color }}; color: {{ theme_color }}; font-size: 10pt; letter-spacing: .05em; margin: 0 0 2mm; padding-bottom: 1mm; text-transform: uppercase; }
+    .item { break-inside: avoid; page-break-inside: avoid; margin: 0 0 3mm; }
+    .item-heading { color: #1f2937; font-weight: 700; margin: 0; }
+    .item-meta { color: #4b5563; font-size: .94em; margin: 0; }
+    .item-description { margin: 1mm 0 0; white-space: pre-line; }
+    .item-description p { margin: 0 0 1mm; }
+    @media print {
+      .cv-page { break-after: page; page-break-after: always; }
+      .cv-page:last-child { break-after: auto; page-break-after: auto; }
+    }
+  </style>
+</head>
+<body data-renderer="{{ renderer_key }}" data-renderer-version="{{ renderer_version }}">
+  <article class="cv-page">
+    <header class="cv-header">
+      <h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>
+      {% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}
+      {% if personal_info.email or personal_info.phone or personal_info.address %}
+        <p class="contact">{{ personal_info.email }}{% if personal_info.email and personal_info.phone %} · {% endif %}{{ personal_info.phone }}{% if personal_info.address %} · {{ personal_info.address }}{% endif %}</p>
+      {% endif %}
+    </header>
+    <div class="regions">
+      {% for region in regions %}
+        <div class="region region-{{ region.id }}">
+          {% for section in region.sections %}
+            <section class="section">
+              <h2>{{ section.title }}</h2>
+              {% for item in section.items %}
+                <div class="item">
+                  {% if item.heading %}<p class="item-heading">{{ item.heading }}</p>{% endif %}
+                  {% if item.metadata %}<p class="item-meta">{{ item.metadata }}</p>{% endif %}
+                  {% if item.description %}<div class="item-description">{% for line in item.description %}<p>{{ line }}</p>{% endfor %}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </section>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </article>
+</body>
+</html>

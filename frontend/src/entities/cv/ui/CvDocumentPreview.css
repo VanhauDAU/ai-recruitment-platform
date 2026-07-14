@@ -1,0 +1,55 @@
+/* Preview and print use the same A4-safe rules as the immutable export
+   contract. Export itself remains server-side and never captures this DOM. */
+@font-face {
+  font-family: "CVPreviewInter";
+  src: local("Inter"), local("Arial");
+  font-display: swap;
+}
+
+.cv-document-preview__section {
+  overflow-wrap: anywhere;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .cv-document-preview {
+    background: #fff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .cv-document-preview__page-label,
+  .cv-document-preview__overflow {
+    display: none !important;
+  }
+
+  .cv-document-preview__page-wrap {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .cv-document-preview__page-wrap:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .cv-document-preview__page {
+    font-family: "CVPreviewInter", Arial, sans-serif;
+    height: auto !important;
+    min-height: 297mm;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .cv-document-preview__section,
+  .cv-document-preview__section > div {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+    overflow-wrap: anywhere;
+  }
+}
