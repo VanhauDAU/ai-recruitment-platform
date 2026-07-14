@@ -17,16 +17,46 @@ export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau
   const detailPath = `${detailBasePath}/chi-tiet/${template.slug}`
   const variants = templateColorVariants(template)
   const [selectedColor, setSelectedColor] = useState(variants[0])
+  const [hovered, setHovered] = useState(false)
 
   const openWith = (color) => {
     setSelectedColor(color)
     onUse?.(template, color)
   }
 
+  // Chuyển hex sang rgba với alpha nhạt hơn để làm background hover
+  const getHoverBgColor = (hex) => {
+    if (!hex || !hex.startsWith('#')) return '#ebf0f5'
+    const cleanHex = hex.replace('#', '')
+    const num = parseInt(cleanHex, 16)
+    let r, g, b
+    if (cleanHex.length === 3) {
+      r = (num >> 8) & 0xf
+      r = (r << 4) | r
+      g = (num >> 4) & 0xf
+      g = (g << 4) | g
+      b = num & 0xf
+      b = (b << 4) | b
+    } else {
+      r = (num >> 16) & 0xff
+      g = (num >> 8) & 0xff
+      b = num & 0xff
+    }
+    return `rgba(${r}, ${g}, ${b}, 0.08)`
+  }
+
   return (
-    <article className="group flex flex-col rounded-2xl border border-slate-100 bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-      {/* Container của preview có padding và background màu xám nhẹ, tạo hiệu ứng CV nổi bật */}
-      <div className="relative overflow-hidden rounded-xl bg-[#f5f7fa] p-4 pb-2 transition-colors duration-300 group-hover:bg-[#ebf0f5]">
+    <article 
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="group flex flex-col rounded-2xl border bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+      style={{
+        borderColor: hovered ? selectedColor : '#f1f5f9', // slate-100 is #f1f5f9
+        backgroundColor: hovered ? getHoverBgColor(selectedColor) : '#ffffff',
+      }}
+    >
+      {/* Container của preview (đã bỏ bg và padding để chỉ dùng khung ngoài) */}
+      <div className="relative overflow-hidden rounded-xl">
         <Link 
           to={detailPath} 
           className="relative block aspect-[3/4] overflow-hidden rounded-lg bg-white shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow duration-300 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]" 
