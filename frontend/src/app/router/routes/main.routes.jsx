@@ -17,12 +17,13 @@ import {
   MainRegisterPage,
   OAuthCallbackPage,
   CookiePolicyPage,
-  CvEditorPlaceholderPage,
+  CvEditorPage,
   CvOwnerViewPage,
   CvSharedViewPage,
   OnboardUserPage,
   OnboardUserSettingPage,
   PersonalInfoPage,
+  MyCvsPage,
   JobPreferenceSettingsPage,
   TwoFactorAuthenticationPage,
   ResetPasswordPage,
@@ -37,6 +38,7 @@ import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 // chưa có ở đây thì dùng AccountPlaceholderPage.
 const ACCOUNT_PAGE_BY_KEY = {
   'personal-info': PersonalInfoPage,
+  'my-cv': MyCvsPage,
   'two-factor': TwoFactorAuthenticationPage,
   'suggestion-settings': JobPreferenceSettingsPage,
 }
@@ -87,7 +89,7 @@ export function mainRoutes() {
           khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
-          <Route path="/cvs/:publicId/edit" element={<CvEditorPlaceholderPage />} />
+          <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
           <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />

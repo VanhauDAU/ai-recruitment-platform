@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { OwnerCvVersionView, SharedCvVersionView } from './CvVersionReadOnly'
 
@@ -25,9 +26,13 @@ const immutableResponse = {
 describe('read-only CV version viewer', () => {
   it('renders the owner view through the shared renderer contract using an immutable version only', async () => {
     const loadOwnerView = vi.fn().mockResolvedValue(immutableResponse)
-    render(<OwnerCvVersionView publicId="cv_1" loadOwnerView={loadOwnerView} />)
+    render(
+      <MemoryRouter>
+        <OwnerCvVersionView publicId="cv_1" loadOwnerView={loadOwnerView} />
+      </MemoryRouter>,
+    )
 
-    expect(await screen.findByRole('heading', { name: 'CV bất biến' })).toBeInTheDocument()
+    expect(await screen.findByText('Xem CV Online của CV bất biến')).toBeInTheDocument()
     expect(screen.getByTestId('immutable-preview')).toHaveTextContent('classic_two_column_v1')
     expect(loadOwnerView).toHaveBeenCalledWith('cv_1')
     expect(preview).toHaveBeenLastCalledWith(expect.objectContaining({

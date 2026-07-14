@@ -1,12 +1,15 @@
 """Read queries for public CV templates."""
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
+
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..models import (
     CvCategory,
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
+    CvTemplateColorLink,
     CvTemplateLocalization,
     CvTemplateSection,
 )
@@ -23,7 +26,12 @@ def _slugs(value):
 def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
     """Public catalogue, always tied to the current published version."""
     localizations = CvTemplateLocalization.objects.filter(locale=locale, is_active=True)
-    categories = CvTemplateCategoryLink.objects.select_related('category').filter(category__is_active=True)
+    categories = CvTemplateCategoryLink.objects.select_related('category').filter(
+        category__is_active=True,
+    ).order_by('sort_order', 'category__sort_order', 'category__name')
+    colors = CvTemplateColorLink.objects.select_related('color').filter(
+        color__is_active=True,
+    ).order_by('sort_order', 'color__sort_order', 'color__name')
     queryset = CvTemplate.objects.filter(
         status=CvTemplate.Status.ACTIVE,
         lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
@@ -33,6 +41,7 @@ def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
     ).select_related('current_published_version').prefetch_related(
         Prefetch('localizations', queryset=localizations, to_attr='catalog_localizations'),
         Prefetch('category_links', queryset=categories, to_attr='catalog_category_links'),
+        Prefetch('color_links', queryset=colors, to_attr='catalog_color_links'),
     )
     category_slugs = _slugs(category)
     if category_slugs:
@@ -77,6 +86,27 @@ def published_sample_contents_queryset(*, locale=None, experience_level=None):
     if experience_level:
         queryset = queryset.filter(experience_level=experience_level)
     return queryset
+
+
+def active_cv_position_options_queryset(query=None):
+    vi_localizations = JobCategoryLocalization.objects.filter(
+        locale=JobCategoryLocalization.Locale.VI,
+        is_active=True,
+    )
+    queryset = JobCategory.objects.filter(
+        status=JobCategory.Status.ACTIVE,
+        category_type=JobCategory.CategoryType.SPECIALIZATION,
+        localizations__locale=JobCategoryLocalization.Locale.VI,
+        localizations__is_active=True,
+    ).prefetch_related(
+        Prefetch('localizations', queryset=vi_localizations, to_attr='cv_picker_localizations'),
+    )
+    if query:
+        queryset = queryset.filter(
+            Q(localizations__display_name__unaccent__icontains=query)
+            | Q(localizations__search_aliases__unaccent__icontains=query)
+        )
+    return queryset.distinct().order_by('localizations__display_name')
 
 
 def related_published_templates(template, *, locale='vi-VN', limit=6):

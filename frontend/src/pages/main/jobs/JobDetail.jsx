@@ -1,7 +1,9 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Button, Result, message } from 'antd'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLoginPrompt } from '@/features/auth'
+import { ApplyForJobModal } from '@/features/apply-for-job'
 import { useSession } from '@/entities/session'
 import { useSavedJob } from '@/features/saved-jobs'
 import JobDetailContent from './ui/job-detail/JobDetailContent'
@@ -19,6 +21,7 @@ export default function JobDetail() {
   const { promptLogin } = useLoginPrompt()
   const { job, relatedJobs, loading, notFound } = useJobDetailPageData({ slug, companySlug, navigate })
   const [saved, toggleSaved, savePending] = useSavedJob(job?.public_id)
+  const [applyOpen, setApplyOpen] = useState(false)
 
   function requireCandidate() {
     if (!isAuthenticated) {
@@ -34,7 +37,7 @@ export default function JobDetail() {
 
   function handleApply() {
     if (!requireCandidate()) return
-    message.info('Tính năng ứng tuyển sẽ sớm ra mắt.')
+    setApplyOpen(true)
   }
 
   function handleSave() {
@@ -84,6 +87,12 @@ export default function JobDetail() {
       </main>
 
       <MobileActions saved={saved} onApply={handleApply} onSave={handleSave} savePending={savePending} />
+      <ApplyForJobModal
+        open={applyOpen}
+        onClose={() => setApplyOpen(false)}
+        jobPublicId={job.public_id}
+        jobTitle={job.title}
+      />
     </>
   )
 }

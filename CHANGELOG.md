@@ -6,6 +6,41 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-15
+
+#### Added
+
+- Chuẩn hóa taxonomy kho mẫu CV bằng quan hệ many-to-many `CvTemplate.categories` qua `CvTemplateCategoryLink`; bổ sung `CvColor` và `CvTemplateColorLink` để một template có nhiều màu, mỗi màu có thumbnail/preview URL, thứ tự và trạng thái mặc định riêng.
+- Public CV Template API V2 trả thêm `colors[]` từ database; Django admin có màn quản lý category/color và inline gán category/color cho từng template.
+- Migration `cv_templates.0004_cv_template_taxonomy_colors` backfill màu từ style JSON cũ sang bảng quan hệ; `seed_cv_catalog` chuyển category legacy thành link thật, seed palette màu/localization/sample content theo cách idempotent.
+- Luồng tạo CV V2 nhận tùy chọn `theme_color`, chỉ chấp nhận màu active đã gán cho template và ghi màu đã chọn vào initial version cùng draft.
+- Thêm unit/regression test cho contract category/color, URL preview theo màu và việc lưu màu vào CV; smoke test desktop/mobile phủ hover màu đổi preview và trang detail mở create flow.
+- Tách contract vị trí sample CV qua migration `cv_templates.0005`: `job_category_slug` giữ định danh ổn định, `position_name_vi` giữ nhãn dropdown tiếng Việt ở mọi locale, còn `position_name` và `content_json` được seed theo ngôn ngữ preview (ví dụ AI/Machine Learning Engineer).
+- Sửa mapping locale `en-US` cho các vị trí có tên gốc tiếng Việt (`Chăm sóc khách hàng` → `Customer Service`, `Nhân viên kinh doanh` → `Sales Executive`, `Kế toán` → `Accountant`, `Nhân sự` → `Human Resources`); chạy seed idempotent để sửa sample generated hiện hữu.
+- Migration `jobs.0017` chuyển position picker sang taxonomy-driven: `JobCategory` có `public_id`, `JobCategoryLocalization` quản lý tên 4 locale trong admin; dropdown lấy toàn bộ vị trí chuyên môn và chỉ hiển thị `name_vi` có tìm kiếm.
+- Migration `cv_templates.0006` thêm `CvContentBlueprint` cấu hình theo locale/experience trong admin và position-content resolver: ưu tiên curated `CvSampleContent`, nếu chưa có thì materialize canonical content từ blueprint. Baseline 61 vị trí × 4 locale được bootstrap, validate thành 244 preview document.
+- Migration `cvs.0006` lưu FK position trên CV; `POST /api/v2/cvs/` nhận `position_public_id` và clone nội dung đã resolve vào initial immutable version/draft. `sample_content_public_id` được giữ tương thích trong cửa sổ chuyển đổi.
+- Hoàn thiện parity cho account library ở V2: `POST /api/v2/cvs/imports/` nhận PDF/DOCX, `PATCH /api/v2/cvs/{id}/` đổi title/default CV, và `DELETE` archive CV bằng lifecycle service. Response import chỉ trả metadata file, không lộ storage URL.
+- Bổ sung constraint DB chỉ cho phép một CV mặc định còn active mỗi candidate; migration giữ CV default cập nhật gần nhất nếu dữ liệu cũ có nhiều bản ghi.
+- Bổ sung `POST /api/v2/cvs/{id}/duplicate/`, archive list và `POST …/restore/`. Duplicate builder CV tạo aggregate/version/draft độc lập từ snapshot immutable; restore owner-only trong restore window cấu hình được (`CV_ARCHIVE_RESTORE_WINDOW_DAYS`, mặc định 30 ngày) và không tự đặt lại default CV.
+- Bổ sung `GET|POST /api/v2/applications/` cho candidate. Request ghi rõ `cv_public_id` và `version_public_id`; backend tạo `application_snapshot` từ version đó, không đọc draft và không làm đổi CV pointer.
+
+#### Changed
+
+- Card mẫu CV bỏ danh sách màu fallback hard-code; hover/focus một màu dùng đúng `preview_url` của quan hệ template–color, còn compatibility fallback chỉ giữ một màu cho node API chưa migrate.
+- Trang template detail và modal dùng chung `CvSourcePanel`; màu của modal mẫu liên quan có state riêng, không làm đổi màu template chính. Catalog không còn tải sample content rồi truyền vào prop không được sử dụng.
+- Đổi tên page `CvEditorPlaceholder` thành `CvEditor` vì route `/cvs/{public_id}/edit` đã render editor thật; thu hẹp public API của entity `cv-template` bằng cách bỏ export preview component không có consumer ngoài slice.
+- Trang “CV của tôi” dùng entity API V2 cho archive, rename, default, share và import; upload gọi backend thật rồi refresh danh sách, không còn thông báo thành công bằng timeout hoặc gọi V1.
+- Trang “CV của tôi” đã duplicate CV builder thật, hiển thị kho archive để restore, đồng thời bỏ các CTA giả cho “đẩy top” và trạng thái searchable chưa có backend.
+- Smoke desktop/mobile của candidate library phủ contract list, owner view, restore và application chọn version; permission/lifecycle vẫn được kiểm tra bằng regression test backend, không đánh đồng mock API với integration test.
+- CTA trên card CV dẫn rõ tới owner view để xem và xuất PDF từ immutable version, tái sử dụng feature export hiện có thay vì tạo luồng export thứ hai.
+- CTA “Ứng tuyển ngay” mở workflow chọn CV/version bất biến, ưu tiên bản published, cảnh báo khi chưa publish và chỉ gửi payload V2 sau bước xác nhận.
+- V1 `/api/cvs/` và `/api/cv-templates/` giữ hoạt động trong thời gian cutover nhưng mọi response đã có `Deprecation`, `Sunset`, `Link: rel="successor-version"` và event telemetry endpoint-level không ghi URL, user-agent hay định danh người dùng.
+
+#### Documentation
+
+- Cập nhật kiến trúc, API, database inventory, tiến độ và kế hoạch CV Builder theo nguồn dữ liệu category/color mới, V1→V2 cutover, các biến môi trường deprecation/sunset và phần còn lại của workflow clone/restore/import analysis.
+
 ### 2026-07-14
 
 #### Added

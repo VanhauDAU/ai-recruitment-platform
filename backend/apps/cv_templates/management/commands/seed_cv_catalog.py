@@ -1,22 +1,32 @@
-"""Seed CV Builder catalog data: template color variants + sample contents per position.
+"""Seed CV Builder taxonomy, template colors and sample contents per position.
 
-Idempotent: color variants are only added when missing; sample contents are
-keyed by (job_category, locale) and skipped when already present.
+Idempotent: relations use get_or_create; sample contents are keyed by
+(job_category, locale) and skipped when already present.
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from django.utils.text import slugify
 
 from apps.cv_templates.models import (
     CvSampleContent,
+    CvContentBlueprint,
+    CvCategory,
+    CvColor,
     CvTemplate,
+    CvTemplateCategoryLink,
+    CvTemplateColorLink,
     CvTemplateLocalization,
-    CvTemplateSection,
-    CvTemplateVersion,
 )
-from apps.jobs.models import JobCategory
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-DEFAULT_COLOR_VARIANTS = ['#1f2937', '#334e68', '#5b2333', '#0e7490']
+DEFAULT_COLORS = [
+    ('Xanh thương hiệu', 'brand-green', '#00A66A'),
+    ('Than chì', 'charcoal', '#1F2937'),
+    ('Xanh đá', 'slate-blue', '#334E68'),
+    ('Đỏ rượu', 'burgundy', '#5B2333'),
+    ('Xanh teal', 'teal', '#0E7490'),
+]
 
 SAMPLE_POSITIONS = [
     'Backend Developer',
@@ -29,6 +39,53 @@ SAMPLE_POSITIONS = [
     'Kế toán',
     'Nhân sự',
 ]
+
+POSITION_LABELS = {
+    'vi-VN': {
+        'Backend Developer': 'Lập trình viên Backend',
+        'Frontend Developer': 'Lập trình viên Frontend',
+        'AI/Machine Learning Engineer': 'Kỹ sư AI/Machine Learning',
+        'Automation Tester': 'Kiểm thử tự động',
+        'Content Marketing': 'Content Marketing',
+        'Chăm sóc khách hàng': 'Chăm sóc khách hàng',
+        'Nhân viên kinh doanh': 'Nhân viên kinh doanh',
+        'Kế toán': 'Kế toán',
+        'Nhân sự': 'Nhân sự',
+    },
+    'en-US': {
+        'Backend Developer': 'Backend Developer',
+        'Frontend Developer': 'Frontend Developer',
+        'AI/Machine Learning Engineer': 'AI/Machine Learning Engineer',
+        'Automation Tester': 'Automation Tester',
+        'Content Marketing': 'Content Marketing',
+        'Chăm sóc khách hàng': 'Customer Service',
+        'Nhân viên kinh doanh': 'Sales Executive',
+        'Kế toán': 'Accountant',
+        'Nhân sự': 'Human Resources',
+    },
+    'ja-JP': {
+        'Backend Developer': 'バックエンド開発者',
+        'Frontend Developer': 'フロントエンド開発者',
+        'AI/Machine Learning Engineer': 'AI・機械学習エンジニア',
+        'Automation Tester': '自動化テスター',
+        'Content Marketing': 'コンテンツマーケティング',
+        'Chăm sóc khách hàng': 'カスタマーサポート',
+        'Nhân viên kinh doanh': '営業担当者',
+        'Kế toán': '会計担当者',
+        'Nhân sự': '人事担当者',
+    },
+    'zh-CN': {
+        'Backend Developer': '后端开发工程师',
+        'Frontend Developer': '前端开发工程师',
+        'AI/Machine Learning Engineer': '人工智能/机器学习工程师',
+        'Automation Tester': '自动化测试工程师',
+        'Content Marketing': '内容营销',
+        'Chăm sóc khách hàng': '客户服务专员',
+        'Nhân viên kinh doanh': '销售专员',
+        'Kế toán': '会计专员',
+        'Nhân sự': '人力资源专员',
+    },
+}
 
 LOCALE_TEXTS = {
     'vi-VN': {
@@ -99,18 +156,27 @@ def rich_text(value):
     return {'format': 'rich_text_v1', 'content': blocks}
 
 
+def category_type_for(name):
+    return (
+        CvCategory.CategoryType.STYLE
+        if name.casefold() in {'simple', 'modern', 'classic'}
+        else CvCategory.CategoryType.POSITION
+    )
+
+
 def build_sample_content(locale, position):
     texts = LOCALE_TEXTS[locale]
+    localized_position = POSITION_LABELS[locale].get(position, position)
 
     def t(key):
-        return texts[key].replace('{position}', position)
+        return texts[key].replace('{position}', localized_position)
 
     return {
         'schema_version': 1,
         'locale': locale,
         'personal_info': {
             'full_name': '',
-            'headline': position,
+            'headline': localized_position,
             'email': '',
             'phone': '',
             'address': '',
@@ -159,7 +225,7 @@ def build_sample_content(locale, position):
                 'title': texts['skills_title'],
                 'enabled': True,
                 'items': [
-                    {'item_id': f'skills_item_{index + 1}', 'name': skill.replace('{position}', position), 'level': ''}
+                    {'item_id': f'skills_item_{index + 1}', 'name': skill.replace('{position}', localized_position), 'level': ''}
                     for index, skill in enumerate(texts['skills'])
                 ],
             },
@@ -169,56 +235,86 @@ def build_sample_content(locale, position):
 
 
 class Command(BaseCommand):
-    help = 'Seed CV template color variants and per-position sample contents (idempotent).'
+    help = 'Seed CV template taxonomy, colors and per-position sample contents (idempotent).'
 
     @transaction.atomic
     def handle(self, *args, **options):
-        # Published versions are immutable, so adding color variants means
-        # publishing a new version cloned from the current one.
-        variants_added = 0
+        for category in JobCategory.objects.filter(
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+            status=JobCategory.Status.ACTIVE,
+        ):
+            JobCategoryLocalization.objects.get_or_create(
+                category=category,
+                locale=JobCategoryLocalization.Locale.VI,
+                defaults={'display_name': category.name, 'is_active': True},
+            )
+
+        for locale, texts in LOCALE_TEXTS.items():
+            CvContentBlueprint.objects.get_or_create(
+                locale=locale,
+                experience_level='unspecified',
+                defaults={
+                    'summary_title': texts['summary_title'],
+                    'summary_template': texts['summary'],
+                    'experience_title': texts['experience_title'],
+                    'experience_company': texts['exp_company'],
+                    'experience_description_template': texts['exp_desc'],
+                    'education_title': texts['education_title'],
+                    'education_degree': texts['edu_degree'],
+                    'education_institution': texts['edu_school'],
+                    'education_description': texts['edu_desc'],
+                    'skills_title': texts['skills_title'],
+                    'skill_templates': texts['skills'],
+                    'is_active': True,
+                },
+            )
+
+        colors = []
+        for index, (name, slug, hex_code) in enumerate(DEFAULT_COLORS):
+            color, _ = CvColor.objects.get_or_create(
+                hex_code=hex_code,
+                defaults={'name': name, 'slug': slug, 'sort_order': index, 'is_active': True},
+            )
+            colors.append(color)
+
+        color_links_created = 0
         for template in CvTemplate.objects.filter(
             lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
             current_published_version__isnull=False,
         ):
             version = template.current_published_version
-            style = dict(version.default_style_json or {})
-            if style.get('color_variants'):
-                continue
-            theme = style.get('theme_color', '#00A66A')
-            style['color_variants'] = [color for color in DEFAULT_COLOR_VARIANTS if color != theme]
-            latest_number = template.versions.order_by('-version_number').first().version_number
-            new_version = CvTemplateVersion.objects.create(
-                template=template,
-                version_number=latest_number + 1,
-                version_status=CvTemplateVersion.VersionStatus.DRAFT,
-                renderer_key=version.renderer_key,
-                renderer_version=version.renderer_version,
-                schema_version=version.schema_version,
-                layout_schema=version.layout_schema,
-                style_schema=version.style_schema,
-                default_layout_json=version.default_layout_json,
-                default_style_json=style,
-                capabilities=version.capabilities,
-                content_contract=version.content_contract,
+            theme = str((version.default_style_json or {}).get('theme_color', '#00A66A')).upper()
+            theme_color, _ = CvColor.objects.get_or_create(
+                hex_code=theme,
+                defaults={
+                    'name': f'Màu {theme}',
+                    'slug': f'color-{theme.lstrip("#").lower()}',
+                },
             )
-            for section in version.sections.all():
-                CvTemplateSection.objects.create(
-                    template_version=new_version,
-                    section_definition=section.section_definition,
-                    region_key=section.region_key,
-                    default_order=section.default_order,
-                    is_required=section.is_required,
-                    is_default_enabled=section.is_default_enabled,
-                    is_draggable=section.is_draggable,
-                    use_theme_color=section.use_theme_color,
-                    config_json=section.config_json,
+            ordered_colors = [theme_color, *[color for color in colors if color.pk != theme_color.pk]]
+            has_default = template.color_links.filter(is_default=True).exists()
+            for index, color in enumerate(ordered_colors):
+                _, created = CvTemplateColorLink.objects.get_or_create(
+                    template=template,
+                    color=color,
+                    defaults={
+                        'thumbnail_url': template.thumbnail_url,
+                        'preview_url': template.preview_url or template.thumbnail_url,
+                        'is_default': index == 0 and not has_default,
+                        'sort_order': index,
+                    },
                 )
-            new_version.version_status = CvTemplateVersion.VersionStatus.PUBLISHED
-            new_version.published_at = timezone.now()
-            new_version.save(update_fields=['version_status', 'published_at'])
-            template.current_published_version = new_version
-            template.save(update_fields=['current_published_version'])
-            variants_added += 1
+                color_links_created += int(created)
+
+            # Convert legacy comma-separated category values into real links.
+            for raw_name in filter(None, (part.strip() for part in template.category.split(','))):
+                slug = slugify(raw_name)[:140]
+                category, _ = CvCategory.objects.get_or_create(
+                    category_type=category_type_for(raw_name),
+                    slug=slug,
+                    defaults={'name': raw_name},
+                )
+                CvTemplateCategoryLink.objects.get_or_create(template=template, category=category)
 
         # A template only appears in a language catalog when it has an active
         # localization for that locale, so make sure every published template
@@ -252,22 +348,48 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f'Job category not found, skipped: {name}'))
                 continue
             for locale in LOCALE_TEXTS:
-                exists = CvSampleContent.objects.filter(job_category=category, locale=locale).exists()
-                if exists:
-                    continue
-                sample = CvSampleContent(
+                localized_position = POSITION_LABELS[locale].get(name, name)
+                JobCategoryLocalization.objects.get_or_create(
+                    category=category,
+                    locale=locale,
+                    defaults={'display_name': localized_position, 'is_active': True},
+                )
+                sample, created = CvSampleContent.objects.get_or_create(
                     job_category=category,
                     locale=locale,
-                    title=LOCALE_TEXTS[locale]['title'].replace('{position}', name),
-                    content_json=build_sample_content(locale, name),
-                    status=CvSampleContent.Status.PUBLISHED,
-                    published_at=timezone.now(),
+                    defaults={
+                        'title': LOCALE_TEXTS[locale]['title'].replace('{position}', localized_position),
+                        'position_name_vi': POSITION_LABELS['vi-VN'].get(name, name),
+                        'content_json': build_sample_content(locale, name),
+                        'status': CvSampleContent.Status.PUBLISHED,
+                        'published_at': timezone.now(),
+                    },
                 )
-                sample.full_clean()
-                sample.save()
-                samples_created += 1
+                if created:
+                    sample.full_clean()
+                    samples_created += 1
+                else:
+                    # Repair rows generated by the old seed without overwriting
+                    # content that an editor has already customized.
+                    headline = (sample.content_json or {}).get('personal_info', {}).get('headline')
+                    position_name_vi = POSITION_LABELS['vi-VN'].get(name, name)
+                    old_position_name_vi = sample.position_name_vi
+                    sample.position_name_vi = position_name_vi
+                    generated_positions = set(POSITION_LABELS[locale].values()) | {name}
+                    generated_headlines = generated_positions
+                    generated_titles = {
+                        LOCALE_TEXTS[locale]['title'].replace('{position}', generated_position)
+                        for generated_position in generated_positions
+                    }
+                    if headline in generated_headlines and sample.title in generated_titles:
+                        sample.title = LOCALE_TEXTS[locale]['title'].replace('{position}', localized_position)
+                        sample.content_json = build_sample_content(locale, name)
+                        sample.full_clean()
+                        sample.save(update_fields=['title', 'position_name_vi', 'content_json', 'updated_at'])
+                    elif old_position_name_vi != position_name_vi:
+                        sample.save(update_fields=['position_name_vi', 'updated_at'])
 
         self.stdout.write(self.style.SUCCESS(
-            f'Done. color_variants added to {variants_added} template version(s); '
+            f'Done. {color_links_created} template color link(s) created; '
             f'{localizations_created} localization(s) and {samples_created} sample content(s) created.'
         ))

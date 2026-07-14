@@ -121,7 +121,7 @@ src/
 ├── pages/     # route pages theo main, employer, admin
 ├── widgets/   # các khối UI lớn ghép domain
 ├── features/  # user actions/workflows
-├── entities/  # session, account, blog, job, location, site-settings
+├── entities/  # session, account, application, blog, job, location, site-settings
 ├── shared/    # infrastructure và UI không biết domain
 └── test/      # test setup
 ```
@@ -129,3 +129,47 @@ src/
 Route được đăng ký trong `app/router/routes`, còn page và layout được lazy-load
 theo portal. Compatibility shim đã hết consumer phải được xóa, không giữ lại để
 phòng hờ.
+
+## Ownership map — CV Builder
+
+```text
+app/router
+  → pages/main/cv-templates, pages/main/cvs, pages/main/account/MyCvs
+    → features/create-cv-from-template, edit-cv-draft, view/export-cv-version
+      → entities/cv-template, entities/cv
+        → shared/api, shared/ui
+```
+
+- `entities/cv-template` sở hữu API đọc catalogue, normalization màu và UI card
+  domain. `colors[]` từ API là nguồn chuẩn; page/feature không tự tạo palette.
+- `features/create-cv-from-template` sở hữu chọn nguồn, sample preview và POST
+  create. Position picker đọc taxonomy qua entity `cv-template`, dùng
+  `position_public_id` làm value và chỉ hiển thị `name_vi`; preview document
+  được resolve ở backend, frontend không dịch hoặc ghép content. Màu được chọn
+  là input của workflow, không phải state toàn app.
+- `features/edit-cv-draft` sở hữu autosave/history/section/layout editing;
+  `entities/cv` sở hữu canonical document, renderer contract và preview.
+- `pages/main/cv-templates` chỉ lấy locale/route params và compose catalogue,
+  detail, source panel/modal. `pages/main/cvs/CvEditor.jsx` chỉ lấy `publicId`
+  rồi compose editor feature.
+- `pages/main/account/MyCvs.jsx` là owner-local account UI; nó chỉ gọi public
+  API `entities/cv` (V2 metadata/archive/import/duplicate/restore/share), không
+  gọi HTTP client trực tiếp hoặc contract V1. CTA chỉ xuất hiện khi backend
+  workflow tồn tại; không dùng timeout/local state để mô phỏng thành công.
+- Backend compatibility fields như `theme_color`/`color_variants` có thể tồn
+  tại trong response lúc dual-read, nhưng frontend mới không được dùng chúng để
+  dựng nhiều màu giả khi `colors[]` đã có.
+
+## Ownership map — Job application
+
+```text
+pages/main/jobs/JobDetail
+  → features/apply-for-job
+    → entities/application, entities/cv
+      → shared/api
+```
+
+- `entities/application` chỉ sở hữu application HTTP contract V2; không chứa
+  lựa chọn CV hoặc state modal.
+- `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
+  explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.

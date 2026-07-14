@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -45,6 +46,18 @@ class CvTemplate(models.Model):
         null=True,
         blank=True,
         related_name='+',
+    )
+    categories = models.ManyToManyField(
+        'CvCategory',
+        through='CvTemplateCategoryLink',
+        related_name='templates',
+        blank=True,
+    )
+    colors = models.ManyToManyField(
+        'CvColor',
+        through='CvTemplateColorLink',
+        related_name='templates',
+        blank=True,
     )
     archived_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_cv_templates')
@@ -99,6 +112,37 @@ class CvCategory(models.Model):
 
     def __str__(self):
         return f'{self.category_type}: {self.name}'
+
+
+class CvColor(models.Model):
+    """Reusable catalogue color; preview assets belong to the template link."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    name = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=100, unique=True)
+    hex_code = models.CharField(
+        max_length=7,
+        unique=True,
+        validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Use a six-digit hex color.')],
+    )
+    sort_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvcolor')
+        if not self.slug:
+            self.slug = slugify(f'{self.name}-{self.hex_code.lstrip("#")}')
+        self.hex_code = self.hex_code.upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.name} ({self.hex_code})'
 
 
 class CvTemplateVersion(models.Model):
@@ -209,6 +253,26 @@ class CvTemplateCategoryLink(models.Model):
         ]
 
 
+class CvTemplateColorLink(models.Model):
+    template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='color_links')
+    color = models.ForeignKey(CvColor, on_delete=models.PROTECT, related_name='template_links')
+    thumbnail_url = models.TextField(blank=True)
+    preview_url = models.TextField(blank=True)
+    is_default = models.BooleanField(default=False)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['sort_order', 'pk']
+        constraints = [
+            models.UniqueConstraint(fields=['template', 'color'], name='uq_cv_template_color_link'),
+            models.UniqueConstraint(
+                fields=['template'],
+                condition=models.Q(is_default=True),
+                name='uq_cv_template_default_color',
+            ),
+        ]
+
+
 class CvSectionDefinition(models.Model):
     """Database registry entry for a canonical CV section key."""
 
@@ -274,6 +338,11 @@ class CvSampleContent(models.Model):
     locale = models.CharField(max_length=16)
     experience_level = models.CharField(max_length=30, default='unspecified')
     title = models.CharField(max_length=255)
+    # The picker is intentionally Vietnamese even when the sample content is
+    # rendered in another locale.  Keep this presentation label beside the
+    # canonical sample so the API does not make the client infer it from
+    # localized content.
+    position_name_vi = models.CharField(max_length=255, blank=True)
     content_json = models.JSONField(default=dict)
     schema_version = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
@@ -291,6 +360,12 @@ class CvSampleContent(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['status', 'locale', 'experience_level'], name='idx_cv_samples_catalog'),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job_category', 'locale', 'experience_level'],
+                name='uq_cv_sample_position_locale_level',
+            ),
         ]
         ordering = ['locale', 'experience_level', 'title']
 
@@ -322,3 +397,52 @@ class CvSampleContent(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class CvContentBlueprint(models.Model):
+    """Admin-configurable generic starter content for a locale/experience pair."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    locale = models.CharField(max_length=16)
+    experience_level = models.CharField(max_length=30, default='unspecified')
+    summary_title = models.CharField(max_length=255)
+    summary_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.')
+    experience_title = models.CharField(max_length=255)
+    experience_company = models.CharField(max_length=255)
+    experience_description_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí.')
+    education_title = models.CharField(max_length=255)
+    education_degree = models.CharField(max_length=255)
+    education_institution = models.CharField(max_length=255)
+    education_description = models.TextField(blank=True)
+    skills_title = models.CharField(max_length=255)
+    skill_templates = models.JSONField(default=list, help_text='Danh sách chuỗi; có thể dùng {position}.')
+    is_active = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_cv_content_blueprints',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['locale', 'experience_level'], name='uq_cv_content_blueprint'),
+        ]
+        ordering = ['locale', 'experience_level']
+
+    def clean(self):
+        if not isinstance(self.skill_templates, list) or not all(
+            isinstance(item, str) for item in self.skill_templates
+        ):
+            raise ValidationError({'skill_templates': 'Must be a list of strings.'})
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvblueprint')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.locale} / {self.experience_level}'

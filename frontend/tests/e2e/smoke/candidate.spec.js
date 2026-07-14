@@ -112,3 +112,110 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   expect((await exportRequest).postDataJSON()).toEqual({ version_public_id: 'cvv_2' })
   await expect(page.getByText('Đang chờ xuất')).toBeVisible()
 })
+
+test('candidate smoke: CV library restores archived CVs through V2', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
+  let restored = false
+  const activeCv = {
+    public_id: 'cv_1', title: 'CV library', cv_type: 'builder', source: 'builder',
+    is_default: false, template_renderer_key: 'classic_single_column_v1', updated_at: '2026-07-15T00:00:00Z',
+  }
+  const restoredCv = {
+    public_id: 'cv_archived', title: 'CV archived', cv_type: 'builder', source: 'builder',
+    is_default: false, lifecycle_status: 'draft', updated_at: '2026-07-15T00:00:00Z',
+  }
+  const archivedCv = {
+    ...restoredCv, lifecycle_status: 'archived', archived_at: '2026-07-15T00:00:00Z',
+  }
+  const version = {
+    public_id: 'cvv_1', version_number: 1, schema_version: 1,
+    template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
+    content_json: {
+      personal_info: { full_name: 'Candidate', headline: 'Developer', email: '', phone: '', address: '' },
+      sections: [],
+    },
+    layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: [] }] },
+    style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
+  }
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const body = path === '/api/auth/me/'
+      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+      : path === '/api/v2/cvs/' && request.method() === 'GET'
+        ? { results: restored ? [activeCv, restoredCv] : [activeCv] }
+        : path === '/api/v2/cvs/archived/'
+          ? { results: restored ? [] : [archivedCv] }
+          : path === '/api/v2/cvs/cv_1/view/'
+            ? { cv: { public_id: 'cv_1', title: activeCv.title, language: 'vi-VN', is_default: false }, version }
+            : path === '/api/v2/cvs/cv_archived/restore/'
+              ? ((restored = true), restoredCv)
+              : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/tai-khoan/cv-cua-toi')
+  await expect(page.getByText('CV library', { exact: true })).toBeVisible()
+  await expect(page.getByText('CV archived', { exact: true })).toBeVisible()
+
+  const restoreRequest = page.waitForRequest((request) => (
+    request.url().endsWith('/api/v2/cvs/cv_archived/restore/') && request.method() === 'POST'
+  ))
+  await page.getByRole('button', { name: 'Khôi phục' }).click()
+  await restoreRequest
+  await expect(page.getByText('CV đã lưu trữ')).toHaveCount(0)
+})
+
+test('candidate smoke: job application submits the selected immutable CV version through V2', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
+  let applicationPayload
+  const job = {
+    public_id: 'job_1', slug: 'apply-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',
+    description: '<p>Mô tả công việc</p>', requirements: '', benefits: '', locations_detail: [],
+    requirement_tags: [], benefit_tags: [], domain_knowledge: [], workplace_groups: [],
+    work_schedules: [], language_requirements: [], category: null, category_name: '',
+    experience_years: 'none', salary_type: 'negotiable', work_type: 'office',
+    employment_type: 'full_time', view_count: 0, status: 'active',
+  }
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    if (path === '/api/v2/applications/' && request.method() === 'POST') {
+      applicationPayload = request.postDataJSON()
+    }
+    const body = path === '/api/auth/me/'
+      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+      : path === '/api/privacy/consent/'
+        ? (request.method() === 'POST'
+          ? { necessary: true, preferences: false, analytics: false, marketing: false }
+          : { consent: null })
+      : path === '/api/jobs/apply-job/'
+        ? job
+        : path === '/api/jobs/'
+          ? { count: 0, results: [] }
+          : path === '/api/jobs/categories/' || path === '/api/locations/'
+            ? []
+            : path === '/api/v2/cvs/'
+              ? { results: [{ public_id: 'cv_1', title: 'CV chính', is_default: true, cv_type: 'builder' }] }
+              : path === '/api/v2/cvs/cv_1/'
+                ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
+                : path === '/api/v2/cvs/cv_1/versions/'
+                  ? { results: [{ public_id: 'cvv_2', version_number: 2, version_kind: 'published' }] }
+                  : path === '/api/v2/applications/'
+                    ? { public_id: 'app_1', submitted_cv_version_public_id: 'cvv_2', status: 'submitted' }
+                    : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/viec-lam/apply-job')
+  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  await page.getByRole('button', { name: 'Ứng tuyển ngay' }).first().click()
+  await expect(page.getByRole('dialog', { name: 'Ứng tuyển: Kỹ sư phần mềm' })).toBeVisible()
+  await expect(page.getByText('Phiên bản 2 (đã publish)')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Xác nhận ứng tuyển' }).click()
+  await expect(page.getByRole('dialog', { name: 'Ứng tuyển: Kỹ sư phần mềm' })).toBeHidden()
+  expect(applicationPayload).toEqual({
+    job_public_id: 'job_1', cv_public_id: 'cv_1', version_public_id: 'cvv_2', cover_letter: '',
+  })
+})

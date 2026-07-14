@@ -7,13 +7,22 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.cv_templates.models import CvSampleContent, CvTemplate, CvTemplateVersion
+from apps.cv_templates.models import (
+    CvColor,
+    CvContentBlueprint,
+    CvSampleContent,
+    CvTemplate,
+    CvTemplateColorLink,
+    CvTemplateVersion,
+)
+from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .models import CvAccessLog, CvDraft, CvExport, CvSharedLink, CvVersion, UserCv
 from .pdf_renderer import build_cv_pdf_html
@@ -54,6 +63,8 @@ class CvV2ApiTests(APITestCase):
         )
         self.template.current_published_version = self.template_version
         self.template.save(update_fields=['current_published_version'])
+        self.blue = CvColor.objects.create(name='Blue', slug='blue', hex_code='#2255AA')
+        CvTemplateColorLink.objects.create(template=self.template, color=self.blue, is_default=True)
         self.client.force_authenticate(self.candidate)
 
     def create_cv(self):
@@ -125,6 +136,10 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(detail.data['template_renderer_key'], 'classic_single_column_v1')
         self.assertEqual(detail.data['template_renderer_version'], '1')
 
+        owner_view = self.client.get(self.owner_view_url(cv))
+        self.assertEqual(owner_view.status_code, 200)
+        self.assertIn('is_default', owner_view.data['cv'])
+
         draft_response = self.client.get(self.draft_url(cv))
         self.assertEqual(draft_response.status_code, 200)
         self.assertEqual(draft_response['ETag'], '"lock-version-0"')
@@ -166,6 +181,168 @@ class CvV2ApiTests(APITestCase):
         cv.refresh_from_db()
         self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.PUBLISHED)
         self.assertEqual(cv.published_version.public_id, published.data['public_id'])
+
+    def test_create_applies_only_a_color_available_for_the_template(self):
+        response = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Blue CV',
+                'template_public_id': self.template.public_id,
+                'language': 'vi-VN',
+                'theme_color': '#2255aa',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        cv = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(cv.draft.style_json['theme_color'], '#2255AA')
+        self.assertEqual(cv.latest_version.style_json['theme_color'], '#2255AA')
+
+        invalid = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Invalid color CV',
+                'template_public_id': self.template.public_id,
+                'language': 'vi-VN',
+                'theme_color': '#FF0000',
+            },
+            format='json',
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn('theme_color', invalid.data)
+
+    def test_import_archive_and_metadata_use_v2_without_legacy_storage_urls(self):
+        uploaded = SimpleUploadedFile('source.pdf', b'%PDF-1.4 test', content_type='application/pdf')
+        imported = self.client.post(
+            reverse('cv-v2-import'),
+            {'file': uploaded, 'title': 'Imported CV'},
+            format='multipart',
+        )
+
+        self.assertEqual(imported.status_code, 201, imported.data)
+        self.assertEqual(imported.data['source'], UserCv.Source.IMPORTED)
+        self.assertEqual(imported.data['cv_type'], UserCv.CvType.UPLOADED)
+        self.assertEqual(imported.data['file_name'], 'source.pdf')
+        self.assertNotIn('file_url', imported.data)
+        cv = UserCv.objects.get(public_id=imported.data['public_id'])
+        self.assertEqual(cv.latest_version.version_kind, CvVersion.VersionKind.IMPORTED)
+
+        metadata = self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}),
+            {'title': 'Renamed CV', 'is_default': True},
+            format='json',
+        )
+        self.assertEqual(metadata.status_code, 200, metadata.data)
+        self.assertEqual(metadata.data['title'], 'Renamed CV')
+        self.assertTrue(metadata.data['is_default'])
+
+        archived = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
+        self.assertEqual(archived.status_code, 204)
+        cv.refresh_from_db()
+        self.assertTrue(cv.is_deleted)
+        self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.ARCHIVED)
+        self.assertIsNotNone(cv.archived_at)
+        self.assertFalse(cv.is_default)
+        self.assertEqual(
+            self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code,
+            404,
+        )
+
+    def test_setting_another_default_cv_clears_the_previous_active_default(self):
+        first_cv = self.create_cv()
+        second_cv = self.create_cv()
+        first = self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': first_cv.public_id}),
+            {'is_default': True},
+            format='json',
+        )
+        second = self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': second_cv.public_id}),
+            {'is_default': True},
+            format='json',
+        )
+
+        self.assertEqual(first.status_code, 200, first.data)
+        self.assertEqual(second.status_code, 200, second.data)
+        first_cv.refresh_from_db()
+        second_cv.refresh_from_db()
+        self.assertFalse(first_cv.is_default)
+        self.assertTrue(second_cv.is_default)
+
+    def test_duplicate_creates_an_independent_builder_draft_from_the_latest_version(self):
+        source_cv = self.create_cv()
+        source_draft = source_cv.draft
+        source_draft.content_json['personal_info']['full_name'] = 'Original candidate'
+        source_draft.save(update_fields=['content_json'])
+        saved = self.client.post(
+            reverse('cv-v2-save-version', kwargs={'public_id': source_cv.public_id}),
+            format='json',
+            HTTP_IF_MATCH='"lock-version-0"',
+        )
+        self.assertEqual(saved.status_code, 201, saved.data)
+        source_cv.refresh_from_db()
+
+        response = self.client.post(
+            reverse('cv-v2-duplicate', kwargs={'public_id': source_cv.public_id}),
+            {'title': 'CV duplicated'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        duplicate = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertNotEqual(duplicate.pk, source_cv.pk)
+        self.assertEqual(duplicate.title, 'CV duplicated')
+        self.assertEqual(duplicate.lifecycle_status, UserCv.LifecycleStatus.DRAFT)
+        self.assertEqual(duplicate.latest_version.version_kind, CvVersion.VersionKind.INITIAL)
+        self.assertEqual(duplicate.current_template_version_id, source_cv.current_template_version_id)
+        self.assertEqual(duplicate.draft.content_json['personal_info']['full_name'], 'Original candidate')
+
+        duplicate_draft = duplicate.draft
+        duplicate_draft.content_json['personal_info']['full_name'] = 'Duplicate candidate'
+        duplicate_draft.save(update_fields=['content_json'])
+        source_cv.refresh_from_db()
+        self.assertEqual(source_cv.draft.content_json['personal_info']['full_name'], 'Original candidate')
+
+    def test_archived_cv_is_owner_listed_and_can_be_restored_without_restoring_default_status(self):
+        cv = self.create_cv()
+        self.client.patch(
+            reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}),
+            {'is_default': True},
+            format='json',
+        )
+        self.assertEqual(self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code, 204)
+
+        archived = self.client.get(reverse('cv-v2-archived-list'))
+        self.assertEqual(archived.status_code, 200, archived.data)
+        archived_items = archived.data['results'] if isinstance(archived.data, dict) else archived.data
+        self.assertEqual([item['public_id'] for item in archived_items], [cv.public_id])
+        self.assertEqual(archived_items[0]['lifecycle_status'], UserCv.LifecycleStatus.ARCHIVED)
+        self.assertIsNotNone(archived_items[0]['archived_at'])
+
+        restored = self.client.post(reverse('cv-v2-restore', kwargs={'public_id': cv.public_id}), format='json')
+        self.assertEqual(restored.status_code, 200, restored.data)
+        self.assertEqual(restored.data['lifecycle_status'], UserCv.LifecycleStatus.DRAFT)
+        self.assertFalse(restored.data['is_default'])
+        self.assertEqual(self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code, 200)
+        archived_after_restore = self.client.get(reverse('cv-v2-archived-list'))
+        archived_items = (
+            archived_after_restore.data['results']
+            if isinstance(archived_after_restore.data, dict)
+            else archived_after_restore.data
+        )
+        self.assertEqual(archived_items, [])
+
+    @override_settings(CV_ARCHIVE_RESTORE_WINDOW_DAYS=1)
+    def test_restore_rejects_a_cv_after_the_retention_window(self):
+        cv = self.create_cv()
+        self.assertEqual(self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code, 204)
+        UserCv.objects.filter(pk=cv.pk).update(archived_at=timezone.now() - timedelta(days=2))
+
+        response = self.client.post(reverse('cv-v2-restore', kwargs={'public_id': cv.public_id}), format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('restore window', str(response.data['detail']))
 
     def test_autosave_rejects_invalid_canonical_documents_before_writing(self):
         cv = self.create_cv()
@@ -526,6 +703,33 @@ class CvV2ApiTests(APITestCase):
         # Sample content flows into both the immutable baseline and the draft.
         self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Person')
         self.assertEqual(cv.latest_version.content_json['personal_info']['full_name'], 'Sample Person')
+
+    def test_create_from_position_resolves_blueprint_and_persists_taxonomy_identity(self):
+        position = JobCategory.objects.create(name='Nhân viên CSKH')
+        JobCategoryLocalization.objects.bulk_create([
+            JobCategoryLocalization(category=position, locale='vi-VN', display_name='Nhân viên CSKH'),
+            JobCategoryLocalization(category=position, locale='en-US', display_name='Customer Service Representative'),
+        ])
+        blueprint = CvContentBlueprint.objects.get(locale='en-US', experience_level='unspecified')
+        blueprint.summary_template = 'Build a career as {position}.'
+        blueprint.save(update_fields=['summary_template', 'updated_at'])
+
+        response = self.client.post(
+            reverse('cv-v2-list-create'),
+            {
+                'title': 'Customer Service CV',
+                'template_public_id': self.template.public_id,
+                'language': 'en-US',
+                'position_public_id': position.public_id,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        cv = UserCv.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(cv.position_id, position.id)
+        self.assertEqual(response.data['position_public_id'], position.public_id)
+        self.assertEqual(cv.draft.content_json['personal_info']['headline'], 'Customer Service Representative')
 
     def test_legacy_dual_write_does_not_discard_a_v2_layout(self):
         cv = self.create_cv()

@@ -8,6 +8,8 @@
 | [02-tong-quan](02-tong-quan/)   | [tong-quan-he-thong.md](02-tong-quan/tong-quan-he-thong.md)      | Tổng quan hệ thống, kiến trúc, phạm vi MVP                              |
 | [02-tong-quan](02-tong-quan/)   | [quy-uoc-code.md](02-tong-quan/quy-uoc-code.md)                  | Quy ước cấu trúc module, DRY, trách nhiệm và kiểm tra chất lượng        |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
+| [03-database](03-database/)     | [cv-builder-architecture-foundation.md](03-database/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |
+| [03-database](03-database/)     | [ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md](03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md) | Trạng thái và roadmap hoàn thiện CV Builder |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |

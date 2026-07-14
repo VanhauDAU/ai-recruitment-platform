@@ -57,11 +57,33 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |
 | GET | `/api/jobs/languages/` | Danh mục ngoại ngữ (đang active), public, không phân trang |
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |
-| GET | `/api/cv-templates/` | Danh sách mẫu CV, public |
-| GET | `/api/cv-templates/{slug}/` | Chi tiết mẫu CV, public |
-| GET/POST | `/api/cvs/` | Candidate: xem danh sách/tạo CV (builder, cần `template`) |
-| GET/PUT/PATCH/DELETE | `/api/cvs/{public_id}/` | Candidate: xem/sửa/xóa mềm CV của chính mình |
-| POST | `/api/cvs/upload/` | Candidate: upload CV có sẵn (PDF/DOCX, multipart `file`) |
+| GET | `/api/cv-templates/` | **Legacy V1** public catalogue; chuyển sang `/api/v2/cv-templates/` |
+| GET | `/api/cv-templates/{slug}/` | **Legacy V1** template detail; chuyển sang `/api/v2/cv-templates/{slug}/` |
+| GET/POST | `/api/cvs/` | **Legacy V1** candidate CV; không dùng cho client mới |
+| GET/PUT/PATCH/DELETE | `/api/cvs/{public_id}/` | **Legacy V1** CV detail; chuyển sang V2 metadata/draft endpoints |
+| POST | `/api/cvs/upload/` | **Legacy V1** upload; chuyển sang `/api/v2/cvs/imports/` |
+| GET | `/api/v2/cv-templates/?locale=&category=&tag=&page=` | Public catalogue V2. Card DTO gồm localization, category/tag và `colors[]`; không lộ layout/style JSON hoặc renderer config. |
+| GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, renderer contract an toàn và section list. |
+| GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
+| GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
+| GET | `/api/v2/cv-position-options/?q=` | Vị trí chuyên môn active từ JobCategory; response chỉ gồm `public_id`, `name_vi`, hỗ trợ tìm theo tên/alias tiếng Việt. |
+| GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_level=` | Resolve canonical preview document: curated sample nếu có, nếu không dùng blueprint active và tên vị trí đã bản địa hóa. |
+| GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Compatibility catalogue cho client cũ; frontend mới không dùng endpoint này làm nguồn dropdown. |
+| GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
+| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample và optional màu thuộc template. |
+| GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE archive mềm, revoke public access qua `is_deleted`. |
+| POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart file`, optional `title`). Response không có storage key/URL, chỉ có `file_name`, `file_type`, `source=imported`. |
+| GET | `/api/v2/cvs/archived/` | Danh sách CV archive chỉ của owner; không có public/share access. |
+| POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
+| POST | `/api/v2/cvs/{public_id}/restore/` | Khôi phục CV archive của owner trong `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30). Default CV không tự được khôi phục. |
+| GET/PUT | `/api/v2/cvs/{public_id}/draft/` | Đọc/autosave canonical draft; PUT bắt buộc `If-Match: "lock-version-N"`. |
+| PUT | `/api/v2/cvs/{public_id}/template/` | Đổi template của mutable draft, giữ canonical content và optimistic lock. |
+| POST | `/api/v2/cvs/{public_id}/save-version/` | Tạo immutable manual version từ draft hợp lệ. |
+| POST | `/api/v2/cvs/{public_id}/publish/` | Tạo immutable published version. |
+| GET | `/api/v2/cvs/{public_id}/versions/` | History version của owner. |
+| GET | `/api/v2/cvs/{public_id}/view/` | Owner read-only view từ immutable version, không đọc draft. |
+| GET/POST | `/api/v2/cvs/{public_id}/shared-links/` | Quản lý bearer share link theo owner/version. |
+| GET/POST | `/api/v2/cvs/{public_id}/exports/` | Danh sách/yêu cầu PDF export từ immutable version. |
 | GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=` | Danh sách job đang active, public. `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
 | GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags`, `benefit_tags`, `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
@@ -69,6 +91,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/jobs/mine/` | Employer: GET dùng management-list DTO gọn; POST dùng write DTO nested cho `job_skills`, `category_assignments`, `job_locations`, `work_schedules`, `job_benefits`, `language_requirements`, `application_contact` và trả detail form DTO. |
 | GET/PUT/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Employer: sửa/xóa tin của mình |
 | GET/POST | `/api/applications/` | Candidate: xem danh sách/ứng tuyển (job + cv theo `public_id`, chặn ứng tuyển trùng) |
+| GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id` và tùy chọn `cover_letter`; backend tạo `application_snapshot` từ đúng version đã chọn, không dùng draft hoặc tự chọn latest. |
 | GET | `/api/applications/employer/?job=` | Employer: xem hồ sơ ứng tuyển vào job của mình |
 | PATCH | `/api/applications/employer/{public_id}/` | Employer: cập nhật `status`/`employer_note` (tự set mốc thời gian tương ứng) |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
@@ -80,3 +103,69 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/site/admin/settings/upload/` | **Admin**: upload ảnh cho setting kiểu image (multipart `file` + `key`) → `{"key", "value", "url"}`; ảnh favicon tự resize về tối đa 256×256 |
 
 **Quy ước ảnh (media):** DB lưu **storage key** (vd `site/settings/logo.png`), không lưu URL tuyệt đối; API resolve ra URL công khai theo domain/CDN hiện tại tại thời điểm trả về. Đổi domain hoặc bật `MEDIA_PUBLIC_BASE_URL` không cần sửa dữ liệu. Chuyển dữ liệu URL cũ sang key bằng `python manage.py normalize_media_references --apply`.
+
+## Cutover CV API: V1 → V2
+
+Không tạo alias `/api/v1/` và không redirect HTTP các request ghi: hai hành vi đó
+làm client lỗi khó chẩn đoán hoặc vô tình đổi method/body. `/api/cvs/` và
+`/api/cv-templates/` là contract legacy hiện hữu; `/api/v2/cvs/` và
+`/api/v2/cv-templates/` là contract chuẩn cho client mới.
+
+Trong cửa sổ cutover, mọi response V1 có ba header: `Deprecation` (structured
+date), `Sunset` và `Link` với `rel="successor-version"`. Backend phát event log
+`deprecated_api_request` theo contract/method/status/authenticated; event không
+ghi raw path, user-agent hoặc user ID. Ngày header được cấu hình bằng
+`LEGACY_CV_API_DEPRECATION_AT` và `LEGACY_CV_API_SUNSET_AT` (ISO-8601) trong
+environment. Sau khi metric V1 bằng 0 trong thời hạn vận hành đã chốt, mới có
+release riêng trả `410 Gone`, rồi mới xóa view/serializer/field legacy.
+
+## Contract CV Template V2
+
+Một phần tử `colors` trong card/detail:
+
+```json
+{
+  "public_id": "cvcolor_...",
+  "name": "Xanh thương hiệu",
+  "slug": "brand-green",
+  "hex_code": "#00A66A",
+  "thumbnail_url": "/media/cv-templates/modern/green-thumb.webp",
+  "preview_url": "/media/cv-templates/modern/green-preview.webp",
+  "is_default": true
+}
+```
+
+`theme_color` và `color_variants` vẫn có trong response trong cửa sổ tương
+thích. Client mới phải dùng `colors[]`; URL ảnh thuộc quan hệ template–color,
+không suy ra từ hex hoặc hard-code trên frontend.
+
+Position picker trả contract tối thiểu, không lộ hai cấp taxonomy trên UI:
+
+```json
+{
+  "public_id": "jobcat_...",
+  "name_vi": "Nhân viên CSKH"
+}
+```
+
+Frontend dùng `public_id` làm value và chỉ hiển thị `name_vi`. Sau khi chọn,
+frontend gọi position-preview với locale. Resolver ưu tiên curated sample; nếu
+không có, nó kết hợp `JobCategoryLocalization` và `CvContentBlueprint` để tạo
+`content_json` deterministic. Không fallback tên tiếng Việt vào preview locale khác.
+
+Payload tạo CV V2:
+
+```json
+{
+  "title": "CV Modern",
+  "template_public_id": "tpl_...",
+  "language": "vi-VN",
+  "position_public_id": "jobcat_...",
+  "theme_color": "#2255AA"
+}
+```
+
+`position_public_id` và `theme_color` đều optional. `sample_content_public_id`
+vẫn được nhận cho client cũ nhưng không được gửi cùng `position_public_id`. Nếu gửi màu không
+active hoặc không được gán cho template, API trả `400 theme_color`. Màu hợp lệ
+được copy vào `style_json.theme_color` của initial version và draft.

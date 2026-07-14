@@ -1,27 +1,19 @@
 import { CrownFilled } from '@ant-design/icons'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { templateColors, templatePreviewForColor } from '../model/template-colors'
 import CvTemplatePreview from './CvTemplatePreview'
 
-const FALLBACK_VARIANTS = ['#1f2937', '#334e68', '#5b2333']
-
-function templateColorVariants(template) {
-  const variants = Array.isArray(template.color_variants) && template.color_variants.length
-    ? template.color_variants
-    : [template.theme_color || '#00A66A', ...FALLBACK_VARIANTS]
-  return [...new Set(variants)].slice(0, 6)
-}
-
-export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau-cv', sampleContent: _sampleContent }) {
+export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau-cv' }) {
   // Chi tiết mẫu CV dùng segment /chi-tiet/ để phân biệt với URL danh mục
   const detailPath = `${detailBasePath}/chi-tiet/${template.slug}`
-  const variants = templateColorVariants(template)
-  const [selectedColor, setSelectedColor] = useState(variants[0])
+  const colors = templateColors(template)
+  const [selectedColor, setSelectedColor] = useState(colors[0])
   const [hovered, setHovered] = useState(false)
 
   const openWith = (color) => {
     setSelectedColor(color)
-    onUse?.(template, color)
+    onUse?.(template, color.hex_code)
   }
 
   // Chuyển hex sang rgba với alpha nhạt hơn để làm background hover
@@ -51,8 +43,8 @@ export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau
       onMouseLeave={() => setHovered(false)}
       className="group flex flex-col rounded-2xl border bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
       style={{
-        borderColor: hovered ? selectedColor : '#f1f5f9', // slate-100 is #f1f5f9
-        backgroundColor: hovered ? getHoverBgColor(selectedColor) : '#ffffff',
+        borderColor: hovered ? selectedColor.hex_code : '#f1f5f9',
+        backgroundColor: hovered ? getHoverBgColor(selectedColor.hex_code) : '#ffffff',
       }}
     >
       {/* Container của preview (đã bỏ bg và padding để chỉ dùng khung ngoài) */}
@@ -62,7 +54,11 @@ export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau
           className="relative block aspect-[3/4] overflow-hidden rounded-lg bg-white shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow duration-300 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]" 
           aria-label={`Xem trước ${template.display_name}`}
         >
-          <CvTemplatePreview template={{ ...template, theme_color: selectedColor }} compact />
+          <CvTemplatePreview
+            template={{ ...template, theme_color: selectedColor.hex_code }}
+            imageUrl={templatePreviewForColor(template, selectedColor)}
+            compact
+          />
         </Link>
 
         {template.is_premium && (
@@ -84,23 +80,27 @@ export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau
 
       {/* Danh sách các nút chọn màu */}
       <div className="mt-3.5 flex items-center gap-1.5 px-1" role="radiogroup" aria-label="Chọn màu mẫu CV">
-        {variants.map((color) => (
+        {colors.map((color) => (
           <button
-            key={color}
+            key={color.public_id || color.slug}
             type="button"
             role="radio"
-            aria-checked={selectedColor === color}
-            title={color}
+            aria-checked={selectedColor.slug === color.slug}
+            title={color.name}
             onMouseEnter={() => setSelectedColor(color)}
             onFocus={() => setSelectedColor(color)}
-            onClick={() => openWith(color)}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              openWith(color)
+            }}
             className={[
               'h-3.5 w-3.5 cursor-pointer rounded-full transition-all duration-200',
-              selectedColor === color
+              selectedColor.slug === color.slug
                 ? 'ring-2 ring-slate-900 ring-offset-2 scale-110'
                 : 'ring-1 ring-black/10 hover:ring-2 hover:ring-slate-400 hover:scale-105',
             ].join(' ')}
-            style={{ backgroundColor: color }}
+            style={{ backgroundColor: color.hex_code }}
           />
         ))}
       </div>
