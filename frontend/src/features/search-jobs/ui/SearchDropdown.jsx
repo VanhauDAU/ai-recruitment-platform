@@ -39,10 +39,10 @@ export default function SearchDropdown({ open, onClose, onSelect, keyword = '', 
       style={{ left: position.left, top: position.bottom + 8, width: position.width, animation: 'dropdownFadeIn 0.18s ease both' }}
     >
       <style>{`@keyframes dropdownFadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-      <div className="flex max-h-[min(32rem,calc(100vh-1rem))] flex-col overflow-y-auto md:flex-row md:divide-x md:divide-gray-100">
+      <div data-testid="search-dropdown" className="flex max-h-[min(32rem,calc(100dvh-1.5rem))] flex-col overflow-y-auto md:flex-row md:divide-x md:divide-gray-100">
         <div className="min-w-0 w-full md:w-[420px] md:shrink-0">
-          <SearchHistorySection isOpen={open} onSearchByChange={onSearchByChange} onSelect={onSelect} searchBy={searchBy} />
           <KeywordSuggestions keyword={keyword} onSelect={onSelect} searchBy={searchBy} suggestions={suggestions} />
+          <SearchHistorySection isOpen={open} onSearchByChange={onSearchByChange} onSelect={onSelect} searchBy={searchBy} />
         </div>
         <SuggestedJobsSection jobs={jobs} loading={loading} onSelect={selectSuggestedJob} />
       </div>
