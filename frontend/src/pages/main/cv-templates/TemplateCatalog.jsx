@@ -136,14 +136,15 @@ export default function TemplateCatalog() {
     ? 'Đang tải các mẫu CV phù hợp…'
     : `Tuyển chọn ${count} mẫu CV đa dạng phong cách, giúp bạn tạo dấu ấn cá nhân và kết nối mạnh mẽ hơn với nhà tuyển dụng.`
 
-  const gridClass = 'grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+  const gridClass = 'grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8'
 
   return (
-    <div className="min-h-[calc(100vh-8rem)]" style={{ backgroundColor: '#E7EBF0' }}>
+    <div className="min-h-[calc(100vh-8rem)] bg-[#f4f6f8]">
       <div className="mx-auto max-w-[1280px] px-4 py-10 md:py-12">
         <CatalogHeader
-          breadcrumbLabel={`Mẫu CV ${localeLabel}`}
-          title={`Mẫu CV xin việc ${localeLabel} chuẩn ${year}`}
+          activeCategory={activeCategory}
+          localeLabel={localeLabel}
+          year={year}
           subtitle={subtitle}
         />
 

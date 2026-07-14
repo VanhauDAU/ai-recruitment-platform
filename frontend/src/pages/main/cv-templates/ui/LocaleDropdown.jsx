@@ -1,4 +1,4 @@
-import { CheckOutlined, DownOutlined, GlobalOutlined } from '@ant-design/icons'
+import { CheckOutlined, DownOutlined } from '@ant-design/icons'
 import { Dropdown } from 'antd'
 
 export default function LocaleDropdown({ value, options = [], onChange }) {
@@ -24,9 +24,9 @@ export default function LocaleDropdown({ value, options = [], onChange }) {
     >
       <button
         type="button"
-        className="inline-flex h-10 items-center gap-2 rounded-full border border-[var(--brand-primary)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]"
+        className="inline-flex h-10 items-center gap-2 rounded-full border border-[var(--brand-primary)] bg-white px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)] cursor-pointer"
       >
-        <GlobalOutlined className="text-base" />
+        {current?.flag && <span className="text-base leading-none">{current.flag}</span>}
         <span>{current?.label}</span>
         <DownOutlined className="text-[10px]" />
       </button>

@@ -22,28 +22,28 @@ function SourceOption({ value, current, onSelect, title, note, disabled, childre
   return (
     <div
       className={[
-        'rounded-xl border transition',
-        active ? 'border-[var(--brand-primary)] shadow-sm' : 'border-slate-200',
-        disabled ? 'opacity-55' : '',
+        'rounded-xl border bg-white transition-all duration-200',
+        active ? 'border-[var(--brand-primary)] shadow-sm' : 'border-slate-200 hover:border-[var(--brand-primary)]',
+        disabled ? 'opacity-55' : 'cursor-pointer',
       ].join(' ')}
     >
       <button
         type="button"
         disabled={disabled}
         onClick={() => onSelect(value)}
-        className="flex w-full items-start gap-3 px-4 py-3 text-left disabled:cursor-not-allowed"
+        className="flex w-full items-start gap-3 px-4 py-3 text-left disabled:cursor-not-allowed cursor-pointer"
       >
         <span
           aria-hidden
           className={[
-            'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2',
+            'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200',
             active ? 'border-[var(--brand-primary)]' : 'border-slate-300',
           ].join(' ')}
         >
           {active && <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />}
         </span>
         <span className="min-w-0">
-          <span className={`block text-sm font-semibold ${active ? 'text-[var(--brand-primary)]' : 'text-slate-800'}`}>{title}</span>
+          <span className={`block text-sm font-semibold transition-colors duration-200 ${active ? 'text-[var(--brand-primary)]' : 'text-slate-800'}`}>{title}</span>
           {note && <span className="mt-0.5 block text-xs leading-5 text-slate-500">{note}</span>}
         </span>
       </button>
@@ -179,10 +179,11 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
       style={{ top: 24, maxWidth: '96vw' }}
       destroyOnHidden
     >
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-10">
-        <div className="lg:col-span-7">
+      {/* Container flex/grid âm để đẩy sát lề Modal padding mặc định */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 -mx-6 -my-5 min-h-[75vh]">
+        <div className="p-6 lg:col-span-7">
           <h2 className="mb-3 text-lg font-bold text-slate-900">Mẫu CV {template.display_name}</h2>
-          <div ref={previewWrapRef} className="h-[72vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200">
+          <div ref={previewWrapRef} className="h-[72vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-[#f8fafc]">
             {loadingDetail || !previewDocument ? (
               <div className="flex h-full items-center justify-center">
                 {loadingDetail ? <Spin /> : <p className="text-sm text-slate-500">Không tải được bản xem trước.</p>}
@@ -195,20 +196,22 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
           </div>
         </div>
 
-        <div className="flex flex-col lg:col-span-3">
-          <h3 className="mb-3 text-base font-bold text-[var(--brand-primary)]">Bạn muốn tạo CV từ?</h3>
-          <div className="flex-1 space-y-2.5 overflow-auto pr-1">
+        <div className="flex flex-col lg:col-span-3 bg-slate-50 border-t lg:border-t-0 lg:border-l border-slate-200 p-6">
+          <h3 className="mb-3.5 text-base font-bold text-[var(--brand-primary)]">Bạn muốn tạo CV từ?</h3>
+          <div className="flex-1 space-y-2.5 overflow-y-auto pr-1">
             {myCvs.length > 0 && (
               <SourceOption value="previous" current={source} onSelect={setSource} title="Nội dung CV đã tạo trước đó">
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {myCvs.map((cv) => (
                     <button
                       key={cv.public_id}
                       type="button"
                       onClick={() => setSelectedCvId(cv.public_id)}
                       className={[
-                        'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left',
-                        selectedCvId === cv.public_id ? 'border-[var(--brand-primary)]' : 'border-slate-200',
+                        'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left cursor-pointer transition-all duration-200',
+                        selectedCvId === cv.public_id 
+                          ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft,#f0fdf4)]' 
+                          : 'border-slate-200 hover:border-[var(--brand-primary)] bg-white',
                       ].join(' ')}
                     >
                       <span
@@ -221,12 +224,12 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
                         <span className="block truncate text-sm font-semibold text-slate-800">{cv.title}</span>
                         <span className="block text-xs text-slate-500">{cv.updated_at ? new Date(cv.updated_at).toLocaleDateString('vi-VN') : ''}</span>
                       </span>
-                      <Link to={`/cvs/${cv.public_id}/view`} target="_blank" className="shrink-0 text-xs font-medium text-[var(--brand-primary)]" onClick={(event) => event.stopPropagation()}>
+                      <Link to={`/cvs/${cv.public_id}/view`} target="_blank" className="shrink-0 text-xs font-medium text-[#00b14f] hover:text-[#008a3e] cursor-pointer" onClick={(event) => event.stopPropagation()}>
                         (Xem CV)
                       </Link>
                     </button>
                   ))}
-                  <p className="text-xs leading-5 text-amber-600">Sao chép nội dung từ CV có sẵn sẽ sớm được kích hoạt.</p>
+                  <p className="text-xs leading-5 text-amber-600 mt-1">Sao chép nội dung từ CV có sẵn sẽ sớm được kích hoạt.</p>
                 </div>
               </SourceOption>
             )}
@@ -241,7 +244,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
                       type="button"
                       onClick={() => setSampleLocale(item.value)}
                       className={[
-                        'rounded-full px-3 py-1 text-xs font-medium transition',
+                        'rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer',
                         sampleLocale === item.value
                           ? 'bg-[var(--brand-primary)] text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
@@ -305,7 +308,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
             />
           </div>
 
-          <div className="mt-4 border-t border-slate-100 pt-4">
+          <div className="mt-4 border-t border-slate-200 pt-4">
             {pendingBackend && (
               <p className="mb-2 text-xs leading-5 text-amber-600">Lựa chọn này sẽ sớm được hỗ trợ. Hãy chọn nội dung mẫu hoặc tạo CV từ đầu.</p>
             )}
@@ -313,7 +316,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
               type="button"
               disabled={!canSubmit || submitting}
               onClick={submit}
-              className="w-full rounded-lg bg-[var(--brand-primary)] py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+              className="w-full rounded-lg bg-[var(--brand-primary)] py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 cursor-pointer"
             >
               {submitting ? 'Đang tạo…' : 'Tạo CV'}
             </button>
