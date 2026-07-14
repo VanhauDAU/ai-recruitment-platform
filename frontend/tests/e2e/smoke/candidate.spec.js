@@ -29,7 +29,7 @@ test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ pa
     const request = route.request()
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true }
+      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/v2/cvs/cv_1/'
         ? { public_id: 'cv_1', title: 'CV V2', template_renderer_key: 'classic_single_column_v1' }
         : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
@@ -89,7 +89,7 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true }
+      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/v2/cvs/cv_1/'
         ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
         : path === '/api/v2/cvs/cv_1/versions/'
