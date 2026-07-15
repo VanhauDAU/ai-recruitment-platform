@@ -9,8 +9,8 @@ import {
   getCvTemplate,
   getRelatedCvTemplates,
   templateColors,
-  usePreviewFitZoom,
 } from '@/entities/cv-template'
+import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { useLocales } from '@/entities/locale'
 import { CvSourcePanel, UseTemplateModal } from '@/features/create-cv-from-template'
 import { catalogLocaleFromPath, catalogPathForCategory } from './locale-paths'

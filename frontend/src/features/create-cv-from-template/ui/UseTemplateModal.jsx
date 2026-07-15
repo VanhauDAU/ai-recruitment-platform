@@ -1,7 +1,7 @@
 import { Modal, Skeleton } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { CvDocumentPreview } from '@/entities/cv'
-import { usePreviewFitZoom } from '@/entities/cv-template'
+import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import CvSourcePanel from './CvSourcePanel'
 
 export default function UseTemplateModal({ template, themeColor, open, onClose, onCreated, locale = 'vi-VN' }) {
