@@ -18,6 +18,10 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - CV Builder Phase 5: nâng import PDF/DOCX thành durable AI job có MIME sniffing, idempotency, provider adapter, canonical validation/composition, retry/throttle/retention và modal polling.
 - CV Builder Phase 6: gom preview selector/zoom/swatches, thêm versioned cache + PII-free product metrics, rollout runbook và hoàn tất full backend/frontend/E2E gates.
 
+#### Fixed
+
+- AI import adapter đọc `GEMINI_API_KEY`, `OPENAI_API_KEY` và `ANTHROPIC_API_KEY` qua `python-decouple`, nên secret trong `backend/.env` được worker/web process dùng đúng thay vì chỉ đọc `os.environ`.
+
 - Chuẩn hóa taxonomy kho mẫu CV bằng quan hệ many-to-many `CvTemplate.categories` qua `CvTemplateCategoryLink`; bổ sung `CvColor` và `CvTemplateColorLink` để một template có nhiều màu, mỗi màu có thumbnail/preview URL, thứ tự và trạng thái mặc định riêng.
 - Public CV Template API V2 trả thêm `colors[]` từ database; Django admin có màn quản lý category/color và inline gán category/color cho từng template.
 - Migration `cv_templates.0004_cv_template_taxonomy_colors` backfill màu từ style JSON cũ sang bảng quan hệ; `seed_cv_catalog` chuyển category legacy thành link thật, seed palette màu/localization/sample content theo cách idempotent.

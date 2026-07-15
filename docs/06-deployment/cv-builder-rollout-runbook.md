@@ -15,8 +15,8 @@
    Fontconfig cache (`XDG_CACHE_HOME` hoặc cache directory tương đương).
 6. Regenerate snapshot theo template từ admin hoặc gọi task bulk sau khi worker
    ổn định. Asset cũ chỉ bị thay pointer khi cả thumbnail/preview mới đã ghi.
-7. Bật AI provider bằng admin setting và secret environment tương ứng. Không
-   lưu secret trong database.
+7. Bật AI provider bằng admin setting và secret environment tương ứng. Secret
+   trong `backend/.env` được đọc qua `python-decouple`; không lưu vào database.
 
 ## Kiểm tra sau deploy
 

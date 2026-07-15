@@ -1,10 +1,10 @@
 """Provider-neutral CV text structuring; never logs prompts or candidate PII."""
 
 import json
-import os
 import re
 
 import requests
+from decouple import config
 
 from apps.cvs.schemas import empty_content
 from apps.sitecontent.models import SiteSetting
@@ -15,6 +15,16 @@ class AiCvParseError(ValueError):
     def __init__(self, code):
         self.code = code
         super().__init__(code)
+
+
+def _provider_api_key(name):
+    """Read provider secrets through django's python-decouple configuration.
+
+    `python-decouple` resolves values from the backend `.env` file without
+    mutating `os.environ`, so adapters must not read `os.environ` directly.
+    Real process environment variables still take precedence.
+    """
+    return config(name, default='')
 
 
 def _setting_value(key, default=None):
@@ -40,7 +50,7 @@ def _call_provider(text, locale):
     model = get_string_setting('ai_model', 'gemini-2.0-flash')
     prompt = _prompt(text, locale)
     if provider == 'gemini':
-        key = os.environ.get('GEMINI_API_KEY', '')
+        key = _provider_api_key('GEMINI_API_KEY')
         if not key:
             return None
         response = requests.post(
@@ -55,7 +65,7 @@ def _call_provider(text, locale):
         response.raise_for_status()
         return _json_from_text(response.json()['candidates'][0]['content']['parts'][0]['text'])
     if provider == 'openai':
-        key = os.environ.get('OPENAI_API_KEY', '')
+        key = _provider_api_key('OPENAI_API_KEY')
         if not key:
             return None
         response = requests.post(
@@ -72,7 +82,7 @@ def _call_provider(text, locale):
         response.raise_for_status()
         return _json_from_text(response.json()['choices'][0]['message']['content'])
     if provider == 'anthropic':
-        key = os.environ.get('ANTHROPIC_API_KEY', '')
+        key = _provider_api_key('ANTHROPIC_API_KEY')
         if not key:
             return None
         response = requests.post(
