@@ -9,9 +9,13 @@ from rest_framework import generics, parsers, permissions, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.permissions import IsCandidate
+from apps.cv_templates.models import CvTemplate
 from apps.cv_templates.services import PositionContentUnavailable
+from common.metrics import record_metric
+from .composition import CvCompositionError, compose_cv_document
 
 from .api_v2_serializers import (
     CvDraftSerializer,
@@ -30,13 +34,14 @@ from .api_v2_serializers import (
     CvVersionSummarySerializer,
     SharedCvVersionSerializer,
 )
-from .models import CvDraft, CvExport, CvSharedLink, UserCv
+from .models import CvDraft, CvExport, CvImportJob, CvSharedLink, UserCv
 from .selectors import (
     candidate_archived_cv_by_public_id,
     candidate_archived_cvs_queryset,
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
+    latest_recoverable_cv,
 )
 from .services import (
     CvLifecyclePolicyError,
@@ -47,11 +52,14 @@ from .services import (
     CvShareUnavailableError,
     StaleDraftError,
     UnsupportedCvUpload,
+    InvalidCvImport,
     archive_cv,
     create_shared_link,
     create_v2_cv,
     duplicate_cv,
     import_v2_cv,
+    queue_cv_import,
+    retry_import,
     export_download_ready,
     owner_cv_export,
     owner_view_version,
@@ -79,6 +87,7 @@ def expected_lock_version(request):
 
 
 def draft_conflict_response(cv):
+    record_metric('cv_autosave_conflict')
     current_lock = CvDraft.objects.filter(cv=cv).values_list('lock_version', flat=True).first()
     return Response(
         {
@@ -121,6 +130,7 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
                 language=serializer.validated_data['language'],
                 sample_content=serializer.validated_data.get('sample_content_public_id'),
                 position=serializer.validated_data.get('position_public_id'),
+                source_cv=serializer.validated_data.get('source_cv_public_id'),
                 theme_color=serializer.validated_data.get('theme_color'),
             )
         except PositionContentUnavailable as error:
@@ -128,6 +138,23 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
         except CvLifecyclePolicyError as error:
             raise PermissionDenied(str(error)) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
+
+
+class CvV2LatestRecoverableDraftView(APIView):
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        cv = latest_recoverable_cv(request.user)
+        if cv is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        draft = cv.draft
+        return Response(
+            {
+                'cv': CvV2Serializer(cv).data,
+                'draft': CvDraftSerializer(draft).data,
+            },
+            headers={'ETag': f'"lock-version-{draft.lock_version}"'},
+        )
 
 
 class CvV2DetailView(CandidateV2CvMixin, APIView):
@@ -193,10 +220,30 @@ class CvV2ImportView(APIView):
 
     permission_classes = [IsCandidate]
     parser_classes = [parsers.MultiPartParser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'cv_import'
 
     def post(self, request):
         serializer = CvV2ImportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        template = serializer.validated_data.get('template_public_id')
+        if template is not None:
+            try:
+                cv, _job, created = queue_cv_import(
+                    actor=request.user,
+                    upload=serializer.validated_data['file'],
+                    title=serializer.validated_data.get('title', ''),
+                    template=template,
+                    language=serializer.validated_data['language'],
+                    theme_color=serializer.validated_data.get('theme_color'),
+                    idempotency_key=request.headers.get('Idempotency-Key', ''),
+                )
+            except InvalidCvImport as error:
+                raise ValidationError({'file': str(error)}) from error
+            return Response(
+                CvV2Serializer(cv).data,
+                status=status.HTTP_202_ACCEPTED if created else status.HTTP_200_OK,
+            )
         try:
             cv = import_v2_cv(
                 actor=request.user,
@@ -206,6 +253,23 @@ class CvV2ImportView(APIView):
         except UnsupportedCvUpload as error:
             raise ValidationError({'file': str(error)}) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
+
+
+class CvV2ImportRetryView(CandidateV2CvMixin, APIView):
+    model = UserCv
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'cv_import'
+
+    def post(self, request, public_id):
+        cv = self.get_cv()
+        try:
+            retry_import(cv=cv, actor=request.user)
+        except CvImportJob.DoesNotExist as error:
+            raise Http404 from error
+        except InvalidCvImport as error:
+            raise ValidationError({'detail': str(error)}) from error
+        cv.refresh_from_db()
+        return Response(CvV2Serializer(cv).data, status=status.HTTP_202_ACCEPTED)
 
 
 def read_only_cv_payload(cv, version):
@@ -423,6 +487,7 @@ class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
                 template_public_id=serializer.validated_data['template_public_id'],
                 expected_lock_version=expected_lock_version(request),
                 client_session_id=serializer.validated_data.get('client_session_id', ''),
+                theme_color=serializer.validated_data.get('theme_color'),
             )
         except StaleDraftError:
             return draft_conflict_response(cv)
@@ -433,6 +498,56 @@ class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
             {'cv': CvV2Serializer(switched_cv).data, 'draft': CvDraftSerializer(draft).data},
             headers={'ETag': f'"lock-version-{draft.lock_version}"'},
         )
+
+
+class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
+    """Project one owned draft onto a template without mutating either aggregate."""
+    model = UserCv
+
+    def get(self, request, public_id):
+        cv = self.get_cv()
+        template_public_id = request.query_params.get('template_public_id', '').strip()
+        theme_color = request.query_params.get('theme_color', '').strip().upper()
+        if not template_public_id:
+            raise ValidationError({'template_public_id': 'This query parameter is required.'})
+        if theme_color and re.fullmatch(r'#[0-9A-F]{6}', theme_color) is None:
+            raise ValidationError({'theme_color': 'Use a six-digit hex color.'})
+        try:
+            template = CvTemplate.objects.select_related(
+                'current_published_version',
+            ).prefetch_related(
+                'current_published_version__sections__section_definition',
+            ).get(public_id=template_public_id)
+        except CvTemplate.DoesNotExist as error:
+            raise Http404 from error
+        if theme_color and not template.color_links.filter(
+            color__hex_code__iexact=theme_color,
+            color__is_active=True,
+        ).exists():
+            raise ValidationError({'theme_color': 'Color is not available for this template.'})
+        try:
+            draft = CvDraft.objects.get(cv=cv)
+            document = compose_cv_document(
+                template=template,
+                content_json=draft.content_json,
+                theme_color=theme_color or None,
+            )
+        except CvDraft.DoesNotExist as error:
+            raise Http404 from error
+        except (CvCompositionError, DjangoValidationError) as error:
+            raise ValidationError({'template_public_id': str(error)}) from error
+        version = template.current_published_version
+        return Response({
+            'document': document,
+            'renderer': {
+                'key': version.renderer_key,
+                'version': version.renderer_version,
+                'schema_version': version.schema_version,
+                'capabilities': version.capabilities,
+            },
+            'source_cv_public_id': cv.public_id,
+            'lock_version': draft.lock_version,
+        })
 
 
 class CvV2SaveVersionView(CandidateV2CvMixin, APIView):

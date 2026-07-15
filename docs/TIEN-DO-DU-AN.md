@@ -21,6 +21,20 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 8 — Deployment | 0/2 | ⬜ |
 | **Tổng** | **56/81** | |
 
+## Epic hoàn thiện CV Builder (2026-07-15)
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| CVB-P0 | Canonical composition, regression contract, ADR | ✅ |
+| CVB-P1 | Sample/blank live preview | ✅ |
+| CVB-P2 | Previous + latest recoverable draft | ✅ |
+| CVB-P3 | Locale + canonical blueprint | ✅ |
+| CVB-P4 | Admin catalogue + snapshot | ✅ |
+| CVB-P5 | AI import PDF/DOCX | ✅ |
+| CVB-P6 | Cleanup, rollout, observability | ⬜ |
+
+Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
+
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
 Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích. Chi tiết baseline: [docs/09-refactor/baseline](./09-refactor/baseline/README.md); quyết định kiến trúc: [docs/adr](./adr/).
@@ -559,4 +573,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (CVB-1.1 — position-driven picker từ taxonomy, 61 vị trí × 4 localization, blueprint/curated resolver dùng chung mọi template, popup A4 fit-width không cuộn ngang)
+Cập nhật lần cuối: 2026-07-15 (CVB-P5 — durable/idempotent AI import PDF/DOCX, canonical mapping, retry/throttle/retention và modal polling hoàn tất)

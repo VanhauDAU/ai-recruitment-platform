@@ -11,7 +11,7 @@ from rest_framework.test import APITransactionTestCase
 
 from apps.accounts.models import User
 
-from .models import SiteSetting
+from .models import Locale, SiteSetting
 
 
 PNG_BYTES = (
@@ -87,3 +87,53 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
             response.data[self.setting.key],
             f'http://testserver/media/{self.old_path}',
         )
+
+
+class LocaleApiTests(APITransactionTestCase):
+    def setUp(self):
+        locale_rows = [
+            ('vi-VN', 'Tiếng Việt', 'Tiếng Việt', 'mau-cv', True, 0),
+            ('en-US', 'Tiếng Anh', 'English', 'mau-cv-tieng-anh', False, 10),
+            ('ja-JP', 'Tiếng Nhật', '日本語', 'mau-cv-tieng-nhat', False, 20),
+            ('zh-CN', 'Tiếng Trung', '简体中文', 'mau-cv-tieng-trung', False, 30),
+        ]
+        for code, label, native, path, is_default, order in locale_rows:
+            Locale.objects.update_or_create(
+                code=code,
+                defaults={
+                    'label_vi': label, 'native_name': native, 'catalog_path': path,
+                    'is_default': is_default, 'sort_order': order,
+                },
+            )
+        self.admin = User.objects.create_user(
+            email='locale-admin@example.com', password='Password@123', role=User.Role.ADMIN,
+        )
+
+    def test_public_api_only_returns_active_locales_in_stable_order(self):
+        Locale.objects.filter(code='ja-JP').update(is_active=False)
+        response = self.client.get(reverse('site-locales'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual([item['code'] for item in response.data], ['vi-VN', 'en-US', 'zh-CN'])
+
+    def test_admin_can_change_default_and_previous_default_is_demoted(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(
+            reverse('site-admin-locale-detail', kwargs={'code': 'en-US'}),
+            {'is_default': True},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(Locale.objects.get(code='en-US').is_default)
+        self.assertFalse(Locale.objects.get(code='vi-VN').is_default)
+
+    def test_admin_cannot_deactivate_default_locale(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(
+            reverse('site-admin-locale-detail', kwargs={'code': 'vi-VN'}),
+            {'is_active': False},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

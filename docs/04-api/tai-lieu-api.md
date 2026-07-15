@@ -66,11 +66,56 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/v2/cv-templates/{slug}/` | Public template detail V2: card fields + preview metadata, renderer contract an toàn và section list. |
 | GET | `/api/v2/cv-templates/{slug}/related/` | Template published liên quan theo category, cùng locale. |
 | GET | `/api/v2/cv-categories/?type=` | Taxonomy template active (`style`, `feature`, `position`, `audience`). |
-| GET | `/api/v2/cv-position-options/?q=` | Vị trí chuyên môn active từ JobCategory; response chỉ gồm `public_id`, `name_vi`, hỗ trợ tìm theo tên/alias tiếng Việt. |
-| GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_level=` | Resolve canonical preview document: curated sample nếu có, nếu không dùng blueprint active và tên vị trí đã bản địa hóa. |
+| GET | `/api/v2/cv-position-options/?locale=&experience_level=&q=` | Vị trí chuyên môn active có localization và content resolve được; response gồm `public_id`, `display_name`, `name_vi`, có ordering quản trị được. |
+| GET | `/api/v2/cv-position-preview/?position_public_id=&locale=&experience_level=&template_public_id=&theme_color=` | Resolve curated→blueprint; khi có template trả thêm canonical `document`, `renderer`, `revision`. `source=blank` compose document trống. Contract content-only cũ vẫn hoạt động nếu thiếu template. |
+| GET | `/api/site/locales/` | Danh sách locale active theo `sort_order`; public, không phân trang. |
+| GET/POST | `/api/site/admin/locales/` | Admin list/create locale. `code` bất biến sau khi tạo; đổi default demote default cũ trong transaction. |
+| GET/PATCH/PUT | `/api/site/admin/locales/{code}/` | Admin đọc/cập nhật locale; không có DELETE. Locale default không thể inactive. |
+
+`locale` trên catalogue/position preview và `language` khi tạo CV phải thuộc
+registry active. API tiếp tục nhận/trả locale code để giữ tương thích; FK
+`locale_ref` là chi tiết migration nội bộ, không làm đổi public payload.
+
+### CV catalogue admin (admin-only)
+
+| Method | Endpoint | Mô tả |
+| --- | --- | --- |
+| CRUD | `/api/v2/admin/cv-templates/` | Metadata template và danh sách version/localization. |
+| POST | `/api/v2/admin/cv-templates/{public_id}/versions/` | Tạo draft version; body rỗng clone contract published hiện tại. |
+| POST | `/api/v2/admin/cv-templates/{public_id}/versions/{id}/publish/` | Validate và publish immutable template version. |
+| POST | `/api/v2/admin/cv-templates/{public_id}/versions/{id}/retire/` | Retire version không còn là current pointer. |
+| POST | `/api/v2/admin/cv-templates/{public_id}/snapshots/regenerate/` | Queue snapshot cho mọi màu của template. |
+| CRUD | `/api/v2/admin/cv-template-localizations/` | Localization của template. |
+| CRUD | `/api/v2/admin/cv-categories/` | Taxonomy catalogue. |
+| CRUD | `/api/v2/admin/cv-colors/` | Registry màu. |
+| CRUD | `/api/v2/admin/cv-sample-contents/` | Nội dung canonical draft. |
+| POST | `/api/v2/admin/cv-sample-contents/{public_id}/preview/` | Preview bằng canonical composer. |
+| POST | `/api/v2/admin/cv-sample-contents/{public_id}/publish\|archive/` | Lifecycle curated content. |
+| CRUD | `/api/v2/admin/cv-content-blueprints/` | Blueprint canonical/compatibility fields. |
+| POST | `/api/v2/admin/cv-content-blueprints/{public_id}/preview\|activate/` | Preview/activate blueprint. |
+
+Các action sinh snapshot trả `202 queued`; asset không được tạo trong request
+web. Public card chỉ thấy storage URL mới sau khi worker đã render và swap đủ
+thumbnail + preview.
+
+### AI CV import
+
+`POST /api/v2/cvs/imports/` multipart giữ `file`, `title` cũ và nhận thêm
+`template_public_id`, `language`, `theme_color`. Khi có template, client nên gửi
+`Idempotency-Key`; response `202` chứa `processing_status=queued` và
+`import_job`. Gửi lại cùng key/user trả cùng CV với `200`, không tạo job/file mới.
+
+`GET /api/v2/cvs/{public_id}/` dùng để poll: `queued|processing|analyzed|failed`.
+Khi failed, `import_job.failure_code` chỉ là mã an toàn, không chứa raw text.
+`POST /api/v2/cvs/{public_id}/imports/retry/` trả `202`, owner-only và chỉ dùng
+cho job failed chưa vượt ba attempt. Bucket throttle là `cv_import=10/hour`.
+
+V1 chỉ nhận `.pdf/.docx`, 5 MB, PDF tối đa 20 trang. `scanned_pdf_ocr_unavailable`
+nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong release này.
 | GET | `/api/v2/cv-sample-contents/?locale=&experience_level=` | Compatibility catalogue cho client cũ; frontend mới không dùng endpoint này làm nguồn dropdown. |
 | GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
-| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample và optional màu thuộc template. |
+| GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id` và optional màu; các source loại trừ nhau. |
+| GET | `/api/v2/cvs/latest-recoverable-draft/` | Trả đúng một server draft dirty mới nhất của candidate hoặc `204`; dirty xác định bằng document hash so với base version. |
 | GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE archive mềm, revoke public access qua `is_deleted`. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart file`, optional `title`). Response không có storage key/URL, chỉ có `file_name`, `file_type`, `source=imported`. |
 | GET | `/api/v2/cvs/archived/` | Danh sách CV archive chỉ của owner; không có public/share access. |
@@ -78,6 +123,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/v2/cvs/{public_id}/restore/` | Khôi phục CV archive của owner trong `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30). Default CV không tự được khôi phục. |
 | GET/PUT | `/api/v2/cvs/{public_id}/draft/` | Đọc/autosave canonical draft; PUT bắt buộc `If-Match: "lock-version-N"`. |
 | PUT | `/api/v2/cvs/{public_id}/template/` | Đổi template của mutable draft, giữ canonical content và optimistic lock. |
+| GET | `/api/v2/cvs/{public_id}/template-preview/?template_public_id=` | Project draft owner lên template mới để preview, không mutation aggregate. |
 | POST | `/api/v2/cvs/{public_id}/save-version/` | Tạo immutable manual version từ draft hợp lệ. |
 | POST | `/api/v2/cvs/{public_id}/publish/` | Tạo immutable published version. |
 | GET | `/api/v2/cvs/{public_id}/versions/` | History version của owner. |

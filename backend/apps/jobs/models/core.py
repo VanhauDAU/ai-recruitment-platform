@@ -63,21 +63,42 @@ class JobCategoryLocalization(models.Model):
         on_delete=models.CASCADE,
         related_name='localizations',
     )
-    locale = models.CharField(max_length=16, choices=Locale.choices)
+    # Compatibility code kept during the staged locale migration. New code
+    # writes both this field and locale_ref until the cleanup release.
+    locale = models.CharField(max_length=16)
+    locale_ref = models.ForeignKey(
+        'sitecontent.Locale',
+        to_field='code',
+        db_column='locale_ref_code',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='job_category_localizations',
+    )
     display_name = models.CharField(max_length=255)
     search_aliases = models.TextField(blank=True, help_text='Các từ khóa tìm kiếm, phân tách bằng dấu phẩy.')
+    sort_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        indexes = [
+            models.Index(fields=['locale', 'is_active', 'sort_order'], name='idx_jobcatloc_picker'),
+        ]
         constraints = [
             models.UniqueConstraint(fields=['category', 'locale'], name='uq_job_category_localization'),
         ]
-        ordering = ['category_id', 'locale']
+        ordering = ['locale', 'sort_order', 'display_name', 'category_id']
 
     def __str__(self):
         return f'{self.category.name} ({self.locale})'
+
+    def save(self, *args, **kwargs):
+        from apps.sitecontent.models import Locale as SiteLocale
+
+        self.locale_ref_id = self.locale if SiteLocale.objects.filter(code=self.locale).exists() else None
+        super().save(*args, **kwargs)
 
 
 class Job(models.Model):
@@ -267,4 +288,3 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title
-

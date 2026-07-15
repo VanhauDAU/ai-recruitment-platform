@@ -246,6 +246,7 @@ class CvDraft(models.Model):
     layout_json = models.JSONField(default=dict)
     style_json = models.JSONField(default=dict)
     schema_version = models.PositiveIntegerField(default=1)
+    document_hash = models.CharField(max_length=64, blank=True, db_index=True)
     lock_version = models.PositiveIntegerField(default=0)
     client_session_id = models.CharField(max_length=100, blank=True)
     updated_by = models.ForeignKey(
@@ -423,6 +424,48 @@ class CvExport(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cve')
+        super().save(*args, **kwargs)
+
+
+class CvImportJob(models.Model):
+    """Durable, idempotent PDF/DOCX-to-canonical processing job."""
+
+    class Status(models.TextChoices):
+        QUEUED = 'queued', 'Queued'
+        PROCESSING = 'processing', 'Processing'
+        COMPLETED = 'completed', 'Completed'
+        FAILED = 'failed', 'Failed'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    cv = models.OneToOneField(UserCv, on_delete=models.CASCADE, related_name='import_job')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cv_import_jobs')
+    idempotency_key = models.CharField(max_length=100)
+    file_checksum_sha256 = models.CharField(max_length=64)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.QUEUED)
+    attempts = models.PositiveIntegerField(default=0)
+    failure_code = models.CharField(max_length=80, blank=True)
+    result_version = models.ForeignKey(
+        CvVersion, on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+    )
+    queued_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    failed_at = models.DateTimeField(null=True, blank=True)
+    source_expires_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'idempotency_key'], name='uq_cv_import_user_idempotency'),
+        ]
+        indexes = [
+            models.Index(fields=['status', 'queued_at'], name='idx_cv_import_pending'),
+            models.Index(fields=['source_expires_at'], name='idx_cv_import_expiry'),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvi')
         super().save(*args, **kwargs)
 
 

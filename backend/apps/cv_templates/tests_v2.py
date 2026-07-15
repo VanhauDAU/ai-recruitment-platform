@@ -2,7 +2,9 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
+from unittest.mock import patch
 
+from apps.accounts.models import User
 from apps.cvs.schemas import empty_content, empty_layout, empty_style
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
@@ -154,7 +156,7 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(content['sections'][1]['items'][0]['role'], 'Customer Service')
         self.assertIn('Customer Service', content['sections'][0]['items'][0]['value'])
 
-    def test_position_picker_uses_specialization_taxonomy_and_only_returns_name_vi(self):
+    def test_position_picker_uses_specialization_taxonomy_and_selected_locale(self):
         JobCategory.objects.create(
             name='Nhóm không phải vị trí',
             category_type=JobCategory.CategoryType.OCCUPATION_GROUP,
@@ -165,8 +167,23 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, [{
             'public_id': self.sample_category.public_id,
+            'display_name': 'Kỹ sư AI/Machine Learning',
             'name_vi': 'Kỹ sư AI/Machine Learning',
         }])
+
+    def test_position_preview_can_return_a_composed_template_document(self):
+        response = self.client.get('/api/v2/cv-position-preview/', {
+            'position_public_id': self.sample_category.public_id,
+            'locale': 'vi-VN',
+            'template_public_id': self.primary.public_id,
+            'theme_color': '#2255AA',
+        })
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['document']['content_json'], self.sample.content_json)
+        self.assertEqual(response.data['document']['style_json']['theme_color'], '#2255AA')
+        self.assertEqual(response.data['renderer']['key'], 'classic_single_column_v1')
+        self.assertTrue(response.data['revision'])
 
     def test_position_preview_falls_back_to_admin_blueprint(self):
         position = JobCategory.objects.create(name='Nhân viên CSKH')
@@ -186,6 +203,20 @@ class TemplateCatalogV2Tests(TestCase):
             education_description='Graduated.',
             skills_title='Skills',
             skill_templates=['{position} expertise'],
+            content_json_template={
+                'schema_version': 1,
+                'locale': 'en-US',
+                'personal_info': {
+                    'full_name': '', 'headline': '{position}', 'email': '', 'phone': '',
+                    'address': '', 'avatar_asset_id': None, 'links': [],
+                },
+                'sections': [{
+                    'instance_id': 'summary_1', 'section_key': 'summary',
+                    'title': 'Career objective', 'enabled': True,
+                    'items': [{'item_id': 'summary_item_1', 'value': 'Ready for {position}.'}],
+                }],
+                'custom_fields': {},
+            },
             is_active=True,
         )
 
@@ -198,6 +229,70 @@ class TemplateCatalogV2Tests(TestCase):
         self.assertEqual(response.data['source'], 'blueprint')
         self.assertEqual(response.data['name_vi'], 'Nhân viên CSKH')
         self.assertEqual(response.data['content_json']['personal_info']['headline'], 'Customer Service Representative')
+        self.assertEqual(
+            response.data['content_json']['sections'][0]['items'][0]['value'],
+            'Ready for Customer Service Representative.',
+        )
+
+    def test_inactive_locale_is_rejected_by_catalogue_and_preview(self):
+        from apps.sitecontent.models import Locale
+
+        Locale.objects.filter(code='en-US').update(is_active=False)
+        catalogue = self.client.get('/api/v2/cv-templates/', {'locale': 'en-US'})
+        preview = self.client.get('/api/v2/cv-position-preview/', {
+            'position_public_id': self.sample_category.public_id,
+            'locale': 'en-US',
+        })
+
+        self.assertEqual(catalogue.status_code, 400)
+        self.assertEqual(preview.status_code, 400)
+
+    def test_admin_template_version_publish_and_snapshot_regenerate_contract(self):
+        admin = User.objects.create_user(
+            email='cv-admin@example.com', password='Password@123', role=User.Role.ADMIN,
+        )
+        self.client.force_authenticate(admin)
+        create_response = self.client.post(
+            f'/api/v2/admin/cv-templates/{self.primary.public_id}/versions/',
+            {}, format='json',
+        )
+        self.assertEqual(create_response.status_code, 201, create_response.data)
+        version_id = create_response.data['id']
+
+        with patch('apps.cv_templates.tasks.generate_template_color_snapshot.delay') as enqueue:
+            with self.captureOnCommitCallbacks(execute=True):
+                publish_response = self.client.post(
+                    f'/api/v2/admin/cv-templates/{self.primary.public_id}/versions/{version_id}/publish/',
+                    {}, format='json',
+                )
+        self.assertEqual(publish_response.status_code, 200, publish_response.data)
+        self.primary.refresh_from_db()
+        self.assertEqual(self.primary.current_published_version_id, version_id)
+        self.assertEqual(publish_response.data['version_status'], CvTemplateVersion.VersionStatus.PUBLISHED)
+        self.assertEqual(enqueue.call_count, 2)
+
+    def test_admin_endpoints_require_admin_role(self):
+        response = self.client.get('/api/v2/admin/cv-templates/')
+        self.assertIn(response.status_code, {401, 403})
+
+    @patch('apps.cv_templates.tasks._save_once')
+    @patch('apps.cv_templates.tasks._first_page_png', return_value=b'png')
+    @patch('apps.cv_templates.tasks.render_cv_version_pdf', return_value=b'%PDF-snapshot')
+    def test_snapshot_task_is_fingerprinted_and_write_then_swap(self, _render, _raster, save_once):
+        from apps.cv_templates.tasks import generate_template_color_snapshot
+
+        save_once.side_effect = lambda key, payload: key
+        link = self.primary.color_links.select_related('color').order_by('pk').first()
+        generate_template_color_snapshot(link.pk)
+        link.refresh_from_db()
+
+        self.assertEqual(len(link.snapshot_fingerprint), 64)
+        self.assertIn(link.snapshot_fingerprint, link.thumbnail_url)
+        self.assertIn(link.snapshot_fingerprint, link.preview_url)
+        self.assertIsNotNone(link.snapshot_generated_at)
+
+        generate_template_color_snapshot(link.pk)
+        self.assertEqual(save_once.call_count, 2)
 
     def test_published_template_version_and_its_sections_are_immutable(self):
         version = self.primary.current_published_version

@@ -1,63 +1,20 @@
 """V2 CV lifecycle workflows built on top of the version/draft foundation."""
 
-from copy import deepcopy
-
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from apps.cv_templates.models import CvSampleContent, CvTemplate, CvTemplateVersion
+from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.cv_templates.services import resolve_position_content
 
+from ..composition import CvCompositionError, compose_cv_document, overlay_actor_identity
 from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import empty_content, empty_layout, empty_style, validate_cv_document, validate_template_layout_capabilities
-from .versions import create_version
+from ..schemas import empty_content
+from .versions import create_version, document_hash
 
 
 class CvLifecyclePolicyError(ValueError):
     """The requested lifecycle action violates a CV business policy."""
-
-
-def _published_template_version(template):
-    version = template.current_published_version
-    if (
-        template.status != CvTemplate.Status.ACTIVE
-        or template.lifecycle_status != CvTemplate.LifecycleStatus.PUBLISHED
-        or version is None
-        or version.template_id != template.pk
-        or version.version_status != CvTemplateVersion.VersionStatus.PUBLISHED
-    ):
-        raise CvLifecyclePolicyError('The selected template does not have a published version.')
-    return version
-
-
-@transaction.atomic
-def _layout_for_content(template_version, content_json):
-    """Place canonical section instances into declared template regions."""
-    layout = deepcopy(template_version.default_layout_json or empty_layout())
-    regions = layout.get('regions', [])
-    if not regions:
-        return layout
-    # Template defaults describe regions only.  Instance IDs always belong to
-    # the candidate document, so never carry assignments across a switch.
-    for region in regions:
-        if isinstance(region, dict):
-            region['section_instance_ids'] = []
-    layout.pop('item_orders', None)
-    regions_by_id = {region.get('id'): region for region in regions if isinstance(region, dict)}
-    region_for_section = {
-        section.section_definition.section_key: section.region_key
-        for section in template_version.sections.select_related('section_definition')
-    }
-    fallback_region = regions[0]
-    for section in content_json.get('sections', []):
-        if not isinstance(section, dict) or not section.get('instance_id'):
-            continue
-        region = regions_by_id.get(region_for_section.get(section.get('section_key')), fallback_region)
-        section_ids = region.setdefault('section_instance_ids', [])
-        if section['instance_id'] not in section_ids:
-            section_ids.append(section['instance_id'])
-    return layout
 
 
 def _content_for_create(sample_content, position, language):
@@ -75,11 +32,21 @@ def _content_for_create(sample_content, position, language):
         raise CvLifecyclePolicyError('The selected sample content is not published.')
     if sample_content.locale != language:
         raise CvLifecyclePolicyError('The selected sample content is not available in this language.')
-    return deepcopy(sample_content.content_json)
+    return sample_content.content_json
 
 
 @transaction.atomic
-def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=None, position=None, theme_color=None):
+def create_v2_cv(
+    *,
+    actor,
+    title,
+    template,
+    language='vi-VN',
+    sample_content=None,
+    position=None,
+    source_cv=None,
+    theme_color=None,
+):
     """Create a builder CV with an immutable baseline and a mutable draft."""
     if not actor.email_verified:
         raise CvLifecyclePolicyError('Verify your email before creating a CV.')
@@ -87,22 +54,32 @@ def create_v2_cv(*, actor, title, template, language='vi-VN', sample_content=Non
     template = CvTemplate.objects.select_for_update(of=('self',)).select_related(
         'current_published_version',
     ).get(pk=template.pk)
-    template_version = _published_template_version(template)
-    content = _content_for_create(sample_content, position, language)
-    layout = _layout_for_content(template_version, content)
-    style = deepcopy(template_version.default_style_json or empty_style())
-    if theme_color:
-        style['theme_color'] = theme_color
-    validate_cv_document(
-        content_json=content,
-        layout_json=layout,
-        style_json=style,
-        schema_version=template_version.schema_version,
-    )
-    validate_template_layout_capabilities(
-        layout_json=layout,
-        capabilities=template_version.capabilities,
-    )
+    if source_cv is not None:
+        source_cv = UserCv.objects.select_for_update(of=('self',)).select_related(
+            'latest_version', 'position',
+        ).get(pk=source_cv.pk, user=actor, is_deleted=False)
+        source_draft = CvDraft.objects.select_for_update().filter(cv=source_cv).first()
+        source_document = source_draft or source_cv.latest_version
+        if source_document is None:
+            raise CvLifecyclePolicyError('The source CV has no reusable document.')
+        content = source_document.content_json
+        language = content.get('locale') or source_cv.language
+        position = source_cv.position
+    else:
+        content = _content_for_create(sample_content, position, language)
+        content = overlay_actor_identity(content, actor, clear_demo_contacts=True)
+    try:
+        document = compose_cv_document(
+            template=template,
+            content_json=content,
+            theme_color=theme_color,
+        )
+    except CvCompositionError as error:
+        raise CvLifecyclePolicyError(str(error)) from error
+    template_version = template.current_published_version
+    content = document['content_json']
+    layout = document['layout_json']
+    style = document['style_json']
     cv = UserCv.objects.create(
         user=actor,
         template=template,
@@ -173,7 +150,15 @@ def save_draft_as_version(*, cv, actor, expected_lock_version, publish=False):
 
 
 @transaction.atomic
-def switch_draft_template(*, cv, actor, template_public_id, expected_lock_version, client_session_id=''):
+def switch_draft_template(
+    *,
+    cv,
+    actor,
+    template_public_id,
+    expected_lock_version,
+    client_session_id='',
+    theme_color=None,
+):
     """Switch a mutable draft to a published template without touching content.
 
     A template version owns its default presentation contract.  The candidate's
@@ -187,30 +172,34 @@ def switch_draft_template(*, cv, actor, template_public_id, expected_lock_versio
         ).get(public_id=template_public_id)
     except CvTemplate.DoesNotExist as error:
         raise CvLifecyclePolicyError('The selected template does not exist.') from error
-    template_version = _published_template_version(template)
-    content = deepcopy(draft.content_json)
-    layout = _layout_for_content(template_version, content)
-    style = deepcopy(template_version.default_style_json or empty_style())
-    validate_cv_document(
-        content_json=content,
-        layout_json=layout,
-        style_json=style,
-        schema_version=template_version.schema_version,
-    )
-    validate_template_layout_capabilities(
-        layout_json=layout,
-        capabilities=template_version.capabilities,
-    )
+    if theme_color and not template.color_links.filter(
+        color__hex_code__iexact=theme_color,
+        color__is_active=True,
+    ).exists():
+        raise CvLifecyclePolicyError('Color is not available for this template.')
+    try:
+        document = compose_cv_document(
+            template=template,
+            content_json=draft.content_json,
+            theme_color=theme_color.upper() if theme_color else None,
+        )
+    except CvCompositionError as error:
+        raise CvLifecyclePolicyError(str(error)) from error
+    template_version = template.current_published_version
+    content = document['content_json']
+    layout = document['layout_json']
+    style = document['style_json']
 
     draft.content_json = content
     draft.layout_json = layout
     draft.style_json = style
     draft.schema_version = template_version.schema_version
+    draft.document_hash = document_hash(content, layout, style)
     draft.lock_version += 1
     draft.client_session_id = client_session_id
     draft.updated_by = actor
     draft.save(update_fields=[
-        'content_json', 'layout_json', 'style_json', 'schema_version', 'lock_version',
+        'content_json', 'layout_json', 'style_json', 'schema_version', 'document_hash', 'lock_version',
         'client_session_id', 'updated_by', 'updated_at',
     ])
     previous_template_id = cv.template_id

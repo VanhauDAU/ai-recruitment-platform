@@ -19,12 +19,39 @@ export async function setDefaultCv(publicId, isDefault) {
   return data
 }
 
-export async function importCvFile(file, title) {
+export async function importCvFile(file, title, options = {}) {
   const body = new FormData()
   body.append('file', file)
   if (title) body.append('title', title)
-  const { data } = await api.post('/v2/cvs/imports/', body)
+  if (options.templatePublicId) body.append('template_public_id', options.templatePublicId)
+  if (options.language) body.append('language', options.language)
+  if (options.themeColor) body.append('theme_color', options.themeColor)
+  const { data } = await api.post('/v2/cvs/imports/', body, {
+    headers: options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {},
+  })
   return data
+}
+
+export async function retryCvImport(publicId) {
+  const { data } = await api.post(`/v2/cvs/${publicId}/imports/retry/`, {})
+  return data
+}
+
+export async function waitForCvImport(publicId, { timeoutMs = 60_000, intervalMs = 1_000 } = {}) {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < timeoutMs) {
+    const cv = await getCv(publicId)
+    if (cv.processing_status === 'analyzed') return cv
+    if (cv.processing_status === 'failed') {
+      const error = new Error(cv.import_job?.failure_code || 'import_failed')
+      error.code = cv.import_job?.failure_code || 'import_failed'
+      throw error
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs))
+  }
+  const error = new Error('import_timeout')
+  error.code = 'import_timeout'
+  throw error
 }
 
 export async function duplicateCv(publicId, title) {
@@ -55,6 +82,18 @@ export async function getCvDraft(publicId) {
   return { ...data, etag: headers.etag }
 }
 
+export async function getLatestRecoverableDraft() {
+  const response = await api.get('/v2/cvs/latest-recoverable-draft/')
+  return response.status === 204 ? null : response.data
+}
+
+export async function getCvTemplatePreview(publicId, templatePublicId, signal) {
+  const config = { params: { template_public_id: templatePublicId } }
+  if (signal) config.signal = signal
+  const { data } = await api.get(`/v2/cvs/${publicId}/template-preview/`, config)
+  return data
+}
+
 export async function updateCvDraft(publicId, document, lockVersion, clientSessionId) {
   const payload = clientSessionId ? { ...document, client_session_id: clientSessionId } : document
   const { data, headers } = await api.put(
@@ -83,10 +122,14 @@ export async function publishCvVersion(publicId, lockVersion) {
   return data
 }
 
-export async function switchCvTemplate(publicId, templatePublicId, lockVersion, clientSessionId) {
+export async function switchCvTemplate(publicId, templatePublicId, lockVersion, clientSessionId, themeColor) {
   const { data, headers } = await api.put(
     `/v2/cvs/${publicId}/template/`,
-    { template_public_id: templatePublicId, ...(clientSessionId ? { client_session_id: clientSessionId } : {}) },
+    {
+      template_public_id: templatePublicId,
+      ...(clientSessionId ? { client_session_id: clientSessionId } : {}),
+      ...(themeColor ? { theme_color: themeColor } : {}),
+    },
     { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
   )
   return { ...data, draft: { ...data.draft, etag: headers.etag } }

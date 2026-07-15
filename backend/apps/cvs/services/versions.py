@@ -122,6 +122,7 @@ def create_version(
                 'layout_json': layout_json,
                 'style_json': style_json,
                 'schema_version': 1,
+                'document_hash': version.content_hash,
                 'lock_version': 0,
                 'updated_by': actor,
             },
@@ -147,11 +148,13 @@ def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_l
             layout_json=layout_json,
             capabilities=cv.current_template_version.capabilities,
         )
+    next_document_hash = document_hash(content_json, layout_json, style_json)
     updated = CvDraft.objects.filter(cv=cv, lock_version=expected_lock_version).update(
         content_json=content_json,
         layout_json=layout_json,
         style_json=style_json,
         schema_version=1,
+        document_hash=next_document_hash,
         lock_version=expected_lock_version + 1,
         client_session_id=client_session_id,
         updated_by=actor,
@@ -198,12 +201,14 @@ def sync_legacy_builder_draft(cv, actor):
             content_json=content,
             layout_json=layout,
             style_json=style,
+            document_hash=document_hash(content, layout, style),
             updated_by=actor,
         )
     else:
         draft.content_json = content
         draft.layout_json = layout
         draft.style_json = style
+        draft.document_hash = document_hash(content, layout, style)
         draft.updated_by = actor
         draft.lock_version += 1
         draft.full_clean()

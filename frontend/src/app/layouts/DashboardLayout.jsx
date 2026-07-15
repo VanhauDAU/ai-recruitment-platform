@@ -15,6 +15,7 @@ const NAV_ITEMS = {
   ],
   admin: [
     { key: adminPath('/dashboard'), label: 'Tổng quan' },
+    { key: adminPath('/cv-catalogue'), label: 'Catalogue CV' },
     { key: adminPath('/settings'), label: 'Cài đặt hệ thống' },
   ],
 }

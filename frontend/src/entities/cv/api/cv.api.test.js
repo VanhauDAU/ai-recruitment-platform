@@ -54,7 +54,7 @@ describe('CV V2 API', () => {
 
     expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
     expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
-    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData))
+    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData), { headers: {} })
     expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
   })
 
@@ -96,12 +96,12 @@ describe('CV V2 API', () => {
       headers: { etag: '"lock-version-4"' },
     })
 
-    await expect(switchCvTemplate('cv_1', 'tpl_two', 3, 'tab_a')).resolves.toEqual({
+    await expect(switchCvTemplate('cv_1', 'tpl_two', 3, 'tab_a', '#2255AA')).resolves.toEqual({
       cv: { template_public_id: 'tpl_two' }, draft: { lock_version: 4, etag: '"lock-version-4"' },
     })
     expect(put).toHaveBeenCalledWith(
       '/v2/cvs/cv_1/template/',
-      { template_public_id: 'tpl_two', client_session_id: 'tab_a' },
+      { template_public_id: 'tpl_two', client_session_id: 'tab_a', theme_color: '#2255AA' },
       { headers: { 'If-Match': '"lock-version-3"' } },
     )
   })

@@ -10,6 +10,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Added
 
+- CV Builder Phase 0: thêm canonical `compose_cv_document` dùng chung để map content vào published template version, áp presentation và validate document/capabilities; bổ sung regression test và ADR 0007.
+- CV Builder Phase 1: position options hỗ trợ locale/ordering/content availability; preview API trả canonical document/renderer/revision, hỗ trợ blank và cache base không chứa PII thực.
+- CV Builder Phase 2: thêm `CvDraft.document_hash`, latest-recoverable endpoint, read-only template projection và `source_cv_public_id` để copy draft sang CV mới.
+- CV Builder Phase 3: thêm registry/API `Locale`, migration FK song song có backfill cho localization/sample/blueprint, canonical `content_json_template` dual-read và route catalogue locale mở rộng.
+- CV Builder Phase 4: thêm admin REST/publishing portal, structured sample editor và snapshot worker canonical WeasyPrint→pypdfium2 theo fingerprint, idempotent/write-then-swap.
+- CV Builder Phase 5: nâng import PDF/DOCX thành durable AI job có MIME sniffing, idempotency, provider adapter, canonical validation/composition, retry/throttle/retention và modal polling.
+
 - Chuẩn hóa taxonomy kho mẫu CV bằng quan hệ many-to-many `CvTemplate.categories` qua `CvTemplateCategoryLink`; bổ sung `CvColor` và `CvTemplateColorLink` để một template có nhiều màu, mỗi màu có thumbnail/preview URL, thứ tự và trạng thái mặc định riêng.
 - Public CV Template API V2 trả thêm `colors[]` từ database; Django admin có màn quản lý category/color và inline gán category/color cho từng template.
 - Migration `cv_templates.0004_cv_template_taxonomy_colors` backfill màu từ style JSON cũ sang bảng quan hệ; `seed_cv_catalog` chuyển category legacy thành link thật, seed palette màu/localization/sample content theo cách idempotent.
@@ -26,6 +33,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Bổ sung `GET|POST /api/v2/applications/` cho candidate. Request ghi rõ `cv_public_id` và `version_public_id`; backend tạo `application_snapshot` từ version đó, không đọc draft và không làm đổi CV pointer.
 
 #### Changed
+
+- Luồng create CV V2 và switch draft template dùng chung canonical composer, giữ nguyên CAS draft, immutable version, payload và dual-write legacy.
+- Modal và template detail mặc định render sample locale/vị trí đầu tiên, chống request race, đổi màu tức thì; xóa toàn bộ persona/sample/layout hardcode khỏi frontend.
+- Previous hoạt động thật; Restore tự dùng duy nhất draft dirty mới nhất, giữ nguyên content và switch template/màu bằng CAS. Editor flush autosave trước điều hướng nội bộ và khi tab chuyển hidden.
+- Catalogue/preview/create chỉ chấp nhận locale active; frontend tải locale từ API qua entity riêng, giữ fallback bốn SEO locale và không làm router phụ thuộc request bất đồng bộ.
 
 - Card mẫu CV bỏ danh sách màu fallback hard-code; hover/focus một màu dùng đúng `preview_url` của quan hệ template–color, còn compatibility fallback chỉ giữ một màu cho node API chưa migrate.
 - Trang template detail và modal dùng chung `CvSourcePanel`; màu của modal mẫu liên quan có state riêng, không làm đổi màu template chính. Catalog không còn tải sample content rồi truyền vào prop không được sử dụng.

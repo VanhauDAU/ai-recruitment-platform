@@ -17,6 +17,15 @@ Mọi document có `schema_version = 1`. Validator backend giới hạn kích th
 section key, ID trùng, region/layout, font/màu và rich text (`rich_text_v1` với
 block text an toàn); HTML tùy ý bị từ chối.
 
+## Canonical composition
+
+Mọi workflow cần ghép content với template phải gọi
+`apps.cvs.composition.compose_cv_document`. Composer lấy published template
+version, deep-copy content, map section instance vào region, áp style/theme và
+chạy document/capability validation. Create và switch template đã dùng contract
+này; position preview, import và snapshot mở rộng trên cùng pipeline thay vì tự
+dựng document ở frontend hoặc service khác.
+
 ## Ownership và bất biến
 
 `UserCv` vẫn là aggregate mutable/metadata. Mỗi CV builder có một `CvDraft`
@@ -110,6 +119,12 @@ Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
 "lock-version-N"`. Stale lock trả `409` cùng `current_lock_version`; client
 phải reload/merge thay vì ghi đè. Autosave không tạo `CvVersion`.
 
+`CvDraft.document_hash` lưu hash canonical của content/layout/style. Draft cần
+recovery khi hash này khác `base_version.content_hash`; manual save repoint base
+version nên tự clear dirty mà không phụ thuộc timestamp. Endpoint recovery chỉ
+trả draft dirty mới nhất, còn template preview là read-only projection trước khi
+switch bằng CAS.
+
 ## Template Catalog và Create CV Flow
 
 Public catalogue chỉ đọc `CvTemplate` đang `active`, có lifecycle `published`,
@@ -136,6 +151,14 @@ của renderer version. Dropdown lấy `JobCategory(category_type=specialization
 nếu chưa có thì kết hợp localization theo locale với `CvContentBlueprint` để
 materialize canonical content. Vì vậy vị trí mới không cần tạo sample theo từng
 template; admin chỉ cấu hình bốn tên locale và optional curated override.
+
+Locale là registry dữ liệu tại `sitecontent.Locale`, không còn là enum runtime.
+Trong cửa sổ migration, các bảng localization/sample/blueprint giữ đồng thời
+`locale` code và FK `locale_ref → Locale.code`; model mới dual-write và resolver
+tiếp tục dual-read. `CvContentBlueprint.content_json_template` là canonical
+source mới, hỗ trợ `{position}` ở mọi string; field blueprint phẳng chỉ là
+fallback tương thích cho tới release contract. Locale inactive bị chặn với CV
+mới nhưng code trong document/version cũ vẫn render được.
 
 `POST /api/v2/cvs/` nhận `template_public_id`, `language`, title, tùy chọn
 `position_public_id` và `theme_color`. `sample_content_public_id` chỉ còn là

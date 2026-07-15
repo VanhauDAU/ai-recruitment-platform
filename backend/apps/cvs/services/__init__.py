@@ -21,6 +21,7 @@ from .exports import (
     retry_cv_export,
 )
 from .lifecycle import CvLifecyclePolicyError, create_v2_cv, save_draft_as_version, switch_draft_template
+from .imports import InvalidCvImport, queue_cv_import, retry_import
 from .sharing import (
     CvSharePermissionError,
     CvShareUnavailableError,
@@ -45,6 +46,9 @@ __all__ = [
     'create_builder_cv',
     'duplicate_cv',
     'import_v2_cv',
+    'InvalidCvImport',
+    'queue_cv_import',
+    'retry_import',
     'create_initial_document',
     'create_v2_cv',
     'create_shared_link',

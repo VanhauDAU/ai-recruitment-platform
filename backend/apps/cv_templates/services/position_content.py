@@ -26,6 +26,16 @@ def _format(value, position_name):
     return value.replace('{position}', position_name)
 
 
+def _materialize_tokens(value, position_name):
+    if isinstance(value, str):
+        return _format(value, position_name)
+    if isinstance(value, list):
+        return [_materialize_tokens(item, position_name) for item in value]
+    if isinstance(value, dict):
+        return {key: _materialize_tokens(item, position_name) for key, item in value.items()}
+    return value
+
+
 def _localized_name(position, locale):
     localization = JobCategoryLocalization.objects.filter(
         category=position,
@@ -64,6 +74,11 @@ def _blueprint(locale, experience_level):
 
 
 def _content_from_blueprint(blueprint, locale, position_name):
+    if isinstance(blueprint.content_json_template, dict) and blueprint.content_json_template.get('sections'):
+        content = _materialize_tokens(deepcopy(blueprint.content_json_template), position_name)
+        content['locale'] = locale
+        content['schema_version'] = content.get('schema_version') or 1
+        return content
     return {
         'schema_version': 1,
         'locale': locale,

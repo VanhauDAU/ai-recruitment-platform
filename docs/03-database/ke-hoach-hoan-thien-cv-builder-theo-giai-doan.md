@@ -23,6 +23,92 @@ Template catalogue → chọn nguồn/màu → initial version + draft
 
 ## Trạng thái tổng thể
 
+### Chương trình hoàn thiện CV Builder 2026-07-15
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 0 | Canonical composition + khóa regression contract | ✅ Hoàn tất |
+| 1 | Sample/blank live preview chuẩn hóa | ✅ Hoàn tất |
+| 2 | Previous + latest recoverable draft | ✅ Hoàn tất |
+| 3 | Locale cấu hình được + canonical blueprint | ✅ Hoàn tất |
+| 4 | Admin catalogue + snapshot theo màu | ✅ Hoàn tất |
+| 5 | AI import PDF/DOCX | ✅ Hoàn tất |
+| 6 | Cleanup, rollout, observability | ⬜ Chưa làm |
+
+Phase 0 đã chuyển create và template switch sang
+`apps.cvs.composition.compose_cv_document`; CAS, immutable version và dual-write
+giữ nguyên. Quyết định kiến trúc: [ADR 0007](../adr/0007-canonical-cv-composition.md).
+
+Phase 1 đã mở rộng position options theo locale/content availability, thêm thứ
+tự vị trí, trả canonical document từ preview API và xóa sample/layout hardcode
+ở frontend. Modal/detail mặc định source sample, tự chọn vị trí đầu tiên, chống
+request race, hiển thị skeleton và đổi màu client-side không fetch lại content.
+
+Phase 2 đã thêm draft hash/backfill, endpoint latest recoverable chỉ trả một CV,
+read-only template projection, source copy tạo CV mới và switch template/màu có
+CAS. Autosave flush khi điều hướng nội bộ/tab hidden; Restore không có CV picker.
+
+Phase 3 đã thêm registry `Locale` quản trị được và public/admin API; bốn locale
+hiện tại được seed. Localization/sample/blueprint có FK song song tới
+`Locale.code`, backfill bằng migration và vẫn giữ cột code để dual-read/write
+trong ít nhất một release. Blueprint có `content_json_template` canonical, hỗ
+trợ token `{position}` đệ quy và fallback sang các field cũ. Frontend dùng entity
+`locale`, giữ bốn SEO route hiện tại và hỗ trợ route mở rộng
+`/mau-cv/ngon-ngu/:localeCode` mà không làm router phụ thuộc API bất đồng bộ.
+
+### Phase 3 — Kết quả nghiệm thu
+
+- `Locale.code` bất biến; chỉ có một default active; admin đổi default theo
+  transaction và không có public delete contract.
+- Locale inactive không còn xuất hiện ở public API, không được dùng cho preview,
+  catalogue hoặc CV mới; document cũ vẫn render theo code đã lưu.
+- Migration chạy theo Expand → Backfill → Switch. Chưa contract/drop cột
+  `locale` cũ; việc đó chỉ được làm sau một release quan sát ổn định.
+- Canonical blueprint được validate bằng document schema và materialize token
+  trước composition; curated content vẫn có độ ưu tiên cao hơn.
+- Regression Phase 3: 12 backend test locale/catalogue xanh; frontend lint,
+  architecture check và production build xanh.
+
+### Phase 4 — Kết quả nghiệm thu
+
+- Admin REST phủ template, localization, category, color, sample và blueprint;
+  mọi endpoint dùng `IsAdmin`. Template version có action tạo draft từ version
+  hiện hành, publish, retire và regenerate snapshot.
+- Publish chạy qua transaction/row lock, gọi `full_clean()` trước khi đổi
+  pointer published. Published/retired version vẫn tuân thủ bất biến của model.
+- Admin portal `/admin-app/cv-catalogue` nằm sau `AuthGuard → RoleGuard`, có
+  bảng publishing và sample editor theo section/item, không yêu cầu sửa raw JSON.
+- Snapshot dùng canonical composer → HTML/WeasyPrint → pypdfium2 raster trang
+  đầu. Fingerprint gồm template/renderer/màu/source revision; worker idempotent,
+  ghi asset mới trước rồi swap DB pointer trong transaction, chỉ xóa asset cũ
+  sau commit.
+- Dependency `WeasyPrint==64.1` và `pypdfium2==4.30.0` được pin. Container/worker
+  production phải cung cấp thư mục Fontconfig cache có quyền ghi.
+- Regression Phase 4: 12 backend catalogue/admin/snapshot test xanh; raster
+  integration PDF→PNG chạy thật; frontend lint, architecture và build xanh.
+
+### Phase 5 — Kết quả nghiệm thu
+
+- `POST /api/v2/cvs/imports/` được mở rộng additive với template/language/màu;
+  contract upload-file cũ vẫn hoạt động khi không truyền template. Import builder
+  trả `202`, tạo `CvImportJob` durable và dùng `Idempotency-Key` theo candidate.
+- Chỉ nhận PDF/DOCX có signature thật, tối đa 5 MB; PDF tối đa 20 trang và PDF
+  scan chưa có OCR trả failure code riêng. Text tối đa 100.000 ký tự.
+- Worker trích xuất bằng `pypdf`/`python-docx`, gọi adapter Gemini/OpenAI/Anthropic
+  theo cấu hình admin, retry schema tối đa một lần, map/validate canonical rồi
+  compose bằng đúng template version. Khi chưa cấu hình provider key, heuristic
+  an toàn vẫn tạo draft tối thiểu để local/dev không bị khóa.
+- Identity parse được được giữ; account chỉ fill field còn trống. Raw text và
+  provider response không persist/log; UI chỉ nhận failure code đã allowlist.
+- Retry owner-only tối đa ba attempt; throttle 10 import/giờ/user. Celery beat
+  redispatch queued job và xóa source file sau retention mặc định 30 ngày, không
+  xóa canonical document.
+- Modal upload chỉ nhận `.pdf/.docx`, poll có timeout, hiển thị lỗi scan cụ thể,
+  có retry và lối thoát sang blank; khi analyzed mở editor đúng canonical draft.
+- Regression Phase 5: 38 AI/CV V2 test xanh, gồm DOCX thực → editable draft,
+  idempotency, spoofed MIME, safe failure/retry và AI schema retry; frontend
+  lint, architecture và production build xanh.
+
 | Mã | Hạng mục | Trạng thái | Kết quả/điểm còn thiếu |
 | --- | --- | --- | --- |
 | CVB-0 | Runtime, migration, create lifecycle | ✅ Hoàn tất | V2 create/draft/version, application snapshot, migration/preflight |

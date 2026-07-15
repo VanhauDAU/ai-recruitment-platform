@@ -184,6 +184,7 @@ REST_FRAMEWORK = {
         'feedback': '5/min',
         'consent': '20/hour',
         'job_view': '120/hour',
+        'cv_import': '10/hour',
     },
 }
 
@@ -312,6 +313,14 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.cvs.tasks.dispatch_pending_cv_export_jobs',
         'schedule': 60.0,
     },
+    'dispatch-pending-cv-import-jobs': {
+        'task': 'apps.cvs.tasks.dispatch_pending_cv_import_jobs',
+        'schedule': 60.0,
+    },
+    'purge-expired-cv-import-sources': {
+        'task': 'apps.cvs.tasks.purge_expired_cv_import_sources',
+        'schedule': 86400.0,
+    },
 }
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
@@ -390,3 +399,4 @@ LEGACY_CV_API_SUNSET_AT = config(
 # A soft-deleted CV can only be restored during this explicit retention window.
 # A later retention worker may purge expired archived records independently.
 CV_ARCHIVE_RESTORE_WINDOW_DAYS = config('CV_ARCHIVE_RESTORE_WINDOW_DAYS', default=30, cast=int)
+CV_IMPORT_SOURCE_RETENTION_DAYS = config('CV_IMPORT_SOURCE_RETENTION_DAYS', default=30, cast=int)

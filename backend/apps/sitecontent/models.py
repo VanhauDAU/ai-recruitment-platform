@@ -1,5 +1,43 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
+
+
+class Locale(models.Model):
+    """Admin-managed locale registry shared by CV catalogue data."""
+
+    code = models.CharField(max_length=16, unique=True)
+    label_vi = models.CharField(max_length=80)
+    native_name = models.CharField(max_length=80)
+    flag_emoji = models.CharField(max_length=16, blank=True)
+    catalog_path = models.SlugField(max_length=120, unique=True)
+    is_default = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'label_vi', 'code']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['is_default'],
+                condition=Q(is_default=True),
+                name='uq_sitecontent_default_locale',
+            ),
+        ]
+
+    def clean(self):
+        if self.is_default and not self.is_active:
+            raise ValidationError({'is_active': 'Default locale must remain active.'})
+        if self.pk:
+            persisted_code = type(self).objects.filter(pk=self.pk).values_list('code', flat=True).first()
+            if persisted_code and persisted_code != self.code:
+                raise ValidationError({'code': 'Locale code is immutable.'})
+
+    def __str__(self):
+        return f'{self.native_name} ({self.code})'
 
 
 class SiteSetting(models.Model):

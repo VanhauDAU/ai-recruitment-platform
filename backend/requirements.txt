@@ -10,3 +10,6 @@ psycopg2-binary==2.9.10
 python-decouple==3.8
 Pillow==11.3.0
 WeasyPrint==64.1
+pypdfium2==4.30.0
+pypdf==5.7.0
+python-docx==1.2.0

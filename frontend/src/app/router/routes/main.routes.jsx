@@ -80,6 +80,9 @@ export function mainRoutes() {
       <Route path="/mau-cv-tieng-trung" element={<TemplateCatalogPage />} />
       <Route path="/mau-cv-tieng-trung/:categorySlug" element={<TemplateCatalogPage />} />
       <Route path="/mau-cv-tieng-trung/chi-tiet/:slug" element={<TemplateDetailPage />} />
+      <Route path="/mau-cv/ngon-ngu/:localeCode" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv/ngon-ngu/:localeCode/:categorySlug" element={<TemplateCatalogPage />} />
+      <Route path="/mau-cv/ngon-ngu/:localeCode/chi-tiet/:slug" element={<TemplateDetailPage />} />
       <Route path="/cv-templates" element={<TemplateCatalogPage />} />
       <Route path="/cv-templates/:slug" element={<TemplateDetailPage />} />
       <Route path="/cv/share/:token" element={<CvSharedViewPage />} />
