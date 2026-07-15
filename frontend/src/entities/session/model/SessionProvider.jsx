@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser } from '../api/session.api'
 import SessionContext from './session-context'
-import { clearSession, getAccessToken } from './session.storage'
+import { clearSession, getAccessToken } from '@/shared/api/token-store'
 
 function loginPathForCurrentPortal() {
   const portal = getCurrentPortal()
