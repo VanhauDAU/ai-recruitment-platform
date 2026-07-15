@@ -17,6 +17,7 @@
    ổn định. Asset cũ chỉ bị thay pointer khi cả thumbnail/preview mới đã ghi.
 7. Bật AI provider bằng admin setting và secret environment tương ứng. Secret
    trong `backend/.env` được đọc qua `python-decouple`; không lưu vào database.
+   Badge Admin chỉ báo trạng thái boolean bằng cùng resolver, không trả secret.
 
 ## Kiểm tra sau deploy
 

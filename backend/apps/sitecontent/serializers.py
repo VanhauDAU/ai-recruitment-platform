@@ -1,5 +1,4 @@
-import os
-
+from decouple import config
 from django.db import transaction
 from rest_framework import serializers
 
@@ -79,7 +78,10 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
     def get_env_configured(self, obj):
         if obj.value_type != SiteSetting.ValueType.ENV:
             return None
-        return bool(os.environ.get(obj.options.get('env_var', '')))
+        # python-decouple resolves backend/.env without mutating os.environ.
+        # This must use the same resolver as runtime services so the admin badge
+        # reflects whether a secret is actually available to the process.
+        return bool(config(obj.options.get('env_var', ''), default=''))
 
     def get_display_value(self, obj):
         """URL chỉ để preview; ``value`` vẫn là storage key để PATCH an toàn."""

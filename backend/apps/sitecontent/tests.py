@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from unittest.mock import patch
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -12,6 +13,7 @@ from rest_framework.test import APITransactionTestCase
 from apps.accounts.models import User
 
 from .models import Locale, SiteSetting
+from .serializers import AdminSiteSettingSerializer
 
 
 PNG_BYTES = (
@@ -137,3 +139,20 @@ class LocaleApiTests(APITransactionTestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class AdminSiteSettingSerializerTests(APITransactionTestCase):
+    @patch('apps.sitecontent.serializers.config', return_value='provider-secret')
+    def test_env_badge_uses_decouple_and_never_exposes_secret(self, config):
+        setting = SiteSetting.objects.create(
+            key='ai_api_key_configured',
+            label='API key',
+            value_type=SiteSetting.ValueType.ENV,
+            options={'env_var': 'GEMINI_API_KEY'},
+        )
+
+        data = AdminSiteSettingSerializer(setting).data
+
+        self.assertTrue(data['env_configured'])
+        self.assertNotIn('provider-secret', str(data))
+        config.assert_called_once_with('GEMINI_API_KEY', default='')
