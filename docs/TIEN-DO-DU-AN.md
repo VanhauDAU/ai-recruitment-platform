@@ -46,7 +46,7 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P3 | Tách `MyCvs.jsx` 643 dòng → model hook + 3 UI component, mở đầu coverage ratchet | ✅ |
 | FE-P4 | Tách `FeaturedIndustriesEmployers` (449) + `MarketStats` (442) | ✅ |
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ✅ |
-| FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ⬜ |
+| FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
@@ -586,4 +586,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (FE-P5 — TanStack Query: infra + saved-jobs + jobs pages + home data; request-deduplication thu hẹp phạm vi còn bootstrap context)
+Cập nhật lần cuối: 2026-07-15 (FE-P6 — WebP logo fallback 80KB→27KB; precompress hoãn tới epic deployment; hoàn tất epic dọn dẹp frontend FE-P1→P6)
