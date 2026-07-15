@@ -22,6 +22,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 - AI import adapter đọc `GEMINI_API_KEY`, `OPENAI_API_KEY` và `ANTHROPIC_API_KEY` qua `python-decouple`, nên secret trong `backend/.env` được worker/web process dùng đúng thay vì chỉ đọc `os.environ`.
 - Badge cấu hình secret ở Admin dùng cùng resolver `python-decouple`, nên phản ánh đúng key trong `backend/.env` mà không bao giờ trả giá trị key về client.
+- `DELETE /api/v2/cvs/{id}/` chuyển từ archive mềm sang xóa vĩnh viễn; loại bỏ UI/API archive/restore, xóa library artifacts và giữ snapshot đã nộp ở trạng thái detached cho workflow tuyển dụng.
 
 - Chuẩn hóa taxonomy kho mẫu CV bằng quan hệ many-to-many `CvTemplate.categories` qua `CvTemplateCategoryLink`; bổ sung `CvColor` và `CvTemplateColorLink` để một template có nhiều màu, mỗi màu có thumbnail/preview URL, thứ tự và trạng thái mặc định riêng.
 - Public CV Template API V2 trả thêm `colors[]` từ database; Django admin có màn quản lý category/color và inline gán category/color cho từng template.

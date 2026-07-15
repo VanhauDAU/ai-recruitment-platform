@@ -116,11 +116,9 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET | `/api/v2/cv-sample-contents/{public_id}/` | Compatibility detail cho client cũ dùng `sample_content_public_id`. |
 | GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id` và optional màu; các source loại trừ nhau. |
 | GET | `/api/v2/cvs/latest-recoverable-draft/` | Trả đúng một server draft dirty mới nhất của candidate hoặc `204`; dirty xác định bằng document hash so với base version. |
-| GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE archive mềm, revoke public access qua `is_deleted`. |
+| GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE xóa vĩnh viễn CV và library artifacts. Snapshot của application đã nộp được giữ detached cho recruiter. |
 | POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart file`, optional `title`). Response không có storage key/URL, chỉ có `file_name`, `file_type`, `source=imported`. |
-| GET | `/api/v2/cvs/archived/` | Danh sách CV archive chỉ của owner; không có public/share access. |
 | POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
-| POST | `/api/v2/cvs/{public_id}/restore/` | Khôi phục CV archive của owner trong `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30). Default CV không tự được khôi phục. |
 | GET/PUT | `/api/v2/cvs/{public_id}/draft/` | Đọc/autosave canonical draft; PUT bắt buộc `If-Match: "lock-version-N"`. |
 | PUT | `/api/v2/cvs/{public_id}/template/` | Đổi template của mutable draft, giữ canonical content và optimistic lock. |
 | GET | `/api/v2/cvs/{public_id}/template-preview/?template_public_id=` | Project draft owner lên template mới để preview, không mutation aggregate. |

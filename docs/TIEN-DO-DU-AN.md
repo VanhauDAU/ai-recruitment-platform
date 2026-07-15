@@ -409,7 +409,7 @@ build đều pass.
 | 4.1 | `cv_versions` + draft/history/owner/share lifecycle | ✅ |
 | 4.2 | `cv_exports` + immutable PDF export | ✅ |
 | 4.3 | Template taxonomy/color many-to-many + preview asset theo màu | ✅ |
-| 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/archive/restore/default) | ✅ — V2 workflow, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
+| 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/hard-delete/default) | ✅ — V2 workflow, snapshot ứng tuyển retained detached, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
 
@@ -425,7 +425,7 @@ build đều pass.
 <details>
 <summary><b>CVB-0.2</b> — 🟡 CV API V1→V2 cutover</summary>
 
-V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/archive, `POST /api/v2/cvs/imports/` cho PDF/DOCX, `POST …/duplicate/` cho builder CV và archive list/restore owner-only trong restore window. Trang “CV của tôi” gọi entity API V2, upload nhận phản hồi backend thật và không còn gọi V1. V1 vẫn chạy để client cũ không gãy, nhưng trả `Deprecation`, `Sunset`, successor `Link` và event telemetry tối thiểu không chứa PII. Không tạo `/api/v1/`, không redirect request ghi; chỉ chuyển sang `410` trong release riêng sau khi telemetry cho thấy usage V1 bằng 0.
+V2 bổ sung `PATCH|DELETE /api/v2/cvs/{id}/` cho metadata/hard-delete, `POST /api/v2/cvs/imports/` cho PDF/DOCX và `POST …/duplicate/` cho builder CV. Hard-delete xóa library aggregate/artifacts; snapshot application bất biến được giữ detached để recruiter đọc đúng hồ sơ đã nộp. Trang “CV của tôi” gọi entity API V2, upload nhận phản hồi backend thật và không còn gọi V1. V1 vẫn chạy để client cũ không gãy, nhưng trả `Deprecation`, `Sunset`, successor `Link` và event telemetry tối thiểu không chứa PII. Không tạo `/api/v1/`, không redirect request ghi; chỉ chuyển sang `410` trong release riêng sau khi telemetry cho thấy usage V1 bằng 0.
 
 </details>
 

@@ -161,7 +161,7 @@ app/router
   detail, source panel/modal. `pages/main/cvs/CvEditor.jsx` chỉ lấy `publicId`
   rồi compose editor feature.
 - `pages/main/account/MyCvs.jsx` là owner-local account UI; nó chỉ gọi public
-  API `entities/cv` (V2 metadata/archive/import/duplicate/restore/share), không
+  API `entities/cv` (V2 metadata/hard-delete/import/duplicate/share), không
   gọi HTTP client trực tiếp hoặc contract V1. CTA chỉ xuất hiện khi backend
   workflow tồn tại; không dùng timeout/local state để mô phỏng thành công.
 - Backend compatibility fields như `theme_color`/`color_variants` có thể tồn
