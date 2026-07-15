@@ -42,11 +42,19 @@ cho các quy tắc này.
 import { useSavedJobs } from '@/features/saved-jobs'
 
 // Sai: phụ thuộc vào cách feature tổ chức nội bộ.
-import { useToggleSavedJob } from '@/features/saved-jobs/model/useToggleSavedJob'
+import { useToggleSavedJob } from '@/features/saved-jobs/model/use-toggle-saved-job'
 
 // Đúng: shared có thể được import theo segment cụ thể.
 import { apiClient } from '@/shared/api/client'
 ```
+
+## Quy ước import trong slice
+
+Trong cùng một slice dùng đường dẫn tương đối (`../model/use-foo`,
+`./JobCard`); chỉ dùng alias `@/` khi import vượt slice hoặc layer. Quy ước
+này chưa có tool enforce nên áp dụng khi chạm vào file (opportunistic),
+không mass-rewrite. File hook đặt tên kebab-case (`use-saved-jobs-query.js`);
+component đặt tên PascalCase.
 
 ## Quy tắc placement
 

@@ -42,7 +42,7 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | FE-P1 | Siết enforcement: widget public API (3 `index.js` + sửa deep-import MainLayout), depcruise đọc slice động (vá 7 feature + 2 widget không được bảo vệ) + rule `no-deep-import-widgets`, oxlint thêm exhaustive-deps/no-unused-vars/import-first/no-duplicates/no-cycle (sửa 36 vi phạm) | ✅ |
-| FE-P2 | Đồng nhất quy ước: rename 6 hook camelCase → kebab-case, xóa wrapper `session.storage.js`, tài liệu hóa quy ước import trong slice | ⬜ |
+| FE-P2 | Đồng nhất quy ước: rename 6 hook camelCase → kebab-case, xóa wrapper `session.storage.js`, tài liệu hóa quy ước import trong slice | ✅ |
 | FE-P3 | Tách `MyCvs.jsx` 643 dòng → model hook + 3 UI component, mở đầu coverage ratchet | ⬜ |
 | FE-P4 | Tách `FeaturedIndustriesEmployers` (449) + `MarketStats` (442) | ⬜ |
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ⬜ |
@@ -586,4 +586,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (FE-P1 — siết enforcement frontend: widget public API, depcruise slice động, oxlint ruleset mở rộng)
+Cập nhật lần cuối: 2026-07-15 (FE-P2 — đồng nhất quy ước frontend: hook kebab-case, xóa session.storage wrapper, quy ước import trong slice)
