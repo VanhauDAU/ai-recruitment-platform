@@ -1,47 +1,49 @@
-import { useEffect, useState } from 'react'
-import { getIndustries, getJobCategories, getJobStats, getJobs } from '@/entities/job'
+import { useQuery } from '@tanstack/react-query'
+import { getIndustries, getJobCategories, getJobStats, getJobs, jobKeys } from '@/entities/job'
 import { getProvinces } from '@/entities/location'
 
+// Dữ liệu tĩnh của sidebar (danh mục, tỉnh thành, ngành) đổi rất chậm —
+// giữ tươi 5 phút để không refetch khi điều hướng qua lại.
+const SIDEBAR_STALE_MS = 5 * 60_000
+
 export default function useJobSidebarData() {
-  const [categories, setCategories] = useState([])
-  const [demandCounts, setDemandCounts] = useState({})
-  const [provinces, setProvinces] = useState([])
-  const [industries, setIndustries] = useState([])
-  const [sidebarLoading, setSidebarLoading] = useState(true)
-  const [noExpCount, setNoExpCount] = useState(null)
+  const categoriesQuery = useQuery({
+    queryKey: jobKeys.categories,
+    queryFn: getJobCategories,
+    staleTime: SIDEBAR_STALE_MS,
+  })
+  const statsQuery = useQuery({
+    queryKey: jobKeys.stats,
+    queryFn: getJobStats,
+    staleTime: SIDEBAR_STALE_MS,
+    select: (stats) => Object.fromEntries((stats.demand || []).map((item) => [item.id, item.count])),
+  })
+  const provincesQuery = useQuery({
+    queryKey: ['locations', 'provinces'],
+    queryFn: getProvinces,
+    staleTime: SIDEBAR_STALE_MS,
+  })
+  const industriesQuery = useQuery({
+    queryKey: jobKeys.industries,
+    queryFn: getIndustries,
+    staleTime: SIDEBAR_STALE_MS,
+  })
+  const noExpQuery = useQuery({
+    queryKey: jobKeys.list({ experience_years: 'none', page_size: 1 }),
+    queryFn: () => getJobs({ experience_years: 'none', page_size: 1 }),
+    staleTime: SIDEBAR_STALE_MS,
+    select: (items) => items.count ?? (items.results || items).length,
+  })
 
-  useEffect(() => {
-    setSidebarLoading(true)
-    Promise.allSettled([
-      getJobCategories().then(setCategories),
-      getJobStats().then((stats) => {
-        setDemandCounts(Object.fromEntries((stats.demand || []).map((item) => [item.id, item.count])))
-      }),
-      getProvinces().then(setProvinces),
-      getIndustries().then(setIndustries),
-    ]).finally(() => setSidebarLoading(false))
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    getJobs({ experience_years: 'none', page_size: 1 })
-      .then((items) => {
-        if (!cancelled) setNoExpCount(items.count ?? (items.results || items).length)
-      })
-      .catch(() => {
-        if (!cancelled) setNoExpCount(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const settled = [categoriesQuery, statsQuery, provincesQuery, industriesQuery]
+    .every((query) => !query.isLoading)
 
   return {
-    categories,
-    demandCounts,
-    provinces,
-    industries,
-    sidebarLoading,
-    noExpCount,
+    categories: categoriesQuery.data ?? [],
+    demandCounts: statsQuery.data ?? {},
+    provinces: provincesQuery.data ?? [],
+    industries: industriesQuery.data ?? [],
+    sidebarLoading: !settled,
+    noExpCount: noExpQuery.data ?? null,
   }
 }

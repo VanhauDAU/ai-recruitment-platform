@@ -1,25 +1,29 @@
-import { useEffect, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useConsent } from '@/entities/consent'
-import { getJobDetail, getJobs, jobDetailPath, recordJobView } from '@/entities/job'
+import { getJobDetail, getJobs, jobDetailPath, jobKeys, recordJobView } from '@/entities/job'
+
+const RELATED_PAGE_SIZE = 4
 
 export default function useJobDetailPageData({ slug, companySlug, navigate }) {
   const { consent, status: consentStatus } = useConsent()
-  const [job, setJob] = useState(null)
-  const [relatedJobs, setRelatedJobs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setNotFound(false)
-    setJob(null)
-    getJobDetail(slug)
-      .then((data) => { if (!cancelled) setJob(data) })
-      .catch(() => { if (!cancelled) setNotFound(true) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [slug])
+  const jobQuery = useQuery({
+    queryKey: jobKeys.detail(slug),
+    queryFn: () => getJobDetail(slug),
+  })
+  const job = jobQuery.data ?? null
+
+  const relatedQuery = useQuery({
+    queryKey: jobKeys.list({ category: job?.category, page_size: RELATED_PAGE_SIZE }),
+    queryFn: () => getJobs({ category: job.category, page_size: RELATED_PAGE_SIZE }),
+    enabled: Boolean(job?.category),
+    select: (data) => {
+      const items = Array.isArray(data) ? data : data.results || []
+      return items.filter((item) => item.public_id !== job?.public_id).slice(0, 3)
+    },
+  })
 
   useEffect(() => {
     if (!job?.title) return undefined
@@ -40,30 +44,19 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
     let cancelled = false
     recordJobView(job.slug)
       .then((result) => {
-        if (!cancelled && typeof result?.view_count === 'number') {
-          setJob((current) => (current ? { ...current, view_count: result.view_count } : current))
-        }
+        if (cancelled || typeof result?.view_count !== 'number') return
+        queryClient.setQueryData(jobKeys.detail(slug), (current) =>
+          current ? { ...current, view_count: result.view_count } : current)
       })
       // Tracking is progressive enhancement: never make the job detail fail.
       .catch(() => {})
     return () => { cancelled = true }
-  }, [consent.analytics, consentStatus, job?.slug])
+  }, [consent.analytics, consentStatus, job?.slug, queryClient, slug])
 
-  useEffect(() => {
-    if (!job?.category) {
-      setRelatedJobs([])
-      return undefined
-    }
-    let cancelled = false
-    getJobs({ category: job.category, page_size: 4 })
-      .then((data) => {
-        if (cancelled) return
-        const items = Array.isArray(data) ? data : data.results || []
-        setRelatedJobs(items.filter((item) => item.public_id !== job.public_id).slice(0, 3))
-      })
-      .catch(() => { if (!cancelled) setRelatedJobs([]) })
-    return () => { cancelled = true }
-  }, [job?.category, job?.public_id])
-
-  return { job, relatedJobs, loading, notFound }
+  return {
+    job,
+    relatedJobs: relatedQuery.data ?? [],
+    loading: jobQuery.isLoading,
+    notFound: jobQuery.isError,
+  }
 }
