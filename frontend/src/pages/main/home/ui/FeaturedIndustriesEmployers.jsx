@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobStats } from '@/entities/job'
-import { formatNumber } from '@/entities/job'
+import { formatNumber, getJobStats } from '@/entities/job'
 import ArrowButton from '@/shared/ui/ArrowButton'
 
 function logoUrlFor(employer) {

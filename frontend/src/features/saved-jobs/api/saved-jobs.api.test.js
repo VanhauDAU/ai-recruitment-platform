@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { getSavedJobs, saveJob, unsaveJob } from './saved-jobs.api'
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
@@ -13,8 +13,6 @@ vi.mock('@/shared/api/request-deduplication', () => ({
   dedupeRequest: mocks.dedupeRequest,
   invalidateRequestCache: mocks.invalidateRequestCache,
 }))
-
-import { getSavedJobs, saveJob, unsaveJob } from './saved-jobs.api'
 
 describe('saved jobs API', () => {
   beforeEach(() => Object.values(mocks).forEach((mock) => mock.mockClear()))

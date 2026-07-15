@@ -12,8 +12,7 @@ import {
 } from '@ant-design/icons'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getLinkGroups } from '@/entities/site-settings'
-import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
+import { DEFAULT_SITE_SETTINGS, getLinkGroups, settingText, useSiteSettings } from '@/entities/site-settings'
 import { CookieSettingsButton } from '@/features/cookie-consent'
 
 function SmartLink({ href, className = '', children, ...props }) {

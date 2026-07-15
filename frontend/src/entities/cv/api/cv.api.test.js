@@ -1,11 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const { get, patch, post, put, remove } = vi.hoisted(() => ({
-  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
-}))
-
-vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
-
 import {
   createCvSharedLink,
   createCvPdfExport,
@@ -31,6 +24,11 @@ import {
   setDefaultCv,
   updateCvDraft,
 } from './cv.api'
+const { get, patch, post, put, remove } = vi.hoisted(() => ({
+  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
+}))
+
+vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
 
 describe('CV V2 API', () => {
   beforeEach(() => {

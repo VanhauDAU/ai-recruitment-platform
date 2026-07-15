@@ -1,10 +1,10 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { EmailVerificationBanner, LoginPromptProvider } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
-import FloatingActions from '@/widgets/floating-actions/FloatingActions'
-import Footer from '@/widgets/main-footer/Footer'
+import { FloatingActions } from '@/widgets/floating-actions'
+import { Footer } from '@/widgets/main-footer'
 import { JobPreferencesReminder } from '@/widgets/job-preferences-reminder'
-import Header from '@/widgets/main-header/Header'
+import { Header } from '@/widgets/main-header'
 import { PopularSearches } from '@/widgets/popular-searches'
 
 export default function MainLayout() {

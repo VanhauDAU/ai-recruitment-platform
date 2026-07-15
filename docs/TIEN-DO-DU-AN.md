@@ -31,9 +31,22 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | CVB-P3 | Locale + canonical blueprint | ✅ |
 | CVB-P4 | Admin catalogue + snapshot | ✅ |
 | CVB-P5 | AI import PDF/DOCX | ✅ |
-| CVB-P6 | Cleanup, rollout, observability | ⬜ |
+| CVB-P6 | Cleanup, rollout, observability | ✅ |
 
 Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
+
+## Epic dọn dẹp & nâng cấp frontend (2026-07-15, nhánh `refactor/*` stacked trên `feature/cv-builder`)
+
+Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ước, tách file lớn và server-state. Baseline: 22 E2E smoke, coverage 84.65/67.36/85.33/89.52, bundle 255.7 KiB gzip.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| FE-P1 | Siết enforcement: widget public API (3 `index.js` + sửa deep-import MainLayout), depcruise đọc slice động (vá 7 feature + 2 widget không được bảo vệ) + rule `no-deep-import-widgets`, oxlint thêm exhaustive-deps/no-unused-vars/import-first/no-duplicates/no-cycle (sửa 36 vi phạm) | ✅ |
+| FE-P2 | Đồng nhất quy ước: rename 6 hook camelCase → kebab-case, xóa wrapper `session.storage.js`, tài liệu hóa quy ước import trong slice | ⬜ |
+| FE-P3 | Tách `MyCvs.jsx` 643 dòng → model hook + 3 UI component, mở đầu coverage ratchet | ⬜ |
+| FE-P4 | Tách `FeaturedIndustriesEmployers` (449) + `MarketStats` (442) | ⬜ |
+| FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ⬜ |
+| FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ⬜ |
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
@@ -398,7 +411,7 @@ build đều pass.
 | 4.3 | Template taxonomy/color many-to-many + preview asset theo màu | ✅ |
 | 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/archive/restore/default) | ✅ — V2 workflow, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
-| 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — V2 upload PDF/DOCX xong, còn parse/LinkedIn/AI review |
+| 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -573,4 +586,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (CVB-P5 — durable/idempotent AI import PDF/DOCX, canonical mapping, retry/throttle/retention và modal polling hoàn tất)
+Cập nhật lần cuối: 2026-07-15 (FE-P1 — siết enforcement frontend: widget public API, depcruise slice động, oxlint ruleset mở rộng)

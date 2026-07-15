@@ -12,8 +12,9 @@ import {
   formatEducation,
   formatLocations,
   formatSalary,
+  jobDetailPath,
+  SavedJobTooltipContent,
 } from '@/entities/job'
-import { jobDetailPath, SavedJobTooltipContent } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…

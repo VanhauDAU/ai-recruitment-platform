@@ -2,14 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { DownOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Empty, Skeleton } from 'antd'
 import { Link, useParams } from 'react-router-dom'
-import { getBanners } from '@/entities/site-settings'
-import { getBlogCategories, getBlogPosts } from '@/entities/blog'
-import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
+import { BLOG_ROOT, getBlogCategories, getBlogPosts } from '@/entities/blog'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import { BlogCardRow } from './ui/BlogCard'
 import BlogInlineBanner from './ui/BlogInlineBanner'
 import FeaturedPosts, { SectionHeading } from './ui/FeaturedPosts'
-import { BLOG_ROOT } from '@/entities/blog'
 
 const PAGE_SIZE = 12
 

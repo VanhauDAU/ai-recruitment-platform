@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import SavedJobsProvider from './SavedJobsProvider'
+import { useSavedJobs } from '../index'
 const mocks = vi.hoisted(() => ({
   auth: { isAuthenticated: true, user: { public_id: 'candidate-1', role: 'candidate' } },
   getSavedJobs: vi.fn(),
@@ -14,9 +15,6 @@ vi.mock('../api/saved-jobs.api', () => ({
   saveJob: mocks.saveJob,
   unsaveJob: mocks.unsaveJob,
 }))
-
-import SavedJobsProvider from './SavedJobsProvider'
-import { useSavedJobs } from '../index'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 

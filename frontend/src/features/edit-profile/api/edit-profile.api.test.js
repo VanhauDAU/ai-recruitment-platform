@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { updateProfile } from './edit-profile.api'
 const { patch } = vi.hoisted(() => ({ patch: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({
   default: { patch },
 }))
-
-import { updateProfile } from './edit-profile.api'
 
 describe('account API', () => {
   beforeEach(() => patch.mockReset())

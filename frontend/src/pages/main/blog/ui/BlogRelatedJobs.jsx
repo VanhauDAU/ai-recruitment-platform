@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
-import { getJobs, JOB_LOGO_TINTS, JobPreviewPanel, jobDetailPath } from '@/entities/job'
-import { companyInitial, formatLocations, formatSalary, stripCompanyPrefix } from '@/entities/job'
+import { companyInitial, formatLocations, formatSalary, getJobs, JOB_LOGO_TINTS, jobDetailPath, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job'
 
 // Khối "Danh sách việc làm ..." trong bài, lấy theo danh mục nghề liên quan.
 export default function BlogRelatedJobs({ jobCategory }) {

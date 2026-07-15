@@ -160,7 +160,9 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
     if (selection.state !== 'ready') {
       setPreviewAvailable(false)
       if (selection.state === 'empty') {
-        setPreviewError('Chưa có nội dung CV mẫu cho ngôn ngữ này.')
+        setPreviewError(source === 'sample'
+          ? 'Chưa có nội dung CV mẫu cho ngôn ngữ này.'
+          : 'Không có dữ liệu CV phù hợp để xem trước.')
         onPreviewChange?.({ empty: true })
       } else {
         onPreviewChange?.(null)

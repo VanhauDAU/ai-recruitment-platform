@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import CvPdfExportControl from './CvPdfExportControl'
 const api = vi.hoisted(() => ({
   createCvPdfExport: vi.fn(),
   downloadCvPdf: vi.fn(),
@@ -12,8 +12,6 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('@/entities/cv', () => api)
-
-import CvPdfExportControl from './CvPdfExportControl'
 
 describe('CvPdfExportControl', () => {
   beforeEach(() => {

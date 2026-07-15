@@ -1,9 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const { get } = vi.hoisted(() => ({ get: vi.fn() }))
-
-vi.mock('@/shared/api/client', () => ({ default: { get } }))
-
 import {
   getCvCategories,
   getCvPositionOptions,
@@ -13,6 +8,9 @@ import {
   getCvTemplates,
   getRelatedCvTemplates,
 } from './cv-template.api'
+const { get } = vi.hoisted(() => ({ get: vi.fn() }))
+
+vi.mock('@/shared/api/client', () => ({ default: { get } }))
 
 describe('CV template catalog API', () => {
   beforeEach(() => get.mockReset())

@@ -1,13 +1,11 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import SessionProvider from './SessionProvider'
+import { useSession } from './useSession'
 const { getCurrentSessionUser } = vi.hoisted(() => ({ getCurrentSessionUser: vi.fn() }))
 
 vi.mock('../api/session.api', () => ({ getCurrentSessionUser }))
-
-import SessionProvider from './SessionProvider'
-import { useSession } from './useSession'
 
 function wrapper({ children }) {
   return <MemoryRouter initialEntries={['/tai-khoan']}><SessionProvider>{children}</SessionProvider></MemoryRouter>

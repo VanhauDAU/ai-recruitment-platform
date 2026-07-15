@@ -1,15 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
-
-vi.mock('@/shared/api/client', () => ({
-  default: {
-    post,
-    get,
-    defaults: { baseURL: 'http://localhost:8000/api' },
-  },
-}))
-
 import {
   changeEmail,
   checkRegistrationEmail,
@@ -26,6 +15,15 @@ import {
   validatePasswordResetToken,
   verifyTwoFactorLogin,
 } from './auth.api'
+const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
+
+vi.mock('@/shared/api/client', () => ({
+  default: {
+    post,
+    get,
+    defaults: { baseURL: 'http://localhost:8000/api' },
+  },
+}))
 
 describe('auth API session storage', () => {
   beforeEach(() => {

@@ -1,7 +1,6 @@
 import { ArrowUpOutlined, BarChartOutlined, RiseOutlined } from '@ant-design/icons'
 import { Select, Skeleton, Tooltip } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getJobStats, jobDetailPath } from '@/entities/job'
 import {
   EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_YEARS_LABELS,
@@ -9,6 +8,8 @@ import {
   companyInitial,
   formatNumber as fmt,
   formatSalary,
+  getJobStats,
+  jobDetailPath,
 } from '@/entities/job'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 

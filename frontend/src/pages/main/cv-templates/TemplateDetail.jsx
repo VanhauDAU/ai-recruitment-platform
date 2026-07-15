@@ -131,7 +131,7 @@ export default function TemplateDetail() {
           </h1>
 
           {/* Hộp chọn màu */}
-          <div className="flex items-center gap-2" role="radiogroup" aria-label="Chọn màu mẫu CV">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500 mr-1">Tông màu:</span>
             <TemplateColorSwatches
               colors={colors}
