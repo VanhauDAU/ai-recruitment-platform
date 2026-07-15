@@ -1,9 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser } from '../api/session.api'
 import SessionContext from './session-context'
-import { clearSession, getAccessToken } from './session.storage'
+import { clearSession, getAccessToken } from '@/shared/api/token-store'
 
 function loginPathForCurrentPortal() {
   const portal = getCurrentPortal()
@@ -16,11 +17,14 @@ export default function SessionProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const clearCurrentSession = useCallback(() => {
     clearSession()
     setUser(null)
-  }, [])
+    // Cache server-state gắn với phiên cũ (saved jobs, CV...) phải bị bỏ.
+    queryClient.clear()
+  }, [queryClient])
 
   const logout = useCallback(() => {
     clearCurrentSession()

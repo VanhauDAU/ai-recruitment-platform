@@ -1,5 +1,6 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { getJobs } from '@/entities/job'
+import { getJobs, jobKeys } from '@/entities/job'
 import { getProvinces, getWardsByParents } from '@/entities/location'
 import {
   BEST_JOBS_PAGE_SIZE,
@@ -29,32 +30,18 @@ async function loadFeaturedLocations() {
 export default function useBestJobsData(categories) {
   const [dimension, setDimension] = useState('location')
   const [filters, setFilters] = useState(EMPTY_BEST_JOBS_FILTERS)
-  const [provinces, setProvinces] = useState([])
-  const [featuredWards, setFeaturedWards] = useState([])
-  const [jobs, setJobs] = useState([])
-  const [count, setCount] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [animKey, setAnimKey] = useState(0)
   const [paused, setPaused] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    loadFeaturedLocations()
-      .then((data) => {
-        if (!cancelled) {
-          setProvinces(data.provinces)
-          setFeaturedWards(data.featuredWards)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setProvinces([])
-          setFeaturedWards([])
-        }
-      })
-    return () => { cancelled = true }
-  }, [])
+  const locationsQuery = useQuery({
+    queryKey: ['locations', 'featured'],
+    queryFn: loadFeaturedLocations,
+    staleTime: 5 * 60_000,
+  })
+  const locationsData = locationsQuery.data
+  const provinces = useMemo(() => locationsData?.provinces ?? [], [locationsData])
+  const featuredWards = useMemo(() => locationsData?.featuredWards ?? [], [locationsData])
 
   const parents = useMemo(
     () => categories.filter((category) => category.parent == null),
@@ -65,28 +52,20 @@ export default function useBestJobsData(categories) {
     [dimension, featuredWards, parents, provinces],
   )
 
+  const jobsQuery = useQuery({
+    queryKey: jobKeys.list(buildBestJobsParams(filters, page)),
+    queryFn: () => getJobs(buildBestJobsParams(filters, page)),
+    placeholderData: keepPreviousData,
+  })
+  const jobsData = jobsQuery.data
+  const jobs = useMemo(() => (jobsData ? jobsData.results || jobsData : []), [jobsData])
+  const count = jobsData ? (jobsData.count ?? jobs.length) : 0
+  const loading = jobsQuery.isFetching
+
+  // Restart animation mỗi lần có dữ liệu mới (giữ hành vi cũ).
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    getJobs(buildBestJobsParams(filters, page))
-      .then((data) => {
-        if (cancelled) return
-        const results = data.results || data
-        setJobs(results)
-        setCount(data.count ?? results.length)
-        setAnimKey((key) => key + 1)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setJobs([])
-          setCount(0)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [filters, page])
+    if (jobsData) setAnimKey((key) => key + 1)
+  }, [jobsData])
 
   const totalPages = Math.max(1, Math.ceil(count / BEST_JOBS_PAGE_SIZE))
 

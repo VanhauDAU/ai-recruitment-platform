@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { getCandidateJobPreferences, updateCandidateJobPreferences } from './candidate-preferences.api'
 const { get, put } = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({ default: { get, put } }))
-
-import { getCandidateJobPreferences, updateCandidateJobPreferences } from './candidate-preferences.api'
 
 describe('candidate job preferences API', () => {
   beforeEach(() => {

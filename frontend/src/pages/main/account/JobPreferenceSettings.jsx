@@ -32,7 +32,7 @@ export default function JobPreferenceSettings() {
         <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full border-[20px] border-emerald-300/20" />
         <div className="absolute right-14 top-4 h-7 w-7 rotate-12 rounded-md bg-amber-300/90 shadow-lg" />
         <div className="relative max-w-xl">
-          <img src="/images/logo/logo-full.png" alt="TopCV" className="h-7 w-auto brightness-0 invert" />
+          <img src="/images/logo/logo-full.webp" alt="TopCV" className="h-7 w-auto brightness-0 invert" />
           <p className="mt-3 text-sm font-bold">Tại sao bạn nên cập nhật thông tin gợi ý việc làm?</p>
           <ul className="mt-2 space-y-1 text-xs text-white/90"><li>✓ Được nhà tuyển dụng chủ động săn đón.</li><li>✓ Được gợi ý các cơ hội việc làm phù hợp.</li></ul>
         </div>

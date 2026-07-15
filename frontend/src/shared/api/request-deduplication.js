@@ -1,6 +1,12 @@
 // React Strict Mode intentionally re-runs effects in development.  Keep one
 // in-flight GET per resource so that it cannot duplicate network traffic or
 // side effects such as a job-detail view counter.
+//
+// Phạm vi còn lại sau khi TanStack Query đảm nhiệm server-state (FE-P5):
+// chỉ các API được gọi NGOÀI react-query — bootstrap context (site-settings,
+// session, locale) và catalogue đọc trực tiếp từ api layer (blog, location,
+// job categories/stats). Endpoint nào chuyển hẳn sang useQuery thì bỏ wrapper
+// tại api layer (xem saved-jobs.api.js).
 const inFlight = new Map()
 const cache = new Map()
 

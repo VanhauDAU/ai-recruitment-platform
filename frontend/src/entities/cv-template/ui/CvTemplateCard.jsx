@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { templateColors, templatePreviewForColor } from '../model/template-colors'
 import CvTemplatePreview from './CvTemplatePreview'
+import TemplateColorSwatches from './TemplateColorSwatches'
 
 export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau-cv' }) {
   // Chi tiết mẫu CV dùng segment /chi-tiet/ để phân biệt với URL danh mục
@@ -79,30 +80,14 @@ export default function CvTemplateCard({ template, onUse, detailBasePath = '/mau
       </div>
 
       {/* Danh sách các nút chọn màu */}
-      <div className="mt-3.5 flex items-center gap-1.5 px-1" role="radiogroup" aria-label="Chọn màu mẫu CV">
-        {colors.map((color) => (
-          <button
-            key={color.public_id || color.slug}
-            type="button"
-            role="radio"
-            aria-checked={selectedColor.slug === color.slug}
-            title={color.name}
-            onMouseEnter={() => setSelectedColor(color)}
-            onFocus={() => setSelectedColor(color)}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              openWith(color)
-            }}
-            className={[
-              'h-3.5 w-3.5 cursor-pointer rounded-full transition-all duration-200',
-              selectedColor.slug === color.slug
-                ? 'ring-2 ring-slate-900 ring-offset-2 scale-110'
-                : 'ring-1 ring-black/10 hover:ring-2 hover:ring-slate-400 hover:scale-105',
-            ].join(' ')}
-            style={{ backgroundColor: color.hex_code }}
-          />
-        ))}
+      <div className="mt-3.5 px-1">
+        <TemplateColorSwatches
+          colors={colors}
+          selectedKey={selectedColor.slug}
+          onSelect={setSelectedColor}
+          onActivate={openWith}
+          sizeClass="h-3.5 w-3.5"
+        />
       </div>
 
       {/* Tiêu đề CV */}

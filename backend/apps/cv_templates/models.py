@@ -230,6 +230,11 @@ class CvTemplateVersion(models.Model):
 class CvTemplateLocalization(models.Model):
     template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='localizations')
     locale = models.CharField(max_length=16)
+    locale_ref = models.ForeignKey(
+        'sitecontent.Locale', to_field='code', db_column='locale_ref_code',
+        on_delete=models.PROTECT, null=True, blank=True,
+        related_name='cv_template_localizations',
+    )
     display_name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     seo_title = models.CharField(max_length=255, blank=True)
@@ -240,6 +245,12 @@ class CvTemplateLocalization(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['template', 'locale'], name='uq_cv_template_locale'),
         ]
+
+    def save(self, *args, **kwargs):
+        from apps.sitecontent.models import Locale
+
+        self.locale_ref_id = self.locale if Locale.objects.filter(code=self.locale).exists() else None
+        super().save(*args, **kwargs)
 
 
 class CvTemplateCategoryLink(models.Model):
@@ -258,6 +269,8 @@ class CvTemplateColorLink(models.Model):
     color = models.ForeignKey(CvColor, on_delete=models.PROTECT, related_name='template_links')
     thumbnail_url = models.TextField(blank=True)
     preview_url = models.TextField(blank=True)
+    snapshot_fingerprint = models.CharField(max_length=64, blank=True)
+    snapshot_generated_at = models.DateTimeField(null=True, blank=True)
     is_default = models.BooleanField(default=False)
     sort_order = models.IntegerField(default=0)
 
@@ -336,6 +349,11 @@ class CvSampleContent(models.Model):
         related_name='cv_sample_contents',
     )
     locale = models.CharField(max_length=16)
+    locale_ref = models.ForeignKey(
+        'sitecontent.Locale', to_field='code', db_column='locale_ref_code',
+        on_delete=models.PROTECT, null=True, blank=True,
+        related_name='cv_sample_contents',
+    )
     experience_level = models.CharField(max_length=30, default='unspecified')
     title = models.CharField(max_length=255)
     # The picker is intentionally Vietnamese even when the sample content is
@@ -393,6 +411,8 @@ class CvSampleContent(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cvsample')
+        from apps.sitecontent.models import Locale
+        self.locale_ref_id = self.locale if Locale.objects.filter(code=self.locale).exists() else None
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -404,7 +424,17 @@ class CvContentBlueprint(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     locale = models.CharField(max_length=16)
+    locale_ref = models.ForeignKey(
+        'sitecontent.Locale', to_field='code', db_column='locale_ref_code',
+        on_delete=models.PROTECT, null=True, blank=True,
+        related_name='cv_content_blueprints',
+    )
     experience_level = models.CharField(max_length=30, default='unspecified')
+    content_json_template = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Canonical content template; strings may contain {position}.',
+    )
     summary_title = models.CharField(max_length=255)
     summary_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.')
     experience_title = models.CharField(max_length=255)
@@ -438,10 +468,30 @@ class CvContentBlueprint(models.Model):
             isinstance(item, str) for item in self.skill_templates
         ):
             raise ValidationError({'skill_templates': 'Must be a list of strings.'})
+        if self.content_json_template:
+            from apps.cvs.schemas import empty_layout, empty_style, validate_cv_document
+            from .services.position_content import _materialize_tokens
+
+            content = _materialize_tokens(self.content_json_template, 'Software Engineer')
+            content['locale'] = self.locale
+            section_ids = [
+                section.get('instance_id') for section in content.get('sections', [])
+                if isinstance(section, dict) and section.get('instance_id')
+            ]
+            layout = empty_layout()
+            layout['regions'][0]['section_instance_ids'] = section_ids
+            validate_cv_document(
+                content_json=content,
+                layout_json=layout,
+                style_json=empty_style(),
+                schema_version=content.get('schema_version', 1),
+            )
 
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cvblueprint')
+        from apps.sitecontent.models import Locale
+        self.locale_ref_id = self.locale if Locale.objects.filter(code=self.locale).exists() else None
         super().save(*args, **kwargs)
 
     def __str__(self):

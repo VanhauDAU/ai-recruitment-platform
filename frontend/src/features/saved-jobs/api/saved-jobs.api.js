@@ -1,20 +1,17 @@
 import api from '@/shared/api/client'
-import { dedupeRequest, invalidateRequestCache } from '@/shared/api/request-deduplication'
 
+// Dedupe/cache do TanStack Query đảm nhiệm (use-saved-jobs-query),
+// api layer chỉ còn HTTP contract thuần.
 export async function getSavedJobs() {
-  return dedupeRequest('saved-jobs', async () => {
-    const { data } = await api.get('/jobs/saved/')
-    return data
-  })
+  const { data } = await api.get('/jobs/saved/')
+  return data
 }
 
 export async function saveJob(publicId) {
   const { data } = await api.post('/jobs/saved/', { job: publicId })
-  invalidateRequestCache('saved-jobs')
   return data
 }
 
 export async function unsaveJob(publicId) {
   await api.delete(`/jobs/saved/${publicId}/`)
-  invalidateRequestCache('saved-jobs')
 }

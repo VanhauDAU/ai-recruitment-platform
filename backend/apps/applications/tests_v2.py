@@ -93,6 +93,25 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_candidate_delete_removes_library_cv_but_retains_submitted_snapshot(self):
+        self.client.force_authenticate(self.candidate)
+
+        response = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': self.cv.public_id}))
+
+        self.assertEqual(response.status_code, 204, response.data)
+        self.assertFalse(type(self.cv).objects.filter(pk=self.cv.pk).exists())
+        self.application.refresh_from_db()
+        self.snapshot.refresh_from_db()
+        self.assertIsNone(self.application.cv_id)
+        self.assertIsNone(self.snapshot.cv_id)
+
+        self.client.force_authenticate(self.member)
+        snapshot_response = self.client.get(
+            reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}),
+        )
+        self.assertEqual(snapshot_response.status_code, 200, snapshot_response.data)
+        self.assertEqual(snapshot_response.data['cv']['public_id'], self.snapshot.public_id)
+
 
 class CandidateApplicationV2Tests(APITestCase):
     def setUp(self):

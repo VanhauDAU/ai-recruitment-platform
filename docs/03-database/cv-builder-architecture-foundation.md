@@ -17,6 +17,15 @@ Mọi document có `schema_version = 1`. Validator backend giới hạn kích th
 section key, ID trùng, region/layout, font/màu và rich text (`rich_text_v1` với
 block text an toàn); HTML tùy ý bị từ chối.
 
+## Canonical composition
+
+Mọi workflow cần ghép content với template phải gọi
+`apps.cvs.composition.compose_cv_document`. Composer lấy published template
+version, deep-copy content, map section instance vào region, áp style/theme và
+chạy document/capability validation. Create và switch template đã dùng contract
+này; position preview, import và snapshot mở rộng trên cùng pipeline thay vì tự
+dựng document ở frontend hoặc service khác.
+
 ## Ownership và bất biến
 
 `UserCv` vẫn là aggregate mutable/metadata. Mỗi CV builder có một `CvDraft`
@@ -85,16 +94,14 @@ Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
 
 - `POST /api/v2/cvs/` tạo CV từ một template published;
 - `GET|PATCH|DELETE /api/v2/cvs/{public_id}/` đọc metadata, đổi `title`/`is_default`
-  hoặc archive mềm CV owner. Database chỉ cho phép một CV default còn active
-  cho mỗi candidate;
+  hoặc xóa vĩnh viễn CV owner. Xóa cũng gỡ draft/version/share/export/file khỏi
+  thư viện; application snapshot đã nộp được tách khỏi CV để recruiter vẫn đọc
+  được đúng hồ sơ đã nhận;
 - `POST /api/v2/cvs/imports/` nhập PDF/DOCX, tạo immutable `imported` version
   và chỉ trả metadata file, không trả storage key/URL;
 - `POST /api/v2/cvs/{public_id}/duplicate/` chỉ clone builder CV. Service copy
   latest immutable version sang aggregate mới có initial version + draft riêng;
   không copy mutable draft, share link hay status published sang CV mới;
-- `GET /api/v2/cvs/archived/` và `POST /api/v2/cvs/{public_id}/restore/` là
-  owner-only. Restore không là PATCH metadata, không tự đổi default CV và chỉ
-  hợp lệ trong `CV_ARCHIVE_RESTORE_WINDOW_DAYS` (mặc định 30 ngày);
 - `GET|PUT /api/v2/cvs/{public_id}/draft/` đọc/autosave canonical draft;
 - `POST /api/v2/cvs/{public_id}/save-version/` tạo `manual_save` immutable;
 - `POST /api/v2/cvs/{public_id}/publish/` tạo `published` immutable;
@@ -109,6 +116,12 @@ Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
 `PUT draft`, save và publish bắt buộc gửi `If-Match:
 "lock-version-N"`. Stale lock trả `409` cùng `current_lock_version`; client
 phải reload/merge thay vì ghi đè. Autosave không tạo `CvVersion`.
+
+`CvDraft.document_hash` lưu hash canonical của content/layout/style. Draft cần
+recovery khi hash này khác `base_version.content_hash`; manual save repoint base
+version nên tự clear dirty mà không phụ thuộc timestamp. Endpoint recovery chỉ
+trả draft dirty mới nhất, còn template preview là read-only projection trước khi
+switch bằng CAS.
 
 ## Template Catalog và Create CV Flow
 
@@ -136,6 +149,14 @@ của renderer version. Dropdown lấy `JobCategory(category_type=specialization
 nếu chưa có thì kết hợp localization theo locale với `CvContentBlueprint` để
 materialize canonical content. Vì vậy vị trí mới không cần tạo sample theo từng
 template; admin chỉ cấu hình bốn tên locale và optional curated override.
+
+Locale là registry dữ liệu tại `sitecontent.Locale`, không còn là enum runtime.
+Trong cửa sổ migration, các bảng localization/sample/blueprint giữ đồng thời
+`locale` code và FK `locale_ref → Locale.code`; model mới dual-write và resolver
+tiếp tục dual-read. `CvContentBlueprint.content_json_template` là canonical
+source mới, hỗ trợ `{position}` ở mọi string; field blueprint phẳng chỉ là
+fallback tương thích cho tới release contract. Locale inactive bị chặn với CV
+mới nhưng code trong document/version cũ vẫn render được.
 
 `POST /api/v2/cvs/` nhận `template_public_id`, `language`, title, tùy chọn
 `position_public_id` và `theme_color`. `sample_content_public_id` chỉ còn là

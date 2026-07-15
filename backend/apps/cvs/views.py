@@ -8,7 +8,7 @@ from apps.accounts.permissions import IsCandidate
 from common.api_deprecation import LegacyApiDeprecationMixin
 from .serializers import UserCvSerializer
 from .selectors import candidate_cvs_queryset
-from .services import UnsupportedCvUpload, archive_cv, create_builder_cv, update_builder_cv, upload_cv
+from .services import UnsupportedCvUpload, create_builder_cv, permanently_delete_cv, update_builder_cv, upload_cv
 
 
 class UserCvListCreateView(LegacyApiDeprecationMixin, generics.ListCreateAPIView):
@@ -35,7 +35,10 @@ class UserCvDetailView(LegacyApiDeprecationMixin, generics.RetrieveUpdateDestroy
         return candidate_cvs_queryset(self.request.user)
 
     def perform_destroy(self, instance):
-        archive_cv(instance)
+        try:
+            permanently_delete_cv(cv=instance, actor=self.request.user)
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
 
     def perform_update(self, serializer):
         update_builder_cv(serializer, self.request.user)

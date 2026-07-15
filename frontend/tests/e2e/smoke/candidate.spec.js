@@ -113,27 +113,17 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   await expect(page.getByText('Đang chờ xuất')).toBeVisible()
 })
 
-test('candidate smoke: CV library restores archived CVs through V2', async ({ page }) => {
+test('candidate smoke: CV library permanently deletes a CV through V2', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
-  let restored = false
-  const activeCv = {
-    public_id: 'cv_1', title: 'CV library', cv_type: 'builder', source: 'builder',
+  let deleted = false
+  const cv = {
+    public_id: 'cv_1', title: 'CV cần xóa', cv_type: 'builder', source: 'builder',
     is_default: false, template_renderer_key: 'classic_single_column_v1', updated_at: '2026-07-15T00:00:00Z',
-  }
-  const restoredCv = {
-    public_id: 'cv_archived', title: 'CV archived', cv_type: 'builder', source: 'builder',
-    is_default: false, lifecycle_status: 'draft', updated_at: '2026-07-15T00:00:00Z',
-  }
-  const archivedCv = {
-    ...restoredCv, lifecycle_status: 'archived', archived_at: '2026-07-15T00:00:00Z',
   }
   const version = {
     public_id: 'cvv_1', version_number: 1, schema_version: 1,
     template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
-    content_json: {
-      personal_info: { full_name: 'Candidate', headline: 'Developer', email: '', phone: '', address: '' },
-      sections: [],
-    },
+    content_json: { personal_info: { full_name: 'Candidate', headline: '', email: '', phone: '', address: '' }, sections: [] },
     layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: [] }] },
     style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
   }
@@ -143,27 +133,25 @@ test('candidate smoke: CV library restores archived CVs through V2', async ({ pa
     const body = path === '/api/auth/me/'
       ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/v2/cvs/' && request.method() === 'GET'
-        ? { results: restored ? [activeCv, restoredCv] : [activeCv] }
-        : path === '/api/v2/cvs/archived/'
-          ? { results: restored ? [] : [archivedCv] }
-          : path === '/api/v2/cvs/cv_1/view/'
-            ? { cv: { public_id: 'cv_1', title: activeCv.title, language: 'vi-VN', is_default: false }, version }
-            : path === '/api/v2/cvs/cv_archived/restore/'
-              ? ((restored = true), restoredCv)
-              : {}
+        ? { results: deleted ? [] : [cv] }
+        : path === '/api/v2/cvs/cv_1/view/'
+          ? { cv: { public_id: 'cv_1', title: cv.title, language: 'vi-VN', is_default: false }, version }
+          : path === '/api/v2/cvs/cv_1/' && request.method() === 'DELETE'
+            ? ((deleted = true), {})
+            : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
   await page.goto('/tai-khoan/cv-cua-toi')
-  await expect(page.getByText('CV library', { exact: true })).toBeVisible()
-  await expect(page.getByText('CV archived', { exact: true })).toBeVisible()
-
-  const restoreRequest = page.waitForRequest((request) => (
-    request.url().endsWith('/api/v2/cvs/cv_archived/restore/') && request.method() === 'POST'
-  ))
-  await page.getByRole('button', { name: 'Khôi phục' }).click()
-  await restoreRequest
-  await expect(page.getByText('CV đã lưu trữ')).toHaveCount(0)
+  await expect(page.getByText('CV cần xóa', { exact: true })).toBeVisible()
+  await page.locator('.group').first().hover()
+  await page.getByRole('button', { name: 'Thao tác CV' }).click()
+  await page.getByText('Xoá', { exact: true }).click()
+  await expect(page.getByText('Xóa vĩnh viễn', { exact: true })).toBeVisible()
+  const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
+  await page.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
+  await deleteRequest
+  await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)
 })
 
 test('candidate smoke: job application submits the selected immutable CV version through V2', async ({ page }) => {

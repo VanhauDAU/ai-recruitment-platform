@@ -1,15 +1,18 @@
 import { ArrowLeftOutlined } from '@ant-design/icons'
-import { Empty, Skeleton, Spin } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Empty, Result, Skeleton } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { CvDocumentPreview } from '@/entities/cv'
-import { CvTemplateCard, getCvTemplate, getRelatedCvTemplates, templateColors } from '@/entities/cv-template'
 import {
-  CvSourcePanel,
-  UseTemplateModal,
-  buildDocumentFromSampleContent,
-  buildSamplePreviewDocument,
-} from '@/features/create-cv-from-template'
+  CvTemplateCard,
+  TemplateColorSwatches,
+  getCvTemplate,
+  getRelatedCvTemplates,
+  templateColors,
+} from '@/entities/cv-template'
+import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
+import { useLocales } from '@/entities/locale'
+import { CvSourcePanel, UseTemplateModal } from '@/features/create-cv-from-template'
 import { catalogLocaleFromPath, catalogPathForCategory } from './locale-paths'
 
 const LOCALE_LABELS = {
@@ -24,19 +27,18 @@ export default function TemplateDetail() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { locale, path: basePath } = catalogLocaleFromPath(pathname)
+  const { locales, loaded: localesLoaded } = useLocales()
   const [template, setTemplate] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
 
   const [modalSelection, setModalSelection] = useState(null)
 
-  // Quản lý màu CV và nội dung mẫu được chọn ở Detail
+  // Quản lý màu CV và canonical preview được chọn ở Detail
   const [selectedColor, setSelectedColor] = useState(null)
-  const [sampleContent, setSampleContent] = useState(null)
+  const [preview, setPreview] = useState(null)
 
-  // Zoom xem trước A4
-  const previewWrapRef = useRef(null)
-  const [previewZoom, setPreviewZoom] = useState(1)
+  const { containerRef: previewWrapRef, zoom: previewZoom } = usePreviewFitZoom(!loading && Boolean(template))
 
   useEffect(() => {
     let cancelled = false
@@ -56,29 +58,22 @@ export default function TemplateDetail() {
     }
   }, [slug, locale])
 
-  // Co giãn A4 vừa khít container bên trái
-  useEffect(() => {
-    if (loading || !template) return undefined
-    const element = previewWrapRef.current
-    if (!element) return undefined
-    const fit = () => setPreviewZoom(Math.min(1, element.clientWidth / 842))
-    fit()
-    const observer = new ResizeObserver(fit)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [loading, template])
-
   const colors = useMemo(() => templateColors(template), [template])
 
   const previewDocument = useMemo(() => {
-    if (!template) return null
-    if (sampleContent) {
-      return buildDocumentFromSampleContent(template, sampleContent, selectedColor)
+    if (!preview?.document) return null
+    if (!selectedColor) return preview.document
+    return {
+      ...preview.document,
+      style_json: { ...preview.document.style_json, theme_color: selectedColor },
     }
-    return buildSamplePreviewDocument(template, selectedColor)
-  }, [template, sampleContent, selectedColor])
+  }, [preview, selectedColor])
 
   const localeLabel = LOCALE_LABELS[locale] || 'tiếng Việt'
+
+  if (localesLoaded && !locales.some((item) => item.code === locale)) {
+    return <Result status="404" title="Ngôn ngữ CV không tồn tại hoặc đã ngừng hoạt động" />
+  }
 
   if (loading) {
     return (
@@ -136,26 +131,13 @@ export default function TemplateDetail() {
           </h1>
 
           {/* Hộp chọn màu */}
-          <div className="flex items-center gap-2" role="radiogroup" aria-label="Chọn màu mẫu CV">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500 mr-1">Tông màu:</span>
-            {colors.map((color) => (
-              <button
-                key={color.public_id || color.slug}
-                type="button"
-                role="radio"
-                aria-checked={selectedColor === color.hex_code}
-                title={color.name}
-                onMouseEnter={() => setSelectedColor(color.hex_code)}
-                onFocus={() => setSelectedColor(color.hex_code)}
-                className={[
-                  'h-4.5 w-4.5 cursor-pointer rounded-full transition-all duration-200',
-                  selectedColor === color.hex_code
-                    ? 'ring-2 ring-slate-900 ring-offset-2 scale-110'
-                    : 'ring-1 ring-black/10 hover:ring-2 hover:ring-slate-400 hover:scale-105',
-                ].join(' ')}
-                style={{ backgroundColor: color.hex_code }}
-              />
-            ))}
+            <TemplateColorSwatches
+              colors={colors}
+              selectedKey={selectedColor}
+              onSelect={(color) => setSelectedColor(color.hex_code)}
+            />
           </div>
         </div>
 
@@ -167,13 +149,16 @@ export default function TemplateDetail() {
             className="lg:col-span-7 h-[78vh] overflow-y-auto overflow-x-hidden flex justify-center p-2"
           >
             {!previewDocument ? (
-              <div className="flex h-full items-center justify-center">
-                <Spin />
+              <div className="min-h-full w-full max-w-[794px] bg-white p-10 shadow-sm">
+                {preview?.empty && <p className="py-20 text-center text-sm text-slate-500">Chưa có nội dung CV mẫu cho ngôn ngữ này.</p>}
+                {preview?.error && <p className="py-20 text-center text-sm text-rose-600">Không tải được bản xem trước.</p>}
+                {preview?.unavailable && <p className="py-20 text-center text-sm text-slate-500">Bản xem trước cho nguồn này sẽ được hiển thị khi workflow sẵn sàng.</p>}
+                {!preview && <Skeleton active paragraph={{ rows: 16 }} />}
               </div>
             ) : (
               <div className="h-fit" style={{ zoom: previewZoom }}>
                 <div className="shadow-[0_12px_40px_rgba(0,0,0,0.06)] rounded-lg overflow-hidden bg-white">
-                  <CvDocumentPreview document={previewDocument} rendererKey={template.renderer?.key} />
+                  <CvDocumentPreview document={previewDocument} rendererKey={preview.renderer?.key} />
                 </div>
               </div>
             )}
@@ -188,7 +173,7 @@ export default function TemplateDetail() {
               themeColor={selectedColor}
               onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit`)}
               onBack={() => navigate(basePath)}
-              onSampleContentChange={setSampleContent}
+              onPreviewChange={setPreview}
             />
           </div>
         </div>

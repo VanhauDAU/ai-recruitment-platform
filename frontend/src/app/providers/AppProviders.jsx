@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App as AntApp, ConfigProvider } from 'antd'
 import { useMemo } from 'react'
 import { SessionProvider } from '@/entities/session'
@@ -26,12 +27,26 @@ function ThemedProviders({ children }) {
   )
 }
 
+// Server-state mặc định mô phỏng hành vi fetch tay hiện có: không refetch khi
+// focus lại tab, retry 1 lần, dữ liệu tươi trong 30s để dedupe giữa các mount.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
 // Điểm tập trung của provider tree. BrowserRouter ở App.jsx vì SessionProvider
 // dùng navigation, còn mọi provider ứng dụng được giữ ở đây.
 export default function AppProviders({ children }) {
   return (
-    <SiteSettingsProvider>
-      <ThemedProviders>{children}</ThemedProviders>
-    </SiteSettingsProvider>
+    <QueryClientProvider client={queryClient}>
+      <SiteSettingsProvider>
+        <ThemedProviders>{children}</ThemedProviders>
+      </SiteSettingsProvider>
+    </QueryClientProvider>
   )
 }

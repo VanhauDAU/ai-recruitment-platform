@@ -1,3 +1,5 @@
 export * from './api/cv-template.api'
+export * from './api/cv-template-admin.api'
 export * from './model/template-colors'
 export { default as CvTemplateCard } from './ui/CvTemplateCard'
+export { default as TemplateColorSwatches } from './ui/TemplateColorSwatches'

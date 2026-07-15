@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { createCvFromTemplate } from './create-cv.api'
 const { post } = vi.hoisted(() => ({ post: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({ default: { post } }))
-
-import { createCvFromTemplate } from './create-cv.api'
 
 describe('create CV from template API', () => {
   beforeEach(() => post.mockReset())

@@ -1,11 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const { get, patch, post, put, remove } = vi.hoisted(() => ({
-  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
-}))
-
-vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
-
 import {
   createCvSharedLink,
   createCvPdfExport,
@@ -13,7 +6,6 @@ import {
   duplicateCv,
   downloadCvPdf,
   getCv,
-  getArchivedCvs,
   getCvDraft,
   getCvOwnerView,
   getCvPdfExport,
@@ -24,13 +16,17 @@ import {
   publishCvVersion,
   revokeCvSharedLink,
   retryCvPdfExport,
-  restoreCv,
   saveCvVersion,
   switchCvTemplate,
   renameCv,
   setDefaultCv,
   updateCvDraft,
 } from './cv.api'
+const { get, patch, post, put, remove } = vi.hoisted(() => ({
+  get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn(), remove: vi.fn(),
+}))
+
+vi.mock('@/shared/api/client', () => ({ default: { get, patch, post, put, delete: remove } }))
 
 describe('CV V2 API', () => {
   beforeEach(() => {
@@ -54,22 +50,16 @@ describe('CV V2 API', () => {
 
     expect(patch).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/', { title: 'Renamed' })
     expect(patch).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/', { is_default: true })
-    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData))
+    expect(post).toHaveBeenCalledWith('/v2/cvs/imports/', expect.any(FormData), { headers: {} })
     expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
   })
 
-  it('uses explicit V2 duplicate and archive-restore contracts', async () => {
+  it('uses the V2 duplicate contract without an archive or restore API', async () => {
     post.mockResolvedValueOnce({ data: { public_id: 'cv_copy' } })
-    get.mockResolvedValueOnce({ data: { results: [{ public_id: 'cv_archived' }] } })
-    post.mockResolvedValueOnce({ data: { public_id: 'cv_archived', lifecycle_status: 'draft' } })
 
     await expect(duplicateCv('cv_1', 'Copy')).resolves.toMatchObject({ public_id: 'cv_copy' })
-    await expect(getArchivedCvs()).resolves.toEqual([{ public_id: 'cv_archived' }])
-    await expect(restoreCv('cv_archived')).resolves.toMatchObject({ lifecycle_status: 'draft' })
 
     expect(post).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/duplicate/', { title: 'Copy' })
-    expect(get).toHaveBeenCalledWith('/v2/cvs/archived/')
-    expect(post).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_archived/restore/', {})
   })
 
   it('uses draft optimistic locking and creates versions only through save-version', async () => {
@@ -96,12 +86,12 @@ describe('CV V2 API', () => {
       headers: { etag: '"lock-version-4"' },
     })
 
-    await expect(switchCvTemplate('cv_1', 'tpl_two', 3, 'tab_a')).resolves.toEqual({
+    await expect(switchCvTemplate('cv_1', 'tpl_two', 3, 'tab_a', '#2255AA')).resolves.toEqual({
       cv: { template_public_id: 'tpl_two' }, draft: { lock_version: 4, etag: '"lock-version-4"' },
     })
     expect(put).toHaveBeenCalledWith(
       '/v2/cvs/cv_1/template/',
-      { template_public_id: 'tpl_two', client_session_id: 'tab_a' },
+      { template_public_id: 'tpl_two', client_session_id: 'tab_a', theme_color: '#2255AA' },
       { headers: { 'If-Match': '"lock-version-3"' } },
     )
   })

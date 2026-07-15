@@ -2,7 +2,6 @@ import { CheckCircleFilled, CloseOutlined, HeartFilled, HeartOutlined, RightOutl
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getJobDetail, jobDetailPath, SavedJobTooltipContent } from '@/entities/job'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -12,6 +11,9 @@ import {
   companyInitial,
   formatLocations,
   formatSalary,
+  getJobDetail,
+  jobDetailPath,
+  SavedJobTooltipContent,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 

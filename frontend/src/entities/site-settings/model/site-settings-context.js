@@ -2,8 +2,8 @@ import { createContext } from 'react'
 
 export const DEFAULT_SITE_SETTINGS = {
   site_name: 'ProCV',
-  brand_logo_url: import.meta.env.VITE_SITE_LOGO_URL || '/images/logo/logo-full.png',
-  brand_logo_mark_url: import.meta.env.VITE_SITE_LOGO_MARK_URL || '/images/logo/logo-mark.png',
+  brand_logo_url: import.meta.env.VITE_SITE_LOGO_URL || '/images/logo/logo-full.webp',
+  brand_logo_mark_url: import.meta.env.VITE_SITE_LOGO_MARK_URL || '/images/logo/logo-mark.webp',
   brand_favicon_url: import.meta.env.VITE_SITE_FAVICON_URL || '/favicon-32.png',
   brand_primary_color: '#00b14f',
   site_tagline: 'Nền tảng việc làm & AI Career Coach',

@@ -1,14 +1,15 @@
-const featureSlices = [
-  'auth',
-  'edit-profile',
-  'manage-site-settings',
-  'saved-jobs',
-  'search-jobs',
-  'submit-feedback',
-  'two-factor',
-]
+const { readdirSync } = require('node:fs')
+const { join } = require('node:path')
 
-const widgetSlices = ['floating-actions', 'main-footer', 'main-header', 'popular-searches']
+// Đọc slice từ filesystem để slice mới tự động được áp rule, không cần nhớ
+// cập nhật danh sách hardcode (trước đây thiếu 7 feature và 2 widget).
+const listSlices = (layer) =>
+  readdirSync(join(__dirname, 'src', layer), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+
+const featureSlices = listSlices('features')
+const widgetSlices = listSlices('widgets')
 
 module.exports = {
   forbidden: [
@@ -60,6 +61,13 @@ module.exports = {
       severity: 'error',
       from: { path: '^src/(app|pages|widgets)/' },
       to: { path: '^src/features/[^/]+/(?!index\\.js$)' },
+    },
+    {
+      name: 'no-deep-import-widgets',
+      comment: 'app and pages must use a widget public API (its index.js)',
+      severity: 'error',
+      from: { path: '^src/(app|pages)/' },
+      to: { path: '^src/widgets/[^/]+/(?!index\\.js$)' },
     },
     ...featureSlices.map((slice) => ({
       name: `no-cross-feature-import-${slice}`,

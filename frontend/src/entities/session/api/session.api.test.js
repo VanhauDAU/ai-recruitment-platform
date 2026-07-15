@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { getCurrentSessionUser } from './session.api'
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   dedupeRequest: vi.fn((_, request) => request()),
@@ -8,9 +8,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/shared/api/client', () => ({ default: { get: mocks.get } }))
 vi.mock('@/shared/api/request-deduplication', () => ({ dedupeRequest: mocks.dedupeRequest }))
-vi.mock('../model/session.storage', () => ({ getAccessToken: mocks.getAccessToken }))
-
-import { getCurrentSessionUser } from './session.api'
+vi.mock('@/shared/api/token-store', () => ({ getAccessToken: mocks.getAccessToken }))
 
 describe('session API', () => {
   beforeEach(() => Object.values(mocks).forEach((mock) => mock.mockClear()))
