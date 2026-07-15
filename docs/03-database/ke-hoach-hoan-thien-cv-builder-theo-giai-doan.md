@@ -218,6 +218,8 @@ legacy làm fallback; nó không tự sinh ảnh renderer.
 - [x] Upload PDF/DOCX chỉ báo thành công sau `POST /api/v2/cvs/imports/` thật;
   UI không mô phỏng upload bằng timeout.
 - [x] Không có archive/restore endpoint hoặc UI; xác nhận xóa nêu rõ là vĩnh viễn.
+- [ ] Purge CV archive mềm tồn tại từ release cũ chỉ sau backup và xác nhận
+  riêng; không chạy tự động trong migration vì đây là thao tác không thể hoàn tác.
 - [x] Smoke desktop/mobile cho candidate library: list, view và hard-delete
   qua contract V2; route unauthorized vẫn được phủ bởi smoke router. Các test này
   mock API có chủ đích, còn permission/service được regression test ở backend.

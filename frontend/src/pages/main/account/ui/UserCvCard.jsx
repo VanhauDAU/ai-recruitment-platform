@@ -8,6 +8,7 @@ import {
   StarFilled,
   StarOutlined,
 } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { Dropdown, Input, Modal, Spin } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -16,8 +17,6 @@ import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { useCvCardActions } from '../model/use-cv-card-actions'
 
 export default function UserCvCard({ cv, onRefresh }) {
-  const [detail, setDetail] = useState(null)
-  const [loading, setLoading] = useState(true)
   const actions = useCvCardActions(cv, onRefresh)
   const { setIsMainCv } = actions
 
@@ -25,28 +24,16 @@ export default function UserCvCard({ cv, onRefresh }) {
   const [hovered, setHovered] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const { containerRef: previewWrapRef, zoom: previewZoom } = usePreviewFitZoom(!loading && Boolean(detail))
+  const { data: detail = null, isLoading: loading } = useQuery({
+    queryKey: ['cv', 'owner-view', cv.public_id],
+    queryFn: () => getCvOwnerView(cv.public_id),
+  })
 
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    getCvOwnerView(cv.public_id)
-      .then((data) => {
-        if (!cancelled) {
-          setDetail(data)
-          setIsMainCv(data.cv?.is_default || false)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setDetail(null)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [cv.public_id, setIsMainCv])
+    if (detail) setIsMainCv(detail.cv?.is_default || false)
+  }, [detail, setIsMainCv])
+
+  const { containerRef: previewWrapRef, zoom: previewZoom } = usePreviewFitZoom(!loading && Boolean(detail))
 
   const version = detail?.version
   const documentData = useMemo(() => {

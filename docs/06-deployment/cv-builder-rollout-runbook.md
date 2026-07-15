@@ -10,6 +10,9 @@
    `python-docx`) trước khi chạy worker mới.
 3. Chạy `python manage.py migrate`. Các migration locale là expand/backfill;
    không xóa compatibility column và có thể deploy cùng client cũ.
+   Chính sách CV mới dùng hard-delete. Các row archive mềm tồn tại từ release
+   cũ không được purge tự động: đếm, backup và chỉ purge sau xác nhận riêng vì
+   thao tác này không thể hoàn tác.
 4. Chạy `python manage.py check` và smoke public catalogue/preview.
 5. Restart web, Celery worker và Celery beat. Worker phải có quyền ghi media và
    Fontconfig cache (`XDG_CACHE_HOME` hoặc cache directory tương đương).

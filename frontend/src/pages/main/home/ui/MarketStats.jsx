@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { BarChartOutlined, RiseOutlined } from '@ant-design/icons'
 import { Select, Skeleton } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
-import { formatNumber as fmt, getJobStats } from '@/entities/job'
+import { useMemo, useState } from 'react'
+import { formatNumber as fmt, getJobStats, jobKeys } from '@/entities/job'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 import { useInViewOnce } from '../model/use-in-view-once'
 import LatestJobsFeed from './LatestJobsFeed'
@@ -34,13 +35,14 @@ function Panel({ icon, title, action, children }) {
 
 export default function MarketStats() {
   const [sectionRef, hasEnteredView] = useInViewOnce()
-  const [stats, setStats] = useState(null)
   const [demandType, setDemandType] = useState('category')
   const [chartAnimKey, setChartAnimKey] = useState(0)
 
-  useEffect(() => {
-    getJobStats().then(setStats).catch(() => {})
-  }, [])
+  const { data: stats = null } = useQuery({
+    queryKey: jobKeys.stats,
+    queryFn: getJobStats,
+    staleTime: 5 * 60_000,
+  })
 
   const latest = useMemo(() => stats?.latest_jobs || [], [stats])
 

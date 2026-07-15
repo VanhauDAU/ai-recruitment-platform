@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobStats } from '@/entities/job'
+import { getJobStats, jobKeys } from '@/entities/job'
 import { logoUrlFor } from '../lib/logo-url'
 import FeaturedEmployers from './FeaturedEmployers'
 import FeaturedIndustries from './FeaturedIndustries'
 
-// Section "Top ngành nghề" + "Nhà tuyển dụng nổi bật" trên trang chủ,
-// dùng chung một lần tải job stats.
+// Section "Top ngành nghề" + "Nhà tuyển dụng nổi bật" trên trang chủ.
+// Query key dùng chung với MarketStats nên cả trang chỉ tải stats một lần.
 export default function FeaturedIndustriesEmployers() {
   const navigate = useNavigate()
-  const [stats, setStats] = useState(null)
-
-  useEffect(() => {
-    getJobStats().then(setStats).catch(() => {})
-  }, [])
+  const { data: stats = null } = useQuery({
+    queryKey: jobKeys.stats,
+    queryFn: getJobStats,
+    staleTime: 5 * 60_000,
+  })
 
   const industries = useMemo(() => stats?.demand || [], [stats])
   const employers = useMemo(() => stats?.featured_employers || [], [stats])
