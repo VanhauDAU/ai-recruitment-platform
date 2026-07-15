@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useSession } from '@/entities/session'
 import SavedJobsContext from './saved-jobs-context'
 import { publishSavedJobsChanged, subscribeSavedJobsSync } from './saved-jobs-sync'
-import useSavedJobsQuery from './useSavedJobsQuery'
-import useToggleSavedJob from './useToggleSavedJob'
+import useSavedJobsQuery from './use-saved-jobs-query'
+import useToggleSavedJob from './use-toggle-saved-job'
 
 export default function SavedJobsProvider({ children }) {
   const { user, isAuthenticated } = useSession()
