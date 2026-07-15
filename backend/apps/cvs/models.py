@@ -159,7 +159,16 @@ class CvVersion(models.Model):
         IMPORTED = 'imported', 'Imported'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='versions')
+    # A candidate may permanently delete their library CV after applying. The
+    # application-owned immutable snapshot remains available to recruiters,
+    # detached from the deleted library aggregate.
+    cv = models.ForeignKey(
+        UserCv,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='versions',
+    )
     version_number = models.PositiveIntegerField()
     version_kind = models.CharField(max_length=30, choices=VersionKind.choices, default=VersionKind.MANUAL_SAVE)
     template_version = models.ForeignKey(
@@ -228,7 +237,7 @@ class CvVersion(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.cv_id} v{self.version_number}'
+        return f'{self.cv_id or "detached"} v{self.version_number}'
 
 
 class CvDraft(models.Model):

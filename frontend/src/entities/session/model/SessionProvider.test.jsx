@@ -1,6 +1,7 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { withQueryClient } from '@/test/render-with-query-client'
 import SessionProvider from './SessionProvider'
 import { useSession } from './use-session'
 const { getCurrentSessionUser } = vi.hoisted(() => ({ getCurrentSessionUser: vi.fn() }))
@@ -8,7 +9,9 @@ const { getCurrentSessionUser } = vi.hoisted(() => ({ getCurrentSessionUser: vi.
 vi.mock('../api/session.api', () => ({ getCurrentSessionUser }))
 
 function wrapper({ children }) {
-  return <MemoryRouter initialEntries={['/tai-khoan']}><SessionProvider>{children}</SessionProvider></MemoryRouter>
+  return withQueryClient(
+    <MemoryRouter initialEntries={['/tai-khoan']}><SessionProvider>{children}</SessionProvider></MemoryRouter>,
+  )
 }
 
 describe('SessionProvider', () => {
