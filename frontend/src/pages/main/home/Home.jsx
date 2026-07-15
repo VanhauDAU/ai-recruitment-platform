@@ -234,8 +234,12 @@ export default function Home() {
         <BestJobs categories={categories} />
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 pt-8">
-        <MarketStats />
+      <section className="pt-8">
+        <div className="bg-white py-8">
+          <div className="max-w-6xl mx-auto px-4">
+            <MarketStats />
+          </div>
+        </div>
       </section>
 
       <section className="pt-8">
