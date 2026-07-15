@@ -6,7 +6,6 @@ import {
   duplicateCv,
   downloadCvPdf,
   getCv,
-  getArchivedCvs,
   getCvDraft,
   getCvOwnerView,
   getCvPdfExport,
@@ -17,7 +16,6 @@ import {
   publishCvVersion,
   revokeCvSharedLink,
   retryCvPdfExport,
-  restoreCv,
   saveCvVersion,
   switchCvTemplate,
   renameCv,
@@ -56,18 +54,12 @@ describe('CV V2 API', () => {
     expect(remove).toHaveBeenCalledWith('/v2/cvs/cv_1/')
   })
 
-  it('uses explicit V2 duplicate and archive-restore contracts', async () => {
+  it('uses the V2 duplicate contract without an archive or restore API', async () => {
     post.mockResolvedValueOnce({ data: { public_id: 'cv_copy' } })
-    get.mockResolvedValueOnce({ data: { results: [{ public_id: 'cv_archived' }] } })
-    post.mockResolvedValueOnce({ data: { public_id: 'cv_archived', lifecycle_status: 'draft' } })
 
     await expect(duplicateCv('cv_1', 'Copy')).resolves.toMatchObject({ public_id: 'cv_copy' })
-    await expect(getArchivedCvs()).resolves.toEqual([{ public_id: 'cv_archived' }])
-    await expect(restoreCv('cv_archived')).resolves.toMatchObject({ lifecycle_status: 'draft' })
 
     expect(post).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/duplicate/', { title: 'Copy' })
-    expect(get).toHaveBeenCalledWith('/v2/cvs/archived/')
-    expect(post).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_archived/restore/', {})
   })
 
   it('uses draft optimistic locking and creates versions only through save-version', async () => {

@@ -8,7 +8,10 @@ from .models import Application
 
 class ApplicationSerializer(serializers.ModelSerializer):
     job = serializers.SlugRelatedField(slug_field='public_id', queryset=Job.objects.filter(status=Job.Status.ACTIVE))
-    cv = serializers.SlugRelatedField(slug_field='public_id', queryset=UserCv.objects.filter(is_deleted=False))
+    cv = serializers.SlugRelatedField(
+        slug_field='public_id', queryset=UserCv.objects.filter(is_deleted=False),
+        allow_null=True, required=False,
+    )
     job_title = serializers.CharField(source='job.title', read_only=True)
     cv_title = serializers.CharField(source='cv.title', read_only=True)
     submitted_cv_version = serializers.CharField(source='submitted_cv_version.public_id', read_only=True)

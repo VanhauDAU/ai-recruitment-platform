@@ -60,8 +60,11 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
 class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
-    cv_public_id = serializers.CharField(source='cv.public_id', read_only=True)
+    cv_public_id = serializers.SerializerMethodField()
     submitted_cv_version_public_id = serializers.CharField(source='submitted_cv_version.public_id', read_only=True)
+
+    def get_cv_public_id(self, obj):
+        return obj.cv.public_id if obj.cv_id else None
 
     class Meta:
         model = Application

@@ -206,6 +206,7 @@ export default function UserCvCard({ cv, onRefresh }) {
               >
                 <button
                   type="button"
+                  aria-label="Thao tác CV"
                   onClick={(e) => e.stopPropagation()}
                   className="flex h-8 w-8 items-center justify-center rounded-full text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                   style={{ backgroundColor: '#ffffff' }}

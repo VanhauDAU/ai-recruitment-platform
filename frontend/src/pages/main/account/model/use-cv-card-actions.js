@@ -85,17 +85,17 @@ export function useCvCardActions(cv, onRefresh) {
   const confirmDelete = () => {
     Modal.confirm({
       title: 'Xóa CV của bạn?',
-      content: 'Hành động này sẽ đưa CV vào kho lưu trữ và không thể hoàn tác.',
-      okText: 'Xóa',
+      content: 'CV, bản nháp, liên kết chia sẻ và file xuất sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.',
+      okText: 'Xóa vĩnh viễn',
       okType: 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
         try {
           await deleteCv(cv.public_id)
-          message.success('Đã đưa CV vào kho lưu trữ.')
+          message.success('Đã xóa vĩnh viễn CV.')
           onRefresh?.()
         } catch {
-          message.error('Không thể lưu trữ CV.')
+          message.error('Không thể xóa CV.')
         }
       },
     })

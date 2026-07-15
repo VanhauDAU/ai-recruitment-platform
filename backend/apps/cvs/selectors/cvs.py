@@ -14,24 +14,11 @@ def candidate_cvs_queryset(user):
     )
 
 
-def candidate_archived_cvs_queryset(user):
-    """Archived CV metadata remains owner-only and is never publicly shareable."""
-    return (
-        UserCv.objects.filter(user=user, is_deleted=True)
-        .select_related('template', 'position', 'current_template_version', 'latest_version', 'published_version')
-        .order_by('-archived_at', '-updated_at')
-    )
-
-
 def candidate_cv_by_public_id(user, public_id):
     """Return one CV only when it belongs to the authenticated candidate."""
     return candidate_cvs_queryset(user).select_related(
         'template', 'current_template_version', 'latest_version', 'published_version',
     ).get(public_id=public_id)
-
-
-def candidate_archived_cv_by_public_id(user, public_id):
-    return candidate_archived_cvs_queryset(user).get(public_id=public_id)
 
 
 def candidate_cv_versions_queryset(user, cv_public_id):

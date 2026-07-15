@@ -2,11 +2,10 @@
 
 from .cvs import (
     UnsupportedCvUpload,
-    archive_cv,
     create_builder_cv,
     duplicate_cv,
     import_v2_cv,
-    restore_cv,
+    permanently_delete_cv,
     update_builder_cv,
     update_cv_metadata,
     upload_cv,
@@ -41,11 +40,11 @@ __all__ = [
     'CvExportPermissionError',
     'CvExportStateError',
     'CvExportUnavailableError',
-    'archive_cv',
     'create_application_snapshot',
     'create_builder_cv',
     'duplicate_cv',
     'import_v2_cv',
+    'permanently_delete_cv',
     'InvalidCvImport',
     'queue_cv_import',
     'retry_import',
@@ -65,6 +64,5 @@ __all__ = [
     'resolve_shared_link',
     'revoke_shared_link',
     'retry_cv_export',
-    'restore_cv',
     'switch_draft_template',
 ]

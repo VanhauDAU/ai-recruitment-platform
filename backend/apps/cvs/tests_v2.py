@@ -319,7 +319,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(invalid.status_code, 400)
         self.assertIn('theme_color', invalid.data)
 
-    def test_import_archive_and_metadata_use_v2_without_legacy_storage_urls(self):
+    def test_import_hard_delete_and_metadata_use_v2_without_legacy_storage_urls(self):
         uploaded = SimpleUploadedFile('source.pdf', b'%PDF-1.4 test', content_type='application/pdf')
         imported = self.client.post(
             reverse('cv-v2-import'),
@@ -344,13 +344,10 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(metadata.data['title'], 'Renamed CV')
         self.assertTrue(metadata.data['is_default'])
 
-        archived = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
-        self.assertEqual(archived.status_code, 204)
-        cv.refresh_from_db()
-        self.assertTrue(cv.is_deleted)
-        self.assertEqual(cv.lifecycle_status, UserCv.LifecycleStatus.ARCHIVED)
-        self.assertIsNotNone(cv.archived_at)
-        self.assertFalse(cv.is_default)
+        deleted = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
+        self.assertEqual(deleted.status_code, 204)
+        self.assertFalse(UserCv.objects.filter(pk=cv.pk).exists())
+        self.assertFalse(CvVersion.objects.filter(cv_id=cv.pk).exists())
         self.assertEqual(
             self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code,
             404,
@@ -370,7 +367,8 @@ class CvV2ApiTests(APITestCase):
             content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         )
 
-    def test_template_import_is_idempotent_and_materializes_editable_canonical_draft(self):
+    @patch('apps.cvs.tasks.structure_cv_text')
+    def test_template_import_is_idempotent_and_materializes_editable_canonical_draft(self, structure_cv_text):
         payload = {
             'file': self._docx_upload(),
             'title': 'Parsed CV',
@@ -394,6 +392,9 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(CvImportJob.objects.count(), 1)
 
         cv = UserCv.objects.get(public_id=first.data['public_id'])
+        parsed_content = empty_content('vi-VN')
+        parsed_content['personal_info']['full_name'] = 'Nguyen Van Candidate'
+        structure_cv_text.return_value = parsed_content
         process_cv_import_job(cv.import_job.pk)
         cv.refresh_from_db()
         cv.import_job.refresh_from_db()
@@ -502,45 +503,12 @@ class CvV2ApiTests(APITestCase):
         source_cv.refresh_from_db()
         self.assertEqual(source_cv.draft.content_json['personal_info']['full_name'], 'Original candidate')
 
-    def test_archived_cv_is_owner_listed_and_can_be_restored_without_restoring_default_status(self):
-        cv = self.create_cv()
-        self.client.patch(
-            reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}),
-            {'is_default': True},
-            format='json',
-        )
-        self.assertEqual(self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code, 204)
-
-        archived = self.client.get(reverse('cv-v2-archived-list'))
-        self.assertEqual(archived.status_code, 200, archived.data)
-        archived_items = archived.data['results'] if isinstance(archived.data, dict) else archived.data
-        self.assertEqual([item['public_id'] for item in archived_items], [cv.public_id])
-        self.assertEqual(archived_items[0]['lifecycle_status'], UserCv.LifecycleStatus.ARCHIVED)
-        self.assertIsNotNone(archived_items[0]['archived_at'])
-
-        restored = self.client.post(reverse('cv-v2-restore', kwargs={'public_id': cv.public_id}), format='json')
-        self.assertEqual(restored.status_code, 200, restored.data)
-        self.assertEqual(restored.data['lifecycle_status'], UserCv.LifecycleStatus.DRAFT)
-        self.assertFalse(restored.data['is_default'])
-        self.assertEqual(self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code, 200)
-        archived_after_restore = self.client.get(reverse('cv-v2-archived-list'))
-        archived_items = (
-            archived_after_restore.data['results']
-            if isinstance(archived_after_restore.data, dict)
-            else archived_after_restore.data
-        )
-        self.assertEqual(archived_items, [])
-
-    @override_settings(CV_ARCHIVE_RESTORE_WINDOW_DAYS=1)
-    def test_restore_rejects_a_cv_after_the_retention_window(self):
+    def test_delete_permanently_removes_the_cv_from_owner_library(self):
         cv = self.create_cv()
         self.assertEqual(self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})).status_code, 204)
-        UserCv.objects.filter(pk=cv.pk).update(archived_at=timezone.now() - timedelta(days=2))
-
-        response = self.client.post(reverse('cv-v2-restore', kwargs={'public_id': cv.public_id}), format='json')
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('restore window', str(response.data['detail']))
+        self.assertFalse(UserCv.objects.filter(pk=cv.pk).exists())
+        listed = self.client.get(reverse('cv-v2-list-create')).data
+        self.assertEqual(listed['results'] if isinstance(listed, dict) else listed, [])
 
     def test_autosave_rejects_invalid_canonical_documents_before_writing(self):
         cv = self.create_cv()

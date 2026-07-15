@@ -5,14 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import { importCvFile } from '@/entities/cv'
 import { useSiteSettings } from '@/entities/site-settings'
 import { useMyCvsData } from './model/use-my-cvs-data'
-import ArchivedCvCard from './ui/ArchivedCvCard'
 import CvListSection from './ui/CvListSection'
 import MyCvsBanner from './ui/MyCvsBanner'
 
 export default function MyCvs() {
   const { siteName } = useSiteSettings()
   const navigate = useNavigate()
-  const { builderCvs, uploadedCvs, archivedCvs, loading, refresh } = useMyCvsData()
+  const { builderCvs, uploadedCvs, loading, refresh } = useMyCvsData()
   const fileInputRef = useRef(null)
 
   const handleUploadClick = () => {
@@ -65,20 +64,6 @@ export default function MyCvs() {
         loading={loading}
         onRefresh={refresh}
       />
-
-      {archivedCvs.length > 0 && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-800 sm:text-[17px]">CV đã lưu trữ</h3>
-            <span className="text-xs font-medium text-slate-500">Có thời hạn khôi phục</span>
-          </div>
-          <div className="mt-5 space-y-3">
-            {archivedCvs.map((cv) => (
-              <ArchivedCvCard key={cv.public_id} cv={cv} onRefresh={refresh} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   )
 }

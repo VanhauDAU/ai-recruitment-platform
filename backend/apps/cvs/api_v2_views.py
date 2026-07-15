@@ -36,8 +36,6 @@ from .api_v2_serializers import (
 )
 from .models import CvDraft, CvExport, CvImportJob, CvSharedLink, UserCv
 from .selectors import (
-    candidate_archived_cv_by_public_id,
-    candidate_archived_cvs_queryset,
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
@@ -53,7 +51,6 @@ from .services import (
     StaleDraftError,
     UnsupportedCvUpload,
     InvalidCvImport,
-    archive_cv,
     create_shared_link,
     create_v2_cv,
     duplicate_cv,
@@ -67,7 +64,7 @@ from .services import (
     resolve_shared_link,
     revoke_shared_link,
     retry_cv_export,
-    restore_cv,
+    permanently_delete_cv,
     save_draft_as_version,
     switch_draft_template,
     update_cv_metadata,
@@ -171,31 +168,11 @@ class CvV2DetailView(CandidateV2CvMixin, APIView):
         return Response(CvV2Serializer(updated_cv).data)
 
     def delete(self, request, public_id):
-        archive_cv(self.get_cv())
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class CvV2ArchivedListView(generics.ListAPIView):
-    permission_classes = [IsCandidate]
-    serializer_class = CvV2Serializer
-
-    def get_queryset(self):
-        return candidate_archived_cvs_queryset(self.request.user)
-
-
-class CvV2RestoreView(APIView):
-    permission_classes = [IsCandidate]
-
-    def post(self, request, public_id):
         try:
-            cv = candidate_archived_cv_by_public_id(request.user, public_id)
-        except UserCv.DoesNotExist as error:
-            raise Http404 from error
-        try:
-            restored_cv = restore_cv(cv=cv, actor=request.user)
+            permanently_delete_cv(cv=self.get_cv(), actor=request.user)
         except ValueError as error:
             raise ValidationError({'detail': str(error)}) from error
-        return Response(CvV2Serializer(restored_cv).data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CvV2DuplicateView(CandidateV2CvMixin, APIView):

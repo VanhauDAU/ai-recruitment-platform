@@ -1,71 +1,67 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { saveJob, unsaveJob } from '../api/saved-jobs.api'
+import { savedJobsKeys } from '../api/saved-jobs.keys'
 
-export default function useToggleSavedJob({ candidateKey, items, setError, setItems, publish }) {
-  const candidateKeyRef = useRef(candidateKey)
+const withoutJob = (items, publicId) => items.filter((item) => item.job_detail?.public_id !== publicId)
+
+export default function useToggleSavedJob({ candidateKey, items, publish }) {
+  // Ref chặn double-click gửi trùng request trước khi state kịp re-render.
   const pendingJobIdsRef = useRef(new Set())
   const [pendingJobIds, setPendingJobIds] = useState(() => new Set())
   const [saveSuccess, setSaveSuccess] = useState(null)
+  const [error, setError] = useState(null)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
-    candidateKeyRef.current = candidateKey
     pendingJobIdsRef.current.clear()
     setPendingJobIds(new Set())
+    setError(null)
   }, [candidateKey])
 
-  const toggle = useCallback(async (publicId) => {
-    if (!candidateKey || !publicId || pendingJobIdsRef.current.has(publicId)) return
-
-    const isCurrentCandidate = () => candidateKeyRef.current === candidateKey
-    const saved = items.some((item) => item.job_detail?.public_id === publicId)
-    pendingJobIdsRef.current.add(publicId)
-    setPendingJobIds((previous) => new Set(previous).add(publicId))
-
-    if (saved) {
-      const removedItem = items.find((item) => item.job_detail?.public_id === publicId)
-      setItems((previous) => previous.filter((item) => item.job_detail?.public_id !== publicId))
-      try {
-        await unsaveJob(publicId)
-        if (isCurrentCandidate()) publish()
-      } catch (nextError) {
-        if (isCurrentCandidate()) {
-          if (removedItem) setItems((previous) => [removedItem, ...previous.filter((item) => item.job_detail?.public_id !== publicId)])
-          setError(nextError)
-        }
-      } finally {
-        pendingJobIdsRef.current.delete(publicId)
-        if (isCurrentCandidate()) setPendingJobIds((previous) => {
-          const next = new Set(previous)
-          next.delete(publicId)
-          return next
-        })
+  const mutation = useMutation({
+    mutationFn: ({ publicId, saved }) => (saved ? unsaveJob(publicId) : saveJob(publicId)),
+    onMutate: async ({ publicId, saved }) => {
+      const queryKey = savedJobsKeys.list(candidateKey)
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData(queryKey) ?? []
+      const rest = withoutJob(previous, publicId)
+      queryClient.setQueryData(queryKey, saved ? rest : [{ job_detail: { public_id: publicId } }, ...rest])
+      return { previous, queryKey }
+    },
+    onSuccess: (created, { publicId, saved }, { queryKey }) => {
+      if (!saved && created) {
+        queryClient.setQueryData(queryKey, (current = []) => [created, ...withoutJob(current, publicId)])
+        setSaveSuccess({ publicId, at: Date.now() })
       }
-      return
-    }
-
-    const optimisticItem = { job_detail: { public_id: publicId } }
-    setItems((previous) => [optimisticItem, ...previous.filter((item) => item.job_detail?.public_id !== publicId)])
-    try {
-      const created = await saveJob(publicId)
-      if (!isCurrentCandidate()) return
-      setItems((previous) => [created, ...previous.filter((item) => item.job_detail?.public_id !== publicId)])
-      setSaveSuccess({ publicId, at: Date.now() })
       setError(null)
       publish()
-    } catch (nextError) {
-      if (isCurrentCandidate()) {
-        setItems((previous) => previous.filter((item) => item.job_detail?.public_id !== publicId))
-        setError(nextError)
-      }
-    } finally {
+    },
+    onError: (nextError, _variables, { previous, queryKey }) => {
+      queryClient.setQueryData(queryKey, previous)
+      setError(nextError)
+    },
+    onSettled: (_data, _error, { publicId }) => {
       pendingJobIdsRef.current.delete(publicId)
-      if (isCurrentCandidate()) setPendingJobIds((previous) => {
-        const next = new Set(previous)
+      setPendingJobIds((current) => {
+        const next = new Set(current)
         next.delete(publicId)
         return next
       })
-    }
-  }, [candidateKey, items, publish, setError, setItems])
+    },
+  })
 
-  return { pendingJobIds, saveSuccess, toggle }
+  const toggle = useCallback(async (publicId) => {
+    if (!candidateKey || !publicId || pendingJobIdsRef.current.has(publicId)) return
+    pendingJobIdsRef.current.add(publicId)
+    setPendingJobIds((current) => new Set(current).add(publicId))
+    const saved = items.some((item) => item.job_detail?.public_id === publicId)
+    try {
+      await mutation.mutateAsync({ publicId, saved })
+    } catch {
+      // lỗi đã được onError xử lý (rollback + setError); nuốt để giữ contract cũ
+    }
+  }, [candidateKey, items, mutation])
+
+  return { pendingJobIds, saveSuccess, toggle, error }
 }

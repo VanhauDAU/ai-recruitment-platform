@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { withQueryClient } from '@/test/render-with-query-client'
 import SavedJobsProvider from './SavedJobsProvider'
 import { useSavedJobs } from '../index'
 const mocks = vi.hoisted(() => ({
@@ -19,7 +20,7 @@ vi.mock('../api/saved-jobs.api', () => ({
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 function wrapper({ children }) {
-  return <SavedJobsProvider>{children}</SavedJobsProvider>
+  return withQueryClient(<SavedJobsProvider>{children}</SavedJobsProvider>)
 }
 
 function deferred() {
@@ -62,9 +63,10 @@ describe('SavedJobsProvider mutations', () => {
       result.current.toggle('job-1')
     })
 
-    expect(mocks.saveJob).toHaveBeenCalledTimes(1)
+    // mutationFn chạy sau microtask (onMutate async) nhưng khóa pending là đồng bộ
     expect(result.current.pendingJobIds.has('job-1')).toBe(true)
-    expect(result.current.savedIds.has('job-1')).toBe(true)
+    await waitFor(() => expect(mocks.saveJob).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(result.current.savedIds.has('job-1')).toBe(true))
 
     await act(async () => {
       request.resolve({ job_detail: { public_id: 'job-1', title: 'React developer' } })
