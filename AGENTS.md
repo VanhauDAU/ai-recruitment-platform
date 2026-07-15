@@ -13,6 +13,8 @@ app → pages → widgets → features → entities → shared
 - Import feature/entity/widget qua public `index.js`; không deep-import nội bộ
   slice khác.
 - `shared` được import theo segment cụ thể, ví dụ `@/shared/api/client`.
+- Trong cùng slice dùng import tương đối (`../model/use-foo`); alias `@/` chỉ
+  dùng khi vượt slice/layer. Hook file đặt tên kebab-case.
 - Không đổi URL, API payload, token/storage key hoặc role/guard nếu task không
   yêu cầu rõ ràng.
 

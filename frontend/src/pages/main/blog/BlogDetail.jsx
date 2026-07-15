@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer, Result, Skeleton, Tag } from 'antd'
 import { Link, useParams } from 'react-router-dom'
-import { getBlogCategories, getBlogPost } from '@/entities/blog'
+import { BLOG_ROOT, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogBenefits from './ui/BlogBenefits'
@@ -10,7 +10,6 @@ import BlogRelatedJobs from './ui/BlogRelatedJobs'
 import BlogShareRail from './ui/BlogShareRail'
 import BlogSidebar from './ui/BlogSidebar'
 import BlogToc from './ui/BlogToc'
-import { BLOG_ROOT, blogCategoryPath, formatBlogDate } from '@/entities/blog'
 
 export default function BlogDetail() {
   const { slug } = useParams()

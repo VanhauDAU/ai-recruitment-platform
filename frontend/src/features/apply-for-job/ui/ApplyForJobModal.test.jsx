@@ -1,14 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
+import ApplyForJobModal from './ApplyForJobModal'
 const cvApi = vi.hoisted(() => ({ getCv: vi.fn(), getCvVersions: vi.fn(), getMyCvs: vi.fn() }))
 const applicationApi = vi.hoisted(() => ({ submitJobApplication: vi.fn() }))
 
 vi.mock('@/entities/cv', () => cvApi)
 vi.mock('@/entities/application', () => applicationApi)
-
-import ApplyForJobModal from './ApplyForJobModal'
 
 describe('ApplyForJobModal', () => {
   afterEach(() => vi.unstubAllGlobals())

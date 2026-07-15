@@ -6,6 +6,17 @@ export const CATALOG_LOCALES = [
 ]
 
 export function catalogLocaleFromPath(pathname) {
+  const dynamicMatch = pathname.match(/^\/mau-cv\/ngon-ngu\/([^/]+)/)
+  if (dynamicMatch) {
+    const locale = decodeURIComponent(dynamicMatch[1])
+    return {
+      locale,
+      path: `/mau-cv/ngon-ngu/${encodeURIComponent(locale)}`,
+      label: locale,
+      shortLabel: locale,
+      flag: '🌐',
+    }
+  }
   const match = [...CATALOG_LOCALES]
     .sort((a, b) => b.path.length - a.path.length)
     .find((item) => pathname === item.path || pathname.startsWith(`${item.path}/`))
@@ -13,7 +24,8 @@ export function catalogLocaleFromPath(pathname) {
 }
 
 export function catalogPathForLocale(locale) {
-  return (CATALOG_LOCALES.find((item) => item.locale === locale) || CATALOG_LOCALES[0]).path
+  return CATALOG_LOCALES.find((item) => item.locale === locale)?.path
+    || `/mau-cv/ngon-ngu/${encodeURIComponent(locale)}`
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Empty, Skeleton, Spin } from 'antd'
+import { Empty, Result, Skeleton, Spin } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -6,9 +6,9 @@ import {
   getCvCategories,
   getCvTemplates,
 } from '@/entities/cv-template'
+import { useLocales } from '@/entities/locale'
 import { UseTemplateModal } from '@/features/create-cv-from-template'
 import {
-  CATALOG_LOCALES,
   catalogCategoryFromPath,
   catalogLocaleFromPath,
   catalogPathForCategory,
@@ -21,6 +21,14 @@ export default function TemplateCatalog() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { locale, shortLabel: localeLabel, path: basePath } = catalogLocaleFromPath(pathname)
+  const { locales, loaded: localesLoaded } = useLocales()
+  const localeOptions = locales.map((item) => ({
+    locale: item.code,
+    path: `/${item.catalog_path}`,
+    label: item.label_vi,
+    shortLabel: item.label_vi.toLowerCase(),
+    flag: item.flag_emoji,
+  }))
 
   const [templates, setTemplates] = useState([])
   const [count, setCount] = useState(0)
@@ -117,6 +125,10 @@ export default function TemplateCatalog() {
     ? 'Đang tải các mẫu CV phù hợp…'
     : `Tuyển chọn ${count} mẫu CV đa dạng phong cách, giúp bạn tạo dấu ấn cá nhân và kết nối mạnh mẽ hơn với nhà tuyển dụng.`
 
+  if (localesLoaded && !locales.some((item) => item.code === locale)) {
+    return <Result status="404" title="Ngôn ngữ CV không tồn tại hoặc đã ngừng hoạt động" />
+  }
+
   const gridClass = 'grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8'
 
   return (
@@ -135,7 +147,7 @@ export default function TemplateCatalog() {
             activeSlug={activeCategory?.slug || null}
             onSelect={selectFilter}
             locale={locale}
-            localeOptions={CATALOG_LOCALES}
+            localeOptions={localeOptions}
             onLocaleChange={changeLocale}
           />
         </div>

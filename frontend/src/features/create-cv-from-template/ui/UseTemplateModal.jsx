@@ -1,51 +1,26 @@
-import { Modal, Spin } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Modal, Skeleton } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
 import { CvDocumentPreview } from '@/entities/cv'
-import { getCvTemplate } from '@/entities/cv-template'
-import { buildDocumentFromSampleContent, buildSamplePreviewDocument } from '../model/sample-preview'
+import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import CvSourcePanel from './CvSourcePanel'
 
 export default function UseTemplateModal({ template, themeColor, open, onClose, onCreated, locale = 'vi-VN' }) {
-  const [detail, setDetail] = useState(null)
-  const [loadingDetail, setLoadingDetail] = useState(false)
-  const [sampleContent, setSampleContent] = useState(null)
-  const previewWrapRef = useRef(null)
-  const [previewZoom, setPreviewZoom] = useState(1)
-
-  // Co bản A4 (~842px cả padding) vừa khít chiều ngang cột trái, không cuộn ngang.
-  useEffect(() => {
-    if (!open) return undefined
-    const element = previewWrapRef.current
-    if (!element) return undefined
-    const fit = () => setPreviewZoom(Math.min(1, element.clientWidth / 842))
-    fit()
-    const observer = new ResizeObserver(fit)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [open, loadingDetail])
+  const [preview, setPreview] = useState(null)
+  const { containerRef: previewWrapRef, zoom: previewZoom } = usePreviewFitZoom(open)
 
   useEffect(() => {
     if (!open || !template) return
-    setDetail(null)
-    setSampleContent(null)
-    setLoadingDetail(true)
-    let cancelled = false
-    getCvTemplate(template.slug, locale)
-      .then((data) => !cancelled && setDetail(data))
-      .catch(() => !cancelled && setDetail(null))
-      .finally(() => !cancelled && setLoadingDetail(false))
-    return () => {
-      cancelled = true
-    }
+    setPreview(null)
   }, [open, template, locale])
 
   const previewDocument = useMemo(() => {
-    if (!detail) return null
-    if (sampleContent) {
-      return buildDocumentFromSampleContent(detail, sampleContent, themeColor)
+    if (!preview?.document) return null
+    if (!themeColor) return preview.document
+    return {
+      ...preview.document,
+      style_json: { ...preview.document.style_json, theme_color: themeColor },
     }
-    return buildSamplePreviewDocument(detail, themeColor)
-  }, [detail, sampleContent, themeColor])
+  }, [preview, themeColor])
 
   if (!template) return null
 
@@ -64,13 +39,16 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
         <div className="p-6 lg:col-span-7">
           <h2 className="mb-3 text-lg font-bold text-slate-900">Mẫu CV {template.display_name}</h2>
           <div ref={previewWrapRef} className="h-[72vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-[#f8fafc]">
-            {loadingDetail || !previewDocument ? (
-              <div className="flex h-full items-center justify-center">
-                {loadingDetail ? <Spin /> : <p className="text-sm text-slate-500">Không tải được bản xem trước.</p>}
+            {!previewDocument ? (
+              <div className="mx-auto min-h-full w-full max-w-[794px] bg-white p-10 shadow-sm">
+                {preview?.empty && <p className="py-20 text-center text-sm text-slate-500">Chưa có nội dung CV mẫu cho ngôn ngữ này.</p>}
+                {preview?.error && <p className="py-20 text-center text-sm text-rose-600">Không tải được bản xem trước.</p>}
+                {preview?.unavailable && <p className="py-20 text-center text-sm text-slate-500">Bản xem trước cho nguồn này sẽ được hiển thị khi workflow sẵn sàng.</p>}
+                {!preview && <Skeleton active paragraph={{ rows: 16 }} />}
               </div>
             ) : (
               <div style={{ zoom: previewZoom }}>
-                <CvDocumentPreview document={previewDocument} rendererKey={detail.renderer?.key} />
+                <CvDocumentPreview document={previewDocument} rendererKey={preview.renderer?.key} />
               </div>
             )}
           </div>
@@ -83,7 +61,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
             locale={locale}
             themeColor={themeColor}
             onCreated={onCreated}
-            onSampleContentChange={setSampleContent}
+            onPreviewChange={setPreview}
           />
         </div>
       </div>

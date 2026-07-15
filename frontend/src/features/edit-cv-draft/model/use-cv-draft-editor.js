@@ -132,21 +132,29 @@ export default function useCvDraftEditor(publicId) {
       event.preventDefault()
       event.returnValue = ''
     }
-    const warnInternalNavigation = (event) => {
+    const flushInternalNavigation = (event) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !hasUnsavedChanges()) return
       const link = event.target.closest?.('a[href]')
       if (!link || link.target || link.download) return
       const destination = new URL(link.href, window.location.href)
       if (destination.origin !== window.location.origin || destination.href === window.location.href) return
-      if (!window.confirm('Bản nháp chưa được lưu. Bạn có chắc muốn rời trang?')) event.preventDefault()
+      event.preventDefault()
+      runAutosave().then((saved) => {
+        if (saved) window.location.assign(destination.href)
+      })
+    }
+    const flushWhenHidden = () => {
+      if (globalThis.document.visibilityState === 'hidden' && hasUnsavedChanges()) runAutosave()
     }
     window.addEventListener('beforeunload', warnBeforeUnload)
-    globalThis.document.addEventListener('click', warnInternalNavigation, true)
+    globalThis.document.addEventListener('click', flushInternalNavigation, true)
+    globalThis.document.addEventListener('visibilitychange', flushWhenHidden)
     return () => {
       window.removeEventListener('beforeunload', warnBeforeUnload)
-      globalThis.document.removeEventListener('click', warnInternalNavigation, true)
+      globalThis.document.removeEventListener('click', flushInternalNavigation, true)
+      globalThis.document.removeEventListener('visibilitychange', flushWhenHidden)
     }
-  }, [])
+  }, [runAutosave])
 
   const updateDocument = useCallback((updater, commandLabel = 'Cập nhật CV') => {
     if (phaseRef.current === 'conflict') return

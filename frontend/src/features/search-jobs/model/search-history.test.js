@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { clearHistory, getHistory, removeHistoryEntry, saveHistory } from './search-history'
 vi.mock('@/entities/job', () => ({
   getJobs: vi.fn(() => Promise.resolve({ count: 0 })),
 }))
-
-import { clearHistory, getHistory, removeHistoryEntry, saveHistory } from './search-history'
 
 describe('search history', () => {
   beforeEach(() => {

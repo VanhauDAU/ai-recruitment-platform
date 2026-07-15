@@ -1,8 +1,7 @@
 import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobs, jobDetailPath } from '@/entities/job'
-import { companyInitial, formatNumber as fmt } from '@/entities/job'
+import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 
 const CYCLE_HOURS = 4

@@ -1,15 +1,12 @@
 """Write workflows for candidate-owned CVs."""
 
 from copy import deepcopy
-from datetime import timedelta
 from uuid import uuid4
 
-from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.utils import timezone
 
-from ..models import CvVersion, UserCv
+from ..models import CvAccessLog, CvExport, CvSharedLink, CvVersion, UserCv
 from .versions import create_initial_document, create_version, sync_legacy_builder_draft
 
 ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
@@ -30,51 +27,54 @@ def create_builder_cv(serializer, user):
     return cv
 
 
-@transaction.atomic
-def archive_cv(instance):
-    """Archive a CV consistently for both legacy and V2 callers."""
-    cv = UserCv.objects.select_for_update().get(pk=instance.pk)
-    if cv.is_deleted:
-        return cv
-    archived_at = timezone.now()
-    cv.is_deleted = True
-    cv.deleted_at = archived_at
-    cv.archived_at = archived_at
-    cv.lifecycle_status = UserCv.LifecycleStatus.ARCHIVED
-    cv.is_default = False
-    cv.save(update_fields=[
-        'is_deleted', 'deleted_at', 'archived_at', 'lifecycle_status', 'is_default', 'updated_at',
-    ])
-    return cv
+def _delete_storage_keys(keys):
+    for key in {key for key in keys if key}:
+        try:
+            default_storage.delete(key)
+        except Exception:
+            # Database deletion is authoritative. A storage retry/retention job
+            # can clean an unavailable object store without retaining the CV.
+            pass
 
 
 @transaction.atomic
-def restore_cv(*, cv, actor):
-    """Restore an explicitly selected archived CV within the retention window."""
+def permanently_delete_cv(*, cv, actor):
+    """Permanently remove one owner CV and all library-only artifacts.
+
+    A submitted application is legally/product-wise independent of the user's
+    library. Its immutable application snapshot is retained, but detached from
+    the removed CV aggregate; every other version, draft, share, export, import
+    source and access log is deleted.
+    """
+    from apps.applications.models import Application
+
     locked_cv = UserCv.objects.select_for_update().get(pk=cv.pk)
     if locked_cv.user_id != actor.pk:
-        raise ValueError('Only the CV owner can restore it.')
-    if not locked_cv.is_deleted or locked_cv.lifecycle_status != UserCv.LifecycleStatus.ARCHIVED:
-        raise ValueError('Only archived CVs can be restored.')
-    if locked_cv.archived_at is None:
-        raise ValueError('Archived CV is missing its archive timestamp.')
-    restore_deadline = locked_cv.archived_at + timedelta(days=settings.CV_ARCHIVE_RESTORE_WINDOW_DAYS)
-    if timezone.now() > restore_deadline:
-        raise ValueError('The archive restore window has expired.')
+        raise ValueError('Only the CV owner can permanently delete it.')
 
-    locked_cv.is_deleted = False
-    locked_cv.deleted_at = None
-    locked_cv.archived_at = None
-    locked_cv.is_default = False
-    locked_cv.lifecycle_status = (
-        UserCv.LifecycleStatus.PUBLISHED
-        if locked_cv.published_version_id
-        else UserCv.LifecycleStatus.DRAFT
-    )
-    locked_cv.save(update_fields=[
-        'is_deleted', 'deleted_at', 'archived_at', 'is_default', 'lifecycle_status', 'updated_at',
-    ])
-    return locked_cv
+    applications = Application.objects.filter(cv=locked_cv).select_related('submitted_cv_version')
+    snapshot_ids = list(applications.values_list('submitted_cv_version_id', flat=True))
+    if applications.exclude(
+        submitted_cv_version__version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT,
+    ).exists():
+        raise ValueError('Cannot delete a CV with an invalid application snapshot.')
+
+    storage_keys = [locked_cv.file_url, locked_cv.pdf_url, locked_cv.thumbnail_url]
+    exports = CvExport.objects.filter(cv=locked_cv)
+    storage_keys.extend(exports.values_list('storage_key', flat=True))
+
+    # These rows protect immutable versions at the database layer; remove
+    # library-owned artifacts before deleting their owning aggregate.
+    CvAccessLog.objects.filter(cv=locked_cv).delete()
+    CvSharedLink.objects.filter(cv=locked_cv).delete()
+    exports.delete()
+
+    # Application snapshot rows remain but no longer point to an active library
+    # CV. `CvVersion.cv` is SET_NULL for exactly this retention boundary.
+    applications.update(cv=None)
+    CvVersion.objects.filter(cv=locked_cv).exclude(pk__in=snapshot_ids).delete()
+    locked_cv.delete()
+    transaction.on_commit(lambda: _delete_storage_keys(storage_keys))
 
 
 def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):

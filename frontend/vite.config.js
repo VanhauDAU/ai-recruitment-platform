@@ -43,6 +43,7 @@ export default defineConfig({
         'src/features/auth/model/return-url.js',
         'src/features/saved-jobs/**/*.{js,jsx}',
         'src/features/search-jobs/**/*.{js,jsx}',
+        'src/pages/main/account/model/use-my-cvs-data.js',
         'src/shared/api/client.js',
         'src/shared/api/error-mapper.js',
         'src/shared/api/request-deduplication.js',

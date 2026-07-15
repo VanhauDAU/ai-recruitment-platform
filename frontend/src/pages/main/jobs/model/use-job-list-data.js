@@ -1,32 +1,20 @@
-import { useEffect, useState } from 'react'
-import { getJobs } from '@/entities/job'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { getJobs, jobKeys } from '@/entities/job'
 import { toApiParams } from '../lib/job-list-params'
 
 export default function useJobListData(searchParams) {
-  const [data, setData] = useState({ results: [], count: 0 })
-  const [loading, setLoading] = useState(true)
+  const params = toApiParams(searchParams)
+  const query = useQuery({
+    queryKey: jobKeys.list(params),
+    queryFn: () => getJobs(params),
+    // Giữ trang cũ hiển thị trong lúc tải filter/trang mới (hành vi cũ).
+    placeholderData: keepPreviousData,
+  })
 
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    getJobs(toApiParams(searchParams))
-      .then((items) => {
-        if (!cancelled) setData(items)
-      })
-      .catch(() => {
-        if (!cancelled) setData({ results: [], count: 0 })
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [searchParams])
-
+  const data = query.data ?? { results: [], count: 0 }
   return {
     data,
-    loading,
+    loading: query.isFetching,
     results: Array.isArray(data) ? data : data.results || [],
     count: Array.isArray(data) ? data.length : data.count || 0,
   }

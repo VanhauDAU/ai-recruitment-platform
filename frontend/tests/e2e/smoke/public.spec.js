@@ -42,23 +42,44 @@ test('public smoke: CV template colors change preview and detail offers the crea
                 { public_id: 'jobcat_frontend', name_vi: 'Frontend Developer' },
               ]
             : path === '/api/v2/cv-position-preview/'
-              ? {
-                  position_public_id: url.searchParams.get('position_public_id'),
-                  name_vi: 'Nhân viên CSKH',
-                  locale: url.searchParams.get('locale'),
-                  source: 'blueprint',
-                  content_json: {
-                    locale: url.searchParams.get('locale'),
+              ? (() => {
+                  const locale = url.searchParams.get('locale')
+                  const content = {
+                    schema_version: 1,
+                    locale,
                     personal_info: {
                       full_name: '',
-                      headline: url.searchParams.get('locale') === 'en-US'
+                      headline: locale === 'en-US'
                         ? 'Customer Service Representative'
                         : 'Nhân viên CSKH',
-                      email: '', phone: '', address: '', links: [],
+                      email: '', phone: '', address: '', avatar_asset_id: null, links: [],
                     },
                     sections: [],
+                    custom_fields: {},
+                  }
+                  return {
+                  position_public_id: url.searchParams.get('position_public_id'),
+                  name_vi: 'Nhân viên CSKH',
+                  locale,
+                  source: 'blueprint',
+                  content_json: content,
+                  document: {
+                    schema_version: 1,
+                    content_json: content,
+                    layout_json: {
+                      schema_version: 1,
+                      page: { size: 'A4', margin_mm: 12 },
+                      regions: [{ id: 'main', width_percent: 100, section_instance_ids: [] }],
+                    },
+                    style_json: {
+                      schema_version: 1, theme_color: '#00A66A', font_family: 'Roboto',
+                      font_scale: 1, line_height: 1.4, background_asset_id: null, section_overrides: {},
+                    },
                   },
+                  renderer: { key: 'classic_single_column_v1', version: '1', schema_version: 1, capabilities: {} },
+                  revision: `revision-${locale}`,
                 }
+                })()
           : path === '/api/v2/cv-categories/' || path === '/api/v2/cv-sample-contents/'
             ? []
             : {}

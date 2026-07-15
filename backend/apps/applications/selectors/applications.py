@@ -1,6 +1,6 @@
 """Read queries for job applications."""
 
-from django.db.models import F, Q
+from django.db.models import Q
 
 from apps.employers.models import RecruiterProfile
 
@@ -35,7 +35,7 @@ def recruiter_application_snapshot_queryset(recruiter):
             job__company__recruiters__user=recruiter,
             job__company__recruiters__membership_status=RecruiterProfile.MembershipStatus.APPROVED,
         ),
-        submitted_cv_version__cv_id=F('cv_id'),
+        submitted_cv_version__version_kind='application_snapshot',
     ).select_related(
         'job',
         'submitted_cv_version',

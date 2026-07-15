@@ -1,10 +1,10 @@
-import os
-
+from decouple import config
+from django.db import transaction
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
 
-from .models import Banner, Feedback, LinkGroup, SiteSetting
+from .models import Banner, Feedback, LinkGroup, Locale, SiteSetting
 from .selectors import resolve_link_group_items
 
 
@@ -12,6 +12,52 @@ class SiteSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteSetting
         fields = ['key', 'label', 'group', 'value']
+
+
+class LocaleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Locale
+        fields = [
+            'code', 'label_vi', 'native_name', 'flag_emoji', 'catalog_path',
+            'is_default', 'is_active', 'sort_order',
+        ]
+        read_only_fields = ['is_active']
+
+
+class AdminLocaleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Locale
+        fields = [
+            'code', 'label_vi', 'native_name', 'flag_emoji', 'catalog_path',
+            'is_default', 'is_active', 'sort_order', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {'is_default': {'validators': []}}
+        validators = []
+
+    def validate_code(self, value):
+        if self.instance and self.instance.code != value:
+            raise serializers.ValidationError('Locale code is immutable.')
+        return value
+
+    def validate(self, attrs):
+        is_default = attrs.get('is_default', self.instance.is_default if self.instance else False)
+        is_active = attrs.get('is_active', self.instance.is_active if self.instance else True)
+        if is_default and not is_active:
+            raise serializers.ValidationError({'is_active': 'Default locale must remain active.'})
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        if validated_data.get('is_default'):
+            Locale.objects.filter(is_default=True).update(is_default=False)
+        return super().create(validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        if validated_data.get('is_default'):
+            Locale.objects.exclude(pk=instance.pk).filter(is_default=True).update(is_default=False)
+        return super().update(instance, validated_data)
 
 
 class AdminSiteSettingSerializer(serializers.ModelSerializer):
@@ -32,7 +78,10 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
     def get_env_configured(self, obj):
         if obj.value_type != SiteSetting.ValueType.ENV:
             return None
-        return bool(os.environ.get(obj.options.get('env_var', '')))
+        # python-decouple resolves backend/.env without mutating os.environ.
+        # This must use the same resolver as runtime services so the admin badge
+        # reflects whether a secret is actually available to the process.
+        return bool(config(obj.options.get('env_var', ''), default=''))
 
     def get_display_value(self, obj):
         """URL chỉ để preview; ``value`` vẫn là storage key để PATCH an toàn."""

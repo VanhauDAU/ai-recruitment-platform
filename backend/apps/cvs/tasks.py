@@ -10,9 +10,14 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
+from common.metrics import record_metric
 
-from .models import CvExport, UserCv
+from apps.ai_core.cv_import import AiCvParseError, structure_cv_text
+
+from .composition import compose_cv_document, overlay_actor_identity
+from .models import CvExport, CvImportJob, UserCv
 from .pdf_renderer import render_cv_version_pdf
+from .services.versions import create_version
 
 logger = logging.getLogger(__name__)
 
@@ -101,3 +106,159 @@ def dispatch_pending_cv_export_jobs() -> None:
             render_cv_export_job.delay(export_id)
         except Exception:  # noqa: BLE001 - leave the durable row for the next sweep
             logger.warning('Unable to dispatch pending immutable CV PDF export %s.', export_id)
+
+
+class ImportProcessingError(ValueError):
+    def __init__(self, code):
+        self.code = code
+        super().__init__(code)
+
+
+def _extract_import_text(cv):
+    try:
+        with default_storage.open(cv.file_url, 'rb') as source:
+            if cv.file_type == 'pdf':
+                from pypdf import PdfReader
+
+                reader = PdfReader(source)
+                if len(reader.pages) > 20:
+                    raise ImportProcessingError('too_many_pages')
+                text = '\n'.join(page.extract_text() or '' for page in reader.pages)
+            elif cv.file_type == 'docx':
+                from docx import Document
+
+                document = Document(source)
+                paragraphs = [paragraph.text for paragraph in document.paragraphs]
+                table_cells = [
+                    cell.text
+                    for table in document.tables
+                    for row in table.rows
+                    for cell in row.cells
+                ]
+                text = '\n'.join(paragraphs + table_cells)
+            else:
+                raise ImportProcessingError('unsupported_file_type')
+    except ImportProcessingError:
+        raise
+    except Exception as error:
+        raise ImportProcessingError('text_extraction_failed') from error
+    text = text.strip()
+    if cv.file_type == 'pdf' and len(text) < 40:
+        raise ImportProcessingError('scanned_pdf_ocr_unavailable')
+    if len(text) < 10:
+        raise ImportProcessingError('insufficient_text')
+    if len(text) > 100_000:
+        raise ImportProcessingError('text_too_long')
+    return text
+
+
+def _fail_import(job_id, code):
+    now = timezone.now()
+    with transaction.atomic():
+        job = CvImportJob.objects.select_for_update().select_related('cv').filter(pk=job_id).first()
+        if job is None or job.status != CvImportJob.Status.PROCESSING:
+            return
+        job.status = CvImportJob.Status.FAILED
+        job.failure_code = code
+        job.failed_at = now
+        job.save(update_fields=['status', 'failure_code', 'failed_at', 'updated_at'])
+        UserCv.objects.filter(pk=job.cv_id).update(
+            status=UserCv.Status.FAILED,
+            processing_status=UserCv.ProcessingStatus.FAILED,
+            error_message=code,
+            updated_at=now,
+        )
+        duration_ms = (now - job.started_at).total_seconds() * 1000 if job.started_at else 0
+        record_metric('cv_import_failure', failure_code=code)
+        record_metric('cv_import_duration_ms', round(duration_ms, 2), status='failed')
+
+
+@shared_task(soft_time_limit=50, time_limit=60)
+def process_cv_import_job(job_id):
+    with transaction.atomic():
+        job = CvImportJob.objects.select_for_update(of=('self',)).select_related(
+            'cv__template__current_published_version', 'user',
+        ).filter(pk=job_id).first()
+        if job is None or job.status != CvImportJob.Status.QUEUED:
+            return
+        job.status = CvImportJob.Status.PROCESSING
+        job.attempts += 1
+        job.started_at = timezone.now()
+        job.save(update_fields=['status', 'attempts', 'started_at', 'updated_at'])
+        UserCv.objects.filter(pk=job.cv_id).update(
+            status=UserCv.Status.PROCESSING,
+            processing_status=UserCv.ProcessingStatus.PROCESSING,
+            updated_at=timezone.now(),
+        )
+
+    try:
+        text_value = _extract_import_text(job.cv)
+        content = structure_cv_text(text_value, job.cv.language)
+        content = overlay_actor_identity(content, job.user, fill_only=True)
+        theme_color = (job.cv.style_config or {}).get('theme_color')
+        document = compose_cv_document(
+            template=job.cv.template,
+            content_json=content,
+            theme_color=theme_color,
+        )
+        with transaction.atomic():
+            current = CvImportJob.objects.select_for_update().select_related('cv', 'user').get(pk=job_id)
+            if current.status != CvImportJob.Status.PROCESSING:
+                return
+            version = create_version(
+                cv=current.cv,
+                actor=current.user,
+                content_json=document['content_json'],
+                layout_json=document['layout_json'],
+                style_json=document['style_json'],
+                version_kind='imported',
+                template_version=current.cv.template.current_published_version,
+                create_or_replace_draft=True,
+            )
+            now = timezone.now()
+            UserCv.objects.filter(pk=current.cv_id).update(
+                cv_data=document['content_json'],
+                style_config=document['style_json'],
+                status=UserCv.Status.ANALYZED,
+                processing_status=UserCv.ProcessingStatus.ANALYZED,
+                error_message='',
+                raw_text='',
+                normalized_text='',
+                last_analyzed_at=now,
+                updated_at=now,
+            )
+            current.status = CvImportJob.Status.COMPLETED
+            current.result_version = version
+            current.failure_code = ''
+            current.completed_at = now
+            current.failed_at = None
+            current.save(update_fields=[
+                'status', 'result_version', 'failure_code', 'completed_at', 'failed_at', 'updated_at',
+            ])
+            duration_ms = (now - current.started_at).total_seconds() * 1000 if current.started_at else 0
+            record_metric('cv_import_duration_ms', round(duration_ms, 2), status='completed')
+    except ImportProcessingError as error:
+        _fail_import(job_id, error.code)
+    except AiCvParseError as error:
+        _fail_import(job_id, error.code)
+    except Exception:  # noqa: BLE001 - never log raw text or provider response
+        logger.warning('CV import job %s failed.', job_id)
+        _fail_import(job_id, 'import_processing_failed')
+
+
+@shared_task
+def dispatch_pending_cv_import_jobs():
+    for job_id in CvImportJob.objects.filter(status=CvImportJob.Status.QUEUED).values_list('pk', flat=True)[:100]:
+        process_cv_import_job.delay(job_id)
+
+
+@shared_task
+def purge_expired_cv_import_sources():
+    for job in CvImportJob.objects.select_related('cv').filter(
+        source_expires_at__lte=timezone.now(),
+        status__in=[CvImportJob.Status.COMPLETED, CvImportJob.Status.FAILED],
+    ).exclude(cv__file_url='').iterator():
+        storage_key = job.cv.file_url
+        if default_storage.exists(storage_key):
+            default_storage.delete(storage_key)
+        UserCv.objects.filter(pk=job.cv_id, file_url=storage_key).update(file_url='', updated_at=timezone.now())

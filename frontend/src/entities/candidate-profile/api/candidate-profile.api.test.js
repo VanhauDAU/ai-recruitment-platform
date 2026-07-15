@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { getCandidateProfile, updateCandidateProfile } from './candidate-profile.api'
 const { get, patch } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({ default: { get, patch } }))
-
-import { getCandidateProfile, updateCandidateProfile } from './candidate-profile.api'
 
 describe('candidate profile API', () => {
   beforeEach(() => {

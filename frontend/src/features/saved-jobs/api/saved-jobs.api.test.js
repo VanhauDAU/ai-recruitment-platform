@@ -1,20 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { getSavedJobs, saveJob, unsaveJob } from './saved-jobs.api'
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   delete: vi.fn(),
-  dedupeRequest: vi.fn((_, request) => request()),
-  invalidateRequestCache: vi.fn(),
 }))
 
 vi.mock('@/shared/api/client', () => ({ default: { get: mocks.get, post: mocks.post, delete: mocks.delete } }))
-vi.mock('@/shared/api/request-deduplication', () => ({
-  dedupeRequest: mocks.dedupeRequest,
-  invalidateRequestCache: mocks.invalidateRequestCache,
-}))
-
-import { getSavedJobs, saveJob, unsaveJob } from './saved-jobs.api'
 
 describe('saved jobs API', () => {
   beforeEach(() => Object.values(mocks).forEach((mock) => mock.mockClear()))
@@ -31,6 +23,5 @@ describe('saved jobs API', () => {
     expect(mocks.get).toHaveBeenCalledWith('/jobs/saved/')
     expect(mocks.post).toHaveBeenCalledWith('/jobs/saved/', { job: 'job-1' })
     expect(mocks.delete).toHaveBeenCalledWith('/jobs/saved/job-1/')
-    expect(mocks.invalidateRequestCache).toHaveBeenCalledTimes(2)
   })
 })

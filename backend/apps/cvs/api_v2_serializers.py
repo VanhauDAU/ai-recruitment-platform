@@ -6,8 +6,9 @@ from rest_framework import serializers
 
 from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.jobs.models import JobCategory
+from apps.sitecontent.selectors import is_active_locale
 
-from .models import CvDraft, CvExport, CvSharedLink, CvVersion, UserCv
+from .models import CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from .schemas import validate_cv_document
 
 
@@ -20,6 +21,9 @@ class CvV2Serializer(serializers.ModelSerializer):
     latest_version_public_id = serializers.CharField(source='latest_version.public_id', read_only=True)
     published_version_public_id = serializers.CharField(source='published_version.public_id', read_only=True)
     position_public_id = serializers.CharField(source='position.public_id', read_only=True, allow_null=True)
+    has_unsaved_changes = serializers.SerializerMethodField()
+    draft_updated_at = serializers.SerializerMethodField()
+    import_job = serializers.SerializerMethodField()
 
     class Meta:
         model = UserCv
@@ -32,8 +36,35 @@ class CvV2Serializer(serializers.ModelSerializer):
             'template_capabilities',
             'processing_status', 'visibility', 'latest_version_public_id',
             'published_version_public_id', 'published_at', 'archived_at', 'created_at', 'updated_at',
+            'has_unsaved_changes', 'draft_updated_at',
+            'import_job',
         ]
         read_only_fields = fields
+
+    def get_has_unsaved_changes(self, obj):
+        try:
+            draft = obj.draft
+        except CvDraft.DoesNotExist:
+            return False
+        return draft.base_version_id is None or draft.document_hash != draft.base_version.content_hash
+
+    def get_draft_updated_at(self, obj):
+        try:
+            return obj.draft.updated_at
+        except CvDraft.DoesNotExist:
+            return None
+
+    def get_import_job(self, obj):
+        try:
+            job = obj.import_job
+        except CvImportJob.DoesNotExist:
+            return None
+        return {
+            'public_id': job.public_id,
+            'status': job.status,
+            'attempts': job.attempts,
+            'failure_code': job.failure_code,
+        }
 
 
 class CvV2MetadataUpdateSerializer(serializers.Serializer):
@@ -49,6 +80,42 @@ class CvV2MetadataUpdateSerializer(serializers.Serializer):
 class CvV2ImportSerializer(serializers.Serializer):
     file = serializers.FileField()
     title = serializers.CharField(max_length=255, required=False, allow_blank=False, trim_whitespace=True)
+    template_public_id = serializers.CharField(max_length=50, required=False)
+    language = serializers.CharField(max_length=16, default='vi-VN')
+    theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
+
+    def validate_file(self, value):
+        from .services.imports import InvalidCvImport, validate_import_upload
+
+        try:
+            validate_import_upload(value)
+        except InvalidCvImport as error:
+            raise serializers.ValidationError(str(error)) from error
+        return value
+
+    def validate_template_public_id(self, value):
+        try:
+            return CvTemplate.objects.select_related('current_published_version').get(public_id=value)
+        except CvTemplate.DoesNotExist as error:
+            raise serializers.ValidationError('Unknown template.') from error
+
+    def validate_language(self, value):
+        if not is_active_locale(value):
+            raise serializers.ValidationError('Unknown or inactive locale.')
+        return value
+
+    def validate(self, attrs):
+        template = attrs.get('template_public_id')
+        theme_color = attrs.get('theme_color')
+        if theme_color and template is None:
+            raise serializers.ValidationError({'theme_color': 'template_public_id is required.'})
+        if theme_color and not template.color_links.filter(
+            color__hex_code__iexact=theme_color, color__is_active=True,
+        ).exists():
+            raise serializers.ValidationError({'theme_color': 'Color is not available for this template.'})
+        if theme_color:
+            attrs['theme_color'] = theme_color.upper()
+        return attrs
 
 
 class CvV2DuplicateSerializer(serializers.Serializer):
@@ -61,7 +128,13 @@ class CvV2CreateSerializer(serializers.Serializer):
     language = serializers.CharField(max_length=16, default='vi-VN')
     sample_content_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     position_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
+    source_cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=False)
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
+
+    def validate_language(self, value):
+        if not is_active_locale(value):
+            raise serializers.ValidationError('Unknown or inactive locale.')
+        return value
 
     def validate_template_public_id(self, value):
         try:
@@ -85,12 +158,24 @@ class CvV2CreateSerializer(serializers.Serializer):
         except JobCategory.DoesNotExist as error:
             raise serializers.ValidationError('Unknown active specialization.') from error
 
+    def validate_source_cv_public_id(self, value):
+        try:
+            return UserCv.objects.select_related('latest_version', 'position').get(
+                public_id=value,
+                user=self.context['request'].user,
+                is_deleted=False,
+            )
+        except UserCv.DoesNotExist as error:
+            raise serializers.ValidationError('Unknown reusable CV.') from error
+
     def validate(self, attrs):
         sample_content = attrs.get('sample_content_public_id')
         position = attrs.get('position_public_id')
-        if sample_content is not None and position is not None:
+        source_cv = attrs.get('source_cv_public_id')
+        selected_sources = [value for value in (sample_content, position, source_cv) if value is not None]
+        if len(selected_sources) > 1:
             raise serializers.ValidationError({
-                'position_public_id': 'Use position_public_id or the legacy sample_content_public_id, not both.',
+                'position_public_id': 'Use only one content source.',
             })
         if sample_content is not None and sample_content.locale != attrs['language']:
             raise serializers.ValidationError({'sample_content_public_id': 'Sample locale must match language.'})
@@ -140,6 +225,7 @@ class CvDraftWriteSerializer(serializers.Serializer):
 
 class CvTemplateSwitchSerializer(serializers.Serializer):
     template_public_id = serializers.CharField(max_length=50)
+    theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
     client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
 

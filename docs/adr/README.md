@@ -11,5 +11,6 @@ Mỗi ADR bất biến sau khi `Accepted`; muốn đổi thì viết ADR mới `
 | [0004](./0004-single-responsibility-route-guards.md) | Route guard đơn trách nhiệm (auth/role/onboarding) | Accepted |
 | [0005](./0005-env-based-settings.md) | Tách Django settings theo môi trường, giữ contract .env | Accepted |
 | [0006](./0006-custom-server-state-during-refactor.md) | Server state bằng custom hooks có ranh giới rõ | Accepted |
+| [0007](./0007-canonical-cv-composition.md) | Một pipeline composition canonical cho CV Builder | Accepted |
 
 Nguồn: *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)*.

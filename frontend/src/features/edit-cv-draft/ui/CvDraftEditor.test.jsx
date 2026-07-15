@@ -127,7 +127,7 @@ describe('CV draft editor', () => {
     expect(screen.getByText(/classic_two_column_v1/)).toBeInTheDocument()
   })
 
-  it('warns before leaving with unsaved data, retries failed autosave, and can restore the server draft', async () => {
+  it('flushes before internal navigation, retries failed autosave, and can restore the server draft', async () => {
     mocks.updateCvDraft.mockRejectedValueOnce({ response: { data: { detail: 'Mất kết nối' } } }).mockResolvedValue({ lock_version: 1 })
     render(<CvDraftEditor publicId="cv_1" />)
     fireEvent.change(await screen.findByLabelText('Họ và tên'), { target: { value: 'Chưa lưu' } })
@@ -136,16 +136,14 @@ describe('CV draft editor', () => {
     window.dispatchEvent(beforeUnload)
     expect(beforeUnload.defaultPrevented).toBe(true)
 
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     const destination = document.createElement('a')
     destination.href = '/viec-lam'
     document.body.append(destination)
     const navigation = new MouseEvent('click', { bubbles: true, cancelable: true })
     destination.dispatchEvent(navigation)
-    expect(confirm).toHaveBeenCalled()
     expect(navigation.defaultPrevented).toBe(true)
+    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(1))
     destination.remove()
-    confirm.mockRestore()
 
     await screen.findByText('Không thể autosave bản nháp', {}, { timeout: 1500 })
     fireEvent.click(screen.getByRole('button', { name: 'Thử lưu lại' }))

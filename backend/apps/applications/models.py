@@ -28,9 +28,13 @@ class Application(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     candidate = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications')
     job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='applications')
-    cv = models.ForeignKey('cvs.UserCv', on_delete=models.PROTECT, related_name='applications')
-    # Legacy `cv` retains the candidate's chosen CV identity.  Recruiter and
-    # export reads must use submitted_cv_version, which is immutable.
+    cv = models.ForeignKey(
+        'cvs.UserCv', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='applications',
+    )
+    # `cv` is a library pointer only. It becomes NULL when a candidate
+    # permanently deletes that CV; recruiter reads always use the immutable
+    # submitted snapshot below.
     submitted_cv_version = models.ForeignKey(
         'cvs.CvVersion',
         on_delete=models.PROTECT,

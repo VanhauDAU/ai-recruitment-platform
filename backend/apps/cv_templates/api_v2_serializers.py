@@ -3,6 +3,7 @@
 from rest_framework import serializers
 
 from apps.jobs.models import JobCategory
+from common.media_storage import media_url_from_value
 
 from .models import CvCategory, CvSampleContent, CvTemplate
 
@@ -22,15 +23,20 @@ def _catalog_groups(template):
     return categories, tags
 
 
-def _catalog_colors(template):
+def _catalog_colors(template, request=None):
     return [
         {
             'public_id': link.color.public_id,
             'name': link.color.name,
             'slug': link.color.slug,
             'hex_code': link.color.hex_code,
-            'thumbnail_url': link.thumbnail_url or template.thumbnail_url,
-            'preview_url': link.preview_url or link.thumbnail_url or template.preview_url or template.thumbnail_url,
+            'thumbnail_url': media_url_from_value(
+                link.thumbnail_url or template.thumbnail_url, request=request,
+            ),
+            'preview_url': media_url_from_value(
+                link.preview_url or link.thumbnail_url or template.preview_url or template.thumbnail_url,
+                request=request,
+            ),
             'is_default': link.is_default,
         }
         for link in getattr(template, 'catalog_color_links', [])
@@ -63,15 +69,15 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
         return localization.description if localization else template.description
 
     def get_theme_color(self, template):
-        colors = _catalog_colors(template)
+        colors = _catalog_colors(template, self.context.get('request'))
         default = next((item for item in colors if item['is_default']), colors[0] if colors else None)
         return default['hex_code'] if default else template.current_published_version.default_style_json.get('theme_color', '#00A66A')
 
     def get_color_variants(self, template):
-        return [item['hex_code'] for item in _catalog_colors(template)] or [self.get_theme_color(template)]
+        return [item['hex_code'] for item in _catalog_colors(template, self.context.get('request'))] or [self.get_theme_color(template)]
 
     def get_colors(self, template):
-        return _catalog_colors(template)
+        return _catalog_colors(template, self.context.get('request'))
 
     def get_categories(self, template):
         return _catalog_groups(template)[0]
@@ -150,13 +156,18 @@ class CvSampleContentDetailSerializer(CvSampleContentCardSerializer):
 
 
 class CvPositionOptionSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
     name_vi = serializers.SerializerMethodField()
 
     class Meta:
         model = JobCategory
-        fields = ['public_id', 'name_vi']
+        fields = ['public_id', 'display_name', 'name_vi']
         read_only_fields = fields
 
-    def get_name_vi(self, obj):
+    def get_display_name(self, obj):
         localizations = getattr(obj, 'cv_picker_localizations', [])
+        return localizations[0].display_name if localizations else obj.name
+
+    def get_name_vi(self, obj):
+        localizations = getattr(obj, 'cv_picker_vi_localizations', [])
         return localizations[0].display_name if localizations else obj.name

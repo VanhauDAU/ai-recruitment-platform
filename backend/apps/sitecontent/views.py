@@ -18,12 +18,14 @@ from common.media_storage import (
     save_image_upload,
 )
 
-from .models import Banner, LinkGroup, SiteSetting
+from .models import Banner, LinkGroup, Locale, SiteSetting
 from .serializers import (
     AdminSiteSettingSerializer,
+    AdminLocaleSerializer,
     BannerSerializer,
     FeedbackSerializer,
     LinkGroupSerializer,
+    LocaleSerializer,
 )
 from .signals import PUBLIC_SETTINGS_CACHE_KEY
 
@@ -52,6 +54,29 @@ class SiteSettingListView(APIView):
             key: media_url_from_value(value, request=request) if is_image else value
             for key, (value, is_image) in data.items()
         })
+
+
+class LocaleListView(generics.ListAPIView):
+    serializer_class = LocaleSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Locale.objects.filter(is_active=True)
+
+
+class AdminLocaleListCreateView(generics.ListCreateAPIView):
+    serializer_class = AdminLocaleSerializer
+    permission_classes = [IsAdmin]
+    pagination_class = None
+    queryset = Locale.objects.all()
+
+
+class AdminLocaleDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = AdminLocaleSerializer
+    permission_classes = [IsAdmin]
+    queryset = Locale.objects.all()
+    lookup_field = 'code'
 
 
 def _validate_value(setting, value):

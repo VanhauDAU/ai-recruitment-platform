@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { submitJobApplication } from './application.api'
 const { post } = vi.hoisted(() => ({ post: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({ default: { post } }))
-
-import { submitJobApplication } from './application.api'
 
 describe('application V2 API', () => {
   beforeEach(() => post.mockReset())

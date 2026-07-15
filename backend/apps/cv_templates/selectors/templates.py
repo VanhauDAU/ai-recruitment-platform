@@ -6,6 +6,7 @@ from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..models import (
     CvCategory,
+    CvContentBlueprint,
     CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
@@ -88,7 +89,16 @@ def published_sample_contents_queryset(*, locale=None, experience_level=None):
     return queryset
 
 
-def active_cv_position_options_queryset(query=None):
+def active_cv_position_options_queryset(
+    query=None,
+    *,
+    locale=JobCategoryLocalization.Locale.VI,
+    experience_level='unspecified',
+):
+    selected_localizations = JobCategoryLocalization.objects.filter(
+        locale=locale,
+        is_active=True,
+    )
     vi_localizations = JobCategoryLocalization.objects.filter(
         locale=JobCategoryLocalization.Locale.VI,
         is_active=True,
@@ -96,17 +106,33 @@ def active_cv_position_options_queryset(query=None):
     queryset = JobCategory.objects.filter(
         status=JobCategory.Status.ACTIVE,
         category_type=JobCategory.CategoryType.SPECIALIZATION,
-        localizations__locale=JobCategoryLocalization.Locale.VI,
+        localizations__locale=locale,
         localizations__is_active=True,
     ).prefetch_related(
-        Prefetch('localizations', queryset=vi_localizations, to_attr='cv_picker_localizations'),
+        Prefetch('localizations', queryset=selected_localizations, to_attr='cv_picker_localizations'),
+        Prefetch('localizations', queryset=vi_localizations, to_attr='cv_picker_vi_localizations'),
     )
+    has_blueprint = CvContentBlueprint.objects.filter(
+        locale=locale,
+        experience_level__in=[experience_level, 'unspecified'],
+        is_active=True,
+    ).exists()
+    if not has_blueprint:
+        queryset = queryset.filter(
+            cv_sample_contents__locale=locale,
+            cv_sample_contents__experience_level=experience_level,
+            cv_sample_contents__status=CvSampleContent.Status.PUBLISHED,
+        )
     if query:
         queryset = queryset.filter(
             Q(localizations__display_name__unaccent__icontains=query)
             | Q(localizations__search_aliases__unaccent__icontains=query)
         )
-    return queryset.distinct().order_by('localizations__display_name')
+    return queryset.distinct().order_by(
+        'localizations__sort_order',
+        'localizations__display_name',
+        'pk',
+    )
 
 
 def related_published_templates(template, *, locale='vi-VN', limit=6):

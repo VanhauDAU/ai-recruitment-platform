@@ -6,10 +6,11 @@ import {
   formatLocations,
   formatSalary,
   JOB_LOGO_TINTS,
+  jobDetailPath,
   JobPreviewPanel,
+  SavedJobTooltipContent,
   stripCompanyPrefix,
 } from '@/entities/job'
-import { jobDetailPath, SavedJobTooltipContent } from '@/entities/job'
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
