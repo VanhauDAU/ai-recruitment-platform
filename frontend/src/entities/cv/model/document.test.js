@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   addItem,
   addSection,
+  availableSectionKeys,
   canDragItems,
   changeContentLocale,
   createDocumentHistory,
@@ -65,6 +66,18 @@ describe('canonical CV editor document', () => {
     expect(normalized.content_json).toEqual(contentBeforeStyleUpdate)
     expect(normalized.layout_json).toEqual(layoutBeforeStyleUpdate)
     expect(nextStyle).toMatchObject({ theme_color: '#2255AA', font_family: 'Inter' })
+  })
+
+  it('keeps the optional avatar block available while excluding fixed personal markers', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    const keys = availableSectionKeys(document.content_json)
+
+    expect(keys).toContain('avatar')
+    expect(keys).toContain('custom')
+    expect(keys).not.toContain('experience')
+    expect(keys).not.toContain('skills')
+    expect(keys).not.toContain('nameplate')
+    expect(keys).not.toContain('contact')
   })
 
   it('resets all section titles to the selected locale while preserving authored item content', () => {
@@ -223,10 +236,14 @@ describe('canonical CV editor document', () => {
 
     const invalid = JSON.parse(JSON.stringify(valid))
     invalid.content_json.sections[1].items[0].item_id = invalid.content_json.sections[2].items[0].item_id
+    invalid.content_json.personal_info.avatar_size_mm = 81
+    invalid.content_json.personal_info.avatar_zoom = 4
     invalid.style_json.theme_color = 'red'
     invalid.content_json.sections[1].items[0].description = { format: 'rich_text_v1', content: [{ type: 'html', text: '<strong>unsafe</strong>' }] }
     expect(validateCvDocument(invalid)).toEqual(expect.arrayContaining([
       'Mỗi item phải có ID duy nhất.',
+      'Kích thước ảnh đại diện phải từ 20 đến 80 mm.',
+      'Mức phóng ảnh đại diện phải từ 1 đến 3.',
       'Màu chủ đề, phông chữ hoặc style không hợp lệ.',
       'Kinh nghiệm làm việc có rich text không hợp lệ.',
     ]))
@@ -247,6 +264,23 @@ describe('canonical CV editor document', () => {
     expect(pages.length).toBeGreaterThan(1)
     expect(pages.map((page) => page.number)).toEqual(pages.map((_, index) => index + 1))
     expect(projection).toEqual(originalProjection)
+  })
+
+  it('rejects invalid contact data and reversed entry dates before creating a version', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    document.content_json.personal_info.email = 'email-sai'
+    document.content_json.personal_info.phone = '123'
+    document.content_json.personal_info.website = 'example.com'
+    const experience = document.content_json.sections.find((section) => section.section_key === 'experience')
+    experience.items[0].start_date = '2026-06'
+    experience.items[0].end_date = '2026-01'
+
+    expect(validateCvDocument(document)).toEqual(expect.arrayContaining([
+      'Email trong thông tin cá nhân chưa đúng định dạng.',
+      'Số điện thoại trong thông tin cá nhân chưa hợp lệ.',
+      'Website trong thông tin cá nhân phải là URL http:// hoặc https:// hợp lệ.',
+      'Kinh nghiệm làm việc: thời gian kết thúc không được trước thời gian bắt đầu.',
+    ]))
   })
 
   it('round-trips rich text v2 marks and coalesces repeated inline edits', () => {

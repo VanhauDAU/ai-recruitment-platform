@@ -916,10 +916,12 @@ class CvV2ApiTests(APITestCase):
         self.assertNotIn('storage_key', created.data)
         self.assertLessEqual(created.data['width'], 512)
         self.assertLessEqual(created.data['height'], 512)
+        self.assertIn('?token=', created.data['url'])
         asset = CvAsset.objects.get(public_id=created.data['public_id'])
         content_url = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
         self.client.force_authenticate(self.other_candidate)
         self.assertEqual(self.client.get(content_url).status_code, 404)
+        self.assertEqual(self.client.get(created.data['url']).status_code, 200)
         self.client.force_authenticate(self.candidate)
         self.assertEqual(self.client.get(content_url).status_code, 200)
 
@@ -1057,6 +1059,37 @@ class CvV2ApiTests(APITestCase):
         self.assertIn('minmax(0, 68fr)', html)
         self.assertIn('minmax(0, 32fr)', html)
         self.assertEqual(version.content_json, cv.draft.content_json)
+
+    def test_pdf_renderer_matches_avatar_size_and_omits_empty_sections(self):
+        cv = self.create_cv()
+        draft = self.client.get(self.draft_url(cv)).data
+        payload = {key: deepcopy(draft[key]) for key in ('schema_version', 'content_json', 'layout_json', 'style_json')}
+        payload['content_json']['personal_info']['avatar_size_mm'] = 36
+        payload['content_json']['personal_info']['avatar_zoom'] = 1.6
+        payload['content_json']['sections'].append({
+            'instance_id': 'empty_summary_1',
+            'section_key': 'summary',
+            'title': 'EMPTY SECTION MUST BE HIDDEN',
+            'enabled': True,
+            'items': [{'item_id': 'empty_summary_item_1', 'value': ''}],
+        })
+        payload['layout_json']['regions'][0]['section_instance_ids'].append('empty_summary_1')
+        updated = self.client.put(
+            self.draft_url(cv), payload, format='json', HTTP_IF_MATCH='"lock-version-0"',
+        )
+        self.assertEqual(updated.status_code, 200, updated.data)
+        saved = self.client.post(
+            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            format='json', HTTP_IF_MATCH='"lock-version-1"',
+        )
+        version = CvVersion.objects.get(public_id=saved.data['public_id'])
+
+        html = build_cv_pdf_html(version)
+
+        self.assertIn('height: 36mm', html)
+        self.assertIn('width: 36mm', html)
+        self.assertIn('transform: scale(1.6)', html)
+        self.assertNotIn('EMPTY SECTION MUST BE HIDDEN', html)
 
     def test_pdf_export_reuses_valid_artifact_and_download_url_is_owner_controlled(self):
         cv = self.create_cv()

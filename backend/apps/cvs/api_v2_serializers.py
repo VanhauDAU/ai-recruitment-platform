@@ -10,7 +10,7 @@ from apps.sitecontent.selectors import is_active_locale
 
 from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from .schemas import validate_cv_document
-from .services.assets import asset_map
+from .services.assets import asset_map, sign_asset
 
 
 class CvV2Serializer(serializers.ModelSerializer):
@@ -210,6 +210,7 @@ class CvDraftSerializer(serializers.ModelSerializer):
             style_json=obj.style_json,
             request=self.context.get('request'),
             owner=obj.cv.user,
+            signed=True,
         )
 
 
@@ -259,6 +260,8 @@ class CvAssetSerializer(serializers.ModelSerializer):
     def get_url(self, obj):
         from django.urls import reverse
         path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
+        if obj.kind == CvAsset.Kind.AVATAR:
+            path = f'{path}?token={sign_asset(obj)}'
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
 
@@ -341,7 +344,7 @@ class CvVersionSerializer(serializers.ModelSerializer):
             request=self.context.get('request'),
             owner=obj.cv.user if obj.cv_id else None,
             version=obj,
-            signed=obj.cv_id is None,
+            signed=True,
         )
 
 

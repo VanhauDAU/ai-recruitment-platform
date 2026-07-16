@@ -34,6 +34,7 @@ export default function useCvDraftEditor(publicId) {
   const [lastVersion, setLastVersion] = useState(null)
   const [validationErrors, setValidationErrors] = useState([])
   const [assets, setAssets] = useState({})
+  const [savedAt, setSavedAt] = useState(null)
   const [history, setHistoryState] = useState(() => createDocumentHistory())
   const documentRef = useRef(null)
   const lockVersionRef = useRef(null)
@@ -44,9 +45,14 @@ export default function useCvDraftEditor(publicId) {
   const historyRef = useRef(createDocumentHistory())
   const loadGenerationRef = useRef(0)
   const pendingEditFlushersRef = useRef(new Set())
+  const autosaveTimerRef = useRef(null)
+  const scheduleLatestAutosaveRef = useRef(() => {})
 
   const flushPendingEdits = useCallback(() => {
     for (const flush of [...pendingEditFlushersRef.current]) flush()
+    // Field commits update documentRef synchronously, while React state updates
+    // on the next render. Consumers opening a modal need this newest snapshot.
+    return documentRef.current
   }, [])
 
   const registerPendingEdit = useCallback((flush) => {
@@ -61,6 +67,7 @@ export default function useCvDraftEditor(publicId) {
 
   const load = useCallback(async () => {
     const generation = ++loadGenerationRef.current
+    clearTimeout(autosaveTimerRef.current)
     setSavePhase('loading')
     setError(null)
     setLastVersion(null)
@@ -82,6 +89,7 @@ export default function useCvDraftEditor(publicId) {
       setDocument(normalized)
       setCv(nextCv)
       setAssets(draft.assets || {})
+      setSavedAt(draft.updated_at ? new Date(draft.updated_at) : null)
       const nextHistory = createDocumentHistory()
       historyRef.current = nextHistory
       setHistoryState(nextHistory)
@@ -112,7 +120,14 @@ export default function useCvDraftEditor(publicId) {
     ).then((draft) => {
       lockVersionRef.current = draft.lock_version
       lastSavedSignatureRef.current = snapshotSignature
-      setSavePhase(signature(documentRef.current) === snapshotSignature ? 'saved' : 'unsaved')
+      if (draft.assets) setAssets((current) => ({ ...current, ...draft.assets }))
+      setSavedAt(new Date())
+      const hasNewerChanges = signature(documentRef.current) !== snapshotSignature
+      setSavePhase(hasNewerChanges ? 'unsaved' : 'saved')
+      // A user may continue typing while the previous request is in flight.
+      // Queue the newer document explicitly; relying only on the phase effect
+      // misses this case when React is already rendering "unsaved".
+      if (hasNewerChanges) scheduleLatestAutosaveRef.current()
       return true
     }).catch((saveError) => {
       if (saveError.response?.status === 409) {
@@ -131,10 +146,26 @@ export default function useCvDraftEditor(publicId) {
   }, [publicId, setSavePhase])
 
   useEffect(() => {
+    const schedule = (delay = AUTOSAVE_DELAY) => {
+      clearTimeout(autosaveTimerRef.current)
+      if (!documentRef.current || phaseRef.current === 'conflict') return
+      autosaveTimerRef.current = setTimeout(() => {
+        autosaveTimerRef.current = null
+        runAutosave()
+      }, delay)
+    }
+    scheduleLatestAutosaveRef.current = schedule
+    return () => {
+      if (scheduleLatestAutosaveRef.current === schedule) scheduleLatestAutosaveRef.current = () => {}
+      clearTimeout(autosaveTimerRef.current)
+    }
+  }, [runAutosave])
+
+  useEffect(() => {
     if (!document || phase !== 'unsaved') return undefined
-    const timer = setTimeout(() => { runAutosave() }, AUTOSAVE_DELAY)
-    return () => clearTimeout(timer)
-  }, [document, phase, runAutosave])
+    scheduleLatestAutosaveRef.current()
+    return undefined
+  }, [document, phase])
 
   useEffect(() => {
     const hasUnsavedChanges = () => {
@@ -223,6 +254,22 @@ export default function useCvDraftEditor(publicId) {
     return runAutosave()
   }, [runAutosave, setSavePhase])
 
+  const saveDraft = useCallback(async () => {
+    flushPendingEdits()
+    clearTimeout(autosaveTimerRef.current)
+    autosaveTimerRef.current = null
+    if (phaseRef.current === 'conflict') return false
+
+    // If an autosave was already in flight, wait for it and persist any newer
+    // canvas edits before reporting that the explicit save has completed.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const saved = await runAutosave()
+      if (!saved) return false
+      if (signature(documentRef.current) === lastSavedSignatureRef.current) return true
+    }
+    return false
+  }, [flushPendingEdits, runAutosave])
+
   const commitVersion = useCallback(async (publish) => {
     flushPendingEdits()
     if (phaseRef.current === 'conflict') return null
@@ -237,6 +284,7 @@ export default function useCvDraftEditor(publicId) {
     try {
       const version = await (publish ? publishCvVersion : saveCvVersion)(publicId, lockVersionRef.current)
       setLastVersion(version)
+      setSavedAt(new Date())
       setSavePhase('saved')
       return version
     } catch (saveError) {
@@ -277,6 +325,7 @@ export default function useCvDraftEditor(publicId) {
       setDocument(nextDocument)
       setCv(result.cv)
       setAssets(result.draft.assets || {})
+      setSavedAt(new Date())
       const nextHistory = createDocumentHistory()
       historyRef.current = nextHistory
       setHistoryState(nextHistory)
@@ -323,6 +372,7 @@ export default function useCvDraftEditor(publicId) {
       lastSavedSignatureRef.current = signature(nextDocument)
       setDocument(nextDocument)
       setAssets(draft.assets || {})
+      setSavedAt(new Date())
       setSavePhase('saved')
       return draft
     } catch (sampleError) {
@@ -352,6 +402,7 @@ export default function useCvDraftEditor(publicId) {
     error,
     lastVersion,
     validationErrors,
+    savedAt,
     canUndo: history.past.length > 0,
     canRedo: history.future.length > 0,
     lockVersion: lockVersionRef.current,
@@ -362,6 +413,7 @@ export default function useCvDraftEditor(publicId) {
     redo,
     retryAutosave,
     reloadDraft: load,
+    saveDraft,
     saveVersion: () => commitVersion(false),
     publishVersion: () => commitVersion(true),
     switchTemplate,

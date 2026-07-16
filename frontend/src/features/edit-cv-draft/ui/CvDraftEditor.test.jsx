@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
 import CvDraftEditor from './CvDraftEditor'
@@ -46,6 +47,10 @@ function renderLegacyEditor() {
   return render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: false } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
 }
 
+function renderWysiwygEditor() {
+  return render(<App><SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider></App>)
+}
+
 describe('CV draft editor', () => {
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', class {
@@ -86,6 +91,24 @@ describe('CV draft editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
     await waitFor(() => expect(mocks.saveCvVersion).toHaveBeenCalledWith('cv_1', 1))
     expect(screen.getByText('Đã tạo phiên bản 2')).toBeInTheDocument()
+  })
+
+  it('queues the newest edit when a previous autosave is still in flight', async () => {
+    let resolveFirstSave
+    mocks.updateCvDraft.mockImplementationOnce(() => new Promise((resolve) => { resolveFirstSave = resolve })).mockResolvedValueOnce({ lock_version: 2 })
+    renderLegacyEditor()
+    const fullName = await screen.findByLabelText('Họ và tên')
+
+    fireEvent.change(fullName, { target: { value: 'Bản nháp đầu tiên' } })
+    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(1), { timeout: 1500 })
+
+    fireEvent.change(fullName, { target: { value: 'Bản nháp mới nhất' } })
+    resolveFirstSave({ lock_version: 1 })
+
+    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledTimes(2), { timeout: 1800 })
+    expect(mocks.updateCvDraft).toHaveBeenLastCalledWith('cv_1', expect.objectContaining({
+      content_json: expect.objectContaining({ personal_info: expect.objectContaining({ full_name: 'Bản nháp mới nhất' }) }),
+    }), 1, expect.any(String))
   })
 
   it('stops autosave and asks the user to reload on a 409 conflict', async () => {
@@ -187,18 +210,60 @@ describe('CV draft editor', () => {
   })
 
   it('renders the six-tool WYSIWYG shell when the rollout flag is enabled', async () => {
-    render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+    renderWysiwygEditor()
 
     expect(await screen.findByLabelText('CV A4 có thể chỉnh sửa')).toBeInTheDocument()
     for (const label of ['Thiết kế & Font', 'Thêm mục', 'Bố cục', 'Đổi mẫu CV', 'Gợi ý viết CV', 'Thư viện CV']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
-    expect(screen.getByRole('button', { name: 'Lưu phiên bản' })).toHaveTextContent('Lưu CV')
+    expect(screen.getByRole('button', { name: 'Lưu CV' })).toHaveTextContent('Lưu CV')
     expect(screen.queryByText('Chỉnh sửa bằng biểu mẫu')).not.toBeInTheDocument()
   })
 
+  it('keeps content editing on the canvas without opening a contextual content panel', async () => {
+    renderWysiwygEditor()
+
+    const section = await screen.findByLabelText('Mục CV Kinh nghiệm')
+    fireEvent.click(section)
+
+    expect(screen.queryByRole('heading', { name: 'Chỉnh sửa nội dung' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('role experience_item_1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Thiết kế & Font' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('blocks explicit save until email, address and phone are present', async () => {
+    renderWysiwygEditor()
+
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu CV' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Chưa thể lưu CV' })).toBeInTheDocument()
+    expect(screen.getByText(/Email, Địa chỉ, Số điện thoại/)).toBeInTheDocument()
+    expect(mocks.saveCvVersion).not.toHaveBeenCalled()
+  })
+
+  it('warns about incomplete optional sections and saves only the current draft after confirmation', async () => {
+    const saveableDraft = draft()
+    saveableDraft.content_json.personal_info.email = 'an@example.com'
+    saveableDraft.content_json.personal_info.phone = '0909123456'
+    saveableDraft.content_json.personal_info.address = 'Hà Nội'
+    mocks.getCvDraft.mockResolvedValueOnce(saveableDraft)
+    renderWysiwygEditor()
+
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu CV' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Lưu ý' })).toBeInTheDocument()
+    expect(screen.getByText(/Vị trí ứng tuyển, Mục tiêu nghề nghiệp, Học vấn, Kinh nghiệm việc làm/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Hoàn thiện tiếp' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }))
+
+    expect(await screen.findByText('Lưu CV thành công')).toBeInTheDocument()
+    expect(mocks.saveCvVersion).not.toHaveBeenCalled()
+  })
+
   it('resets CV headings and empty field placeholders to the selected locale without changing user content', async () => {
-    render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+    renderWysiwygEditor()
 
     await screen.findByLabelText('CV A4 có thể chỉnh sửa')
     fireEvent.click(screen.getByRole('button', { name: 'Thiết kế & Font' }))
@@ -217,7 +282,7 @@ describe('CV draft editor', () => {
   })
 
   it('applies the selected font stack directly to the A4 document surface', async () => {
-    render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+    renderWysiwygEditor()
 
     await screen.findByLabelText('CV A4 có thể chỉnh sửa')
     fireEvent.click(screen.getByRole('button', { name: 'Thiết kế & Font' }))

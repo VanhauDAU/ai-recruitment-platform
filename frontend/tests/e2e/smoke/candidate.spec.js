@@ -15,14 +15,15 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
     lock_version: 0,
     content_json: {
       schema_version: 1, locale: 'vi-VN', custom_fields: {},
-      personal_info: { full_name: 'Nguyễn An', headline: 'Developer', email: '', phone: '', address: '', avatar_asset_id: null, links: [] },
+      personal_info: { full_name: 'Nguyễn An', headline: 'Developer', email: 'an@example.com', phone: '0909123456', address: 'Hà Nội', avatar_asset_id: null, links: [] },
       sections: [
         { instance_id: 'summary_1', section_key: 'summary', title: 'Mục tiêu nghề nghiệp', enabled: true, items: [{ item_id: 'summary_item_1', value: '' }] },
         { instance_id: 'experience_1', section_key: 'experience', title: 'Kinh nghiệm', enabled: true, items: [{ item_id: 'experience_item_1', role: '', company: '', start_date: null, end_date: null, description: { format: 'rich_text_v1', content: [] } }] },
         { instance_id: 'skills_1', section_key: 'skills', title: 'Kỹ năng', enabled: true, items: [{ item_id: 'skills_item_1', name: '' }] },
+        { instance_id: 'avatar_1', section_key: 'avatar', title: 'Ảnh đại diện', enabled: true, items: [] },
       ],
     },
-    layout_json: { schema_version: 1, page: { size: 'A4', margin_mm: 12 }, regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1', 'experience_1', 'skills_1'] }] },
+    layout_json: { schema_version: 1, page: { size: 'A4', margin_mm: 12 }, regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['avatar_1', 'summary_1', 'experience_1', 'skills_1'] }] },
     style_json: { schema_version: 1, theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4, background_asset_id: null, section_overrides: {} },
   }
   await page.route('http://localhost:8000/api/**', async (route) => {
@@ -38,8 +39,16 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
         ? { public_id: 'cv_1', title: 'CV V2', template_public_id: 'tpl_1', template_renderer_key: 'classic_single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
         : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
           ? draft
-          : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
+      : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
             ? { ...draft, lock_version: 1 }
+            : path === '/api/v2/cvs/assets/' && request.method() === 'POST'
+              ? {
+                  public_id: 'avatar_uploaded',
+                  kind: 'avatar',
+                  width: 900,
+                  height: 700,
+                  url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="900" height="700"%3E%3Crect width="900" height="700" fill="%232255AA"/%3E%3C/svg%3E',
+                }
             : path === '/api/v2/cvs/cv_1/save-version/'
               ? { public_id: 'version_2', version_number: 2, version_kind: 'manual_save' }
               : {}
@@ -54,20 +63,46 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await expect(page.getByLabel('CV A4 có thể chỉnh sửa')).toBeVisible()
   await expect(page.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
 
+  await page.getByRole('button', { name: 'Cập nhật ảnh đại diện' }).click()
+  await expect(page.getByRole('dialog', { name: 'Cập nhật ảnh đại diện' })).toBeVisible()
+  const avatarInput = page.locator('input[type="file"][accept="image/jpeg,image/png,image/webp"]')
+  expect(await avatarInput.count()).toBe(1)
+  await avatarInput.setInputFiles({
+    name: 'avatar.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+XTKxWQAAAABJRU5ErkJggg==', 'base64'),
+  })
+  await expect(page.getByRole('group', { name: 'Vùng căn chỉnh ảnh đại diện' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Xem trước ảnh đại diện' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Đổi ảnh' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xóa ảnh' })).toBeVisible()
+  await page.getByRole('button', { name: 'Đóng lại' }).click()
+
+  await page.getByLabel('Mục CV Kinh nghiệm').focus()
+  await page.getByLabel('Mục CV Kinh nghiệm').press('Enter')
+  await expect(page.getByRole('heading', { name: 'Chỉnh sửa nội dung' })).toHaveCount(0)
+  await expect(page.getByLabel('role experience_item_1')).toBeVisible()
+
   const initialAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
   await page.getByLabel('Họ và tên inline').fill('Nguyễn Bình')
   await page.getByLabel('Họ và tên inline').press('Tab')
   expect((await initialAutosaveRequest).headers()['if-match']).toBe('"lock-version-0"')
 
   await page.getByRole('button', { name: 'Thêm mục' }).click()
-  const sectionAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
+  const sectionAutosaveRequest = page.waitForRequest((request) => {
+    if (!request.url().endsWith('/api/v2/cvs/cv_1/draft/') || request.method() !== 'PUT') return false
+    return request.postDataJSON()?.layout_json?.item_orders?.education_1?.[0] === 'education_item_2'
+  })
   await page.getByRole('button', { name: '+ Học vấn' }).click()
   await expect(page.locator('#cv-section-education_1')).toBeVisible()
   await page.getByRole('button', { name: 'Đóng bảng công cụ' }).click()
   await page.getByLabel('Tiêu đề education_1').fill('Đào tạo')
   await page.getByLabel('Tiêu đề education_1').press('Tab')
+  await page.locator('#cv-section-education_1').hover()
   await page.locator('#cv-section-education_1').getByRole('button', { name: 'Thêm nội dung' }).click()
-  await page.getByRole('button', { name: 'Đưa item education_item_2 lên' }).click()
+  const secondEducationItem = page.locator('[data-cv-item-id="education_1:education_item_2"]')
+  await secondEducationItem.hover()
+  await secondEducationItem.getByRole('button', { name: 'Đưa item education_item_2 lên' }).click()
   const sectionAutosave = await sectionAutosaveRequest
   const autosavePayload = sectionAutosave.postDataJSON()
   expect(sectionAutosave.headers()['if-match']).toBe('"lock-version-1"')
@@ -77,10 +112,15 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   expect(autosavePayload.layout_json.item_orders.education_1).toEqual(['education_item_2', 'education_item_1'])
   expect(autosavePayload.layout_json.regions[0].section_instance_ids).toContain('education_1')
 
-  const saveVersionRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/save-version/') && request.method() === 'POST')
-  await page.getByRole('button', { name: 'Lưu phiên bản' }).click()
-  expect((await saveVersionRequest).headers()['if-match']).toBe('"lock-version-1"')
-  await expect(page.getByText('Đã tạo phiên bản 2')).toBeVisible()
+  let saveVersionRequested = false
+  page.on('request', (request) => {
+    if (request.url().endsWith('/api/v2/cvs/cv_1/save-version/')) saveVersionRequested = true
+  })
+  await page.getByRole('button', { name: 'Lưu CV' }).click()
+  await expect(page.getByRole('dialog', { name: 'Lưu ý' })).toBeVisible()
+  await page.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }).click()
+  await expect(page.getByText('Lưu CV thành công')).toBeVisible()
+  expect(saveVersionRequested).toBe(false)
 })
 
 test('candidate smoke: owner CV view renders an immutable V2 version, not a draft', async ({ page }) => {

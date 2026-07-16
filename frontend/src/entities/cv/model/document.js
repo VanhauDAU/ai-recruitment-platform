@@ -4,6 +4,9 @@ const BASIC_EDITOR_SECTION_KEYS = Object.freeze(['summary', 'experience', 'skill
 const ALLOWED_FONTS = new Set(['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'])
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PHONE = /^[+()\d\s.-]{7,20}$/
+const HTTP_URL = /^https?:\/\/[^\s]+\.[^\s]+$/i
 
 export const CV_FONT_STACKS = Object.freeze({
   Arial: 'Arial, Helvetica, sans-serif',
@@ -80,9 +83,12 @@ function ensureSectionAssignment(layout, section) {
   const regions = layout.regions || []
   if (!regions.length || regions.some((region) => (region.section_instance_ids || []).includes(section.instance_id))) return
   const definition = getSectionDefinition(section.section_key)
-  const target = regions.find((region) => region.id === definition?.preferredRegion) || regions[0]
+  const target = [definition?.preferredRegion, ...(definition?.fallbackRegions || [])]
+    .map((regionId) => regions.find((region) => region.id === regionId))
+    .find(Boolean) || regions[0]
   target.section_instance_ids ||= []
-  target.section_instance_ids.push(section.instance_id)
+  if (definition?.insertAtStart) target.section_instance_ids.unshift(section.instance_id)
+  else target.section_instance_ids.push(section.instance_id)
 }
 
 function reorder(array, index, direction) {
@@ -133,7 +139,11 @@ export function getOrderedSections(document) {
 
 export function availableSectionKeys(content) {
   return Object.values(SECTION_REGISTRY)
-    .filter((definition) => definition.allowMultiple || !sectionByKey(content, definition.key))
+    // Nameplate and contact are system markers. Avatar is personal-info backed
+    // too, but it must remain available so a candidate can add an image block.
+    // Standard sections expose repeatable entries inside one section. Only the
+    // custom section may be added more than once from the editor toolbox.
+    .filter((definition) => !['nameplate', 'contact'].includes(definition.key) && (definition.key === 'custom' || !sectionByKey(content, definition.key)))
     .map((definition) => definition.key)
 }
 
@@ -190,6 +200,16 @@ export function updatePersonalInfo(content, patch) {
   return next
 }
 
+export function updateInlineTextStyle(content, styleId, marks) {
+  const next = clone(content)
+  const styles = { ...(next.inline_text_styles || {}) }
+  const normalized = Object.fromEntries(Object.entries(marks || {}).filter(([, value]) => value !== false && value != null))
+  if (Object.keys(normalized).length) styles[styleId] = normalized
+  else delete styles[styleId]
+  next.inline_text_styles = styles
+  return next
+}
+
 export function updateSummary(content, value) {
   const next = clone(content)
   const section = sectionByKey(next, 'summary')
@@ -228,6 +248,16 @@ export function validateCvDocument(document) {
   const errors = []
   const { content_json: content, layout_json: layout, style_json: style } = document || {}
   if (!content || !Array.isArray(content.sections)) return ['Nội dung CV không hợp lệ.']
+  const personal = content.personal_info || {}
+  if (personal.email && !EMAIL.test(personal.email)) errors.push('Email trong thông tin cá nhân chưa đúng định dạng.')
+  if (personal.phone && !PHONE.test(personal.phone)) errors.push('Số điện thoại trong thông tin cá nhân chưa hợp lệ.')
+  if (personal.website && !HTTP_URL.test(personal.website)) errors.push('Website trong thông tin cá nhân phải là URL http:// hoặc https:// hợp lệ.')
+  if (personal.avatar_position && (
+    typeof personal.avatar_position !== 'object'
+    || ['x', 'y'].some((key) => !Number.isFinite(personal.avatar_position[key]) || personal.avatar_position[key] < 0 || personal.avatar_position[key] > 100)
+  )) errors.push('Vị trí ảnh đại diện phải nằm trong khoảng từ 0 đến 100.')
+  if (personal.avatar_size_mm !== undefined && (!Number.isFinite(personal.avatar_size_mm) || personal.avatar_size_mm < 20 || personal.avatar_size_mm > 80)) errors.push('Kích thước ảnh đại diện phải từ 20 đến 80 mm.')
+  if (personal.avatar_zoom !== undefined && (!Number.isFinite(personal.avatar_zoom) || personal.avatar_zoom < 1 || personal.avatar_zoom > 3)) errors.push('Mức phóng ảnh đại diện phải từ 1 đến 3.')
   const instanceIds = new Set()
   const itemIds = new Set()
   const sectionCounts = {}
@@ -245,10 +275,13 @@ export function validateCvDocument(document) {
       if (!item.item_id || itemIds.has(item.item_id)) errors.push('Mỗi item phải có ID duy nhất.')
       itemIds.add(item.item_id)
       for (const key of ['start_date', 'end_date']) if (item[key] !== null && item[key] !== undefined && !YEAR_MONTH.test(item[key])) errors.push(`${section.title || definition.displayName}: ${key} phải có dạng YYYY-MM.`)
+      if (item.start_date && item.end_date && YEAR_MONTH.test(item.start_date) && YEAR_MONTH.test(item.end_date) && item.end_date < item.start_date) errors.push(`${section.title || definition.displayName}: thời gian kết thúc không được trước thời gian bắt đầu.`)
       if (item.description && !isValidRichText(item.description)) errors.push(`${section.title || definition.displayName} có rich text không hợp lệ.`)
     }
   }
   if (content.schema_version !== 1 || !content.locale) errors.push('Nội dung phải dùng schema version 1 và có locale.')
+  const inlineTextStyles = content.inline_text_styles || {}
+  if (typeof inlineTextStyles !== 'object' || Array.isArray(inlineTextStyles) || Object.entries(inlineTextStyles).some(([key, marks]) => !key || !validMarks(marks))) errors.push('Định dạng input ngắn không hợp lệ.')
   if (!layout?.page || layout.schema_version !== 1 || layout.page.size !== 'A4' || typeof layout.page.margin_mm !== 'number' || !Array.isArray(layout.regions) || !layout.regions.length) errors.push('Layout phải có trang A4, margin số và ít nhất một vùng.')
   else {
     const assigned = new Set()

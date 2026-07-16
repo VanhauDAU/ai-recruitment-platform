@@ -41,7 +41,7 @@ SECTION_REGISTRY = {
         ),
         SectionContract(
             'contact', 'Thông tin liên hệ', requires_items=False, initial_item=False,
-            personal_info_backed=True,
+            deletable=False, personal_info_backed=True,
         ),
         SectionContract(
             'avatar', 'Ảnh đại diện', requires_items=False, initial_item=False,

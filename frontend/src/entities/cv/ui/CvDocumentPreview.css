@@ -10,6 +10,80 @@
   overflow-wrap: anywhere;
 }
 
+.cv-document-preview__contact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.25rem 0.75rem;
+}
+
+/* Editor chrome is an overlay: it never changes the A4 document's spacing.
+   The active color comes from the selected template, not a separate green UI. */
+.cv-editor-section,
+.cv-editor-item {
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.cv-editor-item:last-child {
+  margin-bottom: 0;
+}
+
+.cv-editor-section:hover,
+.cv-editor-section:focus-within,
+.cv-editor-section:focus,
+.cv-editor-section[data-active='true'],
+.cv-editor-item:hover,
+.cv-editor-item:focus-within,
+.cv-editor-item:focus,
+.cv-editor-item[data-active='true'] {
+  background: color-mix(in srgb, var(--cv-theme) 8%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cv-theme) 55%, transparent);
+}
+
+/* Keep the section outline while working inside an entry, but drop the extra
+   fill so the hovered entry stays the single highlighted surface. */
+.cv-editor-section:has(.cv-editor-item:hover),
+.cv-editor-section:has(.cv-editor-item[data-active='true']):not(:hover) {
+  background: transparent;
+}
+
+.cv-section-toolbar,
+.cv-item-toolbar,
+.cv-avatar-resize-handle {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.cv-editor-section:hover .cv-section-toolbar,
+.cv-editor-section:focus-within .cv-section-toolbar,
+.cv-editor-section:focus .cv-section-toolbar,
+.cv-editor-item:hover .cv-item-toolbar,
+.cv-editor-item:focus-within .cv-item-toolbar,
+.cv-editor-item:focus .cv-item-toolbar,
+.group\/avatar:hover .cv-avatar-resize-handle,
+.group\/avatar:focus-within .cv-avatar-resize-handle {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+/* One toolbar at a time: the entry chrome wins over the section chrome, and
+   every chrome yields to the floating format toolbar while the user types. */
+.cv-editor-section:has(.cv-editor-item:hover) .cv-section-toolbar,
+.cv-editor-section:has([contenteditable]:focus) .cv-section-toolbar,
+.cv-editor-item:has([contenteditable]:focus) .cv-item-toolbar {
+  pointer-events: none;
+  opacity: 0;
+}
+
+@media (hover: none) {
+  .cv-editor-section:focus .cv-section-toolbar,
+  .cv-editor-item:focus .cv-item-toolbar,
+  .group\/avatar:focus-within .cv-avatar-resize-handle {
+    pointer-events: auto;
+    opacity: 1;
+  }
+}
+
 @media print {
   @page {
     size: A4;

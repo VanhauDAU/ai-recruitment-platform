@@ -157,7 +157,7 @@ với code và test của phase đó.
   và placeholder chuẩn theo template nhưng giữ nguyên nội dung tự viết; font
   dùng browser fallback stack ổn định. Editor form cũ vẫn tồn tại sau feature flag để rollback nhưng
   không còn được render bên trong WYSIWYG.
-- Gate: 63 Django test, 147 Vitest test, lint, architecture, build, bundle
+- Gate: 63 Django test, 158 Vitest test, lint, architecture, build, bundle
   budget và 22 Playwright smoke desktop/mobile đều pass.
 - WYSIWYG hiện là mặc định (`cv_builder_wysiwyg_enabled=true`); việc vận hành
   còn lại là publish template version dùng `header_two_column_v1`, duyệt golden

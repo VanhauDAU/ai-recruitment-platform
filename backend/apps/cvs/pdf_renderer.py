@@ -71,6 +71,35 @@ def _ordered_items(section: dict, item_orders: dict) -> list[dict]:
     return [by_id[item_id] for item_id in desired_order if item_id in by_id]
 
 
+def _projected_item_has_content(item: dict) -> bool:
+    return bool(item['heading'] or item['metadata'] or item['description_blocks'])
+
+
+def _section_projection(section: dict, content: dict, layout: dict) -> dict | None:
+    section_contract = get_section_contract(section.get('section_key'))
+    section_key = section.get('section_key')
+    personal_info = content.get('personal_info', {}) if isinstance(content, dict) else {}
+    projected_items = [
+        projected
+        for item in _ordered_items(section, layout.get('item_orders', {}))
+        if _projected_item_has_content(projected := _item_projection(item))
+    ]
+    if section_key == 'nameplate' and not any(personal_info.get(key) for key in ('full_name', 'headline')):
+        return None
+    if section_key == 'contact' and not _contact_line(personal_info):
+        return None
+    if section_key == 'avatar' and not personal_info.get('avatar_asset_id'):
+        return None
+    if not (section_contract and section_contract.personal_info_backed) and not projected_items:
+        return None
+    return {
+        'section_key': section_key,
+        'personal_info_backed': bool(section_contract and section_contract.personal_info_backed),
+        'title': section.get('title') or (section_contract.display_name if section_contract else section_key or ''),
+        'items': projected_items,
+    }
+
+
 def _project_sections(version, contract) -> list[dict]:
     content = version.content_json
     layout = version.layout_json
@@ -97,13 +126,9 @@ def _project_sections(version, contract) -> list[dict]:
             if section is None:
                 continue
             rendered_ids.add(section_id)
-            section_contract = get_section_contract(section.get('section_key'))
-            rendered_sections.append({
-                'section_key': section.get('section_key'),
-                'personal_info_backed': bool(section_contract and section_contract.personal_info_backed),
-                'title': section.get('title') or (section_contract.display_name if section_contract else section.get('section_key', '')),
-                'items': [_item_projection(item) for item in _ordered_items(section, layout.get('item_orders', {}))],
-            })
+            projected = _section_projection(section, content, layout)
+            if projected is not None:
+                rendered_sections.append(projected)
         regions.append({
             'id': region_key,
             'row': region.get('row', 0),
@@ -114,13 +139,9 @@ def _project_sections(version, contract) -> list[dict]:
         regions.append({'id': contract.region_order[0], 'row': 0, 'width_percent': 100, 'sections': []})
     unassigned_sections = [section for section_id, section in sections_by_id.items() if section_id not in rendered_ids and section_id not in hidden_ids]
     for section in unassigned_sections:
-        section_contract = get_section_contract(section.get('section_key'))
-        regions[0]['sections'].append({
-            'section_key': section.get('section_key'),
-            'personal_info_backed': bool(section_contract and section_contract.personal_info_backed),
-            'title': section.get('title') or (section_contract.display_name if section_contract else section.get('section_key', '')),
-            'items': [_item_projection(item) for item in _ordered_items(section, layout.get('item_orders', {}))],
-        })
+        projected = _section_projection(section, content, layout)
+        if projected is not None:
+            regions[0]['sections'].append(projected)
     return regions
 
 
@@ -134,6 +155,37 @@ def _asset_data_uri(public_id, kind):
     except (CvAsset.DoesNotExist, OSError):
         return ''
     return f'data:{asset.content_type};base64,{encoded}'
+
+
+def _contact_line(personal_info: dict) -> str:
+    return ' · '.join(
+        value for key in ('email', 'phone', 'date_of_birth', 'address', 'website')
+        if isinstance((value := personal_info.get(key)), str) and value
+    )
+
+
+def _avatar_object_position(personal_info: dict) -> str:
+    position = personal_info.get('avatar_position', {}) if isinstance(personal_info, dict) else {}
+    try:
+        x = min(100, max(0, float(position.get('x', 50))))
+        y = min(100, max(0, float(position.get('y', 50))))
+    except (AttributeError, TypeError, ValueError):
+        x, y = 50, 50
+    return f'{x:g}% {y:g}%'
+
+
+def _avatar_size_mm(personal_info: dict) -> float:
+    try:
+        return min(80, max(20, float(personal_info.get('avatar_size_mm', 28))))
+    except (AttributeError, TypeError, ValueError):
+        return 28
+
+
+def _avatar_zoom(personal_info: dict) -> float:
+    try:
+        return min(3, max(1, float(personal_info.get('avatar_zoom', 1))))
+    except (AttributeError, TypeError, ValueError):
+        return 1
 
 
 def build_cv_pdf_html(version) -> str:
@@ -173,9 +225,13 @@ def build_cv_pdf_html(version) -> str:
         'font_scale': style.get('font_scale', 1.0),
         'line_height': style.get('line_height', 1.4),
         'personal_info': personal_info,
+        'contact_line': _contact_line(personal_info),
         'rows': rows,
         'show_legacy_header': contract.key != 'header_two_column_v1',
         'avatar_data_uri': _asset_data_uri(personal_info.get('avatar_asset_id'), CvAsset.Kind.AVATAR),
+        'avatar_object_position': _avatar_object_position(personal_info),
+        'avatar_size_mm': f'{_avatar_size_mm(personal_info):g}',
+        'avatar_zoom': f'{_avatar_zoom(personal_info):g}',
         'background_data_uri': _asset_data_uri(style.get('background_asset_id'), CvAsset.Kind.BACKGROUND),
     })
 

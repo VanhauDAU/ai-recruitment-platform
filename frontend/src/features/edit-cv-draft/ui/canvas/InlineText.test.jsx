@@ -38,4 +38,16 @@ describe('InlineText', () => {
 
     expect(input).toHaveTextContent('CV mới')
   })
+
+  it('exposes a formatting toolbar and commits field-level marks', () => {
+    const onMarksChange = vi.fn()
+    render(<InlineText value="Bằng cấp" ariaLabel="Bằng cấp" onCommit={vi.fn()} onMarksChange={onMarksChange} />)
+    const input = screen.getByRole('textbox', { name: 'Bằng cấp' })
+
+    fireEvent.focus(input)
+    fireEvent.click(screen.getByRole('button', { name: 'In đậm văn bản' }))
+
+    expect(screen.getByRole('toolbar', { name: 'Thao tác văn bản ngắn' })).toHaveClass('fixed')
+    expect(onMarksChange).toHaveBeenCalledWith({ bold: true })
+  })
 })

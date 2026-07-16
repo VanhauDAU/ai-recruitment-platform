@@ -24,7 +24,8 @@
     .headline { color: {{ theme_color }}; font-size: 11pt; font-weight: 700; margin: 2mm 0 0; }
     .contact { color: #4b5563; font-size: 9pt; margin: 2mm 0 0; }
     .region-row { display: grid; gap: 6mm; margin-bottom: 4mm; }
-    .avatar { border-radius: 50%; display: block; height: 28mm; object-fit: cover; width: 28mm; }
+    .avatar-frame { border-radius: 50%; height: {{ avatar_size_mm }}mm; margin-left: auto; margin-right: auto; overflow: hidden; width: {{ avatar_size_mm }}mm; }
+    .avatar { display: block; height: 100%; object-fit: cover; object-position: {{ avatar_object_position }}; transform: scale({{ avatar_zoom }}); transform-origin: {{ avatar_object_position }}; width: 100%; }
     .section { break-inside: avoid-page; page-break-inside: avoid; margin: 0 0 5mm; overflow: visible; }
     .section h2 { border-bottom: 1px solid {{ theme_color }}; color: {{ theme_color }}; font-size: 10pt; letter-spacing: .05em; margin: 0 0 2mm; padding-bottom: 1mm; text-transform: uppercase; }
     .item { break-inside: avoid; page-break-inside: avoid; margin: 0 0 3mm; }
@@ -44,8 +45,8 @@
     {% if show_legacy_header %}<header class="cv-header">
       <h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>
       {% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}
-      {% if personal_info.email or personal_info.phone or personal_info.address %}
-        <p class="contact">{{ personal_info.email }}{% if personal_info.email and personal_info.phone %} · {% endif %}{{ personal_info.phone }}{% if personal_info.address %} · {{ personal_info.address }}{% endif %}</p>
+      {% if contact_line %}
+        <p class="contact">{{ contact_line }}</p>
       {% endif %}
     </header>{% endif %}
     <div class="regions">
@@ -57,9 +58,9 @@
               {% if section.section_key == "nameplate" %}
                 <div class="cv-header"><h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>{% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}</div>
               {% elif section.section_key == "contact" %}
-                <p class="contact">{{ personal_info.email }}{% if personal_info.email and personal_info.phone %} · {% endif %}{{ personal_info.phone }}{% if personal_info.address %} · {{ personal_info.address }}{% endif %}</p>
+                <p class="contact">{{ contact_line }}</p>
               {% elif section.section_key == "avatar" %}
-                {% if avatar_data_uri %}<img class="avatar" src="{{ avatar_data_uri }}" alt="">{% endif %}
+                {% if avatar_data_uri %}<div class="avatar-frame"><img class="avatar" src="{{ avatar_data_uri }}" alt=""></div>{% endif %}
               {% else %}
               <h2>{{ section.title }}</h2>
               {% for item in section.items %}

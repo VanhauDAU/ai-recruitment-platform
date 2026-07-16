@@ -35,6 +35,8 @@ def empty_content(locale='vi-VN'):
             'email': '',
             'phone': '',
             'address': '',
+            'website': '',
+            'date_of_birth': '',
             'avatar_asset_id': None,
             'links': [],
         },
@@ -189,8 +191,25 @@ def _validate_content(content, errors):
     personal_info = content.get('personal_info')
     if not isinstance(personal_info, dict):
         errors['content_json.personal_info'] = 'Must be an object.'
-    elif not isinstance(personal_info.get('links', []), list):
-        errors['content_json.personal_info.links'] = 'Must be a list.'
+    else:
+        if not isinstance(personal_info.get('links', []), list):
+            errors['content_json.personal_info.links'] = 'Must be a list.'
+        if 'avatar_position' in personal_info:
+            position = personal_info['avatar_position']
+            if (
+                not isinstance(position, dict)
+                or any(key not in position or not isinstance(position[key], (int, float)) or not 0 <= position[key] <= 100 for key in ('x', 'y'))
+            ):
+                errors['content_json.personal_info.avatar_position'] = 'Must contain x and y between 0 and 100.'
+        if 'avatar_size_mm' in personal_info:
+            size = personal_info['avatar_size_mm']
+            if not isinstance(size, (int, float)) or isinstance(size, bool) or not 20 <= size <= 80:
+                errors['content_json.personal_info.avatar_size_mm'] = 'Must be between 20 and 80 millimeters.'
+        if 'avatar_zoom' in personal_info:
+            zoom = personal_info['avatar_zoom']
+            if not isinstance(zoom, (int, float)) or isinstance(zoom, bool) or not 1 <= zoom <= 3:
+                errors['content_json.personal_info.avatar_zoom'] = 'Must be between 1 and 3.'
+    _validate_inline_text_styles(content.get('inline_text_styles', {}), errors)
     sections = content.get('sections')
     if not isinstance(sections, list):
         errors['content_json.sections'] = 'Must be a list.'
@@ -247,6 +266,31 @@ def _validate_item_dates(item, path, errors):
         value = item.get(key)
         if value is not None and (not isinstance(value, str) or not YEAR_MONTH_RE.fullmatch(value)):
             errors[f'{path}.{key}'] = 'Must be YYYY-MM or null.'
+
+
+def _validate_inline_text_styles(styles, errors):
+    if not isinstance(styles, dict):
+        errors['content_json.inline_text_styles'] = 'Must be an object.'
+        return
+    for style_id, marks in styles.items():
+        if not isinstance(style_id, str) or not style_id or not isinstance(marks, dict):
+            errors['content_json.inline_text_styles'] = 'Contains an invalid field style.'
+            return
+        if set(marks).difference(SAFE_RICH_TEXT_MARKS):
+            errors['content_json.inline_text_styles'] = 'Contains an unsupported field style mark.'
+            return
+        if any(key in marks and not isinstance(marks[key], bool) for key in ('bold', 'italic', 'underline')):
+            errors['content_json.inline_text_styles'] = 'Boolean field style marks must be boolean.'
+            return
+        if 'font_family' in marks and marks['font_family'] not in ALLOWED_FONT_FAMILIES:
+            errors['content_json.inline_text_styles'] = 'Contains an unsupported field style font.'
+            return
+        if 'font_size_pt' in marks and (not isinstance(marks['font_size_pt'], (int, float)) or not 8 <= marks['font_size_pt'] <= 32):
+            errors['content_json.inline_text_styles'] = 'Field style font size must be between 8 and 32 pt.'
+            return
+        if 'color' in marks and (not isinstance(marks['color'], str) or not HEX_COLOR_RE.fullmatch(marks['color'])):
+            errors['content_json.inline_text_styles'] = 'Field style color must be a six-digit hex color.'
+            return
 
 
 def _validate_rich_text(description, path, errors):

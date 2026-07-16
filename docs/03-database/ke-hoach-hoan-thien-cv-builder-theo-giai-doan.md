@@ -145,7 +145,7 @@ trợ token `{position}` đệ quy và fallback sang các field cũ. Frontend d�
 | CVB-5 | Admin template publishing | ✅ Hoàn tất phạm vi CV Builder | CRUD API, draft→preview→publish→retire, sample/blueprint và snapshot đã có; audit trail chi tiết thuộc backlog hardening |
 | CVB-6 | Production hardening | 🟡 Một phần | Telemetry CV Builder, worker idempotency và retention đã có; còn benchmark tải, object storage/signed URL và V1 cutover |
 | CVB-7 | Import và AI | 🟡 Phần import hoàn tất | PDF/DOCX → canonical draft, retry/throttle/retention đã có; LinkedIn, AI writer, ATS/matching/quota sản phẩm còn backlog |
-| CVB-8 | WYSIWYG CV Builder | ✅ Code hoàn tất, chờ rollout | A4 inline/rich editor, shell TopCV rail 176 px/panel 352 px, design panel màu luôn mở + slider theo nấc, locale reset tiêu đề/placeholder chuẩn, font fallback stack, DOM pagination theo item, DnD, row/header renderer, avatar/background, sample CAS, PDF parity và fallback feature flag; còn UAT/golden |
+| CVB-8 | WYSIWYG CV Builder | ✅ Code hoàn tất, chờ rollout | A4 inline/rich editor, shell TopCV rail 176 px/panel 352 px, toolbar rich-text nổi theo vùng chọn và phản chiếu font/cỡ/màu hiện tại, design panel màu luôn mở + slider theo nấc, locale reset tiêu đề/placeholder chuẩn, font fallback stack, DOM pagination theo item, DnD có overlay/vùng thả, row/header renderer, avatar/background, sample CAS, PDF parity và fallback feature flag; còn UAT/golden |
 
 ## CVB-8 — WYSIWYG CV Builder
 
@@ -154,7 +154,7 @@ Contract chính thức nằm tại
 định renderer/asset tại [ADR 0008](../adr/0008-cv-wysiwyg-renderer-assets.md).
 Code đã hoàn tất sau feature flag với migration additive; không rewrite version
 cũ. Panel WYSIWYG không còn nhúng biểu mẫu cũ; legacy editor vẫn được giữ nguyên
-làm fallback. Gate 2026-07-16: 63 backend tests, 147 frontend tests,
+làm fallback. Gate 2026-07-16: 63 backend tests, 152 frontend tests,
 build/bundle budget và 22 smoke desktop/mobile pass. Còn publish template header
 mới, visual golden và UAT trước khi gỡ fallback.
 
