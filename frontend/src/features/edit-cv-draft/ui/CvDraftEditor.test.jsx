@@ -42,6 +42,10 @@ function draft() {
   }
 }
 
+function renderLegacyEditor() {
+  return render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: false } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+}
+
 describe('CV draft editor', () => {
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', class {
@@ -71,7 +75,7 @@ describe('CV draft editor', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('edits canonical form data, autosaves with the lock and only creates a version from the save button', async () => {
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     const fullName = await screen.findByLabelText('Họ và tên')
     fireEvent.change(fullName, { target: { value: 'Nguyễn Bình' } })
     expect(screen.getByText('Chưa lưu')).toBeInTheDocument()
@@ -86,7 +90,7 @@ describe('CV draft editor', () => {
 
   it('stops autosave and asks the user to reload on a 409 conflict', async () => {
     mocks.updateCvDraft.mockRejectedValue({ response: { status: 409, data: { current_lock_version: 4 } } })
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     fireEvent.change(await screen.findByLabelText('Họ và tên'), { target: { value: 'Tab khác' } })
 
     await screen.findByText('Bản nháp vừa được sửa ở tab khác', {}, { timeout: 1500 })
@@ -95,7 +99,7 @@ describe('CV draft editor', () => {
   })
 
   it('keeps stable section and item identities while editing section management controls', async () => {
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     await screen.findByLabelText('Họ và tên')
 
     fireEvent.change(screen.getByLabelText('Tiêu đề experience_1'), { target: { value: 'Kinh nghiệm nổi bật' } })
@@ -112,7 +116,7 @@ describe('CV draft editor', () => {
   })
 
   it('undoes and redoes edits locally without using autosave as a history command', async () => {
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     const fullName = await screen.findByLabelText('Họ và tên')
     fireEvent.change(fullName, { target: { value: 'Nguyễn Hoàn tác' } })
     expect(screen.getByLabelText('Họ và tên')).toHaveValue('Nguyễn Hoàn tác')
@@ -124,7 +128,7 @@ describe('CV draft editor', () => {
   })
 
   it('switches the published template through V2 while preserving canonical content in the returned draft', async () => {
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     await screen.findByLabelText('Họ và tên')
     fireEvent.mouseDown(screen.getByLabelText('Mẫu CV'))
     fireEvent.click(await screen.findByText('Hai cột'))
@@ -136,7 +140,7 @@ describe('CV draft editor', () => {
 
   it('flushes before internal navigation, retries failed autosave, and can restore the server draft', async () => {
     mocks.updateCvDraft.mockRejectedValueOnce({ response: { data: { detail: 'Mất kết nối' } } }).mockResolvedValue({ lock_version: 1 })
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     fireEvent.change(await screen.findByLabelText('Họ và tên'), { target: { value: 'Chưa lưu' } })
 
     const beforeUnload = new Event('beforeunload', { cancelable: true })
@@ -167,7 +171,7 @@ describe('CV draft editor', () => {
     const invalid = draft()
     invalid.content_json.sections[2].items[0].item_id = 'experience_item_1'
     mocks.getCvDraft.mockResolvedValueOnce(invalid)
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     await screen.findByLabelText('Họ và tên')
     fireEvent.click(screen.getByRole('button', { name: 'Xuất bản CV' }))
     expect(await screen.findByText('Kiểm tra CV trước khi lưu')).toBeInTheDocument()
@@ -175,7 +179,7 @@ describe('CV draft editor', () => {
   })
 
   it('publishes through the V2 publish endpoint after the valid draft is current', async () => {
-    render(<CvDraftEditor publicId="cv_1" />)
+    renderLegacyEditor()
     await screen.findByLabelText('Họ và tên')
     fireEvent.click(screen.getByRole('button', { name: 'Xuất bản CV' }))
     await waitFor(() => expect(mocks.publishCvVersion).toHaveBeenCalledWith('cv_1', 0))

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
-export function useBuilderUi() {
+export function useBuilderUi(initialZoom = 0.8) {
   const [activeTool, setActiveTool] = useState('design')
-  const [zoom, setZoom] = useState(0.8)
+  const [zoom, setZoom] = useState(initialZoom)
   return {
     activeTool,
     setActiveTool,

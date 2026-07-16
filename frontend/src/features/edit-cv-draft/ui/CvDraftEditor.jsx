@@ -1,3 +1,4 @@
+import { CloseOutlined } from '@ant-design/icons'
 import { Alert, Drawer, Modal, Skeleton } from 'antd'
 import { useState } from 'react'
 import {
@@ -46,15 +47,23 @@ import SummaryForm from './SummaryForm'
 import TemplateSwitcher from './TemplateSwitcher'
 import ToolSidebar from './ToolSidebar'
 
-function ToolPanel({ title, children }) {
-  return <section className="h-full overflow-y-auto bg-white p-4"><h2 className="mb-4 text-lg font-extrabold text-slate-900">{title}</h2>{children}</section>
+function ToolPanel({ title, children, onClose }) {
+  return <section className="flex h-full min-h-0 flex-col bg-white">
+    <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-slate-100 px-4">
+      <h2 className="text-[15px] font-extrabold text-slate-800">{title}</h2>
+      <button type="button" aria-label="Đóng bảng công cụ" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"><CloseOutlined /></button>
+    </header>
+    <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+  </section>
 }
 
 function CvWysiwygDraftEditor({ publicId }) {
   const editor = useCvDraftEditor(publicId)
-  const builderUi = useBuilderUi()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const builderUi = useBuilderUi(isDesktop ? 0.8 : 0.48)
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
+  const [desktopPanelOpen, setDesktopPanelOpen] = useState(true)
+  const [editingTipOpen, setEditingTipOpen] = useState(true)
   const [previewOpen, setPreviewOpen] = useState(false)
 
   if (editor.phase === 'loading' || !editor.document) return <div className="mx-auto max-w-7xl px-4 py-10"><Skeleton active paragraph={{ rows: 12 }} /></div>
@@ -103,19 +112,21 @@ function CvWysiwygDraftEditor({ publicId }) {
     samples: <SampleLibraryPanel locale={content.locale} disabled={isBlocked || editor.phase === 'saving'} onApply={editor.applySample} />,
   }
   const activeTitle = BUILDER_TOOLS.find((tool) => tool.key === builderUi.activeTool)?.label
-  const activePanel = <ToolPanel title={activeTitle}>{panelByTool[builderUi.activeTool]}</ToolPanel>
+  const activePanel = <ToolPanel title={activeTitle} onClose={() => isDesktop ? setDesktopPanelOpen(false) : setMobilePanelOpen(false)}>{panelByTool[builderUi.activeTool]}</ToolPanel>
   const chooseTool = (tool) => {
     builderUi.setActiveTool(tool)
-    if (!isDesktop) setMobilePanelOpen(true)
+    if (isDesktop) setDesktopPanelOpen(true)
+    else setMobilePanelOpen(true)
   }
 
-  return <div className="flex h-dvh min-h-[42rem] flex-col overflow-hidden bg-slate-100">
+  return <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#eef0f3]">
     <BuilderTopBar editor={editor} onPreview={() => { editor.flushPendingEdits(); setPreviewOpen(true) }} />
     {editor.validationErrors.length > 0 && <Alert className="z-30 rounded-none" type="warning" showIcon title="Kiểm tra CV trước khi lưu" description={<ul className="list-disc pl-5">{editor.validationErrors.map((error) => <li key={error}>{error}</li>)}</ul>} />}
     {editor.lastVersion && <Alert className="z-30 rounded-none" type="success" showIcon title={editor.lastVersion.version_kind === 'published' ? `Đã xuất bản phiên bản ${editor.lastVersion.version_number}` : `Đã tạo phiên bản ${editor.lastVersion.version_number}`} />}
     <div className="flex min-h-0 flex-1">
-      {isDesktop && <><ToolSidebar activeTool={builderUi.activeTool} onChange={chooseTool} /><aside className="w-[22rem] shrink-0 border-r border-slate-200">{activePanel}</aside></>}
-      <main className="min-w-0 flex-1 overflow-auto px-5 py-6 pb-24">
+      {isDesktop && <><ToolSidebar activeTool={builderUi.activeTool} onChange={chooseTool} />{desktopPanelOpen && <aside className="w-[19rem] shrink-0 border-r border-slate-200">{activePanel}</aside>}</>}
+      <main className="relative min-w-0 flex-1 overflow-auto px-4 py-5 pb-24 lg:px-8">
+        {editingTipOpen && <div className="mx-auto mb-2 flex h-8 max-w-full items-center justify-center bg-emerald-100 px-3 text-center text-xs font-medium text-emerald-700" style={{ width: `${210 * builderUi.zoom}mm` }}><span className="truncate"><strong>Gợi ý:</strong> Bôi đen văn bản để chỉnh sửa cỡ chữ và định dạng!</span><button type="button" aria-label="Đóng gợi ý chỉnh sửa" onClick={() => setEditingTipOpen(false)} className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200 text-[10px] text-emerald-700"><CloseOutlined /></button></div>}
         <CvEditableCanvas
           editor={editor}
           zoom={builderUi.zoom}

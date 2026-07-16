@@ -32,7 +32,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | CVB-P4 | Admin catalogue + snapshot | ✅ |
 | CVB-P5 | AI import PDF/DOCX | ✅ |
 | CVB-P6 | Cleanup, rollout, observability | ✅ |
-| CVB-8 | WYSIWYG A4 editor, rich text, DnD, asset, PDF parity, fallback flag | ✅ Code / 🟡 Rollout |
+| CVB-8 | WYSIWYG A4 editor, rich text, DnD, asset, PDF parity, fallback flag | ✅ Code + bật mặc định / 🟡 Theo dõi rollout |
 
 Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
 
@@ -419,7 +419,7 @@ build đều pass.
 | 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/hard-delete/default) | ✅ — V2 workflow, snapshot ứng tuyển retained detached, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
-| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code / 🟡 Rollout — inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard, avatar/background, template/sample CAS, PDF parity và editor cũ fallback; chờ golden/UAT + bật flag |
+| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code + bật mặc định / 🟡 Theo dõi rollout — shell đúng DOCX gồm header website, action bar, rail 144 px, panel 304 px, canvas A4 80% và zoom nổi; inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard, avatar/background, template/sample CAS, PDF parity; editor cũ còn làm fallback |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -594,4 +594,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-16 (CVB-8 — hoàn tất code WYSIWYG CV Builder sau feature flag; 63 backend + 141 frontend tests, 22 smoke pass; chờ visual UAT/rollout. HOME-CV giữ nguyên tiến độ)
+Cập nhật lần cuối: 2026-07-16 (CVB-8 — shell desktop đã khớp cấu trúc TopCV/DOCX, WYSIWYG bật mặc định và vẫn có fallback; Playwright desktop xác nhận lifecycle V2. HOME-CV giữ nguyên tiến độ)

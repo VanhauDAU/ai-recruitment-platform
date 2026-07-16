@@ -8,7 +8,7 @@ test('candidate smoke: saved jobs remains protected', async ({ page }) => {
   await expect(page).toHaveURL(/\/login$/)
 })
 
-test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ page }) => {
+test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   const draft = {
     schema_version: 1,
@@ -30,8 +30,12 @@ test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ pa
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/me/'
       ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+      : path === '/api/site/settings/'
+        ? { cv_builder_wysiwyg_enabled: true }
       : path === '/api/v2/cvs/cv_1/'
-        ? { public_id: 'cv_1', title: 'CV V2', template_renderer_key: 'classic_single_column_v1' }
+        ? { public_id: 'cv_1', title: 'CV V2', template_public_id: 'tpl_1', template_renderer_key: 'classic_single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
         : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
           ? draft
           : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
@@ -43,22 +47,27 @@ test('candidate smoke: basic CV editor uses the V2 draft lifecycle', async ({ pa
   })
 
   await page.goto('/cvs/cv_1/edit')
-  await expect(page.getByRole('heading', { name: 'CV V2' })).toBeVisible()
+  await expect(page.getByRole('banner', { name: 'Header website' })).toBeVisible()
+  await expect(page.getByLabel('Thanh hành động CV')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Tên CV' })).toHaveText('CV V2')
+  await expect(page.getByRole('navigation', { name: 'Công cụ CV' })).toBeVisible()
+  await expect(page.getByLabel('CV A4 có thể chỉnh sửa')).toBeVisible()
   await expect(page.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
 
   const initialAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
-  await page.getByLabel('Họ và tên').fill('Nguyễn Bình')
+  await page.getByLabel('Họ và tên inline').fill('Nguyễn Bình')
+  await page.getByLabel('Họ và tên inline').press('Tab')
   expect((await initialAutosaveRequest).headers()['if-match']).toBe('"lock-version-0"')
 
+  await page.getByRole('button', { name: 'Thêm mục' }).click()
   const sectionAutosaveRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/draft/') && request.method() === 'PUT')
-  await page.getByRole('combobox', { name: 'Thêm section', exact: true }).click()
-  await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option', { hasText: 'Học vấn' }).click()
-  await expect(page.getByRole('button', { name: 'Xác nhận thêm section' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Xác nhận thêm section' }).click()
-  await expect(page.locator('#section-education_1')).toBeVisible()
+  await page.getByRole('button', { name: '+ Học vấn' }).click()
+  await expect(page.locator('#cv-section-education_1')).toBeVisible()
+  await page.getByRole('button', { name: 'Đóng bảng công cụ' }).click()
   await page.getByLabel('Tiêu đề education_1').fill('Đào tạo')
-  await page.getByRole('button', { name: 'Thêm item education_1' }).click()
-  await page.getByRole('button', { name: 'Di chuyển item education_item_2 lên' }).click()
+  await page.getByLabel('Tiêu đề education_1').press('Tab')
+  await page.locator('#cv-section-education_1').getByRole('button', { name: 'Thêm nội dung' }).click()
+  await page.getByRole('button', { name: 'Đưa item education_item_2 lên' }).click()
   const sectionAutosave = await sectionAutosaveRequest
   const autosavePayload = sectionAutosave.postDataJSON()
   expect(sectionAutosave.headers()['if-match']).toBe('"lock-version-1"')

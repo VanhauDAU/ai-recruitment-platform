@@ -5,8 +5,8 @@
 **Quyết định liên quan:** [ADR 0007](../adr/0007-canonical-cv-composition.md),
 [ADR 0008](../adr/0008-cv-wysiwyg-renderer-assets.md)
 
-**Trạng thái triển khai:** ✅ Hoàn tất code nền và workflow chính sau feature
-flag; flag seed mặc định tắt để UAT/visual golden trước khi rollout rộng.
+**Trạng thái triển khai:** ✅ Hoàn tất code nền, workflow chính và shell TopCV;
+WYSIWYG được seed mặc định bật, feature flag vẫn giữ để rollback về editor cũ.
 
 ## Mục tiêu và ranh giới
 
@@ -94,7 +94,8 @@ pages/main/cvs/CvEditor
 1. **Contract và rollout:** tài liệu, ADR, feature flag, validator additive,
    fixture V1.
 2. **Builder shell:** top bar, sáu tool, desktop rail/mobile drawer, design
-   panel và form cũ trong panel tạm.
+   panel và form cũ trong panel tạm. Desktop dùng đúng ba tầng của DOCX:
+   header website, action bar 52 px, rồi rail 144 px + panel 304 px + canvas A4.
 3. **Renderer/pagination:** document surface dùng chung, measurement surface,
    page label và overflow.
 4. **Inline/DnD/layout:** plain fields, pending-edit flush, coalescing, section/
@@ -147,9 +148,12 @@ với code và test của phase đó.
 - Frontend có shell sáu công cụ, inline/rich editor, pending-edit registry,
   coalesced history, DnD touch/keyboard, nút thay thế lên/xuống, pagination đo
   DOM theo item, template diff, sample library, avatar/background và mobile
-  drawer. Editor form cũ vẫn tồn tại sau feature flag.
+  drawer. Shell desktop đã đối chiếu trực quan với DOCX/TopCV: header website,
+  thanh tên CV và hành động, rail ngang nhãn, panel đóng được, banner gợi ý,
+  A4 ở zoom 80%, nhãn trang dạng badge và zoom nổi góc phải. Editor form cũ
+  vẫn tồn tại sau feature flag để rollback.
 - Gate: 63 Django test, 141 Vitest test, lint, architecture, build, bundle
   budget và 22 Playwright smoke desktop/mobile đều pass.
-- Việc vận hành còn lại: publish template version dùng
-  `header_two_column_v1`, duyệt visual golden/UAT và bật
-  `cv_builder_wysiwyg_enabled` theo rollout.
+- WYSIWYG hiện là mặc định (`cv_builder_wysiwyg_enabled=true`); việc vận hành
+  còn lại là publish template version dùng `header_two_column_v1`, duyệt golden
+  canvas/PDF trên bộ mẫu thật và theo dõi một release trước khi xóa fallback.

@@ -56,7 +56,7 @@ function RegionRows({ regions, contract, document, assets, renderRegion, pageNum
   })}</div>
 }
 
-function A4Page({ page, document, contract, assets, onOverflow, renderRegion, renderHeader, pageAriaLabel }) {
+function A4Page({ page, document, contract, assets, onOverflow, renderRegion, renderHeader, pageAriaLabel, pageLabelVariant }) {
   const ref = useRef(null)
   const { content_json, style_json } = document
   const personal = content_json.personal_info || {}
@@ -68,8 +68,8 @@ function A4Page({ page, document, contract, assets, onOverflow, renderRegion, re
   }, [document, onOverflow, page.number])
 
   return (
-    <div className="cv-document-preview__page-wrap mb-5">
-      <p className="cv-document-preview__page-label mb-1 text-center text-xs font-semibold text-slate-500">Trang {page.number}</p>
+    <div className="cv-document-preview__page-wrap relative mb-5">
+      <p className={`cv-document-preview__page-label text-xs font-semibold ${pageLabelVariant === 'badge' ? 'absolute -left-3 bottom-2 z-10 rounded-sm bg-emerald-400 px-1.5 py-0.5 text-white' : 'mb-1 text-center text-slate-500'}`}>Trang {page.number}</p>
       <article
         ref={ref}
         aria-label={pageAriaLabel?.(page.number) || `Xem trước CV ${contract.key} trang ${page.number}`}
@@ -87,7 +87,7 @@ function A4Page({ page, document, contract, assets, onOverflow, renderRegion, re
   )
 }
 
-export default function CvDocumentPreview({ document, rendererKey, assets = {}, renderRegion, renderHeader, pageAriaLabel, className = '', paginateItems = true }) {
+export default function CvDocumentPreview({ document, rendererKey, assets = {}, renderRegion, renderHeader, pageAriaLabel, className = '', paginateItems = true, editorChrome = true, pageLabelVariant = 'heading' }) {
   const projection = projectDocumentForRenderer(document, rendererKey)
   const contract = getRendererContract(rendererKey)
   const previewRef = useRef(null)
@@ -99,11 +99,11 @@ export default function CvDocumentPreview({ document, rendererKey, assets = {}, 
     const measure = () => {
       const sections = {}
       for (const element of preview.querySelectorAll('[data-section-id]')) {
-        sections[element.dataset.sectionId] = (sections[element.dataset.sectionId] || 0) + Math.ceil(element.getBoundingClientRect().height)
+        sections[element.dataset.sectionId] = (sections[element.dataset.sectionId] || 0) + Math.ceil(element.offsetHeight)
       }
       const next = {
         sections,
-        items: paginateItems ? Object.fromEntries([...preview.querySelectorAll('[data-cv-item-id]')].map((element) => [element.dataset.cvItemId, Math.ceil(element.getBoundingClientRect().height)])) : {},
+        items: paginateItems ? Object.fromEntries([...preview.querySelectorAll('[data-cv-item-id]')].map((element) => [element.dataset.cvItemId, Math.ceil(element.offsetHeight)])) : {},
       }
       setMeasurements((current) => JSON.stringify(current) === JSON.stringify(next) ? current : next)
     }
@@ -123,9 +123,9 @@ export default function CvDocumentPreview({ document, rendererKey, assets = {}, 
   }, [])
 
   return (
-    <div ref={previewRef} className={`cv-document-preview overflow-auto rounded-xl bg-slate-200 p-3 shadow-inner ${className}`}>
+    <div ref={previewRef} className={`cv-document-preview ${editorChrome ? 'overflow-auto rounded-xl bg-slate-200 p-3 shadow-inner' : 'overflow-visible bg-transparent p-0'} ${className}`}>
       {overflowPages.length > 0 && <div role="alert" className="cv-document-preview__overflow mx-auto mb-3 max-w-[210mm] rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Nội dung có thể bị tràn ở trang {overflowPages.join(', ')}. Hãy rút ngắn nội dung hoặc thêm section để Preview phân trang lại.</div>}
-      {pages.map((page) => <A4Page key={page.number} page={page} document={document} contract={contract} assets={assets} onOverflow={onOverflow} renderRegion={renderRegion} renderHeader={renderHeader} pageAriaLabel={pageAriaLabel} />)}
+      {pages.map((page) => <A4Page key={page.number} page={page} document={document} contract={contract} assets={assets} onOverflow={onOverflow} renderRegion={renderRegion} renderHeader={renderHeader} pageAriaLabel={pageAriaLabel} pageLabelVariant={pageLabelVariant} />)}
     </div>
   )
 }
