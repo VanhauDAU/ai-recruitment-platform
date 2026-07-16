@@ -15,6 +15,9 @@ class SectionContract:
     display_name: str
     allow_multiple: bool = False
     requires_items: bool = True
+    initial_item: bool = True
+    deletable: bool = True
+    personal_info_backed: bool = False
 
 
 SECTION_REGISTRY = {
@@ -29,6 +32,21 @@ SECTION_REGISTRY = {
         SectionContract('languages', 'Ngôn ngữ'),
         SectionContract('awards', 'Giải thưởng', allow_multiple=True),
         SectionContract('custom', 'Nội dung tùy chỉnh', allow_multiple=True, requires_items=False),
+        SectionContract('activities', 'Hoạt động', allow_multiple=True),
+        SectionContract('references', 'Người tham chiếu', allow_multiple=True),
+        SectionContract('interests', 'Sở thích'),
+        SectionContract(
+            'nameplate', 'Danh thiếp', requires_items=False, initial_item=False,
+            deletable=False, personal_info_backed=True,
+        ),
+        SectionContract(
+            'contact', 'Thông tin liên hệ', requires_items=False, initial_item=False,
+            personal_info_backed=True,
+        ),
+        SectionContract(
+            'avatar', 'Ảnh đại diện', requires_items=False, initial_item=False,
+            personal_info_backed=True,
+        ),
     )
 }
 
@@ -47,6 +65,9 @@ def section_definition_seed_data():
             'data_schema': {
                 'schema_version': 1,
                 'item_id_required': contract.requires_items,
+                'initial_item': contract.initial_item,
+                'deletable': contract.deletable,
+                'personal_info_backed': contract.personal_info_backed,
             },
             'allow_multiple': contract.allow_multiple,
             'is_system': True,

@@ -42,7 +42,7 @@ function newSection(content, sectionKey) {
     section_key: sectionKey,
     title: definition.displayName,
     enabled: true,
-    items: [defaultItem(content, sectionKey)],
+    items: definition.initialItem === false ? [] : [defaultItem(content, sectionKey)],
   }
 }
 
@@ -127,6 +127,8 @@ export function addSection(document, sectionKey) {
 }
 
 export function removeSection(document, instanceId) {
+  const current = sectionById(document.content_json, instanceId)
+  if (current && getSectionDefinition(current.section_key)?.deletable === false) return document
   const next = clone(document)
   next.content_json.sections = next.content_json.sections.filter((section) => section.instance_id !== instanceId)
   next.layout_json.regions.forEach((region) => {
@@ -221,7 +223,7 @@ export function validateCvDocument(document) {
       if (!item.item_id || itemIds.has(item.item_id)) errors.push('Mỗi item phải có ID duy nhất.')
       itemIds.add(item.item_id)
       for (const key of ['start_date', 'end_date']) if (item[key] !== null && item[key] !== undefined && !YEAR_MONTH.test(item[key])) errors.push(`${section.title || definition.displayName}: ${key} phải có dạng YYYY-MM.`)
-      if (item.description && (!Array.isArray(item.description.content) || item.description.format !== 'rich_text_v1' || item.description.content.some((block) => !block || !['bullet', 'paragraph'].includes(block.type) || typeof block.text !== 'string' || block.text.includes('<') || block.text.includes('>')))) errors.push(`${section.title || definition.displayName} có rich text không hợp lệ.`)
+      if (item.description && !isValidRichText(item.description)) errors.push(`${section.title || definition.displayName} có rich text không hợp lệ.`)
     }
   }
   if (content.schema_version !== 1 || !content.locale) errors.push('Nội dung phải dùng schema version 1 và có locale.')
@@ -229,10 +231,12 @@ export function validateCvDocument(document) {
   else {
     const assigned = new Set()
     const regionIds = new Set()
-    const totalWidth = layout.regions.reduce((total, region) => total + Number(region.width_percent || 0), 0)
-    if (Math.abs(totalWidth - 100) > 0.01) errors.push('Tổng độ rộng các vùng phải bằng 100%.')
+    const rowWidths = new Map()
     for (const region of layout.regions) {
       if (!region.id || regionIds.has(region.id) || !Number.isFinite(region.width_percent) || region.width_percent <= 0 || region.width_percent > 100) errors.push('Mỗi vùng layout phải có ID và độ rộng hợp lệ.')
+      const row = region.row ?? 0
+      if (!Number.isInteger(row) || row < 0) errors.push('Row của vùng layout phải là số nguyên không âm.')
+      rowWidths.set(row, (rowWidths.get(row) || 0) + Number(region.width_percent || 0))
       regionIds.add(region.id)
       if (!Array.isArray(region.section_instance_ids)) { errors.push('Mỗi vùng layout phải có danh sách section.'); continue }
       for (const instanceId of region.section_instance_ids) {
@@ -240,6 +244,9 @@ export function validateCvDocument(document) {
         assigned.add(instanceId)
       }
     }
+    if ([...rowWidths.values()].some((width) => Math.abs(width - 100) > 0.01)) errors.push('Tổng độ rộng các vùng trong mỗi hàng phải bằng 100%.')
+    const hidden = layout.hidden_section_instance_ids || []
+    if (!Array.isArray(hidden) || new Set(hidden).size !== hidden.length || hidden.some((instanceId) => !instanceIds.has(instanceId) || assigned.has(instanceId))) errors.push('Danh sách section ẩn không hợp lệ.')
     const itemOrders = layout.item_orders || {}
     if (typeof itemOrders !== 'object' || Array.isArray(itemOrders)) errors.push('Thứ tự item trong layout không hợp lệ.')
     else for (const [sectionId, order] of Object.entries(itemOrders)) {
@@ -250,4 +257,25 @@ export function validateCvDocument(document) {
   }
   if (!style || style.schema_version !== 1 || !HEX_COLOR.test(style.theme_color || '') || !ALLOWED_FONTS.has(style.font_family) || typeof style.font_scale !== 'number' || style.font_scale < 0.8 || style.font_scale > 1.4 || typeof style.line_height !== 'number' || style.line_height < 1 || style.line_height > 2 || !style.section_overrides || typeof style.section_overrides !== 'object' || Array.isArray(style.section_overrides)) errors.push('Màu chủ đề, phông chữ hoặc style không hợp lệ.')
   return [...new Set(errors)]
+}
+
+function validMarks(marks = {}) {
+  if (!marks || typeof marks !== 'object' || Array.isArray(marks)) return false
+  const allowed = new Set(['bold', 'italic', 'underline', 'font_family', 'font_size_pt', 'color'])
+  if (Object.keys(marks).some((key) => !allowed.has(key))) return false
+  if (['bold', 'italic', 'underline'].some((key) => key in marks && typeof marks[key] !== 'boolean')) return false
+  if ('font_family' in marks && !ALLOWED_FONTS.has(marks.font_family)) return false
+  if ('font_size_pt' in marks && (typeof marks.font_size_pt !== 'number' || marks.font_size_pt < 8 || marks.font_size_pt > 32)) return false
+  return !('color' in marks) || HEX_COLOR.test(marks.color)
+}
+
+function isValidRichText(value) {
+  if (!value || !Array.isArray(value.content) || !['rich_text_v1', 'rich_text_v2'].includes(value.format)) return false
+  return value.content.every((block) => {
+    if (!block || !['bullet', 'paragraph'].includes(block.type) || typeof block.text !== 'string' || block.text.includes('<') || block.text.includes('>')) return false
+    if (value.format === 'rich_text_v1') return true
+    return Array.isArray(block.runs)
+      && block.runs.every((run) => run && typeof run.text === 'string' && validMarks(run.marks || {}))
+      && block.runs.map((run) => run.text).join('') === block.text
+  })
 }

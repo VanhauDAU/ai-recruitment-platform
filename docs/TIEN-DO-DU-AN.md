@@ -32,6 +32,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | CVB-P4 | Admin catalogue + snapshot | ✅ |
 | CVB-P5 | AI import PDF/DOCX | ✅ |
 | CVB-P6 | Cleanup, rollout, observability | ✅ |
+| CVB-8 | WYSIWYG A4 editor, rich text, DnD, asset, PDF parity, fallback flag | ✅ Code / 🟡 Rollout |
 
 Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
 
@@ -47,6 +48,12 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P4 | Tách `FeaturedIndustriesEmployers` (449) + `MarketStats` (442) | ✅ |
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ✅ |
 | FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
+
+## Epic thiết kế trang chủ (2026-07-16, nhánh `feature/design-home`)
+
+| Mục | Nội dung | Trạng thái |
+| --- | --- | --- |
+| HOME-CV | Section "Tạo CV ấn tượng" trên trang chủ (giữa FlashBadge và Top ngành nghề): showcase 3 mẫu CV thật từ catalogue xòe quạt desktop / trượt ngang snap mobile, swatch đổi màu preview tại chỗ, badge PREMIUM, link chi tiết `/mau-cv/chi-tiet/:slug`; 4 thẻ tính năng (mẫu đa dạng, autosave, AI import, xuất PDF) + CTA `/mau-cv`. Fetch React Query (stale 5′) + skeleton, ẩn section khi catalogue rỗng; export `CvTemplatePreview` qua public API entity `cv-template`. Data: seed thêm template "Chuyên nghiệp 2 cột" (`classic_two_column_v1`, publish qua service chính thức) — catalogue dev có 3 mẫu | ✅ |
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
@@ -412,6 +419,7 @@ build đều pass.
 | 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/hard-delete/default) | ✅ — V2 workflow, snapshot ứng tuyển retained detached, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
+| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code / 🟡 Rollout — inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard, avatar/background, template/sample CAS, PDF parity và editor cũ fallback; chờ golden/UAT + bật flag |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -586,4 +594,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (FE-P6 — WebP logo fallback 80KB→27KB; precompress hoãn tới epic deployment; hoàn tất epic dọn dẹp frontend FE-P1→P6)
+Cập nhật lần cuối: 2026-07-16 (CVB-8 — hoàn tất code WYSIWYG CV Builder sau feature flag; 63 backend + 141 frontend tests, 22 smoke pass; chờ visual UAT/rollout. HOME-CV giữ nguyên tiến độ)

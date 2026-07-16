@@ -2,6 +2,10 @@ from django.urls import path
 
 from .api_v2_views import (
     CvV2DetailView,
+    CvV2ApplySampleView,
+    CvV2AssetContentView,
+    CvV2AssetUploadView,
+    CvV2BackgroundListView,
     CvV2DuplicateView,
     CvV2DraftView,
     CvV2ExportDetailView,
@@ -26,6 +30,9 @@ from .api_v2_views import (
 
 
 urlpatterns = [
+    path('assets/', CvV2AssetUploadView.as_view(), name='cv-v2-asset-upload'),
+    path('assets/<str:asset_public_id>/content/', CvV2AssetContentView.as_view(), name='cv-v2-asset-content'),
+    path('backgrounds/', CvV2BackgroundListView.as_view(), name='cv-v2-background-list'),
     path('shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'),
     path('imports/', CvV2ImportView.as_view(), name='cv-v2-import'),
     path('latest-recoverable-draft/', CvV2LatestRecoverableDraftView.as_view(), name='cv-v2-latest-recoverable-draft'),
@@ -43,6 +50,7 @@ urlpatterns = [
     path('<str:public_id>/draft/', CvV2DraftView.as_view(), name='cv-v2-draft'),
     path('<str:public_id>/template/', CvV2TemplateSwitchView.as_view(), name='cv-v2-template-switch'),
     path('<str:public_id>/template-preview/', CvV2TemplatePreviewView.as_view(), name='cv-v2-template-preview'),
+    path('<str:public_id>/apply-sample/', CvV2ApplySampleView.as_view(), name='cv-v2-apply-sample'),
     path('<str:public_id>/save-version/', CvV2SaveVersionView.as_view(), name='cv-v2-save-version'),
     path('<str:public_id>/publish/', CvV2PublishView.as_view(), name='cv-v2-publish'),
     path('<str:public_id>/versions/', CvV2VersionListView.as_view(), name='cv-v2-version-list'),

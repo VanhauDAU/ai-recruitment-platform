@@ -1,5 +1,7 @@
 """V2 CV lifecycle workflows built on top of the version/draft foundation."""
 
+from copy import deepcopy
+
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
@@ -7,7 +9,7 @@ from django.utils import timezone
 from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.cv_templates.services import resolve_position_content
 
-from ..composition import CvCompositionError, compose_cv_document, overlay_actor_identity
+from ..composition import CvCompositionError, compose_cv_document, layout_for_content, overlay_actor_identity
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import empty_content
 from .versions import create_version, document_hash
@@ -214,3 +216,66 @@ def switch_draft_template(
     if previous_template_id != template.pk:
         CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
     return cv, draft
+
+
+@transaction.atomic
+def apply_sample_to_draft(
+    *, cv, actor, sample_public_id, expected_lock_version, client_session_id='',
+):
+    """Replace editable sections with one published sample under the current template."""
+    cv, draft = _lock_draft_for_save(cv, expected_lock_version)
+    try:
+        sample = CvSampleContent.objects.select_for_update().get(
+            public_id=sample_public_id,
+            status=CvSampleContent.Status.PUBLISHED,
+        )
+    except CvSampleContent.DoesNotExist as error:
+        raise CvLifecyclePolicyError('The selected sample content is unavailable.') from error
+    current_locale = draft.content_json.get('locale')
+    if sample.locale != current_locale:
+        raise CvLifecyclePolicyError('The selected sample content uses another language.')
+    current_content = deepcopy(draft.content_json)
+    sample_content = deepcopy(sample.content_json)
+    marker_keys = {'nameplate', 'contact', 'avatar'}
+    markers = [
+        section for section in current_content.get('sections', [])
+        if isinstance(section, dict) and section.get('section_key') in marker_keys
+    ]
+    sample_sections = [
+        section for section in sample_content.get('sections', [])
+        if isinstance(section, dict) and section.get('section_key') not in marker_keys
+    ]
+    merged = sample_content
+    merged['locale'] = current_locale
+    merged['personal_info'] = deepcopy(current_content.get('personal_info', {}))
+    merged['sections'] = [*markers, *sample_sections]
+    layout = layout_for_content(cv.current_template_version, merged)
+    style = deepcopy(draft.style_json)
+    from ..schemas import validate_cv_document, validate_template_layout_capabilities
+    from .assets import validate_document_assets
+
+    validate_cv_document(
+        content_json=merged, layout_json=layout, style_json=style, schema_version=1,
+    )
+    validate_template_layout_capabilities(
+        layout_json=layout,
+        capabilities=cv.current_template_version.capabilities,
+    )
+    validate_document_assets(owner=cv.user, content_json=merged, style_json=style)
+    draft.content_json = merged
+    draft.layout_json = layout
+    draft.style_json = style
+    draft.document_hash = document_hash(merged, layout, style)
+    draft.lock_version += 1
+    draft.client_session_id = client_session_id
+    draft.updated_by = actor
+    draft.save(update_fields=[
+        'content_json', 'layout_json', 'style_json', 'document_hash', 'lock_version',
+        'client_session_id', 'updated_by', 'updated_at',
+    ])
+    UserCv.objects.filter(pk=cv.pk).update(
+        cv_data=merged,
+        style_config=style,
+        updated_at=timezone.now(),
+    )
+    return draft

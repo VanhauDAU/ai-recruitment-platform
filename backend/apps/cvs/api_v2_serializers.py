@@ -8,8 +8,9 @@ from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.jobs.models import JobCategory
 from apps.sitecontent.selectors import is_active_locale
 
-from .models import CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from .schemas import validate_cv_document
+from .services.assets import asset_map
 
 
 class CvV2Serializer(serializers.ModelSerializer):
@@ -193,14 +194,23 @@ class CvV2CreateSerializer(serializers.Serializer):
 
 class CvDraftSerializer(serializers.ModelSerializer):
     base_version_public_id = serializers.CharField(source='base_version.public_id', read_only=True)
+    assets = serializers.SerializerMethodField()
 
     class Meta:
         model = CvDraft
         fields = [
             'schema_version', 'content_json', 'layout_json', 'style_json',
-            'lock_version', 'base_version_public_id', 'updated_at',
+            'assets', 'lock_version', 'base_version_public_id', 'updated_at',
         ]
         read_only_fields = ['lock_version', 'base_version_public_id', 'updated_at']
+
+    def get_assets(self, obj):
+        return asset_map(
+            content_json=obj.content_json,
+            style_json=obj.style_json,
+            request=self.context.get('request'),
+            owner=obj.cv.user,
+        )
 
 
 class CvDraftWriteSerializer(serializers.Serializer):
@@ -227,6 +237,30 @@ class CvTemplateSwitchSerializer(serializers.Serializer):
     template_public_id = serializers.CharField(max_length=50)
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
     client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class CvApplySampleSerializer(serializers.Serializer):
+    sample_content_public_id = serializers.CharField(max_length=50)
+    client_session_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+
+class CvAssetUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+
+class CvAssetSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CvAsset
+        fields = ['public_id', 'kind', 'title', 'content_type', 'size_bytes', 'width', 'height', 'url']
+        read_only_fields = fields
+
+    def get_url(self, obj):
+        from django.urls import reverse
+        path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
+        request = self.context.get('request')
+        return request.build_absolute_uri(path) if request else path
 
 
 class CvSharedLinkCreateSerializer(serializers.Serializer):
@@ -288,16 +322,27 @@ class CvExportSerializer(serializers.ModelSerializer):
 class CvVersionSerializer(serializers.ModelSerializer):
     template_renderer_key = serializers.CharField(source='template_version.renderer_key', read_only=True)
     parent_version_public_id = serializers.CharField(source='parent_version.public_id', read_only=True)
+    assets = serializers.SerializerMethodField()
 
     class Meta:
         model = CvVersion
         fields = [
             'public_id', 'version_number', 'version_kind', 'schema_version',
-            'content_json', 'layout_json', 'style_json', 'plain_text',
+            'content_json', 'layout_json', 'style_json', 'assets', 'plain_text',
             'content_hash', 'template_renderer_key', 'parent_version_public_id',
             'created_at',
         ]
         read_only_fields = fields
+
+    def get_assets(self, obj):
+        return asset_map(
+            content_json=obj.content_json,
+            style_json=obj.style_json,
+            request=self.context.get('request'),
+            owner=obj.cv.user if obj.cv_id else None,
+            version=obj,
+            signed=obj.cv_id is None,
+        )
 
 
 class CvVersionSummarySerializer(serializers.ModelSerializer):
@@ -320,12 +365,22 @@ class SharedCvVersionSerializer(serializers.ModelSerializer):
 
     template_renderer_key = serializers.CharField(source='template_version.renderer_key', read_only=True)
     template_renderer_version = serializers.CharField(source='template_version.renderer_version', read_only=True)
+    assets = serializers.SerializerMethodField()
 
     class Meta:
         model = CvVersion
         fields = [
             'public_id', 'version_number', 'schema_version',
-            'content_json', 'layout_json', 'style_json',
+            'content_json', 'layout_json', 'style_json', 'assets',
             'template_renderer_key', 'template_renderer_version', 'created_at',
         ]
         read_only_fields = fields
+
+    def get_assets(self, obj):
+        return asset_map(
+            content_json=obj.content_json,
+            style_json=obj.style_json,
+            request=self.context.get('request'),
+            version=obj,
+            signed=True,
+        )

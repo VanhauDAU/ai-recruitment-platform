@@ -14,15 +14,19 @@ import {
   projectDocumentForRenderer,
   moveSection,
   moveSectionToRegion,
+  paginateMeasuredProjection,
   recordDocumentCommand,
   removeItem,
   removeSection,
   renameSection,
   resizeRegionPair,
+  richTextV2,
+  setMarkInRange,
   setSectionEnabled,
   undoDocumentCommand,
   redoDocumentCommand,
   updateStyle,
+  toggleBooleanMarkInRange,
   validateCvDocument,
 } from '@/entities/cv'
 import { paginateRendererProjection } from './renderer-contracts'
@@ -220,5 +224,38 @@ describe('canonical CV editor document', () => {
     expect(pages.length).toBeGreaterThan(1)
     expect(pages.map((page) => page.number)).toEqual(pages.map((_, index) => index + 1))
     expect(projection).toEqual(originalProjection)
+  })
+
+  it('round-trips rich text v2 marks and coalesces repeated inline edits', () => {
+    const source = richTextV2('Xin chào Việt Nam')
+    const marked = setMarkInRange(source, 0, 8, 'color', '#0066AA')
+    const bold = toggleBooleanMarkInRange(marked, 0, 8, 'bold')
+    const unbold = toggleBooleanMarkInRange(bold, 0, 8, 'bold')
+    expect(bold.content[0].runs[0]).toMatchObject({ text: 'Xin chào', marks: { bold: true, color: '#0066AA' } })
+    expect(unbold.content[0].runs[0].marks).toEqual({ color: '#0066AA' })
+
+    const initial = ensureBasicEditorDocument(baseDocument())
+    const first = { ...initial, style_json: { ...initial.style_json, font_scale: 1.05 } }
+    const second = { ...initial, style_json: { ...initial.style_json, font_scale: 1.1 } }
+    let history = recordDocumentCommand(createDocumentHistory(), initial, first, 'Cỡ chữ', undefined, { coalesceKey: 'font-scale', timestamp: 100 })
+    history = recordDocumentCommand(history, first, second, 'Cỡ chữ', undefined, { coalesceKey: 'font-scale', timestamp: 500 })
+    expect(history.past).toHaveLength(1)
+    expect(undoDocumentCommand(history).document).toEqual(initial)
+  })
+
+  it('paginates a measured long section only at stable item boundaries', () => {
+    const section = {
+      instance_id: 'experience_1', section_key: 'experience',
+      items: [1, 2, 3].map((number) => ({ item_id: `item_${number}`, role: `Vai trò ${number}` })),
+    }
+    const projection = { regions: [{ id: 'main', widthPercent: 100, sections: [section] }] }
+    const pages = paginateMeasuredProjection(projection, {
+      sections: { experience_1: 280 },
+      items: { 'experience_1:item_1': 80, 'experience_1:item_2': 80, 'experience_1:item_3': 80 },
+    }, 180)
+
+    expect(pages).toHaveLength(3)
+    expect(pages.flatMap((page) => page.regions[0].sections.flatMap((item) => item.items.map((entry) => entry.item_id)))).toEqual(['item_1', 'item_2', 'item_3'])
+    expect(section.items).toHaveLength(3)
   })
 })

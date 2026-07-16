@@ -19,7 +19,14 @@ from .exports import (
     request_cv_export,
     retry_cv_export,
 )
-from .lifecycle import CvLifecyclePolicyError, create_v2_cv, save_draft_as_version, switch_draft_template
+from .lifecycle import (
+    CvLifecyclePolicyError,
+    apply_sample_to_draft,
+    create_v2_cv,
+    save_draft_as_version,
+    switch_draft_template,
+)
+from .assets import create_avatar_asset, create_background_asset
 from .imports import InvalidCvImport, queue_cv_import, retry_import
 from .sharing import (
     CvSharePermissionError,
@@ -41,6 +48,9 @@ __all__ = [
     'CvExportStateError',
     'CvExportUnavailableError',
     'create_application_snapshot',
+    'apply_sample_to_draft',
+    'create_avatar_asset',
+    'create_background_asset',
     'create_builder_cv',
     'duplicate_cv',
     'import_v2_cv',

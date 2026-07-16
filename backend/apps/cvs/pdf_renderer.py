@@ -8,13 +8,16 @@ template version.
 
 from __future__ import annotations
 
+import base64
 from copy import deepcopy
 
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
 from django.template.loader import render_to_string
 
 from apps.cv_templates.renderers import validate_renderer_contract
 from apps.cv_templates.section_registry import get_section_contract
+from .models import CvAsset
 
 
 class PdfRenderingError(RuntimeError):
@@ -30,14 +33,19 @@ FONT_STACKS = {
 }
 
 
-def _rich_text_lines(value) -> list[str]:
+def _rich_text_blocks(value) -> list[dict]:
     if not isinstance(value, dict):
         return []
-    return [
-        block['text']
+    blocks = [
+        {
+            'type': block.get('type', 'paragraph'),
+            'text': block['text'],
+            'runs': block.get('runs') or [{'text': block['text'], 'marks': {}}],
+        }
         for block in value.get('content', [])
         if isinstance(block, dict) and isinstance(block.get('text'), str) and block['text']
     ]
+    return blocks
 
 
 def _item_projection(item: dict) -> dict:
@@ -48,10 +56,10 @@ def _item_projection(item: dict) -> dict:
         for key in ('company', 'institution', 'issuer', 'organization', 'start_date', 'end_date')
         if isinstance(item.get(key), str) and item[key]
     ]
-    description = _rich_text_lines(item.get('description'))
+    description = _rich_text_blocks(item.get('description'))
     if not description and isinstance(item.get('value'), str) and item.get('value') != heading:
-        description = [item['value']]
-    return {'heading': heading, 'metadata': ' · '.join(metadata), 'description': description}
+        description = [{'type': 'paragraph', 'text': item['value'], 'runs': [{'text': item['value'], 'marks': {}}]}]
+    return {'heading': heading, 'metadata': ' · '.join(metadata), 'description_blocks': description}
 
 
 def _ordered_items(section: dict, item_orders: dict) -> list[dict]:
@@ -77,6 +85,7 @@ def _project_sections(version, contract) -> list[dict]:
         if isinstance(region, dict) and region.get('id') in contract.allowed_regions
     }
     rendered_ids = set()
+    hidden_ids = set(layout.get('hidden_section_instance_ids', []))
     regions = []
     for region_key in contract.region_order:
         region = configured_regions.get(region_key)
@@ -90,24 +99,41 @@ def _project_sections(version, contract) -> list[dict]:
             rendered_ids.add(section_id)
             section_contract = get_section_contract(section.get('section_key'))
             rendered_sections.append({
+                'section_key': section.get('section_key'),
+                'personal_info_backed': bool(section_contract and section_contract.personal_info_backed),
                 'title': section.get('title') or (section_contract.display_name if section_contract else section.get('section_key', '')),
                 'items': [_item_projection(item) for item in _ordered_items(section, layout.get('item_orders', {}))],
             })
         regions.append({
             'id': region_key,
+            'row': region.get('row', 0),
             'width_percent': region.get('width_percent', 100),
             'sections': rendered_sections,
         })
     if not regions:
-        regions.append({'id': contract.region_order[0], 'width_percent': 100, 'sections': []})
-    unassigned_sections = [section for section_id, section in sections_by_id.items() if section_id not in rendered_ids]
+        regions.append({'id': contract.region_order[0], 'row': 0, 'width_percent': 100, 'sections': []})
+    unassigned_sections = [section for section_id, section in sections_by_id.items() if section_id not in rendered_ids and section_id not in hidden_ids]
     for section in unassigned_sections:
         section_contract = get_section_contract(section.get('section_key'))
         regions[0]['sections'].append({
+            'section_key': section.get('section_key'),
+            'personal_info_backed': bool(section_contract and section_contract.personal_info_backed),
             'title': section.get('title') or (section_contract.display_name if section_contract else section.get('section_key', '')),
             'items': [_item_projection(item) for item in _ordered_items(section, layout.get('item_orders', {}))],
         })
     return regions
+
+
+def _asset_data_uri(public_id, kind):
+    if not public_id:
+        return ''
+    try:
+        asset = CvAsset.objects.get(public_id=public_id, kind=kind, is_active=True)
+        with default_storage.open(asset.storage_key, 'rb') as stream:
+            encoded = base64.b64encode(stream.read()).decode('ascii')
+    except (CvAsset.DoesNotExist, OSError):
+        return ''
+    return f'data:{asset.content_type};base64,{encoded}'
 
 
 def build_cv_pdf_html(version) -> str:
@@ -133,6 +159,10 @@ def build_cv_pdf_html(version) -> str:
     content = version.content_json
     style = version.style_json
     personal_info = content.get('personal_info', {}) if isinstance(content, dict) else {}
+    projected_regions = _project_sections(version, contract)
+    rows = []
+    for row_number in sorted({region['row'] for region in projected_regions}):
+        rows.append({'number': row_number, 'regions': [region for region in projected_regions if region['row'] == row_number]})
     return render_to_string('cvs/pdf/cv_version.html', {
         'locale': content.get('locale', 'vi-VN'),
         'renderer_key': contract.key,
@@ -143,7 +173,10 @@ def build_cv_pdf_html(version) -> str:
         'font_scale': style.get('font_scale', 1.0),
         'line_height': style.get('line_height', 1.4),
         'personal_info': personal_info,
-        'regions': _project_sections(version, contract),
+        'rows': rows,
+        'show_legacy_header': contract.key != 'header_two_column_v1',
+        'avatar_data_uri': _asset_data_uri(personal_info.get('avatar_asset_id'), CvAsset.Kind.AVATAR),
+        'background_data_uri': _asset_data_uri(style.get('background_asset_id'), CvAsset.Kind.BACKGROUND),
     })
 
 

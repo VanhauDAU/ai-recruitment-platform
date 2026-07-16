@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import canonicalize_legacy_cv_data, validate_cv_document, validate_template_layout_capabilities
+from .assets import validate_document_assets
 
 
 class StaleDraftError(ValueError):
@@ -39,6 +40,13 @@ def plain_text_from_content(content_json):
             if not isinstance(item, dict):
                 continue
             values.extend(value for value in item.values() if isinstance(value, str))
+            description = item.get('description')
+            if isinstance(description, dict):
+                values.extend(
+                    block.get('text', '')
+                    for block in description.get('content', [])
+                    if isinstance(block, dict) and isinstance(block.get('text'), str)
+                )
     return '\n'.join(value for value in values if value)
 
 
@@ -83,6 +91,11 @@ def create_version(
         layout_json=layout_json,
         style_json=style_json,
         schema_version=1,
+    )
+    validate_document_assets(
+        owner=cv.user,
+        content_json=content_json,
+        style_json=style_json,
     )
     if resolved_template_version is not None:
         validate_template_layout_capabilities(
@@ -142,6 +155,11 @@ def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_l
         layout_json=layout_json,
         style_json=style_json,
         schema_version=1,
+    )
+    validate_document_assets(
+        owner=cv.user,
+        content_json=content_json,
+        style_json=style_json,
     )
     if cv.current_template_version_id:
         validate_template_layout_capabilities(

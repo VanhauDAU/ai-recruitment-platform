@@ -133,6 +133,58 @@ class CanonicalCvDocumentTests(TestCase):
         self.assertIn('content_json.sections[0].section_key', context.exception.message_dict)
         self.assertIn('content_json.sections[1].instance_id', context.exception.message_dict)
 
+    def test_accepts_rich_text_v2_rows_and_hidden_sections(self):
+        content, layout, style = self.valid_document()
+        content['sections'][0]['items'][0]['description'] = {
+            'format': 'rich_text_v2',
+            'content': [{
+                'type': 'bullet',
+                'text': 'Thiết kế API an toàn',
+                'runs': [
+                    {'text': 'Thiết kế API', 'marks': {'bold': True, 'color': '#0066AA'}},
+                    {'text': ' an toàn', 'marks': {'italic': True, 'font_size_pt': 11}},
+                ],
+            }],
+        }
+        content['sections'].append({
+            'instance_id': 'sec_interests_1',
+            'section_key': 'interests',
+            'title': 'Sở thích',
+            'enabled': True,
+            'items': [{'item_id': 'interests_1', 'value': 'Đọc sách'}],
+        })
+        layout['regions'] = [
+            {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
+            {'id': 'main', 'row': 1, 'width_percent': 60, 'section_instance_ids': ['sec_experience_1']},
+            {'id': 'sidebar', 'row': 1, 'width_percent': 40, 'section_instance_ids': []},
+        ]
+        layout['hidden_section_instance_ids'] = ['sec_interests_1']
+
+        validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+
+    def test_rejects_invalid_rich_text_marks_row_width_and_hidden_assignment(self):
+        content, layout, style = self.valid_document()
+        content['sections'][0]['items'][0]['description'] = {
+            'format': 'rich_text_v2',
+            'content': [{
+                'type': 'paragraph',
+                'text': 'Sai',
+                'runs': [{'text': 'Sai', 'marks': {'font_size_pt': 64, 'color': 'red'}}],
+            }],
+        }
+        layout['regions'] = [
+            {'id': 'main', 'row': 1, 'width_percent': 70, 'section_instance_ids': ['sec_experience_1']},
+            {'id': 'sidebar', 'row': 1, 'width_percent': 20, 'section_instance_ids': []},
+        ]
+        layout['hidden_section_instance_ids'] = ['sec_experience_1']
+
+        with self.assertRaises(ValidationError) as context:
+            validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+
+        self.assertIn('content_json.sections[0].items[0].description.content', context.exception.message_dict)
+        self.assertIn('layout_json.regions', context.exception.message_dict)
+        self.assertIn('layout_json.hidden_section_instance_ids', context.exception.message_dict)
+
 
 class CvVersioningServiceTests(TestCase):
     def setUp(self):

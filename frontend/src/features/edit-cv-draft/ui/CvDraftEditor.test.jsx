@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
 import CvDraftEditor from './CvDraftEditor'
 
 const mocks = vi.hoisted(() => ({
   getCv: vi.fn(), getCvDraft: vi.fn(), updateCvDraft: vi.fn(), saveCvVersion: vi.fn(), publishCvVersion: vi.fn(), switchCvTemplate: vi.fn(),
 }))
-const templateMocks = vi.hoisted(() => ({ getCvTemplates: vi.fn() }))
+const templateMocks = vi.hoisted(() => ({ getCvTemplates: vi.fn(), getCvBackgrounds: vi.fn(), getCvSampleContents: vi.fn() }))
 
 vi.mock('@/entities/cv', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -17,7 +18,11 @@ vi.mock('@/entities/cv', async (importOriginal) => ({
   switchCvTemplate: mocks.switchCvTemplate,
 }))
 
-vi.mock('@/entities/cv-template', () => ({ getCvTemplates: templateMocks.getCvTemplates }))
+vi.mock('@/entities/cv-template', () => ({
+  getCvTemplates: templateMocks.getCvTemplates,
+  getCvBackgrounds: templateMocks.getCvBackgrounds,
+  getCvSampleContents: templateMocks.getCvSampleContents,
+}))
 
 function draft() {
   return {
@@ -55,6 +60,8 @@ describe('CV draft editor', () => {
     mocks.saveCvVersion.mockResolvedValue({ public_id: 'version_2', version_number: 2 })
     mocks.publishCvVersion.mockResolvedValue({ public_id: 'version_3', version_number: 3, version_kind: 'published' })
     templateMocks.getCvTemplates.mockResolvedValue({ results: [{ public_id: 'tpl_single', display_name: 'Một cột' }, { public_id: 'tpl_two', display_name: 'Hai cột' }] })
+    templateMocks.getCvBackgrounds.mockResolvedValue([])
+    templateMocks.getCvSampleContents.mockResolvedValue([])
     mocks.switchCvTemplate.mockResolvedValue({
       cv: { title: 'CV thử nghiệm', template_public_id: 'tpl_two', template_renderer_key: 'classic_two_column_v1', template_capabilities: { layout: { item_drag: true, column_resize: { enabled: true, min_percent: 25, max_percent: 75 } } } },
       draft: { ...draft(), lock_version: 1, layout_json: { ...draft().layout_json, regions: [{ id: 'main', width_percent: 68, section_instance_ids: ['summary_1', 'experience_1'] }, { id: 'sidebar', width_percent: 32, section_instance_ids: ['skills_1'] }] }, style_json: { ...draft().style_json, theme_color: '#2255AA' } },
@@ -173,5 +180,15 @@ describe('CV draft editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Xuất bản CV' }))
     await waitFor(() => expect(mocks.publishCvVersion).toHaveBeenCalledWith('cv_1', 0))
     expect(screen.getByText('Đã xuất bản phiên bản 3')).toBeInTheDocument()
+  })
+
+  it('renders the six-tool WYSIWYG shell when the rollout flag is enabled', async () => {
+    render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+
+    expect(await screen.findByLabelText('CV A4 có thể chỉnh sửa')).toBeInTheDocument()
+    for (const label of ['Thiết kế & Font', 'Thêm mục', 'Bố cục', 'Đổi mẫu CV', 'Gợi ý viết CV', 'Thư viện CV']) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+    }
+    expect(screen.getByRole('button', { name: 'Lưu phiên bản' })).toHaveTextContent('Lưu CV')
   })
 })

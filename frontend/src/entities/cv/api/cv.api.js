@@ -125,6 +125,25 @@ export async function switchCvTemplate(publicId, templatePublicId, lockVersion, 
   return { ...data, draft: { ...data.draft, etag: headers.etag } }
 }
 
+export async function applyCvSample(publicId, sampleContentPublicId, lockVersion, clientSessionId) {
+  const { data, headers } = await api.post(
+    `/v2/cvs/${publicId}/apply-sample/`,
+    {
+      sample_content_public_id: sampleContentPublicId,
+      ...(clientSessionId ? { client_session_id: clientSessionId } : {}),
+    },
+    { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
+  )
+  return { ...data, etag: headers.etag }
+}
+
+export async function uploadCvAsset(file) {
+  const body = new FormData()
+  body.append('file', file)
+  const { data } = await api.post('/v2/cvs/assets/', body)
+  return data
+}
+
 export async function getCvOwnerView(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/view/`)
   return data

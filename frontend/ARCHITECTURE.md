@@ -156,7 +156,13 @@ app/router
   được resolve ở backend, frontend không dịch hoặc ghép content. Màu được chọn
   là input của workflow, không phải state toàn app.
 - `features/edit-cv-draft` sở hữu autosave/history/section/layout editing;
-  `entities/cv` sở hữu canonical document, renderer contract và preview.
+  `entities/cv` sở hữu canonical document, rich-text model, renderer contract,
+  pagination đo DOM và read-only document surface. Feature chỉ thay leaf bằng
+  inline editor, điều phối DnD/panel/pending-edit flush; không tự compose
+  template hoặc sample.
+- Asset avatar/background chỉ đi qua public ID trong canonical document;
+  `entities/cv` sở hữu DTO/API asset, response resolve qua `assets` map. Storage
+  key và URL công khai không được đưa vào document JSON.
 - `pages/main/cv-templates` chỉ lấy locale/route params và compose catalogue,
   detail, source panel/modal. `pages/main/cvs/CvEditor.jsx` chỉ lấy `publicId`
   rồi compose editor feature.

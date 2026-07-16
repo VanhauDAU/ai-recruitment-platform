@@ -16,20 +16,23 @@
       font-size: {{ font_scale }}em;
       line-height: {{ line_height }};
       overflow-wrap: anywhere;
+      {% if background_data_uri %}background: url("{{ background_data_uri }}") center / cover no-repeat;{% endif %}
     }
     .cv-page { width: 100%; min-height: 100%; }
     .cv-header { border-left: 4px solid {{ theme_color }}; margin: 0 0 6mm; padding-left: 4mm; break-inside: avoid-page; }
     .cv-header h1 { color: #111827; font-size: 22pt; line-height: 1.1; margin: 0; }
     .headline { color: {{ theme_color }}; font-size: 11pt; font-weight: 700; margin: 2mm 0 0; }
     .contact { color: #4b5563; font-size: 9pt; margin: 2mm 0 0; }
-    .regions { display: grid; gap: 6mm; grid-template-columns: {% for region in regions %} minmax(0, {{ region.width_percent }}fr){% endfor %}; }
+    .region-row { display: grid; gap: 6mm; margin-bottom: 4mm; }
+    .avatar { border-radius: 50%; display: block; height: 28mm; object-fit: cover; width: 28mm; }
     .section { break-inside: avoid-page; page-break-inside: avoid; margin: 0 0 5mm; overflow: visible; }
     .section h2 { border-bottom: 1px solid {{ theme_color }}; color: {{ theme_color }}; font-size: 10pt; letter-spacing: .05em; margin: 0 0 2mm; padding-bottom: 1mm; text-transform: uppercase; }
     .item { break-inside: avoid; page-break-inside: avoid; margin: 0 0 3mm; }
     .item-heading { color: #1f2937; font-weight: 700; margin: 0; }
     .item-meta { color: #4b5563; font-size: .94em; margin: 0; }
     .item-description { margin: 1mm 0 0; white-space: pre-line; }
-    .item-description p { margin: 0 0 1mm; }
+    .item-description p, .item-description ul { margin: 0 0 1mm; }
+    .item-description ul { padding-left: 5mm; }
     @media print {
       .cv-page { break-after: page; page-break-after: always; }
       .cv-page:last-child { break-after: auto; page-break-after: auto; }
@@ -38,30 +41,48 @@
 </head>
 <body data-renderer="{{ renderer_key }}" data-renderer-version="{{ renderer_version }}">
   <article class="cv-page">
-    <header class="cv-header">
+    {% if show_legacy_header %}<header class="cv-header">
       <h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>
       {% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}
       {% if personal_info.email or personal_info.phone or personal_info.address %}
         <p class="contact">{{ personal_info.email }}{% if personal_info.email and personal_info.phone %} · {% endif %}{{ personal_info.phone }}{% if personal_info.address %} · {{ personal_info.address }}{% endif %}</p>
       {% endif %}
-    </header>
+    </header>{% endif %}
     <div class="regions">
-      {% for region in regions %}
+      {% for row in rows %}<div class="region-row" style="grid-template-columns:{% for region in row.regions %} minmax(0, {{ region.width_percent }}fr){% endfor %};">
+      {% for region in row.regions %}
         <div class="region region-{{ region.id }}">
           {% for section in region.sections %}
             <section class="section">
+              {% if section.section_key == "nameplate" %}
+                <div class="cv-header"><h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>{% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}</div>
+              {% elif section.section_key == "contact" %}
+                <p class="contact">{{ personal_info.email }}{% if personal_info.email and personal_info.phone %} · {% endif %}{{ personal_info.phone }}{% if personal_info.address %} · {{ personal_info.address }}{% endif %}</p>
+              {% elif section.section_key == "avatar" %}
+                {% if avatar_data_uri %}<img class="avatar" src="{{ avatar_data_uri }}" alt="">{% endif %}
+              {% else %}
               <h2>{{ section.title }}</h2>
               {% for item in section.items %}
                 <div class="item">
                   {% if item.heading %}<p class="item-heading">{{ item.heading }}</p>{% endif %}
                   {% if item.metadata %}<p class="item-meta">{{ item.metadata }}</p>{% endif %}
-                  {% if item.description %}<div class="item-description">{% for line in item.description %}<p>{{ line }}</p>{% endfor %}</div>{% endif %}
+                  {% if item.description_blocks %}<div class="item-description">
+                    {% for block in item.description_blocks %}
+                      {% if block.type == "bullet" %}<ul><li>{% else %}<p>{% endif %}
+                      {% for run in block.runs %}
+                        <span{% if run.marks.font_family or run.marks.font_size_pt or run.marks.color %} style="{% if run.marks.font_family %}font-family:{{ run.marks.font_family }};{% endif %}{% if run.marks.font_size_pt %}font-size:{{ run.marks.font_size_pt }}pt;{% endif %}{% if run.marks.color %}color:{{ run.marks.color }};{% endif %}"{% endif %}>{% if run.marks.bold %}<strong>{% endif %}{% if run.marks.italic %}<em>{% endif %}{% if run.marks.underline %}<u>{% endif %}{{ run.text }}{% if run.marks.underline %}</u>{% endif %}{% if run.marks.italic %}</em>{% endif %}{% if run.marks.bold %}</strong>{% endif %}</span>
+                      {% endfor %}
+                      {% if block.type == "bullet" %}</li></ul>{% else %}</p>{% endif %}
+                    {% endfor %}
+                  </div>{% endif %}
                 </div>
               {% endfor %}
+              {% endif %}
             </section>
           {% endfor %}
         </div>
       {% endfor %}
+      </div>{% endfor %}
     </div>
   </article>
 </body>

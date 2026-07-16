@@ -7,6 +7,7 @@ import { getBanners, useSiteSettings } from '@/entities/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'
 import BestJobs from './ui/BestJobs'
 import CategoryMenu from './ui/CategoryMenu'
+import CvTemplateShowcase from './ui/CvTemplateShowcase'
 import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
 import FlashBadge from './ui/FlashBadge'
 import HotlineConsultation from './ui/HotlineConsultation'
@@ -246,6 +247,7 @@ export default function Home() {
         <FlashBadge />
       </section>
 
+      <CvTemplateShowcase />
       <FeaturedIndustriesEmployers />
       <HotlineConsultation />
     </div>

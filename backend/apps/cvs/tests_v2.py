@@ -14,6 +14,7 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
+from PIL import Image
 
 from apps.cv_templates.models import (
     CvColor,
@@ -26,7 +27,7 @@ from apps.cv_templates.models import (
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .composition import compose_cv_document
-from .models import CvAccessLog, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from .models import CvAccessLog, CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from .pdf_renderer import build_cv_pdf_html
 from .schemas import empty_content, empty_layout, empty_style
 from .services.versions import sync_legacy_builder_draft
@@ -869,6 +870,62 @@ class CvV2ApiTests(APITestCase):
         # Sample content flows into both the immutable baseline and the draft.
         self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Person')
         self.assertEqual(cv.latest_version.content_json['personal_info']['full_name'], 'Sample Person')
+
+    def test_apply_sample_uses_cas_and_preserves_personal_info_and_style(self):
+        cv = self.create_cv()
+        cv.draft.content_json['personal_info']['full_name'] = 'Tên ứng viên thật'
+        cv.draft.style_json['theme_color'] = '#2255AA'
+        cv.draft.save(update_fields=['content_json', 'style_json'])
+        sample_content = empty_content('vi-VN')
+        sample_content['personal_info']['full_name'] = 'Tên demo không được ghi đè'
+        sample_content['sections'] = [{
+            'instance_id': 'sample_summary_1', 'section_key': 'summary',
+            'title': 'Giới thiệu', 'enabled': True,
+            'items': [{'item_id': 'sample_summary_item_1', 'value': 'Nội dung mẫu'}],
+        }]
+        sample = CvSampleContent.objects.create(
+            locale='vi-VN', title='Sample apply', content_json=sample_content,
+            status=CvSampleContent.Status.PUBLISHED,
+        )
+        url = reverse('cv-v2-apply-sample', kwargs={'public_id': cv.public_id})
+
+        applied = self.client.post(
+            url, {'sample_content_public_id': sample.public_id}, format='json',
+            HTTP_IF_MATCH='"lock-version-0"',
+        )
+
+        self.assertEqual(applied.status_code, 200, applied.data)
+        self.assertEqual(applied.data['lock_version'], 1)
+        self.assertEqual(applied.data['content_json']['personal_info']['full_name'], 'Tên ứng viên thật')
+        self.assertEqual(applied.data['content_json']['sections'][0]['items'][0]['value'], 'Nội dung mẫu')
+        self.assertEqual(applied.data['style_json']['theme_color'], '#2255AA')
+        stale = self.client.post(
+            url, {'sample_content_public_id': sample.public_id}, format='json',
+            HTTP_IF_MATCH='"lock-version-0"',
+        )
+        self.assertEqual(stale.status_code, 409)
+
+    def test_avatar_upload_reencodes_image_and_enforces_owner_access(self):
+        buffer = BytesIO()
+        Image.new('RGB', (900, 700), '#2255AA').save(buffer, format='JPEG')
+        upload = SimpleUploadedFile('avatar.jpg', buffer.getvalue(), content_type='image/jpeg')
+
+        created = self.client.post(reverse('cv-v2-asset-upload'), {'file': upload}, format='multipart')
+
+        self.assertEqual(created.status_code, 201, created.data)
+        self.assertNotIn('storage_key', created.data)
+        self.assertLessEqual(created.data['width'], 512)
+        self.assertLessEqual(created.data['height'], 512)
+        asset = CvAsset.objects.get(public_id=created.data['public_id'])
+        content_url = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
+        self.client.force_authenticate(self.other_candidate)
+        self.assertEqual(self.client.get(content_url).status_code, 404)
+        self.client.force_authenticate(self.candidate)
+        self.assertEqual(self.client.get(content_url).status_code, 200)
+
+        invalid = SimpleUploadedFile('avatar.png', b'not-an-image', content_type='image/png')
+        rejected = self.client.post(reverse('cv-v2-asset-upload'), {'file': invalid}, format='multipart')
+        self.assertEqual(rejected.status_code, 400)
 
     def test_create_from_position_resolves_blueprint_and_persists_taxonomy_identity(self):
         position = JobCategory.objects.create(name='Nhân viên CSKH')
