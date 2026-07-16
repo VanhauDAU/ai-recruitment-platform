@@ -3,10 +3,12 @@ import {
   addItem,
   addSection,
   canDragItems,
+  changeContentLocale,
   createDocumentHistory,
   ensureBasicEditorDocument,
   getRendererContract,
   getEditorCapabilities,
+  getCvFontStack,
   getOrderedItems,
   getOrderedSections,
   moveItemInLayout,
@@ -63,6 +65,27 @@ describe('canonical CV editor document', () => {
     expect(normalized.content_json).toEqual(contentBeforeStyleUpdate)
     expect(normalized.layout_json).toEqual(layoutBeforeStyleUpdate)
     expect(nextStyle).toMatchObject({ theme_color: '#2255AA', font_family: 'Inter' })
+  })
+
+  it('resets all section titles to the selected locale while preserving authored item content', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    const experience = document.content_json.sections.find((section) => section.section_key === 'experience')
+    experience.title = 'Dấu ấn nghề nghiệp'
+    experience.items[0].role = 'Kỹ sư phần mềm'
+
+    const localized = changeContentLocale(document.content_json, 'en-US')
+
+    expect(localized.locale).toBe('en-US')
+    expect(localized.sections.find((section) => section.section_key === 'summary').title).toBe('Career objective')
+    expect(localized.sections.find((section) => section.section_key === 'skills').title).toBe('Skills')
+    expect(localized.sections.find((section) => section.section_key === 'experience')).toMatchObject({ title: 'Work experience', items: [expect.objectContaining({ role: 'Kỹ sư phần mềm' })] })
+    expect(document.content_json.locale).toBe('vi-VN')
+  })
+
+  it('uses deterministic browser font stacks so each supported choice has a usable fallback', () => {
+    expect(getCvFontStack('Arial')).toContain('Arial')
+    expect(getCvFontStack('Inter')).toContain('-apple-system')
+    expect(getCvFontStack('Source Sans Pro')).toContain('Trebuchet MS')
   })
 
   it('projects exactly the same canonical content through single and two-column renderer contracts', () => {

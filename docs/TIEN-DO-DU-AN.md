@@ -419,7 +419,7 @@ build đều pass.
 | 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/hard-delete/default) | ✅ — V2 workflow, snapshot ứng tuyển retained detached, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
-| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code + bật mặc định / 🟡 Theo dõi rollout — shell đúng DOCX gồm header website, action bar, rail 144 px, panel 304 px, canvas A4 80% và zoom nổi; inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard, avatar/background, template/sample CAS, PDF parity; editor cũ còn làm fallback |
+| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code + bật mặc định / 🟡 Theo dõi rollout — shell đúng DOCX gồm header website, action bar, rail 176 px tự co chiều cao, panel 352 px, canvas A4 80% và zoom nổi; design panel có màu luôn mở, slider theo nấc, locale reset tiêu đề/placeholder chuẩn và font fallback stack; inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard, avatar/background, template/sample CAS, PDF parity; editor cũ chỉ còn làm fallback |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -594,4 +594,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-16 (CVB-8 — shell desktop đã khớp cấu trúc TopCV/DOCX, WYSIWYG bật mặc định và vẫn có fallback; Playwright desktop xác nhận lifecycle V2. HOME-CV giữ nguyên tiến độ)
+Cập nhật lần cuối: 2026-07-16 (CVB-8 — tinh chỉnh design panel theo TopCV: rail/panel rộng hơn, rail/panel tự co chiều cao, color surface luôn mở, slider theo nấc, locale reset tiêu đề/placeholder chuẩn, inline input giữ caret khi autosave/render lại và bỏ form cũ khỏi WYSIWYG; 147 Vitest + 22 Playwright smoke pass. HOME-CV giữ nguyên tiến độ)

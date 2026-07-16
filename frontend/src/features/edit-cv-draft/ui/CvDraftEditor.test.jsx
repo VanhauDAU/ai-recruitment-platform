@@ -194,5 +194,36 @@ describe('CV draft editor', () => {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
     expect(screen.getByRole('button', { name: 'Lưu phiên bản' })).toHaveTextContent('Lưu CV')
+    expect(screen.queryByText('Chỉnh sửa bằng biểu mẫu')).not.toBeInTheDocument()
+  })
+
+  it('resets CV headings and empty field placeholders to the selected locale without changing user content', async () => {
+    render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+    fireEvent.click(screen.getByRole('button', { name: 'Thiết kế & Font' }))
+    expect(screen.getByRole('slider', { name: 'Độ đậm và độ sáng của màu' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Chọn màu tùy chỉnh' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếng Anh' }))
+
+    expect(screen.getByText('Career objective')).toBeInTheDocument()
+    expect(screen.getByText('Skills')).toBeInTheDocument()
+    expect(screen.getByText('Work experience')).toBeInTheDocument()
+    expect(screen.getByLabelText('role experience_item_1')).toHaveAttribute('aria-placeholder', 'Job title')
+    expect(screen.getByLabelText('company experience_item_1')).toHaveAttribute('aria-placeholder', 'Company')
+    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
+      content_json: expect.objectContaining({ locale: 'en-US', sections: expect.arrayContaining([expect.objectContaining({ section_key: 'summary', title: 'Career objective' })]) }),
+    }), 0, expect.any(String)), { timeout: 1500 })
+  })
+
+  it('applies the selected font stack directly to the A4 document surface', async () => {
+    render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
+
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+    fireEvent.click(screen.getByRole('button', { name: 'Thiết kế & Font' }))
+    fireEvent.mouseDown(screen.getByLabelText('Font chữ CV'))
+    fireEvent.click(await screen.findByText('Arial'))
+
+    expect(screen.getByLabelText('Xem trước CV classic_single_column_v1 trang 1')).toHaveStyle({ fontFamily: 'Arial, Helvetica, sans-serif' })
   })
 })

@@ -1,9 +1,17 @@
-import { getSectionDefinition, SECTION_REGISTRY } from './section-registry'
+import { getSectionDefinition, getSectionDisplayName, SECTION_REGISTRY } from './section-registry'
 
 const BASIC_EDITOR_SECTION_KEYS = Object.freeze(['summary', 'experience', 'skills'])
 const ALLOWED_FONTS = new Set(['Arial', 'Calibri', 'Inter', 'Roboto', 'Source Sans Pro'])
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
+
+export const CV_FONT_STACKS = Object.freeze({
+  Arial: 'Arial, Helvetica, sans-serif',
+  Calibri: 'Calibri, Candara, "Segoe UI", sans-serif',
+  Inter: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  Roboto: 'Roboto, Arial, Helvetica, sans-serif',
+  'Source Sans Pro': '"Source Sans Pro", "Trebuchet MS", Arial, sans-serif',
+})
 
 export { BASIC_EDITOR_SECTION_KEYS }
 
@@ -40,10 +48,24 @@ function newSection(content, sectionKey) {
   return {
     instance_id: nextId(content, sectionKey),
     section_key: sectionKey,
-    title: definition.displayName,
+    title: getSectionDisplayName(sectionKey, content.locale),
     enabled: true,
     items: definition.initialItem === false ? [] : [defaultItem(content, sectionKey)],
   }
+}
+
+export function getCvFontStack(fontFamily) {
+  return CV_FONT_STACKS[fontFamily] || CV_FONT_STACKS.Roboto
+}
+
+export function changeContentLocale(content, locale) {
+  const next = clone(content)
+  next.locale = locale
+  next.sections = next.sections.map((section) => ({
+    ...section,
+    title: getSectionDisplayName(section.section_key, locale),
+  }))
+  return next
 }
 
 function sectionByKey(content, key) {

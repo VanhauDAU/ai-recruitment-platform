@@ -7,7 +7,7 @@ export default function BuilderTopBar({ editor, onPreview }) {
   return <header aria-label="Thanh hành động CV" className="z-40 flex h-[52px] shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 md:px-5">
     <div className="flex min-w-0 items-center gap-3">
       <FileTextOutlined className="shrink-0 text-lg text-emerald-600" />
-      <InlineText value={editor.cv.title || 'CV chưa đặt tên'} placeholder="CV chưa đặt tên" ariaLabel="Tên CV" className="max-w-64 truncate text-[15px] font-bold text-slate-700" onCommit={(title) => editor.rename(title || 'CV chưa đặt tên')} registerPendingEdit={editor.registerPendingEdit} />
+      <InlineText value={editor.cv.title || 'CV chưa đặt tên'} placeholder="CV chưa đặt tên" ariaLabel="Tên CV" className="w-[min(36vw,30rem)] min-w-40 rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-lg font-extrabold text-slate-800 transition hover:border-emerald-300 hover:bg-white focus:border-emerald-500 sm:min-w-64 md:text-xl" onCommit={(title) => editor.rename(title || 'CV chưa đặt tên')} registerPendingEdit={editor.registerPendingEdit} />
     </div>
     <div className="flex shrink-0 items-center gap-1.5">
       <span className="hidden lg:block"><EditorSaveState phase={editor.phase} error={editor.error} onRetry={editor.retryAutosave} onReload={editor.reloadDraft} /></span>

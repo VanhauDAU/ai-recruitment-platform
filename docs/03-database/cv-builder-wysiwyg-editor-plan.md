@@ -94,8 +94,10 @@ pages/main/cvs/CvEditor
 1. **Contract và rollout:** tài liệu, ADR, feature flag, validator additive,
    fixture V1.
 2. **Builder shell:** top bar, sáu tool, desktop rail/mobile drawer, design
-   panel và form cũ trong panel tạm. Desktop dùng đúng ba tầng của DOCX:
-   header website, action bar 52 px, rồi rail 144 px + panel 304 px + canvas A4.
+   panel. Desktop dùng đúng ba tầng của DOCX: header website, action bar 52 px,
+   rồi rail 176 px tự co theo danh sách công cụ + panel 352 px + canvas A4.
+   Form cũ không còn nhúng trong panel; toàn bộ legacy editor chỉ còn ở nhánh
+   fallback của feature flag.
 3. **Renderer/pagination:** document surface dùng chung, measurement surface,
    page label và overflow.
 4. **Inline/DnD/layout:** plain fields, pending-edit flush, coalescing, section/
@@ -149,10 +151,13 @@ với code và test của phase đó.
   coalesced history, DnD touch/keyboard, nút thay thế lên/xuống, pagination đo
   DOM theo item, template diff, sample library, avatar/background và mobile
   drawer. Shell desktop đã đối chiếu trực quan với DOCX/TopCV: header website,
-  thanh tên CV và hành động, rail ngang nhãn, panel đóng được, banner gợi ý,
-  A4 ở zoom 80%, nhãn trang dạng badge và zoom nổi góc phải. Editor form cũ
-  vẫn tồn tại sau feature flag để rollback.
-- Gate: 63 Django test, 141 Vitest test, lint, architecture, build, bundle
+  thanh tên CV và hành động, rail rộng và chỉ cao theo sáu công cụ, panel đóng
+  được, color surface luôn mở, slider theo nấc, banner gợi ý, A4 ở zoom 80%,
+  nhãn trang dạng badge và zoom nổi góc phải. Đổi locale reset tiêu đề section
+  và placeholder chuẩn theo template nhưng giữ nguyên nội dung tự viết; font
+  dùng browser fallback stack ổn định. Editor form cũ vẫn tồn tại sau feature flag để rollback nhưng
+  không còn được render bên trong WYSIWYG.
+- Gate: 63 Django test, 147 Vitest test, lint, architecture, build, bundle
   budget và 22 Playwright smoke desktop/mobile đều pass.
 - WYSIWYG hiện là mặc định (`cv_builder_wysiwyg_enabled=true`); việc vận hành
   còn lại là publish template version dùng `header_two_column_v1`, duyệt golden
