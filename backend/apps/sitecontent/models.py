@@ -170,6 +170,8 @@ class Banner(models.Model):
         # Banner "ảnh giả button": cả khối là 1 link (cta_url), chèn giữa các
         # section trang /blog và trang danh mục.
         BLOG_INLINE = 'blog_inline', 'Banner chèn giữa trang cẩm nang'
+        # Hiện dưới thông báo "Rất tiếc..." khi tìm việc không có kết quả.
+        JOB_EMPTY = 'job_empty', 'Banner trang việc làm khi không có kết quả'
 
     placement = models.CharField(max_length=30, choices=Placement.choices, default=Placement.HOME_HERO)
     eyebrow = models.CharField(max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP')

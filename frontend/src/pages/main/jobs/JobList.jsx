@@ -6,6 +6,7 @@ import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { formatNumber } from '@/entities/job'
+import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
 import JobListHeader from './ui/JobListHeader'
 import JobListOverlays from './ui/JobListOverlays'
@@ -21,6 +22,7 @@ import useJobLocationData from './model/use-job-location-data'
 import useJobSidebarData from './model/use-job-sidebar-data'
 import { buildCategoryTree, nodeCheckState, selectedLeafSet, toggleCategoryIds } from './lib/category-tree'
 import { formatLocationGroups, locationDisplayName } from './lib/job-list-params'
+import { buildJobListTitle } from './lib/job-list-title'
 
 export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
@@ -165,6 +167,17 @@ export default function JobList() {
   const fullContextLabel = searchLabel || catName || fullLocationContext
   const isLocationContext = !searchLabel && !catName && Boolean(locationContext)
   const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
+  const pageTitle = buildJobListTitle({
+    count: formatNumber(count),
+    contextLabel,
+    loading,
+    updateLabel,
+  })
+
+  useEffect(() => {
+    document.title = pageTitle
+  }, [pageTitle])
+
   const wardSuggestionInsertIndex = useMemo(() => {
     if (results.length < 3) return 1
     const min = Math.max(1, Math.floor(results.length * 0.35))
@@ -316,6 +329,15 @@ export default function JobList() {
 
           <JobResults
             count={count}
+            emptyExtra={(
+              <JobEmptyExtras
+                isAuthenticated={isAuthenticated}
+                onRequireLogin={promptLogin}
+                onQuickView={setQuickViewJob}
+                selectedCategories={selectedCategories}
+                selectedLocations={selectedLocations}
+              />
+            )}
             isAuthenticated={isAuthenticated}
             loading={loading}
             onClearAll={hasFilters || searchParamKeyword ? filters.clearAllCriteria : undefined}
