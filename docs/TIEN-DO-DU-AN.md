@@ -133,6 +133,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
+| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược 9s + nút đi ngay) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
 | 1.25 | Cookie consent + job view tracking: signed cookie, UI tùy chỉnh, policy, optional-storage gate và deduplicated tracking | ✅ |
 | 1.26 | API response DTO theo màn hình: list/detail/write riêng, query tối thiểu và contract test chống field dư/nhạy cảm | ✅ |
 
@@ -366,6 +367,30 @@ lint/architecture/unit/build và E2E router desktop/mobile.
 </details>
 
 <details>
+<summary><b>1.24b</b> — Kết thúc onboarding kiểu TopCV (cá nhân hoá → việc làm)</summary>
+
+Sau khi ứng viên bấm "Hoàn thành" ở `/onboard-user-setting`, thay vì về trang
+chủ, luồng mới chạy 3 bước như TopCV: (1) màn "Chờ chút nhé, ProCV AI đang cá
+nhân hoá trải nghiệm dành cho bạn" với 3 chip lợi ích + thanh tiến trình
+gradient ~3s (`PersonalizingScreen`, hiệu ứng thuần UI không gọi API); (2) màn
+"Mọi thứ đã sẵn sàng!" với đếm ngược 9 giây tự chuyển + nút "Đi tới Danh sách
+việc làm (dành riêng cho bạn)" đi ngay + mascot (`ReadyScreen`); (3) redirect
+sang trang việc làm với bộ lọc dựng sẵn từ preference vừa lưu qua
+`buildPersonalizedJobsUrl` (page-local model, có unit test): id vị trí chuyên
+môn → `cat`, vị trí tự nhập → `search`, tỉnh/thành đầu tiên → `locations` +
+path đẹp `/viec-lam/tai/<slug>` (slugify bỏ dấu, bỏ tiền tố Thành phố/Tỉnh).
+Cả hai màn là UI cục bộ của page onboarding (`pages/main/onboarding/ui`),
+điều phối bằng state `phase` trong `OnboardUserSetting`; nút "Tôi sẽ hoàn
+thiện sau" vẫn về trang chủ như cũ. Verify: lint + architecture + 178 unit
+test + build pass; chạy tay full flow trên browser desktop + mobile với tài
+khoản dev (`candidate-dev@demo.local`): chọn 3 vị trí IT, nhập "nhân viên máy
+tính", Đà Nẵng + Hà Nội → redirect đúng
+`/viec-lam/tai/da-nang?cat=…&search=nhân+viên+máy+tính&locations=…`, thanh
+tìm kiếm hiện đủ 3 bộ lọc, sidebar CNTT indeterminate 3/7.
+
+</details>
+
+<details>
 <summary><b>1.25</b> — Cookie consent và job view tracking</summary>
 
 Hoàn tất theo hai lát cắt độc lập. `apps/privacy` là nguồn sự thật cho consent:
@@ -594,4 +619,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-17 (CVB-8 — tối ưu UX canvas theo khảo sát trực tiếp TopCV builder, 2 đợt. Đợt 1: toolbar section thu gọn nằm trong hàng tiêu đề, toolbar item chuyển xuống cạnh dưới-phải nên không còn che tiêu đề/nội dung đang gõ; mỗi lúc chỉ một tầng chrome hiển thị và chrome ẩn khi focus contenteditable (CSS `:has`, hover chủ động vẫn hiện lại để thao tác ngay khi đang gõ); nút Xóa có nhãn + màu ngữ nghĩa, bỏ nút xóa nguy hiểm khỏi toolbar định dạng InlineText; thêm "Ảnh đại diện" mặc định vào đầu cột phụ (fallback `header→sidebar` + `insertAtStart` trong registry); thêm mục tự cuộn tới và focus ô đầu tiên; summary bỏ ô "Tên" thừa và có placeholder gợi ý; placeholder ngày dạng ví dụ `Từ (vd: 2020-01)`; nhãn vùng Cột chính/Cột phụ; sửa bug antd `.ant-btn` đè Tailwind `absolute` khiến nút "+ Thêm nội dung" nằm trong flow làm section editor cao hơn bản in. Đợt 2: nút "+ Thêm" chèn item ngay sau item hiện tại (`moveItemToIndexInLayout` trong cùng một undo step); editor mức độ kỹ năng 5 nấc cùng hàng với tên (khớp preview level bar); DndContext nâng lên cấp editor để kéo mục mới từ panel Thêm mục thả thẳng vào vị trí mong muốn trên canvas (id `new:<key>`); panel Bố cục thành sơ đồ mini-map kéo-thả (id `mini-section:`/`mini-region:`) di chuyển mục giữa cột, click để đi tới mục; vùng Mô tả rich text luôn hiển thị với placeholder theo loại mục — fix lỗ hổng item mới không thể nhập mô tả; toolbar định dạng (InlineText + RichTextArea) neo góc phải phía trên item/section thay vì ngay trên field nên không còn đè lên dòng muốn click kế tiếp; chuẩn hóa DOM rich text sau blur để placeholder quay lại sau khi xóa hết chữ; header editor khớp bản in — danh sách liên hệ dùng chung grid `repeat(auto-fit, minmax(13rem,1fr))` với `.cv-document-preview__contact` (trước đây `.cv-contact-list` không có CSS nên 5 trường xếp dọc, header editor cao gấp đôi Xem trước), khoảng cách name/headline/contact đồng bộ `mb-6 pl-4 mt-1 mt-2`. Verify: lint + architecture + 54 Vitest + build + 22 Playwright smoke desktop/mobile pass; kéo-thả panel→canvas và mini-map đã kiểm chứng trực tiếp trên browser. HOME-CV giữ nguyên tiến độ)
+Cập nhật lần cuối: 2026-07-18 (1.24b — kết thúc onboarding kiểu TopCV: personalizing → ready → redirect /viec-lam với bộ lọc từ preference. CVB-8 — tối ưu UX canvas theo khảo sát trực tiếp TopCV builder, 2 đợt. Đợt 1: toolbar section thu gọn nằm trong hàng tiêu đề, toolbar item chuyển xuống cạnh dưới-phải nên không còn che tiêu đề/nội dung đang gõ; mỗi lúc chỉ một tầng chrome hiển thị và chrome ẩn khi focus contenteditable (CSS `:has`, hover chủ động vẫn hiện lại để thao tác ngay khi đang gõ); nút Xóa có nhãn + màu ngữ nghĩa, bỏ nút xóa nguy hiểm khỏi toolbar định dạng InlineText; thêm "Ảnh đại diện" mặc định vào đầu cột phụ (fallback `header→sidebar` + `insertAtStart` trong registry); thêm mục tự cuộn tới và focus ô đầu tiên; summary bỏ ô "Tên" thừa và có placeholder gợi ý; placeholder ngày dạng ví dụ `Từ (vd: 2020-01)`; nhãn vùng Cột chính/Cột phụ; sửa bug antd `.ant-btn` đè Tailwind `absolute` khiến nút "+ Thêm nội dung" nằm trong flow làm section editor cao hơn bản in. Đợt 2: nút "+ Thêm" chèn item ngay sau item hiện tại (`moveItemToIndexInLayout` trong cùng một undo step); editor mức độ kỹ năng 5 nấc cùng hàng với tên (khớp preview level bar); DndContext nâng lên cấp editor để kéo mục mới từ panel Thêm mục thả thẳng vào vị trí mong muốn trên canvas (id `new:<key>`); panel Bố cục thành sơ đồ mini-map kéo-thả (id `mini-section:`/`mini-region:`) di chuyển mục giữa cột, click để đi tới mục; vùng Mô tả rich text luôn hiển thị với placeholder theo loại mục — fix lỗ hổng item mới không thể nhập mô tả; toolbar định dạng (InlineText + RichTextArea) neo góc phải phía trên item/section thay vì ngay trên field nên không còn đè lên dòng muốn click kế tiếp; chuẩn hóa DOM rich text sau blur để placeholder quay lại sau khi xóa hết chữ; header editor khớp bản in — danh sách liên hệ dùng chung grid `repeat(auto-fit, minmax(13rem,1fr))` với `.cv-document-preview__contact` (trước đây `.cv-contact-list` không có CSS nên 5 trường xếp dọc, header editor cao gấp đôi Xem trước), khoảng cách name/headline/contact đồng bộ `mb-6 pl-4 mt-1 mt-2`. Verify: lint + architecture + 54 Vitest + build + 22 Playwright smoke desktop/mobile pass; kéo-thả panel→canvas và mini-map đã kiểm chứng trực tiếp trên browser. HOME-CV giữ nguyên tiến độ)

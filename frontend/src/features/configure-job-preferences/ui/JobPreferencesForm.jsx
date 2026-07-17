@@ -110,9 +110,10 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
           ...preferenceValues,
           desired_position_other: (values.desired_position_other || '').trim(),
           desired_salary_vnd: values.desired_salary_vnd ?? null,
-          // The consent control is intentionally hidden after it is granted,
+          // These consent controls are intentionally hidden after being granted,
           // but the API still requires the boolean on every replacement PUT.
           ai_recommendation_consent: values.ai_recommendation_consent ?? Boolean(preference?.ai_recommendation_consent),
+          recruiter_visibility_consent: values.recruiter_visibility_consent ?? Boolean(preference?.recruiter_visibility_consent),
         }),
         variant === 'settings' ? onProfileSaved?.({ gender }) : null,
       ])
@@ -271,9 +272,15 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
             <Checkbox>Đồng ý để ProCV gợi ý việc làm dựa trên CV và hoạt động tìm việc của tôi.</Checkbox>
           </Form.Item>
         )}
-        <Form.Item name="recruiter_visibility_consent" valuePropName="checked" className="!mb-0">
-          <Checkbox>Đồng ý để ProCV gửi thông tin liên quan đến việc làm, sự kiện nghề nghiệp.</Checkbox>
-        </Form.Item>
+        {preference?.recruiter_visibility_consent ? (
+          <Form.Item name="recruiter_visibility_consent" hidden>
+            <Input />
+          </Form.Item>
+        ) : (
+          <Form.Item name="recruiter_visibility_consent" valuePropName="checked" className="!mb-0">
+            <Checkbox>Đồng ý để ProCV gửi thông tin liên quan đến việc làm, sự kiện nghề nghiệp.</Checkbox>
+          </Form.Item>
+        )}
       </div>
 
       {isOnboarding && <p className="mt-4 text-xs font-medium text-slate-500">(*) Thông tin bắt buộc</p>}
