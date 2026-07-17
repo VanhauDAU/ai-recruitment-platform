@@ -233,6 +233,9 @@ describe('CV draft editor', () => {
     expect(mocks.saveCvVersion).not.toHaveBeenCalled()
   })
 
+  // This exercises the full canvas plus Ant Design's confirmation portal. On
+  // constrained CI runners, rendering and committing that portal can exceed
+  // Vitest's default 5-second budget even though the workflow is deterministic.
   it('warns about incomplete optional sections and commits an immutable version after confirmation', async () => {
     const saveableDraft = draft()
     saveableDraft.content_json.personal_info.email = 'an@example.com'
@@ -251,7 +254,7 @@ describe('CV draft editor', () => {
 
     expect(await screen.findByText('Lưu CV thành công')).toBeInTheDocument()
     expect(mocks.saveCvVersion).toHaveBeenCalledWith('cv_1', 0)
-  })
+  }, 15_000)
 
   it('requires a title for an unnamed CV before continuing the save flow', async () => {
     const saveableDraft = draft()
@@ -306,6 +309,9 @@ describe('CV draft editor', () => {
     expect(screen.getByLabelText('Xem trước CV classic_single_column_v1 trang 1')).toHaveStyle({ fontFamily: 'Arial, Helvetica, sans-serif' })
   })
 
+  // This mounts the complete sortable canvas and waits for the autosave cycle;
+  // keep its wider budget local to this integration test rather than slowing
+  // the unit-test suite globally.
   it('sets a skill level from the canvas notches and clears it on a second click', async () => {
     renderWysiwygEditor()
     await screen.findByLabelText('CV A4 có thể chỉnh sửa')
@@ -319,7 +325,7 @@ describe('CV draft editor', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' }))
     expect(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'false')
-  })
+  }, 15_000)
 
   it('inserts the new entry right below the anchor entry from the item toolbar', async () => {
     renderWysiwygEditor()
