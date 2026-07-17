@@ -5,7 +5,7 @@ import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-sett
 import CvDraftEditor from './CvDraftEditor'
 
 const mocks = vi.hoisted(() => ({
-  getCv: vi.fn(), getCvDraft: vi.fn(), updateCvDraft: vi.fn(), saveCvVersion: vi.fn(), publishCvVersion: vi.fn(), switchCvTemplate: vi.fn(),
+  getCv: vi.fn(), getCvDraft: vi.fn(), updateCvDraft: vi.fn(), saveCvVersion: vi.fn(), publishCvVersion: vi.fn(), switchCvTemplate: vi.fn(), renameCv: vi.fn(),
 }))
 const templateMocks = vi.hoisted(() => ({ getCvTemplates: vi.fn(), getCvBackgrounds: vi.fn(), getCvSampleContents: vi.fn() }))
 
@@ -17,6 +17,7 @@ vi.mock('@/entities/cv', async (importOriginal) => ({
   saveCvVersion: mocks.saveCvVersion,
   publishCvVersion: mocks.publishCvVersion,
   switchCvTemplate: mocks.switchCvTemplate,
+  renameCv: mocks.renameCv,
 }))
 
 vi.mock('@/entities/cv-template', () => ({
@@ -47,8 +48,8 @@ function renderLegacyEditor() {
   return render(<SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: false } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider>)
 }
 
-function renderWysiwygEditor() {
-  return render(<App><SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" /></SiteSettingsContext.Provider></App>)
+function renderWysiwygEditor(props = {}) {
+  return render(<App><SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" {...props} /></SiteSettingsContext.Provider></App>)
 }
 
 describe('CV draft editor', () => {
@@ -68,6 +69,7 @@ describe('CV draft editor', () => {
     mocks.updateCvDraft.mockResolvedValue({ lock_version: 1 })
     mocks.saveCvVersion.mockResolvedValue({ public_id: 'version_2', version_number: 2 })
     mocks.publishCvVersion.mockResolvedValue({ public_id: 'version_3', version_number: 3, version_kind: 'published' })
+    mocks.renameCv.mockImplementation(async (_publicId, title) => ({ title, template_public_id: 'tpl_single', template_renderer_key: 'classic_single_column_v1' }))
     templateMocks.getCvTemplates.mockResolvedValue({ results: [{ public_id: 'tpl_single', display_name: 'Một cột' }, { public_id: 'tpl_two', display_name: 'Hai cột' }] })
     templateMocks.getCvBackgrounds.mockResolvedValue([])
     templateMocks.getCvSampleContents.mockResolvedValue([])
@@ -260,6 +262,29 @@ describe('CV draft editor', () => {
 
     expect(await screen.findByText('Lưu CV thành công')).toBeInTheDocument()
     expect(mocks.saveCvVersion).not.toHaveBeenCalled()
+  })
+
+  it('requires a title for an unnamed CV before continuing the save flow', async () => {
+    const saveableDraft = draft()
+    saveableDraft.content_json.personal_info.email = 'an@example.com'
+    saveableDraft.content_json.personal_info.phone = '0909123456'
+    saveableDraft.content_json.personal_info.address = 'Hà Nội'
+    mocks.getCv.mockResolvedValueOnce({
+      title: 'CV chưa đặt tên', template_public_id: 'tpl_single', template_renderer_key: 'classic_single_column_v1',
+      template_capabilities: { layout: { section_drag: true } },
+    })
+    mocks.getCvDraft.mockResolvedValueOnce(saveableDraft)
+    renderWysiwygEditor()
+
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu CV' }))
+    expect(await screen.findByRole('dialog', { name: 'Đặt tên cho CV' })).toBeInTheDocument()
+    expect(screen.getByText(/Vị trí ứng tuyển, Mục tiêu nghề nghiệp, Học vấn, Kinh nghiệm việc làm/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Tên CV mới'), { target: { value: 'CV Marketing - Nguyễn An' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu và tiếp tục' }))
+
+    await waitFor(() => expect(mocks.renameCv).toHaveBeenCalledWith('cv_1', 'CV Marketing - Nguyễn An'))
+    expect(await screen.findByText('Lưu CV thành công')).toBeInTheDocument()
   })
 
   it('resets CV headings and empty field placeholders to the selected locale without changing user content', async () => {

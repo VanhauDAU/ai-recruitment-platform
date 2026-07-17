@@ -1,5 +1,5 @@
 import { CloseOutlined, HolderOutlined } from '@ant-design/icons'
-import { Alert, App, Drawer, Modal, Skeleton } from 'antd'
+import { Alert, App, Drawer, Input, Modal, Skeleton } from 'antd'
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useEffect, useState } from 'react'
@@ -89,7 +89,7 @@ function ToolPanel({ title, children, onClose, fullHeight = false }) {
   </section>
 }
 
-function CvWysiwygDraftEditor({ publicId }) {
+function CvWysiwygDraftEditor({ publicId, onSaved }) {
   const { message, modal } = App.useApp()
   const editor = useCvDraftEditor(publicId)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -298,9 +298,54 @@ function CvWysiwygDraftEditor({ publicId }) {
   }
   const persistCv = async () => {
     const saved = await editor.saveDraft()
-    if (saved) message.success('Lưu CV thành công')
-    else message.error('Không thể lưu CV. Vui lòng thử lại.')
+    if (saved) {
+      if (onSaved) onSaved({ cv: editor.cv, document: editor.document })
+      else message.success('Lưu CV thành công')
+    } else message.error('Không thể lưu CV. Vui lòng thử lại.')
     return saved
+  }
+  const confirmIncompleteCv = (snapshot) => {
+    const incompleteSections = incompleteCvSections(snapshot)
+    if (!incompleteSections.length) {
+      persistCv()
+      return
+    }
+    modal.confirm({
+      title: 'Lưu ý',
+      content: <p>Một số mục trong CV của bạn chưa có nội dung: <strong>{incompleteSections.join(', ')}</strong>. Bạn nhớ hoàn thiện đầy đủ trước khi ứng tuyển nhé. Khi xem hoặc tải xuống, các mục trống sẽ tự động được ẩn đi để CV luôn gọn gàng và đẹp mắt.</p>,
+      cancelText: 'Hoàn thiện tiếp',
+      okText: 'Lưu CV, tôi sẽ hoàn thiện sau',
+      onOk: persistCv,
+    })
+  }
+  const hasUntitledCv = () => {
+    const title = editor.cv?.title?.trim().toLocaleLowerCase('vi')
+    return !title || title === 'cv chưa đặt tên'
+  }
+  const requestCvTitle = (snapshot) => {
+    let title = ''
+    const incompleteSections = incompleteCvSections(snapshot)
+    modal.confirm({
+      title: 'Đặt tên cho CV',
+      content: <div><p className="mb-3 text-slate-600">Tên CV giúp bạn dễ nhận biết khi quản lý và ứng tuyển.</p><Input autoFocus aria-label="Tên CV mới" placeholder="Ví dụ: CV Marketing - Nguyễn An" maxLength={120} onChange={(event) => { title = event.target.value }} />{incompleteSections.length > 0 && <p className="mt-4 text-amber-700">Một số mục chưa có nội dung: <strong>{incompleteSections.join(', ')}</strong>. Các mục trống sẽ tự động được ẩn khi xem hoặc tải CV.</p>}</div>,
+      cancelText: 'Quay lại',
+      okText: 'Lưu và tiếp tục',
+      onOk: async () => {
+        const normalizedTitle = title.trim()
+        if (!normalizedTitle) {
+          message.warning('Vui lòng nhập tên CV.')
+          throw new Error('cv_title_required')
+        }
+        try {
+          await editor.rename(normalizedTitle)
+          await persistCv()
+        } catch (renameError) {
+          if (renameError?.message === 'cv_title_required') throw renameError
+          message.error('Không thể cập nhật tên CV. Vui lòng thử lại.')
+          throw renameError
+        }
+      },
+    })
   }
   const saveCv = () => {
     const snapshot = editor.flushPendingEdits() || editor.document
@@ -328,18 +373,11 @@ function CvWysiwygDraftEditor({ publicId }) {
       })
       return
     }
-    const incompleteSections = incompleteCvSections(snapshot)
-    if (!incompleteSections.length) {
-      persistCv()
+    if (hasUntitledCv()) {
+      requestCvTitle(snapshot)
       return
     }
-    modal.confirm({
-      title: 'Lưu ý',
-      content: <p>Một số mục trong CV của bạn chưa có nội dung: <strong>{incompleteSections.join(', ')}</strong>. Bạn nhớ hoàn thiện đầy đủ trước khi ứng tuyển nhé. Khi xem hoặc tải xuống, các mục trống sẽ tự động được ẩn đi để CV luôn gọn gàng và đẹp mắt.</p>,
-      cancelText: 'Hoàn thiện tiếp',
-      okText: 'Lưu CV, tôi sẽ hoàn thiện sau',
-      onOk: persistCv,
-    })
+    confirmIncompleteCv(snapshot)
   }
 
   return <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragStart={({ active }) => setActiveDrag(active.id)} onDragCancel={() => setActiveDrag(null)} onDragEnd={handleDragEnd}><div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#eef0f3]">
@@ -374,9 +412,9 @@ function CvWysiwygDraftEditor({ publicId }) {
   </div><DragOverlay dropAnimation={null}>{dragPreview && <div className="flex max-w-64 items-center gap-2 rounded-lg border-2 border-emerald-500 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-xl"><HolderOutlined className="text-emerald-600" /><span className="truncate">{dragPreview}</span></div>}</DragOverlay></DndContext>
 }
 
-export default function CvDraftEditor({ publicId }) {
+export default function CvDraftEditor({ publicId, onSaved }) {
   const { settings } = useSiteSettings()
   return settings.cv_builder_wysiwyg_enabled === false
     ? <CvLegacyDraftEditor publicId={publicId} />
-    : <CvWysiwygDraftEditor publicId={publicId} />
+    : <CvWysiwygDraftEditor publicId={publicId} onSaved={onSaved} />
 }

@@ -119,7 +119,10 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await page.getByRole('button', { name: 'Lưu CV' }).click()
   await expect(page.getByRole('dialog', { name: 'Lưu ý' })).toBeVisible()
   await page.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }).click()
-  await expect(page.getByText('Lưu CV thành công')).toBeVisible()
+  await expect(page).toHaveURL('/save-cv-success/cv_1?type=create')
+  await expect(page.getByRole('heading', { name: 'Lưu CV thành công!' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'CV V2' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Việc làm phù hợp với CV của bạn' })).toBeVisible()
   expect(saveVersionRequested).toBe(false)
 })
 
