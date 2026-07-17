@@ -1,5 +1,7 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { CloseOutlined, HolderOutlined } from '@ant-design/icons'
 import { Alert, App, Drawer, Modal, Skeleton } from 'antd'
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useEffect, useState } from 'react'
 import {
   addItem,
@@ -8,8 +10,10 @@ import {
   changeContentLocale,
   CvDocumentPreview,
   getEditorCapabilities,
+  getOrderedItems,
   getOrderedSections,
   getSectionDefinition,
+  getSectionDisplayName,
   moveItemInLayout,
   moveItemToIndexInLayout,
   moveSectionToRegion,
@@ -43,6 +47,14 @@ import CanvasZoomControls from './canvas/CanvasZoomControls'
 import EditorSaveState from './EditorSaveState'
 import TemplateSwitcher from './TemplateSwitcher'
 import ToolSidebar from './ToolSidebar'
+
+// DnD ids share one namespace across the canvas ("section:", "item:",
+// "region:"), the layout mini-map ("mini-section:", "mini-region:") and the
+// add-section panel ("new:<section_key>").
+function parseDndId(value) {
+  const [type, sectionId, itemId] = String(value).split(':')
+  return { type, sectionId, itemId }
+}
 
 function hasCvValue(value) {
   if (typeof value === 'string') return Boolean(value.trim())
@@ -89,6 +101,12 @@ function CvWysiwygDraftEditor({ publicId }) {
   const [previewDocument, setPreviewDocument] = useState(null)
   const [selection, setSelection] = useState(null)
   const [pendingFocus, setPendingFocus] = useState(null)
+  const [activeDrag, setActiveDrag] = useState(null)
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   useEffect(() => {
     if (!pendingFocus) return
@@ -134,11 +152,17 @@ function CvWysiwygDraftEditor({ publicId }) {
   }
   const updateInlineStyle = (styleId, marks) => changeContent((current) => updateInlineTextStyle(current, styleId, marks), 'Định dạng văn bản', { coalesceKey: `inline-style:${styleId}` })
   const selectContent = (nextSelection) => setSelection(nextSelection)
-  const addCollectionItem = (instanceId) => {
+  const addCollectionItem = (instanceId, afterItemId = null) => {
     let itemId = null
-    updateCollectionContent(instanceId, (current) => {
-      const next = addItem(current, instanceId)
-      itemId = next.sections.find((section) => section.instance_id === instanceId)?.items.at(-1)?.item_id || null
+    changeDocument((document) => {
+      const nextContent = addItem(document.content_json, instanceId)
+      itemId = nextContent.sections.find((section) => section.instance_id === instanceId)?.items.at(-1)?.item_id || null
+      let next = syncItemOrder({ ...document, content_json: nextContent }, instanceId)
+      if (afterItemId && itemId) {
+        const section = next.content_json.sections.find((candidate) => candidate.instance_id === instanceId)
+        const anchorIndex = getOrderedItems(next, section).findIndex((item) => item.item_id === afterItemId)
+        if (anchorIndex >= 0) next = moveItemToIndexInLayout(next, instanceId, itemId, anchorIndex + 1)
+      }
       return next
     }, 'Thêm item')
     if (itemId) {
@@ -158,7 +182,7 @@ function CvWysiwygDraftEditor({ publicId }) {
     else modal.confirm({ title: 'Xóa nội dung này?', content: 'Dữ liệu trong nội dung sẽ bị xóa. Bạn có thể dùng Hoàn tác ngay sau đó nếu cần.', okText: 'Xóa', cancelText: 'Giữ lại', okButtonProps: { danger: true }, onOk: remove })
   }
 
-  const addSectionAndSelect = (sectionKey, title) => {
+  const addSectionAndSelect = (sectionKey, title, placement = null) => {
     let instanceId = null
     let firstItemId = null
     const personalInfoBacked = getSectionDefinition(sectionKey)?.personalInfoBacked
@@ -170,6 +194,12 @@ function CvWysiwygDraftEditor({ publicId }) {
       instanceId = added.instance_id
       firstItemId = added.items?.[0]?.item_id || null
       if (title) next = renameSection(next, instanceId, title)
+      if (placement?.regionId) {
+        // Dropped straight onto the canvas or the layout mini-map.
+        const region = next.layout_json.regions.find((candidate) => candidate.id === placement.regionId)
+        if (region) next = moveSectionToRegion(next, instanceId, placement.regionId, placement.index ?? region.section_instance_ids.length)
+        return next
+      }
       // Personal-info blocks (avatar) keep their smart default position instead
       // of following the current selection down the page.
       const activeRegion = personalInfoBacked ? null : next.layout_json.regions.find((region) => region.section_instance_ids.includes(selection?.sectionId))
@@ -183,6 +213,44 @@ function CvWysiwygDraftEditor({ publicId }) {
     selectContent({ sectionId: instanceId, itemId: firstItemId })
     setPendingFocus({ sectionId: instanceId, itemId: firstItemId })
   }
+
+  // Where a dragged block should land: over a region drops at its end, over a
+  // section (canvas or mini-map) drops at that section's slot.
+  const dropTarget = (target) => {
+    if (['region', 'mini-region'].includes(target.type)) {
+      const region = regions.find((candidate) => candidate.id === target.sectionId)
+      return region ? { regionId: region.id, index: region.section_instance_ids.length } : null
+    }
+    const region = regions.find((candidate) => (candidate.section_instance_ids || []).includes(target.sectionId))
+    return region ? { regionId: region.id, index: region.section_instance_ids.indexOf(target.sectionId) } : null
+  }
+
+  const handleDragEnd = ({ active, over }) => {
+    setActiveDrag(null)
+    if (!over || active.id === over.id) return
+    const source = parseDndId(active.id)
+    const target = parseDndId(over.id)
+    if (source.type === 'new') {
+      const placement = dropTarget(target)
+      if (placement) addSectionAndSelect(source.sectionId, undefined, placement)
+    } else if (['section', 'mini-section'].includes(source.type)) {
+      const placement = dropTarget(target)
+      if (placement) moveSectionToTargetRegion(source.sectionId, placement.regionId, placement.index)
+    } else if (source.type === 'item' && target.type === 'item' && source.sectionId === target.sectionId) {
+      const section = content.sections.find((candidate) => candidate.instance_id === source.sectionId)
+      const targetIndex = getOrderedItems(editor.document, section).findIndex((item) => item.item_id === target.itemId)
+      changeDocument((document) => moveItemToIndexInLayout(document, source.sectionId, source.itemId, targetIndex), 'Kéo item')
+    }
+  }
+
+  const dragPreview = activeDrag && (() => {
+    const source = parseDndId(activeDrag)
+    if (source.type === 'new') return getSectionDisplayName(source.sectionId, content.locale)
+    const section = content.sections.find((candidate) => candidate.instance_id === source.sectionId)
+    if (['section', 'mini-section'].includes(source.type)) return section?.title || getSectionDisplayName(section?.section_key, content.locale) || 'Mục CV'
+    const item = section?.items.find((candidate) => candidate.item_id === source.itemId)
+    return item?.role || item?.name || item?.title || item?.value || 'Nội dung CV'
+  })()
 
   const requestRemoveSection = (instanceId) => {
     const section = content.sections.find((candidate) => candidate.instance_id === instanceId)
@@ -208,13 +276,15 @@ function CvWysiwygDraftEditor({ publicId }) {
     }
   }
 
+  const locateSection = (instanceId) => {
+    globalThis.document.getElementById(`cv-section-${instanceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    selectContent({ sectionId: instanceId, itemId: null })
+  }
+
   const panelByTool = {
     design: <DesignFontPanel editor={editor} onStyle={changeStyle} onLocale={(locale) => changeContent((current) => changeContentLocale(current, locale), 'Đổi ngôn ngữ CV')} />,
-    sections: <AddSectionsPanel locale={content.locale} availableKeys={availableSectionKeys(content)} sections={orderedSections} onAdd={(sectionKey) => addSectionAndSelect(sectionKey)} onAddCustom={(title) => addSectionAndSelect('custom', title)} onLocate={(instanceId) => {
-      globalThis.document.getElementById(`cv-section-${instanceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      selectContent({ sectionId: instanceId, itemId: null })
-    }} />,
-    layout: <LayoutPanel regions={regions} capabilities={capabilities} sections={orderedSections} pageMargin={Number(editor.document.layout_json.page?.margin_mm) || 8} onPageMarginChange={(margin_mm) => changeDocument((document) => ({ ...document, layout_json: { ...document.layout_json, page: { ...document.layout_json.page, margin_mm } } }), 'Đổi lề trang', { coalesceKey: 'page-margin' })} onResize={(regionId, width) => changeDocument((document) => resizeRegionPair(document, regionId, width, capabilities), 'Đổi tỷ lệ cột')} />,
+    sections: <AddSectionsPanel locale={content.locale} availableKeys={availableSectionKeys(content)} sections={orderedSections} onAdd={(sectionKey) => addSectionAndSelect(sectionKey)} onAddCustom={(title) => addSectionAndSelect('custom', title)} onLocate={locateSection} />,
+    layout: <LayoutPanel regions={regions} capabilities={capabilities} sections={orderedSections} onLocate={locateSection} pageMargin={Number(editor.document.layout_json.page?.margin_mm) || 8} onPageMarginChange={(margin_mm) => changeDocument((document) => ({ ...document, layout_json: { ...document.layout_json, page: { ...document.layout_json.page, margin_mm } } }), 'Đổi lề trang', { coalesceKey: 'page-margin' })} onResize={(regionId, width) => changeDocument((document) => resizeRegionPair(document, regionId, width, capabilities), 'Đổi tỷ lệ cột')} />,
     templates: <TemplateSwitcher currentTemplatePublicId={editor.cv.template_public_id} locale={content.locale} currentSections={content.sections} disabled={isBlocked || editor.phase === 'saving'} onSwitch={editor.switchTemplate} />,
     suggest: <AiSuggestPanel />,
     samples: <SampleLibraryPanel locale={content.locale} disabled={isBlocked || editor.phase === 'saving'} onApply={editor.applySample} />,
@@ -272,7 +342,7 @@ function CvWysiwygDraftEditor({ publicId }) {
     })
   }
 
-  return <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#eef0f3]">
+  return <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragStart={({ active }) => setActiveDrag(active.id)} onDragCancel={() => setActiveDrag(null)} onDragEnd={handleDragEnd}><div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#eef0f3]">
     <BuilderTopBar editor={editor} onSave={saveCv} onPreview={() => { setPreviewDocument(editor.flushPendingEdits() || editor.document); setPreviewOpen(true) }} />
     {['failed', 'conflict'].includes(editor.phase) && <div className="z-30 border-b border-slate-200 bg-white px-4 py-2"><EditorSaveState phase={editor.phase} error={editor.error} savedAt={editor.savedAt} onRetry={editor.retryAutosave} onReload={editor.reloadDraft} /></div>}
     <div className="flex min-h-0 flex-1 gap-3 px-3 pb-3">
@@ -282,8 +352,6 @@ function CvWysiwygDraftEditor({ publicId }) {
         <CvEditableCanvas
           editor={editor}
           zoom={builderUi.zoom}
-          onMoveSection={moveSectionToTargetRegion}
-          onMoveItem={(instanceId, itemId, targetIndex) => changeDocument((document) => moveItemToIndexInLayout(document, instanceId, itemId, targetIndex), 'Kéo item')}
           onMoveItemDirection={(instanceId, itemId, direction) => changeDocument((document) => moveItemInLayout(document, instanceId, itemId, direction), 'Đổi thứ tự item')}
           onMoveSectionDirection={(instanceId, direction) => changeDocument((document) => moveSection(document, instanceId, direction), 'Đổi thứ tự section')}
           onRenameSection={(instanceId, title) => changeDocument((document) => renameSection(document, instanceId, title), 'Đổi tiêu đề section', { coalesceKey: `section-title:${instanceId}` })}
@@ -303,7 +371,7 @@ function CvWysiwygDraftEditor({ publicId }) {
     {!isDesktop && <div className="fixed inset-x-0 bottom-0 z-40"><ToolSidebar mobile activeTool={builderUi.activeTool} onChange={chooseTool} /></div>}
     <Drawer placement="bottom" size="large" title={activeTitle} open={!isDesktop && mobilePanelOpen} onClose={() => setMobilePanelOpen(false)} styles={{ body: { padding: 0 } }}>{activePanel}</Drawer>
     <Modal open={previewOpen} onCancel={() => setPreviewOpen(false)} afterClose={() => setPreviewDocument(null)} footer={null} width="min(96vw, 1000px)" title="Xem trước CV" styles={{ body: { maxHeight: '82vh', overflow: 'auto', background: '#e2e8f0', padding: 24 } }}><CvDocumentPreview document={previewDocument || editor.document} rendererKey={editor.cv.template_renderer_key || editor.cv.template_version} assets={editor.assets} /></Modal>
-  </div>
+  </div><DragOverlay dropAnimation={null}>{dragPreview && <div className="flex max-w-64 items-center gap-2 rounded-lg border-2 border-emerald-500 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-xl"><HolderOutlined className="text-emerald-600" /><span className="truncate">{dragPreview}</span></div>}</DragOverlay></DndContext>
 }
 
 export default function CvDraftEditor({ publicId }) {

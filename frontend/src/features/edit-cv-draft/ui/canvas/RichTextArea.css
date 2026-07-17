@@ -3,7 +3,7 @@
 }
 
 .cv-rich-text:empty::before {
-  content: 'Nhập mô tả';
+  content: attr(data-placeholder);
   color: #94a3b8;
   pointer-events: none;
 }

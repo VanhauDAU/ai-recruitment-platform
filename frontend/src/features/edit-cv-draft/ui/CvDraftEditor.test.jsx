@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
@@ -35,7 +35,7 @@ function draft() {
       sections: [
         { instance_id: 'summary_1', section_key: 'summary', title: 'Mục tiêu nghề nghiệp', enabled: true, items: [{ item_id: 'summary_item_1', value: '' }] },
         { instance_id: 'experience_1', section_key: 'experience', title: 'Kinh nghiệm', enabled: true, items: [{ item_id: 'experience_item_1', role: '', company: '', start_date: null, end_date: null, description: { format: 'rich_text_v1', content: [] } }] },
-        { instance_id: 'skills_1', section_key: 'skills', title: 'Kỹ năng', enabled: true, items: [{ item_id: 'skills_item_1', name: '' }] },
+        { instance_id: 'skills_1', section_key: 'skills', title: 'Kỹ năng', enabled: true, items: [{ item_id: 'skills_item_1', name: '', level: '' }] },
       ],
     },
     layout_json: { schema_version: 1, page: { size: 'A4', margin_mm: 12 }, regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1', 'experience_1', 'skills_1'] }] },
@@ -290,5 +290,33 @@ describe('CV draft editor', () => {
     fireEvent.click(await screen.findByText('Arial'))
 
     expect(screen.getByLabelText('Xem trước CV classic_single_column_v1 trang 1')).toHaveStyle({ fontFamily: 'Arial, Helvetica, sans-serif' })
+  })
+
+  it('sets a skill level from the canvas notches and clears it on a second click', async () => {
+    renderWysiwygEditor()
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' }))
+    expect(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Mức độ 4 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'false')
+    await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
+      content_json: expect.objectContaining({ sections: expect.arrayContaining([expect.objectContaining({ section_key: 'skills', items: [expect.objectContaining({ level: 3 })] })]) }),
+    }), 0, expect.any(String)), { timeout: 1500 })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' }))
+    expect(screen.getByRole('button', { name: 'Mức độ 3 trên 5 skills_item_1' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('inserts the new entry right below the anchor entry from the item toolbar', async () => {
+    renderWysiwygEditor()
+    await screen.findByLabelText('CV A4 có thể chỉnh sửa')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm nội dung sau experience_item_1' }))
+    expect(screen.getByLabelText('role experience_item_2')).toBeInTheDocument()
+
+    // A second "add right after item 1" must land between item 1 and item 2.
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm nội dung sau experience_item_1' }))
+    expect(within(screen.getByLabelText('Nội dung 2 của Kinh nghiệm')).getByLabelText('role experience_item_3')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Nội dung 3 của Kinh nghiệm')).getByLabelText('role experience_item_2')).toBeInTheDocument()
   })
 })

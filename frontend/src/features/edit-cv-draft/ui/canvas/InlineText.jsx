@@ -46,13 +46,16 @@ export default function InlineText({ value = '', placeholder, ariaLabel, classNa
   }
 
   const positionToolbar = useCallback(() => {
-    const rect = rootRef.current?.getBoundingClientRect()
+    // Anchor above the top-right of the surrounding entry (TopCV-style) so the
+    // toolbar never covers the left-aligned line the user wants to click next.
+    const anchor = rootRef.current?.closest('.cv-editor-item, .cv-editor-section, .cv-editor-header') || rootRef.current
+    const rect = anchor?.getBoundingClientRect()
     if (!rect) return
     const viewportWidth = globalThis.innerWidth || 1024
     const toolbarWidth = Math.min(360, viewportWidth - 24)
-    const left = Math.max(12, Math.min(rect.left, viewportWidth - toolbarWidth - 12))
+    const right = Math.max(12, Math.min(viewportWidth - rect.right, viewportWidth - toolbarWidth - 12))
     const openBelow = rect.top < 64
-    setToolbarPosition({ left, top: openBelow ? rect.bottom + 6 : rect.top - 6, openBelow })
+    setToolbarPosition({ right, top: openBelow ? rect.bottom + 6 : rect.top - 6, openBelow })
   }, [])
 
   const closeWhenFocusLeaves = () => {
@@ -86,7 +89,7 @@ export default function InlineText({ value = '', placeholder, ariaLabel, classNa
     textDecoration: marks.underline ? 'underline' : undefined,
   }
 
-  const toolbar = toolbarPosition && globalThis.document && createPortal(<div ref={toolbarRef} role="toolbar" aria-label="Thao tác văn bản ngắn" className="fixed z-[1000] flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-xl" style={{ left: toolbarPosition.left, top: toolbarPosition.top, transform: toolbarPosition.openBelow ? undefined : 'translateY(-100%)' }} onBlurCapture={closeWhenFocusLeaves} onMouseDown={(event) => { if (event.target.closest?.('button')) event.preventDefault() }}>
+  const toolbar = toolbarPosition && globalThis.document && createPortal(<div ref={toolbarRef} role="toolbar" aria-label="Thao tác văn bản ngắn" className="fixed z-[1000] flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-xl" style={{ right: toolbarPosition.right, top: toolbarPosition.top, transform: toolbarPosition.openBelow ? undefined : 'translateY(-100%)' }} onBlurCapture={closeWhenFocusLeaves} onMouseDown={(event) => { if (event.target.closest?.('button')) event.preventDefault() }}>
     <Select aria-label="Font văn bản" size="small" value={marks.font_family || defaultFontFamily} options={FONTS} className="w-28" onChange={(font_family) => updateMarks({ font_family })} />
     <InputNumber aria-label="Cỡ chữ văn bản" size="small" min={8} max={32} value={marks.font_size_pt || 11} className="w-[4.7rem]" onChange={(font_size_pt) => font_size_pt && updateMarks({ font_size_pt })} />
     <ColorPicker aria-label="Màu văn bản" size="small" value={marks.color || '#1F2937'} onOpenChange={(open) => { colorPickerOpenRef.current = open }} onChange={(_, color) => updateMarks({ color: color.toUpperCase() })} />

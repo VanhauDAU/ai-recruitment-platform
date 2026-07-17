@@ -99,7 +99,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await page.getByLabel('Tiêu đề education_1').fill('Đào tạo')
   await page.getByLabel('Tiêu đề education_1').press('Tab')
   await page.locator('#cv-section-education_1').hover()
-  await page.locator('#cv-section-education_1').getByRole('button', { name: 'Thêm nội dung' }).click()
+  await page.locator('#cv-section-education_1').getByRole('button', { name: 'Thêm nội dung', exact: true }).click()
   const secondEducationItem = page.locator('[data-cv-item-id="education_1:education_item_2"]')
   await secondEducationItem.hover()
   await secondEducationItem.getByRole('button', { name: 'Đưa item education_item_2 lên' }).click()

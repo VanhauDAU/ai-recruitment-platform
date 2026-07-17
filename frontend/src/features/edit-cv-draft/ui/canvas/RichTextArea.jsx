@@ -46,7 +46,7 @@ function marksAtSelection(value, offsets, defaults) {
   return common
 }
 
-export default function RichTextArea({ value, ariaLabel, onCommit, registerPendingEdit, defaultFontFamily, defaultFontSizePt = 11, defaultColor = '#1F2937' }) {
+export default function RichTextArea({ value, ariaLabel, placeholder, onCommit, registerPendingEdit, defaultFontFamily, defaultFontSizePt = 11, defaultColor = '#1F2937' }) {
   const rootRef = useRef(null)
   const toolbarRef = useRef(null)
   const selectionRef = useRef(null)
@@ -65,11 +65,15 @@ export default function RichTextArea({ value, ariaLabel, onCommit, registerPendi
   const current = useMemo(() => toRichTextV2(value), [value])
 
   const positionToolbar = useCallback(() => {
-    const rect = rootRef.current?.getBoundingClientRect()
+    // Anchor above the top-right of the whole entry (TopCV-style): the fields
+    // are left-aligned, so a right-aligned toolbar never covers the line the
+    // user wants to click next.
+    const anchor = rootRef.current?.closest('.cv-editor-item, .cv-editor-section, .cv-editor-header') || rootRef.current
+    const rect = anchor?.getBoundingClientRect()
     if (!rect) return
     const viewportWidth = globalThis.innerWidth || 1024
     const toolbarWidth = Math.min(430, viewportWidth - 24)
-    const left = Math.max(12, Math.min(rect.left, viewportWidth - toolbarWidth - 12))
+    const left = Math.max(12, Math.min(rect.right - toolbarWidth, viewportWidth - toolbarWidth - 12))
     const openBelow = rect.top < 72
     setToolbarPosition({ left, top: openBelow ? rect.bottom + 8 : rect.top - 8, openBelow, width: toolbarWidth })
   }, [])
@@ -171,6 +175,9 @@ export default function RichTextArea({ value, ariaLabel, onCommit, registerPendi
       setFocused(false)
       setToolbarPosition(null)
       flush()
+      // Re-render the committed value so leftover empty nodes from deletions
+      // disappear and the :empty placeholder can show again.
+      renderRichText(rootRef.current, domToRichText(rootRef.current))
     })
   }
 
@@ -187,6 +194,6 @@ export default function RichTextArea({ value, ariaLabel, onCommit, registerPendi
 
   return <div className="relative">
     {toolbar}
-    <div ref={rootRef} role="textbox" aria-label={ariaLabel} contentEditable suppressContentEditableWarning className="cv-rich-text min-h-8 rounded-md px-2 py-1 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-300" onFocus={() => { focusedRef.current = true; setFocused(true); positionToolbar(); rememberSelection() }} onMouseUp={rememberSelection} onKeyUp={rememberSelection} onBlur={closeWhenFocusLeavesEditor} onInput={() => { schedule(); rememberSelection() }} onPaste={(event) => { event.preventDefault(); globalThis.document.execCommand('insertText', false, event.clipboardData.getData('text/plain')) }} />
+    <div ref={rootRef} role="textbox" aria-label={ariaLabel} aria-placeholder={placeholder} data-placeholder={placeholder} contentEditable suppressContentEditableWarning className="cv-rich-text min-h-8 rounded-md px-2 py-1 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-300" onFocus={() => { focusedRef.current = true; setFocused(true); positionToolbar(); rememberSelection() }} onMouseUp={rememberSelection} onKeyUp={rememberSelection} onBlur={closeWhenFocusLeavesEditor} onInput={() => { schedule(); rememberSelection() }} onPaste={(event) => { event.preventDefault(); globalThis.document.execCommand('insertText', false, event.clipboardData.getData('text/plain')) }} />
   </div>
 }

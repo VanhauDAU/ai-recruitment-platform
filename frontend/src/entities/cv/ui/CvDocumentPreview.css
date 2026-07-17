@@ -10,7 +10,10 @@
   overflow-wrap: anywhere;
 }
 
-.cv-document-preview__contact {
+/* The editable contact list must flow exactly like the printed one so the
+   editor header keeps the same height as the exported A4 header. */
+.cv-document-preview__contact,
+.cv-contact-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   gap: 0.25rem 0.75rem;
@@ -67,10 +70,12 @@
 }
 
 /* One toolbar at a time: the entry chrome wins over the section chrome, and
-   every chrome yields to the floating format toolbar while the user types. */
+   chrome yields to the floating format toolbar while the user types. A
+   deliberate hover still reveals the chrome — its off-content placement means
+   it never covers the text being edited. */
 .cv-editor-section:has(.cv-editor-item:hover) .cv-section-toolbar,
-.cv-editor-section:has([contenteditable]:focus) .cv-section-toolbar,
-.cv-editor-item:has([contenteditable]:focus) .cv-item-toolbar {
+.cv-editor-section:has([contenteditable]:focus):not(:hover) .cv-section-toolbar,
+.cv-editor-item:has([contenteditable]:focus):not(:hover) .cv-item-toolbar {
   pointer-events: none;
   opacity: 0;
 }

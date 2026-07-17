@@ -1,24 +1,33 @@
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
-import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import { useDroppable } from '@dnd-kit/core'
 import { useEffect, useRef, useState } from 'react'
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { CvDocumentPreview, getCvUiText, getOrderedItems, getRendererContract, getSectionDefinition } from '@/entities/cv'
 import InlineText from './InlineText'
 import RichTextArea from './RichTextArea'
 import AvatarUploadModal from './AvatarUploadModal'
 
-function parseId(value) {
-  const [type, sectionId, itemId] = String(value).split(':')
-  return { type, sectionId, itemId }
+const CANVAS_ACTION_TONES = {
+  default: 'border-slate-200 text-slate-600 hover:border-[var(--cv-theme)] hover:bg-[color:var(--cv-theme)] hover:text-white',
+  danger: 'border-rose-200 text-rose-600 hover:border-rose-500 hover:bg-rose-500 hover:text-white',
+  primary: 'border-emerald-300 text-emerald-700 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white',
 }
 
 function CanvasActionButton({ label, ariaLabel = label, tone = 'default', className = '', children, ...props }) {
-  const toneClass = tone === 'danger'
-    ? 'border-rose-200 text-rose-600 hover:border-rose-500 hover:bg-rose-500 hover:text-white'
-    : 'border-slate-200 text-slate-600 hover:border-[var(--cv-theme)] hover:bg-[color:var(--cv-theme)] hover:text-white'
-  return <Tooltip title={label}><button type="button" aria-label={ariaLabel} className={`flex h-7 min-w-7 cursor-pointer items-center justify-center gap-1 rounded-md border bg-white px-1 text-xs font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-30 ${toneClass} ${className}`} {...props}>{children}</button></Tooltip>
+  return <Tooltip title={label}><button type="button" aria-label={ariaLabel} className={`flex h-7 min-w-7 cursor-pointer items-center justify-center gap-1 rounded-md border bg-white px-1 text-xs font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-30 ${CANVAS_ACTION_TONES[tone]} ${className}`} {...props}>{children}</button></Tooltip>
+}
+
+function SkillLevelPicker({ value, itemId, onChange }) {
+  const level = Number(value) || 0
+  return <div className="flex shrink-0 items-center gap-0.5" role="group" aria-label={`Mức độ thành thạo ${itemId}`}>
+    {[1, 2, 3, 4, 5].map((notch) => <Tooltip key={notch} title={level === notch ? 'Bấm để bỏ mức độ' : `Mức ${notch}/5`}>
+      <button type="button" aria-label={`Mức độ ${notch} trên 5 ${itemId}`} aria-pressed={level >= notch} onClick={() => onChange(level === notch ? '' : notch)} className="flex h-5 w-4 cursor-pointer items-center justify-center">
+        <span className={`h-1.5 w-3 rounded-full transition ${level >= notch ? 'bg-[var(--cv-theme)]' : 'bg-slate-200 hover:bg-slate-400'}`} />
+      </button>
+    </Tooltip>)}
+  </div>
 }
 
 function personalStyleId(field) {
@@ -27,6 +36,16 @@ function personalStyleId(field) {
 
 function hasRichTextContent(value) {
   return value?.content?.some((block) => block.text?.trim() || block.runs?.some((run) => run.text?.trim()))
+}
+
+const DESCRIPTION_HINT_KEYS = {
+  experience: 'description_hint_experience',
+  education: 'description_hint_education',
+  projects: 'description_hint_projects',
+}
+
+function descriptionHint(sectionKey, locale) {
+  return getCvUiText(DESCRIPTION_HINT_KEYS[sectionKey] || 'description_hint', locale)
 }
 
 function clampAvatarSize(value) {
@@ -110,7 +129,7 @@ function ContactInputs({ personal, locale, onPersonalChange, registerPendingEdit
   return <div className="cv-contact-list text-slate-600">{fields.map((field) => <div key={field} className="min-w-0"><InlineText value={personal[field] || ''} placeholder={getCvUiText(field, locale)} ariaLabel={`${getCvUiText(field, locale)} inline`} className="block w-full max-w-full break-words" onCommit={(value) => onPersonalChange({ [field]: value })} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[personalStyleId(field)]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId(field), marks)} defaultFontFamily={defaultFontFamily} /></div>)}</div>
 }
 
-function SortableItem({ item, section, locale, position, total, selected, onSelect, onChange, onRemove, onMove, registerPendingEdit, defaultFontFamily, inlineTextStyles, onInlineTextStyle }) {
+function SortableItem({ item, section, locale, position, total, selected, onSelect, onChange, onRemove, onMove, onAddAfter, registerPendingEdit, defaultFontFamily, inlineTextStyles, onInlineTextStyle }) {
   const id = `item:${section.instance_id}:${item.item_id}`
   const sortable = useSortable({ id })
   // The read-only preview and PDF never print a "name" line for the summary
@@ -135,9 +154,15 @@ function SortableItem({ item, section, locale, position, total, selected, onSele
     {sortable.isOver && !sortable.isDragging && <div className="pointer-events-none absolute -top-2 left-2 right-2 z-20 border-t-2 border-emerald-500"><span className="relative -top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold text-white">Thả item tại đây</span></div>}
     <Tooltip title="Kéo để di chuyển nội dung"><button type="button" aria-label={`Kéo item ${item.item_id}`} className="absolute -left-8 top-1 flex h-8 w-8 cursor-grab items-center justify-center text-slate-400 opacity-100 lg:pointer-events-none lg:opacity-0 lg:group-hover/item:pointer-events-auto lg:group-hover/item:opacity-100 lg:group-focus-within/item:pointer-events-auto lg:group-focus-within/item:opacity-100" {...sortable.attributes} {...sortable.listeners}><HolderOutlined /></button></Tooltip>
     {fields.some((field) => dateFields.has(field) && field in item) && <div className="mb-1 flex items-center gap-1 text-slate-600"><InlineText value={item.start_date || ''} placeholder={getCvUiText('start_date', locale)} ariaLabel={`Từ ${item.item_id}`} className="min-w-28" onCommit={(value) => onChange({ start_date: value || null })} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[`item:${section.instance_id}:${item.item_id}:start_date`]} onMarksChange={(marks) => onInlineTextStyle(`item:${section.instance_id}:${item.item_id}:start_date`, marks)} defaultFontFamily={defaultFontFamily} /><span className="text-slate-400">–</span><InlineText value={item.end_date || ''} placeholder={getCvUiText('end_date', locale)} ariaLabel={`Đến ${item.item_id}`} className="min-w-28" onCommit={(value) => onChange({ end_date: value || null })} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[`item:${section.instance_id}:${item.item_id}:end_date`]} onMarksChange={(marks) => onInlineTextStyle(`item:${section.instance_id}:${item.item_id}:end_date`, marks)} defaultFontFamily={defaultFontFamily} /></div>}
-    {fields.filter((field) => !dateFields.has(field) && field in item).map((field) => <div key={field} className={titleFields.has(field) ? 'font-bold text-slate-800' : 'text-slate-600'}><InlineText value={item[field] || ''} placeholder={fieldPlaceholder(field)} ariaLabel={`${field} ${item.item_id}`} className="w-full" onCommit={(value) => onChange({ [field]: value })} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[`item:${section.instance_id}:${item.item_id}:${field}`]} onMarksChange={(marks) => onInlineTextStyle(`item:${section.instance_id}:${item.item_id}:${field}`, marks)} defaultFontFamily={defaultFontFamily} /></div>)}
-    {hasRichTextContent(item.description) && <RichTextArea value={item.description} ariaLabel={`Mô tả ${item.item_id}`} onCommit={(description) => onChange({ description })} registerPendingEdit={registerPendingEdit} defaultFontFamily={defaultFontFamily} />}
-    <div className="cv-item-toolbar absolute -bottom-3 right-0 z-10 flex items-center gap-1"><CanvasActionButton label="Di chuyển lên trên" ariaLabel={`Đưa item ${item.item_id} lên`} disabled={position === 0} onClick={() => onMove(-1)}><ArrowUpOutlined /></CanvasActionButton><CanvasActionButton label="Di chuyển xuống dưới" ariaLabel={`Đưa item ${item.item_id} xuống`} disabled={position === total - 1} onClick={() => onMove(1)}><ArrowDownOutlined /></CanvasActionButton><CanvasActionButton label="Xóa nội dung" ariaLabel={`Xóa item ${item.item_id}`} tone="danger" onClick={onRemove}><DeleteOutlined /><span>Xóa</span></CanvasActionButton></div>
+    {fields.filter((field) => !dateFields.has(field) && field in item).map((field) => {
+      const input = <InlineText value={item[field] || ''} placeholder={fieldPlaceholder(field)} ariaLabel={`${field} ${item.item_id}`} className="w-full" onCommit={(value) => onChange({ [field]: value })} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[`item:${section.instance_id}:${item.item_id}:${field}`]} onMarksChange={(marks) => onInlineTextStyle(`item:${section.instance_id}:${item.item_id}:${field}`, marks)} defaultFontFamily={defaultFontFamily} />
+      // Mirror the printed skills row: name on the left, level notches on the
+      // right, so toggling a level never changes the item's height.
+      if (field === 'name' && 'level' in item) return <div key={field} className="flex items-center justify-between gap-3 font-bold text-slate-800">{input}<SkillLevelPicker value={item.level} itemId={item.item_id} onChange={(level) => onChange({ level })} /></div>
+      return <div key={field} className={titleFields.has(field) ? 'font-bold text-slate-800' : 'text-slate-600'}>{input}</div>
+    })}
+    {('description' in item && (section.section_key !== 'summary' || hasRichTextContent(item.description))) && <RichTextArea value={item.description} ariaLabel={`Mô tả ${item.item_id}`} placeholder={descriptionHint(section.section_key, locale)} onCommit={(description) => onChange({ description })} registerPendingEdit={registerPendingEdit} defaultFontFamily={defaultFontFamily} />}
+    <div className="cv-item-toolbar absolute -bottom-3 right-0 z-10 flex items-center gap-1"><CanvasActionButton label="Di chuyển lên trên" ariaLabel={`Đưa item ${item.item_id} lên`} disabled={position === 0} onClick={() => onMove(-1)}><ArrowUpOutlined /></CanvasActionButton><CanvasActionButton label="Di chuyển xuống dưới" ariaLabel={`Đưa item ${item.item_id} xuống`} disabled={position === total - 1} onClick={() => onMove(1)}><ArrowDownOutlined /></CanvasActionButton><CanvasActionButton label="Xóa nội dung" ariaLabel={`Xóa item ${item.item_id}`} tone="danger" onClick={onRemove}><DeleteOutlined /><span>Xóa</span></CanvasActionButton><CanvasActionButton label="Thêm nội dung ngay sau" ariaLabel={`Thêm nội dung sau ${item.item_id}`} tone="primary" onClick={onAddAfter}><PlusOutlined /><span>Thêm</span></CanvasActionButton></div>
   </div>
 }
 
@@ -188,8 +213,8 @@ function SortableSection({ section, document, personal, assets, pageNumber, posi
   return <section id={pageNumber === 1 ? `cv-section-${section.instance_id}` : undefined} ref={sortable.setNodeRef} tabIndex={0} aria-label={`Mục CV ${section.title}`} style={style} className={sectionClass} {...selectionProps}>
     {sortable.isOver && !sortable.isDragging && <div className="pointer-events-none absolute -top-2 left-2 right-2 z-20 border-t-2 border-emerald-500"><span className="relative -top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold text-white">Thả mục tại đây</span></div>}
     <div className="mb-3 flex items-center gap-2 border-b pb-2.5 text-sm font-bold uppercase tracking-wide text-[var(--cv-theme)]"><InlineText value={section.title || definition?.displayName || ''} placeholder={getCvUiText('section_title', locale)} ariaLabel={`Tiêu đề ${section.instance_id}`} onCommit={onRename} registerPendingEdit={registerPendingEdit} marks={inlineTextStyles?.[`section:${section.instance_id}:title`]} onMarksChange={(marks) => onInlineTextStyle(`section:${section.instance_id}:title`, marks)} defaultFontFamily={document.style_json.font_family} /><SectionToolbar section={section} sortable={sortable} position={position} total={total} definition={definition} onMoveSection={onMoveSection} onRemoveSection={onRemoveSection} /></div>
-    <SortableContext items={items.map((item) => `item:${section.instance_id}:${item.item_id}`)} strategy={verticalListSortingStrategy}>{items.map((item, itemPosition) => <SortableItem key={item.item_id} item={item} section={section} locale={locale} position={itemPosition} total={items.length} selected={selected && selection?.itemId === item.item_id} onSelect={onSelect} onChange={(patch) => onItemChange(item.item_id, patch)} onRemove={() => onRemoveItem(item.item_id)} onMove={(direction) => onMoveItem(item.item_id, direction)} registerPendingEdit={registerPendingEdit} defaultFontFamily={document.style_json.font_family} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />)}</SortableContext>
-    {!definition?.personalInfoBacked && <Button size="small" type="primary" aria-label={getCvUiText('add_item', locale)} icon={<PlusOutlined />} onClick={onAddItem} className="!absolute -bottom-3 left-2 z-10 !border-emerald-600 !bg-emerald-600 !shadow-md transition-opacity hover:!border-emerald-700 hover:!bg-emerald-700 lg:pointer-events-none lg:opacity-0 lg:group-hover/section:pointer-events-auto lg:group-hover/section:opacity-100 lg:group-focus-within/section:pointer-events-auto lg:group-focus-within/section:opacity-100">{getCvUiText('add_item', locale)}</Button>}
+    <SortableContext items={items.map((item) => `item:${section.instance_id}:${item.item_id}`)} strategy={verticalListSortingStrategy}>{items.map((item, itemPosition) => <SortableItem key={item.item_id} item={item} section={section} locale={locale} position={itemPosition} total={items.length} selected={selected && selection?.itemId === item.item_id} onSelect={onSelect} onChange={(patch) => onItemChange(item.item_id, patch)} onRemove={() => onRemoveItem(item.item_id)} onMove={(direction) => onMoveItem(item.item_id, direction)} onAddAfter={() => onAddItem(item.item_id)} registerPendingEdit={registerPendingEdit} defaultFontFamily={document.style_json.font_family} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />)}</SortableContext>
+    {!definition?.personalInfoBacked && <Button size="small" type="primary" aria-label={getCvUiText('add_item', locale)} icon={<PlusOutlined />} onClick={() => onAddItem()} className="!absolute -bottom-3 left-2 z-10 !border-emerald-600 !bg-emerald-600 !shadow-md transition-opacity hover:!border-emerald-700 hover:!bg-emerald-700 lg:pointer-events-none lg:opacity-0 lg:group-hover/section:pointer-events-auto lg:group-hover/section:opacity-100 lg:group-focus-within/section:pointer-events-auto lg:group-focus-within/section:opacity-100">{getCvUiText('add_item', locale)}</Button>}
   </section>
 }
 
@@ -204,7 +229,7 @@ function EditableRegion({ region, document, pageNumber, ...props }) {
     {...props}
     onRename={(title) => props.onRenameSection(section.instance_id, title)}
     onItemChange={(itemId, patch) => props.onItemChange(section.instance_id, itemId, patch)}
-    onAddItem={() => props.onAddItem(section.instance_id)}
+    onAddItem={(afterItemId) => props.onAddItem(section.instance_id, afterItemId)}
     onRemoveItem={(itemId) => props.onRemoveItem(section.instance_id, itemId)}
     onMoveItem={(itemId, direction) => props.onMoveItem(section.instance_id, itemId, direction)}
     onMoveSection={(direction) => props.onMoveSectionDirection(section.instance_id, direction)}
@@ -212,49 +237,19 @@ function EditableRegion({ region, document, pageNumber, ...props }) {
   /></div>)}</SortableContext></div>
 }
 
-export default function CvEditableCanvas({ editor, zoom, selection, onSelect, onMoveSection, onMoveItem, onMoveItemDirection, onMoveSectionDirection, onRenameSection, onItemChange, onAddItem, onRemoveItem, onRemoveSection, onPersonalChange, onAvatarUpload, onInlineTextStyle }) {
+export default function CvEditableCanvas({ editor, zoom, selection, onSelect, onMoveItemDirection, onMoveSectionDirection, onRenameSection, onItemChange, onAddItem, onRemoveItem, onRemoveSection, onPersonalChange, onAvatarUpload, onInlineTextStyle }) {
   const rendererKey = editor.cv.template_renderer_key || editor.cv.template_version
   const contract = getRendererContract(rendererKey)
   const personal = editor.document.content_json.personal_info || {}
   const locale = editor.document.content_json.locale
   const inlineTextStyles = editor.document.content_json.inline_text_styles || {}
-  const [activeDrag, setActiveDrag] = useState(null)
   const [avatarEditorOpen, setAvatarEditorOpen] = useState(false)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
-  const dragEnd = ({ active, over }) => {
-    setActiveDrag(null)
-    if (!over || active.id === over.id) return
-    const source = parseId(active.id)
-    const target = parseId(over.id)
-    if (source.type === 'section') {
-      const targetRegion = target.type === 'region' ? target.sectionId : editor.document.layout_json.regions.find((region) => region.section_instance_ids.includes(target.sectionId))?.id
-      if (!targetRegion) return
-      const region = editor.document.layout_json.regions.find((candidate) => candidate.id === targetRegion)
-      const targetIndex = target.type === 'section' ? region.section_instance_ids.indexOf(target.sectionId) : region.section_instance_ids.length
-      onMoveSection(source.sectionId, targetRegion, targetIndex)
-    } else if (source.type === 'item' && target.type === 'item' && source.sectionId === target.sectionId) {
-      const section = editor.document.content_json.sections.find((candidate) => candidate.instance_id === source.sectionId)
-      const targetIndex = getOrderedItems(editor.document, section).findIndex((item) => item.item_id === target.itemId)
-      onMoveItem(source.sectionId, source.itemId, targetIndex)
-    }
-  }
   const historyKey = (event) => {
     if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z') return
     event.preventDefault()
     if (event.shiftKey) editor.redo()
     else editor.undo()
   }
-  const dragPreview = activeDrag && (() => {
-    const source = parseId(activeDrag)
-    if (source.type === 'section') return editor.document.content_json.sections.find((section) => section.instance_id === source.sectionId)?.title || 'Mục CV'
-    const section = editor.document.content_json.sections.find((candidate) => candidate.instance_id === source.sectionId)
-    const item = section?.items.find((candidate) => candidate.item_id === source.itemId)
-    return item?.role || item?.name || item?.title || item?.value || 'Nội dung CV'
-  })()
   const personalSelection = { sectionId: 'personal', itemId: null }
   const header = () => contract.key !== 'header_two_column_v1' ? <header tabIndex={0} aria-label="Thông tin cá nhân trên CV" data-active={selection?.sectionId === 'personal'} onClick={(event) => {
     if (event.target.closest?.('[contenteditable="true"],button,input,textarea,[role="combobox"]')) return
@@ -263,9 +258,9 @@ export default function CvEditableCanvas({ editor, zoom, selection, onSelect, on
     if (event.currentTarget !== event.target || !['Enter', ' '].includes(event.key)) return
     event.preventDefault()
     onSelect(personalSelection)
-  }} className="mb-4 rounded-lg border-l-4 px-2 py-1.5 outline-none transition hover:bg-emerald-50/70 hover:ring-1 hover:ring-emerald-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500 data-[active=true]:bg-emerald-50/70 data-[active=true]:ring-2 data-[active=true]:ring-emerald-500" style={{ borderColor: editor.document.style_json.theme_color }}><InlineText value={personal.full_name || ''} placeholder={getCvUiText('full_name', locale)} ariaLabel="Họ và tên inline" className="text-2xl font-extrabold" onCommit={(full_name) => onPersonalChange({ full_name })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('full_name')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('full_name'), marks)} defaultFontFamily={editor.document.style_json.font_family} /><div><InlineText value={personal.headline || ''} placeholder={getCvUiText('headline', locale)} ariaLabel="Chức danh inline" className="font-semibold text-[var(--cv-theme)]" onCommit={(headline) => onPersonalChange({ headline })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('headline')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('headline'), marks)} defaultFontFamily={editor.document.style_json.font_family} /></div><ContactInputs personal={personal} locale={locale} onPersonalChange={onPersonalChange} registerPendingEdit={editor.registerPendingEdit} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} defaultFontFamily={editor.document.style_json.font_family} /></header> : null
+  }} className="cv-editor-header mb-6 rounded-lg border-l-4 pl-4 pr-2 outline-none transition hover:bg-emerald-50/70 hover:ring-1 hover:ring-emerald-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500 data-[active=true]:bg-emerald-50/70 data-[active=true]:ring-2 data-[active=true]:ring-emerald-500" style={{ borderColor: editor.document.style_json.theme_color }}><InlineText value={personal.full_name || ''} placeholder={getCvUiText('full_name', locale)} ariaLabel="Họ và tên inline" className="text-2xl font-extrabold" onCommit={(full_name) => onPersonalChange({ full_name })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('full_name')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('full_name'), marks)} defaultFontFamily={editor.document.style_json.font_family} /><div className="mt-1"><InlineText value={personal.headline || ''} placeholder={getCvUiText('headline', locale)} ariaLabel="Chức danh inline" className="font-semibold text-[var(--cv-theme)]" onCommit={(headline) => onPersonalChange({ headline })} registerPendingEdit={editor.registerPendingEdit} marks={inlineTextStyles[personalStyleId('headline')]} onMarksChange={(marks) => onInlineTextStyle(personalStyleId('headline'), marks)} defaultFontFamily={editor.document.style_json.font_family} /></div><div className="mt-2"><ContactInputs personal={personal} locale={locale} onPersonalChange={onPersonalChange} registerPendingEdit={editor.registerPendingEdit} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} defaultFontFamily={editor.document.style_json.font_family} /></div></header> : null
 
-  return <><DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={({ active }) => setActiveDrag(active.id)} onDragCancel={() => setActiveDrag(null)} onDragEnd={dragEnd}><div aria-label="CV A4 có thể chỉnh sửa" onKeyDownCapture={historyKey} className="mx-auto origin-top" style={{ width: `${210 * zoom}mm` }}><div className="origin-top-left" style={{ width: '210mm', transform: `scale(${zoom})` }}><CvDocumentPreview
+  return <><div aria-label="CV A4 có thể chỉnh sửa" onKeyDownCapture={historyKey} className="mx-auto origin-top" style={{ width: `${210 * zoom}mm` }}><div className="origin-top-left" style={{ width: '210mm', transform: `scale(${zoom})` }}><CvDocumentPreview
     document={editor.document}
     rendererKey={rendererKey}
     assets={editor.assets}
@@ -273,7 +268,7 @@ export default function CvEditableCanvas({ editor, zoom, selection, onSelect, on
     pageLabelVariant="badge"
     renderHeader={header}
     renderRegion={(region, pageNumber) => <EditableRegion key={`${region.id}:${pageNumber}`} region={contract.key === 'header_two_column_v1' ? region : { ...region, sections: region.sections.filter((section) => !['nameplate', 'contact'].includes(section.section_key)) }} pageNumber={pageNumber} document={editor.document} personal={personal} assets={editor.assets} selection={selection} onSelect={onSelect} onRenameSection={onRenameSection} onItemChange={onItemChange} onAddItem={onAddItem} onRemoveItem={onRemoveItem} onMoveItem={onMoveItemDirection} onMoveSectionDirection={onMoveSectionDirection} onRemoveSection={onRemoveSection} registerPendingEdit={editor.registerPendingEdit} onPersonalChange={onPersonalChange} onOpenAvatarEditor={() => setAvatarEditorOpen(true)} inlineTextStyles={inlineTextStyles} onInlineTextStyle={onInlineTextStyle} />}
-  /></div></div><DragOverlay dropAnimation={null}>{dragPreview && <div className="flex max-w-64 items-center gap-2 rounded-lg border-2 border-emerald-500 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-xl"><HolderOutlined className="text-emerald-600" /><span className="truncate">{dragPreview}</span></div>}</DragOverlay></DndContext>
+  /></div></div>
   <AvatarUploadModal
     open={avatarEditorOpen}
     avatar={editor.assets?.[personal.avatar_asset_id]}
