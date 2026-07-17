@@ -5,12 +5,19 @@ import { getCandidateJobPreferences } from '@/entities/candidate-preferences'
 import { JobPreferencesForm } from '@/features/configure-job-preferences'
 import { useSession } from '@/entities/session'
 import PageLoading from '@/shared/ui/PageLoading'
+import { buildPersonalizedJobsUrl } from './model/personalized-jobs-url'
+import PersonalizingScreen from './ui/PersonalizingScreen'
+import ReadyScreen from './ui/ReadyScreen'
 
 export default function OnboardUserSetting() {
   const { setCurrentUser, user } = useSession()
   const navigate = useNavigate()
   const [preference, setPreference] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Sau khi lưu: form -> personalizing (hiệu ứng chờ) -> ready (đếm ngược
+  // rồi chuyển sang /viec-lam với bộ lọc dựng từ nhu cầu vừa lưu).
+  const [phase, setPhase] = useState('form')
+  const [savedPreference, setSavedPreference] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -21,6 +28,8 @@ export default function OnboardUserSetting() {
   }, [])
 
   if (loading) return <PageLoading />
+  if (phase === 'personalizing') return <PersonalizingScreen onDone={() => setPhase('ready')} />
+  if (phase === 'ready') return <ReadyScreen targetUrl={buildPersonalizedJobsUrl(savedPreference)} />
 
   return (
     <section className="mx-auto w-full max-w-4xl px-3 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-7">
@@ -34,7 +43,8 @@ export default function OnboardUserSetting() {
           variant="onboarding"
           onSaved={(saved) => {
             setCurrentUser({ ...user, job_preferences_configured: saved.job_preferences_configured })
-            navigate('/', { replace: true })
+            setSavedPreference(saved)
+            setPhase('personalizing')
           }}
           onSkip={() => navigate('/', { replace: true })}
           renderFooter={({ saving, catalogLoading, onSkip, isValid }) => (

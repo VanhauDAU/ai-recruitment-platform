@@ -211,6 +211,9 @@ describe('CV draft editor', () => {
     expect(screen.getByText('Đã xuất bản phiên bản 3')).toBeInTheDocument()
   })
 
+  // The canvas initializes DnD and Ant Design overlays. Coverage instrumentation
+  // on a two-core GitHub runner can make that initial render exceed Vitest's
+  // default 5-second limit, while the test's assertions remain deterministic.
   it('renders the six-tool WYSIWYG shell when the rollout flag is enabled', async () => {
     renderWysiwygEditor()
 
@@ -220,7 +223,7 @@ describe('CV draft editor', () => {
     }
     expect(screen.getByRole('button', { name: 'Lưu CV' })).toHaveTextContent('Lưu CV')
     expect(screen.queryByText('Chỉnh sửa bằng biểu mẫu')).not.toBeInTheDocument()
-  })
+  }, 10_000)
 
   it('keeps content editing on the canvas without opening a contextual content panel', async () => {
     renderWysiwygEditor()
@@ -304,7 +307,7 @@ describe('CV draft editor', () => {
     await waitFor(() => expect(mocks.updateCvDraft).toHaveBeenCalledWith('cv_1', expect.objectContaining({
       content_json: expect.objectContaining({ locale: 'en-US', sections: expect.arrayContaining([expect.objectContaining({ section_key: 'summary', title: 'Career objective' })]) }),
     }), 0, expect.any(String)), { timeout: 1500 })
-  })
+  }, 10_000)
 
   it('applies the selected font stack directly to the A4 document surface', async () => {
     renderWysiwygEditor()
