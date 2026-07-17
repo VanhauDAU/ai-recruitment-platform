@@ -148,6 +148,9 @@ def save_draft_as_version(*, cv, actor, expected_lock_version, publish=False):
             published_version=version,
             published_at=timezone.now(),
         )
+    from .thumbnails import schedule_cv_thumbnail
+
+    schedule_cv_thumbnail(version)
     return version
 
 

@@ -59,7 +59,25 @@ def _item_projection(item: dict) -> dict:
     description = _rich_text_blocks(item.get('description'))
     if not description and isinstance(item.get('value'), str) and item.get('value') != heading:
         description = [{'type': 'paragraph', 'text': item['value'], 'runs': [{'text': item['value'], 'marks': {}}]}]
-    return {'heading': heading, 'metadata': ' · '.join(metadata), 'description_blocks': description}
+    try:
+        skill_level = min(5, max(0, int(item.get('level') or 0)))
+    except (TypeError, ValueError):
+        skill_level = 0
+    return {
+        'heading': heading,
+        'metadata': ' · '.join(metadata),
+        'description_blocks': description,
+        'value': item.get('value') if isinstance(item.get('value'), str) else '',
+        'role': item.get('role') if isinstance(item.get('role'), str) else '',
+        'company': item.get('company') if isinstance(item.get('company'), str) else '',
+        'secondary': next((item[key] for key in ('institution', 'issuer', 'organization') if isinstance(item.get(key), str) and item[key]), ''),
+        'date_range': ' – '.join(
+            item[key] for key in ('start_date', 'end_date')
+            if isinstance(item.get(key), str) and item[key]
+        ),
+        'skill_level': skill_level,
+        'skill_notches': [index <= skill_level for index in range(1, 6)],
+    }
 
 
 def _ordered_items(section: dict, item_orders: dict) -> list[dict]:
@@ -210,6 +228,10 @@ def build_cv_pdf_html(version) -> str:
         raise PdfRenderingError('The selected CV version has an unsupported renderer version.')
     content = version.content_json
     style = version.style_json
+    try:
+        font_scale = min(1.5, max(0.75, float(style.get('font_scale', 1.0))))
+    except (TypeError, ValueError):
+        font_scale = 1.0
     personal_info = content.get('personal_info', {}) if isinstance(content, dict) else {}
     projected_regions = _project_sections(version, contract)
     rows = []
@@ -222,10 +244,16 @@ def build_cv_pdf_html(version) -> str:
         'margin_mm': version.layout_json.get('page', {}).get('margin_mm', 12),
         'theme_color': style.get('theme_color', '#00A66A'),
         'font_stack': FONT_STACKS.get(style.get('font_family'), FONT_STACKS['Roboto']),
-        'font_scale': style.get('font_scale', 1.0),
+        'font_scale': font_scale,
+        'font_size_px': f'{11 * font_scale:g}',
         'line_height': style.get('line_height', 1.4),
         'personal_info': personal_info,
         'contact_line': _contact_line(personal_info),
+        'contact_values': [
+            personal_info[key]
+            for key in ('email', 'phone', 'date_of_birth', 'address', 'website')
+            if isinstance(personal_info.get(key), str) and personal_info[key]
+        ],
         'rows': rows,
         'show_legacy_header': contract.key != 'header_two_column_v1',
         'avatar_data_uri': _asset_data_uri(personal_info.get('avatar_asset_id'), CvAsset.Kind.AVATAR),

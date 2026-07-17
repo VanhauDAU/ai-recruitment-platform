@@ -5,11 +5,36 @@ from django.utils import timezone
 
 from ..models import (
     CandidateConsent,
+    CandidateConsentEvent,
     CandidateDesiredSpecialization,
     CandidateJobPreference,
     CandidatePreferredProvince,
     CandidateProfile,
 )
+
+
+@transaction.atomic
+def set_recruiter_visibility(profile, *, enabled, policy_version, source, source_path='', cv_public_id=''):
+    """Update current consent and append an immutable decision audit event."""
+    locked_profile = CandidateProfile.objects.select_for_update().get(pk=profile.pk)
+    now = timezone.now()
+    decision = CandidateConsent.Decision.GRANTED if enabled else CandidateConsent.Decision.DENIED
+    consent, _ = CandidateConsent.objects.update_or_create(
+        candidate_profile=locked_profile,
+        consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+        defaults={'decision': decision, 'policy_version': policy_version, 'decided_at': now},
+    )
+    CandidateConsentEvent.objects.create(
+        candidate_profile=locked_profile,
+        consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+        decision=decision,
+        policy_version=policy_version,
+        source=source,
+        source_path=source_path,
+        cv_public_id=cv_public_id,
+        decided_at=now,
+    )
+    return consent
 
 
 @transaction.atomic
@@ -52,14 +77,23 @@ def replace_candidate_job_preferences(profile, validated_data):
         (CandidateConsent.ConsentType.AI_RECOMMENDATION, ai_consent),
         (CandidateConsent.ConsentType.RECRUITER_VISIBILITY, recruiter_consent),
     ):
+        decision = CandidateConsent.Decision.GRANTED if allowed else CandidateConsent.Decision.DENIED
         CandidateConsent.objects.update_or_create(
             candidate_profile=locked_profile,
             consent_type=consent_type,
             defaults={
-                'decision': CandidateConsent.Decision.GRANTED if allowed else CandidateConsent.Decision.DENIED,
+                'decision': decision,
                 'policy_version': 'v1',
                 'decided_at': now,
             },
+        )
+        CandidateConsentEvent.objects.create(
+            candidate_profile=locked_profile,
+            consent_type=consent_type,
+            decision=decision,
+            policy_version='v1',
+            source='job_preferences',
+            decided_at=now,
         )
 
     if not locked_profile.job_preferences_configured:

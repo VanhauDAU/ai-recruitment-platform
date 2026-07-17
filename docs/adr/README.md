@@ -13,5 +13,6 @@ Mỗi ADR bất biến sau khi `Accepted`; muốn đổi thì viết ADR mới `
 | [0006](./0006-custom-server-state-during-refactor.md) | Server state bằng custom hooks có ranh giới rõ | Accepted |
 | [0007](./0007-canonical-cv-composition.md) | Một pipeline composition canonical cho CV Builder | Accepted |
 | [0008](./0008-cv-wysiwyg-renderer-assets.md) | Renderer WYSIWYG và asset reference cho CV | Accepted |
+| [0009](./0009-cv-save-success-orchestration.md) | Luồng sau khi lưu CV dựa trên immutable version | Accepted |
 
 Nguồn: *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)*.

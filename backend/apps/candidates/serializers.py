@@ -23,6 +23,20 @@ class CandidateProfileUpdateSerializer(serializers.ModelSerializer):
         fields = ['gender']
 
 
+class RecruiterVisibilitySerializer(serializers.Serializer):
+    enabled = serializers.BooleanField()
+    confirmed = serializers.BooleanField(default=False, write_only=True)
+    cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    policy_version = serializers.CharField(max_length=64, default='v1')
+    source = serializers.ChoiceField(choices=['cv_save_success', 'account_settings'])
+    source_path = serializers.CharField(max_length=2048, required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        if attrs['enabled'] and not attrs['confirmed']:
+            raise serializers.ValidationError({'confirmed': 'Bạn cần xác nhận trước khi mở hồ sơ cho nhà tuyển dụng.'})
+        return attrs
+
+
 class CandidateJobPreferenceSerializer(serializers.ModelSerializer):
     """Read/write contract shared by onboarding and account preference settings."""
 

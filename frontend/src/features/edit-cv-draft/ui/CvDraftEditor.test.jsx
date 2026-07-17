@@ -244,7 +244,7 @@ describe('CV draft editor', () => {
     expect(mocks.saveCvVersion).not.toHaveBeenCalled()
   })
 
-  it('warns about incomplete optional sections and saves only the current draft after confirmation', async () => {
+  it('warns about incomplete optional sections and commits an immutable version after confirmation', async () => {
     const saveableDraft = draft()
     saveableDraft.content_json.personal_info.email = 'an@example.com'
     saveableDraft.content_json.personal_info.phone = '0909123456'
@@ -261,7 +261,7 @@ describe('CV draft editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Lưu CV, tôi sẽ hoàn thiện sau' }))
 
     expect(await screen.findByText('Lưu CV thành công')).toBeInTheDocument()
-    expect(mocks.saveCvVersion).not.toHaveBeenCalled()
+    expect(mocks.saveCvVersion).toHaveBeenCalledWith('cv_1', 0)
   })
 
   it('requires a title for an unnamed CV before continuing the save flow', async () => {

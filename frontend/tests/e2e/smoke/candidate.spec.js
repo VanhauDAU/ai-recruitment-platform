@@ -36,7 +36,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
       : path === '/api/site/settings/'
         ? { cv_builder_wysiwyg_enabled: true }
       : path === '/api/v2/cvs/cv_1/'
-        ? { public_id: 'cv_1', title: 'CV V2', template_public_id: 'tpl_1', template_renderer_key: 'classic_single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
+        ? { public_id: 'cv_1', title: 'CV V2', latest_version_public_id: 'version_2', thumbnail_url: null, thumbnail_status: 'pending', template_public_id: 'tpl_1', template_renderer_key: 'classic_single_column_v1', template_capabilities: { layout: { section_drag: true, cross_region_drag: true, item_drag: true } } }
         : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'GET'
           ? draft
       : path === '/api/v2/cvs/cv_1/draft/' && request.method() === 'PUT'
@@ -50,12 +50,23 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
                   url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="900" height="700"%3E%3Crect width="900" height="700" fill="%232255AA"/%3E%3C/svg%3E',
                 }
             : path === '/api/v2/cvs/cv_1/save-version/'
-              ? { public_id: 'version_2', version_number: 2, version_kind: 'manual_save' }
+              ? {
+                  public_id: 'version_2', version_number: 2, version_kind: 'manual_save',
+                  schema_version: draft.schema_version, content_json: draft.content_json,
+                  layout_json: draft.layout_json, style_json: draft.style_json, assets: {},
+                  template_renderer_key: 'classic_single_column_v1',
+                }
+              : path === '/api/jobs/recommendations/by-cv/cv_1/'
+                ? { focus_keyword: 'Developer', strategy: 'profile-rule-v1', related_positions: [{ label: 'Frontend Developer', search: 'Frontend Developer' }], results: [] }
+                : path === '/api/candidate/recruiter-visibility/'
+                  ? { enabled: false, policy_version: 'v1', decided_at: null }
+                  : path === '/api/v2/cvs/cv_1/thumbnail/'
+                    ? { status: 'pending', thumbnail_url: null }
               : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/cvs/cv_1/edit')
+  await page.goto('/cvs/cv_1/edit?mode=create')
   await expect(page.getByRole('banner', { name: 'Header website' })).toBeVisible()
   await expect(page.getByLabel('Thanh hành động CV')).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Tên CV' })).toHaveText('CV V2')
@@ -122,8 +133,9 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await expect(page).toHaveURL('/save-cv-success/cv_1?type=create')
   await expect(page.getByRole('heading', { name: 'Lưu CV thành công!' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'CV V2' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Việc làm phù hợp với CV của bạn' })).toBeVisible()
-  expect(saveVersionRequested).toBe(false)
+  await expect(page.getByRole('img', { name: 'Ảnh xem trước CV V2' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Việc làm “Developer” phù hợp với CV của bạn' })).toBeVisible()
+  expect(saveVersionRequested).toBe(true)
 })
 
 test('candidate smoke: owner CV view renders an immutable V2 version, not a draft', async ({ page }) => {

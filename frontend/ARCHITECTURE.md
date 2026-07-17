@@ -143,6 +143,8 @@ phòng hờ.
 ```text
 app/router
   → pages/main/cv-templates, pages/main/cvs, pages/main/account/MyCvs
+    → widgets/cv-save-success
+      → features/export-cv-pdf, update-recruiter-visibility
     → features/create-cv-from-template, edit-cv-draft, view/export-cv-version
       → entities/cv-template, entities/cv
         → shared/api, shared/ui
@@ -166,6 +168,15 @@ app/router
 - `pages/main/cv-templates` chỉ lấy locale/route params và compose catalogue,
   detail, source panel/modal. `pages/main/cvs/CvEditor.jsx` chỉ lấy `publicId`
   rồi compose editor feature.
+- `pages/main/cvs/CvSaveSuccess.jsx` chỉ lấy route param/navigation state và
+  compose widget. Widget đọc CV/job domain qua public entity API; download và
+  recruiter consent là feature độc lập. Preview trang này render immutable
+  version từ response `save-version` bằng `CvDocumentPreview` ở vùng capture,
+  chuyển trang A4 đầu tiên thành Blob và chỉ hiển thị bằng thẻ `<img>`. Vì vậy
+  ảnh dùng đúng renderer/assets của editor; direct reload lấy đích danh
+  `latest_version_public_id`. Private thumbnail là artifact nền cho card/catalog,
+  không chặn trang thành công. Nhãn phù hợp chỉ đọc `match_score/is_high_match`
+  từ backend, không tự suy diễn trong page.
 - `pages/main/account/MyCvs.jsx` là owner-local account UI; nó chỉ gọi public
   API `entities/cv` (V2 metadata/hard-delete/import/duplicate/share), không
   gọi HTTP client trực tiếp hoặc contract V1. CTA chỉ xuất hiện khi backend

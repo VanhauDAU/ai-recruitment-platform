@@ -1,6 +1,5 @@
 """Idempotent catalogue snapshot generation from the canonical renderer path."""
 
-from io import BytesIO
 from hashlib import sha256
 import json
 import logging
@@ -13,6 +12,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 from common.metrics import record_metric
+from common.pdf_raster import first_pdf_page_image
 
 from apps.cvs.composition import compose_cv_document
 from apps.cvs.pdf_renderer import render_cv_version_pdf
@@ -52,27 +52,7 @@ def snapshot_fingerprint(link):
 
 
 def _first_page_png(pdf_bytes, *, width):
-    try:
-        import pypdfium2 as pdfium
-    except ImportError as error:  # pragma: no cover - deployment dependency check
-        raise RuntimeError('pypdfium2 is unavailable') from error
-    document = pdfium.PdfDocument(pdf_bytes)
-    try:
-        page = document[0]
-        try:
-            page_width, _ = page.get_size()
-            bitmap = page.render(scale=width / page_width)
-            try:
-                image = bitmap.to_pil().convert('RGB')
-            finally:
-                bitmap.close()
-        finally:
-            page.close()
-    finally:
-        document.close()
-    output = BytesIO()
-    image.save(output, format='PNG', optimize=True)
-    return output.getvalue()
+    return first_pdf_page_image(pdf_bytes, width=width, image_format='PNG')
 
 
 def _save_once(key, payload):

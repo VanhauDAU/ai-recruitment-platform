@@ -297,12 +297,12 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
     else setMobilePanelOpen(true)
   }
   const persistCv = async () => {
-    const saved = await editor.saveDraft()
-    if (saved) {
-      if (onSaved) onSaved({ cv: editor.cv, document: editor.document })
+    const version = await editor.saveVersion()
+    if (version) {
+      if (onSaved) onSaved({ cv: editor.cv, document: editor.document, version })
       else message.success('Lưu CV thành công')
-    } else message.error('Không thể lưu CV. Vui lòng thử lại.')
-    return saved
+    } else message.error('Không thể lưu phiên bản CV. Vui lòng thử lại.')
+    return version
   }
   const confirmIncompleteCv = (snapshot) => {
     const incompleteSections = incompleteCvSections(snapshot)

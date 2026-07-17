@@ -36,6 +36,7 @@ from .sharing import (
     resolve_shared_link,
     revoke_shared_link,
 )
+from .thumbnails import current_thumbnail_ready, request_current_cv_thumbnail, schedule_cv_thumbnail
 from .versions import StaleDraftError, create_application_snapshot, create_initial_document, create_version, update_draft
 
 __all__ = [
@@ -75,4 +76,7 @@ __all__ = [
     'revoke_shared_link',
     'retry_cv_export',
     'switch_draft_template',
+    'current_thumbnail_ready',
+    'request_current_cv_thumbnail',
+    'schedule_cv_thumbnail',
 ]

@@ -25,6 +25,8 @@ class CvV2Serializer(serializers.ModelSerializer):
     has_unsaved_changes = serializers.SerializerMethodField()
     draft_updated_at = serializers.SerializerMethodField()
     import_job = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    thumbnail_status = serializers.SerializerMethodField()
 
     class Meta:
         model = UserCv
@@ -38,7 +40,7 @@ class CvV2Serializer(serializers.ModelSerializer):
             'processing_status', 'visibility', 'latest_version_public_id',
             'published_version_public_id', 'published_at', 'archived_at', 'created_at', 'updated_at',
             'has_unsaved_changes', 'draft_updated_at',
-            'import_job',
+            'import_job', 'thumbnail_url', 'thumbnail_status',
         ]
         read_only_fields = fields
 
@@ -66,6 +68,21 @@ class CvV2Serializer(serializers.ModelSerializer):
             'attempts': job.attempts,
             'failure_code': job.failure_code,
         }
+
+    def get_thumbnail_url(self, obj):
+        from django.urls import reverse
+        from .services import current_thumbnail_ready
+
+        if not current_thumbnail_ready(obj):
+            return None
+        path = reverse('cv-v2-thumbnail', kwargs={'public_id': obj.public_id})
+        request = self.context.get('request')
+        return request.build_absolute_uri(path) if request else path
+
+    def get_thumbnail_status(self, obj):
+        from .services import current_thumbnail_ready
+
+        return 'ready' if current_thumbnail_ready(obj) else 'pending'
 
 
 class CvV2MetadataUpdateSerializer(serializers.Serializer):

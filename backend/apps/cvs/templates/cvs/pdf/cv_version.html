@@ -7,33 +7,47 @@
        network request for candidate data. The CSS fallback is deliberately
        constrained to schema-validated font families. */
     @font-face { font-family: "CVExportFallback"; src: local("Arial"); }
-    @page { size: A4; margin: {{ margin_mm }}mm; }
+    @page { size: A4; margin: {{ margin_mm }}mm; background: #fff; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #fff; }
     body {
       color: #1f2937;
       font-family: {{ font_stack }};
-      font-size: {{ font_scale }}em;
+      font-size: {{ font_size_px }}px;
       line-height: {{ line_height }};
       overflow-wrap: anywhere;
       {% if background_data_uri %}background: url("{{ background_data_uri }}") center / cover no-repeat;{% endif %}
     }
     .cv-page { width: 100%; min-height: 100%; }
-    .cv-header { border-left: 4px solid {{ theme_color }}; margin: 0 0 6mm; padding-left: 4mm; break-inside: avoid-page; }
-    .cv-header h1 { color: #111827; font-size: 22pt; line-height: 1.1; margin: 0; }
-    .headline { color: {{ theme_color }}; font-size: 11pt; font-weight: 700; margin: 2mm 0 0; }
-    .contact { color: #4b5563; font-size: 9pt; margin: 2mm 0 0; }
-    .region-row { display: grid; gap: 6mm; margin-bottom: 4mm; }
+    p { margin: 0; }
+    .cv-header { border-left: 4px solid {{ theme_color }}; margin: 0 0 24px; padding-left: 16px; break-inside: avoid-page; }
+    .cv-header h1 { color: #0f172a; font-size: 24px; line-height: 1.2; margin: 0; }
+    .headline { color: {{ theme_color }}; font-size: 11px; font-weight: 700; margin: 4px 0 0; }
+    .contact { color: #475569; margin: 8px 0 0; }
+    .contact-grid span { display: inline-block; margin: 0 12px 4px 0; min-width: 28%; vertical-align: top; }
+    /* The deployed WeasyPrint build drops children from CSS Grid/Flex here.
+       Floats preserve canonical column percentages and still paginate normally. */
+    .region-row { margin-bottom: 12px; width: 100%; }
+    .region-row::after { clear: both; content: ""; display: block; }
+    .region { float: left; min-width: 0; padding-right: 12px; vertical-align: top; }
+    .region:last-child { padding-right: 0; }
     .avatar-frame { border-radius: 50%; height: {{ avatar_size_mm }}mm; margin-left: auto; margin-right: auto; overflow: hidden; width: {{ avatar_size_mm }}mm; }
     .avatar { display: block; height: 100%; object-fit: cover; object-position: {{ avatar_object_position }}; transform: scale({{ avatar_zoom }}); transform-origin: {{ avatar_object_position }}; width: 100%; }
-    .section { break-inside: avoid-page; page-break-inside: avoid; margin: 0 0 5mm; overflow: visible; }
-    .section h2 { border-bottom: 1px solid {{ theme_color }}; color: {{ theme_color }}; font-size: 10pt; letter-spacing: .05em; margin: 0 0 2mm; padding-bottom: 1mm; text-transform: uppercase; }
-    .item { break-inside: avoid; page-break-inside: avoid; margin: 0 0 3mm; }
+    .section { break-inside: avoid-page; page-break-inside: avoid; margin: 0 0 20px; overflow: visible; }
+    .section h2 { border-bottom: 1px solid {{ theme_color }}; color: {{ theme_color }}; font-size: 14px; letter-spacing: .025em; margin: 0 0 12px; padding-bottom: 10px; text-transform: uppercase; }
+    .item { break-inside: avoid; page-break-inside: avoid; margin: 0 0 12px; }
     .item-heading { color: #1f2937; font-weight: 700; margin: 0; }
     .item-meta { color: #4b5563; font-size: .94em; margin: 0; }
-    .item-description { margin: 1mm 0 0; white-space: pre-line; }
+    .item-description { margin: 4px 0 0; }
     .item-description p, .item-description ul { margin: 0 0 1mm; }
+    .item-description p { white-space: pre-line; }
     .item-description ul { padding-left: 5mm; }
+    .date-range, .item-secondary { color: #475569; }
+    .skill-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .skill-name { color: #334155; overflow-wrap: anywhere; }
+    .skill-level { display: flex; flex: 0 0 auto; gap: 2px; margin-top: 4px; }
+    .skill-notch { background: #e2e8f0; border-radius: 999px; height: 6px; width: 12px; }
+    .skill-notch.active { background: {{ theme_color }}; }
     @media print {
       .cv-page { break-after: page; page-break-after: always; }
       .cv-page:last-child { break-after: auto; page-break-after: auto; }
@@ -45,29 +59,40 @@
     {% if show_legacy_header %}<header class="cv-header">
       <h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>
       {% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}
-      {% if contact_line %}
-        <p class="contact">{{ contact_line }}</p>
-      {% endif %}
+      {% if contact_values %}<div class="contact contact-grid">{% for value in contact_values %}<span>{{ value }}</span>{% endfor %}</div>{% endif %}
     </header>{% endif %}
     <div class="regions">
-      {% for row in rows %}<div class="region-row" style="grid-template-columns:{% for region in row.regions %} minmax(0, {{ region.width_percent }}fr){% endfor %};">
+      {% for row in rows %}<div class="region-row">
       {% for region in row.regions %}
-        <div class="region region-{{ region.id }}">
+        <div class="region region-{{ region.id }}" style="width: {{ region.width_percent }}%;">
           {% for section in region.sections %}
             <section class="section">
               {% if section.section_key == "nameplate" %}
                 <div class="cv-header"><h1>{{ personal_info.full_name|default:"Họ và tên" }}</h1>{% if personal_info.headline %}<p class="headline">{{ personal_info.headline }}</p>{% endif %}</div>
               {% elif section.section_key == "contact" %}
-                <p class="contact">{{ contact_line }}</p>
+                {% if contact_values %}<div class="contact contact-grid">{% for value in contact_values %}<span>{{ value }}</span>{% endfor %}</div>{% endif %}
               {% elif section.section_key == "avatar" %}
                 {% if avatar_data_uri %}<div class="avatar-frame"><img class="avatar" src="{{ avatar_data_uri }}" alt=""></div>{% endif %}
               {% else %}
               <h2>{{ section.title }}</h2>
               {% for item in section.items %}
                 <div class="item">
-                  {% if item.heading %}<p class="item-heading">{{ item.heading }}</p>{% endif %}
-                  {% if item.metadata %}<p class="item-meta">{{ item.metadata }}</p>{% endif %}
-                  {% if item.description_blocks %}<div class="item-description">
+                  {% if section.section_key == "summary" %}
+                    {% if item.description_blocks %}<div class="item-description">
+                      {% for block in item.description_blocks %}{% if block.type == "bullet" %}<ul><li>{% else %}<p>{% endif %}{% for run in block.runs %}{{ run.text }}{% endfor %}{% if block.type == "bullet" %}</li></ul>{% else %}</p>{% endif %}{% endfor %}
+                    </div>{% elif item.value %}<p>{{ item.value }}</p>{% endif %}
+                  {% elif section.section_key == "experience" %}
+                    {% if item.date_range %}<p class="date-range">{{ item.date_range }}</p>{% endif %}
+                    {% if item.role %}<p class="item-heading">{{ item.role }}</p>{% endif %}
+                    {% if item.company %}<p class="item-secondary">{{ item.company }}</p>{% endif %}
+                  {% elif section.section_key == "skills" %}
+                    <div class="skill-row"><span class="skill-name">{{ item.heading }}</span>{% if item.skill_level %}<span class="skill-level">{% for active in item.skill_notches %}<span class="skill-notch{% if active %} active{% endif %}"></span>{% endfor %}</span>{% endif %}</div>
+                  {% else %}
+                    {% if item.date_range %}<p class="date-range">{{ item.date_range }}</p>{% endif %}
+                    {% if item.heading %}<p class="item-heading">{{ item.heading }}</p>{% endif %}
+                    {% if item.secondary %}<p class="item-secondary">{{ item.secondary }}</p>{% endif %}
+                  {% endif %}
+                  {% if section.section_key != "summary" and item.description_blocks %}<div class="item-description">
                     {% for block in item.description_blocks %}
                       {% if block.type == "bullet" %}<ul><li>{% else %}<p>{% endif %}
                       {% for run in block.runs %}

@@ -24,6 +24,7 @@ from .api_v2_views import (
     CvV2SharedLinkRevokeView,
     CvV2TemplateSwitchView,
     CvV2TemplatePreviewView,
+    CvV2ThumbnailView,
     CvV2VersionDetailView,
     CvV2VersionListView,
 )
@@ -41,6 +42,7 @@ urlpatterns = [
     path('<str:public_id>/duplicate/', CvV2DuplicateView.as_view(), name='cv-v2-duplicate'),
     path('<str:public_id>/imports/retry/', CvV2ImportRetryView.as_view(), name='cv-v2-import-retry'),
     path('<str:public_id>/view/', CvV2OwnerVersionView.as_view(), name='cv-v2-owner-view'),
+    path('<str:public_id>/thumbnail/', CvV2ThumbnailView.as_view(), name='cv-v2-thumbnail'),
     path('<str:public_id>/shared-links/', CvV2SharedLinkListCreateView.as_view(), name='cv-v2-shared-link-list-create'),
     path('<str:public_id>/shared-links/<str:link_public_id>/', CvV2SharedLinkRevokeView.as_view(), name='cv-v2-shared-link-revoke'),
     path('<str:public_id>/exports/', CvV2ExportListCreateView.as_view(), name='cv-v2-export-list-create'),

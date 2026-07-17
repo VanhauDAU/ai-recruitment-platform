@@ -37,7 +37,7 @@ from .api_v2_serializers import (
     CvVersionSummarySerializer,
     SharedCvVersionSerializer,
 )
-from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, UserCv
+from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from .selectors import (
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
@@ -65,6 +65,7 @@ from .services import (
     owner_cv_export,
     owner_view_version,
     request_cv_export,
+    request_current_cv_thumbnail,
     resolve_shared_link,
     revoke_shared_link,
     retry_cv_export,
@@ -164,7 +165,7 @@ class CvV2DetailView(CandidateV2CvMixin, APIView):
     model = UserCv
 
     def get(self, request, public_id):
-        return Response(CvV2Serializer(self.get_cv()).data)
+        return Response(CvV2Serializer(self.get_cv(), context={'request': request}).data)
 
     def patch(self, request, public_id):
         cv = self.get_cv()
@@ -417,6 +418,37 @@ class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
             as_attachment=True,
             filename=filename,
             content_type='application/pdf',
+        )
+
+
+class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
+    """Owner-only first-page image; the private storage key is never serialized."""
+    model = UserCv
+
+    def get(self, request, public_id):
+        cv = self.get_cv()
+        from .services import current_thumbnail_ready
+
+        if not current_thumbnail_ready(cv):
+            raise Http404
+        return FileResponse(
+            default_storage.open(cv.thumbnail_url, 'rb'),
+            filename=f'{cv.title or "cv"}-preview.webp',
+            content_type='image/webp',
+        )
+
+    def post(self, request, public_id):
+        try:
+            cv = request_current_cv_thumbnail(cv=self.get_cv(), actor=request.user)
+        except (ValueError, CvVersion.DoesNotExist) as error:
+            raise Http404 from error
+        from .services import current_thumbnail_ready
+
+        ready = current_thumbnail_ready(cv)
+        payload = CvV2Serializer(cv, context={'request': request}).data
+        return Response(
+            {'status': 'ready' if ready else 'pending', 'thumbnail_url': payload['thumbnail_url']},
+            status=status.HTTP_200_OK if ready else status.HTTP_202_ACCEPTED,
         )
 
 
