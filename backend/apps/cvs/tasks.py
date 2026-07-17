@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import logging
+from time import monotonic
 
 from celery import shared_task
 from django.core.files.base import ContentFile
@@ -11,6 +12,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 from common.metrics import record_metric
+from common.pdf_raster import first_pdf_page_image
 
 from apps.ai_core.cv_import import AiCvParseError, structure_cv_text
 
@@ -18,8 +20,46 @@ from .composition import compose_cv_document, overlay_actor_identity
 from .models import CvExport, CvImportJob, UserCv
 from .pdf_renderer import render_cv_version_pdf
 from .services.versions import create_version
+from .services.thumbnails import thumbnail_key_for
 
 logger = logging.getLogger(__name__)
+
+
+@shared_task
+def generate_cv_thumbnail(version_id: int) -> None:
+    """Create a private WebP preview from the newest immutable saved version."""
+    from .models import CvVersion
+
+    started_at = monotonic()
+    version = CvVersion.objects.select_related('cv', 'template_version').filter(pk=version_id).first()
+    if version is None or version.cv_id is None or version.cv.latest_version_id != version.pk:
+        return
+    cv = version.cv
+    storage_key = thumbnail_key_for(cv, version)
+    try:
+        if default_storage.exists(storage_key):
+            saved_key = storage_key
+        else:
+            pdf_bytes = render_cv_version_pdf(version)
+            image_bytes = first_pdf_page_image(pdf_bytes, width=900, image_format='WEBP', quality=88)
+            saved_key = default_storage.save(storage_key, ContentFile(image_bytes))
+    except Exception:  # noqa: BLE001 - never log CV content or renderer payload
+        logger.warning('Private CV thumbnail generation failed for version %s.', version_id)
+        record_metric('cv_snapshot_failure')
+        record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='failed')
+        return
+
+    with transaction.atomic():
+        current = UserCv.objects.select_for_update().filter(pk=cv.pk).first()
+        if current is None or current.latest_version_id != version.pk:
+            default_storage.delete(saved_key)
+            return
+        old_key = current.thumbnail_url
+        current.thumbnail_url = saved_key
+        current.save(update_fields=['thumbnail_url', 'updated_at'])
+        if old_key and old_key != saved_key:
+            transaction.on_commit(lambda: default_storage.delete(old_key))
+    record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed')
 
 
 def _storage_key(export: CvExport) -> str:

@@ -82,11 +82,11 @@ export default function BlogCategory() {
 
       <div className="mx-auto max-w-6xl px-3 pb-8 pt-4 sm:px-4 sm:pb-10 sm:pt-5">
         <nav className="flex min-w-0 items-center overflow-hidden whitespace-nowrap text-xs text-slate-400 sm:text-sm">
-          <Link to="/" className="shrink-0 hover:text-[var(--brand-primary)]">Trang chủ</Link>
+          <Link to="/" className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">Trang chủ</Link>
           <span className="mx-1.5 shrink-0">›</span>
-          <Link to={BLOG_ROOT} className="shrink-0 hover:text-[var(--brand-primary)]">{pageTitle}</Link>
+          <Link to={BLOG_ROOT} className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">{pageTitle}</Link>
           <span className="mx-1.5 shrink-0">›</span>
-          <span className="truncate font-medium text-[var(--brand-primary)]">{activeCategory?.name || '...'}</span>
+          <span className="truncate font-medium text-slate-900">{activeCategory?.name || '...'}</span>
         </nav>
         <h1 className="mt-2 text-xl font-extrabold leading-7 text-slate-900 sm:text-3xl sm:leading-9">{activeCategory?.name || ''}</h1>
         {activeCategory?.description && <p className="mt-1 text-sm text-slate-500">{activeCategory.description}</p>}

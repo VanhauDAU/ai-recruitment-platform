@@ -36,6 +36,11 @@ export async function getCvSampleContent(publicId) {
   return data
 }
 
+export async function getCvBackgrounds() {
+  const { data } = await api.get('/v2/cv-backgrounds/')
+  return results(data)
+}
+
 export async function getCvPositionOptions(locale = 'vi-VN', query = '', signal) {
   const config = { params: { locale, ...(query ? { q: query } : {}) } }
   if (signal) config.signal = signal

@@ -78,7 +78,7 @@ function MobileActions({ isAuthenticated, navigate, onClose, user }) {
   )
 }
 
-export default function Header() {
+export default function Header({ editorMode = false }) {
   const { user, isAuthenticated, logout } = useSession()
   const { promptLogin } = useLoginPrompt()
   const navigate = useNavigate()
@@ -97,7 +97,7 @@ export default function Header() {
     // while scrolling there so it cannot cover controls on small viewports.
     || location.pathname.startsWith('/cvs/')
   const isCvRoute = location.pathname.startsWith('/cvs/')
-  const shouldShowHeader = !isCvRoute && (!hideOnScroll || headerVisible)
+  const shouldShowHeader = editorMode || (!isCvRoute && (!hideOnScroll || headerVisible))
 
   function handleItem(item) {
     setOpenKey(null)
@@ -114,7 +114,7 @@ export default function Header() {
   }
 
   return (
-    <header className={`sticky top-0 z-30 border-b border-gray-200 bg-white transition-transform duration-300 ${shouldShowHeader ? 'translate-y-0' : '-translate-y-full'}`}>
+    <header aria-label={editorMode ? 'Header website' : undefined} className={`sticky top-0 z-50 shrink-0 border-b border-gray-200 bg-white transition-transform duration-300 ${editorMode ? 'border-t-2 border-t-slate-800' : ''} ${shouldShowHeader ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="flex h-16 w-full items-center gap-3 px-4 sm:px-6 md:gap-8">
         <button
           type="button"

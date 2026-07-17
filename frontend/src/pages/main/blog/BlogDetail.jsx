@@ -70,13 +70,13 @@ export default function BlogDetail() {
 
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
         <nav className="flex min-w-0 items-center overflow-hidden whitespace-nowrap text-xs text-slate-400 sm:text-sm">
-          <Link to="/" className="shrink-0 hover:text-[var(--brand-primary)]">Trang chủ</Link>
+          <Link to="/" className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">Trang chủ</Link>
           <span className="mx-1.5 shrink-0">›</span>
-          <Link to={BLOG_ROOT} className="shrink-0 hover:text-[var(--brand-primary)]">{pageTitle}</Link>
+          <Link to={BLOG_ROOT} className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">{pageTitle}</Link>
           {post.category && (
             <>
               <span className="mx-1.5 hidden shrink-0 sm:inline">›</span>
-              <Link to={blogCategoryPath(post.category.slug)} className="hidden shrink-0 hover:text-[var(--brand-primary)] sm:inline">
+              <Link to={blogCategoryPath(post.category.slug)} className="hidden shrink-0 !text-[var(--brand-primary)] hover:!opacity-80 sm:inline">
                 {post.category.name}
               </Link>
             </>

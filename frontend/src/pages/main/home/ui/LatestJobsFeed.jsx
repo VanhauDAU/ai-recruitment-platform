@@ -55,24 +55,12 @@ function LatestJobTooltip({ job }) {
 function Mascot() {
   return (
     <div className="flex justify-center">
-      <svg viewBox="0 0 120 110" className="w-28 h-auto" role="img" aria-label="Trợ lý ảo">
-        <defs>
-          <radialGradient id="glow" cx="50%" cy="45%" r="55%">
-            <stop offset="0%" stopColor="#3ddc84" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#3ddc84" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="60" cy="55" rx="55" ry="50" fill="url(#glow)" />
-        <line x1="60" y1="16" x2="60" y2="26" stroke="#3ddc84" strokeWidth="2" />
-        <circle cx="60" cy="13" r="4" fill="#3ddc84" />
-        <rect x="30" y="26" width="60" height="48" rx="16" fill="#e8fff4" />
-        <rect x="37" y="36" width="46" height="26" rx="12" fill="#0a2a20" />
-        <circle cx="50" cy="49" r="5" fill="#3ddc84" />
-        <circle cx="70" cy="49" r="5" fill="#3ddc84" />
-        <rect x="42" y="74" width="36" height="24" rx="8" fill="#cfeede" />
-        <rect x="26" y="78" width="10" height="18" rx="5" fill="#e8fff4" />
-        <rect x="84" y="78" width="10" height="18" rx="5" fill="#e8fff4" />
-      </svg>
+      <img
+        src="https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/dashboard/dashboard-item.png"
+        alt="Thị trường việc làm"
+        className="w-36 h-auto object-contain drop-shadow-md"
+        loading="lazy"
+      />
     </div>
   )
 }

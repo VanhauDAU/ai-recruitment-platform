@@ -20,6 +20,9 @@ ALLOWED_FONT_FAMILIES = frozenset({'Arial', 'Calibri', 'Inter', 'Roboto', 'Sourc
 HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 YEAR_MONTH_RE = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
 SAFE_RICH_TEXT_TYPES = frozenset({'bullet', 'paragraph'})
+SAFE_RICH_TEXT_MARKS = frozenset({
+    'bold', 'italic', 'underline', 'font_family', 'font_size_pt', 'color',
+})
 
 
 def empty_content(locale='vi-VN'):
@@ -32,6 +35,8 @@ def empty_content(locale='vi-VN'):
             'email': '',
             'phone': '',
             'address': '',
+            'website': '',
+            'date_of_birth': '',
             'avatar_asset_id': None,
             'links': [],
         },
@@ -150,9 +155,15 @@ def validate_template_layout_capabilities(*, layout_json, capabilities):
     if not isinstance(minimum, (int, float)) or not isinstance(maximum, (int, float)) or not 0 < minimum <= maximum < 100:
         raise ValidationError({'template_capabilities': 'column_resize requires valid min_percent and max_percent.'})
     regions = layout_json.get('regions', []) if isinstance(layout_json, dict) else []
-    if len(regions) < 2 or any(
-        not isinstance(region, dict) or not minimum <= region.get('width_percent', 0) <= maximum
-        for region in regions
+    rows = {}
+    for region in regions:
+        if not isinstance(region, dict):
+            continue
+        rows.setdefault(region.get('row', 0), []).append(region)
+    resizable_regions = [region for row in rows.values() if len(row) > 1 for region in row]
+    if not resizable_regions or any(
+        not minimum <= region.get('width_percent', 0) <= maximum
+        for region in resizable_regions
     ):
         raise ValidationError({
             'layout_json.regions': f'Column widths must stay between {minimum} and {maximum} percent for this template.',
@@ -180,8 +191,25 @@ def _validate_content(content, errors):
     personal_info = content.get('personal_info')
     if not isinstance(personal_info, dict):
         errors['content_json.personal_info'] = 'Must be an object.'
-    elif not isinstance(personal_info.get('links', []), list):
-        errors['content_json.personal_info.links'] = 'Must be a list.'
+    else:
+        if not isinstance(personal_info.get('links', []), list):
+            errors['content_json.personal_info.links'] = 'Must be a list.'
+        if 'avatar_position' in personal_info:
+            position = personal_info['avatar_position']
+            if (
+                not isinstance(position, dict)
+                or any(key not in position or not isinstance(position[key], (int, float)) or not 0 <= position[key] <= 100 for key in ('x', 'y'))
+            ):
+                errors['content_json.personal_info.avatar_position'] = 'Must contain x and y between 0 and 100.'
+        if 'avatar_size_mm' in personal_info:
+            size = personal_info['avatar_size_mm']
+            if not isinstance(size, (int, float)) or isinstance(size, bool) or not 20 <= size <= 80:
+                errors['content_json.personal_info.avatar_size_mm'] = 'Must be between 20 and 80 millimeters.'
+        if 'avatar_zoom' in personal_info:
+            zoom = personal_info['avatar_zoom']
+            if not isinstance(zoom, (int, float)) or isinstance(zoom, bool) or not 1 <= zoom <= 3:
+                errors['content_json.personal_info.avatar_zoom'] = 'Must be between 1 and 3.'
+    _validate_inline_text_styles(content.get('inline_text_styles', {}), errors)
     sections = content.get('sections')
     if not isinstance(sections, list):
         errors['content_json.sections'] = 'Must be a list.'
@@ -240,11 +268,36 @@ def _validate_item_dates(item, path, errors):
             errors[f'{path}.{key}'] = 'Must be YYYY-MM or null.'
 
 
+def _validate_inline_text_styles(styles, errors):
+    if not isinstance(styles, dict):
+        errors['content_json.inline_text_styles'] = 'Must be an object.'
+        return
+    for style_id, marks in styles.items():
+        if not isinstance(style_id, str) or not style_id or not isinstance(marks, dict):
+            errors['content_json.inline_text_styles'] = 'Contains an invalid field style.'
+            return
+        if set(marks).difference(SAFE_RICH_TEXT_MARKS):
+            errors['content_json.inline_text_styles'] = 'Contains an unsupported field style mark.'
+            return
+        if any(key in marks and not isinstance(marks[key], bool) for key in ('bold', 'italic', 'underline')):
+            errors['content_json.inline_text_styles'] = 'Boolean field style marks must be boolean.'
+            return
+        if 'font_family' in marks and marks['font_family'] not in ALLOWED_FONT_FAMILIES:
+            errors['content_json.inline_text_styles'] = 'Contains an unsupported field style font.'
+            return
+        if 'font_size_pt' in marks and (not isinstance(marks['font_size_pt'], (int, float)) or not 8 <= marks['font_size_pt'] <= 32):
+            errors['content_json.inline_text_styles'] = 'Field style font size must be between 8 and 32 pt.'
+            return
+        if 'color' in marks and (not isinstance(marks['color'], str) or not HEX_COLOR_RE.fullmatch(marks['color'])):
+            errors['content_json.inline_text_styles'] = 'Field style color must be a six-digit hex color.'
+            return
+
+
 def _validate_rich_text(description, path, errors):
     if description is None:
         return
-    if not isinstance(description, dict) or description.get('format') != 'rich_text_v1':
-        errors[f'{path}.description'] = 'Must use rich_text_v1.'
+    if not isinstance(description, dict) or description.get('format') not in {'rich_text_v1', 'rich_text_v2'}:
+        errors[f'{path}.description'] = 'Must use rich_text_v1 or rich_text_v2.'
         return
     blocks = description.get('content')
     if not isinstance(blocks, list):
@@ -258,6 +311,38 @@ def _validate_rich_text(description, path, errors):
         if not isinstance(text, str) or '<' in text or '>' in text:
             errors[f'{path}.description.content'] = 'Rich text must be plain text blocks, not HTML.'
             return
+        if description.get('format') == 'rich_text_v1':
+            continue
+        runs = block.get('runs')
+        if not isinstance(runs, list) or ''.join(
+            run.get('text', '') for run in runs if isinstance(run, dict)
+        ) != text:
+            errors[f'{path}.description.content'] = 'rich_text_v2 text must equal the concatenated runs.'
+            return
+        for run in runs:
+            if not isinstance(run, dict) or not isinstance(run.get('text'), str):
+                errors[f'{path}.description.content'] = 'rich_text_v2 runs must contain text.'
+                return
+            marks = run.get('marks', {})
+            if not isinstance(marks, dict) or set(marks).difference(SAFE_RICH_TEXT_MARKS):
+                errors[f'{path}.description.content'] = 'rich_text_v2 contains unsupported marks.'
+                return
+            if any(key in marks and not isinstance(marks[key], bool) for key in ('bold', 'italic', 'underline')):
+                errors[f'{path}.description.content'] = 'Boolean rich-text marks must be boolean.'
+                return
+            if 'font_family' in marks and marks['font_family'] not in ALLOWED_FONT_FAMILIES:
+                errors[f'{path}.description.content'] = 'Unsupported rich-text font family.'
+                return
+            if 'font_size_pt' in marks and (
+                not isinstance(marks['font_size_pt'], (int, float)) or not 8 <= marks['font_size_pt'] <= 32
+            ):
+                errors[f'{path}.description.content'] = 'Rich-text font size must be between 8 and 32 pt.'
+                return
+            if 'color' in marks and (
+                not isinstance(marks['color'], str) or not HEX_COLOR_RE.fullmatch(marks['color'])
+            ):
+                errors[f'{path}.description.content'] = 'Rich-text color must be a six-digit hex color.'
+                return
 
 
 def _validate_layout(layout, content, errors):
@@ -278,7 +363,7 @@ def _validate_layout(layout, content, errors):
     } if isinstance(content, dict) else set()
     region_ids = set()
     assigned_sections = set()
-    widths = 0
+    row_widths = {}
     for index, region in enumerate(regions):
         path = f'layout_json.regions[{index}]'
         if not isinstance(region, dict):
@@ -293,7 +378,11 @@ def _validate_layout(layout, content, errors):
         if not isinstance(width, (int, float)) or not 0 < width <= 100:
             errors[f'{path}.width_percent'] = 'Must be between 0 and 100.'
         else:
-            widths += width
+            row = region.get('row', 0)
+            if not isinstance(row, int) or row < 0:
+                errors[f'{path}.row'] = 'Must be a non-negative integer.'
+                row = 0
+            row_widths[row] = row_widths.get(row, 0) + width
         section_ids = region.get('section_instance_ids')
         if not isinstance(section_ids, list):
             errors[f'{path}.section_instance_ids'] = 'Must be a list.'
@@ -304,8 +393,15 @@ def _validate_layout(layout, content, errors):
             elif section_id in assigned_sections:
                 errors[f'{path}.section_instance_ids'] = 'A section can only belong to one region.'
             assigned_sections.add(section_id)
-    if abs(widths - 100) > 0.01:
-        errors['layout_json.regions'] = 'Region widths must total 100 percent.'
+    if any(abs(width - 100) > 0.01 for width in row_widths.values()):
+        errors['layout_json.regions'] = 'Region widths must total 100 percent in each row.'
+    hidden_ids = layout.get('hidden_section_instance_ids', [])
+    if not isinstance(hidden_ids, list) or any(not isinstance(section_id, str) for section_id in hidden_ids):
+        errors['layout_json.hidden_section_instance_ids'] = 'Must be a list of section IDs.'
+    elif len(hidden_ids) != len(set(hidden_ids)) or any(section_id not in valid_instance_ids for section_id in hidden_ids):
+        errors['layout_json.hidden_section_instance_ids'] = 'Must contain unique known section IDs.'
+    elif assigned_sections.intersection(hidden_ids):
+        errors['layout_json.hidden_section_instance_ids'] = 'A hidden section cannot also be assigned to a region.'
     item_orders = layout.get('item_orders', {})
     if not isinstance(item_orders, dict):
         errors['layout_json.item_orders'] = 'Must be an object when present.'

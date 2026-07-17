@@ -36,15 +36,55 @@ export default function BlogHome() {
 
   return (
     <div className="bg-white">
+      {/* ── Hero banner ── */}
+      <div
+        style={{
+          backgroundImage: `url("https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/blog/blog-banner-toppy-3d.png"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
+          backgroundPosition: 'center top, center',
+          backgroundRepeat: 'no-repeat, no-repeat',
+          backgroundSize: 'cover, cover',
+          minHeight: '400px',
+          position: 'relative',
+          width: '100%',
+        }}
+      >
+        {/* Inner container: absolute ở dưới, gradient trắng từ dưới lên */}
+        <div
+          style={{
+            alignItems: 'center',
+            background: 'linear-gradient(180deg, rgba(248,255,251,0) 8.81%, #fbfffd 57.81%)',
+            bottom: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            left: 0,
+            margin: '0 auto',
+            position: 'absolute',
+            right: 0,
+            textAlign: 'center',
+            padding: '24px 16px 28px',
+          }}
+        >
+          <h1 className="text-2xl font-extrabold text-slate-800 sm:text-3xl md:text-4xl">
+            {pageTitle}
+          </h1>
+          <p className="max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+            Khám phá thông tin hữu ích liên quan tới nghề nghiệp bạn quan tâm. Chia sẻ kinh nghiệm,
+            kiến thức chuyên môn giúp bạn tìm được công việc phù hợp và phát triển bản thân.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Category nav (sticky, dưới hero) ── */}
       <BlogCategoryNav categories={categories} />
 
+      {/* ── Breadcrumb ── */}
       <div className="mx-auto max-w-6xl px-3 pt-4 sm:px-4 sm:pt-5">
         <nav className="flex min-w-0 items-center overflow-hidden whitespace-nowrap text-xs text-slate-400 sm:text-sm">
-          <Link to="/" className="shrink-0 hover:text-[var(--brand-primary)]">Trang chủ</Link>
+          <Link to="/" className="shrink-0 !text-[var(--brand-primary)] hover:!opacity-80">Trang chủ</Link>
           <span className="mx-1.5 shrink-0">›</span>
-          <span className="truncate font-medium text-[var(--brand-primary)]">{pageTitle}</span>
+          <span className="truncate font-medium text-slate-900">{pageTitle}</span>
         </nav>
-        <h1 className="mt-2 text-xl font-extrabold text-slate-900 sm:text-3xl">{pageTitle}</h1>
       </div>
 
       {loading ? (

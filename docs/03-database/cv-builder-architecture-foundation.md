@@ -106,6 +106,9 @@ Frontend Builder mới phải gọi các route V2, không gọi endpoint legacy
 - `POST /api/v2/cvs/{public_id}/save-version/` tạo `manual_save` immutable;
 - `POST /api/v2/cvs/{public_id}/publish/` tạo `published` immutable;
 - `GET /api/v2/cvs/{public_id}/versions/` đọc history immutable;
+- `GET|POST /api/v2/cvs/{public_id}/thumbnail/` đọc ảnh WebP qua owner scope hoặc
+  yêu cầu idempotent worker sinh lại từ latest immutable version; storage key
+  không được serialize;
 - `GET|POST /api/v2/applications/` là candidate application contract. POST bắt
   buộc CV và `version_public_id` cùng aggregate; service copy đúng version này
   thành `application_snapshot` mà không đổi draft/latest/published pointer;
@@ -122,6 +125,27 @@ recovery khi hash này khác `base_version.content_hash`; manual save repoint ba
 version nên tự clear dirty mà không phụ thuộc timestamp. Endpoint recovery chỉ
 trả draft dirty mới nhất, còn template preview là read-only projection trước khi
 switch bằng CAS.
+
+## Orchestration sau khi lưu
+
+Nút lưu cuối workflow khác autosave: client flush pending edit, PUT draft rồi
+POST `save-version`. Sau commit, backend enqueue thumbnail WebP cho đúng version;
+trang `/save-cv-success/{public_id}` poll metadata ngắn hạn cho tới khi artifact
+sẵn sàng và không render lại document bằng DOM.
+
+Nút tải dùng contract export hiện hành: POST export với
+`version_public_id`, poll job, sau đó GET download owner-only. Không tải draft,
+không dùng URL storage trực tiếp và không tạo PDF trong browser.
+
+`GET /api/jobs/recommendations/by-cv/{public_id}/` scope CV theo candidate hiện
+tại và xếp hạng active jobs bằng rule giải thích được. Response gồm điểm, lý do,
+cờ high-match, keyword chính và position taxonomy liên quan. V1 không gọi đây là
+AI; việc thay ranker không được bỏ owner scope hoặc lý do match.
+
+Recruiter visibility dùng `GET|PATCH /api/candidate/recruiter-visibility/`, tách
+khỏi PUT job preferences. Bật quyền yêu cầu explicit confirmation; mỗi quyết
+định vừa cập nhật current `CandidateConsent` vừa append
+`CandidateConsentEvent` với policy, source, source path và CV context.
 
 ## Template Catalog và Create CV Flow
 

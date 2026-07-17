@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createDocumentHistory,
+  applyCvSample,
   ensureBasicEditorDocument,
   getCv,
   getCvDraft,
   publishCvVersion,
+  renameCv,
   recordDocumentCommand,
   redoDocumentCommand,
   saveCvVersion,
@@ -31,6 +33,8 @@ export default function useCvDraftEditor(publicId) {
   const [error, setError] = useState(null)
   const [lastVersion, setLastVersion] = useState(null)
   const [validationErrors, setValidationErrors] = useState([])
+  const [assets, setAssets] = useState({})
+  const [savedAt, setSavedAt] = useState(null)
   const [history, setHistoryState] = useState(() => createDocumentHistory())
   const documentRef = useRef(null)
   const lockVersionRef = useRef(null)
@@ -40,6 +44,21 @@ export default function useCvDraftEditor(publicId) {
   const clientSessionIdRef = useRef(sessionId())
   const historyRef = useRef(createDocumentHistory())
   const loadGenerationRef = useRef(0)
+  const pendingEditFlushersRef = useRef(new Set())
+  const autosaveTimerRef = useRef(null)
+  const scheduleLatestAutosaveRef = useRef(() => {})
+
+  const flushPendingEdits = useCallback(() => {
+    for (const flush of [...pendingEditFlushersRef.current]) flush()
+    // Field commits update documentRef synchronously, while React state updates
+    // on the next render. Consumers opening a modal need this newest snapshot.
+    return documentRef.current
+  }, [])
+
+  const registerPendingEdit = useCallback((flush) => {
+    pendingEditFlushersRef.current.add(flush)
+    return () => pendingEditFlushersRef.current.delete(flush)
+  }, [])
 
   const setSavePhase = useCallback((nextPhase) => {
     phaseRef.current = nextPhase
@@ -48,6 +67,7 @@ export default function useCvDraftEditor(publicId) {
 
   const load = useCallback(async () => {
     const generation = ++loadGenerationRef.current
+    clearTimeout(autosaveTimerRef.current)
     setSavePhase('loading')
     setError(null)
     setLastVersion(null)
@@ -68,6 +88,8 @@ export default function useCvDraftEditor(publicId) {
       lastSavedSignatureRef.current = needsInitialAutosave ? signature(rawDocument) : signature(normalized)
       setDocument(normalized)
       setCv(nextCv)
+      setAssets(draft.assets || {})
+      setSavedAt(draft.updated_at ? new Date(draft.updated_at) : null)
       const nextHistory = createDocumentHistory()
       historyRef.current = nextHistory
       setHistoryState(nextHistory)
@@ -98,7 +120,14 @@ export default function useCvDraftEditor(publicId) {
     ).then((draft) => {
       lockVersionRef.current = draft.lock_version
       lastSavedSignatureRef.current = snapshotSignature
-      setSavePhase(signature(documentRef.current) === snapshotSignature ? 'saved' : 'unsaved')
+      if (draft.assets) setAssets((current) => ({ ...current, ...draft.assets }))
+      setSavedAt(new Date())
+      const hasNewerChanges = signature(documentRef.current) !== snapshotSignature
+      setSavePhase(hasNewerChanges ? 'unsaved' : 'saved')
+      // A user may continue typing while the previous request is in flight.
+      // Queue the newer document explicitly; relying only on the phase effect
+      // misses this case when React is already rendering "unsaved".
+      if (hasNewerChanges) scheduleLatestAutosaveRef.current()
       return true
     }).catch((saveError) => {
       if (saveError.response?.status === 409) {
@@ -117,10 +146,26 @@ export default function useCvDraftEditor(publicId) {
   }, [publicId, setSavePhase])
 
   useEffect(() => {
+    const schedule = (delay = AUTOSAVE_DELAY) => {
+      clearTimeout(autosaveTimerRef.current)
+      if (!documentRef.current || phaseRef.current === 'conflict') return
+      autosaveTimerRef.current = setTimeout(() => {
+        autosaveTimerRef.current = null
+        runAutosave()
+      }, delay)
+    }
+    scheduleLatestAutosaveRef.current = schedule
+    return () => {
+      if (scheduleLatestAutosaveRef.current === schedule) scheduleLatestAutosaveRef.current = () => {}
+      clearTimeout(autosaveTimerRef.current)
+    }
+  }, [runAutosave])
+
+  useEffect(() => {
     if (!document || phase !== 'unsaved') return undefined
-    const timer = setTimeout(() => { runAutosave() }, AUTOSAVE_DELAY)
-    return () => clearTimeout(timer)
-  }, [document, phase, runAutosave])
+    scheduleLatestAutosaveRef.current()
+    return undefined
+  }, [document, phase])
 
   useEffect(() => {
     const hasUnsavedChanges = () => {
@@ -128,23 +173,29 @@ export default function useCvDraftEditor(publicId) {
       return documentChanged || ['saving', 'failed', 'conflict'].includes(phaseRef.current)
     }
     const warnBeforeUnload = (event) => {
+      flushPendingEdits()
       if (!hasUnsavedChanges()) return
       event.preventDefault()
       event.returnValue = ''
     }
     const flushInternalNavigation = (event) => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !hasUnsavedChanges()) return
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
       const link = event.target.closest?.('a[href]')
       if (!link || link.target || link.download) return
       const destination = new URL(link.href, window.location.href)
       if (destination.origin !== window.location.origin || destination.href === window.location.href) return
+      flushPendingEdits()
+      if (!hasUnsavedChanges()) return
       event.preventDefault()
       runAutosave().then((saved) => {
         if (saved) window.location.assign(destination.href)
       })
     }
     const flushWhenHidden = () => {
-      if (globalThis.document.visibilityState === 'hidden' && hasUnsavedChanges()) runAutosave()
+      if (globalThis.document.visibilityState === 'hidden') {
+        flushPendingEdits()
+        if (hasUnsavedChanges()) runAutosave()
+      }
     }
     window.addEventListener('beforeunload', warnBeforeUnload)
     globalThis.document.addEventListener('click', flushInternalNavigation, true)
@@ -154,15 +205,15 @@ export default function useCvDraftEditor(publicId) {
       globalThis.document.removeEventListener('click', flushInternalNavigation, true)
       globalThis.document.removeEventListener('visibilitychange', flushWhenHidden)
     }
-  }, [runAutosave])
+  }, [flushPendingEdits, runAutosave])
 
-  const updateDocument = useCallback((updater, commandLabel = 'Cập nhật CV') => {
+  const updateDocument = useCallback((updater, commandLabel = 'Cập nhật CV', options = {}) => {
     if (phaseRef.current === 'conflict') return
     const current = documentRef.current
     if (!current) return
     const next = typeof updater === 'function' ? updater(current) : updater
     if (signature(current) === signature(next)) return
-    const nextHistory = recordDocumentCommand(historyRef.current, current, next, commandLabel)
+    const nextHistory = recordDocumentCommand(historyRef.current, current, next, commandLabel, undefined, options)
     historyRef.current = nextHistory
     setHistoryState(nextHistory)
     documentRef.current = next
@@ -172,6 +223,7 @@ export default function useCvDraftEditor(publicId) {
   }, [setSavePhase])
 
   const undo = useCallback(() => {
+    flushPendingEdits()
     if (phaseRef.current === 'conflict') return
     const result = undoDocumentCommand(historyRef.current)
     if (!result.document) return
@@ -181,9 +233,10 @@ export default function useCvDraftEditor(publicId) {
     setDocument(result.document)
     setValidationErrors([])
     setSavePhase('unsaved')
-  }, [setSavePhase])
+  }, [flushPendingEdits, setSavePhase])
 
   const redo = useCallback(() => {
+    flushPendingEdits()
     if (phaseRef.current === 'conflict') return
     const result = redoDocumentCommand(historyRef.current)
     if (!result.document) return
@@ -193,7 +246,7 @@ export default function useCvDraftEditor(publicId) {
     setDocument(result.document)
     setValidationErrors([])
     setSavePhase('unsaved')
-  }, [setSavePhase])
+  }, [flushPendingEdits, setSavePhase])
 
   const retryAutosave = useCallback(() => {
     if (phaseRef.current === 'conflict') return Promise.resolve(false)
@@ -201,7 +254,24 @@ export default function useCvDraftEditor(publicId) {
     return runAutosave()
   }, [runAutosave, setSavePhase])
 
+  const saveDraft = useCallback(async () => {
+    flushPendingEdits()
+    clearTimeout(autosaveTimerRef.current)
+    autosaveTimerRef.current = null
+    if (phaseRef.current === 'conflict') return false
+
+    // If an autosave was already in flight, wait for it and persist any newer
+    // canvas edits before reporting that the explicit save has completed.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const saved = await runAutosave()
+      if (!saved) return false
+      if (signature(documentRef.current) === lastSavedSignatureRef.current) return true
+    }
+    return false
+  }, [flushPendingEdits, runAutosave])
+
   const commitVersion = useCallback(async (publish) => {
+    flushPendingEdits()
     if (phaseRef.current === 'conflict') return null
     const nextValidationErrors = validateCvDocument(documentRef.current)
     if (nextValidationErrors.length) {
@@ -214,6 +284,7 @@ export default function useCvDraftEditor(publicId) {
     try {
       const version = await (publish ? publishCvVersion : saveCvVersion)(publicId, lockVersionRef.current)
       setLastVersion(version)
+      setSavedAt(new Date())
       setSavePhase('saved')
       return version
     } catch (saveError) {
@@ -226,9 +297,10 @@ export default function useCvDraftEditor(publicId) {
       }
       return null
     }
-  }, [publicId, runAutosave, setSavePhase])
+  }, [flushPendingEdits, publicId, runAutosave, setSavePhase])
 
   const switchTemplate = useCallback(async (templatePublicId) => {
+    flushPendingEdits()
     if (phaseRef.current === 'conflict' || !templatePublicId) return null
     const didAutosave = await runAutosave()
     if (!didAutosave) return null
@@ -252,6 +324,11 @@ export default function useCvDraftEditor(publicId) {
       lastSavedSignatureRef.current = signature(nextDocument)
       setDocument(nextDocument)
       setCv(result.cv)
+      setAssets(result.draft.assets || {})
+      setSavedAt(new Date())
+      const nextHistory = createDocumentHistory()
+      historyRef.current = nextHistory
+      setHistoryState(nextHistory)
       setValidationErrors([])
       setSavePhase('saved')
       return result
@@ -265,25 +342,83 @@ export default function useCvDraftEditor(publicId) {
       }
       return null
     }
-  }, [publicId, runAutosave, setSavePhase])
+  }, [flushPendingEdits, publicId, runAutosave, setSavePhase])
+
+  const applySample = useCallback(async (sampleContentPublicId) => {
+    flushPendingEdits()
+    if (phaseRef.current === 'conflict' || !sampleContentPublicId) return null
+    const didAutosave = await runAutosave()
+    if (!didAutosave) return null
+    const before = documentRef.current
+    setSavePhase('saving')
+    try {
+      const draft = await applyCvSample(
+        publicId,
+        sampleContentPublicId,
+        lockVersionRef.current,
+        clientSessionIdRef.current,
+      )
+      const nextDocument = {
+        schema_version: draft.schema_version,
+        content_json: draft.content_json,
+        layout_json: draft.layout_json,
+        style_json: draft.style_json,
+      }
+      const nextHistory = recordDocumentCommand(historyRef.current, before, nextDocument, 'Áp dụng nội dung mẫu')
+      historyRef.current = nextHistory
+      setHistoryState(nextHistory)
+      documentRef.current = nextDocument
+      lockVersionRef.current = draft.lock_version
+      lastSavedSignatureRef.current = signature(nextDocument)
+      setDocument(nextDocument)
+      setAssets(draft.assets || {})
+      setSavedAt(new Date())
+      setSavePhase('saved')
+      return draft
+    } catch (sampleError) {
+      if (sampleError.response?.status === 409) setSavePhase('conflict')
+      else setSavePhase('failed')
+      setError(sampleError.response?.data || sampleError)
+      return null
+    }
+  }, [flushPendingEdits, publicId, runAutosave, setSavePhase])
+
+  const rename = useCallback(async (title) => {
+    const nextCv = await renameCv(publicId, title)
+    setCv(nextCv)
+    return nextCv
+  }, [publicId])
+
+  const rememberAsset = useCallback((asset) => {
+    if (!asset?.public_id) return
+    setAssets((current) => ({ ...current, [asset.public_id]: asset }))
+  }, [])
 
   return {
     cv,
+    assets,
     document,
     phase,
     error,
     lastVersion,
     validationErrors,
+    savedAt,
     canUndo: history.past.length > 0,
     canRedo: history.future.length > 0,
     lockVersion: lockVersionRef.current,
     updateDocument,
+    registerPendingEdit,
+    flushPendingEdits,
     undo,
     redo,
     retryAutosave,
     reloadDraft: load,
+    saveDraft,
     saveVersion: () => commitVersion(false),
     publishVersion: () => commitVersion(true),
     switchTemplate,
+    applySample,
+    rename,
+    rememberAsset,
   }
 }

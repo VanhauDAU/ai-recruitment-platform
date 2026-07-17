@@ -4,13 +4,15 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
 
+from .models import CandidateConsent
 from .serializers import (
     CandidateJobPreferenceSerializer,
     CandidateProfileReadSerializer,
     CandidateProfileUpdateSerializer,
+    RecruiterVisibilitySerializer,
 )
 from .selectors import candidate_job_preference_for_user, candidate_profile_for_user
-from .services import replace_candidate_job_preferences, update_candidate_profile
+from .services import replace_candidate_job_preferences, set_recruiter_visibility, update_candidate_profile
 
 
 class MyCandidateProfileView(generics.RetrieveUpdateAPIView):
@@ -48,3 +50,43 @@ class MyCandidateJobPreferencesView(APIView):
         preference = replace_candidate_job_preferences(current.candidate_profile, serializer.validated_data)
         preference = candidate_job_preference_for_user(request.user)
         return Response(CandidateJobPreferenceSerializer(preference).data)
+
+
+class MyRecruiterVisibilityView(APIView):
+    """Purpose-specific recruiter-search consent; independent from job preferences."""
+
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        profile = candidate_profile_for_user(request.user)
+        consent = profile.consents.filter(
+            consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+        ).first()
+        return Response({
+            'enabled': bool(consent and consent.decision == CandidateConsent.Decision.GRANTED),
+            'policy_version': consent.policy_version if consent else 'v1',
+            'decided_at': consent.decided_at if consent else None,
+        })
+
+    def patch(self, request):
+        serializer = RecruiterVisibilitySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        cv_public_id = data.get('cv_public_id', '')
+        if cv_public_id and not request.user.cvs.filter(public_id=cv_public_id, is_deleted=False).exists():
+            from rest_framework.exceptions import ValidationError
+
+            raise ValidationError({'cv_public_id': 'CV không thuộc tài khoản hiện tại.'})
+        consent = set_recruiter_visibility(
+            candidate_profile_for_user(request.user),
+            enabled=data['enabled'],
+            policy_version=data['policy_version'],
+            source=data['source'],
+            source_path=data.get('source_path', ''),
+            cv_public_id=cv_public_id,
+        )
+        return Response({
+            'enabled': consent.decision == CandidateConsent.Decision.GRANTED,
+            'policy_version': consent.policy_version,
+            'decided_at': consent.decided_at,
+        })

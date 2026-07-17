@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.jobs.models import JobCategory
+from apps.cvs.models import CvAsset
 
 from .models import (
     CvCategory,
@@ -54,6 +55,28 @@ class CvColorAdminSerializer(serializers.ModelSerializer):
         model = CvColor
         fields = '__all__'
         read_only_fields = ['public_id', 'created_at', 'updated_at']
+
+
+class CvBackgroundAdminSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(write_only=True, required=False)
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CvAsset
+        fields = [
+            'public_id', 'title', 'file', 'content_type', 'size_bytes', 'width',
+            'height', 'is_active', 'url', 'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'public_id', 'content_type', 'size_bytes', 'width', 'height', 'url',
+            'created_at', 'updated_at',
+        ]
+
+    def get_url(self, obj):
+        from django.urls import reverse
+        path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
+        request = self.context.get('request')
+        return request.build_absolute_uri(path) if request else path
 
 
 class CvSampleContentAdminSerializer(serializers.ModelSerializer):

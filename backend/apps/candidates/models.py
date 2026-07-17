@@ -175,3 +175,30 @@ class CandidateConsent(models.Model):
                 name='candidate_consent_type_unique',
             ),
         ]
+
+
+class CandidateConsentEvent(models.Model):
+    """Immutable audit trail for a candidate privacy decision."""
+
+    candidate_profile = models.ForeignKey(
+        CandidateProfile,
+        on_delete=models.CASCADE,
+        related_name='consent_events',
+    )
+    consent_type = models.CharField(max_length=30, choices=CandidateConsent.ConsentType.choices)
+    decision = models.CharField(max_length=20, choices=CandidateConsent.Decision.choices)
+    policy_version = models.CharField(max_length=64, default='v1')
+    source = models.CharField(max_length=64)
+    source_path = models.TextField(blank=True)
+    cv_public_id = models.CharField(max_length=50, blank=True)
+    decided_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'candidate_consent_events'
+        ordering = ['-decided_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['candidate_profile', 'consent_type', '-decided_at'],
+                name='candidate_consent_event_lookup',
+            ),
+        ]

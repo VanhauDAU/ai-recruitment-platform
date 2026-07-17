@@ -32,6 +32,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | CVB-P4 | Admin catalogue + snapshot | ✅ |
 | CVB-P5 | AI import PDF/DOCX | ✅ |
 | CVB-P6 | Cleanup, rollout, observability | ✅ |
+| CVB-8 | WYSIWYG A4 editor, rich text, DnD, asset, PDF parity, fallback flag | ✅ Code + bật mặc định / 🟡 Theo dõi rollout |
 
 Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
 
@@ -47,6 +48,12 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P4 | Tách `FeaturedIndustriesEmployers` (449) + `MarketStats` (442) | ✅ |
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ✅ |
 | FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
+
+## Epic thiết kế trang chủ (2026-07-16, nhánh `feature/design-home`)
+
+| Mục | Nội dung | Trạng thái |
+| --- | --- | --- |
+| HOME-CV | Section "Tạo CV ấn tượng" trên trang chủ (giữa FlashBadge và Top ngành nghề): showcase 3 mẫu CV thật từ catalogue xòe quạt desktop / trượt ngang snap mobile, swatch đổi màu preview tại chỗ, badge PREMIUM, link chi tiết `/mau-cv/chi-tiet/:slug`; 4 thẻ tính năng (mẫu đa dạng, autosave, AI import, xuất PDF) + CTA `/mau-cv`. Fetch React Query (stale 5′) + skeleton, ẩn section khi catalogue rỗng; export `CvTemplatePreview` qua public API entity `cv-template`. Data: seed thêm template "Chuyên nghiệp 2 cột" (`classic_two_column_v1`, publish qua service chính thức) — catalogue dev có 3 mẫu | ✅ |
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
@@ -412,6 +419,7 @@ build đều pass.
 | 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/hard-delete/default) | ✅ — V2 workflow, snapshot ứng tuyển retained detached, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
+| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code + bật mặc định / 🟡 Theo dõi rollout — shell đúng DOCX gồm header website, action bar, rail 176 px tự co chiều cao, panel 352 px, canvas A4 80% và zoom nổi; toolbar rich text nổi theo selection, hiển thị format hiện tại và không thay đổi kích thước trang; design panel có màu luôn mở, slider theo nấc, locale reset tiêu đề/placeholder chuẩn và font fallback stack; inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard với overlay/vùng thả, avatar/background, template/sample CAS, PDF parity; editor cũ chỉ còn làm fallback; canvas chrome đối chiếu TopCV: toolbar section gọn trong hàng tiêu đề + toolbar item ở cạnh dưới-phải (không che nội dung), mỗi lúc chỉ một tầng chrome và ẩn khi đang gõ (`:has`, hover chủ động vẫn hiện lại), nút Xóa có nhãn màu ngữ nghĩa, avatar mặc định lên đầu cột phụ khi template không có header, thêm mục tự cuộn + focus ô đầu, summary bỏ ô "Tên" thừa, placeholder ngày dạng ví dụ, nhãn vùng Cột chính/Cột phụ, sửa nút "+ Thêm nội dung" bị antd đè `position` làm lệch layout A4; đợt 2 theo TopCV: nút "+ Thêm" chèn item ngay sau item đang hover, editor mức độ kỹ năng 5 nấc khớp preview, kéo mục mới từ panel Thêm mục thả thẳng vào canvas (DndContext dùng chung cấp editor), panel Bố cục thành sơ đồ mini kéo-thả giữa các cột + click đi tới mục, vùng Mô tả luôn hiển thị với placeholder theo loại mục (trước đây item mới không thể nhập mô tả), toolbar định dạng neo góc phải phía trên item nên không đè lên dòng kế bên |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -586,4 +594,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (FE-P6 — WebP logo fallback 80KB→27KB; precompress hoãn tới epic deployment; hoàn tất epic dọn dẹp frontend FE-P1→P6)
+Cập nhật lần cuối: 2026-07-17 (CVB-8 — tối ưu UX canvas theo khảo sát trực tiếp TopCV builder, 2 đợt. Đợt 1: toolbar section thu gọn nằm trong hàng tiêu đề, toolbar item chuyển xuống cạnh dưới-phải nên không còn che tiêu đề/nội dung đang gõ; mỗi lúc chỉ một tầng chrome hiển thị và chrome ẩn khi focus contenteditable (CSS `:has`, hover chủ động vẫn hiện lại để thao tác ngay khi đang gõ); nút Xóa có nhãn + màu ngữ nghĩa, bỏ nút xóa nguy hiểm khỏi toolbar định dạng InlineText; thêm "Ảnh đại diện" mặc định vào đầu cột phụ (fallback `header→sidebar` + `insertAtStart` trong registry); thêm mục tự cuộn tới và focus ô đầu tiên; summary bỏ ô "Tên" thừa và có placeholder gợi ý; placeholder ngày dạng ví dụ `Từ (vd: 2020-01)`; nhãn vùng Cột chính/Cột phụ; sửa bug antd `.ant-btn` đè Tailwind `absolute` khiến nút "+ Thêm nội dung" nằm trong flow làm section editor cao hơn bản in. Đợt 2: nút "+ Thêm" chèn item ngay sau item hiện tại (`moveItemToIndexInLayout` trong cùng một undo step); editor mức độ kỹ năng 5 nấc cùng hàng với tên (khớp preview level bar); DndContext nâng lên cấp editor để kéo mục mới từ panel Thêm mục thả thẳng vào vị trí mong muốn trên canvas (id `new:<key>`); panel Bố cục thành sơ đồ mini-map kéo-thả (id `mini-section:`/`mini-region:`) di chuyển mục giữa cột, click để đi tới mục; vùng Mô tả rich text luôn hiển thị với placeholder theo loại mục — fix lỗ hổng item mới không thể nhập mô tả; toolbar định dạng (InlineText + RichTextArea) neo góc phải phía trên item/section thay vì ngay trên field nên không còn đè lên dòng muốn click kế tiếp; chuẩn hóa DOM rich text sau blur để placeholder quay lại sau khi xóa hết chữ; header editor khớp bản in — danh sách liên hệ dùng chung grid `repeat(auto-fit, minmax(13rem,1fr))` với `.cv-document-preview__contact` (trước đây `.cv-contact-list` không có CSS nên 5 trường xếp dọc, header editor cao gấp đôi Xem trước), khoảng cách name/headline/contact đồng bộ `mb-6 pl-4 mt-1 mt-2`. Verify: lint + architecture + 54 Vitest + build + 22 Playwright smoke desktop/mobile pass; kéo-thả panel→canvas và mini-map đã kiểm chứng trực tiếp trên browser. HOME-CV giữ nguyên tiến độ)

@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .admin_api_views import (
     AdminCvCategoryViewSet,
+    AdminCvBackgroundViewSet,
     AdminCvColorViewSet,
     AdminCvContentBlueprintViewSet,
     AdminCvSampleContentViewSet,
@@ -20,6 +21,7 @@ from .api_v2_views import (
     CvTemplateCatalogListView,
     CvTemplateRelatedListView,
 )
+from apps.cvs.api_v2_views import CvV2BackgroundListView
 
 
 router = DefaultRouter()
@@ -27,6 +29,7 @@ router.register('admin/cv-templates', AdminCvTemplateViewSet, basename='admin-cv
 router.register('admin/cv-template-localizations', AdminCvTemplateLocalizationViewSet, basename='admin-cv-template-localization')
 router.register('admin/cv-categories', AdminCvCategoryViewSet, basename='admin-cv-category')
 router.register('admin/cv-colors', AdminCvColorViewSet, basename='admin-cv-color')
+router.register('admin/cv-backgrounds', AdminCvBackgroundViewSet, basename='admin-cv-background')
 router.register('admin/cv-sample-contents', AdminCvSampleContentViewSet, basename='admin-cv-sample-content')
 router.register('admin/cv-content-blueprints', AdminCvContentBlueprintViewSet, basename='admin-cv-content-blueprint')
 
@@ -36,6 +39,7 @@ urlpatterns = [
     path('cv-templates/<slug:slug>/', CvTemplateCatalogDetailView.as_view(), name='cv-template-v2-detail'),
     path('cv-templates/<slug:slug>/related/', CvTemplateRelatedListView.as_view(), name='cv-template-v2-related'),
     path('cv-categories/', CvCategoryCatalogListView.as_view(), name='cv-category-v2-list'),
+    path('cv-backgrounds/', CvV2BackgroundListView.as_view(), name='cv-background-v2-list'),
     path('cv-position-options/', CvPositionOptionListView.as_view(), name='cv-position-option-v2-list'),
     path('cv-position-preview/', CvPositionPreviewView.as_view(), name='cv-position-preview-v2'),
     path('cv-sample-contents/', CvSampleContentCatalogListView.as_view(), name='cv-sample-content-v2-list'),

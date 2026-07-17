@@ -129,7 +129,7 @@ export default function BlogCategoryBar({ categories, activeSlug }) {
 // Khối bọc sticky ngay dưới header (header cao h-16) dùng chung cho mọi trang blog.
 export function BlogCategoryNav({ categories, activeSlug }) {
   return (
-    <div className="sticky top-16 z-20 border-b border-slate-100 bg-white/95 backdrop-blur">
+    <div className="sticky top-16 z-20 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4">
         <BlogCategoryBar categories={categories} activeSlug={activeSlug} />
       </div>

@@ -14,6 +14,8 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
+from PIL import Image
+from pypdf import PdfReader
 
 from apps.cv_templates.models import (
     CvColor,
@@ -26,11 +28,11 @@ from apps.cv_templates.models import (
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .composition import compose_cv_document
-from .models import CvAccessLog, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
-from .pdf_renderer import build_cv_pdf_html
+from .models import CvAccessLog, CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from .pdf_renderer import build_cv_pdf_html, render_cv_version_pdf
 from .schemas import empty_content, empty_layout, empty_style
 from .services.versions import sync_legacy_builder_draft
-from .tasks import ImportProcessingError, process_cv_import_job, render_cv_export_job
+from .tasks import ImportProcessingError, generate_cv_thumbnail, process_cv_import_job, render_cv_export_job
 
 
 TEST_EXPORT_MEDIA_ROOT = tempfile.mkdtemp()
@@ -870,6 +872,64 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(cv.draft.content_json['personal_info']['full_name'], 'Sample Person')
         self.assertEqual(cv.latest_version.content_json['personal_info']['full_name'], 'Sample Person')
 
+    def test_apply_sample_uses_cas_and_preserves_personal_info_and_style(self):
+        cv = self.create_cv()
+        cv.draft.content_json['personal_info']['full_name'] = 'Tên ứng viên thật'
+        cv.draft.style_json['theme_color'] = '#2255AA'
+        cv.draft.save(update_fields=['content_json', 'style_json'])
+        sample_content = empty_content('vi-VN')
+        sample_content['personal_info']['full_name'] = 'Tên demo không được ghi đè'
+        sample_content['sections'] = [{
+            'instance_id': 'sample_summary_1', 'section_key': 'summary',
+            'title': 'Giới thiệu', 'enabled': True,
+            'items': [{'item_id': 'sample_summary_item_1', 'value': 'Nội dung mẫu'}],
+        }]
+        sample = CvSampleContent.objects.create(
+            locale='vi-VN', title='Sample apply', content_json=sample_content,
+            status=CvSampleContent.Status.PUBLISHED,
+        )
+        url = reverse('cv-v2-apply-sample', kwargs={'public_id': cv.public_id})
+
+        applied = self.client.post(
+            url, {'sample_content_public_id': sample.public_id}, format='json',
+            HTTP_IF_MATCH='"lock-version-0"',
+        )
+
+        self.assertEqual(applied.status_code, 200, applied.data)
+        self.assertEqual(applied.data['lock_version'], 1)
+        self.assertEqual(applied.data['content_json']['personal_info']['full_name'], 'Tên ứng viên thật')
+        self.assertEqual(applied.data['content_json']['sections'][0]['items'][0]['value'], 'Nội dung mẫu')
+        self.assertEqual(applied.data['style_json']['theme_color'], '#2255AA')
+        stale = self.client.post(
+            url, {'sample_content_public_id': sample.public_id}, format='json',
+            HTTP_IF_MATCH='"lock-version-0"',
+        )
+        self.assertEqual(stale.status_code, 409)
+
+    def test_avatar_upload_reencodes_image_and_enforces_owner_access(self):
+        buffer = BytesIO()
+        Image.new('RGB', (900, 700), '#2255AA').save(buffer, format='JPEG')
+        upload = SimpleUploadedFile('avatar.jpg', buffer.getvalue(), content_type='image/jpeg')
+
+        created = self.client.post(reverse('cv-v2-asset-upload'), {'file': upload}, format='multipart')
+
+        self.assertEqual(created.status_code, 201, created.data)
+        self.assertNotIn('storage_key', created.data)
+        self.assertLessEqual(created.data['width'], 512)
+        self.assertLessEqual(created.data['height'], 512)
+        self.assertIn('?token=', created.data['url'])
+        asset = CvAsset.objects.get(public_id=created.data['public_id'])
+        content_url = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
+        self.client.force_authenticate(self.other_candidate)
+        self.assertEqual(self.client.get(content_url).status_code, 404)
+        self.assertEqual(self.client.get(created.data['url']).status_code, 200)
+        self.client.force_authenticate(self.candidate)
+        self.assertEqual(self.client.get(content_url).status_code, 200)
+
+        invalid = SimpleUploadedFile('avatar.png', b'not-an-image', content_type='image/png')
+        rejected = self.client.post(reverse('cv-v2-asset-upload'), {'file': invalid}, format='multipart')
+        self.assertEqual(rejected.status_code, 400)
+
     def test_create_from_position_resolves_blueprint_and_persists_taxonomy_identity(self):
         position = JobCategory.objects.create(name='Nhân viên CSKH')
         JobCategoryLocalization.objects.bulk_create([
@@ -986,9 +1046,26 @@ class CvV2ApiTests(APITestCase):
             format='json', HTTP_IF_MATCH='"lock-version-0"',
         )
         self.assertEqual(switched.status_code, 200, switched.data)
+        draft = self.client.get(self.draft_url(cv)).data
+        payload = {
+            key: deepcopy(draft[key])
+            for key in ('schema_version', 'content_json', 'layout_json', 'style_json')
+        }
+        payload['content_json']['sections'] = [{
+            'instance_id': 'summary_1',
+            'section_key': 'summary',
+            'title': 'Mục tiêu nghề nghiệp',
+            'enabled': True,
+            'items': [{'item_id': 'summary_item_1', 'value': 'Xây dựng sản phẩm hữu ích.'}],
+        }]
+        payload['layout_json']['regions'][0]['section_instance_ids'] = ['summary_1']
+        updated = self.client.put(
+            self.draft_url(cv), payload, format='json', HTTP_IF_MATCH='"lock-version-1"',
+        )
+        self.assertEqual(updated.status_code, 200, updated.data)
         saved = self.client.post(
             reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
-            format='json', HTTP_IF_MATCH='"lock-version-1"',
+            format='json', HTTP_IF_MATCH='"lock-version-2"',
         )
         version = CvVersion.objects.get(public_id=saved.data['public_id'])
 
@@ -997,9 +1074,47 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(version.template_version_id, alternate_version.id)
         self.assertIn('data-renderer="classic_two_column_v1"', html)
         self.assertIn('data-renderer-version="1"', html)
-        self.assertIn('minmax(0, 68fr)', html)
-        self.assertIn('minmax(0, 32fr)', html)
+        self.assertIn('class="region region-main" style="width: 68%;"', html)
+        self.assertIn('class="region region-sidebar" style="width: 32%;"', html)
+        self.assertIn('.region { float: left;', html)
         self.assertEqual(version.content_json, cv.draft.content_json)
+
+        pdf_text = ''.join(
+            page.extract_text() or ''
+            for page in PdfReader(BytesIO(render_cv_version_pdf(version))).pages
+        )
+        self.assertIn('MỤC TIÊU NGHỀ NGHIỆP', pdf_text.upper())
+
+    def test_pdf_renderer_matches_avatar_size_and_omits_empty_sections(self):
+        cv = self.create_cv()
+        draft = self.client.get(self.draft_url(cv)).data
+        payload = {key: deepcopy(draft[key]) for key in ('schema_version', 'content_json', 'layout_json', 'style_json')}
+        payload['content_json']['personal_info']['avatar_size_mm'] = 36
+        payload['content_json']['personal_info']['avatar_zoom'] = 1.6
+        payload['content_json']['sections'].append({
+            'instance_id': 'empty_summary_1',
+            'section_key': 'summary',
+            'title': 'EMPTY SECTION MUST BE HIDDEN',
+            'enabled': True,
+            'items': [{'item_id': 'empty_summary_item_1', 'value': ''}],
+        })
+        payload['layout_json']['regions'][0]['section_instance_ids'].append('empty_summary_1')
+        updated = self.client.put(
+            self.draft_url(cv), payload, format='json', HTTP_IF_MATCH='"lock-version-0"',
+        )
+        self.assertEqual(updated.status_code, 200, updated.data)
+        saved = self.client.post(
+            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            format='json', HTTP_IF_MATCH='"lock-version-1"',
+        )
+        version = CvVersion.objects.get(public_id=saved.data['public_id'])
+
+        html = build_cv_pdf_html(version)
+
+        self.assertIn('height: 36mm', html)
+        self.assertIn('width: 36mm', html)
+        self.assertIn('transform: scale(1.6)', html)
+        self.assertNotIn('EMPTY SECTION MUST BE HIDDEN', html)
 
     def test_pdf_export_reuses_valid_artifact_and_download_url_is_owner_controlled(self):
         cv = self.create_cv()
@@ -1114,3 +1229,24 @@ class CvV2ApiTests(APITestCase):
         )
         self.client.force_authenticate(employer)
         self.assertEqual(self.client.post(self.exports_url(cv), format='json').status_code, 403)
+
+    @patch('apps.cvs.tasks.first_pdf_page_image', return_value=b'webp-preview')
+    @patch('apps.cvs.tasks.render_cv_version_pdf', return_value=b'%PDF-1.4')
+    def test_private_thumbnail_is_generated_from_latest_version_and_owner_scoped(self, _render, _raster):
+        cv = self.create_cv()
+        cv.refresh_from_db()
+
+        generate_cv_thumbnail(cv.latest_version_id)
+        cv.refresh_from_db()
+
+        self.assertTrue(cv.thumbnail_url.endswith('.webp'))
+        response = self.client.get(reverse('cv-v2-thumbnail', kwargs={'public_id': cv.public_id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/webp')
+        self.assertEqual(b''.join(response.streaming_content), b'webp-preview')
+
+        self.client.force_authenticate(self.other_candidate)
+        self.assertEqual(
+            self.client.get(reverse('cv-v2-thumbnail', kwargs={'public_id': cv.public_id})).status_code,
+            404,
+        )
