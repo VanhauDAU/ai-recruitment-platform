@@ -15,8 +15,9 @@ export default function MainLayout() {
     return (
       <SavedJobsProvider>
         <LoginPromptProvider>
-          <div className="min-h-screen flex flex-col bg-gray-50">
-            <main className="flex-1">
+          <div className="flex h-dvh flex-col overflow-hidden bg-gray-50">
+            <Header editorMode />
+            <main className="min-h-0 flex-1">
               <Outlet />
             </main>
           </div>

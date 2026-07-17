@@ -67,6 +67,16 @@ export async function getCv(publicId) {
   return data
 }
 
+export async function requestCvThumbnail(publicId) {
+  const { data } = await api.post(`/v2/cvs/${publicId}/thumbnail/`, {})
+  return data
+}
+
+export async function downloadCvThumbnail(thumbnailUrl) {
+  const { data } = await api.get(thumbnailUrl, { responseType: 'blob' })
+  return data
+}
+
 export async function getCvDraft(publicId) {
   const { data, headers } = await api.get(`/v2/cvs/${publicId}/draft/`)
   return { ...data, etag: headers.etag }
@@ -125,6 +135,25 @@ export async function switchCvTemplate(publicId, templatePublicId, lockVersion, 
   return { ...data, draft: { ...data.draft, etag: headers.etag } }
 }
 
+export async function applyCvSample(publicId, sampleContentPublicId, lockVersion, clientSessionId) {
+  const { data, headers } = await api.post(
+    `/v2/cvs/${publicId}/apply-sample/`,
+    {
+      sample_content_public_id: sampleContentPublicId,
+      ...(clientSessionId ? { client_session_id: clientSessionId } : {}),
+    },
+    { headers: { 'If-Match': `"lock-version-${lockVersion}"` } },
+  )
+  return { ...data, etag: headers.etag }
+}
+
+export async function uploadCvAsset(file) {
+  const body = new FormData()
+  body.append('file', file)
+  const { data } = await api.post('/v2/cvs/assets/', body)
+  return data
+}
+
 export async function getCvOwnerView(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/view/`)
   return data
@@ -152,6 +181,11 @@ export async function revokeCvSharedLink(publicId, linkPublicId) {
 export async function getCvVersions(publicId) {
   const { data } = await api.get(`/v2/cvs/${publicId}/versions/`)
   return Array.isArray(data) ? data : (data.results || [])
+}
+
+export async function getCvVersion(publicId, versionPublicId) {
+  const { data } = await api.get(`/v2/cvs/${publicId}/versions/${versionPublicId}/`)
+  return data
 }
 
 export async function createCvPdfExport(publicId, versionPublicId) {

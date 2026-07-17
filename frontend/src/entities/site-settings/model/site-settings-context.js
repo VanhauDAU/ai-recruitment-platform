@@ -28,6 +28,7 @@ export const DEFAULT_SITE_SETTINGS = {
   support_email: 'support@aicareercoach.vn',
   contact_address: '',
   contact_working_hours: '8:00 - 17:30, Thứ 2 - Thứ 6',
+  cv_builder_wysiwyg_enabled: true,
 }
 
 export const SiteSettingsContext = createContext({

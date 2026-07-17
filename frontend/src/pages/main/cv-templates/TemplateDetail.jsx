@@ -171,7 +171,7 @@ export default function TemplateDetail() {
               template={template}
               locale={locale}
               themeColor={selectedColor}
-              onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit`)}
+              onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
               onBack={() => navigate(basePath)}
               onPreviewChange={setPreview}
             />
@@ -204,7 +204,7 @@ export default function TemplateDetail() {
         themeColor={modalSelection?.color}
         open={Boolean(modalSelection)}
         onClose={() => setModalSelection(null)}
-        onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit`)}
+        onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
         locale={locale}
       />
     </div>

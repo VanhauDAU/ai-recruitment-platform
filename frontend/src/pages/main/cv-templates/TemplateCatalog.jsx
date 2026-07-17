@@ -191,7 +191,7 @@ export default function TemplateCatalog() {
         themeColor={selection?.color}
         open={Boolean(selection)}
         onClose={() => setSelection(null)}
-        onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit`)}
+        onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
         locale={locale}
       />
     </div>

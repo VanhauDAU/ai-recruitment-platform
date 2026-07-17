@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest'
 import {
   addItem,
   addSection,
+  availableSectionKeys,
   canDragItems,
+  changeContentLocale,
   createDocumentHistory,
   ensureBasicEditorDocument,
   getRendererContract,
   getEditorCapabilities,
+  getCvFontStack,
   getOrderedItems,
   getOrderedSections,
   moveItemInLayout,
@@ -14,15 +17,19 @@ import {
   projectDocumentForRenderer,
   moveSection,
   moveSectionToRegion,
+  paginateMeasuredProjection,
   recordDocumentCommand,
   removeItem,
   removeSection,
   renameSection,
   resizeRegionPair,
+  richTextV2,
+  setMarkInRange,
   setSectionEnabled,
   undoDocumentCommand,
   redoDocumentCommand,
   updateStyle,
+  toggleBooleanMarkInRange,
   validateCvDocument,
 } from '@/entities/cv'
 import { paginateRendererProjection } from './renderer-contracts'
@@ -59,6 +66,39 @@ describe('canonical CV editor document', () => {
     expect(normalized.content_json).toEqual(contentBeforeStyleUpdate)
     expect(normalized.layout_json).toEqual(layoutBeforeStyleUpdate)
     expect(nextStyle).toMatchObject({ theme_color: '#2255AA', font_family: 'Inter' })
+  })
+
+  it('keeps the optional avatar block available while excluding fixed personal markers', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    const keys = availableSectionKeys(document.content_json)
+
+    expect(keys).toContain('avatar')
+    expect(keys).toContain('custom')
+    expect(keys).not.toContain('experience')
+    expect(keys).not.toContain('skills')
+    expect(keys).not.toContain('nameplate')
+    expect(keys).not.toContain('contact')
+  })
+
+  it('resets all section titles to the selected locale while preserving authored item content', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    const experience = document.content_json.sections.find((section) => section.section_key === 'experience')
+    experience.title = 'Dấu ấn nghề nghiệp'
+    experience.items[0].role = 'Kỹ sư phần mềm'
+
+    const localized = changeContentLocale(document.content_json, 'en-US')
+
+    expect(localized.locale).toBe('en-US')
+    expect(localized.sections.find((section) => section.section_key === 'summary').title).toBe('Career objective')
+    expect(localized.sections.find((section) => section.section_key === 'skills').title).toBe('Skills')
+    expect(localized.sections.find((section) => section.section_key === 'experience')).toMatchObject({ title: 'Work experience', items: [expect.objectContaining({ role: 'Kỹ sư phần mềm' })] })
+    expect(document.content_json.locale).toBe('vi-VN')
+  })
+
+  it('uses deterministic browser font stacks so each supported choice has a usable fallback', () => {
+    expect(getCvFontStack('Arial')).toContain('Arial')
+    expect(getCvFontStack('Inter')).toContain('-apple-system')
+    expect(getCvFontStack('Source Sans Pro')).toContain('Trebuchet MS')
   })
 
   it('projects exactly the same canonical content through single and two-column renderer contracts', () => {
@@ -196,10 +236,14 @@ describe('canonical CV editor document', () => {
 
     const invalid = JSON.parse(JSON.stringify(valid))
     invalid.content_json.sections[1].items[0].item_id = invalid.content_json.sections[2].items[0].item_id
+    invalid.content_json.personal_info.avatar_size_mm = 81
+    invalid.content_json.personal_info.avatar_zoom = 4
     invalid.style_json.theme_color = 'red'
     invalid.content_json.sections[1].items[0].description = { format: 'rich_text_v1', content: [{ type: 'html', text: '<strong>unsafe</strong>' }] }
     expect(validateCvDocument(invalid)).toEqual(expect.arrayContaining([
       'Mỗi item phải có ID duy nhất.',
+      'Kích thước ảnh đại diện phải từ 20 đến 80 mm.',
+      'Mức phóng ảnh đại diện phải từ 1 đến 3.',
       'Màu chủ đề, phông chữ hoặc style không hợp lệ.',
       'Kinh nghiệm làm việc có rich text không hợp lệ.',
     ]))
@@ -220,5 +264,55 @@ describe('canonical CV editor document', () => {
     expect(pages.length).toBeGreaterThan(1)
     expect(pages.map((page) => page.number)).toEqual(pages.map((_, index) => index + 1))
     expect(projection).toEqual(originalProjection)
+  })
+
+  it('rejects invalid contact data and reversed entry dates before creating a version', () => {
+    const document = ensureBasicEditorDocument(baseDocument())
+    document.content_json.personal_info.email = 'email-sai'
+    document.content_json.personal_info.phone = '123'
+    document.content_json.personal_info.website = 'example.com'
+    const experience = document.content_json.sections.find((section) => section.section_key === 'experience')
+    experience.items[0].start_date = '2026-06'
+    experience.items[0].end_date = '2026-01'
+
+    expect(validateCvDocument(document)).toEqual(expect.arrayContaining([
+      'Email trong thông tin cá nhân chưa đúng định dạng.',
+      'Số điện thoại trong thông tin cá nhân chưa hợp lệ.',
+      'Website trong thông tin cá nhân phải là URL http:// hoặc https:// hợp lệ.',
+      'Kinh nghiệm làm việc: thời gian kết thúc không được trước thời gian bắt đầu.',
+    ]))
+  })
+
+  it('round-trips rich text v2 marks and coalesces repeated inline edits', () => {
+    const source = richTextV2('Xin chào Việt Nam')
+    const marked = setMarkInRange(source, 0, 8, 'color', '#0066AA')
+    const bold = toggleBooleanMarkInRange(marked, 0, 8, 'bold')
+    const unbold = toggleBooleanMarkInRange(bold, 0, 8, 'bold')
+    expect(bold.content[0].runs[0]).toMatchObject({ text: 'Xin chào', marks: { bold: true, color: '#0066AA' } })
+    expect(unbold.content[0].runs[0].marks).toEqual({ color: '#0066AA' })
+
+    const initial = ensureBasicEditorDocument(baseDocument())
+    const first = { ...initial, style_json: { ...initial.style_json, font_scale: 1.05 } }
+    const second = { ...initial, style_json: { ...initial.style_json, font_scale: 1.1 } }
+    let history = recordDocumentCommand(createDocumentHistory(), initial, first, 'Cỡ chữ', undefined, { coalesceKey: 'font-scale', timestamp: 100 })
+    history = recordDocumentCommand(history, first, second, 'Cỡ chữ', undefined, { coalesceKey: 'font-scale', timestamp: 500 })
+    expect(history.past).toHaveLength(1)
+    expect(undoDocumentCommand(history).document).toEqual(initial)
+  })
+
+  it('paginates a measured long section only at stable item boundaries', () => {
+    const section = {
+      instance_id: 'experience_1', section_key: 'experience',
+      items: [1, 2, 3].map((number) => ({ item_id: `item_${number}`, role: `Vai trò ${number}` })),
+    }
+    const projection = { regions: [{ id: 'main', widthPercent: 100, sections: [section] }] }
+    const pages = paginateMeasuredProjection(projection, {
+      sections: { experience_1: 280 },
+      items: { 'experience_1:item_1': 80, 'experience_1:item_2': 80, 'experience_1:item_3': 80 },
+    }, 180)
+
+    expect(pages).toHaveLength(3)
+    expect(pages.flatMap((page) => page.regions[0].sections.flatMap((item) => item.items.map((entry) => entry.item_id)))).toEqual(['item_1', 'item_2', 'item_3'])
+    expect(section.items).toHaveLength(3)
   })
 })

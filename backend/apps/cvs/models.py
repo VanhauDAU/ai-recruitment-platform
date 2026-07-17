@@ -278,6 +278,51 @@ class CvDraft(models.Model):
         )
 
 
+class CvAsset(models.Model):
+    """Immutable media referenced by canonical CV documents through public IDs."""
+
+    class Kind(models.TextChoices):
+        AVATAR = 'avatar', 'Avatar'
+        BACKGROUND = 'background', 'Background'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cv_assets',
+    )
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    title = models.CharField(max_length=120, blank=True)
+    storage_key = models.TextField()
+    content_type = models.CharField(max_length=100)
+    size_bytes = models.PositiveIntegerField()
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    checksum_sha256 = models.CharField(max_length=64, db_index=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['kind', 'is_active', 'created_at'], name='idx_cv_assets_catalog'),
+            models.Index(fields=['owner', 'kind', 'created_at'], name='idx_cv_assets_owner_kind'),
+        ]
+
+    def clean(self):
+        if self.kind == self.Kind.AVATAR and self.owner_id is None:
+            raise ValidationError({'owner': 'Avatar assets require an owner.'})
+        if self.kind == self.Kind.BACKGROUND and self.owner_id is not None:
+            raise ValidationError({'owner': 'Background assets are system-owned.'})
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cva')
+        super().save(*args, **kwargs)
+
+
 class CvSharedLink(models.Model):
     """A revocable bearer link bound to one immutable CV version.
 

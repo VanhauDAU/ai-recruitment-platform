@@ -8,9 +8,15 @@ export function createDocumentHistory() {
   return { past: [], future: [] }
 }
 
-export function recordDocumentCommand(history, before, after, label, limit = DEFAULT_HISTORY_LIMIT) {
+export function recordDocumentCommand(history, before, after, label, limit = DEFAULT_HISTORY_LIMIT, options = {}) {
   if (JSON.stringify(before) === JSON.stringify(after)) return history
-  const command = { label, before: clone(before), after: clone(after) }
+  const now = options.timestamp || Date.now()
+  const previous = history.past.at(-1)
+  if (options.coalesceKey && previous?.coalesceKey === options.coalesceKey && now - previous.timestamp <= (options.windowMs || 1000)) {
+    const command = { ...previous, label, after: clone(after), timestamp: now }
+    return { past: [...history.past.slice(0, -1), command], future: [] }
+  }
+  const command = { label, before: clone(before), after: clone(after), coalesceKey: options.coalesceKey || null, timestamp: now }
   return { past: [...history.past, command].slice(-limit), future: [] }
 }
 

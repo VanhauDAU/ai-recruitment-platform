@@ -53,17 +53,22 @@ def layout_for_content(template_version, content_json):
         section.section_definition.section_key: section.region_key
         for section in template_version.sections.select_related('section_definition')
     }
+    hidden_section_ids = []
     fallback_region = regions[0]
     for section in content_json.get('sections', []):
         if not isinstance(section, dict) or not section.get('instance_id'):
             continue
-        region = regions_by_id.get(
-            region_for_section.get(section.get('section_key')),
-            fallback_region,
-        )
+        configured_region = region_for_section.get(section.get('section_key'))
+        if not region_for_section:
+            configured_region = fallback_region.get('id')
+        if configured_region is None:
+            hidden_section_ids.append(section['instance_id'])
+            continue
+        region = regions_by_id.get(configured_region, fallback_region)
         assigned_ids = region.setdefault('section_instance_ids', [])
         if section['instance_id'] not in assigned_ids:
             assigned_ids.append(section['instance_id'])
+    layout['hidden_section_instance_ids'] = hidden_section_ids
     return layout
 
 

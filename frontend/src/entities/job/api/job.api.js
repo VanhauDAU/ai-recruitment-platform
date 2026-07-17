@@ -10,6 +10,11 @@ export async function getJobs(params = {}) {
   return data
 }
 
+export async function getCvJobRecommendations(publicId) {
+  const { data } = await api.get(`/jobs/recommendations/by-cv/${publicId}/`)
+  return data
+}
+
 export async function getJobDetail(slug) {
   return dedupeRequest(`job-detail:${slug}`, async () => {
     const { data } = await api.get(`/jobs/${slug}/`)

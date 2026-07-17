@@ -32,6 +32,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | CVB-P4 | Admin catalogue + snapshot | ✅ |
 | CVB-P5 | AI import PDF/DOCX | ✅ |
 | CVB-P6 | Cleanup, rollout, observability | ✅ |
+| CVB-8 | WYSIWYG A4 editor, rich text, DnD, asset, PDF parity, fallback flag | ✅ Code + bật mặc định / 🟡 Theo dõi rollout |
 
 Chi tiết: [kế hoạch CV Builder theo giai đoạn](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md).
 
@@ -47,6 +48,12 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P4 | Tách `FeaturedIndustriesEmployers` (449) + `MarketStats` (442) | ✅ |
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ✅ |
 | FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
+
+## Epic thiết kế trang chủ (2026-07-16, nhánh `feature/design-home`)
+
+| Mục | Nội dung | Trạng thái |
+| --- | --- | --- |
+| HOME-CV | Section "Tạo CV ấn tượng" trên trang chủ (giữa FlashBadge và Top ngành nghề): showcase 3 mẫu CV thật từ catalogue xòe quạt desktop / trượt ngang snap mobile, swatch đổi màu preview tại chỗ, badge PREMIUM, link chi tiết `/mau-cv/chi-tiet/:slug`; 4 thẻ tính năng (mẫu đa dạng, autosave, AI import, xuất PDF) + CTA `/mau-cv`. Fetch React Query (stale 5′) + skeleton, ẩn section khi catalogue rỗng; export `CvTemplatePreview` qua public API entity `cv-template`. Data: seed thêm template "Chuyên nghiệp 2 cột" (`classic_two_column_v1`, publish qua service chính thức) — catalogue dev có 3 mẫu | ✅ |
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
@@ -126,6 +133,9 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
+| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược 9s + nút đi ngay) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
+| 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
 | 1.25 | Cookie consent + job view tracking: signed cookie, UI tùy chỉnh, policy, optional-storage gate và deduplicated tracking | ✅ |
 | 1.26 | API response DTO theo màn hình: list/detail/write riêng, query tối thiểu và contract test chống field dư/nhạy cảm | ✅ |
 
@@ -359,6 +369,88 @@ lint/architecture/unit/build và E2E router desktop/mobile.
 </details>
 
 <details>
+<summary><b>1.24b</b> — Kết thúc onboarding kiểu TopCV (cá nhân hoá → việc làm)</summary>
+
+Sau khi ứng viên bấm "Hoàn thành" ở `/onboard-user-setting`, thay vì về trang
+chủ, luồng mới chạy 3 bước như TopCV: (1) màn "Chờ chút nhé, ProCV AI đang cá
+nhân hoá trải nghiệm dành cho bạn" với 3 chip lợi ích + thanh tiến trình
+gradient ~3s (`PersonalizingScreen`, hiệu ứng thuần UI không gọi API); (2) màn
+"Mọi thứ đã sẵn sàng!" với đếm ngược 9 giây tự chuyển + nút "Đi tới Danh sách
+việc làm (dành riêng cho bạn)" đi ngay + mascot (`ReadyScreen`); (3) redirect
+sang trang việc làm với bộ lọc dựng sẵn từ preference vừa lưu qua
+`buildPersonalizedJobsUrl` (page-local model, có unit test): id vị trí chuyên
+môn → `cat`, vị trí tự nhập → `search`, tỉnh/thành đầu tiên → `locations` +
+path đẹp `/viec-lam/tai/<slug>` (slugify bỏ dấu, bỏ tiền tố Thành phố/Tỉnh).
+Cả hai màn là UI cục bộ của page onboarding (`pages/main/onboarding/ui`),
+điều phối bằng state `phase` trong `OnboardUserSetting`; nút "Tôi sẽ hoàn
+thiện sau" vẫn về trang chủ như cũ. Verify: lint + architecture + 178 unit
+test + build pass; chạy tay full flow trên browser desktop + mobile với tài
+khoản dev (`candidate-dev@demo.local`): chọn 3 vị trí IT, nhập "nhân viên máy
+tính", Đà Nẵng + Hà Nội → redirect đúng
+`/viec-lam/tai/da-nang?cat=…&search=nhân+viên+máy+tính&locations=…`, thanh
+tìm kiếm hiện đủ 3 bộ lọc, sidebar CNTT indeterminate 3/7.
+
+</details>
+
+<details>
+<summary><b>1.24c</b> — Empty state trang việc làm kiểu TopCV (banner + gợi ý)</summary>
+
+Khi `/viec-lam` không có kết quả, dưới thông báo "Rất tiếc..." hiện thêm 2 khối
+(có kết quả thì danh sách hiển thị bình thường, không đổi):
+(1) **Banner quảng cáo** do admin cấu hình — thêm placement `job_empty` vào
+`sitecontent.Banner` (migration 0013) + seed banner "Tạo CV chuẩn ATS miễn phí"
+CTA `/mau-cv`; frontend đọc qua `getBanners('job_empty')` (API
+`/site/banners/?placement=` có sẵn), render card gradient theme responsive.
+(2) **"Việc làm có thể bạn sẽ quan tâm"** — khảo sát trực tiếp TopCV cho thấy
+họ gợi ý theo HỒ SƠ ứng viên (card badge "2 năm kinh nghiệm chuyên môn"...)
+chứ không theo từ khóa vừa fail. Làm tương tự: `use-interested-jobs` (page
+model) đọc preference đã lưu của ứng viên (`getCandidateJobPreferences`; khách
+dùng bộ lọc URL) rồi gọi `/api/jobs/` theo 3 tầng nới lỏng dựng bởi
+`buildInterestedJobTiers` (lib thuần, có unit test): chuyên môn + tỉnh/thành →
+chỉ chuyên môn → mới nhất; khử trùng lặp public_id, gom đủ 6, tầng trùng nhau
+tự loại. Lỗi mạng → khối tự ẩn. UI `JobEmptyExtras` tái dùng
+JobCard/JobCardSkeleton, gắn vào `JobResults` qua prop `emptyExtra` nên chỉ
+mount (và chỉ gọi API) khi thật sự rỗng. Verify: lint + architecture + 181
+unit test + build + backend sitecontent tests pass; browser thật với tài khoản
+dev: URL onboarding 0 kết quả hiện đúng thứ tự empty→banner→6 gợi ý, network
+3 tầng đúng params từ preference (cat 75,76,77 + loc 3351,1 → cat → newest);
+`/viec-lam` có kết quả hiển thị 20 card bình thường, không mount khối gợi ý.
+
+</details>
+
+<details>
+<summary><b>1.24d</b> — Bổ sung trang việc làm theo khảo sát TopCV</summary>
+
+Khảo sát trực tiếp trang kết quả TopCV (public, 1.135 việc Nhân sự) và bổ sung
+các khối còn thiếu vào `/viec-lam`. **Chèn giữa danh sách** qua prop
+`insertAfter` (map index→node) của `JobResults`, né vị trí card gợi ý
+phường/xã: (1) banner admin cấu hình placement mới `job_list_inline`
+(migration sitecontent 0014 + seed "Việc làm tuyển gấp..." CTA
+`/viec-lam?sort=urgent`) sau tin thứ 5 — refactor `PlacementBanner` dùng chung
+cho cả `job_empty`; (2) card "Ứng viên ProCV cũng tìm kiếm" sau tin thứ 10 —
+từ khóa lấy từ nhánh danh mục đang lọc (con của danh mục, hoặc anh em nếu là
+lá) qua `relatedSearchTerms` (lib thuần + test), bấm chạy tìm kiếm ngay.
+**Cuối danh sách** (`JobListFooter`, hiện cả trang rỗng lẫn có kết quả như
+TopCV): chip "Danh mục Nghề liên quan" = tổ tiên + con + anh em qua
+`relatedCategoryChips` (test đủ 3 nhánh); box "Bạn vẫn chưa tìm được công việc
+ưng ý?" CTA Nhận thông báo (Sắp ra mắt, đồng bộ nút header); khảo sát hài lòng
+1 chạm 5 mức emoji gửi qua API góp ý sẵn có (`Feedback.satisfaction` khớp đủ 5
+choices, content tự sinh ≥10 ký tự, kèm page_url) với trạng thái cảm ơn sau
+gửi; đoạn SEO text theo nhánh nghề (chỉ hiện khi lọc sâu ≥2 cấp: "X là chuyên
+môn... trong danh mục nghề Y thuộc nhóm nghề Z"). **Sort mới "Cần tuyển gấp"**
+(`ordering=urgent` xếp `-has_flash_badge` trước, thêm nhánh `_order_jobs` +
+option Select). Bỏ qua có chủ đích: lọc "Nghỉ thứ 7" (cần field model Job mới
++ UI đăng tin NTD), "Search by AI" (cần ranking AI), lọc Pro Company (chưa có
+khái niệm tier công ty). Verify: backend jobs + sitecontent tests OK, frontend
+lint/architecture/189 test/build pass; browser thật: cat=1 hiện đủ 6 khối,
+cat=75 (lá, 0 kết quả) hiện SEO text đúng chuỗi "Frontend Developer → Lập
+trình Web → Công nghệ thông tin" + chip liên quan đúng tổ tiên/anh em, khảo
+sát lưu đúng `satisfied` vào DB, API `ordering=urgent` trả tin flash badge
+trước.
+
+</details>
+
+<details>
 <summary><b>1.25</b> — Cookie consent và job view tracking</summary>
 
 Hoàn tất theo hai lát cắt độc lập. `apps/privacy` là nguồn sự thật cho consent:
@@ -412,6 +504,7 @@ build đều pass.
 | 4.4 | Candidate “My CV” hoàn chỉnh (duplicate/hard-delete/default) | ✅ — V2 workflow, snapshot ứng tuyển retained detached, smoke desktop/mobile và CTA tới immutable PDF export hoàn tất |
 | 4.4a | Candidate apply chọn CV/version bất biến | ✅ — V2 application contract, application snapshot, unit/regression và smoke desktop/mobile |
 | 4.5 | Import PDF/DOCX/LinkedIn và AI-assisted authoring | 🟡 — PDF/DOCX đã parse AI thành canonical editable draft; còn LinkedIn, AI writer và review workflow nâng cao |
+| 4.6 | CVB-8 WYSIWYG editor kiểu TopCV | ✅ Code + bật mặc định / 🟡 Theo dõi rollout — shell đúng DOCX gồm header website, action bar, rail 176 px tự co chiều cao, panel 352 px, canvas A4 80% và zoom nổi; toolbar rich text nổi theo selection, hiển thị format hiện tại và không thay đổi kích thước trang; design panel có màu luôn mở, slider theo nấc, locale reset tiêu đề/placeholder chuẩn và font fallback stack; inline/rich text, pagination DOM theo item, row/header, DnD touch/keyboard với overlay/vùng thả, avatar/background, template/sample CAS, PDF parity; editor cũ chỉ còn làm fallback; canvas chrome đối chiếu TopCV: toolbar section gọn trong hàng tiêu đề + toolbar item ở cạnh dưới-phải (không che nội dung), mỗi lúc chỉ một tầng chrome và ẩn khi đang gõ (`:has`, hover chủ động vẫn hiện lại), nút Xóa có nhãn màu ngữ nghĩa, avatar mặc định lên đầu cột phụ khi template không có header, thêm mục tự cuộn + focus ô đầu, summary bỏ ô "Tên" thừa, placeholder ngày dạng ví dụ, nhãn vùng Cột chính/Cột phụ, sửa nút "+ Thêm nội dung" bị antd đè `position` làm lệch layout A4; đợt 2 theo TopCV: nút "+ Thêm" chèn item ngay sau item đang hover, editor mức độ kỹ năng 5 nấc khớp preview, kéo mục mới từ panel Thêm mục thả thẳng vào canvas (DndContext dùng chung cấp editor), panel Bố cục thành sơ đồ mini kéo-thả giữa các cột + click đi tới mục, vùng Mô tả luôn hiển thị với placeholder theo loại mục (trước đây item mới không thể nhập mô tả), toolbar định dạng neo góc phải phía trên item nên không đè lên dòng kế bên |
 
 ### Kế hoạch hoàn thiện CV Builder theo giai đoạn ([kế hoạch](./03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md))
 
@@ -586,4 +679,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-15 (FE-P6 — WebP logo fallback 80KB→27KB; precompress hoãn tới epic deployment; hoàn tất epic dọn dẹp frontend FE-P1→P6)
+Cập nhật lần cuối: 2026-07-18 (1.24d — bổ sung /viec-lam theo khảo sát TopCV: banner chèn giữa danh sách, "Ứng viên cũng tìm kiếm", chip danh mục liên quan, CTA thông báo, khảo sát hài lòng, SEO text, sort Cần tuyển gấp. 1.24c — empty state /viec-lam kiểu TopCV: banner placement job_empty + "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference, nới lỏng 3 tầng. 1.24b — kết thúc onboarding kiểu TopCV: personalizing → ready → redirect /viec-lam với bộ lọc từ preference. CVB-8 — tối ưu UX canvas theo khảo sát trực tiếp TopCV builder, 2 đợt. Đợt 1: toolbar section thu gọn nằm trong hàng tiêu đề, toolbar item chuyển xuống cạnh dưới-phải nên không còn che tiêu đề/nội dung đang gõ; mỗi lúc chỉ một tầng chrome hiển thị và chrome ẩn khi focus contenteditable (CSS `:has`, hover chủ động vẫn hiện lại để thao tác ngay khi đang gõ); nút Xóa có nhãn + màu ngữ nghĩa, bỏ nút xóa nguy hiểm khỏi toolbar định dạng InlineText; thêm "Ảnh đại diện" mặc định vào đầu cột phụ (fallback `header→sidebar` + `insertAtStart` trong registry); thêm mục tự cuộn tới và focus ô đầu tiên; summary bỏ ô "Tên" thừa và có placeholder gợi ý; placeholder ngày dạng ví dụ `Từ (vd: 2020-01)`; nhãn vùng Cột chính/Cột phụ; sửa bug antd `.ant-btn` đè Tailwind `absolute` khiến nút "+ Thêm nội dung" nằm trong flow làm section editor cao hơn bản in. Đợt 2: nút "+ Thêm" chèn item ngay sau item hiện tại (`moveItemToIndexInLayout` trong cùng một undo step); editor mức độ kỹ năng 5 nấc cùng hàng với tên (khớp preview level bar); DndContext nâng lên cấp editor để kéo mục mới từ panel Thêm mục thả thẳng vào vị trí mong muốn trên canvas (id `new:<key>`); panel Bố cục thành sơ đồ mini-map kéo-thả (id `mini-section:`/`mini-region:`) di chuyển mục giữa cột, click để đi tới mục; vùng Mô tả rich text luôn hiển thị với placeholder theo loại mục — fix lỗ hổng item mới không thể nhập mô tả; toolbar định dạng (InlineText + RichTextArea) neo góc phải phía trên item/section thay vì ngay trên field nên không còn đè lên dòng muốn click kế tiếp; chuẩn hóa DOM rich text sau blur để placeholder quay lại sau khi xóa hết chữ; header editor khớp bản in — danh sách liên hệ dùng chung grid `repeat(auto-fit, minmax(13rem,1fr))` với `.cv-document-preview__contact` (trước đây `.cv-contact-list` không có CSS nên 5 trường xếp dọc, header editor cao gấp đôi Xem trước), khoảng cách name/headline/contact đồng bộ `mb-6 pl-4 mt-1 mt-2`. Verify: lint + architecture + 54 Vitest + build + 22 Playwright smoke desktop/mobile pass; kéo-thả panel→canvas và mini-map đã kiểm chứng trực tiếp trên browser. HOME-CV giữ nguyên tiến độ)

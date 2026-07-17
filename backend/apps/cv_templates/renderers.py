@@ -36,6 +36,13 @@ RENDERER_REGISTRY = {
             allowed_regions=frozenset({'main', 'sidebar'}),
             region_order=('main', 'sidebar'),
         ),
+        RendererContract(
+            key='header_two_column_v1',
+            version='1',
+            supported_schema_versions=frozenset({1}),
+            allowed_regions=frozenset({'header', 'main', 'sidebar'}),
+            region_order=('header', 'main', 'sidebar'),
+        ),
     )
 }
 

@@ -7,6 +7,9 @@ import WardSuggestionCard from './WardSuggestionCard'
 
 export default function JobResults({
   count,
+  emptyExtra,
+  footer,
+  insertAfter = {},
   isAuthenticated,
   loading,
   onClearAll,
@@ -57,6 +60,7 @@ export default function JobResults({
             options={[
               { value: '', label: 'Mới nhất' },
               { value: 'salary_desc', label: 'Lương cao nhất' },
+              { value: 'urgent', label: 'Cần tuyển gấp' },
             ]}
           />
         </div>
@@ -69,22 +73,25 @@ export default function JobResults({
           ))}
         </div>
       ) : results.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white px-6 py-16">
-          <Empty
-            description={
-              <span className="text-gray-500">
-                Rất tiếc, chưa tìm thấy công việc phù hợp với tiêu chí của bạn.
-                <br />
-                Hãy thử thay đổi từ khóa hoặc bộ lọc để mở rộng kết quả tìm kiếm.
-              </span>
-            }
-          >
-            {onClearAll && (
-              <Button type="primary" shape="round" onClick={onClearAll}>
-                Xóa bộ lọc & từ khóa
-              </Button>
-            )}
-          </Empty>
+        <div>
+          <div className="rounded-xl border border-gray-200 bg-white px-6 py-16">
+            <Empty
+              description={
+                <span className="text-gray-500">
+                  Rất tiếc, chưa tìm thấy công việc phù hợp với tiêu chí của bạn.
+                  <br />
+                  Hãy thử thay đổi từ khóa hoặc bộ lọc để mở rộng kết quả tìm kiếm.
+                </span>
+              }
+            >
+              {onClearAll && (
+                <Button type="primary" shape="round" onClick={onClearAll}>
+                  Xóa bộ lọc & từ khóa
+                </Button>
+              )}
+            </Empty>
+          </div>
+          {emptyExtra}
         </div>
       ) : (
         <div className="space-y-3">
@@ -101,6 +108,7 @@ export default function JobResults({
               {!quickViewJob && suggestedWards.length > 0 && index + 1 === wardSuggestionInsertIndex && (
                 <WardSuggestionCard wards={suggestedWards} onSelect={onSelectSuggestedWard} />
               )}
+              {!quickViewJob && insertAfter[index + 1]}
             </div>
           ))}
         </div>
@@ -118,6 +126,8 @@ export default function JobResults({
           />
         </div>
       )}
+
+      {!loading && !quickViewJob && footer}
     </div>
   )
 }

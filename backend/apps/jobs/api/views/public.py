@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
@@ -7,6 +8,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
 from ...models import Job, SavedJob
 from ...selectors.listing import (
@@ -15,6 +17,7 @@ from ...selectors.listing import (
     suggest_job_search_terms,
 )
 from ...selectors.stats import build_job_stats
+from ...selectors.recommendations import recommend_jobs_for_cv
 from ...services.engagement import record_consented_job_view, set_viewer_cookie
 from ..serializers import (
     JobDetailSerializer,
@@ -118,6 +121,29 @@ class JobSuggestView(APIView):
         return Response({'suggestions': suggest_job_search_terms(
             request.query_params.get('q'), request.query_params.get('search_by')
         )})
+
+
+class CvJobRecommendationView(APIView):
+    """Candidate-only, explainable job ranking from one owner-scoped saved CV."""
+
+    permission_classes = [IsCandidate]
+
+    def get(self, request, cv_public_id):
+        try:
+            payload = recommend_jobs_for_cv(request.user, cv_public_id, limit=6)
+        except UserCv.DoesNotExist as error:
+            raise Http404 from error
+        results = []
+        for item in payload['results']:
+            serialized = PublicJobListSerializer(item['job'], context={'request': request}).data
+            serialized.update({
+                'match_score': item['match_score'],
+                'match_details': item['match_details'],
+                'match_reasons': item['match_reasons'],
+                'is_high_match': item['match_score'] >= 70,
+            })
+            results.append(serialized)
+        return Response({**payload, 'results': results})
 
 
 class JobDetailView(generics.RetrieveAPIView):

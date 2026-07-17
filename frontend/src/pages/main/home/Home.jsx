@@ -7,6 +7,7 @@ import { getBanners, useSiteSettings } from '@/entities/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'
 import BestJobs from './ui/BestJobs'
 import CategoryMenu from './ui/CategoryMenu'
+import CvTemplateShowcase from './ui/CvTemplateShowcase'
 import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
 import FlashBadge from './ui/FlashBadge'
 import HotlineConsultation from './ui/HotlineConsultation'
@@ -234,14 +235,19 @@ export default function Home() {
         <BestJobs categories={categories} />
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 pt-8">
-        <MarketStats />
+      <section className="pt-8">
+        <div className="bg-white py-8">
+          <div className="max-w-6xl mx-auto px-4">
+            <MarketStats />
+          </div>
+        </div>
       </section>
 
       <section className="pt-8">
         <FlashBadge />
       </section>
 
+      <CvTemplateShowcase />
       <FeaturedIndustriesEmployers />
       <HotlineConsultation />
     </div>

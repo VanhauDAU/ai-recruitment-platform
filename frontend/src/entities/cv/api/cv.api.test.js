@@ -5,17 +5,20 @@ import {
   deleteCv,
   duplicateCv,
   downloadCvPdf,
+  downloadCvThumbnail,
   getCv,
   getCvDraft,
   getCvOwnerView,
   getCvPdfExport,
   getCvSharedLinks,
+  getCvVersion,
   getCvVersions,
   getSharedCv,
   importCvFile,
   publishCvVersion,
   revokeCvSharedLink,
   retryCvPdfExport,
+  requestCvThumbnail,
   saveCvVersion,
   switchCvTemplate,
   renameCv,
@@ -118,21 +121,38 @@ describe('CV V2 API', () => {
 
   it('uses owner-scoped immutable PDF export jobs and a controlled download endpoint', async () => {
     get.mockResolvedValueOnce({ data: { results: [{ public_id: 'cvv_2', version_number: 2 }] } })
+    get.mockResolvedValueOnce({ data: { public_id: 'cvv_2', content_json: { personal_info: { full_name: 'Saved' } } } })
     post.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'pending', version_public_id: 'cvv_2' } })
     get.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'completed', download_url: '/api/v2/cvs/cv_1/exports/cve_1/download/' } })
     post.mockResolvedValueOnce({ data: { public_id: 'cve_1', status: 'pending' } })
     get.mockResolvedValueOnce({ data: new Blob(['%PDF-1.4']) })
 
     await expect(getCvVersions('cv_1')).resolves.toEqual([{ public_id: 'cvv_2', version_number: 2 }])
+    await expect(getCvVersion('cv_1', 'cvv_2')).resolves.toMatchObject({ public_id: 'cvv_2' })
     await expect(createCvPdfExport('cv_1', 'cvv_2')).resolves.toMatchObject({ status: 'pending' })
     await expect(getCvPdfExport('cv_1', 'cve_1')).resolves.toMatchObject({ status: 'completed' })
     await expect(retryCvPdfExport('cv_1', 'cve_1')).resolves.toMatchObject({ status: 'pending' })
     await expect(downloadCvPdf('/api/v2/cvs/cv_1/exports/cve_1/download/')).resolves.toBeInstanceOf(Blob)
 
     expect(get).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/versions/')
+    expect(get).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/versions/cvv_2/')
     expect(post).toHaveBeenNthCalledWith(1, '/v2/cvs/cv_1/exports/', { version_public_id: 'cvv_2' })
-    expect(get).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/exports/cve_1/')
+    expect(get).toHaveBeenNthCalledWith(3, '/v2/cvs/cv_1/exports/cve_1/')
     expect(post).toHaveBeenNthCalledWith(2, '/v2/cvs/cv_1/exports/cve_1/retry/', {})
-    expect(get).toHaveBeenNthCalledWith(3, '/api/v2/cvs/cv_1/exports/cve_1/download/', { responseType: 'blob' })
+    expect(get).toHaveBeenNthCalledWith(4, '/api/v2/cvs/cv_1/exports/cve_1/download/', { responseType: 'blob' })
+  })
+
+  it('requests an idempotent private thumbnail job', async () => {
+    post.mockResolvedValue({ data: { status: 'pending', thumbnail_url: null } })
+
+    await expect(requestCvThumbnail('cv_1')).resolves.toEqual({ status: 'pending', thumbnail_url: null })
+    expect(post).toHaveBeenCalledWith('/v2/cvs/cv_1/thumbnail/', {})
+  })
+
+  it('downloads a private thumbnail through the authenticated API client', async () => {
+    get.mockResolvedValue({ data: new Blob(['webp']) })
+
+    await expect(downloadCvThumbnail('/api/v2/cvs/cv_1/thumbnail/')).resolves.toBeInstanceOf(Blob)
+    expect(get).toHaveBeenCalledWith('/api/v2/cvs/cv_1/thumbnail/', { responseType: 'blob' })
   })
 })

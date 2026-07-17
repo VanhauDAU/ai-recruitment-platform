@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .api.views import (
+    CvJobRecommendationView,
     BenefitListView,
     EmployerJobDetailView,
     EmployerJobListCreateView,
@@ -21,6 +22,7 @@ urlpatterns = [
     path('languages/', LanguageListView.as_view(), name='language-list'),
     path('stats/', JobStatsView.as_view(), name='job-stats'),
     path('suggest/', JobSuggestView.as_view(), name='job-suggest'),
+    path('recommendations/by-cv/<str:cv_public_id>/', CvJobRecommendationView.as_view(), name='cv-job-recommendations'),
     path('saved/', SavedJobListCreateView.as_view(), name='saved-job-list-create'),
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),
     path('mine/', EmployerJobListCreateView.as_view(), name='employer-job-list-create'),

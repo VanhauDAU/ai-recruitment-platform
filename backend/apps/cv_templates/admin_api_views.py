@@ -8,10 +8,13 @@ from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdmin
 from apps.cvs.composition import compose_cv_document
+from apps.cvs.models import CvAsset
+from apps.cvs.services import create_background_asset
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .admin_api_serializers import (
     CvCategoryAdminSerializer,
+    CvBackgroundAdminSerializer,
     CvColorAdminSerializer,
     CvContentBlueprintAdminSerializer,
     CvSampleContentAdminSerializer,
@@ -136,6 +139,44 @@ class AdminCvColorViewSet(AdminModelViewSet):
     serializer_class = CvColorAdminSerializer
     lookup_field = 'public_id'
     queryset = CvColor.objects.all()
+
+
+class AdminCvBackgroundViewSet(AdminModelViewSet):
+    serializer_class = CvBackgroundAdminSerializer
+    lookup_field = 'public_id'
+    queryset = CvAsset.objects.filter(
+        kind=CvAsset.Kind.BACKGROUND,
+        owner__isnull=True,
+    ).order_by('created_at')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        upload = serializer.validated_data.get('file')
+        if upload is None:
+            raise ValidationError({'file': 'This field is required.'})
+        asset = create_background_asset(
+            upload=upload,
+            title=serializer.validated_data.get('title', ''),
+        )
+        return Response(
+            self.get_serializer(asset).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def update(self, request, *args, **kwargs):
+        asset = self.get_object()
+        allowed = {key: request.data[key] for key in ('title', 'is_active') if key in request.data}
+        serializer = self.get_serializer(asset, data=allowed, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        asset = self.get_object()
+        asset.is_active = False
+        asset.save(update_fields=['is_active', 'updated_at'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AdminCvSampleContentViewSet(AdminModelViewSet):

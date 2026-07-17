@@ -228,17 +228,31 @@ LINK_GROUPS = [
     ]),
 ]
 
-# (title, eyebrow, subtitle, theme, cta_label, cta_url, order)
+# (placement, title, eyebrow, subtitle, theme, cta_label, cta_url, order)
 BANNERS = [
     (
+        Banner.Placement.HOME_HERO,
         'Lập trình viên & Kỹ sư AI', 'TUYỂN DỤNG GẤP',
         'Mức lương hấp dẫn, môi trường năng động, cơ hội thăng tiến nhanh.',
         Banner.Theme.BLUE, 'Xem việc làm IT', '/viec-lam?search=IT', 1,
     ),
     (
+        Banner.Placement.HOME_HERO,
         'Tạo CV chuyên nghiệp cùng AI', 'MIỄN PHÍ',
         'Chỉ mất 5 phút để có CV ấn tượng, sẵn sàng ứng tuyển.',
         Banner.Theme.ORANGE, '', '', 2,
+    ),
+    (
+        Banner.Placement.JOB_EMPTY,
+        'Tạo CV chuẩn ATS miễn phí — ứng tuyển ngay khi có việc phù hợp', 'GỢI Ý CHO BẠN',
+        'CV đẹp giúp bạn nổi bật với nhà tuyển dụng. Chỉ mất 5 phút để hoàn thành.',
+        Banner.Theme.GREEN, 'Tạo CV ngay', '/mau-cv', 1,
+    ),
+    (
+        Banner.Placement.JOB_LIST_INLINE,
+        'Việc làm tuyển gấp từ các doanh nghiệp hàng đầu', 'PROCV GỢI Ý',
+        'Tin cần tuyển gấp thường được nhà tuyển dụng phản hồi nhanh hơn. Đừng bỏ lỡ!',
+        Banner.Theme.GREEN, 'Khám phá ngay', '/viec-lam?sort=urgent', 1,
     ),
 ]
 
@@ -304,10 +318,10 @@ class Command(BaseCommand):
                     ]
                 )
 
-        for title, eyebrow, subtitle, theme, cta_label, cta_url, order in BANNERS:
+        for placement, title, eyebrow, subtitle, theme, cta_label, cta_url, order in BANNERS:
             _, created = Banner.objects.get_or_create(
                 title=title,
-                defaults={'eyebrow': eyebrow, 'subtitle': subtitle, 'theme': theme, 'cta_label': cta_label, 'cta_url': cta_url, 'order': order},
+                defaults={'placement': placement, 'eyebrow': eyebrow, 'subtitle': subtitle, 'theme': theme, 'cta_label': cta_label, 'cta_url': cta_url, 'order': order},
             )
             self.stdout.write(f'{"+ " if created else "= "}banner {title}')
 

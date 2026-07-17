@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { message } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ApplyForJobModal from './ApplyForJobModal'
 const cvApi = vi.hoisted(() => ({ getCv: vi.fn(), getCvVersions: vi.fn(), getMyCvs: vi.fn() }))
@@ -9,7 +10,10 @@ vi.mock('@/entities/cv', () => cvApi)
 vi.mock('@/entities/application', () => applicationApi)
 
 describe('ApplyForJobModal', () => {
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
 
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', class {
@@ -19,6 +23,7 @@ describe('ApplyForJobModal', () => {
     })
     Object.values(cvApi).forEach((mock) => mock.mockReset())
     applicationApi.submitJobApplication.mockReset()
+    vi.spyOn(message, 'success').mockImplementation(() => {})
     cvApi.getMyCvs.mockResolvedValue([{ public_id: 'cv_1', title: 'CV chính', is_default: true }])
     cvApi.getCv.mockResolvedValue({ public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_3' })
     cvApi.getCvVersions.mockResolvedValue([
@@ -40,6 +45,7 @@ describe('ApplyForJobModal', () => {
     await waitFor(() => expect(applicationApi.submitJobApplication).toHaveBeenCalledWith({
       jobPublicId: 'job_1', cvPublicId: 'cv_1', versionPublicId: 'cvv_2', coverLetter: '',
     }))
+    expect(message.success).toHaveBeenCalledWith('Đã gửi hồ sơ ứng tuyển.')
     expect(onClose).toHaveBeenCalledOnce()
   })
 })

@@ -116,7 +116,8 @@ export function resizeRegionPair(document, regionId, requestedWidth, capabilitie
   const next = clone(document)
   const index = next.layout_json.regions.findIndex((region) => region.id === regionId)
   const primary = next.layout_json.regions[index]
-  const secondary = next.layout_json.regions[index + 1]
+  const row = primary?.row ?? 0
+  const secondary = next.layout_json.regions.slice(index + 1).find((region) => (region.row ?? 0) === row)
   if (!primary || !secondary || !capabilities.columnResize) return next
   const pairTotal = primary.width_percent + secondary.width_percent
   const min = Math.max(capabilities.minColumnPercent, pairTotal - capabilities.maxColumnPercent)

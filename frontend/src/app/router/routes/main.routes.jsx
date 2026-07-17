@@ -18,6 +18,7 @@ import {
   OAuthCallbackPage,
   CookiePolicyPage,
   CvEditorPage,
+  CvSaveSuccessPage,
   CvOwnerViewPage,
   CvSharedViewPage,
   OnboardUserPage,
@@ -93,6 +94,7 @@ export function mainRoutes() {
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
           <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
+          <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
           <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />

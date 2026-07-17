@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 
-from .models import CandidateConsent, CandidateJobPreference
+from .models import CandidateConsent, CandidateConsentEvent, CandidateJobPreference
 
 
 class CandidateProfileApiTests(TestCase):
@@ -149,3 +149,29 @@ class CandidateProfileApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('desired_salary_vnd', response.data)
         self.assertFalse(CandidateConsent.objects.exists())
+
+    def test_recruiter_visibility_requires_confirmation_and_writes_audit_event(self):
+        url = '/api/candidate/recruiter-visibility/'
+        rejected = self.client.patch(url, {
+            'enabled': True, 'confirmed': False, 'policy_version': 'v1',
+            'source': 'cv_save_success', 'source_path': '/save-cv-success/cv_1',
+        }, format='json')
+        self.assertEqual(rejected.status_code, 400)
+        self.assertFalse(CandidateConsentEvent.objects.exists())
+
+        accepted = self.client.patch(url, {
+            'enabled': True, 'confirmed': True, 'policy_version': 'v1',
+            'source': 'cv_save_success', 'source_path': '/save-cv-success/cv_1',
+        }, format='json')
+        self.assertEqual(accepted.status_code, 200, accepted.data)
+        self.assertTrue(accepted.data['enabled'])
+        event = CandidateConsentEvent.objects.get()
+        self.assertEqual(event.source, 'cv_save_success')
+        self.assertEqual(event.decision, CandidateConsent.Decision.GRANTED)
+
+        disabled = self.client.patch(url, {
+            'enabled': False, 'source': 'account_settings', 'policy_version': 'v1',
+        }, format='json')
+        self.assertEqual(disabled.status_code, 200)
+        self.assertFalse(disabled.data['enabled'])
+        self.assertEqual(CandidateConsentEvent.objects.count(), 2)

@@ -6,14 +6,18 @@ import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { formatNumber } from '@/entities/job'
+import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
+import JobListFooter from './ui/JobListFooter'
 import JobListHeader from './ui/JobListHeader'
 import JobListOverlays from './ui/JobListOverlays'
 import JobQuickView from './ui/JobQuickView'
 import JobResults from './ui/JobResults'
 import JobSearchBar from './ui/JobSearchBar'
 import LocationMergeNotice from './ui/LocationMergeNotice'
+import PlacementBanner from './ui/PlacementBanner'
 import QuickExplore from './ui/QuickExplore'
+import RelatedSearchesCard from './ui/RelatedSearchesCard'
 import useJobListData from './model/use-job-list-data'
 import useJobListFilters from './model/use-job-list-filters'
 import useHanoiJobSuggestion from './model/use-hanoi-job-suggestion'
@@ -21,6 +25,8 @@ import useJobLocationData from './model/use-job-location-data'
 import useJobSidebarData from './model/use-job-sidebar-data'
 import { buildCategoryTree, nodeCheckState, selectedLeafSet, toggleCategoryIds } from './lib/category-tree'
 import { formatLocationGroups, locationDisplayName } from './lib/job-list-params'
+import { relatedCategoryChips, relatedSearchTerms } from './lib/related-terms'
+import { buildJobListTitle } from './lib/job-list-title'
 
 export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
@@ -165,6 +171,17 @@ export default function JobList() {
   const fullContextLabel = searchLabel || catName || fullLocationContext
   const isLocationContext = !searchLabel && !catName && Boolean(locationContext)
   const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
+  const pageTitle = buildJobListTitle({
+    count: formatNumber(count),
+    contextLabel,
+    loading,
+    updateLabel,
+  })
+
+  useEffect(() => {
+    document.title = pageTitle
+  }, [pageTitle])
+
   const wardSuggestionInsertIndex = useMemo(() => {
     if (results.length < 3) return 1
     const min = Math.max(1, Math.floor(results.length * 0.35))
@@ -172,6 +189,29 @@ export default function JobList() {
     const hash = selectedLocationKey.split('').reduce((sum, char) => sum + char.charCodeAt(0), results.length)
     return min + (hash % (max - min + 1))
   }, [selectedLocationKey, results.length])
+
+  // Khối chèn giữa danh sách (kiểu TopCV): banner sau tin thứ 5, "Ứng viên cũng
+  // tìm kiếm" sau tin thứ 10; né vị trí card gợi ý phường/xã nếu trùng.
+  const relatedTerms = useMemo(
+    () => relatedSearchTerms(categories, selectedCategories),
+    [categories, selectedCategories],
+  )
+  const relatedCategories = useMemo(
+    () => relatedCategoryChips(categories, selectedCategories),
+    [categories, selectedCategories],
+  )
+  const insertAfter = {}
+  if (results.length > 2) {
+    const bannerIndex = Math.min(5, results.length)
+    insertAfter[bannerIndex] = <PlacementBanner placement="job_list_inline" />
+    if (relatedTerms.length) {
+      let termsIndex = Math.min(10, results.length)
+      if (termsIndex === bannerIndex || termsIndex === wardSuggestionInsertIndex) termsIndex -= 1
+      if (termsIndex > 0 && termsIndex !== bannerIndex) {
+        insertAfter[termsIndex] = <RelatedSearchesCard terms={relatedTerms} onSelect={handleDropdownSelect} />
+      }
+    }
+  }
 
   const openAllCategories = () => {
     setShowAllGroups(true)
@@ -316,6 +356,23 @@ export default function JobList() {
 
           <JobResults
             count={count}
+            emptyExtra={(
+              <JobEmptyExtras
+                isAuthenticated={isAuthenticated}
+                onRequireLogin={promptLogin}
+                onQuickView={setQuickViewJob}
+                selectedCategories={selectedCategories}
+                selectedLocations={selectedLocations}
+              />
+            )}
+            footer={(
+              <JobListFooter
+                catChain={catChain}
+                onCategorySelect={(id) => filters.setCommaParam('cat', [id])}
+                relatedCategories={relatedCategories}
+              />
+            )}
+            insertAfter={insertAfter}
             isAuthenticated={isAuthenticated}
             loading={loading}
             onClearAll={hasFilters || searchParamKeyword ? filters.clearAllCriteria : undefined}
