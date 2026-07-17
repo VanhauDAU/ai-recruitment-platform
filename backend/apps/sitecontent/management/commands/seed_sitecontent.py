@@ -248,6 +248,12 @@ BANNERS = [
         'CV đẹp giúp bạn nổi bật với nhà tuyển dụng. Chỉ mất 5 phút để hoàn thành.',
         Banner.Theme.GREEN, 'Tạo CV ngay', '/mau-cv', 1,
     ),
+    (
+        Banner.Placement.JOB_LIST_INLINE,
+        'Việc làm tuyển gấp từ các doanh nghiệp hàng đầu', 'PROCV GỢI Ý',
+        'Tin cần tuyển gấp thường được nhà tuyển dụng phản hồi nhanh hơn. Đừng bỏ lỡ!',
+        Banner.Theme.GREEN, 'Khám phá ngay', '/viec-lam?sort=urgent', 1,
+    ),
 ]
 
 

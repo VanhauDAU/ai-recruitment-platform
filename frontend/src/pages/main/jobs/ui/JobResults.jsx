@@ -8,6 +8,8 @@ import WardSuggestionCard from './WardSuggestionCard'
 export default function JobResults({
   count,
   emptyExtra,
+  footer,
+  insertAfter = {},
   isAuthenticated,
   loading,
   onClearAll,
@@ -58,6 +60,7 @@ export default function JobResults({
             options={[
               { value: '', label: 'Mới nhất' },
               { value: 'salary_desc', label: 'Lương cao nhất' },
+              { value: 'urgent', label: 'Cần tuyển gấp' },
             ]}
           />
         </div>
@@ -105,6 +108,7 @@ export default function JobResults({
               {!quickViewJob && suggestedWards.length > 0 && index + 1 === wardSuggestionInsertIndex && (
                 <WardSuggestionCard wards={suggestedWards} onSelect={onSelectSuggestedWard} />
               )}
+              {!quickViewJob && insertAfter[index + 1]}
             </div>
           ))}
         </div>
@@ -122,6 +126,8 @@ export default function JobResults({
           />
         </div>
       )}
+
+      {!loading && !quickViewJob && footer}
     </div>
   )
 }

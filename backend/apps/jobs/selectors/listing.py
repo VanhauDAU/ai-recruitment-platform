@@ -151,6 +151,8 @@ def _filter_search(queryset, params):
 def _order_jobs(queryset, ordering):
     if ordering == 'salary_desc':
         return queryset.order_by(F('salary_max').desc(nulls_last=True), '-published_at')
+    if ordering == 'urgent':
+        return queryset.order_by('-has_flash_badge', '-published_at', '-created_at')
     tier_weight = Case(
         When(tier=Job.Tier.TOP, then=2),
         When(tier=Job.Tier.FEATURED, then=1),
