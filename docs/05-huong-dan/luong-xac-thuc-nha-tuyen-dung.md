@@ -19,11 +19,13 @@ Tham khảo sản phẩm:
 Đăng ký email
   → /account/verify
   → nhấn liên kết trong email
+  → gửi email chào mừng nhà tuyển dụng
   → /consulting-need
   → /employer-verify
   → /dashboard
 
 Đăng ký Google (email đã được provider xác thực)
+  → gửi email chào mừng nhà tuyển dụng
   → /account/complete-profile
   → /consulting-need
   → /employer-verify
@@ -73,6 +75,11 @@ Token dùng một lần, có TTL và cooldown gửi lại. Link xác thực có 
 xác thực người dùng tiếp tục thẳng tới `/consulting-need`; nếu mở ở trình duyệt
 khác, hệ thống yêu cầu đăng nhập rồi áp dụng lại state machine.
 
+Sau khi token được chấp nhận và `email_verified` chuyển từ `false` sang `true`,
+backend mới ghi welcome job vào transactional outbox. Vì vậy đăng ký bằng email
+không nhận thư chào mừng trước thư xác thực. Token đã dùng, request confirm lặp
+lại và thao tác gửi lại link không tạo thêm thư chào mừng.
+
 ## Đăng ký bằng Google
 
 Nút Google chỉ bật sau khi người dùng đồng ý điều khoản bắt buộc. OAuth dùng
@@ -80,6 +87,26 @@ Authorization Code Flow qua backend và trả token theo namespace employer. Vì
 provider đã xác thực email, tài khoản mới chỉ cần bổ sung người liên hệ, địa
 điểm và consent tại `/account/complete-profile`, sau đó đi thẳng tới
 `/consulting-need`.
+
+Tài khoản employer được tạo mới qua Google ghi welcome job ngay tại callback vì
+email đã được provider xác thực. Việc đăng nhập lại bằng Google hoặc liên kết
+Google với tài khoản đã tồn tại không được coi là đăng ký mới và không gửi lại
+email này.
+
+## Email chào mừng nhà tuyển dụng
+
+Email chào mừng dùng template riêng, không dùng nội dung onboarding ứng viên.
+Thư gồm tên người liên hệ, mã NTD (ưu tiên `RecruiterProfile.public_id`, fallback
+`User.public_id` khi hồ sơ Google chưa được tạo), xác nhận nguồn xác thực email,
+CTA “Tiếp tục thiết lập tài khoản” và khối hotline/email/Zalo lấy từ site
+settings. CTA trỏ vào `/tuyendung/app/employer-verify`; các guard hiện có tự đưa người
+dùng về đúng bước còn thiếu (`complete-profile`, `consulting-need` hoặc
+checklist xác thực) thay vì đóng cứng một bước có thể đã hoàn tất.
+
+Không đưa cam kết điểm thưởng, thời hạn đăng tin miễn phí hoặc CTA đăng tin đầu
+tiên vào email khi các chính sách/tính năng đó chưa được triển khai. Mỗi user có
+tối đa một `AuthEmailJob(kind=welcome)` bằng idempotent enqueue và partial unique
+constraint ở database; worker vẫn dùng retry policy chung nếu SMTP tạm lỗi.
 
 Tài khoản OAuth chưa có mật khẩu phải đặt mật khẩu lần đầu tại
 `/account/settings/password-login` trước khi bắt đầu xác thực số điện thoại.
@@ -94,7 +121,7 @@ field rời rạc.
 | `registration` | Thiếu hồ sơ người liên hệ bắt buộc | `/account/complete-profile` |
 | `email_verification` | Hồ sơ đủ nhưng email chưa xác thực | `/account/verify` |
 | `consulting_need` | Email đã xác thực nhưng chưa khai báo nhu cầu | `/consulting-need` |
-| `complete` | Đã có nhu cầu tuyển dụng hợp lệ | `/dashboard` hoặc `returnUrl` an toàn |
+| `complete` | Đã có nhu cầu tuyển dụng hợp lệ | Nếu checklist xác thực chưa đủ thì `/employer-verify`; nếu đã đủ thì `/dashboard` hoặc `returnUrl` an toàn |
 
 `employer_onboarding_required` chỉ bằng `false` ở trạng thái `complete`.
 `EmployerOnboardingGuard` bảo vệ direct navigation vào dashboard. API khai báo
@@ -145,9 +172,26 @@ nhận thỏa thuận nền tảng–nhà tuyển dụng. Nút đăng tin đầu
 đủ năm điều kiện trước và workflow đăng tin sẽ được triển khai ở giai đoạn sau.
 Người dùng vẫn có thể chọn “xác thực thêm sau” để vào dashboard.
 
+### Cấp xác thực trên sidebar
+
+Sidebar không hiển thị tiến độ của sáu mốc checklist. Nó dùng thang **Cấp 0/3 →
+Cấp 3/3** theo ba điều kiện được tham khảo từ mẫu quản trị: xác thực số điện
+thoại, cập nhật/liên kết thông tin công ty và nộp Giấy đăng ký doanh nghiệp.
+Hover hoặc focus vào dấu `?` cạnh nhãn “Tài khoản xác thực” mở popover, hiển thị
+phần trăm hoàn thành, trạng thái từng điều kiện và liên kết đi thẳng tới action
+phù hợp. DLCN và đăng tin đầu tiên vẫn hiển thị riêng ở checklist đầy đủ, không
+làm thay đổi cấp sidebar.
+
+Backend trả thêm `employer_verification_completed` trong session. Trạng thái này
+bằng `true` khi đã xác thực điện thoại, liên kết công ty với membership được
+duyệt, nộp ĐKDN, nộp thỏa thuận DLCN ứng viên và chấp nhận thỏa thuận nền tảng.
+Nó không phụ thuộc bước đăng tin đầu tiên vì workflow đó chưa triển khai. Sau
+đăng nhập, tài khoản có trạng thái `false` vào `/employer-verify`; trạng thái
+`true` vào thẳng dashboard hoặc deep-link an toàn.
+
 Dashboard dùng shell quản trị riêng, responsive desktop/mobile. Cấu trúc shell
 gồm dải cảnh báo tuân thủ theo trạng thái DLCN, topbar tối chứa hành động nhanh,
-sidebar trắng chứa hồ sơ/mã NTD/tiến độ xác thực và menu nghiệp vụ phân nhóm,
+sidebar trắng chứa hồ sơ/mã NTD/cấp xác thực 0–3 kèm popover chi tiết và menu nghiệp vụ phân nhóm,
 header tên trang và vùng nội dung cuộn độc lập. Bảng tin ưu tiên thông báo quan
 trọng, banner thông tin, hành trình xác thực ngang, khu khám phá và CV đề xuất;
 phía dưới vẫn gồm số tin đang tuyển, tổng hồ sơ, hồ sơ mới, lượt xem, biểu đồ 7

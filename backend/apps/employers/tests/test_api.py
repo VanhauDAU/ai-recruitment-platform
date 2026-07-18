@@ -108,6 +108,9 @@ class EmployerRegistrationTests(APITestCase):
         self.assertTrue(AuthEmailJob.objects.filter(
             user=user, kind=AuthEmailJob.Kind.VERIFICATION,
         ).exists())
+        self.assertFalse(AuthEmailJob.objects.filter(
+            user=user, kind=AuthEmailJob.Kind.WELCOME,
+        ).exists())
 
     def test_registration_requires_mandatory_terms(self):
         response = self.client.post(
@@ -208,6 +211,7 @@ class RecruitmentNeedTests(APITestCase):
         session = self.client.get(reverse('auth-me'))
         self.assertFalse(session.data['employer_onboarding_required'])
         self.assertEqual(session.data['employer_onboarding_step'], 'complete')
+        self.assertFalse(session.data['employer_verification_completed'])
 
         repeated = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
         self.assertEqual(repeated.status_code, status.HTTP_400_BAD_REQUEST)
@@ -510,7 +514,50 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertTrue(onboarding['company_linked'])
         self.assertTrue(onboarding['membership_approved'])
         self.assertFalse(onboarding['business_doc_submitted'])
+        self.assertFalse(onboarding['verification_completed'])
         self.assertFalse(onboarding['completed'])
+
+    def test_session_marks_employer_verified_without_requiring_first_job(self):
+        now = timezone.now()
+        self.user.email_verified = True
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+        self.recruiter.registration_completed_at = now
+        self.recruiter.dpa_accepted_at = now
+        self.recruiter.save(update_fields=[
+            'registration_completed_at', 'dpa_accepted_at', 'updated_at',
+        ])
+        category = JobCategory.objects.create(
+            name='Chuyên viên tuyển dụng',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=self.recruiter,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            is_continuous=True,
+            headcount=1,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=now,
+        )
+        for doc_type in (
+            CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        ):
+            CompanyDocument.objects.create(
+                company=self.company,
+                uploaded_by=self.user,
+                doc_type=doc_type,
+                file_url=f'employers/documents/{doc_type}.pdf',
+                file_name=f'{doc_type}.pdf',
+            )
+
+        profile = self.client.get(reverse('employer-me'))
+        session = self.client.get(reverse('auth-me'))
+
+        self.assertTrue(profile.data['onboarding']['verification_completed'])
+        self.assertFalse(profile.data['onboarding']['first_job_posted'])
+        self.assertFalse(profile.data['onboarding']['completed'])
+        self.assertTrue(session.data['employer_verification_completed'])
 
     def test_business_and_candidate_dpa_documents_update_separate_steps(self):
         media_root = tempfile.mkdtemp()

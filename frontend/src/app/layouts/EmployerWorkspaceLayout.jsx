@@ -1,7 +1,9 @@
 import {
+  ArrowRightOutlined,
   BarChartOutlined,
   BellOutlined,
   BulbOutlined,
+  CheckCircleFilled,
   CustomerServiceOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -13,6 +15,7 @@ import {
   MenuUnfoldOutlined,
   MessageOutlined,
   NotificationOutlined,
+  QuestionCircleFilled,
   RobotOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
@@ -24,13 +27,13 @@ import {
   ToolOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, Dropdown, Layout, Menu, Tooltip } from 'antd'
+import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
-import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
+import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {
   EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
@@ -40,6 +43,12 @@ import {
 } from '@/shared/config/portals'
 
 const { Header, Sider, Content } = Layout
+
+const ACCOUNT_VERIFICATION_LEVEL_STEPS = [
+  { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
+  { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
+  { key: 'business_doc_submitted', label: 'Xác thực Giấy đăng ký doanh nghiệp', to: employerAppPath('/account/settings/gpkd') },
+]
 
 function ComingSoonLabel({ children }) {
   return (
@@ -106,6 +115,47 @@ function TopbarAction({ icon, label, prominent = false }) {
   )
 }
 
+function AccountVerificationPopover({ verification, level }) {
+  return (
+    <div className="w-[330px] p-1 sm:w-[344px]" aria-label="Chi tiết cấp xác thực tài khoản">
+      <div className="flex items-center gap-2 text-base font-bold text-slate-800">
+        <span>Tài khoản xác thực:</span>
+        <strong className="text-emerald-600">Cấp {level.level}/{level.total}</strong>
+      </div>
+      <span className="mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl">🌟</span>
+      <p className="mt-4 text-sm text-slate-500">Vui lòng thực hiện các bước xác thực dưới đây:</p>
+      <div className="mt-5 flex items-center justify-between text-sm">
+        <strong className="text-base text-slate-800">Xác thực thông tin</strong>
+        <span className="text-slate-500">Hoàn thành <strong className="text-emerald-600">{level.percent}%</strong></span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+        <span className="block h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${level.percent}%` }} />
+      </div>
+      <div className="mt-3 divide-y divide-slate-100">
+        {ACCOUNT_VERIFICATION_LEVEL_STEPS.map((step) => {
+          const completed = Boolean(verification[step.key])
+          return (
+            <Link
+              key={step.key}
+              to={step.to}
+              className="flex items-center gap-3 py-4 text-sm font-semibold text-slate-700 transition hover:text-emerald-700"
+            >
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full ${completed ? 'text-emerald-600' : 'border border-slate-400 text-transparent'}`}>
+                {completed && <CheckCircleFilled />}
+              </span>
+              <span className="min-w-0 flex-1">{step.label}</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><ArrowRightOutlined /></span>
+            </Link>
+          )
+        })}
+      </div>
+      <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
+        <Link to={EMPLOYER_VERIFY_URL} className="rounded-md border border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50">Tìm hiểu thêm</Link>
+      </div>
+    </div>
+  )
+}
+
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
   const { pathname } = useLocation()
@@ -118,7 +168,7 @@ export default function EmployerWorkspaceLayout() {
   })
   const profile = profileQuery.data || {}
   const verification = profile.onboarding || {}
-  const progress = getEmployerVerificationProgress(verification)
+  const accountVerificationLevel = getEmployerAccountVerificationLevel(verification)
   const showComplianceNotice = profileQuery.isSuccess
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
@@ -202,14 +252,24 @@ export default function EmployerWorkspaceLayout() {
                   <Link to={EMPLOYER_COMPANY_SETTINGS_URL} className="block truncate text-sm font-extrabold text-slate-800 hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</Link>
                   <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
                   <span className="mt-1 block truncate text-[10px] text-slate-400">Mã NTD: {profile.public_id || user?.public_id || '—'}</span>
-                  <span className="mt-1 block text-[10px] text-slate-500">Tài khoản xác thực: <strong className="text-emerald-600">{progress.completed}/{progress.total}</strong></span>
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
+                    Tài khoản xác thực: <strong className="text-emerald-600">Cấp {accountVerificationLevel.level}/{accountVerificationLevel.total}</strong>
+                    <Popover
+                      trigger={['hover', 'focus']}
+                      placement="rightTop"
+                      overlayInnerStyle={{ padding: 12 }}
+                      content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
+                    >
+                      <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
+                    </Popover>
+                  </span>
                 </div>
               </div>
               <Link
                 to={EMPLOYER_VERIFY_URL}
-                className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${progress.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
               >
-                <SafetyCertificateOutlined /> {progress.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'}
+                <SafetyCertificateOutlined /> {accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'}
               </Link>
             </div>
 

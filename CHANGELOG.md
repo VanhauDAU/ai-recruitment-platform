@@ -25,6 +25,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Thêm nhóm route account nội bộ `/account/phone-verify`, `/account/settings/password-login`, `/account/settings/company?update=true`, `/account/settings/gpkd` và `/account/settings/personal-data-protection`; trang company có hai tab tìm/liên kết công ty có sẵn và tạo công ty mới.
 - Thêm API đổi/đặt mật khẩu khi đã đăng nhập. Tài khoản Google chưa có mật khẩu được chặn trước bước OTP bằng modal an toàn và dẫn tới màn đặt mật khẩu đầu tiên.
 - Thêm read-model `GET /api/dashboard/employer/` trong `apps.dashboard` cùng dashboard responsive: KPI tuyển dụng, biểu đồ hồ sơ 7 ngày, pipeline, tin/hồ sơ gần đây, nhu cầu ưu tiên, tiến độ xác thực và hồ sơ công ty.
+- Thêm email chào mừng riêng cho nhà tuyển dụng: tài khoản email chỉ nhận sau khi xác thực thành công, tài khoản Google mới nhận ngay sau callback; nội dung có tên, mã NTD, CTA quay về state machine cổng tuyển dụng và thông tin CSKH từ site settings.
 
 #### Changed
 
@@ -39,9 +40,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Security
 
 - Consent bắt buộc và marketing consent được lưu tách biệt kèm thời điểm/phiên bản; backend kiểm tra captcha, password policy, email không phân biệt hoa/thường, số điện thoại duy nhất và transaction rollback.
+- Transactional outbox giới hạn đúng một welcome job trên mỗi tài khoản bằng cả thao tác idempotent và partial unique constraint; callback Google lặp lại, đăng nhập social cũ hoặc token xác thực dùng lại không gửi trùng thư chào mừng.
 
 #### Fixed
 
+- Sửa destination sau đăng nhập nhà tuyển dụng: tài khoản còn thiếu bước bảo mật/pháp lý vào `/tuyendung/app/employer-verify` và không bị `returnUrl=/dashboard` bỏ qua; tài khoản đã xác thực đủ năm điều kiện hiện hành vào thẳng bảng tin hoặc deep-link an toàn. CTA email chào mừng vẫn dùng điểm vào checklist cho tài khoản mới.
+- Sidebar workspace nhà tuyển dụng dùng thang “Tài khoản xác thực: Cấp 0/3–3/3” theo điện thoại, thông tin công ty và ĐKDN; dấu `?` mở popover có tiến độ, ba action tương ứng và CTA tìm hiểu thêm, thay vì hiển thị 6 bước checklist.
 - Giữ nguyên query `?token=` khi redirect link xác thực employer cũ từ `/xac-thuc-email` sang `/account/verify`; đồng bộ `EMPLOYER_EMAIL_VERIFICATION_PATH` trong môi trường phát triển để email mới dùng trực tiếp route chuẩn.
 - Sửa toàn bộ link footer nhà tuyển dụng từ prefix cũ `/nha-tuyen-dung` sang route thật `/tuyendung` bằng seed và data migration `sitecontent.0015`.
 - Header marketing hiển thị rõ route hiện tại (màu thương hiệu, gạch chân và `aria-current`), dùng màu trung tính nhất quán cho link chưa chọn; thêm mục Trang chủ. Card giá/dịch vụ có vùng thao tác thật, con trỏ pointer và focus keyboard thay vì chỉ có hiệu ứng thị giác.
@@ -52,7 +56,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Documentation
 
 - Ghi rõ boundary i18n chỉ thuộc chunk employer marketing, ownership FSD cho domain dịch vụ/lead và cập nhật tiến độ dự án.
-- Thêm tài liệu state machine/validation/API cho auth employer, email xác thực, khảo sát nhu cầu, checklist và dashboard; kiểm chứng 83 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke test desktop/mobile. Full backend có 229 test, còn 5 lỗi legacy độc lập ở `apps.applications.tests_migrations` do schema migration thiếu cột `contact_name`.
+- Thêm tài liệu state machine/validation/API cho auth employer, email xác thực/chào mừng, khảo sát nhu cầu, checklist và dashboard; kiểm chứng 85 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke test desktop/mobile. Full backend có 229 test, còn 5 lỗi legacy độc lập ở `apps.applications.tests_migrations` do schema migration thiếu cột `contact_name`.
 
 ### 2026-07-15
 

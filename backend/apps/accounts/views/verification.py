@@ -65,7 +65,7 @@ class VerificationConfirmView(APIView):
         if not user.email_verified:
             user.email_verified = True
             user.save(update_fields=['email_verified', 'updated_at'])
-            queue_welcome_email(user)
+            queue_welcome_email(user, context={'registration_method': 'email'})
         return Response({'detail': 'Xác thực email thành công.'})
 
 

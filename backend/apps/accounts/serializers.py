@@ -69,6 +69,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
     job_preferences_configured = serializers.SerializerMethodField()
     employer_onboarding_required = serializers.SerializerMethodField()
     employer_onboarding_step = serializers.SerializerMethodField()
+    employer_verification_completed = serializers.SerializerMethodField()
     has_usable_password = serializers.SerializerMethodField()
 
     class Meta:
@@ -79,6 +80,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             'has_usable_password',
             'employer_onboarding_required',
             'employer_onboarding_step',
+            'employer_verification_completed',
         ]
         read_only_fields = fields
 
@@ -117,6 +119,19 @@ class SessionUserSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return 'consulting_need'
         return 'complete'
+
+    def get_employer_verification_completed(self, obj):
+        if not obj.is_employer:
+            return False
+        try:
+            recruiter = obj.recruiter_profile
+        except ObjectDoesNotExist:
+            return False
+        # Local import keeps the accounts model layer independent while this
+        # session DTO exposes the employer read-model needed for routing.
+        from apps.employers.selectors import build_employer_onboarding_steps
+
+        return build_employer_onboarding_steps(recruiter)['verification_completed']
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):

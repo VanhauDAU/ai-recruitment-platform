@@ -30,7 +30,10 @@ def build_employer_onboarding_steps(recruiter):
         steps['registration_completed'],
         steps['consulting_need_completed'],
     ])
-    steps['completed'] = all([
+    # Xác thực tài khoản hoàn tất sau năm workflow bảo mật/pháp lý đang khả
+    # dụng. Đăng tin đầu tiên là bước kích hoạt sản phẩm riêng và chưa được dùng
+    # để buộc một tài khoản đã xác thực quay lại checklist ở mỗi lần đăng nhập.
+    steps['verification_completed'] = all([
         steps['account_ready'],
         steps['phone_verified'],
         steps['company_linked'],
@@ -38,6 +41,6 @@ def build_employer_onboarding_steps(recruiter):
         steps['business_doc_submitted'],
         steps['candidate_dpa_submitted'],
         steps['dpa_accepted'],
-        steps['first_job_posted'],
     ])
+    steps['completed'] = steps['verification_completed'] and steps['first_job_posted']
     return steps
