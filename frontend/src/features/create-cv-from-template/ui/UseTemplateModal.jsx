@@ -4,7 +4,7 @@ import { CvDocumentPreview } from '@/entities/cv'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import CvSourcePanel from './CvSourcePanel'
 
-export default function UseTemplateModal({ template, themeColor, open, onClose, onCreated, locale = 'vi-VN' }) {
+export default function UseTemplateModal({ template, themeColor, open, onClose, onCreated, locale = 'vi-VN', onRequireLogin }) {
   const [preview, setPreview] = useState(null)
   const { containerRef: previewWrapRef, zoom: previewZoom } = usePreviewFitZoom(open)
 
@@ -62,6 +62,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
             themeColor={themeColor}
             onCreated={onCreated}
             onPreviewChange={setPreview}
+            onRequireLogin={onRequireLogin}
           />
         </div>
       </div>

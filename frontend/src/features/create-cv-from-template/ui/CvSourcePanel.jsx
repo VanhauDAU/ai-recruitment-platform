@@ -53,7 +53,7 @@ function SourceOption({ value, current, onSelect, title, note, disabled, childre
   )
 }
 
-export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, onCreated, onBack, onPreviewChange }) {
+export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, onCreated, onBack, onPreviewChange, onRequireLogin }) {
   const { user, isAuthenticated } = useSession()
   const { siteName } = useSiteSettings()
   const { locales } = useLocales()
@@ -239,7 +239,11 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
   }
 
   const submit = async () => {
-    if (!isAuthenticated || user?.role !== 'candidate') {
+    if (!isAuthenticated) {
+      onRequireLogin?.()
+      return
+    }
+    if (user?.role !== 'candidate') {
       message.warning('Hãy đăng nhập bằng tài khoản ứng viên để tạo CV.')
       return
     }

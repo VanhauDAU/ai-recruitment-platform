@@ -12,6 +12,7 @@ import {
 } from '@/entities/cv-template'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { useLocales } from '@/entities/locale'
+import { useLoginPrompt } from '@/features/auth'
 import { CvSourcePanel, UseTemplateModal } from '@/features/create-cv-from-template'
 import { catalogLocaleFromPath, catalogPathForCategory } from './locale-paths'
 
@@ -28,6 +29,7 @@ export default function TemplateDetail() {
   const { pathname } = useLocation()
   const { locale, path: basePath } = catalogLocaleFromPath(pathname)
   const { locales, loaded: localesLoaded } = useLocales()
+  const { promptLogin } = useLoginPrompt()
   const [template, setTemplate] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
@@ -174,6 +176,7 @@ export default function TemplateDetail() {
               onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
               onBack={() => navigate(basePath)}
               onPreviewChange={setPreview}
+              onRequireLogin={promptLogin}
             />
           </div>
         </div>
@@ -206,6 +209,7 @@ export default function TemplateDetail() {
         onClose={() => setModalSelection(null)}
         onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
         locale={locale}
+        onRequireLogin={promptLogin}
       />
     </div>
   )
