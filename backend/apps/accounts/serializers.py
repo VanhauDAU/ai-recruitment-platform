@@ -69,12 +69,14 @@ class SessionUserSerializer(serializers.ModelSerializer):
     job_preferences_configured = serializers.SerializerMethodField()
     employer_onboarding_required = serializers.SerializerMethodField()
     employer_onboarding_step = serializers.SerializerMethodField()
+    has_usable_password = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'has_usable_password',
             'employer_onboarding_required',
             'employer_onboarding_step',
         ]
@@ -93,6 +95,9 @@ class SessionUserSerializer(serializers.ModelSerializer):
             # introduced; the candidate endpoint will create the profile once.
             return False
 
+    def get_has_usable_password(self, obj):
+        return obj.has_usable_password()
+
     def get_employer_onboarding_required(self, obj):
         return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False
 
@@ -103,7 +108,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             recruiter = obj.recruiter_profile
         except ObjectDoesNotExist:
             return 'registration'
-        if recruiter.registration_completed_at is None or recruiter.company_id is None:
+        if recruiter.registration_completed_at is None:
             return 'registration'
         if not obj.email_verified:
             return 'email_verification'
@@ -172,6 +177,24 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     token = serializers.CharField(write_only=True)
     password = password_field()
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại."""
+
+    current_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password = password_field()
+    logout_all_sessions = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if user.has_usable_password():
+            current_password = attrs.get('current_password') or ''
+            if not current_password:
+                raise serializers.ValidationError({'current_password': 'Nhập mật khẩu hiện tại.'})
+            if not user.check_password(current_password):
+                raise serializers.ValidationError({'current_password': 'Mật khẩu hiện tại không đúng.'})
+        return attrs
 
 
 # Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.

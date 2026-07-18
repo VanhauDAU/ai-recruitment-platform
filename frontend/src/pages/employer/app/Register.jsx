@@ -20,7 +20,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_COMPLETE_PROFILE_URL, employerAppPath } from '@/shared/config/portals'
 
 const REGISTRATION_FIELDS = new Set([
-  'email', 'password', 'full_name', 'gender', 'contact_phone', 'company_name',
+  'email', 'password', 'full_name', 'gender', 'contact_phone',
   'work_location', 'terms_accepted', 'marketing_opt_in',
 ])
 
@@ -115,7 +115,6 @@ export default function EmployerRegister() {
         full_name: values.full_name,
         gender: values.gender,
         contact_phone: values.contact_phone.replace(/[ .-]/g, ''),
-        company_name: values.company_name,
         work_location: values.work_location,
         terms_accepted: values.terms_accepted,
         marketing_opt_in: Boolean(values.marketing_opt_in),
@@ -237,7 +236,7 @@ export default function EmployerRegister() {
           </section>
         ) : (
           <section className="login-field rounded-3xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-950/[0.03] sm:p-7">
-            <RegistrationSectionTitle number="02" title="Thông tin nhà tuyển dụng" description="Dùng để khởi tạo hồ sơ công ty và cá nhân hóa trải nghiệm tuyển dụng cho bạn." />
+            <RegistrationSectionTitle number="02" title="Thông tin nhà tuyển dụng" description="Bổ sung người liên hệ; bạn sẽ tìm hoặc tạo đúng hồ sơ công ty ở bước xác thực riêng." />
             <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"><ArrowLeftOutlined />Quay lại</button>

@@ -21,7 +21,7 @@ class EmployerRegisterView(APIView):
     throttle_scope = 'register'
 
     @extend_schema(
-        summary='Đăng ký tài khoản nhà tuyển dụng và hồ sơ công ty ban đầu',
+        summary='Đăng ký tài khoản và hồ sơ người liên hệ nhà tuyển dụng',
         request=EmployerRegisterSerializer,
         tags=['employer-auth'],
     )

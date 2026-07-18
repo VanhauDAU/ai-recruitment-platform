@@ -73,8 +73,11 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(set(response.data), {
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'has_usable_password',
             'employer_onboarding_required', 'employer_onboarding_step',
         })
+        self.assertIs(response.data['job_preferences_configured'], False)
+        self.assertIs(response.data['has_usable_password'], True)
         self.assertTrue({
             'id', 'password', 'token', 'refresh_token', 'permissions',
             'status', 'date_joined', 'last_login',
@@ -111,6 +114,45 @@ class ProfileUpdateTests(APITestCase):
         response = self.client.patch(self.url, {'full_name': 'X'})
         self.assertIn(response.status_code, (401, 403))
 
+
+class PasswordChangeTests(APITestCase):
+    def test_oauth_user_can_create_first_password_without_current_password(self):
+        user = User.objects.create_user(
+            email='oauth-employer@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('NewPassword@123'))
+        self.assertTrue(response.data['user']['has_usable_password'])
+
+    def test_existing_password_requires_correct_current_password(self):
+        user = User.objects.create_user(
+            email='local-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=user)
+
+        missing = self.client.post(reverse('auth-password-change'), {
+            'password': 'NewPassword@123',
+        }, format='json')
+        wrong = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'WrongPassword@123',
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('current_password', missing.data)
+        self.assertIn('current_password', wrong.data)
 
 GOOGLE_PROFILE = {
     'id': 'google-uid-1',

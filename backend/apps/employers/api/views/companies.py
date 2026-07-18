@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from apps.accounts.permissions import IsEmployer
 from ...models import RecruiterProfile
 from ...selectors import search_companies
+from ...selectors import has_explicit_company_link
 from ...services import get_or_create_recruiter
 from ..serializers import CompanySearchSerializer, CompanySerializer
 from .onboarding import _require_company
@@ -29,7 +30,7 @@ class CreateCompanyView(generics.CreateAPIView):
         recruiter = get_or_create_recruiter(self.request.user)
         if recruiter.phone_verified_at is None:
             raise ValidationError({'detail': 'Xác thực số điện thoại trước khi cập nhật thông tin công ty.'})
-        if recruiter.company_id is not None:
+        if has_explicit_company_link(recruiter):
             raise ValidationError({'detail': 'Bạn đã liên kết với một công ty — không thể tạo hoặc đổi công ty khác.'})
         company = serializer.save(created_by=self.request.user)
         recruiter.company = company

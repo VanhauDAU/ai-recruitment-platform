@@ -6,6 +6,8 @@ import RoleGuard from '@/app/router/guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,
+  EmployerBusinessLicensePage,
+  EmployerCompanySettingsPage,
   EmployerContactPage,
   EmployerConsultingNeedPage,
   EmployerDashboardPage,
@@ -13,9 +15,13 @@ import {
   EmployerLegalPage,
   EmployerLoginPage,
   EmployerOnboardingPage,
+  EmployerPasswordLoginPage,
+  EmployerPersonalDataProtectionPage,
+  EmployerPhoneVerifyPage,
   EmployerPricingPage,
   EmployerRegisterPage,
   EmployerServicesPage,
+  EmployerVerifyPage,
 } from '../lazy/employer.pages'
 import { ForgotPasswordPage, OAuthCallbackPage, ResetPasswordPage, VerifyEmailPage } from '../lazy/main.pages'
 import { DashboardLayout, EmployerAuthLayout, EmployerMarketingLayout, EmployerSetupLayout } from '../lazy/layouts'
@@ -77,6 +83,12 @@ export function employerRoutes() {
         </Route>
         <Route element={<EmployerOnboardingGuard />}>
           <Route element={<DashboardLayout />}>
+            <Route path={employerAppPath('/employer-verify')} element={<EmployerVerifyPage />} />
+            <Route path={employerAppPath('/account/phone-verify')} element={<EmployerPhoneVerifyPage />} />
+            <Route path={employerAppPath('/account/settings/password-login')} element={<EmployerPasswordLoginPage />} />
+            <Route path={employerAppPath('/account/settings/company')} element={<EmployerCompanySettingsPage />} />
+            <Route path={employerAppPath('/account/settings/gpkd')} element={<EmployerBusinessLicensePage />} />
+            <Route path={employerAppPath('/account/settings/personal-data-protection')} element={<EmployerPersonalDataProtectionPage />} />
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
           </Route>
         </Route>

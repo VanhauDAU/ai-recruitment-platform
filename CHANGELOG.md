@@ -17,17 +17,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Added — Xác thực tài khoản nhà tuyển dụng
 
-- Thêm API đăng ký employer riêng, tạo atomically tài khoản, recruiter profile, company chưa xác thực, membership owner, consent có phiên bản; trả JWT và gửi email xác thực ngay sau đăng ký.
+- Thêm API đăng ký employer riêng, tạo atomically tài khoản, recruiter profile và consent có phiên bản; trả JWT và gửi email xác thực ngay sau đăng ký. Công ty không còn được tạo ngầm trong bước này.
 - Thêm hồ sơ đăng ký recruiter (giới tính, số liên hệ, địa điểm, thời điểm hoàn tất, consent/marketing) bằng migration `employers.0009`; thêm endpoint hoàn thiện profile cho tài khoản Google.
 - Thêm giao diện login/register tách biệt cổng ứng viên, màn xác thực email riêng tại `/account/verify`, khảo sát nhu cầu tại `/consulting-need`, trang điều khoản/quyền riêng tư và route recovery riêng cho employer.
 - Thêm model/API `RecruitmentNeed` cho vị trí chuyên môn, cấp bậc, thời hạn hoặc tuyển liên tục, số lượng, khoảng/nguồn ngân sách và nhu cầu tư vấn; email employer có mã NTD, CTA xác thực và cảnh báo bảo mật riêng.
+- Thêm `/tuyendung/app/employer-verify` theo shell quản trị employer: checklist điện thoại/công ty/giấy ĐKDN/hai bước DLCN/tin đầu tiên và lựa chọn xác thực sau; email không lặp lại vì đã là điều kiện vào trang.
+- Thêm nhóm route account nội bộ `/account/phone-verify`, `/account/settings/password-login`, `/account/settings/company?update=true`, `/account/settings/gpkd` và `/account/settings/personal-data-protection`; trang company có hai tab tìm/liên kết công ty có sẵn và tạo công ty mới.
+- Thêm API đổi/đặt mật khẩu khi đã đăng nhập. Tài khoản Google chưa có mật khẩu được chặn trước bước OTP bằng modal an toàn và dẫn tới màn đặt mật khẩu đầu tiên.
+- Thêm read-model `GET /api/dashboard/employer/` trong `apps.dashboard` cùng dashboard responsive: KPI tuyển dụng, biểu đồ hồ sơ 7 ngày, pipeline, tin/hồ sơ gần đây, nhu cầu ưu tiên, tiến độ xác thực và hồ sơ công ty.
 
 #### Changed
 
-- Employer đăng ký email giữ session và đi theo state machine `/account/verify → /consulting-need → /dashboard`; employer mới qua Google bổ sung hồ sơ tại `/account/complete-profile` rồi đi thẳng tới khảo sát vì email đã được provider xác thực.
-- Link đặt lại mật khẩu trong email được dựng theo role; link employer dùng host/path của cổng tuyển dụng. Dashboard thêm guard bắt buộc email + hồ sơ + company/membership trước khi truy cập.
+- Employer đăng ký email giữ session và đi theo state machine `/account/verify → /consulting-need → /dashboard`; employer mới qua Google bổ sung hồ sơ tại `/account/complete-profile` rồi đi thẳng tới khảo sát vì email đã được provider xác thực. State onboarding không còn phụ thuộc company; company chỉ hoàn tất sau thao tác chọn/tạo rõ ràng.
+- Link đặt lại mật khẩu trong email được dựng theo role; link employer dùng host/path của cổng tuyển dụng. Dashboard guard bắt buộc email + hồ sơ + consulting, còn company/membership thuộc checklist xác thực có thể hoàn thiện dần.
 - Trường nhu cầu tư vấn trong khảo sát tuyển dụng chỉ cho phép chọn một lựa chọn; frontend gửi mảng một phần tử tương thích API và backend từ chối payload nhiều lựa chọn.
 - Làm lại giao diện đăng ký nhà tuyển dụng: form hiển thị tuần tự bước 01 rồi mới sang bước 02 (có quay lại), khối tài khoản và hồ sơ tách bạch, email không còn chừa cột trống trên desktop và lựa chọn giới tính không còn viền bao quanh trên mobile.
+- Luồng sau khai báo nhu cầu chuyển thành `/consulting-need → /employer-verify → /dashboard`; checklist bảo mật không tạo state onboarding bắt buộc mới. Workspace dùng đúng `100dvh`, chỉ cuộn vùng nội dung; link dịch vụ/bảng giá và workflow chưa triển khai được disabled rõ ràng, không thoát sang landing page.
+- Tách trạng thái tài liệu thỏa thuận ứng viên–nhà tuyển dụng (`candidate_dpa`) khỏi trạng thái chấp nhận thỏa thuận nền tảng–nhà tuyển dụng; tin tuyển dụng đầu tiên bị khóa đến khi đủ năm điều kiện trước.
 
 #### Security
 
@@ -38,11 +44,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Giữ nguyên query `?token=` khi redirect link xác thực employer cũ từ `/xac-thuc-email` sang `/account/verify`; đồng bộ `EMPLOYER_EMAIL_VERIFICATION_PATH` trong môi trường phát triển để email mới dùng trực tiếp route chuẩn.
 - Sửa toàn bộ link footer nhà tuyển dụng từ prefix cũ `/nha-tuyen-dung` sang route thật `/tuyendung` bằng seed và data migration `sitecontent.0015`.
 - Header marketing hiển thị rõ route hiện tại (màu thương hiệu, gạch chân và `aria-current`), dùng màu trung tính nhất quán cho link chưa chọn; thêm mục Trang chủ. Card giá/dịch vụ có vùng thao tác thật, con trỏ pointer và focus keyboard thay vì chỉ có hiệu ứng thị giác.
+- Khóa form consulting sau lần hoàn tất đầu tiên ở cả frontend và backend; sửa race session refresh khiến URL vừa tới `employer-verify` lại bị redirect sang dashboard.
+- Sửa hồ sơ company rỗng do luồng đăng ký cũ bị hiểu nhầm là đã hoàn tất; vẫn cho phép người dùng thay thế bằng thao tác tìm/tạo công ty thật.
+- Sửa upload giấy tờ dùng validator ảnh cho file PDF; ĐKDN nay nhận JPG/PNG/PDF còn thỏa thuận `candidate_dpa` nhận PDF/DOC/DOCX với kiểm tra MIME, chữ ký file và giới hạn 5 MB.
 
 #### Documentation
 
 - Ghi rõ boundary i18n chỉ thuộc chunk employer marketing, ownership FSD cho domain dịch vụ/lead và cập nhật tiến độ dự án.
-- Thêm tài liệu state machine/validation/API cho auth employer, email xác thực và khảo sát nhu cầu; kiểm chứng 92 backend test, 212 frontend test, lint/architecture/build và 36 Playwright smoke test desktop/mobile cho marketing, register consent gate, recovery và các redirect onboarding.
+- Thêm tài liệu state machine/validation/API cho auth employer, email xác thực, khảo sát nhu cầu, checklist và dashboard; kiểm chứng 83 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke test desktop/mobile. Full backend có 229 test, còn 5 lỗi legacy độc lập ở `apps.applications.tests_migrations` do schema migration thiếu cột `contact_name`.
 
 ### 2026-07-15
 

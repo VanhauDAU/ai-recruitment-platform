@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -33,12 +34,19 @@ class RecruitmentNeedView(APIView):
         recruiter = get_or_create_recruiter(request.user)
         if not request.user.email_verified:
             raise ValidationError({'detail': 'Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng.'})
-        if recruiter.registration_completed_at is None or recruiter.company_id is None:
+        if recruiter.registration_completed_at is None:
             raise ValidationError({'detail': 'Vui lòng hoàn tất hồ sơ nhà tuyển dụng trước.'})
+        if hasattr(recruiter, 'recruitment_need'):
+            raise ValidationError({'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'})
         serializer = RecruitmentNeedSerializer(
             data=request.data,
             context={'recruiter': recruiter},
         )
         serializer.is_valid(raise_exception=True)
-        need = serializer.save()
+        try:
+            need = serializer.save()
+        except IntegrityError as error:
+            raise ValidationError({
+                'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'
+            }) from error
         return Response(RecruitmentNeedSerializer(need).data, status=status.HTTP_200_OK)

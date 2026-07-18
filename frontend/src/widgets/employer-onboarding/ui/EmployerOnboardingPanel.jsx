@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_CONSULTING_NEED_URL } from '@/shared/config/portals'
 
 const PROFILE_FIELDS = new Set([
-  'full_name', 'gender', 'contact_phone', 'company_name', 'work_location',
+  'full_name', 'gender', 'contact_phone', 'work_location',
   'terms_accepted', 'marketing_opt_in',
 ])
 
@@ -93,7 +93,7 @@ export default function EmployerOnboardingPanel() {
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
       <Tag color="green" className="!m-0 !rounded-full !px-3">Đăng ký bằng Google</Tag>
       <h1 className="mt-3 text-2xl font-black text-slate-950">Hoàn thiện hồ sơ nhà tuyển dụng</h1>
-      <p className="mb-6 mt-1 text-sm leading-6 text-slate-500">Bổ sung thông tin người liên hệ và công ty trước khi khai báo nhu cầu tuyển dụng.</p>
+      <p className="mb-6 mt-1 text-sm leading-6 text-slate-500">Bổ sung thông tin người liên hệ trước khi khai báo nhu cầu; hồ sơ công ty được chọn hoặc tạo tại bước xác thực riêng.</p>
       {error && <Alert type="error" message={error} showIcon closable onClose={() => setError('')} className="!mb-5 !rounded-lg" />}
       <Form form={form} layout="vertical" onFinish={submit} requiredMark="optional" scrollToFirstError>
         <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />

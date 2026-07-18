@@ -20,7 +20,7 @@ function HiringConversationVisual() {
   )
 }
 
-export default function EmployerConsultingNeedPanel() {
+export default function EmployerConsultingNeedPanel({ onCompleted }) {
   const { user } = useSession()
   return (
     <div className="mx-auto grid max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[minmax(0,1.65fr)_minmax(360px,1fr)]">
@@ -29,7 +29,7 @@ export default function EmployerConsultingNeedPanel() {
         <p className="mt-1 text-sm text-slate-500">Hãy cung cấp thông tin về đợt tuyển dụng sắp tới để chúng tôi hỗ trợ bạn tốt hơn</p>
         <h2 className="mt-8 text-xl font-black text-slate-900">Nhu cầu tuyển dụng</h2>
         <p className="mt-1 text-sm leading-6 text-slate-500">Đây là thông tin về vị trí bạn đang cần ưu tiên tuyển nhất hiện tại. Bạn có thể cập nhật nhu cầu này sau trong trang quản lý.</p>
-        <RecruitmentNeedForm />
+        <RecruitmentNeedForm onCompleted={onCompleted} />
       </section>
       <HiringConversationVisual />
     </div>

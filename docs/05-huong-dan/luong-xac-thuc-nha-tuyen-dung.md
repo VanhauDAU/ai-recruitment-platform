@@ -18,11 +18,13 @@ Tham khảo sản phẩm:
   → /account/verify
   → nhấn liên kết trong email
   → /consulting-need
+  → /employer-verify
   → /dashboard
 
 Đăng ký Google (email đã được provider xác thực)
   → /account/complete-profile
   → /consulting-need
+  → /employer-verify
   → /dashboard
 ```
 
@@ -39,15 +41,16 @@ nhưng không thay thế bước khai báo nhu cầu tuyển dụng.
 | Nhập lại mật khẩu | Khớp ở frontend; không gửi xuống API |
 | Họ tên, giới tính | Bắt buộc; họ tên tối thiểu 2 ký tự |
 | Số điện thoại | `0` hoặc `+84`, 10–11 chữ số; chưa thuộc recruiter khác |
-| Công ty | Tên tối thiểu 2 ký tự; tạo hồ sơ công ty ở trạng thái `unverified` |
 | Nơi làm việc | Location đang hoạt động ở cấp tỉnh/thành phố |
 | Điều khoản + quyền riêng tư | Bắt buộc, lưu thời điểm và phiên bản chính sách |
 | Nhận tư vấn/marketing | Tùy chọn, lưu quyết định độc lập |
 | Captcha | reCAPTCHA v3 action `register`, kiểm tra ở backend |
 
 `POST /api/employer/register/` chạy trong một transaction: tạo `User` role
-`employer`, `RecruiterProfile`, công ty ban đầu và membership owner/approved;
-ghi consent; gửi email xác thực; trả `user`, `recruiter`, JWT access/refresh.
+`employer`, `RecruiterProfile`, ghi consent; gửi email xác thực; trả `user`,
+`recruiter`, JWT access/refresh. Đăng ký không tự tạo công ty. Nhà tuyển dụng chỉ
+liên kết công ty khi chủ động tìm công ty có sẵn hoặc tạo hồ sơ mới trong phần
+cài đặt tài khoản.
 Frontend giữ session rồi chuyển đến
 `/tuyendung/app/account/verify?registered=1`, không yêu cầu đăng nhập lại.
 
@@ -72,12 +75,12 @@ khác, hệ thống yêu cầu đăng nhập rồi áp dụng lại state machin
 
 Nút Google chỉ bật sau khi người dùng đồng ý điều khoản bắt buộc. OAuth dùng
 Authorization Code Flow qua backend và trả token theo namespace employer. Vì
-provider đã xác thực email, tài khoản mới chỉ cần bổ sung người liên hệ, công ty,
-địa điểm và consent tại `/account/complete-profile`, sau đó đi thẳng tới
+provider đã xác thực email, tài khoản mới chỉ cần bổ sung người liên hệ, địa
+điểm và consent tại `/account/complete-profile`, sau đó đi thẳng tới
 `/consulting-need`.
 
-Tài khoản OAuth chưa có mật khẩu có thể dùng “Quên mật khẩu” của employer để
-thiết lập mật khẩu lần đầu.
+Tài khoản OAuth chưa có mật khẩu phải đặt mật khẩu lần đầu tại
+`/account/settings/password-login` trước khi bắt đầu xác thực số điện thoại.
 
 ## State machine và điều hướng
 
@@ -86,14 +89,14 @@ field rời rạc.
 
 | `employer_onboarding_step` | Điều kiện | Route bắt buộc |
 | --- | --- | --- |
-| `registration` | Thiếu hồ sơ bắt buộc hoặc chưa liên kết công ty | `/account/complete-profile` |
+| `registration` | Thiếu hồ sơ người liên hệ bắt buộc | `/account/complete-profile` |
 | `email_verification` | Hồ sơ đủ nhưng email chưa xác thực | `/account/verify` |
 | `consulting_need` | Email đã xác thực nhưng chưa khai báo nhu cầu | `/consulting-need` |
 | `complete` | Đã có nhu cầu tuyển dụng hợp lệ | `/dashboard` hoặc `returnUrl` an toàn |
 
 `employer_onboarding_required` chỉ bằng `false` ở trạng thái `complete`.
 `EmployerOnboardingGuard` bảo vệ direct navigation vào dashboard. API khai báo
-nhu cầu cũng chặn email chưa xác thực hoặc hồ sơ/công ty chưa hoàn tất; redirect
+nhu cầu cũng chặn email chưa xác thực hoặc hồ sơ chưa hoàn tất; redirect
 frontend không phải lớp bảo vệ duy nhất.
 
 ## Bước khai báo nhu cầu tuyển dụng
@@ -108,9 +111,45 @@ frontend không phải lớp bảo vệ duy nhất.
 - nguồn ngân sách công ty/cá nhân;
 - một chủ đề cần tư vấn, có thể bỏ trống.
 
-`POST /api/employer/consulting-need/` upsert dữ liệu và đặt `completed_at`. Sau
-khi lưu, frontend refresh session; state chuyển sang `complete` và điều hướng
-vào dashboard.
+`POST /api/employer/consulting-need/` chỉ tạo dữ liệu đúng một lần và đặt
+`completed_at`. Request POST tiếp theo bị từ chối `400`; khi state đã là
+`complete`, direct navigation về `/consulting-need` cũng bị chuyển sang
+dashboard. Sau lần lưu đầu tiên, frontend refresh session rồi điều hướng tới
+`/employer-verify`.
+
+## Checklist xác thực và dashboard
+
+`/employer-verify` là checklist bảo mật/tuân thủ có thể hoàn thiện dần, không
+phải state thứ năm của onboarding. Email không xuất hiện trong checklist vì đây
+là điều kiện bắt buộc để tới được trang. Sáu mốc theo thứ tự là:
+
+1. xác thực số điện thoại;
+2. chọn công ty có sẵn hoặc tạo công ty mới;
+3. cập nhật giấy đăng ký doanh nghiệp;
+4. tải lên thỏa thuận xử lý DLCN với ứng viên;
+5. đồng ý thỏa thuận xử lý DLCN với ProCV;
+6. đăng tin tuyển dụng đầu tiên.
+
+Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
+chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi
+tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên thương mại/MST
+để gửi yêu cầu liên kết kèm giấy tờ chứng minh, hoặc tạo hồ sơ công ty mới.
+Company chỉ được tính hoàn tất sau một hành động liên kết rõ ràng; hồ sơ company
+rỗng do luồng đăng ký cũ không được tính là đã hoàn tất.
+
+Hai mốc DLCN dùng cùng trang nhưng có trạng thái và hành động độc lập: một mốc
+là tài liệu ứng viên–nhà tuyển dụng (`candidate_dpa`), mốc còn lại là việc chấp
+nhận thỏa thuận nền tảng–nhà tuyển dụng. Nút đăng tin đầu tiên bị khóa tới khi
+đủ năm điều kiện trước và workflow đăng tin sẽ được triển khai ở giai đoạn sau.
+Người dùng vẫn có thể chọn “xác thực thêm sau” để vào dashboard.
+
+Dashboard dùng shell quản trị riêng, responsive desktop/mobile, gồm số tin đang
+tuyển, tổng hồ sơ, hồ sơ mới, lượt xem, biểu đồ 7 ngày, pipeline ứng viên, tin và
+hồ sơ gần đây, nhu cầu tuyển dụng ưu tiên, hồ sơ công ty và tiến độ xác thực.
+Toàn bộ số liệu đọc từ `GET /api/dashboard/employer/`; frontend không tự cộng
+trên response phân trang. Workspace chiếm đúng `100dvh`, chỉ vùng nội dung cuộn
+để header/sidebar không bị cắt. Menu dịch vụ/bảng giá và các workflow chưa làm
+được hiển thị disabled “Sắp mở”, không điều hướng sang landing marketing.
 
 ## Route frontend
 
@@ -123,8 +162,14 @@ vào dashboard.
 | `/tuyendung/app/account/verify` | Gửi/xác nhận email | `EmployerSetupLayout`, token-aware |
 | `/tuyendung/app/account/complete-profile` | Bổ sung hồ sơ Google | `AuthGuard → RoleGuard` |
 | `/tuyendung/app/consulting-need` | Khai báo nhu cầu ưu tiên | `AuthGuard → RoleGuard` |
+| `/tuyendung/app/employer-verify` | Checklist bảo mật sau consulting, có thể bỏ qua | `AuthGuard → RoleGuard → EmployerOnboardingGuard`, `EmployerWorkspaceLayout` |
+| `/tuyendung/app/account/phone-verify` | Gửi và xác nhận OTP số điện thoại | Cùng guard, `EmployerWorkspaceLayout` |
+| `/tuyendung/app/account/settings/password-login` | Đổi hoặc đặt mật khẩu đầu tiên cho tài khoản OAuth | Cùng guard, `EmployerWorkspaceLayout` |
+| `/tuyendung/app/account/settings/company?update=true` | Tìm/liên kết hoặc tạo công ty mới | Cùng guard, `EmployerWorkspaceLayout` |
+| `/tuyendung/app/account/settings/gpkd` | Tải lên giấy đăng ký doanh nghiệp | Cùng guard, `EmployerWorkspaceLayout` |
+| `/tuyendung/app/account/settings/personal-data-protection` | Hai bước DLCN ứng viên–NTD và ProCV–NTD | Cùng guard, `EmployerWorkspaceLayout` |
 | `/tuyendung/app/oauth/callback` | Đổi one-time code lấy JWT | Public callback |
-| `/tuyendung/app/dashboard` | Workspace nhà tuyển dụng | `AuthGuard → RoleGuard → EmployerOnboardingGuard` |
+| `/tuyendung/app/dashboard` | Workspace và read-model tuyển dụng | `AuthGuard → RoleGuard → EmployerOnboardingGuard`, `EmployerWorkspaceLayout` |
 
 `/xac-thuc-email` và `/onboarding` chỉ là route tương thích cũ; luồng mới không
 điều hướng người dùng tới hai URL này.
@@ -132,10 +177,19 @@ vào dashboard.
 ## API và dữ liệu
 
 - `POST /api/employer/register/`: đăng ký email, trả JWT.
+- `POST /api/auth/password/`: đổi mật khẩu; tài khoản OAuth không có mật khẩu
+  được đặt lần đầu mà không cần `current_password`.
 - `POST /api/employer/onboarding/registration/`: hoàn tất profile OAuth.
 - `GET /api/employer/me/`: recruiter/company và trạng thái chi tiết.
-- `GET|POST /api/employer/consulting-need/`: đọc/ghi nhu cầu ưu tiên.
+- `GET|POST /api/employer/consulting-need/`: đọc/tạo một lần nhu cầu ưu tiên.
+- `GET /api/dashboard/employer/`: summary, activity 7 ngày, nhu cầu, tin và hồ sơ gần đây.
 - `POST /api/auth/verify/send/`, `POST /api/auth/verify/confirm/`: email.
+- `POST /api/employer/phone/send-otp/`, `POST /api/employer/phone/verify/`: OTP.
+- `GET /api/employer/company/search/`, `POST /api/employer/company/create/`,
+  `POST /api/employer/company/join/`: hai luồng liên kết công ty rõ ràng.
+- `GET|POST /api/employer/company/documents/`: ĐKDN chấp nhận JPG/PNG/PDF;
+  `candidate_dpa` chấp nhận PDF/DOC/DOCX và được theo dõi riêng.
+- `POST /api/employer/dpa/accept/`: đồng ý thỏa thuận ProCV–nhà tuyển dụng.
 - `POST /api/auth/password-reset/`, validate và confirm: recovery dùng chung
   backend nhưng URL email/route frontend tách theo role.
 
@@ -145,10 +199,13 @@ hiện tại lấy từ `EMPLOYER_TERMS_POLICY_VERSION`.
 
 ## Kiểm thử bắt buộc
 
-1. Backend: transaction đăng ký, email/link employer, token một lần, session
-   trả đúng bốn state, chặn khai báo trước xác thực và validate toàn bộ payload.
-2. Frontend unit: endpoint, namespace token và destination theo từng state.
-3. E2E desktop/mobile: register consent gate, dashboard redirect về
-   `/account/verify`, rồi `/consulting-need`, cùng đầy đủ field responsive.
-4. Browser thật: keyboard/focus, overflow, mobile layout, console/network và
-   không gửi form thật trên website tham chiếu.
+1. Backend: transaction đăng ký không tạo company, email/link employer, token
+   một lần, đặt mật khẩu OAuth, OTP, company explicit-link và hai trạng thái
+   DLCN độc lập.
+2. Frontend unit: endpoint, namespace token, destination theo từng state và
+   contract account settings.
+3. E2E desktop/mobile: register consent gate, `/consulting-need →
+   /employer-verify`, modal tài khoản chưa có mật khẩu, hai tab company, workspace
+   đúng chiều cao viewport và không có link thoát sang bảng giá.
+4. Browser thật: keyboard/focus, internal overflow, mobile layout,
+   console/network và không gửi form thật trên website tham chiếu.

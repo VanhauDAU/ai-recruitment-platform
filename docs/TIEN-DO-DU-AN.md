@@ -16,10 +16,10 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 3 — Tối ưu tìm kiếm / matching | 0/2 | ⬜ |
 | 4 — CV nâng cao | 0/2 | ⬜ |
 | 5 — Tuyển dụng nâng cao | 1/3 | 🟡 |
-| 6 — Thương mại & quản trị | 12/15 | 🟡 |
+| 6 — Thương mại & quản trị | 13/16 | 🟡 |
 | 7 — Phỏng vấn AI | 0/4 | ⬜ |
 | 8 — Deployment | 0/2 | ⬜ |
-| **Tổng** | **58/83** | |
+| **Tổng** | **59/84** | |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -64,6 +64,7 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | EMP-P3 | Landing 10 section, Services 5 nhóm, Pricing đọc DB + trạng thái loading/error/empty | ✅ |
 | EMP-P4 | Admin CRUD dịch vụ + danh sách/xử lý lead, docs/changelog và smoke desktop/mobile; polish navigation active state và card giá có affordance click/focus | ✅ |
 | EMP-P5 | Auth employer riêng: register email/Google, consent, recovery, onboarding + guard dashboard, legal routes, backend/frontend/E2E/docs; khảo sát nhu cầu tư vấn chỉ chọn một mục (API vẫn tương thích mảng một phần tử); giao diện đăng ký theo wizard 01 → 02, responsive desktop/mobile | ✅ |
+| EMP-P6 | Employer verify + workspace dashboard: shell `100dvh` cuộn nội bộ; checklist bỏ email, có OTP + password gate cho OAuth, chọn/tạo công ty rõ ràng, ĐKDN, hai bước DLCN độc lập và khóa tin đầu tiên; route account settings nội bộ, read-model KPI/activity/pipeline/recent data, khóa consulting đã hoàn tất và regression desktop/mobile | ✅ |
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
@@ -79,7 +80,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R5 | Pilot Jobs theo lát cắt dọc | 🟡 Tách candidate feature + backend boundary; còn UI CRUD employer |
 | R6 | Applications/Saved jobs + server state | 🟡 Feature state/API và transition backend; còn UI nghiệp vụ |
 | R7 | Tách Django settings theo môi trường | ✅ base/development/test/production, CI test settings và production validation giữ nguyên |
-| R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard/AI chưa có use case, Sitecontent để lát cắt riêng |
+| R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard đã có read-model employer, AI chưa có use case, Sitecontent để lát cắt riêng |
 | R9 | Onboarding theo kiến trúc mới | ✅ Form preference dùng chung onboarding/settings, API preference có transaction + consent, responsive modal chọn vị trí, regression desktop/mobile |
 | R10 | Cleanup, bundle, tài liệu | ✅ Xóa compatibility layer, CI feature boundary, bundle review và tài liệu |
 
@@ -600,6 +601,7 @@ frontend unit tests và 22 smoke desktop/mobile.
 | 6.13 | Redesign giao diện blog kiểu TopCV: magazine /blog, danh mục load-more, chi tiết nền xám card trắng | ✅ |
 | 6.14 | Cổng marketing nhà tuyển dụng: 5 trang VI/EN, gói dịch vụ + lead, admin CRUD/xử lý lead | ✅ |
 | 6.15 | Luồng đăng ký/đăng nhập NTD: profile + consent, email verify → consulting need → dashboard, Google completion, recovery và guard | ✅ |
+| 6.16 | Employer verify + dashboard quản trị: checklist bảo mật, KPI/activity/pipeline, recent job/application và shell responsive | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 6
 
@@ -691,4 +693,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-18 (EMP-P1→P5 — hoàn tất cổng marketing và auth nhà tuyển dụng: đăng ký email/Google, profile + consent có phiên bản, email employer riêng, luồng `/account/verify → /consulting-need → /dashboard`, recovery theo portal và guard state machine. Đã qua 92 backend test, 212 frontend test, lint/architecture/build và 36 Playwright smoke test desktop/mobile, gồm regression giữ token từ link xác thực cũ. Các cập nhật 1.24b→1.24d, CVB-8 và HOME-CV giữ nguyên tiến độ.)
+Cập nhật lần cuối: 2026-07-18 (EMP-P1→P6 — hoàn tất cổng marketing, auth, `/employer-verify`, nhóm route account settings và dashboard nhà tuyển dụng dùng read-model thật; luồng chuẩn `/account/verify → /consulting-need → /employer-verify → /dashboard`, consulting chỉ tạo một lần. Workspace chiếm `100dvh`, company chỉ hoàn tất sau khi chọn/tạo rõ ràng, hai bước DLCN được theo dõi độc lập. Đã qua 83 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke desktop/mobile. Full backend 229 test còn 5 lỗi độc lập trong `apps.applications.tests_migrations` do model hiện tại truy vấn cột `contact_name` khi schema test đang ở migration legacy; lỗi tái hiện khi chạy riêng suite này và không thuộc phạm vi EMP-P6. Các cập nhật 1.24b→1.24d, CVB-8 và HOME-CV giữ nguyên tiến độ.)

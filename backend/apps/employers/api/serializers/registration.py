@@ -18,7 +18,6 @@ class EmployerRegistrationProfileSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=255, trim_whitespace=True)
     gender = serializers.ChoiceField(choices=RecruiterProfile.Gender.choices)
     contact_phone = serializers.CharField(max_length=20, validators=[phone_validator])
-    company_name = serializers.CharField(max_length=255, trim_whitespace=True)
     work_location = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.filter(level=Location.Level.PROVINCE, is_active=True),
     )
@@ -28,11 +27,6 @@ class EmployerRegistrationProfileSerializer(serializers.Serializer):
     def validate_full_name(self, value):
         if len(value) < 2:
             raise serializers.ValidationError('Họ và tên cần ít nhất 2 ký tự.')
-        return value
-
-    def validate_company_name(self, value):
-        if len(value) < 2:
-            raise serializers.ValidationError('Tên công ty cần ít nhất 2 ký tự.')
         return value
 
     def validate_contact_phone(self, value):

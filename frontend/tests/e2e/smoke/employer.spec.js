@@ -94,7 +94,7 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await expect(page.getByRole('heading', { name: 'Tạo thông tin đăng nhập' })).toHaveCount(0)
   await expect(page.getByLabel('Họ và tên')).toBeVisible()
   await expect(page.getByLabel('Số điện thoại cá nhân')).toBeVisible()
-  await expect(page.getByLabel('Tên công ty')).toBeVisible()
+  await expect(page.getByLabel('Tên công ty')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Quay lại' })).toBeVisible()
 
   await page.goto('/tuyendung/app/forgot-password')
@@ -113,6 +113,7 @@ async function setEmployerSession(page, overrides = {}) {
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'usr_test', email: 'hr@example.com', role: 'employer', full_name: 'Nguyễn An',
+        has_usable_password: true,
         email_verified: false, employer_onboarding_required: true,
         employer_onboarding_step: 'email_verification',
         ...currentOverrides,
@@ -205,5 +206,58 @@ test('employer auth: verified session completes recruitment need before dashboar
     budget_source: 'company',
     consultation_topics: ['service_packages'],
   })
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
+  await expect(page.getByText('Xác thực số điện thoại', { exact: true })).toBeVisible()
+
+  await page.goto('/tuyendung/app/consulting-need')
   await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
+  await expect(page.getByRole('heading', { name: /Chào Nguyễn An/ })).toBeVisible()
+})
+
+test('employer workspace: verification actions stay inside the 100vh app shell', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    has_usable_password: false,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_test',
+        company: null,
+        contact_phone: '0912345678',
+        onboarding: {
+          phone_verified: false,
+          company_linked: false,
+          business_doc_submitted: false,
+          candidate_dpa_submitted: false,
+          dpa_accepted: false,
+          first_job_posted: false,
+        },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/industries/all/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+
+  await page.goto('/tuyendung/app/employer-verify')
+
+  const workspace = page.getByTestId('employer-workspace')
+  await expect(workspace).toBeVisible()
+  await expect(workspace).toHaveCSS('height', `${page.viewportSize().height}px`)
+  await expect(page.getByText('Xác thực địa chỉ email')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Cập nhật Xác thực số điện thoại' }).click()
+  await expect(page.getByRole('dialog')).toContainText('Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google')
+  await page.getByRole('button', { name: 'Cập nhật mật khẩu tại đây' }).click()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/password-login$/)
+
+  await page.goto('/tuyendung/app/account/settings/company?update=true')
+  await expect(page.getByRole('tab', { name: /Tìm kiếm thông tin công ty/ })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /Tạo công ty mới/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Bảng giá dịch vụ/ })).toHaveCount(0)
 })

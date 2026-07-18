@@ -1,5 +1,4 @@
 import {
-  BankOutlined,
   EnvironmentOutlined,
   PhoneOutlined,
   UserOutlined,
@@ -39,17 +38,6 @@ export default function EmployerRegistrationFields({ provinces = [], locationsLo
         ]}
       >
         <Input prefix={<PhoneOutlined className="text-emerald-600" />} inputMode="tel" placeholder="0912 345 678" className={fieldClassName} />
-      </Form.Item>
-
-      <Form.Item
-        name="company_name"
-        label="Tên công ty"
-        rules={[
-          { required: true, message: 'Vui lòng nhập tên công ty' },
-          { min: 2, message: 'Tên công ty cần ít nhất 2 ký tự' },
-        ]}
-      >
-        <Input prefix={<BankOutlined className="text-emerald-600" />} placeholder="Công ty TNHH ABC" className={fieldClassName} />
       </Form.Item>
 
       <Form.Item

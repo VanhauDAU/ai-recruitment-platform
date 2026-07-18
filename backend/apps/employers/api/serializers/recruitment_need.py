@@ -64,8 +64,4 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         recruiter = self.context['recruiter']
         validated_data['completed_at'] = timezone.now()
-        need, _ = RecruitmentNeed.objects.update_or_create(
-            recruiter=recruiter,
-            defaults=validated_data,
-        )
-        return need
+        return RecruitmentNeed.objects.create(recruiter=recruiter, **validated_data)

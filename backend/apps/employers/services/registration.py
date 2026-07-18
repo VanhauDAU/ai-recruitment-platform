@@ -3,18 +3,11 @@
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
 
-from ..models import Company, RecruiterProfile
 from .profiles import get_or_create_recruiter
-
-
-def _company_slug(company_name, user):
-    base = slugify(company_name) or 'doanh-nghiep'
-    return f'{base}-{user.public_id[-8:].lower()}'
 
 
 @transaction.atomic
@@ -33,21 +26,6 @@ def complete_registration_profile(user, validated_data):
     user.full_name = validated_data['full_name']
     user.phone = contact_phone
     user.save(update_fields=['full_name', 'phone', 'updated_at'])
-
-    if recruiter.company_id is None:
-        company = Company.objects.create(
-            company_name=validated_data['company_name'],
-            slug=_company_slug(validated_data['company_name'], user),
-            email=user.email,
-            phone=contact_phone,
-            address=location.name,
-            has_no_logo=True,
-            has_no_website=True,
-            created_by=user,
-        )
-        recruiter.company = company
-        recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
-        recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
 
     recruiter.gender = validated_data['gender']
     recruiter.contact_phone = contact_phone

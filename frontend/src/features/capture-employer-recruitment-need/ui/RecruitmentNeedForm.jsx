@@ -21,7 +21,7 @@ const POSITION_LEVEL_OPTIONS = Object.entries(POSITION_LEVEL_LABELS).map(([value
 const moneyFormatter = (value) => value == null ? '' : `${String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} VNĐ`
 const moneyParser = (value) => value?.replace(/\D/g, '') || ''
 
-export default function RecruitmentNeedForm() {
+export default function RecruitmentNeedForm({ onCompleted }) {
   const [form] = Form.useForm()
   const { message } = App.useApp()
   const { refreshSession } = useSession()
@@ -61,9 +61,10 @@ export default function RecruitmentNeedForm() {
   const mutation = useMutation({
     mutationFn: saveEmployerRecruitmentNeed,
     onSuccess: async () => {
+      onCompleted?.()
       await refreshSession()
       message.success('Đã ghi nhận nhu cầu tuyển dụng của bạn.')
-      navigate(employerAppPath('/dashboard'), { replace: true })
+      navigate(employerAppPath('/employer-verify'), { replace: true })
     },
     onError: (error) => {
       const data = error.response?.data

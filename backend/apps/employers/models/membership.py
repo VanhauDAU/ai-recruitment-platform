@@ -16,8 +16,8 @@ class RecruiterProfile(models.Model):
 
     Các bước onboarding suy ra từ dữ liệu, không có bảng riêng:
     1) phone_verified_at  2) company IS NOT NULL (+ membership approved)
-    3) CompanyDocument(business_registration)  4) dpa_accepted_at
-    5) tồn tại Job của user.
+    3) CompanyDocument(business_registration)  4) văn bản DLCN ứng viên
+    5) dpa_accepted_at với nền tảng  6) tồn tại Job của user.
     """
 
     class CompanyRole(models.TextChoices):

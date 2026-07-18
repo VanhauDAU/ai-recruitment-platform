@@ -216,29 +216,53 @@ pages/main/jobs/JobDetail
 ## Ownership map — Auth và onboarding nhà tuyển dụng
 
 ```text
-app/router + EmployerAuthLayout|EmployerSetupLayout + EmployerOnboardingGuard
-  → pages/employer/app/Login|Register|Onboarding|ConsultingNeed
-    → widgets/employer-onboarding, employer-consulting-need
+app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
+  + EmployerOnboardingGuard
+  → pages/employer/app/Login|Register|Onboarding|ConsultingNeed|EmployerVerify|Dashboard
+    + pages/employer/app/account/PhoneVerify|PasswordLogin|CompanySettings
+      |BusinessLicense|PersonalDataProtection
+    → widgets/employer-onboarding, employer-consulting-need,
+      employer-verification, employer-dashboard, employer-account-settings
       → features/auth, complete-employer-registration,
-        capture-employer-recruitment-need
-          → entities/session, employer-profile, job, location
+        capture-employer-recruitment-need, verify-employer-account,
+        change-password, manage-employer-company
+          → entities/session, employer-profile, employer-dashboard, job, location
             → shared/api, shared/config/portals
 ```
 
 - `features/auth` sở hữu account action dùng chung và JWT namespace theo portal;
-  employer registration vẫn gọi endpoint riêng vì payload tạo cả recruiter và
-  company, không mở rộng contract candidate hiện có.
+  employer registration vẫn gọi endpoint riêng vì payload tạo recruiter và
+  consent riêng, nhưng không tự tạo/liên kết company và không mở rộng contract
+  candidate hiện có.
 - `features/complete-employer-registration` sở hữu các field profile/consent tái
   sử dụng giữa đăng ký email và bổ sung hồ sơ sau OAuth. Hai workflow chỉ được
   compose ở page/widget, không import feature lẫn nhau.
-- `entities/employer-profile` sở hữu HTTP contract recruiter và nhu cầu ưu tiên.
+- `entities/employer-profile` sở hữu HTTP contract recruiter, nhu cầu ưu tiên,
+  tìm/tạo/liên kết công ty và giấy tờ xác minh.
   `widgets/employer-onboarding` chỉ hoàn thiện hồ sơ Google; widget
   `employer-consulting-need` compose form nhu cầu sau xác thực. Email/phone/DPA
   là workflow bảo mật riêng, không còn bị gộp thành checklist onboarding.
+- `entities/employer-dashboard` sở hữu read-model tổng hợp từ backend
+  `apps.dashboard`; widget dashboard không tải toàn bộ danh sách job/application
+  rồi tự cộng số liệu. `features/verify-employer-account` sở hữu OTP điện thoại,
+  upload giấy đăng ký doanh nghiệp và hai bước DLCN; `change-password` và
+  `manage-employer-company` sở hữu các account action tương ứng. Page verify và
+  các page account chỉ compose.
+- `EmployerWorkspaceLayout` là shell riêng của vùng quản trị employer. Menu chưa
+  có workflow thật phải ở trạng thái disabled rõ ràng, không đăng ký route hoặc
+  toast thành công giả.
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế
   guard và backend permission.
+- `/employer-verify` chỉ là checklist bảo mật sau khi consulting hoàn tất, không
+  tạo thêm state onboarding bắt buộc. Checklist không lặp lại email đã xác thực;
+  các action mở route account nội bộ và tin đầu tiên chỉ bật sau khi đủ năm điều
+  kiện trước đó. Submit consulting đi tới checklist; direct navigation lại
+  `/consulting-need` ở state `complete` phải về dashboard.
+- `EmployerWorkspaceLayout` chiếm đúng `100dvh`; chỉ vùng `Content` cuộn. Link
+  dịch vụ/bảng giá chưa có workflow quản trị phải disabled trong workspace,
+  không điều hướng sang landing page marketing.
 - Login/register/recovery employer dùng `EmployerAuthLayout` và route helper
   `employerAppPath`; không hardcode host, token key hoặc điều hướng sang cổng
   candidate.

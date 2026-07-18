@@ -25,6 +25,8 @@ PNG_BYTES = (
     b'\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
     b'\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
 )
+PDF_BYTES = b'%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF'
+DOCX_BYTES = b'PK\x03\x04' + (b'\x00' * 64)
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
 
@@ -77,13 +79,12 @@ class EmployerRegistrationTests(APITestCase):
             'full_name': 'Nguyễn Minh Anh',
             'gender': 'female',
             'contact_phone': '0912345678',
-            'company_name': 'Công ty Acme',
             'work_location': self.location.id,
             'terms_accepted': True,
             'marketing_opt_in': False,
         }
 
-    def test_email_registration_creates_employer_company_consent_and_session(self):
+    def test_email_registration_creates_recruiter_consent_without_auto_linking_company(self):
         response = self.client.post(reverse('employer-register'), self.payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
@@ -98,8 +99,8 @@ class EmployerRegistrationTests(APITestCase):
         self.assertEqual(recruiter.gender, RecruiterProfile.Gender.FEMALE)
         self.assertEqual(recruiter.contact_phone, '0912345678')
         self.assertEqual(recruiter.work_location, self.location)
-        self.assertEqual(recruiter.company.company_name, 'Công ty Acme')
-        self.assertEqual(recruiter.membership_status, RecruiterProfile.MembershipStatus.APPROVED)
+        self.assertIsNone(recruiter.company)
+        self.assertFalse(response.data['recruiter']['onboarding']['company_linked'])
         self.assertEqual(recruiter.terms_policy_version, 'test-v1')
         self.assertIsNotNone(recruiter.terms_accepted_at)
         self.assertFalse(recruiter.marketing_opt_in)
@@ -159,7 +160,7 @@ class EmployerRegistrationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertFalse(response.data['onboarding']['account_ready'])
         self.assertFalse(response.data['onboarding']['consulting_need_completed'])
-        self.assertEqual(response.data['company']['company_name'], 'Công ty Acme')
+        self.assertIsNone(response.data['company'])
         second = self.client.post(
             reverse('employer-registration-complete'),
             profile_payload,
@@ -173,16 +174,6 @@ class RecruitmentNeedTests(APITestCase):
         self.user, self.recruiter = make_employer(phone_verified=False)
         self.user.email_verified = True
         self.user.save(update_fields=['email_verified', 'updated_at'])
-        company = Company.objects.create(
-            company_name='Công ty Acme',
-            email=self.user.email,
-            phone='0912345678',
-            address='Hà Nội',
-            created_by=self.user,
-        )
-        self.recruiter.company = company
-        self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
-        self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
         self.recruiter.registration_completed_at = timezone.now()
         self.recruiter.save()
         self.category = JobCategory.objects.create(
@@ -217,6 +208,10 @@ class RecruitmentNeedTests(APITestCase):
         session = self.client.get(reverse('auth-me'))
         self.assertFalse(session.data['employer_onboarding_required'])
         self.assertEqual(session.data['employer_onboarding_step'], 'complete')
+
+        repeated = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
+        self.assertEqual(repeated.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('đã hoàn tất', str(repeated.data['detail']))
 
     def test_unverified_email_cannot_submit_consulting_need(self):
         self.user.email_verified = False
@@ -316,6 +311,15 @@ class PhoneOtpTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('nhà tuyển dụng khác', str(response.data['phone']))
 
+    def test_oauth_account_without_password_must_create_password_first(self):
+        self.user.set_unusable_password()
+        self.user.save(update_fields=['password', 'updated_at'])
+
+        response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+
 
 class CompanyCreateTests(APITestCase):
     def setUp(self):
@@ -370,6 +374,28 @@ class CompanyCreateTests(APITestCase):
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_registration_placeholder_does_not_block_explicit_company_creation(self):
+        placeholder = Company.objects.create(
+            company_name='Tên khai báo ban đầu',
+            has_no_logo=True,
+            has_no_website=True,
+            created_by=self.user,
+        )
+        self.recruiter.company = placeholder
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        self.recruiter.save()
+
+        before = self.client.get(reverse('employer-me'))
+        response = self.client.post(
+            reverse('employer-company-create'), company_payload(self.industry), format='json'
+        )
+
+        self.assertFalse(before.data['onboarding']['company_linked'])
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.recruiter.refresh_from_db()
+        self.assertNotEqual(self.recruiter.company, placeholder)
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])
@@ -485,6 +511,31 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertTrue(onboarding['membership_approved'])
         self.assertFalse(onboarding['business_doc_submitted'])
         self.assertFalse(onboarding['completed'])
+
+    def test_business_and_candidate_dpa_documents_update_separate_steps(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                business = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                    'file': SimpleUploadedFile('gpkd.pdf', PDF_BYTES, content_type='application/pdf'),
+                }, format='multipart')
+                candidate_dpa = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                    'file': SimpleUploadedFile(
+                        'dlcn.docx',
+                        DOCX_BYTES,
+                        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ),
+                }, format='multipart')
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(business.status_code, status.HTTP_201_CREATED, business.data)
+        self.assertEqual(candidate_dpa.status_code, status.HTTP_201_CREATED, candidate_dpa.data)
+        onboarding = self.client.get(reverse('employer-me')).data['onboarding']
+        self.assertTrue(onboarding['business_doc_submitted'])
+        self.assertTrue(onboarding['candidate_dpa_submitted'])
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])
