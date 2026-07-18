@@ -34,6 +34,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Làm lại giao diện đăng ký nhà tuyển dụng: form hiển thị tuần tự bước 01 rồi mới sang bước 02 (có quay lại), khối tài khoản và hồ sơ tách bạch, email không còn chừa cột trống trên desktop và lựa chọn giới tính không còn viền bao quanh trên mobile.
 - Luồng sau khai báo nhu cầu chuyển thành `/consulting-need → /employer-verify → /dashboard`; checklist bảo mật không tạo state onboarding bắt buộc mới. Workspace dùng đúng `100dvh`, chỉ cuộn vùng nội dung; link dịch vụ/bảng giá và workflow chưa triển khai được disabled rõ ràng, không thoát sang landing page.
 - Tách trạng thái tài liệu thỏa thuận ứng viên–nhà tuyển dụng (`candidate_dpa`) khỏi trạng thái chấp nhận thỏa thuận nền tảng–nhà tuyển dụng; tin tuyển dụng đầu tiên bị khóa đến khi đủ năm điều kiện trước.
+- Thiết kế lại toàn bộ shell quản trị employer theo mẫu dashboard nghiệp vụ: dải cảnh báo tuân thủ theo trạng thái DLCN, topbar tối toàn chiều ngang, sidebar trắng có hồ sơ/mã NTD/tiến độ xác thực và menu phân nhóm, header tên trang cùng content cuộn nội bộ. Dashboard mới có thông báo quan trọng, banner code-native, hành trình xác thực ngang, khu khám phá và CV đề xuất; KPI/read-model thật vẫn được giữ bên dưới. Mọi tính năng chưa có workflow đều disabled “Sắp mở”.
 
 #### Security
 

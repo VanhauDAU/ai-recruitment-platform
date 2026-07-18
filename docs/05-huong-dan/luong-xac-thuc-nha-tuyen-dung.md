@@ -8,6 +8,8 @@ Tham khảo sản phẩm:
 
 - [TopCV — đăng nhập nhà tuyển dụng](https://tuyendung.topcv.vn/app/login)
 - [TopCV — đăng ký nhà tuyển dụng](https://tuyendung.topcv.vn/app/register)
+- [TopCV — hướng dẫn tạo tài khoản nhà tuyển dụng](https://tuyendung.topcv.vn/help/huong-dan-su-dung/tao-tai-khoan-nha-tuyen-dung/)
+- [TopCV — hướng dẫn cài đặt tài khoản](https://tuyendung.topcv.vn/help/huong-dan-su-dung/cai-dat-tai-khoan/)
 - [TopCV — xử lý lỗi xác thực tài khoản](https://www.topcv.vn/faqs/account-setting/toi-gap-loi-khi-xac-thuc-tai-khoan.html)
 - [TopCV — điều khoản dịch vụ](https://tuyendung.topcv.vn/term-of-services)
 
@@ -143,13 +145,18 @@ nhận thỏa thuận nền tảng–nhà tuyển dụng. Nút đăng tin đầu
 đủ năm điều kiện trước và workflow đăng tin sẽ được triển khai ở giai đoạn sau.
 Người dùng vẫn có thể chọn “xác thực thêm sau” để vào dashboard.
 
-Dashboard dùng shell quản trị riêng, responsive desktop/mobile, gồm số tin đang
-tuyển, tổng hồ sơ, hồ sơ mới, lượt xem, biểu đồ 7 ngày, pipeline ứng viên, tin và
-hồ sơ gần đây, nhu cầu tuyển dụng ưu tiên, hồ sơ công ty và tiến độ xác thực.
+Dashboard dùng shell quản trị riêng, responsive desktop/mobile. Cấu trúc shell
+gồm dải cảnh báo tuân thủ theo trạng thái DLCN, topbar tối chứa hành động nhanh,
+sidebar trắng chứa hồ sơ/mã NTD/tiến độ xác thực và menu nghiệp vụ phân nhóm,
+header tên trang và vùng nội dung cuộn độc lập. Bảng tin ưu tiên thông báo quan
+trọng, banner thông tin, hành trình xác thực ngang, khu khám phá và CV đề xuất;
+phía dưới vẫn gồm số tin đang tuyển, tổng hồ sơ, hồ sơ mới, lượt xem, biểu đồ 7
+ngày, pipeline ứng viên, tin/hồ sơ gần đây, nhu cầu ưu tiên và hồ sơ công ty.
 Toàn bộ số liệu đọc từ `GET /api/dashboard/employer/`; frontend không tự cộng
 trên response phân trang. Workspace chiếm đúng `100dvh`, chỉ vùng nội dung cuộn
 để header/sidebar không bị cắt. Menu dịch vụ/bảng giá và các workflow chưa làm
-được hiển thị disabled “Sắp mở”, không điều hướng sang landing marketing.
+được hiển thị disabled “Sắp mở”, không điều hướng sang landing marketing và
+không mô phỏng thao tác thành công khi backend chưa tồn tại.
 
 ## Route frontend
 

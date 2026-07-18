@@ -250,6 +250,13 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   const workspace = page.getByTestId('employer-workspace')
   await expect(workspace).toBeVisible()
   await expect(workspace).toHaveCSS('height', `${page.viewportSize().height}px`)
+  await expect(page.getByTestId('employer-topbar')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Cập nhật ngay' }).first()).toBeVisible()
+  if (page.viewportSize().width < 1024) {
+    await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
+  }
+  await expect(page.getByRole('menuitem', { name: /Bảng tin/ })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: /Cài đặt tài khoản/ })).toBeVisible()
   await expect(page.getByText('Xác thực địa chỉ email')).toHaveCount(0)
   await page.getByRole('button', { name: 'Cập nhật Xác thực số điện thoại' }).click()
   await expect(page.getByRole('dialog')).toContainText('Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google')

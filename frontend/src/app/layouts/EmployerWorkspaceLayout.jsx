@@ -1,58 +1,137 @@
 import {
   BarChartOutlined,
   BellOutlined,
-  CrownOutlined,
+  BulbOutlined,
+  CustomerServiceOutlined,
   DashboardOutlined,
   FileTextOutlined,
+  GiftOutlined,
+  HistoryOutlined,
+  LikeOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MessageOutlined,
+  NotificationOutlined,
+  RobotOutlined,
   SafetyCertificateOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  ShoppingCartOutlined,
+  TagsOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
 } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown, Layout, Menu, Tooltip } from 'antd'
 import { useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
-import { employerAppPath } from '@/shared/config/portals'
+import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
+import {
+  EMPLOYER_COMPANY_SETTINGS_URL,
+  EMPLOYER_DATA_PROTECTION_URL,
+  EMPLOYER_PHONE_VERIFY_URL,
+  EMPLOYER_VERIFY_URL,
+  employerAppPath,
+} from '@/shared/config/portals'
 
 const { Header, Sider, Content } = Layout
 
 function ComingSoonLabel({ children }) {
-  return <span className="flex items-center justify-between gap-2"><span>{children}</span><span className="rounded bg-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-slate-400">Sắp mở</span></span>
+  return (
+    <span className="flex min-w-0 items-center justify-between gap-2">
+      <span className="truncate">{children}</span>
+      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-400">Sắp mở</span>
+    </span>
+  )
 }
 
 const EMPLOYER_NAV_ITEMS = [
-  {
-    type: 'group',
-    label: 'Workspace',
-    children: [
-      { key: employerAppPath('/dashboard'), icon: <DashboardOutlined />, label: 'Bảng tin' },
-      { key: 'coming-jobs', icon: <FileTextOutlined />, label: <ComingSoonLabel>Tin tuyển dụng</ComingSoonLabel>, disabled: true },
-      { key: 'coming-applications', icon: <TeamOutlined />, label: <ComingSoonLabel>Quản lý ứng viên</ComingSoonLabel>, disabled: true },
-      { key: 'coming-reports', icon: <BarChartOutlined />, label: <ComingSoonLabel>Báo cáo tuyển dụng</ComingSoonLabel>, disabled: true },
-    ],
-  },
-  {
-    type: 'group',
-    label: 'Tài khoản & dịch vụ',
-    children: [
-      { key: employerAppPath('/employer-verify'), icon: <SafetyCertificateOutlined />, label: 'Xác thực tài khoản' },
-      { key: 'coming-services', icon: <CrownOutlined />, label: <ComingSoonLabel>Dịch vụ tuyển dụng</ComingSoonLabel>, disabled: true },
-    ],
-  },
+  { key: employerAppPath('/dashboard'), icon: <DashboardOutlined />, label: 'Bảng tin' },
+  { key: 'coming-insights', icon: <BulbOutlined />, label: <ComingSoonLabel>ProCV Insights</ComingSoonLabel>, disabled: true },
+  { key: 'coming-rewards', icon: <GiftOutlined />, label: <ComingSoonLabel>ProCV Rewards</ComingSoonLabel>, disabled: true },
+  { key: 'coming-ai', icon: <RobotOutlined />, label: <ComingSoonLabel>AI đề xuất</ComingSoonLabel>, disabled: true },
+  { key: 'coming-cv-recommendations', icon: <LikeOutlined />, label: <ComingSoonLabel>CV đề xuất</ComingSoonLabel>, disabled: true },
+  { type: 'divider' },
+  { key: 'coming-campaigns', icon: <ThunderboltOutlined />, label: <ComingSoonLabel>Chiến dịch tuyển dụng</ComingSoonLabel>, disabled: true },
+  { key: 'coming-jobs', icon: <FileTextOutlined />, label: <ComingSoonLabel>Tin tuyển dụng</ComingSoonLabel>, disabled: true },
+  { key: 'coming-applications', icon: <TeamOutlined />, label: <ComingSoonLabel>Quản lý CV</ComingSoonLabel>, disabled: true },
+  { key: 'coming-reports', icon: <BarChartOutlined />, label: <ComingSoonLabel>Báo cáo tuyển dụng</ComingSoonLabel>, disabled: true },
+  { type: 'divider' },
+  { key: 'coming-buy-services', icon: <ShoppingCartOutlined />, label: <ComingSoonLabel>Mua dịch vụ</ComingSoonLabel>, disabled: true },
+  { key: 'coming-services', icon: <ToolOutlined />, label: <ComingSoonLabel>Dịch vụ của tôi</ComingSoonLabel>, disabled: true },
+  { key: 'coming-coupons', icon: <TagsOutlined />, label: <ComingSoonLabel>Mã ưu đãi</ComingSoonLabel>, disabled: true },
+  { type: 'divider' },
+  { key: 'coming-activity', icon: <HistoryOutlined />, label: <ComingSoonLabel>Lịch sử hoạt động</ComingSoonLabel>, disabled: true },
+  { key: EMPLOYER_COMPANY_SETTINGS_URL, icon: <SettingOutlined />, label: 'Cài đặt tài khoản' },
+  { type: 'divider' },
+  { key: 'coming-system-notifications', icon: <NotificationOutlined />, label: <ComingSoonLabel>Thông báo hệ thống</ComingSoonLabel>, disabled: true },
 ]
+
+const ROUTE_TITLES = [
+  [employerAppPath('/dashboard'), 'Bảng tin'],
+  [EMPLOYER_VERIFY_URL, 'Xác thực tài khoản'],
+  [EMPLOYER_PHONE_VERIFY_URL, 'Xác thực số điện thoại'],
+  [employerAppPath('/account/settings/password-login'), 'Thay đổi mật khẩu'],
+  [EMPLOYER_COMPANY_SETTINGS_URL, 'Cài đặt tài khoản'],
+  [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
+  [EMPLOYER_DATA_PROTECTION_URL, 'Văn bản xử lý dữ liệu cá nhân'],
+]
+
+function routeTitle(pathname) {
+  return ROUTE_TITLES.find(([path]) => pathname === path)?.[1] || 'Không gian nhà tuyển dụng'
+}
+
+function selectedMenuKey(pathname) {
+  if (pathname.startsWith(employerAppPath('/account/settings')) || pathname === EMPLOYER_PHONE_VERIFY_URL) {
+    return EMPLOYER_COMPANY_SETTINGS_URL
+  }
+  return pathname
+}
+
+function TopbarAction({ icon, label, prominent = false }) {
+  return (
+    <Tooltip title={`${label} — chức năng sẽ được mở trong giai đoạn tiếp theo`}>
+      <span
+        aria-disabled="true"
+        className={`hidden h-8 cursor-not-allowed items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
+      >
+        {icon}{label}
+      </span>
+    </Tooltip>
+  )
+}
 
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const profileQuery = useQuery({
+    queryKey: ['employer', 'profile'],
+    queryFn: getEmployerProfile,
+    staleTime: 30 * 1000,
+  })
+  const profile = profileQuery.data || {}
+  const verification = profile.onboarding || {}
+  const progress = getEmployerVerificationProgress(verification)
+  const showComplianceNotice = profileQuery.isSuccess
+    && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const accountMenu = {
-    items: [{ key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true }],
-    onClick: ({ key }) => key === 'logout' && logout(),
+    items: [
+      { key: 'settings', label: 'Cài đặt tài khoản', icon: <SettingOutlined /> },
+      { type: 'divider' },
+      { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true },
+    ],
+    onClick: ({ key }) => {
+      if (key === 'settings') navigate(EMPLOYER_COMPANY_SETTINGS_URL)
+      if (key === 'logout') logout()
+    },
   }
 
   function navigateFromMenu({ key }) {
@@ -61,69 +140,105 @@ export default function EmployerWorkspaceLayout() {
   }
 
   return (
-    <Layout data-testid="employer-workspace" className="!h-dvh !min-h-dvh !overflow-hidden !bg-[#f2f5f9]">
-      <Sider
-        width={264}
-        breakpoint="lg"
-        collapsedWidth="0"
-        collapsed={collapsed}
-        onBreakpoint={setCollapsed}
-        trigger={null}
-        className="!h-dvh !overflow-y-auto !bg-[#16283a] shadow-xl"
-      >
-        <div className="flex h-18 items-center border-b border-white/8 px-6">
+    <Layout data-testid="employer-workspace" className="!flex !h-dvh !min-h-dvh !flex-col !overflow-hidden !bg-[#edf1f5]">
+      {showComplianceNotice && (
+        <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
+          <span className="hidden sm:inline">[QUAN TRỌNG] Hoàn thiện Thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên. </span>
+          <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">Cập nhật ngay</Link>
+        </div>
+      )}
+
+      <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between !bg-[#1e2f40] !px-3 !leading-none sm:!px-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Button
+            type="text"
+            aria-label={collapsed ? 'Mở menu quản trị' : 'Thu gọn menu quản trị'}
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed((current) => !current)}
+            className="!text-slate-300 hover:!bg-white/10 hover:!text-white"
+          />
           <BrandLogo
             dark
             to={employerAppPath('/dashboard')}
-            className="max-w-full"
-            imageClassName="h-8 max-w-[168px]"
-            textClassName="text-base"
+            className="max-w-[138px]"
+            imageClassName="h-7 max-w-[126px]"
+            textClassName="text-sm"
           />
         </div>
-        <div className="px-4 py-5">
-          <div className="mb-4 rounded-xl border border-white/8 bg-white/5 p-3">
-            <div className="flex items-center gap-3">
-              <Avatar className="!bg-emerald-500 !font-bold">{initials}</Avatar>
-              <div className="min-w-0"><strong className="block truncate text-sm text-white">{user?.full_name || 'Nhà tuyển dụng'}</strong><span className="block truncate text-xs text-slate-400">{user?.email}</span></div>
-            </div>
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-200"><CrownOutlined /> Tài khoản nhà tuyển dụng</div>
-          </div>
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[pathname]}
-          items={EMPLOYER_NAV_ITEMS}
-          onClick={navigateFromMenu}
-          className="!border-0 !bg-transparent [&_.ant-menu-item-group-title]:!px-6 [&_.ant-menu-item-group-title]:!text-[10px] [&_.ant-menu-item-group-title]:!font-bold [&_.ant-menu-item-group-title]:!uppercase [&_.ant-menu-item-group-title]:!tracking-[.16em] [&_.ant-menu-item-group-title]:!text-slate-500 [&_.ant-menu-item-selected]:!bg-emerald-500/15 [&_.ant-menu-item-selected]:!text-emerald-300"
-        />
-      </Sider>
 
-      <Layout className="!h-dvh !min-h-0 !min-w-0 !overflow-hidden !bg-[#f2f5f9]">
-        <Header className="!flex !h-18 !shrink-0 !items-center !justify-between !border-b !border-slate-200 !bg-white !px-4 sm:!px-6">
-          <div className="flex items-center gap-3">
-            <Button
-              type="text"
-              aria-label={collapsed ? 'Mở menu quản trị' : 'Thu gọn menu quản trị'}
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed((current) => !current)}
-            />
-            <div className="hidden sm:block"><strong className="text-sm text-slate-900">Bảng điều khiển nhà tuyển dụng</strong><span className="ml-2 text-xs text-slate-400">Tổng quan hôm nay</span></div>
+        <div className="flex items-center gap-2">
+          <TopbarAction icon={<BarChartOutlined />} label="Khảo sát thị trường" prominent />
+          <TopbarAction icon={<FileTextOutlined />} label="Đăng tin" />
+          <TopbarAction icon={<SearchOutlined />} label="Tìm CV" />
+          <TopbarAction icon={<MessageOutlined />} label="Connect" />
+          <Tooltip title="Thông báo hệ thống">
+            <Button type="text" shape="circle" aria-label="Thông báo hệ thống" icon={<BellOutlined />} className="!text-slate-200 hover:!bg-white/10 hover:!text-white" />
+          </Tooltip>
+          <Dropdown menu={accountMenu} trigger={['click']} placement="bottomRight">
+            <button type="button" className="flex cursor-pointer items-center gap-2 rounded-full border-0 bg-white/10 p-1 pr-2 text-white transition hover:bg-white/15" aria-label="Mở menu tài khoản">
+              <Avatar size={28} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-700">{initials}</Avatar>
+              <span className="hidden max-w-28 truncate text-xs font-bold xl:block">{user?.full_name || user?.email}</span>
+            </button>
+          </Dropdown>
+        </div>
+      </Header>
+
+      <Layout className="!min-h-0 !min-w-0 !flex-1 !overflow-hidden !bg-[#edf1f5]">
+        <Sider
+          width={252}
+          breakpoint="lg"
+          collapsedWidth="0"
+          collapsed={collapsed}
+          onBreakpoint={setCollapsed}
+          trigger={null}
+          data-testid="employer-sidebar"
+          className="!h-full !overflow-hidden !border-r !border-slate-200 !bg-white"
+        >
+          <div className="flex h-full flex-col bg-white">
+            <div className="shrink-0 border-b border-slate-100 px-4 py-4">
+              <div className="flex items-start gap-3">
+                <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
+                <div className="min-w-0 flex-1">
+                  <Link to={EMPLOYER_COMPANY_SETTINGS_URL} className="block truncate text-sm font-extrabold text-slate-800 hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</Link>
+                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
+                  <span className="mt-1 block truncate text-[10px] text-slate-400">Mã NTD: {profile.public_id || user?.public_id || '—'}</span>
+                  <span className="mt-1 block text-[10px] text-slate-500">Tài khoản xác thực: <strong className="text-emerald-600">{progress.completed}/{progress.total}</strong></span>
+                </div>
+              </div>
+              <Link
+                to={EMPLOYER_VERIFY_URL}
+                className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${progress.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+              >
+                <SafetyCertificateOutlined /> {progress.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'}
+              </Link>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto py-2">
+              <Menu
+                mode="inline"
+                selectedKeys={[selectedMenuKey(pathname)]}
+                items={EMPLOYER_NAV_ITEMS}
+                onClick={navigateFromMenu}
+                className="!border-0 !bg-white [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!px-3 [&_.ant-menu-item]:!text-xs [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600"
+              />
+            </div>
+
+            <div className="shrink-0 border-t border-slate-100 p-2">
+              <div aria-disabled="true" className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-500"><CustomerServiceOutlined className="text-base text-emerald-600" /> Hộp thư hỗ trợ <span className="ml-auto text-[9px] text-slate-400">Sắp mở</span></div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Tooltip title="Thông báo hệ thống"><Button type="text" shape="circle" aria-label="Thông báo hệ thống" icon={<BellOutlined />} /></Tooltip>
-            <Tooltip title="Kho dịch vụ nội bộ sẽ được triển khai ở giai đoạn tiếp theo"><Button disabled className="!hidden sm:!inline-flex">Dịch vụ tuyển dụng</Button></Tooltip>
-            <Dropdown menu={accountMenu} trigger={['click']} placement="bottomRight">
-              <button type="button" className="flex cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent p-1.5 transition hover:bg-slate-100" aria-label="Mở menu tài khoản">
-                <Avatar size="small" className="!bg-slate-800 !font-bold">{initials}</Avatar>
-                <span className="hidden max-w-32 truncate text-sm font-semibold text-slate-700 md:block">{user?.full_name || user?.email}</span>
-              </button>
-            </Dropdown>
+        </Sider>
+
+        <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
+          <div className="flex h-12 shrink-0 items-center border-b border-slate-200 bg-white px-4 sm:px-6">
+            <strong className="text-sm text-slate-700">{routeTitle(pathname)}</strong>
           </div>
-        </Header>
-        <Content className="min-h-0 min-w-0 overflow-y-auto p-4 sm:p-6 xl:p-7">
-          <Outlet />
-        </Content>
+          <Content className="min-h-0 min-w-0 overflow-y-auto bg-[#edf1f5] p-3 sm:p-5 xl:p-6">
+            <div className="mx-auto w-full max-w-[1320px]">
+              <Outlet />
+            </div>
+          </Content>
+        </Layout>
       </Layout>
     </Layout>
   )

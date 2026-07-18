@@ -62,6 +62,10 @@ describe('EmployerDashboardOverview', () => {
     )
 
     expect(await screen.findByRole('heading', { name: /Chào Nguyễn An/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Đọc dữ liệu, tuyển đúng người' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Khám phá ProCV dành cho nhà tuyển dụng/ })).toBeInTheDocument()
+    expect(screen.getByText('Xác thực số điện thoại', { exact: true })).toBeInTheDocument()
+    expect(screen.queryByText('Xác thực địa chỉ email')).not.toBeInTheDocument()
     expect(screen.getByText('Công ty Acme')).toBeInTheDocument()
     expect(screen.getByText('Kinh doanh phần mềm')).toBeInTheDocument()
     expect(screen.getByText('240')).toBeInTheDocument()

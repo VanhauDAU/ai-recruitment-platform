@@ -248,8 +248,10 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   upload giấy đăng ký doanh nghiệp và hai bước DLCN; `change-password` và
   `manage-employer-company` sở hữu các account action tương ứng. Page verify và
   các page account chỉ compose.
-- `EmployerWorkspaceLayout` là shell riêng của vùng quản trị employer. Menu chưa
-  có workflow thật phải ở trạng thái disabled rõ ràng, không đăng ký route hoặc
+- `EmployerWorkspaceLayout` là shell riêng của vùng quản trị employer, sở hữu
+  dải cảnh báo tuân thủ, topbar, sidebar hồ sơ/menu và header tên route. Widget
+  dashboard chỉ sở hữu nội dung bảng tin bên trong shell. Menu/action chưa có
+  workflow thật phải ở trạng thái disabled rõ ràng, không đăng ký route hoặc
   toast thành công giả.
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →

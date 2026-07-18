@@ -1,25 +1,13 @@
-import { ArrowRightOutlined, BankOutlined, CalendarOutlined, EnvironmentOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-design/icons'
-import { Progress, Tag } from 'antd'
-import { Link } from 'react-router-dom'
-import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
-import { employerAppPath } from '@/shared/config/portals'
+import { BankOutlined, CalendarOutlined, EnvironmentOutlined, TeamOutlined } from '@ant-design/icons'
+import { Tag } from 'antd'
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
 export default function DashboardSidebar({ account = {}, recruitmentNeed }) {
-  const progress = getEmployerVerificationProgress(account.verification || {})
   const companyVerified = account.company_verification_status === 'verified'
 
   return (
     <aside className="space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-3"><h2 className="font-extrabold text-slate-900">Độ tin cậy tài khoản</h2><SafetyCertificateOutlined className="text-xl text-emerald-600" /></div>
-        <div className="mt-5 flex items-center gap-4"><Progress type="circle" percent={progress.percent} size={70} strokeColor="#00b14f" /><div><strong className="text-sm text-slate-900">{progress.completed}/{progress.total} bước hoàn tất</strong><p className="mt-1 text-xs leading-5 text-slate-500">Tăng uy tín khi tiếp cận ứng viên.</p></div></div>
-        <Link to={employerAppPath('/employer-verify')} className="mt-5 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">
-          {progress.percent === 100 ? 'Xem trạng thái xác thực' : 'Tiếp tục xác thực'} <ArrowRightOutlined />
-        </Link>
-      </section>
-
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3"><h2 className="font-extrabold text-slate-900">Nhu cầu ưu tiên</h2><TeamOutlined className="text-lg text-emerald-600" /></div>
         {recruitmentNeed ? (
