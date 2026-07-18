@@ -54,7 +54,7 @@ const EMPLOYER_SIDEBAR_COLLAPSED_WIDTH = 64
 const ACCOUNT_VERIFICATION_LEVEL_STEPS = [
   { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_submitted', label: 'Xác thực Giấy đăng ký doanh nghiệp', to: employerAppPath('/account/settings/gpkd') },
+  { key: 'business_doc_approved', label: 'Xác thực Giấy đăng ký doanh nghiệp', to: employerAppPath('/account/settings/gpkd') },
 ]
 
 function ComingSoonLabel({ children }) {
@@ -178,7 +178,7 @@ export default function EmployerWorkspaceLayout() {
   })
   const profile = profileQuery.data || {}
   const verification = profile.onboarding || {}
-  const accountVerificationLevel = getEmployerAccountVerificationLevel(verification)
+  const accountVerificationLevel = getEmployerAccountVerificationLevel(verification, user)
   const showComplianceNotice = profileQuery.isSuccess
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
