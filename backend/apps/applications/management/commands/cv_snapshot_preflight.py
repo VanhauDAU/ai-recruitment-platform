@@ -48,22 +48,50 @@ def _index_exists(name):
         return cursor.fetchone() is not None
 
 
+def _application_rows(where_sql='', params=()):
+    """Read columns available from snapshot migration 0004 onward.
+
+    The preflight is intentionally usable between its expand and contract
+    migrations. Importing the current Application ORM model would make Django
+    select fields added by later migrations (for example ``contact_name`` in
+    0009), which do not exist in that intermediate schema.
+    """
+    query = (
+        'SELECT id, cv_id, candidate_id, applied_at, submitted_cv_version_id '
+        f'FROM {TABLE} {where_sql}'
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(query, params)
+        return cursor.fetchall()
+
+
+def _missing_snapshot_count():
+    with connection.cursor() as cursor:
+        cursor.execute(f'SELECT COUNT(*) FROM {TABLE} WHERE submitted_cv_version_id IS NULL')
+        return cursor.fetchone()[0]
+
+
 def _inconsistencies():
     """Linked snapshots that belong to the wrong CV or are the wrong kind."""
-    from apps.applications.models import Application
+    from apps.cvs.models import CvVersion
 
     problems = []
-    linked = Application.objects.filter(submitted_cv_version__isnull=False).select_related('submitted_cv_version')
-    for application in linked.iterator():
-        snapshot = application.submitted_cv_version
-        if snapshot.cv_id != application.cv_id:
+    linked_rows = _application_rows('WHERE submitted_cv_version_id IS NOT NULL')
+    snapshots = CvVersion.objects.in_bulk(
+        row[4] for row in linked_rows
+    )
+    for app_id, cv_id, _candidate_id, _applied_at, submitted_cv_version_id in linked_rows:
+        snapshot = snapshots.get(submitted_cv_version_id)
+        if snapshot is None:
+            problems.append(f'application {app_id}: submitted snapshot {submitted_cv_version_id} is missing')
+        elif snapshot.cv_id != cv_id:
             problems.append(
-                f'application {application.pk}: snapshot {snapshot.public_id} belongs to '
-                f'cv_id={snapshot.cv_id}, expected {application.cv_id}'
+                f'application {app_id}: snapshot {snapshot.public_id} belongs to '
+                f'cv_id={snapshot.cv_id}, expected {cv_id}'
             )
         elif snapshot.version_kind != 'application_snapshot':
             problems.append(
-                f'application {application.pk}: snapshot {snapshot.public_id} has '
+                f'application {app_id}: snapshot {snapshot.public_id} has '
                 f"version_kind={snapshot.version_kind!r}, expected 'application_snapshot'"
             )
     return problems
@@ -71,22 +99,22 @@ def _inconsistencies():
 
 def _orphan_deterministic_snapshots():
     """`cvv-application-{pk}` rows that no longer match their application."""
-    from apps.applications.models import Application
     from apps.cvs.models import CvVersion
 
     problems = []
+    application_cv_ids = {row[0]: row[1] for row in _application_rows()}
     for snapshot in CvVersion.objects.filter(public_id__startswith='cvv-application-').iterator():
         try:
             app_pk = int(snapshot.public_id.rsplit('-', 1)[1])
         except (IndexError, ValueError):
             continue
-        application = Application.objects.filter(pk=app_pk).first()
-        if application is None:
+        if app_pk not in application_cv_ids:
             continue  # application deleted; snapshot retained by design
-        if snapshot.cv_id != application.cv_id or snapshot.version_kind != 'application_snapshot':
+        application_cv_id = application_cv_ids[app_pk]
+        if snapshot.cv_id != application_cv_id or snapshot.version_kind != 'application_snapshot':
             problems.append(
                 f'{snapshot.public_id}: cv_id={snapshot.cv_id}/kind={snapshot.version_kind!r} '
-                f'does not match application {app_pk} (cv_id={application.cv_id})'
+                f'does not match application {app_pk} (cv_id={application_cv_id})'
             )
     return problems
 
@@ -97,25 +125,24 @@ def _repair_missing_snapshots(stdout):
     Mirrors migration 0005: deterministic public_id, reuse only when the row
     genuinely belongs to this application's CV and is an application_snapshot.
     """
-    from apps.applications.models import Application
     from apps.cvs.models import CvVersion, UserCv
 
     repaired = 0
-    missing = Application.objects.filter(submitted_cv_version__isnull=True)
-    for application in missing.iterator():
+    missing = _application_rows('WHERE submitted_cv_version_id IS NULL')
+    for app_id, cv_id, candidate_id, applied_at, _submitted_cv_version_id in missing:
         with transaction.atomic():
-            cv = UserCv.objects.get(pk=application.cv_id)
+            cv = UserCv.objects.get(pk=cv_id)
             base = CvVersion.objects.filter(cv_id=cv.pk).order_by('-version_number').first()
             if base is None:
                 raise RuntimeError(
-                    f'application {application.pk}: cv {cv.pk} has no CvVersion to snapshot from; '
+                    f'application {app_id}: cv {cv.pk} has no CvVersion to snapshot from; '
                     f'run migrations first (0005 creates a recovery baseline).'
                 )
-            snapshot_public_id = f'cvv-application-{application.pk}'
+            snapshot_public_id = f'cvv-application-{app_id}'
             snapshot = CvVersion.objects.filter(public_id=snapshot_public_id).first()
             if snapshot is not None and (snapshot.cv_id != cv.pk or snapshot.version_kind != 'application_snapshot'):
                 raise RuntimeError(
-                    f'Refusing to reuse {snapshot_public_id!r} for application {application.pk}: '
+                    f'Refusing to reuse {snapshot_public_id!r} for application {app_id}: '
                     f'cv_id={snapshot.cv_id}/kind={snapshot.version_kind!r} mismatch.'
                 )
             if snapshot is None:
@@ -126,12 +153,14 @@ def _repair_missing_snapshots(stdout):
                     version_kind='application_snapshot', template_version_id=base.template_version_id,
                     parent_version_id=base.pk, schema_version=base.schema_version,
                     content_json=base.content_json, layout_json=base.layout_json, style_json=base.style_json,
-                    plain_text=base.plain_text, content_hash=base.content_hash, created_by_id=application.candidate_id,
+                    plain_text=base.plain_text, content_hash=base.content_hash, created_by_id=candidate_id,
                 )
-            Application.objects.filter(pk=application.pk).update(
-                submitted_cv_version_id=snapshot.pk, submitted_cv_title=cv.title,
-                submitted_cv_source=cv.source, submitted_at=application.applied_at,
-            )
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f'UPDATE {TABLE} SET submitted_cv_version_id = %s, submitted_cv_title = %s, '
+                    'submitted_cv_source = %s, submitted_at = %s WHERE id = %s',
+                    [snapshot.pk, cv.title, cv.source, applied_at, app_id],
+                )
             repaired += 1
     stdout(f'repaired {repaired} application snapshot(s)')
     return repaired
@@ -147,8 +176,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        from apps.applications.models import Application
-
         recorded = _recorded_migrations()
         columns = _existing_columns()
 
@@ -166,9 +193,7 @@ class Command(BaseCommand):
         self.stdout.write(f'  [{"X" if _index_exists(SNAPSHOT_INDEX) else " "}] index {SNAPSHOT_INDEX}')
 
         has_fk_column = 'submitted_cv_version_id' in columns
-        missing_count = (
-            Application.objects.filter(submitted_cv_version__isnull=True).count() if has_fk_column else None
-        )
+        missing_count = _missing_snapshot_count() if has_fk_column else None
         inconsistencies = []
         if has_fk_column:
             inconsistencies = _inconsistencies() + _orphan_deterministic_snapshots()
@@ -193,7 +218,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR('  columns absent — run migrations first.'))
                 raise SystemExit(1)
             self._write_repair_line(_repair_missing_snapshots)
-            missing_count = Application.objects.filter(submitted_cv_version__isnull=True).count()
+            missing_count = _missing_snapshot_count()
 
         healthy = has_fk_column and not inconsistencies and (missing_count == 0)
         self.stdout.write('')

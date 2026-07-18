@@ -16,7 +16,6 @@ Covers the failure modes the expand/backfill/contract split (applications
 
 from io import StringIO
 
-from django.apps import apps as global_apps
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import connection
@@ -30,6 +29,7 @@ from apps.jobs.models import Job
 BEFORE = [('applications', '0003_initial')]
 EXPAND = [('applications', '0004_application_snapshot_expand')]
 AFTER = [('applications', '0006_application_snapshot_contract')]
+LATEST = [('applications', '0009_application_multiple_locations_and_contact')]
 
 # DDL identical to migration 0004, used to fake a partially-applied database.
 PARTIAL_EXPAND_SQL = """
@@ -56,6 +56,17 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         executor = MigrationExecutor(connection)
         executor.loader.build_graph()
         return executor.loader.project_state(('applications', '0003_initial')).apps.get_model('applications', 'Application')
+
+    def _snapshot_application(self):
+        """Return the Application model matching the 0004–0006 test schema.
+
+        Later migrations add fields such as contact_name. These migration tests
+        deliberately run against the pre-0009 table, so the runtime model must
+        not be used to query it.
+        """
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        return executor.loader.project_state(AFTER).apps.get_model('applications', 'Application')
 
     def _seed_legacy_application(self, suffix='a', base_public_id=None):
         """Create a legacy Application (no snapshot) + a V1 baseline CvVersion."""
@@ -87,7 +98,7 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         return CvVersion.objects.filter(public_id=f'cvv-application-{app_pk}').count()
 
     def _assert_backfilled(self, app_pk, cv):
-        application = global_apps.get_model('applications', 'Application').objects.get(pk=app_pk)
+        application = self._snapshot_application().objects.get(pk=app_pk)
         self.assertIsNotNone(application.submitted_cv_version_id)
         self.assertEqual(application.submitted_cv_title, cv.title)
         self.assertEqual(application.submitted_cv_source, cv.source)
@@ -173,4 +184,4 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
 
     def tearDown(self):
         # Leave the database fully migrated forward for the rest of the suite.
-        self._migrate(AFTER)
+        self._migrate(LATEST)
