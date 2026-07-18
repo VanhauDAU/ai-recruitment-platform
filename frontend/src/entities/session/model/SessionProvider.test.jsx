@@ -34,6 +34,8 @@ describe('SessionProvider', () => {
   it('clears an invalid persisted session', async () => {
     localStorage.setItem('main_access_token', 'expired-access')
     localStorage.setItem('main_refresh_token', 'expired-refresh')
+    localStorage.setItem('employer_access_token', 'valid-employer-access')
+    localStorage.setItem('employer_refresh_token', 'valid-employer-refresh')
     getCurrentSessionUser.mockRejectedValue(new Error('unauthorized'))
 
     const { result } = renderHook(() => useSession(), { wrapper })
@@ -42,10 +44,17 @@ describe('SessionProvider', () => {
     expect(result.current.isAuthenticated).toBe(false)
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('main_refresh_token')).toBeNull()
+    expect(localStorage.getItem('employer_access_token')).toBe('valid-employer-access')
+    expect(localStorage.getItem('employer_refresh_token')).toBe('valid-employer-refresh')
   })
 
-  it('logs out by clearing tokens and user state', async () => {
+  it('logs out every portal while clearing the current user state', async () => {
     localStorage.setItem('main_access_token', 'access-token')
+    localStorage.setItem('main_refresh_token', 'refresh-token')
+    localStorage.setItem('employer_access_token', 'employer-access')
+    localStorage.setItem('employer_refresh_token', 'employer-refresh')
+    localStorage.setItem('admin_access_token', 'admin-access')
+    localStorage.setItem('admin_refresh_token', 'admin-refresh')
     getCurrentSessionUser.mockResolvedValue({ public_id: 'candidate-1', role: 'candidate' })
     const { result } = renderHook(() => useSession(), { wrapper })
 
@@ -54,6 +63,11 @@ describe('SessionProvider', () => {
 
     expect(result.current.isAuthenticated).toBe(false)
     expect(localStorage.getItem('main_access_token')).toBeNull()
+    expect(localStorage.getItem('main_refresh_token')).toBeNull()
+    expect(localStorage.getItem('employer_access_token')).toBeNull()
+    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
+    expect(localStorage.getItem('admin_access_token')).toBeNull()
+    expect(localStorage.getItem('admin_refresh_token')).toBeNull()
   })
 
   it('clears the session when refreshSession fails', async () => {

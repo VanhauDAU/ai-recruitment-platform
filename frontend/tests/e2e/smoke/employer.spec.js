@@ -277,7 +277,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await sidebarAccountLink.click()
   await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/account-info$/)
   await expect(page).toHaveTitle('Thông tin tài khoản | Smart Recruitment Platform')
-  await expect(page.getByRole('heading', { name: 'Thông tin tài khoản' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thông tin tài khoản', exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
   await expect(page.getByRole('button', { name: 'Cập nhật' })).toBeVisible()
 })

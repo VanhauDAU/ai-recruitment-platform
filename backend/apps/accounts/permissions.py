@@ -12,17 +12,13 @@ def _accessible(request):
 
 
 class IsCandidate(BasePermission):
-    """Có năng lực ứng viên (role gốc candidate hoặc đã có `candidate_profile`)."""
-
     def has_permission(self, request, view):
-        return _accessible(request) and request.user.has_candidate_capability
+        return _accessible(request) and request.user.is_candidate
 
 
 class IsEmployer(BasePermission):
-    """Có năng lực NTD (đã có `recruiter_profile`), không phụ thuộc `role` gốc."""
-
     def has_permission(self, request, view):
-        return _accessible(request) and request.user.has_employer_capability
+        return _accessible(request) and request.user.is_employer
 
 
 class IsAdmin(BasePermission):

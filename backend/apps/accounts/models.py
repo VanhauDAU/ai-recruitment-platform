@@ -22,10 +22,18 @@ class UserManager(BaseUserManager):
     def get_by_natural_key(self, username):
         """Đăng nhập không phân biệt hoa/thường.
 
-        `ModelBackend.authenticate()` gọi hàm này. Ràng buộc `uniq_users_email_lower`
-        đảm bảo `iexact` không bao giờ khớp quá 1 bản ghi.
+        Mô hình tách tài khoản theo cổng (giống TopCV): cùng một email có thể
+        thuộc nhiều `role`, nên `email` KHÔNG còn unique toàn cục. Các cổng app tự
+        resolve theo (email, role) khi đăng nhập; hàm này chỉ phục vụ
+        `ModelBackend.authenticate()` (Django admin site) nên khi email trùng
+        nhiều bản ghi thì ưu tiên tài khoản staff/superuser.
         """
-        return self.get(**{f'{self.model.USERNAME_FIELD}__iexact': username})
+        return (
+            self.filter(**{f'{self.model.USERNAME_FIELD}__iexact': username})
+            .order_by('-is_superuser', '-is_staff', 'pk')
+            .first()
+            or self.get(**{f'{self.model.USERNAME_FIELD}__iexact': username})  # raise DoesNotExist
+        )
 
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -68,7 +76,10 @@ class User(AbstractUser):
     last_name = None
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    email = models.EmailField(unique=True)
+    # Email KHÔNG unique toàn cục: một email dùng được cho tối đa một tài khoản
+    # mỗi role (ứng viên / NTD / admin) — mô hình tách cổng giống TopCV. Tính duy
+    # nhất được đảm bảo bởi ràng buộc (Lower(email), role) trong Meta.
+    email = models.EmailField()
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CANDIDATE)
     full_name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=20, blank=True)
@@ -95,12 +106,13 @@ class User(AbstractUser):
                 check=models.Q(role__in=['candidate', 'employer', 'admin']),
                 name='chk_users_role',
             ),
-            # `email` đã unique nhưng Postgres so sánh phân biệt hoa/thường; ràng
-            # buộc này chặn tạo thêm `Hau@gmail.com` khi đã có `hau@gmail.com`,
-            # đồng thời bảo đảm `get_by_natural_key` (iexact) chỉ khớp 1 bản ghi.
+            # Duy nhất theo (email, role), không phân biệt hoa/thường: chặn tạo hai
+            # tài khoản cùng cổng cho một email, nhưng CHO PHÉP cùng email tồn tại
+            # ở khác cổng (ứng viên vs NTD) — mỗi tài khoản mật khẩu riêng.
             models.UniqueConstraint(
                 Lower('email'),
-                name='uniq_users_email_lower',
+                'role',
+                name='uniq_users_email_role_lower',
             ),
         ]
 
@@ -124,38 +136,6 @@ class User(AbstractUser):
     def is_admin_role(self):
         return self.role == self.Role.ADMIN
 
-    @property
-    def has_employer_capability(self):
-        """Dùng được cổng NTD: role gốc là employer HOẶC đã được cấp hồ sơ NTD.
-
-        Cho phép mô hình "một danh tính, nhiều vai": một ứng viên đăng nhập cổng
-        NTD sẽ được cấp `recruiter_profile` và từ đó có năng lực nhà tuyển dụng,
-        không phụ thuộc vào `role` đăng ký ban đầu.
-        """
-        return self.is_employer or hasattr(self, 'recruiter_profile')
-
-    @property
-    def has_candidate_capability(self):
-        """Dùng được cổng ứng viên: role gốc là candidate HOẶC đã có hồ sơ ứng viên.
-
-        Đối xứng với `has_employer_capability`: một NTD muốn dùng tính năng ứng
-        viên sẽ được cấp `candidate_profile` khi đăng nhập cổng ứng viên. Admin
-        không có năng lực ứng viên.
-        """
-        return self.is_candidate or hasattr(self, 'candidate_profile')
-
-    @property
-    def available_roles(self):
-        """Các vai người dùng thực sự dùng được, suy từ năng lực đã có."""
-        roles = []
-        if self.has_candidate_capability:
-            roles.append(self.Role.CANDIDATE)
-        if self.has_employer_capability:
-            roles.append(self.Role.EMPLOYER)
-        if self.is_admin_role:
-            roles.append(self.Role.ADMIN)
-        return roles
-
 
 class SocialAccount(models.Model):
     """Liên kết tài khoản mạng xã hội (OAuth) với user.
@@ -174,7 +154,14 @@ class SocialAccount(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['provider', 'provider_user_id'], name='uq_social_provider_uid'),
+            # Cùng một danh tính social (google-id) gắn được vào NHIỀU tài khoản
+            # cùng email khác cổng (ứng viên + NTD) — nên khoá theo (provider,
+            # provider_user_id, user) thay vì chỉ (provider, provider_user_id).
+            # Việc "mỗi cổng một tài khoản" do luật (email, role) ở User đảm bảo.
+            models.UniqueConstraint(
+                fields=['provider', 'provider_user_id', 'user'],
+                name='uq_social_provider_uid_user',
+            ),
         ]
 
     def __str__(self):

@@ -20,7 +20,6 @@ import {
   SearchOutlined,
   SettingOutlined,
   ShoppingCartOutlined,
-  SwapOutlined,
   TagsOutlined,
   TeamOutlined,
   ThunderboltOutlined,
@@ -40,7 +39,6 @@ import {
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_PHONE_VERIFY_URL,
   EMPLOYER_VERIFY_URL,
-  MAIN_PORTAL_URL,
   employerAppPath,
 } from '@/shared/config/portals'
 
@@ -184,21 +182,14 @@ export default function EmployerWorkspaceLayout() {
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
-  const canSwitchToCandidate = user?.available_roles?.includes('candidate')
   const accountMenu = {
     items: [
       { key: 'settings', label: 'Cài đặt tài khoản', icon: <SettingOutlined /> },
-      // Tài khoản đa vai: đã có năng lực ứng viên -> chuyển sang cổng ứng viên
-      // (điều hướng toàn trang vì token lưu tách theo cổng).
-      ...(canSwitchToCandidate
-        ? [{ key: 'candidate-portal', label: 'Về trang ứng viên', icon: <SwapOutlined /> }]
-        : []),
       { type: 'divider' },
       { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true },
     ],
     onClick: ({ key }) => {
       if (key === 'settings') navigate(EMPLOYER_ACCOUNT_SETTINGS_URL)
-      if (key === 'candidate-portal') window.location.assign(MAIN_PORTAL_URL)
       if (key === 'logout') logout()
     },
   }

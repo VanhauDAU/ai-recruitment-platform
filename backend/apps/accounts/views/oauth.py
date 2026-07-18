@@ -81,7 +81,7 @@ class OAuthCallbackView(APIView):
         if created:
             queue_welcome_email(user, context={'registration_method': provider})
 
-        params = {'code': oauth.create_one_time_code(user, portal)}
+        params = {'code': oauth.create_one_time_code(user)}
         if state_data.get('next'):
             params['next'] = state_data['next']
         return redirect(f'{oauth.frontend_callback_url(portal)}?{urlencode(params)}')
@@ -102,20 +102,15 @@ class OAuthCompleteView(APIView):
     throttle_scope = 'oauth'
 
     def post(self, request):
-        payload = oauth.pop_one_time_code(request.data.get('code'))
-        user = User.objects.filter(pk=payload['uid'], is_active=True).first() if payload else None
+        user_id = oauth.pop_one_time_code(request.data.get('code'))
+        user = User.objects.filter(pk=user_id, is_active=True).first() if user_id else None
         if user is None:
             return Response(
                 {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # Active role theo cổng đã đăng nhập (lưu kèm trong one_time_code) để một
-        # danh tính đa vai nhận đúng vai trong JWT và trong DTO điều hướng của FE.
-        active_role = oauth.PORTAL_ROLE.get(payload.get('portal'), User.Role.CANDIDATE)
         # Social providers have completed their own identity verification.
         # Product policy: email 2FA protects password login only, so OAuth
         # completion always returns a session without an email-code challenge.
-        user_data = SessionUserSerializer(
-            user, context={'request': request, 'active_role': active_role}
-        ).data
-        return Response({'user': user_data, **issue_tokens(user, active_role=active_role)})
+        user_data = SessionUserSerializer(user, context={'request': request}).data
+        return Response({'user': user_data, **issue_tokens(user)})

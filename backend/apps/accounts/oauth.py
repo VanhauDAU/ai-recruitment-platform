@@ -117,23 +117,16 @@ def pop_state(state):
     return atomic_pop(f'{_STATE_PREFIX}{state}')
 
 
-def create_one_time_code(user, portal):
-    """Lưu kèm `portal` để bước đổi JWT biết active role của cổng đăng nhập."""
+def create_one_time_code(user):
     code = secrets.token_urlsafe(32)
-    cache.set(f'{_CODE_PREFIX}{code}', {'uid': user.pk, 'portal': portal}, settings.OAUTH_CODE_TTL)
+    cache.set(f'{_CODE_PREFIX}{code}', user.pk, settings.OAUTH_CODE_TTL)
     return code
 
 
 def pop_one_time_code(code):
-    """Trả `{'uid', 'portal'}` (hoặc None). Tương thích ngược code cũ chỉ có uid."""
     if not code:
         return None
-    data = atomic_pop(f'{_CODE_PREFIX}{code}')
-    if data is None:
-        return None
-    if isinstance(data, dict):
-        return data
-    return {'uid': data, 'portal': 'main'}
+    return atomic_pop(f'{_CODE_PREFIX}{code}')
 
 
 # ---- Nói chuyện với provider ----
@@ -209,39 +202,18 @@ def fetch_profile(provider, access_token):
 
 # ---- Tạo / liên kết user ----
 
-def _ensure_portal_capability(user, portal):
-    """Cấp năng lực của cổng cho user (mô hình một danh tính, nhiều vai).
-
-    - employer: nếu chưa có `recruiter_profile` thì tạo hồ sơ NTD ở trạng thái
-      pending -> user đi vào luồng onboarding NTD sẵn có. Không đổi `user.role`
-      gốc: năng lực suy ra từ hồ sơ, không từ role.
-    - main: nếu chưa có `candidate_profile` thì tạo hồ sơ ứng viên (đối xứng),
-      để NTD dùng được tính năng ứng viên.
-
-    Import cục bộ để giữ ranh giới layer (accounts không phụ thuộc cứng
-    employers/candidates), theo pattern đã dùng ở `serializers.SessionUserSerializer`.
-    """
-    if portal == 'employer' and not user.has_employer_capability:
-        from apps.employers.services.profiles import get_or_create_recruiter
-
-        get_or_create_recruiter(user)
-    elif portal == 'main' and not user.has_candidate_capability:
-        from apps.candidates.models import CandidateProfile
-
-        CandidateProfile.objects.get_or_create(user=user)
-
-
 def resolve_user(provider, profile, portal, *, include_created=False):
-    """Tìm hoặc tạo user cho danh tính social, rồi cấp năng lực của cổng.
+    """Tìm hoặc tạo **tài khoản của cổng** cho danh tính social (mô hình tách cổng).
 
-    - Đã có SocialAccount -> dùng user đó.
-    - Email trùng user hiện có -> tự liên kết danh tính social vào user đó.
-    - Chưa có -> tạo user mới: role theo cổng, email_verified=True, password unusable.
-    - Mọi trường hợp: bảo đảm user có năng lực của cổng đang vào (một danh tính,
-      nhiều vai). Không còn chặn 'wrong_portal'; chỉ chặn tài khoản `inactive`.
+    Mỗi cổng có tài khoản riêng theo `role`; cùng một google-id gắn được vào cả
+    tài khoản ứng viên lẫn NTD (mỗi bên một SocialAccount row).
+
+    - Đã có SocialAccount của google-id NÀY gắn vào tài khoản đúng `role` -> dùng nó.
+    - Chưa có, nhưng đã có tài khoản (email, role) -> liên kết social vào tài khoản đó.
+    - Chưa có gì -> tạo tài khoản mới (email, role), email_verified=True, password unusable.
 
     ``include_created=True`` lets the caller trigger first-account side effects
-    without confusing a newly linked provider with a newly created user.
+    without confusing a newly linked provider with a newly created account.
     """
     role = PORTAL_ROLE[portal]
 
@@ -251,21 +223,20 @@ def resolve_user(provider, profile, portal, *, include_created=False):
     with transaction.atomic():
         account = (
             SocialAccount.objects.select_related('user')
-            .filter(provider=provider, provider_user_id=profile['id'])
+            .filter(provider=provider, provider_user_id=profile['id'], user__role=role)
             .first()
         )
         if account:
             user = account.user
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
-            _ensure_portal_capability(user, portal)
             return result(user, False)
 
         email = User.objects.normalize_email(profile.get('email') or '')
         if not email:
             raise OAuthError('no_email')
 
-        user = User.objects.filter(email__iexact=email).first()
+        user = User.objects.filter(email__iexact=email, role=role).first()
         created = False
         if user:
             if not is_account_accessible(user):
@@ -298,5 +269,4 @@ def resolve_user(provider, profile, portal, *, include_created=False):
             email=email,
             raw_profile=profile.get('raw', {}),
         )
-        _ensure_portal_capability(user, portal)
         return result(user, created)

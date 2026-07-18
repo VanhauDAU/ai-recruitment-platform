@@ -109,6 +109,12 @@ DATABASES = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
+# `USERNAME_FIELD='email'` cố ý KHÔNG unique toàn cục: mô hình tách tài khoản
+# theo cổng (giống TopCV) cho phép cùng email tồn tại ở khác role. Các cổng app
+# tự resolve theo (email, role) khi đăng nhập, nên bỏ qua cảnh báo mặc định của
+# Django về USERNAME_FIELD không unique.
+SILENCED_SYSTEM_CHECKS = ['auth.E003', 'auth.W004']
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

@@ -46,7 +46,9 @@ class EmployerRegisterSerializer(EmployerRegistrationProfileSerializer):
     captcha_token = serializers.CharField(write_only=True)
 
     def validate_email(self, value):
+        # Trùng chỉ tính trong phạm vi tài khoản NTD: cùng email vẫn có thể đã là
+        # tài khoản ứng viên (mô hình tách tài khoản theo cổng như TopCV).
         value = User.objects.normalize_email(value)
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
+        if User.objects.filter(email__iexact=value, role=User.Role.EMPLOYER).exists():
+            raise serializers.ValidationError('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.')
         return value

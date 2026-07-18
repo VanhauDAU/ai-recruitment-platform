@@ -7,7 +7,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from ..models import AuthEmailJob, User
-from ..serializers import PORTAL_ACTIVE_ROLE, SessionUserSerializer
+from ..serializers import SessionUserSerializer
 from ..services import two_factor
 from ..services.tokens import issue_tokens
 from ..tasks import queue_auth_email
@@ -156,10 +156,8 @@ class TwoFactorLoginVerifyView(APIView):
         serializer = TwoFactorChallengeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         challenge = serializer.validated_data['challenge']
-        user, data = _challenge_user(challenge)
+        user, _ = _challenge_user(challenge)
         if user is None or not two_factor.verify_code(user, two_factor.PURPOSE_LOGIN, serializer.validated_data['code']):
             return Response({'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'}, status=status.HTTP_400_BAD_REQUEST)
         two_factor.consume_login_challenge(challenge)
-        # Active role theo cổng đã lưu trong challenge (một danh tính, nhiều vai).
-        active_role = PORTAL_ACTIVE_ROLE.get((data or {}).get('portal'))
-        return Response(issue_tokens(user, active_role=active_role))
+        return Response(issue_tokens(user))

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
@@ -110,5 +110,28 @@ describe('EmployerWorkspaceLayout', () => {
     fireEvent.click(accountLink)
 
     expect(screen.getByText('Thông tin tài khoản đang mở')).toBeInTheDocument()
+  })
+
+  it('does not show a candidate-portal shortcut in the employer account menu', async () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mở menu tài khoản' }))
+
+    await waitFor(() => expect(screen.getAllByText('Cài đặt tài khoản')).toHaveLength(2))
+    expect(screen.queryByText('Về trang ứng viên')).not.toBeInTheDocument()
+    expect(screen.getByText('Đăng xuất')).toBeInTheDocument()
   })
 })

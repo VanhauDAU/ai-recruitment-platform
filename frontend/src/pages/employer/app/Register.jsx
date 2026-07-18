@@ -201,8 +201,8 @@ export default function EmployerRegister() {
                   {
                     validator: async (_, value) => {
                       if (!value || !/^\S+@\S+\.\S+$/.test(value)) return
-                      const available = await checkRegistrationEmail(value)
-                      if (!available) throw new Error('Email này đã được sử dụng cho tài khoản khác')
+                      const available = await checkRegistrationEmail(value, { role: 'employer' })
+                      if (!available) throw new Error('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng')
                     },
                   },
                 ]}

@@ -1,12 +1,11 @@
 import {
   BellOutlined, CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
-  LogoutOutlined, MessageOutlined, ShopOutlined, WarningFilled,
+  LogoutOutlined, MessageOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { App, Avatar, Badge, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
-import { EMPLOYER_LOGIN_URL } from '@/shared/config/portals'
 
 // Section lấy từ config dùng chung với sidebar trang tài khoản (một nguồn duy nhất).
 // Nhóm A (search, cv) mở/đóng độc lập; nhóm B (email, account, upgrade) là accordion: mở 1 đóng 2 còn lại.
@@ -134,20 +133,6 @@ export default function CandidateUserMenu({ user, logout }) {
         ))}
       </div>
 
-      {user?.available_roles?.includes('employer') && (
-        <div className="px-3 pt-3">
-          {/* Tài khoản đa vai: đã có năng lực NTD -> chuyển thẳng sang cổng nhà tuyển dụng.
-              Token lưu tách theo cổng nên đây là điều hướng toàn trang sang cổng NTD. */}
-          <a
-            href={EMPLOYER_LOGIN_URL}
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] py-2.5 text-sm font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary-soft)]"
-          >
-            <ShopOutlined /> Chuyển sang Nhà tuyển dụng
-          </a>
-        </div>
-      )}
-
       <div className="p-3">
         <button
           onClick={() => { setOpen(false); logout() }}
@@ -174,7 +159,7 @@ export default function CandidateUserMenu({ user, logout }) {
       </button>
 
       <Dropdown open={open} onOpenChange={setOpen} trigger={['hover']} placement="bottomRight" popupRender={() => userPanel} mouseLeaveDelay={0.2}>
-        <button className="flex cursor-pointer items-center gap-1">
+        <button aria-label="Mở menu tài khoản" className="flex cursor-pointer items-center gap-1">
           <Avatar size={38} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
           <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? '-rotate-90' : 'rotate-90'}`} />
         </button>

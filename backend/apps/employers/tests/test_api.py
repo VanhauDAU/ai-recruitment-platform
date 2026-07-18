@@ -152,9 +152,6 @@ class EmployerRegistrationTests(APITestCase):
             role=User.Role.EMPLOYER,
             email_verified=True,
         )
-        # Luồng OAuth cổng NTD cấp sẵn năng lực (recruiter_profile) khi đăng nhập;
-        # dựng đúng trạng thái đó để phản ánh authorization theo năng lực.
-        RecruiterProfile.objects.create(user=user)
         self.client.force_authenticate(user=user)
         profile_payload = {key: value for key, value in self.payload.items() if key not in {
             'email', 'password', 'captcha_token',
