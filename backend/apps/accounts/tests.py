@@ -73,6 +73,7 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(set(response.data), {
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'employer_onboarding_required', 'employer_onboarding_step',
         })
         self.assertTrue({
             'id', 'password', 'token', 'refresh_token', 'permissions',
@@ -482,7 +483,8 @@ class LastLoginTests(APITestCase):
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     FRONTEND_URL='https://main.example.test',
     EMPLOYER_FRONTEND_URL='https://employer.example.test',
-    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/xac-thuc-email',
+    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/account/verify',
+    EMPLOYER_PASSWORD_RESET_PATH='/app/reset-password',
 )
 class AuthSecurityAndEmailTests(APITestCase):
     def setUp(self):
@@ -510,7 +512,21 @@ class AuthSecurityAndEmailTests(APITestCase):
         email_verification.send_verification_email(user)
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('https://employer.example.test/app/xac-thuc-email?token=', mail.outbox[0].body)
+        self.assertIn('https://employer.example.test/app/account/verify?token=', mail.outbox[0].body)
+        self.assertIn('Mã NTD', mail.outbox[0].body)
+        self.assertIn('Xác thực tài khoản', mail.outbox[0].alternatives[0][0])
+
+    def test_employer_password_reset_email_uses_employer_portal_link(self):
+        user = User.objects.create_user(
+            email='employer-reset@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+
+        password_reset.send_password_reset_email(user)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('https://employer.example.test/app/reset-password?token=', mail.outbox[0].body)
 
     def test_email_outbox_job_is_marked_sent_after_delivery(self):
         user = User.objects.create_user(email='queue@example.com', password='Password@123')

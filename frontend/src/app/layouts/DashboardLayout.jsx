@@ -16,6 +16,8 @@ const NAV_ITEMS = {
   admin: [
     { key: adminPath('/dashboard'), label: 'Tổng quan' },
     { key: adminPath('/cv-catalogue'), label: 'Catalogue CV' },
+    { key: adminPath('/services'), label: 'Dịch vụ NTD' },
+    { key: adminPath('/consultation-leads'), label: 'Lead tư vấn' },
     { key: adminPath('/settings'), label: 'Cài đặt hệ thống' },
   ],
 }
@@ -51,7 +53,7 @@ export default function DashboardLayout() {
           <Button onClick={logout}>Đăng xuất</Button>
         </Header>
         {user?.role === 'employer' && (
-          <EmailVerificationBanner verificationPath={employerAppPath('/xac-thuc-email')} />
+          <EmailVerificationBanner verificationPath={employerAppPath('/account/verify')} />
         )}
         <Content className="p-6">
           <Outlet />

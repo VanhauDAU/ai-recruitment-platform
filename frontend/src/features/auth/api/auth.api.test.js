@@ -9,6 +9,7 @@ import {
   logout,
   oauthStartUrl,
   register,
+  registerEmployer,
   requestPasswordReset,
   resendTwoFactorLogin,
   sendVerificationEmail,
@@ -67,6 +68,21 @@ describe('auth API session storage', () => {
 
     expect(localStorage.getItem('main_access_token')).toBe('access-token')
     expect(localStorage.getItem('main_refresh_token')).toBe('refresh-token')
+  })
+
+  it('registers an employer through the employer profile endpoint', async () => {
+    post.mockResolvedValue({ data: { access: 'employer-access', refresh: 'employer-refresh', user: { role: 'employer' } } })
+    const payload = {
+      email: 'hr@company.vn', password: 'Password@123', full_name: 'Nguyễn An',
+      contact_phone: '0912345678', company_name: 'Acme', work_location: 1,
+      gender: 'female', terms_accepted: true, marketing_opt_in: false, captcha_token: 'captcha',
+    }
+
+    await registerEmployer(payload)
+
+    expect(post).toHaveBeenCalledWith('/employer/register/', payload)
+    expect(localStorage.getItem('employer_access_token')).toBe('employer-access')
+    expect(localStorage.getItem('employer_refresh_token')).toBe('employer-refresh')
   })
 
   it('stores tokens in the portal that completed the 2FA login challenge', async () => {

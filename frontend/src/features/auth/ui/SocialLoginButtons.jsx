@@ -47,7 +47,15 @@ function defaultNext() {
  * - `portal`: 'main' (Google/Facebook/LinkedIn) hoặc 'employer' (chỉ Google).
  * - `action`: chữ trên aria-label ("Đăng nhập" / "Đăng ký").
  */
-export default function SocialLoginButtons({ portal = 'main', providers, action = 'Đăng nhập' }) {
+export default function SocialLoginButtons({
+  portal = 'main',
+  providers,
+  action = 'Đăng nhập',
+  appearance = 'default',
+  disabled = false,
+  next,
+  onBeforeRedirect,
+}) {
   const keys = providers || (portal === 'employer' ? ['google'] : ['google', 'facebook', 'linkedin'])
 
   return (
@@ -64,12 +72,16 @@ export default function SocialLoginButtons({ portal = 'main', providers, action 
           <button
             key={key}
             type="button"
+            disabled={disabled}
             aria-label={`${action} bằng ${label}`}
-            onClick={() => window.location.assign(oauthStartUrl(key, { portal, next: defaultNext() }))}
-            className={`social-oauth-btn ${span} flex h-11 items-center justify-center gap-2 rounded-full border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${border}`}
+            onClick={() => {
+              onBeforeRedirect?.()
+              window.location.assign(oauthStartUrl(key, { portal, next: next ?? defaultNext() }))
+            }}
+            className={`social-oauth-btn ${span} flex h-11 items-center justify-center gap-2 border bg-white px-4 text-sm font-medium text-gray-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-700 ${appearance === 'employer' ? 'rounded-lg' : 'rounded-full'} ${border}`}
           >
             <Icon />
-            <span>{label}</span>
+            <span>{appearance === 'employer' ? `${action} với ${label}` : label}</span>
           </button>
         )
       })}

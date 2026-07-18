@@ -30,6 +30,27 @@ Object.defineProperty(globalThis, 'localStorage', {
 })
 Object.defineProperty(window, 'localStorage', { configurable: true, value: localStorageMock })
 
+// jsdom không có matchMedia/ResizeObserver — antd (Grid, Dropdown, Form) cần chúng.
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = (query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() { return false },
+  })
+}
+if (typeof globalThis.ResizeObserver !== 'function') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
+
 afterEach(() => {
   cleanup()
   localStorage.clear()

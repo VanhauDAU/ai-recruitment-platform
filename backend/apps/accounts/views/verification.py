@@ -6,16 +6,11 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from ..models import AuthEmailJob, User
+from ..models import User
 from ..serializers import ChangeEmailSerializer, SessionUserSerializer
 from ..services import email_verification as ev
-from ..tasks import queue_auth_email, queue_welcome_email
-
-
-def queue_verification_email(user):
-    """Queue email xác thực sau khi request hoàn tất; không chờ SMTP."""
-    ev.start_cooldown(user)
-    return queue_auth_email(AuthEmailJob.Kind.VERIFICATION, user)
+from ..services import queue_verification_email
+from ..tasks import queue_welcome_email
 
 
 @extend_schema(

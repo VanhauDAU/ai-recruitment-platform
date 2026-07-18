@@ -6,6 +6,44 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-18
+
+#### Added — Cổng marketing nhà tuyển dụng
+
+- Thêm app backend `services` với danh mục/gói dịch vụ song ngữ, lead tư vấn, public API bảng giá, admin CRUD API, cache + signal invalidation, throttle form và seed 5 nhóm/11 gói idempotent.
+- Hoàn thiện 5 route marketing `/tuyendung`: Landing đủ chuỗi section AI/dịch vụ/số liệu/form/giá trị/đối tác/liên hệ; Giới thiệu, Dịch vụ, Báo giá động và Liên hệ; header/footer riêng, drawer mobile, language switcher VI/EN và CTA tư vấn nổi.
+- Thêm `entities/service-package`, `entities/consultation-lead`, feature gửi tư vấn, widget footer nhà tuyển dụng; bảng giá fallback ngôn ngữ, loading/error/empty state và CTA prefill theo gói.
+- Thêm hai màn admin `/admin/app/services` và `/admin/app/consultation-leads` để quản lý danh mục/gói và xử lý lead.
+
+#### Added — Xác thực tài khoản nhà tuyển dụng
+
+- Thêm API đăng ký employer riêng, tạo atomically tài khoản, recruiter profile, company chưa xác thực, membership owner, consent có phiên bản; trả JWT và gửi email xác thực ngay sau đăng ký.
+- Thêm hồ sơ đăng ký recruiter (giới tính, số liên hệ, địa điểm, thời điểm hoàn tất, consent/marketing) bằng migration `employers.0009`; thêm endpoint hoàn thiện profile cho tài khoản Google.
+- Thêm giao diện login/register tách biệt cổng ứng viên, màn xác thực email riêng tại `/account/verify`, khảo sát nhu cầu tại `/consulting-need`, trang điều khoản/quyền riêng tư và route recovery riêng cho employer.
+- Thêm model/API `RecruitmentNeed` cho vị trí chuyên môn, cấp bậc, thời hạn hoặc tuyển liên tục, số lượng, khoảng/nguồn ngân sách và nhu cầu tư vấn; email employer có mã NTD, CTA xác thực và cảnh báo bảo mật riêng.
+
+#### Changed
+
+- Employer đăng ký email giữ session và đi theo state machine `/account/verify → /consulting-need → /dashboard`; employer mới qua Google bổ sung hồ sơ tại `/account/complete-profile` rồi đi thẳng tới khảo sát vì email đã được provider xác thực.
+- Link đặt lại mật khẩu trong email được dựng theo role; link employer dùng host/path của cổng tuyển dụng. Dashboard thêm guard bắt buộc email + hồ sơ + company/membership trước khi truy cập.
+- Trường nhu cầu tư vấn trong khảo sát tuyển dụng chỉ cho phép chọn một lựa chọn; frontend gửi mảng một phần tử tương thích API và backend từ chối payload nhiều lựa chọn.
+- Làm lại giao diện đăng ký nhà tuyển dụng: form hiển thị tuần tự bước 01 rồi mới sang bước 02 (có quay lại), khối tài khoản và hồ sơ tách bạch, email không còn chừa cột trống trên desktop và lựa chọn giới tính không còn viền bao quanh trên mobile.
+
+#### Security
+
+- Consent bắt buộc và marketing consent được lưu tách biệt kèm thời điểm/phiên bản; backend kiểm tra captcha, password policy, email không phân biệt hoa/thường, số điện thoại duy nhất và transaction rollback.
+
+#### Fixed
+
+- Giữ nguyên query `?token=` khi redirect link xác thực employer cũ từ `/xac-thuc-email` sang `/account/verify`; đồng bộ `EMPLOYER_EMAIL_VERIFICATION_PATH` trong môi trường phát triển để email mới dùng trực tiếp route chuẩn.
+- Sửa toàn bộ link footer nhà tuyển dụng từ prefix cũ `/nha-tuyen-dung` sang route thật `/tuyendung` bằng seed và data migration `sitecontent.0015`.
+- Header marketing hiển thị rõ route hiện tại (màu thương hiệu, gạch chân và `aria-current`), dùng màu trung tính nhất quán cho link chưa chọn; thêm mục Trang chủ. Card giá/dịch vụ có vùng thao tác thật, con trỏ pointer và focus keyboard thay vì chỉ có hiệu ứng thị giác.
+
+#### Documentation
+
+- Ghi rõ boundary i18n chỉ thuộc chunk employer marketing, ownership FSD cho domain dịch vụ/lead và cập nhật tiến độ dự án.
+- Thêm tài liệu state machine/validation/API cho auth employer, email xác thực và khảo sát nhu cầu; kiểm chứng 92 backend test, 212 frontend test, lint/architecture/build và 36 Playwright smoke test desktop/mobile cho marketing, register consent gate, recovery và các redirect onboarding.
+
 ### 2026-07-15
 
 #### Added

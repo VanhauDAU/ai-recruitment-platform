@@ -1,0 +1,211 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "about": "Giới thiệu",
+    "services": "Dịch vụ",
+    "pricing": "Báo giá",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập",
+    "postJob": "Đăng tin ngay",
+    "goToDashboard": "Vào trang quản lý",
+    "openMenu": "Mở menu"
+  },
+  "common": {
+    "consult": "Tư vấn tuyển dụng",
+    "consultShort": "Tư vấn",
+    "register": "Đăng ký ngay",
+    "learnMore": "Tìm hiểu thêm",
+    "viewPricing": "Xem báo giá",
+    "contactPrice": "Liên hệ",
+    "backToTop": "Về đầu trang",
+    "startNow": "Trải nghiệm ngay",
+    "seeServices": "Khám phá dịch vụ"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Nền tảng tuyển dụng thông minh",
+      "title": "Đăng tin dễ dàng. Tuyển đúng người bằng AI.",
+      "subtitle": "Một nơi để doanh nghiệp tạo nguồn ứng viên, sàng lọc CV, theo dõi pipeline và đo lường hiệu quả tuyển dụng.",
+      "primaryCta": "Đăng tin miễn phí",
+      "secondaryCta": "Nhận tư vấn",
+      "benefits": ["Khởi tạo tài khoản trong vài phút", "Quản lý ứng viên tập trung", "Gợi ý hồ sơ phù hợp bằng AI"],
+      "dashboard": "Trung tâm tuyển dụng",
+      "dashboardSubtitle": "Tổng quan hôm nay",
+      "live": "Đang hoạt động",
+      "match": "Độ phù hợp",
+      "newProfiles": "hồ sơ mới",
+      "jobs": ["Kỹ sư Frontend", "Chuyên viên Kinh doanh", "Thiết kế UI/UX"]
+    },
+    "platform": {
+      "eyebrow": "Smart Recruitment Platform",
+      "title": "Từ một tin đăng đến cả quy trình tuyển dụng",
+      "desc": "Nền tảng kết hợp dữ liệu, tự động hoá và công nghệ đối sánh để giúp đội ngũ tuyển dụng làm việc nhanh hơn mà vẫn giữ trải nghiệm ứng viên chuyên nghiệp.",
+      "points": ["Tạo và quản lý chiến dịch tuyển dụng", "Lưu trữ hồ sơ theo từng vị trí", "Báo cáo nguồn và hiệu suất tuyển dụng"]
+    },
+    "ai": {
+      "eyebrow": "AI trong tuyển dụng",
+      "title": "Sàng lọc ít hơn, ra quyết định tốt hơn",
+      "desc": "AI phân tích yêu cầu công việc và hồ sơ ứng viên để ưu tiên những CV đáng xem, giải thích tín hiệu phù hợp và gợi ý nguồn ứng viên tiềm năng.",
+      "features": ["Chấm điểm mức độ phù hợp", "Tóm tắt kinh nghiệm nổi bật", "Gợi ý ứng viên theo từng tin", "Giảm thao tác lặp lại cho recruiter"]
+    },
+    "functions": {
+      "eyebrow": "Năng lực cốt lõi",
+      "title": "Mọi công cụ cần thiết cho một đội tuyển dụng hiện đại",
+      "subtitle": "Thiết kế theo luồng làm việc thật, từ tạo nguồn đến theo dõi kết quả.",
+      "items": {
+        "posting": {"title": "Đăng tin thông minh", "desc": "Tạo tin rõ ràng với taxonomy ngành nghề, kỹ năng và địa điểm chuẩn."},
+        "pipeline": {"title": "Pipeline ứng viên", "desc": "Theo dõi hồ sơ theo vòng tuyển dụng và trạng thái xử lý."},
+        "matching": {"title": "AI Matching", "desc": "Ưu tiên ứng viên phù hợp theo yêu cầu thực tế của vị trí."},
+        "database": {"title": "Kho CV tập trung", "desc": "Tìm kiếm và quản lý nguồn hồ sơ không bị phân tán."},
+        "analytics": {"title": "Báo cáo hiệu quả", "desc": "Nắm lượt xem, hồ sơ, chuyển đổi và hiệu quả từng nguồn."},
+        "branding": {"title": "Thương hiệu tuyển dụng", "desc": "Trình bày doanh nghiệp chuyên nghiệp và nhất quán với ứng viên."}
+      }
+    },
+    "services": {
+      "eyebrow": "Giải pháp tuyển dụng",
+      "title": "Linh hoạt theo từng mục tiêu tăng trưởng",
+      "subtitle": "Bắt đầu miễn phí, sau đó tăng tốc bằng các gói hiển thị, AI, truyền thông thương hiệu và dịch vụ bổ trợ.",
+      "items": {
+        "featured": "Tin tuyển dụng nổi bật",
+        "combo": "Combo tiết kiệm",
+        "ai": "AI & Credits",
+        "branding": "Employer Branding",
+        "addons": "Dịch vụ bổ trợ"
+      }
+    },
+    "statsTitle": "Những con số của nền tảng tuyển dụng",
+    "consultation": {
+      "eyebrow": "Tư vấn theo nhu cầu",
+      "title": "Đâu là giải pháp phù hợp cho doanh nghiệp của bạn?",
+      "desc": "Chia sẻ mục tiêu tuyển dụng; chuyên viên của chúng tôi sẽ đề xuất lộ trình và gói dịch vụ phù hợp."
+    },
+    "values": {
+      "eyebrow": "Giá trị mang lại",
+      "title": "Tốt hơn cho doanh nghiệp, dễ hơn cho nhà tuyển dụng",
+      "businessTitle": "Đối với doanh nghiệp",
+      "business": ["Chuẩn hoá quy trình tuyển dụng", "Tiết kiệm thời gian và chi phí tạo nguồn", "Xây dựng thương hiệu tuyển dụng bền vững"],
+      "recruiterTitle": "Đối với nhà tuyển dụng",
+      "recruiter": ["Quản lý công việc tập trung", "Đánh giá ứng viên dựa trên dữ liệu", "Chủ động kế hoạch và đo lường hiệu quả"]
+    },
+    "partnersTitle": "Doanh nghiệp tin tưởng và đồng hành"
+  },
+  "servicesPage": {
+    "eyebrow": "Dịch vụ tuyển dụng",
+    "title": "Giải pháp toàn diện để tuyển nhanh và tuyển đúng",
+    "subtitle": "Kết hợp tin đăng, dữ liệu ứng viên, AI và thương hiệu tuyển dụng trong cùng một nền tảng.",
+    "sections": {
+      "posting": {"title": "Đăng tin tuyển dụng", "desc": "Đưa cơ hội việc làm đến đúng nhóm ứng viên và quản lý hiệu suất từng tin.", "benefits": ["Khởi tạo tin nhanh với dữ liệu chuẩn", "Tối ưu hiển thị theo nhu cầu", "Theo dõi lượt xem và hồ sơ nhận được"]},
+      "pipeline": {"title": "Quản lý ứng viên", "desc": "Tập trung toàn bộ hồ sơ và tiến trình xử lý trong một không gian làm việc.", "benefits": ["Pipeline rõ ràng theo từng vị trí", "Ghi chú và cập nhật trạng thái", "Hạn chế bỏ sót hoặc thất lạc CV"]},
+      "ai": {"title": "AI sàng lọc và gợi ý", "desc": "Ưu tiên CV có tín hiệu phù hợp để recruiter dành thời gian cho quyết định quan trọng.", "benefits": ["Chấm điểm phù hợp tự động", "Tóm tắt điểm mạnh của hồ sơ", "Gợi ý ứng viên tiềm năng"]},
+      "branding": {"title": "Truyền thông thương hiệu", "desc": "Tạo trải nghiệm đáng tin cậy và nhất quán ở mọi điểm chạm với ứng viên.", "benefits": ["Trang doanh nghiệp chuyên nghiệp", "Hiển thị thương hiệu nổi bật", "Nội dung tuyển dụng đồng nhất"]},
+      "support": {"title": "Tư vấn và dịch vụ bổ trợ", "desc": "Chuyên viên đồng hành theo ngành, quy mô và mục tiêu tuyển dụng của doanh nghiệp.", "benefits": ["Tư vấn lựa chọn gói", "Theo dõi hiệu quả triển khai", "Hỗ trợ tối ưu chiến dịch"]}
+    },
+    "ctaTitle": "Sẵn sàng nâng cấp hiệu quả tuyển dụng?",
+    "ctaDesc": "Bắt đầu miễn phí hoặc nhận tư vấn giải pháp phù hợp với doanh nghiệp."
+  },
+  "pricing": {
+    "eyebrow": "Báo giá dịch vụ",
+    "title": "Chọn gói phù hợp với kế hoạch tuyển dụng",
+    "subtitle": "Giá và quyền lợi được cập nhật trực tiếp bởi đội ngũ vận hành. Liên hệ để nhận tư vấn và ưu đãi theo nhu cầu.",
+    "loading": "Đang tải các gói dịch vụ",
+    "emptyTitle": "Chưa có gói dịch vụ đang mở bán",
+    "emptyDesc": "Bạn vẫn có thể gửi nhu cầu để nhận phương án phù hợp.",
+    "errorTitle": "Không thể tải bảng giá",
+    "errorDesc": "Vui lòng thử lại hoặc để lại thông tin để chúng tôi hỗ trợ.",
+    "popular": "Nổi bật",
+    "includes": "Quyền lợi bao gồm",
+    "registerCta": "Đăng ký sử dụng",
+    "contactCta": "Nhận tư vấn gói này",
+    "contactPrice": "Liên hệ",
+    "adviceTitle": "Chưa chắc nên chọn gói nào?",
+    "adviceDesc": "Chúng tôi sẽ phân tích mục tiêu, số lượng vị trí và ngân sách để đề xuất phương án phù hợp."
+  },
+  "consultation": {
+    "title": "Đăng ký nhận tư vấn",
+    "subtitle": "Để lại thông tin, chuyên viên tư vấn tuyển dụng sẽ liên hệ với bạn trong 24h làm việc.",
+    "fullName": "Họ và tên",
+    "fullNamePlaceholder": "Nguyễn Văn A",
+    "companyName": "Tên công ty",
+    "companyNamePlaceholder": "Công ty TNHH ABC",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "province": "Tỉnh/Thành phố",
+    "provincePlaceholder": "Chọn tỉnh/thành phố",
+    "need": "Nhu cầu tư vấn",
+    "needPlaceholder": "Chọn nhu cầu tư vấn",
+    "needOptions": {
+      "post_job": "Tôi muốn đăng tin tuyển dụng",
+      "buy_service": "Tôi muốn tìm hiểu các gói dịch vụ",
+      "ai_solution": "Tôi quan tâm giải pháp AI sàng lọc CV",
+      "employer_branding": "Tôi muốn truyền thông thương hiệu tuyển dụng",
+      "other": "Nhu cầu khác"
+    },
+    "note": "Ghi chú",
+    "notePlaceholder": "Mô tả thêm nhu cầu của bạn (không bắt buộc)",
+    "submit": "Gửi yêu cầu tư vấn",
+    "consentNote": "Bằng cách bấm \"Gửi yêu cầu tư vấn\", bạn đồng ý nhận thông tin tư vấn về các giải pháp tuyển dụng phù hợp.",
+    "success": "Đã gửi yêu cầu tư vấn. Chúng tôi sẽ liên hệ với bạn sớm nhất!",
+    "error": "Gửi yêu cầu thất bại. Vui lòng thử lại sau.",
+    "required": {
+      "fullName": "Vui lòng nhập họ tên",
+      "email": "Vui lòng nhập email",
+      "emailInvalid": "Email không hợp lệ",
+      "phone": "Vui lòng nhập số điện thoại",
+      "phoneInvalid": "Số điện thoại không hợp lệ"
+    }
+  },
+  "footer": {
+    "tagline": "Nền tảng tuyển dụng ứng dụng AI — đăng tin, sàng lọc CV và quản lý ứng viên trong một nơi.",
+    "forEmployers": "Dành cho nhà tuyển dụng",
+    "forCandidates": "Dành cho ứng viên",
+    "candidatePortal": "Tìm việc làm",
+    "createCv": "Tạo CV chuyên nghiệp",
+    "contactTitle": "Liên hệ",
+    "hotlineNorth": "Hotline miền Bắc",
+    "hotlineSouth": "Hotline miền Nam",
+    "hotline": "Hotline",
+    "connectWith": "Kết nối với chúng tôi"
+  },
+  "contactBand": {
+    "title": "Chúng tôi luôn sẵn sàng đồng hành cùng doanh nghiệp",
+    "subtitle": "Đội ngũ tư vấn tuyển dụng hỗ trợ bạn từ đăng tin đầu tiên đến chiến lược tuyển dụng dài hạn.",
+    "supportEmail": "Email hỗ trợ",
+    "workingHours": "Giờ làm việc"
+  },
+  "about": {
+    "metaTitle": "Giới thiệu nền tảng tuyển dụng",
+    "heroEyebrow": "Về chúng tôi",
+    "heroTitle": "Kết nối đúng người, đúng việc bằng công nghệ AI",
+    "heroSubtitle": "Chúng tôi xây dựng nền tảng tuyển dụng thông minh giúp doanh nghiệp Việt tìm được nhân sự phù hợp nhanh hơn, chính xác hơn và tiết kiệm hơn.",
+    "whoTitle": "Chúng tôi là ai",
+    "whoBody1": "Nền tảng tuyển dụng ứng dụng trí tuệ nhân tạo, phục vụ đồng thời ứng viên và doanh nghiệp: ứng viên tạo CV chuẩn, nhận gợi ý việc làm phù hợp; doanh nghiệp đăng tin, sàng lọc hồ sơ và quản lý toàn bộ quy trình tuyển dụng tại một nơi.",
+    "whoBody2": "Với công nghệ phân tích và đối sánh CV tự động, chúng tôi rút ngắn khoảng cách giữa nhà tuyển dụng và ứng viên phù hợp — để mỗi tin đăng đều đến đúng người cần thấy nó.",
+    "valuesTitle": "Giá trị cốt lõi",
+    "values": {
+      "ai": {
+        "title": "Công nghệ AI thực chất",
+        "desc": "AI sàng lọc, chấm điểm và gợi ý ứng viên dựa trên dữ liệu thật, không phải từ khóa đơn thuần."
+      },
+      "efficiency": {
+        "title": "Hiệu quả đo lường được",
+        "desc": "Mọi tin đăng đều có số liệu rõ ràng: lượt xem, hồ sơ nhận được, tỷ lệ phù hợp."
+      },
+      "companion": {
+        "title": "Đồng hành dài hạn",
+        "desc": "Tư vấn chiến lược tuyển dụng theo ngành và quy mô, không chỉ bán gói dịch vụ."
+      }
+    },
+    "statsTitle": "Nền tảng qua những con số"
+  },
+  "contact": {
+    "metaTitle": "Liên hệ tư vấn tuyển dụng",
+    "heroEyebrow": "Liên hệ",
+    "heroTitle": "Trò chuyện với đội ngũ tư vấn tuyển dụng",
+    "heroSubtitle": "Gửi yêu cầu tư vấn hoặc liên hệ trực tiếp qua hotline, email — chúng tôi phản hồi trong giờ làm việc.",
+    "infoTitle": "Thông tin liên hệ",
+    "address": "Địa chỉ",
+    "chatZalo": "Chat Zalo",
+    "chatMessenger": "Messenger",
+    "mapTitle": "Bản đồ"
+  }
+}

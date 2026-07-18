@@ -67,12 +67,16 @@ class SessionUserSerializer(serializers.ModelSerializer):
 
     avatar_url = serializers.SerializerMethodField()
     job_preferences_configured = serializers.SerializerMethodField()
+    employer_onboarding_required = serializers.SerializerMethodField()
+    employer_onboarding_step = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'employer_onboarding_required',
+            'employer_onboarding_step',
         ]
         read_only_fields = fields
 
@@ -88,6 +92,26 @@ class SessionUserSerializer(serializers.ModelSerializer):
             # Tolerate a legacy candidate created before its profile signal was
             # introduced; the candidate endpoint will create the profile once.
             return False
+
+    def get_employer_onboarding_required(self, obj):
+        return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False
+
+    def get_employer_onboarding_step(self, obj):
+        if not obj.is_employer:
+            return None
+        try:
+            recruiter = obj.recruiter_profile
+        except ObjectDoesNotExist:
+            return 'registration'
+        if recruiter.registration_completed_at is None or recruiter.company_id is None:
+            return 'registration'
+        if not obj.email_verified:
+            return 'email_verification'
+        try:
+            recruiter.recruitment_need
+        except ObjectDoesNotExist:
+            return 'consulting_need'
+        return 'complete'
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):

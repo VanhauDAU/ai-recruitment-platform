@@ -1,6 +1,7 @@
 import re
 import shutil
 import tempfile
+from datetime import timedelta
 
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -10,10 +11,12 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import User
+from apps.accounts.models import AuthEmailJob, User
+from apps.locations.models import Location
+from apps.jobs.models import JobCategory
 
 from .. import services
-from ..models import Company, CompanyDocument, CompanyUpdateRequest, Industry, PhoneOtp, RecruiterProfile
+from ..models import Company, CompanyDocument, CompanyUpdateRequest, Industry, PhoneOtp, RecruiterProfile, RecruitmentNeed
 
 
 PNG_BYTES = (
@@ -51,6 +54,231 @@ def company_payload(industry, **overrides):
     }
     payload.update(overrides)
     return payload
+
+
+@override_settings(
+    RECAPTCHA_SECRET_KEY='',
+    DEBUG=True,
+    ALLOWED_HOSTS=['testserver'],
+    EMPLOYER_TERMS_POLICY_VERSION='test-v1',
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+)
+class EmployerRegistrationTests(APITestCase):
+    def setUp(self):
+        self.location = Location.objects.create(
+            code='01',
+            level=Location.Level.PROVINCE,
+            name='Hà Nội',
+        )
+        self.payload = {
+            'email': 'hr@acme.vn',
+            'password': 'Password@123',
+            'captcha_token': 'test-captcha',
+            'full_name': 'Nguyễn Minh Anh',
+            'gender': 'female',
+            'contact_phone': '0912345678',
+            'company_name': 'Công ty Acme',
+            'work_location': self.location.id,
+            'terms_accepted': True,
+            'marketing_opt_in': False,
+        }
+
+    def test_email_registration_creates_employer_company_consent_and_session(self):
+        response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+        self.assertTrue(response.data['user']['employer_onboarding_required'])
+
+        user = User.objects.get(email='hr@acme.vn')
+        recruiter = RecruiterProfile.objects.select_related('company', 'work_location').get(user=user)
+        self.assertEqual(user.role, User.Role.EMPLOYER)
+        self.assertEqual(user.phone, '0912345678')
+        self.assertEqual(recruiter.gender, RecruiterProfile.Gender.FEMALE)
+        self.assertEqual(recruiter.contact_phone, '0912345678')
+        self.assertEqual(recruiter.work_location, self.location)
+        self.assertEqual(recruiter.company.company_name, 'Công ty Acme')
+        self.assertEqual(recruiter.membership_status, RecruiterProfile.MembershipStatus.APPROVED)
+        self.assertEqual(recruiter.terms_policy_version, 'test-v1')
+        self.assertIsNotNone(recruiter.terms_accepted_at)
+        self.assertFalse(recruiter.marketing_opt_in)
+        self.assertIsNotNone(user.last_login)
+        self.assertTrue(AuthEmailJob.objects.filter(
+            user=user, kind=AuthEmailJob.Kind.VERIFICATION,
+        ).exists())
+
+    def test_registration_requires_mandatory_terms(self):
+        response = self.client.post(
+            reverse('employer-register'),
+            {**self.payload, 'terms_accepted': False},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('terms_accepted', response.data)
+        self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
+
+    def test_registration_rejects_weak_password_and_duplicate_contact_phone(self):
+        weak = self.client.post(
+            reverse('employer-register'),
+            {**self.payload, 'password': 'matkhaudai'},
+            format='json',
+        )
+        self.assertEqual(weak.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', weak.data)
+
+        first = self.client.post(reverse('employer-register'), self.payload, format='json')
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        duplicate = self.client.post(
+            reverse('employer-register'),
+            {**self.payload, 'email': 'other@acme.vn'},
+            format='json',
+        )
+        self.assertEqual(duplicate.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('contact_phone', duplicate.data)
+
+    def test_google_employer_can_complete_registration_profile_once(self):
+        user = User.objects.create_user(
+            email='google@acme.vn',
+            password=None,
+            role=User.Role.EMPLOYER,
+            email_verified=True,
+        )
+        self.client.force_authenticate(user=user)
+        profile_payload = {key: value for key, value in self.payload.items() if key not in {
+            'email', 'password', 'captcha_token',
+        }}
+
+        response = self.client.post(
+            reverse('employer-registration-complete'),
+            profile_payload,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertFalse(response.data['onboarding']['account_ready'])
+        self.assertFalse(response.data['onboarding']['consulting_need_completed'])
+        self.assertEqual(response.data['company']['company_name'], 'Công ty Acme')
+        second = self.client.post(
+            reverse('employer-registration-complete'),
+            profile_payload,
+            format='json',
+        )
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class RecruitmentNeedTests(APITestCase):
+    def setUp(self):
+        self.user, self.recruiter = make_employer(phone_verified=False)
+        self.user.email_verified = True
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+        company = Company.objects.create(
+            company_name='Công ty Acme',
+            email=self.user.email,
+            phone='0912345678',
+            address='Hà Nội',
+            created_by=self.user,
+        )
+        self.recruiter.company = company
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        self.recruiter.registration_completed_at = timezone.now()
+        self.recruiter.save()
+        self.category = JobCategory.objects.create(
+            name='Kinh doanh phần mềm',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        self.payload = {
+            'position_category': self.category.id,
+            'position_level': RecruitmentNeed.PositionLevel.EMPLOYEE,
+            'target_date': (timezone.localdate() + timedelta(days=30)).isoformat(),
+            'is_continuous': False,
+            'headcount': 3,
+            'budget_min': 5_000_000,
+            'budget_max': 10_000_000,
+            'budget_source': RecruitmentNeed.BudgetSource.COMPANY,
+            'consultation_topics': [RecruitmentNeed.ConsultationTopic.SERVICE_PACKAGES],
+        }
+        self.client.force_authenticate(user=self.user)
+
+    def test_verified_employer_completes_consulting_need_and_session_becomes_ready(self):
+        response = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        need = RecruitmentNeed.objects.get(recruiter=self.recruiter)
+        self.assertEqual(need.position_category, self.category)
+        self.assertEqual(need.headcount, 3)
+        detail = self.client.get(reverse('employer-consulting-need'))
+        self.assertEqual(detail.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail.data['public_id'], need.public_id)
+        self.assertEqual(detail.data['position_category_name'], self.category.name)
+
+        session = self.client.get(reverse('auth-me'))
+        self.assertFalse(session.data['employer_onboarding_required'])
+        self.assertEqual(session.data['employer_onboarding_step'], 'complete')
+
+    def test_unverified_email_cannot_submit_consulting_need(self):
+        self.user.email_verified = False
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+
+        response = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(RecruitmentNeed.objects.filter(recruiter=self.recruiter).exists())
+
+    def test_consulting_need_rejects_non_specialization_category(self):
+        domain = JobCategory.objects.create(
+            name='Công nghệ',
+            category_type=JobCategory.CategoryType.DOMAIN,
+        )
+        response = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'position_category': domain.id,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('position_category', response.data)
+
+    def test_consulting_need_rejects_past_date_and_inverted_budget(self):
+        past_date = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'target_date': (timezone.localdate() - timedelta(days=1)).isoformat(),
+        }, format='json')
+        self.assertEqual(past_date.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('target_date', past_date.data)
+
+        inverted_budget = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'budget_min': 20_000_000,
+            'budget_max': 10_000_000,
+        }, format='json')
+        self.assertEqual(inverted_budget.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('budget_max', inverted_budget.data)
+
+    def test_consulting_need_accepts_at_most_one_consultation_topic(self):
+        response = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'consultation_topics': [
+                RecruitmentNeed.ConsultationTopic.FREE_POSTING,
+                RecruitmentNeed.ConsultationTopic.PROMOTIONS,
+            ],
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('consultation_topics', response.data)
+
+    def test_continuous_hiring_clears_target_date_and_budget_is_optional(self):
+        response = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'target_date': None,
+            'is_continuous': True,
+            'budget_min': None,
+            'budget_max': None,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertIsNone(response.data['target_date'])
 
 
 class PhoneOtpTests(APITestCase):

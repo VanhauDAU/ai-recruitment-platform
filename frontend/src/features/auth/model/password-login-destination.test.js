@@ -22,4 +22,22 @@ describe('authentication onboarding destination', () => {
       returnUrl: '',
     })).toBe('/')
   })
+
+  it.each([
+    ['registration', '/tuyendung/app/account/complete-profile'],
+    ['email_verification', '/tuyendung/app/account/verify'],
+    ['consulting_need', '/tuyendung/app/consulting-need'],
+  ])('sends an employer at %s to the matching setup route', (step, destination) => {
+    expect(getAuthDestination({
+      user: { role: 'employer', employer_onboarding_required: true, employer_onboarding_step: step },
+      returnUrl: '/tuyendung/app/dashboard',
+    })).toBe(destination)
+  })
+
+  it('sends a ready employer to the employer dashboard', () => {
+    expect(getAuthDestination({
+      user: { role: 'employer', employer_onboarding_required: false },
+      returnUrl: '',
+    })).toBe('/tuyendung/app/dashboard')
+  })
 })

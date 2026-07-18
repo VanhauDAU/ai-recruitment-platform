@@ -198,3 +198,47 @@ pages/main/jobs/JobDetail
   lựa chọn CV hoặc state modal.
 - `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
   explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.
+
+## i18n cổng marketing nhà tuyển dụng
+
+- i18next chỉ được khởi tạo từ `EmployerMarketingLayout`; không import
+  `@/shared/config/i18n` vào `AppProviders`, main portal hoặc admin portal để
+  tránh kéo runtime và resource song ngữ vào các chunk không dùng.
+- Namespace `employer` sở hữu toàn bộ copy của 5 trang marketing. Nội dung lấy
+  từ database dùng cột đôi `*_vi`/`*_en` và helper `pickLocalized`; tiếng Anh
+  rỗng hoặc mảng rỗng phải fallback về tiếng Việt.
+- Lựa chọn ngôn ngữ được lưu bằng key `employer_marketing_lang`, không thay đổi
+  URL. Route, API payload, auth guard và portal host vẫn dùng contract hiện có.
+- Page marketing chỉ compose section; workflow gửi lead nằm ở
+  `features/request-consultation`, domain gói/giá ở
+  `entities/service-package`, footer lớn ở `widgets/employer-footer`.
+
+## Ownership map — Auth và onboarding nhà tuyển dụng
+
+```text
+app/router + EmployerAuthLayout|EmployerSetupLayout + EmployerOnboardingGuard
+  → pages/employer/app/Login|Register|Onboarding|ConsultingNeed
+    → widgets/employer-onboarding, employer-consulting-need
+      → features/auth, complete-employer-registration,
+        capture-employer-recruitment-need
+          → entities/session, employer-profile, job, location
+            → shared/api, shared/config/portals
+```
+
+- `features/auth` sở hữu account action dùng chung và JWT namespace theo portal;
+  employer registration vẫn gọi endpoint riêng vì payload tạo cả recruiter và
+  company, không mở rộng contract candidate hiện có.
+- `features/complete-employer-registration` sở hữu các field profile/consent tái
+  sử dụng giữa đăng ký email và bổ sung hồ sơ sau OAuth. Hai workflow chỉ được
+  compose ở page/widget, không import feature lẫn nhau.
+- `entities/employer-profile` sở hữu HTTP contract recruiter và nhu cầu ưu tiên.
+  `widgets/employer-onboarding` chỉ hoàn thiện hồ sơ Google; widget
+  `employer-consulting-need` compose form nhu cầu sau xác thực. Email/phone/DPA
+  là workflow bảo mật riêng, không còn bị gộp thành checklist onboarding.
+- Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
+  `EmployerOnboardingGuard`. State server lần lượt là `registration →
+  email_verification → consulting_need → complete`; UI redirect không thay thế
+  guard và backend permission.
+- Login/register/recovery employer dùng `EmployerAuthLayout` và route helper
+  `employerAppPath`; không hardcode host, token key hoặc điều hướng sang cổng
+  candidate.

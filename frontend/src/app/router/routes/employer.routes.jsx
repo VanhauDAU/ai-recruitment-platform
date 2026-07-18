@@ -1,39 +1,58 @@
 import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import AuthGuard from '@/app/router/guards/AuthGuard'
+import EmployerOnboardingGuard from '@/app/router/guards/EmployerOnboardingGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
+import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
+  EmployerAboutPage,
+  EmployerContactPage,
+  EmployerConsultingNeedPage,
   EmployerDashboardPage,
   EmployerLandingPage,
+  EmployerLegalPage,
   EmployerLoginPage,
+  EmployerOnboardingPage,
   EmployerPricingPage,
   EmployerRegisterPage,
   EmployerServicesPage,
 } from '../lazy/employer.pages'
-import { OAuthCallbackPage, VerifyEmailPage } from '../lazy/main.pages'
-import { AuthLayout, DashboardLayout, EmployerMarketingLayout } from '../lazy/layouts'
+import { ForgotPasswordPage, OAuthCallbackPage, ResetPasswordPage, VerifyEmailPage } from '../lazy/main.pages'
+import { DashboardLayout, EmployerAuthLayout, EmployerMarketingLayout, EmployerSetupLayout } from '../lazy/layouts'
 
 export function employerRoutes() {
   return [
     <Route key="employer-marketing" element={<EmployerMarketingLayout />}>
       <Route path={employerMarketingPath('')} element={<EmployerLandingPage />} />
+      <Route path={employerMarketingPath('/gioi-thieu')} element={<EmployerAboutPage />} />
       <Route path={employerMarketingPath('/dich-vu')} element={<EmployerServicesPage />} />
       <Route path={employerMarketingPath('/bao-gia')} element={<EmployerPricingPage />} />
+      <Route path={employerMarketingPath('/lien-he')} element={<EmployerContactPage />} />
+      <Route path={employerMarketingPath('/dieu-khoan-dich-vu')} element={<EmployerLegalPage />} />
+      <Route path={employerMarketingPath('/chinh-sach-quyen-rieng')} element={<EmployerLegalPage />} />
     </Route>,
 
-    <Route key="employer-auth" element={<AuthLayout />}>
+    <Route key="employer-auth" element={<EmployerAuthLayout />}>
       <Route path={employerAppPath('/login')} element={<EmployerLoginPage />} />
       <Route path={employerAppPath('/register')} element={<EmployerRegisterPage />} />
+      <Route path={employerAppPath('/forgot-password')} element={<ForgotPasswordPage loginPath={employerAppPath('/login')} />} />
+      <Route path={employerAppPath('/reset-password')} element={<ResetPasswordPage requestPath={employerAppPath('/forgot-password')} />} />
+    </Route>,
+
+    <Route key="employer-email-verification" element={<EmployerSetupLayout />}>
       <Route
-        path={employerAppPath('/xac-thuc-email')}
+        path={employerAppPath('/account/verify')}
         element={(
           <VerifyEmailPage
-            homePath={employerAppPath('/dashboard')}
+            homePath={employerAppPath('/consulting-need')}
             loginPath={employerAppPath('/login')}
-            verificationPath={employerAppPath('/xac-thuc-email')}
+            verificationPath={employerAppPath('/account/verify')}
+            successActionLabel="Tiếp tục khai báo nhu cầu tuyển dụng"
+            verifiedActionLabel="Khai báo nhu cầu tuyển dụng"
           />
         )}
       />
+      <Route path={employerAppPath('/xac-thuc-email')} element={<EmployerLegacyVerifyRedirect />} />
     </Route>,
 
     <Route
@@ -49,8 +68,17 @@ export function employerRoutes() {
 
     <Route key="employer-authenticated" element={<AuthGuard loginPath={employerAppPath('/login')} />}>
       <Route element={<RoleGuard allowedRoles={['employer']} loginPath={employerAppPath('/login')} />}>
-        <Route element={<DashboardLayout />}>
-          <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
+        <Route element={<EmployerAuthLayout />}>
+          <Route path={employerAppPath('/account/complete-profile')} element={<EmployerOnboardingPage />} />
+          <Route path={employerAppPath('/onboarding')} element={<EmployerOnboardingPage />} />
+        </Route>
+        <Route element={<EmployerSetupLayout />}>
+          <Route path={employerAppPath('/consulting-need')} element={<EmployerConsultingNeedPage />} />
+        </Route>
+        <Route element={<EmployerOnboardingGuard />}>
+          <Route element={<DashboardLayout />}>
+            <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
+          </Route>
         </Route>
       </Route>
     </Route>,

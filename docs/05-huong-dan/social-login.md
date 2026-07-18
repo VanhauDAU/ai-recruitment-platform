@@ -115,9 +115,12 @@ nghĩa là luồng redirect đang hoạt động, chỉ thiếu credential.
 - Email trùng nhưng **khác vai trò** (vd email đã là NTD mà đăng nhập cổng ứng
   viên) → bị chặn với thông báo "Tài khoản không thuộc cổng này".
 - Tài khoản social mới → tạo với vai trò theo cổng, `email_verified=True`, không có
-  mật khẩu (chỉ đăng nhập qua social). Muốn đăng nhập bằng mật khẩu thì dùng
-  "Quên mật khẩu?" (`/forgot-password`) để đặt mật khẩu lần đầu — luồng này chấp
-  nhận cả tài khoản chưa từng có mật khẩu (`has_usable_password() == False`).
+  mật khẩu. Candidate đi theo onboarding preference; employer đi tới
+  `/tuyendung/app/account/complete-profile` để bổ sung người liên hệ, công ty và
+  consent, rồi khai báo nhu cầu tại `/tuyendung/app/consulting-need`. Muốn
+  đăng nhập bằng mật khẩu thì dùng "Quên mật khẩu?" (`/forgot-password` cho
+  candidate, `/tuyendung/app/forgot-password` cho employer) để đặt mật khẩu lần
+  đầu — backend chấp nhận cả tài khoản `has_usable_password() == False`.
 
 ## Lên production
 

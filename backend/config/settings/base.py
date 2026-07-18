@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'apps.sitecontent',
     'apps.blog',
     'apps.privacy',
+    'apps.services',
 ]
 
 MIDDLEWARE = [
@@ -182,6 +183,7 @@ REST_FRAMEWORK = {
         'password_reset_confirm': '10/min',
         'oauth': '10/min',
         'feedback': '5/min',
+        'consultation': '5/min',
         'consent': '20/hour',
         'job_view': '120/hour',
         'cv_import': '10/hour',
@@ -351,8 +353,12 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
-    'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/xac-thuc-email'
+    'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/account/verify'
 )
+EMPLOYER_PASSWORD_RESET_PATH = config(
+    'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/reset-password'
+)
+EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
