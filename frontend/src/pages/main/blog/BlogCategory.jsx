@@ -4,6 +4,7 @@ import { Empty, Skeleton } from 'antd'
 import { Link, useParams } from 'react-router-dom'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { BLOG_ROOT, getBlogCategories, getBlogPosts } from '@/entities/blog'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import { BlogCardRow } from './ui/BlogCard'
 import BlogInlineBanner from './ui/BlogInlineBanner'
@@ -55,7 +56,7 @@ export default function BlogCategory() {
   }, [categorySlug])
 
   useEffect(() => {
-    document.title = activeCategory ? `${activeCategory.name} — ${pageTitle}` : pageTitle
+    setDocumentTitle(activeCategory ? `${activeCategory.name} — ${pageTitle}` : pageTitle)
   }, [activeCategory, pageTitle])
 
   async function loadMore() {

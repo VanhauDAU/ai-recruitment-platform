@@ -9,6 +9,7 @@ import {
   logout,
   oauthStartUrl,
   register,
+  registerEmployer,
   requestPasswordReset,
   resendTwoFactorLogin,
   sendVerificationEmail,
@@ -32,11 +33,15 @@ describe('auth API session storage', () => {
     window.history.replaceState({}, '', '/login')
   })
 
-  it('stores tokens in the portal-specific namespace after login', async () => {
+  it('stores tokens in the requested portal without replacing another portal session', async () => {
+    localStorage.setItem('main_access_token', 'candidate-access')
+    localStorage.setItem('main_refresh_token', 'candidate-refresh')
     post.mockResolvedValue({ data: { access: 'access-token', refresh: 'refresh-token' } })
 
     await login({ email: 'user@example.com', password: 'secret', captcha_token: 'captcha', portal: 'employer' })
 
+    expect(localStorage.getItem('main_access_token')).toBe('candidate-access')
+    expect(localStorage.getItem('main_refresh_token')).toBe('candidate-refresh')
     expect(localStorage.getItem('employer_access_token')).toBe('access-token')
     expect(localStorage.getItem('employer_refresh_token')).toBe('refresh-token')
   })
@@ -48,14 +53,18 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/auth/register/email-availability/', { email: 'used@example.com' }, { signal: undefined })
   })
 
-  it('clears the complete portal session', async () => {
+  it('logs out every portal in the browser', async () => {
     localStorage.setItem('main_access_token', 'access-token')
     localStorage.setItem('main_refresh_token', 'refresh-token')
+    localStorage.setItem('employer_access_token', 'employer-access')
+    localStorage.setItem('employer_refresh_token', 'employer-refresh')
 
-    logout('main')
+    logout()
 
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('main_refresh_token')).toBeNull()
+    expect(localStorage.getItem('employer_access_token')).toBeNull()
+    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
   })
 
   it('stores registration tokens for the requested portal', async () => {
@@ -67,6 +76,21 @@ describe('auth API session storage', () => {
 
     expect(localStorage.getItem('main_access_token')).toBe('access-token')
     expect(localStorage.getItem('main_refresh_token')).toBe('refresh-token')
+  })
+
+  it('registers an employer through the employer profile endpoint', async () => {
+    post.mockResolvedValue({ data: { access: 'employer-access', refresh: 'employer-refresh', user: { role: 'employer' } } })
+    const payload = {
+      email: 'hr@company.vn', password: 'Password@123', full_name: 'Nguyễn An',
+      contact_phone: '0912345678', company_name: 'Acme', work_location: 1,
+      gender: 'female', terms_accepted: true, marketing_opt_in: false, captcha_token: 'captcha',
+    }
+
+    await registerEmployer(payload)
+
+    expect(post).toHaveBeenCalledWith('/employer/register/', payload)
+    expect(localStorage.getItem('employer_access_token')).toBe('employer-access')
+    expect(localStorage.getItem('employer_refresh_token')).toBe('employer-refresh')
   })
 
   it('stores tokens in the portal that completed the 2FA login challenge', async () => {
@@ -100,7 +124,7 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/auth/verify/send/')
     expect(post).toHaveBeenCalledWith('/auth/verify/confirm/', { token: 'verify-token' })
     expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com' })
-    expect(post).toHaveBeenCalledWith('/auth/password-reset/', { email: 'user@example.com', captcha_token: 'captcha' })
+    expect(post).toHaveBeenCalledWith('/auth/password-reset/', { email: 'user@example.com', captcha_token: 'captcha', portal: 'main' })
     expect(get).toHaveBeenCalledWith('/auth/password-reset/validate/', { params: { token: 'reset-token' } })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/confirm/', { token: 'reset-token', password: 'Abc123' })
   })

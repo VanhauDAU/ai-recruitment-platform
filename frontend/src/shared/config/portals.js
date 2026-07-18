@@ -16,6 +16,31 @@ export const IS_EMPLOYER_HOST = !!import.meta.env.VITE_EMPLOYER_HOST && host ===
 export const IS_ADMIN_HOST = !!import.meta.env.VITE_ADMIN_HOST && host === import.meta.env.VITE_ADMIN_HOST
 export const IS_MAIN_HOST = !IS_EMPLOYER_HOST && !IS_ADMIN_HOST
 
+function commonPortalDomain() {
+  const configuredHosts = [
+    import.meta.env.VITE_MAIN_HOST,
+    import.meta.env.VITE_EMPLOYER_HOST,
+    import.meta.env.VITE_ADMIN_HOST,
+  ]
+    .filter(Boolean)
+    .map((configuredHost) => configuredHost.toLowerCase().split('.').reverse())
+
+  if (configuredHosts.length < 2) return ''
+
+  const commonLabels = configuredHosts[0].filter((label, index) => (
+    configuredHosts.every((labels) => labels[index] === label)
+  ))
+
+  // Không tự suy ra cookie domain chỉ có một nhãn như `com`/`localhost`.
+  return commonLabels.length >= 2 ? commonLabels.reverse().join('.') : ''
+}
+
+// Cookie này chỉ chứa marker đăng xuất (không chứa JWT). Domain dùng chung giúp
+// main/employer/admin phát hiện logout của nhau khi production chạy subdomain.
+export const AUTH_SYNC_COOKIE_DOMAIN = (
+  import.meta.env.VITE_AUTH_SYNC_COOKIE_DOMAIN || commonPortalDomain()
+).replace(/^\./, '')
+
 const EMPLOYER_MARKETING_BASE = IS_EMPLOYER_HOST ? '' : '/tuyendung'
 const EMPLOYER_APP_BASE = `${EMPLOYER_MARKETING_BASE}/app`
 const ADMIN_APP_BASE = IS_ADMIN_HOST ? '/app' : '/admin/app'
@@ -33,12 +58,29 @@ export const EMPLOYER_LOGIN_URL = import.meta.env.VITE_EMPLOYER_HOST
   ? `https://${import.meta.env.VITE_EMPLOYER_HOST}/app/login`
   : employerAppPath('/login')
 
+export const EMPLOYER_FORGOT_PASSWORD_URL = employerAppPath('/forgot-password')
+export const EMPLOYER_RESET_PASSWORD_URL = employerAppPath('/reset-password')
+export const EMPLOYER_ACCOUNT_VERIFY_URL = employerAppPath('/account/verify')
+export const EMPLOYER_COMPLETE_PROFILE_URL = employerAppPath('/account/complete-profile')
+export const EMPLOYER_CONSULTING_NEED_URL = employerAppPath('/consulting-need')
+export const EMPLOYER_VERIFY_URL = employerAppPath('/employer-verify')
+export const EMPLOYER_PHONE_VERIFY_URL = employerAppPath('/account/phone-verify')
+export const EMPLOYER_ACCOUNT_SETTINGS_URL = employerAppPath('/account/settings/account-info')
+export const EMPLOYER_PASSWORD_SETTINGS_URL = employerAppPath('/account/settings/password-login')
+export const EMPLOYER_COMPANY_SETTINGS_URL = employerAppPath('/account/settings/company')
+export const EMPLOYER_BUSINESS_LICENSE_URL = employerAppPath('/account/settings/gpkd')
+export const EMPLOYER_DATA_PROTECTION_URL = employerAppPath('/account/settings/personal-data-protection')
+
 export const MAIN_LOGIN_URL = import.meta.env.VITE_MAIN_HOST
   ? `https://${import.meta.env.VITE_MAIN_HOST}/login`
   : '/login'
 
-// Luồng quên/đặt lại mật khẩu chỉ tồn tại ở cổng main (link trong email trỏ về
-// FRONTEND_URL), nên các cổng khác phải link tuyệt đối sang host chính.
+// Link từ cổng NTD về trang ứng viên (trang chủ main).
+export const MAIN_PORTAL_URL = import.meta.env.VITE_MAIN_HOST
+  ? `https://${import.meta.env.VITE_MAIN_HOST}/`
+  : '/'
+
+// Link recovery của ứng viên. Employer có route và template email riêng ở trên.
 export const MAIN_FORGOT_PASSWORD_URL = import.meta.env.VITE_MAIN_HOST
   ? `https://${import.meta.env.VITE_MAIN_HOST}/forgot-password`
   : '/forgot-password'

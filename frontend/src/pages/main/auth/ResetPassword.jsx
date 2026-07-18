@@ -22,7 +22,7 @@ const loginUrlFor = (role) => LOGIN_URL_BY_ROLE[role] || MAIN_LOGIN_URL
 
 // Bước 2: mở link trong email (`?token=`). Token được kiểm tra trước (không bị
 // tiêu) để hiện ngay màn "link hết hạn" thay vì để user gõ xong mật khẩu mới báo lỗi.
-export default function ResetPassword() {
+export default function ResetPassword({ requestPath = '/forgot-password' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const token = params.get('token')
@@ -99,7 +99,7 @@ export default function ResetPassword() {
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-600 dark:text-gray-300">
             Liên kết đặt lại mật khẩu đã hết hạn, đã được sử dụng, hoặc bạn đã yêu cầu một liên kết mới hơn.
           </p>
-          <Link to="/forgot-password" className="mt-6 inline-block">
+          <Link to={requestPath} className="mt-6 inline-block">
             <span className="submit-btn inline-block rounded-full px-8 py-3 text-base font-bold text-white cursor-pointer">
               Gửi lại liên kết
             </span>

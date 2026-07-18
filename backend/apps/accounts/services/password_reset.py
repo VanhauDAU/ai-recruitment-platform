@@ -61,7 +61,12 @@ def start_cooldown(user):
 
 def send_password_reset_email(user):
     token = issue_token(user)
-    link = frontend_link('/reset-password', token=token)
+    is_employer = user.role == user.Role.EMPLOYER
+    link = frontend_link(
+        settings.EMPLOYER_PASSWORD_RESET_PATH if is_employer else '/reset-password',
+        base_url=settings.EMPLOYER_FRONTEND_URL if is_employer else settings.FRONTEND_URL,
+        token=token,
+    )
     site_name = site_setting('site_name', 'ProCV')
     minutes = settings.PASSWORD_RESET_TTL // 60
     name = user.full_name or user.email

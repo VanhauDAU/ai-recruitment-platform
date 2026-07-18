@@ -8,6 +8,8 @@ import {
 } from '@/entities/cv-template'
 import { useLocales } from '@/entities/locale'
 import { UseTemplateModal } from '@/features/create-cv-from-template'
+import { useLoginPrompt } from '@/features/auth'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import {
   catalogCategoryFromPath,
   catalogLocaleFromPath,
@@ -19,6 +21,7 @@ import CatalogHeader from './ui/CatalogHeader'
 
 export default function TemplateCatalog() {
   const navigate = useNavigate()
+  const { promptLogin } = useLoginPrompt()
   const { pathname } = useLocation()
   const { locale, shortLabel: localeLabel, path: basePath } = catalogLocaleFromPath(pathname)
   const { locales, loaded: localesLoaded } = useLocales()
@@ -93,7 +96,7 @@ export default function TemplateCatalog() {
     return () => { cancelled = true }
   }, [locale, activeCategory, page])
 
-  useEffect(() => { document.title = 'Mẫu CV chuyên nghiệp | ProCV' }, [])
+  useEffect(() => { setDocumentTitle('Mẫu CV chuyên nghiệp') }, [])
 
   // Infinite scroll
   useEffect(() => {
@@ -193,6 +196,7 @@ export default function TemplateCatalog() {
         onClose={() => setSelection(null)}
         onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
         locale={locale}
+        onRequireLogin={promptLogin}
       />
     </div>
   )

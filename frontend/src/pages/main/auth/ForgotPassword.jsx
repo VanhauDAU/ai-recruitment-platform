@@ -9,7 +9,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 // Bước 1: nhập email -> backend gửi link đặt lại. Backend luôn trả cùng một
 // thông điệp dù email có tồn tại hay không, nên màn hình này không được suy đoán
 // "email không tồn tại" — cứ hiện màn "đã gửi".
-export default function ForgotPassword() {
+export default function ForgotPassword({ loginPath = '/login' }) {
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [sentTo, setSentTo] = useState('')
   const [error, setError] = useState('')
@@ -62,7 +62,7 @@ export default function ForgotPassword() {
             .
           </p>
           <Link
-            to="/login"
+            to={loginPath}
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
           >
             <ArrowLeftOutlined className="text-xs" />
@@ -123,7 +123,7 @@ export default function ForgotPassword() {
 
       <div className="login-field mt-6 text-center">
         <Link
-          to="/login"
+          to={loginPath}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-primary)] hover:underline"
         >
           <ArrowLeftOutlined className="text-xs" />

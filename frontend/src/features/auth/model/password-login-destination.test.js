@@ -22,4 +22,59 @@ describe('authentication onboarding destination', () => {
       returnUrl: '',
     })).toBe('/')
   })
+
+  it.each([
+    ['registration', '/tuyendung/app/account/complete-profile'],
+    ['email_verification', '/tuyendung/app/account/verify'],
+    ['consulting_need', '/tuyendung/app/consulting-need'],
+  ])('sends an employer at %s to the matching setup route', (step, destination) => {
+    expect(getAuthDestination({
+      user: { role: 'employer', employer_onboarding_required: true, employer_onboarding_step: step },
+      returnUrl: '/tuyendung/app/dashboard',
+    })).toBe(destination)
+  })
+
+  it('sends an account-ready but unverified employer to the verification checklist', () => {
+    expect(getAuthDestination({
+      user: {
+        role: 'employer',
+        employer_onboarding_required: false,
+        employer_verification_completed: false,
+      },
+      returnUrl: '',
+    })).toBe('/tuyendung/app/employer-verify')
+  })
+
+  it('does not let a dashboard return URL skip unfinished employer verification', () => {
+    expect(getAuthDestination({
+      user: {
+        role: 'employer',
+        employer_onboarding_required: false,
+        employer_verification_completed: false,
+      },
+      returnUrl: '/tuyendung/app/dashboard',
+    })).toBe('/tuyendung/app/employer-verify')
+  })
+
+  it('sends a fully verified employer directly to the dashboard', () => {
+    expect(getAuthDestination({
+      user: {
+        role: 'employer',
+        employer_onboarding_required: false,
+        employer_verification_completed: true,
+      },
+      returnUrl: '',
+    })).toBe('/tuyendung/app/dashboard')
+  })
+
+  it('preserves a safe return URL for a fully verified employer', () => {
+    expect(getAuthDestination({
+      user: {
+        role: 'employer',
+        employer_onboarding_required: false,
+        employer_verification_completed: true,
+      },
+      returnUrl: '/tuyendung/app/account/settings/company?update=true',
+    })).toBe('/tuyendung/app/account/settings/company?update=true')
+  })
 })

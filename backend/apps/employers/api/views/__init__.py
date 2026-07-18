@@ -10,6 +10,7 @@ from .media import (
 )
 from .memberships import JoinCompanyView
 from .onboarding import AcceptDpaView, RecruiterMeView, SendPhoneOtpView, VerifyPhoneOtpView
+from .recruitment_need import RecruitmentNeedView
 from .verification import CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
 
 __all__ = [
@@ -27,6 +28,7 @@ __all__ = [
     'JoinCompanyView',
     'MyCompanyView',
     'RecruiterMeView',
+    'RecruitmentNeedView',
     'SendPhoneOtpView',
     'VerifyPhoneOtpView',
 ]

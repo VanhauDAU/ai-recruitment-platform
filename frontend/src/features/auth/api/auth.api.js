@@ -11,8 +11,22 @@ export async function register({ email, password, role, full_name, captcha_token
   return data
 }
 
-export async function checkRegistrationEmail(email, { signal } = {}) {
-  const { data } = await api.post('/auth/register/email-availability/', { email }, { signal })
+export async function registerEmployer(payload) {
+  const { data } = await api.post('/employer/register/', payload)
+  if (data.access && data.refresh) {
+    setTokens({ access: data.access, refresh: data.refresh }, 'employer')
+  }
+  return data
+}
+
+// `role` giới hạn kiểm tra trong phạm vi một cổng: cùng email vẫn còn trống ở
+// cổng khác (tài khoản tách theo cổng). Bỏ trống -> cổng ứng viên (mặc định BE).
+export async function checkRegistrationEmail(email, { signal, role } = {}) {
+  const { data } = await api.post(
+    '/auth/register/email-availability/',
+    { email, ...(role && { role }) },
+    { signal },
+  )
   return data.available === true
 }
 
@@ -35,8 +49,10 @@ export async function changeEmail(email) {
 // ---- Đặt lại mật khẩu ----
 
 // Luôn trả về cùng một thông điệp, kể cả email chưa đăng ký (chống dò email).
-export async function requestPasswordReset({ email, captcha_token }) {
-  const { data } = await api.post('/auth/password-reset/', { email, captcha_token })
+// `portal` chọn đúng tài khoản của cổng (một email có thể có tài khoản ứng viên
+// và NTD riêng, mỗi bên mật khẩu riêng). Mặc định suy từ cổng hiện tại.
+export async function requestPasswordReset({ email, captcha_token, portal = getCurrentPortal() }) {
+  const { data } = await api.post('/auth/password-reset/', { email, captcha_token, portal })
   return data
 }
 
@@ -88,6 +104,6 @@ export async function completeOAuth(code, portal) {
   return data
 }
 
-export function logout(portal = getCurrentPortal()) {
-  clearSession(portal)
+export function logout() {
+  clearSession()
 }

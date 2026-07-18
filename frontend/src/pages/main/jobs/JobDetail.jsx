@@ -92,6 +92,10 @@ export default function JobDetail() {
         onClose={() => setApplyOpen(false)}
         jobPublicId={job.public_id}
         jobTitle={job.title}
+        workplaceGroups={job.workplace_groups || []}
+        candidateName={user?.full_name || ''}
+        candidateEmail={user?.email || ''}
+        candidatePhone={user?.phone || ''}
       />
     </>
   )

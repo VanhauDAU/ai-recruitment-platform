@@ -8,14 +8,19 @@ from ..models import Application
 
 
 def candidate_applications_queryset(candidate):
-    return Application.objects.filter(candidate=candidate).select_related(
-        'job', 'cv', 'submitted_cv_version',
-    ).order_by('-applied_at')
+    return (
+        Application.objects.filter(candidate=candidate)
+        .select_related('job', 'cv', 'submitted_cv_version')
+        .prefetch_related('preferred_locations')
+        .order_by('-applied_at')
+    )
 
 
 def employer_applications_queryset(employer, job_public_id=None):
     queryset = Application.objects.filter(job__posted_by=employer).select_related(
         'job', 'cv', 'submitted_cv_version', 'submitted_cv_version__template_version',
+    ).prefetch_related(
+        'preferred_locations',
     )
     if job_public_id:
         queryset = queryset.filter(job__public_id=job_public_id)
@@ -41,4 +46,4 @@ def recruiter_application_snapshot_queryset(recruiter):
         'submitted_cv_version',
         'submitted_cv_version__template_version',
         'submitted_cv_version__parent_version',
-    ).distinct()
+    ).prefetch_related('preferred_locations').distinct()

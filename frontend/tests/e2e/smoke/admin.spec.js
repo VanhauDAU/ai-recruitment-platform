@@ -11,4 +11,10 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
 
   await page.goto('/admin/app/cv-catalogue')
   await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
+
+  await page.goto('/admin/app/services')
+  await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
+
+  await page.goto('/admin/app/consultation-leads')
+  await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
 })

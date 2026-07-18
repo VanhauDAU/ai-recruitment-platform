@@ -5,6 +5,7 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -25,7 +26,9 @@ def _hash_otp(code):
 
 def send_phone_otp(user, phone):
     """Create and email an OTP used to verify a recruiter phone number."""
-    conflict = RecruiterProfile.objects.filter(verified_phone=phone).exclude(user=user)
+    conflict = RecruiterProfile.objects.filter(
+        Q(verified_phone=phone) | Q(contact_phone=phone)
+    ).exclude(user=user)
     if conflict.exists():
         raise ValidationError({
             'phone': 'Đã có nhà tuyển dụng khác xác thực số điện thoại này, vui lòng dùng số khác.'
@@ -89,9 +92,10 @@ def verify_phone_otp(user, code):
     otp.save(update_fields=['attempts', 'verified_at'])
 
     recruiter = get_or_create_recruiter(user)
+    recruiter.contact_phone = otp.phone
     recruiter.verified_phone = otp.phone
     recruiter.phone_verified_at = otp.verified_at
-    recruiter.save(update_fields=['verified_phone', 'phone_verified_at', 'updated_at'])
+    recruiter.save(update_fields=['contact_phone', 'verified_phone', 'phone_verified_at', 'updated_at'])
     if user.phone != otp.phone:
         user.phone = otp.phone
         user.save(update_fields=['phone', 'updated_at'])

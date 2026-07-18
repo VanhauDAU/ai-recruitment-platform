@@ -38,6 +38,12 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
                 cv=serializer.validated_data['cv'],
                 source_version=serializer.validated_data['version'],
                 cover_letter=serializer.validated_data.get('cover_letter', ''),
+                preferred_locations=serializer.validated_data.get('preferred_locations', ()),
+                allow_ai_analysis=serializer.validated_data.get('allow_ai_analysis', False),
+                data_processing_consent=serializer.validated_data['data_processing_consent'],
+                contact_name=serializer.validated_data['contact_name'],
+                contact_email=serializer.validated_data['contact_email'],
+                contact_phone=serializer.validated_data['contact_phone'],
             )
         except ValueError as error:
             raise ValidationError({'version_public_id': str(error)}) from error

@@ -2,6 +2,7 @@ import { BrowserRouter, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import AppProviders from './app/providers/AppProviders'
 import AppRouter from './app/router/AppRouter'
+import DocumentTitleManager from './app/router/DocumentTitleManager'
 import { CookieConsentLayer } from '@/widgets/cookie-consent-layer'
 
 function ScrollRestorationGuard() {
@@ -25,6 +26,7 @@ function App() {
     <BrowserRouter>
       <AppProviders>
         <ScrollRestorationGuard />
+        <DocumentTitleManager />
         <AppRouter />
         <CookieConsentLayer />
       </AppProviders>

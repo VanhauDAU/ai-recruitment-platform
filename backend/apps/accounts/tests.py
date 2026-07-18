@@ -10,6 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
 from . import oauth
 from .models import AuthEmailJob, SocialAccount, User
@@ -73,7 +74,13 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(set(response.data), {
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'has_usable_password',
+            'employer_onboarding_required', 'employer_onboarding_step',
+            'employer_verification_completed',
         })
+        self.assertIs(response.data['job_preferences_configured'], False)
+        self.assertIs(response.data['has_usable_password'], True)
+        self.assertIs(response.data['employer_verification_completed'], False)
         self.assertTrue({
             'id', 'password', 'token', 'refresh_token', 'permissions',
             'status', 'date_joined', 'last_login',
@@ -110,6 +117,45 @@ class ProfileUpdateTests(APITestCase):
         response = self.client.patch(self.url, {'full_name': 'X'})
         self.assertIn(response.status_code, (401, 403))
 
+
+class PasswordChangeTests(APITestCase):
+    def test_oauth_user_can_create_first_password_without_current_password(self):
+        user = User.objects.create_user(
+            email='oauth-employer@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('NewPassword@123'))
+        self.assertTrue(response.data['user']['has_usable_password'])
+
+    def test_existing_password_requires_correct_current_password(self):
+        user = User.objects.create_user(
+            email='local-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=user)
+
+        missing = self.client.post(reverse('auth-password-change'), {
+            'password': 'NewPassword@123',
+        }, format='json')
+        wrong = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'WrongPassword@123',
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('current_password', missing.data)
+        self.assertIn('current_password', wrong.data)
 
 GOOGLE_PROFILE = {
     'id': 'google-uid-1',
@@ -221,6 +267,16 @@ class OAuthFlowTests(APITestCase):
         complete = self._complete(response.url)
         self.assertEqual(complete.data['user']['role'], 'employer')
 
+        user = User.objects.get(email='social@example.com')
+        job = AuthEmailJob.objects.get(user=user, kind=AuthEmailJob.Kind.WELCOME)
+        self.assertEqual(job.context, {'registration_method': 'google'})
+
+        self._complete(self._callback(portal='employer').url)
+        self.assertEqual(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).count(),
+            1,
+        )
+
     def test_same_email_same_role_links_account(self):
         existing = User.objects.create_user(
             email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
@@ -233,14 +289,36 @@ class OAuthFlowTests(APITestCase):
         self.assertTrue(existing.has_usable_password())  # vẫn đăng nhập được bằng mật khẩu cũ
         self.assertEqual(existing.social_accounts.count(), 1)
 
-    def test_same_email_different_role_is_blocked(self):
-        User.objects.create_user(
-            email='social@example.com', password='Password@123', role=User.Role.EMPLOYER
+    def test_google_employer_portal_creates_separate_account_from_candidate(self):
+        """Mô hình tách cổng: đã có tài khoản ỨNG VIÊN cùng email; Google cổng NTD
+        tạo tài khoản NTD RIÊNG (không đụng tài khoản ứng viên)."""
+        candidate = User.objects.create_user(
+            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
         )
-        response = self._callback(portal='main')
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('error=wrong_portal', response.url)
-        self.assertEqual(SocialAccount.objects.count(), 0)
+        complete = self._complete(self._callback(portal='employer').url)
+
+        self.assertEqual(complete.status_code, 200)
+        self.assertEqual(complete.data['user']['role'], 'employer')
+        self.assertNotEqual(complete.data['user']['public_id'], str(candidate.public_id))
+        # Hai tài khoản độc lập cùng email, khác role.
+        self.assertEqual(User.objects.filter(email__iexact='social@example.com').count(), 2)
+        employer = User.objects.get(email__iexact='social@example.com', role=User.Role.EMPLOYER)
+        self.assertTrue(employer.social_accounts.filter(provider='google').exists())
+        # Tài khoản ứng viên giữ nguyên mật khẩu riêng.
+        candidate.refresh_from_db()
+        self.assertTrue(candidate.check_password('Password@123'))
+
+    def test_same_google_id_links_both_portal_accounts(self):
+        """Cùng một google-id gắn được vào cả tài khoản ứng viên lẫn NTD (2 row)."""
+        cand = self._complete(self._callback(portal='main').url)
+        emp = self._complete(self._callback(portal='employer').url)
+        self.assertEqual(cand.data['user']['role'], 'candidate')
+        self.assertEqual(emp.data['user']['role'], 'employer')
+        self.assertNotEqual(cand.data['user']['public_id'], emp.data['user']['public_id'])
+        self.assertEqual(
+            SocialAccount.objects.filter(provider='google', provider_user_id='google-uid-1').count(),
+            2,
+        )
 
     def test_existing_social_account_logs_in_without_duplicate(self):
         first = self._complete(self._callback().url)
@@ -386,18 +464,46 @@ class LastLoginTests(APITestCase):
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
 
-    def test_wrong_portal_does_not_update_last_login(self):
-        """Sai cổng bị chặn sau khi xác thực mật khẩu đúng — không tính là đăng nhập."""
-        user = User.objects.create_user(
-            email='login3@example.com', password='Password@123', role=User.Role.EMPLOYER,
+    def test_login_is_scoped_per_portal_account(self):
+        """Mô hình tách cổng: cùng email có 2 tài khoản (ứng viên/NTD) mật khẩu
+        riêng; đăng nhập mỗi cổng chỉ chấp nhận mật khẩu của tài khoản cổng đó."""
+        User.objects.create_user(
+            email='dual@example.com', password='CandPass@123', role=User.Role.CANDIDATE,
+        )
+        User.objects.create_user(
+            email='dual@example.com', password='EmpPass@123', role=User.Role.EMPLOYER,
         )
 
+        def login(portal, password):
+            return self.client.post(reverse('auth-login'), {
+                'email': 'dual@example.com', 'password': password,
+                'captcha_token': 'x', 'portal': portal,
+            })
+
+        # Đúng cổng, đúng mật khẩu -> token đúng role.
+        emp_ok = login('employer', 'EmpPass@123')
+        self.assertEqual(emp_ok.status_code, status.HTTP_200_OK)
+        self.assertEqual(AccessToken(emp_ok.data['access'])['role'], 'employer')
+
+        cand_ok = login('main', 'CandPass@123')
+        self.assertEqual(cand_ok.status_code, status.HTTP_200_OK)
+        self.assertEqual(AccessToken(cand_ok.data['access'])['role'], 'candidate')
+
+        # Mật khẩu của cổng kia KHÔNG mở được cổng này.
+        self.assertEqual(login('employer', 'CandPass@123').status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(login('main', 'EmpPass@123').status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_login_wrong_portal_account_absent_is_unauthorized(self):
+        """Chỉ có tài khoản ứng viên; đăng nhập cổng NTD -> không có tài khoản NTD
+        -> 401 (không lộ việc email tồn tại ở cổng khác)."""
+        user = User.objects.create_user(
+            email='login3@example.com', password='Password@123', role=User.Role.CANDIDATE,
+        )
         response = self.client.post(reverse('auth-login'), {
             'email': 'login3@example.com', 'password': 'Password@123',
-            'captcha_token': 'x', 'portal': 'main',
+            'captcha_token': 'x', 'portal': 'employer',
         })
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
 
@@ -482,7 +588,8 @@ class LastLoginTests(APITestCase):
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     FRONTEND_URL='https://main.example.test',
     EMPLOYER_FRONTEND_URL='https://employer.example.test',
-    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/xac-thuc-email',
+    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/account/verify',
+    EMPLOYER_PASSWORD_RESET_PATH='/app/reset-password',
 )
 class AuthSecurityAndEmailTests(APITestCase):
     def setUp(self):
@@ -510,7 +617,21 @@ class AuthSecurityAndEmailTests(APITestCase):
         email_verification.send_verification_email(user)
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('https://employer.example.test/app/xac-thuc-email?token=', mail.outbox[0].body)
+        self.assertIn('https://employer.example.test/app/account/verify?token=', mail.outbox[0].body)
+        self.assertIn('Mã NTD', mail.outbox[0].body)
+        self.assertIn('Xác thực tài khoản', mail.outbox[0].alternatives[0][0])
+
+    def test_employer_password_reset_email_uses_employer_portal_link(self):
+        user = User.objects.create_user(
+            email='employer-reset@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+
+        password_reset.send_password_reset_email(user)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('https://employer.example.test/app/reset-password?token=', mail.outbox[0].body)
 
     def test_email_outbox_job_is_marked_sent_after_delivery(self):
         user = User.objects.create_user(email='queue@example.com', password='Password@123')
@@ -532,7 +653,7 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
 
-    def test_employer_verification_does_not_queue_candidate_welcome_email(self):
+    def test_employer_verification_queues_one_employer_welcome_email(self):
         user = User.objects.create_user(
             email='employer-welcome@example.com', password='Password@123', role=User.Role.EMPLOYER,
         )
@@ -541,7 +662,15 @@ class AuthSecurityAndEmailTests(APITestCase):
         response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+        job = AuthEmailJob.objects.get(user=user, kind=AuthEmailJob.Kind.WELCOME)
+        self.assertEqual(job.context, {'registration_method': 'email'})
+
+        reused = self.client.post(reverse('auth-verify-confirm'), {'token': token})
+        self.assertEqual(reused.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).count(),
+            1,
+        )
 
     def test_welcome_email_is_delivered_from_the_outbox(self):
         user = User.objects.create_user(email='welcome@example.com', password='Password@123', email_verified=True)
@@ -551,6 +680,33 @@ class AuthSecurityAndEmailTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('Chào mừng', mail.outbox[0].subject)
+
+    def test_employer_welcome_email_uses_employer_content_and_portal_link(self):
+        user = User.objects.create_user(
+            email='hr-welcome@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+            full_name='Nguyễn Minh Anh',
+            email_verified=True,
+        )
+        job = AuthEmailJob.objects.create(
+            user=user,
+            kind=AuthEmailJob.Kind.WELCOME,
+            context={'registration_method': 'google'},
+        )
+
+        deliver_auth_email_job.run(job.pk)
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(
+            message.subject,
+            'Chúc mừng Nguyễn Minh Anh đã có tài khoản dành cho nhà tuyển dụng',
+        )
+        self.assertIn(f'Mã NTD {user.public_id}', message.body)
+        self.assertIn('Google đã xác thực địa chỉ email', message.body)
+        self.assertIn('https://employer.example.test/tuyendung/app/employer-verify', message.body)
+        self.assertIn('Tiếp tục thiết lập tài khoản', message.alternatives[0][0])
 
 
 @override_settings(

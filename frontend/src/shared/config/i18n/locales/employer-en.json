@@ -1,0 +1,184 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Sign in",
+    "postJob": "Post a job",
+    "goToDashboard": "Go to dashboard",
+    "openMenu": "Open menu"
+  },
+  "common": {
+    "consult": "Talk to sales",
+    "consultShort": "Consult",
+    "register": "Get started",
+    "learnMore": "Learn more",
+    "viewPricing": "View pricing",
+    "contactPrice": "Contact us",
+    "backToTop": "Back to top",
+    "startNow": "Try it now",
+    "seeServices": "Explore services"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Smart recruitment platform",
+      "title": "Post with ease. Hire the right people with AI.",
+      "subtitle": "One place to source candidates, screen CVs, manage your pipeline and measure hiring performance.",
+      "primaryCta": "Post a job for free",
+      "secondaryCta": "Talk to sales",
+      "benefits": ["Set up your account in minutes", "Manage candidates in one place", "AI-powered candidate recommendations"],
+      "dashboard": "Recruitment hub",
+      "dashboardSubtitle": "Today's overview",
+      "live": "Live",
+      "match": "Match score",
+      "newProfiles": "new profiles",
+      "jobs": ["Frontend Engineer", "Sales Executive", "UI/UX Designer"]
+    },
+    "platform": {
+      "eyebrow": "Smart Recruitment Platform",
+      "title": "From one job post to your entire hiring process",
+      "desc": "The platform combines data, automation and matching technology so hiring teams can move faster while keeping a professional candidate experience.",
+      "points": ["Build and manage hiring campaigns", "Organize profiles by position", "Report on sources and hiring performance"]
+    },
+    "ai": {
+      "eyebrow": "AI in recruitment",
+      "title": "Screen less. Make better decisions.",
+      "desc": "AI analyzes job requirements and candidate profiles to prioritize CVs worth reviewing, explain matching signals and recommend potential talent.",
+      "features": ["Candidate match scoring", "Experience highlights", "Recommendations for each job", "Less repetitive recruiter work"]
+    },
+    "functions": {
+      "eyebrow": "Core capabilities",
+      "title": "Everything a modern hiring team needs",
+      "subtitle": "Designed around real workflows, from sourcing to reporting.",
+      "items": {
+        "posting": {"title": "Smart job posting", "desc": "Create clear posts with standardized occupations, skills and locations."},
+        "pipeline": {"title": "Candidate pipeline", "desc": "Track applicants across hiring stages and processing statuses."},
+        "matching": {"title": "AI Matching", "desc": "Prioritize candidates based on the real requirements of each role."},
+        "database": {"title": "Central CV database", "desc": "Search and manage candidate profiles without scattered files."},
+        "analytics": {"title": "Performance analytics", "desc": "Track views, applications, conversion and source performance."},
+        "branding": {"title": "Employer branding", "desc": "Present your company professionally and consistently to candidates."}
+      }
+    },
+    "services": {
+      "eyebrow": "Recruitment solutions",
+      "title": "Flexible solutions for every growth goal",
+      "subtitle": "Start free, then accelerate with premium visibility, AI, employer branding and add-on services.",
+      "items": {"featured": "Featured job posts", "combo": "Saver combos", "ai": "AI & Credits", "branding": "Employer Branding", "addons": "Add-on services"}
+    },
+    "statsTitle": "The recruitment platform in numbers",
+    "consultation": {"eyebrow": "Tailored consultation", "title": "Which solution is right for your business?", "desc": "Share your hiring goals and our consultants will recommend the right roadmap and service package."},
+    "values": {
+      "eyebrow": "The value we deliver", "title": "Better for businesses, easier for recruiters",
+      "businessTitle": "For businesses", "business": ["Standardize the hiring process", "Save sourcing time and cost", "Build a sustainable employer brand"],
+      "recruiterTitle": "For recruiters", "recruiter": ["Manage work in one place", "Evaluate candidates with data", "Plan proactively and measure results"]
+    },
+    "partnersTitle": "Trusted by growing businesses"
+  },
+  "servicesPage": {
+    "eyebrow": "Recruitment services", "title": "Complete solutions to hire faster and better", "subtitle": "Combine job postings, candidate data, AI and employer branding on one platform.",
+    "sections": {
+      "posting": {"title": "Job posting", "desc": "Bring opportunities to the right talent and manage each post's performance.", "benefits": ["Quick setup with standardized data", "Visibility options for every need", "Track views and applications"]},
+      "pipeline": {"title": "Candidate management", "desc": "Keep every profile and processing step in one workspace.", "benefits": ["Clear pipeline for each position", "Notes and status updates", "Reduce missed or lost CVs"]},
+      "ai": {"title": "AI screening and recommendations", "desc": "Prioritize profiles with strong signals so recruiters can focus on important decisions.", "benefits": ["Automatic match scoring", "Profile strength summaries", "Potential candidate recommendations"]},
+      "branding": {"title": "Employer branding", "desc": "Create a trusted and consistent experience at every candidate touchpoint.", "benefits": ["Professional company page", "Prominent brand visibility", "Consistent recruitment content"]},
+      "support": {"title": "Consulting and add-ons", "desc": "Specialists support your industry, company size and hiring goals.", "benefits": ["Package selection consulting", "Implementation performance tracking", "Campaign optimization support"]}
+    },
+    "ctaTitle": "Ready to improve your hiring performance?", "ctaDesc": "Start free or talk to us about a solution that fits your business."
+  },
+  "pricing": {
+    "eyebrow": "Service pricing", "title": "Choose the right plan for your hiring goals", "subtitle": "Prices and benefits are managed by our operations team. Contact us for tailored recommendations and offers.",
+    "loading": "Loading service packages", "emptyTitle": "No service packages are currently available", "emptyDesc": "You can still share your needs to receive a tailored proposal.",
+    "errorTitle": "Pricing is currently unavailable", "errorDesc": "Please try again or leave your details so we can help.", "popular": "Featured", "includes": "What's included",
+    "registerCta": "Get started", "contactCta": "Get advice on this plan", "contactPrice": "Contact us", "adviceTitle": "Not sure which plan to choose?", "adviceDesc": "We will review your goals, hiring volume and budget to recommend the right option."
+  },
+  "consultation": {
+    "title": "Request a consultation",
+    "subtitle": "Leave your details and our recruitment consultants will get back to you within 24 business hours.",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "John Doe",
+    "companyName": "Company name",
+    "companyNamePlaceholder": "ABC Co., Ltd.",
+    "email": "Email",
+    "phone": "Phone number",
+    "province": "Province/City",
+    "provincePlaceholder": "Select province/city",
+    "need": "What do you need?",
+    "needPlaceholder": "Select your need",
+    "needOptions": {
+      "post_job": "I want to post a job",
+      "buy_service": "I want to learn about service packages",
+      "ai_solution": "I'm interested in AI CV screening",
+      "employer_branding": "I want employer branding services",
+      "other": "Something else"
+    },
+    "note": "Note",
+    "notePlaceholder": "Tell us more about your needs (optional)",
+    "submit": "Send request",
+    "consentNote": "By clicking \"Send request\", you agree to receive consulting information about suitable recruitment solutions.",
+    "success": "Request sent. We will contact you shortly!",
+    "error": "Failed to send request. Please try again later.",
+    "required": {
+      "fullName": "Please enter your full name",
+      "email": "Please enter your email",
+      "emailInvalid": "Invalid email address",
+      "phone": "Please enter your phone number",
+      "phoneInvalid": "Invalid phone number"
+    }
+  },
+  "footer": {
+    "tagline": "AI-powered recruitment platform — post jobs, screen CVs and manage candidates in one place.",
+    "forEmployers": "For employers",
+    "forCandidates": "For candidates",
+    "candidatePortal": "Find jobs",
+    "createCv": "Create a professional CV",
+    "contactTitle": "Contact",
+    "hotlineNorth": "Hotline (North)",
+    "hotlineSouth": "Hotline (South)",
+    "hotline": "Hotline",
+    "connectWith": "Connect with us"
+  },
+  "contactBand": {
+    "title": "We are ready to support your business",
+    "subtitle": "Our consultants support you from your first job posting to long-term hiring strategy.",
+    "supportEmail": "Support email",
+    "workingHours": "Working hours"
+  },
+  "about": {
+    "metaTitle": "About our recruitment platform",
+    "heroEyebrow": "About us",
+    "heroTitle": "Matching the right people to the right jobs with AI",
+    "heroSubtitle": "We build a smart recruitment platform that helps Vietnamese businesses find the right talent faster, more accurately and at lower cost.",
+    "whoTitle": "Who we are",
+    "whoBody1": "An AI-powered recruitment platform serving both candidates and businesses: candidates build professional CVs and get matching job suggestions; businesses post jobs, screen applications and manage the whole hiring pipeline in one place.",
+    "whoBody2": "With automatic CV analysis and matching, we close the gap between employers and suitable candidates — so every posting reaches exactly who needs to see it.",
+    "valuesTitle": "Core values",
+    "values": {
+      "ai": {
+        "title": "AI that actually works",
+        "desc": "AI screens, scores and recommends candidates based on real data, not just keywords."
+      },
+      "efficiency": {
+        "title": "Measurable results",
+        "desc": "Every posting comes with clear numbers: views, applications received, match rates."
+      },
+      "companion": {
+        "title": "A long-term partner",
+        "desc": "Hiring strategy consulting by industry and company size, not just selling packages."
+      }
+    },
+    "statsTitle": "The platform in numbers"
+  },
+  "contact": {
+    "metaTitle": "Contact recruitment sales",
+    "heroEyebrow": "Contact",
+    "heroTitle": "Talk to our recruitment consultants",
+    "heroSubtitle": "Send a consultation request or reach us directly via hotline or email — we reply during business hours.",
+    "infoTitle": "Contact information",
+    "address": "Address",
+    "chatZalo": "Chat on Zalo",
+    "chatMessenger": "Messenger",
+    "mapTitle": "Map"
+  }
+}

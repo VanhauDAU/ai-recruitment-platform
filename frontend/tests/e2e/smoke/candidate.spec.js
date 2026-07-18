@@ -224,7 +224,11 @@ test('candidate smoke: job application submits the selected immutable CV version
   const job = {
     public_id: 'job_1', slug: 'apply-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',
     description: '<p>Mô tả công việc</p>', requirements: '', benefits: '', locations_detail: [],
-    requirement_tags: [], benefit_tags: [], domain_knowledge: [], workplace_groups: [],
+    requirement_tags: [], benefit_tags: [], domain_knowledge: [],
+    workplace_groups: [
+      { province_id: 3, province_name: 'Bình Dương', addresses: [] },
+      { province_id: 4, province_name: 'Đà Nẵng', addresses: [] },
+    ],
     work_schedules: [], language_requirements: [], category: null, category_name: '',
     experience_years: 'none', salary_type: 'negotiable', work_type: 'office',
     employment_type: 'full_time', view_count: 0, status: 'active',
@@ -248,7 +252,11 @@ test('candidate smoke: job application submits the selected immutable CV version
           : path === '/api/jobs/categories/' || path === '/api/locations/'
             ? []
             : path === '/api/v2/cvs/'
-              ? { results: [{ public_id: 'cv_1', title: 'CV chính', is_default: true, cv_type: 'builder' }] }
+              ? { results: [{
+                  public_id: 'cv_1', title: 'CV chính', is_default: true, cv_type: 'builder',
+                  latest_version_public_id: 'cvv_2', has_unsaved_changes: false,
+                  completion_score: 85, is_complete: true, updated_at: '2026-07-17T10:00:00Z',
+                }] }
               : path === '/api/v2/cvs/cv_1/'
                 ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
                 : path === '/api/v2/cvs/cv_1/versions/'
@@ -262,12 +270,35 @@ test('candidate smoke: job application submits the selected immutable CV version
   await page.goto('/viec-lam/apply-job')
   await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
   await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển ngay', exact: true }).click()
-  await expect(page.getByRole('dialog', { name: 'Ứng tuyển: Kỹ sư phần mềm' })).toBeVisible()
-  await expect(page.getByText('Phiên bản 2 (đã publish)')).toBeVisible()
+  const applicationDialog = page.getByRole('dialog')
+  await expect(applicationDialog).toBeVisible()
+  await expect(applicationDialog.getByText('Kỹ sư phần mềm', { exact: true })).toBeVisible()
+  await expect(applicationDialog.getByRole('radio', { name: /CV chính/ })).toBeChecked()
+  await expect(applicationDialog.getByText(/Tải CV từ máy tính/)).toBeVisible()
+  const locationSelect = applicationDialog.getByRole('combobox', { name: 'Địa điểm làm việc mong muốn' })
+  await expect(locationSelect).toBeVisible()
+  await locationSelect.click()
+  await page.locator('.ant-select-dropdown:visible .ant-select-item-option-content', { hasText: 'Bình Dương' }).click()
+  await expect(page.locator('.ant-select-dropdown:visible')).toHaveCount(0)
+  await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: 'Bình Dương' })).toBeVisible()
+  await locationSelect.click()
+  await page.locator('.ant-select-dropdown:visible .ant-select-item-option-content', { hasText: 'Đà Nẵng' }).click()
+  await expect(page.locator('.ant-select-dropdown:visible')).toHaveCount(0)
+  await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: 'Đà Nẵng' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Xác nhận ứng tuyển' }).click()
-  await expect(page.getByRole('dialog', { name: 'Ứng tuyển: Kỹ sư phần mềm' })).toBeHidden()
+  await applicationDialog.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }).check()
+  await applicationDialog.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }).click()
+  await expect(applicationDialog).toBeHidden()
   expect(applicationPayload).toEqual({
-    job_public_id: 'job_1', cv_public_id: 'cv_1', version_public_id: 'cvv_2', cover_letter: '',
+    job_public_id: 'job_1',
+    cv_public_id: 'cv_1',
+    version_public_id: 'cvv_2',
+    cover_letter: '',
+    preferred_location_ids: [3, 4],
+    allow_ai_analysis: false,
+    data_processing_consent: true,
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
   })
 })

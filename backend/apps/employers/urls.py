@@ -15,11 +15,16 @@ from .api.views import (
     JoinCompanyView,
     MyCompanyView,
     RecruiterMeView,
+    RecruitmentNeedView,
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )
+from .api.views.registration import CompleteEmployerRegistrationView, EmployerRegisterView
 
 urlpatterns = [
+    path('register/', EmployerRegisterView.as_view(), name='employer-register'),
+    path('onboarding/registration/', CompleteEmployerRegistrationView.as_view(), name='employer-registration-complete'),
+    path('consulting-need/', RecruitmentNeedView.as_view(), name='employer-consulting-need'),
     # Nhà tuyển dụng + onboarding
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
     path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),

@@ -33,25 +33,30 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/password-reset/` | Gửi email chứa link đặt lại mật khẩu (public, cần `captcha_token`). **Luôn trả 200 kèm cùng một `detail`** dù email có tồn tại hay không — chống dò danh sách email. Cooldown 60s/tài khoản (im lặng), throttle 5/phút theo IP |
 | GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn. Dùng để hiện ngay màn "hết hạn" thay vì bắt user gõ xong mật khẩu mới báo lỗi |
 | POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
+| POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu được đặt lần đầu chỉ với `new_password`. Có thể gửi `logout_all_sessions` để thu hồi refresh token cũ |
 | POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`; DB lưu storage key) |
 | GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
 | GET | `/api/auth/oauth/{provider}/callback/` | Provider gọi lại; verify state, tạo/liên kết user, redirect về trang callback frontend kèm `one_time_code` (hoặc `?error=`) |
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PATCH | `/api/candidate/profile/` | Đọc/cập nhật `gender` cho onboarding và cài đặt gợi ý việc làm (tự tạo profile legacy khi cần) |
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
-| GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + trạng thái onboarding 5 bước (chỉ `position_title` sửa được) |
+| GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + state onboarding bắt buộc và checklist xác thực có thể hoàn thiện dần (chỉ `position_title` sửa được) |
+| POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
+| POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
+| GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |
 | POST | `/api/employer/phone/send-otp/` | Gửi mã OTP xác thực SĐT (gửi qua email tài khoản; cooldown 60s, hết hạn 10 phút) |
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
-| POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân với ứng viên |
+| POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
 | POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới (cần đã xác thực SĐT; người tạo là owner, hiệu lực ngay, trạng thái `unverified`) |
 | GET | `/api/employer/company/search/?q=` | Tìm công ty có sẵn theo tên / tên thương mại / MST (không dấu) |
 | POST | `/api/employer/company/join/` | Join công ty có sẵn: multipart `company` + `proof_type` (`business_registration` hoặc `authorization_and_id`) + file giấy tờ; membership `pending` chờ admin duyệt |
 | POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; JPG/PNG/GIF/WebP, multipart `file`) |
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
-| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty (ĐKDN, ủy quyền, định danh, DLCN...); POST multipart `doc_type` + `file` (jpeg/png/pdf) |
+| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; POST multipart `doc_type` + `file`. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra cả MIME lẫn chữ ký file, tối đa 5 MB |
 | GET/POST | `/api/employer/company/update-requests/` | Yêu cầu cập nhật thông tin công ty (owner; tối đa 1 pending; đổi MST/tên bắt buộc `reason` + `proof_type`) |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
+| GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI job/application, activity 7 ngày, nhu cầu ưu tiên, tin và hồ sơ gần đây |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
 | GET | `/api/jobs/categories/` | Danh sách ngành nghề (taxonomy 3 cấp: nhóm nghề/nghề/vị trí chuyên môn), public, có phân trang mặc định |
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |

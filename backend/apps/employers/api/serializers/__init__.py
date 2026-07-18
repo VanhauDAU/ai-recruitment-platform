@@ -7,6 +7,8 @@ from .companies import (
     IndustrySerializer,
 )
 from .onboarding import RecruiterProfileSerializer
+from .recruitment_need import RecruitmentNeedSerializer
+from .registration import EmployerRegisterSerializer, EmployerRegistrationProfileSerializer
 from .verification import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 
 __all__ = [
@@ -17,4 +19,7 @@ __all__ = [
     'CompanyUpdateRequestSerializer',
     'IndustrySerializer',
     'RecruiterProfileSerializer',
+    'RecruitmentNeedSerializer',
+    'EmployerRegisterSerializer',
+    'EmployerRegistrationProfileSerializer',
 ]

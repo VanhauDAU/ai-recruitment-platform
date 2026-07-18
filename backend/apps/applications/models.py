@@ -44,6 +44,16 @@ class Application(models.Model):
     submitted_cv_source = models.CharField(max_length=30, default='builder')
     submitted_at = models.DateTimeField(null=True, blank=True)
     cover_letter = models.TextField(blank=True)
+    preferred_locations = models.ManyToManyField(
+        'locations.Location',
+        blank=True,
+        related_name='applications',
+    )
+    contact_name = models.CharField(max_length=255, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+    allow_ai_analysis = models.BooleanField(default=False)
+    data_processing_consent = models.BooleanField(default=False)
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.APPLIED)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.SUBMITTED)
     employer_note = models.TextField(blank=True)
