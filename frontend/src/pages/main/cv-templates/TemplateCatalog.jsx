@@ -9,6 +9,7 @@ import {
 import { useLocales } from '@/entities/locale'
 import { UseTemplateModal } from '@/features/create-cv-from-template'
 import { useLoginPrompt } from '@/features/auth'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import {
   catalogCategoryFromPath,
   catalogLocaleFromPath,
@@ -95,7 +96,7 @@ export default function TemplateCatalog() {
     return () => { cancelled = true }
   }, [locale, activeCategory, page])
 
-  useEffect(() => { document.title = 'Mẫu CV chuyên nghiệp | ProCV' }, [])
+  useEffect(() => { setDocumentTitle('Mẫu CV chuyên nghiệp') }, [])
 
   // Infinite scroll
   useEffect(() => {

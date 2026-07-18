@@ -30,18 +30,7 @@ class EmployerRegistrationProfileSerializer(serializers.Serializer):
         return value
 
     def validate_contact_phone(self, value):
-        value = value.replace(' ', '').replace('.', '').replace('-', '')
-        user = self.context.get('user')
-        conflict = RecruiterProfile.objects.filter(contact_phone=value)
-        verified_conflict = RecruiterProfile.objects.filter(verified_phone=value)
-        if user is not None:
-            conflict = conflict.exclude(user=user)
-            verified_conflict = verified_conflict.exclude(user=user)
-        if conflict.exists() or verified_conflict.exists():
-            raise serializers.ValidationError(
-                'Số điện thoại này đã được dùng cho một tài khoản nhà tuyển dụng khác.'
-            )
-        return value
+        return value.replace(' ', '').replace('.', '').replace('-', '')
 
     def validate_terms_accepted(self, value):
         if value is not True:
@@ -57,7 +46,9 @@ class EmployerRegisterSerializer(EmployerRegistrationProfileSerializer):
     captcha_token = serializers.CharField(write_only=True)
 
     def validate_email(self, value):
+        # Trùng chỉ tính trong phạm vi tài khoản NTD: cùng email vẫn có thể đã là
+        # tài khoản ứng viên (mô hình tách tài khoản theo cổng như TopCV).
         value = User.objects.normalize_email(value)
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
+        if User.objects.filter(email__iexact=value, role=User.Role.EMPLOYER).exists():
+            raise serializers.ValidationError('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.')
         return value

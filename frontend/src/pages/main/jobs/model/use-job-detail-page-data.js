@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useConsent } from '@/entities/consent'
 import { getJobDetail, getJobs, jobDetailPath, jobKeys, recordJobView } from '@/entities/job'
+import { setDocumentTitle } from '@/shared/config/document-title'
 
 const RELATED_PAGE_SIZE = 4
 
@@ -28,8 +29,8 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
   useEffect(() => {
     if (!job?.title) return undefined
     const previousTitle = document.title
-    document.title = `Tuyển ${job.title}`
-    return () => { document.title = previousTitle }
+    setDocumentTitle(`Tuyển ${job.title}`)
+    return () => { setDocumentTitle(previousTitle) }
   }, [job?.title])
 
   useEffect(() => {

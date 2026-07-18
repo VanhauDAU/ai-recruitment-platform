@@ -159,7 +159,7 @@ export default function CandidateUserMenu({ user, logout }) {
       </button>
 
       <Dropdown open={open} onOpenChange={setOpen} trigger={['hover']} placement="bottomRight" popupRender={() => userPanel} mouseLeaveDelay={0.2}>
-        <button className="flex cursor-pointer items-center gap-1">
+        <button aria-label="Mở menu tài khoản" className="flex cursor-pointer items-center gap-1">
           <Avatar size={38} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
           <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? '-rotate-90' : 'rotate-90'}`} />
         </button>

@@ -15,6 +15,7 @@ export default function EmployerConsentFields({ compact = false }) {
       <Form.Item
         name="terms_accepted"
         valuePropName="checked"
+        required
         className="!mb-0"
         rules={[{
           validator: (_, value) => value
@@ -28,6 +29,7 @@ export default function EmployerConsentFields({ compact = false }) {
             <Link target="_blank" to={employerMarketingPath('/dieu-khoan-dich-vu')} className="font-semibold !text-emerald-700 hover:underline">Điều khoản dịch vụ</Link>
             {' '}và{' '}
             <Link target="_blank" to={employerMarketingPath('/chinh-sach-quyen-rieng')} className="font-semibold !text-emerald-700 hover:underline">Chính sách quyền riêng tư</Link>.
+            <span className="ml-1 text-red-500" aria-hidden="true">*</span>
           </span>
         </Checkbox>
       </Form.Item>

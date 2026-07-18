@@ -6,3 +6,10 @@ export async function updateProfile({ full_name, phone }) {
   const { data } = await api.patch('/auth/me/', { full_name, phone })
   return data
 }
+
+export async function uploadAvatar(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post('/auth/avatar/', formData)
+  return data
+}

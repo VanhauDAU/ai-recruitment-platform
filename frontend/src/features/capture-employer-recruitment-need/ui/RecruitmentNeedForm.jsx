@@ -18,7 +18,8 @@ const CONSULTATION_OPTIONS = [
 ]
 
 const POSITION_LEVEL_OPTIONS = Object.entries(POSITION_LEVEL_LABELS).map(([value, label]) => ({ value, label }))
-const moneyFormatter = (value) => value == null ? '' : `${String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} VNĐ`
+const MIN_BUDGET = 1_000_000
+const moneyFormatter = (value) => value == null ? '' : String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 const moneyParser = (value) => value?.replace(/\D/g, '') || ''
 
 export default function RecruitmentNeedForm({ onCompleted }) {
@@ -161,14 +162,14 @@ export default function RecruitmentNeedForm({ onCompleted }) {
         </Form.Item>
       </div>
 
-      <Form.Item label={<span className="font-semibold">Ngân sách tuyển dụng cho vị trí này của bạn là?</span>}>
+      <Form.Item label={<span className="font-semibold">Ngân sách tuyển dụng cho vị trí này của bạn là? <span className="text-xs font-normal text-slate-500">(tối thiểu 1.000.000đ)</span></span>}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <Form.Item name="budget_min" noStyle>
-            <InputNumber min={0} formatter={moneyFormatter} parser={moneyParser} placeholder="Từ" className="!h-11 !w-full [&_.ant-input-number-input]:!h-[42px]" />
+          <Form.Item name="budget_min" noStyle rules={[{ type: 'number', min: MIN_BUDGET, message: 'Ngân sách tối thiểu là 1.000.000đ' }]}>
+            <InputNumber min={MIN_BUDGET} formatter={moneyFormatter} parser={moneyParser} placeholder="Từ" className="!h-11 !w-full [&_.ant-input-number-input]:!h-[42px]" />
           </Form.Item>
           <span className="text-slate-400">–</span>
-          <Form.Item name="budget_max" noStyle>
-            <InputNumber min={0} formatter={moneyFormatter} parser={moneyParser} placeholder="Đến" className="!h-11 !w-full [&_.ant-input-number-input]:!h-[42px]" />
+          <Form.Item name="budget_max" noStyle rules={[{ type: 'number', min: MIN_BUDGET, message: 'Ngân sách tối thiểu là 1.000.000đ' }]}>
+            <InputNumber min={MIN_BUDGET} formatter={moneyFormatter} parser={moneyParser} placeholder="Đến" className="!h-11 !w-full [&_.ant-input-number-input]:!h-[42px]" />
           </Form.Item>
         </div>
       </Form.Item>

@@ -6,6 +6,7 @@ import RoleGuard from '@/app/router/guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,
+  EmployerAccountInformationPage,
   EmployerBusinessLicensePage,
   EmployerCompanySettingsPage,
   EmployerContactPage,
@@ -85,6 +86,7 @@ export function employerRoutes() {
           <Route element={<DashboardLayout />}>
             <Route path={employerAppPath('/employer-verify')} element={<EmployerVerifyPage />} />
             <Route path={employerAppPath('/account/phone-verify')} element={<EmployerPhoneVerifyPage />} />
+            <Route path={employerAppPath('/account/settings/account-info')} element={<EmployerAccountInformationPage />} />
             <Route path={employerAppPath('/account/settings/password-login')} element={<EmployerPasswordLoginPage />} />
             <Route path={employerAppPath('/account/settings/company')} element={<EmployerCompanySettingsPage />} />
             <Route path={employerAppPath('/account/settings/gpkd')} element={<EmployerBusinessLicensePage />} />

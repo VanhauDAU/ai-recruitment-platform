@@ -10,6 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
 from . import oauth
 from .models import AuthEmailJob, SocialAccount, User
@@ -288,14 +289,36 @@ class OAuthFlowTests(APITestCase):
         self.assertTrue(existing.has_usable_password())  # vẫn đăng nhập được bằng mật khẩu cũ
         self.assertEqual(existing.social_accounts.count(), 1)
 
-    def test_same_email_different_role_is_blocked(self):
-        User.objects.create_user(
-            email='social@example.com', password='Password@123', role=User.Role.EMPLOYER
+    def test_google_employer_portal_creates_separate_account_from_candidate(self):
+        """Mô hình tách cổng: đã có tài khoản ỨNG VIÊN cùng email; Google cổng NTD
+        tạo tài khoản NTD RIÊNG (không đụng tài khoản ứng viên)."""
+        candidate = User.objects.create_user(
+            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
         )
-        response = self._callback(portal='main')
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('error=wrong_portal', response.url)
-        self.assertEqual(SocialAccount.objects.count(), 0)
+        complete = self._complete(self._callback(portal='employer').url)
+
+        self.assertEqual(complete.status_code, 200)
+        self.assertEqual(complete.data['user']['role'], 'employer')
+        self.assertNotEqual(complete.data['user']['public_id'], str(candidate.public_id))
+        # Hai tài khoản độc lập cùng email, khác role.
+        self.assertEqual(User.objects.filter(email__iexact='social@example.com').count(), 2)
+        employer = User.objects.get(email__iexact='social@example.com', role=User.Role.EMPLOYER)
+        self.assertTrue(employer.social_accounts.filter(provider='google').exists())
+        # Tài khoản ứng viên giữ nguyên mật khẩu riêng.
+        candidate.refresh_from_db()
+        self.assertTrue(candidate.check_password('Password@123'))
+
+    def test_same_google_id_links_both_portal_accounts(self):
+        """Cùng một google-id gắn được vào cả tài khoản ứng viên lẫn NTD (2 row)."""
+        cand = self._complete(self._callback(portal='main').url)
+        emp = self._complete(self._callback(portal='employer').url)
+        self.assertEqual(cand.data['user']['role'], 'candidate')
+        self.assertEqual(emp.data['user']['role'], 'employer')
+        self.assertNotEqual(cand.data['user']['public_id'], emp.data['user']['public_id'])
+        self.assertEqual(
+            SocialAccount.objects.filter(provider='google', provider_user_id='google-uid-1').count(),
+            2,
+        )
 
     def test_existing_social_account_logs_in_without_duplicate(self):
         first = self._complete(self._callback().url)
@@ -441,18 +464,46 @@ class LastLoginTests(APITestCase):
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
 
-    def test_wrong_portal_does_not_update_last_login(self):
-        """Sai cổng bị chặn sau khi xác thực mật khẩu đúng — không tính là đăng nhập."""
-        user = User.objects.create_user(
-            email='login3@example.com', password='Password@123', role=User.Role.EMPLOYER,
+    def test_login_is_scoped_per_portal_account(self):
+        """Mô hình tách cổng: cùng email có 2 tài khoản (ứng viên/NTD) mật khẩu
+        riêng; đăng nhập mỗi cổng chỉ chấp nhận mật khẩu của tài khoản cổng đó."""
+        User.objects.create_user(
+            email='dual@example.com', password='CandPass@123', role=User.Role.CANDIDATE,
+        )
+        User.objects.create_user(
+            email='dual@example.com', password='EmpPass@123', role=User.Role.EMPLOYER,
         )
 
+        def login(portal, password):
+            return self.client.post(reverse('auth-login'), {
+                'email': 'dual@example.com', 'password': password,
+                'captcha_token': 'x', 'portal': portal,
+            })
+
+        # Đúng cổng, đúng mật khẩu -> token đúng role.
+        emp_ok = login('employer', 'EmpPass@123')
+        self.assertEqual(emp_ok.status_code, status.HTTP_200_OK)
+        self.assertEqual(AccessToken(emp_ok.data['access'])['role'], 'employer')
+
+        cand_ok = login('main', 'CandPass@123')
+        self.assertEqual(cand_ok.status_code, status.HTTP_200_OK)
+        self.assertEqual(AccessToken(cand_ok.data['access'])['role'], 'candidate')
+
+        # Mật khẩu của cổng kia KHÔNG mở được cổng này.
+        self.assertEqual(login('employer', 'CandPass@123').status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(login('main', 'EmpPass@123').status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_login_wrong_portal_account_absent_is_unauthorized(self):
+        """Chỉ có tài khoản ứng viên; đăng nhập cổng NTD -> không có tài khoản NTD
+        -> 401 (không lộ việc email tồn tại ở cổng khác)."""
+        user = User.objects.create_user(
+            email='login3@example.com', password='Password@123', role=User.Role.CANDIDATE,
+        )
         response = self.client.post(reverse('auth-login'), {
             'email': 'login3@example.com', 'password': 'Password@123',
-            'captcha_token': 'x', 'portal': 'main',
+            'captcha_token': 'x', 'portal': 'employer',
         })
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
 

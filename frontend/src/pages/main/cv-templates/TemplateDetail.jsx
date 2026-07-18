@@ -11,6 +11,7 @@ import {
   templateColors,
 } from '@/entities/cv-template'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import { useLocales } from '@/entities/locale'
 import { useLoginPrompt } from '@/features/auth'
 import { CvSourcePanel, UseTemplateModal } from '@/features/create-cv-from-template'
@@ -51,7 +52,7 @@ export default function TemplateDetail() {
         setTemplate(detail)
         setRelated(recommendations)
         setSelectedColor(templateColors(detail)[0].hex_code)
-        document.title = `${detail.display_name} | Mẫu CV ProCV`
+        setDocumentTitle(`Mẫu CV: ${detail.display_name}`)
       })
       .catch(() => !cancelled && setTemplate(null))
       .finally(() => !cancelled && setLoading(false))

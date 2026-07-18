@@ -7,7 +7,11 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from ..models import AuthEmailJob, User
-from ..serializers import PasswordResetConfirmSerializer, PasswordResetRequestSerializer
+from ..serializers import (
+    PORTAL_ROLE_BY_NAME,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+)
 from ..services import verify_request_captcha
 from ..services import password_reset as pr
 from ..services.tokens import revoke_refresh_tokens
@@ -37,8 +41,12 @@ class PasswordResetRequestView(APIView):
         serializer.is_valid(raise_exception=True)
         verify_request_captcha(request, 'password_reset')
 
+        # Đúng tài khoản của cổng: một email có thể có tài khoản ứng viên và NTD
+        # riêng, mỗi bên mật khẩu riêng.
+        portal = serializer.validated_data.get('portal') or 'main'
         user = User.objects.filter(
             email__iexact=serializer.validated_data['email'],
+            role=PORTAL_ROLE_BY_NAME[portal],
             is_deleted=False,
             status=User.Status.ACTIVE,
         ).first()

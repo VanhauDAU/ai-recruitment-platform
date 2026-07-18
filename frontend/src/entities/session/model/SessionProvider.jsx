@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser } from '../api/session.api'
 import SessionContext from './session-context'
-import { clearSession, getAccessToken } from '@/shared/api/token-store'
+import {
+  clearSession,
+  clearTokens,
+  getAccessToken,
+  subscribeToSessionLogout,
+} from '@/shared/api/token-store'
 
 function loginPathForCurrentPortal() {
   const portal = getCurrentPortal()
@@ -19,17 +24,23 @@ export default function SessionProvider({ children }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const clearCurrentSession = useCallback(() => {
-    clearSession()
+  const clearSessionState = useCallback(() => {
     setUser(null)
     // Cache server-state gắn với phiên cũ (saved jobs, CV...) phải bị bỏ.
     queryClient.clear()
   }, [queryClient])
 
+  const clearCurrentSession = useCallback(() => {
+    // Phiên hiện tại hỏng/hết hạn không được làm mất phiên hợp lệ ở portal khác.
+    clearTokens()
+    clearSessionState()
+  }, [clearSessionState])
+
   const logout = useCallback(() => {
-    clearCurrentSession()
+    clearSession()
+    clearSessionState()
     navigate(loginPathForCurrentPortal(), { replace: true })
-  }, [clearCurrentSession, navigate])
+  }, [clearSessionState, navigate])
 
   const refreshSession = useCallback(async () => {
     try {
@@ -62,6 +73,11 @@ export default function SessionProvider({ children }) {
   useEffect(() => {
     restoreSession()
   }, [restoreSession])
+
+  useEffect(
+    () => subscribeToSessionLogout(clearSessionState),
+    [clearSessionState],
+  )
 
   const value = useMemo(
     () => ({

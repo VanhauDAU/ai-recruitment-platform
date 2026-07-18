@@ -203,15 +203,17 @@ def fetch_profile(provider, access_token):
 # ---- Tạo / liên kết user ----
 
 def resolve_user(provider, profile, portal, *, include_created=False):
-    """Tìm hoặc tạo user cho danh tính social, theo luật cổng.
+    """Tìm hoặc tạo **tài khoản của cổng** cho danh tính social (mô hình tách cổng).
 
-    - Đã có SocialAccount -> dùng user đó (sai role cổng thì chặn).
-    - Email trùng user hiện có cùng role -> tự liên kết.
-    - Email trùng khác role -> chặn 'wrong_portal'.
-    - Chưa có -> tạo user mới: role theo cổng, email_verified=True, password unusable.
+    Mỗi cổng có tài khoản riêng theo `role`; cùng một google-id gắn được vào cả
+    tài khoản ứng viên lẫn NTD (mỗi bên một SocialAccount row).
+
+    - Đã có SocialAccount của google-id NÀY gắn vào tài khoản đúng `role` -> dùng nó.
+    - Chưa có, nhưng đã có tài khoản (email, role) -> liên kết social vào tài khoản đó.
+    - Chưa có gì -> tạo tài khoản mới (email, role), email_verified=True, password unusable.
 
     ``include_created=True`` lets the caller trigger first-account side effects
-    without confusing a newly linked provider with a newly created user.
+    without confusing a newly linked provider with a newly created account.
     """
     role = PORTAL_ROLE[portal]
 
@@ -221,13 +223,11 @@ def resolve_user(provider, profile, portal, *, include_created=False):
     with transaction.atomic():
         account = (
             SocialAccount.objects.select_related('user')
-            .filter(provider=provider, provider_user_id=profile['id'])
+            .filter(provider=provider, provider_user_id=profile['id'], user__role=role)
             .first()
         )
         if account:
             user = account.user
-            if user.role != role:
-                raise OAuthError('wrong_portal')
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
             return result(user, False)
@@ -236,11 +236,9 @@ def resolve_user(provider, profile, portal, *, include_created=False):
         if not email:
             raise OAuthError('no_email')
 
-        user = User.objects.filter(email__iexact=email).first()
+        user = User.objects.filter(email__iexact=email, role=role).first()
         created = False
         if user:
-            if user.role != role:
-                raise OAuthError('wrong_portal')
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
             # Provider đã xác thực email này -> coi như email tài khoản đã xác thực.

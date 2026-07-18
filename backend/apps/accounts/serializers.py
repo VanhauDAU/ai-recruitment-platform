@@ -11,6 +11,15 @@ from .models import User
 from .services.access import is_account_accessible
 
 
+# Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
+# đăng nhập/đăng ký/quên mật khẩu (một email có thể có nhiều tài khoản khác cổng).
+PORTAL_ROLE_BY_NAME = {
+    'main': User.Role.CANDIDATE,
+    'employer': User.Role.EMPLOYER,
+    'admin': User.Role.ADMIN,
+}
+
+
 def password_field():
     """Cùng một bộ rule mật khẩu cho đăng ký và đặt lại mật khẩu."""
     return serializers.CharField(
@@ -37,16 +46,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'full_name': {'required': False}}
 
     def validate_email(self, value):
-        """Chuẩn hoá + chặn trùng không phân biệt hoa/thường.
+        # Chỉ chuẩn hoá; tính duy nhất kiểm ở `validate()` vì phụ thuộc cả `role`.
+        return User.objects.normalize_email(value)
 
-        `UniqueValidator` mặc định của ModelSerializer so sánh phân biệt hoa/thường
-        nên `Hau@gmail.com` lọt qua dù đã có `hau@gmail.com`, rồi vỡ ở ràng buộc
-        `uniq_users_email_lower` dưới DB thành lỗi 500.
+    def validate(self, attrs):
+        """Chặn trùng theo (email, role): cùng email vẫn đăng ký được ở cổng khác.
+
+        Mô hình tách cổng — một email có thể có tài khoản ứng viên và NTD riêng.
         """
-        value = User.objects.normalize_email(value)
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
-        return value
+        if User.objects.filter(email__iexact=attrs['email'], role=attrs['role']).exists():
+            raise serializers.ValidationError(
+                {'email': 'Email này đã được sử dụng cho một tài khoản cùng loại.'}
+            )
+        return attrs
 
     def create(self, validated_data):
         validated_data.pop('captcha_token', None)
@@ -54,16 +66,28 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class RegisterEmailAvailabilitySerializer(serializers.Serializer):
-    """Normalize the email before the debounced registration pre-check."""
+    """Normalize the email before the debounced registration pre-check.
+
+    ``role`` scopes the check to one portal: cùng email vẫn còn trống ở cổng khác
+    (mô hình tách tài khoản theo cổng). Mặc định kiểm cho cổng ứng viên.
+    """
 
     email = serializers.EmailField()
+    role = serializers.ChoiceField(
+        choices=[User.Role.CANDIDATE, User.Role.EMPLOYER],
+        required=False,
+        default=User.Role.CANDIDATE,
+    )
 
     def validate_email(self, value):
         return User.objects.normalize_email(value)
 
 
 class SessionUserSerializer(serializers.ModelSerializer):
-    """Authenticated-session DTO containing only fields rendered by the portals."""
+    """Authenticated-session DTO containing only fields rendered by the portals.
+
+    Mỗi tài khoản đơn-vai (mô hình tách cổng): `role` là vai của chính tài khoản.
+    """
 
     avatar_url = serializers.SerializerMethodField()
     job_preferences_configured = serializers.SerializerMethodField()
@@ -173,17 +197,25 @@ class ChangeEmailSerializer(serializers.Serializer):
         user = self.context['request'].user
         if value.lower() == user.email.lower():
             raise serializers.ValidationError('Email mới trùng với email hiện tại.')
-        if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho tài khoản khác.')
+        # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng).
+        if User.objects.filter(email__iexact=value, role=user.role).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError('Email này đã được sử dụng cho một tài khoản cùng loại.')
         return value
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     """Yêu cầu gửi link đặt lại mật khẩu. Không kiểm tra email có tồn tại hay
-    không — view luôn trả cùng một thông điệp để tránh lộ danh sách email."""
+    không — view luôn trả cùng một thông điệp để tránh lộ danh sách email.
+
+    ``portal`` chọn đúng tài khoản của cổng (một email có thể có tài khoản ứng
+    viên và NTD riêng, mỗi bên mật khẩu riêng). Bỏ trống -> cổng ứng viên.
+    """
 
     email = serializers.EmailField()
     captcha_token = serializers.CharField(write_only=True)
+    portal = serializers.ChoiceField(
+        choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True
+    )
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
@@ -212,19 +244,15 @@ class PasswordChangeSerializer(serializers.Serializer):
         return attrs
 
 
-# Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.
-PORTAL_ROLES = {
-    'main': [User.Role.CANDIDATE],
-    'employer': [User.Role.EMPLOYER],
-    'admin': [User.Role.ADMIN],
-}
-
-
 class LoginCredentialsSerializer(TokenObtainSerializer):
     """Xác thực email/mật khẩu mà chưa phát JWT.
 
     Tách bước này khỏi ``TokenObtainPairSerializer`` để tài khoản bật 2FA không
     nhận refresh token trước khi mã email được xác nhận.
+
+    Mô hình tách tài khoản theo cổng: cùng email có thể có tài khoản ứng viên và
+    NTD riêng (mật khẩu riêng), nên phải resolve theo **(email, role của cổng)**
+    thay vì `authenticate()` mặc định (natural key nhập nhằng khi email trùng).
     """
 
     default_error_messages = {
@@ -233,18 +261,25 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
     }
 
     captcha_token = serializers.CharField(write_only=True)
-    portal = serializers.ChoiceField(choices=list(PORTAL_ROLES), required=False, write_only=True)
+    # Bỏ trống -> cổng ứng viên (mặc định). FE luôn gửi 'main'/'employer'/'admin'.
+    portal = serializers.ChoiceField(choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True)
 
     def validate(self, attrs):
         attrs.pop('captcha_token', None)
-        portal = attrs.pop('portal', None)
-        self.portal = portal
-        data = super().validate(attrs)
-        if not is_account_accessible(self.user):
+        self.portal = attrs.pop('portal', None) or 'main'
+        role = PORTAL_ROLE_BY_NAME[self.portal]
+
+        email = User.objects.normalize_email(attrs.get(self.username_field) or '')
+        user = User.objects.filter(email__iexact=email, role=role).first()
+        if (
+            user is None
+            or not user.check_password(attrs.get('password') or '')
+            or not is_account_accessible(user)
+        ):
             raise AuthenticationFailed(self.error_messages['no_active_account'], 'no_active_account')
-        if portal and self.user.role not in PORTAL_ROLES[portal]:
-            raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
-        return data
+
+        self.user = user
+        return {}
 
 
 class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):

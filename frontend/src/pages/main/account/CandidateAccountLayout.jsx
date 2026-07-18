@@ -3,6 +3,7 @@ import { Drawer } from 'antd'
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { findActiveAccountItem } from '@/entities/account'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import AccountSidebar from './ui/AccountSidebar'
 import ProfileSidebar from './ui/ProfileSidebar'
 
@@ -20,7 +21,7 @@ export default function CandidateAccountLayout() {
   const activeItem = findActiveAccountItem(pathname)
 
   useEffect(() => {
-    document.title = activeItem ? activeItem.label : 'Quản lý tài khoản'
+    setDocumentTitle(activeItem ? activeItem.label : 'Quản lý tài khoản')
   }, [activeItem])
 
   return (

@@ -123,7 +123,7 @@ class EmployerRegistrationTests(APITestCase):
         self.assertIn('terms_accepted', response.data)
         self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
 
-    def test_registration_rejects_weak_password_and_duplicate_contact_phone(self):
+    def test_registration_rejects_weak_password_and_allows_duplicate_contact_phone(self):
         weak = self.client.post(
             reverse('employer-register'),
             {**self.payload, 'password': 'matkhaudai'},
@@ -139,8 +139,11 @@ class EmployerRegistrationTests(APITestCase):
             {**self.payload, 'email': 'other@acme.vn'},
             format='json',
         )
-        self.assertEqual(duplicate.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('contact_phone', duplicate.data)
+        self.assertEqual(duplicate.status_code, status.HTTP_201_CREATED, duplicate.data)
+        self.assertEqual(
+            RecruiterProfile.objects.filter(contact_phone='0912345678').count(),
+            2,
+        )
 
     def test_google_employer_can_complete_registration_profile_once(self):
         user = User.objects.create_user(
@@ -170,6 +173,21 @@ class EmployerRegistrationTests(APITestCase):
             format='json',
         )
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+
+        other_user = User.objects.create_user(
+            email='other-google@acme.vn',
+            password=None,
+            role=User.Role.EMPLOYER,
+            email_verified=True,
+        )
+        RecruiterProfile.objects.create(user=other_user)
+        self.client.force_authenticate(user=other_user)
+        duplicate_phone = self.client.post(
+            reverse('employer-registration-complete'),
+            profile_payload,
+            format='json',
+        )
+        self.assertEqual(duplicate_phone.status_code, status.HTTP_200_OK, duplicate_phone.data)
 
 
 class RecruitmentNeedTests(APITestCase):
@@ -254,6 +272,16 @@ class RecruitmentNeedTests(APITestCase):
         }, format='json')
         self.assertEqual(inverted_budget.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('budget_max', inverted_budget.data)
+
+    def test_consulting_need_rejects_budget_below_one_million(self):
+        response = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'budget_min': 999_999,
+            'budget_max': 2_000_000,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('budget_min', response.data)
 
     def test_consulting_need_accepts_at_most_one_consultation_topic(self):
         response = self.client.post(reverse('employer-consulting-need'), {

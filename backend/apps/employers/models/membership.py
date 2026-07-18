@@ -53,7 +53,6 @@ class RecruiterProfile(models.Model):
     gender = models.CharField(max_length=10, choices=Gender.choices, blank=True)
     contact_phone = models.CharField(
         max_length=20,
-        unique=True,
         null=True,
         blank=True,
         help_text='Số điện thoại cá nhân khai báo khi đăng ký; xác thực riêng qua OTP.',

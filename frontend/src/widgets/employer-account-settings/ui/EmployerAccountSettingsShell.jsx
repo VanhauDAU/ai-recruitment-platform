@@ -1,35 +1,58 @@
-import { BankOutlined, FileProtectOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { BankOutlined, FileProtectOutlined, LockOutlined, SafetyCertificateOutlined, UserOutlined } from '@ant-design/icons'
+import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
+  EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_BUSINESS_LICENSE_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_PASSWORD_SETTINGS_URL,
 } from '@/shared/config/portals'
+import { setDocumentTitle } from '@/shared/config/document-title'
 
 const ITEMS = [
   { to: EMPLOYER_PASSWORD_SETTINGS_URL, label: 'Đổi mật khẩu', icon: LockOutlined },
-  { to: EMPLOYER_COMPANY_SETTINGS_URL, label: 'Thông tin công ty', icon: BankOutlined },
+  { to: EMPLOYER_ACCOUNT_SETTINGS_URL, label: 'Thông tin tài khoản', icon: UserOutlined },
   { to: EMPLOYER_BUSINESS_LICENSE_URL, label: 'Giấy đăng ký doanh nghiệp', icon: FileProtectOutlined },
-  { to: EMPLOYER_DATA_PROTECTION_URL, label: 'Văn bản xử lý DLCN', icon: SafetyCertificateOutlined },
+  { to: EMPLOYER_DATA_PROTECTION_URL, label: 'Văn bản xử lý Dữ liệu cá nhân', icon: SafetyCertificateOutlined },
+  { to: EMPLOYER_COMPANY_SETTINGS_URL, label: 'Thông tin công ty', icon: BankOutlined },
 ]
 
-export default function EmployerAccountSettingsShell({ title, description, children }) {
+export default function EmployerAccountSettingsShell({ title, children }) {
   const { pathname } = useLocation()
+
+  useEffect(() => {
+    setDocumentTitle(title, { portal: 'employer' })
+  }, [title])
+
   return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-5"><p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-600">Cài đặt tài khoản</p><h1 className="mt-2 text-2xl font-black text-slate-950">{title}</h1>{description && <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>}</header>
-      <div className="grid items-start gap-5 xl:grid-cols-[250px_minmax(0,1fr)]">
-        <nav aria-label="Cài đặt tài khoản nhà tuyển dụng" className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm xl:sticky xl:top-0">
-          <div className="flex min-w-max gap-1 xl:min-w-0 xl:flex-col">
+    <div className="mx-auto max-w-[1256px] overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm">
+      <div className="grid items-stretch xl:grid-cols-[260px_minmax(0,1fr)]">
+        <nav aria-label="Cài đặt tài khoản nhà tuyển dụng" className="border-b border-slate-200 bg-slate-50/80 p-2 xl:border-b-0 xl:border-r">
+          <div className="flex min-w-max gap-1 overflow-x-auto xl:min-w-0 xl:flex-col xl:overflow-visible">
             {ITEMS.map((item) => {
               const Icon = item.icon
               const active = pathname === item.to
-              return <Link key={item.to} to={item.to} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition ${active ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`} aria-current={active ? 'page' : undefined}><Icon /> {item.label}</Link>
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex items-center gap-3 rounded-sm border-l-2 px-3 py-3 text-sm transition ${active ? 'border-emerald-500 bg-white font-bold !text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'border-transparent font-semibold !text-slate-900 hover:bg-white'}`}
+                >
+                  <Icon aria-hidden="true" className="text-base" />
+                  <span className="whitespace-nowrap">{item.label}</span>
+                </Link>
+              )
             })}
           </div>
         </nav>
-        <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">{children}</section>
+        <section className="min-w-0 p-5 sm:p-7">
+          <header className="mb-5">
+            <h1 className="text-base font-semibold text-slate-800">{title}</h1>
+          </header>
+          {children}
+        </section>
       </div>
     </div>
   )

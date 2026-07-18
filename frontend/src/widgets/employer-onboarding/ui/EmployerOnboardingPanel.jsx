@@ -95,7 +95,18 @@ export default function EmployerOnboardingPanel() {
       <h1 className="mt-3 text-2xl font-black text-slate-950">Hoàn thiện hồ sơ nhà tuyển dụng</h1>
       <p className="mb-6 mt-1 text-sm leading-6 text-slate-500">Bổ sung thông tin người liên hệ trước khi khai báo nhu cầu; hồ sơ công ty được chọn hoặc tạo tại bước xác thực riêng.</p>
       {error && <Alert type="error" message={error} showIcon closable onClose={() => setError('')} className="!mb-5 !rounded-lg" />}
-      <Form form={form} layout="vertical" onFinish={submit} requiredMark="optional" scrollToFirstError>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={submit}
+        requiredMark={(label, { required }) => (
+          <>
+            {label}
+            {required && <span className="ml-1 text-red-500" aria-hidden="true">*</span>}
+          </>
+        )}
+        scrollToFirstError
+      >
         <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
         <EmployerConsentFields />
         <Button type="primary" htmlType="submit" size="large" block loading={mutation.isPending} className="!mt-6 !h-12 !rounded-lg !font-bold">
