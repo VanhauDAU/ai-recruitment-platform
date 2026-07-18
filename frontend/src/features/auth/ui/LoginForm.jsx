@@ -55,7 +55,7 @@ export function AuthFormStyles() {
  * - `forgotPasswordLink`: null để ẩn (cổng admin).
  * - `onSuccess`: nếu truyền (vd. nhúng trong modal), gọi callback thay vì điều hướng.
  */
-export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL }) {
+export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL, appearance = 'default' }) {
   // Cổng NTD/admin chạy subdomain riêng -> link tuyệt đối, không đi qua router.
   const ForgotLink = forgotPasswordLink?.startsWith('http') ? 'a' : Link
   const forgotLinkProps = forgotPasswordLink?.startsWith('http')
@@ -71,6 +71,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
   const [form] = Form.useForm()
   const returnUrl = getReturnUrl(searchParams)
+  const employerAppearance = appearance === 'employer'
 
   function navigateAfterLogin(user) {
     navigate(getAuthDestination({ user, returnUrl }), { replace: true })
@@ -175,7 +176,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
               autoComplete="email"
               prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
               placeholder="ten@congty.com"
-              className="!rounded-full !h-11 !text-base"
+              className={`${employerAppearance ? '!rounded-lg !h-12' : '!rounded-full !h-11'} !text-base`}
             />
           </Form.Item>
         </div>
@@ -210,7 +211,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
               autoComplete="current-password"
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Nhập mật khẩu của bạn"
-              className="!rounded-full !h-11 !text-base"
+              className={`${employerAppearance ? '!rounded-lg !h-12' : '!rounded-full !h-11'} !text-base`}
             />
           </Form.Item>
         </div>
@@ -219,7 +220,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
           <button
             type="submit"
             disabled={loading}
-            className="submit-btn w-full flex items-center justify-center gap-2.5 rounded-full px-6 py-3.5 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            className={`submit-btn w-full flex items-center justify-center gap-2.5 px-6 py-3.5 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${employerAppearance ? 'rounded-lg' : 'rounded-full'}`}
           >
             {loading ? (
               <>

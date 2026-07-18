@@ -11,6 +11,14 @@ export async function register({ email, password, role, full_name, captcha_token
   return data
 }
 
+export async function registerEmployer(payload) {
+  const { data } = await api.post('/employer/register/', payload)
+  if (data.access && data.refresh) {
+    setTokens({ access: data.access, refresh: data.refresh }, 'employer')
+  }
+  return data
+}
+
 export async function checkRegistrationEmail(email, { signal } = {}) {
   const { data } = await api.post('/auth/register/email-availability/', { email }, { signal })
   return data.available === true

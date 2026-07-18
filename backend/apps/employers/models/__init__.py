@@ -3,6 +3,7 @@
 from .company import Company, CompanyImage, CompanyIndustry, Industry
 from .membership import RecruiterProfile
 from .otp import PhoneOtp
+from .recruitment_need import RecruitmentNeed
 from .verification import CompanyDocument, CompanyUpdateRequest
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     'Industry',
     'PhoneOtp',
     'RecruiterProfile',
+    'RecruitmentNeed',
 ]

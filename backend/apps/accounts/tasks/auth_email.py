@@ -16,8 +16,17 @@ MAX_DELIVERY_ATTEMPTS = 4
 STALE_SENDING_AFTER = timedelta(minutes=5)
 
 
-def queue_auth_email(kind, user, context=None):
-    job = AuthEmailJob.objects.create(user=user, kind=kind, context=context or {})
+def queue_auth_email(kind, user, context=None, *, unique=False):
+    if unique:
+        job, created = AuthEmailJob.objects.get_or_create(
+            user=user,
+            kind=kind,
+            defaults={'context': context or {}},
+        )
+        if not created:
+            return None
+    else:
+        job = AuthEmailJob.objects.create(user=user, kind=kind, context=context or {})
 
     def dispatch():
         try:
@@ -29,13 +38,16 @@ def queue_auth_email(kind, user, context=None):
     return job
 
 
-def queue_welcome_email(user):
-    """Persist one candidate welcome job; employer mail uses its own workflow."""
-    if not user.is_candidate:
+def queue_welcome_email(user, context=None):
+    """Persist exactly one welcome job for a candidate or employer account."""
+    if not (user.is_candidate or user.is_employer):
         return None
-    if AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists():
-        return None
-    return queue_auth_email(AuthEmailJob.Kind.WELCOME, user)
+    return queue_auth_email(
+        AuthEmailJob.Kind.WELCOME,
+        user,
+        context=context,
+        unique=True,
+    )
 
 
 def _send(job):
@@ -44,7 +56,7 @@ def _send(job):
             email_verification.send_verification_email(job.user)
         return
     if job.kind == AuthEmailJob.Kind.WELCOME:
-        welcome.send_welcome_email(job.user)
+        welcome.send_welcome_email(job.user, context=job.context)
         return
     if job.kind == AuthEmailJob.Kind.PASSWORD_RESET:
         password_reset.send_password_reset_email(job.user)

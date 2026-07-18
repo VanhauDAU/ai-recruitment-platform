@@ -83,6 +83,22 @@ SETTINGS = [
     ('employer_require_company_info', 'Bắt buộc thông tin công ty', G.EMPLOYER, T.BOOLEAN, True, False, '', {}),
     ('employer_max_active_jobs', 'Số tin đang đăng tối đa', G.EMPLOYER, T.NUMBER, 10, False, '', {}),
     ('employer_allow_logo_upload', 'Cho phép upload logo công ty', G.EMPLOYER, T.BOOLEAN, True, True, '', {}),
+    ('employer_stats', 'Số liệu trang NTD', G.EMPLOYER, T.JSON,
+     [
+         {'value': '60.000+', 'label_vi': 'việc làm đã đăng tuyển', 'label_en': 'jobs posted'},
+         {'value': '10.000+', 'label_vi': 'hồ sơ ứng viên trên nền tảng', 'label_en': 'candidate profiles'},
+         {'value': '80%', 'label_vi': 'độ chính xác AI gợi ý ứng viên', 'label_en': 'AI matching accuracy'},
+         {'value': '34', 'label_vi': 'tỉnh/thành có dữ liệu tuyển dụng', 'label_en': 'provinces covered'},
+         {'value': '24/7', 'label_vi': 'hệ thống nhận hồ sơ trực tuyến', 'label_en': 'online application intake'},
+         {'value': '5 phút', 'label_vi': 'để đăng một tin tuyển dụng', 'label_en': 'to post a job'},
+     ], True,
+     'Khối số liệu trên trang chủ NTD. Mỗi mục gồm value, label_vi, label_en.', {}),
+    ('employer_partners', 'Khách hàng tiêu biểu (trang NTD)', G.EMPLOYER, T.JSON, [], True,
+     'Danh sách logo khách hàng: [{"name": "...", "logo_url": "..."}]. Để trống sẽ ẩn khối này.', {}),
+    ('employer_hotline_north', 'Hotline tư vấn miền Bắc', G.EMPLOYER, T.TEXT, '', True,
+     'Để trống sẽ dùng hotline chung ở nhóm Liên hệ.', {}),
+    ('employer_hotline_south', 'Hotline tư vấn miền Nam', G.EMPLOYER, T.TEXT, '', True,
+     'Để trống sẽ dùng hotline chung ở nhóm Liên hệ.', {}),
 
     # ---- 6. Việc làm ----
     ('job_expiry_days', 'Số ngày hết hạn tin', G.JOBS, T.NUMBER, 30, False,
@@ -223,8 +239,8 @@ LINK_GROUPS = [
         ('Tạo CV chuyên nghiệp', ''), ('Review CV bằng AI', ''),
     ]),
     ('footer-employer', 'Dành cho nhà tuyển dụng', LinkGroup.Source.MANUAL, 3, [
-        ('Đăng tin tuyển dụng', '/nha-tuyen-dung'), ('Giải pháp tuyển dụng', '/nha-tuyen-dung/dich-vu'),
-        ('Bảng giá dịch vụ', '/nha-tuyen-dung/bang-gia'), ('Đăng nhập nhà tuyển dụng', '/nha-tuyen-dung/dang-nhap'),
+        ('Đăng tin tuyển dụng', '/tuyendung'), ('Giải pháp tuyển dụng', '/tuyendung/dich-vu'),
+        ('Bảng giá dịch vụ', '/tuyendung/bao-gia'), ('Đăng nhập nhà tuyển dụng', '/tuyendung/app/login'),
     ]),
 ]
 

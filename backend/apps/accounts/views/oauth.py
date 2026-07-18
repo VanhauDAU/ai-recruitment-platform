@@ -79,7 +79,7 @@ class OAuthCallbackView(APIView):
             return _oauth_error_redirect(portal, exc.code)
 
         if created:
-            queue_welcome_email(user)
+            queue_welcome_email(user, context={'registration_method': provider})
 
         params = {'code': oauth.create_one_time_code(user)}
         if state_data.get('next'):

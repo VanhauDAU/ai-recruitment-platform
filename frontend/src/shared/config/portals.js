@@ -33,12 +33,28 @@ export const EMPLOYER_LOGIN_URL = import.meta.env.VITE_EMPLOYER_HOST
   ? `https://${import.meta.env.VITE_EMPLOYER_HOST}/app/login`
   : employerAppPath('/login')
 
+export const EMPLOYER_FORGOT_PASSWORD_URL = employerAppPath('/forgot-password')
+export const EMPLOYER_RESET_PASSWORD_URL = employerAppPath('/reset-password')
+export const EMPLOYER_ACCOUNT_VERIFY_URL = employerAppPath('/account/verify')
+export const EMPLOYER_COMPLETE_PROFILE_URL = employerAppPath('/account/complete-profile')
+export const EMPLOYER_CONSULTING_NEED_URL = employerAppPath('/consulting-need')
+export const EMPLOYER_VERIFY_URL = employerAppPath('/employer-verify')
+export const EMPLOYER_PHONE_VERIFY_URL = employerAppPath('/account/phone-verify')
+export const EMPLOYER_PASSWORD_SETTINGS_URL = employerAppPath('/account/settings/password-login')
+export const EMPLOYER_COMPANY_SETTINGS_URL = employerAppPath('/account/settings/company')
+export const EMPLOYER_BUSINESS_LICENSE_URL = employerAppPath('/account/settings/gpkd')
+export const EMPLOYER_DATA_PROTECTION_URL = employerAppPath('/account/settings/personal-data-protection')
+
 export const MAIN_LOGIN_URL = import.meta.env.VITE_MAIN_HOST
   ? `https://${import.meta.env.VITE_MAIN_HOST}/login`
   : '/login'
 
-// Luồng quên/đặt lại mật khẩu chỉ tồn tại ở cổng main (link trong email trỏ về
-// FRONTEND_URL), nên các cổng khác phải link tuyệt đối sang host chính.
+// Link từ cổng NTD về trang ứng viên (trang chủ main).
+export const MAIN_PORTAL_URL = import.meta.env.VITE_MAIN_HOST
+  ? `https://${import.meta.env.VITE_MAIN_HOST}/`
+  : '/'
+
+// Link recovery của ứng viên. Employer có route và template email riêng ở trên.
 export const MAIN_FORGOT_PASSWORD_URL = import.meta.env.VITE_MAIN_HOST
   ? `https://${import.meta.env.VITE_MAIN_HOST}/forgot-password`
   : '/forgot-password'

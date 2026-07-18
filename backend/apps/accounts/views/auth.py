@@ -17,11 +17,10 @@ from ..serializers import (
     RoleTokenObtainPairSerializer,
     SessionUserSerializer,
 )
-from ..services import verify_request_captcha
+from ..services import queue_verification_email, verify_request_captcha
 from ..services.tokens import issue_tokens
 from ..services import two_factor
 from ..tasks import queue_auth_email
-from .verification import queue_verification_email
 
 
 class RegisterView(generics.CreateAPIView):

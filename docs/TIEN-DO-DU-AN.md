@@ -16,10 +16,10 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 3 — Tối ưu tìm kiếm / matching | 0/2 | ⬜ |
 | 4 — CV nâng cao | 0/2 | ⬜ |
 | 5 — Tuyển dụng nâng cao | 1/3 | 🟡 |
-| 6 — Thương mại & quản trị | 10/13 | 🟡 |
+| 6 — Thương mại & quản trị | 13/16 | 🟡 |
 | 7 — Phỏng vấn AI | 0/4 | ⬜ |
 | 8 — Deployment | 0/2 | ⬜ |
-| **Tổng** | **56/81** | |
+| **Tổng** | **59/84** | |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -55,6 +55,18 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | --- | --- | --- |
 | HOME-CV | Section "Tạo CV ấn tượng" trên trang chủ (giữa FlashBadge và Top ngành nghề): showcase 3 mẫu CV thật từ catalogue xòe quạt desktop / trượt ngang snap mobile, swatch đổi màu preview tại chỗ, badge PREMIUM, link chi tiết `/mau-cv/chi-tiet/:slug`; 4 thẻ tính năng (mẫu đa dạng, autosave, AI import, xuất PDF) + CTA `/mau-cv`. Fetch React Query (stale 5′) + skeleton, ẩn section khi catalogue rỗng; export `CvTemplatePreview` qua public API entity `cv-template`. Data: seed thêm template "Chuyên nghiệp 2 cột" (`classic_two_column_v1`, publish qua service chính thức) — catalogue dev có 3 mẫu | ✅ |
 
+## Epic cổng marketing nhà tuyển dụng (2026-07-18, nhánh `feature/employers-home`)
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| EMP-P1 | Backend `apps.services`: models/API/throttle/cache/seed + migration sửa link footer | ✅ |
+| EMP-P2 | i18n VI/EN, layout/header/drawer/footer, form tư vấn, About + Contact | ✅ |
+| EMP-P3 | Landing 10 section, Services 5 nhóm, Pricing đọc DB + trạng thái loading/error/empty | ✅ |
+| EMP-P4 | Admin CRUD dịch vụ + danh sách/xử lý lead, docs/changelog và smoke desktop/mobile; polish navigation active state và card giá có affordance click/focus | ✅ |
+| EMP-P5 | Auth employer riêng: register email/Google, consent, recovery, onboarding + guard dashboard, legal routes, backend/frontend/E2E/docs; khảo sát nhu cầu tư vấn chỉ chọn một mục (API vẫn tương thích mảng một phần tử); giao diện đăng ký theo wizard 01 → 02, responsive desktop/mobile | ✅ |
+| EMP-P6 | Employer verify + workspace dashboard: shell `100dvh` theo mẫu quản trị với compliance bar/topbar/sidebar trắng/header route/content cuộn; sidebar có cấp xác thực 0/3–3/3 + popover 3 mốc và desktop icon rail 216px→64px (hover mở tạm, icon lớn/căn giữa; mobile ẩn); dashboard có banner, hành trình xác thực ngang, discovery và CV đề xuất; checklist bỏ email, có OTP + password gate cho OAuth, chọn/tạo công ty rõ ràng, ĐKDN, hai bước DLCN độc lập và khóa tin đầu tiên; route account settings nội bộ, read-model KPI/activity/pipeline/recent data, khóa consulting đã hoàn tất và regression desktop/mobile | ✅ |
+| EMP-P7 | Email chào mừng NTD theo nguồn đăng ký: email/password gửi sau verify, Google mới gửi ngay; template riêng + CTA checklist + transactional outbox chống trùng ở DB; login chỉ vào `/employer-verify` khi năm điều kiện xác thực chưa đủ, đã đủ thì vào dashboard/deep-link | ✅ |
+
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
 Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích. Chi tiết baseline: [docs/09-refactor/baseline](./09-refactor/baseline/README.md); quyết định kiến trúc: [docs/adr](./adr/).
@@ -69,7 +81,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | R5 | Pilot Jobs theo lát cắt dọc | 🟡 Tách candidate feature + backend boundary; còn UI CRUD employer |
 | R6 | Applications/Saved jobs + server state | 🟡 Feature state/API và transition backend; còn UI nghiệp vụ |
 | R7 | Tách Django settings theo môi trường | ✅ base/development/test/production, CI test settings và production validation giữ nguyên |
-| R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard/AI chưa có use case, Sitecontent để lát cắt riêng |
+| R8 | Dọn backend theo hotspot | 🟡 Candidate/CV/CV template có selector/service; Dashboard đã có read-model employer, AI chưa có use case, Sitecontent để lát cắt riêng |
 | R9 | Onboarding theo kiến trúc mới | ✅ Form preference dùng chung onboarding/settings, API preference có transaction + consent, responsive modal chọn vị trí, regression desktop/mobile |
 | R10 | Cleanup, bundle, tài liệu | ✅ Xóa compatibility layer, CI feature boundary, bundle review và tài liệu |
 
@@ -588,6 +600,9 @@ frontend unit tests và 22 smoke desktop/mobile.
 | 6.11 | Tối ưu performance đợt 1: favicon 957KB→1.9KB, chặn upload favicon nặng, tách vendor chunk react | ✅ |
 | 6.12 | Cẩm nang nghề nghiệp (blog): app `blog` + API public + trang `/blog` + phân quyền biên tập | ✅ |
 | 6.13 | Redesign giao diện blog kiểu TopCV: magazine /blog, danh mục load-more, chi tiết nền xám card trắng | ✅ |
+| 6.14 | Cổng marketing nhà tuyển dụng: 5 trang VI/EN, gói dịch vụ + lead, admin CRUD/xử lý lead | ✅ |
+| 6.15 | Luồng đăng ký/đăng nhập NTD: profile + consent, email verify → consulting need → dashboard, Google completion, recovery và guard | ✅ |
+| 6.16 | Employer verify + dashboard quản trị: checklist bảo mật, KPI/activity/pipeline, recent job/application và shell responsive | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 6
 
@@ -679,4 +694,4 @@ App Django mới `apps/blog` (4 model: `PostCategory` taxonomy phẳng 1 cấp, 
 
 ---
 
-Cập nhật lần cuối: 2026-07-18 (1.24d — bổ sung /viec-lam theo khảo sát TopCV: banner chèn giữa danh sách, "Ứng viên cũng tìm kiếm", chip danh mục liên quan, CTA thông báo, khảo sát hài lòng, SEO text, sort Cần tuyển gấp. 1.24c — empty state /viec-lam kiểu TopCV: banner placement job_empty + "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference, nới lỏng 3 tầng. 1.24b — kết thúc onboarding kiểu TopCV: personalizing → ready → redirect /viec-lam với bộ lọc từ preference. CVB-8 — tối ưu UX canvas theo khảo sát trực tiếp TopCV builder, 2 đợt. Đợt 1: toolbar section thu gọn nằm trong hàng tiêu đề, toolbar item chuyển xuống cạnh dưới-phải nên không còn che tiêu đề/nội dung đang gõ; mỗi lúc chỉ một tầng chrome hiển thị và chrome ẩn khi focus contenteditable (CSS `:has`, hover chủ động vẫn hiện lại để thao tác ngay khi đang gõ); nút Xóa có nhãn + màu ngữ nghĩa, bỏ nút xóa nguy hiểm khỏi toolbar định dạng InlineText; thêm "Ảnh đại diện" mặc định vào đầu cột phụ (fallback `header→sidebar` + `insertAtStart` trong registry); thêm mục tự cuộn tới và focus ô đầu tiên; summary bỏ ô "Tên" thừa và có placeholder gợi ý; placeholder ngày dạng ví dụ `Từ (vd: 2020-01)`; nhãn vùng Cột chính/Cột phụ; sửa bug antd `.ant-btn` đè Tailwind `absolute` khiến nút "+ Thêm nội dung" nằm trong flow làm section editor cao hơn bản in. Đợt 2: nút "+ Thêm" chèn item ngay sau item hiện tại (`moveItemToIndexInLayout` trong cùng một undo step); editor mức độ kỹ năng 5 nấc cùng hàng với tên (khớp preview level bar); DndContext nâng lên cấp editor để kéo mục mới từ panel Thêm mục thả thẳng vào vị trí mong muốn trên canvas (id `new:<key>`); panel Bố cục thành sơ đồ mini-map kéo-thả (id `mini-section:`/`mini-region:`) di chuyển mục giữa cột, click để đi tới mục; vùng Mô tả rich text luôn hiển thị với placeholder theo loại mục — fix lỗ hổng item mới không thể nhập mô tả; toolbar định dạng (InlineText + RichTextArea) neo góc phải phía trên item/section thay vì ngay trên field nên không còn đè lên dòng muốn click kế tiếp; chuẩn hóa DOM rich text sau blur để placeholder quay lại sau khi xóa hết chữ; header editor khớp bản in — danh sách liên hệ dùng chung grid `repeat(auto-fit, minmax(13rem,1fr))` với `.cv-document-preview__contact` (trước đây `.cv-contact-list` không có CSS nên 5 trường xếp dọc, header editor cao gấp đôi Xem trước), khoảng cách name/headline/contact đồng bộ `mb-6 pl-4 mt-1 mt-2`. Verify: lint + architecture + 54 Vitest + build + 22 Playwright smoke desktop/mobile pass; kéo-thả panel→canvas và mini-map đã kiểm chứng trực tiếp trên browser. HOME-CV giữ nguyên tiến độ)
+Cập nhật lần cuối: 2026-07-18 (EMP-P1→P7 — hoàn tất cổng marketing, auth, `/employer-verify`, nhóm route account settings, dashboard nhà tuyển dụng và email chào mừng theo nguồn đăng ký; luồng email/password chỉ chào mừng sau khi verify, Google mới chào mừng ngay và outbox chống gửi trùng ở DB. Employer đủ onboarding nhưng còn thiếu một trong năm điều kiện bảo mật/pháp lý sẽ vào `/employer-verify` và không bị `returnUrl=/dashboard` bỏ qua; khi `employer_verification_completed=true` thì đăng nhập vào thẳng dashboard hoặc deep-link an toàn. Bước đăng tin đầu tiên chưa triển khai không khóa trạng thái xác thực này. Luồng chuẩn `/account/verify → /consulting-need → /employer-verify → /dashboard`, consulting chỉ tạo một lần. Workspace `100dvh` đã được thiết kế lại theo mẫu quản trị với compliance bar, topbar, sidebar trắng, header route và content cuộn; desktop sidebar thu 216px→64px thành icon rail lớn/căn giữa, hover rail mở tạm và rời chuột tự thu, mobile vẫn ẩn khi đóng; dashboard có hành trình xác thực ngang nhưng không tạo action giả cho workflow chưa làm. Company chỉ hoàn tất sau khi chọn/tạo rõ ràng, hai bước DLCN được theo dõi độc lập. Đã qua 85 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke desktop/mobile; regression login destination có 10/10 test xanh. Full backend 229 test còn 5 lỗi độc lập trong `apps.applications.tests_migrations` do model hiện tại truy vấn cột `contact_name` khi schema test đang ở migration legacy; lỗi tái hiện khi chạy riêng suite này và không thuộc phạm vi EMP-P7. Các cập nhật 1.24b→1.24d, CVB-8 và HOME-CV giữ nguyên tiến độ.)

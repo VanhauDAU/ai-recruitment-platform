@@ -8,6 +8,7 @@
 
 from .auth import AvatarUploadView, LoginView, MeView, RegisterEmailAvailabilityView, RegisterView
 from .oauth import OAuthCallbackView, OAuthCompleteView, OAuthStartView
+from .password import PasswordChangeView
 from .password_reset import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
@@ -32,6 +33,7 @@ __all__ = [
     'OAuthCompleteView',
     'OAuthStartView',
     'PasswordResetConfirmView',
+    'PasswordChangeView',
     'PasswordResetRequestView',
     'PasswordResetValidateView',
     'RegisterView',

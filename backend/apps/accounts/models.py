@@ -179,6 +179,13 @@ class AuthEmailJob(models.Model):
         indexes = [
             models.Index(fields=['status', 'created_at'], name='auth_email_status_created_idx'),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'kind'],
+                condition=models.Q(kind='welcome'),
+                name='uq_auth_email_welcome_per_user',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.kind}:{self.user_id}:{self.status}'

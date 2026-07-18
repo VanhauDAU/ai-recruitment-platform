@@ -73,7 +73,13 @@ class ProfileUpdateTests(APITestCase):
         self.assertEqual(set(response.data), {
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'has_usable_password',
+            'employer_onboarding_required', 'employer_onboarding_step',
+            'employer_verification_completed',
         })
+        self.assertIs(response.data['job_preferences_configured'], False)
+        self.assertIs(response.data['has_usable_password'], True)
+        self.assertIs(response.data['employer_verification_completed'], False)
         self.assertTrue({
             'id', 'password', 'token', 'refresh_token', 'permissions',
             'status', 'date_joined', 'last_login',
@@ -110,6 +116,45 @@ class ProfileUpdateTests(APITestCase):
         response = self.client.patch(self.url, {'full_name': 'X'})
         self.assertIn(response.status_code, (401, 403))
 
+
+class PasswordChangeTests(APITestCase):
+    def test_oauth_user_can_create_first_password_without_current_password(self):
+        user = User.objects.create_user(
+            email='oauth-employer@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('NewPassword@123'))
+        self.assertTrue(response.data['user']['has_usable_password'])
+
+    def test_existing_password_requires_correct_current_password(self):
+        user = User.objects.create_user(
+            email='local-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=user)
+
+        missing = self.client.post(reverse('auth-password-change'), {
+            'password': 'NewPassword@123',
+        }, format='json')
+        wrong = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'WrongPassword@123',
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('current_password', missing.data)
+        self.assertIn('current_password', wrong.data)
 
 GOOGLE_PROFILE = {
     'id': 'google-uid-1',
@@ -220,6 +265,16 @@ class OAuthFlowTests(APITestCase):
         self.assertIn('/tuyendung/app/oauth/callback', response.url)
         complete = self._complete(response.url)
         self.assertEqual(complete.data['user']['role'], 'employer')
+
+        user = User.objects.get(email='social@example.com')
+        job = AuthEmailJob.objects.get(user=user, kind=AuthEmailJob.Kind.WELCOME)
+        self.assertEqual(job.context, {'registration_method': 'google'})
+
+        self._complete(self._callback(portal='employer').url)
+        self.assertEqual(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).count(),
+            1,
+        )
 
     def test_same_email_same_role_links_account(self):
         existing = User.objects.create_user(
@@ -482,7 +537,8 @@ class LastLoginTests(APITestCase):
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     FRONTEND_URL='https://main.example.test',
     EMPLOYER_FRONTEND_URL='https://employer.example.test',
-    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/xac-thuc-email',
+    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/account/verify',
+    EMPLOYER_PASSWORD_RESET_PATH='/app/reset-password',
 )
 class AuthSecurityAndEmailTests(APITestCase):
     def setUp(self):
@@ -510,7 +566,21 @@ class AuthSecurityAndEmailTests(APITestCase):
         email_verification.send_verification_email(user)
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('https://employer.example.test/app/xac-thuc-email?token=', mail.outbox[0].body)
+        self.assertIn('https://employer.example.test/app/account/verify?token=', mail.outbox[0].body)
+        self.assertIn('Mã NTD', mail.outbox[0].body)
+        self.assertIn('Xác thực tài khoản', mail.outbox[0].alternatives[0][0])
+
+    def test_employer_password_reset_email_uses_employer_portal_link(self):
+        user = User.objects.create_user(
+            email='employer-reset@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+
+        password_reset.send_password_reset_email(user)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('https://employer.example.test/app/reset-password?token=', mail.outbox[0].body)
 
     def test_email_outbox_job_is_marked_sent_after_delivery(self):
         user = User.objects.create_user(email='queue@example.com', password='Password@123')
@@ -532,7 +602,7 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
 
-    def test_employer_verification_does_not_queue_candidate_welcome_email(self):
+    def test_employer_verification_queues_one_employer_welcome_email(self):
         user = User.objects.create_user(
             email='employer-welcome@example.com', password='Password@123', role=User.Role.EMPLOYER,
         )
@@ -541,7 +611,15 @@ class AuthSecurityAndEmailTests(APITestCase):
         response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+        job = AuthEmailJob.objects.get(user=user, kind=AuthEmailJob.Kind.WELCOME)
+        self.assertEqual(job.context, {'registration_method': 'email'})
+
+        reused = self.client.post(reverse('auth-verify-confirm'), {'token': token})
+        self.assertEqual(reused.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).count(),
+            1,
+        )
 
     def test_welcome_email_is_delivered_from_the_outbox(self):
         user = User.objects.create_user(email='welcome@example.com', password='Password@123', email_verified=True)
@@ -551,6 +629,33 @@ class AuthSecurityAndEmailTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('Chào mừng', mail.outbox[0].subject)
+
+    def test_employer_welcome_email_uses_employer_content_and_portal_link(self):
+        user = User.objects.create_user(
+            email='hr-welcome@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+            full_name='Nguyễn Minh Anh',
+            email_verified=True,
+        )
+        job = AuthEmailJob.objects.create(
+            user=user,
+            kind=AuthEmailJob.Kind.WELCOME,
+            context={'registration_method': 'google'},
+        )
+
+        deliver_auth_email_job.run(job.pk)
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(
+            message.subject,
+            'Chúc mừng Nguyễn Minh Anh đã có tài khoản dành cho nhà tuyển dụng',
+        )
+        self.assertIn(f'Mã NTD {user.public_id}', message.body)
+        self.assertIn('Google đã xác thực địa chỉ email', message.body)
+        self.assertIn('https://employer.example.test/tuyendung/app/employer-verify', message.body)
+        self.assertIn('Tiếp tục thiết lập tài khoản', message.alternatives[0][0])
 
 
 @override_settings(

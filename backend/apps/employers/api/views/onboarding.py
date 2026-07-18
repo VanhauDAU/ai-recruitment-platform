@@ -10,6 +10,7 @@ from common.db.search import search_q
 from common.media_storage import delete_local_media_url, save_image_upload
 
 from ...models import Company, CompanyDocument, CompanyImage, CompanyUpdateRequest, Industry, RecruiterProfile
+from ...selectors import has_explicit_company_link
 from ..serializers import (
     CompanyDocumentSerializer,
     CompanyImageSerializer,
@@ -21,12 +22,9 @@ from ..serializers import (
 )
 from ...services import get_or_create_recruiter, send_phone_otp, verify_phone_otp
 
-ALLOWED_DOCUMENT_TYPES = {'image/jpeg', 'image/png', 'application/pdf'}
-
-
 def _require_company(user):
     recruiter = get_or_create_recruiter(user)
-    if recruiter.company_id is None:
+    if not has_explicit_company_link(recruiter):
         raise NotFound('Bạn chưa liên kết với công ty nào.')
     return recruiter
 
@@ -97,4 +95,3 @@ class AcceptDpaView(APIView):
             recruiter.dpa_accepted_at = timezone.now()
             recruiter.save(update_fields=['dpa_accepted_at', 'updated_at'])
         return Response(RecruiterProfileSerializer(recruiter, context={'request': request}).data)
-

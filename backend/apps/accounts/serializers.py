@@ -67,12 +67,20 @@ class SessionUserSerializer(serializers.ModelSerializer):
 
     avatar_url = serializers.SerializerMethodField()
     job_preferences_configured = serializers.SerializerMethodField()
+    employer_onboarding_required = serializers.SerializerMethodField()
+    employer_onboarding_step = serializers.SerializerMethodField()
+    employer_verification_completed = serializers.SerializerMethodField()
+    has_usable_password = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'has_usable_password',
+            'employer_onboarding_required',
+            'employer_onboarding_step',
+            'employer_verification_completed',
         ]
         read_only_fields = fields
 
@@ -88,6 +96,42 @@ class SessionUserSerializer(serializers.ModelSerializer):
             # Tolerate a legacy candidate created before its profile signal was
             # introduced; the candidate endpoint will create the profile once.
             return False
+
+    def get_has_usable_password(self, obj):
+        return obj.has_usable_password()
+
+    def get_employer_onboarding_required(self, obj):
+        return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False
+
+    def get_employer_onboarding_step(self, obj):
+        if not obj.is_employer:
+            return None
+        try:
+            recruiter = obj.recruiter_profile
+        except ObjectDoesNotExist:
+            return 'registration'
+        if recruiter.registration_completed_at is None:
+            return 'registration'
+        if not obj.email_verified:
+            return 'email_verification'
+        try:
+            recruiter.recruitment_need
+        except ObjectDoesNotExist:
+            return 'consulting_need'
+        return 'complete'
+
+    def get_employer_verification_completed(self, obj):
+        if not obj.is_employer:
+            return False
+        try:
+            recruiter = obj.recruiter_profile
+        except ObjectDoesNotExist:
+            return False
+        # Local import keeps the accounts model layer independent while this
+        # session DTO exposes the employer read-model needed for routing.
+        from apps.employers.selectors import build_employer_onboarding_steps
+
+        return build_employer_onboarding_steps(recruiter)['verification_completed']
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -148,6 +192,24 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     token = serializers.CharField(write_only=True)
     password = password_field()
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại."""
+
+    current_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password = password_field()
+    logout_all_sessions = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if user.has_usable_password():
+            current_password = attrs.get('current_password') or ''
+            if not current_password:
+                raise serializers.ValidationError({'current_password': 'Nhập mật khẩu hiện tại.'})
+            if not user.check_password(current_password):
+                raise serializers.ValidationError({'current_password': 'Mật khẩu hiện tại không đúng.'})
+        return attrs
 
 
 # Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.
