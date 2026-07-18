@@ -30,6 +30,38 @@ vi.mock('@/entities/site-settings', () => ({
 }))
 
 describe('EmployerWorkspaceLayout', () => {
+  it('temporarily opens the compact desktop icon rail on hover and collapses it when leaving', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const toggle = screen.getByRole('button', { name: 'Thu gọn menu quản trị' })
+    fireEvent.click(toggle)
+
+    const sidebar = screen.getByTestId('employer-sidebar')
+    expect(sidebar).toHaveClass('ant-layout-sider-collapsed')
+    expect(screen.getByRole('link', { name: 'Xem trạng thái xác thực tài khoản' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mở menu quản trị' })).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.mouseEnter(sidebar)
+    expect(sidebar).not.toHaveClass('ant-layout-sider-collapsed')
+    expect(screen.getByText('Cấp 0/3')).toBeInTheDocument()
+
+    fireEvent.mouseLeave(sidebar)
+    expect(sidebar).toHaveClass('ant-layout-sider-collapsed')
+  })
+
   it('shows the three-level account verification popover from the sidebar question mark', async () => {
     useSession.mockReturnValue({
       user: { full_name: 'Nguyễn An', email: 'hr@example.com' },

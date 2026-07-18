@@ -11,8 +11,7 @@ import {
   HistoryOutlined,
   LikeOutlined,
   LogoutOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
+  MenuOutlined,
   MessageOutlined,
   NotificationOutlined,
   QuestionCircleFilled,
@@ -44,6 +43,11 @@ import {
 
 const { Header, Sider, Content } = Layout
 
+// Mirrors the employer workspace navigation in TopCV: an expanded work menu
+// and a compact, icon-only rail that keeps the current workspace usable.
+const EMPLOYER_SIDEBAR_WIDTH = 216
+const EMPLOYER_SIDEBAR_COLLAPSED_WIDTH = 64
+
 const ACCOUNT_VERIFICATION_LEVEL_STEPS = [
   { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
@@ -60,25 +64,25 @@ function ComingSoonLabel({ children }) {
 }
 
 const EMPLOYER_NAV_ITEMS = [
-  { key: employerAppPath('/dashboard'), icon: <DashboardOutlined />, label: 'Bảng tin' },
-  { key: 'coming-insights', icon: <BulbOutlined />, label: <ComingSoonLabel>ProCV Insights</ComingSoonLabel>, disabled: true },
-  { key: 'coming-rewards', icon: <GiftOutlined />, label: <ComingSoonLabel>ProCV Rewards</ComingSoonLabel>, disabled: true },
-  { key: 'coming-ai', icon: <RobotOutlined />, label: <ComingSoonLabel>AI đề xuất</ComingSoonLabel>, disabled: true },
-  { key: 'coming-cv-recommendations', icon: <LikeOutlined />, label: <ComingSoonLabel>CV đề xuất</ComingSoonLabel>, disabled: true },
+  { key: employerAppPath('/dashboard'), icon: <DashboardOutlined />, label: 'Bảng tin', title: 'Bảng tin' },
+  { key: 'coming-insights', icon: <BulbOutlined />, label: <ComingSoonLabel>ProCV Insights</ComingSoonLabel>, title: 'ProCV Insights — Sắp mở', disabled: true },
+  { key: 'coming-rewards', icon: <GiftOutlined />, label: <ComingSoonLabel>ProCV Rewards</ComingSoonLabel>, title: 'ProCV Rewards — Sắp mở', disabled: true },
+  { key: 'coming-ai', icon: <RobotOutlined />, label: <ComingSoonLabel>AI đề xuất</ComingSoonLabel>, title: 'AI đề xuất — Sắp mở', disabled: true },
+  { key: 'coming-cv-recommendations', icon: <LikeOutlined />, label: <ComingSoonLabel>CV đề xuất</ComingSoonLabel>, title: 'CV đề xuất — Sắp mở', disabled: true },
   { type: 'divider' },
-  { key: 'coming-campaigns', icon: <ThunderboltOutlined />, label: <ComingSoonLabel>Chiến dịch tuyển dụng</ComingSoonLabel>, disabled: true },
-  { key: 'coming-jobs', icon: <FileTextOutlined />, label: <ComingSoonLabel>Tin tuyển dụng</ComingSoonLabel>, disabled: true },
-  { key: 'coming-applications', icon: <TeamOutlined />, label: <ComingSoonLabel>Quản lý CV</ComingSoonLabel>, disabled: true },
-  { key: 'coming-reports', icon: <BarChartOutlined />, label: <ComingSoonLabel>Báo cáo tuyển dụng</ComingSoonLabel>, disabled: true },
+  { key: 'coming-campaigns', icon: <ThunderboltOutlined />, label: <ComingSoonLabel>Chiến dịch tuyển dụng</ComingSoonLabel>, title: 'Chiến dịch tuyển dụng — Sắp mở', disabled: true },
+  { key: 'coming-jobs', icon: <FileTextOutlined />, label: <ComingSoonLabel>Tin tuyển dụng</ComingSoonLabel>, title: 'Tin tuyển dụng — Sắp mở', disabled: true },
+  { key: 'coming-applications', icon: <TeamOutlined />, label: <ComingSoonLabel>Quản lý CV</ComingSoonLabel>, title: 'Quản lý CV — Sắp mở', disabled: true },
+  { key: 'coming-reports', icon: <BarChartOutlined />, label: <ComingSoonLabel>Báo cáo tuyển dụng</ComingSoonLabel>, title: 'Báo cáo tuyển dụng — Sắp mở', disabled: true },
   { type: 'divider' },
-  { key: 'coming-buy-services', icon: <ShoppingCartOutlined />, label: <ComingSoonLabel>Mua dịch vụ</ComingSoonLabel>, disabled: true },
-  { key: 'coming-services', icon: <ToolOutlined />, label: <ComingSoonLabel>Dịch vụ của tôi</ComingSoonLabel>, disabled: true },
-  { key: 'coming-coupons', icon: <TagsOutlined />, label: <ComingSoonLabel>Mã ưu đãi</ComingSoonLabel>, disabled: true },
+  { key: 'coming-buy-services', icon: <ShoppingCartOutlined />, label: <ComingSoonLabel>Mua dịch vụ</ComingSoonLabel>, title: 'Mua dịch vụ — Sắp mở', disabled: true },
+  { key: 'coming-services', icon: <ToolOutlined />, label: <ComingSoonLabel>Dịch vụ của tôi</ComingSoonLabel>, title: 'Dịch vụ của tôi — Sắp mở', disabled: true },
+  { key: 'coming-coupons', icon: <TagsOutlined />, label: <ComingSoonLabel>Mã ưu đãi</ComingSoonLabel>, title: 'Mã ưu đãi — Sắp mở', disabled: true },
   { type: 'divider' },
-  { key: 'coming-activity', icon: <HistoryOutlined />, label: <ComingSoonLabel>Lịch sử hoạt động</ComingSoonLabel>, disabled: true },
-  { key: EMPLOYER_COMPANY_SETTINGS_URL, icon: <SettingOutlined />, label: 'Cài đặt tài khoản' },
+  { key: 'coming-activity', icon: <HistoryOutlined />, label: <ComingSoonLabel>Lịch sử hoạt động</ComingSoonLabel>, title: 'Lịch sử hoạt động — Sắp mở', disabled: true },
+  { key: EMPLOYER_COMPANY_SETTINGS_URL, icon: <SettingOutlined />, label: 'Cài đặt tài khoản', title: 'Cài đặt tài khoản' },
   { type: 'divider' },
-  { key: 'coming-system-notifications', icon: <NotificationOutlined />, label: <ComingSoonLabel>Thông báo hệ thống</ComingSoonLabel>, disabled: true },
+  { key: 'coming-system-notifications', icon: <NotificationOutlined />, label: <ComingSoonLabel>Thông báo hệ thống</ComingSoonLabel>, title: 'Thông báo hệ thống — Sắp mở', disabled: true },
 ]
 
 const ROUTE_TITLES = [
@@ -161,6 +165,8 @@ export default function EmployerWorkspaceLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false)
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
   const profileQuery = useQuery({
     queryKey: ['employer', 'profile'],
     queryFn: getEmployerProfile,
@@ -172,6 +178,8 @@ export default function EmployerWorkspaceLayout() {
   const showComplianceNotice = profileQuery.isSuccess
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
+  const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
+  const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
     items: [
       { key: 'settings', label: 'Cài đặt tài khoản', icon: <SettingOutlined /> },
@@ -186,7 +194,13 @@ export default function EmployerWorkspaceLayout() {
 
   function navigateFromMenu({ key }) {
     if (!key.startsWith('coming-')) navigate(key)
-    if (window.innerWidth < 992) setCollapsed(true)
+    if (isMobileViewport) setCollapsed(true)
+  }
+
+  function handleSidebarBreakpoint(isBroken) {
+    setIsMobileViewport(isBroken)
+    setIsSidebarHovered(false)
+    setCollapsed(isBroken)
   }
 
   return (
@@ -203,7 +217,8 @@ export default function EmployerWorkspaceLayout() {
           <Button
             type="text"
             aria-label={collapsed ? 'Mở menu quản trị' : 'Thu gọn menu quản trị'}
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            aria-pressed={!collapsed}
+            icon={<MenuOutlined />}
             onClick={() => setCollapsed((current) => !current)}
             className="!text-slate-300 hover:!bg-white/10 hover:!text-white"
           />
@@ -235,56 +250,84 @@ export default function EmployerWorkspaceLayout() {
 
       <Layout className="!min-h-0 !min-w-0 !flex-1 !overflow-hidden !bg-[#edf1f5]">
         <Sider
-          width={252}
+          width={EMPLOYER_SIDEBAR_WIDTH}
           breakpoint="lg"
-          collapsedWidth="0"
-          collapsed={collapsed}
-          onBreakpoint={setCollapsed}
+          collapsedWidth={isMobileViewport ? 0 : EMPLOYER_SIDEBAR_COLLAPSED_WIDTH}
+          collapsed={sidebarCollapsed}
+          onBreakpoint={handleSidebarBreakpoint}
+          onMouseEnter={() => {
+            if (collapsed && !isMobileViewport) setIsSidebarHovered(true)
+          }}
+          onMouseLeave={() => setIsSidebarHovered(false)}
           trigger={null}
           data-testid="employer-sidebar"
           className="!h-full !overflow-hidden !border-r !border-slate-200 !bg-white"
         >
           <div className="flex h-full flex-col bg-white">
-            <div className="shrink-0 border-b border-slate-100 px-4 py-4">
-              <div className="flex items-start gap-3">
-                <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
-                <div className="min-w-0 flex-1">
-                  <Link to={EMPLOYER_COMPANY_SETTINGS_URL} className="block truncate text-sm font-extrabold text-slate-800 hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</Link>
-                  <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
-                  <span className="mt-1 block truncate text-[10px] text-slate-400">Mã NTD: {profile.public_id || user?.public_id || '—'}</span>
-                  <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
-                    Tài khoản xác thực: <strong className="text-emerald-600">Cấp {accountVerificationLevel.level}/{accountVerificationLevel.total}</strong>
-                    <Popover
-                      trigger={['hover', 'focus']}
-                      placement="rightTop"
-                      overlayInnerStyle={{ padding: 12 }}
-                      content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
+            <div className={`shrink-0 border-b border-slate-100 ${isCompactSidebar ? 'px-2 py-3' : 'px-4 py-4'}`}>
+              {isCompactSidebar ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Tooltip title="Cài đặt tài khoản" placement="right">
+                    <Link to={EMPLOYER_COMPANY_SETTINGS_URL} aria-label="Cài đặt tài khoản">
+                      <Avatar size={34} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
+                    </Link>
+                  </Tooltip>
+                  <Tooltip title={accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'} placement="right">
+                    <Link
+                      to={EMPLOYER_VERIFY_URL}
+                      aria-label="Xem trạng thái xác thực tài khoản"
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
                     >
-                      <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
-                    </Popover>
-                  </span>
+                      <SafetyCertificateOutlined />
+                    </Link>
+                  </Tooltip>
                 </div>
-              </div>
-              <Link
-                to={EMPLOYER_VERIFY_URL}
-                className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
-              >
-                <SafetyCertificateOutlined /> {accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'}
-              </Link>
+              ) : (
+                <>
+                  <div className="flex items-start gap-3">
+                    <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
+                    <div className="min-w-0 flex-1">
+                      <Link to={EMPLOYER_COMPANY_SETTINGS_URL} className="block truncate text-sm font-extrabold text-slate-800 hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</Link>
+                      <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
+                      <span className="mt-1 block truncate text-[10px] text-slate-400">Mã NTD: {profile.public_id || user?.public_id || '—'}</span>
+                      <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
+                        Tài khoản xác thực: <strong className="text-emerald-600">Cấp {accountVerificationLevel.level}/{accountVerificationLevel.total}</strong>
+                        <Popover
+                          trigger={['hover', 'focus']}
+                          placement="rightTop"
+                          overlayInnerStyle={{ padding: 12 }}
+                          content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
+                        >
+                          <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
+                        </Popover>
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    to={EMPLOYER_VERIFY_URL}
+                    className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                  >
+                    <SafetyCertificateOutlined /> {accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'}
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto py-2">
               <Menu
                 mode="inline"
+                inlineCollapsed={isCompactSidebar}
                 selectedKeys={[selectedMenuKey(pathname)]}
                 items={EMPLOYER_NAV_ITEMS}
                 onClick={navigateFromMenu}
-                className="!border-0 !bg-white [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!px-3 [&_.ant-menu-item]:!text-xs [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600"
+                className="!border-0 !bg-white [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!px-3 [&_.ant-menu-item]:!text-xs [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"
               />
             </div>
 
             <div className="shrink-0 border-t border-slate-100 p-2">
-              <div aria-disabled="true" className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-500"><CustomerServiceOutlined className="text-base text-emerald-600" /> Hộp thư hỗ trợ <span className="ml-auto text-[9px] text-slate-400">Sắp mở</span></div>
+              <Tooltip title={isCompactSidebar ? 'Hộp thư hỗ trợ — Sắp mở' : null} placement="right">
+                <div aria-disabled="true" className={`flex cursor-not-allowed items-center rounded-lg py-2.5 text-xs font-semibold text-slate-500 ${isCompactSidebar ? 'justify-center px-0' : 'gap-3 px-3'}`}><CustomerServiceOutlined className={`${isCompactSidebar ? 'text-xl' : 'text-base'} text-emerald-600`} /> {!isCompactSidebar && <>Hộp thư hỗ trợ <span className="ml-auto text-[9px] text-slate-400">Sắp mở</span></>}</div>
+              </Tooltip>
             </div>
           </div>
         </Sider>

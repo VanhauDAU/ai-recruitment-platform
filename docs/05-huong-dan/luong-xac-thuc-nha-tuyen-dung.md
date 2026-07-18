@@ -191,7 +191,7 @@ Nó không phụ thuộc bước đăng tin đầu tiên vì workflow đó chưa
 
 Dashboard dùng shell quản trị riêng, responsive desktop/mobile. Cấu trúc shell
 gồm dải cảnh báo tuân thủ theo trạng thái DLCN, topbar tối chứa hành động nhanh,
-sidebar trắng chứa hồ sơ/mã NTD/cấp xác thực 0–3 kèm popover chi tiết và menu nghiệp vụ phân nhóm,
+sidebar trắng chứa hồ sơ/mã NTD/cấp xác thực 0–3 kèm popover chi tiết và menu nghiệp vụ phân nhóm. Trên desktop, nút hamburger thu sidebar từ 216px thành rail 64px còn icon lớn, căn giữa; hover vào rail mở tạm menu/hồ sơ và rời chuột sẽ tự thu lại. Nếu người dùng không thu gọn, sidebar luôn mở. Avatar/trạng thái an toàn và item menu có tooltip để vẫn thao tác được. Trên mobile sidebar vẫn ẩn hoàn toàn khi đóng.
 header tên trang và vùng nội dung cuộn độc lập. Bảng tin ưu tiên thông báo quan
 trọng, banner thông tin, hành trình xác thực ngang, khu khám phá và CV đề xuất;
 phía dưới vẫn gồm số tin đang tuyển, tổng hồ sơ, hồ sơ mới, lượt xem, biểu đồ 7
