@@ -87,4 +87,28 @@ describe('EmployerWorkspaceLayout', () => {
     expect(screen.getByText('Cập nhật thông tin công ty', { exact: true })).toBeInTheDocument()
     expect(screen.getByText('Xác thực Giấy đăng ký doanh nghiệp', { exact: true })).toBeInTheDocument()
   })
+
+  it('opens the account information settings tab from the sidebar profile', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/account/settings/account-info" element={<p>Thông tin tài khoản đang mở</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const accountLink = screen.getByRole('link', { name: 'Thông tin tài khoản' })
+    expect(accountLink).toHaveAttribute('href', '/tuyendung/app/account/settings/account-info')
+    fireEvent.click(accountLink)
+
+    expect(screen.getByText('Thông tin tài khoản đang mở')).toBeInTheDocument()
+  })
 })

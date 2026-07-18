@@ -40,6 +40,7 @@ export const EMPLOYER_COMPLETE_PROFILE_URL = employerAppPath('/account/complete-
 export const EMPLOYER_CONSULTING_NEED_URL = employerAppPath('/consulting-need')
 export const EMPLOYER_VERIFY_URL = employerAppPath('/employer-verify')
 export const EMPLOYER_PHONE_VERIFY_URL = employerAppPath('/account/phone-verify')
+export const EMPLOYER_ACCOUNT_SETTINGS_URL = employerAppPath('/account/settings/account-info')
 export const EMPLOYER_PASSWORD_SETTINGS_URL = employerAppPath('/account/settings/password-login')
 export const EMPLOYER_COMPANY_SETTINGS_URL = employerAppPath('/account/settings/company')
 export const EMPLOYER_BUSINESS_LICENSE_URL = employerAppPath('/account/settings/gpkd')

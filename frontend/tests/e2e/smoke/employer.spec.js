@@ -262,9 +262,22 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('dialog')).toContainText('Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google')
   await page.getByRole('button', { name: 'Cập nhật mật khẩu tại đây' }).click()
   await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/password-login$/)
+  await expect(page).toHaveTitle('Thay đổi mật khẩu | Smart Recruitment Platform')
 
   await page.goto('/tuyendung/app/account/settings/company?update=true')
   await expect(page.getByRole('tab', { name: /Tìm kiếm thông tin công ty/ })).toBeVisible()
   await expect(page.getByRole('tab', { name: /Tạo công ty mới/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Bảng giá dịch vụ/ })).toHaveCount(0)
+
+  if (page.viewportSize().width < 1024) {
+    await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
+  }
+  const sidebarAccountLink = page.getByTestId('employer-sidebar').getByRole('link', { name: 'Thông tin tài khoản' })
+  await expect(sidebarAccountLink).toHaveAttribute('href', '/tuyendung/app/account/settings/account-info')
+  await sidebarAccountLink.click()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/account-info$/)
+  await expect(page).toHaveTitle('Thông tin tài khoản | Smart Recruitment Platform')
+  await expect(page.getByRole('heading', { name: 'Thông tin tài khoản' })).toBeVisible()
+  await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
+  await expect(page.getByRole('button', { name: 'Cập nhật' })).toBeVisible()
 })

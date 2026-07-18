@@ -34,6 +34,7 @@ import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {
+  EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_PHONE_VERIFY_URL,
@@ -45,7 +46,7 @@ const { Header, Sider, Content } = Layout
 
 // Mirrors the employer workspace navigation in TopCV: an expanded work menu
 // and a compact, icon-only rail that keeps the current workspace usable.
-const EMPLOYER_SIDEBAR_WIDTH = 216
+const EMPLOYER_SIDEBAR_WIDTH = 240
 const EMPLOYER_SIDEBAR_COLLAPSED_WIDTH = 64
 
 const ACCOUNT_VERIFICATION_LEVEL_STEPS = [
@@ -80,7 +81,7 @@ const EMPLOYER_NAV_ITEMS = [
   { key: 'coming-coupons', icon: <TagsOutlined />, label: <ComingSoonLabel>Mã ưu đãi</ComingSoonLabel>, title: 'Mã ưu đãi — Sắp mở', disabled: true },
   { type: 'divider' },
   { key: 'coming-activity', icon: <HistoryOutlined />, label: <ComingSoonLabel>Lịch sử hoạt động</ComingSoonLabel>, title: 'Lịch sử hoạt động — Sắp mở', disabled: true },
-  { key: EMPLOYER_COMPANY_SETTINGS_URL, icon: <SettingOutlined />, label: 'Cài đặt tài khoản', title: 'Cài đặt tài khoản' },
+  { key: EMPLOYER_ACCOUNT_SETTINGS_URL, icon: <SettingOutlined />, label: 'Cài đặt tài khoản', title: 'Cài đặt tài khoản' },
   { type: 'divider' },
   { key: 'coming-system-notifications', icon: <NotificationOutlined />, label: <ComingSoonLabel>Thông báo hệ thống</ComingSoonLabel>, title: 'Thông báo hệ thống — Sắp mở', disabled: true },
 ]
@@ -89,6 +90,7 @@ const ROUTE_TITLES = [
   [employerAppPath('/dashboard'), 'Bảng tin'],
   [EMPLOYER_VERIFY_URL, 'Xác thực tài khoản'],
   [EMPLOYER_PHONE_VERIFY_URL, 'Xác thực số điện thoại'],
+  [EMPLOYER_ACCOUNT_SETTINGS_URL, 'Thông tin tài khoản'],
   [employerAppPath('/account/settings/password-login'), 'Thay đổi mật khẩu'],
   [EMPLOYER_COMPANY_SETTINGS_URL, 'Cài đặt tài khoản'],
   [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
@@ -101,7 +103,7 @@ function routeTitle(pathname) {
 
 function selectedMenuKey(pathname) {
   if (pathname.startsWith(employerAppPath('/account/settings')) || pathname === EMPLOYER_PHONE_VERIFY_URL) {
-    return EMPLOYER_COMPANY_SETTINGS_URL
+    return EMPLOYER_ACCOUNT_SETTINGS_URL
   }
   return pathname
 }
@@ -187,7 +189,7 @@ export default function EmployerWorkspaceLayout() {
       { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true },
     ],
     onClick: ({ key }) => {
-      if (key === 'settings') navigate(EMPLOYER_COMPANY_SETTINGS_URL)
+      if (key === 'settings') navigate(EMPLOYER_ACCOUNT_SETTINGS_URL)
       if (key === 'logout') logout()
     },
   }
@@ -267,8 +269,8 @@ export default function EmployerWorkspaceLayout() {
             <div className={`shrink-0 border-b border-slate-100 ${isCompactSidebar ? 'px-2 py-3' : 'px-4 py-4'}`}>
               {isCompactSidebar ? (
                 <div className="flex flex-col items-center gap-3">
-                  <Tooltip title="Cài đặt tài khoản" placement="right">
-                    <Link to={EMPLOYER_COMPANY_SETTINGS_URL} aria-label="Cài đặt tài khoản">
+                  <Tooltip title="Thông tin tài khoản" placement="right">
+                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label="Thông tin tài khoản">
                       <Avatar size={34} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
                     </Link>
                   </Tooltip>
@@ -285,24 +287,26 @@ export default function EmployerWorkspaceLayout() {
               ) : (
                 <>
                   <div className="flex items-start gap-3">
-                    <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
+                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label="Thông tin tài khoản" className="flex min-w-0 flex-1 items-start gap-3 rounded-xl outline-none transition hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-emerald-500">
+                      <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
                     <div className="min-w-0 flex-1">
-                      <Link to={EMPLOYER_COMPANY_SETTINGS_URL} className="block truncate text-sm font-extrabold text-slate-800 hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</Link>
+                      <span className="block truncate text-sm font-extrabold text-slate-800 transition hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</span>
                       <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
                       <span className="mt-1 block truncate text-[10px] text-slate-400">Mã NTD: {profile.public_id || user?.public_id || '—'}</span>
-                      <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
-                        Tài khoản xác thực: <strong className="text-emerald-600">Cấp {accountVerificationLevel.level}/{accountVerificationLevel.total}</strong>
-                        <Popover
-                          trigger={['hover', 'focus']}
-                          placement="rightTop"
-                          overlayInnerStyle={{ padding: 12 }}
-                          content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
-                        >
-                          <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
-                        </Popover>
-                      </span>
                     </div>
+                    </Link>
                   </div>
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
+                    Tài khoản xác thực: <strong className="text-emerald-600">Cấp {accountVerificationLevel.level}/{accountVerificationLevel.total}</strong>
+                    <Popover
+                      trigger={['hover', 'focus']}
+                      placement="rightTop"
+                      overlayInnerStyle={{ padding: 12 }}
+                      content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
+                    >
+                      <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
+                    </Popover>
+                  </span>
                   <Link
                     to={EMPLOYER_VERIFY_URL}
                     className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
