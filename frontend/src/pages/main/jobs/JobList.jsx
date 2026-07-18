@@ -5,6 +5,7 @@ import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import { formatNumber } from '@/entities/job'
 import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
@@ -179,7 +180,7 @@ export default function JobList() {
   })
 
   useEffect(() => {
-    document.title = pageTitle
+    setDocumentTitle(pageTitle)
   }, [pageTitle])
 
   const wardSuggestionInsertIndex = useMemo(() => {

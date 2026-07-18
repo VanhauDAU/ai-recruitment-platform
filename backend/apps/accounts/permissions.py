@@ -12,13 +12,10 @@ def _accessible(request):
 
 
 class IsCandidate(BasePermission):
-    """Vai ứng viên là vai nền: mọi tài khoản khả dụng không phải admin.
-
-    Cho phép một tài khoản NTD (đa vai) vẫn dùng được các tính năng ứng viên.
-    """
+    """Có năng lực ứng viên (role gốc candidate hoặc đã có `candidate_profile`)."""
 
     def has_permission(self, request, view):
-        return _accessible(request) and not request.user.is_admin_role
+        return _accessible(request) and request.user.has_candidate_capability
 
 
 class IsEmployer(BasePermission):

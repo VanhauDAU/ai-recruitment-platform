@@ -5,6 +5,8 @@ from apps.jobs.models import JobCategory
 
 from ...models import RecruitmentNeed
 
+MIN_BUDGET = 1_000_000
+
 
 class RecruitmentNeedSerializer(serializers.ModelSerializer):
     position_category = serializers.PrimaryKeyRelatedField(
@@ -55,6 +57,10 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
 
         budget_min = attrs.get('budget_min')
         budget_max = attrs.get('budget_max')
+        if budget_min is not None and budget_min < MIN_BUDGET:
+            raise serializers.ValidationError({'budget_min': 'Ngân sách tối thiểu là 1.000.000đ.'})
+        if budget_max is not None and budget_max < MIN_BUDGET:
+            raise serializers.ValidationError({'budget_max': 'Ngân sách tối thiểu là 1.000.000đ.'})
         if (budget_min is None) != (budget_max is None):
             raise serializers.ValidationError({'budget_max': 'Nhập đủ khoảng ngân sách từ và đến.'})
         if budget_min is not None and budget_min > budget_max:

@@ -3,6 +3,7 @@ import { Empty, Skeleton } from 'antd'
 import { Link } from 'react-router-dom'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { getBlogCategories, getBlogHome } from '@/entities/blog'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogInlineBanner from './ui/BlogInlineBanner'
 import CategorySection from './ui/CategorySection'
@@ -30,7 +31,7 @@ export default function BlogHome() {
     return () => { cancelled = true }
   }, [])
 
-  useEffect(() => { document.title = pageTitle }, [pageTitle])
+  useEffect(() => { setDocumentTitle(pageTitle) }, [pageTitle])
 
   const sections = home?.sections || []
 

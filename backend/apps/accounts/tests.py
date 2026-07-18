@@ -309,15 +309,18 @@ class OAuthFlowTests(APITestCase):
         self.assertTrue(existing.has_employer_capability)
         self.assertTrue(existing.social_accounts.filter(provider='google').exists())
 
-    def test_employer_email_can_log_into_candidate_portal(self):
-        """Chiều ngược lại: NTD đăng nhập cổng ứng viên bằng Google -> vai nền ứng
-        viên, active role=candidate, không bị chặn."""
-        User.objects.create_user(
+    def test_employer_email_gains_candidate_capability_via_google(self):
+        """Chiều ngược lại (đối xứng): NTD đăng nhập cổng ứng viên bằng Google được
+        cấp năng lực ứng viên (candidate_profile), active role=candidate."""
+        existing = User.objects.create_user(
             email='social@example.com', password='Password@123', role=User.Role.EMPLOYER
         )
         complete = self._complete(self._callback(portal='main').url)
         self.assertEqual(complete.status_code, 200)
         self.assertEqual(complete.data['user']['role'], 'candidate')
+        existing.refresh_from_db()
+        self.assertEqual(existing.role, User.Role.EMPLOYER)  # role gốc không đổi
+        self.assertTrue(existing.has_candidate_capability)
 
     def test_me_reports_active_role_and_capabilities_per_portal(self):
         """`/auth/me/` trả active role theo token của cổng; available_roles phản ánh
@@ -500,10 +503,10 @@ class LastLoginTests(APITestCase):
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
 
-    def test_password_login_main_portal_allows_employer_account(self):
-        """NTD đăng nhập cổng ứng viên bằng mật khẩu được phép (vai nền ứng viên),
-        token mang active role=candidate."""
-        User.objects.create_user(
+    def test_password_login_main_portal_without_candidate_capability_is_blocked(self):
+        """NTD thuần (chưa có năng lực ứng viên) đăng nhập cổng ứng viên bằng mật
+        khẩu bị chặn — password-login không tự cấp năng lực (đối xứng cổng NTD)."""
+        user = User.objects.create_user(
             email='login4@example.com', password='Password@123', role=User.Role.EMPLOYER,
         )
 
@@ -512,9 +515,9 @@ class LastLoginTests(APITestCase):
             'captcha_token': 'x', 'portal': 'main',
         })
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        access = AccessToken(response.data['access'])
-        self.assertEqual(access['role'], 'candidate')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertIsNone(user.last_login)
 
     def test_banned_or_deleted_user_cannot_log_in(self):
         for suffix, fields in (

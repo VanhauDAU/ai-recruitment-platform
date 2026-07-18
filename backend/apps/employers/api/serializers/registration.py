@@ -30,18 +30,7 @@ class EmployerRegistrationProfileSerializer(serializers.Serializer):
         return value
 
     def validate_contact_phone(self, value):
-        value = value.replace(' ', '').replace('.', '').replace('-', '')
-        user = self.context.get('user')
-        conflict = RecruiterProfile.objects.filter(contact_phone=value)
-        verified_conflict = RecruiterProfile.objects.filter(verified_phone=value)
-        if user is not None:
-            conflict = conflict.exclude(user=user)
-            verified_conflict = verified_conflict.exclude(user=user)
-        if conflict.exists() or verified_conflict.exists():
-            raise serializers.ValidationError(
-                'Số điện thoại này đã được dùng cho một tài khoản nhà tuyển dụng khác.'
-            )
-        return value
+        return value.replace(' ', '').replace('.', '').replace('-', '')
 
     def validate_terms_accepted(self, value):
         if value is not True:

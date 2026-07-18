@@ -3,6 +3,7 @@ import { Drawer, Result, Skeleton, Tag } from 'antd'
 import { Link, useParams } from 'react-router-dom'
 import { BLOG_ROOT, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { setDocumentTitle } from '@/shared/config/document-title'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogBenefits from './ui/BlogBenefits'
 import BlogContent from './ui/BlogContent'
@@ -43,8 +44,8 @@ export default function BlogDetail() {
   useEffect(() => {
     if (!post?.title) return undefined
     const previous = document.title
-    document.title = post.seo_title || post.title
-    return () => { document.title = previous }
+    setDocumentTitle(post.seo_title || post.title)
+    return () => { setDocumentTitle(previous) }
   }, [post])
 
   const handleToc = useCallback((items) => setToc(items), [])

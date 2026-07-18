@@ -215,16 +215,20 @@ def _ensure_portal_capability(user, portal):
     - employer: nếu chưa có `recruiter_profile` thì tạo hồ sơ NTD ở trạng thái
       pending -> user đi vào luồng onboarding NTD sẵn có. Không đổi `user.role`
       gốc: năng lực suy ra từ hồ sơ, không từ role.
-    - main: vai ứng viên là vai nền, không cần cấp gì (endpoint ứng viên tự tạo
-      `candidate_profile` khi cần).
+    - main: nếu chưa có `candidate_profile` thì tạo hồ sơ ứng viên (đối xứng),
+      để NTD dùng được tính năng ứng viên.
 
-    Import cục bộ để giữ ranh giới layer (accounts không phụ thuộc cứng employers),
-    theo đúng pattern đã dùng ở `serializers.SessionUserSerializer`.
+    Import cục bộ để giữ ranh giới layer (accounts không phụ thuộc cứng
+    employers/candidates), theo pattern đã dùng ở `serializers.SessionUserSerializer`.
     """
     if portal == 'employer' and not user.has_employer_capability:
         from apps.employers.services.profiles import get_or_create_recruiter
 
         get_or_create_recruiter(user)
+    elif portal == 'main' and not user.has_candidate_capability:
+        from apps.candidates.models import CandidateProfile
+
+        CandidateProfile.objects.get_or_create(user=user)
 
 
 def resolve_user(provider, profile, portal, *, include_created=False):

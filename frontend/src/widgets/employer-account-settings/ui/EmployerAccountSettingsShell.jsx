@@ -8,6 +8,7 @@ import {
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_PASSWORD_SETTINGS_URL,
 } from '@/shared/config/portals'
+import { setDocumentTitle } from '@/shared/config/document-title'
 
 const ITEMS = [
   { to: EMPLOYER_PASSWORD_SETTINGS_URL, label: 'Đổi mật khẩu', icon: LockOutlined },
@@ -21,7 +22,7 @@ export default function EmployerAccountSettingsShell({ title, children }) {
   const { pathname } = useLocation()
 
   useEffect(() => {
-    document.title = `${title} | Smart Recruitment Platform`
+    setDocumentTitle(title, { portal: 'employer' })
   }, [title])
 
   return (

@@ -276,6 +276,16 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(inverted_budget.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('budget_max', inverted_budget.data)
 
+    def test_consulting_need_rejects_budget_below_one_million(self):
+        response = self.client.post(reverse('employer-consulting-need'), {
+            **self.payload,
+            'budget_min': 999_999,
+            'budget_max': 2_000_000,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('budget_min', response.data)
+
     def test_consulting_need_accepts_at_most_one_consultation_topic(self):
         response = self.client.post(reverse('employer-consulting-need'), {
             **self.payload,

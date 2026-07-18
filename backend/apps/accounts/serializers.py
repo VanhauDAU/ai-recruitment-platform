@@ -246,16 +246,19 @@ PORTAL_ACTIVE_ROLE = {
 def portal_access_allowed(user, portal):
     """Tài khoản có được vào cổng này không, theo **năng lực** (không phải role gốc).
 
-    - main: vai ứng viên là vai nền -> mọi tài khoản khả dụng không phải admin.
-    - employer: yêu cầu đã có năng lực NTD (`recruiter_profile`). Password-login
-      không tự cấp năng lực; ứng viên muốn thành NTD đi qua Google hoặc trang đăng ký.
+    Password-login KHÔNG tự cấp năng lực (khác Google): mỗi cổng yêu cầu đã có
+    năng lực tương ứng. Muốn thêm vai thì đi qua Google của cổng đích hoặc trang
+    đăng ký — nơi năng lực được cấp tường minh.
+
+    - main: yêu cầu năng lực ứng viên (`candidate_profile` hoặc role candidate).
+    - employer: yêu cầu năng lực NTD (`recruiter_profile` hoặc role employer).
     - admin: chỉ tài khoản admin.
     """
     if portal == 'employer':
         return user.has_employer_capability
     if portal == 'admin':
         return user.is_admin_role
-    return not user.is_admin_role
+    return user.has_candidate_capability
 
 
 class LoginCredentialsSerializer(TokenObtainSerializer):

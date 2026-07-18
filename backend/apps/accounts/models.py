@@ -126,19 +126,29 @@ class User(AbstractUser):
 
     @property
     def has_employer_capability(self):
-        """Đã có hồ sơ NTD (dù `role` chính là gì) -> dùng được cổng NTD.
+        """Dùng được cổng NTD: role gốc là employer HOẶC đã được cấp hồ sơ NTD.
 
         Cho phép mô hình "một danh tính, nhiều vai": một ứng viên đăng nhập cổng
         NTD sẽ được cấp `recruiter_profile` và từ đó có năng lực nhà tuyển dụng,
         không phụ thuộc vào `role` đăng ký ban đầu.
         """
-        return hasattr(self, 'recruiter_profile')
+        return self.is_employer or hasattr(self, 'recruiter_profile')
+
+    @property
+    def has_candidate_capability(self):
+        """Dùng được cổng ứng viên: role gốc là candidate HOẶC đã có hồ sơ ứng viên.
+
+        Đối xứng với `has_employer_capability`: một NTD muốn dùng tính năng ứng
+        viên sẽ được cấp `candidate_profile` khi đăng nhập cổng ứng viên. Admin
+        không có năng lực ứng viên.
+        """
+        return self.is_candidate or hasattr(self, 'candidate_profile')
 
     @property
     def available_roles(self):
-        """Các vai người dùng thực sự dùng được (không tính admin tự phục vụ)."""
+        """Các vai người dùng thực sự dùng được, suy từ năng lực đã có."""
         roles = []
-        if not self.is_admin_role:
+        if self.has_candidate_capability:
             roles.append(self.Role.CANDIDATE)
         if self.has_employer_capability:
             roles.append(self.Role.EMPLOYER)
