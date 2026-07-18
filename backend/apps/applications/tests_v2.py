@@ -7,7 +7,8 @@ from apps.cvs.models import CvVersion
 from apps.cvs.schemas import empty_layout, empty_style
 from apps.cvs.services import create_application_snapshot, create_v2_cv, save_draft_as_version, update_draft
 from apps.employers.models import Company, RecruiterProfile
-from apps.jobs.models import Job
+from apps.jobs.models import Job, JobLocation
+from apps.locations.models import Location
 
 from .models import Application
 
@@ -116,7 +117,12 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 class CandidateApplicationV2Tests(APITestCase):
     def setUp(self):
         self.candidate = get_user_model().objects.create_user(
-            email='apply-candidate@example.com', password='password', role='candidate', email_verified=True,
+            email='apply-candidate@example.com',
+            password='password',
+            role='candidate',
+            email_verified=True,
+            full_name='Apply Candidate',
+            phone='0909000000',
         )
         self.other_candidate = get_user_model().objects.create_user(
             email='other-apply-candidate@example.com', password='password', role='candidate', email_verified=True,
@@ -130,6 +136,18 @@ class CandidateApplicationV2Tests(APITestCase):
             company=self.company,
             title='Apply Job', description='Candidate selects an immutable CV version.', status=Job.Status.ACTIVE,
         )
+        self.preferred_location = Location.objects.create(
+            code='74',
+            level=Location.Level.PROVINCE,
+            name='Bình Dương',
+        )
+        self.second_preferred_location = Location.objects.create(
+            code='48',
+            level=Location.Level.PROVINCE,
+            name='Đà Nẵng',
+        )
+        JobLocation.objects.create(job=self.job, location=self.preferred_location)
+        JobLocation.objects.create(job=self.job, location=self.second_preferred_location)
         template = CvTemplate.objects.create(
             name='Apply template', lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
         )
@@ -153,6 +171,12 @@ class CandidateApplicationV2Tests(APITestCase):
             'cv_public_id': self.cv.public_id,
             'version_public_id': self.cv.latest_version.public_id,
             'cover_letter': 'I would like to apply.',
+            'preferred_location_ids': [
+                self.preferred_location.id,
+                self.second_preferred_location.id,
+            ],
+            'allow_ai_analysis': False,
+            'data_processing_consent': True,
         }
         payload.update(overrides)
         return payload
@@ -175,6 +199,15 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(application.submitted_cv_version.public_id, response.data['submitted_cv_version_public_id'])
         self.assertEqual(self.cv.latest_version_id, selected_version.id)
         self.assertEqual(response.data['cv_public_id'], self.cv.public_id)
+        self.assertEqual(
+            response.data['preferred_location_ids'],
+            [self.preferred_location.id, self.second_preferred_location.id],
+        )
+        self.assertEqual(response.data['preferred_location_names'], ['Bình Dương', 'Đà Nẵng'])
+        self.assertTrue(response.data['data_processing_consent'])
+        self.assertEqual(response.data['contact_name'], 'Apply Candidate')
+        self.assertEqual(response.data['contact_email'], 'apply-candidate@example.com')
+        self.assertEqual(response.data['contact_phone'], '0909000000')
 
     def test_candidate_cannot_submit_another_candidates_cv_or_submit_twice(self):
         self.client.force_authenticate(self.candidate)
@@ -196,6 +229,30 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(forbidden_cv.status_code, 400, forbidden_cv.data)
         self.assertEqual(first.status_code, 201, first.data)
         self.assertEqual(duplicate.status_code, 400, duplicate.data)
+
+    def test_candidate_must_consent_and_select_a_workplace_offered_by_the_job(self):
+        other_location = Location.objects.create(
+            code='01',
+            level=Location.Level.PROVINCE,
+            name='Hà Nội',
+        )
+        self.client.force_authenticate(self.candidate)
+
+        missing_consent = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(data_processing_consent=False),
+            format='json',
+        )
+        invalid_location = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(preferred_location_ids=[other_location.id]),
+            format='json',
+        )
+
+        self.assertEqual(missing_consent.status_code, 400, missing_consent.data)
+        self.assertIn('data_processing_consent', missing_consent.data)
+        self.assertEqual(invalid_location.status_code, 400, invalid_location.data)
+        self.assertIn('preferred_location_ids', invalid_location.data)
 
     def test_employer_cannot_use_candidate_submission_endpoint(self):
         self.client.force_authenticate(self.employer)
