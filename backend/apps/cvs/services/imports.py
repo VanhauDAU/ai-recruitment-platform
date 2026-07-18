@@ -26,9 +26,11 @@ def validate_import_upload(upload):
         raise InvalidCvImport('File must not exceed 5 MB.')
     extension = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
     upload.seek(0)
-    signature = upload.read(8)
+    signature = upload.read(1024)
     upload.seek(0)
-    if extension == 'pdf' and signature.startswith(b'%PDF-'):
+    # ISO 32000 readers accept the PDF header within the first 1024 bytes.
+    # Some document generators prepend a BOM or transport whitespace.
+    if extension == 'pdf' and b'%PDF-' in signature:
         return extension
     if extension == 'docx' and signature.startswith(b'PK'):
         try:
@@ -41,7 +43,7 @@ def validate_import_upload(upload):
             pass
         finally:
             upload.seek(0)
-    raise InvalidCvImport('The file signature must be a valid PDF or DOCX.')
+    raise InvalidCvImport('Tệp phải là PDF hoặc DOCX hợp lệ.')
 
 
 def _checksum(upload):

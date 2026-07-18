@@ -52,10 +52,23 @@ class InvalidApplicationStatusTransition(ValueError):
 
 
 @transaction.atomic
-def create_application_record(*, candidate, job, cv, cover_letter='', source_version=None):
+def create_application_record(
+    *,
+    candidate,
+    job,
+    cv,
+    cover_letter='',
+    source_version=None,
+    preferred_locations=(),
+    allow_ai_analysis=False,
+    data_processing_consent=False,
+    contact_name='',
+    contact_email='',
+    contact_phone='',
+):
     """Persist one candidate application and its immutable selected CV snapshot."""
     snapshot = create_application_snapshot(cv, candidate, source_version=source_version)
-    return Application.objects.create(
+    application = Application.objects.create(
         candidate=candidate,
         job=job,
         cv=cv,
@@ -64,7 +77,14 @@ def create_application_record(*, candidate, job, cv, cover_letter='', source_ver
         submitted_cv_source=cv.source,
         submitted_at=timezone.now(),
         cover_letter=cover_letter,
+        allow_ai_analysis=allow_ai_analysis,
+        data_processing_consent=data_processing_consent,
+        contact_name=contact_name,
+        contact_email=contact_email,
+        contact_phone=contact_phone,
     )
+    application.preferred_locations.set(preferred_locations)
+    return application
 
 
 @transaction.atomic

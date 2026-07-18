@@ -418,6 +418,22 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(CvImportJob.objects.count(), 0)
 
+    def test_import_accepts_a_pdf_header_after_a_valid_leading_preamble(self):
+        upload = SimpleUploadedFile(
+            'generated-cv.pdf',
+            b'\xef\xbb\xbf\n%PDF-1.7\ncandidate cv',
+            content_type='application/pdf',
+        )
+
+        response = self.client.post(
+            reverse('cv-v2-import'),
+            {'file': upload},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['file_name'], 'generated-cv.pdf')
+
     def test_failed_import_exposes_safe_code_and_can_retry(self):
         with patch('apps.cvs.tasks.process_cv_import_job.delay'):
             queued = self.client.post(
