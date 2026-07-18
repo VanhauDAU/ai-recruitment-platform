@@ -10,6 +10,7 @@ from common.media_storage import delete_local_media_url, save_image_upload
 
 from ..models import AuthEmailJob, User
 from ..serializers import (
+    PORTAL_ACTIVE_ROLE,
     LoginCredentialsSerializer,
     ProfileUpdateSerializer,
     RegisterEmailAvailabilitySerializer,
@@ -21,6 +22,16 @@ from ..services import queue_verification_email, verify_request_captcha
 from ..services.tokens import issue_tokens
 from ..services import two_factor
 from ..tasks import queue_auth_email
+
+
+def active_role_from_request(request):
+    """Vai đang hoạt động lấy từ JWT đã verify (`request.auth['role']`).
+
+    Nhờ token lưu tách theo cổng, cùng một danh tính đa vai sẽ báo đúng vai của
+    cổng đang gọi. Trả None khi không có token (rơi về `user.role` ở serializer).
+    """
+    auth = getattr(request, 'auth', None)
+    return auth.get('role') if auth else None
 
 
 class RegisterView(generics.CreateAPIView):
@@ -88,7 +99,7 @@ class LoginView(APIView):
                 },
                 status=status.HTTP_202_ACCEPTED,
             )
-        return Response(issue_tokens(user))
+        return Response(issue_tokens(user, active_role=PORTAL_ACTIVE_ROLE.get(serializer.portal)))
 
 
 class MeView(generics.RetrieveUpdateAPIView):
@@ -105,6 +116,11 @@ class MeView(generics.RetrieveUpdateAPIView):
 
     def get_serializer_class(self):
         return ProfileUpdateSerializer if self.request.method == 'PATCH' else SessionUserSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['active_role'] = active_role_from_request(self.request)
+        return context
 
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
@@ -141,4 +157,5 @@ class AvatarUploadView(APIView):
         user.save(update_fields=['avatar_url', 'updated_at'])
         delete_local_media_url(old_url)
 
-        return Response(SessionUserSerializer(user).data)
+        context = {'request': request, 'active_role': active_role_from_request(request)}
+        return Response(SessionUserSerializer(user, context=context).data)

@@ -117,16 +117,23 @@ def pop_state(state):
     return atomic_pop(f'{_STATE_PREFIX}{state}')
 
 
-def create_one_time_code(user):
+def create_one_time_code(user, portal):
+    """Lưu kèm `portal` để bước đổi JWT biết active role của cổng đăng nhập."""
     code = secrets.token_urlsafe(32)
-    cache.set(f'{_CODE_PREFIX}{code}', user.pk, settings.OAUTH_CODE_TTL)
+    cache.set(f'{_CODE_PREFIX}{code}', {'uid': user.pk, 'portal': portal}, settings.OAUTH_CODE_TTL)
     return code
 
 
 def pop_one_time_code(code):
+    """Trả `{'uid', 'portal'}` (hoặc None). Tương thích ngược code cũ chỉ có uid."""
     if not code:
         return None
-    return atomic_pop(f'{_CODE_PREFIX}{code}')
+    data = atomic_pop(f'{_CODE_PREFIX}{code}')
+    if data is None:
+        return None
+    if isinstance(data, dict):
+        return data
+    return {'uid': data, 'portal': 'main'}
 
 
 # ---- Nói chuyện với provider ----
@@ -202,13 +209,32 @@ def fetch_profile(provider, access_token):
 
 # ---- Tạo / liên kết user ----
 
-def resolve_user(provider, profile, portal, *, include_created=False):
-    """Tìm hoặc tạo user cho danh tính social, theo luật cổng.
+def _ensure_portal_capability(user, portal):
+    """Cấp năng lực của cổng cho user (mô hình một danh tính, nhiều vai).
 
-    - Đã có SocialAccount -> dùng user đó (sai role cổng thì chặn).
-    - Email trùng user hiện có cùng role -> tự liên kết.
-    - Email trùng khác role -> chặn 'wrong_portal'.
+    - employer: nếu chưa có `recruiter_profile` thì tạo hồ sơ NTD ở trạng thái
+      pending -> user đi vào luồng onboarding NTD sẵn có. Không đổi `user.role`
+      gốc: năng lực suy ra từ hồ sơ, không từ role.
+    - main: vai ứng viên là vai nền, không cần cấp gì (endpoint ứng viên tự tạo
+      `candidate_profile` khi cần).
+
+    Import cục bộ để giữ ranh giới layer (accounts không phụ thuộc cứng employers),
+    theo đúng pattern đã dùng ở `serializers.SessionUserSerializer`.
+    """
+    if portal == 'employer' and not user.has_employer_capability:
+        from apps.employers.services.profiles import get_or_create_recruiter
+
+        get_or_create_recruiter(user)
+
+
+def resolve_user(provider, profile, portal, *, include_created=False):
+    """Tìm hoặc tạo user cho danh tính social, rồi cấp năng lực của cổng.
+
+    - Đã có SocialAccount -> dùng user đó.
+    - Email trùng user hiện có -> tự liên kết danh tính social vào user đó.
     - Chưa có -> tạo user mới: role theo cổng, email_verified=True, password unusable.
+    - Mọi trường hợp: bảo đảm user có năng lực của cổng đang vào (một danh tính,
+      nhiều vai). Không còn chặn 'wrong_portal'; chỉ chặn tài khoản `inactive`.
 
     ``include_created=True`` lets the caller trigger first-account side effects
     without confusing a newly linked provider with a newly created user.
@@ -226,10 +252,9 @@ def resolve_user(provider, profile, portal, *, include_created=False):
         )
         if account:
             user = account.user
-            if user.role != role:
-                raise OAuthError('wrong_portal')
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
+            _ensure_portal_capability(user, portal)
             return result(user, False)
 
         email = User.objects.normalize_email(profile.get('email') or '')
@@ -239,8 +264,6 @@ def resolve_user(provider, profile, portal, *, include_created=False):
         user = User.objects.filter(email__iexact=email).first()
         created = False
         if user:
-            if user.role != role:
-                raise OAuthError('wrong_portal')
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
             # Provider đã xác thực email này -> coi như email tài khoản đã xác thực.
@@ -271,4 +294,5 @@ def resolve_user(provider, profile, portal, *, include_created=False):
             email=email,
             raw_profile=profile.get('raw', {}),
         )
+        _ensure_portal_capability(user, portal)
         return result(user, created)

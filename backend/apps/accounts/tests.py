@@ -10,6 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
 from . import oauth
 from .models import AuthEmailJob, SocialAccount, User
@@ -74,6 +75,7 @@ class ProfileUpdateTests(APITestCase):
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
             'has_usable_password',
+            'has_employer_capability', 'available_roles',
             'employer_onboarding_required', 'employer_onboarding_step',
             'employer_verification_completed',
         })
@@ -288,14 +290,55 @@ class OAuthFlowTests(APITestCase):
         self.assertTrue(existing.has_usable_password())  # vẫn đăng nhập được bằng mật khẩu cũ
         self.assertEqual(existing.social_accounts.count(), 1)
 
-    def test_same_email_different_role_is_blocked(self):
+    def test_candidate_email_gains_employer_capability_via_google(self):
+        """Một danh tính, nhiều vai: ứng viên đăng nhập cổng NTD bằng Google được
+        cấp năng lực NTD (recruiter_profile) và nhận active role=employer, thay vì
+        bị chặn 'wrong_portal'."""
+        existing = User.objects.create_user(
+            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
+        )
+        response = self._callback(portal='employer')
+        self.assertEqual(response.status_code, 302)
+        complete = self._complete(response.url)
+
+        self.assertEqual(complete.status_code, 200)
+        self.assertEqual(complete.data['user']['public_id'], str(existing.public_id))
+        self.assertEqual(complete.data['user']['role'], 'employer')  # active role theo cổng
+        existing.refresh_from_db()
+        self.assertEqual(existing.role, User.Role.CANDIDATE)  # role gốc không đổi
+        self.assertTrue(existing.has_employer_capability)
+        self.assertTrue(existing.social_accounts.filter(provider='google').exists())
+
+    def test_employer_email_can_log_into_candidate_portal(self):
+        """Chiều ngược lại: NTD đăng nhập cổng ứng viên bằng Google -> vai nền ứng
+        viên, active role=candidate, không bị chặn."""
         User.objects.create_user(
             email='social@example.com', password='Password@123', role=User.Role.EMPLOYER
         )
-        response = self._callback(portal='main')
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('error=wrong_portal', response.url)
-        self.assertEqual(SocialAccount.objects.count(), 0)
+        complete = self._complete(self._callback(portal='main').url)
+        self.assertEqual(complete.status_code, 200)
+        self.assertEqual(complete.data['user']['role'], 'candidate')
+
+    def test_me_reports_active_role_and_capabilities_per_portal(self):
+        """`/auth/me/` trả active role theo token của cổng; available_roles phản ánh
+        cả hai vai của một danh tính đa vai."""
+        User.objects.create_user(
+            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
+        )
+        emp = self._complete(self._callback(portal='employer').url)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {emp.data["access"]}')
+        me_emp = self.client.get(reverse('auth-me'))
+        self.assertEqual(me_emp.data['role'], 'employer')
+        self.assertEqual(me_emp.data['employer_onboarding_step'], 'registration')
+        self.assertTrue(me_emp.data['has_employer_capability'])
+        self.assertEqual(set(me_emp.data['available_roles']), {'candidate', 'employer'})
+
+        cand = self._complete(self._callback(portal='main').url)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {cand.data["access"]}')
+        me_cand = self.client.get(reverse('auth-me'))
+        self.assertEqual(me_cand.data['role'], 'candidate')
+        self.assertIsNone(me_cand.data['employer_onboarding_step'])
+        self.client.credentials()
 
     def test_existing_social_account_logs_in_without_duplicate(self):
         first = self._complete(self._callback().url)
@@ -441,20 +484,37 @@ class LastLoginTests(APITestCase):
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
 
-    def test_wrong_portal_does_not_update_last_login(self):
-        """Sai cổng bị chặn sau khi xác thực mật khẩu đúng — không tính là đăng nhập."""
+    def test_password_login_without_employer_capability_is_blocked(self):
+        """Ứng viên thuần (chưa có năng lực NTD) đăng nhập cổng NTD bằng mật khẩu bị
+        chặn sau khi xác thực đúng — không tự cấp năng lực qua password."""
         user = User.objects.create_user(
-            email='login3@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='login3@example.com', password='Password@123', role=User.Role.CANDIDATE,
         )
 
         response = self.client.post(reverse('auth-login'), {
             'email': 'login3@example.com', 'password': 'Password@123',
-            'captcha_token': 'x', 'portal': 'main',
+            'captcha_token': 'x', 'portal': 'employer',
         })
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
+
+    def test_password_login_main_portal_allows_employer_account(self):
+        """NTD đăng nhập cổng ứng viên bằng mật khẩu được phép (vai nền ứng viên),
+        token mang active role=candidate."""
+        User.objects.create_user(
+            email='login4@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+
+        response = self.client.post(reverse('auth-login'), {
+            'email': 'login4@example.com', 'password': 'Password@123',
+            'captcha_token': 'x', 'portal': 'main',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        access = AccessToken(response.data['access'])
+        self.assertEqual(access['role'], 'candidate')
 
     def test_banned_or_deleted_user_cannot_log_in(self):
         for suffix, fields in (

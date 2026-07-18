@@ -123,7 +123,7 @@ class EmployerRegistrationTests(APITestCase):
         self.assertIn('terms_accepted', response.data)
         self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
 
-    def test_registration_rejects_weak_password_and_duplicate_contact_phone(self):
+    def test_registration_rejects_weak_password_and_allows_duplicate_contact_phone(self):
         weak = self.client.post(
             reverse('employer-register'),
             {**self.payload, 'password': 'matkhaudai'},
@@ -139,8 +139,11 @@ class EmployerRegistrationTests(APITestCase):
             {**self.payload, 'email': 'other@acme.vn'},
             format='json',
         )
-        self.assertEqual(duplicate.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('contact_phone', duplicate.data)
+        self.assertEqual(duplicate.status_code, status.HTTP_201_CREATED, duplicate.data)
+        self.assertEqual(
+            RecruiterProfile.objects.filter(contact_phone='0912345678').count(),
+            2,
+        )
 
     def test_google_employer_can_complete_registration_profile_once(self):
         user = User.objects.create_user(
@@ -149,6 +152,9 @@ class EmployerRegistrationTests(APITestCase):
             role=User.Role.EMPLOYER,
             email_verified=True,
         )
+        # Luồng OAuth cổng NTD cấp sẵn năng lực (recruiter_profile) khi đăng nhập;
+        # dựng đúng trạng thái đó để phản ánh authorization theo năng lực.
+        RecruiterProfile.objects.create(user=user)
         self.client.force_authenticate(user=user)
         profile_payload = {key: value for key, value in self.payload.items() if key not in {
             'email', 'password', 'captcha_token',
@@ -170,6 +176,21 @@ class EmployerRegistrationTests(APITestCase):
             format='json',
         )
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+
+        other_user = User.objects.create_user(
+            email='other-google@acme.vn',
+            password=None,
+            role=User.Role.EMPLOYER,
+            email_verified=True,
+        )
+        RecruiterProfile.objects.create(user=other_user)
+        self.client.force_authenticate(user=other_user)
+        duplicate_phone = self.client.post(
+            reverse('employer-registration-complete'),
+            profile_payload,
+            format='json',
+        )
+        self.assertEqual(duplicate_phone.status_code, status.HTTP_200_OK, duplicate_phone.data)
 
 
 class RecruitmentNeedTests(APITestCase):

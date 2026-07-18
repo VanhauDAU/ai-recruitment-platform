@@ -63,14 +63,23 @@ class RegisterEmailAvailabilitySerializer(serializers.Serializer):
 
 
 class SessionUserSerializer(serializers.ModelSerializer):
-    """Authenticated-session DTO containing only fields rendered by the portals."""
+    """Authenticated-session DTO containing only fields rendered by the portals.
 
+    Trả **vai đang hoạt động (active role)** theo token của cổng gọi tới, không
+    phải `role` đăng ký gốc. Nhờ vậy một danh tính đa vai (vừa ứng viên vừa NTD)
+    được các guard/redirect ở frontend nhìn thấy đúng vai của cổng hiện tại.
+    Active role lấy từ `context['active_role']` (view truyền vào từ `request.auth`).
+    """
+
+    role = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
     job_preferences_configured = serializers.SerializerMethodField()
     employer_onboarding_required = serializers.SerializerMethodField()
     employer_onboarding_step = serializers.SerializerMethodField()
     employer_verification_completed = serializers.SerializerMethodField()
     has_usable_password = serializers.SerializerMethodField()
+    has_employer_capability = serializers.BooleanField(read_only=True)
+    available_roles = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -78,17 +87,31 @@ class SessionUserSerializer(serializers.ModelSerializer):
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
             'email_verified', 'two_factor_enabled', 'job_preferences_configured',
             'has_usable_password',
+            'has_employer_capability',
+            'available_roles',
             'employer_onboarding_required',
             'employer_onboarding_step',
             'employer_verification_completed',
         ]
         read_only_fields = fields
 
+    def _active_role(self, obj):
+        return self.context.get('active_role') or obj.role
+
+    def _active_is_employer(self, obj):
+        return self._active_role(obj) == User.Role.EMPLOYER and obj.has_employer_capability
+
+    def get_role(self, obj):
+        return self._active_role(obj)
+
+    def get_available_roles(self, obj):
+        return list(obj.available_roles)
+
     def get_avatar_url(self, obj):
         return media_url_from_value(obj.avatar_url, request=self.context.get('request'))
 
     def get_job_preferences_configured(self, obj):
-        if not obj.is_candidate:
+        if self._active_role(obj) != User.Role.CANDIDATE:
             return False
         try:
             return obj.candidate_profile.job_preferences_configured
@@ -101,10 +124,10 @@ class SessionUserSerializer(serializers.ModelSerializer):
         return obj.has_usable_password()
 
     def get_employer_onboarding_required(self, obj):
-        return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False
+        return self.get_employer_onboarding_step(obj) != 'complete' if self._active_is_employer(obj) else False
 
     def get_employer_onboarding_step(self, obj):
-        if not obj.is_employer:
+        if not self._active_is_employer(obj):
             return None
         try:
             recruiter = obj.recruiter_profile
@@ -121,7 +144,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
         return 'complete'
 
     def get_employer_verification_completed(self, obj):
-        if not obj.is_employer:
+        if not self._active_is_employer(obj):
             return False
         try:
             recruiter = obj.recruiter_profile
@@ -212,12 +235,27 @@ class PasswordChangeSerializer(serializers.Serializer):
         return attrs
 
 
-# Mỗi cổng đăng nhập (main / tuyendung / admin) chỉ chấp nhận role tương ứng.
-PORTAL_ROLES = {
-    'main': [User.Role.CANDIDATE],
-    'employer': [User.Role.EMPLOYER],
-    'admin': [User.Role.ADMIN],
+# Vai đang hoạt động (active role) tương ứng mỗi cổng — dùng để mã hoá vào JWT.
+PORTAL_ACTIVE_ROLE = {
+    'main': User.Role.CANDIDATE,
+    'employer': User.Role.EMPLOYER,
+    'admin': User.Role.ADMIN,
 }
+
+
+def portal_access_allowed(user, portal):
+    """Tài khoản có được vào cổng này không, theo **năng lực** (không phải role gốc).
+
+    - main: vai ứng viên là vai nền -> mọi tài khoản khả dụng không phải admin.
+    - employer: yêu cầu đã có năng lực NTD (`recruiter_profile`). Password-login
+      không tự cấp năng lực; ứng viên muốn thành NTD đi qua Google hoặc trang đăng ký.
+    - admin: chỉ tài khoản admin.
+    """
+    if portal == 'employer':
+        return user.has_employer_capability
+    if portal == 'admin':
+        return user.is_admin_role
+    return not user.is_admin_role
 
 
 class LoginCredentialsSerializer(TokenObtainSerializer):
@@ -233,7 +271,7 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
     }
 
     captcha_token = serializers.CharField(write_only=True)
-    portal = serializers.ChoiceField(choices=list(PORTAL_ROLES), required=False, write_only=True)
+    portal = serializers.ChoiceField(choices=list(PORTAL_ACTIVE_ROLE), required=False, write_only=True)
 
     def validate(self, attrs):
         attrs.pop('captcha_token', None)
@@ -242,17 +280,21 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
         data = super().validate(attrs)
         if not is_account_accessible(self.user):
             raise AuthenticationFailed(self.error_messages['no_active_account'], 'no_active_account')
-        if portal and self.user.role not in PORTAL_ROLES[portal]:
+        if portal and not portal_access_allowed(self.user, portal):
             raise serializers.ValidationError({'detail': 'Tài khoản không có quyền truy cập cổng này.'})
         return data
 
 
 class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """JWT claims dùng chung cho mọi luồng phát token thành công."""
+    """JWT claims dùng chung cho mọi luồng phát token thành công.
+
+    ``active_role`` là vai của cổng đang đăng nhập; khi bỏ trống rơi về `user.role`.
+    Nhờ vậy một danh tính đa vai nhận đúng vai trong token theo từng cổng.
+    """
 
     @classmethod
-    def get_token(cls, user):
+    def get_token(cls, user, active_role=None):
         token = super().get_token(user)
-        token['role'] = user.role
+        token['role'] = active_role or user.role
         token['email'] = user.email
         return token

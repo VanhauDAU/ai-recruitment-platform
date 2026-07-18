@@ -12,7 +12,10 @@ from .profiles import get_or_create_recruiter
 
 @transaction.atomic
 def complete_registration_profile(user, validated_data):
-    if not user.is_employer:
+    # Chấp nhận cả tài khoản đã có năng lực NTD (đa vai, đã được cấp
+    # recruiter_profile) lẫn tài khoản role=employer vừa đăng ký (hồ sơ tạo ngay
+    # bên dưới). Chặn tài khoản không thuộc cả hai nhóm.
+    if not (user.has_employer_capability or user.is_employer):
         raise ValidationError({'detail': 'Chỉ tài khoản nhà tuyển dụng được cập nhật hồ sơ này.'})
 
     recruiter = get_or_create_recruiter(user)

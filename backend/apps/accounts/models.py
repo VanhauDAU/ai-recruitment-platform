@@ -124,6 +124,28 @@ class User(AbstractUser):
     def is_admin_role(self):
         return self.role == self.Role.ADMIN
 
+    @property
+    def has_employer_capability(self):
+        """Đã có hồ sơ NTD (dù `role` chính là gì) -> dùng được cổng NTD.
+
+        Cho phép mô hình "một danh tính, nhiều vai": một ứng viên đăng nhập cổng
+        NTD sẽ được cấp `recruiter_profile` và từ đó có năng lực nhà tuyển dụng,
+        không phụ thuộc vào `role` đăng ký ban đầu.
+        """
+        return hasattr(self, 'recruiter_profile')
+
+    @property
+    def available_roles(self):
+        """Các vai người dùng thực sự dùng được (không tính admin tự phục vụ)."""
+        roles = []
+        if not self.is_admin_role:
+            roles.append(self.Role.CANDIDATE)
+        if self.has_employer_capability:
+            roles.append(self.Role.EMPLOYER)
+        if self.is_admin_role:
+            roles.append(self.Role.ADMIN)
+        return roles
+
 
 class SocialAccount(models.Model):
     """Liên kết tài khoản mạng xã hội (OAuth) với user.

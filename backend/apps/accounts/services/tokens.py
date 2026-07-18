@@ -7,11 +7,11 @@ from ..serializers import RoleTokenObtainPairSerializer
 from .access import is_account_accessible
 
 
-def issue_tokens(user):
+def issue_tokens(user, active_role=None):
     if not is_account_accessible(user):
         raise ValueError('Cannot issue tokens for an inaccessible account.')
     update_last_login(None, user)
-    refresh = RoleTokenObtainPairSerializer.get_token(user)
+    refresh = RoleTokenObtainPairSerializer.get_token(user, active_role=active_role)
     return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
 
