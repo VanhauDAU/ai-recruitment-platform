@@ -117,4 +117,16 @@ describe('CV save success page', () => {
     await waitFor(() => expect(mocks.getCvVersion).toHaveBeenCalledTimes(2))
     expect(await screen.findByTestId('saved-version-document')).toHaveTextContent('Nguyễn An')
   })
+
+  it('cancels pending preview frames when the page unmounts', async () => {
+    const requestAnimationFrame = vi.spyOn(globalThis, 'requestAnimationFrame')
+    const cancelAnimationFrame = vi.spyOn(globalThis, 'cancelAnimationFrame')
+    const { unmount } = renderPage()
+
+    await screen.findByText('Lưu CV thành công!')
+    await waitFor(() => expect(requestAnimationFrame).toHaveBeenCalled())
+    unmount()
+
+    expect(cancelAnimationFrame).toHaveBeenCalled()
+  })
 })
