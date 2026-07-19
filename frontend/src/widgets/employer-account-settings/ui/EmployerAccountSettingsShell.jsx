@@ -5,7 +5,6 @@ import {
   SafetyCertificateOutlined,
   SettingOutlined,
   SolutionOutlined,
-  SyncOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Select, Tooltip } from 'antd'

@@ -36,10 +36,10 @@ function StatusBadge({ active, activeLabel = 'Đang hoạt động' }) {
   )
 }
 
-function MethodRow({ icon, title, description, checked, loading, disabled, onChange, tooltip }) {
+function MethodRow({ id, icon, title, description, checked, loading, disabled, onChange, tooltip }) {
   const control = <Switch checked={checked} loading={loading} disabled={disabled} onChange={onChange} />
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 p-3 sm:gap-4 sm:p-4">
+    <div data-testid={`two-factor-method-${id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 p-3 sm:gap-4 sm:p-4">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800">{title}</p>
@@ -333,9 +333,9 @@ export default function EmployerGeneralSettings() {
         <div className="flex flex-wrap items-center gap-2"><SafetyCertificateOutlined className="text-slate-600" /><p className="text-sm font-bold text-slate-800">Xác thực 2 yếu tố</p><StatusBadge active={twoFactorEnabled} activeLabel="Đang bật" /></div>
         {!twoFactorEnabled && <div className="mt-4 flex items-start gap-2 rounded-md border-l-4 border-blue-400 bg-blue-50 p-3 text-sm leading-6 text-slate-700"><InfoCircleFilled className="mt-0.5 shrink-0 text-blue-500" /><span>Vui lòng bật tính năng Xác thực bảo mật để tăng cường an toàn cho tài khoản của bạn.</span></div>}
         <div className="mt-4 space-y-3">
-          <MethodRow icon={<MobileOutlined />} title="Sử dụng Ứng dụng xác thực" description="Quét QR bằng Google Authenticator hoặc ứng dụng tương tự" checked={totpEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startTotp() : startMethodDisable('totp')} />
-          <MethodRow icon={<MailOutlined />} title="Sử dụng Email" description="Lấy mã OTP qua email đăng ký tài khoản" checked={emailEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startEmailAction('email-enable') : startMethodDisable('email')} />
-          <MethodRow icon={<KeyOutlined />} title="Sử dụng Mã dự phòng" description="Dùng khi không lấy được mã OTP qua ứng dụng hoặc email" checked={backupEnabled} loading={sending} disabled={sending || !twoFactorEnabled} tooltip={!twoFactorEnabled ? 'Hãy bật xác thực email hoặc ứng dụng xác thực trước.' : undefined} onChange={startBackupAction} />
+          <MethodRow id="totp" icon={<MobileOutlined />} title="Sử dụng Ứng dụng xác thực" description="Quét QR bằng Google Authenticator hoặc ứng dụng tương tự" checked={totpEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startTotp() : startMethodDisable('totp')} />
+          <MethodRow id="email" icon={<MailOutlined />} title="Sử dụng Email" description="Lấy mã OTP qua email đăng ký tài khoản" checked={emailEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startEmailAction('email-enable') : startMethodDisable('email')} />
+          <MethodRow id="backup" icon={<KeyOutlined />} title="Sử dụng Mã dự phòng" description="Dùng khi không lấy được mã OTP qua ứng dụng hoặc email" checked={backupEnabled} loading={sending} disabled={sending || !twoFactorEnabled} tooltip={!twoFactorEnabled ? 'Hãy bật xác thực email hoặc ứng dụng xác thực trước.' : undefined} onChange={startBackupAction} />
         </div>
       </div>
 

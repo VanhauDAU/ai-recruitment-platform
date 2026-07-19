@@ -65,7 +65,7 @@ describe('EmployerGeneralSettings', () => {
     })
 
     renderSettings()
-    const row = screen.getByText('Sử dụng Ứng dụng xác thực').closest('.flex.items-center')
+    const row = screen.getByTestId('two-factor-method-totp')
     await user.click(within(row).getByRole('switch'))
 
     expect(await screen.findByText('Bật xác thực 2 yếu tố')).toBeInTheDocument()
@@ -86,7 +86,7 @@ describe('EmployerGeneralSettings', () => {
     mocks.confirmEmployerTotpSetup.mockResolvedValue({ email: 'hr@example.com', two_factor_enabled: true, two_factor_totp_enabled: true })
 
     renderSettings()
-    const row = screen.getByText('Sử dụng Ứng dụng xác thực').closest('.flex.items-center')
+    const row = screen.getByTestId('two-factor-method-totp')
     await user.click(within(row).getByRole('switch'))
     await screen.findByText('Bật xác thực 2 yếu tố')
 
@@ -104,7 +104,7 @@ describe('EmployerGeneralSettings', () => {
     })
 
     renderSettings()
-    const row = screen.getByText('Sử dụng Mã dự phòng').closest('.flex.items-center')
+    const row = screen.getByTestId('two-factor-method-backup')
     await user.click(within(row).getByRole('switch'))
 
     expect(await screen.findByText('Xác nhận tạo mã dự phòng')).toBeInTheDocument()
@@ -121,7 +121,7 @@ describe('EmployerGeneralSettings', () => {
     mocks.sendEmployerBackupCodesCode.mockResolvedValue({ email: 'hr@example.com', expires_in: 180 })
 
     renderSettings()
-    const row = screen.getByText('Sử dụng Mã dự phòng').closest('.flex.items-center')
+    const row = screen.getByTestId('two-factor-method-backup')
     await user.click(within(row).getByRole('switch'))
 
     expect(await screen.findByText('Xác nhận tạo mã dự phòng')).toBeInTheDocument()
@@ -140,7 +140,7 @@ describe('EmployerGeneralSettings', () => {
     })
 
     renderSettings()
-    const row = screen.getByText('Sử dụng Email').closest('.flex.items-center')
+    const row = screen.getByTestId('two-factor-method-email')
     await user.click(within(row).getByRole('switch'))
 
     expect(await screen.findByText('Xác nhận tắt Email')).toBeInTheDocument()

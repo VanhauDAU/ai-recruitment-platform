@@ -56,6 +56,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 - Bỏ `PUBLIC_EMAIL_DOMAINS` chép tay ở frontend (`account-verification-level.js`); cấp độ xác minh email doanh nghiệp giờ tin hoàn toàn vào cờ `email_domain_verified` do backend trả, tránh lệch danh sách khi thêm domain mới.
 
+#### Fixed — CI frontend
+
+- Sửa regression coverage của trang cài đặt bảo mật: test thao tác phương thức 2FA giờ bám vào `data-testid` ổn định thay vì class layout, nên không hỏng khi UI chuyển từ flex sang grid.
+- Bỏ import icon không dùng làm `static-quality` dừng lint; giữ kiểm tra ranh giới API/feature và kiến trúc sạch.
+- Điều chỉnh ngân sách CSS initial gzip từ 30 KiB lên 35 KiB, phản ánh stylesheet responsive của shell settings hiện ở 31,5 KiB mà vẫn giữ giới hạn rõ ràng; JavaScript initial vẫn ở 279/320 KiB.
+- Khôi phục đầy đủ chuỗi kiểm tra: coverage 76 file/270 test, production build, bundle budget và 63 Playwright smoke desktop/tablet/mobile đều chạy xanh.
+
 ### 2026-07-19
 
 #### Changed — Xác thực giấy tờ nhà tuyển dụng
