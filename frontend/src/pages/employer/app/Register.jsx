@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, ArrowRightOutlined, DownOutlined, LockOutlined, MailOutlined, PhoneOutlined, UpOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, ArrowRightOutlined, DownOutlined, InfoCircleOutlined, LockOutlined, MailOutlined, PhoneOutlined, UpOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
@@ -8,7 +8,7 @@ import {
   AuthFormStyles,
   AuthLogo,
   checkRegistrationEmail,
-  passwordValidationRule,
+  employerPasswordValidationRule,
   PasswordRequirements,
   registerEmployer,
   SocialLoginButtons,
@@ -46,7 +46,7 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
         onClick={onToggle}
         className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600 sm:px-5"
       >
-        <span id="registration-rules-title" className="text-base font-bold">Quy định đăng ký tài khoản</span>
+        <span id="registration-rules-title" className="text-base font-bold">Quy định</span>
         <span className="flex shrink-0 items-center gap-2 text-sm font-semibold">
           {expanded ? <UpOutlined aria-hidden="true" /> : <DownOutlined aria-hidden="true" />}
         </span>
@@ -86,6 +86,7 @@ export default function EmployerRegister() {
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
   const [rulesExpanded, setRulesExpanded] = useState(true)
+  const [passwordFocused, setPasswordFocused] = useState(false)
   const hotline = settingText(settings.hotline)
   const password = Form.useWatch('password', form) || ''
   const termsAccepted = Form.useWatch('terms_accepted', form) === true
@@ -243,8 +244,19 @@ export default function EmployerRegister() {
               >
                 <Input autoComplete="email" prefix={<MailOutlined className="text-emerald-600" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
-              <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }, { validator: passwordValidationRule }]} className="!mb-1">
-                <Input.Password autoComplete="new-password" prefix={<LockOutlined className="text-emerald-600" />} placeholder="Nhập mật khẩu" className="!h-12 !rounded-lg !text-base" />
+              <p className="-mt-3 mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900 md:col-span-2">
+                <InfoCircleOutlined className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+                <span>Trường hợp bạn đăng ký tài khoản bằng email không phải email tên miền công ty, một số dịch vụ trên tài khoản có thể sẽ bị giới hạn quyền mua hoặc sử dụng.</span>
+              </p>
+              <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }, { validator: employerPasswordValidationRule }]} className="!mb-1">
+                <Input.Password
+                  autoComplete="new-password"
+                  prefix={<LockOutlined className="text-emerald-600" />}
+                  placeholder="Nhập mật khẩu"
+                  className="!h-12 !rounded-lg !text-base"
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                />
               </Form.Item>
               <Form.Item
                 name="confirm_password"
@@ -261,7 +273,7 @@ export default function EmployerRegister() {
               >
                 <Input.Password autoComplete="new-password" prefix={<LockOutlined className="text-emerald-600" />} placeholder="Nhập lại mật khẩu" className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
-              <div className="md:col-span-2"><PasswordRequirements password={password} /></div>
+              {passwordFocused && <div className="md:col-span-2"><PasswordRequirements password={password} mode="employer" /></div>}
             </div>
 
             <button type="button" onClick={goToEmployerDetails} className="submit-btn mt-6 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white">

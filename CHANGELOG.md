@@ -38,6 +38,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Bỏ thanh **Các bước tạo tài khoản** ở đầu trang đăng ký; luồng hai phần vẫn tiếp tục bằng CTA phía cuối form và giữ nút Quay lại ở phần thông tin nhà tuyển dụng.
 - Thêm khối **Quy định đăng ký tài khoản** theo UX tham khảo TopCV: mặc định mở, cho phép hiện/ẩn bằng nút có trạng thái truy cập `aria-expanded`, dùng tên website và hotline từ site settings.
 - Làm phẳng phần giới thiệu và hai phần form, bỏ card viền/đổ bóng bao quanh để giảm lớp thị giác; bổ sung regression Playwright cho trạng thái Quy định và chống tràn ngang trên desktop, tablet, mobile.
+- Form mật khẩu employer hiển thị mức độ yếu/trung bình/mạnh, thanh tiến trình và bốn điều kiện cập nhật theo từng ký tự; chỉ cho tiếp tục khi có đủ độ dài, hoa/thường, chữ số và ký tự đặc biệt.
+- Hướng dẫn xác minh mật khẩu chỉ hiển thị khi ô Mật khẩu đang được focus và tự đóng khi người dùng rời ô, tránh che hoặc kéo dài form không cần thiết.
+- Thêm lưu ý ngay dưới email đăng ký: email không thuộc tên miền công ty có thể bị giới hạn quyền mua hoặc sử dụng một số dịch vụ.
 
 #### Fixed — Màu liên kết DLCN
 

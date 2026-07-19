@@ -90,7 +90,7 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await expect(page.getByRole('heading', { name: 'Đăng ký tài khoản Nhà tuyển dụng' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await expect(page.getByLabel('Các bước tạo tài khoản')).toHaveCount(0)
-  const rulesToggle = page.getByRole('button', { name: /Quy định đăng ký tài khoản/ })
+  const rulesToggle = page.getByRole('button', { name: 'Quy định' })
   const rulesContent = page.getByText(/không cho phép một người dùng tạo nhiều tài khoản nhà tuyển dụng/)
   await expect(rulesToggle).toHaveAttribute('aria-expanded', 'true')
   await expect(rulesContent).toBeVisible()
@@ -101,6 +101,7 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await expect(rulesContent).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tạo thông tin đăng nhập' })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveCount(0)
+  await expect(page.getByText('Trường hợp bạn đăng ký tài khoản bằng email không phải email tên miền công ty, một số dịch vụ trên tài khoản có thể sẽ bị giới hạn quyền mua hoặc sử dụng.')).toBeVisible()
 
   const googleSignup = page.getByRole('button', { name: 'Đăng ký bằng Google' })
   await expect(googleSignup).toBeDisabled()
@@ -112,7 +113,12 @@ test('employer auth: registration has employer fields and consent-gated Google s
 
   await page.getByLabel('Email đăng nhập').fill('hr@example.com')
   await page.getByLabel('Mật khẩu', { exact: true }).fill('Password1')
-  await page.getByLabel('Nhập lại mật khẩu').fill('Password1')
+  await expect(page.getByText('Mật khẩu trung bình')).toBeVisible()
+  await expect(page.getByLabel('Điều kiện mật khẩu').getByText('Có ít nhất 1 ký tự đặc biệt (!, @, #, ...)')).toBeVisible()
+  await page.getByLabel('Mật khẩu', { exact: true }).fill('Password@1')
+  await expect(page.getByText('Mật khẩu mạnh')).toBeVisible()
+  await page.getByLabel('Nhập lại mật khẩu').fill('Password@1')
+  await expect(page.getByLabel('Điều kiện mật khẩu')).toHaveCount(0)
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
 
   await expect(page.getByRole('heading', { name: 'Thông tin nhà tuyển dụng' })).toBeVisible()

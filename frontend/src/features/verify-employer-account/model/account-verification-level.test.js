@@ -38,12 +38,12 @@ describe('employer account verification level', () => {
     })).toEqual({ level: 3, total: 3, percent: 100 })
   })
 
-  it('falls back to the account email when the API omits its domain flag', () => {
+  it('stays at level 2 when the API omits the email domain flag', () => {
     expect(getEmployerAccountVerificationLevel({
       email_verified: true,
       phone_verified: true,
       business_doc_approved: true,
-    }, { email: 'owner@acme.vn' })).toEqual({ level: 3, total: 3, percent: 100 })
+    }, { email: 'owner@acme.vn' })).toEqual({ level: 2, total: 3, percent: 67 })
   })
 
   it('uses the session email verification flag when onboarding data is stale', () => {
