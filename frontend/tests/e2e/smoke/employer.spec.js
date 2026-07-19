@@ -364,7 +364,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer workspace: completed verification redirects away from the checklist without requiring a first job', async ({ page }) => {
+test('employer workspace: completed verification redirects away from the checklist while keeping the first-job action separate', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -395,7 +395,7 @@ test('employer workspace: completed verification redirects away from the checkli
   await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toHaveCount(0)
-  await expect(page.getByText('Đăng tin tuyển dụng đầu tiên', { exact: true })).toHaveCount(0)
+  await expect(page.getByLabel('Đăng tin tuyển dụng đầu tiên (đang khóa)')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 
