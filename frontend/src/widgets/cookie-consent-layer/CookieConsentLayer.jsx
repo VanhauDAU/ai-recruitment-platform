@@ -1,5 +1,5 @@
-import { App } from 'antd'
 import { useState } from 'react'
+import { message } from '@/shared/lib/toast'
 import { useConsent } from '@/entities/consent'
 import { CookieConsentBanner, CookiePreferencesModal } from '@/features/cookie-consent'
 
@@ -7,7 +7,6 @@ const OPTIONAL_OFF = { necessary: true, preferences: false, analytics: false, ma
 const ALL_ON = { necessary: true, preferences: true, analytics: true, marketing: true }
 
 export default function CookieConsentLayer() {
-  const { message } = App.useApp()
   const { consent, status, isDecided, isEnabled, settingsOpen, openSettings, closeSettings, updateConsent } = useConsent()
   const [saving, setSaving] = useState(false)
 

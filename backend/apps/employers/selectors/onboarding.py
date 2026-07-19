@@ -1,5 +1,7 @@
 """Read model for recruiter onboarding and account-verification progress."""
 
+from django.db.models import Q
+
 from ..models import CompanyDocument, RecruiterProfile
 from .company_status import has_explicit_company_link
 
@@ -48,13 +50,23 @@ def build_employer_onboarding_steps(recruiter):
         doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
         status=CompanyDocument.Status.APPROVED,
     ).exists()
-    has_candidate_dpa = company_linked and recruiter.company.documents.filter(
+    candidate_dpa = Q(
         doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-    ).exclude(status=CompanyDocument.Status.REJECTED).exists()
+        recruiter=recruiter,
+    )
+    if company_linked:
+        # Hỗ trợ văn bản DLCN cũ được lưu trước khi contract tách theo recruiter.
+        candidate_dpa |= Q(
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            company=recruiter.company,
+        )
+    has_candidate_dpa = CompanyDocument.objects.filter(candidate_dpa).exclude(
+        status=CompanyDocument.Status.REJECTED,
+    ).exists()
     steps = {
         'email_verified': recruiter.user.email_verified,
         'registration_completed': recruiter.registration_completed_at is not None,
-        'consulting_need_completed': hasattr(recruiter, 'recruitment_need'),
+        'consulting_need_completed': recruiter.recruitment_needs.exists(),
         'phone_verified': recruiter.phone_verified_at is not None,
         'company_linked': company_linked,
         'membership_approved': company_linked and recruiter.membership_status == RecruiterProfile.MembershipStatus.APPROVED,

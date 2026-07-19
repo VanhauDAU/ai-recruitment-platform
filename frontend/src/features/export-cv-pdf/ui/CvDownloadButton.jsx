@@ -1,7 +1,8 @@
 import { CheckCircleFilled, DownloadOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Modal, Progress, message } from 'antd'
+import { Alert, Button, Modal, Progress } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { createCvPdfExport, downloadCvPdf, getCvPdfExport, retryCvPdfExport } from '@/entities/cv'
+import { message } from '@/shared/lib/toast'
 
 function triggerBrowserDownload(blob, filename) {
   const objectUrl = window.URL.createObjectURL(blob)

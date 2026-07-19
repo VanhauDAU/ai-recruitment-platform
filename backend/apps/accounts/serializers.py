@@ -152,9 +152,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             return 'registration'
         if not obj.email_verified:
             return 'email_verification'
-        try:
-            recruiter.recruitment_need
-        except ObjectDoesNotExist:
+        if not recruiter.recruitment_needs.exists():
             return 'consulting_need'
         return 'complete'
 

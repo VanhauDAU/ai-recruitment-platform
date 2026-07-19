@@ -32,6 +32,7 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
             'position_level', 'position_level_label', 'target_date', 'is_continuous',
             'headcount', 'budget_min', 'budget_max', 'budget_source',
             'budget_source_label', 'consultation_topics', 'completed_at',
+            'is_active',
         ]
         read_only_fields = ['public_id', 'completed_at']
 
@@ -46,8 +47,9 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        is_continuous = attrs.get('is_continuous', False)
-        target_date = attrs.get('target_date')
+        current = self.instance
+        is_continuous = attrs.get('is_continuous', current.is_continuous if current else False)
+        target_date = attrs.get('target_date', current.target_date if current else None)
         if not is_continuous and target_date is None:
             raise serializers.ValidationError({'target_date': 'Chọn thời gian cần tuyển xong hoặc chọn Tuyển liên tục.'})
         if target_date and target_date < timezone.localdate():
@@ -55,8 +57,8 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
         if is_continuous:
             attrs['target_date'] = None
 
-        budget_min = attrs.get('budget_min')
-        budget_max = attrs.get('budget_max')
+        budget_min = attrs.get('budget_min', current.budget_min if current else None)
+        budget_max = attrs.get('budget_max', current.budget_max if current else None)
         if budget_min is not None and budget_min < MIN_BUDGET:
             raise serializers.ValidationError({'budget_min': 'Ngân sách tối thiểu là 1.000.000đ.'})
         if budget_max is not None and budget_max < MIN_BUDGET:

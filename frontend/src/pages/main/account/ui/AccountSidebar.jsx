@@ -1,6 +1,6 @@
 import { CaretRightOutlined } from '@ant-design/icons'
-import { App } from 'antd'
 import { useEffect, useState } from 'react'
+import { message } from '@/shared/lib/toast'
 import { Link, useLocation } from 'react-router-dom'
 import { CANDIDATE_MENU, candidateMenuItemLabel, findGroupKeyByPath } from '@/entities/account'
 import { useSession } from '@/entities/session'
@@ -11,7 +11,6 @@ import { useSession } from '@/entities/session'
 export default function AccountSidebar({ onNavigate }) {
   const { pathname } = useLocation()
   const { user } = useSession()
-  const { message } = App.useApp()
   // Mặc định mở nhóm chứa trang đang xem; vào lại trang khác thì mở nhóm đó.
   const [openKey, setOpenKey] = useState(() => findGroupKeyByPath(pathname) || CANDIDATE_MENU[0].key)
 

@@ -8,8 +8,9 @@ import {
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Button, Form, Input, Modal, Result, Skeleton } from 'antd'
+import { Alert, Button, Form, Input, Modal, Result, Skeleton } from 'antd'
 import { useState } from 'react'
+import { message } from '@/shared/lib/toast'
 import { Link } from 'react-router-dom'
 import {
   checkEmployerPhoneAvailability,
@@ -55,7 +56,6 @@ function VerificationBanner() {
 export default function EmployerPhoneVerification() {
   const { user, refreshSession } = useSession()
   const { settings } = useSiteSettings()
-  const { message } = App.useApp()
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const [passwordForm] = Form.useForm()

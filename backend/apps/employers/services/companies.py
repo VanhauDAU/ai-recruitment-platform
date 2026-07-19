@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from ..models import Company, CompanyIndustry, Industry
+from ..models import Company, CompanyDocument, CompanyIndustry, Industry
 
 UPDATABLE_COMPANY_FIELDS = {
     'business_type', 'tax_code', 'company_name', 'trade_name',
@@ -36,6 +36,17 @@ def apply_update_request(update_request, admin_user, approve, note=''):
         raise ValidationError({'detail': 'Yêu cầu này đã được xử lý.'})
 
     if approve:
+        if update_request.is_sensitive:
+            document_types = set(update_request.documents.values_list('doc_type', flat=True))
+            if update_request.proof_type == update_request.ProofType.BUSINESS_REGISTRATION:
+                complete = CompanyDocument.DocType.BUSINESS_REGISTRATION in document_types
+            else:
+                complete = {
+                    CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                    CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                }.issubset(document_types)
+            if not complete:
+                raise ValidationError({'detail': 'Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh.'})
         company = update_request.company
         changes = dict(update_request.changes)
         industry_ids = changes.pop('industries', None)

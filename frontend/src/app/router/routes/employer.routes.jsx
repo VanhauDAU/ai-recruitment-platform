@@ -20,6 +20,7 @@ import {
   EmployerOnboardingPage,
   EmployerPasswordLoginPage,
   EmployerPersonalDataProtectionPage,
+  EmployerRecruitmentDemandPage,
   EmployerPhoneVerifyPage,
   EmployerPricingPage,
   EmployerRegisterPage,
@@ -95,6 +96,7 @@ export function employerRoutes() {
             <Route path={employerAppPath('/account/settings/company')} element={<EmployerCompanySettingsPage />} />
             <Route path={employerAppPath('/account/settings/gpkd')} element={<EmployerBusinessLicensePage />} />
             <Route path={employerAppPath('/account/settings/personal-data-protection')} element={<EmployerPersonalDataProtectionPage />} />
+            <Route path={employerAppPath('/account/settings/recruitment-demand')} element={<EmployerRecruitmentDemandPage />} />
             <Route path={employerAppPath('/account/settings/general-setting')} element={<EmployerGeneralSettingsPage />} />
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
           </Route>

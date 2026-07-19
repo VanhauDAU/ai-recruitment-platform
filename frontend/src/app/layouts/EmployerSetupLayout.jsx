@@ -9,7 +9,7 @@ export default function EmployerSetupLayout() {
 
   return (
     <ConfigProvider theme={{ token: { colorPrimary: '#00b14f', borderRadius: 8 } }}>
-      <div className="min-h-screen bg-[#eef1f5] text-slate-900">
+      <div className="min-h-dvh overflow-x-hidden bg-[#eef1f5] text-slate-900">
         <div className="bg-amber-500 px-4 py-2 text-center text-xs font-semibold text-amber-950 sm:text-sm">
           Bảo vệ dữ liệu ứng viên là trách nhiệm chung. Hãy hoàn thiện thông tin tài khoản trước khi bắt đầu tuyển dụng.
         </div>
@@ -26,7 +26,7 @@ export default function EmployerSetupLayout() {
             )}
           </div>
         </header>
-        <main className="px-4 py-8 sm:px-6 sm:py-10">
+        <main className="px-3 py-5 sm:px-6 sm:py-8 lg:py-10">
           <Outlet />
         </main>
       </div>

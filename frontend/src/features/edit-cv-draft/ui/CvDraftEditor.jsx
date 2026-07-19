@@ -1,6 +1,7 @@
 import { CloseOutlined, HolderOutlined } from '@ant-design/icons'
 import { Alert, App, Drawer, Input, Modal, Skeleton } from 'antd'
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { message } from '@/shared/lib/toast'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useEffect, useState } from 'react'
 import {
@@ -90,7 +91,7 @@ function ToolPanel({ title, children, onClose, fullHeight = false }) {
 }
 
 function CvWysiwygDraftEditor({ publicId, onSaved }) {
-  const { message, modal } = App.useApp()
+  const { modal } = App.useApp()
   const editor = useCvDraftEditor(publicId)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const builderUi = useBuilderUi(isDesktop ? 0.8 : 0.48)

@@ -5,36 +5,12 @@ export const EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS = [
 ]
 
 const TOTAL_LEVELS = 3
-const PUBLIC_EMAIL_DOMAINS = new Set([
-  'gmail.com',
-  'googlemail.com',
-  'yahoo.com',
-  'yahoo.com.vn',
-  'outlook.com',
-  'hotmail.com',
-  'live.com',
-  'msn.com',
-  'icloud.com',
-  'me.com',
-  'proton.me',
-  'protonmail.com',
-  'zoho.com',
-  'mail.com',
-  'example.com',
-  'example.org',
-  'example.net',
-])
-
-function isCompanyEmail(email) {
-  const domain = (email || '').split('@').pop()?.trim().toLowerCase() || ''
-  return Boolean(domain && domain.includes('.') && !PUBLIC_EMAIL_DOMAINS.has(domain))
-}
 
 export function getEmployerAccountVerificationLevel(verification = {}, user = {}) {
   const emailVerified = Boolean(verification.email_verified ?? user?.email_verified)
   const phoneVerified = Boolean(verification.phone_verified)
   const businessDocumentApproved = Boolean(verification.business_doc_approved)
-  const companyEmail = verification.email_domain_verified ?? isCompanyEmail(user?.email)
+  const companyEmail = Boolean(verification.email_domain_verified)
   const noReportHistory = verification.no_report_history ?? true
 
   let level = 0

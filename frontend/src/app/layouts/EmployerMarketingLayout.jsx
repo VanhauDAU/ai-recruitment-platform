@@ -74,7 +74,7 @@ export default function EmployerMarketingLayout() {
       <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
-            <BrandLogo to={employerMarketingPath('')} variant="full" className="flex items-center" imageClassName="h-9 max-w-[190px]" />
+            <BrandLogo to={employerMarketingPath('')} variant="full" className="flex min-w-0 items-center" imageClassName="h-8 max-w-[150px] sm:h-9 sm:max-w-[190px]" />
             <NavLinks className="hidden items-center gap-7 text-sm lg:flex" />
           </div>
 

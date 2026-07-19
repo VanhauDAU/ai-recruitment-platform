@@ -1,10 +1,11 @@
+from django.db.models import Max
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployerWithMFA
-from common.media_storage import delete_local_media_url, save_image_upload
+from common.media_storage import delete_local_media_url, save_image_upload, validate_image_upload
 
 from ...models import CompanyImage
 from ..serializers import CompanyImageSerializer, CompanySerializer
@@ -32,18 +33,63 @@ class CompanyImageUploadView(APIView):
         if not upload:
             return Response({'file': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        extension, _ = validate_image_upload(upload)
+        if extension == 'gif':
+            return Response({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'}, status=status.HTTP_400_BAD_REQUEST)
+
         company = _require_owner(request.user).company
-        saved = save_image_upload(upload, f'employers/{company.public_id}/{self.kind}s', request=request)
+        if self.kind == 'gallery' and company.images.count() >= 10:
+            return Response({'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        saved = save_image_upload(
+            upload,
+            f'employers/{company.public_id}/{self.kind}s',
+            request=request,
+            max_dimensions=(2400, 1600),
+        )
+
+        try:
+            if self.kind == 'gallery':
+                last_order = company.images.aggregate(value=Max('sort_order'))['value']
+                CompanyImage.objects.create(
+                    company=company,
+                    image_url=saved['path'],
+                    sort_order=(last_order + 1) if last_order is not None else 0,
+                )
+            else:
+                field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
+                delete_local_media_url(getattr(company, field))
+                # Lưu key của storage thay vì URL tuyệt đối phụ thuộc localhost/domain.
+                setattr(company, field, saved['path'])
+                update_fields = [field, 'updated_at']
+                if self.kind == 'logo':
+                    company.has_no_logo = False
+                    update_fields.append('has_no_logo')
+                company.save(update_fields=update_fields)
+        except Exception:
+            delete_local_media_url(saved['path'])
+            raise
+
+        return Response(CompanySerializer(company, context={'request': request}).data)
+
+    @extend_schema(
+        summary='Xóa logo hoặc ảnh bìa công ty',
+        request=None,
+        responses={200: CompanySerializer},
+        tags=['employer'],
+    )
+    def delete(self, request):
         if self.kind == 'gallery':
-            CompanyImage.objects.create(company=company, image_url=saved['path'])
-        else:
-            field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
-            delete_local_media_url(getattr(company, field))
-            # Lưu key của storage thay vì URL tuyệt đối phụ thuộc localhost/domain.
-            setattr(company, field, saved['path'])
-            company.save(update_fields=[field, 'updated_at'])
-
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        company = _require_owner(request.user).company
+        field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
+        delete_local_media_url(getattr(company, field))
+        setattr(company, field, '')
+        update_fields = [field, 'updated_at']
+        if self.kind == 'logo':
+            company.has_no_logo = True
+            update_fields.append('has_no_logo')
+        company.save(update_fields=update_fields)
         return Response(CompanySerializer(company, context={'request': request}).data)
 
 
@@ -57,6 +103,10 @@ class CompanyCoverUploadView(CompanyImageUploadView):
 
 class CompanyGalleryUploadView(CompanyImageUploadView):
     kind = 'gallery'
+
+    @extend_schema(exclude=True)
+    def delete(self, request):
+        return super().delete(request)
 
 
 class CompanyGalleryDeleteView(generics.DestroyAPIView):

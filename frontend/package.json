@@ -24,6 +24,9 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@tanstack/react-query": "^5.101.2",
+    "@tiptap/extension-character-count": "^3.28.0",
+    "@tiptap/react": "^3.28.0",
+    "@tiptap/starter-kit": "^3.28.0",
     "antd": "^6.5.0",
     "axios": "^1.18.1",
     "dayjs": "^1.11.19",
@@ -33,7 +36,8 @@
     "react-dom": "^19.2.7",
     "react-google-recaptcha-v3": "^1.11.0",
     "react-i18next": "^17.0.10",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.1",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

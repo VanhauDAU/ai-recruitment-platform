@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BellOutlined } from '@ant-design/icons'
-import { message } from 'antd'
 import { submitFeedback } from '@/features/submit-feedback'
+import { message } from '@/shared/lib/toast'
 
 // Cụm cuối danh sách kết quả (kiểu TopCV, hiện cả khi có lẫn không có kết quả):
 // chip danh mục nghề liên quan -> box đăng ký thông báo -> khảo sát hài lòng

@@ -122,6 +122,29 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
 5. Chỉ thêm portal mới khi có base path, role contract, layout và test strategy
    được chốt; không suy diễn từ một route đơn lẻ.
 
+## Responsive baseline — cổng nhà tuyển dụng
+
+- Mọi giao diện mới hoặc được sửa trong `pages/employer`, các widget employer và
+  feature được compose vào cổng employer phải triển khai mobile-first. Không xem
+  responsive là bước polish tùy chọn sau khi hoàn thành desktop.
+- Bắt buộc kiểm tra tối thiểu ba viewport đại diện: mobile Chromium (Pixel 5),
+  tablet `834x1112` và desktop Chromium. Trang không được làm `document` tràn
+  ngang; khu vực cuộn ngang chỉ được dùng khi bản thân dữ liệu đòi hỏi và phải có
+  UX nhận biết rõ ràng.
+- Dưới tablet, sidebar workspace phải hoạt động như drawer phủ có mask và cách
+  đóng rõ ràng; nội dung phía sau không được co xuống hoặc nhận thao tác khi menu
+  đang mở. Menu settings dùng control chọn mục thay vì dãy tab ngang dài.
+- Grid nhiều cột phải hạ về một cột trên mobile và chỉ tăng cột khi chiều rộng
+  thực tế của vùng content đủ dùng (tính cả sidebar). Text dài cần `min-w-0`,
+  `break-words` hoặc `truncate` theo ngữ cảnh; không dùng fixed width làm vỡ
+  viewport.
+- Nút hành động trong form/modal xếp dọc và chiếm đủ chiều rộng trên mobile,
+  chuyển sang hàng ngang từ breakpoint phù hợp. Modal/popover phải giới hạn theo
+  `100vw` và vẫn có khoảng đệm chạm hai cạnh màn hình.
+- Route hoặc workflow employer bị tác động phải bổ sung regression trong
+  `tests/e2e/smoke/employer.spec.js`, gồm kiểm tra hiển thị và không tràn ngang ở
+  cả ba Playwright project.
+
 ## Cấu trúc hiện tại
 
 ```text

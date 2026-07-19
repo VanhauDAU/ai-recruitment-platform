@@ -2,10 +2,11 @@ import {
   BellOutlined, CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
   LogoutOutlined, MessageOutlined, WarningFilled,
 } from '@ant-design/icons'
-import { App, Avatar, Badge, Dropdown } from 'antd'
+import { Avatar, Badge, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
+import { message } from '@/shared/lib/toast'
 
 // Section lấy từ config dùng chung với sidebar trang tài khoản (một nguồn duy nhất).
 // Nhóm A (search, cv) mở/đóng độc lập; nhóm B (email, account, upgrade) là accordion: mở 1 đóng 2 còn lại.
@@ -59,7 +60,6 @@ function Section({ section, open, onToggle, onItem, user, activePathname }) {
 export default function CandidateUserMenu({ user, logout }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [openKeys, setOpenKeys] = useState(() => new Set(['search', 'cv']))
   const verified = user?.email_verified
