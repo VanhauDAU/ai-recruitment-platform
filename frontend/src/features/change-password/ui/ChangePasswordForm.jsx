@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { setTokens } from '@/shared/api/token-store'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
 import { changeCurrentPassword } from '../api/change-password.api'
 
@@ -52,6 +53,8 @@ export default function ChangePasswordForm() {
   const mutation = useMutation({
     mutationFn: changeCurrentPassword,
     onSuccess: (result) => {
+      // Thay token của phiên hiện tại bằng cặp token mới (BE đã xoay refresh cũ).
+      if (result.tokens) setTokens(result.tokens)
       if (result.user) setCurrentUser(result.user)
       message.success(result.detail || 'Cập nhật mật khẩu thành công.')
       navigate(EMPLOYER_PHONE_VERIFY_URL, { replace: true })
@@ -138,7 +141,7 @@ export default function ChangePasswordForm() {
           <Input.Password size="middle" autoComplete="new-password" placeholder="Nhập lại mật khẩu mới" />
         </Form.Item>
         <Form.Item name="logout_all_sessions" valuePropName="checked" label={null} className="!mb-3 sm:ml-[220px]">
-          <Checkbox>Thoát tất cả các phiên đăng nhập hiện tại</Checkbox>
+          <Checkbox>Đăng xuất khỏi các thiết bị khác</Checkbox>
         </Form.Item>
         <Form.Item label={null} className="!mb-0 sm:ml-[220px]">
           <div className="flex gap-3">

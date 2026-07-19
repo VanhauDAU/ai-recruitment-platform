@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 import { getCurrentPortal } from '@/shared/config/portals'
-import { clearSession, setTokens } from '@/shared/api/token-store'
+import { clearCurrentPortalSession, setTokens } from '@/shared/api/token-store'
 
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })
@@ -41,8 +41,11 @@ export async function confirmVerification(token) {
   return data
 }
 
-export async function changeEmail(email) {
-  const { data } = await api.post('/auth/change-email/', { email })
+export async function changeEmail(email, currentPassword) {
+  const { data } = await api.post('/auth/change-email/', {
+    email,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  })
   return data
 }
 
@@ -104,6 +107,8 @@ export async function completeOAuth(code, portal) {
   return data
 }
 
+// Chỉ xóa phiên cục bộ của cổng hiện tại (không gọi backend). Đăng xuất "đầy đủ"
+// (blacklist refresh) đi qua session context: useSession().logout.
 export function logout() {
-  clearSession()
+  clearCurrentPortalSession()
 }

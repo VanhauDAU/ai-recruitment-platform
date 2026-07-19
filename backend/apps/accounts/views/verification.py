@@ -79,13 +79,24 @@ class ChangeEmailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        user = request.user
+        # Chỉ dành cho tài khoản CHƯA xác thực (đúng mục đích thiết kế). Tài khoản
+        # đã xác thực đổi email = đường cướp tài khoản, không mở ở đây.
+        if user.email_verified:
+            return Response(
+                {'detail': 'Tài khoản đã xác thực email; không thể đổi email tại đây.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = ChangeEmailSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
-        user = request.user
+        old_email = user.email
         user.email = serializer.validated_data['email']
         user.email_verified = False
         user.save(update_fields=['email', 'email_verified', 'updated_at'])
 
+        # Cảnh báo địa chỉ cũ để chủ tài khoản thật phát hiện nếu bị chiếm phiên.
+        ev.send_email_changed_notice(user, old_email)
         queue_verification_email(user)
         return Response(SessionUserSerializer(user).data)

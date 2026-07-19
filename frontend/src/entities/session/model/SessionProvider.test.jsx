@@ -4,9 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { withQueryClient } from '@/test/render-with-query-client'
 import SessionProvider from './SessionProvider'
 import { useSession } from './use-session'
-const { getCurrentSessionUser } = vi.hoisted(() => ({ getCurrentSessionUser: vi.fn() }))
+const { getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices } = vi.hoisted(() => ({
+  getCurrentSessionUser: vi.fn(),
+  logoutCurrentPortal: vi.fn(),
+  logoutAllDevices: vi.fn(),
+}))
 
-vi.mock('../api/session.api', () => ({ getCurrentSessionUser }))
+vi.mock('../api/session.api', () => ({ getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices }))
 
 function wrapper({ children }) {
   return withQueryClient(
@@ -18,6 +22,8 @@ describe('SessionProvider', () => {
   beforeEach(() => {
     localStorage.clear()
     getCurrentSessionUser.mockReset()
+    logoutCurrentPortal.mockReset().mockResolvedValue(undefined)
+    logoutAllDevices.mockReset().mockResolvedValue(undefined)
   })
 
   it('restores a valid session from persisted tokens', async () => {
@@ -48,26 +54,42 @@ describe('SessionProvider', () => {
     expect(localStorage.getItem('employer_refresh_token')).toBe('valid-employer-refresh')
   })
 
-  it('logs out every portal while clearing the current user state', async () => {
+  it('logs out only the current portal and blacklists its refresh token', async () => {
     localStorage.setItem('main_access_token', 'access-token')
     localStorage.setItem('main_refresh_token', 'refresh-token')
     localStorage.setItem('employer_access_token', 'employer-access')
     localStorage.setItem('employer_refresh_token', 'employer-refresh')
     localStorage.setItem('admin_access_token', 'admin-access')
-    localStorage.setItem('admin_refresh_token', 'admin-refresh')
     getCurrentSessionUser.mockResolvedValue({ public_id: 'candidate-1', role: 'candidate' })
     const { result } = renderHook(() => useSession(), { wrapper })
 
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
-    act(() => result.current.logout())
+    await act(async () => { await result.current.logout() })
 
+    expect(logoutCurrentPortal).toHaveBeenCalledWith('refresh-token')
     expect(result.current.isAuthenticated).toBe(false)
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('main_refresh_token')).toBeNull()
+    // Cổng khác trên cùng thiết bị vẫn đăng nhập.
+    expect(localStorage.getItem('employer_access_token')).toBe('employer-access')
+    expect(localStorage.getItem('admin_access_token')).toBe('admin-access')
+  })
+
+  it('logs out every portal on the device when logging out everywhere', async () => {
+    localStorage.setItem('main_access_token', 'access-token')
+    localStorage.setItem('main_refresh_token', 'main-refresh')
+    localStorage.setItem('employer_access_token', 'employer-access')
+    localStorage.setItem('employer_refresh_token', 'employer-refresh')
+    getCurrentSessionUser.mockResolvedValue({ public_id: 'candidate-1', role: 'candidate' })
+    const { result } = renderHook(() => useSession(), { wrapper })
+
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
+    await act(async () => { await result.current.logoutEverywhere() })
+
+    expect(logoutCurrentPortal).toHaveBeenCalledWith('main-refresh')
+    expect(logoutCurrentPortal).toHaveBeenCalledWith('employer-refresh')
+    expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('employer_access_token')).toBeNull()
-    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
-    expect(localStorage.getItem('admin_access_token')).toBeNull()
-    expect(localStorage.getItem('admin_refresh_token')).toBeNull()
   })
 
   it('clears the session when refreshSession fails', async () => {

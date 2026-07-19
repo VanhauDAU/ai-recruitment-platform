@@ -188,9 +188,21 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 
 class ChangeEmailSerializer(serializers.Serializer):
-    """Đổi email khi tài khoản chưa xác thực (reset email_verified và gửi lại link)."""
+    """Đổi email khi tài khoản chưa xác thực (reset email_verified và gửi lại link).
 
+    Yêu cầu mật khẩu hiện tại (re-auth): chỉ chủ tài khoản mới đổi được email —
+    chống kẻ chiếm access token đổi email để cướp tài khoản qua luồng quên mật khẩu.
+    """
+
+    current_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     email = serializers.EmailField()
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if user.has_usable_password():
+            if not user.check_password(attrs.get('current_password') or ''):
+                raise serializers.ValidationError({'current_password': 'Mật khẩu hiện tại không đúng.'})
+        return attrs
 
     def validate_email(self, value):
         value = User.objects.normalize_email(value)

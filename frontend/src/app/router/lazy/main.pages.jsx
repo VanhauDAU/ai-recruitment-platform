@@ -13,6 +13,7 @@ export const AccountPlaceholderPage = lazy(() => import('@/pages/main/account/Ac
 export const PersonalInfoPage = lazy(() => import('@/pages/main/account/PersonalInfo'))
 export const MyCvsPage = lazy(() => import('@/pages/main/account/MyCvs'))
 export const TwoFactorAuthenticationPage = lazy(() => import('@/pages/main/account/TwoFactorAuthentication'))
+export const SecuritySettingsPage = lazy(() => import('@/pages/main/account/SecuritySettings'))
 export const JobPreferenceSettingsPage = lazy(() => import('@/pages/main/account/JobPreferenceSettings'))
 export const OnboardUserPage = lazy(() => import('@/pages/main/onboarding/OnboardUser'))
 export const OnboardUserSettingPage = lazy(() => import('@/pages/main/onboarding/OnboardUserSetting'))

@@ -160,4 +160,4 @@ class TwoFactorLoginVerifyView(APIView):
         if user is None or not two_factor.verify_code(user, two_factor.PURPOSE_LOGIN, serializer.validated_data['code']):
             return Response({'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'}, status=status.HTTP_400_BAD_REQUEST)
         two_factor.consume_login_challenge(challenge)
-        return Response(issue_tokens(user))
+        return Response(issue_tokens(user, request))

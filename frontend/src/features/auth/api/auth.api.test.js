@@ -53,18 +53,19 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/auth/register/email-availability/', { email: 'used@example.com' }, { signal: undefined })
   })
 
-  it('logs out every portal in the browser', async () => {
+  it('clears only the current portal session in the browser', async () => {
     localStorage.setItem('main_access_token', 'access-token')
     localStorage.setItem('main_refresh_token', 'refresh-token')
     localStorage.setItem('employer_access_token', 'employer-access')
     localStorage.setItem('employer_refresh_token', 'employer-refresh')
 
+    // beforeEach đặt path '/login' -> cổng hiện tại là 'main'.
     logout()
 
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('main_refresh_token')).toBeNull()
-    expect(localStorage.getItem('employer_access_token')).toBeNull()
-    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
+    expect(localStorage.getItem('employer_access_token')).toBe('employer-access')
+    expect(localStorage.getItem('employer_refresh_token')).toBe('employer-refresh')
   })
 
   it('stores registration tokens for the requested portal', async () => {
@@ -116,14 +117,14 @@ describe('auth API session storage', () => {
 
     await sendVerificationEmail()
     await confirmVerification('verify-token')
-    await changeEmail('new@example.com')
+    await changeEmail('new@example.com', 'Current@123')
     await requestPasswordReset({ email: 'user@example.com', captcha_token: 'captcha' })
     await validatePasswordResetToken('reset-token')
     await confirmPasswordReset({ token: 'reset-token', password: 'Abc123' })
 
     expect(post).toHaveBeenCalledWith('/auth/verify/send/')
     expect(post).toHaveBeenCalledWith('/auth/verify/confirm/', { token: 'verify-token' })
-    expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com' })
+    expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com', current_password: 'Current@123' })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/', { email: 'user@example.com', captcha_token: 'captcha', portal: 'main' })
     expect(get).toHaveBeenCalledWith('/auth/password-reset/validate/', { params: { token: 'reset-token' } })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/confirm/', { token: 'reset-token', password: 'Abc123' })

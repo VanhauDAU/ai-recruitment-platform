@@ -16,6 +16,25 @@ client.interceptors.request.use((config) => {
   return config
 })
 
+// Single-flight: nhiều request 401 đồng thời chỉ gọi /auth/refresh MỘT lần. Vì
+// backend rotation + blacklist token cũ, nếu để mỗi request tự refresh thì request
+// thứ hai dùng lại refresh đã bị blacklist -> 401 -> văng phiên oan.
+let refreshPromise = null
+
+function refreshAccessToken(refreshToken) {
+  if (!refreshPromise) {
+    // Dùng axios trần (không qua instance) để không lặp interceptor.
+    refreshPromise = axios
+      .post(`${baseURL}/auth/refresh/`, { refresh: refreshToken })
+      .then(({ data }) => {
+        setTokens({ access: data.access, refresh: data.refresh })
+        return data.access
+      })
+      .finally(() => { refreshPromise = null })
+  }
+  return refreshPromise
+}
+
 // 401 -> thử refresh một lần rồi phát lại request gốc; thất bại thì xóa phiên.
 client.interceptors.response.use(
   (response) => response,
@@ -28,10 +47,8 @@ client.interceptors.response.use(
       const refreshToken = getRefreshToken()
       if (refreshToken) {
         try {
-          // Dùng axios trần (không qua instance) để không lặp interceptor.
-          const { data } = await axios.post(`${baseURL}/auth/refresh/`, { refresh: refreshToken })
-          setTokens({ access: data.access, refresh: data.refresh })
-          originalRequest.headers.Authorization = `Bearer ${data.access}`
+          const access = await refreshAccessToken(refreshToken)
+          originalRequest.headers.Authorization = `Bearer ${access}`
           return client(originalRequest)
         } catch {
           clearTokens()
