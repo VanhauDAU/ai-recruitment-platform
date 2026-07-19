@@ -15,6 +15,7 @@ from .password_reset import (
     PasswordResetRequestView,
     PasswordResetValidateView,
 )
+from .sessions import SessionListView, SessionRevokeOthersView, SessionRevokeView
 from .verification import ChangeEmailView, VerificationConfirmView, VerificationSendView
 from .two_factor import (
     TwoFactorDisableConfirmView,
@@ -41,6 +42,9 @@ __all__ = [
     'PasswordResetValidateView',
     'RegisterView',
     'RegisterEmailAvailabilityView',
+    'SessionListView',
+    'SessionRevokeView',
+    'SessionRevokeOthersView',
     'VerificationConfirmView',
     'VerificationSendView',
     'TwoFactorLoginResendView',

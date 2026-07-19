@@ -113,4 +113,4 @@ class OAuthCompleteView(APIView):
         # Product policy: email 2FA protects password login only, so OAuth
         # completion always returns a session without an email-code challenge.
         user_data = SessionUserSerializer(user, context={'request': request}).data
-        return Response({'user': user_data, **issue_tokens(user)})
+        return Response({'user': user_data, **issue_tokens(user, request)})

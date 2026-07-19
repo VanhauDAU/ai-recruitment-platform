@@ -47,7 +47,7 @@ class PasswordChangeView(APIView):
         return Response({
             'detail': 'Cập nhật mật khẩu thành công.',
             'user': SessionUserSerializer(user, context={'request': request}).data,
-            'tokens': issue_tokens(user),
+            'tokens': issue_tokens(user, request),
         })
 
     @staticmethod

@@ -13,8 +13,9 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from . import oauth
-from .models import AuthEmailJob, SocialAccount, User
+from .models import AuthEmailJob, AuthSession, SocialAccount, User
 from .services import email_verification, password_reset, two_factor
+from .services.tokens import issue_tokens
 from .tasks import deliver_auth_email_job
 
 
@@ -200,6 +201,83 @@ class PasswordChangeTests(APITestCase):
         current_ok = self.client.post(reverse('auth-refresh'), {'refresh': response.data['tokens']['refresh']}, format='json')
         self.assertEqual(other_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(current_ok.status_code, status.HTTP_200_OK)
+
+
+class SessionManagementTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(email='sess@example.com', password='Password@123')
+
+    def _auth(self, tokens):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+    def test_issuing_tokens_creates_a_listable_current_session(self):
+        self._auth(issue_tokens(self.user))
+
+        res = self.client.get(reverse('auth-sessions'))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertTrue(res.data[0]['current'])
+
+    def test_second_device_is_not_current_and_can_be_revoked(self):
+        current = issue_tokens(self.user)
+        other = issue_tokens(self.user)
+        self._auth(current)
+
+        listed = self.client.get(reverse('auth-sessions')).data
+        self.assertEqual(len(listed), 2)
+        other_row = next(s for s in listed if not s['current'])
+
+        revoked = self.client.delete(reverse('auth-session-revoke', args=[other_row['id']]))
+        self.assertEqual(revoked.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Refresh token của thiết bị bị thu hồi không còn dùng được.
+        blocked = self.client.post(reverse('auth-refresh'), {'refresh': other['refresh']}, format='json')
+        self.assertEqual(blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(len(self.client.get(reverse('auth-sessions')).data), 1)
+
+    def test_revoke_others_keeps_current_device(self):
+        current = issue_tokens(self.user)
+        issue_tokens(self.user)
+        issue_tokens(self.user)
+        self._auth(current)
+
+        res = self.client.post(reverse('auth-sessions-revoke-others'))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        listed = self.client.get(reverse('auth-sessions')).data
+        self.assertEqual(len(listed), 1)
+        self.assertTrue(listed[0]['current'])
+        still_valid = self.client.post(reverse('auth-refresh'), {'refresh': current['refresh']}, format='json')
+        self.assertEqual(still_valid.status_code, status.HTTP_200_OK)
+
+    def test_cannot_revoke_a_session_of_another_account(self):
+        victim = User.objects.create_user(email='sess@example.com', password='Password@123', role=User.Role.EMPLOYER)
+        issue_tokens(victim)
+        victim_session = AuthSession.objects.get(user=victim)
+        self._auth(issue_tokens(self.user))
+
+        res = self.client.delete(reverse('auth-session-revoke', args=[victim_session.id]))
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        victim_session.refresh_from_db()
+        self.assertIsNone(victim_session.revoked_at)
+
+    def test_refresh_rotation_keeps_one_session_with_preserved_sid(self):
+        tokens = issue_tokens(self.user)
+        session = AuthSession.objects.get(user=self.user)
+        old_jti = session.refresh_jti
+
+        rotated = self.client.post(reverse('auth-refresh'), {'refresh': tokens['refresh']}, format='json')
+        self.assertEqual(rotated.status_code, status.HTTP_200_OK)
+
+        # Cùng một phiên (một hàng), chỉ đổi jti; `sid` giữ nguyên nên vẫn "current".
+        self.assertEqual(AuthSession.objects.filter(user=self.user).count(), 1)
+        session.refresh_from_db()
+        self.assertNotEqual(session.refresh_jti, old_jti)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + rotated.data['access'])
+        self.assertTrue(self.client.get(reverse('auth-sessions')).data[0]['current'])
 
 
 class ChangeEmailTests(APITestCase):

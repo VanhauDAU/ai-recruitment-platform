@@ -27,6 +27,7 @@ import {
   MyCvsPage,
   JobPreferenceSettingsPage,
   TwoFactorAuthenticationPage,
+  SecuritySettingsPage,
   ResetPasswordPage,
   SavedJobsPage,
   TemplateCatalogPage,
@@ -42,6 +43,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'my-cv': MyCvsPage,
   'two-factor': TwoFactorAuthenticationPage,
   'suggestion-settings': JobPreferenceSettingsPage,
+  security: SecuritySettingsPage,
 }
 
 // Route cổng main (ứng viên + khách). Xem thêm employer.routes/admin.routes.

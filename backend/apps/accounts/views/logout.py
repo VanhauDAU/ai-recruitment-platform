@@ -13,8 +13,10 @@ from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from ..services import auth_sessions
 from ..services.tokens import revoke_refresh_tokens
 
 
@@ -35,7 +37,9 @@ class LogoutView(APIView):
         token = request.data.get('refresh')
         if token:
             try:
-                RefreshToken(token).blacklist()
+                parsed = RefreshToken(token)
+                parsed.blacklist()
+                auth_sessions.revoke_session_by_refresh_jti(parsed.get(api_settings.JTI_CLAIM))
             except TokenError:
                 pass
         return Response({'detail': 'Đã đăng xuất.'}, status=status.HTTP_200_OK)

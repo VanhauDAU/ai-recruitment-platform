@@ -37,7 +37,7 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         queue_verification_email(user)
         return Response(
-            {'user': SessionUserSerializer(user).data, **issue_tokens(user)},
+            {'user': SessionUserSerializer(user).data, **issue_tokens(user, request)},
             status=status.HTTP_201_CREATED,
         )
 
@@ -91,7 +91,7 @@ class LoginView(APIView):
                 },
                 status=status.HTTP_202_ACCEPTED,
             )
-        return Response(issue_tokens(user))
+        return Response(issue_tokens(user, request))
 
 
 class MeView(generics.RetrieveUpdateAPIView):

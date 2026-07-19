@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from ..selectors import get_accessible_user
+from ..services import auth_sessions
 
 
 class AccountTokenRefreshSerializer(TokenRefreshSerializer):
@@ -19,7 +20,12 @@ class AccountTokenRefreshSerializer(TokenRefreshSerializer):
         refresh = RefreshToken(attrs['refresh'])
         if not get_accessible_user(refresh.get(api_settings.USER_ID_CLAIM)):
             raise InvalidToken({'detail': self.error_messages['user_inactive']})
-        return super().validate(attrs)
+        old_jti = refresh.get(api_settings.JTI_CLAIM)
+        data = super().validate(attrs)
+        # Refresh xoay vòng: giữ nguyên phiên (cùng `sid`), chỉ chuyển sang jti mới.
+        if data.get('refresh'):
+            auth_sessions.rotate_session(old_jti, data['refresh'])
+        return data
 
 
 class AccountTokenRefreshView(TokenRefreshView):
