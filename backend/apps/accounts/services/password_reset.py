@@ -70,16 +70,19 @@ def send_password_reset_email(user):
     site_name = site_setting('site_name', 'ProCV')
     minutes = settings.PASSWORD_RESET_TTL // 60
     name = user.full_name or user.email
-    subject = f'Đặt lại mật khẩu tài khoản {site_name}'
+    # Nêu rõ cổng: một email có thể có tài khoản Ứng viên và Nhà tuyển dụng riêng,
+    # người dùng cần biết mình đang đặt lại mật khẩu cho tài khoản nào.
+    portal_label = 'Nhà tuyển dụng' if is_employer else 'Ứng viên'
+    subject = f'Đặt lại mật khẩu tài khoản {portal_label} {site_name}'
     text = (
         f'Xin chào {name},\n\nChúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản {user.email}. '
         f'Mở liên kết dưới đây để tạo mật khẩu mới:\n{link}\n\nLiên kết có hiệu lực trong '
         f'{minutes} phút và chỉ dùng được một lần. Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.'
     )
     html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
-      <h2 style="color:#00b14f">Đặt lại mật khẩu</h2>
+      <h2 style="color:#00b14f">Đặt lại mật khẩu tài khoản {portal_label}</h2>
       <p>Xin chào <strong>{escape(name)}</strong>,</p>
-      <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản <strong>{escape(user.email)}</strong>.</p>
+      <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản {portal_label} <strong>{escape(user.email)}</strong>.</p>
       <p style="text-align:center;margin:28px 0"><a href="{link}" style="background:#00b14f;color:#fff;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:bold;display:inline-block">Tạo mật khẩu mới</a></p>
       <p style="font-size:13px;color:#666">Hoặc mở liên kết: <br>{link}</p>
       <p style="font-size:12px;color:#999">Liên kết có hiệu lực trong {minutes} phút và chỉ dùng được một lần.</p>

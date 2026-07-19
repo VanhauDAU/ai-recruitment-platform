@@ -2,7 +2,7 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icon
 import { Alert, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
 import { MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
 import { useSession } from '@/entities/session'
@@ -63,10 +63,12 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     : { to: forgotPasswordLink }
   const { logout, refreshSession } = useSession()
   const navigate = useNavigate()
+  const location = useLocation()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [searchParams] = useSearchParams()
   // Lỗi từ luồng social login (OAuthCallback quay về kèm ?oauth_error=).
   const [error, setError] = useState(() => getOAuthErrorMessage(searchParams.get('oauth_error')))
+  const [warning, setWarning] = useState(() => location.state?.authWarning || '')
   const [loading, setLoading] = useState(false)
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
   const [form] = Form.useForm()
@@ -158,6 +160,16 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
           className="mb-4 !rounded-xl login-field"
           closable
           onClose={() => setError('')}
+        />
+      )}
+      {warning && (
+        <Alert
+          type="warning"
+          message={warning}
+          showIcon
+          closable
+          className="mb-4 !rounded-xl login-field"
+          onClose={() => setWarning('')}
         />
       )}
 

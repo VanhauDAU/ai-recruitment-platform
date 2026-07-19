@@ -3,12 +3,20 @@ import { expect, test } from '@playwright/test'
 async function mockRouteDependencies(page) {
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
+    if (path === '/api/auth/me/' || path === '/api/auth/refresh/') {
+      await route.fulfill({ status: 401, contentType: 'application/json', body: '{"detail":"Unauthenticated"}' })
+      return
+    }
     if (path.startsWith('/api/jobs/frontend-job/')) {
       await route.fulfill({ status: 404, contentType: 'application/json', body: '{}' })
       return
     }
 
-    const body = path === '/api/jobs/' ? { count: 0, results: [] } : {}
+    const body = path === '/api/jobs/'
+      ? { count: 0, results: [] }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+        : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 }
@@ -28,7 +36,7 @@ test.describe('portal route registries', () => {
     }
 
     await page.goto('/tuyendung/app/login')
-    await expect(page.getByRole('heading', { name: 'Đăng nhập dành cho Nhà tuyển dụng' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
     await page.goto('/admin/app/login')
     await expect(page.getByRole('heading', { name: 'Đăng nhập Quản trị hệ thống' })).toBeVisible()
     expect(pageErrors).toEqual([])
@@ -47,11 +55,31 @@ test.describe('portal route registries', () => {
     await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
   })
 
-  test('renders onboarding for an unconfigured candidate', async ({ page }, testInfo) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('main_access_token', 'candidate-access-token')
-      localStorage.setItem('main_refresh_token', 'candidate-refresh-token')
+  test('redirects an authenticated candidate away from login and sign-up', async ({ page }) => {
+    await page.unroute('http://localhost:8000/api/**')
+    await page.route('http://localhost:8000/api/**', async (route) => {
+      const path = new URL(route.request().url()).pathname
+      const body = path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+        : path === '/api/privacy/consent/'
+          ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+          : path === '/api/jobs/'
+            ? { count: 0, results: [] }
+            : path === '/api/jobs/categories/' || path === '/api/locations/'
+              ? []
+              : path === '/api/site/banners/'
+                ? []
+                : {}
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
     })
+
+    await page.goto('/login')
+    await expect(page).toHaveURL('/')
+    await page.goto('/sign-up')
+    await expect(page).toHaveURL('/')
+  })
+
+  test('renders onboarding for an unconfigured candidate', async ({ page }, testInfo) => {
     await page.unroute('http://localhost:8000/api/**')
     await page.route('http://localhost:8000/api/**', async (route) => {
       const path = new URL(route.request().url()).pathname
@@ -72,6 +100,9 @@ test.describe('portal route registries', () => {
           recruiter_visibility_consent: false,
         },
         '/api/candidate/profile/': { gender: 'female' },
+        '/api/privacy/consent/': {
+          consent: { necessary: true, preferences: false, analytics: false, marketing: false },
+        },
         '/api/jobs/categories/': {
           count: 3,
           results: [

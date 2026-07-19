@@ -16,6 +16,7 @@ import {
   validatePasswordResetToken,
   verifyTwoFactorLogin,
 } from './auth.api'
+import { clearAllPortalSessions, getAccessToken, setTokens } from '@/shared/api/token-store'
 const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({
@@ -30,20 +31,21 @@ describe('auth API session storage', () => {
   beforeEach(() => {
     post.mockReset()
     get.mockReset()
+    clearAllPortalSessions()
+    localStorage.clear()
     window.history.replaceState({}, '', '/login')
   })
 
   it('stores tokens in the requested portal without replacing another portal session', async () => {
-    localStorage.setItem('main_access_token', 'candidate-access')
-    localStorage.setItem('main_refresh_token', 'candidate-refresh')
+    setTokens({ access: 'candidate-access' }, 'main')
     post.mockResolvedValue({ data: { access: 'access-token', refresh: 'refresh-token' } })
 
     await login({ email: 'user@example.com', password: 'secret', captcha_token: 'captcha', portal: 'employer' })
 
-    expect(localStorage.getItem('main_access_token')).toBe('candidate-access')
-    expect(localStorage.getItem('main_refresh_token')).toBe('candidate-refresh')
-    expect(localStorage.getItem('employer_access_token')).toBe('access-token')
-    expect(localStorage.getItem('employer_refresh_token')).toBe('refresh-token')
+    expect(getAccessToken('main')).toBe('candidate-access')
+    expect(getAccessToken('employer')).toBe('access-token')
+    expect(localStorage.getItem('employer_access_token')).toBeNull()
+    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
   })
 
   it('checks email availability through the registration API', async () => {
@@ -53,18 +55,19 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/auth/register/email-availability/', { email: 'used@example.com' }, { signal: undefined })
   })
 
-  it('logs out every portal in the browser', async () => {
+  it('clears only the current portal session in the browser', async () => {
     localStorage.setItem('main_access_token', 'access-token')
     localStorage.setItem('main_refresh_token', 'refresh-token')
     localStorage.setItem('employer_access_token', 'employer-access')
     localStorage.setItem('employer_refresh_token', 'employer-refresh')
 
+    // beforeEach đặt path '/login' -> cổng hiện tại là 'main'.
     logout()
 
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('main_refresh_token')).toBeNull()
-    expect(localStorage.getItem('employer_access_token')).toBeNull()
-    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
+    expect(localStorage.getItem('employer_access_token')).toBe('employer-access')
+    expect(localStorage.getItem('employer_refresh_token')).toBe('employer-refresh')
   })
 
   it('stores registration tokens for the requested portal', async () => {
@@ -74,8 +77,8 @@ describe('auth API session storage', () => {
       email: 'user@example.com', password: 'Abc123', role: 'candidate', full_name: 'Candidate', captcha_token: 'captcha', portal: 'main',
     })
 
-    expect(localStorage.getItem('main_access_token')).toBe('access-token')
-    expect(localStorage.getItem('main_refresh_token')).toBe('refresh-token')
+    expect(getAccessToken('main')).toBe('access-token')
+    expect(localStorage.getItem('main_refresh_token')).toBeNull()
   })
 
   it('registers an employer through the employer profile endpoint', async () => {
@@ -89,8 +92,8 @@ describe('auth API session storage', () => {
     await registerEmployer(payload)
 
     expect(post).toHaveBeenCalledWith('/employer/register/', payload)
-    expect(localStorage.getItem('employer_access_token')).toBe('employer-access')
-    expect(localStorage.getItem('employer_refresh_token')).toBe('employer-refresh')
+    expect(getAccessToken('employer')).toBe('employer-access')
+    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
   })
 
   it('stores tokens in the portal that completed the 2FA login challenge', async () => {
@@ -99,8 +102,8 @@ describe('auth API session storage', () => {
     await verifyTwoFactorLogin({ challenge: 'challenge-id', code: '123456', portal: 'employer' })
 
     expect(post).toHaveBeenCalledWith('/auth/two-factor/login/verify/', { challenge: 'challenge-id', code: '123456' })
-    expect(localStorage.getItem('employer_access_token')).toBe('access-token')
-    expect(localStorage.getItem('employer_refresh_token')).toBe('refresh-token')
+    expect(getAccessToken('employer')).toBe('access-token')
+    expect(localStorage.getItem('employer_refresh_token')).toBeNull()
   })
 
   it('keeps the 2FA resend endpoint and payload unchanged', async () => {
@@ -116,14 +119,14 @@ describe('auth API session storage', () => {
 
     await sendVerificationEmail()
     await confirmVerification('verify-token')
-    await changeEmail('new@example.com')
+    await changeEmail('new@example.com', 'Current@123')
     await requestPasswordReset({ email: 'user@example.com', captcha_token: 'captcha' })
     await validatePasswordResetToken('reset-token')
     await confirmPasswordReset({ token: 'reset-token', password: 'Abc123' })
 
     expect(post).toHaveBeenCalledWith('/auth/verify/send/')
     expect(post).toHaveBeenCalledWith('/auth/verify/confirm/', { token: 'verify-token' })
-    expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com' })
+    expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com', current_password: 'Current@123' })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/', { email: 'user@example.com', captcha_token: 'captcha', portal: 'main' })
     expect(get).toHaveBeenCalledWith('/auth/password-reset/validate/', { params: { token: 'reset-token' } })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/confirm/', { token: 'reset-token', password: 'Abc123' })
@@ -137,6 +140,7 @@ describe('auth API session storage', () => {
     await completeOAuth('one-time-code', 'admin')
 
     expect(post).toHaveBeenCalledWith('/auth/oauth/complete/', { code: 'one-time-code' })
-    expect(localStorage.getItem('admin_access_token')).toBe('access-token')
+    expect(getAccessToken('admin')).toBe('access-token')
+    expect(localStorage.getItem('admin_refresh_token')).toBeNull()
   })
 })

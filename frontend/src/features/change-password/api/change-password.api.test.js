@@ -6,9 +6,12 @@ const { post } = vi.hoisted(() => ({ post: vi.fn() }))
 vi.mock('@/shared/api/client', () => ({ default: { post } }))
 
 describe('change password API', () => {
-  beforeEach(() => post.mockReset())
+  beforeEach(() => {
+    post.mockReset()
+    localStorage.clear()
+  })
 
-  it('posts the authenticated password contract', async () => {
+  it('relies on the HttpOnly refresh cookie instead of exposing refresh in the payload', async () => {
     post.mockResolvedValue({ data: { detail: 'ok', user: { has_usable_password: true } } })
     const payload = { password: 'Password@123', logout_all_sessions: false }
 

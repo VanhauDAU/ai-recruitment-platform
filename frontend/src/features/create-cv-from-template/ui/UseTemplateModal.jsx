@@ -36,7 +36,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
     >
       {/* Container flex/grid âm để đẩy sát lề Modal padding mặc định */}
       <div className="grid grid-cols-1 lg:grid-cols-10 -mx-6 -my-5 min-h-[75vh]">
-        <div className="p-6 lg:col-span-7">
+        <div className="order-2 p-6 lg:order-1 lg:col-span-7">
           <h2 className="mb-3 text-lg font-bold text-slate-900">Mẫu CV {template.display_name}</h2>
           <div ref={previewWrapRef} className="h-[72vh] overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-[#f8fafc]">
             {!previewDocument ? (
@@ -54,7 +54,7 @@ export default function UseTemplateModal({ template, themeColor, open, onClose, 
           </div>
         </div>
 
-        <div className="flex flex-col lg:col-span-3 bg-slate-50 border-t lg:border-t-0 lg:border-l border-slate-200 p-6">
+        <div className="order-1 flex max-h-[70vh] flex-col overflow-y-auto border-b border-slate-200 bg-slate-50 p-6 lg:order-2 lg:col-span-3 lg:max-h-none lg:overflow-visible lg:border-b-0 lg:border-l">
           <h3 className="mb-3.5 text-base font-bold text-[var(--brand-primary)]">Bạn muốn tạo CV từ?</h3>
           <CvSourcePanel
             template={template}

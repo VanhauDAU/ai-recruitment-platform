@@ -32,10 +32,6 @@ function versionDocument(version) {
   }
 }
 
-function nextPaint() {
-  return new Promise((resolve) => globalThis.requestAnimationFrame(() => globalThis.requestAnimationFrame(resolve)))
-}
-
 function SavedVersionImage({ version, title, onError }) {
   const sourceRef = useRef(null)
   const onErrorRef = useRef(onError)
@@ -45,10 +41,32 @@ function SavedVersionImage({ version, title, onError }) {
   useEffect(() => {
     let active = true
     let objectUrl = ''
+    const pendingFrames = new Set()
+    const scheduleFrame = (callback) => {
+      const requestFrame = globalThis.requestAnimationFrame || globalThis.setTimeout
+      const frameId = requestFrame(callback)
+      pendingFrames.add(frameId)
+      return frameId
+    }
+    const cancelPendingFrames = () => {
+      const cancelFrame = globalThis.cancelAnimationFrame || globalThis.clearTimeout
+      pendingFrames.forEach((frameId) => cancelFrame(frameId))
+      pendingFrames.clear()
+    }
+    const waitForNextPaint = () => new Promise((resolve) => {
+      scheduleFrame(() => {
+        if (!active) return
+        scheduleFrame(() => {
+          if (active) resolve()
+        })
+      })
+    })
     const capture = async () => {
       try {
         await globalThis.document.fonts?.ready
-        await nextPaint()
+        if (!active) return
+        await waitForNextPaint()
+        if (!active) return
         const page = sourceRef.current?.querySelector('.cv-document-preview__page')
         if (!page) throw new Error('CV preview page is unavailable.')
         const images = [...page.querySelectorAll('img')]
@@ -56,6 +74,7 @@ function SavedVersionImage({ version, title, onError }) {
           image.addEventListener('load', resolve, { once: true })
           image.addEventListener('error', resolve, { once: true })
         })))
+        if (!active) return
         const blob = await toBlob(page, {
           backgroundColor: '#ffffff',
           cacheBust: false,
@@ -63,6 +82,7 @@ function SavedVersionImage({ version, title, onError }) {
           width: page.scrollWidth,
           height: page.scrollHeight,
         })
+        if (!active) return
         if (!blob) throw new Error('CV preview image is empty.')
         objectUrl = globalThis.URL.createObjectURL(blob)
         if (active) setImageUrl(objectUrl)
@@ -73,6 +93,7 @@ function SavedVersionImage({ version, title, onError }) {
     capture()
     return () => {
       active = false
+      cancelPendingFrames()
       if (objectUrl) globalThis.URL.revokeObjectURL(objectUrl)
     }
   }, [version])

@@ -1,20 +1,20 @@
 import api from '@/shared/api/client'
 import { getCurrentPortal } from '@/shared/config/portals'
-import { clearSession, setTokens } from '@/shared/api/token-store'
+import { clearCurrentPortalSession, setTokens } from '@/shared/api/token-store'
 
 export async function register({ email, password, role, full_name, captcha_token, portal }) {
   const { data } = await api.post('/auth/register/', { email, password, role, full_name, captcha_token })
-  // Backend trả về access/refresh -> đăng nhập ngay để dẫn thẳng vào trang (chưa xác thực email).
-  if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+  // Backend trả access trong body và đặt refresh bằng HttpOnly cookie.
+  if (data.access) {
+    setTokens({ access: data.access }, portal || getCurrentPortal())
   }
   return data
 }
 
 export async function registerEmployer(payload) {
   const { data } = await api.post('/employer/register/', payload)
-  if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, 'employer')
+  if (data.access) {
+    setTokens({ access: data.access }, 'employer')
   }
   return data
 }
@@ -41,8 +41,11 @@ export async function confirmVerification(token) {
   return data
 }
 
-export async function changeEmail(email) {
-  const { data } = await api.post('/auth/change-email/', { email })
+export async function changeEmail(email, currentPassword) {
+  const { data } = await api.post('/auth/change-email/', {
+    email,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  })
   return data
 }
 
@@ -69,15 +72,15 @@ export async function confirmPasswordReset({ token, password }) {
 
 export async function login({ email, password, captcha_token, portal }) {
   const { data } = await api.post('/auth/login/', { email, password, captcha_token, ...(portal && { portal }) })
-  if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+  if (data.access) {
+    setTokens({ access: data.access }, portal || getCurrentPortal())
   }
   return data
 }
 
 export async function verifyTwoFactorLogin({ challenge, code, portal }) {
   const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code })
-  setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+  setTokens({ access: data.access }, portal || getCurrentPortal())
   return data
 }
 
@@ -95,15 +98,17 @@ export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
   return `${api.defaults.baseURL}/auth/oauth/${provider}/start/?${params}`
 }
 
-// Đổi one_time_code (backend redirect về kèm ?code=) lấy JWT + user.
+// Đổi one_time_code lấy access + user; refresh được đặt bằng HttpOnly cookie.
 export async function completeOAuth(code, portal) {
   const { data } = await api.post('/auth/oauth/complete/', { code })
-  if (data.access && data.refresh) {
-    setTokens({ access: data.access, refresh: data.refresh }, portal || getCurrentPortal())
+  if (data.access) {
+    setTokens({ access: data.access }, portal || getCurrentPortal())
   }
   return data
 }
 
+// Chỉ xóa phiên cục bộ của cổng hiện tại (không gọi backend). Đăng xuất "đầy đủ"
+// (blacklist refresh) đi qua session context: useSession().logout.
 export function logout() {
-  clearSession()
+  clearCurrentPortalSession()
 }

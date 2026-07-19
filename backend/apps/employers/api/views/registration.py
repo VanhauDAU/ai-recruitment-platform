@@ -8,6 +8,7 @@ from apps.accounts.permissions import IsEmployer
 from apps.accounts.serializers import SessionUserSerializer
 from apps.accounts.services import queue_verification_email, verify_request_captcha
 from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services.refresh_cookies import set_refresh_cookie
 
 from ...services.registration import complete_registration_profile, register_employer
 from ..serializers import RecruiterProfileSerializer
@@ -31,14 +32,16 @@ class EmployerRegisterView(APIView):
         verify_request_captcha(request, 'register')
         user, recruiter = register_employer(serializer.validated_data)
         queue_verification_email(user)
-        return Response(
+        tokens = issue_tokens(user, request, auth_method='registration')
+        response = Response(
             {
                 'user': SessionUserSerializer(user, context={'request': request}).data,
                 'recruiter': RecruiterProfileSerializer(recruiter, context={'request': request}).data,
-                **issue_tokens(user),
+                'access': tokens['access'],
             },
             status=status.HTTP_201_CREATED,
         )
+        return set_refresh_cookie(response, tokens['refresh'], user=user)
 
 
 class CompleteEmployerRegistrationView(APIView):

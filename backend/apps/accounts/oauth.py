@@ -190,9 +190,23 @@ def fetch_profile(provider, access_token):
 
     if provider == 'facebook':
         avatar = (raw.get('picture') or {}).get('data', {}).get('url', '')
-        profile = {'id': raw.get('id'), 'email': raw.get('email'), 'name': raw.get('name', ''), 'avatar': avatar}
+        profile = {
+            'id': raw.get('id'),
+            'email': raw.get('email'),
+            # Graph User `verified` is not an explicit email-verification
+            # attestation. Fail closed until this provider supplies one.
+            'email_verified': False,
+            'name': raw.get('name', ''),
+            'avatar': avatar,
+        }
     else:  # google + linkedin đều theo chuẩn OIDC userinfo
-        profile = {'id': raw.get('sub'), 'email': raw.get('email'), 'name': raw.get('name', ''), 'avatar': raw.get('picture', '')}
+        profile = {
+            'id': raw.get('sub'),
+            'email': raw.get('email'),
+            'email_verified': raw.get('email_verified') is True,
+            'name': raw.get('name', ''),
+            'avatar': raw.get('picture', ''),
+        }
 
     if not profile['id']:
         raise OAuthError('profile_failed')
@@ -216,6 +230,11 @@ def resolve_user(provider, profile, portal, *, include_created=False):
     without confusing a newly linked provider with a newly created account.
     """
     role = PORTAL_ROLE[portal]
+    email = User.objects.normalize_email(profile.get('email') or '')
+    if not email:
+        raise OAuthError('no_email')
+    if profile.get('email_verified') is not True:
+        raise OAuthError('email_not_verified')
 
     def result(user, created):
         return (user, created) if include_created else user
@@ -232,25 +251,14 @@ def resolve_user(provider, profile, portal, *, include_created=False):
                 raise OAuthError('inactive')
             return result(user, False)
 
-        email = User.objects.normalize_email(profile.get('email') or '')
-        if not email:
-            raise OAuthError('no_email')
-
         user = User.objects.filter(email__iexact=email, role=role).first()
         created = False
         if user:
             if not is_account_accessible(user):
                 raise OAuthError('inactive')
-            # Provider đã xác thực email này -> coi như email tài khoản đã xác thực.
-            update_fields = []
-            if not user.email_verified:
-                user.email_verified = True
-                update_fields.append('email_verified')
-            if not user.avatar_url and profile.get('avatar'):
-                user.avatar_url = profile['avatar']
-                update_fields.append('avatar_url')
-            if update_fields:
-                user.save(update_fields=[*update_fields, 'updated_at'])
+            # Không tự động gắn provider vào tài khoản chỉ vì email trùng. Chủ
+            # tài khoản phải đăng nhập lại rồi đi qua flow liên kết xác nhận.
+            raise OAuthError('link_confirmation_required')
         else:
             user = User.objects.create_user(
                 email=email,

@@ -9,7 +9,6 @@ test('candidate smoke: saved jobs remains protected', async ({ page }) => {
 })
 
 test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   const draft = {
     schema_version: 1,
     lock_version: 0,
@@ -139,7 +138,6 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
 })
 
 test('candidate smoke: owner CV view renders an immutable V2 version, not a draft', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   const version = {
     public_id: 'cvv_2', version_number: 2, schema_version: 1,
     template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
@@ -178,7 +176,6 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
 })
 
 test('candidate smoke: CV library permanently deletes a CV through V2', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   let deleted = false
   const cv = {
     public_id: 'cv_1', title: 'CV cần xóa', cv_type: 'builder', source: 'builder',
@@ -196,6 +193,8 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/me/'
       ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
       : path === '/api/v2/cvs/' && request.method() === 'GET'
         ? { results: deleted ? [] : [cv] }
         : path === '/api/v2/cvs/cv_1/view/'
@@ -210,16 +209,16 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await expect(page.getByText('CV cần xóa', { exact: true })).toBeVisible()
   await page.locator('.group').first().hover()
   await page.getByRole('button', { name: 'Thao tác CV' }).click()
-  await page.getByText('Xoá', { exact: true }).click()
-  await expect(page.getByText('Xóa vĩnh viễn', { exact: true })).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Xoá' }).click()
+  const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV của bạn?' })
+  await expect(deleteDialog).toBeVisible()
   const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
-  await page.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
+  await deleteDialog.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
   await deleteRequest
   await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)
 })
 
 test('candidate smoke: job application submits the selected immutable CV version through V2', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   let applicationPayload
   const job = {
     public_id: 'job_1', slug: 'apply-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',

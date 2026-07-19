@@ -1,20 +1,25 @@
 import shutil
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core import mail
-from django.test import override_settings
+from django.db import close_old_connections
+from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.test import APIClient, APIRequestFactory, APITestCase
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from . import oauth
-from .models import AuthEmailJob, SocialAccount, User
+from .models import AuthEmailJob, AuthSession, SocialAccount, User
 from .services import email_verification, password_reset, two_factor
+from .services.tokens import issue_tokens
+from .services.refresh_cookies import cookie_name
 from .tasks import deliver_auth_email_job
 
 
@@ -25,6 +30,14 @@ PNG_BYTES = (
     b'\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
 )
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
+
+
+def set_refresh_cookie(client, portal, refresh):
+    client.cookies[cookie_name(portal)] = str(refresh)
+
+
+def refresh_session(client, portal='main'):
+    return client.post(reverse('auth-refresh'), {'portal': portal}, format='json')
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])
@@ -119,13 +132,57 @@ class ProfileUpdateTests(APITestCase):
 
 
 class PasswordChangeTests(APITestCase):
+    def test_candidate_password_change_does_not_change_same_email_employer(self):
+        candidate = User.objects.create_user(
+            email='password-isolation@example.com',
+            password='CandidatePass@123',
+            role=User.Role.CANDIDATE,
+        )
+        employer = User.objects.create_user(
+            email='password-isolation@example.com',
+            password='EmployerPass@123',
+            role=User.Role.EMPLOYER,
+        )
+        tokens = issue_tokens(candidate)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+        set_refresh_cookie(self.client, 'main', tokens['refresh'])
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'CandidatePass@123',
+            'password': 'CandidateNewPass@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        candidate.refresh_from_db()
+        employer.refresh_from_db()
+        self.assertTrue(candidate.check_password('CandidateNewPass@123'))
+        self.assertTrue(employer.check_password('EmployerPass@123'))
+
+    def test_change_without_current_refresh_cookie_is_rejected(self):
+        user = User.objects.create_user(
+            email='missing-refresh@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        tokens = issue_tokens(user)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'Password@123',
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('Password@123'))
+
     def test_oauth_user_can_create_first_password_without_current_password(self):
         user = User.objects.create_user(
             email='oauth-employer@example.com',
             password=None,
             role=User.Role.EMPLOYER,
         )
-        self.client.force_authenticate(user=user)
+        tokens = issue_tokens(user, auth_method='oauth')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+        set_refresh_cookie(self.client, 'employer', tokens['refresh'])
 
         response = self.client.post(reverse('auth-password-change'), {
             'password': 'NewPassword@123',
@@ -157,12 +214,353 @@ class PasswordChangeTests(APITestCase):
         self.assertIn('current_password', missing.data)
         self.assertIn('current_password', wrong.data)
 
+    def test_change_rotates_current_session_and_returns_fresh_tokens(self):
+        user = User.objects.create_user(
+            email='rotate@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        old_tokens = issue_tokens(user)
+        old_refresh = old_tokens['refresh']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + old_tokens['access'])
+        set_refresh_cookie(self.client, 'employer', old_refresh)
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'Password@123',
+            'password': 'NewPassword@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertIn('access', response.data['tokens'])
+        self.assertNotIn('refresh', response.data['tokens'])
+        new_refresh = self.client.cookies[cookie_name('employer')].value
+
+        # Refresh token của phiên hiện tại bị xoay: token cũ hỏng, token mới dùng được.
+        self.client.credentials()
+        set_refresh_cookie(self.client, 'employer', old_refresh)
+        old_blocked = refresh_session(self.client, 'employer')
+        set_refresh_cookie(self.client, 'employer', new_refresh)
+        new_ok = refresh_session(self.client, 'employer')
+        self.assertEqual(old_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(new_ok.status_code, status.HTTP_200_OK)
+
+    def test_change_with_logout_all_revokes_other_devices_but_keeps_current(self):
+        user = User.objects.create_user(
+            email='logoutall@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        other_device = issue_tokens(user)
+        current = issue_tokens(user)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + current['access'])
+        set_refresh_cookie(self.client, 'employer', current['refresh'])
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'Password@123',
+            'password': 'NewPassword@123',
+            'logout_all_sessions': True,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        new_refresh = self.client.cookies[cookie_name('employer')].value
+        self.client.credentials()
+        set_refresh_cookie(self.client, 'employer', other_device['refresh'])
+        other_blocked = refresh_session(self.client, 'employer')
+        set_refresh_cookie(self.client, 'employer', new_refresh)
+        current_ok = refresh_session(self.client, 'employer')
+        self.assertEqual(other_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(current_ok.status_code, status.HTTP_200_OK)
+
+
+class SessionManagementTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(email='sess@example.com', password='Password@123')
+
+    def _auth(self, tokens):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+    def test_issuing_tokens_creates_a_listable_current_session(self):
+        self._auth(issue_tokens(self.user))
+
+        res = self.client.get(reverse('auth-sessions'))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertTrue(res.data[0]['current'])
+
+    def test_second_device_is_not_current_and_can_be_revoked(self):
+        current = issue_tokens(self.user)
+        other = issue_tokens(self.user)
+        self._auth(current)
+
+        listed = self.client.get(reverse('auth-sessions')).data
+        self.assertEqual(len(listed), 2)
+        other_row = next(s for s in listed if not s['current'])
+
+        revoked = self.client.delete(reverse('auth-session-revoke', args=[other_row['id']]))
+        self.assertEqual(revoked.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Refresh token của thiết bị bị thu hồi không còn dùng được.
+        set_refresh_cookie(self.client, 'main', other['refresh'])
+        blocked = refresh_session(self.client)
+        self.assertEqual(blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(len(self.client.get(reverse('auth-sessions')).data), 1)
+
+        # Access JWT của thiết bị vừa thu hồi bị chặn ngay, không chờ hết hạn.
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + other['access'])
+        self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_revoke_others_keeps_current_device(self):
+        current = issue_tokens(self.user)
+        issue_tokens(self.user)
+        issue_tokens(self.user)
+        self._auth(current)
+
+        res = self.client.post(reverse('auth-sessions-revoke-others'))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        listed = self.client.get(reverse('auth-sessions')).data
+        self.assertEqual(len(listed), 1)
+        self.assertTrue(listed[0]['current'])
+        set_refresh_cookie(self.client, 'main', current['refresh'])
+        still_valid = refresh_session(self.client)
+        self.assertEqual(still_valid.status_code, status.HTTP_200_OK)
+
+    def test_cannot_revoke_a_session_of_another_account(self):
+        victim = User.objects.create_user(email='sess@example.com', password='Password@123', role=User.Role.EMPLOYER)
+        issue_tokens(victim)
+        victim_session = AuthSession.objects.get(user=victim)
+        self._auth(issue_tokens(self.user))
+
+        res = self.client.delete(reverse('auth-session-revoke', args=[victim_session.id]))
+
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        victim_session.refresh_from_db()
+        self.assertIsNone(victim_session.revoked_at)
+
+    def test_refresh_rotation_keeps_one_session_with_preserved_sid(self):
+        tokens = issue_tokens(self.user)
+        session = AuthSession.objects.get(user=self.user)
+        old_jti = session.refresh_jti
+
+        set_refresh_cookie(self.client, 'main', tokens['refresh'])
+        rotated = refresh_session(self.client)
+        self.assertEqual(rotated.status_code, status.HTTP_200_OK)
+
+        # Cùng một phiên (một hàng), chỉ đổi jti; `sid` giữ nguyên nên vẫn "current".
+        self.assertEqual(AuthSession.objects.filter(user=self.user).count(), 1)
+        session.refresh_from_db()
+        self.assertNotEqual(session.refresh_jti, old_jti)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + rotated.data['access'])
+        self.assertTrue(self.client.get(reverse('auth-sessions')).data[0]['current'])
+
+    def test_access_token_without_sid_is_rejected(self):
+        access = AccessToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(access))
+
+        self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @override_settings(TRUSTED_PROXY_IPS=[])
+    def test_x_forwarded_for_is_ignored_from_untrusted_peer(self):
+        request = APIRequestFactory().get(
+            '/', HTTP_X_FORWARDED_FOR='203.0.113.9', REMOTE_ADDR='198.51.100.7',
+        )
+        issue_tokens(self.user, request)
+        self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '198.51.100.7')
+
+    @override_settings(TRUSTED_PROXY_IPS=['10.0.0.0/8'])
+    def test_x_forwarded_for_is_used_from_configured_proxy(self):
+        request = APIRequestFactory().get(
+            '/', HTTP_X_FORWARDED_FOR='203.0.113.9, 10.1.2.3', REMOTE_ADDR='10.1.2.3',
+        )
+        issue_tokens(self.user, request)
+        self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '203.0.113.9')
+
+
+class ConcurrentRefreshTests(TransactionTestCase):
+    # This test needs real commits/row locks. Preserve data-migration fixtures
+    # (locales, benefits, footer links) when TransactionTestCase flushes tables.
+    serialized_rollback = True
+
+    def test_two_simultaneous_refreshes_create_only_one_rotation_branch(self):
+        user = User.objects.create_user(email='refresh-race@example.com', password='Password@123')
+        tokens = issue_tokens(user)
+        gate = Barrier(2)
+
+        def refresh_once():
+            close_old_connections()
+            client = APIClient()
+            set_refresh_cookie(client, 'main', tokens['refresh'])
+            gate.wait(timeout=5)
+            response = refresh_session(client)
+            close_old_connections()
+            return response.status_code
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            statuses = sorted(pool.map(lambda _: refresh_once(), range(2)))
+
+        self.assertEqual(statuses, [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED])
+        self.assertEqual(AuthSession.objects.filter(user=user, revoked_at__isnull=True).count(), 1)
+
+
+class ChangeEmailTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+
+    def _user(self):
+        return User.objects.create_user(email='pending@example.com', password='Password@123')
+
+    def test_change_email_requires_current_password(self):
+        user = self._user()
+        self.client.force_authenticate(user=user)
+
+        wrong = self.client.post(reverse('auth-change-email'), {
+            'email': 'new@example.com', 'current_password': 'Wrong@123',
+        }, format='json')
+
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('current_password', wrong.data)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'pending@example.com')
+
+    def test_change_email_rejected_when_already_verified(self):
+        user = self._user()
+        user.email_verified = True
+        user.save(update_fields=['email_verified'])
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-change-email'), {
+            'email': 'new@example.com', 'current_password': 'Password@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'pending@example.com')
+
+    def test_change_email_success_resets_verification_and_warns_old_address(self):
+        user = self._user()
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-change-email'), {
+            'email': 'new@example.com', 'current_password': 'Password@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'new@example.com')
+        self.assertFalse(user.email_verified)
+        # Mail cảnh báo (gửi đồng bộ) phải tới đúng địa chỉ CŨ.
+        warning = [msg for msg in mail.outbox if 'pending@example.com' in msg.to]
+        self.assertEqual(len(warning), 1)
+        self.assertIn('thay đổi', warning[0].subject.lower())
+
+
+class LogoutEndpointTests(APITestCase):
+    def test_logout_blacklists_the_provided_refresh_token(self):
+        user = User.objects.create_user(email='logout@example.com', password='Password@123')
+        tokens = issue_tokens(user)
+        set_refresh_cookie(self.client, 'main', tokens['refresh'])
+
+        response = self.client.post(reverse('auth-logout'), {'portal': 'main'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        set_refresh_cookie(self.client, 'main', tokens['refresh'])
+        blocked = refresh_session(self.client)
+        self.assertEqual(blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_is_idempotent_for_invalid_token(self):
+        set_refresh_cookie(self.client, 'main', 'not-a-token')
+        response = self.client.post(reverse('auth-logout'), {'portal': 'main'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_logout_all_revokes_only_the_current_account_not_same_email_other_portal(self):
+        candidate = User.objects.create_user(
+            email='dual@example.com', password='Password@123', role=User.Role.CANDIDATE,
+        )
+        employer = User.objects.create_user(
+            email='dual@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        candidate_tokens = issue_tokens(candidate)
+        employer_tokens = issue_tokens(employer)
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + candidate_tokens['access'])
+        response = self.client.post(reverse('auth-logout-all'))
+        self.client.credentials()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        set_refresh_cookie(self.client, 'main', candidate_tokens['refresh'])
+        candidate_blocked = refresh_session(self.client)
+        set_refresh_cookie(self.client, 'employer', employer_tokens['refresh'])
+        employer_ok = refresh_session(self.client, 'employer')
+        self.assertEqual(candidate_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(employer_ok.status_code, status.HTTP_200_OK)
+
+    def test_logout_all_requires_authentication(self):
+        response = self.client.post(reverse('auth-logout-all'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(
+    RECAPTCHA_SECRET_KEY='',
+    DEBUG=True,
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+    ADMIN_ACCESS_TOKEN_MINUTES=5,
+)
+class AdminAuthenticationPolicyTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.admin = User.objects.create_user(
+            email='workspace-admin@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+        )
+
+    def test_admin_without_mfa_cannot_login_workspace(self):
+        response = self.client.post(reverse('auth-login'), {
+            'email': self.admin.email,
+            'password': 'Password@123',
+            'captcha_token': 'x',
+            'portal': 'admin',
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['code'], 'admin_mfa_required')
+        self.assertNotIn(cookie_name('admin'), response.cookies)
+
+    def test_admin_mfa_issues_five_minute_access_and_httponly_refresh_cookie(self):
+        self.admin.two_factor_enabled = True
+        self.admin.save(update_fields=['two_factor_enabled'])
+        login = self.client.post(reverse('auth-login'), {
+            'email': self.admin.email,
+            'password': 'Password@123',
+            'captcha_token': 'x',
+            'portal': 'admin',
+        })
+        code = cache.get(two_factor._code_key(self.admin.pk, two_factor.PURPOSE_LOGIN))
+        verified = self.client.post(reverse('auth-two-factor-login-verify'), {
+            'challenge': login.data['challenge'], 'code': code,
+        })
+
+        self.assertEqual(verified.status_code, status.HTTP_200_OK)
+        access = AccessToken(verified.data['access'])
+        self.assertLessEqual(access['exp'] - access['iat'], 5 * 60)
+        self.assertNotIn('refresh', verified.data)
+        cookie = verified.cookies[cookie_name('admin')]
+        self.assertTrue(cookie['httponly'])
+
+    def test_admin_public_password_reset_is_rejected(self):
+        response = self.client.post(reverse('auth-password-reset'), {
+            'email': self.admin.email,
+            'captcha_token': 'x',
+            'portal': 'admin',
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
 GOOGLE_PROFILE = {
     'id': 'google-uid-1',
     'email': 'social@example.com',
     'name': 'Nguyễn Social',
     'avatar': 'https://lh3.example.com/a.png',
-    'raw': {'sub': 'google-uid-1'},
+    'email_verified': True,
+    'raw': {'sub': 'google-uid-1', 'email_verified': True},
 }
 
 
@@ -277,17 +675,16 @@ class OAuthFlowTests(APITestCase):
             1,
         )
 
-    def test_same_email_same_role_links_account(self):
+    def test_same_email_same_role_requires_confirmed_linking(self):
         existing = User.objects.create_user(
             email='social@example.com', password='Password@123', role=User.Role.CANDIDATE
         )
         response = self._callback()
-        complete = self._complete(response.url)
-        self.assertEqual(complete.data['user']['public_id'], str(existing.public_id))
+        self.assertIn('error=link_confirmation_required', response.url)
         existing.refresh_from_db()
-        self.assertTrue(existing.email_verified)  # social coi như đã xác thực email
-        self.assertTrue(existing.has_usable_password())  # vẫn đăng nhập được bằng mật khẩu cũ
-        self.assertEqual(existing.social_accounts.count(), 1)
+        self.assertFalse(existing.email_verified)
+        self.assertTrue(existing.has_usable_password())
+        self.assertEqual(existing.social_accounts.count(), 0)
 
     def test_google_employer_portal_creates_separate_account_from_candidate(self):
         """Mô hình tách cổng: đã có tài khoản ỨNG VIÊN cùng email; Google cổng NTD
@@ -328,10 +725,10 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(User.objects.filter(email='social@example.com').count(), 1)
 
     def test_social_login_bypasses_email_two_factor(self):
-        user = User.objects.create_user(
-            email='social@example.com', password='Password@123', role=User.Role.CANDIDATE,
-            two_factor_enabled=True,
-        )
+        self._complete(self._callback().url)
+        user = User.objects.get(email='social@example.com', role=User.Role.CANDIDATE)
+        user.two_factor_enabled = True
+        user.save(update_fields=['two_factor_enabled'])
 
         complete = self._complete(self._callback().url)
 
@@ -341,12 +738,18 @@ class OAuthFlowTests(APITestCase):
         self.assertNotIn('two_factor_required', complete.data)
         self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists())
 
-    def test_one_user_can_link_multiple_social_providers(self):
+    def test_second_provider_requires_confirmed_linking(self):
         user = oauth.resolve_user('google', dict(GOOGLE_PROFILE), 'main')
-        oauth.resolve_user('facebook', {
-            'id': 'facebook-uid-1', 'email': user.email, 'name': 'Nguyễn Social', 'avatar': '', 'raw': {},
-        }, 'main')
-        self.assertEqual(user.social_accounts.count(), 2)
+        with self.assertRaisesRegex(oauth.OAuthError, 'link_confirmation_required'):
+            oauth.resolve_user('facebook', {
+                'id': 'facebook-uid-1', 'email': user.email, 'email_verified': True,
+                'name': 'Nguyễn Social', 'avatar': '', 'raw': {'verified': True},
+            }, 'main')
+        self.assertEqual(user.social_accounts.count(), 1)
+
+    def test_unverified_provider_email_is_rejected(self):
+        response = self._callback(profile={**GOOGLE_PROFILE, 'email_verified': False})
+        self.assertIn('error=email_not_verified', response.url)
 
     def test_profile_without_email_is_rejected(self):
         profile = dict(GOOGLE_PROFILE, email='')
@@ -529,7 +932,7 @@ class LastLoginTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {login.data["access"]}')
         self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
         self.client.credentials()
-        refresh = self.client.post(reverse('auth-refresh'), {'refresh': login.data['refresh']})
+        refresh = refresh_session(self.client)
         self.assertEqual(refresh.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_register_auto_login_sets_last_login(self):
@@ -608,6 +1011,34 @@ class AuthSecurityAndEmailTests(APITestCase):
 
         self.assertEqual(password_reset.consume_token(token), user.pk)
         self.assertIsNone(password_reset.consume_token(token))
+
+    def test_employer_password_reset_does_not_revoke_same_email_candidate_session(self):
+        candidate = User.objects.create_user(
+            email='reset-isolation@example.com',
+            password='CandidatePass@123',
+            role=User.Role.CANDIDATE,
+        )
+        employer = User.objects.create_user(
+            email='reset-isolation@example.com',
+            password='EmployerPass@123',
+            role=User.Role.EMPLOYER,
+        )
+        candidate_tokens = issue_tokens(candidate)
+        reset_token = password_reset.issue_token(employer)
+
+        reset = self.client.post(reverse('auth-password-reset-confirm'), {
+            'token': reset_token,
+            'password': 'EmployerNewPass@123',
+        }, format='json')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + candidate_tokens['access'])
+        candidate_me = self.client.get(reverse('auth-me'))
+
+        self.assertEqual(reset.status_code, status.HTTP_200_OK, reset.data)
+        self.assertEqual(candidate_me.status_code, status.HTTP_200_OK, candidate_me.data)
+        candidate.refresh_from_db()
+        employer.refresh_from_db()
+        self.assertTrue(candidate.check_password('CandidatePass@123'))
+        self.assertTrue(employer.check_password('EmployerNewPass@123'))
 
     def test_employer_verification_email_uses_employer_portal_link(self):
         user = User.objects.create_user(
@@ -759,9 +1190,28 @@ class TwoFactorAuthenticationTests(APITestCase):
         verified = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code})
         self.assertEqual(verified.status_code, status.HTTP_200_OK)
         self.assertIn('access', verified.data)
-        self.assertIn('refresh', verified.data)
+        self.assertNotIn('refresh', verified.data)
+        self.assertTrue(self.client.cookies[cookie_name('main')].value)
         self.user.refresh_from_db()
         self.assertIsNotNone(self.user.last_login)
+
+    def test_two_factor_code_is_invalidated_after_too_many_wrong_attempts(self):
+        self.user.two_factor_enabled = True
+        self.user.save(update_fields=['two_factor_enabled'])
+        login = self.client.post(reverse('auth-login'), {
+            'email': self.user.email, 'password': 'Password@123', 'captcha_token': 'x', 'portal': 'main',
+        })
+        challenge = login.data['challenge']
+        code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN))
+        wrong = '000001' if code == '000000' else '000000'
+
+        for _ in range(two_factor.MAX_VERIFY_ATTEMPTS):
+            self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong})
+
+        # Mã đã bị hủy sau 5 lần sai: mã đúng cũng không còn dùng được.
+        self.assertIsNone(cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN)))
+        replay = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code})
+        self.assertEqual(replay.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_can_disable_two_factor_with_email_code(self):
         self.user.two_factor_enabled = True

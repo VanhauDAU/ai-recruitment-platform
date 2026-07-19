@@ -2,12 +2,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
-import { getCurrentSessionUser } from '../api/session.api'
+import { getCurrentSessionUser, logoutAllDevices, logoutCurrentPortal } from '../api/session.api'
 import SessionContext from './session-context'
 import {
-  clearSession,
+  clearAllPortalSessions,
+  clearCurrentPortalSession,
   clearTokens,
-  getAccessToken,
   subscribeToSessionLogout,
 } from '@/shared/api/token-store'
 
@@ -36,8 +36,42 @@ export default function SessionProvider({ children }) {
     clearSessionState()
   }, [clearSessionState])
 
-  const logout = useCallback(() => {
-    clearSession()
+  // Đăng xuất mặc định chỉ ảnh hưởng CỔNG HIỆN TẠI (khớp mô hình token đã tách):
+  // blacklist refresh token phía server trước, rồi mới xóa phiên cục bộ.
+  const logout = useCallback(async () => {
+    let serverRevokeUncertain = false
+    try {
+      await logoutCurrentPortal()
+    } catch {
+      // Mạng lỗi vẫn phải xóa phiên cục bộ để người dùng thoát được.
+      serverRevokeUncertain = true
+    }
+    clearCurrentPortalSession()
+    clearSessionState()
+    navigate(loginPathForCurrentPortal(), {
+      replace: true,
+      state: serverRevokeUncertain
+        ? { authWarning: 'Đã đăng xuất trên thiết bị này; chưa thể xác nhận thu hồi phiên trên máy chủ.' }
+        : undefined,
+    })
+  }, [clearSessionState, navigate])
+
+  // Đăng xuất khỏi mọi thiết bị của cổng hiện tại (thu hồi toàn bộ refresh token).
+  const logoutAllDevicesForPortal = useCallback(async () => {
+    try {
+      await logoutAllDevices()
+    } catch {
+      // Bỏ qua lỗi mạng: vẫn xóa phiên cục bộ bên dưới.
+    }
+    clearCurrentPortalSession()
+    clearSessionState()
+    navigate(loginPathForCurrentPortal(), { replace: true })
+  }, [clearSessionState, navigate])
+
+  // Đăng xuất khỏi TẤT CẢ cổng trên thiết bị này (hành động toàn cục, chủ động).
+  const logoutAllPortalsOnThisBrowser = useCallback(async () => {
+    await Promise.allSettled(['main', 'employer', 'admin'].map((portal) => logoutCurrentPortal(portal)))
+    clearAllPortalSessions()
     clearSessionState()
     navigate(loginPathForCurrentPortal(), { replace: true })
   }, [clearSessionState, navigate])
@@ -54,12 +88,6 @@ export default function SessionProvider({ children }) {
   }, [clearCurrentSession])
 
   const restoreSession = useCallback(async () => {
-    if (!getAccessToken()) {
-      setUser(null)
-      setLoading(false)
-      return null
-    }
-
     try {
       return await refreshSession()
     } catch {
@@ -85,12 +113,23 @@ export default function SessionProvider({ children }) {
       loading,
       isAuthenticated: Boolean(user),
       logout,
+      logoutAllDevices: logoutAllDevicesForPortal,
+      logoutAllPortalsOnThisBrowser,
       refreshSession,
       restoreSession,
       setCurrentUser: setUser,
       clearCurrentSession,
     }),
-    [user, loading, logout, refreshSession, restoreSession, clearCurrentSession],
+    [
+      user,
+      loading,
+      logout,
+      logoutAllDevicesForPortal,
+      logoutAllPortalsOnThisBrowser,
+      refreshSession,
+      restoreSession,
+      clearCurrentSession,
+    ],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

@@ -1,30 +1,64 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  clearSession,
+  clearAllPortalSessions,
+  clearCurrentPortalSession,
   clearTokens,
   getAccessToken,
   setTokens,
   subscribeToSessionLogout,
 } from './token-store'
 
-const LOGOUT_COOKIE_NAME = 'procv_auth_logout'
+// jsdom mở tại path '/', nên getCurrentPortal() trả về 'main'.
+const MAIN_COOKIE = 'procv_auth_logout_main'
+const EMPLOYER_COOKIE = 'procv_auth_logout_employer'
 
-function clearLogoutCookie() {
-  document.cookie = `${LOGOUT_COOKIE_NAME}=; Path=/; Max-Age=0`
+function clearCookie(name) {
+  document.cookie = `${name}=; Path=/; Max-Age=0`
 }
 
 describe('portal token store', () => {
   beforeEach(() => {
+    clearAllPortalSessions()
     localStorage.clear()
-    clearLogoutCookie()
+    clearCookie(MAIN_COOKIE)
+    clearCookie(EMPLOYER_COOKIE)
   })
 
   afterEach(() => {
     vi.useRealTimers()
-    clearLogoutCookie()
+    clearCookie(MAIN_COOKIE)
+    clearCookie(EMPLOYER_COOKIE)
   })
 
-  it('keeps portal sessions independent until an explicit global logout', () => {
+  it('logs out only the requested portal, leaving other portals signed in', () => {
+    setTokens({ access: 'candidate-access', refresh: 'candidate-refresh' }, 'main')
+    setTokens({ access: 'employer-access', refresh: 'employer-refresh' }, 'employer')
+
+    clearCurrentPortalSession('main')
+
+    expect(getAccessToken('main')).toBeNull()
+    expect(getAccessToken('employer')).toBe('employer-access')
+  })
+
+  it('never writes access or refresh JWTs to JavaScript storage', () => {
+    setTokens({ access: 'access-jwt', refresh: 'refresh-jwt' }, 'main')
+
+    expect(getAccessToken('main')).toBe('access-jwt')
+    expect(localStorage.getItem('main_access_token')).toBeNull()
+    expect(localStorage.getItem('main_refresh_token')).toBeNull()
+  })
+
+  it('clears every portal on an explicit whole-device logout', () => {
+    setTokens({ access: 'candidate-access', refresh: 'candidate-refresh' }, 'main')
+    setTokens({ access: 'employer-access', refresh: 'employer-refresh' }, 'employer')
+
+    clearAllPortalSessions()
+
+    expect(getAccessToken('main')).toBeNull()
+    expect(getAccessToken('employer')).toBeNull()
+  })
+
+  it('drops only the current portal tokens when its refresh fails locally', () => {
     setTokens({ access: 'candidate-access', refresh: 'candidate-refresh' }, 'main')
     setTokens({ access: 'employer-access', refresh: 'employer-refresh' }, 'employer')
 
@@ -32,23 +66,27 @@ describe('portal token store', () => {
 
     expect(getAccessToken('main')).toBeNull()
     expect(getAccessToken('employer')).toBe('employer-access')
-
-    clearSession()
-
-    expect(getAccessToken('employer')).toBeNull()
   })
 
-  it('clears local tokens when another subdomain changes the logout marker', () => {
+  it('reacts only to the current portal marker changed by another subdomain', () => {
     vi.useFakeTimers()
+    setTokens({ access: 'candidate-access', refresh: 'candidate-refresh' }, 'main')
     setTokens({ access: 'employer-access', refresh: 'employer-refresh' }, 'employer')
     const onLogout = vi.fn()
     const unsubscribe = subscribeToSessionLogout(onLogout)
 
-    document.cookie = `${LOGOUT_COOKIE_NAME}=logout-from-main; Path=/; SameSite=Lax`
+    // Marker của cổng NTD đổi không được đụng phiên cổng ứng viên hiện tại.
+    document.cookie = `${EMPLOYER_COOKIE}=logout-employer; Path=/; SameSite=Lax`
     vi.advanceTimersByTime(1000)
+    expect(getAccessToken('main')).toBe('candidate-access')
+    expect(onLogout).not.toHaveBeenCalled()
 
-    expect(getAccessToken('employer')).toBeNull()
+    // Marker của chính cổng ứng viên đổi thì xóa phiên ứng viên trên tab này.
+    document.cookie = `${MAIN_COOKIE}=logout-main; Path=/; SameSite=Lax`
+    vi.advanceTimersByTime(1000)
+    expect(getAccessToken('main')).toBeNull()
     expect(onLogout).toHaveBeenCalledOnce()
+
     unsubscribe()
   })
 })

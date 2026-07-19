@@ -1,7 +1,10 @@
+import uuid
+
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 from common.public_id import generate_public_id
 
@@ -208,3 +211,42 @@ class AuthEmailJob(models.Model):
 
     def __str__(self):
         return f'{self.kind}:{self.user_id}:{self.status}'
+
+
+class AuthSession(models.Model):
+    """Một phiên đăng nhập (một thiết bị) của một tài khoản.
+
+    `id` được nhúng vào JWT dưới claim `sid` để nhận diện thiết bị hiện tại khi
+    liệt kê. `refresh_jti` trỏ tới refresh token đang hiệu lực của phiên; khi
+    refresh xoay vòng, `refresh_jti` được cập nhật để phiên xuyên suốt. Chỉ lưu
+    jti (không lưu access/refresh token thô). Mỗi request access token bắt buộc
+    có `sid` trỏ tới row còn hiệu lực; blacklist SimpleJWT bảo vệ thêm luồng
+    refresh và `revoked_at` chặn access token ngay lập tức.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='auth_sessions')
+    # Cổng của phiên = role của tài khoản (mô hình tách tài khoản theo cổng).
+    portal = models.CharField(max_length=20, choices=User.Role.choices)
+    refresh_jti = models.CharField(max_length=64, db_index=True)
+    auth_method = models.CharField(max_length=20, default='password')
+    device_label = models.CharField(max_length=120, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=400, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now_add=True)
+    reauthenticated_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-last_seen_at']
+        indexes = [
+            models.Index(fields=['user', 'revoked_at'], name='auth_session_user_active_idx'),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['refresh_jti'], name='uq_auth_session_refresh_jti'),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id}:{self.portal}:{self.device_label}'

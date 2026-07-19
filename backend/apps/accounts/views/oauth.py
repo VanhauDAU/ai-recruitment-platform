@@ -14,6 +14,7 @@ from .. import oauth
 from ..models import User
 from ..serializers import SessionUserSerializer
 from ..services.tokens import issue_tokens
+from ..services.refresh_cookies import set_refresh_cookie
 from ..tasks import queue_welcome_email
 
 
@@ -92,7 +93,7 @@ class OAuthCallbackView(APIView):
     request=inline_serializer('OAuthCompleteRequest', {'code': serializers.CharField()}),
     responses={200: inline_serializer(
         'OAuthComplete',
-        {'user': SessionUserSerializer(), 'access': serializers.CharField(), 'refresh': serializers.CharField()},
+        {'user': SessionUserSerializer(), 'access': serializers.CharField()},
     )},
     tags=['auth'],
 )
@@ -113,4 +114,6 @@ class OAuthCompleteView(APIView):
         # Product policy: email 2FA protects password login only, so OAuth
         # completion always returns a session without an email-code challenge.
         user_data = SessionUserSerializer(user, context={'request': request}).data
-        return Response({'user': user_data, **issue_tokens(user)})
+        tokens = issue_tokens(user, request, auth_method='oauth')
+        response = Response({'user': user_data, 'access': tokens['access']})
+        return set_refresh_cookie(response, tokens['refresh'], user=user)

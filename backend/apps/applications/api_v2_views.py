@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate, IsEmployer
+from apps.accounts.permissions import IsCandidate, IsEmployerWithMFA
 
 from .api_v2_serializers import (
     CandidateApplicationV2CreateSerializer,
@@ -29,6 +29,8 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
         return CandidateApplicationV2CreateSerializer if self.request.method == 'POST' else CandidateApplicationV2Serializer
 
     def create(self, request, *args, **kwargs):
+        if not request.user.email_verified:
+            raise ValidationError({'detail': 'Verify your email before applying for a job.'})
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -56,7 +58,7 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
 
 
 class RecruiterApplicationSnapshotView(APIView):
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
 
     def get(self, request, public_id):
         try:

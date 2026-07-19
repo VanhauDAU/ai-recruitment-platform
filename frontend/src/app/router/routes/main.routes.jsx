@@ -2,6 +2,7 @@ import { Navigate, Route } from 'react-router-dom'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '@/app/router/guards/AuthGuard'
+import GuestGuard from '@/app/router/guards/GuestGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   AccountPlaceholderPage,
@@ -27,6 +28,7 @@ import {
   MyCvsPage,
   JobPreferenceSettingsPage,
   TwoFactorAuthenticationPage,
+  SecuritySettingsPage,
   ResetPasswordPage,
   SavedJobsPage,
   TemplateCatalogPage,
@@ -42,6 +44,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'my-cv': MyCvsPage,
   'two-factor': TwoFactorAuthenticationPage,
   'suggestion-settings': JobPreferenceSettingsPage,
+  security: SecuritySettingsPage,
 }
 
 // Route cổng main (ứng viên + khách). Xem thêm employer.routes/admin.routes.
@@ -123,9 +126,11 @@ export function mainRoutes() {
     </Route>,
 
     <Route key="auth" element={<AuthLayout />}>
-      <Route path="/login" element={<MainLoginPage />} />
-      <Route path="/sign-up" element={<MainRegisterPage />} />
-      <Route path="/register" element={<MainRegisterPage />} />
+      <Route element={<GuestGuard allowedRoles={['candidate']} />}>
+        <Route path="/login" element={<MainLoginPage />} />
+        <Route path="/sign-up" element={<MainRegisterPage />} />
+        <Route path="/register" element={<MainRegisterPage />} />
+      </Route>
       {/* Dùng chung cho cả 3 cổng: link trong email luôn trỏ về host chính. */}
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />

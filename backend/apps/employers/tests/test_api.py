@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import AuthEmailJob, User
+from apps.accounts.services.tokens import issue_tokens
 from apps.locations.models import Location
 from apps.jobs.models import JobCategory
 
@@ -31,13 +32,23 @@ TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
 
 def make_employer(email='employer@example.com', phone_verified=True):
-    user = User.objects.create_user(email=email, password='Password@123', role=User.Role.EMPLOYER)
+    user = User.objects.create_user(
+        email=email,
+        password='Password@123',
+        role=User.Role.EMPLOYER,
+        two_factor_enabled=True,
+    )
     recruiter = RecruiterProfile.objects.create(user=user)
     if phone_verified:
         recruiter.verified_phone = f'09{abs(hash(email)) % 10 ** 8:08d}'
         recruiter.phone_verified_at = timezone.now()
         recruiter.save()
     return user, recruiter
+
+
+def authenticate_employer(client, user):
+    tokens = issue_tokens(user, auth_method='mfa')
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
 
 def company_payload(industry, **overrides):
@@ -89,7 +100,8 @@ class EmployerRegistrationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         self.assertIn('access', response.data)
-        self.assertIn('refresh', response.data)
+        self.assertNotIn('refresh', response.data)
+        self.assertTrue(response.cookies['procv_refresh_employer'].value)
         self.assertTrue(response.data['user']['employer_onboarding_required'])
 
         user = User.objects.get(email='hr@acme.vn')
@@ -357,7 +369,7 @@ class CompanyCreateTests(APITestCase):
     def setUp(self):
         self.user, self.recruiter = make_employer()
         self.industry = Industry.objects.create(name='Công nghệ thông tin')
-        self.client.force_authenticate(user=self.user)
+        authenticate_employer(self.client, self.user)
 
     def test_create_company_links_recruiter_as_approved_owner(self):
         response = self.client.post(
@@ -375,7 +387,7 @@ class CompanyCreateTests(APITestCase):
 
     def test_create_requires_verified_phone(self):
         user, _ = make_employer('newbie@example.com', phone_verified=False)
-        self.client.force_authenticate(user=user)
+        authenticate_employer(self.client, user)
         response = self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
@@ -399,7 +411,7 @@ class CompanyCreateTests(APITestCase):
     def test_duplicate_tax_code_rejected(self):
         self.client.post(reverse('employer-company-create'), company_payload(self.industry), format='json')
         user2, _ = make_employer('hr2@example.com')
-        self.client.force_authenticate(user=user2)
+        authenticate_employer(self.client, user2)
         response = self.client.post(
             reverse('employer-company-create'),
             company_payload(self.industry, company_name='Acme Fake'),
@@ -443,7 +455,7 @@ class JoinCompanyTests(APITestCase):
             company_name='Acme Corp', tax_code='0101234567', created_by=owner
         )
         self.user, self.recruiter = make_employer('hr2@example.com')
-        self.client.force_authenticate(user=self.user)
+        authenticate_employer(self.client, self.user)
 
     def _join_with_business_registration(self):
         upload = SimpleUploadedFile('gdkd.png', PNG_BYTES, content_type='image/png')
@@ -500,7 +512,7 @@ class CompanyUpdateRequestTests(APITestCase):
     def setUp(self):
         self.user, self.recruiter = make_employer()
         self.industry = Industry.objects.create(name='Công nghệ thông tin')
-        self.client.force_authenticate(user=self.user)
+        authenticate_employer(self.client, self.user)
         self.client.post(reverse('employer-company-create'), company_payload(self.industry), format='json')
         self.recruiter.refresh_from_db()
         self.company = self.recruiter.company
@@ -627,7 +639,7 @@ class CompanyImageUploadTests(APITestCase):
         self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
         self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
         self.recruiter.save()
-        self.client.force_authenticate(user=self.user)
+        authenticate_employer(self.client, self.user)
 
     def test_owner_can_upload_company_logo_to_media_storage(self):
         upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')
@@ -645,7 +657,7 @@ class CompanyImageUploadTests(APITestCase):
         member_recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
         member_recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
         member_recruiter.save()
-        self.client.force_authenticate(user=member)
+        authenticate_employer(self.client, member)
 
         upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')
         response = self.client.post(reverse('employer-company-logo-upload'), {'file': upload}, format='multipart')

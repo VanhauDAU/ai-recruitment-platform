@@ -7,6 +7,7 @@
 """
 
 from .auth import AvatarUploadView, LoginView, MeView, RegisterEmailAvailabilityView, RegisterView
+from .logout import LogoutAllView, LogoutView
 from .oauth import OAuthCallbackView, OAuthCompleteView, OAuthStartView
 from .password import PasswordChangeView
 from .password_reset import (
@@ -14,6 +15,7 @@ from .password_reset import (
     PasswordResetRequestView,
     PasswordResetValidateView,
 )
+from .sessions import SessionListView, SessionRevokeOthersView, SessionRevokeView
 from .verification import ChangeEmailView, VerificationConfirmView, VerificationSendView
 from .two_factor import (
     TwoFactorDisableConfirmView,
@@ -28,6 +30,8 @@ __all__ = [
     'AvatarUploadView',
     'ChangeEmailView',
     'LoginView',
+    'LogoutView',
+    'LogoutAllView',
     'MeView',
     'OAuthCallbackView',
     'OAuthCompleteView',
@@ -38,6 +42,9 @@ __all__ = [
     'PasswordResetValidateView',
     'RegisterView',
     'RegisterEmailAvailabilityView',
+    'SessionListView',
+    'SessionRevokeView',
+    'SessionRevokeOthersView',
     'VerificationConfirmView',
     'VerificationSendView',
     'TwoFactorLoginResendView',
