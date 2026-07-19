@@ -3,6 +3,7 @@ from django.utils.html import strip_tags
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
+from common.rich_text import rich_text_plain_text
 
 from ...models import (
     Job,
@@ -268,7 +269,7 @@ class JobDetailSerializer(JobSerializer):
     category_name = serializers.SerializerMethodField()
     company_size = serializers.CharField(source='company.company_size', read_only=True)
     company_address = serializers.CharField(source='company.address', read_only=True)
-    company_description = serializers.CharField(source='company.description', read_only=True)
+    company_description = serializers.SerializerMethodField()
     company_website_url = serializers.CharField(source='company.website_url', read_only=True)
     company_industries = serializers.SerializerMethodField()
     primary_specialization = serializers.SerializerMethodField()
@@ -303,6 +304,9 @@ class JobDetailSerializer(JobSerializer):
     def get_category_name(self, obj):
         assignment = self._primary_assignment(obj)
         return assignment.category.name if assignment else ''
+
+    def get_company_description(self, obj):
+        return rich_text_plain_text(obj.company.description)
 
     def get_company_industries(self, obj):
         return [industry.name for industry in obj.company.industries.all()]

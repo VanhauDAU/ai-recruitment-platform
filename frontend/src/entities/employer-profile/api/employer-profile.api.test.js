@@ -12,6 +12,7 @@ import {
   searchEmployerCompanies,
   sendEmployerPhoneOtp,
   saveEmployerRecruitmentNeed,
+  saveEmployerCompanyTradeNameWebsite,
   uploadEmployerBusinessDocument,
   uploadEmployerDataProcessingAgreement,
   verifyEmployerPhoneOtp,
@@ -79,6 +80,19 @@ describe('employer profile API', () => {
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('business_registration')
     expect(formData.get('file')).toBe(file)
+  })
+
+  it('saves a trade-name proof website as multipart data', async () => {
+    post.mockResolvedValue({ data: { id: 9, source_type: 'website' } })
+
+    await expect(saveEmployerCompanyTradeNameWebsite('https://example.com/thuong-hieu')).resolves.toMatchObject({ source_type: 'website' })
+
+    const [url, formData] = post.mock.calls[0]
+    expect(url).toBe('/employer/company/documents/')
+    expect(formData.get('doc_type')).toBe('trade_name_proof')
+    expect(formData.get('source_type')).toBe('website')
+    expect(formData.get('website_url')).toBe('https://example.com/thuong-hieu')
+    expect(formData.get('file')).toBeNull()
   })
 
   it('supports explicit company selection, creation and DPA documents', async () => {

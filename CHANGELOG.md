@@ -8,6 +8,44 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-20
 
+#### Added — Quản lý hồ sơ công ty đầy đủ
+
+- Nâng cấp `/tuyendung/app/account/settings/company` thành ba trạng thái hoàn chỉnh: catalogue công ty dùng chung có recent/search/phân trang; form tạo Doanh nghiệp/Hộ kinh doanh; và hồ sơ đã liên kết theo quyền owner/member/pending.
+- Form mới có option card theo luồng, logo/website/tên thương mại với checkbox phụ thuộc, catalogue lĩnh vực/quy mô/thị trường/khách hàng, TipTap rich text 10.000 ký tự, gallery nhiều ảnh và hồ sơ chứng minh cho thay đổi pháp lý.
+- Bổ sung `GET /api/employer/company/catalogs/`; chuẩn hóa `company/search` trả sáu công ty mỗi trang, mới nhất trước khi không có từ khóa và tìm không dấu theo tên/tên thương mại/MST khi có từ khóa.
+- Thêm migration `employers.0014` seed idempotent catalogue lĩnh vực đầy đủ; media công ty chỉ nhận JPG/PNG/WebP tối đa 5 MB, gallery tối đa 10 ảnh và dọn file khi thao tác DB lỗi.
+
+#### Security — Nội dung công ty và cập nhật pháp lý
+
+- Mô tả/phúc lợi được lưu dưới HTML allowlist (`p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`), bỏ thuộc tính/script/style nguy hiểm và giới hạn theo 10.000 ký tự nhìn thấy; API chi tiết việc làm tiếp tục trả mô tả công ty dạng plain text.
+- Owner gửi thay đổi qua `CompanyUpdateRequest`; đổi tên/MST bắt buộc lý do, loại hồ sơ và tài liệu gắn đúng request trước khi admin có thể duyệt. Member chỉ xem, request pending thứ hai tiếp tục bị chặn.
+
+#### Verification — Trang thông tin công ty
+
+- Thêm regression backend cho catalogue, validation, rich-text XSS, gallery và update-request proof; unit frontend cho mapping/diff/media cùng option cards/recent list.
+- Thêm Playwright smoke riêng chạy xanh desktop, tablet `834×1112` và Pixel mobile, kiểm tra không tràn ngang và nhãn động Hộ kinh doanh.
+
+#### Changed — Quy tắc liên kết công ty
+
+- Bỏ điều kiện phải xác thực số điện thoại trước khi tạo công ty mới hoặc gửi hồ sơ liên kết công ty có sẵn; xác thực điện thoại tiếp tục là một bước bảo mật độc lập.
+- Sau lần tạo hoặc chọn công ty đầu tiên, tài khoản không thể chuyển sang công ty khác. Backend khóa recruiter trong giao dịch để chặn cả request đồng thời; frontend chỉ hiển thị hồ sơ đã liên kết và thông báo đây là liên kết cố định.
+
+#### Changed — Catalogue công ty gọn hơn
+
+- Luồng tìm công ty chuyển về bố cục tab ngang, ô tìm kiếm chiếm toàn bộ hàng, kèm nhãn **Lưu ý!** về tên công ty theo dữ liệu Cục Thuế.
+- Card catalogue rút gọn thành logo, tên, MST, một dòng `địa chỉ | quy mô nhân viên`, lĩnh vực và nút **Chọn** nhỏ; lĩnh vực bị giới hạn một dòng có ellipsis, hover để xem đầy đủ; mobile tự xếp lại mà không tràn ngang.
+- Khu chọn logo trong form tạo công ty được rút về cụm căn giữa không khung: avatar/logo tròn có affordance camera, nhãn bắt buộc và checkbox “Tôi không có logo”.
+- Bỏ trường Năm thành lập khỏi form; các phần thông tin còn lại dùng đường phân cách nhẹ thay vì nhiều card, giúp input liền mạch và gọn hơn.
+- Tiếp tục nén form theo spacing TopCV: bỏ heading nhóm thị giác, giảm khoảng cách alert/label/form item và chiều cao editor, giữ nguyên nhãn và validation của từng trường.
+- Chứng minh Tên thương mại giờ chỉ hiện CTA **+ Thêm giấy tờ chứng minh Tên thương mại**. CTA mở popup chọn **Giấy tờ** (JPEG/JPG/PNG/PDF, tối đa 5 MB) hoặc **Website**; sau khi lưu hiện link mở tab mới và nút **Chỉnh sửa**.
+- Dropdown **Lĩnh vực chính** bị khóa cho đến khi người dùng chọn ít nhất một **Lĩnh vực hoạt động**, tránh chọn dữ liệu không hợp lệ.
+- Khi chọn “Tên thương mại trùng với tên đăng ký kinh doanh”, hệ thống ẩn thao tác thêm/chỉnh sửa giấy tờ chứng minh tên thương mại vì không còn cần thiết.
+- Chọn một công ty từ catalogue giờ liên kết ngay, không mở modal và không bắt người dùng tải hồ sơ ở bước này; trạng thái liên kết vẫn chờ quản trị viên duyệt.
+- Làm lại trạng thái công ty đã liên kết theo hierarchy TopCV: khối “Yêu cầu cập nhật thông tin công ty” có thời điểm gần nhất/CTA tạo yêu cầu, tiếp theo là hồ sơ đọc dạng nhãn–giá trị; form yêu cầu có tiêu đề và mô tả ngữ cảnh rõ ràng.
+- Liên kết công ty có hiệu lực ngay sau khi chọn; bỏ hoàn toàn trạng thái/alert chờ duyệt liên kết.
+- Mọi employer đã liên kết công ty, gồm cả member, đều thấy và tạo được **Yêu cầu cập nhật**; yêu cầu vẫn ở trạng thái chờ quản trị viên duyệt trước khi áp dụng.
+- Tương thích liên kết cũ còn trạng thái `pending`: chỉ cần tài khoản đã có công ty là luôn hiển thị **Tạo yêu cầu**.
+
 #### Changed — Dashboard nhà tuyển dụng: khối "Xin chào" theo UX TopCV
 
 - Dựng lại section hành trình xác thực (`DashboardVerificationJourney`) theo mẫu TopCV: mỗi bước là thẻ pill bo góc riêng biệt cuộn ngang, bước đang làm có viền + chữ + nút mũi tên xanh, bước đã xong hiển thị check tròn và chữ mờ.

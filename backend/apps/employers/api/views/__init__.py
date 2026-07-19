@@ -1,6 +1,6 @@
 """Public HTTP views grouped by employers use case."""
 
-from .catalogs import AllIndustryListView, IndustryListView
+from .catalogs import AllIndustryListView, CompanyCatalogView, IndustryListView
 from .companies import CompanySearchView, CreateCompanyView, MyCompanyView
 from .media import (
     CompanyCoverUploadView,
@@ -23,6 +23,7 @@ __all__ = [
     'AcceptDpaView',
     'AllIndustryListView',
     'CompanyCoverUploadView',
+    'CompanyCatalogView',
     'CompanyDocumentListCreateView',
     'CompanyGalleryDeleteView',
     'CompanyGalleryUploadView',

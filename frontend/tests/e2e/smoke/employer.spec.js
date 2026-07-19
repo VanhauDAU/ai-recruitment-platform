@@ -398,3 +398,69 @@ test('employer workspace: completed verification redirects away from the checkli
   await expect(page.getByText('Đăng tin tuyển dụng đầu tiên', { exact: true })).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 })
+
+test('employer company settings: recent catalogue and full create form are responsive', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_company', company: null, company_role: 'member', membership_status: 'pending',
+        onboarding: { phone_verified: true, company_linked: false },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/industries/all/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'IT - Phần mềm', slug: 'it-phan-mem' }]) })
+  })
+  await page.route('http://localhost:8000/api/employer/company/catalogs/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        business_types: [{ value: 'enterprise', label: 'Doanh nghiệp' }, { value: 'household', label: 'Hộ kinh doanh' }],
+        company_sizes: [{ value: '25-99', label: '25 - 99 nhân viên' }],
+        markets: [{ value: 'domestic', label: 'Nội địa' }],
+        target_customers: [{ value: 'b2b', label: 'B2B' }],
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/company\/search\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        count: 1, next: null, previous: null,
+        results: [{
+          public_id: 'co_recent', company_name: 'Công ty mới nhất', trade_name: 'Recent Co',
+          tax_code: '0101234567', address: 'Hà Nội', company_size: '25-99', logo_url: '',
+          industries_detail: [{ id: 1, name: 'IT - Phần mềm' }], verification_status: 'unverified',
+        }],
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/company')
+
+  await expect(page.getByText('Lưu ý!')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Công ty mới tạo' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Công ty mới nhất' })).toBeVisible()
+  await expect(page.getByText('25-99 nhân viên')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Chọn' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('tab', { name: /Tạo công ty mới/ }).click()
+  await expect(page.getByRole('button', { name: 'Chọn logo' })).toBeVisible()
+  await expect(page.getByLabel('Mã số thuế')).toBeVisible()
+  await expect(page.getByText('Năm thành lập')).toHaveCount(0)
+  await expect(page.getByRole('toolbar', { name: 'Công cụ định dạng văn bản' })).toHaveCount(2)
+  await expect(page.getByRole('button', { name: /Lưu và liên kết công ty/ })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.locator('label.ant-radio-button-wrapper').filter({ hasText: 'Hộ kinh doanh' }).click()
+  await expect(page.getByLabel(/Mã số thuế người đại diện/)).toBeVisible()
+  await expect(page.getByLabel(/Tên hộ kinh doanh/)).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})

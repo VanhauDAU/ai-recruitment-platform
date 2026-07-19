@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import parsers, serializers
 from rest_framework.exceptions import ValidationError
@@ -104,20 +105,17 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
 
 
 class JoinCompanyView(APIView):
-    """Join công ty có sẵn: khóa lựa chọn, upload giấy tờ, membership chờ duyệt.
+    """Liên kết một lần với công ty có sẵn, có hiệu lực ngay."""
 
-    Giấy tờ: `business_registration_file` HOẶC (`authorization_file` + `identity_file`).
-    """
-
-    # Nộp hồ sơ chỉ tạo membership chờ duyệt, nên không yêu cầu MFA/xác thực lại.
+    # Liên kết không yêu cầu MFA/xác thực lại; giấy tờ chỉ là thông tin tùy chọn.
     permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
 
     @extend_schema(
-        summary='Join công ty có sẵn kèm giấy tờ chứng minh (chờ admin duyệt)',
+        summary='Liên kết ngay với công ty có sẵn',
         request=inline_serializer('JoinCompany', fields={
             'company': serializers.CharField(help_text='public_id công ty'),
-            'proof_type': serializers.ChoiceField(choices=CompanyUpdateRequest.ProofType.choices),
+            'proof_type': serializers.ChoiceField(choices=CompanyUpdateRequest.ProofType.choices, required=False),
             'business_registration_file': serializers.FileField(required=False),
             'authorization_file': serializers.FileField(required=False),
             'identity_file': serializers.FileField(required=False),
@@ -125,10 +123,10 @@ class JoinCompanyView(APIView):
         responses={200: RecruiterProfileSerializer},
         tags=['employer'],
     )
+    @transaction.atomic
     def post(self, request):
-        recruiter = get_or_create_recruiter(request.user)
-        if recruiter.phone_verified_at is None:
-            raise ValidationError({'detail': 'Xác thực số điện thoại trước khi cập nhật thông tin công ty.'})
+        get_or_create_recruiter(request.user)
+        recruiter = RecruiterProfile.objects.select_for_update().get(user=request.user)
         if has_explicit_company_link(recruiter):
             raise ValidationError({'detail': 'Bạn đã liên kết với một công ty — không thể đổi công ty khác.'})
 
@@ -151,16 +149,18 @@ class JoinCompanyView(APIView):
                 (CompanyDocument.DocType.AUTHORIZATION_LETTER, authorization),
                 (CompanyDocument.DocType.IDENTITY_DOCUMENT, identity),
             ]
+        elif proof_type:
+            raise ValidationError({'proof_type': 'Loại giấy tờ chứng minh không hợp lệ.'})
         else:
-            raise ValidationError({'proof_type': 'Chọn loại giấy tờ chứng minh.'})
+            documents = []
 
         for doc_type, upload in documents:
             _save_document(request, company, doc_type, upload)
 
         recruiter.company = company
         recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
-        recruiter.membership_status = RecruiterProfile.MembershipStatus.PENDING
-        recruiter.membership_proof_type = proof_type
+        recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        recruiter.membership_proof_type = proof_type or ''
         recruiter.save(update_fields=[
             'company', 'company_role', 'membership_status', 'membership_proof_type', 'updated_at',
         ])

@@ -48,13 +48,15 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
 | POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
-| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới (cần đã xác thực SĐT; người tạo là owner, hiệu lực ngay, trạng thái `unverified`) |
-| GET | `/api/employer/company/search/?q=` | Tìm công ty có sẵn theo tên / tên thương mại / MST (không dấu) |
-| POST | `/api/employer/company/join/` | Join công ty có sẵn: multipart `company` + `proof_type` (`business_registration` hoặc `authorization_and_id`) + file giấy tờ; membership `pending` chờ admin duyệt |
-| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; JPG/PNG/GIF/WebP, multipart `file`) |
+| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới, không phụ thuộc trạng thái xác thực SĐT; người tạo là owner, hiệu lực ngay, trạng thái `unverified`. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
+| GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
+| GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
+| POST | `/api/employer/company/join/` | Liên kết ngay với công ty có sẵn, không phụ thuộc trạng thái xác thực SĐT hay admin duyệt: multipart chỉ cần `company`; membership có hiệu lực ngay. API vẫn nhận tùy chọn `proof_type` (`business_registration` hoặc `authorization_and_id`) và file giấy tờ khi cần bổ sung hồ sơ. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
+| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; JPG/PNG/WebP, tối đa 5 MB, multipart `file`). Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ |
+| DELETE | `/api/employer/company/logo/` \| `cover/` | Xóa logo/cover (owner); xóa logo đồng thời đặt `has_no_logo=true` |
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
-| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; POST multipart `doc_type` + `file`. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra cả MIME lẫn chữ ký file, tối đa 5 MB |
-| GET/POST | `/api/employer/company/update-requests/` | Yêu cầu cập nhật thông tin công ty (owner; tối đa 1 pending; đổi MST/tên bắt buộc `reason` + `proof_type`) |
+| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; mặc định POST multipart `doc_type` + `file`, có thể kèm `update_request` public id để gắn hồ sơ chứng minh vào request pending. Riêng `trade_name_proof` nhận thêm `source_type=website` + `website_url` (HTTP/HTTPS), không kèm file; response trả `source_type` để UI mở đúng link. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra MIME + chữ ký, tối đa 5 MB |
+| GET/POST | `/api/employer/company/update-requests/` | Mọi tài khoản employer đã liên kết công ty có thể tạo yêu cầu cập nhật (tối đa 1 pending/company, không yêu cầu MFA). `changes` dùng cùng validation với form; đổi MST/tên bắt buộc `reason` + `proof_type` và đủ tài liệu gắn request trước khi quản trị viên duyệt |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI job/application, activity 7 ngày, nhu cầu ưu tiên, tin và hồ sơ gần đây |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |

@@ -38,10 +38,21 @@ export async function uploadEmployerDataProcessingAgreement(file) {
   return uploadEmployerCompanyDocument('data_processing_agreement', file)
 }
 
-export async function uploadEmployerCompanyDocument(docType, file) {
+export async function uploadEmployerCompanyDocument(docType, file, options = {}) {
   const formData = new FormData()
   formData.append('doc_type', docType)
   formData.append('file', file)
+  if (options.updateRequest) formData.append('update_request', options.updateRequest)
+  const { data } = await api.post('/employer/company/documents/', formData)
+  return data
+}
+
+export async function saveEmployerCompanyTradeNameWebsite(websiteUrl, options = {}) {
+  const formData = new FormData()
+  formData.append('doc_type', 'trade_name_proof')
+  formData.append('source_type', 'website')
+  formData.append('website_url', websiteUrl)
+  if (options.updateRequest) formData.append('update_request', options.updateRequest)
   const { data } = await api.post('/employer/company/documents/', formData)
   return data
 }
@@ -61,8 +72,57 @@ export async function searchEmployerCompanies(query) {
   return data?.results || data || []
 }
 
+export async function getEmployerCompanyList({ query = '', page = 1 } = {}) {
+  const { data } = await api.get('/employer/company/search/', { params: { q: query, page } })
+  return data
+}
+
+export async function getEmployerCompany() {
+  const { data } = await api.get('/employer/company/')
+  return data
+}
+
+export async function getEmployerCompanyCatalogs() {
+  const { data } = await api.get('/employer/company/catalogs/')
+  return data
+}
+
 export async function createEmployerCompany(payload) {
   const { data } = await api.post('/employer/company/create/', payload)
+  return data
+}
+
+async function uploadEmployerCompanyMedia(endpoint, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post(endpoint, formData)
+  return data
+}
+
+export function uploadEmployerCompanyLogo(file) {
+  return uploadEmployerCompanyMedia('/employer/company/logo/', file)
+}
+
+export function uploadEmployerCompanyImage(file) {
+  return uploadEmployerCompanyMedia('/employer/company/images/', file)
+}
+
+export async function deleteEmployerCompanyLogo() {
+  const { data } = await api.delete('/employer/company/logo/')
+  return data
+}
+
+export async function deleteEmployerCompanyImage(id) {
+  await api.delete(`/employer/company/images/${id}/`)
+}
+
+export async function getEmployerCompanyUpdateRequests() {
+  const { data } = await api.get('/employer/company/update-requests/')
+  return data?.results || data || []
+}
+
+export async function createEmployerCompanyUpdateRequest(payload) {
+  const { data } = await api.post('/employer/company/update-requests/', payload)
   return data
 }
 
