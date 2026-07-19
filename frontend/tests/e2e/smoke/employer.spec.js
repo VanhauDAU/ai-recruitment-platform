@@ -265,6 +265,21 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('tab', { name: /Tạo công ty mới/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Bảng giá dịch vụ/ })).toHaveCount(0)
 
+  await page.goto('/tuyendung/app/account/settings/gpkd')
+  const businessRegistrationRadio = page.getByRole('radio', { name: 'Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác' })
+  const authorizationRadio = page.getByRole('radio', { name: 'Giấy ủy quyền và Giấy tờ định danh' })
+  await expect(businessRegistrationRadio).toBeChecked()
+  await expect(page.getByRole('img', { name: 'Minh họa giấy chứng nhận đăng ký doanh nghiệp' })).toHaveAttribute('src', '/images/employer/business-registration-sample.jpg')
+  expect((await authorizationRadio.boundingBox()).y).toBeGreaterThan((await businessRegistrationRadio.boundingBox()).y)
+
+  await authorizationRadio.check()
+  const authorizationHeading = page.getByRole('heading', { name: 'Giấy ủy quyền *' })
+  await expect(authorizationHeading).toBeVisible()
+  expect((await authorizationHeading.boundingBox()).y).toBeGreaterThan((await authorizationRadio.boundingBox()).y)
+  await expect(page.getByRole('img', { name: 'Minh họa giấy ủy quyền' })).toHaveAttribute('src', '/images/employer/authorization-sample.jpg')
+  await expect(page.getByRole('img', { name: 'Minh họa căn cước công dân hoặc hộ chiếu' })).toHaveAttribute('src', '/images/employer/identity-sample.jpg')
+  await expect(page.getByRole('button', { name: 'Lưu' })).toBeDisabled()
+
   if (page.viewportSize().width < 1024) {
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
   }
