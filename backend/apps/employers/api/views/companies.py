@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import IsEmployer, IsEmployerWithMFA
 from ...models import RecruiterProfile
 from ...selectors import search_companies
 from ...selectors import has_explicit_company_link
@@ -24,7 +24,7 @@ class CreateCompanyView(generics.CreateAPIView):
     """Tạo hồ sơ công ty mới (thẻ 2) — có hiệu lực ngay, người tạo là owner."""
 
     serializer_class = CompanySerializer
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
 
     def perform_create(self, serializer):
         recruiter = get_or_create_recruiter(self.request.user)

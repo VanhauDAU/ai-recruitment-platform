@@ -1,11 +1,16 @@
 """Vòng đời phiên đăng nhập theo thiết bị (AuthSession).
 
-Bảng `AuthSession` là read-model cho tính năng "quản lý thiết bị": mỗi lần phát
-token cho một thiết bị tạo một phiên, `id` được nhúng vào JWT dưới claim `sid`.
-Refresh xoay vòng thì cập nhật `refresh_jti` để phiên xuyên suốt. Thu hồi vẫn
-được ENFORCE bằng blacklist của simplejwt; bảng chỉ thêm trạng thái + metadata.
+Bảng `AuthSession` là nguồn enforcement cho phiên thiết bị: mỗi lần phát token
+cho một thiết bị tạo một phiên, `id` được nhúng vào JWT dưới claim `sid`.
+Refresh xoay vòng cập nhật `refresh_jti`; access token bị từ chối ngay khi phiên
+revoked, idle/absolute-expired hoặc tài khoản không còn được phép truy cập.
 """
 
+from datetime import timedelta
+from ipaddress import ip_address, ip_network
+
+from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -20,11 +25,22 @@ SID_CLAIM = 'sid'
 def _client_ip(request):
     if request is None:
         return None
+    remote = request.META.get('REMOTE_ADDR') or None
     forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    if forwarded:
-        # Hop đầu tiên là client thật (sau proxy tin cậy).
+    if forwarded and _is_trusted_proxy(remote):
+        # Chỉ proxy đã cấu hình mới được quyền khai báo địa chỉ client.
         return forwarded.split(',')[0].strip() or None
-    return request.META.get('REMOTE_ADDR') or None
+    return remote
+
+
+def _is_trusted_proxy(remote):
+    if not remote:
+        return False
+    try:
+        address = ip_address(remote)
+        return any(address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS)
+    except ValueError:
+        return False
 
 
 def _user_agent(request):
@@ -81,7 +97,7 @@ def _ensure_outstanding(token):
     )
 
 
-def start_session(user, refresh, request):
+def start_session(user, refresh, request, *, auth_method='password'):
     """Tạo phiên mới cho refresh vừa phát và gắn claim `sid` vào token.
 
     Gọi TRƯỚC khi lấy `refresh.access_token`/`str(refresh)` để access + refresh
@@ -90,6 +106,7 @@ def start_session(user, refresh, request):
         user=user,
         portal=user.role,
         refresh_jti=refresh[api_settings.JTI_CLAIM],
+        auth_method=auth_method,
         device_label=parse_device_label(_user_agent(request)),
         user_agent=_user_agent(request)[:400],
         ip_address=_client_ip(request),
@@ -99,17 +116,78 @@ def start_session(user, refresh, request):
     return session
 
 
-def rotate_session(old_jti, new_refresh_str):
+def rotate_session(session, new_refresh_str):
     """Đồng bộ phiên khi refresh xoay vòng: chuyển sang jti mới + bump last_seen."""
     new_refresh = RefreshToken(new_refresh_str)
     _ensure_outstanding(new_refresh)
     new_jti = new_refresh[api_settings.JTI_CLAIM]
-    session = AuthSession.objects.filter(refresh_jti=old_jti, revoked_at__isnull=True).first()
-    if session:
-        session.refresh_jti = new_jti
-        session.last_seen_at = timezone.now()
-        session.save(update_fields=['refresh_jti', 'last_seen_at'])
+    session.refresh_jti = new_jti
+    session.last_seen_at = timezone.now()
+    session.save(update_fields=['refresh_jti', 'last_seen_at'])
     return session
+
+
+def locked_refresh_session(*, sid, user_id, refresh_jti):
+    """Lock and return the exact live session represented by a refresh JWT."""
+    if not sid:
+        return None
+    return (
+        AuthSession.objects.select_for_update()
+        .filter(
+            id=sid,
+            user_id=user_id,
+            refresh_jti=refresh_jti,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        )
+        .first()
+    )
+
+
+def active_session_for_access(*, sid, user):
+    """Enforce immediate access-token revocation and idle/absolute timeouts."""
+    if not sid:
+        return None
+    session = AuthSession.objects.filter(
+        id=sid,
+        user=user,
+        portal=user.role,
+        revoked_at__isnull=True,
+        expires_at__gt=timezone.now(),
+    ).first()
+    if session is None:
+        return None
+
+    now = timezone.now()
+    idle_timeout = settings.AUTH_SESSION_IDLE_TIMEOUT_SECONDS
+    if idle_timeout > 0 and session.last_seen_at <= now - timedelta(seconds=idle_timeout):
+        revoke_session(session)
+        return None
+
+    touch_interval = settings.AUTH_SESSION_TOUCH_INTERVAL_SECONDS
+    if touch_interval <= 0 or session.last_seen_at <= now - timedelta(seconds=touch_interval):
+        AuthSession.objects.filter(pk=session.pk, revoked_at__isnull=True).update(last_seen_at=now)
+        session.last_seen_at = now
+    return session
+
+
+def is_recent_oauth_reauthentication(session):
+    return bool(
+        session
+        and session.auth_method == 'oauth'
+        and session.reauthenticated_at
+        and session.reauthenticated_at
+        > timezone.now() - timedelta(seconds=settings.AUTH_REAUTH_MAX_AGE_SECONDS)
+    )
+
+
+def is_recent_reauthentication(session):
+    return bool(
+        session
+        and session.reauthenticated_at
+        and session.reauthenticated_at
+        > timezone.now() - timedelta(seconds=settings.AUTH_REAUTH_MAX_AGE_SECONDS)
+    )
 
 
 def _blacklist_jti(jti):

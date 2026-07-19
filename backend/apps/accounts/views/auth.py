@@ -19,6 +19,7 @@ from ..serializers import (
 )
 from ..services import queue_verification_email, verify_request_captcha
 from ..services.tokens import issue_tokens
+from ..services.refresh_cookies import set_refresh_cookie
 from ..services import two_factor
 from ..tasks import queue_auth_email
 
@@ -36,10 +37,15 @@ class RegisterView(generics.CreateAPIView):
         verify_request_captcha(request, 'register')
         user = serializer.save()
         queue_verification_email(user)
-        return Response(
-            {'user': SessionUserSerializer(user).data, **issue_tokens(user, request)},
+        tokens = issue_tokens(user, request, auth_method='registration')
+        response = Response(
+            {
+                'user': SessionUserSerializer(user, context={'request': request}).data,
+                'access': tokens['access'],
+            },
             status=status.HTTP_201_CREATED,
         )
+        return set_refresh_cookie(response, tokens['refresh'], user=user)
 
 
 @extend_schema(
@@ -79,6 +85,14 @@ class LoginView(APIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.user
+        if user.is_admin_role and not user.two_factor_enabled:
+            return Response(
+                {
+                    'detail': 'Tài khoản quản trị bắt buộc bật MFA trước khi đăng nhập workspace.',
+                    'code': 'admin_mfa_required',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if user.two_factor_enabled:
             challenge = two_factor.start_login_challenge(user, serializer.portal)
             queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
@@ -91,7 +105,9 @@ class LoginView(APIView):
                 },
                 status=status.HTTP_202_ACCEPTED,
             )
-        return Response(issue_tokens(user, request))
+        tokens = issue_tokens(user, request, auth_method='password')
+        response = Response({'access': tokens['access']})
+        return set_refresh_cookie(response, tokens['refresh'], user=user)
 
 
 class MeView(generics.RetrieveUpdateAPIView):

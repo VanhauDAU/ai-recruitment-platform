@@ -128,6 +128,8 @@ def _lock_draft_for_save(cv, expected_lock_version):
 @transaction.atomic
 def save_draft_as_version(*, cv, actor, expected_lock_version, publish=False):
     """Persist draft content as a new immutable save or published version."""
+    if publish and not actor.email_verified:
+        raise CvLifecyclePolicyError('Verify your email before publishing a CV.')
     cv, draft = _lock_draft_for_save(cv, expected_lock_version)
     version = create_version(
         cv=cv,

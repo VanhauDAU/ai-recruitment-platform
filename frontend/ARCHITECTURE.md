@@ -230,9 +230,11 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
             → shared/api, shared/config/portals
 ```
 
-- `features/auth` sở hữu account action dùng chung và JWT namespace theo portal.
-  Các phiên portal không ghi đè nhau khi chuyển URL; logout chủ động đổi marker
-  dùng chung để xóa toàn bộ phiên trên các tab/subdomain mà không chia sẻ JWT;
+- `features/auth` sở hữu account action dùng chung và contract xác thực theo portal.
+  Access token chỉ tồn tại trong memory của tab; refresh token nằm trong cookie
+  `HttpOnly` tách theo portal và không được đọc/ghi bởi JavaScript. Các phiên
+  portal không ghi đè nhau khi chuyển URL; logout chủ động đổi marker dùng chung
+  để xóa toàn bộ phiên trên các tab/subdomain mà không chia sẻ token;
   employer registration vẫn gọi endpoint riêng vì payload tạo recruiter và
   consent riêng, nhưng không tự tạo/liên kết company và không mở rộng contract
   candidate hiện có.

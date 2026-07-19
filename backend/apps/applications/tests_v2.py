@@ -9,6 +9,7 @@ from apps.cvs.services import create_application_snapshot, create_v2_cv, save_dr
 from apps.employers.models import Company, RecruiterProfile
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
+from apps.accounts.services.tokens import issue_tokens
 
 from .models import Application
 
@@ -19,13 +20,13 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             email='snapshot-candidate@example.com', password='password', role='candidate', email_verified=True,
         )
         self.owner = get_user_model().objects.create_user(
-            email='snapshot-owner@example.com', password='password', role='employer',
+            email='snapshot-owner@example.com', password='password', role='employer', two_factor_enabled=True,
         )
         self.member = get_user_model().objects.create_user(
-            email='snapshot-member@example.com', password='password', role='employer',
+            email='snapshot-member@example.com', password='password', role='employer', two_factor_enabled=True,
         )
         self.outsider = get_user_model().objects.create_user(
-            email='snapshot-outsider@example.com', password='password', role='employer',
+            email='snapshot-outsider@example.com', password='password', role='employer', two_factor_enabled=True,
         )
         self.company = Company.objects.create(company_name='Snapshot Company', created_by=self.owner)
         RecruiterProfile.objects.create(
@@ -79,7 +80,8 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         save_draft_as_version(cv=self.cv, actor=self.candidate, expected_lock_version=1)
         self.assertEqual(CvVersion.objects.filter(cv=self.cv).count(), 3)
 
-        self.client.force_authenticate(self.member)
+        tokens = issue_tokens(self.member, auth_method='mfa')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         response = self.client.get(reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}))
 
         self.assertEqual(response.status_code, 200, response.data)
@@ -88,7 +90,8 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertNotIn('cv_data', response.data['cv'])
 
     def test_recruiter_outside_the_application_company_receives_404(self):
-        self.client.force_authenticate(self.outsider)
+        tokens = issue_tokens(self.outsider, auth_method='mfa')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
         response = self.client.get(reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}))
 
@@ -106,7 +109,9 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertIsNone(self.application.cv_id)
         self.assertIsNone(self.snapshot.cv_id)
 
-        self.client.force_authenticate(self.member)
+        self.client.force_authenticate(user=None)
+        tokens = issue_tokens(self.member, auth_method='mfa')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         snapshot_response = self.client.get(
             reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}),
         )

@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.permissions import IsCandidate, IsEmployer
+from apps.accounts.permissions import IsCandidate, IsEmployerWithMFA
 
 from .models import Application
 from .serializers import ApplicationSerializer, ApplicationStatusUpdateSerializer
@@ -25,12 +25,14 @@ class CandidateApplicationListCreateView(generics.ListCreateAPIView):
         return candidate_applications_queryset(self.request.user)
 
     def perform_create(self, serializer):
+        if not self.request.user.email_verified:
+            raise ValidationError({'detail': 'Verify your email before applying for a job.'})
         create_application(serializer, self.request.user)
 
 
 class EmployerApplicationListView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
 
     def get_queryset(self):
         return employer_applications_queryset(self.request.user, self.request.query_params.get('job'))
@@ -38,7 +40,7 @@ class EmployerApplicationListView(generics.ListAPIView):
 
 class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
     serializer_class = ApplicationStatusUpdateSerializer
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
     lookup_field = 'public_id'
 
     def get_queryset(self):

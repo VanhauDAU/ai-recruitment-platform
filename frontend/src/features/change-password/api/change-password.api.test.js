@@ -11,12 +11,11 @@ describe('change password API', () => {
     localStorage.clear()
   })
 
-  it('posts the authenticated password contract with the current refresh token', async () => {
-    localStorage.setItem('main_refresh_token', 'current-refresh')
+  it('relies on the HttpOnly refresh cookie instead of exposing refresh in the payload', async () => {
     post.mockResolvedValue({ data: { detail: 'ok', user: { has_usable_password: true } } })
     const payload = { password: 'Password@123', logout_all_sessions: false }
 
     await expect(changeCurrentPassword(payload)).resolves.toMatchObject({ detail: 'ok' })
-    expect(post).toHaveBeenCalledWith('/auth/password/', { ...payload, refresh: 'current-refresh' })
+    expect(post).toHaveBeenCalledWith('/auth/password/', payload)
   })
 })

@@ -11,11 +11,11 @@ const candidate = {
 }
 
 async function authenticateCandidate(page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('main_access_token', 'access-token')
-    localStorage.setItem('main_refresh_token', 'refresh-token')
-  })
   await page.route('**/api/site/settings/', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }))
+  await page.route('**/api/privacy/consent/', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ consent: { necessary: true, preferences: false, analytics: false, marketing: false } }),
+  }))
   await page.route('**/api/auth/me/', async (route) => {
     if (route.request().method() === 'PATCH') {
       const values = route.request().postDataJSON()
@@ -58,7 +58,7 @@ test.describe('candidate account features', () => {
     await page.goto('/tai-khoan/xac-minh-hai-buoc')
     await page.getByRole('button', { name: 'Xác minh 2 bước' }).click()
     await expect(page.getByRole('dialog')).toBeVisible()
-    await page.getByLabel('Mã xác minh 6 chữ số').fill('123456')
+    await page.getByRole('group', { name: 'Mã xác minh 6 chữ số' }).locator('input').first().pressSequentially('123456')
     await page.getByRole('button', { name: 'Xác nhận' }).click()
     await expect(page.getByRole('heading', { name: 'Xác minh hai bước đã bật' })).toBeVisible()
   })

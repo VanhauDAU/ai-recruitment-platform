@@ -1,5 +1,6 @@
-// Nơi DUY NHẤT đọc/ghi/xóa JWT theo portal (main/employer/admin).
-// JWT vẫn nằm trong localStorage của từng origin. Cookie dùng chung bên dưới chỉ
+// Nơi DUY NHẤT giữ access JWT theo portal (main/employer/admin).
+// Access token chỉ tồn tại trong memory; refresh token do backend giữ trong
+// HttpOnly cookie nên JavaScript không thể đọc. Cookie marker bên dưới chỉ
 // là marker logout — và marker được TÁCH THEO PORTAL: đăng xuất cổng ứng viên
 // không được xóa phiên cổng nhà tuyển dụng ở tab/subdomain khác.
 import {
@@ -12,6 +13,16 @@ const AUTH_PORTALS = ['main', 'employer', 'admin']
 const LEGACY_KEYS = ['access_token', 'refresh_token']
 const LOGOUT_EVENT_NAME = 'procv:auth-logout'
 const LOGOUT_POLL_INTERVAL_MS = 1000
+const accessTokens = new Map()
+
+// One-time migration cleanup: no JWT from an older release may remain readable
+// through localStorage after this bundle starts.
+AUTH_PORTALS.forEach((portal) => {
+  const keys = getAuthStorageKeys(portal)
+  localStorage.removeItem(keys.access)
+  localStorage.removeItem(keys.refresh)
+})
+LEGACY_KEYS.forEach((key) => localStorage.removeItem(key))
 
 function markerStorageKey(portal) {
   return `auth_logout_marker_${portal}`
@@ -48,6 +59,8 @@ function createLogoutMarker() {
 
 function clearPortalTokens(portal) {
   const keys = getAuthStorageKeys(portal)
+  accessTokens.delete(portal)
+  // Dọn token của các phiên bản cũ ngay khi người dùng chạy frontend mới.
   localStorage.removeItem(keys.access)
   localStorage.removeItem(keys.refresh)
 }
@@ -76,21 +89,17 @@ function synchronizeLogoutMarker(portal) {
 
 export function getAccessToken(portal = getCurrentPortal()) {
   synchronizeLogoutMarker(portal)
-  return localStorage.getItem(getAuthStorageKeys(portal).access)
+  return accessTokens.get(portal) || null
 }
 
-export function getRefreshToken(portal = getCurrentPortal()) {
+export function setTokens({ access } = {}, portal = getCurrentPortal()) {
   synchronizeLogoutMarker(portal)
-  return localStorage.getItem(getAuthStorageKeys(portal).refresh)
-}
-
-// Ghi token; chỉ set refresh khi có (giữ nguyên hành vi interceptor cũ: refresh
-// mới có thể vắng mặt trong phản hồi refresh).
-export function setTokens({ access, refresh } = {}, portal = getCurrentPortal()) {
-  synchronizeLogoutMarker(portal)
+  if (access) accessTokens.set(portal, access)
+  // Never persist a refresh token returned by an obsolete/backend-compatible
+  // response. Also purge old localStorage values during the migration.
   const keys = getAuthStorageKeys(portal)
-  if (access) localStorage.setItem(keys.access, access)
-  if (refresh) localStorage.setItem(keys.refresh, refresh)
+  localStorage.removeItem(keys.access)
+  localStorage.removeItem(keys.refresh)
 }
 
 // Xóa token theo portal. Dùng bởi interceptor khi refresh thất bại — CHỈ key
@@ -115,13 +124,6 @@ export function clearCurrentPortalSession(portal = getCurrentPortal()) {
 export function clearAllPortalSessions() {
   AUTH_PORTALS.forEach((portal) => clearCurrentPortalSession(portal))
   LEGACY_KEYS.forEach((key) => localStorage.removeItem(key))
-}
-
-// Refresh token đang lưu của mọi cổng (để logout toàn thiết bị gọi blacklist BE).
-export function getStoredRefreshTokens() {
-  return AUTH_PORTALS
-    .map((portal) => localStorage.getItem(getAuthStorageKeys(portal).refresh))
-    .filter(Boolean)
 }
 
 // Lắng nghe logout của CỔNG HIỆN TẠI phát ra từ tab/subdomain khác cùng cổng.

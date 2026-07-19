@@ -3,7 +3,7 @@ from rest_framework import generics, parsers, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import IsEmployerWithMFA
 from common.media_storage import delete_local_media_url, save_image_upload
 
 from ...models import CompanyImage
@@ -14,7 +14,7 @@ from .onboarding import _require_owner
 class CompanyImageUploadView(APIView):
     """Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`)."""
 
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
     parser_classes = [parsers.MultiPartParser]
     kind = ''  # 'logo' | 'cover' | 'gallery'
 
@@ -61,7 +61,7 @@ class CompanyGalleryUploadView(CompanyImageUploadView):
 
 class CompanyGalleryDeleteView(generics.DestroyAPIView):
     serializer_class = CompanyImageSerializer
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
 
     def get_queryset(self):
         return CompanyImage.objects.filter(company=_require_owner(self.request.user).company)
@@ -69,4 +69,3 @@ class CompanyGalleryDeleteView(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         delete_local_media_url(instance.image_url)
         instance.delete()
-

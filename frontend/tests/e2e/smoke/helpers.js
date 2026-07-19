@@ -12,6 +12,14 @@ export async function mockPublicApi(page) {
   }]
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
+    if (path === '/api/auth/me/' || path === '/api/auth/refresh/') {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ detail: 'Authentication credentials were not provided.' }),
+      })
+      return
+    }
     const body = path === '/api/jobs/'
       ? { count: 0, results: [] }
       : path === '/api/privacy/consent/'
@@ -34,7 +42,9 @@ export async function mockPublicApi(page) {
           ? [{ id: 1, name: 'Hà Nội', level: 'province' }, { id: 2, name: 'TP. Hồ Chí Minh', level: 'province' }]
           : ['/api/jobs/categories/', '/api/employer/industries/'].includes(path)
             ? []
-          : {}
+          : path === '/api/auth/sessions/'
+            ? []
+            : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 }

@@ -17,6 +17,12 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..services import auth_sessions
+from ..services.refresh_cookies import (
+    VALID_PORTALS,
+    clear_refresh_cookie,
+    portal_for_user,
+    refresh_from_request,
+)
 from ..services.tokens import revoke_refresh_tokens
 
 
@@ -28,13 +34,16 @@ class LogoutView(APIView):
     @extend_schema(
         summary='Đăng xuất phiên hiện tại (blacklist refresh token)',
         request=inline_serializer('LogoutRequest', {
-            'refresh': serializers.CharField(required=False, allow_blank=True),
+            'portal': serializers.ChoiceField(choices=sorted(VALID_PORTALS)),
         }),
         responses={200: inline_serializer('LogoutResponse', {'detail': serializers.CharField()})},
         tags=['auth'],
     )
     def post(self, request):
-        token = request.data.get('refresh')
+        portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
+        if portal not in VALID_PORTALS:
+            return Response({'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST)
+        token = refresh_from_request(request, portal=portal)
         if token:
             try:
                 parsed = RefreshToken(token)
@@ -42,7 +51,8 @@ class LogoutView(APIView):
                 auth_sessions.revoke_session_by_refresh_jti(parsed.get(api_settings.JTI_CLAIM))
             except TokenError:
                 pass
-        return Response({'detail': 'Đã đăng xuất.'}, status=status.HTTP_200_OK)
+        response = Response({'detail': 'Đã đăng xuất.'}, status=status.HTTP_200_OK)
+        return clear_refresh_cookie(response, portal=portal)
 
 
 class LogoutAllView(APIView):
@@ -58,4 +68,5 @@ class LogoutAllView(APIView):
     )
     def post(self, request):
         revoke_refresh_tokens(request.user)
-        return Response({'detail': 'Đã đăng xuất khỏi tất cả thiết bị.'}, status=status.HTTP_200_OK)
+        response = Response({'detail': 'Đã đăng xuất khỏi tất cả thiết bị.'}, status=status.HTTP_200_OK)
+        return clear_refresh_cookie(response, portal=portal_for_user(request.user))

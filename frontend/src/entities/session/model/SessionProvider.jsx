@@ -8,9 +8,6 @@ import {
   clearAllPortalSessions,
   clearCurrentPortalSession,
   clearTokens,
-  getAccessToken,
-  getRefreshToken,
-  getStoredRefreshTokens,
   subscribeToSessionLogout,
 } from '@/shared/api/token-store'
 
@@ -42,17 +39,21 @@ export default function SessionProvider({ children }) {
   // Đăng xuất mặc định chỉ ảnh hưởng CỔNG HIỆN TẠI (khớp mô hình token đã tách):
   // blacklist refresh token phía server trước, rồi mới xóa phiên cục bộ.
   const logout = useCallback(async () => {
-    const refresh = getRefreshToken()
-    if (refresh) {
-      try {
-        await logoutCurrentPortal(refresh)
-      } catch {
-        // Mạng lỗi vẫn phải xóa phiên cục bộ để người dùng thoát được.
-      }
+    let serverRevokeUncertain = false
+    try {
+      await logoutCurrentPortal()
+    } catch {
+      // Mạng lỗi vẫn phải xóa phiên cục bộ để người dùng thoát được.
+      serverRevokeUncertain = true
     }
     clearCurrentPortalSession()
     clearSessionState()
-    navigate(loginPathForCurrentPortal(), { replace: true })
+    navigate(loginPathForCurrentPortal(), {
+      replace: true,
+      state: serverRevokeUncertain
+        ? { authWarning: 'Đã đăng xuất trên thiết bị này; chưa thể xác nhận thu hồi phiên trên máy chủ.' }
+        : undefined,
+    })
   }, [clearSessionState, navigate])
 
   // Đăng xuất khỏi mọi thiết bị của cổng hiện tại (thu hồi toàn bộ refresh token).
@@ -68,8 +69,8 @@ export default function SessionProvider({ children }) {
   }, [clearSessionState, navigate])
 
   // Đăng xuất khỏi TẤT CẢ cổng trên thiết bị này (hành động toàn cục, chủ động).
-  const logoutEverywhere = useCallback(async () => {
-    await Promise.allSettled(getStoredRefreshTokens().map((refresh) => logoutCurrentPortal(refresh)))
+  const logoutAllPortalsOnThisBrowser = useCallback(async () => {
+    await Promise.allSettled(['main', 'employer', 'admin'].map((portal) => logoutCurrentPortal(portal)))
     clearAllPortalSessions()
     clearSessionState()
     navigate(loginPathForCurrentPortal(), { replace: true })
@@ -87,12 +88,6 @@ export default function SessionProvider({ children }) {
   }, [clearCurrentSession])
 
   const restoreSession = useCallback(async () => {
-    if (!getAccessToken()) {
-      setUser(null)
-      setLoading(false)
-      return null
-    }
-
     try {
       return await refreshSession()
     } catch {
@@ -119,7 +114,7 @@ export default function SessionProvider({ children }) {
       isAuthenticated: Boolean(user),
       logout,
       logoutAllDevices: logoutAllDevicesForPortal,
-      logoutEverywhere,
+      logoutAllPortalsOnThisBrowser,
       refreshSession,
       restoreSession,
       setCurrentUser: setUser,
@@ -130,7 +125,7 @@ export default function SessionProvider({ children }) {
       loading,
       logout,
       logoutAllDevicesForPortal,
-      logoutEverywhere,
+      logoutAllPortalsOnThisBrowser,
       refreshSession,
       restoreSession,
       clearCurrentSession,
