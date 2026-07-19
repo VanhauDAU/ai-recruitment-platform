@@ -83,7 +83,7 @@ export default function UserCvCard({ cv, onRefresh }) {
       label: 'Xoá',
       icon: <DeleteOutlined />,
       danger: true,
-      onClick: actions.confirmDelete,
+      onClick: actions.deleteConfirmation.show,
     },
   ]
 
@@ -236,6 +236,19 @@ export default function UserCvCard({ cv, onRefresh }) {
             maxLength={255}
           />
         </div>
+      </Modal>
+
+      <Modal
+        title="Xóa CV của bạn?"
+        open={actions.deleteConfirmation.open}
+        onOk={actions.deleteConfirmation.submit}
+        onCancel={actions.deleteConfirmation.close}
+        okText="Xóa vĩnh viễn"
+        okButtonProps={{ danger: true }}
+        cancelText="Hủy"
+        destroyOnHidden
+      >
+        CV, bản nháp, liên kết chia sẻ và file xuất sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
       </Modal>
     </div>
   )

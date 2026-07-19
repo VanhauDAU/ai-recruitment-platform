@@ -115,7 +115,8 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
 2. Dùng lazy page từ registry tương ứng; không import page trực tiếp vào
    `AppRouter`.
 3. Áp dụng `AuthGuard` trước `RoleGuard` cho route cần đăng nhập; role portal
-   phải khớp với contract backend.
+   phải khớp với contract backend. Route login/register dùng `GuestGuard`: chỉ
+   redirect khi session thuộc đúng portal, để các portal vẫn đăng nhập độc lập.
 4. Bổ sung smoke/route test cho direct navigation, redirect unauthorized và
    responsive project nếu route là public hoặc protected.
 5. Chỉ thêm portal mới khi có base path, role contract, layout và test strategy

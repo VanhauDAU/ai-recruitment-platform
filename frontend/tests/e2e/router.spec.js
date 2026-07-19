@@ -55,6 +55,30 @@ test.describe('portal route registries', () => {
     await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
   })
 
+  test('redirects an authenticated candidate away from login and sign-up', async ({ page }) => {
+    await page.unroute('http://localhost:8000/api/**')
+    await page.route('http://localhost:8000/api/**', async (route) => {
+      const path = new URL(route.request().url()).pathname
+      const body = path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+        : path === '/api/privacy/consent/'
+          ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+          : path === '/api/jobs/'
+            ? { count: 0, results: [] }
+            : path === '/api/jobs/categories/' || path === '/api/locations/'
+              ? []
+              : path === '/api/site/banners/'
+                ? []
+                : {}
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+    })
+
+    await page.goto('/login')
+    await expect(page).toHaveURL('/')
+    await page.goto('/sign-up')
+    await expect(page).toHaveURL('/')
+  })
+
   test('renders onboarding for an unconfigured candidate', async ({ page }, testInfo) => {
     await page.unroute('http://localhost:8000/api/**')
     await page.route('http://localhost:8000/api/**', async (route) => {
