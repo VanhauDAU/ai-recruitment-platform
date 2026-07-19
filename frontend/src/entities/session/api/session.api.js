@@ -9,3 +9,13 @@ export async function getCurrentSessionUser() {
     return data
   })
 }
+
+// Đăng xuất phiên hiện tại: refresh token là bằng chứng để backend blacklist nó.
+export async function logoutCurrentPortal(refresh) {
+  await api.post('/auth/logout/', refresh ? { refresh } : {})
+}
+
+// Đăng xuất khỏi mọi thiết bị của tài khoản (cổng) đang đăng nhập.
+export async function logoutAllDevices() {
+  await api.post('/auth/logout-all/', {})
+}

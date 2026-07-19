@@ -10,7 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from . import oauth
 from .models import AuthEmailJob, SocialAccount, User
@@ -156,6 +156,91 @@ class PasswordChangeTests(APITestCase):
         self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('current_password', missing.data)
         self.assertIn('current_password', wrong.data)
+
+    def test_change_rotates_current_session_and_returns_fresh_tokens(self):
+        user = User.objects.create_user(
+            email='rotate@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        old_refresh = RefreshToken.for_user(user)
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'Password@123',
+            'password': 'NewPassword@123',
+            'refresh': str(old_refresh),
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertIn('access', response.data['tokens'])
+        self.assertIn('refresh', response.data['tokens'])
+
+        # Refresh token của phiên hiện tại bị xoay: token cũ hỏng, token mới dùng được.
+        self.client.force_authenticate(user=None)
+        old_blocked = self.client.post(reverse('auth-refresh'), {'refresh': str(old_refresh)}, format='json')
+        new_ok = self.client.post(reverse('auth-refresh'), {'refresh': response.data['tokens']['refresh']}, format='json')
+        self.assertEqual(old_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(new_ok.status_code, status.HTTP_200_OK)
+
+    def test_change_with_logout_all_revokes_other_devices_but_keeps_current(self):
+        user = User.objects.create_user(
+            email='logoutall@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        other_device = RefreshToken.for_user(user)
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-password-change'), {
+            'current_password': 'Password@123',
+            'password': 'NewPassword@123',
+            'logout_all_sessions': True,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.client.force_authenticate(user=None)
+        other_blocked = self.client.post(reverse('auth-refresh'), {'refresh': str(other_device)}, format='json')
+        current_ok = self.client.post(reverse('auth-refresh'), {'refresh': response.data['tokens']['refresh']}, format='json')
+        self.assertEqual(other_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(current_ok.status_code, status.HTTP_200_OK)
+
+
+class LogoutEndpointTests(APITestCase):
+    def test_logout_blacklists_the_provided_refresh_token(self):
+        user = User.objects.create_user(email='logout@example.com', password='Password@123')
+        refresh = RefreshToken.for_user(user)
+
+        response = self.client.post(reverse('auth-logout'), {'refresh': str(refresh)}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        blocked = self.client.post(reverse('auth-refresh'), {'refresh': str(refresh)}, format='json')
+        self.assertEqual(blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_is_idempotent_for_invalid_token(self):
+        response = self.client.post(reverse('auth-logout'), {'refresh': 'not-a-token'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_logout_all_revokes_only_the_current_account_not_same_email_other_portal(self):
+        candidate = User.objects.create_user(
+            email='dual@example.com', password='Password@123', role=User.Role.CANDIDATE,
+        )
+        employer = User.objects.create_user(
+            email='dual@example.com', password='Password@123', role=User.Role.EMPLOYER,
+        )
+        candidate_refresh = RefreshToken.for_user(candidate)
+        employer_refresh = RefreshToken.for_user(employer)
+
+        self.client.force_authenticate(user=candidate)
+        response = self.client.post(reverse('auth-logout-all'))
+        self.client.force_authenticate(user=None)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        candidate_blocked = self.client.post(reverse('auth-refresh'), {'refresh': str(candidate_refresh)}, format='json')
+        employer_ok = self.client.post(reverse('auth-refresh'), {'refresh': str(employer_refresh)}, format='json')
+        self.assertEqual(candidate_blocked.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(employer_ok.status_code, status.HTTP_200_OK)
+
+    def test_logout_all_requires_authentication(self):
+        response = self.client.post(reverse('auth-logout-all'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 GOOGLE_PROFILE = {
     'id': 'google-uid-1',

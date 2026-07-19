@@ -2,12 +2,15 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
-import { getCurrentSessionUser } from '../api/session.api'
+import { getCurrentSessionUser, logoutAllDevices, logoutCurrentPortal } from '../api/session.api'
 import SessionContext from './session-context'
 import {
-  clearSession,
+  clearAllPortalSessions,
+  clearCurrentPortalSession,
   clearTokens,
   getAccessToken,
+  getRefreshToken,
+  getStoredRefreshTokens,
   subscribeToSessionLogout,
 } from '@/shared/api/token-store'
 
@@ -36,8 +39,38 @@ export default function SessionProvider({ children }) {
     clearSessionState()
   }, [clearSessionState])
 
-  const logout = useCallback(() => {
-    clearSession()
+  // Đăng xuất mặc định chỉ ảnh hưởng CỔNG HIỆN TẠI (khớp mô hình token đã tách):
+  // blacklist refresh token phía server trước, rồi mới xóa phiên cục bộ.
+  const logout = useCallback(async () => {
+    const refresh = getRefreshToken()
+    if (refresh) {
+      try {
+        await logoutCurrentPortal(refresh)
+      } catch {
+        // Mạng lỗi vẫn phải xóa phiên cục bộ để người dùng thoát được.
+      }
+    }
+    clearCurrentPortalSession()
+    clearSessionState()
+    navigate(loginPathForCurrentPortal(), { replace: true })
+  }, [clearSessionState, navigate])
+
+  // Đăng xuất khỏi mọi thiết bị của cổng hiện tại (thu hồi toàn bộ refresh token).
+  const logoutAllDevicesForPortal = useCallback(async () => {
+    try {
+      await logoutAllDevices()
+    } catch {
+      // Bỏ qua lỗi mạng: vẫn xóa phiên cục bộ bên dưới.
+    }
+    clearCurrentPortalSession()
+    clearSessionState()
+    navigate(loginPathForCurrentPortal(), { replace: true })
+  }, [clearSessionState, navigate])
+
+  // Đăng xuất khỏi TẤT CẢ cổng trên thiết bị này (hành động toàn cục, chủ động).
+  const logoutEverywhere = useCallback(async () => {
+    await Promise.allSettled(getStoredRefreshTokens().map((refresh) => logoutCurrentPortal(refresh)))
+    clearAllPortalSessions()
     clearSessionState()
     navigate(loginPathForCurrentPortal(), { replace: true })
   }, [clearSessionState, navigate])
@@ -85,12 +118,23 @@ export default function SessionProvider({ children }) {
       loading,
       isAuthenticated: Boolean(user),
       logout,
+      logoutAllDevices: logoutAllDevicesForPortal,
+      logoutEverywhere,
       refreshSession,
       restoreSession,
       setCurrentUser: setUser,
       clearCurrentSession,
     }),
-    [user, loading, logout, refreshSession, restoreSession, clearCurrentSession],
+    [
+      user,
+      loading,
+      logout,
+      logoutAllDevicesForPortal,
+      logoutEverywhere,
+      refreshSession,
+      restoreSession,
+      clearCurrentSession,
+    ],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
