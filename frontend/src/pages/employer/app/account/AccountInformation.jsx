@@ -9,7 +9,6 @@ export default function EmployerAccountInformationPage() {
     <EmployerAccountSettingsShell
       title="Thông tin tài khoản"
       description="Cập nhật thông tin liên hệ và quản lý hồ sơ tài khoản tuyển dụng của bạn."
-      hideHeading
     >
       <EmployerAccountVerificationCard />
       <EmployerAccountInformation />
