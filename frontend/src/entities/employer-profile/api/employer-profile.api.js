@@ -84,3 +84,22 @@ export async function saveEmployerRecruitmentNeed(payload) {
   const { data } = await api.post('/employer/consulting-need/', payload)
   return data
 }
+
+export async function getEmployerRecruitmentNeeds() {
+  const { data } = await api.get('/employer/recruitment-needs/')
+  return data?.results || data || []
+}
+
+export async function createEmployerRecruitmentNeed(payload) {
+  const { data } = await api.post('/employer/recruitment-needs/', payload)
+  return data
+}
+
+export async function updateEmployerRecruitmentNeed(publicId, payload) {
+  const { data } = await api.patch(`/employer/recruitment-needs/${publicId}/`, payload)
+  return data
+}
+
+export async function deleteEmployerRecruitmentNeed(publicId) {
+  await api.delete(`/employer/recruitment-needs/${publicId}/`)
+}

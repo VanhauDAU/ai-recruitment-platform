@@ -73,12 +73,12 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
 
   return (
     <div>
-      <div className="mb-7 flex items-center justify-between gap-4">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">Xác thực thông tin</h2>
           <p className="mt-1 text-sm text-slate-500">Hoàn thiện dần để tăng độ tin cậy của tài khoản.</p>
         </div>
-        <strong className="whitespace-nowrap text-sm text-emerald-600">Hoàn thành {progress.percent}%</strong>
+        <strong className="text-sm text-emerald-600">Hoàn thành {progress.percent}%</strong>
       </div>
       <Progress percent={progress.percent} showInfo={false} strokeColor="#00b14f" railColor="#e8edf2" className="!mb-6" />
 
@@ -87,7 +87,7 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
           const Icon = step.icon
           const done = Boolean(verification[step.key])
           return (
-            <div key={step.key} className="flex min-h-20 items-center gap-4 py-3">
+            <div key={step.key} className="grid min-h-20 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 sm:gap-4">
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${done ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                 {done ? <CheckCircleFilled className="text-xl" /> : <Icon className="text-lg" />}
               </span>

@@ -86,8 +86,8 @@ export function DashboardVerificationJourney({ verification = {}, displayName, h
         <Link to={EMPLOYER_VERIFY_URL} className="inline-flex items-center gap-2 text-xs font-bold text-emerald-600 hover:text-emerald-700">{progress.percent === 100 ? 'Xem trạng thái' : 'Tiếp tục xác thực'} <ArrowRightOutlined /></Link>
       </div>
 
-      <div className="overflow-x-auto border-t border-slate-100 px-3 py-3 sm:px-4">
-        <div className="flex min-w-max gap-2">
+      <div className="border-t border-slate-100 px-3 py-3 sm:px-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {VERIFICATION_STEPS.map((step, index) => {
             const done = Boolean(verification[step.key])
             const disabled = step.disabled && !done
@@ -107,9 +107,9 @@ export function DashboardVerificationJourney({ verification = {}, displayName, h
               </>
             )
             return target && !done && !disabled ? (
-              <Link key={step.key} to={target} className={`flex w-48 items-center gap-2 rounded-lg border px-3 py-3 transition hover:border-emerald-400 hover:text-emerald-700 ${stateClass}`}>{content}</Link>
+              <Link key={step.key} to={target} className={`flex min-w-0 items-center gap-2 rounded-lg border px-3 py-3 transition hover:border-emerald-400 hover:text-emerald-700 ${stateClass}`}>{content}</Link>
             ) : (
-              <div key={step.key} aria-disabled={disabled || undefined} className={`flex w-48 items-center gap-2 rounded-lg border px-3 py-3 ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${stateClass}`}>{content}</div>
+              <div key={step.key} aria-disabled={disabled || undefined} className={`flex min-w-0 items-center gap-2 rounded-lg border px-3 py-3 ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${stateClass}`}>{content}</div>
             )
           })}
         </div>

@@ -16,7 +16,7 @@ from .onboarding import (
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )
-from .recruitment_need import RecruitmentNeedView
+from .recruitment_need import RecruitmentNeedDetailView, RecruitmentNeedListCreateView, RecruitmentNeedView
 from .verification import CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
 
 __all__ = [
@@ -36,6 +36,8 @@ __all__ = [
     'PhoneAvailabilityView',
     'RecruiterMeView',
     'RecruitmentNeedView',
+    'RecruitmentNeedListCreateView',
+    'RecruitmentNeedDetailView',
     'SendPhoneOtpView',
     'VerifyPhoneOtpView',
 ]

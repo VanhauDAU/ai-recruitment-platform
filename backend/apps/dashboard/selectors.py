@@ -91,13 +91,13 @@ def _recent_applications(applications):
 
 def build_employer_dashboard(user):
     recruiter = RecruiterProfile.objects.select_related(
-        'user', 'company', 'work_location', 'recruitment_need__position_category',
-    ).get(user=user)
+        'user', 'company', 'work_location',
+    ).prefetch_related('recruitment_needs__position_category').get(user=user)
     jobs = Job.objects.filter(posted_by=user)
     applications = Application.objects.filter(job__posted_by=user)
     verification = build_employer_onboarding_steps(recruiter)
     company = recruiter.company if verification['company_linked'] else None
-    need = getattr(recruiter, 'recruitment_need', None)
+    need = next(iter(recruiter.recruitment_needs.all()), None)
 
     return {
         'account': {

@@ -64,14 +64,14 @@ export default function EmployerAuthLayout() {
   return (
     <ConfigProvider theme={{ token: { borderRadius: 10, colorPrimary: '#00b14f' } }}>
       <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
-        <div className="min-h-screen bg-white text-slate-900 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(380px,1fr)]">
-          <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_76%,#f6fbf8_100%)]">
-            <main className="flex flex-1 justify-center px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+        <div className="min-h-dvh overflow-x-hidden bg-white text-slate-900 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]">
+          <div className="flex min-h-dvh min-w-0 flex-col bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_76%,#f6fbf8_100%)]">
+            <main className="flex min-w-0 flex-1 justify-center px-3 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-12">
               <div className={`w-full ${isWide ? 'max-w-4xl' : 'max-w-xl self-center'}`}>
                 <Outlet />
               </div>
             </main>
-            <footer className="px-6 py-5 text-center text-xs text-slate-400">
+            <footer className="px-4 py-5 text-center text-xs leading-5 text-slate-400 sm:px-6">
               © {new Date().getFullYear()} {siteName}. Nền tảng tuyển dụng dành cho doanh nghiệp.
             </footer>
           </div>

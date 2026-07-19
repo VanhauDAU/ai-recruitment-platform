@@ -72,10 +72,10 @@ function SearchCompanyTab({ disabled, onLinked }) {
       <Alert type="info" showIcon className="!mt-4" title="Sử dụng tên hoặc mã số thuế trùng khớp dữ liệu doanh nghiệp để việc xác thực nhanh hơn." />
       <div className="mt-5 space-y-3">
         {results.map((company) => (
-          <article key={company.public_id} className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 p-4">
+          <article key={company.public_id} className="grid min-w-0 gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4">
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-600"><BankOutlined /></span>
             <div className="min-w-0 flex-1"><h3 className="font-extrabold text-slate-900">{company.company_name}</h3><p className="mt-1 text-xs text-slate-500">MST: {company.tax_code || 'Chưa cập nhật'} · {company.address || 'Chưa cập nhật địa chỉ'}</p><div className="mt-2 flex flex-wrap gap-1">{(company.industries_detail || []).map((item) => <Tag key={item.id}>{item.name}</Tag>)}</div></div>
-            <Button disabled={disabled} onClick={() => setSelectedCompany(company)}>Chọn</Button>
+            <Button disabled={disabled} onClick={() => setSelectedCompany(company)} className="w-full sm:w-auto">Chọn</Button>
           </article>
         ))}
         {searchMutation.isSuccess && results.length === 0 && <Result status="info" title="Không tìm thấy công ty phù hợp" subTitle="Hãy thử tên khác hoặc chuyển sang tab Tạo công ty mới." />}
@@ -173,6 +173,7 @@ export default function EmployerCompanySettings() {
     <div>
       {!phoneVerified && <Alert type="warning" showIcon className="!mb-5" title="Cần xác thực số điện thoại trước khi chọn công ty" description={<span>Bạn vẫn có thể xem hai luồng bên dưới, nhưng cần <Link to={EMPLOYER_PHONE_VERIFY_URL} className="font-bold">xác thực số điện thoại</Link> trước khi lưu.</span>} />}
       <Tabs
+        className="[&_.ant-tabs-tab]:!px-1 [&_.ant-tabs-tab-btn]:!whitespace-normal"
         defaultActiveKey="search"
         items={[
           { key: 'search', label: <span><SearchOutlined /> Tìm kiếm thông tin công ty</span>, children: <SearchCompanyTab disabled={!phoneVerified} onLinked={refreshProfile} /> },

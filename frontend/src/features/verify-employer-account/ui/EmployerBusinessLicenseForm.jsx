@@ -63,7 +63,7 @@ function UploadNotice({ documentName }) {
 
 function DocumentCard({ label, files, onFilesChange, variant, noticeDocument, showTemplate = false }) {
   return (
-    <section className="rounded-lg border border-slate-200 p-5 sm:p-6">
+    <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
         <div>
           <UploadBox label={label} files={files} onFilesChange={onFilesChange} />
@@ -72,7 +72,7 @@ function DocumentCard({ label, files, onFilesChange, variant, noticeDocument, sh
         <aside className="flex flex-col items-center gap-3 text-center">
           <p className="text-sm font-medium text-slate-800">Minh họa</p>
           <Illustration variant={variant} />
-          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50"><DownloadOutlined />Tải mẫu giấy ủy quyền</a>}
+          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"><DownloadOutlined />Tải mẫu giấy ủy quyền</a>}
         </aside>
       </div>
     </section>
@@ -108,9 +108,9 @@ export default function EmployerBusinessLicenseForm() {
         )}
       </Radio.Group>
 
-      <div className="mt-5 flex flex-col items-end gap-2">
-        <Button type="primary" size="large" disabled title={saveHint} className="!min-w-[100px] !shadow-none">Lưu</Button>
-        {!companyLinked && <p className="text-right text-xs text-slate-500">Bạn cần <Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-emerald-600 hover:text-emerald-700">cập nhật thông tin công ty</Link> trước khi có thể lưu giấy tờ.</p>}
+      <div className="mt-5 flex flex-col gap-2 sm:items-end">
+        <Button type="primary" size="large" disabled title={saveHint} className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto">Lưu</Button>
+        {!companyLinked && <p className="text-left text-xs leading-5 text-slate-500 sm:text-right">Bạn cần <Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-emerald-600 hover:text-emerald-700">cập nhật thông tin công ty</Link> trước khi có thể lưu giấy tờ.</p>}
       </div>
     </div>
   )

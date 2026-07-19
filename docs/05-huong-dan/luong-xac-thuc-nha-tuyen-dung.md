@@ -277,6 +277,12 @@ không mô phỏng thao tác thành công khi backend chưa tồn tại.
 - `POST /api/employer/onboarding/registration/`: hoàn tất profile OAuth.
 - `GET /api/employer/me/`: recruiter/company và trạng thái chi tiết.
 - `GET|POST /api/employer/consulting-need/`: đọc/tạo một lần nhu cầu ưu tiên.
+- `GET|POST /api/employer/recruitment-needs/` và
+  `PATCH|DELETE /api/employer/recruitment-needs/<public_id>/`: quản lý danh
+  sách nhu cầu tuyển dụng sau onboarding. Nhu cầu khai báo đầu tiên vẫn là mốc
+  hoàn thành onboarding; các nhu cầu thêm sau không làm thay đổi state đó.
+  Nguồn ngân sách được chọn như một thiết lập chung Công ty/Cá nhân trong trang
+  này, không phải điều kiện lọc danh sách.
 - `GET /api/dashboard/employer/`: summary, activity 7 ngày, nhu cầu, tin và hồ sơ gần đây.
 - `POST /api/auth/verify/send/`, `POST /api/auth/verify/confirm/`: email.
 - `POST /api/employer/phone/send-otp/`, `POST /api/employer/phone/verify/`: OTP.

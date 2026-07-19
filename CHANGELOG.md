@@ -20,6 +20,25 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Đưa mẫu DOCX người dùng cung cấp vào `frontend/public/documents/` để nhà tuyển dụng tải về và chỉnh sửa. Giao diện chỉ nhận một tệp DOC/DOCX/PDF tối đa 5 MB; chọn tệp mới sẽ thay thế tệp đang chờ lưu.
 - Thêm migration `employers.0012`: văn bản DLCN được gắn với recruiter thay vì bắt buộc công ty, có thể lưu/thay thế khi chưa cập nhật thông tin công ty; dữ liệu DLCN cũ theo company vẫn được đọc để giữ nguyên tiến độ xác thực.
 
+#### Added — Quản lý nhu cầu tuyển dụng
+
+- Mở route `/tuyendung/app/account/settings/recruitment-demand`: hiển thị toàn bộ nhu cầu đã khai báo lúc onboarding và cho phép thêm, sửa, xóa, bật/tắt từng nhu cầu. Nguồn ngân sách là thiết lập dùng chung Công ty/Cá nhân, được lưu cho các nhu cầu hiện có và tự áp dụng khi tạo nhu cầu mới.
+- Migration `employers.0013` chuyển nhu cầu từ một bản ghi onboarding cố định sang nhiều nhu cầu theo recruiter, giữ dữ liệu cũ và trạng thái hoạt động mặc định; thêm API CRUD `/api/employer/recruitment-needs/`.
+- Tinh chỉnh UX theo mẫu TopCV: form thêm/sửa có hierarchy rõ ràng, danh sách responsive không cuộn ngang và thiết lập nguồn ngân sách mở popover radio với nút Lưu/Hủy.
+
+#### Changed — Responsive toàn bộ cổng nhà tuyển dụng
+
+- Chuẩn hóa shell employer cho mobile/tablet: sidebar workspace mở dạng drawer phủ có mask, tiêu đề route không tràn, content không phát sinh cuộn ngang và menu cài đặt chuyển thành dropdown trên màn hình nhỏ.
+- Responsive lại dashboard, xác minh tài khoản, hồ sơ/công ty, GPKD, DLCN, bảo mật, đổi mật khẩu và nhu cầu tuyển dụng; grid tự xếp cột, text dài ngắt an toàn, modal/popover giới hạn theo viewport và nút form chiếm đủ chiều rộng trên mobile.
+- Tinh chỉnh typography, CTA và card của toàn bộ trang marketing employer; thêm Playwright project tablet `834x1112` cùng regression chống tràn ngang cho desktop, tablet và Pixel mobile.
+- Ghi responsive mobile-first thành baseline bắt buộc trong `frontend/ARCHITECTURE.md` cho mọi giao diện employer phát triển sau này.
+
+#### Changed — Trang đăng ký nhà tuyển dụng
+
+- Bỏ thanh **Các bước tạo tài khoản** ở đầu trang đăng ký; luồng hai phần vẫn tiếp tục bằng CTA phía cuối form và giữ nút Quay lại ở phần thông tin nhà tuyển dụng.
+- Thêm khối **Quy định đăng ký tài khoản** theo UX tham khảo TopCV: mặc định mở, cho phép hiện/ẩn bằng nút có trạng thái truy cập `aria-expanded`, dùng tên website và hotline từ site settings.
+- Làm phẳng phần giới thiệu và hai phần form, bỏ card viền/đổ bóng bao quanh để giảm lớp thị giác; bổ sung regression Playwright cho trạng thái Quy định và chống tràn ngang trên desktop, tablet, mobile.
+
 #### Fixed — Màu liên kết DLCN
 
 - Ép màu emerald cho các liên kết/hành động trên trang DLCN (hướng dẫn, tải mẫu, xem nội dung đầy đủ, thỏa thuận và tài liệu đã tải) để không bị màu xanh mặc định của Ant Design ghi đè.

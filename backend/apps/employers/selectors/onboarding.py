@@ -66,7 +66,7 @@ def build_employer_onboarding_steps(recruiter):
     steps = {
         'email_verified': recruiter.user.email_verified,
         'registration_completed': recruiter.registration_completed_at is not None,
-        'consulting_need_completed': hasattr(recruiter, 'recruitment_need'),
+        'consulting_need_completed': recruiter.recruitment_needs.exists(),
         'phone_verified': recruiter.phone_verified_at is not None,
         'company_linked': company_linked,
         'membership_approved': company_linked and recruiter.membership_status == RecruiterProfile.MembershipStatus.APPROVED,

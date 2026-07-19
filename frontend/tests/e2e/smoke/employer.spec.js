@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
+async function expectNoHorizontalOverflow(page) {
+  await expect.poll(() => page.evaluate(() => {
+    const root = document.documentElement
+    const body = document.body
+    return Math.max(root.scrollWidth, body?.scrollWidth || 0) - window.innerWidth
+  })).toBeLessThanOrEqual(1)
+}
+
 test('employer smoke: marketing pages render', async ({ page }) => {
   await mockPublicApi(page)
   const isMobile = page.viewportSize().width < 1024
@@ -15,20 +23,25 @@ test('employer smoke: marketing pages render', async ({ page }) => {
   await page.goto('/tuyendung')
   await expect(page.locator('header')).toBeVisible()
   await expectActiveNav('Trang chủ')
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/gioi-thieu')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expectActiveNav('Giới thiệu')
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/lien-he')
   await expect(page.getByLabel('Họ và tên')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/dich-vu')
   await expect(page.getByRole('heading', { level: 1, name: /Giải pháp toàn diện/ })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/bao-gia')
   await expect(page.getByRole('heading', { level: 3, name: 'TOP MAX' })).toBeVisible()
   await expect(page.getByText('7.500.000 ₫')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
   await page.locator('[data-package-slug="top-max"]').click()
   await expect(page.getByRole('dialog')).toBeVisible()
 })
@@ -61,6 +74,7 @@ test('employer smoke: login loads and dashboard stays role-protected', async ({ 
   await mockPublicApi(page)
   await page.goto('/tuyendung/app/login')
   await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/dashboard')
   await expect(page).toHaveURL(/\/tuyendung\/app\/login\?returnUrl=/)
@@ -74,6 +88,17 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await page.goto('/tuyendung/app/register')
 
   await expect(page.getByRole('heading', { name: 'Đăng ký tài khoản Nhà tuyển dụng' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await expect(page.getByLabel('Các bước tạo tài khoản')).toHaveCount(0)
+  const rulesToggle = page.getByRole('button', { name: /Quy định đăng ký tài khoản/ })
+  const rulesContent = page.getByText(/không cho phép một người dùng tạo nhiều tài khoản nhà tuyển dụng/)
+  await expect(rulesToggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(rulesContent).toBeVisible()
+  await rulesToggle.click()
+  await expect(rulesToggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(rulesContent).toHaveCount(0)
+  await rulesToggle.click()
+  await expect(rulesContent).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tạo thông tin đăng nhập' })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveCount(0)
 
@@ -96,10 +121,12 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await expect(page.getByLabel('Số điện thoại cá nhân')).toBeVisible()
   await expect(page.getByLabel('Tên công ty')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Quay lại' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/forgot-password')
   await expect(page.getByRole('heading', { name: 'Quên mật khẩu?' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Quay lại đăng nhập' }).last()).toHaveAttribute('href', '/tuyendung/app/login')
+  await expectNoHorizontalOverflow(page)
 })
 
 async function setEmployerSession(page, overrides = {}) {
@@ -240,6 +267,9 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await page.route('http://localhost:8000/api/employer/industries/all/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
+  await page.route('http://localhost:8000/api/employer/recruitment-needs/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
 
   await page.goto('/tuyendung/app/employer-verify')
 
@@ -247,23 +277,29 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(workspace).toBeVisible()
   await expect(workspace).toHaveCSS('height', `${page.viewportSize().height}px`)
   await expect(page.getByTestId('employer-topbar')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
   await expect(page.getByRole('link', { name: 'Cập nhật ngay' }).first()).toBeVisible()
   if (page.viewportSize().width < 1024) {
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
   }
   await expect(page.getByRole('menuitem', { name: /Bảng tin/ })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: /Cài đặt tài khoản/ })).toBeVisible()
+  if (page.viewportSize().width < 1024) {
+    await page.getByRole('button', { name: 'Đóng menu quản trị' }).click()
+  }
   await expect(page.getByText('Xác thực địa chỉ email')).toHaveCount(0)
   await page.getByRole('button', { name: 'Cập nhật Xác thực số điện thoại' }).click()
   await expect(page.getByRole('dialog')).toContainText('Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google')
   await page.getByRole('button', { name: 'Cập nhật mật khẩu tại đây' }).click()
   await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/password-login$/)
   await expect(page).toHaveTitle('Thay đổi mật khẩu | Smart Recruitment Platform')
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/account/settings/company?update=true')
   await expect(page.getByRole('tab', { name: /Tìm kiếm thông tin công ty/ })).toBeVisible()
   await expect(page.getByRole('tab', { name: /Tạo công ty mới/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Bảng giá dịch vụ/ })).toHaveCount(0)
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/account/settings/gpkd')
   const businessRegistrationRadio = page.getByRole('radio', { name: 'Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác' })
@@ -279,6 +315,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('img', { name: 'Minh họa giấy ủy quyền' })).toHaveAttribute('src', '/images/employer/authorization-sample.jpg')
   await expect(page.getByRole('img', { name: 'Minh họa căn cước công dân hoặc hộ chiếu' })).toHaveAttribute('src', '/images/employer/identity-sample.jpg')
   await expect(page.getByRole('button', { name: 'Lưu' })).toBeDisabled()
+  await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/account/settings/personal-data-protection')
   await expect(page.getByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
@@ -293,6 +330,19 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('button', { name: 'Lưu' })).toBeEnabled()
   await page.getByRole('checkbox', { name: /Xác nhận đồng ý với các điều khoản/i }).check()
   await expect(page.getByRole('button', { name: 'Xác nhận' })).toBeEnabled()
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/app/account/settings/recruitment-demand')
+  await expect(page.getByRole('button', { name: 'Thêm nhu cầu' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/app/account/settings/general-setting')
+  await expect(page.getByText('Xác thực 2 yếu tố', { exact: true })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.goto('/tuyendung/app/dashboard')
+  await expect(page.getByRole('heading', { name: /Chào Nguyễn An/ })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 
   if (page.viewportSize().width < 1024) {
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
@@ -305,4 +355,5 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('heading', { name: 'Thông tin tài khoản', exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
   await expect(page.getByRole('button', { name: 'Cập nhật' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
 })

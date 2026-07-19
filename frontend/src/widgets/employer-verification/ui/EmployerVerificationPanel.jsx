@@ -60,12 +60,12 @@ export default function EmployerVerificationPanel() {
 
   const profile = profileQuery.data || {}
   return (
-    <div className="mx-auto grid max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,.10)] lg:grid-cols-[minmax(360px,.9fr)_minmax(520px,1.1fr)]">
+    <div className="mx-auto grid min-w-0 max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,.10)] xl:grid-cols-[minmax(300px,.85fr)_minmax(0,1.15fr)]">
       <VerificationStory
         need={needQuery.data}
         companyName={profile.onboarding?.company_linked ? profile.company?.company_name : ''}
       />
-      <section className="p-6 sm:p-9 lg:p-12">
+      <section className="min-w-0 p-5 sm:p-8 xl:p-10">
         <h1 className="text-2xl font-black text-slate-900">Xin chào, <span className="text-emerald-600">{user?.full_name || user?.email}</span></h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">Bạn có thể hoàn thiện các bước bảo mật ngay bây giờ hoặc tiếp tục vào dashboard và quay lại sau.</p>
         <div className="mt-8">

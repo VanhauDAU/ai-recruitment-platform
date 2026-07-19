@@ -97,6 +97,8 @@ const ROUTE_TITLES = [
   [EMPLOYER_COMPANY_SETTINGS_URL, 'Cài đặt tài khoản'],
   [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
   [EMPLOYER_DATA_PROTECTION_URL, 'Văn bản xử lý dữ liệu cá nhân'],
+  [employerAppPath('/account/settings/recruitment-demand'), 'Nhu cầu tuyển dụng'],
+  [EMPLOYER_GENERAL_SETTINGS_URL, 'Cài đặt'],
 ]
 
 function routeTitle(pathname) {
@@ -125,7 +127,7 @@ function TopbarAction({ icon, label, prominent = false }) {
 
 function AccountVerificationPopover({ verification, level }) {
   return (
-    <div className="w-[330px] p-1 sm:w-[344px]" aria-label="Chi tiết cấp xác thực tài khoản">
+    <div className="w-[min(330px,calc(100vw-48px))] p-1 sm:w-[344px]" aria-label="Chi tiết cấp xác thực tài khoản">
       <div className="flex items-center gap-2 text-base font-bold text-slate-800">
         <span>Tài khoản xác thực:</span>
         <strong className="text-emerald-600">Cấp {level.level}/{level.total}</strong>
@@ -255,7 +257,15 @@ export default function EmployerWorkspaceLayout() {
         </div>
       </Header>
 
-      <Layout className="!min-h-0 !min-w-0 !flex-1 !overflow-hidden !bg-[#edf1f5]">
+      <Layout className="!relative !min-h-0 !min-w-0 !flex-1 !overflow-hidden !bg-[#edf1f5]">
+        {isMobileViewport && !sidebarCollapsed && (
+          <button
+            type="button"
+            aria-label="Đóng menu quản trị"
+            onClick={() => setCollapsed(true)}
+            className="absolute inset-0 z-30 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
+          />
+        )}
         <Sider
           width={EMPLOYER_SIDEBAR_WIDTH}
           breakpoint="lg"
@@ -268,7 +278,7 @@ export default function EmployerWorkspaceLayout() {
           onMouseLeave={() => setIsSidebarHovered(false)}
           trigger={null}
           data-testid="employer-sidebar"
-          className="!h-full !overflow-hidden !border-r !border-slate-200 !bg-white"
+          className={`!h-full !overflow-hidden !border-r !border-slate-200 !bg-white ${isMobileViewport ? '!absolute !inset-y-0 !left-0 !z-40 !shadow-2xl' : ''}`}
         >
           <div className="flex h-full flex-col bg-white">
             <div className={`shrink-0 border-b border-slate-100 ${isCompactSidebar ? 'px-2 py-3' : 'px-4 py-4'}`}>
@@ -306,7 +316,7 @@ export default function EmployerWorkspaceLayout() {
                     <Popover
                       trigger={['hover', 'focus']}
                       placement="rightTop"
-                      overlayInnerStyle={{ padding: 12 }}
+                      styles={{ container: { padding: 12 } }}
                       content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
                     >
                       <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
@@ -345,10 +355,10 @@ export default function EmployerWorkspaceLayout() {
         </Sider>
 
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
-          <div className="flex h-12 shrink-0 items-center border-b border-slate-200 bg-white px-4 sm:px-6">
-            <strong className="text-sm text-slate-700">{routeTitle(pathname)}</strong>
+          <div className="flex min-h-11 shrink-0 items-center border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
+            <strong className="min-w-0 truncate text-sm text-slate-700">{routeTitle(pathname)}</strong>
           </div>
-          <Content className="min-h-0 min-w-0 overflow-y-auto bg-[#edf1f5] p-3 sm:p-5 xl:p-6">
+          <Content className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 sm:p-5 xl:p-6">
             <div className="mx-auto w-full max-w-[1320px]">
               <Outlet />
             </div>

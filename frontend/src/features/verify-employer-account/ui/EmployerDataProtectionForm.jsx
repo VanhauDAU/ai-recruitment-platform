@@ -74,7 +74,7 @@ function CandidateAgreementTemplate() {
 function CandidateAgreementUploadForm({ currentDocument, files, onFilesChange, accepted, onAcceptedChange, onCancel, submitting, canSave, onSave, siteName }) {
   return (
     <>
-      <div className="mt-4 rounded-lg border border-slate-200 p-5 sm:p-6">
+      <div className="mt-4 min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_220px]">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-slate-800">Văn bản Thỏa thuận <span className="text-red-500">*</span></h3>
@@ -105,9 +105,9 @@ function CandidateAgreementUploadForm({ currentDocument, files, onFilesChange, a
       </div>
 
       <Checkbox checked={accepted} onChange={(event) => onAcceptedChange(event.target.checked)} className="!mt-5 !flex !items-start !text-sm !leading-5 !text-slate-500">Tôi cam đoan văn bản này là tài liệu hợp pháp của doanh nghiệp và chịu hoàn toàn trách nhiệm về tính chính xác, hợp lệ của nội dung. {siteName} chỉ là nền tảng trung gian lưu trữ văn bản này.</Checkbox>
-      <div className="mt-4 flex justify-end gap-3">
-        {onCancel && <Button size="large" disabled={submitting} onClick={onCancel} className="!min-w-[100px] !shadow-none">Hủy</Button>}
-        <Button type="primary" size="large" disabled={!canSave} loading={submitting} onClick={onSave} className="!min-w-[100px] !shadow-none">Lưu</Button>
+      <div className="mt-4 grid gap-2 sm:flex sm:justify-end sm:gap-3">
+        {onCancel && <Button size="large" disabled={submitting} onClick={onCancel} className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto">Hủy</Button>}
+        <Button type="primary" size="large" disabled={!canSave} loading={submitting} onClick={onSave} className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto">Lưu</Button>
       </div>
     </>
   )
@@ -172,12 +172,12 @@ export default function EmployerDataProtectionForm() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-lg border border-slate-200 p-5 sm:p-6">
+      <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa Ứng viên - Nhà tuyển dụng</h2>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
             <StatusTag completed={candidateAgreementSubmitted} completedColor="gold" completedLabel="Hệ thống đang xử lý" pendingLabel="Chưa cập nhật" />
             {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label="Chỉnh sửa văn bản" icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700">Chỉnh sửa</Button>}
           </div>
@@ -199,7 +199,7 @@ export default function EmployerDataProtectionForm() {
             submitting={documentMutation.isPending}
           />
         ) : candidateAgreementDocument ? (
-          <div className="mt-4 grid items-center gap-6 rounded-lg border border-slate-200 p-5 sm:grid-cols-[minmax(0,1fr)_220px] sm:p-6">
+          <div className="mt-4 grid min-w-0 items-center gap-6 rounded-lg border border-slate-200 p-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:p-6">
             <a aria-label={CANDIDATE_AGREEMENT_DOCUMENT_NAME} href={documentUrl(candidateAgreementDocument)} target="_blank" rel="noreferrer" className="group flex min-w-0 items-center gap-2 rounded-lg bg-slate-50 px-4 py-3 text-sm !text-slate-700 transition-colors hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)]">
               <FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" /><span className="truncate">{CANDIDATE_AGREEMENT_DOCUMENT_NAME}</span>
             </a>
@@ -208,7 +208,7 @@ export default function EmployerDataProtectionForm() {
         ) : <p className="mt-4 text-sm text-slate-500">Hệ thống đang đồng bộ văn bản của bạn.</p>}
       </section>
 
-      <section className="rounded-lg border border-slate-200 p-5 sm:p-6">
+      <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa {siteName} - Nhà tuyển dụng</h2>
           <StatusTag completed={verification.dpa_accepted} completedLabel="Đã xác nhận" pendingLabel="Chưa xác nhận" />
@@ -223,8 +223,8 @@ export default function EmployerDataProtectionForm() {
             <div className="mt-4">
               <Checkbox checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">Xác nhận đồng ý với các điều khoản của <a href={PLATFORM_DPA_URL} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">Thỏa thuận về xử lý Dữ liệu cá nhân</a></Checkbox>
             </div>
-            <div className="mt-4 flex justify-end">
-              <Button type="primary" size="large" disabled={!platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()} className="!min-w-[112px] !shadow-none">Xác nhận</Button>
+            <div className="mt-4 flex justify-stretch sm:justify-end">
+              <Button type="primary" size="large" disabled={!platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">Xác nhận</Button>
             </div>
           </>
         )}

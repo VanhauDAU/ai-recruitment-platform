@@ -32,10 +32,10 @@ class RecruitmentNeed(models.Model):
         OTHER = 'other', 'Khác'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    recruiter = models.OneToOneField(
+    recruiter = models.ForeignKey(
         'RecruiterProfile',
         on_delete=models.CASCADE,
-        related_name='recruitment_need',
+        related_name='recruitment_needs',
     )
     position_category = models.ForeignKey(
         'jobs.JobCategory',
@@ -50,6 +50,7 @@ class RecruitmentNeed(models.Model):
     budget_max = models.PositiveBigIntegerField(null=True, blank=True)
     budget_source = models.CharField(max_length=20, choices=BudgetSource.choices)
     consultation_topics = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
     completed_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

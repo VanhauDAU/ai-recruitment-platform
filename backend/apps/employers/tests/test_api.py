@@ -256,6 +256,29 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(RecruitmentNeed.objects.filter(recruiter=self.recruiter).exists())
 
+    def test_recruitment_demand_crud_keeps_onboarding_need_and_manages_more_needs(self):
+        first = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
+        second = self.client.post(reverse('employer-recruitment-needs'), {
+            **self.payload,
+            'headcount': 5,
+            'is_continuous': True,
+            'target_date': None,
+        }, format='json')
+
+        self.assertEqual(first.status_code, status.HTTP_200_OK, first.data)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.data)
+        listed = self.client.get(reverse('employer-recruitment-needs'))
+        self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
+        self.assertEqual(len(listed.data), 2)
+
+        detail_url = reverse('employer-recruitment-need-detail', args=[second.data['public_id']])
+        toggled = self.client.patch(detail_url, {'is_active': False}, format='json')
+        self.assertEqual(toggled.status_code, status.HTTP_200_OK, toggled.data)
+        self.assertFalse(toggled.data['is_active'])
+        deleted = self.client.delete(detail_url)
+        self.assertEqual(deleted.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(RecruitmentNeed.objects.filter(recruiter=self.recruiter).count(), 1)
+
     def test_consulting_need_rejects_non_specialization_category(self):
         domain = JobCategory.objects.create(
             name='Công nghệ',

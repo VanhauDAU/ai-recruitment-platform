@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, ArrowRightOutlined, LockOutlined, MailOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, ArrowRightOutlined, DownOutlined, LockOutlined, MailOutlined, PhoneOutlined, UpOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
@@ -16,6 +16,7 @@ import {
 import { EmployerConsentFields, EmployerRegistrationFields } from '@/features/complete-employer-registration'
 import { getProvinces } from '@/entities/location'
 import { useSession } from '@/entities/session'
+import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_COMPLETE_PROFILE_URL, employerAppPath } from '@/shared/config/portals'
 
@@ -24,33 +25,68 @@ const REGISTRATION_FIELDS = new Set([
   'work_location', 'terms_accepted', 'marketing_opt_in',
 ])
 
-const REGISTRATION_STEPS = [
-  { icon: <SafetyCertificateOutlined />, title: 'Tài khoản' },
-  { icon: <TeamOutlined />, title: 'Thông tin nhà tuyển dụng' },
-]
-
-function RegistrationSectionTitle({ number, title, description }) {
+function RegistrationSectionTitle({ title, description }) {
   return (
-    <div className="mb-6 flex items-start gap-3">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black tracking-wide text-emerald-700">
-        {number}
-      </span>
-      <div>
-        <h2 className="text-lg font-black tracking-tight text-slate-900">{title}</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
-      </div>
+    <div className="mb-6 border-b border-slate-100 pb-4">
+      <h2 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">{title}</h2>
+      <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
     </div>
+  )
+}
+
+function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
+  const phoneHref = hotline ? `tel:${hotline.replace(/[^\d+]/g, '')}` : undefined
+
+  return (
+    <section className="login-field mb-7 overflow-hidden rounded-xl border border-emerald-400 bg-white" aria-labelledby="registration-rules-title">
+      <button
+        type="button"
+        aria-controls="registration-rules-content"
+        aria-expanded={expanded}
+        onClick={onToggle}
+        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600 sm:px-5"
+      >
+        <span id="registration-rules-title" className="text-base font-bold">Quy định đăng ký tài khoản</span>
+        <span className="flex shrink-0 items-center gap-2 text-sm font-semibold">
+          {expanded ? <UpOutlined aria-hidden="true" /> : <DownOutlined aria-hidden="true" />}
+        </span>
+      </button>
+
+      {expanded && (
+        <div id="registration-rules-content" className="border-t border-emerald-100 px-4 pb-5 pt-4 text-sm leading-6 text-slate-600 sm:px-5">
+          <p>
+            Để đảm bảo chất lượng dịch vụ, <strong className="font-semibold text-slate-800">{siteName}</strong> không cho phép một người dùng tạo nhiều tài khoản nhà tuyển dụng khác nhau.
+          </p>
+          <p className="mt-3">
+            Nếu phát hiện vi phạm, {siteName} có thể ngừng cung cấp dịch vụ tới các tài khoản trùng lặp hoặc tạm chặn quyền truy cập hệ thống để xác minh.
+          </p>
+          <p className="mt-3">
+            Sau khi đăng ký và cung cấp đầy đủ thông tin cần thiết, nhà tuyển dụng có thể được hỗ trợ hiển thị tin tuyển dụng cơ bản. Số lượng tin đăng và cách thức hiển thị phụ thuộc vào quy định của {siteName} tại từng thời điểm.
+          </p>
+          {hotline && (
+            <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-slate-700">
+              <PhoneOutlined className="text-emerald-600" aria-hidden="true" />
+              Cần hỗ trợ? Liên hệ hotline
+              <a href={phoneHref} className="font-bold !text-emerald-700 hover:!text-emerald-800 hover:underline">{hotline}</a>
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
 
 export default function EmployerRegister() {
   const navigate = useNavigate()
   const { setCurrentUser } = useSession()
+  const { settings, siteName } = useSiteSettings()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [form] = Form.useForm()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
+  const [rulesExpanded, setRulesExpanded] = useState(true)
+  const hotline = settingText(settings.hotline)
   const password = Form.useWatch('password', form) || ''
   const termsAccepted = Form.useWatch('terms_accepted', form) === true
   const marketingOptIn = Form.useWatch('marketing_opt_in', form) === true
@@ -139,25 +175,23 @@ export default function EmployerRegister() {
   return (
     <div className="w-full">
       <AuthFormStyles />
-      <header className="login-card mb-7 rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,#f0fdf4_0%,#ffffff_62%)] p-5 shadow-sm shadow-emerald-950/5 sm:p-7">
-        <div className="flex items-start justify-between gap-5">
+      <header className="login-card mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <AuthLogo className="!mx-0 !h-12 !w-12 !rounded-xl" />
-          <span className="rounded-full border border-emerald-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-emerald-700">Chỉ mất khoảng 3 phút</span>
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">Chỉ mất khoảng 3 phút</span>
         </div>
-        <p className="mt-7 text-xs font-black uppercase tracking-[0.16em] text-emerald-700">Không gian tuyển dụng cho doanh nghiệp</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Đăng ký tài khoản Nhà tuyển dụng</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
           Tạo tài khoản để quản lý ứng viên, thiết lập nhu cầu tuyển dụng và theo dõi hiệu quả trong một nơi.
         </p>
-        <ol className="mt-6 grid grid-cols-2 gap-2" aria-label="Các bước tạo tài khoản">
-          {REGISTRATION_STEPS.map((flowStep, index) => (
-            <li key={flowStep.title} className={`flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors ${index + 1 === step ? 'border-emerald-200 bg-white shadow-sm shadow-emerald-950/5' : 'border-transparent bg-white/50 text-slate-400'}`}>
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${index + 1 === step ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{flowStep.icon}</span>
-              <span><strong className={`block text-xs font-bold ${index + 1 === step ? 'text-slate-800' : 'text-slate-400'}`}>{String(index + 1).padStart(2, '0')} · {flowStep.title}</strong></span>
-            </li>
-          ))}
-        </ol>
       </header>
+
+      <RegistrationRules
+        expanded={rulesExpanded}
+        hotline={hotline}
+        onToggle={() => setRulesExpanded((current) => !current)}
+        siteName={siteName}
+      />
 
       {error && <Alert type="error" message={error} showIcon closable onClose={() => setError('')} className="login-field mb-5 !rounded-lg" />}
 
@@ -170,9 +204,9 @@ export default function EmployerRegister() {
         scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
       >
         {step === 1 ? (
-          <section className="login-field rounded-3xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-950/[0.03] sm:p-7">
-            <RegistrationSectionTitle number="01" title="Tạo thông tin đăng nhập" description="Dùng email công ty nếu có để việc xác thực doanh nghiệp thuận lợi hơn." />
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+          <section className="login-field">
+            <RegistrationSectionTitle title="Tạo thông tin đăng nhập" description="Dùng email công ty nếu có để việc xác thực doanh nghiệp thuận lợi hơn." />
+            <div className="border-b border-slate-100 pb-5">
               <p className="mb-3 text-sm font-semibold text-slate-700">Trước khi tiếp tục, vui lòng xác nhận lựa chọn của bạn</p>
               <EmployerConsentFields compact />
             </div>
@@ -235,8 +269,8 @@ export default function EmployerRegister() {
             </button>
           </section>
         ) : (
-          <section className="login-field rounded-3xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-950/[0.03] sm:p-7">
-            <RegistrationSectionTitle number="02" title="Thông tin nhà tuyển dụng" description="Bổ sung người liên hệ; bạn sẽ tìm hoặc tạo đúng hồ sơ công ty ở bước xác thực riêng." />
+          <section className="login-field">
+            <RegistrationSectionTitle title="Thông tin nhà tuyển dụng" description="Bổ sung người liên hệ; bạn sẽ tìm hoặc tạo đúng hồ sơ công ty ở bước xác thực riêng." />
             <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"><ArrowLeftOutlined />Quay lại</button>
