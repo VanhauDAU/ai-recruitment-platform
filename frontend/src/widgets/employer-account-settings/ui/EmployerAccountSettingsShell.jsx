@@ -29,7 +29,6 @@ const ITEMS = [
   { to: EMPLOYER_DATA_PROTECTION_URL, label: 'Văn bản xử lý Dữ liệu cá nhân', icon: SafetyCertificateOutlined },
   { to: EMPLOYER_COMPANY_SETTINGS_URL, label: 'Thông tin công ty', icon: BankOutlined },
   { to: EMPLOYER_RECRUITMENT_DEMAND_URL, label: 'Nhu cầu tuyển dụng', icon: SolutionOutlined },
-  { label: 'Đồng bộ CV', icon: SyncOutlined, disabled: true },
   { to: EMPLOYER_GENERAL_SETTINGS_URL, label: 'Cài đặt', icon: SettingOutlined },
 ]
 
