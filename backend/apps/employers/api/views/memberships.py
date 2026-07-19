@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployerWithRecentReauthentication
+from apps.accounts.permissions import IsEmployer
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, RecruiterProfile
 from ...selectors import has_explicit_company_link
@@ -57,15 +57,49 @@ def _save_document_file(upload, directory, doc_type):
     return path
 
 
-def _save_document(request, company, doc_type, upload, update_request=None):
+def _save_document(request, company, doc_type, upload, update_request=None, recruiter=None):
+    if company is not None:
+        directory = f'employers/{company.public_id}/documents'
+    elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT and recruiter is not None:
+        directory = f'employers/{recruiter.public_id}/documents'
+    else:
+        raise ValidationError({'detail': 'Không xác định được chủ sở hữu của giấy tờ.'})
+
     path = _save_document_file(
         upload,
-        f'employers/{company.public_id}/documents',
+        directory,
         doc_type,
     )
+    document_name = (
+        'Thỏa thuận xử lý DLCN'
+        if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
+        else upload.name
+    )
+    if recruiter is not None and doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
+        existing = CompanyDocument.objects.filter(
+            recruiter=recruiter,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        ).first()
+        if existing is not None:
+            previous_path = existing.file_url
+            existing.file_url = path
+            existing.file_name = document_name
+            existing.uploaded_by = request.user
+            existing.status = CompanyDocument.Status.PENDING
+            existing.reviewed_by = None
+            existing.reviewed_at = None
+            existing.review_note = ''
+            existing.save(update_fields=[
+                'file_url', 'file_name', 'uploaded_by', 'status', 'reviewed_by',
+                'reviewed_at', 'review_note',
+            ])
+            if previous_path and previous_path != path:
+                default_storage.delete(previous_path)
+            return existing
+
     return CompanyDocument.objects.create(
         company=company, uploaded_by=request.user, update_request=update_request,
-        doc_type=doc_type, file_url=path, file_name=upload.name,
+        recruiter=recruiter, doc_type=doc_type, file_url=path, file_name=document_name,
     )
 
 
@@ -75,7 +109,8 @@ class JoinCompanyView(APIView):
     Giấy tờ: `business_registration_file` HOẶC (`authorization_file` + `identity_file`).
     """
 
-    permission_classes = [IsEmployerWithRecentReauthentication]
+    # Nộp hồ sơ chỉ tạo membership chờ duyệt, nên không yêu cầu MFA/xác thực lại.
+    permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
 
     @extend_schema(

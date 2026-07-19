@@ -1,11 +1,12 @@
 import { MenuOutlined } from '@ant-design/icons'
-import { App, Button } from 'antd'
+import { Button } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
+import { message } from '@/shared/lib/toast'
 import { BrandLogo } from '@/entities/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
@@ -83,7 +84,6 @@ export default function Header({ editorMode = false }) {
   const { promptLogin } = useLoginPrompt()
   const navigate = useNavigate()
   const location = useLocation()
-  const { message } = App.useApp()
   const [openKey, setOpenKey] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileKey, setMobileKey] = useState(null)

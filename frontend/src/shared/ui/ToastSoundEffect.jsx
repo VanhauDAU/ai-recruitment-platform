@@ -1,16 +1,16 @@
 import { useEffect, useRef } from 'react'
 
-const TOAST_SELECTOR = '.ant-message-notice'
+const TOAST_SELECTOR = '[data-sonner-toast]'
 
 function toastTone(node) {
-  if (node.matches('.ant-message-notice-error') || node.querySelector('.ant-message-error')) return 280
-  if (node.matches('.ant-message-notice-warning') || node.querySelector('.ant-message-warning')) return 500
-  if (node.matches('.ant-message-notice-info') || node.querySelector('.ant-message-info')) return 620
+  if (node.dataset.type === 'error') return 280
+  if (node.dataset.type === 'warning') return 500
+  if (node.dataset.type === 'info') return 620
   return 740
 }
 
 /**
- * Plays a subtle, generated tone whenever the global Ant Design message layer
+ * Plays a subtle, generated tone whenever the global Sonner toast layer
  * receives a toast. No audio file is loaded, and sound remains opt-in through
  * the browser's first user interaction policy.
  */

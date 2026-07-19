@@ -280,6 +280,20 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('img', { name: 'Minh họa căn cước công dân hoặc hộ chiếu' })).toHaveAttribute('src', '/images/employer/identity-sample.jpg')
   await expect(page.getByRole('button', { name: 'Lưu' })).toBeDisabled()
 
+  await page.goto('/tuyendung/app/account/settings/personal-data-protection')
+  await expect(page.getByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
+  const dpaFileInput = page.locator('input[type="file"]')
+  await dpaFileInput.setInputFiles({
+    name: 'thoa-thuan.docx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer: Buffer.from('candidate agreement'),
+  })
+  await page.getByRole('checkbox', { name: /Tôi cam đoan văn bản này/i }).check()
+  await expect(page.getByRole('button', { name: 'Lưu' })).toBeEnabled()
+  await page.getByRole('checkbox', { name: /Xác nhận đồng ý với các điều khoản/i }).check()
+  await expect(page.getByRole('button', { name: 'Xác nhận' })).toBeEnabled()
+
   if (page.viewportSize().width < 1024) {
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
   }

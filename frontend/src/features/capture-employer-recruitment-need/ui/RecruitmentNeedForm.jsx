@@ -1,6 +1,6 @@
 import { CalendarOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Alert, App, Button, Checkbox, DatePicker, Form, InputNumber, Radio, Select } from 'antd'
+import { Alert, Button, Checkbox, DatePicker, Form, InputNumber, Radio, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,6 +9,7 @@ import { getJobCategories, POSITION_LEVEL_LABELS } from '@/entities/job'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 const CONSULTATION_OPTIONS = [
   { value: 'free_posting', label: 'Tôi muốn được đăng tin miễn phí' },
@@ -24,7 +25,6 @@ const moneyParser = (value) => value?.replace(/\D/g, '') || ''
 
 export default function RecruitmentNeedForm({ onCompleted }) {
   const [form] = Form.useForm()
-  const { message } = App.useApp()
   const { refreshSession } = useSession()
   const navigate = useNavigate()
   const continuous = Form.useWatch('is_continuous', form) === true

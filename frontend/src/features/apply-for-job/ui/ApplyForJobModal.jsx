@@ -10,12 +10,13 @@ import {
   SafetyCertificateOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Input, Modal, Select, Spin, message } from 'antd'
+import { Alert, Button, Checkbox, Input, Modal, Select, Spin } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { submitJobApplication } from '@/entities/application'
 import { getMyCvs, importCvFile } from '@/entities/cv'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { message } from '@/shared/lib/toast'
 
 const INITIAL_VISIBLE_CVS = 5
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024

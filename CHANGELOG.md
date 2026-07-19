@@ -6,6 +6,41 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-19
+
+#### Changed — Xác thực giấy tờ nhà tuyển dụng
+
+- Hoàn thiện UX trang `/tuyendung/app/account/settings/gpkd`: hai phương thức giấy ĐKDN hoặc giấy ủy quyền + CCCD/hộ chiếu luôn giữ thứ tự dọc; mỗi phương thức chỉ mở các ô hồ sơ tương ứng, có khoảng cách thao tác rõ ràng trên desktop và mobile.
+- Thay minh họa code-native bằng ba ảnh mẫu đã tối ưu trong `frontend/public/images/employer/`; cập nhật link tải mẫu giấy ủy quyền và link hướng dẫn đăng tải.
+- Trong giai đoạn hiện tại, người dùng vẫn xem/chọn file cục bộ nhưng nút Lưu được khóa; không gửi tài liệu lên API trước khi workflow cập nhật thông tin công ty và lưu giấy tờ được bật.
+
+#### Added — Văn bản xử lý Dữ liệu cá nhân
+
+- Hoàn thiện `/tuyendung/app/account/settings/personal-data-protection` theo hai khối độc lập: thỏa thuận Ứng viên–Nhà tuyển dụng có hướng dẫn, tải mẫu DOCX local, tải lên/lưu; và thỏa thuận nền tảng–Nhà tuyển dụng có link văn bản đầy đủ cùng xác nhận inline.
+- Đưa mẫu DOCX người dùng cung cấp vào `frontend/public/documents/` để nhà tuyển dụng tải về và chỉnh sửa. Giao diện chỉ nhận một tệp DOC/DOCX/PDF tối đa 5 MB; chọn tệp mới sẽ thay thế tệp đang chờ lưu.
+- Thêm migration `employers.0012`: văn bản DLCN được gắn với recruiter thay vì bắt buộc công ty, có thể lưu/thay thế khi chưa cập nhật thông tin công ty; dữ liệu DLCN cũ theo company vẫn được đọc để giữ nguyên tiến độ xác thực.
+
+#### Fixed — Màu liên kết DLCN
+
+- Ép màu emerald cho các liên kết/hành động trên trang DLCN (hướng dẫn, tải mẫu, xem nội dung đầy đủ, thỏa thuận và tài liệu đã tải) để không bị màu xanh mặc định của Ant Design ghi đè.
+- Đặt checkbox xác nhận thỏa thuận nền tảng ở một dòng/khối riêng dưới liên kết xem văn bản, giữ khoảng cách và căn chỉnh ổn định khi nội dung dài.
+
+#### Fixed — Toast workspace nhà tuyển dụng
+
+- Thay toàn bộ lớp `message` Ant Design bằng Sonner: toast được render độc lập ở cấp `document.body`, không thể bị header hay vùng cuộn của workspace cắt mất nội dung. Các trạng thái thành công, lỗi, cảnh báo, thông tin và đang tải có biểu tượng/màu riêng; người dùng có thể đóng từng toast.
+
+#### Changed — Nộp giấy tờ nhà tuyển dụng
+
+- Bỏ yêu cầu MFA và xác thực lại phiên đối với thao tác nộp/thay thế giấy tờ doanh nghiệp, giấy tờ liên kết công ty và văn bản DLCN. Endpoint vẫn yêu cầu phiên nhà tuyển dụng hợp lệ để gắn đúng chủ sở hữu; mọi tài liệu nộp mới tiếp tục chờ admin duyệt.
+- Sau khi lưu văn bản DLCN, hiển thị toast xác nhận tiếp nhận theo tên hệ thống, nhãn “Hệ thống đang xử lý” và chỉ cho mở form thay tệp qua nút Chỉnh sửa/Hủy. Tài liệu DOC/DOCX đã nộp mở bằng Google Docs Viewer; thời điểm chấp nhận thỏa thuận nền tảng hiển thị đến giây theo giờ Việt Nam.
+- Khi văn bản DLCN đang được xử lý, vẫn giữ khối **Văn bản mẫu** và nút tải xuống cạnh tệp đã nộp; bỏ nhãn trạng thái trùng lặp ở dòng tệp để chỉ dùng nhãn trạng thái tại tiêu đề.
+- Khi chọn **Chỉnh sửa**, giữ liên kết xem tệp đã nộp và hiển thị tên tệp thay thế ngay trong ô tải lên. Sau khi lưu, tên hiển thị chuẩn của tài liệu là **Thỏa thuận xử lý DLCN**, không dùng tên gốc của tệp tải lên.
+- API ưu tiên văn bản DLCN mới gắn recruiter trước bản DLCN lịch sử theo company, tránh mở nhầm PDF cũ khi hai bản cùng tồn tại. DOC/DOCX tại URL HTTPS storage công khai/S3 có chữ ký mở qua Google Docs Viewer; PDF và URL localhost mở trực tiếp. Hover liên kết tệp dùng màu thương hiệu cấu hình của hệ thống.
+
+#### Documentation
+
+- Cập nhật hướng dẫn xác thực employer, tiến độ EMP-P8/EMP-P9 và regression test desktop/mobile cho layout/asset GPKD cùng DLCN; chuẩn hóa thông báo toàn ứng dụng qua Sonner.
+
 ### 2026-07-18
 
 #### Added — Cổng marketing nhà tuyển dụng

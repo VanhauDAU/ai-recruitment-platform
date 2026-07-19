@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { App, AutoComplete, Button, Checkbox, Form, Input, InputNumber, Radio, Select, Switch } from 'antd'
+import { AutoComplete, Button, Checkbox, Form, Input, InputNumber, Radio, Select, Switch } from 'antd'
 import { UnorderedListOutlined, UserOutlined } from '@ant-design/icons'
 import { updateCandidateJobPreferences } from '@/entities/candidate-preferences'
 import { getJobCategories } from '@/entities/job'
 import { getProvinces } from '@/entities/location'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 import JobSpecializationPicker from './JobSpecializationPicker'
 
 const EXPERIENCE_OPTIONS = [
@@ -45,7 +46,6 @@ function toFormValues(preference) {
 }
 
 export default function JobPreferencesForm({ preference, profile, onProfileSaved, onSaved, onSkip, submitLabel = 'Hoàn thành', variant = 'default', renderFooter }) {
-  const { message } = App.useApp()
   const [form] = Form.useForm()
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -84,7 +84,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
         if (active) setCatalogLoading(false)
       })
     return () => { active = false }
-  }, [message])
+  }, [])
 
   useEffect(() => {
     form.setFieldsValue({ ...toFormValues(preference), gender: profile?.gender || undefined })

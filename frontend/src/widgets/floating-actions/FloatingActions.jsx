@@ -11,7 +11,7 @@ import {
   SafetyOutlined,
   UpOutlined,
 } from '@ant-design/icons'
-import { App, Badge, Modal, Tooltip } from 'antd'
+import { Badge, Modal, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLoginPrompt } from '@/features/auth'
@@ -19,9 +19,9 @@ import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { useSiteSettings } from '@/entities/site-settings'
 import { FeedbackModal } from '@/features/submit-feedback'
+import { message } from '@/shared/lib/toast'
 
 export default function FloatingActions() {
-  const { message } = App.useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useSession()

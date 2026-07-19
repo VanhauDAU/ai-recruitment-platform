@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
+import AppToast from '@/shared/ui/AppToast'
 import CvDraftEditor from './CvDraftEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -49,7 +50,7 @@ function renderLegacyEditor() {
 }
 
 function renderWysiwygEditor(props = {}) {
-  return render(<App><SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" {...props} /></SiteSettingsContext.Provider></App>)
+  return render(<App><AppToast /><SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: true } }}><CvDraftEditor publicId="cv_1" {...props} /></SiteSettingsContext.Provider></App>)
 }
 
 describe('CV draft editor', () => {

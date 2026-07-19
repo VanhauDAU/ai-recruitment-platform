@@ -166,11 +166,55 @@ tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên 
 Company chỉ được tính hoàn tất sau một hành động liên kết rõ ràng; hồ sơ company
 rỗng do luồng đăng ký cũ không được tính là đã hoàn tất.
 
-Hai mốc DLCN dùng cùng trang nhưng có trạng thái và hành động độc lập: một mốc
-là tài liệu ứng viên–nhà tuyển dụng (`candidate_dpa`), mốc còn lại là việc chấp
-nhận thỏa thuận nền tảng–nhà tuyển dụng. Nút đăng tin đầu tiên bị khóa tới khi
-đủ năm điều kiện trước và workflow đăng tin sẽ được triển khai ở giai đoạn sau.
-Người dùng vẫn có thể chọn “xác thực thêm sau” để vào dashboard.
+### Trang giấy đăng ký doanh nghiệp
+
+Trang `/tuyendung/app/account/settings/gpkd` hiển thị hai cách cung cấp hồ sơ
+theo thứ tự cố định: (1) giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương;
+(2) giấy ủy quyền kèm CCCD/hộ chiếu. Khi đổi lựa chọn, chỉ các ô tài liệu của
+cách đó hiển thị bên dưới radio đã chọn; radio còn lại không đổi vị trí. Mỗi ô
+nhận JPEG/JPG/PNG/PDF tối đa 5 MB, có minh họa local tại
+`frontend/public/images/employer/` và liên kết tới tài liệu hướng dẫn/mẫu giấy
+ủy quyền.
+
+Ở giai đoạn hiện tại, việc chọn file chỉ phục vụ xem trước UI cục bộ. Nút **Lưu**
+luôn disabled, không gọi API upload hoặc tạo trạng thái xác thực giả. Workflow
+persist tài liệu chỉ được mở sau khi thông tin công ty đã được cập nhật và API
+cho đầy đủ hai phương thức hồ sơ được chốt.
+
+### Trang văn bản xử lý Dữ liệu cá nhân
+
+Trang `/tuyendung/app/account/settings/personal-data-protection` có hai mốc
+độc lập. Khối đầu là văn bản thỏa thuận **Ứng viên – Nhà tuyển dụng**: có link
+hướng dẫn, link tải mẫu DOCX tại
+`frontend/public/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx`,
+ô tải lên DOC/DOCX/PDF tối đa 5 MB và cam đoan trước khi bấm **Lưu**. Mỗi lần
+chỉ có một tệp cục bộ; chọn tệp mới để thay thế tệp cũ. Backend lưu văn bản này
+theo `RecruiterProfile` (không bắt buộc company), reset trạng thái duyệt khi
+thay tệp, và vẫn đọc văn bản DLCN lịch sử đã từng gắn company. Việc nộp hoặc
+thay thế tài liệu chỉ cần phiên đăng nhập nhà tuyển dụng còn hợp lệ, không bắt
+MFA hoặc xác thực lại; tệp mới luôn chờ admin duyệt.
+
+Sau khi lưu, trang hiển thị nhãn **Hệ thống đang xử lý**, toast xác nhận đã
+nhận giấy tờ và nút **Chỉnh sửa**. Form thay tệp chỉ mở khi chọn nút này, có
+**Lưu** và **Hủy** cạnh nhau. Khi cả bản DLCN lịch sử của company và bản mới
+của recruiter cùng tồn tại, API luôn ưu tiên bản recruiter mới nhất. DOC/DOCX
+qua URL HTTPS storage công khai/S3 có chữ ký mở bằng Google Docs Viewer; PDF
+và URL localhost mở trực tiếp theo định dạng.
+Khối **Văn bản mẫu** và nút tải mẫu vẫn hiện cạnh tệp đã nộp; trạng thái chỉ hiển thị một lần tại tiêu đề. Khi thỏa thuận nền tảng được chấp nhận, trang
+hiển thị chính xác giờ-phút-giây và ngày xác nhận theo múi giờ Việt Nam.
+
+Khi chọn **Chỉnh sửa**, liên kết **Tệp hiện tại: Thỏa thuận xử lý DLCN** vẫn cho
+phép xem tệp đang chờ duyệt; tên tệp thay thế được hiển thị bên trong ô tải lên.
+Sau khi lưu, backend chuẩn hóa tên hiển thị của văn bản DLCN thành **Thỏa thuận
+xử lý DLCN**.
+
+Khối thứ hai là thỏa thuận **nền tảng – Nhà tuyển dụng**: người dùng mở nội dung
+đầy đủ ở `/data-processing-agreement`, tích xác nhận rồi bấm **Xác nhận** ngay
+trên trang. Cả Lưu và Xác nhận đều hoạt động khi nhà tuyển dụng chưa cập nhật
+thông tin công ty; hai trạng thái `candidate_dpa_submitted` và `dpa_accepted`
+vẫn được tính độc lập. Nút đăng tin đầu tiên bị khóa tới khi đủ năm điều kiện
+trước và workflow đăng tin sẽ được triển khai ở giai đoạn sau. Người dùng vẫn
+có thể chọn “xác thực thêm sau” để vào dashboard.
 
 ### Cấp xác thực trên sidebar
 

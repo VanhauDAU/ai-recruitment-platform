@@ -528,6 +528,80 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('chờ duyệt', str(response.data))
 
+    def test_candidate_dpa_can_be_saved_without_mfa_requirement(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                first = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                    'file': SimpleUploadedFile(
+                        'thoa-thuan-cu.docx',
+                        DOCX_BYTES,
+                        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ),
+                }, format='multipart')
+                replacement = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                    'file': SimpleUploadedFile(
+                        'thoa-thuan-moi.docx',
+                        DOCX_BYTES,
+                        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ),
+                }, format='multipart')
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
+        self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
+        documents = CompanyDocument.objects.filter(
+            recruiter=self.recruiter,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        )
+        self.assertEqual(documents.count(), 1)
+        document = documents.get()
+        self.assertIsNone(document.company)
+        self.assertEqual(document.file_name, 'Thỏa thuận xử lý DLCN')
+        self.assertTrue(self.client.get(reverse('employer-me')).data['onboarding']['candidate_dpa_submitted'])
+        listed = self.client.get(reverse('employer-company-documents'))
+        self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
+        self.assertEqual(len(listed.data), 1)
+
+    def test_current_recruiter_dpa_is_listed_before_legacy_company_dpa(self):
+        self.recruiter.company = self.company
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        self.recruiter.save(update_fields=['company', 'company_role', 'membership_status', 'updated_at'])
+        CompanyDocument.objects.create(
+            company=self.company,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            file_url='employers/legacy-company-dpa.pdf',
+            file_name='Thỏa thuận xử lý DLCN',
+        )
+        current_document = CompanyDocument.objects.create(
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            file_url='employers/current-recruiter-dpa.docx',
+            file_name='Thỏa thuận xử lý DLCN',
+        )
+
+        response = self.client.get(reverse('employer-company-documents'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.data[0]['id'], current_document.id)
+        self.assertTrue(response.data[0]['file_url'].endswith('.docx'))
+
+    def test_join_with_business_registration_does_not_require_mfa(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+
+        response = self._join_with_business_registration()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
     def test_admin_approves_membership(self):
         self._join_with_business_registration()
 

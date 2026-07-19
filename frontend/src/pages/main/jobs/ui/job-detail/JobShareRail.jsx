@@ -1,5 +1,5 @@
 import { FacebookFilled, LinkedinFilled, LinkOutlined, TwitterOutlined } from '@ant-design/icons'
-import { message } from 'antd'
+import { message } from '@/shared/lib/toast'
 
 function shareUrl(network) {
   const url = encodeURIComponent(window.location.href)

@@ -1,7 +1,8 @@
 import { DesktopOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Empty, Popconfirm, Skeleton, Tag } from 'antd'
+import { Button, Empty, Popconfirm, Skeleton, Tag } from 'antd'
 import { listSessions, revokeOtherSessions, revokeSession } from '../api/session-management.api'
+import { message } from '@/shared/lib/toast'
 
 function timeAgo(iso) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
@@ -13,7 +14,6 @@ function timeAgo(iso) {
 }
 
 export default function SessionManager() {
-  const { message } = App.useApp()
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['auth-sessions'], queryFn: listSessions })
   const sessions = Array.isArray(data) ? data : []

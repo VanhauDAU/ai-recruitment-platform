@@ -2,8 +2,9 @@ import {
   CameraOutlined, CheckCircleFilled, CheckOutlined, PlusCircleOutlined,
   QrcodeOutlined, QuestionCircleOutlined, WarningFilled,
 } from '@ant-design/icons'
-import { App, Avatar, Switch } from 'antd'
+import { Avatar, Switch } from 'antd'
 import { useState } from 'react'
+import { message } from '@/shared/lib/toast'
 import { Link } from 'react-router-dom'
 import { useSession } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
@@ -77,7 +78,6 @@ function GreetingCard() {
 }
 
 function SuggestionToggleRow() {
-  const { message } = App.useApp()
   // TODO(candidate-settings): đọc/ghi cờ gợi ý việc làm qua API candidate profile.
   const [enabled, setEnabled] = useState(false)
 

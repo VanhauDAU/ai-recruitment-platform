@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CopyOutlined, EditOutlined } from '@ant-design/icons'
 import { CvDocumentPreview } from '@/entities/cv'
+import { message } from '@/shared/lib/toast'
 
 function documentFromVersion(version) {
   return {

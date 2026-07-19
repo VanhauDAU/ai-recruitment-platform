@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { App, Button, Form, Input } from 'antd'
+import { Button, Form, Input } from 'antd'
 import { updateProfile } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { useSession } from '@/entities/session'
+import { message } from '@/shared/lib/toast'
 
 // Số điện thoại VN: 0 hoặc +84 rồi 9-10 chữ số (khớp validate backend).
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
@@ -11,7 +12,6 @@ const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
 // (đổi email đi qua luồng xác thực riêng). Card trắng trên nền xám của layout.
 export default function PersonalInfo() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const [form] = Form.useForm()
   const [saving, setSaving] = useState(false)
 

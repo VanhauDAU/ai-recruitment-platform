@@ -8,7 +8,7 @@ import {
   MobileOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { App, Button, Input, Modal, QRCode, Radio, Switch, Tooltip } from 'antd'
+import { Button, Input, Modal, QRCode, Radio, Switch, Tooltip } from 'antd'
 import { useState } from 'react'
 import { useSession } from '@/entities/session'
 import {
@@ -24,6 +24,7 @@ import {
   startEmployerTotpSetup,
 } from '@/features/two-factor'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 import { sanitizeTwoFactorCode, TWO_FACTOR_CODE_LENGTH } from '@/shared/ui/two-factor-code'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 
@@ -50,7 +51,6 @@ function MethodRow({ icon, title, description, checked, loading, disabled, onCha
 }
 
 function BackupCodesModal({ codes, email, onClose }) {
-  const { message } = App.useApp()
   const copyCodes = async () => {
     await navigator.clipboard?.writeText(codes.join('\n'))
     message.success('Đã sao chép mã dự phòng.')
@@ -89,7 +89,6 @@ function formatManualKey(manualKey) {
 }
 
 function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange, onConfirm }) {
-  const { message } = App.useApp()
   const [copied, setCopied] = useState(false)
 
   if (!setup) return null
@@ -161,7 +160,6 @@ function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange
 
 export default function EmployerGeneralSettings() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const [verification, setVerification] = useState(null)
   const [sending, setSending] = useState(false)
   const [backupCodes, setBackupCodes] = useState([])

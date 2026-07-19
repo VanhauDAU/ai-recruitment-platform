@@ -1,8 +1,9 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Button, Form, Skeleton, Tag } from 'antd'
+import { Alert, Button, Form, Skeleton, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { message } from '@/shared/lib/toast'
 import { EmployerConsentFields, EmployerRegistrationFields } from '@/features/complete-employer-registration'
 import { completeEmployerRegistration, getEmployerProfile } from '@/entities/employer-profile'
 import { getProvinces } from '@/entities/location'
@@ -25,7 +26,6 @@ function readConsentDraft() {
 
 export default function EmployerOnboardingPanel() {
   const { user, refreshSession } = useSession()
-  const { message } = App.useApp()
   const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const [error, setError] = useState('')

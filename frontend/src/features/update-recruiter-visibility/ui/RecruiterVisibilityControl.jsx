@@ -1,6 +1,7 @@
-import { Checkbox, Modal, Skeleton, Switch, message } from 'antd'
+import { Checkbox, Modal, Skeleton, Switch } from 'antd'
 import { useEffect, useState } from 'react'
 import { getRecruiterVisibility, updateRecruiterVisibility } from '@/entities/candidate-preferences'
+import { message } from '@/shared/lib/toast'
 
 export default function RecruiterVisibilityControl({ cvPublicId }) {
   const [status, setStatus] = useState(null)

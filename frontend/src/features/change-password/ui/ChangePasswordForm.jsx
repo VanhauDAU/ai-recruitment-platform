@@ -1,7 +1,8 @@
 import { ExclamationCircleFilled, LockOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
-import { Alert, App, Button, Checkbox, Form, Input } from 'antd'
+import { Alert, Button, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
+import { message } from '@/shared/lib/toast'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -44,7 +45,6 @@ function PasswordStrengthGuide({ value }) {
 
 export default function ChangePasswordForm() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const hasPassword = Boolean(user?.has_usable_password)

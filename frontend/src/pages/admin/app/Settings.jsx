@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Modal, Skeleton, Tag, Tabs, Typography, message } from 'antd'
+import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
+import { message } from '@/shared/lib/toast'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 

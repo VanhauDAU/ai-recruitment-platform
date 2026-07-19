@@ -1,6 +1,6 @@
 import { CameraOutlined, DownloadOutlined, LinkOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { App, Avatar, Button, Form, Input, Select } from 'antd'
+import { Avatar, Button, Form, Input, Select } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getEmployerProfile } from '@/entities/employer-profile'
@@ -8,13 +8,13 @@ import { useSession } from '@/entities/session'
 import { updateProfile, uploadAvatar } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
 const GENDER_LABELS = { male: 'Nam', female: 'Nữ', other: 'Khác' }
 
 export default function EmployerAccountInformation() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)

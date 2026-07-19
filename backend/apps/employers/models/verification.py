@@ -56,11 +56,13 @@ class CompanyUpdateRequest(models.Model):
 
 
 class CompanyDocument(models.Model):
-    """Giấy tờ xác thực của công ty (ĐKDN, ủy quyền, định danh, DLCN...).
+    """Giấy tờ xác thực của công ty và văn bản DLCN của nhà tuyển dụng.
 
     `uploaded_by` SET_NULL: giấy tờ pháp lý thuộc về công ty, không mất khi
-    tài khoản người upload bị xóa. Gắn `update_request` khi là hồ sơ đính kèm
-    yêu cầu cập nhật; gắn với luồng join công ty qua `uploaded_by` + company.
+    tài khoản người upload bị xóa. Các giấy tờ công ty gắn `company`; riêng
+    văn bản DLCN ứng viên gắn `recruiter` để nhà tuyển dụng có thể cập nhật
+    trước khi hoàn thiện thông tin công ty. Gắn `update_request` khi là hồ sơ
+    đính kèm yêu cầu cập nhật.
     """
 
     class DocType(models.TextChoices):
@@ -75,7 +77,16 @@ class CompanyDocument(models.Model):
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Từ chối'
 
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='documents')
+    company = models.ForeignKey(
+        Company, on_delete=models.CASCADE, null=True, blank=True, related_name='documents'
+    )
+    recruiter = models.ForeignKey(
+        'employers.RecruiterProfile',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='personal_documents',
+    )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+'
     )
@@ -93,6 +104,14 @@ class CompanyDocument(models.Model):
     review_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f'{self.company_id}:{self.doc_type}:{self.status}'
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(doc_type='data_processing_agreement') | models.Q(company__isnull=False),
+                name='company_document_requires_company_unless_dpa',
+            ),
+        ]
 
+    def __str__(self):
+        owner = self.company_id or f'recruiter-{self.recruiter_id}'
+        return f'{owner}:{self.doc_type}:{self.status}'

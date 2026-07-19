@@ -1,6 +1,6 @@
 import { BankOutlined, CheckCircleFilled, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Button, Checkbox, Form, Input, Modal, Radio, Result, Select, Skeleton, Tabs, Tag, Upload } from 'antd'
+import { Alert, Button, Checkbox, Form, Input, Modal, Radio, Result, Select, Skeleton, Tabs, Tag, Upload } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 const COMPANY_SIZE_OPTIONS = [
   ['1-9', '1 – 9 nhân viên'],
@@ -23,7 +24,6 @@ const COMPANY_SIZE_OPTIONS = [
 ].map(([value, label]) => ({ value, label }))
 
 function SearchCompanyTab({ disabled, onLinked }) {
-  const { message } = App.useApp()
   const [query, setQuery] = useState('')
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [proofType, setProofType] = useState('business_registration')
@@ -103,7 +103,6 @@ function SearchCompanyTab({ disabled, onLinked }) {
 }
 
 function CreateCompanyTab({ disabled, industries, onCreated }) {
-  const { message } = App.useApp()
   const [form] = Form.useForm()
   const selectedIndustries = Form.useWatch('industries', form) || []
   const hasNoWebsite = Form.useWatch('has_no_website', form)
