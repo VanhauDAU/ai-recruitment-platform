@@ -108,7 +108,7 @@ export default function EmployerAccountInformation() {
             <Avatar size={36} src={user?.avatar_url || undefined} className="!bg-slate-100 !text-slate-500">
               {(user?.full_name || user?.email || 'N').trim().charAt(0).toUpperCase()}
             </Avatar>
-            <input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleAvatarChange} />
+            <input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="!hidden" onChange={handleAvatarChange} />
             <Button size="small" icon={<CameraOutlined />} loading={uploadingAvatar} onClick={() => avatarInputRef.current?.click()}>Đổi avatar</Button>
           </div>
 

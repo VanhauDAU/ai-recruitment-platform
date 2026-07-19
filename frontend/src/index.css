@@ -398,3 +398,23 @@ body {
 .animate-employer-marquee:hover {
   animation-play-state: paused;
 }
+
+@keyframes nudgeX {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.animate-nudge-x {
+  animation: nudgeX 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-nudge-x {
+    animation: none;
+  }
+}

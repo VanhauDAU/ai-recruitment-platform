@@ -6,6 +6,7 @@ import {
   CheckCircleFilled,
   CustomerServiceOutlined,
   DashboardOutlined,
+  DoubleRightOutlined,
   FileTextOutlined,
   GiftOutlined,
   HistoryOutlined,
@@ -37,6 +38,7 @@ import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
+  EMPLOYER_GENERAL_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,
   EMPLOYER_VERIFY_URL,
   employerAppPath,
@@ -274,9 +276,9 @@ export default function EmployerWorkspaceLayout() {
                       <Avatar size={34} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
                     </Link>
                   </Tooltip>
-                  <Tooltip title={accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'} placement="right">
+                  <Tooltip title={accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản chưa đủ an toàn'} placement="right">
                     <Link
-                      to={EMPLOYER_VERIFY_URL}
+                      to={accountVerificationLevel.percent === 100 ? EMPLOYER_VERIFY_URL : EMPLOYER_GENERAL_SETTINGS_URL}
                       aria-label="Xem trạng thái xác thực tài khoản"
                       className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
                     >
@@ -307,12 +309,22 @@ export default function EmployerWorkspaceLayout() {
                       <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
                     </Popover>
                   </span>
-                  <Link
-                    to={EMPLOYER_VERIFY_URL}
-                    className={`mt-3 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-[11px] font-bold transition ${accountVerificationLevel.percent === 100 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
-                  >
-                    <SafetyCertificateOutlined /> {accountVerificationLevel.percent === 100 ? 'Tài khoản đã đủ an toàn' : 'Tài khoản cần hoàn thiện'}
-                  </Link>
+                  {accountVerificationLevel.percent === 100 ? (
+                    <Link
+                      to={EMPLOYER_VERIFY_URL}
+                      className="mt-3 flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      <SafetyCertificateOutlined /> Tài khoản đã đủ an toàn
+                    </Link>
+                  ) : (
+                    <Link
+                      to={EMPLOYER_GENERAL_SETTINGS_URL}
+                      className="group mt-3 flex items-center justify-center gap-2 rounded-full bg-red-50 px-3 py-2 text-[11px] font-bold text-red-600 transition hover:bg-red-100"
+                    >
+                      <SafetyCertificateOutlined /> Tài khoản chưa đủ an toàn
+                      <DoubleRightOutlined aria-hidden="true" className="animate-nudge-x" />
+                    </Link>
+                  )}
                 </>
               )}
             </div>

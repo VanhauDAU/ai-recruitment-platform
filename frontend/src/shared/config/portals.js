@@ -70,6 +70,7 @@ export const EMPLOYER_PASSWORD_SETTINGS_URL = employerAppPath('/account/settings
 export const EMPLOYER_COMPANY_SETTINGS_URL = employerAppPath('/account/settings/company')
 export const EMPLOYER_BUSINESS_LICENSE_URL = employerAppPath('/account/settings/gpkd')
 export const EMPLOYER_DATA_PROTECTION_URL = employerAppPath('/account/settings/personal-data-protection')
+export const EMPLOYER_GENERAL_SETTINGS_URL = employerAppPath('/account/settings/general-setting')
 
 export const MAIN_LOGIN_URL = import.meta.env.VITE_MAIN_HOST
   ? `https://${import.meta.env.VITE_MAIN_HOST}/login`
