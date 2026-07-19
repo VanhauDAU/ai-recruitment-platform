@@ -2,6 +2,7 @@ import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import AuthGuard from '@/app/router/guards/AuthGuard'
 import EmployerOnboardingGuard from '@/app/router/guards/EmployerOnboardingGuard'
+import GuestGuard from '@/app/router/guards/GuestGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
@@ -40,8 +41,10 @@ export function employerRoutes() {
     </Route>,
 
     <Route key="employer-auth" element={<EmployerAuthLayout />}>
-      <Route path={employerAppPath('/login')} element={<EmployerLoginPage />} />
-      <Route path={employerAppPath('/register')} element={<EmployerRegisterPage />} />
+      <Route element={<GuestGuard allowedRoles={['employer']} />}>
+        <Route path={employerAppPath('/login')} element={<EmployerLoginPage />} />
+        <Route path={employerAppPath('/register')} element={<EmployerRegisterPage />} />
+      </Route>
       <Route path={employerAppPath('/forgot-password')} element={<ForgotPasswordPage loginPath={employerAppPath('/login')} />} />
       <Route path={employerAppPath('/reset-password')} element={<ResetPasswordPage requestPath={employerAppPath('/forgot-password')} />} />
     </Route>,

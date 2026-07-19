@@ -1,4 +1,4 @@
-import { Modal, message } from 'antd'
+import { message } from 'antd'
 import { useEffect, useState } from 'react'
 import { createCvSharedLink, deleteCv, duplicateCv, renameCv, setDefaultCv } from '@/entities/cv'
 
@@ -8,6 +8,7 @@ export function useCvCardActions(cv, onRefresh) {
   const [title, setTitle] = useState(cv.title || '')
   const [isRenameOpen, setIsRenameOpen] = useState(false)
   const [newTitle, setNewTitle] = useState(cv.title || '')
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
 
   // Đồng bộ lại khi danh sách bên ngoài refresh và truyền cv mới xuống.
   useEffect(() => {
@@ -82,23 +83,16 @@ export function useCvCardActions(cv, onRefresh) {
     }
   }
 
-  const confirmDelete = () => {
-    Modal.confirm({
-      title: 'Xóa CV của bạn?',
-      content: 'CV, bản nháp, liên kết chia sẻ và file xuất sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.',
-      okText: 'Xóa vĩnh viễn',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        try {
-          await deleteCv(cv.public_id)
-          message.success('Đã xóa vĩnh viễn CV.')
-          onRefresh?.()
-        } catch {
-          message.error('Không thể xóa CV.')
-        }
-      },
-    })
+  const deletePermanently = async () => {
+    try {
+      await deleteCv(cv.public_id)
+      message.success('Đã xóa vĩnh viễn CV.')
+      onRefresh?.()
+    } catch {
+      message.error('Không thể xóa CV.')
+    } finally {
+      setIsDeleteConfirmationOpen(false)
+    }
   }
 
   return {
@@ -109,7 +103,12 @@ export function useCvCardActions(cv, onRefresh) {
     copyLink,
     shareFacebook,
     duplicate,
-    confirmDelete,
+    deleteConfirmation: {
+      open: isDeleteConfirmationOpen,
+      show: () => setIsDeleteConfirmationOpen(true),
+      close: () => setIsDeleteConfirmationOpen(false),
+      submit: deletePermanently,
+    },
     rename: {
       open: isRenameOpen,
       value: newTitle,

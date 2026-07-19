@@ -193,6 +193,8 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
     const path = new URL(request.url()).pathname
     const body = path === '/api/auth/me/'
       ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
       : path === '/api/v2/cvs/' && request.method() === 'GET'
         ? { results: deleted ? [] : [cv] }
         : path === '/api/v2/cvs/cv_1/view/'
@@ -207,10 +209,11 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await expect(page.getByText('CV cần xóa', { exact: true })).toBeVisible()
   await page.locator('.group').first().hover()
   await page.getByRole('button', { name: 'Thao tác CV' }).click()
-  await page.getByText('Xoá', { exact: true }).click()
-  await expect(page.getByText('Xóa vĩnh viễn', { exact: true })).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Xoá' }).click()
+  const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV của bạn?' })
+  await expect(deleteDialog).toBeVisible()
   const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
-  await page.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
+  await deleteDialog.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
   await deleteRequest
   await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)
 })

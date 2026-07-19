@@ -1,6 +1,7 @@
 import { Navigate, Route } from 'react-router-dom'
 import { adminPath } from '@/shared/config/portals'
 import AuthGuard from '@/app/router/guards/AuthGuard'
+import GuestGuard from '@/app/router/guards/GuestGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   AdminConsultationLeadsPage,
@@ -15,7 +16,9 @@ import { AuthLayout, DashboardLayout } from '../lazy/layouts'
 export function adminRoutes() {
   return [
     <Route key="admin-auth" element={<AuthLayout />}>
-      <Route path={adminPath('/login')} element={<AdminLoginPage />} />
+      <Route element={<GuestGuard allowedRoles={['admin']} />}>
+        <Route path={adminPath('/login')} element={<AdminLoginPage />} />
+      </Route>
     </Route>,
 
     <Route key="admin-redirect-root" path="/admin" element={<Navigate to={adminPath('/login')} replace />} />,
