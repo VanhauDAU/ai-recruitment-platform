@@ -62,7 +62,11 @@ def _send(job):
         password_reset.send_password_reset_email(job.user)
         return
     if job.kind == AuthEmailJob.Kind.TWO_FACTOR:
-        two_factor.send_two_factor_email(job.user, job.context.get('purpose', two_factor.PURPOSE_LOGIN))
+        two_factor.send_two_factor_email(
+            job.user,
+            job.context.get('purpose', two_factor.PURPOSE_LOGIN),
+            target=job.context.get('target'),
+        )
         return
     raise ValueError(f'Unsupported authentication email kind: {job.kind}')
 

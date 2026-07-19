@@ -90,6 +90,11 @@ class User(AbstractUser):
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
     two_factor_enabled = models.BooleanField(default=False)
+    # ``two_factor_enabled`` là cờ tổng hợp để giữ tương thích với các guard
+    # cũ. Các field dưới đây mô tả chính xác phương thức đã bật cho employer.
+    two_factor_email_enabled = models.BooleanField(default=False)
+    two_factor_totp_secret = models.TextField(blank=True)
+    two_factor_backup_code_hashes = models.JSONField(default=list, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
