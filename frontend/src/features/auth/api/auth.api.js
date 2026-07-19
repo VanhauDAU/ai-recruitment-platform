@@ -41,8 +41,11 @@ export async function confirmVerification(token) {
   return data
 }
 
-export async function changeEmail(email) {
-  const { data } = await api.post('/auth/change-email/', { email })
+export async function changeEmail(email, currentPassword) {
+  const { data } = await api.post('/auth/change-email/', {
+    email,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  })
   return data
 }
 

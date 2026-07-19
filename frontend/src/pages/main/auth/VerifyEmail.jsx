@@ -270,6 +270,8 @@ function RequestVerification({ homePath, loginPath, initiallySent, actionLabel }
 }
 
 function ChangeEmailModal({ open, onClose, onChanged }) {
+  const { user } = useSession()
+  const hasPassword = Boolean(user?.has_usable_password)
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -278,13 +280,18 @@ function ChangeEmailModal({ open, onClose, onChanged }) {
     setLoading(true)
     setError('')
     try {
-      await changeEmail(values.email)
+      await changeEmail(values.email, values.current_password)
       await onChanged()
       form.resetFields()
       onClose()
     } catch (err) {
       const data = err.response?.data
-      setError(data?.email?.[0] || data?.detail || 'Đổi email thất bại, vui lòng thử lại.')
+      setError(
+        data?.current_password?.[0]
+        || data?.email?.[0]
+        || data?.detail
+        || 'Đổi email thất bại, vui lòng thử lại.',
+      )
     } finally {
       setLoading(false)
     }
@@ -315,6 +322,15 @@ function ChangeEmailModal({ open, onClose, onChanged }) {
         >
           <Input size="large" prefix={<MailOutlined className="text-[var(--brand-primary)]" />} placeholder="ten@email.com" />
         </Form.Item>
+        {hasPassword && (
+          <Form.Item
+            name="current_password"
+            label="Mật khẩu hiện tại"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại để xác nhận' }]}
+          >
+            <Input.Password size="large" autoComplete="current-password" placeholder="Nhập mật khẩu để xác nhận" />
+          </Form.Item>
+        )}
       </Form>
     </Modal>
   )

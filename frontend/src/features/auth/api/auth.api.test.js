@@ -117,14 +117,14 @@ describe('auth API session storage', () => {
 
     await sendVerificationEmail()
     await confirmVerification('verify-token')
-    await changeEmail('new@example.com')
+    await changeEmail('new@example.com', 'Current@123')
     await requestPasswordReset({ email: 'user@example.com', captcha_token: 'captcha' })
     await validatePasswordResetToken('reset-token')
     await confirmPasswordReset({ token: 'reset-token', password: 'Abc123' })
 
     expect(post).toHaveBeenCalledWith('/auth/verify/send/')
     expect(post).toHaveBeenCalledWith('/auth/verify/confirm/', { token: 'verify-token' })
-    expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com' })
+    expect(post).toHaveBeenCalledWith('/auth/change-email/', { email: 'new@example.com', current_password: 'Current@123' })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/', { email: 'user@example.com', captcha_token: 'captcha', portal: 'main' })
     expect(get).toHaveBeenCalledWith('/auth/password-reset/validate/', { params: { token: 'reset-token' } })
     expect(post).toHaveBeenCalledWith('/auth/password-reset/confirm/', { token: 'reset-token', password: 'Abc123' })

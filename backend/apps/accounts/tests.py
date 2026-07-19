@@ -202,6 +202,58 @@ class PasswordChangeTests(APITestCase):
         self.assertEqual(current_ok.status_code, status.HTTP_200_OK)
 
 
+class ChangeEmailTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+
+    def _user(self):
+        return User.objects.create_user(email='pending@example.com', password='Password@123')
+
+    def test_change_email_requires_current_password(self):
+        user = self._user()
+        self.client.force_authenticate(user=user)
+
+        wrong = self.client.post(reverse('auth-change-email'), {
+            'email': 'new@example.com', 'current_password': 'Wrong@123',
+        }, format='json')
+
+        self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('current_password', wrong.data)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'pending@example.com')
+
+    def test_change_email_rejected_when_already_verified(self):
+        user = self._user()
+        user.email_verified = True
+        user.save(update_fields=['email_verified'])
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-change-email'), {
+            'email': 'new@example.com', 'current_password': 'Password@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'pending@example.com')
+
+    def test_change_email_success_resets_verification_and_warns_old_address(self):
+        user = self._user()
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(reverse('auth-change-email'), {
+            'email': 'new@example.com', 'current_password': 'Password@123',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'new@example.com')
+        self.assertFalse(user.email_verified)
+        # Mail cảnh báo (gửi đồng bộ) phải tới đúng địa chỉ CŨ.
+        warning = [msg for msg in mail.outbox if 'pending@example.com' in msg.to]
+        self.assertEqual(len(warning), 1)
+        self.assertIn('thay đổi', warning[0].subject.lower())
+
+
 class LogoutEndpointTests(APITestCase):
     def test_logout_blacklists_the_provided_refresh_token(self):
         user = User.objects.create_user(email='logout@example.com', password='Password@123')
@@ -847,6 +899,24 @@ class TwoFactorAuthenticationTests(APITestCase):
         self.assertIn('refresh', verified.data)
         self.user.refresh_from_db()
         self.assertIsNotNone(self.user.last_login)
+
+    def test_two_factor_code_is_invalidated_after_too_many_wrong_attempts(self):
+        self.user.two_factor_enabled = True
+        self.user.save(update_fields=['two_factor_enabled'])
+        login = self.client.post(reverse('auth-login'), {
+            'email': self.user.email, 'password': 'Password@123', 'captcha_token': 'x', 'portal': 'main',
+        })
+        challenge = login.data['challenge']
+        code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN))
+        wrong = '000001' if code == '000000' else '000000'
+
+        for _ in range(two_factor.MAX_VERIFY_ATTEMPTS):
+            self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong})
+
+        # Mã đã bị hủy sau 5 lần sai: mã đúng cũng không còn dùng được.
+        self.assertIsNone(cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN)))
+        replay = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code})
+        self.assertEqual(replay.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_can_disable_two_factor_with_email_code(self):
         self.user.two_factor_enabled = True
