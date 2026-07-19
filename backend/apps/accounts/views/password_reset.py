@@ -76,7 +76,7 @@ class PasswordResetValidateView(APIView):
     def get(self, request):
         user_id = pr.peek_token(request.query_params.get('token'))
         user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
-        if user is None:
+        if user is None or user.is_admin_role:
             return Response(
                 {'detail': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -104,7 +104,7 @@ class PasswordResetConfirmView(APIView):
 
         user_id = pr.consume_token(serializer.validated_data['token'])
         user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
-        if user is None:
+        if user is None or user.is_admin_role:
             return Response(
                 {'detail': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,

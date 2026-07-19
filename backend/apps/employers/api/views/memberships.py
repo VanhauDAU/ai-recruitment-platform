@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import IsEmployerWithRecentReauthentication
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, RecruiterProfile
 from ...selectors import has_explicit_company_link
@@ -75,7 +75,7 @@ class JoinCompanyView(APIView):
     Giấy tờ: `business_registration_file` HOẶC (`authorization_file` + `identity_file`).
     """
 
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithRecentReauthentication]
     parser_classes = [parsers.MultiPartParser]
 
     @extend_schema(

@@ -18,6 +18,7 @@ function clearCookie(name) {
 
 describe('portal token store', () => {
   beforeEach(() => {
+    clearAllPortalSessions()
     localStorage.clear()
     clearCookie(MAIN_COOKIE)
     clearCookie(EMPLOYER_COOKIE)
@@ -37,6 +38,14 @@ describe('portal token store', () => {
 
     expect(getAccessToken('main')).toBeNull()
     expect(getAccessToken('employer')).toBe('employer-access')
+  })
+
+  it('never writes access or refresh JWTs to JavaScript storage', () => {
+    setTokens({ access: 'access-jwt', refresh: 'refresh-jwt' }, 'main')
+
+    expect(getAccessToken('main')).toBe('access-jwt')
+    expect(localStorage.getItem('main_access_token')).toBeNull()
+    expect(localStorage.getItem('main_refresh_token')).toBeNull()
   })
 
   it('clears every portal on an explicit whole-device logout', () => {

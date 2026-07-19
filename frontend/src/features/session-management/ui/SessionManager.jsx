@@ -15,7 +15,8 @@ function timeAgo(iso) {
 export default function SessionManager() {
   const { message } = App.useApp()
   const queryClient = useQueryClient()
-  const { data: sessions = [], isLoading } = useQuery({ queryKey: ['auth-sessions'], queryFn: listSessions })
+  const { data, isLoading } = useQuery({ queryKey: ['auth-sessions'], queryFn: listSessions })
+  const sessions = Array.isArray(data) ? data : []
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['auth-sessions'] })
 
   const revokeOne = useMutation({

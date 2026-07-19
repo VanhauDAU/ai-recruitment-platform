@@ -6,7 +6,7 @@ import { EmployerAccountSettingsShell } from '@/widgets/employer-account-setting
 export default function EmployerPasswordLogin() {
   return (
     <EmployerAccountSettingsShell
-      title="Mật khẩu & bảo mật"
+      title="Thay đổi mật khẩu"
       description="Tạo mật khẩu cho tài khoản Google hoặc cập nhật mật khẩu đăng nhập, và quản lý thiết bị đang đăng nhập."
     >
       <ChangePasswordForm />

@@ -53,7 +53,7 @@ export default function ChangePasswordForm() {
   const mutation = useMutation({
     mutationFn: changeCurrentPassword,
     onSuccess: (result) => {
-      // Thay token của phiên hiện tại bằng cặp token mới (BE đã xoay refresh cũ).
+      // Thay access token trong memory; backend đã xoay refresh cookie và `sid`.
       if (result.tokens) setTokens(result.tokens)
       if (result.user) setCurrentUser(result.user)
       message.success(result.detail || 'Cập nhật mật khẩu thành công.')

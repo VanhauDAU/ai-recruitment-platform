@@ -2,7 +2,7 @@ from rest_framework import generics, parsers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.permissions import IsEmployerWithMFA, IsEmployerWithRecentReauthentication
 
 from ...models import CompanyDocument, CompanyUpdateRequest
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
@@ -14,7 +14,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     """Giấy tờ của công ty tôi. POST multipart: `doc_type` + `file`."""
 
     serializer_class = CompanyDocumentSerializer
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithRecentReauthentication]
     parser_classes = [parsers.MultiPartParser]
     pagination_class = None
 
@@ -38,7 +38,7 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
     """Yêu cầu cập nhật thông tin công ty của tôi (owner tạo, admin duyệt)."""
 
     serializer_class = CompanyUpdateRequestSerializer
-    permission_classes = [IsEmployer]
+    permission_classes = [IsEmployerWithMFA]
     pagination_class = None
 
     def get_queryset(self):
@@ -53,4 +53,3 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
         ).exists():
             raise ValidationError({'detail': 'Công ty đang có một yêu cầu cập nhật chờ duyệt.'})
         serializer.save(company=recruiter.company, requested_by=self.request.user)
-

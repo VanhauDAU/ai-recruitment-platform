@@ -202,6 +202,17 @@ class ChangeEmailSerializer(serializers.Serializer):
         if user.has_usable_password():
             if not user.check_password(attrs.get('current_password') or ''):
                 raise serializers.ValidationError({'current_password': 'Mật khẩu hiện tại không đúng.'})
+        else:
+            from .services import auth_sessions
+
+            request = self.context['request']
+            sid = request.auth.get(auth_sessions.SID_CLAIM) if request.auth else None
+            session = auth_sessions.active_sessions(user).filter(id=sid).first()
+            if not auth_sessions.is_recent_oauth_reauthentication(session):
+                raise serializers.ValidationError({
+                    'detail': 'Hãy đăng nhập lại với OAuth trước khi đổi email.',
+                    'code': 'reauth_required',
+                })
         return attrs
 
     def validate_email(self, value):
@@ -226,7 +237,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
     captcha_token = serializers.CharField(write_only=True)
     portal = serializers.ChoiceField(
-        choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True
+        choices=['main', 'employer'], required=False, write_only=True
     )
 
 

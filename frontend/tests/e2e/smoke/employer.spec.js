@@ -103,10 +103,6 @@ test('employer auth: registration has employer fields and consent-gated Google s
 })
 
 async function setEmployerSession(page, overrides = {}) {
-  await page.addInitScript(() => {
-    localStorage.setItem('employer_access_token', 'test-access')
-    localStorage.setItem('employer_refresh_token', 'test-refresh')
-  })
   await page.route('http://localhost:8000/api/auth/me/', async (route) => {
     const currentOverrides = typeof overrides === 'function' ? overrides() : overrides
     await route.fulfill({

@@ -9,7 +9,6 @@ test('candidate smoke: saved jobs remains protected', async ({ page }) => {
 })
 
 test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   const draft = {
     schema_version: 1,
     lock_version: 0,
@@ -139,7 +138,6 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
 })
 
 test('candidate smoke: owner CV view renders an immutable V2 version, not a draft', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   const version = {
     public_id: 'cvv_2', version_number: 2, schema_version: 1,
     template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
@@ -178,7 +176,6 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
 })
 
 test('candidate smoke: CV library permanently deletes a CV through V2', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   let deleted = false
   const cv = {
     public_id: 'cv_1', title: 'CV cần xóa', cv_type: 'builder', source: 'builder',
@@ -219,7 +216,6 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
 })
 
 test('candidate smoke: job application submits the selected immutable CV version through V2', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('main_access_token', 'candidate-test-token'))
   let applicationPayload
   const job = {
     public_id: 'job_1', slug: 'apply-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',

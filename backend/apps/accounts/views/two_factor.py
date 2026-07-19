@@ -10,6 +10,7 @@ from ..models import AuthEmailJob, User
 from ..serializers import SessionUserSerializer
 from ..services import two_factor
 from ..services.tokens import issue_tokens
+from ..services.refresh_cookies import set_refresh_cookie
 from ..tasks import queue_auth_email
 
 
@@ -84,6 +85,11 @@ class TwoFactorDisableSendView(APIView):
 
     def post(self, request):
         user = request.user
+        if user.is_admin_role:
+            return Response(
+                {'detail': 'MFA của tài khoản quản trị chỉ có thể thay đổi qua quy trình quản trị an toàn.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if not user.two_factor_enabled:
             return Response({'detail': 'Xác minh hai bước chưa được bật.'}, status=status.HTTP_400_BAD_REQUEST)
         two_factor.issue_code(user, two_factor.PURPOSE_DISABLE)
@@ -100,6 +106,11 @@ class TwoFactorDisableConfirmView(APIView):
         serializer = TwoFactorCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = request.user
+        if user.is_admin_role:
+            return Response(
+                {'detail': 'Không thể tắt MFA cho tài khoản quản trị.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if not user.two_factor_enabled or not two_factor.verify_code(user, two_factor.PURPOSE_DISABLE, serializer.validated_data['code']):
             return Response({'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'}, status=status.HTTP_400_BAD_REQUEST)
         user.two_factor_enabled = False
@@ -143,7 +154,7 @@ class TwoFactorLoginResendView(APIView):
     summary='Xác nhận mã và hoàn tất đăng nhập hai bước',
     request=TwoFactorChallengeSerializer,
     responses={200: inline_serializer('TwoFactorLoginTokens', {
-        'access': serializers.CharField(), 'refresh': serializers.CharField(),
+        'access': serializers.CharField(),
     })},
     tags=['auth'],
 )
@@ -160,4 +171,6 @@ class TwoFactorLoginVerifyView(APIView):
         if user is None or not two_factor.verify_code(user, two_factor.PURPOSE_LOGIN, serializer.validated_data['code']):
             return Response({'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'}, status=status.HTTP_400_BAD_REQUEST)
         two_factor.consume_login_challenge(challenge)
-        return Response(issue_tokens(user, request))
+        tokens = issue_tokens(user, request, auth_method='mfa')
+        response = Response({'access': tokens['access']})
+        return set_refresh_cookie(response, tokens['refresh'], user=user)

@@ -9,8 +9,13 @@ const { getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices } = vi.hois
   logoutCurrentPortal: vi.fn(),
   logoutAllDevices: vi.fn(),
 }))
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 
 vi.mock('../api/session.api', () => ({ getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices }))
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...await importOriginal(),
+  useNavigate: () => navigate,
+}))
 
 function wrapper({ children }) {
   return withQueryClient(
@@ -24,10 +29,10 @@ describe('SessionProvider', () => {
     getCurrentSessionUser.mockReset()
     logoutCurrentPortal.mockReset().mockResolvedValue(undefined)
     logoutAllDevices.mockReset().mockResolvedValue(undefined)
+    navigate.mockReset()
   })
 
-  it('restores a valid session from persisted tokens', async () => {
-    localStorage.setItem('main_access_token', 'access-token')
+  it('restores a valid session through the cookie-backed API bootstrap', async () => {
     getCurrentSessionUser.mockResolvedValue({ public_id: 'candidate-1', role: 'candidate' })
 
     const { result } = renderHook(() => useSession(), { wrapper })
@@ -54,7 +59,7 @@ describe('SessionProvider', () => {
     expect(localStorage.getItem('employer_refresh_token')).toBe('valid-employer-refresh')
   })
 
-  it('logs out only the current portal and blacklists its refresh token', async () => {
+  it('logs out only the current portal through its HttpOnly refresh cookie', async () => {
     localStorage.setItem('main_access_token', 'access-token')
     localStorage.setItem('main_refresh_token', 'refresh-token')
     localStorage.setItem('employer_access_token', 'employer-access')
@@ -66,7 +71,7 @@ describe('SessionProvider', () => {
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
     await act(async () => { await result.current.logout() })
 
-    expect(logoutCurrentPortal).toHaveBeenCalledWith('refresh-token')
+    expect(logoutCurrentPortal).toHaveBeenCalledWith()
     expect(result.current.isAuthenticated).toBe(false)
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('main_refresh_token')).toBeNull()
@@ -75,7 +80,24 @@ describe('SessionProvider', () => {
     expect(localStorage.getItem('admin_access_token')).toBe('admin-access')
   })
 
-  it('logs out every portal on the device when logging out everywhere', async () => {
+  it('logs out locally and warns when server revocation cannot be confirmed offline', async () => {
+    getCurrentSessionUser.mockResolvedValue({ public_id: 'candidate-1', role: 'candidate' })
+    logoutCurrentPortal.mockRejectedValue(new Error('network unavailable'))
+    const { result } = renderHook(() => useSession(), { wrapper })
+
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
+    await act(async () => { await result.current.logout() })
+
+    expect(result.current.isAuthenticated).toBe(false)
+    expect(navigate).toHaveBeenCalledWith('/login', {
+      replace: true,
+      state: {
+        authWarning: 'Đã đăng xuất trên thiết bị này; chưa thể xác nhận thu hồi phiên trên máy chủ.',
+      },
+    })
+  })
+
+  it('logs out every portal cookie on this browser', async () => {
     localStorage.setItem('main_access_token', 'access-token')
     localStorage.setItem('main_refresh_token', 'main-refresh')
     localStorage.setItem('employer_access_token', 'employer-access')
@@ -84,10 +106,11 @@ describe('SessionProvider', () => {
     const { result } = renderHook(() => useSession(), { wrapper })
 
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
-    await act(async () => { await result.current.logoutEverywhere() })
+    await act(async () => { await result.current.logoutAllPortalsOnThisBrowser() })
 
-    expect(logoutCurrentPortal).toHaveBeenCalledWith('main-refresh')
-    expect(logoutCurrentPortal).toHaveBeenCalledWith('employer-refresh')
+    expect(logoutCurrentPortal).toHaveBeenCalledWith('main')
+    expect(logoutCurrentPortal).toHaveBeenCalledWith('employer')
+    expect(logoutCurrentPortal).toHaveBeenCalledWith('admin')
     expect(localStorage.getItem('main_access_token')).toBeNull()
     expect(localStorage.getItem('employer_access_token')).toBeNull()
   })
