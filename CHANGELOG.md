@@ -6,6 +6,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-20
+
+#### Changed — Dashboard nhà tuyển dụng: khối "Xin chào" theo UX TopCV
+
+- Dựng lại section hành trình xác thực (`DashboardVerificationJourney`) theo mẫu TopCV: mỗi bước là thẻ pill bo góc riêng biệt cuộn ngang, bước đang làm có viền + chữ + nút mũi tên xanh, bước đã xong hiển thị check tròn và chữ mờ.
+- Thêm hai nút chevron trái/phải ở header để cuộn qua các bước; ghim sticky thẻ "Đăng tin tuyển dụng đầu tiên" ở ngoài cùng bên phải, tách khỏi vùng cuộn.
+- Màu chủ đạo dùng biến thương hiệu (`--brand-primary`, `--brand-primary-soft`, `brand_primary_color`) từ site settings thay cho hardcode, đồng bộ khi đổi màu brand.
+
+#### Fixed — Gộp danh sách domain email miễn phí về một nguồn
+
+- Bỏ `PUBLIC_EMAIL_DOMAINS` chép tay ở frontend (`account-verification-level.js`); cấp độ xác minh email doanh nghiệp giờ tin hoàn toàn vào cờ `email_domain_verified` do backend trả, tránh lệch danh sách khi thêm domain mới.
+
 ### 2026-07-19
 
 #### Changed — Xác thực giấy tờ nhà tuyển dụng
@@ -41,6 +53,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Form mật khẩu employer hiển thị mức độ yếu/trung bình/mạnh, thanh tiến trình và bốn điều kiện cập nhật theo từng ký tự; chỉ cho tiếp tục khi có đủ độ dài, hoa/thường, chữ số và ký tự đặc biệt.
 - Hướng dẫn xác minh mật khẩu chỉ hiển thị khi ô Mật khẩu đang được focus và tự đóng khi người dùng rời ô, tránh che hoặc kéo dài form không cần thiết.
 - Thêm lưu ý ngay dưới email đăng ký: email không thuộc tên miền công ty có thể bị giới hạn quyền mua hoặc sử dụng một số dịch vụ.
+
+#### Fixed — Hoàn tất xác thực employer
+
+- Đồng bộ checklist, progress dashboard và redirect `/employer-verify` theo đúng năm điều kiện xác thực; mục **Đăng tin tuyển dụng đầu tiên** là hành động sản phẩm, không còn được tính vào tiến độ hay giữ tài khoản đã xác thực ở checklist.
+- Thiết kế lại hành trình xác thực trên dashboard theo hierarchy TopCV: phần trăm/lời chào rõ ràng, năm bước có trạng thái; bố cục tự chuyển thành danh sách dễ quét trên mobile.
+- Căn chỉnh lại journey sát mẫu dashboard TopCV: năm bước nằm trong dải cuộn riêng, tiêu đề mỗi bước mở đúng màn hình tác vụ ở tab mới; mục **Đăng tin tuyển dụng đầu tiên** được ghim ngoài cùng bên phải ở trạng thái khóa và không còn hiển thị điểm thưởng.
+- Tải và self-host SVG `v-brand` tham khảo từ TopCV; dùng làm nền trang trí cho khối hành trình xác thực, không phụ thuộc CDN ngoài khi hiển thị.
+- Đồng bộ vị trí ảnh nền `v-brand` theo CSS mẫu TopCV (`top: -250px; bottom: 0; right: 5%`) để họa tiết neo đúng cạnh phải của journey.
 
 #### Fixed — Màu liên kết DLCN
 

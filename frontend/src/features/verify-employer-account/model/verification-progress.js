@@ -4,7 +4,6 @@ export const EMPLOYER_VERIFICATION_STEP_KEYS = [
   'business_doc_submitted',
   'candidate_dpa_submitted',
   'dpa_accepted',
-  'first_job_posted',
 ]
 
 export function getEmployerVerificationProgress(verification = {}) {

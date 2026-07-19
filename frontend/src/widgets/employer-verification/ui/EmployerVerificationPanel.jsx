@@ -1,7 +1,7 @@
 import { BarChartOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Skeleton } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { getEmployerProfile, getEmployerRecruitmentNeed } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { EmployerVerificationChecklist } from '@/features/verify-employer-account'
@@ -59,6 +59,10 @@ export default function EmployerVerificationPanel() {
   }
 
   const profile = profileQuery.data || {}
+  if (profile.onboarding?.verification_completed) {
+    return <Navigate to={employerAppPath('/dashboard')} replace />
+  }
+
   return (
     <div className="mx-auto grid min-w-0 max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,.10)] xl:grid-cols-[minmax(300px,.85fr)_minmax(0,1.15fr)]">
       <VerificationStory

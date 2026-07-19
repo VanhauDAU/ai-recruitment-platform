@@ -721,3 +721,13 @@ Cập nhật 2026-07-19j (EMP-REGISTER — kiểm tra mật khẩu): phần mậ
 Cập nhật 2026-07-19k (EMP-REGISTER — UX hướng dẫn mật khẩu): khối xác minh mật khẩu employer chỉ mở khi input Mật khẩu nhận focus và tự đóng ngay khi blur (ví dụ chuyển sang Nhập lại mật khẩu), giúp form gọn và không che nội dung kế tiếp. Regression E2E xác nhận cả trạng thái hiển thị khi nhập lẫn trạng thái đóng khi rời input.
 
 Cập nhật 2026-07-19l (EMP-REGISTER — lưu ý email doanh nghiệp): thêm note cảnh báo ngay dưới ô Email đăng nhập rằng email không thuộc tên miền công ty có thể bị hạn chế quyền mua hoặc sử dụng một số dịch vụ. Note dùng màu cảnh báo nhẹ, icon thông tin và tự ngắt dòng trên mobile; regression E2E xác nhận hiển thị trên form đăng ký.
+
+Cập nhật 2026-07-19m (EMP-VERIFY — kết thúc đúng năm điều kiện): chỉnh frontend dùng cùng định nghĩa với backend `verification_completed`: năm mục xác thực trên checklist là số liệu duy nhất của progress. **Đăng tin tuyển dụng đầu tiên** được tách khỏi xác thực, không còn hiển thị trong checklist/progress dashboard. Direct navigation tới `/employer-verify` sau khi đủ năm mục sẽ tải profile canonical rồi redirect về dashboard, kể cả khi `first_job_posted=false`. Thêm E2E regression cho redirect này.
+
+Cập nhật 2026-07-19n (EMP-DASHBOARD — hành trình xác thực): đối chiếu dashboard TopCV đã đăng nhập và thiết kế lại khối xác thực theo mô hình journey: header có vòng phần trăm, lời chào và mô tả lợi ích; năm bước xác thực hiển thị trạng thái hoàn tất/bước tiếp theo/chưa hoàn tất. Desktop dùng dải năm mục trực quan; tablet/mobile hạ thành grid/danh sách dễ quét, không tràn viewport. Đăng tin đầu tiên tiếp tục bị loại khỏi tiến độ xác thực.
+
+Cập nhật 2026-07-19o (EMP-DASHBOARD — sticky hành động đăng tin): đưa journey về bố cục dải cuộn theo dashboard TopCV; tiêu đề của năm bước là liên kết mở tab mới đến tác vụ tương ứng. **Đăng tin tuyển dụng đầu tiên** tách thành item ghim ở mép phải, hiển thị khóa đến khi workflow đăng tin được triển khai; không tính vào xác thực, không có Top Points/điểm thưởng. Nút điều hướng dải bước hỗ trợ cuộn ngang có chủ đích, còn mobile giữ item ghim ở mép phải mà không phát sinh tràn viewport.
+
+Cập nhật 2026-07-20a (EMP-DASHBOARD — brand background): tải SVG `v-brand` từ tài nguyên tham khảo TopCV về `frontend/public/images/employer/topcv-v-brand.svg` và self-host làm nền trang trí ở cạnh phải của section hành trình xác thực. Asset là decor nên `alt` rỗng và `aria-hidden`, không thêm nội dung lặp cho trình đọc màn hình.
+
+Cập nhật 2026-07-20b (EMP-DASHBOARD — brand background position): đồng bộ đúng CSS định vị của mẫu cho asset `v-brand`: `top: -250px`, `bottom: 0`, `right: 5%`; không ép kích thước hoặc opacity làm thay đổi tỷ lệ SVG gốc.

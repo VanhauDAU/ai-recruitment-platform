@@ -3,12 +3,10 @@ import {
   BankOutlined,
   CheckCircleFilled,
   FileProtectOutlined,
-  LockOutlined,
   PhoneOutlined,
-  RocketOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { Button, Modal, Progress, Tooltip } from 'antd'
+import { Button, Modal, Progress } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '@/entities/session'
@@ -28,15 +26,6 @@ const STEP_DEFINITIONS = [
   { key: 'business_doc_submitted', title: 'Cập nhật Giấy đăng ký doanh nghiệp', description: 'Tải giấy tờ pháp lý sau khi đã liên kết đúng công ty.', icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
   { key: 'candidate_dpa_submitted', title: 'Cập nhật Thỏa thuận xử lý DLCN với ứng viên', description: 'Đăng tải văn bản cho phép thu thập và sử dụng dữ liệu ứng viên.', icon: FileProtectOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
   { key: 'dpa_accepted', title: 'Đồng ý Thỏa thuận xử lý DLCN với nền tảng', description: 'Xác nhận vai trò và trách nhiệm bảo vệ dữ liệu trên hệ thống.', icon: SafetyCertificateOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
-  { key: 'first_job_posted', title: 'Đăng tin tuyển dụng đầu tiên', description: 'Chỉ kích hoạt sau khi hoàn tất toàn bộ điều kiện xác thực phía trên.', icon: RocketOutlined },
-]
-
-const FIRST_JOB_PREREQUISITES = [
-  'phone_verified',
-  'company_linked',
-  'business_doc_submitted',
-  'candidate_dpa_submitted',
-  'dpa_accepted',
 ]
 
 export default function EmployerVerificationChecklist({ profile, onContinue }) {
@@ -46,7 +35,6 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   const [passwordPromptOpen, setPasswordPromptOpen] = useState(false)
   const verification = profile?.onboarding || {}
   const progress = getEmployerVerificationProgress(verification)
-  const firstJobReady = FIRST_JOB_PREREQUISITES.every((key) => verification[key])
   const hotline = settingText(settings.hotline, '1900 1234')
   const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
 
@@ -60,13 +48,6 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
 
   function stepAction(step) {
     if (verification[step.key]) return <span className="text-xs font-bold text-emerald-600">Hoàn tất</span>
-    if (step.key === 'first_job_posted') {
-      return (
-        <Tooltip title={firstJobReady ? 'Chức năng đăng tin sẽ được triển khai ở giai đoạn tiếp theo.' : 'Hoàn tất các điều kiện phía trên để kích hoạt.'}>
-          <Button type="text" disabled aria-label="Đăng tin tuyển dụng đầu tiên chưa khả dụng" icon={<LockOutlined />} />
-        </Tooltip>
-      )
-    }
     const actionLabel = step.title.startsWith('Cập nhật') ? step.title : `Cập nhật ${step.title}`
     return <Button type="text" aria-label={actionLabel} icon={<ArrowRightOutlined />} onClick={() => openStep(step)} />
   }

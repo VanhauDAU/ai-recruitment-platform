@@ -241,7 +241,7 @@ test('employer auth: verified session completes recruitment need before dashboar
 
   await page.goto('/tuyendung/app/consulting-need')
   await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
-  await expect(page.getByRole('heading', { name: /Chào Nguyễn An/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
 })
 
 test('employer workspace: verification actions stay inside the 100vh app shell', async ({ page }) => {
@@ -347,7 +347,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/dashboard')
-  await expect(page.getByRole('heading', { name: /Chào Nguyễn An/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   if (page.viewportSize().width < 1024) {
@@ -361,5 +361,40 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('heading', { name: 'Thông tin tài khoản', exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
   await expect(page.getByRole('button', { name: 'Cập nhật' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer workspace: completed verification redirects away from the checklist without requiring a first job', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_verified',
+        onboarding: {
+          phone_verified: true,
+          company_linked: true,
+          business_doc_submitted: true,
+          candidate_dpa_submitted: true,
+          dpa_accepted: true,
+          verification_completed: true,
+          first_job_posted: false,
+        },
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/employer-verify')
+
+  await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
+  await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toHaveCount(0)
+  await expect(page.getByText('Đăng tin tuyển dụng đầu tiên', { exact: true })).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 })
