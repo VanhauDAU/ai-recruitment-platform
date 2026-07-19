@@ -24,12 +24,22 @@ def _hash_otp(code):
     return hashlib.sha256(f'{settings.SECRET_KEY}:{code}'.encode()).hexdigest()
 
 
-def send_phone_otp(user, phone):
-    """Create and email an OTP used to verify a recruiter phone number."""
-    conflict = RecruiterProfile.objects.filter(
-        Q(verified_phone=phone) | Q(contact_phone=phone)
-    ).exclude(user=user)
-    if conflict.exists():
+def phone_taken_by_other(user, phone):
+    """True nếu số điện thoại đã được nhà tuyển dụng khác dùng/ xác thực."""
+    return (
+        RecruiterProfile.objects.filter(Q(verified_phone=phone) | Q(contact_phone=phone))
+        .exclude(user=user)
+        .exists()
+    )
+
+
+def send_phone_otp(user, phone, password=None):
+    """Create and email an OTP used to verify a recruiter phone number.
+
+    ``password`` là bước re-auth bảo mật trước khi gửi mã: tài khoản phải có mật
+    khẩu và nhập đúng mật khẩu hiện tại thì mới được gửi OTP.
+    """
+    if phone_taken_by_other(user, phone):
         raise ValidationError({
             'phone': 'Đã có nhà tuyển dụng khác xác thực số điện thoại này, vui lòng dùng số khác.'
         })
@@ -37,6 +47,8 @@ def send_phone_otp(user, phone):
         raise ValidationError({
             'password': 'Tài khoản chưa có mật khẩu. Tạo mật khẩu trước khi xác thực số điện thoại.'
         })
+    if not user.check_password((password or '').strip()):
+        raise ValidationError({'password': 'Mật khẩu không đúng, vui lòng thử lại.'})
 
     latest = PhoneOtp.objects.filter(user=user).order_by('-created_at').first()
     if latest and timezone.now() - latest.created_at < OTP_COOLDOWN:

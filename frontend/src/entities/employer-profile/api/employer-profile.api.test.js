@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   acceptEmployerDpa,
+  checkEmployerPhoneAvailability,
   completeEmployerRegistration,
   createEmployerCompany,
   getEmployerCompanyDocuments,
@@ -52,13 +53,17 @@ describe('employer profile API', () => {
       work_location: 1, terms_accepted: true, marketing_opt_in: false,
     }
 
+    get.mockResolvedValue({ data: { available: true } })
+
     await completeEmployerRegistration(profile)
-    await sendEmployerPhoneOtp('0912345678')
+    await checkEmployerPhoneAvailability('0912345678')
+    await sendEmployerPhoneOtp('0912345678', 'Password@123')
     await verifyEmployerPhoneOtp('123456')
     await acceptEmployerDpa()
 
     expect(post).toHaveBeenCalledWith('/employer/onboarding/registration/', profile)
-    expect(post).toHaveBeenCalledWith('/employer/phone/send-otp/', { phone: '0912345678' })
+    expect(get).toHaveBeenCalledWith('/employer/phone/check/', { params: { phone: '0912345678' } })
+    expect(post).toHaveBeenCalledWith('/employer/phone/send-otp/', { phone: '0912345678', password: 'Password@123' })
     expect(post).toHaveBeenCalledWith('/employer/phone/verify/', { code: '123456' })
     expect(post).toHaveBeenCalledWith('/employer/dpa/accept/')
   })
