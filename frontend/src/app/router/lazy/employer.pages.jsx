@@ -19,3 +19,4 @@ export const EmployerPasswordLoginPage = lazy(() => import('@/pages/employer/app
 export const EmployerCompanySettingsPage = lazy(() => import('@/pages/employer/app/account/CompanySettings'))
 export const EmployerBusinessLicensePage = lazy(() => import('@/pages/employer/app/account/BusinessLicense'))
 export const EmployerPersonalDataProtectionPage = lazy(() => import('@/pages/employer/app/account/PersonalDataProtection'))
+export const EmployerGeneralSettingsPage = lazy(() => import('@/pages/employer/app/account/GeneralSetting'))

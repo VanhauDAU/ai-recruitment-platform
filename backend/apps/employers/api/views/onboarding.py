@@ -1,5 +1,5 @@
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
@@ -20,7 +20,7 @@ from ..serializers import (
     IndustrySerializer,
     RecruiterProfileSerializer,
 )
-from ...services import get_or_create_recruiter, send_phone_otp, verify_phone_otp
+from ...services import get_or_create_recruiter, phone_taken_by_other, send_phone_otp, verify_phone_otp
 
 def _require_company(user):
     recruiter = get_or_create_recruiter(user)
@@ -46,12 +46,42 @@ class RecruiterMeView(generics.RetrieveUpdateAPIView):
         return get_or_create_recruiter(self.request.user)
 
 
+class PhoneAvailabilityView(APIView):
+    """Kiểm tra nhanh (debounce) xem số điện thoại đã bị NTD khác dùng chưa."""
+
+    permission_classes = [IsEmployer]
+
+    @extend_schema(
+        summary='Kiểm tra số điện thoại đã được nhà tuyển dụng khác sử dụng chưa',
+        parameters=[OpenApiParameter('phone', str, OpenApiParameter.QUERY, required=True)],
+        responses=inline_serializer('PhoneAvailability', fields={
+            'available': serializers.BooleanField(),
+            'detail': serializers.CharField(required=False),
+        }),
+        tags=['employer'],
+    )
+    def get(self, request):
+        phone = (request.query_params.get('phone') or '').strip()
+        if not phone:
+            raise ValidationError({'phone': 'Nhập số điện thoại cần kiểm tra.'})
+        if phone_taken_by_other(request.user, phone):
+            return Response({
+                'available': False,
+                'detail': 'Đã có nhà tuyển dụng khác sử dụng & xác thực số điện thoại này, '
+                          'bạn vui lòng nhập số điện thoại khác và thực hiện lại thao tác.',
+            })
+        return Response({'available': True})
+
+
 class SendPhoneOtpView(APIView):
     permission_classes = [IsEmployer]
 
     @extend_schema(
         summary='Gửi mã OTP xác thực số điện thoại (qua email tài khoản)',
-        request=inline_serializer('SendPhoneOtp', fields={'phone': serializers.CharField(required=False)}),
+        request=inline_serializer('SendPhoneOtp', fields={
+            'phone': serializers.CharField(required=False),
+            'password': serializers.CharField(),
+        }),
         responses=inline_serializer('SendPhoneOtpResponse', fields={'detail': serializers.CharField()}),
         tags=['employer'],
     )
@@ -59,7 +89,7 @@ class SendPhoneOtpView(APIView):
         phone = (request.data.get('phone') or request.user.phone or '').strip()
         if not phone:
             raise ValidationError({'phone': 'Nhập số điện thoại cần xác thực.'})
-        send_phone_otp(request.user, phone)
+        send_phone_otp(request.user, phone, password=request.data.get('password'))
         return Response({'detail': 'Đã gửi mã xác thực tới email của bạn.'})
 
 

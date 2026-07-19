@@ -45,48 +45,105 @@ body {
   }
 }
 
-/* Keep validation feedback useful under repeated clicks: one current toast,
-   with a compact surface that does not cover the form. */
-.app-toast {
-  left: 50%;
-  max-width: min(calc(100vw - 32px), 420px);
-  transform: translateX(-50%);
-  width: max-content;
+/* A single, consistent feedback surface for every portal. The message provider
+   owns duration/count; this styling only determines its visual presentation. */
+.app-toast-list,
+.ant-message {
+  left: auto !important;
+  max-width: min(calc(100vw - 40px), 360px);
+  right: 20px !important;
+  transform: none !important;
+  width: 100% !important;
 }
 
-.app-toast .ant-message-notice-content {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
-  color: #334155;
+.ant-message .ant-message-notice:not(:has(.ant-message-notice-content)),
+.ant-message .ant-message-notice-content {
+  background: #fff;
+  border: 1px solid var(--toast-border, #b7eb8f);
+  border-radius: 2px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+  box-sizing: border-box;
+  color: var(--toast-text, #237804);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 20px;
-  max-width: 100%;
-  padding: 11px 16px;
+  min-height: 50px;
+  overflow: hidden;
+  padding: 14px 20px 16px;
+  position: relative;
+  text-align: left;
+  width: 100%;
 }
 
-.app-toast .ant-message-custom-content {
+.ant-message .ant-message-notice:not(:has(.ant-message-notice-content))::after,
+.ant-message .ant-message-notice-content::after {
+  animation: app-toast-progress 3.5s linear forwards;
+  background: var(--toast-accent, #52c41a);
+  bottom: 0;
+  content: '';
+  height: 3px;
+  left: 0;
+  position: absolute;
+  transform-origin: left;
+  width: 100%;
+}
+
+@keyframes app-toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.ant-message .ant-message-custom-content {
   align-items: center;
   display: flex;
-  gap: 9px;
+  gap: 0;
 }
 
-.app-toast .anticon {
-  font-size: 17px;
+.ant-message .ant-message-notice-icon,
+.ant-message .ant-message-custom-content > .anticon {
+  display: none;
+}
+
+.ant-message .ant-message-notice-success,
+.ant-message .ant-message-notice:has(.ant-message-success) {
+  --toast-accent: #52c41a;
+  --toast-border: #b7eb8f;
+  --toast-text: #237804;
+}
+
+.ant-message .ant-message-notice-error,
+.ant-message .ant-message-notice:has(.ant-message-error) {
+  --toast-accent: #ff7875;
+  --toast-border: #ffccc7;
+  --toast-text: #c23616;
+}
+
+.ant-message .ant-message-notice-warning,
+.ant-message .ant-message-notice:has(.ant-message-warning) {
+  --toast-accent: #faad14;
+  --toast-border: #ffe58f;
+  --toast-text: #ad6800;
+}
+
+.ant-message .ant-message-notice-info,
+.ant-message .ant-message-notice:has(.ant-message-info) {
+  --toast-accent: #69b1ff;
+  --toast-border: #bae0ff;
+  --toast-text: #0958d9;
 }
 
 @media (max-width: 640px) {
-  .app-toast {
+  .app-toast-list,
+  .ant-message {
     max-width: calc(100vw - 24px);
+    right: 12px !important;
   }
 
-  .app-toast .ant-message-notice-content {
-    border-radius: 12px;
+  .ant-message .ant-message-notice:not(:has(.ant-message-notice-content)),
+  .ant-message .ant-message-notice-content {
     font-size: 13px;
-    padding: 10px 13px;
+    min-height: 48px;
+    padding: 13px 16px 15px;
   }
 }
 
@@ -397,4 +454,24 @@ body {
 
 .animate-employer-marquee:hover {
   animation-play-state: paused;
+}
+
+@keyframes nudgeX {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.animate-nudge-x {
+  animation: nudgeX 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-nudge-x {
+    animation: none;
+  }
 }

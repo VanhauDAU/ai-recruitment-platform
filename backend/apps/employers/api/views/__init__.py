@@ -9,7 +9,13 @@ from .media import (
     CompanyLogoUploadView,
 )
 from .memberships import JoinCompanyView
-from .onboarding import AcceptDpaView, RecruiterMeView, SendPhoneOtpView, VerifyPhoneOtpView
+from .onboarding import (
+    AcceptDpaView,
+    PhoneAvailabilityView,
+    RecruiterMeView,
+    SendPhoneOtpView,
+    VerifyPhoneOtpView,
+)
 from .recruitment_need import RecruitmentNeedView
 from .verification import CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
 
@@ -27,6 +33,7 @@ __all__ = [
     'IndustryListView',
     'JoinCompanyView',
     'MyCompanyView',
+    'PhoneAvailabilityView',
     'RecruiterMeView',
     'RecruitmentNeedView',
     'SendPhoneOtpView',

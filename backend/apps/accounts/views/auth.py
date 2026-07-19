@@ -93,15 +93,19 @@ class LoginView(APIView):
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
+        methods = two_factor.enabled_methods(user)
         if user.two_factor_enabled:
             challenge = two_factor.start_login_challenge(user, serializer.portal)
-            queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
+            if methods['email']:
+                queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
             return Response(
                 {
                     'two_factor_required': True,
                     'challenge': challenge,
-                    'email': user.email,
-                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN),
+                    'email': user.email if methods['email'] else '',
+                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN) if methods['email'] else 0,
+                    'methods': methods,
+                    'preferred_method': 'totp' if methods['totp'] else 'email',
                 },
                 status=status.HTTP_202_ACCEPTED,
             )

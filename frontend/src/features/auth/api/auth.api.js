@@ -78,8 +78,8 @@ export async function login({ email, password, captcha_token, portal }) {
   return data
 }
 
-export async function verifyTwoFactorLogin({ challenge, code, portal }) {
-  const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code })
+export async function verifyTwoFactorLogin({ challenge, code, method = 'email', portal }) {
+  const { data } = await api.post('/auth/two-factor/login/verify/', { challenge, code, ...(method !== 'email' && { method }) })
   setTokens({ access: data.access }, portal || getCurrentPortal())
   return data
 }

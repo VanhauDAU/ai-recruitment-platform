@@ -13,3 +13,4 @@ WeasyPrint==64.1
 pypdfium2==4.30.0
 pypdf==5.7.0
 python-docx==1.2.0
+cryptography==45.0.6

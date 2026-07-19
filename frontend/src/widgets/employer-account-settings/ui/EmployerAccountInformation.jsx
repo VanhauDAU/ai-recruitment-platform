@@ -95,20 +95,20 @@ export default function EmployerAccountInformation() {
         <Button size="small" icon={<DownloadOutlined />} onClick={handleExport} className="!border-emerald-500 !text-emerald-600">Xuất dữ liệu</Button>
       </div>
 
-      <Form
-        form={form}
-        layout="vertical"
-        requiredMark={false}
-        onFinish={handleSave}
-        className="px-4 py-5 sm:px-5 sm:py-6"
-      >
+      <div className="p-5 sm:p-6">
+        <Form
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={handleSave}
+        >
         <div className="grid gap-x-8 sm:grid-cols-2">
           <div className="mb-5 flex items-center gap-3 sm:col-span-2">
             <span className="text-sm text-slate-600">Avatar</span>
             <Avatar size={36} src={user?.avatar_url || undefined} className="!bg-slate-100 !text-slate-500">
               {(user?.full_name || user?.email || 'N').trim().charAt(0).toUpperCase()}
             </Avatar>
-            <input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleAvatarChange} />
+            <input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="!hidden" onChange={handleAvatarChange} />
             <Button size="small" icon={<CameraOutlined />} loading={uploadingAvatar} onClick={() => avatarInputRef.current?.click()}>Đổi avatar</Button>
           </div>
 
@@ -144,7 +144,8 @@ export default function EmployerAccountInformation() {
           <Button onClick={() => { form.resetFields(); setPhoneEditing(false) }} className="min-w-24">Hủy</Button>
           <Button type="primary" htmlType="submit" loading={saving} className="min-w-24 !bg-[#00b14f]">Lưu</Button>
         </div>
-      </Form>
+        </Form>
+      </div>
     </div>
   )
 }
