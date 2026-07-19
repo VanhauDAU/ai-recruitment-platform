@@ -1,4 +1,4 @@
-import { Button, Input, Modal, Space, Switch, Table, Tabs, Tag, Typography, Upload, message } from 'antd'
+import { Button, Input, Modal, Space, Switch, Table, Tabs, Tag, Typography, Upload } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import {
   activateAdminCvBlueprint,
@@ -19,6 +19,7 @@ import {
   updateAdminCvSample,
 } from '@/entities/cv-template'
 import { getAdminLocales } from '@/entities/locale'
+import { message } from '@/shared/lib/toast'
 
 function statusTag(value) {
   const color = value === 'published' || value === true ? 'green' : value === 'draft' ? 'gold' : 'default'

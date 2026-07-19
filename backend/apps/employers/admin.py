@@ -54,9 +54,9 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.register(CompanyDocument)
 class CompanyDocumentAdmin(admin.ModelAdmin):
-    list_display = ['company', 'doc_type', 'uploaded_by', 'status', 'created_at']
+    list_display = ['company', 'recruiter', 'doc_type', 'uploaded_by', 'status', 'created_at']
     list_filter = ['doc_type', 'status']
-    search_fields = ['company__company_name', 'uploaded_by__email']
+    search_fields = ['company__company_name', 'recruiter__user__email', 'uploaded_by__email']
     actions = ['approve_documents', 'reject_documents']
 
     def _review(self, request, queryset, status):

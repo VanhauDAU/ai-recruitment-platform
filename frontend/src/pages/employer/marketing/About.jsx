@@ -24,11 +24,11 @@ export default function EmployerAbout() {
           <span className="rounded-full bg-[var(--brand-primary)]/10 px-4 py-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
             {t('about.heroEyebrow')}
           </span>
-          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight text-gray-950 md:text-5xl">
+          <h1 className="mx-auto mt-5 max-w-3xl text-3xl font-extrabold leading-tight text-gray-950 sm:text-4xl md:text-5xl">
             {t('about.heroTitle')}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">{t('about.heroSubtitle')}</p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
             <Link to={employerAppPath('/register')}>
               <Button type="primary" size="large" shape="round" className="!h-12 !px-7">{t('common.register')}</Button>
             </Link>
@@ -45,8 +45,8 @@ export default function EmployerAbout() {
           <p className="mt-5 leading-8 text-gray-600">{t('about.whoBody1')}</p>
           <p className="mt-4 leading-8 text-gray-600">{t('about.whoBody2')}</p>
         </div>
-        <div className="rounded-2xl border border-[var(--brand-primary)]/15 bg-gradient-to-br from-[#f0fff6] to-white p-8 shadow-[0_24px_80px_rgba(0,177,79,0.10)]">
-          <p className="text-5xl font-extrabold text-[var(--brand-primary)]">{siteName}</p>
+        <div className="min-w-0 rounded-2xl border border-[var(--brand-primary)]/15 bg-gradient-to-br from-[#f0fff6] to-white p-5 shadow-[0_24px_80px_rgba(0,177,79,0.10)] sm:p-8">
+          <p className="break-words text-3xl font-extrabold text-[var(--brand-primary)] sm:text-5xl">{siteName}</p>
           <p className="mt-4 text-lg font-semibold text-gray-800">{t('footer.tagline')}</p>
         </div>
       </section>

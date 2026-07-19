@@ -1,4 +1,6 @@
+from django.db import transaction
 from rest_framework import generics
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.permissions import IsEmployer, IsEmployerWithMFA
@@ -26,10 +28,10 @@ class CreateCompanyView(generics.CreateAPIView):
     serializer_class = CompanySerializer
     permission_classes = [IsEmployerWithMFA]
 
+    @transaction.atomic
     def perform_create(self, serializer):
-        recruiter = get_or_create_recruiter(self.request.user)
-        if recruiter.phone_verified_at is None:
-            raise ValidationError({'detail': 'Xác thực số điện thoại trước khi cập nhật thông tin công ty.'})
+        get_or_create_recruiter(self.request.user)
+        recruiter = RecruiterProfile.objects.select_for_update().get(user=self.request.user)
         if has_explicit_company_link(recruiter):
             raise ValidationError({'detail': 'Bạn đã liên kết với một công ty — không thể tạo hoặc đổi công ty khác.'})
         company = serializer.save(created_by=self.request.user)
@@ -44,6 +46,12 @@ class CompanySearchView(generics.ListAPIView):
 
     serializer_class = CompanySearchSerializer
     permission_classes = [IsEmployer]
+
+    class Pagination(PageNumberPagination):
+        page_size = 6
+        page_size_query_param = None
+
+    pagination_class = Pagination
 
     def get_queryset(self):
         return search_companies(self.request.query_params.get('q'))

@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { App } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { createConsultationLead } from '@/entities/consultation-lead'
+import { message } from '@/shared/lib/toast'
 
 export function useConsultationSubmit({ onSuccess } = {}) {
   const [submitting, setSubmitting] = useState(false)
-  const { message } = App.useApp()
   const { t } = useTranslation('employer')
   const location = useLocation()
 

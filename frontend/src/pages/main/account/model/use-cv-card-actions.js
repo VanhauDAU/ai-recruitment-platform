@@ -1,6 +1,6 @@
-import { message } from 'antd'
 import { useEffect, useState } from 'react'
 import { createCvSharedLink, deleteCv, duplicateCv, renameCv, setDefaultCv } from '@/entities/cv'
+import { message } from '@/shared/lib/toast'
 
 // Sở hữu state hiển thị (tên, CV chính) và toàn bộ hành động của một thẻ CV.
 export function useCvCardActions(cv, onRefresh) {

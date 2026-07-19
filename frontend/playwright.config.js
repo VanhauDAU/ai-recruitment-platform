@@ -9,6 +9,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'tablet-chromium', use: { viewport: { width: 834, height: 1112 }, hasTouch: true } },
     // Use a Chromium-native mobile profile. iPhone 13 is a WebKit device;
     // forcing it onto Chromium produces a mismatched layout/visual viewport.
     { name: 'mobile-chromium', use: { ...devices['Pixel 5'] } },

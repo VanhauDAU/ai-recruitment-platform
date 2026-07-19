@@ -23,7 +23,7 @@ const SECTIONS = [
 
 function ServiceVisual({ Icon, index }) {
   return (
-    <div className="relative mx-auto flex min-h-72 w-full max-w-lg items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 to-slate-800 p-8 text-white shadow-xl shadow-slate-950/10">
+    <div className="relative mx-auto flex min-h-72 w-full max-w-lg items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 to-slate-800 p-5 text-white shadow-xl shadow-slate-950/10 sm:p-8">
       <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-emerald-400/20 blur-2xl" />
       <div className="relative w-full">
         <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-400 text-3xl text-slate-950"><Icon /></span>
@@ -48,9 +48,9 @@ export default function EmployerServices() {
       <section className="bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
           <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-700">{t('servicesPage.eyebrow')}</span>
-          <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-black leading-tight text-slate-950 sm:text-5xl">{t('servicesPage.title')}</h1>
+          <h1 className="mx-auto mt-6 max-w-4xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl">{t('servicesPage.title')}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t('servicesPage.subtitle')}</p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
             <Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{t('common.startNow')}</Button></Link>
             <Button size="large" shape="round" className="!h-12 !px-7" onClick={() => setConsultOpen(true)}>{t('common.consult')}</Button>
           </div>
@@ -80,7 +80,7 @@ export default function EmployerServices() {
       <section className="bg-slate-950 px-4 py-14 text-white">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 text-center md:flex-row md:text-left">
           <div><h2 className="text-2xl font-bold">{t('servicesPage.ctaTitle')}</h2><p className="mt-2 text-white/60">{t('servicesPage.ctaDesc')}</p></div>
-          <div className="flex shrink-0 gap-3"><Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round">{t('common.register')}</Button></Link><Button ghost size="large" shape="round" onClick={() => setConsultOpen(true)}>{t('common.consultShort')}</Button></div>
+          <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto"><Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round">{t('common.register')}</Button></Link><Button ghost size="large" shape="round" onClick={() => setConsultOpen(true)}>{t('common.consultShort')}</Button></div>
         </div>
       </section>
 

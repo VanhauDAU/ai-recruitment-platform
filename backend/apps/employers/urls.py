@@ -4,6 +4,7 @@ from .api.views import (
     AcceptDpaView,
     AllIndustryListView,
     CompanyCoverUploadView,
+    CompanyCatalogView,
     CompanyDocumentListCreateView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
@@ -17,6 +18,8 @@ from .api.views import (
     PhoneAvailabilityView,
     RecruiterMeView,
     RecruitmentNeedView,
+    RecruitmentNeedListCreateView,
+    RecruitmentNeedDetailView,
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )
@@ -26,6 +29,8 @@ urlpatterns = [
     path('register/', EmployerRegisterView.as_view(), name='employer-register'),
     path('onboarding/registration/', CompleteEmployerRegistrationView.as_view(), name='employer-registration-complete'),
     path('consulting-need/', RecruitmentNeedView.as_view(), name='employer-consulting-need'),
+    path('recruitment-needs/', RecruitmentNeedListCreateView.as_view(), name='employer-recruitment-needs'),
+    path('recruitment-needs/<str:public_id>/', RecruitmentNeedDetailView.as_view(), name='employer-recruitment-need-detail'),
     # Nhà tuyển dụng + onboarding
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
     path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
@@ -36,6 +41,7 @@ urlpatterns = [
     path('company/', MyCompanyView.as_view(), name='employer-company'),
     path('company/create/', CreateCompanyView.as_view(), name='employer-company-create'),
     path('company/search/', CompanySearchView.as_view(), name='employer-company-search'),
+    path('company/catalogs/', CompanyCatalogView.as_view(), name='employer-company-catalogs'),
     path('company/join/', JoinCompanyView.as_view(), name='employer-company-join'),
     path('company/logo/', CompanyLogoUploadView.as_view(), name='employer-company-logo-upload'),
     path('company/cover/', CompanyCoverUploadView.as_view(), name='employer-company-cover-upload'),

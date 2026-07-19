@@ -6,6 +6,129 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-20
+
+#### Added — Quản lý hồ sơ công ty đầy đủ
+
+- Nâng cấp `/tuyendung/app/account/settings/company` thành ba trạng thái hoàn chỉnh: catalogue công ty dùng chung có recent/search/phân trang; form tạo Doanh nghiệp/Hộ kinh doanh; và hồ sơ đã liên kết theo quyền owner/member/pending.
+- Form mới có option card theo luồng, logo/website/tên thương mại với checkbox phụ thuộc, catalogue lĩnh vực/quy mô/thị trường/khách hàng, TipTap rich text 10.000 ký tự, gallery nhiều ảnh và hồ sơ chứng minh cho thay đổi pháp lý.
+- Bổ sung `GET /api/employer/company/catalogs/`; chuẩn hóa `company/search` trả sáu công ty mỗi trang, mới nhất trước khi không có từ khóa và tìm không dấu theo tên/tên thương mại/MST khi có từ khóa.
+- Thêm migration `employers.0014` seed idempotent catalogue lĩnh vực đầy đủ; media công ty chỉ nhận JPG/PNG/WebP tối đa 5 MB, gallery tối đa 10 ảnh và dọn file khi thao tác DB lỗi.
+
+#### Security — Nội dung công ty và cập nhật pháp lý
+
+- Mô tả/phúc lợi được lưu dưới HTML allowlist (`p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`), bỏ thuộc tính/script/style nguy hiểm và giới hạn theo 10.000 ký tự nhìn thấy; API chi tiết việc làm tiếp tục trả mô tả công ty dạng plain text.
+- Owner gửi thay đổi qua `CompanyUpdateRequest`; đổi tên/MST bắt buộc lý do, loại hồ sơ và tài liệu gắn đúng request trước khi admin có thể duyệt. Member chỉ xem, request pending thứ hai tiếp tục bị chặn.
+
+#### Verification — Trang thông tin công ty
+
+- Thêm regression backend cho catalogue, validation, rich-text XSS, gallery và update-request proof; unit frontend cho mapping/diff/media cùng option cards/recent list.
+- Thêm Playwright smoke riêng chạy xanh desktop, tablet `834×1112` và Pixel mobile, kiểm tra không tràn ngang và nhãn động Hộ kinh doanh.
+
+#### Changed — Quy tắc liên kết công ty
+
+- Bỏ điều kiện phải xác thực số điện thoại trước khi tạo công ty mới hoặc gửi hồ sơ liên kết công ty có sẵn; xác thực điện thoại tiếp tục là một bước bảo mật độc lập.
+- Sau lần tạo hoặc chọn công ty đầu tiên, tài khoản không thể chuyển sang công ty khác. Backend khóa recruiter trong giao dịch để chặn cả request đồng thời; frontend chỉ hiển thị hồ sơ đã liên kết và thông báo đây là liên kết cố định.
+
+#### Changed — Catalogue công ty gọn hơn
+
+- Luồng tìm công ty chuyển về bố cục tab ngang, ô tìm kiếm chiếm toàn bộ hàng, kèm nhãn **Lưu ý!** về tên công ty theo dữ liệu Cục Thuế.
+- Card catalogue rút gọn thành logo, tên, MST, một dòng `địa chỉ | quy mô nhân viên`, lĩnh vực và nút **Chọn** nhỏ; lĩnh vực bị giới hạn một dòng có ellipsis, hover để xem đầy đủ; mobile tự xếp lại mà không tràn ngang.
+- Khu chọn logo trong form tạo công ty được rút về cụm căn giữa không khung: avatar/logo tròn có affordance camera, nhãn bắt buộc và checkbox “Tôi không có logo”.
+- Bỏ trường Năm thành lập khỏi form; các phần thông tin còn lại dùng đường phân cách nhẹ thay vì nhiều card, giúp input liền mạch và gọn hơn.
+- Tiếp tục nén form theo spacing TopCV: bỏ heading nhóm thị giác, giảm khoảng cách alert/label/form item và chiều cao editor, giữ nguyên nhãn và validation của từng trường.
+- Chứng minh Tên thương mại giờ chỉ hiện CTA **+ Thêm giấy tờ chứng minh Tên thương mại**. CTA mở popup chọn **Giấy tờ** (JPEG/JPG/PNG/PDF, tối đa 5 MB) hoặc **Website**; sau khi lưu hiện link mở tab mới và nút **Chỉnh sửa**.
+- Dropdown **Lĩnh vực chính** bị khóa cho đến khi người dùng chọn ít nhất một **Lĩnh vực hoạt động**, tránh chọn dữ liệu không hợp lệ.
+- Khi chọn “Tên thương mại trùng với tên đăng ký kinh doanh”, hệ thống ẩn thao tác thêm/chỉnh sửa giấy tờ chứng minh tên thương mại vì không còn cần thiết.
+- Chọn một công ty từ catalogue giờ liên kết ngay, không mở modal và không bắt người dùng tải hồ sơ ở bước này; trạng thái liên kết vẫn chờ quản trị viên duyệt.
+- Làm lại trạng thái công ty đã liên kết theo hierarchy TopCV: khối “Yêu cầu cập nhật thông tin công ty” có thời điểm gần nhất/CTA tạo yêu cầu, tiếp theo là hồ sơ đọc dạng nhãn–giá trị; form yêu cầu có tiêu đề và mô tả ngữ cảnh rõ ràng.
+- Liên kết công ty có hiệu lực ngay sau khi chọn; bỏ hoàn toàn trạng thái/alert chờ duyệt liên kết.
+- Mọi employer đã liên kết công ty, gồm cả member, đều thấy và tạo được **Yêu cầu cập nhật**; yêu cầu vẫn ở trạng thái chờ quản trị viên duyệt trước khi áp dụng.
+- Tương thích liên kết cũ còn trạng thái `pending`: chỉ cần tài khoản đã có công ty là luôn hiển thị **Tạo yêu cầu**.
+
+#### Changed — Dashboard nhà tuyển dụng: khối "Xin chào" theo UX TopCV
+
+- Dựng lại section hành trình xác thực (`DashboardVerificationJourney`) theo mẫu TopCV: mỗi bước là thẻ pill bo góc riêng biệt cuộn ngang, bước đang làm có viền + chữ + nút mũi tên xanh, bước đã xong hiển thị check tròn và chữ mờ.
+- Thêm hai nút chevron trái/phải ở header để cuộn qua các bước; ghim sticky thẻ "Đăng tin tuyển dụng đầu tiên" ở ngoài cùng bên phải, tách khỏi vùng cuộn.
+- Màu chủ đạo dùng biến thương hiệu (`--brand-primary`, `--brand-primary-soft`, `brand_primary_color`) từ site settings thay cho hardcode, đồng bộ khi đổi màu brand.
+
+#### Fixed — Gộp danh sách domain email miễn phí về một nguồn
+
+- Bỏ `PUBLIC_EMAIL_DOMAINS` chép tay ở frontend (`account-verification-level.js`); cấp độ xác minh email doanh nghiệp giờ tin hoàn toàn vào cờ `email_domain_verified` do backend trả, tránh lệch danh sách khi thêm domain mới.
+
+#### Fixed — CI frontend
+
+- Sửa regression coverage của trang cài đặt bảo mật: test thao tác phương thức 2FA giờ bám vào `data-testid` ổn định thay vì class layout, nên không hỏng khi UI chuyển từ flex sang grid.
+- Bỏ import icon không dùng làm `static-quality` dừng lint; giữ kiểm tra ranh giới API/feature và kiến trúc sạch.
+- Điều chỉnh ngân sách CSS initial gzip từ 30 KiB lên 35 KiB, phản ánh stylesheet responsive của shell settings hiện ở 31,5 KiB mà vẫn giữ giới hạn rõ ràng; JavaScript initial vẫn ở 279/320 KiB.
+- Khôi phục đầy đủ chuỗi kiểm tra: coverage 76 file/270 test, production build, bundle budget và 63 Playwright smoke desktop/tablet/mobile đều chạy xanh.
+- Sửa smoke xác thực employer: tài khoản đã hoàn tất năm điều kiện vẫn được redirect khỏi checklist, đồng thời test xác nhận CTA **Đăng tin tuyển dụng đầu tiên** còn hiển thị như hành động ghim độc lập, không bị tính là bước xác thực.
+
+### 2026-07-19
+
+#### Changed — Xác thực giấy tờ nhà tuyển dụng
+
+- Hoàn thiện UX trang `/tuyendung/app/account/settings/gpkd`: hai phương thức giấy ĐKDN hoặc giấy ủy quyền + CCCD/hộ chiếu luôn giữ thứ tự dọc; mỗi phương thức chỉ mở các ô hồ sơ tương ứng, có khoảng cách thao tác rõ ràng trên desktop và mobile.
+- Thay minh họa code-native bằng ba ảnh mẫu đã tối ưu trong `frontend/public/images/employer/`; cập nhật link tải mẫu giấy ủy quyền và link hướng dẫn đăng tải.
+- Trong giai đoạn hiện tại, người dùng vẫn xem/chọn file cục bộ nhưng nút Lưu được khóa; không gửi tài liệu lên API trước khi workflow cập nhật thông tin công ty và lưu giấy tờ được bật.
+
+#### Added — Văn bản xử lý Dữ liệu cá nhân
+
+- Hoàn thiện `/tuyendung/app/account/settings/personal-data-protection` theo hai khối độc lập: thỏa thuận Ứng viên–Nhà tuyển dụng có hướng dẫn, tải mẫu DOCX local, tải lên/lưu; và thỏa thuận nền tảng–Nhà tuyển dụng có link văn bản đầy đủ cùng xác nhận inline.
+- Đưa mẫu DOCX người dùng cung cấp vào `frontend/public/documents/` để nhà tuyển dụng tải về và chỉnh sửa. Giao diện chỉ nhận một tệp DOC/DOCX/PDF tối đa 5 MB; chọn tệp mới sẽ thay thế tệp đang chờ lưu.
+- Thêm migration `employers.0012`: văn bản DLCN được gắn với recruiter thay vì bắt buộc công ty, có thể lưu/thay thế khi chưa cập nhật thông tin công ty; dữ liệu DLCN cũ theo company vẫn được đọc để giữ nguyên tiến độ xác thực.
+
+#### Added — Quản lý nhu cầu tuyển dụng
+
+- Mở route `/tuyendung/app/account/settings/recruitment-demand`: hiển thị toàn bộ nhu cầu đã khai báo lúc onboarding và cho phép thêm, sửa, xóa, bật/tắt từng nhu cầu. Nguồn ngân sách là thiết lập dùng chung Công ty/Cá nhân, được lưu cho các nhu cầu hiện có và tự áp dụng khi tạo nhu cầu mới.
+- Migration `employers.0013` chuyển nhu cầu từ một bản ghi onboarding cố định sang nhiều nhu cầu theo recruiter, giữ dữ liệu cũ và trạng thái hoạt động mặc định; thêm API CRUD `/api/employer/recruitment-needs/`.
+- Tinh chỉnh UX theo mẫu TopCV: form thêm/sửa có hierarchy rõ ràng, danh sách responsive không cuộn ngang và thiết lập nguồn ngân sách mở popover radio với nút Lưu/Hủy.
+
+#### Changed — Responsive toàn bộ cổng nhà tuyển dụng
+
+- Chuẩn hóa shell employer cho mobile/tablet: sidebar workspace mở dạng drawer phủ có mask, tiêu đề route không tràn, content không phát sinh cuộn ngang và menu cài đặt chuyển thành dropdown trên màn hình nhỏ.
+- Responsive lại dashboard, xác minh tài khoản, hồ sơ/công ty, GPKD, DLCN, bảo mật, đổi mật khẩu và nhu cầu tuyển dụng; grid tự xếp cột, text dài ngắt an toàn, modal/popover giới hạn theo viewport và nút form chiếm đủ chiều rộng trên mobile.
+- Tinh chỉnh typography, CTA và card của toàn bộ trang marketing employer; thêm Playwright project tablet `834x1112` cùng regression chống tràn ngang cho desktop, tablet và Pixel mobile.
+- Ghi responsive mobile-first thành baseline bắt buộc trong `frontend/ARCHITECTURE.md` cho mọi giao diện employer phát triển sau này.
+
+#### Changed — Trang đăng ký nhà tuyển dụng
+
+- Bỏ thanh **Các bước tạo tài khoản** ở đầu trang đăng ký; luồng hai phần vẫn tiếp tục bằng CTA phía cuối form và giữ nút Quay lại ở phần thông tin nhà tuyển dụng.
+- Thêm khối **Quy định đăng ký tài khoản** theo UX tham khảo TopCV: mặc định mở, cho phép hiện/ẩn bằng nút có trạng thái truy cập `aria-expanded`, dùng tên website và hotline từ site settings.
+- Làm phẳng phần giới thiệu và hai phần form, bỏ card viền/đổ bóng bao quanh để giảm lớp thị giác; bổ sung regression Playwright cho trạng thái Quy định và chống tràn ngang trên desktop, tablet, mobile.
+- Form mật khẩu employer hiển thị mức độ yếu/trung bình/mạnh, thanh tiến trình và bốn điều kiện cập nhật theo từng ký tự; chỉ cho tiếp tục khi có đủ độ dài, hoa/thường, chữ số và ký tự đặc biệt.
+- Hướng dẫn xác minh mật khẩu chỉ hiển thị khi ô Mật khẩu đang được focus và tự đóng khi người dùng rời ô, tránh che hoặc kéo dài form không cần thiết.
+- Thêm lưu ý ngay dưới email đăng ký: email không thuộc tên miền công ty có thể bị giới hạn quyền mua hoặc sử dụng một số dịch vụ.
+
+#### Fixed — Hoàn tất xác thực employer
+
+- Đồng bộ checklist, progress dashboard và redirect `/employer-verify` theo đúng năm điều kiện xác thực; mục **Đăng tin tuyển dụng đầu tiên** là hành động sản phẩm, không còn được tính vào tiến độ hay giữ tài khoản đã xác thực ở checklist.
+- Thiết kế lại hành trình xác thực trên dashboard theo hierarchy TopCV: phần trăm/lời chào rõ ràng, năm bước có trạng thái; bố cục tự chuyển thành danh sách dễ quét trên mobile.
+- Căn chỉnh lại journey sát mẫu dashboard TopCV: năm bước nằm trong dải cuộn riêng, tiêu đề mỗi bước mở đúng màn hình tác vụ ở tab mới; mục **Đăng tin tuyển dụng đầu tiên** được ghim ngoài cùng bên phải ở trạng thái khóa và không còn hiển thị điểm thưởng.
+- Tải và self-host SVG `v-brand` tham khảo từ TopCV; dùng làm nền trang trí cho khối hành trình xác thực, không phụ thuộc CDN ngoài khi hiển thị.
+- Đồng bộ vị trí ảnh nền `v-brand` theo CSS mẫu TopCV (`top: -250px; bottom: 0; right: 5%`) để họa tiết neo đúng cạnh phải của journey.
+
+#### Fixed — Màu liên kết DLCN
+
+- Ép màu emerald cho các liên kết/hành động trên trang DLCN (hướng dẫn, tải mẫu, xem nội dung đầy đủ, thỏa thuận và tài liệu đã tải) để không bị màu xanh mặc định của Ant Design ghi đè.
+- Đặt checkbox xác nhận thỏa thuận nền tảng ở một dòng/khối riêng dưới liên kết xem văn bản, giữ khoảng cách và căn chỉnh ổn định khi nội dung dài.
+
+#### Fixed — Toast workspace nhà tuyển dụng
+
+- Thay toàn bộ lớp `message` Ant Design bằng Sonner: toast được render độc lập ở cấp `document.body`, không thể bị header hay vùng cuộn của workspace cắt mất nội dung. Các trạng thái thành công, lỗi, cảnh báo, thông tin và đang tải có biểu tượng/màu riêng; người dùng có thể đóng từng toast.
+
+#### Changed — Nộp giấy tờ nhà tuyển dụng
+
+- Bỏ yêu cầu MFA và xác thực lại phiên đối với thao tác nộp/thay thế giấy tờ doanh nghiệp, giấy tờ liên kết công ty và văn bản DLCN. Endpoint vẫn yêu cầu phiên nhà tuyển dụng hợp lệ để gắn đúng chủ sở hữu; mọi tài liệu nộp mới tiếp tục chờ admin duyệt.
+- Sau khi lưu văn bản DLCN, hiển thị toast xác nhận tiếp nhận theo tên hệ thống, nhãn “Hệ thống đang xử lý” và chỉ cho mở form thay tệp qua nút Chỉnh sửa/Hủy. Tài liệu DOC/DOCX đã nộp mở bằng Google Docs Viewer; thời điểm chấp nhận thỏa thuận nền tảng hiển thị đến giây theo giờ Việt Nam.
+- Khi văn bản DLCN đang được xử lý, vẫn giữ khối **Văn bản mẫu** và nút tải xuống cạnh tệp đã nộp; bỏ nhãn trạng thái trùng lặp ở dòng tệp để chỉ dùng nhãn trạng thái tại tiêu đề.
+- Khi chọn **Chỉnh sửa**, giữ liên kết xem tệp đã nộp và hiển thị tên tệp thay thế ngay trong ô tải lên. Sau khi lưu, tên hiển thị chuẩn của tài liệu là **Thỏa thuận xử lý DLCN**, không dùng tên gốc của tệp tải lên.
+- API ưu tiên văn bản DLCN mới gắn recruiter trước bản DLCN lịch sử theo company, tránh mở nhầm PDF cũ khi hai bản cùng tồn tại. DOC/DOCX tại URL HTTPS storage công khai/S3 có chữ ký mở qua Google Docs Viewer; PDF và URL localhost mở trực tiếp. Hover liên kết tệp dùng màu thương hiệu cấu hình của hệ thống.
+
+#### Documentation
+
+- Cập nhật hướng dẫn xác thực employer, tiến độ EMP-P8/EMP-P9 và regression test desktop/mobile cho layout/asset GPKD cùng DLCN; chuẩn hóa thông báo toàn ứng dụng qua Sonner.
+
 ### 2026-07-18
 
 #### Added — Cổng marketing nhà tuyển dụng

@@ -86,7 +86,7 @@ export default function EmployerPricing() {
       <section className="bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
           <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-300">{t('pricing.eyebrow')}</span>
-          <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-black leading-tight sm:text-5xl">{t('pricing.title')}</h1>
+          <h1 className="mx-auto mt-6 max-w-4xl text-3xl font-black leading-tight sm:text-5xl">{t('pricing.title')}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/65">{t('pricing.subtitle')}</p>
         </div>
       </section>
@@ -98,9 +98,9 @@ export default function EmployerPricing() {
       {categories.map((category, categoryIndex) => (
         <section key={category.key} className={categoryIndex % 2 ? 'bg-slate-50' : 'bg-white'}>
           <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-            <div className="flex items-start gap-4">
+            <div className="flex min-w-0 items-start gap-4">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-600"><CategoryIcon category={category} /></span>
-              <div><h2 className="text-3xl font-extrabold text-slate-950">{pickLocalized(category, 'name', language)}</h2><p className="mt-2 max-w-3xl leading-7 text-slate-600">{pickLocalized(category, 'description', language)}</p></div>
+              <div className="min-w-0"><h2 className="break-words text-2xl font-extrabold text-slate-950 sm:text-3xl">{pickLocalized(category, 'name', language)}</h2><p className="mt-2 max-w-3xl leading-7 text-slate-600">{pickLocalized(category, 'description', language)}</p></div>
             </div>
             <div className="mt-9 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
               {category.packages.map((item) => <PackageCard key={item.slug} item={item} language={language} onConsult={setSelectedPackage} />)}

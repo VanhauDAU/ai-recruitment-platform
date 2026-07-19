@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { getEmployerVerificationProgress } from './verification-progress'
 
 describe('employer verification progress', () => {
-  it('counts only the six visible account-safety steps', () => {
+  it('counts only the five account-verification steps', () => {
     expect(getEmployerVerificationProgress({
       registration_completed: true,
       consulting_need_completed: true,
@@ -12,6 +12,6 @@ describe('employer verification progress', () => {
       candidate_dpa_submitted: true,
       dpa_accepted: false,
       first_job_posted: false,
-    })).toEqual({ completed: 3, total: 6, percent: 50 })
+    })).toEqual({ completed: 3, total: 5, percent: 60 })
   })
 })

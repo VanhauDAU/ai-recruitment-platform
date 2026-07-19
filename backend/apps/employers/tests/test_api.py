@@ -17,7 +17,7 @@ from apps.locations.models import Location
 from apps.jobs.models import JobCategory
 
 from .. import services
-from ..models import Company, CompanyDocument, CompanyUpdateRequest, Industry, PhoneOtp, RecruiterProfile, RecruitmentNeed
+from ..models import Company, CompanyDocument, CompanyImage, CompanyUpdateRequest, Industry, PhoneOtp, RecruiterProfile, RecruitmentNeed
 
 
 PNG_BYTES = (
@@ -256,6 +256,29 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(RecruitmentNeed.objects.filter(recruiter=self.recruiter).exists())
 
+    def test_recruitment_demand_crud_keeps_onboarding_need_and_manages_more_needs(self):
+        first = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
+        second = self.client.post(reverse('employer-recruitment-needs'), {
+            **self.payload,
+            'headcount': 5,
+            'is_continuous': True,
+            'target_date': None,
+        }, format='json')
+
+        self.assertEqual(first.status_code, status.HTTP_200_OK, first.data)
+        self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.data)
+        listed = self.client.get(reverse('employer-recruitment-needs'))
+        self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
+        self.assertEqual(len(listed.data), 2)
+
+        detail_url = reverse('employer-recruitment-need-detail', args=[second.data['public_id']])
+        toggled = self.client.patch(detail_url, {'is_active': False}, format='json')
+        self.assertEqual(toggled.status_code, status.HTTP_200_OK, toggled.data)
+        self.assertFalse(toggled.data['is_active'])
+        deleted = self.client.delete(detail_url)
+        self.assertEqual(deleted.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(RecruitmentNeed.objects.filter(recruiter=self.recruiter).count(), 1)
+
     def test_consulting_need_rejects_non_specialization_category(self):
         domain = JobCategory.objects.create(
             name='Công nghệ',
@@ -415,16 +438,18 @@ class CompanyCreateTests(APITestCase):
         self.assertEqual(self.recruiter.membership_status, RecruiterProfile.MembershipStatus.APPROVED)
         self.assertTrue(company.company_industries.get(industry=self.industry).is_primary)
 
-    def test_create_requires_verified_phone(self):
+    def test_create_does_not_require_verified_phone(self):
         user, _ = make_employer('newbie@example.com', phone_verified=False)
         authenticate_employer(self.client, user)
         response = self.client.post(
-            reverse('employer-company-create'), company_payload(self.industry), format='json'
+            reverse('employer-company-create'),
+            company_payload(self.industry, tax_code='0207654321'),
+            format='json',
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
 
     def test_primary_industry_must_be_among_selected(self):
-        other = Industry.objects.create(name='Bảo hiểm')
+        other = Industry.objects.get(name='Bảo hiểm')
         payload = company_payload(self.industry, primary_industry=other.id)
         response = self.client.post(reverse('employer-company-create'), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -448,6 +473,28 @@ class CompanyCreateTests(APITestCase):
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_tax_code_is_normalized_and_rich_text_is_sanitized(self):
+        payload = company_payload(
+            self.industry,
+            tax_code='010 123 4567',
+            description='<p onclick="steal()">Công ty <strong>an toàn</strong><script>alert(1)</script></p>',
+        )
+        response = self.client.post(reverse('employer-company-create'), payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        company = Company.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(company.tax_code, '0101234567')
+        self.assertEqual(company.description, '<p>Công ty <strong>an toàn</strong></p>')
+
+    def test_company_catalogs_are_server_driven(self):
+        response = self.client.get(reverse('employer-company-catalogs'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn({'value': 'enterprise', 'label': 'Doanh nghiệp'}, response.data['business_types'])
+        self.assertTrue(response.data['company_sizes'])
+        self.assertTrue(response.data['markets'])
+        self.assertTrue(response.data['target_customers'])
 
     def test_registration_placeholder_does_not_block_explicit_company_creation(self):
         placeholder = Company.objects.create(
@@ -501,16 +548,80 @@ class JoinCompanyTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(response.data['results'][0]['public_id'], self.company.public_id)
 
-    def test_join_with_business_registration_creates_pending_membership(self):
+    def test_blank_search_returns_six_recent_real_companies_and_excludes_placeholder(self):
+        for index in range(7):
+            Company.objects.create(
+                company_name=f'Công ty mới {index}',
+                tax_code=f'02000000{index:02d}',
+                created_by=self.user,
+            )
+        Company.objects.create(
+            company_name='Placeholder cũ',
+            has_no_logo=True,
+            has_no_website=True,
+            created_by=self.user,
+        )
+
+        response = self.client.get(reverse('employer-company-search'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 6)
+        names = [item['company_name'] for item in response.data['results']]
+        self.assertNotIn('Placeholder cũ', names)
+        self.assertEqual(names[0], 'Công ty mới 6')
+
+    def test_join_with_business_registration_creates_active_membership(self):
         response = self._join_with_business_registration()
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
 
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.company, self.company)
-        self.assertEqual(self.recruiter.membership_status, RecruiterProfile.MembershipStatus.PENDING)
+        self.assertEqual(self.recruiter.membership_status, RecruiterProfile.MembershipStatus.APPROVED)
         self.assertTrue(self.company.documents.filter(
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION, uploaded_by=self.user,
         ).exists())
+
+    def test_join_does_not_require_verified_phone(self):
+        self.recruiter.verified_phone = ''
+        self.recruiter.phone_verified_at = None
+        self.recruiter.save(update_fields=['verified_phone', 'phone_verified_at', 'updated_at'])
+
+        response = self._join_with_business_registration()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+    def test_can_join_company_immediately_without_proof(self):
+        response = self.client.post(reverse('employer-company-join'), {
+            'company': self.company.public_id,
+        }, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.recruiter.refresh_from_db()
+        self.assertEqual(self.recruiter.company, self.company)
+        self.assertEqual(self.recruiter.membership_status, RecruiterProfile.MembershipStatus.APPROVED)
+        self.assertEqual(self.recruiter.membership_proof_type, '')
+
+    def test_cannot_select_or_create_another_company_after_joining(self):
+        first = self._join_with_business_registration()
+        other_company = Company.objects.create(
+            company_name='Công ty khác', tax_code='0207654321', created_by=self.user
+        )
+        second = self.client.post(reverse('employer-company-join'), {
+            'company': other_company.public_id,
+            'proof_type': 'business_registration',
+        }, format='multipart')
+        industry = Industry.objects.get(name='Bảo hiểm')
+        create = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(industry, tax_code='0307654321'),
+            format='json',
+        )
+
+        self.assertEqual(first.status_code, status.HTTP_200_OK, first.data)
+        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('không thể đổi công ty khác', str(second.data))
+        self.assertEqual(create.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('không thể tạo hoặc đổi công ty khác', str(create.data))
 
     def test_join_with_authorization_requires_both_files(self):
         response = self.client.post(reverse('employer-company-join'), {
@@ -520,13 +631,102 @@ class JoinCompanyTests(APITestCase):
         }, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_pending_member_cannot_post_job(self):
+    def test_linked_member_has_active_membership(self):
         self._join_with_business_registration()
-        response = self.client.post(reverse('employer-job-list-create'), {
-            'title': 'Nhân viên kinh doanh', 'description': 'Mô tả',
-        }, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('chờ duyệt', str(response.data))
+        self.recruiter.refresh_from_db()
+        self.assertEqual(self.recruiter.membership_status, RecruiterProfile.MembershipStatus.APPROVED)
+
+    def test_candidate_dpa_can_be_saved_without_mfa_requirement(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                first = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                    'file': SimpleUploadedFile(
+                        'thoa-thuan-cu.docx',
+                        DOCX_BYTES,
+                        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ),
+                }, format='multipart')
+                replacement = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                    'file': SimpleUploadedFile(
+                        'thoa-thuan-moi.docx',
+                        DOCX_BYTES,
+                        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ),
+                }, format='multipart')
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
+        self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
+        documents = CompanyDocument.objects.filter(
+            recruiter=self.recruiter,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        )
+        self.assertEqual(documents.count(), 1)
+        document = documents.get()
+        self.assertIsNone(document.company)
+        self.assertEqual(document.file_name, 'Thỏa thuận xử lý DLCN')
+        self.assertTrue(self.client.get(reverse('employer-me')).data['onboarding']['candidate_dpa_submitted'])
+        listed = self.client.get(reverse('employer-company-documents'))
+        self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
+        self.assertEqual(len(listed.data), 1)
+
+    def test_current_recruiter_dpa_is_listed_before_legacy_company_dpa(self):
+        self.recruiter.company = self.company
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        self.recruiter.save(update_fields=['company', 'company_role', 'membership_status', 'updated_at'])
+        CompanyDocument.objects.create(
+            company=self.company,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            file_url='employers/legacy-company-dpa.pdf',
+            file_name='Thỏa thuận xử lý DLCN',
+        )
+        current_document = CompanyDocument.objects.create(
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            file_url='employers/current-recruiter-dpa.docx',
+            file_name='Thỏa thuận xử lý DLCN',
+        )
+
+        response = self.client.get(reverse('employer-company-documents'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.data[0]['id'], current_document.id)
+        self.assertTrue(response.data[0]['file_url'].endswith('.docx'))
+
+    def test_join_with_business_registration_does_not_require_mfa(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+
+        response = self._join_with_business_registration()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+    def test_trade_name_proof_can_be_saved_as_website(self):
+        self.recruiter.company = self.company
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
+        self.recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        self.recruiter.save(update_fields=['company', 'company_role', 'membership_status', 'updated_at'])
+
+        response = self.client.post(reverse('employer-company-documents'), {
+            'doc_type': CompanyDocument.DocType.TRADE_NAME_PROOF,
+            'source_type': 'website',
+            'website_url': 'https://example.com/thuong-hieu',
+        }, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(response.data['source_type'], 'website')
+        self.assertEqual(response.data['file_url'], 'https://example.com/thuong-hieu')
+        document = CompanyDocument.objects.get(doc_type=CompanyDocument.DocType.TRADE_NAME_PROOF)
+        self.assertEqual(document.file_name, 'Website chứng minh tên thương mại')
 
     def test_admin_approves_membership(self):
         self._join_with_business_registration()
@@ -561,6 +761,23 @@ class CompanyUpdateRequestTests(APITestCase):
         second = self.client.post(reverse('employer-company-update-requests'), payload, format='json')
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_linked_member_can_create_update_request_without_mfa(self):
+        member_user, member = make_employer('member-update@example.com')
+        member_user.two_factor_enabled = False
+        member_user.save(update_fields=['two_factor_enabled'])
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        member.save(update_fields=['company', 'company_role', 'membership_status', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        response = self.client.post(reverse('employer-company-update-requests'), {
+            'changes': {'address': 'Đà Nẵng'},
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(response.data['status'], CompanyUpdateRequest.Status.PENDING)
+
     def test_admin_approval_applies_changes(self):
         self.client.post(reverse('employer-company-update-requests'), {
             'changes': {'company_name': 'Acme Global', 'address': 'TP.HCM'},
@@ -571,11 +788,40 @@ class CompanyUpdateRequestTests(APITestCase):
         admin = User.objects.create_superuser(email='admin@example.com', password='Password@123')
         update_request = CompanyUpdateRequest.objects.get(company=self.company)
         self.assertTrue(update_request.is_sensitive)
+        CompanyDocument.objects.create(
+            company=self.company,
+            update_request=update_request,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/documents/update-proof.pdf',
+            file_name='update-proof.pdf',
+        )
         services.apply_update_request(update_request, admin, approve=True)
 
         self.company.refresh_from_db()
         self.assertEqual(self.company.company_name, 'Acme Global')
         self.assertEqual(self.company.address, 'TP.HCM')
+
+    def test_sensitive_proof_is_bound_to_update_request(self):
+        create_response = self.client.post(reverse('employer-company-update-requests'), {
+            'changes': {'tax_code': '0107654321'},
+            'reason': 'Thay đổi đăng ký thuế',
+            'proof_type': 'business_registration',
+        }, format='json')
+        update_request_id = create_response.data['public_id']
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                response = self.client.post(reverse('employer-company-documents'), {
+                    'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                    'update_request': update_request_id,
+                    'file': SimpleUploadedFile('proof.pdf', PDF_BYTES, content_type='application/pdf'),
+                }, format='multipart')
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(response.data['update_request'], update_request_id)
 
     def test_onboarding_status_reflects_progress(self):
         response = self.client.get(reverse('employer-me'))
@@ -680,6 +926,19 @@ class CompanyImageUploadTests(APITestCase):
         self.company.refresh_from_db()
         self.assertTrue(self.company.logo_url.startswith('employers/'))
         self.assertNotIn('://', self.company.logo_url)
+        self.assertFalse(self.company.has_no_logo)
+
+    def test_gallery_rejects_the_eleventh_image(self):
+        CompanyImage.objects.bulk_create([
+            CompanyImage(company=self.company, image_url=f'employers/image-{index}.png', sort_order=index)
+            for index in range(10)
+        ])
+        upload = SimpleUploadedFile('extra.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(reverse('employer-company-image-upload'), {'file': upload}, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.company.images.count(), 10)
 
     def test_member_cannot_upload_logo(self):
         member, member_recruiter = make_employer('member@example.com')

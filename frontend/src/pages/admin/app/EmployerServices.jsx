@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  App,
   Button,
   Form,
   Input,
@@ -25,6 +24,7 @@ import {
   updateAdminServiceCategory,
   updateAdminServicePackage,
 } from '@/entities/service-package'
+import { message } from '@/shared/lib/toast'
 
 const CATEGORY_DEFAULTS = { order: 0, is_active: true }
 const PACKAGE_DEFAULTS = { currency: 'VND', cta_type: 'contact', order: 0, is_active: true, is_highlight: false }
@@ -34,7 +34,6 @@ function lines(value) {
 }
 
 export default function AdminEmployerServices() {
-  const { message } = App.useApp()
   const [form] = Form.useForm()
   const [categories, setCategories] = useState([])
   const [packages, setPackages] = useState([])
@@ -53,7 +52,7 @@ export default function AdminEmployerServices() {
     } finally {
       setLoading(false)
     }
-  }, [message])
+  }, [])
 
   useEffect(() => { load() }, [load])
 

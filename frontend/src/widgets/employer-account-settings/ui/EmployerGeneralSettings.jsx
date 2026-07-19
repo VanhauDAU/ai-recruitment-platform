@@ -8,7 +8,7 @@ import {
   MobileOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { App, Button, Input, Modal, QRCode, Radio, Switch, Tooltip } from 'antd'
+import { Button, Input, Modal, QRCode, Radio, Switch, Tooltip } from 'antd'
 import { useState } from 'react'
 import { useSession } from '@/entities/session'
 import {
@@ -24,6 +24,7 @@ import {
   startEmployerTotpSetup,
 } from '@/features/two-factor'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 import { sanitizeTwoFactorCode, TWO_FACTOR_CODE_LENGTH } from '@/shared/ui/two-factor-code'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 
@@ -35,10 +36,10 @@ function StatusBadge({ active, activeLabel = 'Đang hoạt động' }) {
   )
 }
 
-function MethodRow({ icon, title, description, checked, loading, disabled, onChange, tooltip }) {
+function MethodRow({ id, icon, title, description, checked, loading, disabled, onChange, tooltip }) {
   const control = <Switch checked={checked} loading={loading} disabled={disabled} onChange={onChange} />
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-slate-200 p-4">
+    <div data-testid={`two-factor-method-${id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 p-3 sm:gap-4 sm:p-4">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800">{title}</p>
@@ -50,7 +51,6 @@ function MethodRow({ icon, title, description, checked, loading, disabled, onCha
 }
 
 function BackupCodesModal({ codes, email, onClose }) {
-  const { message } = App.useApp()
   const copyCodes = async () => {
     await navigator.clipboard?.writeText(codes.join('\n'))
     message.success('Đã sao chép mã dự phòng.')
@@ -67,7 +67,7 @@ function BackupCodesModal({ codes, email, onClose }) {
   return (
     <Modal open={codes.length > 0} footer={null} title="Mã dự phòng" onCancel={onClose} centered>
       <p className="text-sm leading-6 text-slate-600">Các mã dưới đây chỉ hiển thị một lần. Mỗi mã dùng được một lần khi bạn không thể xác thực bằng ứng dụng hoặc email.</p>
-      <div className="my-5 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 font-mono text-base font-bold text-slate-800 sm:grid-cols-3">
+      <div className="my-5 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 font-mono text-sm font-bold text-slate-800 sm:grid-cols-3 sm:gap-3 sm:p-4 sm:text-base">
         {codes.map((code) => <span key={code}>{code}</span>)}
       </div>
       <div className="flex flex-wrap gap-3">
@@ -89,7 +89,6 @@ function formatManualKey(manualKey) {
 }
 
 function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange, onConfirm }) {
-  const { message } = App.useApp()
   const [copied, setCopied] = useState(false)
 
   if (!setup) return null
@@ -112,7 +111,7 @@ function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange
       footer={null}
       onCancel={onCancel}
       centered
-      styles={{ body: { padding: '22px 32px 16px' }, header: { padding: '20px 26px', marginBottom: 0 } }}
+      className="employer-totp-modal"
     >
       <form onSubmit={(event) => {
         event.preventDefault()
@@ -151,7 +150,7 @@ function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange
             </div>
           </div>
         </div>
-        <div className="-mx-8 mt-7 border-t border-slate-100 px-4 pt-4">
+        <div className="mt-7 border-t border-slate-100 pt-4">
           <Button aria-label="Tiếp tục" htmlType="submit" type="primary" size="large" block icon={<ArrowRightOutlined />} iconPlacement="end" loading={submitting} disabled={code.length !== TWO_FACTOR_CODE_LENGTH}>Tiếp tục</Button>
         </div>
       </form>
@@ -161,7 +160,6 @@ function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange
 
 export default function EmployerGeneralSettings() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const [verification, setVerification] = useState(null)
   const [sending, setSending] = useState(false)
   const [backupCodes, setBackupCodes] = useState([])
@@ -325,7 +323,7 @@ export default function EmployerGeneralSettings() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-4 rounded-lg border border-slate-200 p-4 sm:p-5">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border border-slate-200 p-3 sm:gap-4 sm:p-5">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600"><MailOutlined /></span>
         <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold text-slate-800">Thông báo CV ứng tuyển</p><StatusBadge active /></div><p className="mt-1 text-sm leading-6 text-slate-500">Tự động gửi email khi ứng viên ứng tuyển vào tin tuyển dụng của bạn</p></div>
         <Tooltip title="Thông báo email luôn được bật; tùy chọn cấu hình sẽ có ở giai đoạn tiếp theo."><Switch checked disabled /></Tooltip>
@@ -335,9 +333,9 @@ export default function EmployerGeneralSettings() {
         <div className="flex flex-wrap items-center gap-2"><SafetyCertificateOutlined className="text-slate-600" /><p className="text-sm font-bold text-slate-800">Xác thực 2 yếu tố</p><StatusBadge active={twoFactorEnabled} activeLabel="Đang bật" /></div>
         {!twoFactorEnabled && <div className="mt-4 flex items-start gap-2 rounded-md border-l-4 border-blue-400 bg-blue-50 p-3 text-sm leading-6 text-slate-700"><InfoCircleFilled className="mt-0.5 shrink-0 text-blue-500" /><span>Vui lòng bật tính năng Xác thực bảo mật để tăng cường an toàn cho tài khoản của bạn.</span></div>}
         <div className="mt-4 space-y-3">
-          <MethodRow icon={<MobileOutlined />} title="Sử dụng Ứng dụng xác thực" description="Quét QR bằng Google Authenticator hoặc ứng dụng tương tự" checked={totpEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startTotp() : startMethodDisable('totp')} />
-          <MethodRow icon={<MailOutlined />} title="Sử dụng Email" description="Lấy mã OTP qua email đăng ký tài khoản" checked={emailEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startEmailAction('email-enable') : startMethodDisable('email')} />
-          <MethodRow icon={<KeyOutlined />} title="Sử dụng Mã dự phòng" description="Dùng khi không lấy được mã OTP qua ứng dụng hoặc email" checked={backupEnabled} loading={sending} disabled={sending || !twoFactorEnabled} tooltip={!twoFactorEnabled ? 'Hãy bật xác thực email hoặc ứng dụng xác thực trước.' : undefined} onChange={startBackupAction} />
+          <MethodRow id="totp" icon={<MobileOutlined />} title="Sử dụng Ứng dụng xác thực" description="Quét QR bằng Google Authenticator hoặc ứng dụng tương tự" checked={totpEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startTotp() : startMethodDisable('totp')} />
+          <MethodRow id="email" icon={<MailOutlined />} title="Sử dụng Email" description="Lấy mã OTP qua email đăng ký tài khoản" checked={emailEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startEmailAction('email-enable') : startMethodDisable('email')} />
+          <MethodRow id="backup" icon={<KeyOutlined />} title="Sử dụng Mã dự phòng" description="Dùng khi không lấy được mã OTP qua ứng dụng hoặc email" checked={backupEnabled} loading={sending} disabled={sending || !twoFactorEnabled} tooltip={!twoFactorEnabled ? 'Hãy bật xác thực email hoặc ứng dụng xác thực trước.' : undefined} onChange={startBackupAction} />
         </div>
       </div>
 

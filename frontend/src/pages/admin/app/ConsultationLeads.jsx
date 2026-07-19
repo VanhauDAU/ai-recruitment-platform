@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { App, Button, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, Select, Space, Table, Tag, Typography } from 'antd'
 import { getAdminConsultationLeads, updateAdminConsultationLead } from '@/entities/consultation-lead'
+import { message } from '@/shared/lib/toast'
 
 export default function AdminConsultationLeads() {
-  const { message } = App.useApp()
   const [status, setStatus] = useState('new')
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,7 +19,7 @@ export default function AdminConsultationLeads() {
     } finally {
       setLoading(false)
     }
-  }, [message, status])
+  }, [status])
 
   useEffect(() => { load() }, [load])
 

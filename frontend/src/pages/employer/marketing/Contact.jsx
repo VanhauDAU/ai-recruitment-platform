@@ -16,9 +16,9 @@ function InfoRow({ icon, label, value, href }) {
       <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
         {icon}
       </span>
-      <span>
+      <span className="min-w-0">
         <span className="block text-sm text-gray-500">{label}</span>
-        <span className="block font-semibold text-gray-900">{value}</span>
+        <span className="block break-words font-semibold text-gray-900">{value}</span>
       </span>
     </span>
   )
@@ -47,7 +47,7 @@ export default function EmployerContact() {
           <span className="rounded-full bg-[var(--brand-primary)]/10 px-4 py-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
             {t('contact.heroEyebrow')}
           </span>
-          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold text-gray-950 md:text-5xl">
+          <h1 className="mx-auto mt-5 max-w-3xl text-3xl font-extrabold text-gray-950 sm:text-4xl md:text-5xl">
             {t('contact.heroTitle')}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-gray-600">{t('contact.heroSubtitle')}</p>
@@ -95,7 +95,7 @@ export default function EmployerContact() {
           )}
         </div>
 
-        <div className="h-fit rounded-2xl border border-gray-100 bg-white p-6 shadow-[0_24px_80px_rgba(0,177,79,0.08)] sm:p-8">
+        <div className="h-fit min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_24px_80px_rgba(0,177,79,0.08)] sm:p-8">
           <h2 className="text-xl font-bold text-gray-900">{t('consultation.title')}</h2>
           <p className="mt-1 mb-6 text-sm leading-6 text-gray-500">{t('consultation.subtitle')}</p>
           <ConsultationForm />

@@ -11,10 +11,12 @@ class RecruiterProfile(models.Model):
     """Hồ sơ nhà tuyển dụng — 1-1 với user, gắn với đúng 1 công ty.
 
     Đã gán công ty thì không đổi được (enforce ở tầng service: chỉ set khi
-    đang null). Owner tạo công ty mới được duyệt membership ngay; member join
-    công ty có sẵn phải upload giấy tờ và chờ admin duyệt.
+    đang null). Owner tạo công ty mới hoặc member chọn công ty có sẵn đều có
+    membership hiệu lực ngay; member vẫn có thể kèm giấy tờ khi cần.
 
-    Các bước onboarding suy ra từ dữ liệu, không có bảng riêng:
+    Các bước onboarding suy ra từ dữ liệu, không có bảng riêng. Xác thực số
+    điện thoại và chọn/tạo công ty là hai bước độc lập; company không yêu cầu
+    `phone_verified_at`:
     1) phone_verified_at  2) company IS NOT NULL (+ membership approved)
     3) CompanyDocument(business_registration)  4) văn bản DLCN ứng viên
     5) dpa_accepted_at với nền tảng  6) tồn tại Job của user.

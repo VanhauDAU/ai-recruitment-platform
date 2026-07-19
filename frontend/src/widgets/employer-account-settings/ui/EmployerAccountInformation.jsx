@@ -1,6 +1,6 @@
 import { CameraOutlined, DownloadOutlined, LinkOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { App, Avatar, Button, Form, Input, Select } from 'antd'
+import { Avatar, Button, Form, Input, Select } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getEmployerProfile } from '@/entities/employer-profile'
@@ -8,13 +8,13 @@ import { useSession } from '@/entities/session'
 import { updateProfile, uploadAvatar } from '@/features/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
 const GENDER_LABELS = { male: 'Nam', female: 'Nữ', other: 'Khác' }
 
 export default function EmployerAccountInformation() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -90,7 +90,7 @@ export default function EmployerAccountInformation() {
 
   return (
     <div className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
         <h2 className="text-sm font-bold text-slate-800">Cập nhật thông tin tài khoản</h2>
         <Button size="small" icon={<DownloadOutlined />} onClick={handleExport} className="!border-emerald-500 !text-emerald-600">Xuất dữ liệu</Button>
       </div>
@@ -103,7 +103,7 @@ export default function EmployerAccountInformation() {
           onFinish={handleSave}
         >
         <div className="grid gap-x-8 sm:grid-cols-2">
-          <div className="mb-5 flex items-center gap-3 sm:col-span-2">
+          <div className="mb-5 flex flex-wrap items-center gap-3 sm:col-span-2">
             <span className="text-sm text-slate-600">Avatar</span>
             <Avatar size={36} src={user?.avatar_url || undefined} className="!bg-slate-100 !text-slate-500">
               {(user?.full_name || user?.email || 'N').trim().charAt(0).toUpperCase()}
@@ -127,7 +127,7 @@ export default function EmployerAccountInformation() {
           <Form.Item
             name="phone"
             label={(
-              <span className="flex items-center gap-2">
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span>Số điện thoại</span>
                 <Button type="link" size="small" onClick={() => setPhoneEditing((value) => !value)} className="!h-auto !p-0 !font-normal !text-emerald-600">{phoneEditing ? 'Khóa' : 'Cập nhật'}</Button>
                 <span className="text-slate-300">|</span>
@@ -140,9 +140,9 @@ export default function EmployerAccountInformation() {
           </Form.Item>
         </div>
 
-        <div className="mt-1 flex justify-end gap-3 border-t border-slate-200 pt-4">
-          <Button onClick={() => { form.resetFields(); setPhoneEditing(false) }} className="min-w-24">Hủy</Button>
-          <Button type="primary" htmlType="submit" loading={saving} className="min-w-24 !bg-[#00b14f]">Lưu</Button>
+        <div className="mt-1 grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end sm:gap-3">
+          <Button onClick={() => { form.resetFields(); setPhoneEditing(false) }} className="w-full sm:min-w-24 sm:w-auto">Hủy</Button>
+          <Button type="primary" htmlType="submit" loading={saving} className="w-full !bg-[#00b14f] sm:min-w-24 sm:w-auto">Lưu</Button>
         </div>
         </Form>
       </div>

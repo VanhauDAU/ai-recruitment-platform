@@ -27,11 +27,11 @@ function HeroSection() {
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-emerald-700 shadow-sm">
             <RobotOutlined /> {t('landing.hero.eyebrow')}
           </span>
-          <h1 className="mt-6 max-w-3xl text-4xl font-black leading-[1.12] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 max-w-3xl text-3xl font-black leading-[1.12] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
             {t('landing.hero.title')}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t('landing.hero.subtitle')}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
             <Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{t('landing.hero.primaryCta')} <ArrowRightOutlined /></Button></Link>
             <a href="#tu-van"><Button size="large" shape="round" className="!h-12 !px-7">{t('landing.hero.secondaryCta')}</Button></a>
           </div>
@@ -44,9 +44,9 @@ function HeroSection() {
           <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-emerald-300/35 to-cyan-200/10 blur-2xl" />
           <div className="relative rounded-[1.75rem] border border-white/70 bg-white/90 p-4 shadow-[0_30px_90px_rgba(15,118,74,0.18)] backdrop-blur sm:p-6">
             <div className="rounded-2xl bg-slate-950 p-5 text-white sm:p-6">
-              <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                <div><p className="text-xs font-bold uppercase tracking-widest text-emerald-300">{t('landing.hero.dashboard')}</p><h2 className="mt-1 text-xl font-bold">{t('landing.hero.dashboardSubtitle')}</h2></div>
-                <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-300"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />{t('landing.hero.live')}</span>
+              <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0"><p className="text-xs font-bold uppercase tracking-widest text-emerald-300">{t('landing.hero.dashboard')}</p><h2 className="mt-1 text-lg font-bold sm:text-xl">{t('landing.hero.dashboardSubtitle')}</h2></div>
+                <span className="w-fit rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-300"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />{t('landing.hero.live')}</span>
               </div>
               <div className="mt-5 grid gap-3">
                 {jobs.map((title, index) => {
@@ -60,7 +60,7 @@ function HeroSection() {
                 })}
               </div>
             </div>
-            <div className="absolute -bottom-5 -left-4 rounded-2xl border border-emerald-100 bg-white px-5 py-4 shadow-xl"><p className="text-xs font-bold text-slate-400">AI SHORTLIST</p><p className="mt-1 text-xl font-black text-emerald-600">24 CV</p></div>
+            <div className="absolute -bottom-5 left-2 rounded-2xl border border-emerald-100 bg-white px-5 py-4 shadow-xl sm:-left-4"><p className="text-xs font-bold text-slate-400">AI SHORTLIST</p><p className="mt-1 text-xl font-black text-emerald-600">24 CV</p></div>
           </div>
         </div>
       </div>

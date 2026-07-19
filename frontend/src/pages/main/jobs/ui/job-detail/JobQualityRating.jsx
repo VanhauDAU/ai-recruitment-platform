@@ -1,6 +1,6 @@
 import { CheckCircleFilled, MehOutlined, SmileOutlined, FrownOutlined } from '@ant-design/icons'
-import { message } from 'antd'
 import { useState } from 'react'
+import { message } from '@/shared/lib/toast'
 
 const RATING_OPTIONS = [
   { value: 1, label: 'Không đáng tin cậy & rõ ràng', icon: <FrownOutlined /> },

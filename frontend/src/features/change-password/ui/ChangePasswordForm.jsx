@@ -1,7 +1,8 @@
 import { ExclamationCircleFilled, LockOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
-import { Alert, App, Button, Checkbox, Form, Input } from 'antd'
+import { Alert, Button, Checkbox, Form, Input } from 'antd'
 import { useState } from 'react'
+import { message } from '@/shared/lib/toast'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -24,7 +25,7 @@ function PasswordStrengthGuide({ value }) {
   const color = passed === PASSWORD_CHECKS.length ? 'bg-emerald-500' : passed >= 2 ? 'bg-amber-400' : 'bg-red-400'
 
   return (
-    <div className="absolute left-0 right-0 top-[42px] z-20 rounded-lg bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,.12)] ring-1 ring-slate-100 sm:left-[220px]">
+    <div className="absolute left-0 right-0 top-[68px] z-20 rounded-lg bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,.12)] ring-1 ring-slate-100 sm:top-[42px] sm:left-[220px]">
       <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
         <ExclamationCircleFilled className={passed === PASSWORD_CHECKS.length ? 'text-emerald-500' : 'text-red-500'} />
         {label}
@@ -44,7 +45,6 @@ function PasswordStrengthGuide({ value }) {
 
 export default function ChangePasswordForm() {
   const { user, setCurrentUser } = useSession()
-  const { message } = App.useApp()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const hasPassword = Boolean(user?.has_usable_password)
@@ -93,8 +93,8 @@ export default function ChangePasswordForm() {
         form={form}
         layout="horizontal"
         labelAlign="left"
-        labelCol={{ flex: '220px' }}
-        wrapperCol={{ flex: '1' }}
+        labelCol={{ xs: { span: 24 }, sm: { flex: '220px' } }}
+        wrapperCol={{ xs: { span: 24 }, sm: { flex: '1' } }}
         colon={false}
         onFinish={submit}
         initialValues={{ logout_all_sessions: false }}
@@ -144,7 +144,7 @@ export default function ChangePasswordForm() {
           <Checkbox>Đăng xuất khỏi các thiết bị khác</Checkbox>
         </Form.Item>
         <Form.Item label={null} className="!mb-0 sm:ml-[220px]">
-          <div className="flex gap-3">
+          <div className="grid gap-2 sm:flex sm:gap-3">
             <Button htmlType="button" size="middle" onClick={() => form.resetFields()} className="min-w-24">Hủy</Button>
             <Button type="primary" htmlType="submit" size="middle" loading={mutation.isPending} className="min-w-24">
               {hasPassword ? 'Cập nhật' : 'Tạo mật khẩu'}

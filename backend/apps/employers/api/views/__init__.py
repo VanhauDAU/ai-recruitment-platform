@@ -1,6 +1,6 @@
 """Public HTTP views grouped by employers use case."""
 
-from .catalogs import AllIndustryListView, IndustryListView
+from .catalogs import AllIndustryListView, CompanyCatalogView, IndustryListView
 from .companies import CompanySearchView, CreateCompanyView, MyCompanyView
 from .media import (
     CompanyCoverUploadView,
@@ -16,13 +16,14 @@ from .onboarding import (
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )
-from .recruitment_need import RecruitmentNeedView
+from .recruitment_need import RecruitmentNeedDetailView, RecruitmentNeedListCreateView, RecruitmentNeedView
 from .verification import CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
 
 __all__ = [
     'AcceptDpaView',
     'AllIndustryListView',
     'CompanyCoverUploadView',
+    'CompanyCatalogView',
     'CompanyDocumentListCreateView',
     'CompanyGalleryDeleteView',
     'CompanyGalleryUploadView',
@@ -36,6 +37,8 @@ __all__ = [
     'PhoneAvailabilityView',
     'RecruiterMeView',
     'RecruitmentNeedView',
+    'RecruitmentNeedListCreateView',
+    'RecruitmentNeedDetailView',
     'SendPhoneOtpView',
     'VerifyPhoneOtpView',
 ]

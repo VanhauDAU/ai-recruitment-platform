@@ -1,6 +1,7 @@
 import { InboxOutlined } from '@ant-design/icons'
-import { App, Button, Modal, Upload } from 'antd'
+import { Button, Modal, Upload } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { message } from '@/shared/lib/toast'
 
 const MAX_ZOOM = 3
 const MIN_ZOOM = 1
@@ -159,7 +160,6 @@ export default function AvatarUploadModal({
   onAvatarUpload,
   onComplete,
 }) {
-  const { message } = App.useApp()
   const [uploaded, setUploaded] = useState(null)
   const [removed, setRemoved] = useState(false)
   const [uploading, setUploading] = useState(false)

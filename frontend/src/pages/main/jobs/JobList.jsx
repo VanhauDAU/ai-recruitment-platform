@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilterOutlined } from '@ant-design/icons'
-import { message } from 'antd'
 import { useLoginPrompt } from '@/features/auth'
+import { message } from '@/shared/lib/toast'
 import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'

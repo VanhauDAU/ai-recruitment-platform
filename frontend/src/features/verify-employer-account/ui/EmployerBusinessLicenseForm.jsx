@@ -1,80 +1,117 @@
-import { CheckCircleFilled, FileProtectOutlined, UploadOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App, Button, Result, Skeleton, Tag, Upload } from 'antd'
-import { Link } from 'react-router-dom'
 import {
-  getEmployerCompanyDocuments,
-  getEmployerProfile,
-  uploadEmployerBusinessDocument,
-} from '@/entities/employer-profile'
-import { getApiErrorMessage } from '@/shared/api/error-mapper'
+  DownloadOutlined,
+  UploadOutlined,
+  WarningFilled,
+} from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
+import { Button, Radio, Skeleton, Upload } from 'antd'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { getEmployerProfile } from '@/entities/employer-profile'
 import { EMPLOYER_COMPANY_SETTINGS_URL } from '@/shared/config/portals'
 
-const STATUS = {
-  pending: { label: 'Chờ duyệt', color: 'gold' },
-  approved: { label: 'Đã duyệt', color: 'green' },
-  rejected: { label: 'Từ chối', color: 'red' },
+const UPLOAD_GUIDE_URL = 'https://drive.google.com/file/d/1yYXQMXUjW7_vF3dlpsQd0EBo8WinH9K-/view'
+const AUTHORIZATION_TEMPLATE_URL = 'https://docs.google.com/document/d/1_cQDRuVuibU7XP1YPcsjpSYB8jokcqyR/edit?usp=sharing&ouid=111388583364027655585&rtpof=true&sd=true'
+const ACCEPTED_FILE_TYPES = '.jpeg,.jpg,.png,.pdf'
+const UPLOAD_HINT = 'Dung lượng tối đa 5MB, định dạng: jpeg, jpg, png, pdf'
+const SAMPLE_IMAGES = {
+  business: { src: '/images/employer/business-registration-sample.jpg', alt: 'Minh họa giấy chứng nhận đăng ký doanh nghiệp' },
+  authorization: { src: '/images/employer/authorization-sample.jpg', alt: 'Minh họa giấy ủy quyền' },
+  identity: { src: '/images/employer/identity-sample.jpg', alt: 'Minh họa căn cước công dân hoặc hộ chiếu' },
+}
+
+function Illustration({ variant }) {
+  const image = SAMPLE_IMAGES[variant]
+
+  return <img src={image.src} alt={image.alt} className="h-[128px] max-w-[176px] rounded border border-slate-200 bg-white object-contain shadow-sm" loading="lazy" />
+}
+
+function UploadBox({ label, files, onFilesChange }) {
+  return (
+    <div className="min-w-0">
+      <h3 className="mb-2 text-sm font-semibold text-slate-800">{label} <span className="text-red-500">*</span></h3>
+      <Upload.Dragger
+        accept={ACCEPTED_FILE_TYPES}
+        beforeUpload={() => false}
+        fileList={files}
+        maxCount={1}
+        multiple={false}
+        showUploadList={false}
+        onChange={({ fileList }) => onFilesChange(fileList.slice(-1))}
+        className="!rounded-lg !border-dashed !border-slate-300 !bg-white !px-4 !py-2 hover:!border-emerald-500"
+      >
+        <p className="mb-1 text-sm font-medium text-slate-600">Chọn hoặc kéo file vào đây</p>
+        <p className="mb-2 text-xs text-slate-500">{UPLOAD_HINT}</p>
+        <Button type="text" icon={<UploadOutlined />} className="!h-8 !border !border-emerald-100 !bg-emerald-50 !text-emerald-600">Chọn file</Button>
+      </Upload.Dragger>
+      {files[0] && <p className="mt-2 truncate text-xs text-emerald-700">Đã chọn: {files[0].name}</p>}
+    </div>
+  )
+}
+
+function UploadNotice({ documentName }) {
+  return (
+    <div className="mt-2 flex gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs leading-5 text-orange-600">
+      <WarningFilled className="mt-0.5 shrink-0" />
+      <ul className="list-disc space-y-0.5 pl-3">
+        <li>Các văn bản đăng tải cần đầy đủ các mặt và không có dấu hiệu chỉnh sửa/ che/ cắt thông tin.</li>
+        {documentName && <li>Vui lòng đăng tải {documentName} có thông tin trùng khớp với dữ liệu doanh nghiệp theo Trang thông tin điện tử của Cục Thuế.</li>}
+      </ul>
+    </div>
+  )
+}
+
+function DocumentCard({ label, files, onFilesChange, variant, noticeDocument, showTemplate = false }) {
+  return (
+    <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+        <div>
+          <UploadBox label={label} files={files} onFilesChange={onFilesChange} />
+          <UploadNotice documentName={noticeDocument} />
+        </div>
+        <aside className="flex flex-col items-center gap-3 text-center">
+          <p className="text-sm font-medium text-slate-800">Minh họa</p>
+          <Illustration variant={variant} />
+          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"><DownloadOutlined />Tải mẫu giấy ủy quyền</a>}
+        </aside>
+      </div>
+    </section>
+  )
 }
 
 export default function EmployerBusinessLicenseForm() {
-  const { message } = App.useApp()
-  const queryClient = useQueryClient()
+  const [method, setMethod] = useState('business_registration')
+  const [businessFiles, setBusinessFiles] = useState([])
+  const [authorizationFiles, setAuthorizationFiles] = useState([])
+  const [identityFiles, setIdentityFiles] = useState([])
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
-  const documentsQuery = useQuery({
-    queryKey: ['employer', 'company-documents'],
-    queryFn: getEmployerCompanyDocuments,
-    enabled: Boolean(profileQuery.data?.onboarding?.company_linked),
-  })
-  const mutation = useMutation({
-    mutationFn: uploadEmployerBusinessDocument,
-    onSuccess: async () => {
-      message.success('Giấy đăng ký doanh nghiệp đã được gửi và đang chờ duyệt.')
-      await Promise.all([
-        profileQuery.refetch(),
-        documentsQuery.refetch(),
-        queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
-      ])
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể tải giấy tờ lên.')),
-  })
 
-  if (profileQuery.isLoading) return <Skeleton active paragraph={{ rows: 8 }} />
-  if (!profileQuery.data?.onboarding?.company_linked) {
-    return <Alert type="warning" showIcon title="Bạn chưa liên kết công ty" description={<span>Hãy <Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-bold">tìm hoặc tạo công ty</Link> trước khi cập nhật giấy đăng ký doanh nghiệp.</span>} />
-  }
+  if (profileQuery.isLoading) return <Skeleton active paragraph={{ rows: 10 }} />
 
-  const documents = (documentsQuery.data || []).filter((item) => item.doc_type === 'business_registration')
+  const companyLinked = Boolean(profileQuery.data?.onboarding?.company_linked)
+  const saveHint = companyLinked ? 'Chức năng lưu chưa được bật' : 'Cần cập nhật thông tin công ty trước khi lưu'
   return (
     <div>
-      <h2 className="text-xl font-black text-slate-900">Thông tin Giấy đăng ký doanh nghiệp</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-500">Văn bản cần đầy đủ các mặt, không chỉnh sửa, che hoặc cắt thông tin; dữ liệu phải trùng khớp hồ sơ doanh nghiệp.</p>
-      {profileQuery.data.onboarding.business_doc_submitted && (
-        <Result status="success" icon={<CheckCircleFilled className="text-emerald-500" />} title="Đã cập nhật giấy đăng ký doanh nghiệp" className="!py-5" />
-      )}
-      <Upload.Dragger
-        accept=".jpg,.jpeg,.png,.pdf"
-        maxCount={1}
-        showUploadList={false}
-        disabled={mutation.isPending}
-        beforeUpload={(file) => {
-          mutation.mutate(file)
-          return Upload.LIST_IGNORE
-        }}
-        className="!mt-5"
-      >
-        <FileProtectOutlined className="text-4xl text-emerald-600" />
-        <p className="mt-3 font-bold text-slate-800">Chọn hoặc kéo file vào đây</p>
-        <p className="mt-1 text-xs text-slate-400">Dung lượng tối đa 5MB, định dạng JPG, PNG hoặc PDF</p>
-        <Button icon={<UploadOutlined />} loading={mutation.isPending} className="!mt-4">Chọn file</Button>
-      </Upload.Dragger>
-      {documents.length > 0 && (
-        <div className="mt-6 divide-y divide-slate-100 rounded-xl border border-slate-200 px-4">
-          {documents.map((item) => {
-            const status = STATUS[item.status] || { label: item.status, color: 'default' }
-            return <div key={item.id} className="flex items-center justify-between gap-3 py-3 text-sm"><span className="truncate text-slate-600">{item.file_name || 'Giấy đăng ký doanh nghiệp'}</span><Tag color={status.color}>{status.label}</Tag></div>
-          })}
-        </div>
-      )}
+      <h2 className="text-base font-semibold text-slate-800">Thông tin Giấy đăng ký doanh nghiệp</h2>
+      <p className="mt-6 text-sm text-slate-700">Vui lòng lựa chọn phương thức đăng tải, xem hướng dẫn đăng tải <a href={UPLOAD_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-600 hover:text-emerald-700">Tại đây</a></p>
+
+      <Radio.Group value={method} onChange={(event) => setMethod(event.target.value)} className="!mt-6 !grid !gap-0">
+        <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác</Radio>
+        {method === 'business_registration' && <div className="mb-4"><DocumentCard label="Giấy tờ" files={businessFiles} onFilesChange={setBusinessFiles} variant="business" noticeDocument="Giấy đăng ký doanh nghiệp" /></div>}
+
+        <Radio value="authorization_and_id" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy ủy quyền và Giấy tờ định danh</Radio>
+        {method === 'authorization_and_id' && (
+          <div className="mb-4 mt-1 grid gap-5">
+            <DocumentCard label="Giấy ủy quyền" files={authorizationFiles} onFilesChange={setAuthorizationFiles} variant="authorization" noticeDocument="Giấy ủy quyền" showTemplate />
+            <DocumentCard label="Giấy tờ định danh (CCCD/ Hộ chiếu)" files={identityFiles} onFilesChange={setIdentityFiles} variant="identity" />
+          </div>
+        )}
+      </Radio.Group>
+
+      <div className="mt-5 flex flex-col gap-2 sm:items-end">
+        <Button type="primary" size="large" disabled title={saveHint} className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto">Lưu</Button>
+        {!companyLinked && <p className="text-left text-xs leading-5 text-slate-500 sm:text-right">Bạn cần <Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-emerald-600 hover:text-emerald-700">cập nhật thông tin công ty</Link> trước khi có thể lưu giấy tờ.</p>}
+      </div>
     </div>
   )
 }

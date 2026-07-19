@@ -3,13 +3,14 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import parsers, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployerWithRecentReauthentication
+from apps.accounts.permissions import IsEmployer
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, RecruiterProfile
 from ...selectors import has_explicit_company_link
@@ -57,32 +58,64 @@ def _save_document_file(upload, directory, doc_type):
     return path
 
 
-def _save_document(request, company, doc_type, upload, update_request=None):
+def _save_document(request, company, doc_type, upload, update_request=None, recruiter=None):
+    if company is not None:
+        directory = f'employers/{company.public_id}/documents'
+    elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT and recruiter is not None:
+        directory = f'employers/{recruiter.public_id}/documents'
+    else:
+        raise ValidationError({'detail': 'Không xác định được chủ sở hữu của giấy tờ.'})
+
     path = _save_document_file(
         upload,
-        f'employers/{company.public_id}/documents',
+        directory,
         doc_type,
     )
+    document_name = (
+        'Thỏa thuận xử lý DLCN'
+        if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
+        else upload.name
+    )
+    if recruiter is not None and doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
+        existing = CompanyDocument.objects.filter(
+            recruiter=recruiter,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        ).first()
+        if existing is not None:
+            previous_path = existing.file_url
+            existing.file_url = path
+            existing.file_name = document_name
+            existing.uploaded_by = request.user
+            existing.status = CompanyDocument.Status.PENDING
+            existing.reviewed_by = None
+            existing.reviewed_at = None
+            existing.review_note = ''
+            existing.save(update_fields=[
+                'file_url', 'file_name', 'uploaded_by', 'status', 'reviewed_by',
+                'reviewed_at', 'review_note',
+            ])
+            if previous_path and previous_path != path:
+                default_storage.delete(previous_path)
+            return existing
+
     return CompanyDocument.objects.create(
         company=company, uploaded_by=request.user, update_request=update_request,
-        doc_type=doc_type, file_url=path, file_name=upload.name,
+        recruiter=recruiter, doc_type=doc_type, file_url=path, file_name=document_name,
     )
 
 
 class JoinCompanyView(APIView):
-    """Join công ty có sẵn: khóa lựa chọn, upload giấy tờ, membership chờ duyệt.
+    """Liên kết một lần với công ty có sẵn, có hiệu lực ngay."""
 
-    Giấy tờ: `business_registration_file` HOẶC (`authorization_file` + `identity_file`).
-    """
-
-    permission_classes = [IsEmployerWithRecentReauthentication]
+    # Liên kết không yêu cầu MFA/xác thực lại; giấy tờ chỉ là thông tin tùy chọn.
+    permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
 
     @extend_schema(
-        summary='Join công ty có sẵn kèm giấy tờ chứng minh (chờ admin duyệt)',
+        summary='Liên kết ngay với công ty có sẵn',
         request=inline_serializer('JoinCompany', fields={
             'company': serializers.CharField(help_text='public_id công ty'),
-            'proof_type': serializers.ChoiceField(choices=CompanyUpdateRequest.ProofType.choices),
+            'proof_type': serializers.ChoiceField(choices=CompanyUpdateRequest.ProofType.choices, required=False),
             'business_registration_file': serializers.FileField(required=False),
             'authorization_file': serializers.FileField(required=False),
             'identity_file': serializers.FileField(required=False),
@@ -90,10 +123,10 @@ class JoinCompanyView(APIView):
         responses={200: RecruiterProfileSerializer},
         tags=['employer'],
     )
+    @transaction.atomic
     def post(self, request):
-        recruiter = get_or_create_recruiter(request.user)
-        if recruiter.phone_verified_at is None:
-            raise ValidationError({'detail': 'Xác thực số điện thoại trước khi cập nhật thông tin công ty.'})
+        get_or_create_recruiter(request.user)
+        recruiter = RecruiterProfile.objects.select_for_update().get(user=request.user)
         if has_explicit_company_link(recruiter):
             raise ValidationError({'detail': 'Bạn đã liên kết với một công ty — không thể đổi công ty khác.'})
 
@@ -116,16 +149,18 @@ class JoinCompanyView(APIView):
                 (CompanyDocument.DocType.AUTHORIZATION_LETTER, authorization),
                 (CompanyDocument.DocType.IDENTITY_DOCUMENT, identity),
             ]
+        elif proof_type:
+            raise ValidationError({'proof_type': 'Loại giấy tờ chứng minh không hợp lệ.'})
         else:
-            raise ValidationError({'proof_type': 'Chọn loại giấy tờ chứng minh.'})
+            documents = []
 
         for doc_type, upload in documents:
             _save_document(request, company, doc_type, upload)
 
         recruiter.company = company
         recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
-        recruiter.membership_status = RecruiterProfile.MembershipStatus.PENDING
-        recruiter.membership_proof_type = proof_type
+        recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
+        recruiter.membership_proof_type = proof_type or ''
         recruiter.save(update_fields=[
             'company', 'company_role', 'membership_status', 'membership_proof_type', 'updated_at',
         ])

@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { SessionProvider } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
 import { ConsentProvider } from '@/entities/consent'
+import AppToast from '@/shared/ui/AppToast'
 import ToastSoundEffect from '@/shared/ui/ToastSoundEffect'
 
 function ThemedProviders({ children }) {
@@ -19,16 +20,9 @@ function ThemedProviders({ children }) {
 
   return (
     <ConfigProvider theme={theme}>
-      <AntApp
-        message={{
-          maxCount: 1,
-          duration: 3.5,
-          top: 20,
-          className: 'app-toast',
-          classNames: { list: 'app-toast-list' },
-        }}
-      >
+      <AntApp>
         <ConsentProvider>
+          <AppToast />
           <ToastSoundEffect />
           <SessionProvider>{children}</SessionProvider>
         </ConsentProvider>
