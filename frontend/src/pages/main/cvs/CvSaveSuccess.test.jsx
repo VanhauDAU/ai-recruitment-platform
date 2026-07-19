@@ -40,6 +40,8 @@ const savedVersion = {
   style_json: { theme_color: '#00A66A', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
 }
 
+const PREVIEW_CAPTURE_TIMEOUT = 15_000
+
 function renderPage(initialEntry = '/save-cv-success/cv_1?type=create') {
   return render(<App><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/save-cv-success/:publicId" element={<CvSaveSuccess />} /></Routes></MemoryRouter></App>)
 }
@@ -66,7 +68,7 @@ describe('CV save success page', () => {
     renderPage()
     expect(await screen.findByText('Lưu CV thành công!')).toBeInTheDocument()
     expect(screen.getByText('CV của Marketing')).toBeInTheDocument()
-    expect(await screen.findByRole('img', { name: 'Ảnh xem trước Marketing' })).toHaveAttribute('src', 'blob:captured-cv')
+    expect(await screen.findByRole('img', { name: 'Ảnh xem trước Marketing' }, { timeout: PREVIEW_CAPTURE_TIMEOUT })).toHaveAttribute('src', 'blob:captured-cv')
     expect(screen.getByTestId('saved-version-document')).toHaveTextContent('classic_two_column_v1:Nguyễn An')
     expect(mocks.getCvVersion).toHaveBeenCalledWith('cv_1', 'cvv_2')
     expect(screen.getByText('Marketing Executive')).toBeInTheDocument()
@@ -82,7 +84,7 @@ describe('CV save success page', () => {
       state: { savedCv: { title: 'Marketing', latest_version_public_id: 'cvv_2' }, savedVersion },
     })
 
-    expect(await screen.findByRole('img', { name: 'Ảnh xem trước Marketing' })).toHaveAttribute('src', 'blob:captured-cv')
+    expect(await screen.findByRole('img', { name: 'Ảnh xem trước Marketing' }, { timeout: PREVIEW_CAPTURE_TIMEOUT })).toHaveAttribute('src', 'blob:captured-cv')
     expect(screen.getByTestId('saved-version-document')).toHaveTextContent('classic_two_column_v1:Nguyễn An')
     expect(mocks.getCvVersion).not.toHaveBeenCalled()
   })

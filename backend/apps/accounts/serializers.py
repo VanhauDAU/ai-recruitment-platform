@@ -95,12 +95,16 @@ class SessionUserSerializer(serializers.ModelSerializer):
     employer_onboarding_step = serializers.SerializerMethodField()
     employer_verification_completed = serializers.SerializerMethodField()
     has_usable_password = serializers.SerializerMethodField()
+    two_factor_email_enabled = serializers.SerializerMethodField()
+    two_factor_totp_enabled = serializers.SerializerMethodField()
+    two_factor_backup_codes_enabled = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'email_verified', 'two_factor_enabled', 'job_preferences_configured',
+            'email_verified', 'two_factor_enabled', 'two_factor_email_enabled',
+            'two_factor_totp_enabled', 'two_factor_backup_codes_enabled', 'job_preferences_configured',
             'has_usable_password',
             'employer_onboarding_required',
             'employer_onboarding_step',
@@ -123,6 +127,16 @@ class SessionUserSerializer(serializers.ModelSerializer):
 
     def get_has_usable_password(self, obj):
         return obj.has_usable_password()
+
+    def get_two_factor_email_enabled(self, obj):
+        from .services.two_factor import enabled_methods
+        return enabled_methods(obj)['email']
+
+    def get_two_factor_totp_enabled(self, obj):
+        return bool(obj.two_factor_totp_secret)
+
+    def get_two_factor_backup_codes_enabled(self, obj):
+        return bool(obj.two_factor_backup_code_hashes)
 
     def get_employer_onboarding_required(self, obj):
         return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False

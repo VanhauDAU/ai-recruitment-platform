@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
-import { Alert, Form, Input } from 'antd'
+import { Alert, Form, Input, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -106,7 +106,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
       const result = await login({ ...values, captcha_token: captchaToken, portal })
       if (result.two_factor_required) {
         clearPassword()
-        setTwoFactorChallenge({ ...result, portal })
+        setTwoFactorChallenge({ ...result, portal, method: result.preferred_method || 'email' })
         return
       }
       const user = await refreshSession()
@@ -116,6 +116,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
         setError('Tài khoản không có quyền truy cập cổng này.')
         return
       }
+      message.success('Đăng nhập thành công.')
       if (onSuccess) onSuccess(user)
       else navigateAfterLogin(user)
     } catch (err) {
@@ -134,6 +135,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
     await verifyTwoFactorLogin({
       challenge: twoFactorChallenge.challenge,
       code,
+      method: twoFactorChallenge.method,
       portal: twoFactorChallenge.portal,
     })
     const user = await refreshSession()
@@ -144,6 +146,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
       return
     }
     setTwoFactorChallenge(null)
+    message.success('Đăng nhập thành công.')
     if (onSuccess) onSuccess(user)
     else navigateAfterLogin(user)
   }
@@ -261,6 +264,24 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
         onCancel={() => setTwoFactorChallenge(null)}
         onConfirm={handleTwoFactorConfirm}
         onResend={() => resendTwoFactorLogin(twoFactorChallenge.challenge)}
+        codeLength={twoFactorChallenge?.method === 'backup' ? 8 : 6}
+        title={twoFactorChallenge?.method === 'totp' ? 'Nhập mã ứng dụng xác thực' : twoFactorChallenge?.method === 'backup' ? 'Nhập mã dự phòng' : undefined}
+        description={twoFactorChallenge?.method === 'totp'
+          ? 'Mở ứng dụng xác thực của bạn và nhập mã gồm 6 chữ số.'
+          : twoFactorChallenge?.method === 'backup'
+            ? 'Nhập một mã dự phòng gồm 8 chữ số. Mỗi mã chỉ sử dụng một lần.'
+            : undefined}
+        showResend={twoFactorChallenge?.method === 'email'}
+        methodOptions={twoFactorChallenge && Object.values(twoFactorChallenge.methods || { email: true }).filter(Boolean).length > 1 ? (
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Phương thức khác</p>
+            <div className="flex gap-2">
+              {twoFactorChallenge.methods?.totp && twoFactorChallenge.method !== 'totp' && <button type="button" className="flex-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" onClick={() => setTwoFactorChallenge((current) => ({ ...current, method: 'totp' }))}>Ứng dụng xác thực</button>}
+              {twoFactorChallenge.methods?.email && twoFactorChallenge.method !== 'email' && <button type="button" className="flex-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" onClick={() => setTwoFactorChallenge((current) => ({ ...current, method: 'email' }))}>Nhận mã qua email</button>}
+              {twoFactorChallenge.methods?.backup && twoFactorChallenge.method !== 'backup' && <button type="button" className="flex-1 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" onClick={() => setTwoFactorChallenge((current) => ({ ...current, method: 'backup' }))}>Dùng mã dự phòng</button>}
+            </div>
+          </div>
+        ) : null}
       />
     </>
   )

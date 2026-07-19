@@ -325,8 +325,13 @@ class PhoneOtpTests(APITestCase):
         self.user, self.recruiter = make_employer(phone_verified=False)
         self.client.force_authenticate(user=self.user)
 
+    def _send_otp(self, phone='0912345678', password='Password@123'):
+        return self.client.post(
+            reverse('employer-phone-send-otp'), {'phone': phone, 'password': password}
+        )
+
     def test_send_and_verify_otp_marks_phone_verified(self):
-        response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
+        response = self._send_otp()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(mail.outbox), 1)
 
@@ -340,7 +345,7 @@ class PhoneOtpTests(APITestCase):
         self.assertIsNotNone(self.recruiter.phone_verified_at)
 
     def test_wrong_otp_rejected_and_attempts_counted(self):
-        self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
+        self._send_otp()
         response = self.client.post(reverse('employer-phone-verify'), {'code': '000000'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(PhoneOtp.objects.get(user=self.user).attempts, 1)
@@ -351,15 +356,40 @@ class PhoneOtpTests(APITestCase):
         other.phone_verified_at = timezone.now()
         other.save()
 
-        response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
+        response = self._send_otp()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('nhà tuyển dụng khác', str(response.data['phone']))
+
+    def test_send_otp_rejects_wrong_password(self):
+        response = self._send_otp(password='Wrong@123')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_send_otp_requires_password(self):
+        response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+
+    def test_phone_availability_flags_taken_and_free_numbers(self):
+        other_user, other = make_employer('other@example.com', phone_verified=False)
+        other.verified_phone = '0912345678'
+        other.phone_verified_at = timezone.now()
+        other.save()
+
+        taken = self.client.get(reverse('employer-phone-check'), {'phone': '0912345678'})
+        self.assertEqual(taken.status_code, status.HTTP_200_OK)
+        self.assertFalse(taken.data['available'])
+
+        free = self.client.get(reverse('employer-phone-check'), {'phone': '0987654321'})
+        self.assertEqual(free.status_code, status.HTTP_200_OK)
+        self.assertTrue(free.data['available'])
 
     def test_oauth_account_without_password_must_create_password_first(self):
         self.user.set_unusable_password()
         self.user.save(update_fields=['password', 'updated_at'])
 
-        response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
+        response = self._send_otp()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)

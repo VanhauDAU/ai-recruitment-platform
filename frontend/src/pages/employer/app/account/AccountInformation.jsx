@@ -1,4 +1,8 @@
-import { EmployerAccountInformation, EmployerAccountSettingsShell } from '@/widgets/employer-account-settings'
+import {
+  EmployerAccountInformation,
+  EmployerAccountSettingsShell,
+  EmployerAccountVerificationCard,
+} from '@/widgets/employer-account-settings'
 
 export default function EmployerAccountInformationPage() {
   return (
@@ -6,6 +10,7 @@ export default function EmployerAccountInformationPage() {
       title="Thông tin tài khoản"
       description="Cập nhật thông tin liên hệ và quản lý hồ sơ tài khoản tuyển dụng của bạn."
     >
+      <EmployerAccountVerificationCard />
       <EmployerAccountInformation />
     </EmployerAccountSettingsShell>
   )

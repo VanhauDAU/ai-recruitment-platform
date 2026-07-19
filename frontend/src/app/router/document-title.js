@@ -46,6 +46,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/account/settings/company'), 'Thông tin công ty'],
   [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
   [employerAppPath('/account/settings/personal-data-protection'), 'Văn bản xử lý dữ liệu cá nhân'],
+  [employerAppPath('/account/settings/general-setting'), 'Cài đặt'],
   [employerAppPath('/dashboard'), 'Bảng tin'],
 ])
 

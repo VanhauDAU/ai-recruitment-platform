@@ -7,7 +7,7 @@ from .companies import (
     set_company_industries,
     verify_company,
 )
-from .onboarding import send_phone_otp, verify_phone_otp
+from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import get_or_create_recruiter, review_membership
 
 __all__ = [
@@ -15,6 +15,7 @@ __all__ = [
     'UPDATABLE_COMPANY_FIELDS',
     'apply_update_request',
     'get_or_create_recruiter',
+    'phone_taken_by_other',
     'review_membership',
     'send_phone_otp',
     'set_company_industries',

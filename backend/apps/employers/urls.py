@@ -14,6 +14,7 @@ from .api.views import (
     IndustryListView,
     JoinCompanyView,
     MyCompanyView,
+    PhoneAvailabilityView,
     RecruiterMeView,
     RecruitmentNeedView,
     SendPhoneOtpView,
@@ -27,6 +28,7 @@ urlpatterns = [
     path('consulting-need/', RecruitmentNeedView.as_view(), name='employer-consulting-need'),
     # Nhà tuyển dụng + onboarding
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
+    path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
     path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),
     path('phone/verify/', VerifyPhoneOtpView.as_view(), name='employer-phone-verify'),
     path('dpa/accept/', AcceptDpaView.as_view(), name='employer-dpa-accept'),
