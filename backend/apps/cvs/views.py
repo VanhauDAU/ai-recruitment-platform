@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema, inline_serializer
+from django.http import FileResponse, Http404
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -6,6 +7,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
 from common.api_deprecation import LegacyApiDeprecationMixin
+from common.r2_storage import private_media_storage
 from .serializers import UserCvSerializer
 from .selectors import candidate_cvs_queryset
 from .services import UnsupportedCvUpload, create_builder_cv, permanently_delete_cv, update_builder_cv, upload_cv
@@ -42,6 +44,36 @@ class UserCvDetailView(LegacyApiDeprecationMixin, generics.RetrieveUpdateDestroy
 
     def perform_update(self, serializer):
         update_builder_cv(serializer, self.request.user)
+
+
+class UserCvContentView(LegacyApiDeprecationMixin, APIView):
+    """Compatibility download URL for legacy CV fields backed by private R2."""
+
+    permission_classes = [IsCandidate]
+    deprecation_contract = 'cvs-v1'
+    deprecation_successor = '/api/v2/cvs/'
+    _fields = {
+        'file': ('file_url', None),
+        'pdf': ('pdf_url', 'application/pdf'),
+        'thumbnail': ('thumbnail_url', 'image/webp'),
+    }
+
+    def get(self, request, public_id, kind):
+        field = self._fields.get(kind)
+        if field is None:
+            raise Http404
+        try:
+            cv = candidate_cvs_queryset(request.user).get(public_id=public_id)
+        except UserCv.DoesNotExist as error:
+            raise Http404 from error
+        storage_key = getattr(cv, field[0])
+        if not storage_key:
+            raise Http404
+        try:
+            stream = private_media_storage().open(storage_key, 'rb')
+        except OSError as error:
+            raise Http404 from error
+        return FileResponse(stream, content_type=field[1])
 
 
 class UserCvUploadView(LegacyApiDeprecationMixin, APIView):

@@ -8,19 +8,19 @@ const BENEFITS = [
     title: '60.000+ Việc làm chất lượng',
     action: 'Tìm việc ngay',
     to: '/viec-lam',
-    image: 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/blog/blog-detail/search_tool_v2.png',
+    image: 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/search-tool-v2.png',
   },
   {
     title: 'Công cụ tạo CV chuyên nghiệp',
     action: 'Tạo CV',
     to: '/',
-    image: 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/blog/blog-detail/cv_tool_v2.png',
+    image: 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/cv-tool-v2.png',
   },
   {
     title: 'Trắc nghiệm tính cách, nghề nghiệp',
     action: 'Khám phá ngay',
     to: '/blog',
-    image: 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/blog/blog-detail/survey_tool_v2.png',
+    image: 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/survey-tool-v2.png',
   },
 ]
 

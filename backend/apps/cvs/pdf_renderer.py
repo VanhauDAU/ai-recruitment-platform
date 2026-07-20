@@ -12,11 +12,11 @@ import base64
 from copy import deepcopy
 
 from django.core.exceptions import ValidationError
-from django.core.files.storage import default_storage
 from django.template.loader import render_to_string
 
 from apps.cv_templates.renderers import validate_renderer_contract
 from apps.cv_templates.section_registry import get_section_contract
+from common.r2_storage import cv_asset_storage
 from .models import CvAsset
 
 
@@ -168,7 +168,7 @@ def _asset_data_uri(public_id, kind):
         return ''
     try:
         asset = CvAsset.objects.get(public_id=public_id, kind=kind, is_active=True)
-        with default_storage.open(asset.storage_key, 'rb') as stream:
+        with cv_asset_storage(asset).open(asset.storage_key, 'rb') as stream:
             encoded = base64.b64encode(stream.read()).decode('ascii')
     except (CvAsset.DoesNotExist, OSError):
         return ''

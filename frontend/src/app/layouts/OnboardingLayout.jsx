@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { BrandLogo } from '@/entities/site-settings'
 
-const BG_IMAGE = 'https://static.topcv.vn/v4/image/onboard-user/bg-step-1.png'
+const BG_IMAGE = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/onboarding/bg-step-1.png'
 
 export default function OnboardingLayout() {
   return (

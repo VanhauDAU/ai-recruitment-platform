@@ -17,7 +17,7 @@ from .onboarding import (
     VerifyPhoneOtpView,
 )
 from .recruitment_need import RecruitmentNeedDetailView, RecruitmentNeedListCreateView, RecruitmentNeedView
-from .verification import CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
+from .verification import CompanyDocumentContentView, CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
 
 __all__ = [
     'AcceptDpaView',
@@ -25,6 +25,7 @@ __all__ = [
     'CompanyCoverUploadView',
     'CompanyCatalogView',
     'CompanyDocumentListCreateView',
+    'CompanyDocumentContentView',
     'CompanyGalleryDeleteView',
     'CompanyGalleryUploadView',
     'CompanyLogoUploadView',

@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
-
 from .models import CvSkill, UserCv
 
 
@@ -41,11 +39,20 @@ class UserCvSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('template is required to create a CV.')
         return attrs
 
+    def _private_content_url(self, obj, kind, value):
+        if not value:
+            return ''
+        from django.urls import reverse
+
+        path = reverse('cv-content', kwargs={'public_id': obj.public_id, 'kind': kind})
+        request = self.context.get('request')
+        return request.build_absolute_uri(path) if request else path
+
     def get_file_url(self, obj):
-        return media_url_from_value(obj.file_url, request=self.context.get('request'))
+        return self._private_content_url(obj, 'file', obj.file_url)
 
     def get_pdf_url(self, obj):
-        return media_url_from_value(obj.pdf_url, request=self.context.get('request'))
+        return self._private_content_url(obj, 'pdf', obj.pdf_url)
 
     def get_thumbnail_url(self, obj):
-        return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))
+        return self._private_content_url(obj, 'thumbnail', obj.thumbnail_url)

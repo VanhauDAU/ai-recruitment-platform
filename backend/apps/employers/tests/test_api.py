@@ -700,7 +700,10 @@ class JoinCompanyTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertEqual(response.data[0]['id'], current_document.id)
-        self.assertTrue(response.data[0]['file_url'].endswith('.docx'))
+        self.assertEqual(
+            response.data[0]['file_url'],
+            f'http://testserver{reverse("employer-company-document-content", kwargs={"pk": current_document.pk})}',
+        )
 
     def test_join_with_business_registration_does_not_require_mfa(self):
         self.user.two_factor_enabled = False
@@ -727,6 +730,20 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(response.data['file_url'], 'https://example.com/thuong-hieu')
         document = CompanyDocument.objects.get(doc_type=CompanyDocument.DocType.TRADE_NAME_PROOF)
         self.assertEqual(document.file_name, 'Website chứng minh tên thương mại')
+
+    def test_private_company_document_is_served_only_to_an_authorised_employer(self):
+        self._join_with_business_registration()
+        document = self.company.documents.get(doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION)
+
+        response = self.client.get(reverse('employer-company-document-content', kwargs={'pk': document.pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(b''.join(response.streaming_content), PNG_BYTES)
+
+        outsider, _ = make_employer('outside-documents@example.com')
+        authenticate_employer(self.client, outsider)
+        denied = self.client.get(reverse('employer-company-document-content', kwargs={'pk': document.pk}))
+        self.assertEqual(denied.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_admin_approves_membership(self):
         self._join_with_business_registration()

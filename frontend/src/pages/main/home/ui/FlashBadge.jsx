@@ -10,8 +10,8 @@ const ROTATE_MS = 3500
 const ITEM_H = 72   // height của mỗi card (px)
 const GAP    = 8    // khoảng cách giữa các card (px)
 const SLOT   = ITEM_H + GAP
-const FLASH_BADGE_COVER_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/box-flash-badge/cover.png'
-const FLASH_BADGE_INTRO_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/box-flash-badge/flash-badge-intro.png'
+const FLASH_BADGE_COVER_URL = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/flash-badge-cover.png'
+const FLASH_BADGE_INTRO_URL = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/flash-badge-intro.png'
 const pad = (n) => String(n).padStart(2, '0')
 
 function useCountdown() {

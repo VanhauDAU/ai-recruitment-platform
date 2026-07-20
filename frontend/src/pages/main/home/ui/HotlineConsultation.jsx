@@ -2,7 +2,7 @@ import { MailFilled, PhoneFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
 import ChatShowcase from '@/shared/ui/ChatShowcase'
 
-const HOTLINE_BG_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/job-new/hotline_bg.png'
+const HOTLINE_BG_URL = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/home/hotline-bg.png'
 
 const HOTLINE_TABS = [
   {

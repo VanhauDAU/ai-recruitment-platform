@@ -5,6 +5,7 @@ from .api.views import (
     AllIndustryListView,
     CompanyCoverUploadView,
     CompanyCatalogView,
+    CompanyDocumentContentView,
     CompanyDocumentListCreateView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
@@ -48,6 +49,7 @@ urlpatterns = [
     path('company/images/', CompanyGalleryUploadView.as_view(), name='employer-company-image-upload'),
     path('company/images/<int:pk>/', CompanyGalleryDeleteView.as_view(), name='employer-company-image-delete'),
     path('company/documents/', CompanyDocumentListCreateView.as_view(), name='employer-company-documents'),
+    path('company/documents/<int:pk>/content/', CompanyDocumentContentView.as_view(), name='employer-company-document-content'),
     path('company/update-requests/', CompanyUpdateRequestListCreateView.as_view(), name='employer-company-update-requests'),
     # Danh mục lĩnh vực
     path('industries/', IndustryListView.as_view(), name='employer-industries'),

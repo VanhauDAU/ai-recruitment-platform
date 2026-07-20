@@ -56,7 +56,7 @@ function Mascot() {
   return (
     <div className="flex justify-center">
       <img
-        src="https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/dashboard/dashboard-item.png"
+        src="https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/dashboard-item.png"
         alt="Thị trường việc làm"
         className="w-36 h-auto object-contain drop-shadow-md"
         loading="lazy"

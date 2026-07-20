@@ -2,7 +2,6 @@ from pathlib import PurePosixPath
 from uuid import uuid4
 
 from django.conf import settings
-from django.core.files.storage import default_storage
 from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import parsers, serializers
@@ -11,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from common.r2_storage import private_media_storage
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, RecruiterProfile
 from ...selectors import has_explicit_company_link
@@ -54,7 +54,7 @@ def _save_document_file(upload, directory, doc_type):
         raise ValidationError({'file': f'Chỉ chấp nhận tệp {allowed} hợp lệ.'})
 
     safe_directory = str(PurePosixPath(directory.strip('/')))
-    path = default_storage.save(f'{safe_directory}/{uuid4().hex}.{extension}', upload)
+    path = private_media_storage().save(f'{safe_directory}/{uuid4().hex}.{extension}', upload)
     return path
 
 
@@ -95,7 +95,7 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
                 'reviewed_at', 'review_note',
             ])
             if previous_path and previous_path != path:
-                default_storage.delete(previous_path)
+                private_media_storage().delete(previous_path)
             return existing
 
     return CompanyDocument.objects.create(
