@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import EmailValidator, URLValidator
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry
@@ -22,7 +21,13 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'file_url', 'file_name', 'status', 'review_note', 'created_at']
 
     def get_file_url(self, obj):
-        return media_url_from_value(obj.file_url, request=self.context.get('request'))
+        if obj.file_url.startswith(('http://', 'https://')):
+            return obj.file_url
+        from django.urls import reverse
+
+        path = reverse('employer-company-document-content', kwargs={'pk': obj.pk})
+        request = self.context.get('request')
+        return request.build_absolute_uri(path) if request else path
 
     def get_source_type(self, obj):
         # URL ngoài chỉ được dùng cho bằng chứng tên thương mại. Không cần thêm

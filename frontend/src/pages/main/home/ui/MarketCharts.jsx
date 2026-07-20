@@ -36,8 +36,8 @@ export function GrowthChart({ data, animate }) {
           <stop offset="100%" stopColor={LINE_COLOR} stopOpacity="0" />
         </linearGradient>
       </defs>
-      {ticks.map((t) => (
-        <g key={t}>
+      {ticks.map((t, i) => (
+        <g key={i}>
           <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke="#ffffff" strokeOpacity="0.08" />
           <text x={padL - 5} y={y(t) + 3} textAnchor="end" fontSize="8" fill="#ffffff" fillOpacity="0.55">
             {fmt(t)}
@@ -102,8 +102,8 @@ export function DemandChart({ data, animate }) {
         </div>
       )}
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
-        {ticks.map((t) => (
-          <g key={t}>
+        {ticks.map((t, i) => (
+          <g key={i}>
             <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke="#ffffff" strokeOpacity="0.08" />
             <text x={padL - 5} y={y(t) + 3} textAnchor="end" fontSize="8" fill="#ffffff" fillOpacity="0.55">
               {t}

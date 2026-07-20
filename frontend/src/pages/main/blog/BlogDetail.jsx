@@ -144,7 +144,7 @@ export default function BlogDetail() {
         placement="left"
         open={tocDrawerOpen}
         onClose={() => setTocDrawerOpen(false)}
-        width="min(340px, 92vw)"
+        size="min(340px, 92vw)"
       >
         <BlogToc toc={toc} collapsible={false} onNavigate={() => setTocDrawerOpen(false)} />
       </Drawer>

@@ -8,9 +8,10 @@ import {
 } from '@/features/two-factor'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { useSession } from '@/entities/session'
+import { legacyAsset } from '@/shared/config/assets'
 
-const SETUP_ILLUSTRATION = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/icon/icon-shield-gears.png'
-const SUCCESS_ILLUSTRATION = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/icon/icon-shield-check.png'
+const SETUP_ILLUSTRATION = legacyAsset('icons/shield-gears.png')
+const SUCCESS_ILLUSTRATION = legacyAsset('icons/shield-check.png')
 
 export default function TwoFactorAuthentication() {
   const { user, setCurrentUser } = useSession()
@@ -96,7 +97,7 @@ export default function TwoFactorAuthentication() {
             {error && <p role="alert" className="mt-3 text-sm text-red-500">{error}</p>}
           </div>
           <img
-            src={enabled ? 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/icon/icon-shield-check.png' : SETUP_ILLUSTRATION}
+            src={enabled ? SUCCESS_ILLUSTRATION : SETUP_ILLUSTRATION}
             alt="Bảo vệ tài khoản"
             className="hidden h-32 w-36 shrink-0 object-contain sm:block"
           />

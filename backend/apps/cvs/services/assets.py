@@ -4,10 +4,11 @@ import json
 
 from django.core import signing
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.urls import reverse
 from PIL import Image, ImageOps
 from rest_framework.exceptions import ValidationError
+
+from common.r2_storage import private_media_storage, public_media_storage
 
 from ..models import CvAsset, CvVersion
 
@@ -51,7 +52,7 @@ def _encode_avatar(upload):
 def create_avatar_asset(*, actor, upload):
     payload, extension, content_type, width, height = _encode_avatar(upload)
     checksum = sha256(payload).hexdigest()
-    storage_key = default_storage.save(
+    storage_key = private_media_storage().save(
         f'cvs/assets/{actor.public_id}/{checksum}.{extension}',
         ContentFile(payload),
     )
@@ -95,7 +96,7 @@ def create_background_asset(*, upload, title=''):
     image.save(buffer, format=detected_format, optimize=True)
     payload = buffer.getvalue()
     checksum = sha256(payload).hexdigest()
-    storage_key = default_storage.save(
+    storage_key = public_media_storage().save(
         f'cvs/backgrounds/{checksum}.{extension}',
         ContentFile(payload),
     )

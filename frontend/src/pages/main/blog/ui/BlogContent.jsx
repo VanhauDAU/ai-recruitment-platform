@@ -1,35 +1,5 @@
 import { useEffect, useMemo } from 'react'
-
-const ALLOWED_TAGS = new Set([
-  'a', 'b', 'blockquote', 'br', 'code', 'div', 'em', 'figure', 'figcaption', 'h2', 'h3',
-  'h4', 'hr', 'img', 'li', 'ol', 'p', 'pre', 'span', 'strong', 'table', 'tbody', 'td',
-  'th', 'thead', 'tr', 'u', 'ul',
-])
-const ALLOWED_STYLES = new Set([
-  'background-color', 'color', 'font-family', 'font-size', 'font-style', 'font-weight',
-  'line-height', 'list-style-type', 'margin-left', 'text-align', 'text-decoration',
-])
-
-function safeUrl(value, { image = false } = {}) {
-  try {
-    const url = new URL(value, window.location.origin)
-    if (image) return ['http:', 'https:'].includes(url.protocol) ? url.href : ''
-    return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ? url.href : ''
-  } catch {
-    return ''
-  }
-}
-
-function safeStyle(styleText) {
-  return styleText
-    .split(';')
-    .map((rule) => rule.split(':').map((part) => part.trim()))
-    .filter(([property, value]) => (
-      ALLOWED_STYLES.has(property) && value && !/url\(|expression|@import|javascript:/i.test(value)
-    ))
-    .map(([property, value]) => `${property}: ${value}`)
-    .join('; ')
-}
+import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 
 function slugifyHeading(text, used) {
   const base = text
@@ -46,52 +16,22 @@ function slugifyHeading(text, used) {
   return id
 }
 
-// Vệ sinh HTML từ rich-text editor (loại script/handler/URL nguy hiểm) và gắn
-// id vào h2/h3 để mục lục có thể cuộn tới. Trả về { html, toc }.
+// Sanitize HTML dùng chính sách chung, rồi gắn id vào h2/h3 để mục lục cuộn tới.
+// Trả về { html, toc }.
 function processContent(html) {
-  if (typeof window === 'undefined' || !html?.trim()) return { html: '', toc: [] }
-  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const clean = sanitizeHtml(html)
+  if (!clean) return { html: '', toc: [] }
+
+  const doc = new DOMParser().parseFromString(clean, 'text/html')
   const usedIds = new Set()
   const toc = []
 
-  for (const element of [...doc.body.querySelectorAll('*')]) {
-    const tag = element.tagName.toLowerCase()
-    if (!ALLOWED_TAGS.has(tag)) {
-      element.replaceWith(...element.childNodes)
-      continue
-    }
-    for (const attribute of [...element.attributes]) {
-      const name = attribute.name.toLowerCase()
-      const value = attribute.value.trim()
-      if (name.startsWith('on')) {
-        element.removeAttribute(attribute.name)
-      } else if (name === 'style') {
-        const style = safeStyle(value)
-        if (style) element.setAttribute('style', style)
-        else element.removeAttribute('style')
-      } else if (tag === 'a' && name === 'href') {
-        const url = safeUrl(value)
-        if (url) element.setAttribute('href', url)
-        else element.removeAttribute('href')
-      } else if (tag === 'img' && name === 'src') {
-        const url = safeUrl(value, { image: true })
-        if (url) element.setAttribute('src', url)
-        else element.remove()
-      } else if (!['alt', 'colspan', 'href', 'src', 'target'].includes(name)) {
-        element.removeAttribute(attribute.name)
-      }
-    }
-    if (tag === 'a' && element.getAttribute('target') === '_blank') {
-      element.setAttribute('rel', 'noopener noreferrer')
-    }
-    if (tag === 'h2' || tag === 'h3') {
-      const text = element.textContent.trim()
-      if (text) {
-        const id = slugifyHeading(text, usedIds)
-        element.setAttribute('id', id)
-        toc.push({ id, text, level: tag === 'h2' ? 2 : 3 })
-      }
-    }
+  for (const element of doc.body.querySelectorAll('h2, h3')) {
+    const text = element.textContent.trim()
+    if (!text) continue
+    const id = slugifyHeading(text, usedIds)
+    element.setAttribute('id', id)
+    toc.push({ id, text, level: element.tagName === 'H2' ? 2 : 3 })
   }
   return { html: doc.body.innerHTML, toc }
 }

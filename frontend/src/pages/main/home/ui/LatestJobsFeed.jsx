@@ -9,6 +9,7 @@ import {
   formatSalary,
   jobDetailPath,
 } from '@/entities/job'
+import { legacyAsset } from '@/shared/config/assets'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'
 
@@ -56,7 +57,7 @@ function Mascot() {
   return (
     <div className="flex justify-center">
       <img
-        src="https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/welcome/dashboard/dashboard-item.png"
+        src={legacyAsset('welcome/dashboard-item.png')}
         alt="Thị trường việc làm"
         className="w-36 h-auto object-contain drop-shadow-md"
         loading="lazy"

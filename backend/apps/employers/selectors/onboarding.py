@@ -2,7 +2,7 @@
 
 from django.db.models import Q
 
-from ..models import CompanyDocument, RecruiterProfile
+from ..models import CompanyDocument
 from .company_status import has_explicit_company_link
 
 
@@ -69,7 +69,6 @@ def build_employer_onboarding_steps(recruiter):
         'consulting_need_completed': recruiter.recruitment_needs.exists(),
         'phone_verified': recruiter.phone_verified_at is not None,
         'company_linked': company_linked,
-        'membership_approved': company_linked and recruiter.membership_status == RecruiterProfile.MembershipStatus.APPROVED,
         'business_doc_submitted': has_business_doc,
         'business_doc_approved': has_approved_business_doc,
         'email_domain_verified': recruiter.user.email_verified and _is_company_email(recruiter),
@@ -92,7 +91,6 @@ def build_employer_onboarding_steps(recruiter):
         steps['account_ready'],
         steps['phone_verified'],
         steps['company_linked'],
-        steps['membership_approved'],
         steps['business_doc_submitted'],
         steps['candidate_dpa_submitted'],
         steps['dpa_accepted'],

@@ -14,7 +14,6 @@ def is_registration_placeholder_company(recruiter):
     return (
         company.created_by_id == recruiter.user_id
         and recruiter.company_role == recruiter.CompanyRole.OWNER
-        and recruiter.membership_status == recruiter.MembershipStatus.APPROVED
         and company.tax_code is None
         and company.has_no_logo
         and company.has_no_website

@@ -3,7 +3,6 @@
 import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404
 from rest_framework import generics, parsers, permissions, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -15,6 +14,7 @@ from apps.accounts.permissions import IsCandidate
 from apps.cv_templates.models import CvTemplate
 from apps.cv_templates.services import PositionContentUnavailable
 from common.metrics import record_metric
+from common.r2_storage import cv_asset_storage, private_media_storage
 from .composition import CvCompositionError, compose_cv_document
 
 from .api_v2_serializers import (
@@ -414,7 +414,7 @@ class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
             raise Http404
         filename = f'{cv.title or "cv"}-v{export.version.version_number}.pdf'
         return FileResponse(
-            default_storage.open(export.storage_key, 'rb'),
+            private_media_storage().open(export.storage_key, 'rb'),
             as_attachment=True,
             filename=filename,
             content_type='application/pdf',
@@ -432,7 +432,7 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
         if not current_thumbnail_ready(cv):
             raise Http404
         return FileResponse(
-            default_storage.open(cv.thumbnail_url, 'rb'),
+            private_media_storage().open(cv.thumbnail_url, 'rb'),
             filename=f'{cv.title or "cv"}-preview.webp',
             content_type='image/webp',
         )
@@ -599,7 +599,7 @@ class CvV2AssetContentView(APIView):
         except CvAsset.DoesNotExist as error:
             raise Http404 from error
         try:
-            stream = default_storage.open(asset.storage_key, 'rb')
+            stream = cv_asset_storage(asset).open(asset.storage_key, 'rb')
         except OSError as error:
             raise Http404 from error
         return FileResponse(stream, content_type=asset.content_type)

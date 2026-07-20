@@ -1,7 +1,8 @@
 import { RightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
+import { legacyAsset } from '@/shared/config/assets'
 
-const HERO_IMAGE = 'https://www.topcv.vn/v4/image/cv-template/cv-sample/toppy-list-mau-cv.png'
+const HERO_IMAGE = legacyAsset('cv-template/toppy-list-mau-cv.png')
 
 export default function CatalogHeader({ activeCategory, localeLabel, year, subtitle }) {
   // Xác định xem danh mục có thuộc nhóm style hay ngành nghề

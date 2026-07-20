@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { legacyAsset } from '@/shared/config/assets'
 
-const MASCOT_IMAGE = 'https://www.topcv.vn/v4/image/cv-template/cv-sample/toppy-list-mau-cv.png'
+const MASCOT_IMAGE = legacyAsset('cv-template/toppy-list-mau-cv.png')
 const COUNTDOWN_SECONDS = 9
 
 // Màn hoàn tất onboarding: đếm ngược rồi tự chuyển sang trang việc làm với

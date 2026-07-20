@@ -1,8 +1,9 @@
 import { MailFilled, PhoneFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
 import ChatShowcase from '@/shared/ui/ChatShowcase'
+import { legacyAsset } from '@/shared/config/assets'
 
-const HOTLINE_BG_URL = 'https://cdn-new.topcv.vn/unsafe/https://static.topcv.vn/v4/image/job-new/hotline_bg.png'
+const HOTLINE_BG_URL = legacyAsset('home/hotline-bg.png')
 
 const HOTLINE_TABS = [
   {

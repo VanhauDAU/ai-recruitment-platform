@@ -1,6 +1,7 @@
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
+from django.http import FileResponse, Http404
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, status
 from rest_framework import serializers
@@ -8,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
+from common.r2_storage import private_media_storage
 
 from ...models import CompanyDocument, CompanyUpdateRequest
 from ...selectors import has_explicit_company_link
@@ -15,6 +17,38 @@ from ...services import get_or_create_recruiter
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 from .memberships import _save_document
 from .onboarding import _require_company
+
+
+def employer_documents_queryset(user):
+    """Documents visible to the authenticated recruiter; never expose R2 URLs."""
+    recruiter = get_or_create_recruiter(user)
+    candidate_dpa = Q(
+        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        recruiter=recruiter,
+    )
+    if has_explicit_company_link(recruiter):
+        candidate_dpa |= Q(
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            company=recruiter.company,
+        )
+        queryset = CompanyDocument.objects.filter(Q(company=recruiter.company) | candidate_dpa)
+    else:
+        queryset = CompanyDocument.objects.filter(candidate_dpa)
+    return queryset.annotate(
+        dpa_owner_priority=Case(
+            When(
+                doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                recruiter=recruiter,
+                then=Value(0),
+            ),
+            When(
+                doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+                then=Value(1),
+            ),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+    )
 
 
 class CompanyDocumentListCreateView(generics.ListCreateAPIView):
@@ -28,39 +62,12 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        recruiter = get_or_create_recruiter(self.request.user)
-        candidate_dpa = Q(
-            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-            recruiter=recruiter,
-        )
-        if has_explicit_company_link(recruiter):
-            # Giữ các văn bản DLCN lịch sử từng được lưu theo công ty.
-            candidate_dpa |= Q(
-                doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-                company=recruiter.company,
-            )
-            queryset = CompanyDocument.objects.filter(Q(company=recruiter.company) | candidate_dpa)
-        else:
-            queryset = CompanyDocument.objects.filter(candidate_dpa)
-
         # Văn bản DLCN mới gắn với recruiter thay thế bản lịch sử từng gắn với
         # company. API phải trả bản mới trước để consumer không vô tình mở tệp
         # công ty cũ khi cả hai cùng tồn tại.
-        return queryset.annotate(
-            dpa_owner_priority=Case(
-                When(
-                    doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-                    recruiter=recruiter,
-                    then=Value(0),
-                ),
-                When(
-                    doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-                    then=Value(1),
-                ),
-                default=Value(0),
-                output_field=IntegerField(),
-            ),
-        ).order_by('dpa_owner_priority', '-created_at', '-id')
+        return employer_documents_queryset(self.request.user).order_by(
+            'dpa_owner_priority', '-created_at', '-id',
+        )
 
     @extend_schema(
         summary='Tải giấy tờ công ty hoặc hồ sơ chứng minh cho yêu cầu cập nhật',
@@ -126,6 +133,22 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             )
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CompanyDocumentContentView(generics.GenericAPIView):
+    """Authorized private-file download for the employer's own documents."""
+
+    permission_classes = [IsEmployer]
+
+    def get(self, request, pk):
+        document = employer_documents_queryset(request.user).filter(pk=pk).first()
+        if document is None or document.file_url.startswith(('http://', 'https://')):
+            raise Http404
+        try:
+            stream = private_media_storage().open(document.file_url, 'rb')
+        except OSError as error:
+            raise Http404 from error
+        return FileResponse(stream, as_attachment=False, filename=document.file_name or None)
 
 
 class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):

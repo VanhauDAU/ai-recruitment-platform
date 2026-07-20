@@ -8,11 +8,11 @@ from types import SimpleNamespace
 
 from celery import shared_task
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
+from common.r2_storage import public_media_storage
 
 from apps.cvs.composition import compose_cv_document
 from apps.cvs.pdf_renderer import render_cv_version_pdf
@@ -56,9 +56,10 @@ def _first_page_png(pdf_bytes, *, width):
 
 
 def _save_once(key, payload):
-    if default_storage.exists(key):
+    storage = public_media_storage()
+    if storage.exists(key):
         return key
-    return default_storage.save(key, ContentFile(payload))
+    return storage.save(key, ContentFile(payload))
 
 
 @shared_task
@@ -114,7 +115,7 @@ def generate_template_color_snapshot(link_id):
         ])
         for old_key in set(filter(None, old_keys)):
             if old_key != thumbnail_key and old_key != preview_key and 'cv-templates/snapshots/' in old_key:
-                transaction.on_commit(lambda key=old_key: default_storage.delete(key))
+                transaction.on_commit(lambda key=old_key: public_media_storage().delete(key))
     record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed')
 
 
