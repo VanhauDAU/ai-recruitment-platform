@@ -93,7 +93,12 @@ test('public smoke: CV template colors change preview and detail offers the crea
   await expect(page.getByRole('img', { name: 'Xem trước Modern' })).toHaveAttribute('src', '/blue.png')
   const cardText = page.getByText('Modern', { exact: true })
   await cardText.hover()
-  await page.getByRole('button', { name: 'Dùng mẫu' }).click({ force: true })
+  const useTemplateButton = page.getByRole('button', { name: 'Dùng mẫu' })
+  // Nút nằm trong overlay có transition CSS (opacity/translate) khi hover;
+  // đợi nó thực sự visible trước khi click để tránh click rơi giữa lúc
+  // transition chưa ổn định (nguồn gốc flaky trước đây khi dùng force click).
+  await expect(useTemplateButton).toBeVisible()
+  await useTemplateButton.click()
   await expect(page.getByText('Mẫu CV Modern')).toBeVisible()
   await expect(page.getByText('Bạn muốn tạo CV từ?')).toBeVisible()
   await page.getByRole('button', { name: /Nội dung CV mẫu/ }).click()
