@@ -69,22 +69,6 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             'dpa_owner_priority', '-created_at', '-id',
         )
 
-
-class CompanyDocumentContentView(generics.GenericAPIView):
-    """Authorized private-file download for the employer's own documents."""
-
-    permission_classes = [IsEmployer]
-
-    def get(self, request, pk):
-        document = employer_documents_queryset(request.user).filter(pk=pk).first()
-        if document is None or document.file_url.startswith(('http://', 'https://')):
-            raise Http404
-        try:
-            stream = private_media_storage().open(document.file_url, 'rb')
-        except OSError as error:
-            raise Http404 from error
-        return FileResponse(stream, as_attachment=False, filename=document.file_name or None)
-
     @extend_schema(
         summary='Tải giấy tờ công ty hoặc hồ sơ chứng minh cho yêu cầu cập nhật',
         request=inline_serializer('CompanyDocumentUploadRequest', fields={
@@ -149,6 +133,22 @@ class CompanyDocumentContentView(generics.GenericAPIView):
             )
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CompanyDocumentContentView(generics.GenericAPIView):
+    """Authorized private-file download for the employer's own documents."""
+
+    permission_classes = [IsEmployer]
+
+    def get(self, request, pk):
+        document = employer_documents_queryset(request.user).filter(pk=pk).first()
+        if document is None or document.file_url.startswith(('http://', 'https://')):
+            raise Http404
+        try:
+            stream = private_media_storage().open(document.file_url, 'rb')
+        except OSError as error:
+            raise Http404 from error
+        return FileResponse(stream, as_attachment=False, filename=document.file_name or None)
 
 
 class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
