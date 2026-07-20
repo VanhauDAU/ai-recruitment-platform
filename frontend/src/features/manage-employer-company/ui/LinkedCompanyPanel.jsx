@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
 import { getEmployerCompanyUpdateRequests } from '@/entities/employer-profile'
+import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import CompanyForm from './CompanyForm'
 
 const VERIFICATION_STATUS = {
@@ -88,7 +89,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
 
 function Detail({ label, value, link = false, html, children }) {
   const content = children || (html
-    ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: html }} />
+    ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
     : link && value ? <a href={value} target="_blank" rel="noreferrer" className="company-setting-link"><LinkOutlined /> {value}</a>
       : value || '--')
   return <div className="linked-company-details__row"><dt>{label}:</dt><dd>{content}</dd></div>
