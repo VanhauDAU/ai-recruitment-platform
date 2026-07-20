@@ -26,7 +26,6 @@ class EmployerDashboardApiTests(APITestCase):
             user=self.user,
             company=company,
             company_role=RecruiterProfile.CompanyRole.OWNER,
-            membership_status=RecruiterProfile.MembershipStatus.APPROVED,
             registration_completed_at=timezone.now(),
         )
         category = JobCategory.objects.create(

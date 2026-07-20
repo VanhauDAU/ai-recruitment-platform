@@ -94,27 +94,15 @@ class CompanyUpdateRequestAdmin(admin.ModelAdmin):
 @admin.register(RecruiterProfile)
 class RecruiterProfileAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'company', 'company_role', 'membership_status', 'contact_phone',
+        'user', 'company', 'company_role', 'contact_phone',
         'verified_phone', 'registration_completed_at', 'created_at',
     ]
-    list_filter = ['company_role', 'membership_status', 'gender', 'marketing_opt_in']
+    list_filter = ['company_role', 'gender', 'marketing_opt_in']
     search_fields = ['user__email', 'company__company_name', 'contact_phone', 'verified_phone']
     readonly_fields = [
         'registration_completed_at', 'terms_accepted_at', 'terms_policy_version',
         'marketing_decided_at', 'created_at', 'updated_at',
     ]
-    actions = ['approve_membership', 'reject_membership']
-
-    @admin.action(description='Duyệt HR vào công ty')
-    def approve_membership(self, request, queryset):
-        for recruiter in queryset.filter(membership_status=RecruiterProfile.MembershipStatus.PENDING):
-            services.review_membership(recruiter, request.user, approve=True)
-
-    @admin.action(description='Từ chối HR vào công ty')
-    def reject_membership(self, request, queryset):
-        for recruiter in queryset.filter(membership_status=RecruiterProfile.MembershipStatus.PENDING):
-            services.review_membership(recruiter, request.user, approve=False, note='Từ chối qua admin')
-
 
 @admin.register(RecruitmentNeed)
 class RecruitmentNeedAdmin(admin.ModelAdmin):

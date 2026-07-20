@@ -8,7 +8,7 @@ from .companies import (
     verify_company,
 )
 from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
-from .profiles import get_or_create_recruiter, review_membership
+from .profiles import get_or_create_recruiter
 
 __all__ = [
     'SENSITIVE_FIELDS',
@@ -16,7 +16,6 @@ __all__ = [
     'apply_update_request',
     'get_or_create_recruiter',
     'phone_taken_by_other',
-    'review_membership',
     'send_phone_otp',
     'set_company_industries',
     'verify_company',

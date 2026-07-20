@@ -77,7 +77,6 @@ describe('EmployerCompanySettings', () => {
     api.getEmployerProfile.mockResolvedValue({
       onboarding: { company_linked: true, phone_verified: false },
       company_role: 'member',
-      membership_status: 'approved',
       company: {
         public_id: 'co_linked', company_name: 'Công ty đã liên kết', tax_code: '0101234567',
         verification_status: 'unverified', industries_detail: [], images: [],

@@ -24,9 +24,7 @@ const FIELD_LABELS = {
 export default function LinkedCompanyPanel({ profile, catalogs, industries, onRefresh }) {
   const [editing, setEditing] = useState(false)
   const company = profile.company
-  const owner = profile.company_role === 'owner' && profile.membership_status === 'approved'
-  // Các liên kết cũ có thể còn trạng thái pending từ trước khi workflow duyệt
-  // bị bỏ. Chỉ cần đã có company là tài khoản được tạo yêu cầu cập nhật.
+  const owner = profile.company_role === 'owner'
   const canRequestUpdate = Boolean(company)
   const requestsQuery = useQuery({
     queryKey: ['employer', 'company', 'update-requests'],

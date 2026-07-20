@@ -2,8 +2,6 @@
 
 from django.db.models import Q
 
-from apps.employers.models import RecruiterProfile
-
 from ..models import Application
 
 
@@ -33,12 +31,11 @@ def employer_application_queryset(employer):
 
 
 def recruiter_application_snapshot_queryset(recruiter):
-    """Snapshots readable by a job poster or an approved company member only."""
+    """Snapshots readable by a job poster or a linked company member."""
     return Application.objects.filter(
         Q(job__posted_by=recruiter)
         | Q(
             job__company__recruiters__user=recruiter,
-            job__company__recruiters__membership_status=RecruiterProfile.MembershipStatus.APPROVED,
         ),
         submitted_cv_version__version_kind='application_snapshot',
     ).select_related(

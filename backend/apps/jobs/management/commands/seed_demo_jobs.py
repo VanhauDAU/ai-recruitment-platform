@@ -132,7 +132,6 @@ class Command(BaseCommand):
             RecruiterProfile.objects.create(
                 user=user, company=company,
                 company_role=RecruiterProfile.CompanyRole.OWNER,
-                membership_status=RecruiterProfile.MembershipStatus.APPROVED,
             )
             companies.append((user, company))
 

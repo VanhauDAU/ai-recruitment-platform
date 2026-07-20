@@ -2,10 +2,19 @@ import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // Audit bundle: `ANALYZE=1 npm run build` sinh dist/stats.html (treemap gzip).
+    process.env.ANALYZE
+      && visualizer(process.env.ANALYZE === 'json'
+        ? { filename: 'dist/stats.json', template: 'raw-data', gzipSize: true }
+        : { filename: 'dist/stats.html', gzipSize: true, template: 'treemap' }),
+  ],
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },

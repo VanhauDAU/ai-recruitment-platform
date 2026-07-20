@@ -10,12 +10,10 @@ from ..models import Job
 
 @transaction.atomic
 def create_pending_job(serializer, user):
-    """Create a pending posting for the recruiter's approved company."""
+    """Create a pending posting for the recruiter's linked company."""
     recruiter = RecruiterProfile.objects.select_related('company').filter(user=user).first()
     if recruiter is None or recruiter.company_id is None:
         raise ValidationError('Cập nhật thông tin công ty trước khi đăng tin.')
-    if recruiter.membership_status != RecruiterProfile.MembershipStatus.APPROVED:
-        raise ValidationError('Tài khoản của bạn đang chờ duyệt vào công ty nên chưa thể đăng tin.')
     return serializer.save(
         posted_by=user,
         company=recruiter.company,

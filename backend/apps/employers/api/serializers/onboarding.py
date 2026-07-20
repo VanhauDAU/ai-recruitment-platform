@@ -13,8 +13,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecruiterProfile
         fields = [
-            'public_id', 'company', 'company_role', 'membership_status',
-            'membership_review_note', 'position_title', 'verified_phone',
+            'public_id', 'company', 'company_role', 'position_title', 'verified_phone',
             'gender', 'contact_phone', 'work_location', 'registration_completed_at',
             'terms_accepted_at', 'terms_policy_version', 'marketing_opt_in',
             'marketing_decided_at', 'phone_verified_at', 'dpa_accepted_at',

@@ -1,6 +1,6 @@
 import { getCurrentPortal } from './portals'
 
-export const EMPLOYER_SITE_TITLE = 'Smart Recruitment Platform'
+export const EMPLOYER_SITE_TITLE = 'ProCV cho Nhà tuyển dụng'
 export const DEFAULT_SITE_TITLE = 'ProCV'
 
 const TITLE_SEPARATOR = ' | '

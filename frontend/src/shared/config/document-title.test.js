@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatDocumentTitle } from './document-title'
+import { EMPLOYER_SITE_TITLE, formatDocumentTitle } from './document-title'
 
 describe('formatDocumentTitle', () => {
   it('uses the employer platform title only for employer pages', () => {
     expect(formatDocumentTitle('Thay đổi mật khẩu', { portal: 'employer' }))
-      .toBe('Thay đổi mật khẩu | Smart Recruitment Platform')
+      .toBe(`Thay đổi mật khẩu | ${EMPLOYER_SITE_TITLE}`)
   })
 
   it('uses the configured candidate site name', () => {
@@ -12,8 +12,8 @@ describe('formatDocumentTitle', () => {
       .toBe('Trang chủ | Tên website')
   })
 
-  it('replaces an old title suffix instead of duplicating it', () => {
-    expect(formatDocumentTitle('Trang chủ | Smart Recruitment Platform', { portal: 'main', siteName: 'ProCV' }))
+  it('replaces the employer suffix instead of duplicating it when switching portal', () => {
+    expect(formatDocumentTitle(`Trang chủ | ${EMPLOYER_SITE_TITLE}`, { portal: 'main', siteName: 'ProCV' }))
       .toBe('Trang chủ | ProCV')
   })
 })
