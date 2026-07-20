@@ -298,7 +298,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('dialog')).toContainText('Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google')
   await page.getByRole('button', { name: 'Cập nhật mật khẩu tại đây' }).click()
   await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/password-login$/)
-  await expect(page).toHaveTitle('Thay đổi mật khẩu | Smart Recruitment Platform')
+  await expect(page).toHaveTitle('Thay đổi mật khẩu | ProCV cho Nhà tuyển dụng')
   await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/account/settings/company?update=true')
@@ -357,7 +357,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(sidebarAccountLink).toHaveAttribute('href', '/tuyendung/app/account/settings/account-info')
   await sidebarAccountLink.click()
   await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/account-info$/)
-  await expect(page).toHaveTitle('Thông tin tài khoản | Smart Recruitment Platform')
+  await expect(page).toHaveTitle('Thông tin tài khoản | ProCV cho Nhà tuyển dụng')
   await expect(page.getByRole('heading', { name: 'Thông tin tài khoản', exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
   await expect(page.getByRole('button', { name: 'Cập nhật' })).toBeVisible()
