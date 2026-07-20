@@ -2,7 +2,6 @@ from pathlib import PurePosixPath
 from uuid import uuid4
 
 from django.conf import settings
-from django.core.files.storage import default_storage
 from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import parsers, serializers
@@ -11,8 +10,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from common.r2_storage import private_media_storage
 
-from ...models import Company, CompanyDocument, CompanyUpdateRequest, RecruiterProfile
+from ...models import Company, CompanyDocument, RecruiterProfile
 from ...selectors import has_explicit_company_link
 from ...services import get_or_create_recruiter
 from ..serializers import RecruiterProfileSerializer
@@ -54,7 +54,7 @@ def _save_document_file(upload, directory, doc_type):
         raise ValidationError({'file': f'Chỉ chấp nhận tệp {allowed} hợp lệ.'})
 
     safe_directory = str(PurePosixPath(directory.strip('/')))
-    path = default_storage.save(f'{safe_directory}/{uuid4().hex}.{extension}', upload)
+    path = private_media_storage().save(f'{safe_directory}/{uuid4().hex}.{extension}', upload)
     return path
 
 
@@ -95,7 +95,7 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
                 'reviewed_at', 'review_note',
             ])
             if previous_path and previous_path != path:
-                default_storage.delete(previous_path)
+                private_media_storage().delete(previous_path)
             return existing
 
     return CompanyDocument.objects.create(
@@ -105,9 +105,13 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
 
 
 class JoinCompanyView(APIView):
-    """Liên kết một lần với công ty có sẵn, có hiệu lực ngay."""
+    """Liên kết một lần với công ty có sẵn, có hiệu lực ngay.
 
-    # Liên kết không yêu cầu MFA/xác thực lại; giấy tờ chỉ là thông tin tùy chọn.
+    Đây chỉ là gán HR vào công ty, không phải yêu cầu xác thực hay yêu cầu
+    chỉnh sửa công ty. Hai nghiệp vụ sau có workflow duyệt riêng.
+    """
+
+    # Liên kết không yêu cầu MFA/xác thực lại và không nhận giấy tờ.
     permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
 
@@ -115,10 +119,6 @@ class JoinCompanyView(APIView):
         summary='Liên kết ngay với công ty có sẵn',
         request=inline_serializer('JoinCompany', fields={
             'company': serializers.CharField(help_text='public_id công ty'),
-            'proof_type': serializers.ChoiceField(choices=CompanyUpdateRequest.ProofType.choices, required=False),
-            'business_registration_file': serializers.FileField(required=False),
-            'authorization_file': serializers.FileField(required=False),
-            'identity_file': serializers.FileField(required=False),
         }),
         responses={200: RecruiterProfileSerializer},
         tags=['employer'],
@@ -133,35 +133,16 @@ class JoinCompanyView(APIView):
         company = Company.objects.filter(public_id=request.data.get('company')).first()
         if company is None:
             raise ValidationError({'company': 'Không tìm thấy công ty.'})
-
-        proof_type = request.data.get('proof_type')
-        if proof_type == CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION:
-            upload = request.FILES.get('business_registration_file')
-            if not upload:
-                raise ValidationError({'business_registration_file': 'Upload giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương.'})
-            documents = [(CompanyDocument.DocType.BUSINESS_REGISTRATION, upload)]
-        elif proof_type == CompanyUpdateRequest.ProofType.AUTHORIZATION_AND_ID:
-            authorization = request.FILES.get('authorization_file')
-            identity = request.FILES.get('identity_file')
-            if not authorization or not identity:
-                raise ValidationError({'detail': 'Upload đủ Giấy ủy quyền và Giấy tờ định danh (CCCD/hộ chiếu).'})
-            documents = [
-                (CompanyDocument.DocType.AUTHORIZATION_LETTER, authorization),
-                (CompanyDocument.DocType.IDENTITY_DOCUMENT, identity),
-            ]
-        elif proof_type:
-            raise ValidationError({'proof_type': 'Loại giấy tờ chứng minh không hợp lệ.'})
-        else:
-            documents = []
-
-        for doc_type, upload in documents:
-            _save_document(request, company, doc_type, upload)
+        legacy_proof_fields = {
+            'proof_type', 'business_registration_file', 'authorization_file', 'identity_file',
+        }
+        if legacy_proof_fields.intersection(request.data) or legacy_proof_fields.intersection(request.FILES):
+            raise ValidationError({
+                'detail': 'Tham gia công ty không yêu cầu hoặc nhận giấy tờ chứng minh. '
+                'Giấy tờ chỉ được nộp khi xác thực hoặc yêu cầu cập nhật công ty.'
+            })
 
         recruiter.company = company
         recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
-        recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
-        recruiter.membership_proof_type = proof_type or ''
-        recruiter.save(update_fields=[
-            'company', 'company_role', 'membership_status', 'membership_proof_type', 'updated_at',
-        ])
+        recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
         return Response(RecruiterProfileSerializer(recruiter, context={'request': request}).data)

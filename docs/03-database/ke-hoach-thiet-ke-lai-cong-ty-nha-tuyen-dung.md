@@ -4,7 +4,7 @@ Nguồn yêu cầu: `document_project_ai/Công ty và nhà tuyển dụng.docx` 
 
 > **Trạng thái (2026-07-11): đã triển khai xong cả 3 giai đoạn A + B + C** — schema + data migration, jobs chuyển sang company, API `/api/employer/*` + admin duyệt, frontend cổng NTD chuyển sang API mới và bảng `employer_profiles` đã xóa (migration `employers.0008`).
 
-> **Bổ sung 2026-07-20:** đã hoàn thiện catalogue và UI quản lý công ty ở account, validation/rich text/media, trạng thái owner/member/pending và hồ sơ cập nhật pháp lý. Catalogue dùng dữ liệu nội bộ; không scrape hoặc phụ thuộc API Cục Thuế.
+> **Bổ sung 2026-07-20:** đã hoàn thiện catalogue và UI quản lý công ty ở account, validation/rich text/media, vai trò owner/member và hồ sơ cập nhật pháp lý. Catalogue dùng dữ liệu nội bộ; không scrape hoặc phụ thuộc API Cục Thuế.
 
 ## 1. Vấn đề hiện tại
 
@@ -60,7 +60,7 @@ users 1─1 recruiter_profiles N─1 companies 1─N jobs
 
 > Nguyên tắc TopCV áp dụng: **tạo công ty mới thì có hiệu lực ngay** (`unverified`, được hiển thị kèm nhãn chưa xác thực), nhưng **cập nhật sau đó phải qua duyệt** (mục 2.6).
 
-> Quy tắc hệ thống 2026-07-20: xác thực số điện thoại không phải điều kiện tiên quyết để tạo/chọn công ty. Sau lần tạo hoặc chọn đầu tiên, recruiter bị khóa với đúng công ty đó ở cả UI và API; membership pending/rejected cũng không được chọn lại công ty khác. Thao tác gán dùng khóa hàng trong giao dịch để ngăn hai request đồng thời vượt quy tắc.
+> Quy tắc hệ thống 2026-07-20: xác thực số điện thoại không phải điều kiện tiên quyết để tạo/chọn công ty. Sau lần tạo hoặc chọn đầu tiên, recruiter bị khóa với đúng công ty đó ở cả UI và API. Thao tác gán dùng khóa hàng trong giao dịch để ngăn hai request đồng thời vượt quy tắc.
 
 ### 2.2 `company_industries` — through table thay cho M2M trần
 
@@ -92,10 +92,7 @@ Bảng `industries` giữ nguyên.
 | `public_id` | prefix mới `rec` |
 | `user` | OneToOne |
 | `company` | FK companies, **null**, on_delete=PROTECT — null khi mới đăng ký, gán trong onboarding. **Đã gán thì không đổi được** (enforce ở service: chỉ cho set khi đang null; đổi công ty = liên hệ vận hành) |
-| `company_role` | choices `owner` / `member` — người tạo công ty là owner (được gửi yêu cầu cập nhật công ty); HR join sau là member |
-| `membership_status` | choices `pending/approved/rejected` — owner tạo công ty mới: `approved` ngay; member join công ty có sẵn: `pending` chờ admin duyệt |
-| `membership_proof_type` | choices, null: `business_registration` / `authorization_and_id` — loại giấy tờ khi join công ty có sẵn |
-| `membership_reviewed_by` / `membership_reviewed_at` / `membership_review_note` | admin duyệt membership |
+| `company_role` | choices `owner` / `member` — người tạo công ty là owner; HR join sau là member |
 | `position_title` | chức danh (HR Manager…), blank |
 | `verified_phone` | char, blank, **unique khi có giá trị** (partial unique) — "SĐT đã có NTD khác xác thực" chính là vi phạm ràng buộc này |
 | `phone_verified_at` | null |
@@ -160,9 +157,11 @@ Khi admin approve: service apply `changes` vào `companies` trong 1 transaction,
 4. **P4**: Yêu cầu cập nhật thông tin công ty + luồng duyệt (kèm reason/giấy tờ khi đổi MST/tên).
 5. **P5**: Ảnh công ty, thị trường/khách hàng mục tiêu/phúc lợi trên trang công ty public.
 
-## 5. Các quyết định đã chốt (2026-07-11)
+## 5. Các quyết định đã cập nhật (2026-07-20)
 
-- **HR thứ 2 join công ty có sẵn: phải chờ admin duyệt.** Khi chọn công ty, recruiter phải upload giấy tờ chứng minh — chọn 1 trong 2: (a) giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương, hoặc (b) giấy ủy quyền + giấy tờ định danh. Upload xong membership ở trạng thái `pending` cho đến khi admin duyệt. Thể hiện trong schema: `recruiter_profiles.membership_status` (`approved` khi tự tạo công ty mới với vai trò owner; `pending` khi join công ty có sẵn) + `membership_proof_type` + `membership_reviewed_by/at`; giấy tờ lưu ở `company_documents` với `uploaded_by` = người join.
+- **HR join công ty có sẵn: có hiệu lực ngay.** Thao tác chỉ gán `recruiter_profiles.company_id` và `company_role=member`; không tạo membership request, không yêu cầu giấy tờ và không có admin duyệt. Liên kết vẫn cố định sau lần chọn đầu tiên.
+- **Tạo công ty mới: có hiệu lực ngay.** Hệ thống tạo `companies` với `verification_status=unverified`, đồng thời gán người tạo là `owner`. Xác thực pháp nhân qua `company_documents` là workflow độc lập; không chặn việc HR tham gia công ty.
+- **Chỉ yêu cầu cập nhật công ty phải chờ duyệt.** Thay đổi được lưu tại `company_update_requests` với `pending/approved/rejected`; khi thay đổi MST hoặc tên công ty thì cần lý do và giấy tờ đính kèm.
 - **Đăng tin: công ty nào cũng được đăng, nhưng từng tin phải chờ duyệt.** Job tạo ra ở `status=pending`, admin duyệt → `active`. Không chặn theo `verification_status` của công ty; nhãn "Tin xác thực" vẫn suy từ công ty đã verified.
 - **OTP: dùng email trước** (chưa có SMS gateway trong môi trường thesis), schema `phone_otps` giữ nguyên để chuyển sang SMS sau mà không đổi DB.
 

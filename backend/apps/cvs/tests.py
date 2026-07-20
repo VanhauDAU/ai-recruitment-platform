@@ -45,7 +45,7 @@ class CandidateCvApiTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['title'], 'My CV')
-        self.assertTrue(response.data['file_url'].endswith('.pdf'))
+        self.assertTrue(response.data['file_url'].endswith('/content/file/'))
         self.assertIn('Deprecation', response)
         self.assertIn('Sunset', response)
         self.assertEqual(response['Link'], '</api/v2/cvs/imports/>; rel="successor-version"')

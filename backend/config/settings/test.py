@@ -6,6 +6,23 @@ from .base import *  # noqa: F403
 ENVIRONMENT = 'test'
 IS_PRODUCTION = False
 DEBUG = False
+R2_ENABLED = False
+R2_PUBLIC_BASE_URL = ''
+MEDIA_PUBLIC_BASE_URL = ''
+
+# Never let a local .env switch test storage to a real R2 bucket. Tests use the
+# same local media contract as before and must not require network credentials.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},  # noqa: F405
+    },
+    'public_media': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},  # noqa: F405
+    },
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 
 # Tests must not depend on a developer's Redis, SMTP server, or Celery worker.
 CACHES = {

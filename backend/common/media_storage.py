@@ -5,9 +5,10 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from PIL import Image
 from rest_framework.exceptions import ValidationError
+
+from common.r2_storage import public_media_storage
 
 
 ALLOWED_IMAGE_SIGNATURES = {
@@ -78,7 +79,7 @@ def save_image_upload(upload, directory, request=None, max_dimensions=None):
         if resized is not None:
             file_to_save = resized
 
-    path = default_storage.save(f'{safe_directory}/{filename}', file_to_save)
+    path = public_media_storage().save(f'{safe_directory}/{filename}', file_to_save)
 
     return {
         'path': path,
@@ -90,7 +91,7 @@ def save_image_upload(upload, directory, request=None, max_dimensions=None):
 
 
 def media_public_url(path, request=None):
-    url = default_storage.url(path)
+    url = public_media_storage().url(path)
     public_base_url = getattr(settings, 'MEDIA_PUBLIC_BASE_URL', '').strip()
 
     if public_base_url and url.startswith('/'):
@@ -170,5 +171,6 @@ def media_url_from_value(value, request=None):
 def delete_local_media_url(value):
     """Xoá file nội bộ được tham chiếu bởi storage key hoặc URL legacy."""
     storage_path = media_storage_path(value)
-    if storage_path and default_storage.exists(storage_path):
-        default_storage.delete(storage_path)
+    storage = public_media_storage()
+    if storage_path and storage.exists(storage_path):
+        storage.delete(storage_path)

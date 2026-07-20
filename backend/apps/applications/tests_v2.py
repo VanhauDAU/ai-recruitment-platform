@@ -33,7 +33,6 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             user=self.member,
             company=self.company,
             company_role=RecruiterProfile.CompanyRole.MEMBER,
-            membership_status=RecruiterProfile.MembershipStatus.APPROVED,
         )
         self.job = Job.objects.create(
             posted_by=self.owner,

@@ -37,8 +37,7 @@ class CreateCompanyView(generics.CreateAPIView):
         company = serializer.save(created_by=self.request.user)
         recruiter.company = company
         recruiter.company_role = RecruiterProfile.CompanyRole.OWNER
-        recruiter.membership_status = RecruiterProfile.MembershipStatus.APPROVED
-        recruiter.save(update_fields=['company', 'company_role', 'membership_status', 'updated_at'])
+        recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
 
 
 class CompanySearchView(generics.ListAPIView):

@@ -27,6 +27,11 @@ if not jwt_signing_key:
     raise ImproperlyConfigured('JWT_SIGNING_KEY là bắt buộc khi ENVIRONMENT=production.')
 if len(jwt_signing_key) < 32:
     raise ImproperlyConfigured('JWT_SIGNING_KEY production phải có ít nhất 32 ký tự.')
+
+if not R2_ENABLED:  # noqa: F405
+    raise ImproperlyConfigured(
+        'Production yêu cầu Cloudflare R2: endpoint, access key, secret key và public base URL.',
+    )
 if not AUTH_REFRESH_COOKIE_SECURE:  # noqa: F405
     raise ImproperlyConfigured('AUTH_REFRESH_COOKIE_SECURE phải bật ở production.')
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:  # noqa: F405

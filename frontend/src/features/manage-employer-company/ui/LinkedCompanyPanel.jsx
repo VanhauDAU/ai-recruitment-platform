@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
 import { getEmployerCompanyUpdateRequests } from '@/entities/employer-profile'
+import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import CompanyForm from './CompanyForm'
 
 const VERIFICATION_STATUS = {
@@ -23,9 +24,7 @@ const FIELD_LABELS = {
 export default function LinkedCompanyPanel({ profile, catalogs, industries, onRefresh }) {
   const [editing, setEditing] = useState(false)
   const company = profile.company
-  const owner = profile.company_role === 'owner' && profile.membership_status === 'approved'
-  // Các liên kết cũ có thể còn trạng thái pending từ trước khi workflow duyệt
-  // bị bỏ. Chỉ cần đã có company là tài khoản được tạo yêu cầu cập nhật.
+  const owner = profile.company_role === 'owner'
   const canRequestUpdate = Boolean(company)
   const requestsQuery = useQuery({
     queryKey: ['employer', 'company', 'update-requests'],
@@ -88,7 +87,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
 
 function Detail({ label, value, link = false, html, children }) {
   const content = children || (html
-    ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: html }} />
+    ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
     : link && value ? <a href={value} target="_blank" rel="noreferrer" className="company-setting-link"><LinkOutlined /> {value}</a>
       : value || '--')
   return <div className="linked-company-details__row"><dt>{label}:</dt><dd>{content}</dd></div>

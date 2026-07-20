@@ -154,11 +154,67 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media files (uploaded CVs, template thumbnails)
+# Media files are split deliberately: R2 public is only for published visual
+# assets; default/private storage is for documents and candidate data.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_PUBLIC_BASE_URL = config('MEDIA_PUBLIC_BASE_URL', default='')
+R2_ENDPOINT_URL = config('R2_ENDPOINT_URL', default='').strip()
+R2_REGION_NAME = config('R2_REGION_NAME', default='auto').strip() or 'auto'
+R2_PUBLIC_ACCESS_KEY_ID = config('R2_PUBLIC_ACCESS_KEY_ID', default='').strip()
+R2_PUBLIC_SECRET_ACCESS_KEY = config('R2_PUBLIC_SECRET_ACCESS_KEY', default='').strip()
+R2_PRIVATE_ACCESS_KEY_ID = config('R2_PRIVATE_ACCESS_KEY_ID', default='').strip()
+R2_PRIVATE_SECRET_ACCESS_KEY = config('R2_PRIVATE_SECRET_ACCESS_KEY', default='').strip()
+R2_PUBLIC_BUCKET = config('R2_PUBLIC_BUCKET', default='procv-public-media').strip()
+R2_PRIVATE_BUCKET = config('R2_PRIVATE_BUCKET', default='procv-private-files').strip()
+R2_PUBLIC_BASE_URL = config('R2_PUBLIC_BASE_URL', default='').strip().rstrip('/')
+R2_ENABLED = bool(
+    R2_ENDPOINT_URL and R2_PUBLIC_ACCESS_KEY_ID and R2_PUBLIC_SECRET_ACCESS_KEY
+    and R2_PRIVATE_ACCESS_KEY_ID and R2_PRIVATE_SECRET_ACCESS_KEY and R2_PUBLIC_BASE_URL
+)
+
+# Kept as a compatibility setting for media helpers and deployments that still
+# use local disk.  With R2, URLs are produced by the public storage backend.
+MEDIA_PUBLIC_BASE_URL = R2_PUBLIC_BASE_URL or config('MEDIA_PUBLIC_BASE_URL', default='').strip()
 IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024, cast=int)
+
+_LOCAL_MEDIA_STORAGE = {
+    'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
+}
+STORAGES = {
+    'default': _LOCAL_MEDIA_STORAGE,
+    'public_media': _LOCAL_MEDIA_STORAGE,
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
+if R2_ENABLED:
+    _R2_COMMON_OPTIONS = {
+        'endpoint_url': R2_ENDPOINT_URL,
+        'region_name': R2_REGION_NAME,
+        'default_acl': None,
+        'file_overwrite': False,
+    }
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            **_R2_COMMON_OPTIONS,
+            'bucket_name': R2_PRIVATE_BUCKET,
+            'access_key': R2_PRIVATE_ACCESS_KEY_ID,
+            'secret_key': R2_PRIVATE_SECRET_ACCESS_KEY,
+            'querystring_auth': False,
+        },
+    }
+    STORAGES['public_media'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            **_R2_COMMON_OPTIONS,
+            'bucket_name': R2_PUBLIC_BUCKET,
+            'access_key': R2_PUBLIC_ACCESS_KEY_ID,
+            'secret_key': R2_PUBLIC_SECRET_ACCESS_KEY,
+            'custom_domain': R2_PUBLIC_BASE_URL.removeprefix('https://').removeprefix('http://'),
+            'querystring_auth': False,
+            'object_parameters': {'CacheControl': 'public, max-age=31536000, immutable'},
+        },
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

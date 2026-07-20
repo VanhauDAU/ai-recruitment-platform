@@ -1,7 +1,8 @@
 import { Outlet } from 'react-router-dom'
 import { BrandLogo } from '@/entities/site-settings'
+import { legacyAsset } from '@/shared/config/assets'
 
-const BG_IMAGE = 'https://static.topcv.vn/v4/image/onboard-user/bg-step-1.png'
+const BG_IMAGE = legacyAsset('onboarding/bg-step-1.png')
 
 export default function OnboardingLayout() {
   return (
