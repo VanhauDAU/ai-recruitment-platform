@@ -4,6 +4,7 @@ import tempfile
 from datetime import timedelta
 
 from django.core import mail
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
@@ -13,6 +14,7 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import AuthEmailJob, User
 from apps.accounts.services.tokens import issue_tokens
+from common.r2_storage import private_media_storage
 from apps.locations.models import Location
 from apps.jobs.models import JobCategory
 
@@ -709,11 +711,14 @@ class JoinCompanyTests(APITestCase):
 
     def test_private_company_document_is_served_only_to_an_authorised_employer(self):
         self._join()
+        stored_name = private_media_storage().save(
+            'employers/documents/company-registration.png', ContentFile(PNG_BYTES)
+        )
         document = CompanyDocument.objects.create(
             company=self.company,
             uploaded_by=self.user,
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            file_url='employers/documents/company-registration.png',
+            file_url=stored_name,
             file_name='company-registration.png',
         )
 
