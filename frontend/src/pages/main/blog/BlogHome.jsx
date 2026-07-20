@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { getBlogCategories, getBlogHome } from '@/entities/blog'
 import { setDocumentTitle } from '@/shared/config/document-title'
+import { legacyAsset } from '@/shared/config/assets'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogInlineBanner from './ui/BlogInlineBanner'
 import CategorySection from './ui/CategorySection'
@@ -40,7 +41,7 @@ export default function BlogHome() {
       {/* ── Hero banner ── */}
       <div
         style={{
-          backgroundImage: `url("https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/blog-banner-toppy-3d.png"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
+          backgroundImage: `url("${legacyAsset('blog/blog-banner-toppy-3d.png')}"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
           backgroundPosition: 'center top, center',
           backgroundRepeat: 'no-repeat, no-repeat',
           backgroundSize: 'cover, cover',

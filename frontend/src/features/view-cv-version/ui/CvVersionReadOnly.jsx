@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { CopyOutlined, EditOutlined } from '@ant-design/icons'
 import { CvDocumentPreview } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'
+import { legacyAsset } from '@/shared/config/assets'
 
 function documentFromVersion(version) {
   return {
@@ -60,7 +61,7 @@ function CvVersionReadOnly({ load, inaccessibleMessage, isOwner, publicId }) {
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center bg-fixed flex flex-col relative"
-      style={{ backgroundImage: "url('https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/cv-builder/bg-5.png')" }}
+      style={{ backgroundImage: `url('${legacyAsset('cv-builder/bg-5.png')}')` }}
     >
       {/* Lớp phủ tối nhẹ tăng độ tương phản */}
       <div className="absolute inset-0 bg-black/10 pointer-events-none" />

@@ -186,6 +186,8 @@ body {
   position: relative;
 }
 
+/* Ảnh nền trang trí lấy từ R2. CSS không đọc được config JS nên base URL lặp lại
+   ở đây; nguồn chuẩn cho JS là src/shared/config/assets.js. */
 #section-header::before,
 #section-header::after {
   content: "";

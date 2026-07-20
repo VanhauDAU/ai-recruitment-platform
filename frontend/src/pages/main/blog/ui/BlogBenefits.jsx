@@ -2,25 +2,26 @@ import { ArrowRightOutlined, CloseOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
+import { legacyAsset } from '@/shared/config/assets'
 
 const BENEFITS = [
   {
     title: '60.000+ Việc làm chất lượng',
     action: 'Tìm việc ngay',
     to: '/viec-lam',
-    image: 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/search-tool-v2.png',
+    image: legacyAsset('blog/search-tool-v2.png'),
   },
   {
     title: 'Công cụ tạo CV chuyên nghiệp',
     action: 'Tạo CV',
     to: '/',
-    image: 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/cv-tool-v2.png',
+    image: legacyAsset('blog/cv-tool-v2.png'),
   },
   {
     title: 'Trắc nghiệm tính cách, nghề nghiệp',
     action: 'Khám phá ngay',
     to: '/blog',
-    image: 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/survey-tool-v2.png',
+    image: legacyAsset('blog/survey-tool-v2.png'),
   },
 ]
 

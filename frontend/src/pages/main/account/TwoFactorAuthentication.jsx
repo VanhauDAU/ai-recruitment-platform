@@ -8,9 +8,10 @@ import {
 } from '@/features/two-factor'
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { useSession } from '@/entities/session'
+import { legacyAsset } from '@/shared/config/assets'
 
-const SETUP_ILLUSTRATION = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/icons/shield-gears.png'
-const SUCCESS_ILLUSTRATION = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/icons/shield-check.png'
+const SETUP_ILLUSTRATION = legacyAsset('icons/shield-gears.png')
+const SUCCESS_ILLUSTRATION = legacyAsset('icons/shield-check.png')
 
 export default function TwoFactorAuthentication() {
   const { user, setCurrentUser } = useSession()

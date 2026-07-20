@@ -2,8 +2,9 @@ import { SafetyCertificateOutlined } from '@ant-design/icons'
 import { Button, Input, Modal } from 'antd'
 import { useEffect, useState } from 'react'
 import { sanitizeTwoFactorCode, TWO_FACTOR_CODE_LENGTH } from './two-factor-code'
+import { legacyAsset } from '@/shared/config/assets'
 
-const SUCCESS_ILLUSTRATION = 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/icons/shield-check.png'
+const SUCCESS_ILLUSTRATION = legacyAsset('icons/shield-check.png')
 
 function displayRemaining(seconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
