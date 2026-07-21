@@ -46,6 +46,26 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 - Cấu hình nginx: `deploy/nginx/procv.conf`. TLS: thêm server block 443 +
   certbot khi trỏ domain.
 
+## Seed dữ liệu (lần đầu — DB Docker khởi tạo rỗng)
+
+`docker compose up` chỉ chạy `migrate`, **không** seed. Trang chủ sẽ hiện
+"0 việc làm" và `/mau-cv` rỗng cho tới khi chạy:
+
+```bash
+docker compose exec backend sh -c "\
+  python manage.py seed_skills && \
+  python manage.py seed_locations && \
+  python manage.py seed_province_merges && \
+  python manage.py seed_job_categories && \
+  python manage.py seed_sitecontent && \
+  python manage.py seed_cv_catalog && \
+  python manage.py seed_services && \
+  python manage.py seed_demo_jobs"
+```
+
+`seed_locations` gọi `provinces.open-api.vn` nên cần internet ở lần chạy đầu.
+Mọi lệnh seed đều chạy lại được.
+
 ## Vận hành
 
 ```bash

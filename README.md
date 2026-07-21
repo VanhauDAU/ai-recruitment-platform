@@ -74,10 +74,13 @@ source venv/bin/activate
 brew services start redis
 python manage.py runserver 8000        # http://localhost:8000
 
-# Worker gửi email auth (terminal riêng, chạy từ backend/)
-celery -A config worker -l info -Q auth-email
+# Worker Celery (terminal riêng, chạy từ backend/).
+# BẮT BUỘC khai đủ 3 queue: settings route task sang auth-email (email xác thực,
+# 2FA, OTP điện thoại) và cv-export (render PDF, thumbnail); phần còn lại vào
+# default. Thiếu queue nào thì task của queue đó im lặng không chạy.
+celery -A config worker -l info -Q default,auth-email,cv-export
 
-# Quét lại email job bị gián đoạn (terminal riêng, chạy từ backend/)
+# Beat: quét lại job bị gián đoạn + dọn file import hết hạn (terminal riêng)
 celery -A config beat -l info
 
 # Frontend (terminal khác)
