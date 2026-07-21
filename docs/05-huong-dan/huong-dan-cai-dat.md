@@ -68,12 +68,14 @@ python manage.py createsuperuser
 python manage.py runserver 8000
 ```
 
-Email xác thực và reset password được gửi bất đồng bộ. Chạy thêm hai process từ
-thư mục `backend`:
+Email (xác thực, reset password, 2FA, OTP điện thoại) và tác vụ nặng (render PDF,
+thumbnail CV) đều chạy bất đồng bộ. Chạy thêm hai process từ thư mục `backend`:
 
 ```bash
-# Terminal worker: xử lý queue email auth
-venv/bin/celery -A config worker -l info -Q auth-email
+# Terminal worker: BẮT BUỘC khai đủ 3 queue. Settings route task sang
+# auth-email và cv-export; phần còn lại vào default. Thiếu queue nào thì task
+# của queue đó im lặng không chạy (không lỗi, không log).
+venv/bin/celery -A config worker -l info -Q default,auth-email,cv-export
 
 # Terminal beat: quét lại job pending khi broker/worker từng bị gián đoạn
 venv/bin/celery -A config beat -l info
