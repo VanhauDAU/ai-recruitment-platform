@@ -26,7 +26,6 @@ from apps.jobs.models import JobCategory
 from apps.sitecontent.models import Banner, SiteSetting
 from common.r2_storage import public_media_storage
 
-
 PUBLIC_IMAGE_FIELDS = (
     (User, 'avatar_url'),
     (Company, 'logo_url'),
@@ -81,17 +80,23 @@ class Command(BaseCommand):
     help = 'Dry-run or copy external public image URLs into Cloudflare R2 and replace them with storage keys.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--apply', action='store_true', help='Write objects and update database values.')
-        parser.add_argument('--limit', type=int, default=0, help='Process at most this many matching values.')
+        parser.add_argument(
+            '--apply', action='store_true', help='Write objects and update database values.'
+        )
+        parser.add_argument(
+            '--limit', type=int, default=0, help='Process at most this many matching values.'
+        )
 
     def handle(self, *args, **options):
         storage = public_media_storage()
         if storage.__class__.__module__.startswith('django.core.files.storage'):
-            raise CommandError('R2 is not configured. Set all R2_* variables in the local backend .env first.')
+            raise CommandError(
+                'R2 is not configured. Set all R2_* variables in the local backend .env first.'
+            )
 
         apply = options['apply']
         limit = max(options['limit'], 0)
-        inspected = migrated = skipped = failed = 0
+        inspected = migrated = failed = 0
         for model, field in PUBLIC_IMAGE_FIELDS:
             queryset = model.objects.all().only('pk', field)
             if model is SiteSetting:
@@ -107,14 +112,23 @@ class Command(BaseCommand):
                     payload, extension = _image_payload(value)
                     digest = sha256(payload).hexdigest()
                     key = PurePosixPath(
-                        'migrations', 'external-media', model._meta.app_label,
-                        model._meta.model_name, str(instance.pk), field, f'{digest}.{extension}',
+                        'migrations',
+                        'external-media',
+                        model._meta.app_label,
+                        model._meta.model_name,
+                        str(instance.pk),
+                        field,
+                        f'{digest}.{extension}',
                     ).as_posix()
                     if apply and not storage.exists(key):
                         storage.save(key, ContentFile(payload))
                     if apply:
                         setattr(instance, field, key)
-                        instance.save(update_fields=[field, 'updated_at'] if hasattr(instance, 'updated_at') else [field])
+                        instance.save(
+                            update_fields=[field, 'updated_at']
+                            if hasattr(instance, 'updated_at')
+                            else [field]
+                        )
                     migrated += 1
                 except (requests.RequestException, ValueError) as error:
                     failed += 1
@@ -123,7 +137,9 @@ class Command(BaseCommand):
                 break
 
         mode = 'Applied' if apply else 'Dry run'
-        self.stdout.write(self.style.SUCCESS(
-            f'{mode}: {inspected} external public image references; '
-            f'{migrated} ready to migrate; {failed} skipped.'
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'{mode}: {inspected} external public image references; '
+                f'{migrated} ready to migrate; {failed} skipped.'
+            )
+        )

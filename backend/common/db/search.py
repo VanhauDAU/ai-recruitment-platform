@@ -17,7 +17,5 @@ def fold_accents(text):
     """Normalize Vietnamese text for in-memory ranking."""
     text = text.replace('đ', 'd').replace('Đ', 'D')
     return ''.join(
-        char
-        for char in unicodedata.normalize('NFD', text)
-        if not unicodedata.combining(char)
+        char for char in unicodedata.normalize('NFD', text) if not unicodedata.combining(char)
     ).lower()

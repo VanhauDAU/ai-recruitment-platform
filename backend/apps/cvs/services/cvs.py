@@ -110,9 +110,15 @@ def import_v2_cv(actor, upload, title=''):
 @transaction.atomic
 def duplicate_cv(*, cv, actor, title=''):
     """Copy a builder CV's latest immutable version into a new independent draft."""
-    source_cv = UserCv.objects.select_for_update(of=('self',)).select_related(
-        'template', 'position', 'latest_version__template_version',
-    ).get(pk=cv.pk)
+    source_cv = (
+        UserCv.objects.select_for_update(of=('self',))
+        .select_related(
+            'template',
+            'position',
+            'latest_version__template_version',
+        )
+        .get(pk=cv.pk)
+    )
     if source_cv.user_id != actor.pk:
         raise ValueError('Only the CV owner can duplicate it.')
     if source_cv.is_deleted:
@@ -149,7 +155,10 @@ def duplicate_cv(*, cv, actor, title=''):
         create_or_replace_draft=True,
     )
     return UserCv.objects.select_related(
-        'template', 'current_template_version', 'latest_version', 'published_version',
+        'template',
+        'current_template_version',
+        'latest_version',
+        'published_version',
     ).get(pk=duplicate.pk)
 
 

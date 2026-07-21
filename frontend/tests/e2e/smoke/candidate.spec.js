@@ -275,15 +275,20 @@ test('candidate smoke: job application submits the selected immutable CV version
   await expect(applicationDialog.getByRole('radio', { name: /CV chính/ })).toBeChecked()
   await expect(applicationDialog.getByText(/Tải CV từ máy tính/)).toBeVisible()
   const locationSelect = applicationDialog.getByRole('combobox', { name: 'Địa điểm làm việc mong muốn' })
+  const locationDropdown = page.locator('.ant-select-dropdown:visible')
+  const selectPreferredLocation = async (locationName) => {
+    await locationSelect.click()
+    await expect(locationDropdown).toBeVisible()
+    await locationDropdown.locator('.ant-select-item-option-content', { hasText: locationName }).click()
+    await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: locationName })).toBeVisible()
+    // A multiple Select can keep its menu open after choosing an option. Dismiss
+    // it explicitly so the next selection is independent of that UI detail.
+    await page.keyboard.press('Escape')
+    await expect(locationDropdown).toHaveCount(0)
+  }
   await expect(locationSelect).toBeVisible()
-  await locationSelect.click()
-  await page.locator('.ant-select-dropdown:visible .ant-select-item-option-content', { hasText: 'Bình Dương' }).click()
-  await expect(page.locator('.ant-select-dropdown:visible')).toHaveCount(0)
-  await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: 'Bình Dương' })).toBeVisible()
-  await locationSelect.click()
-  await page.locator('.ant-select-dropdown:visible .ant-select-item-option-content', { hasText: 'Đà Nẵng' }).click()
-  await expect(page.locator('.ant-select-dropdown:visible')).toHaveCount(0)
-  await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: 'Đà Nẵng' })).toBeVisible()
+  await selectPreferredLocation('Bình Dương')
+  await selectPreferredLocation('Đà Nẵng')
 
   await applicationDialog.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }).check()
   await applicationDialog.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }).click()

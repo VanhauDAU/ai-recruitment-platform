@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 )
                 province_count += 1
 
-                detail = fetch_json(f"{API_BASE}/p/{province['code']}?depth=2")
+                detail = fetch_json(f'{API_BASE}/p/{province["code"]}?depth=2')
                 for ward in detail.get('wards', []):
                     Location.objects.update_or_create(
                         code=str(ward['code']),
@@ -54,6 +54,8 @@ class Command(BaseCommand):
                         },
                     )
                     ward_count += 1
-                self.stdout.write(f"  {province['name']}: {len(detail.get('wards', []))} wards")
+                self.stdout.write(f'  {province["name"]}: {len(detail.get("wards", []))} wards')
 
-        self.stdout.write(self.style.SUCCESS(f'Seeded {province_count} provinces and {ward_count} wards.'))
+        self.stdout.write(
+            self.style.SUCCESS(f'Seeded {province_count} provinces and {ward_count} wards.')
+        )

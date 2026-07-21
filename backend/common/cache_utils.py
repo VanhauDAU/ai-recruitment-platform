@@ -2,7 +2,6 @@
 
 from django.core.cache import cache
 
-
 _ATOMIC_POP_SCRIPT = """
 local value = redis.call('GET', KEYS[1])
 if value then

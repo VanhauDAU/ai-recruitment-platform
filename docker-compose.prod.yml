@@ -1,0 +1,81 @@
+# Override PRODUCTION — dùng kèm file dev:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Yêu cầu: backend/.env đặt ENVIRONMENT=production, DJANGO_SETTINGS_MODULE
+# =config.settings.production và đầy đủ biến BẮT BUỘC (xem backend/.env.example).
+# Settings production sẽ fail-fast liệt kê mọi biến thiếu ngay khi container start.
+
+services:
+  db:
+    restart: unless-stopped
+    ports: []          # không expose DB ra ngoài host ở production
+
+  redis:
+    restart: unless-stopped
+    ports: []
+
+  backend:
+    restart: unless-stopped
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60"
+    environment:
+      DB_HOST: db
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/1
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    volumes:
+      - backend_media:/app/media
+      - backend_static:/app/staticfiles
+    ports: []          # đi qua nginx, không expose trực tiếp
+
+  worker:
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/1
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    volumes:
+      - backend_media:/app/media
+
+  beat:
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      REDIS_URL: redis://redis:6379/1
+      CELERY_BROKER_URL: redis://redis:6379/1
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    volumes: []
+
+  frontend:
+    # Prod: build tĩnh + nginx thay cho vite dev server.
+    image: !reset null
+    build:
+      context: ./frontend
+      args:
+        # Đặt trong file .env cạnh docker-compose.yml (compose interpolation).
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:-}
+        VITE_PUBLIC_ASSET_BASE_URL: ${VITE_PUBLIC_ASSET_BASE_URL:-}
+    command: !reset null
+    working_dir: !reset null
+    restart: unless-stopped
+    volumes: []
+    environment: {}
+    ports: []
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/nginx/procv.conf:/etc/nginx/conf.d/default.conf:ro
+      - backend_static:/srv/backend-static:ro
+      - backend_media:/srv/backend-media:ro
+      # TLS cert mount tại đây khi có domain (letsencrypt/certbot)
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  backend_static:

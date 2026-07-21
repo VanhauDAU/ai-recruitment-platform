@@ -101,6 +101,7 @@ def safe_next(next_path):
 
 # ---- State (chống CSRF) + one_time_code (đổi JWT), đều one-shot qua Redis ----
 
+
 def create_state(provider, portal, next_path):
     state = secrets.token_urlsafe(32)
     cache.set(
@@ -131,6 +132,7 @@ def pop_one_time_code(code):
 
 # ---- Nói chuyện với provider ----
 
+
 def build_authorize_url(provider, redirect_uri, state):
     cfg = provider_config(provider)
     params = {
@@ -140,7 +142,7 @@ def build_authorize_url(provider, redirect_uri, state):
         'scope': cfg['scope'],
         'state': state,
     }
-    return f"{cfg['authorize_url']}?{urlencode(params)}"
+    return f'{cfg["authorize_url"]}?{urlencode(params)}'
 
 
 def exchange_code(provider, code, redirect_uri):
@@ -174,7 +176,10 @@ def fetch_profile(provider, access_token):
         if provider == 'facebook':
             resp = requests.get(
                 cfg['userinfo_url'],
-                params={'fields': 'id,name,email,picture.type(large)', 'access_token': access_token},
+                params={
+                    'fields': 'id,name,email,picture.type(large)',
+                    'access_token': access_token,
+                },
                 timeout=10,
             )
         else:
@@ -215,6 +220,7 @@ def fetch_profile(provider, access_token):
 
 
 # ---- Tạo / liên kết user ----
+
 
 def resolve_user(provider, profile, portal, *, include_created=False):
     """Tìm hoặc tạo **tài khoản của cổng** cho danh tính social (mô hình tách cổng).

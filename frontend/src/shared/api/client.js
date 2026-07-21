@@ -4,7 +4,17 @@ import axios from 'axios'
 import { clearTokens, getAccessToken, setTokens } from './token-store'
 import { getCurrentPortal } from '@/shared/config/portals'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+// Fallback localhost CHỈ dành cho dev/test. Build production thiếu
+// VITE_API_BASE_URL phải fail ngay lúc load — nếu không, app prod sẽ im lặng
+// trỏ về localhost và mọi request đều chết không dấu vết.
+const baseURL = (() => {
+  const fromEnv = import.meta.env.VITE_API_BASE_URL
+  if (fromEnv) return fromEnv
+  if (import.meta.env.PROD) {
+    throw new Error('VITE_API_BASE_URL là bắt buộc ở build production')
+  }
+  return 'http://localhost:8000/api'
+})()
 
 const client = axios.create({ baseURL, withCredentials: true })
 

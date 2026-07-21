@@ -24,11 +24,11 @@
 
 ## Test đã chạy
 
-- [ ] Lint
-- [ ] Architecture check
-- [ ] Unit test
+- [ ] Lint (oxlint + ruff)
+- [ ] Architecture check (depcruise + lint-imports + check_backend_layering)
+- [ ] Unit test + coverage gate (FE ratchet toàn src, BE >=84%)
 - [ ] Build
-- [ ] E2E
+- [ ] E2E smoke
 
 <!-- Dán lệnh và kết quả thực tế; bổ sung regression/manual evidence khi phù hợp. -->
 

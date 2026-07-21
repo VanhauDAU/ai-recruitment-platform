@@ -16,8 +16,16 @@ from .onboarding import (
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )
-from .recruitment_need import RecruitmentNeedDetailView, RecruitmentNeedListCreateView, RecruitmentNeedView
-from .verification import CompanyDocumentContentView, CompanyDocumentListCreateView, CompanyUpdateRequestListCreateView
+from .recruitment_need import (
+    RecruitmentNeedDetailView,
+    RecruitmentNeedListCreateView,
+    RecruitmentNeedView,
+)
+from .verification import (
+    CompanyDocumentContentView,
+    CompanyDocumentListCreateView,
+    CompanyUpdateRequestListCreateView,
+)
 
 __all__ = [
     'AcceptDpaView',

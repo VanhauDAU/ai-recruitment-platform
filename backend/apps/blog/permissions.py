@@ -7,6 +7,8 @@ class CanEditBlog(BasePermission):
     def has_permission(self, request, view):
         user = request.user
         return bool(
-            user and user.is_authenticated and user.is_staff
+            user
+            and user.is_authenticated
+            and user.is_staff
             and (user.has_perm('blog.add_post') or user.has_perm('blog.change_post'))
         )

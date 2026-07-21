@@ -55,9 +55,9 @@ test('employer smoke: language switcher renders English copy', async ({ page }) 
     await page.getByRole('button', { name: 'Mở menu' }).click()
   }
   await page.getByRole('button', { name: /Đổi ngôn ngữ/ }).last().click()
-  await page.getByText('English').click()
-  await page.keyboard.press('Escape')
+  await page.getByRole('menuitem', { name: 'English', exact: true }).click()
 
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   await expect(page.getByRole('heading', { level: 1, name: /Matching the right people/ })).toBeVisible()
 })
 

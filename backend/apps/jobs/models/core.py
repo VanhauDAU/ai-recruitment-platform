@@ -25,7 +25,9 @@ class JobCategory(models.Model):
         blank=True,
         help_text='Storage key nội bộ hoặc URL ngoài; API tự resolve storage key thành URL public.',
     )
-    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
+    parent = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children'
+    )
     category_type = models.CharField(
         max_length=30,
         choices=CategoryType.choices,
@@ -76,7 +78,9 @@ class JobCategoryLocalization(models.Model):
         related_name='job_category_localizations',
     )
     display_name = models.CharField(max_length=255)
-    search_aliases = models.TextField(blank=True, help_text='Các từ khóa tìm kiếm, phân tách bằng dấu phẩy.')
+    search_aliases = models.TextField(
+        blank=True, help_text='Các từ khóa tìm kiếm, phân tách bằng dấu phẩy.'
+    )
     sort_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -87,7 +91,9 @@ class JobCategoryLocalization(models.Model):
             models.Index(fields=['locale', 'is_active', 'sort_order'], name='idx_jobcatloc_picker'),
         ]
         constraints = [
-            models.UniqueConstraint(fields=['category', 'locale'], name='uq_job_category_localization'),
+            models.UniqueConstraint(
+                fields=['category', 'locale'], name='uq_job_category_localization'
+            ),
         ]
         ordering = ['locale', 'sort_order', 'display_name', 'category_id']
 
@@ -97,7 +103,9 @@ class JobCategoryLocalization(models.Model):
     def save(self, *args, **kwargs):
         from apps.sitecontent.models import Locale as SiteLocale
 
-        self.locale_ref_id = self.locale if SiteLocale.objects.filter(code=self.locale).exists() else None
+        self.locale_ref_id = (
+            self.locale if SiteLocale.objects.filter(code=self.locale).exists() else None
+        )
         super().save(*args, **kwargs)
 
 
@@ -179,7 +187,9 @@ class Job(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     # Tin thuộc về công ty; posted_by là HR cụ thể đã đăng (nhiều HR/công ty).
-    posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs')
+    posted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs'
+    )
     company = models.ForeignKey('employers.Company', on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
@@ -192,8 +202,18 @@ class Job(models.Model):
     )
     work_type = models.CharField(max_length=50, choices=WorkType.choices, blank=True)
     employment_type = models.CharField(max_length=50, choices=EmploymentType.choices, blank=True)
-    experience_years = models.CharField(max_length=20, choices=ExperienceYears.choices, blank=True, help_text='Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")')
-    position_level = models.CharField(max_length=30, choices=PositionLevel.choices, blank=True, help_text='Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")')
+    experience_years = models.CharField(
+        max_length=20,
+        choices=ExperienceYears.choices,
+        blank=True,
+        help_text='Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")',
+    )
+    position_level = models.CharField(
+        max_length=30,
+        choices=PositionLevel.choices,
+        blank=True,
+        help_text='Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")',
+    )
     # Minimum education required; interpreted as "từ <level> trở lên". Blank = unspecified.
     education_level = models.CharField(max_length=50, choices=EducationLevel.choices, blank=True)
     gender_requirement = models.CharField(
@@ -203,7 +223,9 @@ class Job(models.Model):
     )
     age_min = models.PositiveSmallIntegerField(null=True, blank=True)
     age_max = models.PositiveSmallIntegerField(null=True, blank=True)
-    number_of_vacancies = models.PositiveIntegerField(null=True, blank=True, help_text='Số lượng cần tuyển; null = không giới hạn')
+    number_of_vacancies = models.PositiveIntegerField(
+        null=True, blank=True, help_text='Số lượng cần tuyển; null = không giới hạn'
+    )
     salary_type = models.CharField(
         max_length=20,
         choices=SalaryType.choices,
@@ -218,7 +240,9 @@ class Job(models.Model):
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
     is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
     is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
-    has_flash_badge = models.BooleanField(default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh')
+    has_flash_badge = models.BooleanField(
+        default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh'
+    )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     view_count = models.IntegerField(default=0)
     application_count = models.IntegerField(default=0)
@@ -239,7 +263,9 @@ class Job(models.Model):
             models.Index(fields=['position_level']),
             models.Index(fields=['education_level']),
             models.Index(fields=['status', 'published_at']),
-            models.Index(fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'),
+            models.Index(
+                fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
+            ),
         ]
         constraints = [
             models.CheckConstraint(
@@ -247,11 +273,15 @@ class Job(models.Model):
                 name='chk_jobs_status',
             ),
             models.CheckConstraint(
-                check=(models.Q(age_min__isnull=True) | models.Q(age_min__gte=15, age_min__lte=100)),
+                check=(
+                    models.Q(age_min__isnull=True) | models.Q(age_min__gte=15, age_min__lte=100)
+                ),
                 name='chk_jobs_age_min_range',
             ),
             models.CheckConstraint(
-                check=(models.Q(age_max__isnull=True) | models.Q(age_max__gte=15, age_max__lte=100)),
+                check=(
+                    models.Q(age_max__isnull=True) | models.Q(age_max__gte=15, age_max__lte=100)
+                ),
                 name='chk_jobs_age_max_range',
             ),
             models.CheckConstraint(
@@ -263,7 +293,10 @@ class Job(models.Model):
                 name='chk_jobs_age_order',
             ),
             models.CheckConstraint(
-                check=(models.Q(number_of_vacancies__isnull=True) | models.Q(number_of_vacancies__gte=1)),
+                check=(
+                    models.Q(number_of_vacancies__isnull=True)
+                    | models.Q(number_of_vacancies__gte=1)
+                ),
                 name='chk_jobs_vacancies_positive',
             ),
             models.CheckConstraint(

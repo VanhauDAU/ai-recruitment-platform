@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core import signing
-from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -22,13 +21,16 @@ class ConsentApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {
-            'version': settings.CONSENT_POLICY_VERSION,
-            'necessary': True,
-            'preferences': True,
-            'analytics': True,
-            'marketing': False,
-        })
+        self.assertEqual(
+            response.data,
+            {
+                'version': settings.CONSENT_POLICY_VERSION,
+                'necessary': True,
+                'preferences': True,
+                'analytics': True,
+                'marketing': False,
+            },
+        )
         cookie = response.cookies[settings.CONSENT_COOKIE_NAME]
         self.assertTrue(cookie['httponly'])
         self.assertEqual(cookie['samesite'], settings.CONSENT_COOKIE_SAMESITE)

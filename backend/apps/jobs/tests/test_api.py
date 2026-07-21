@@ -98,6 +98,7 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 1)
 
+
 class JobSalaryBucketFilterTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -137,18 +138,49 @@ class JobSalaryBucketFilterTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         item = next(job for job in response.data['results'] if job['title'] == 'Contract job')
-        self.assertEqual(set(item), {
-            'public_id', 'slug', 'title', 'company_name', 'company_logo_url',
-            'brand_slug', 'company_verified', 'category', 'locations_detail',
-            'job_skills', 'work_type', 'employment_type', 'education_level',
-            'experience_years', 'position_level', 'age_min', 'age_max',
-            'salary_type', 'salary_min', 'salary_max', 'currency', 'tier',
-            'is_hot', 'is_urgent', 'has_flash_badge', 'published_at', 'created_at',
-        })
-        self.assertTrue({
-            'description', 'requirements', 'benefits', 'application_contact',
-            'application_count', 'status', 'updated_at',
-        }.isdisjoint(item))
+        self.assertEqual(
+            set(item),
+            {
+                'public_id',
+                'slug',
+                'title',
+                'company_name',
+                'company_logo_url',
+                'brand_slug',
+                'company_verified',
+                'category',
+                'locations_detail',
+                'job_skills',
+                'work_type',
+                'employment_type',
+                'education_level',
+                'experience_years',
+                'position_level',
+                'age_min',
+                'age_max',
+                'salary_type',
+                'salary_min',
+                'salary_max',
+                'currency',
+                'tier',
+                'is_hot',
+                'is_urgent',
+                'has_flash_badge',
+                'published_at',
+                'created_at',
+            },
+        )
+        self.assertTrue(
+            {
+                'description',
+                'requirements',
+                'benefits',
+                'application_contact',
+                'application_count',
+                'status',
+                'updated_at',
+            }.isdisjoint(item)
+        )
 
 
 class EmployerJobSerializerTests(APITestCase):
@@ -160,10 +192,14 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.company = Company.objects.create(company_name='Acme', created_by=self.user)
         self.province = Location.objects.create(
-            code='01-test', level=Location.Level.PROVINCE, name='Thành phố Hà Nội',
+            code='01-test',
+            level=Location.Level.PROVINCE,
+            name='Thành phố Hà Nội',
         )
         self.ward = Location.objects.create(
-            code='00001-test', level=Location.Level.WARD, name='Phường Cầu Giấy',
+            code='00001-test',
+            level=Location.Level.WARD,
+            name='Phường Cầu Giấy',
             parent=self.province,
         )
         self.specialization = JobCategory.objects.create(
@@ -192,15 +228,32 @@ class EmployerJobSerializerTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         item = response.data['results'][0]
-        self.assertEqual(set(item), {
-            'public_id', 'title', 'company_name', 'locations_detail',
-            'employment_type', 'deadline', 'status', 'application_count',
-            'published_at', 'created_at', 'updated_at',
-        })
-        self.assertTrue({
-            'description', 'requirements', 'benefits', 'application_contact',
-            'job_skills', 'category_assignments',
-        }.isdisjoint(item))
+        self.assertEqual(
+            set(item),
+            {
+                'public_id',
+                'title',
+                'company_name',
+                'locations_detail',
+                'employment_type',
+                'deadline',
+                'status',
+                'application_count',
+                'published_at',
+                'created_at',
+                'updated_at',
+            },
+        )
+        self.assertTrue(
+            {
+                'description',
+                'requirements',
+                'benefits',
+                'application_contact',
+                'job_skills',
+                'category_assignments',
+            }.isdisjoint(item)
+        )
 
     def payload(self):
         return {
@@ -230,8 +283,10 @@ class EmployerJobSerializerTests(APITestCase):
             ],
             'work_schedules': [
                 {
-                    'weekday_from': 1, 'weekday_to': 5,
-                    'start_time': '08:00', 'end_time': '17:00',
+                    'weekday_from': 1,
+                    'weekday_to': 5,
+                    'start_time': '08:00',
+                    'end_time': '17:00',
                 },
             ],
             'job_skills': [
@@ -295,22 +350,36 @@ class EmployerJobSerializerTests(APITestCase):
 
         self.assertNotIn('application_contact', data)
         self.assertNotIn('hr@acme.test', str(data))
-        self.assertTrue({
-            'status', 'application_count', 'tier', 'has_flash_badge',
-            'category_assignments', 'job_skills', 'job_benefits', 'updated_at',
-        }.isdisjoint(data))
+        self.assertTrue(
+            {
+                'status',
+                'application_count',
+                'tier',
+                'has_flash_badge',
+                'category_assignments',
+                'job_skills',
+                'job_benefits',
+                'updated_at',
+            }.isdisjoint(data)
+        )
 
     def test_public_detail_exposes_grouped_view_model(self):
         payload = self.payload()
         ward2 = Location.objects.create(
-            code='00002-test', level=Location.Level.WARD, name='Phường Dịch Vọng',
+            code='00002-test',
+            level=Location.Level.WARD,
+            name='Phường Dịch Vọng',
             parent=self.province,
         )
         province2 = Location.objects.create(
-            code='02-test', level=Location.Level.PROVINCE, name='Thành phố Đà Nẵng',
+            code='02-test',
+            level=Location.Level.PROVINCE,
+            name='Thành phố Đà Nẵng',
         )
         ward3 = Location.objects.create(
-            code='00003-test', level=Location.Level.WARD, name='Phường Hải Châu',
+            code='00003-test',
+            level=Location.Level.WARD,
+            name='Phường Hải Châu',
             parent=province2,
         )
         payload['job_locations'] += [
@@ -323,32 +392,42 @@ class EmployerJobSerializerTests(APITestCase):
 
         data = JobDetailSerializer(job).data
 
-        self.assertEqual(data['primary_specialization'], {
-            'id': self.specialization.pk,
-            'name': 'Chăm sóc khách hàng',
-            'slug': self.specialization.slug,
-        })
+        self.assertEqual(
+            data['primary_specialization'],
+            {
+                'id': self.specialization.pk,
+                'name': 'Chăm sóc khách hàng',
+                'slug': self.specialization.slug,
+            },
+        )
         self.assertEqual(
             [item['name'] for item in data['domain_knowledge']],
             ['Giáo dục / Đào tạo'],
         )
 
         self.assertEqual(len(data['workplace_groups']), 2)
-        hanoi = next(g for g in data['workplace_groups'] if g['province_name'] == 'Thành phố Hà Nội')
+        hanoi = next(
+            g for g in data['workplace_groups'] if g['province_name'] == 'Thành phố Hà Nội'
+        )
         self.assertEqual(
             [address['display'] for address in hanoi['addresses']],
             ['55 Cầu Giấy, Phường Cầu Giấy', '12 Dịch Vọng, Phường Dịch Vọng'],
         )
-        danang = next(g for g in data['workplace_groups'] if g['province_name'] == 'Thành phố Đà Nẵng')
+        danang = next(
+            g for g in data['workplace_groups'] if g['province_name'] == 'Thành phố Đà Nẵng'
+        )
         self.assertEqual(danang['addresses'][0]['display'], '3 Hải Châu, Phường Hải Châu')
 
-        self.assertEqual(data['requirement_tags'], [
-            'Dưới 1 năm kinh nghiệm',
-            'Tuổi 22 - 30',
-            'Từ Đại học trở lên',
-            'Giới tính: Nữ',
-            'Giao tiếp',
-        ])
+        self.assertEqual(
+            data['requirement_tags'],
+            [
+                'Dưới 1 năm kinh nghiệm',
+                'Tuổi 22 - 30',
+                'Từ Đại học trở lên',
+                'Giới tính: Nữ',
+                'Giao tiếp',
+            ],
+        )
         self.assertEqual(data['benefit_tags'], ['Bảo hiểm xã hội'])
 
         language = data['language_requirements'][0]

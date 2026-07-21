@@ -45,25 +45,24 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      include: [
-        'src/app/router/guards/**/*.{js,jsx}',
-        'src/entities/session/**/*.{js,jsx}',
-        'src/features/auth/api/**/*.js',
-        'src/features/auth/model/return-url.js',
-        'src/features/saved-jobs/**/*.{js,jsx}',
-        'src/features/search-jobs/**/*.{js,jsx}',
-        'src/pages/main/account/model/use-my-cvs-data.js',
-        'src/shared/api/client.js',
-        'src/shared/api/error-mapper.js',
-        'src/shared/api/request-deduplication.js',
-        'src/shared/api/token-store.js',
+      // AR-P5: đo TOÀN BỘ src/ — allowlist cũ (11 đường dẫn) cho con số 84%
+      // không đại diện. Threshold đặt bằng số đo thật tại 2026-07-21 và là
+      // RATCHET: chỉ được tăng, không được giảm; PR làm tụt số phải bổ sung test.
+      include: ['src/**/*.{js,jsx}'],
+      exclude: [
+        '**/*.test.{js,jsx}',
+        'src/**/tests/**',
+        'src/test/**',
+        'src/main.jsx',
+        'src/App.jsx',
+        // Barrel re-export không có logic
+        'src/**/index.js',
       ],
-      exclude: ['**/*.test.{js,jsx}', 'src/**/tests/**'],
       thresholds: {
-        lines: 75,
-        functions: 70,
-        branches: 65,
-        statements: 75,
+        statements: 33,
+        branches: 29,
+        functions: 28,
+        lines: 35,
       },
     },
   },

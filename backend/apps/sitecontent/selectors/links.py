@@ -29,7 +29,4 @@ def resolve_link_group_items(group):
             {'label': f'Việc làm {category.name}', 'url': f'/viec-lam?category={category.id}'}
             for category in categories
         ]
-    return [
-        {'label': item.label, 'url': item.url}
-        for item in group.items.filter(is_active=True)
-    ]
+    return [{'label': item.label, 'url': item.url} for item in group.items.filter(is_active=True)]

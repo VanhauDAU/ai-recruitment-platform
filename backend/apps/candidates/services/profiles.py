@@ -14,7 +14,9 @@ from ..models import (
 
 
 @transaction.atomic
-def set_recruiter_visibility(profile, *, enabled, policy_version, source, source_path='', cv_public_id=''):
+def set_recruiter_visibility(
+    profile, *, enabled, policy_version, source, source_path='', cv_public_id=''
+):
     """Update current consent and append an immutable decision audit event."""
     locked_profile = CandidateProfile.objects.select_for_update().get(pk=profile.pk)
     now = timezone.now()
@@ -62,22 +64,32 @@ def replace_candidate_job_preferences(profile, validated_data):
     preference.save()
 
     CandidateDesiredSpecialization.objects.filter(job_preference=preference).delete()
-    CandidateDesiredSpecialization.objects.bulk_create([
-        CandidateDesiredSpecialization(job_preference=preference, job_category=category, sort_order=index)
-        for index, category in enumerate(specializations)
-    ])
+    CandidateDesiredSpecialization.objects.bulk_create(
+        [
+            CandidateDesiredSpecialization(
+                job_preference=preference, job_category=category, sort_order=index
+            )
+            for index, category in enumerate(specializations)
+        ]
+    )
     CandidatePreferredProvince.objects.filter(job_preference=preference).delete()
-    CandidatePreferredProvince.objects.bulk_create([
-        CandidatePreferredProvince(job_preference=preference, location=province, sort_order=index)
-        for index, province in enumerate(provinces)
-    ])
+    CandidatePreferredProvince.objects.bulk_create(
+        [
+            CandidatePreferredProvince(
+                job_preference=preference, location=province, sort_order=index
+            )
+            for index, province in enumerate(provinces)
+        ]
+    )
 
     now = timezone.now()
     for consent_type, allowed in (
         (CandidateConsent.ConsentType.AI_RECOMMENDATION, ai_consent),
         (CandidateConsent.ConsentType.RECRUITER_VISIBILITY, recruiter_consent),
     ):
-        decision = CandidateConsent.Decision.GRANTED if allowed else CandidateConsent.Decision.DENIED
+        decision = (
+            CandidateConsent.Decision.GRANTED if allowed else CandidateConsent.Decision.DENIED
+        )
         CandidateConsent.objects.update_or_create(
             candidate_profile=locked_profile,
             consent_type=consent_type,

@@ -1,12 +1,11 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
+from apps.accounts.api.serializers import password_field
 from apps.accounts.models import User
-from apps.accounts.serializers import password_field
 from apps.locations.models import Location
 
 from ...models import RecruiterProfile
-
 
 phone_validator = RegexValidator(
     regex=r'^(0|\+84)\d{9,10}$',
@@ -50,5 +49,7 @@ class EmployerRegisterSerializer(EmployerRegistrationProfileSerializer):
         # tài khoản ứng viên (mô hình tách tài khoản theo cổng như TopCV).
         value = User.objects.normalize_email(value)
         if User.objects.filter(email__iexact=value, role=User.Role.EMPLOYER).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.')
+            raise serializers.ValidationError(
+                'Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.'
+            )
         return value

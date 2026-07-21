@@ -1,10 +1,27 @@
 from django.urls import path
 
-from .api_v2_views import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
-
+from .api.views.employer import (
+    EmployerApplicationListView,
+    EmployerApplicationStatusUpdateView,
+)
+from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
 urlpatterns = [
-    path('applications/', CandidateApplicationV2ListCreateView.as_view(), name='candidate-application-list-create-v2'),
+    path(
+        'applications/',
+        CandidateApplicationV2ListCreateView.as_view(),
+        name='candidate-application-list-create-v2',
+    ),
+    path(
+        'recruiter/applications/',
+        EmployerApplicationListView.as_view(),
+        name='recruiter-application-list-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/',
+        EmployerApplicationStatusUpdateView.as_view(),
+        name='recruiter-application-status-v2',
+    ),
     path(
         'recruiter/applications/<str:public_id>/cv/',
         RecruiterApplicationSnapshotView.as_view(),

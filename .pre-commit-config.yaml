@@ -1,0 +1,41 @@
+# Cài: pip install pre-commit && pre-commit install
+# Chạy tay toàn repo: pre-commit run --all-files
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.22
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: \.(svg|min\.js|min\.css)$
+      - id: trailing-whitespace
+        exclude: \.md$
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: oxlint (frontend)
+        entry: bash -c 'cd frontend && npx oxlint'
+        language: system
+        files: ^frontend/src/.*\.(js|jsx)$
+        pass_filenames: false
+      - id: env-sync
+        name: .env.example đồng bộ với code
+        entry: bash scripts/check_env_sync.sh
+        language: system
+        files: (\.env\.example|\.py|\.jsx?)$
+        pass_filenames: false

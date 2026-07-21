@@ -22,7 +22,9 @@ def current_thumbnail_ready(cv):
     version = cv.latest_version
     if version is None or not cv.thumbnail_url:
         return False
-    return cv.thumbnail_url == thumbnail_key_for(cv, version) and default_storage.exists(cv.thumbnail_url)
+    return cv.thumbnail_url == thumbnail_key_for(cv, version) and default_storage.exists(
+        cv.thumbnail_url
+    )
 
 
 def schedule_cv_thumbnail(version):

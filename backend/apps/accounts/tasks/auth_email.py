@@ -75,10 +75,19 @@ def _send(job):
 def deliver_auth_email_job(self, job_id):
     now = timezone.now()
     with transaction.atomic():
-        job = AuthEmailJob.objects.select_for_update().select_related('user').filter(pk=job_id).first()
+        job = (
+            AuthEmailJob.objects.select_for_update()
+            .select_related('user')
+            .filter(pk=job_id)
+            .first()
+        )
         if job is None or job.status == AuthEmailJob.Status.SENT:
             return
-        if job.status == AuthEmailJob.Status.SENDING and job.started_at and now - job.started_at < STALE_SENDING_AFTER:
+        if (
+            job.status == AuthEmailJob.Status.SENDING
+            and job.started_at
+            and now - job.started_at < STALE_SENDING_AFTER
+        ):
             return
         job.status = AuthEmailJob.Status.SENDING
         job.started_at = now
@@ -96,7 +105,7 @@ def deliver_auth_email_job(self, job_id):
         if exhausted:
             logger.exception('Auth email job %s thất bại sau %s lần thử.', job.pk, job.attempts)
             raise
-        raise self.retry(exc=exc, countdown=min(2 ** job.attempts, 60))
+        raise self.retry(exc=exc, countdown=min(2**job.attempts, 60)) from exc
 
     AuthEmailJob.objects.filter(pk=job.pk).update(
         status=AuthEmailJob.Status.SENT,

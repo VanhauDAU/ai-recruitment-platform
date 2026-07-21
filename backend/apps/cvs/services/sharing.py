@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import secrets
+from hashlib import sha256
 
 from django.db import transaction
 from django.db.models import Q
@@ -49,7 +49,9 @@ def _shareable_version(cv: UserCv, version_public_id: str | None) -> CvVersion:
 
 
 @transaction.atomic
-def create_shared_link(*, cv: UserCv, actor, version_public_id: str | None = None, expires_at=None) -> tuple[CvSharedLink, str]:
+def create_shared_link(
+    *, cv: UserCv, actor, version_public_id: str | None = None, expires_at=None
+) -> tuple[CvSharedLink, str]:
     """Create a bearer token once; persist only its SHA-256 hash."""
     # Lock only the aggregate row. ``latest_version`` and ``published_version``
     # are nullable FKs, so joining them under PostgreSQL FOR UPDATE is invalid.

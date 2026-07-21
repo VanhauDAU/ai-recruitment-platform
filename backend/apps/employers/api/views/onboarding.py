@@ -1,26 +1,26 @@
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
-from rest_framework import generics, parsers, permissions, serializers, status
+from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
-from common.db.search import search_q
-from common.media_storage import delete_local_media_url, save_image_upload
 
-from ...models import Company, CompanyDocument, CompanyImage, CompanyUpdateRequest, Industry, RecruiterProfile
+from ...models import (
+    RecruiterProfile,
+)
 from ...selectors import has_explicit_company_link
+from ...services import (
+    get_or_create_recruiter,
+    phone_taken_by_other,
+    send_phone_otp,
+    verify_phone_otp,
+)
 from ..serializers import (
-    CompanyDocumentSerializer,
-    CompanyImageSerializer,
-    CompanySearchSerializer,
-    CompanySerializer,
-    CompanyUpdateRequestSerializer,
-    IndustrySerializer,
     RecruiterProfileSerializer,
 )
-from ...services import get_or_create_recruiter, phone_taken_by_other, send_phone_otp, verify_phone_otp
+
 
 def _require_company(user):
     recruiter = get_or_create_recruiter(user)
@@ -32,7 +32,9 @@ def _require_company(user):
 def _require_owner(user):
     recruiter = _require_company(user)
     if recruiter.company_role != RecruiterProfile.CompanyRole.OWNER:
-        raise ValidationError({'detail': 'Chỉ người tạo hồ sơ công ty được thực hiện thao tác này.'})
+        raise ValidationError(
+            {'detail': 'Chỉ người tạo hồ sơ công ty được thực hiện thao tác này.'}
+        )
     return recruiter
 
 
@@ -54,10 +56,13 @@ class PhoneAvailabilityView(APIView):
     @extend_schema(
         summary='Kiểm tra số điện thoại đã được nhà tuyển dụng khác sử dụng chưa',
         parameters=[OpenApiParameter('phone', str, OpenApiParameter.QUERY, required=True)],
-        responses=inline_serializer('PhoneAvailability', fields={
-            'available': serializers.BooleanField(),
-            'detail': serializers.CharField(required=False),
-        }),
+        responses=inline_serializer(
+            'PhoneAvailability',
+            fields={
+                'available': serializers.BooleanField(),
+                'detail': serializers.CharField(required=False),
+            },
+        ),
         tags=['employer'],
     )
     def get(self, request):
@@ -65,11 +70,13 @@ class PhoneAvailabilityView(APIView):
         if not phone:
             raise ValidationError({'phone': 'Nhập số điện thoại cần kiểm tra.'})
         if phone_taken_by_other(request.user, phone):
-            return Response({
-                'available': False,
-                'detail': 'Đã có nhà tuyển dụng khác sử dụng & xác thực số điện thoại này, '
-                          'bạn vui lòng nhập số điện thoại khác và thực hiện lại thao tác.',
-            })
+            return Response(
+                {
+                    'available': False,
+                    'detail': 'Đã có nhà tuyển dụng khác sử dụng & xác thực số điện thoại này, '
+                    'bạn vui lòng nhập số điện thoại khác và thực hiện lại thao tác.',
+                }
+            )
         return Response({'available': True})
 
 
@@ -78,11 +85,16 @@ class SendPhoneOtpView(APIView):
 
     @extend_schema(
         summary='Gửi mã OTP xác thực số điện thoại (qua email tài khoản)',
-        request=inline_serializer('SendPhoneOtp', fields={
-            'phone': serializers.CharField(required=False),
-            'password': serializers.CharField(),
-        }),
-        responses=inline_serializer('SendPhoneOtpResponse', fields={'detail': serializers.CharField()}),
+        request=inline_serializer(
+            'SendPhoneOtp',
+            fields={
+                'phone': serializers.CharField(required=False),
+                'password': serializers.CharField(),
+            },
+        ),
+        responses=inline_serializer(
+            'SendPhoneOtpResponse', fields={'detail': serializers.CharField()}
+        ),
         tags=['employer'],
     )
     def post(self, request):

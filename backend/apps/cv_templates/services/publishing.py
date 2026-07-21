@@ -28,7 +28,9 @@ def retire_template_version(*, template, version):
     template = CvTemplate.objects.select_for_update().get(pk=template.pk)
     version = CvTemplateVersion.objects.select_for_update().get(pk=version.pk, template=template)
     if template.current_published_version_id == version.pk:
-        raise ValidationError({'version': 'Publish another version before retiring the current one.'})
+        raise ValidationError(
+            {'version': 'Publish another version before retiring the current one.'}
+        )
     if version.version_status != CvTemplateVersion.VersionStatus.PUBLISHED:
         raise ValidationError({'version': 'Only a published version can be retired.'})
     version.version_status = CvTemplateVersion.VersionStatus.RETIRED

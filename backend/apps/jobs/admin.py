@@ -13,8 +13,8 @@ from .models import (
     JobApplicationEmail,
     JobBenefit,
     JobCategory,
-    JobCategoryLocalization,
     JobCategoryAssignment,
+    JobCategoryLocalization,
     JobLanguageRequirement,
     JobLocation,
     JobSkill,
@@ -75,14 +75,34 @@ class JobCategoryLocalizationInline(admin.TabularInline):
 @admin.register(JobCategory)
 class JobCategoryAdmin(admin.ModelAdmin):
     form = JobCategoryAdminForm
-    list_display = ['name', 'category_type', 'parent', 'cv_locale_readiness', 'logo_preview', 'status']
+    list_display = [
+        'name',
+        'category_type',
+        'parent',
+        'cv_locale_readiness',
+        'logo_preview',
+        'status',
+    ]
     list_filter = ['category_type', 'status']
     search_fields = ['name', 'logo_url']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['public_id', 'logo_preview']
     inlines = [JobCategoryLocalizationInline]
     fieldsets = (
-        (None, {'fields': ('public_id', 'name', 'slug', 'description', 'parent', 'category_type', 'status')}),
+        (
+            None,
+            {
+                'fields': (
+                    'public_id',
+                    'name',
+                    'slug',
+                    'description',
+                    'parent',
+                    'category_type',
+                    'status',
+                )
+            },
+        ),
         ('Homepage display', {'fields': ('upload_logo', 'logo_url', 'logo_preview')}),
     )
 
@@ -91,7 +111,11 @@ class JobCategoryAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         upload = form.cleaned_data.get('upload_logo')
-        old_url = JobCategory.objects.filter(pk=obj.pk).values_list('logo_url', flat=True).first() if change else ''
+        old_url = (
+            JobCategory.objects.filter(pk=obj.pk).values_list('logo_url', flat=True).first()
+            if change
+            else ''
+        )
         if upload:
             saved = save_image_upload(upload, 'jobs/categories/logos', request=request)
             obj.logo_url = saved['path']
@@ -150,11 +174,29 @@ class JobLanguageRequirementInline(admin.TabularInline):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ['title', 'company', 'status', 'tier', 'is_hot', 'is_urgent', 'has_flash_badge', 'created_at']
+    list_display = [
+        'title',
+        'company',
+        'status',
+        'tier',
+        'is_hot',
+        'is_urgent',
+        'has_flash_badge',
+        'created_at',
+    ]
     list_filter = [
-        'status', 'tier', 'is_hot', 'is_urgent', 'has_flash_badge',
-        'work_type', 'employment_type', 'position_level', 'experience_years',
-        'education_level', 'gender_requirement', 'salary_type',
+        'status',
+        'tier',
+        'is_hot',
+        'is_urgent',
+        'has_flash_badge',
+        'work_type',
+        'employment_type',
+        'position_level',
+        'experience_years',
+        'education_level',
+        'gender_requirement',
+        'salary_type',
     ]
     # Gán hạng tin + nhãn ngay trên danh sách, không cần mở từng job.
     list_editable = ['tier', 'is_hot', 'is_urgent', 'has_flash_badge']
@@ -169,17 +211,50 @@ class JobAdmin(admin.ModelAdmin):
         JobLanguageRequirementInline,
     ]
     fieldsets = (
-        ('Thông tin tuyển dụng', {'fields': ('title', 'slug', 'posted_by', 'company', 'status', 'tier', 'is_hot', 'is_urgent', 'has_flash_badge')}),
-        ('Mô tả hiển thị trên trang chi tiết', {
-            'fields': ('description', 'requirements', 'benefits', 'work_schedule_note'),
-            'description': 'Các trường nội dung có thể nhập HTML từ rich-text editor; trang ứng viên chỉ render tập thẻ an toàn.',
-        }),
-        ('Điều kiện và đãi ngộ', {'fields': (
-            'work_type', 'employment_type', 'experience_years', 'education_level',
-            'position_level', 'gender_requirement', 'age_min', 'age_max',
-            'number_of_vacancies', 'salary_type', 'salary_min', 'salary_max',
-            'currency', 'deadline',
-        )}),
+        (
+            'Thông tin tuyển dụng',
+            {
+                'fields': (
+                    'title',
+                    'slug',
+                    'posted_by',
+                    'company',
+                    'status',
+                    'tier',
+                    'is_hot',
+                    'is_urgent',
+                    'has_flash_badge',
+                )
+            },
+        ),
+        (
+            'Mô tả hiển thị trên trang chi tiết',
+            {
+                'fields': ('description', 'requirements', 'benefits', 'work_schedule_note'),
+                'description': 'Các trường nội dung có thể nhập HTML từ rich-text editor; trang ứng viên chỉ render tập thẻ an toàn.',
+            },
+        ),
+        (
+            'Điều kiện và đãi ngộ',
+            {
+                'fields': (
+                    'work_type',
+                    'employment_type',
+                    'experience_years',
+                    'education_level',
+                    'position_level',
+                    'gender_requirement',
+                    'age_min',
+                    'age_max',
+                    'number_of_vacancies',
+                    'salary_type',
+                    'salary_min',
+                    'salary_max',
+                    'currency',
+                    'deadline',
+                )
+            },
+        ),
         ('Thống kê', {'fields': ('public_id', 'view_count', 'application_count')}),
     )
 

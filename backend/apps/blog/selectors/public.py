@@ -12,8 +12,15 @@ def published_posts_queryset(params):
         Post.objects.filter(status=Post.Status.PUBLISHED)
         .select_related('category')
         .only(
-            'public_id', 'title', 'slug', 'content', 'thumbnail_url',
-            'published_at', 'category_id', 'category__name', 'category__slug',
+            'public_id',
+            'title',
+            'slug',
+            'content',
+            'thumbnail_url',
+            'published_at',
+            'category_id',
+            'category__name',
+            'category__slug',
         )
     )
     if category := params.get('category'):
@@ -32,10 +39,19 @@ def published_post_detail_queryset():
         .select_related('category', 'related_job_category')
         .prefetch_related('tags')
         .only(
-            'public_id', 'title', 'slug', 'thumbnail_url', 'content',
-            'published_at', 'seo_title', 'category_id',
-            'category__name', 'category__slug', 'related_job_category_id',
-            'related_job_category__name', 'related_job_category__slug',
+            'public_id',
+            'title',
+            'slug',
+            'thumbnail_url',
+            'content',
+            'published_at',
+            'seo_title',
+            'category_id',
+            'category__name',
+            'category__slug',
+            'related_job_category_id',
+            'related_job_category__name',
+            'related_job_category__slug',
         )
     )
 
@@ -57,8 +73,15 @@ def blog_home_sections(per_section=4):
         Post.objects.filter(status=Post.Status.PUBLISHED)
         .select_related('category')
         .only(
-            'public_id', 'title', 'slug', 'content', 'thumbnail_url',
-            'published_at', 'category_id', 'category__name', 'category__slug',
+            'public_id',
+            'title',
+            'slug',
+            'content',
+            'thumbnail_url',
+            'published_at',
+            'category_id',
+            'category__name',
+            'category__slug',
         )
     )
     featured = list(base[:per_section])

@@ -16,7 +16,9 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
         )
     )
     position_category_name = serializers.CharField(source='position_category.name', read_only=True)
-    position_level_label = serializers.CharField(source='get_position_level_display', read_only=True)
+    position_level_label = serializers.CharField(
+        source='get_position_level_display', read_only=True
+    )
     budget_source_label = serializers.CharField(source='get_budget_source_display', read_only=True)
     consultation_topics = serializers.ListField(
         child=serializers.ChoiceField(choices=RecruitmentNeed.ConsultationTopic.choices),
@@ -28,10 +30,20 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecruitmentNeed
         fields = [
-            'public_id', 'position_category', 'position_category_name',
-            'position_level', 'position_level_label', 'target_date', 'is_continuous',
-            'headcount', 'budget_min', 'budget_max', 'budget_source',
-            'budget_source_label', 'consultation_topics', 'completed_at',
+            'public_id',
+            'position_category',
+            'position_category_name',
+            'position_level',
+            'position_level_label',
+            'target_date',
+            'is_continuous',
+            'headcount',
+            'budget_min',
+            'budget_max',
+            'budget_source',
+            'budget_source_label',
+            'consultation_topics',
+            'completed_at',
             'is_active',
         ]
         read_only_fields = ['public_id', 'completed_at']
@@ -51,9 +63,13 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
         is_continuous = attrs.get('is_continuous', current.is_continuous if current else False)
         target_date = attrs.get('target_date', current.target_date if current else None)
         if not is_continuous and target_date is None:
-            raise serializers.ValidationError({'target_date': 'Chọn thời gian cần tuyển xong hoặc chọn Tuyển liên tục.'})
+            raise serializers.ValidationError(
+                {'target_date': 'Chọn thời gian cần tuyển xong hoặc chọn Tuyển liên tục.'}
+            )
         if target_date and target_date < timezone.localdate():
-            raise serializers.ValidationError({'target_date': 'Thời gian cần tuyển xong không được ở trong quá khứ.'})
+            raise serializers.ValidationError(
+                {'target_date': 'Thời gian cần tuyển xong không được ở trong quá khứ.'}
+            )
         if is_continuous:
             attrs['target_date'] = None
 
@@ -66,7 +82,9 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
         if (budget_min is None) != (budget_max is None):
             raise serializers.ValidationError({'budget_max': 'Nhập đủ khoảng ngân sách từ và đến.'})
         if budget_min is not None and budget_min > budget_max:
-            raise serializers.ValidationError({'budget_max': 'Ngân sách tối đa phải lớn hơn hoặc bằng ngân sách tối thiểu.'})
+            raise serializers.ValidationError(
+                {'budget_max': 'Ngân sách tối đa phải lớn hơn hoặc bằng ngân sách tối thiểu.'}
+            )
         return attrs
 
     def create(self, validated_data):

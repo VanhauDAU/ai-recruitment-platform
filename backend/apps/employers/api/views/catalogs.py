@@ -38,16 +38,21 @@ class CompanyCatalogView(APIView):
 
     @extend_schema(
         summary='Danh mục lựa chọn cho form thông tin công ty',
-        responses=inline_serializer('CompanyCatalogResponse', fields={
-            key: serializers.ListField(child=serializers.DictField())
-            for key in ('business_types', 'company_sizes', 'markets', 'target_customers')
-        }),
+        responses=inline_serializer(
+            'CompanyCatalogResponse',
+            fields={
+                key: serializers.ListField(child=serializers.DictField())
+                for key in ('business_types', 'company_sizes', 'markets', 'target_customers')
+            },
+        ),
         tags=['employer'],
     )
     def get(self, request):
-        return Response({
-            'business_types': self._choices(Company.BusinessType.choices),
-            'company_sizes': self._choices(Company.Size.choices),
-            'markets': self._choices(Company.Market.choices),
-            'target_customers': self._choices(Company.TargetCustomer.choices),
-        })
+        return Response(
+            {
+                'business_types': self._choices(Company.BusinessType.choices),
+                'company_sizes': self._choices(Company.Size.choices),
+                'markets': self._choices(Company.Market.choices),
+                'target_customers': self._choices(Company.TargetCustomer.choices),
+            }
+        )

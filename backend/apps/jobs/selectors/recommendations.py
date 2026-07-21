@@ -1,19 +1,26 @@
 """Deterministic CV-to-job ranking used immediately after a candidate saves."""
 
-from decimal import Decimal
 import re
+from decimal import Decimal
 
-from common.db.search import fold_accents
 from apps.candidates.selectors import candidate_job_preference_for_user
 from apps.cvs.selectors import candidate_cv_by_public_id
+from common.db.search import fold_accents
 
 from ..models import Job, JobCategoryAssignment
 from .listing import active_jobs_queryset
 
-
 EXPERIENCE_RANK = {
-    '': 0, 'none': 0, 'no_experience': 0, 'under_1': 1,
-    '1': 2, '2': 3, '3': 4, '4': 5, '5': 6, 'over_5': 7,
+    '': 0,
+    'none': 0,
+    'no_experience': 0,
+    'under_1': 1,
+    '1': 2,
+    '2': 3,
+    '3': 4,
+    '4': 5,
+    '5': 6,
+    'over_5': 7,
 }
 
 # A job must have at least one strong CV signal (position/category) or several
@@ -32,14 +39,30 @@ def _contains_term(text, terms):
 
 def _has_semantic_token_overlap(text, labels):
     stop_words = {
-        'developer', 'engineer', 'specialist', 'staff', 'nhan', 'vien', 'chuyen',
-        'lap', 'trinh', 'ky', 'su', 'cong', 'viec', 'and', 'the', 'senior', 'junior',
+        'developer',
+        'engineer',
+        'specialist',
+        'staff',
+        'nhan',
+        'vien',
+        'chuyen',
+        'lap',
+        'trinh',
+        'ky',
+        'su',
+        'cong',
+        'viec',
+        'and',
+        'the',
+        'senior',
+        'junior',
     }
     short_domain_tokens = {'ai', 'it', 'qa', 'hr', 'ui', 'ux'}
 
     def tokens(value):
         return {
-            token for token in re.findall(r'[a-z0-9]+', _normalized(value))
+            token
+            for token in re.findall(r'[a-z0-9]+', _normalized(value))
             if token not in stop_words and (len(token) >= 3 or token in short_domain_tokens)
         }
 
@@ -91,7 +114,13 @@ def _cv_context(user, public_id):
     if not position_terms and title_position:
         position_terms.add(_normalized(title_position))
     province_ids = {item.location_id for item in preference.preferred_provinces.all()}
-    focus_keyword = headline or (cv.position.name if cv.position_id else '') or title_position or preference.desired_position_other or cv.title
+    focus_keyword = (
+        headline
+        or (cv.position.name if cv.position_id else '')
+        or title_position
+        or preference.desired_position_other
+        or cv.title
+    )
     return {
         'cv': cv,
         'preference': preference,
@@ -112,12 +141,14 @@ def _score_job(job, context):
 
     title = _normalized(job.title)
     matching_primary_categories = [
-        item for item in job.category_assignments.all()
+        item
+        for item in job.category_assignments.all()
         if item.role == JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
         and item.category_id in context['category_ids']
     ]
     if matching_primary_categories and _has_semantic_token_overlap(
-        title, [item.category.name for item in matching_primary_categories],
+        title,
+        [item.category.name for item in matching_primary_categories],
     ):
         add_detail('category', 'Đúng vị trí chuyên môn', 38)
 
@@ -127,12 +158,11 @@ def _score_job(job, context):
     job_skills = {_normalized(item.skill.name) for item in job.job_skills.all()}
     matched_skills = sorted(context['skills'] & job_skills)
     if matched_skills:
-        add_detail('skills', f'Khớp {len(matched_skills)} kỹ năng', min(24, len(matched_skills) * 6))
+        add_detail(
+            'skills', f'Khớp {len(matched_skills)} kỹ năng', min(24, len(matched_skills) * 6)
+        )
 
-    provinces = {
-        item.location.parent_id or item.location_id
-        for item in job.job_locations.all()
-    }
+    provinces = {item.location.parent_id or item.location_id for item in job.job_locations.all()}
     if provinces & context['province_ids']:
         add_detail('location', 'Đúng địa điểm mong muốn', 10)
 
@@ -163,18 +193,23 @@ def recommend_jobs_for_cv(user, public_id, *, limit=6):
         score, details = _score_job(job, context)
         if score < MIN_RECOMMENDATION_SCORE:
             continue
-        ranked.append({
-            'job': job,
-            'match_score': score,
-            'match_details': details,
-            'match_reasons': [item['label'] for item in details],
-        })
+        ranked.append(
+            {
+                'job': job,
+                'match_score': score,
+                'match_details': details,
+                'match_reasons': [item['label'] for item in details],
+            }
+        )
     tier_rank = {Job.Tier.TOP: 2, Job.Tier.FEATURED: 1}
-    ranked.sort(key=lambda item: (
-        item['match_score'],
-        tier_rank.get(item['job'].tier, 0),
-        item['job'].published_at or item['job'].created_at,
-    ), reverse=True)
+    ranked.sort(
+        key=lambda item: (
+            item['match_score'],
+            tier_rank.get(item['job'].tier, 0),
+            item['job'].published_at or item['job'].created_at,
+        ),
+        reverse=True,
+    )
     selected = ranked[:limit]
 
     related = []

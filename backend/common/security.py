@@ -35,7 +35,11 @@ class AuthCookieOriginMiddleware:
 
     def __call__(self, request):
         origin = request.headers.get('Origin')
-        if request.method not in {'GET', 'HEAD', 'OPTIONS'} and request.path in self._PATHS and origin:
+        if (
+            request.method not in {'GET', 'HEAD', 'OPTIONS'}
+            and request.path in self._PATHS
+            and origin
+        ):
             trusted = {
                 *settings.CORS_ALLOWED_ORIGINS,
                 *settings.CSRF_TRUSTED_ORIGINS,

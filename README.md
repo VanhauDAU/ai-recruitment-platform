@@ -55,6 +55,18 @@ docs/       Tài liệu dự án — xem docs/README.md
 
 ## Bắt đầu nhanh
 
+### Cách 1 — Docker Compose (khuyến nghị, chỉ cần Docker)
+
+```bash
+cp backend/.env.example backend/.env    # điền tối thiểu SECRET_KEY
+docker compose up
+# Frontend: http://localhost:5173 · API: http://localhost:8000/api · Swagger: /api/docs/
+```
+
+Đầy đủ (gồm production trên VPS): [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
+
+### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)
+
 ```bash
 # Backend
 cd backend
@@ -90,16 +102,19 @@ Hoặc chạy thủ công từng phần:
 ```bash
 # Backend
 cd backend
+ruff check . && ruff format --check .   # lint + format
+lint-imports                            # kiến trúc layer (ADR-0010)
 python manage.py check
 python manage.py makemigrations --check --dry-run
-python manage.py test
+pytest --cov --cov-fail-under=84        # test + coverage gate
 
 # Frontend
 cd frontend
 npm run lint
-npm test
+npm run check:architecture
+npm run test:coverage
 npm run build
-npm run test:e2e
+npm run test:e2e:smoke
 ```
 
 CI (GitHub Actions) tự chạy `backend-ci` và `frontend-ci` trên mọi pull request đụng
