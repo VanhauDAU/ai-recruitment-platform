@@ -54,15 +54,19 @@ pip install -r requirements.txt
 cp .env.example .env   # chỉnh DB_USER/DB_PASSWORD nếu khác PostgreSQL local
 python manage.py migrate
 
-# Seed dữ liệu nền
+# Seed dữ liệu nền (chạy theo đúng thứ tự này — job_categories cần skills,
+# province_merges cần locations)
 python manage.py seed_skills
 python manage.py seed_locations
 python manage.py seed_province_merges
 python manage.py seed_job_categories
 python manage.py seed_sitecontent
+python manage.py seed_cv_catalog     # mẫu CV + nội dung mẫu — thiếu thì trang /mau-cv rỗng
+python manage.py seed_services       # nhóm/gói dịch vụ cho trang báo giá NTD
 
 # Seed dữ liệu demo cho trang chủ/danh sách việc làm (tuỳ chọn nhưng nên chạy khi dev UI)
 python manage.py seed_demo_jobs
+python manage.py seed_blog           # bài viết mẫu cho trang cẩm nang
 
 python manage.py createsuperuser
 python manage.py runserver 8000
