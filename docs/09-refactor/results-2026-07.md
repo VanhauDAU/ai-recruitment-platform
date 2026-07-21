@@ -39,11 +39,17 @@ Baseline chi tiết: [baseline-2026-07.md](./baseline-2026-07.md)
 - File frontend > 300 dòng: giữ ở mức `warn` **có chủ ý**. Theo quy ước code
   style của dự án, chỉ tách khi file thực sự khó quản lý — `JobList.jsx` (423)
   và `CvDraftEditor.jsx` (421) đã decompose sẵn thành 12+ sub-component và
-  5 model hook, tách thêm chỉ làm loãng. Còn `use-cv-draft-editor.js` (424) là
-  ứng viên tách theo mối quan tâm (autosave / selection / history) khi cần.
-- factory-boy cho test backend (test đã tách theo tầng ở AR-P7).
+  5 model hook, tách thêm chỉ làm loãng. `use-cv-draft-editor.js`: đã rút guard
+  chống mất dữ liệu ra `use-unsaved-changes-guard.js` (AR-P8, 424 → 394); phần
+  còn lại KHÔNG tách tiếp vì autosave/history/actions dùng chung ~10 ref — tách
+  ra sẽ phải truyền ref qua tham số, spaghetti tệ hơn file dài.
+- ~~factory-boy cho test backend~~ — thay bằng helper nhẹ
+  `apps/cv_templates/tests/factories.py::make_published_template` (AR-P8) cho
+  đúng phần lặp thật (khối template+version PUBLISHED, 4 app dùng). Không thêm
+  factory-boy: 63 lời gọi `create_user` đơn giản không đáng đổi lấy một
+  dependency mới + churn 21 file test.
 - Squash migrations (chỉ làm khi chắc chắn chưa có production DB).
-- Email đồng bộ trong request ở 2FA/reset/welcome (xem
-  `docs/07-algorithms/flow-audit-2026-07.md`).
-- Build Docker image chưa verify trên máy dev (daemon tắt) — cần
-  `docker compose build` một lần.
+- ~~Email đồng bộ ở 2FA/reset/welcome~~ — audit đầu ghi sai, kiểm lại thấy đã
+  async sẵn; chỉ OTP điện thoại còn đồng bộ và đã sửa ở AR-P8.
+- ~~Build Docker image chưa verify~~ — đã chạy thật ở AR-P7: migrate, API,
+  WeasyPrint PDF tiếng Việt, worker trên cả 3 queue.

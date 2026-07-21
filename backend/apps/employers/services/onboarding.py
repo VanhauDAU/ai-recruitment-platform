@@ -5,14 +5,13 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.sitecontent.selectors import get_string_setting
-from common.email import send_html_email
-
 from ..models import PhoneOtp, RecruiterProfile
+from ..tasks import send_phone_otp_email
 from .profiles import get_or_create_recruiter
 
 OTP_TTL = timedelta(minutes=10)
@@ -65,25 +64,11 @@ def send_phone_otp(user, phone, password=None):
         code_hash=_hash_otp(code),
         expires_at=timezone.now() + OTP_TTL,
     )
-    site_name = get_string_setting('site_name', 'ProCV')
-    sender_name = get_string_setting('email_from_name', settings.EMAIL_FROM_NAME)
-    support_email = get_string_setting('support_email', '')
-    sender = (
-        f'{sender_name} <{settings.EMAIL_FROM_ADDRESS}>'
-        if sender_name
-        else settings.EMAIL_FROM_ADDRESS
-    )
-    send_html_email(
-        subject=f'Mã xác thực số điện thoại tại {site_name}',
-        text=f'Mã xác thực số điện thoại {phone} của bạn là {code}. Mã có hiệu lực trong 10 phút.',
-        html=(
-            f'<p>Mã xác thực số điện thoại <b>{phone}</b> của bạn là</p>'
-            f'<p style="font-size:24px;letter-spacing:4px"><b>{code}</b></p>'
-            '<p>Mã có hiệu lực trong 10 phút.</p>'
-        ),
-        to=user.email,
-        from_email=sender,
-        reply_to=support_email or None,
+    # Gửi ngoài request cycle: SMTP chậm (EMAIL_TIMEOUT=10s) sẽ giữ gunicorn
+    # worker, mà production chỉ chạy 3 worker. on_commit để không gửi mã cho một
+    # OTP bị rollback.
+    transaction.on_commit(
+        lambda: send_phone_otp_email.delay(user.pk, phone, code),
     )
     return otp
 
