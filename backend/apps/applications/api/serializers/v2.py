@@ -7,7 +7,7 @@ from apps.cvs.models import CvVersion, UserCv
 from apps.jobs.models import Job
 from apps.locations.models import Location
 
-from .models import Application
+from ...models import Application
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):

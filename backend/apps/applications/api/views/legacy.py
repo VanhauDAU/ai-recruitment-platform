@@ -3,17 +3,17 @@ from rest_framework.exceptions import ValidationError
 
 from apps.accounts.permissions import IsCandidate, IsEmployerWithMFA
 
-from .selectors import (
+from ...selectors import (
     candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
 )
-from .serializers import ApplicationSerializer, ApplicationStatusUpdateSerializer
-from .services import (
+from ...services import (
     InvalidApplicationStatusTransition,
     create_application,
     update_application_status,
 )
+from ..serializers.legacy import ApplicationSerializer, ApplicationStatusUpdateSerializer
 
 
 class CandidateApplicationListCreateView(generics.ListCreateAPIView):

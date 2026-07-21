@@ -227,7 +227,7 @@ class CvTemplateVersion(models.Model):
     )
 
     def clean(self):
-        from .renderers import validate_renderer_contract
+        from ..renderers import validate_renderer_contract
 
         regions = [
             region.get('id')
@@ -564,7 +564,7 @@ class CvContentBlueprint(models.Model):
         if self.content_json_template:
             from apps.cvs.schemas import empty_layout, empty_style, validate_cv_document
 
-            from .services.position_content import _materialize_tokens
+            from ..services.position_content import _materialize_tokens
 
             content = _materialize_tokens(self.content_json_template, 'Software Engineer')
             content['locale'] = self.locale

@@ -9,14 +9,14 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate, IsEmployerWithMFA
 
-from .api_v2_serializers import (
+from ...models import Application
+from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
+from ...services import create_application_record
+from ..serializers.v2 import (
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,
     RecruiterApplicationSnapshotSerializer,
 )
-from .models import Application
-from .selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
-from .services import create_application_record
 
 
 class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):

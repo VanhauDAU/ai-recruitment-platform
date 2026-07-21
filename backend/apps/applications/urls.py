@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (
+from .api.views.legacy import (
     CandidateApplicationListCreateView,
     EmployerApplicationListView,
     EmployerApplicationStatusUpdateView,

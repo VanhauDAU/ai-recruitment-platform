@@ -13,26 +13,18 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import (
     CvCompositionError,
     compose_cv_document,
     finalize_preview_document,
 )
-from apps.cvs.schemas import empty_content
 from apps.jobs.models import JobCategory
 from apps.sitecontent.selectors import default_locale_code, is_active_locale
 from common.metrics import record_metric
 
-from .api_v2_serializers import (
-    CvCategorySerializer,
-    CvPositionOptionSerializer,
-    CvSampleContentCardSerializer,
-    CvSampleContentDetailSerializer,
-    CvTemplateCardSerializer,
-    CvTemplateDetailSerializer,
-)
-from .models import CvTemplate
-from .selectors import (
+from ...models import CvTemplate
+from ...selectors import (
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
     published_sample_contents_queryset,
@@ -40,7 +32,15 @@ from .selectors import (
     published_template_queryset,
     related_published_templates,
 )
-from .services import PositionContentUnavailable, resolve_position_content
+from ...services import PositionContentUnavailable, resolve_position_content
+from ..serializers.v2 import (
+    CvCategorySerializer,
+    CvPositionOptionSerializer,
+    CvSampleContentCardSerializer,
+    CvSampleContentDetailSerializer,
+    CvTemplateCardSerializer,
+    CvTemplateDetailSerializer,
+)
 
 
 def requested_locale(request):

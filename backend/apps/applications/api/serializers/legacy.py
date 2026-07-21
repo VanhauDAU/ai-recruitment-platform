@@ -3,7 +3,7 @@ from rest_framework import serializers
 from apps.cvs.models import UserCv
 from apps.jobs.models import Job
 
-from .models import Application
+from ...models import Application
 
 
 class ApplicationSerializer(serializers.ModelSerializer):

@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from apps.cvs.api.views.v2 import CvV2BackgroundListView
 
-from .admin_api_views import (
+from .api.views.admin import (
     AdminCvBackgroundViewSet,
     AdminCvCategoryViewSet,
     AdminCvColorViewSet,
@@ -12,7 +12,7 @@ from .admin_api_views import (
     AdminCvTemplateLocalizationViewSet,
     AdminCvTemplateViewSet,
 )
-from .api_v2_views import (
+from .api.views.v2 import (
     CvCategoryCatalogListView,
     CvPositionOptionListView,
     CvPositionPreviewView,

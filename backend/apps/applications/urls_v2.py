@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .api_v2_views import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
+from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
 urlpatterns = [
     path(

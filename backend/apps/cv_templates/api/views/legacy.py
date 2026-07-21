@@ -2,8 +2,8 @@ from rest_framework import generics, permissions
 
 from common.api_deprecation import LegacyApiDeprecationMixin
 
-from .selectors import active_cv_templates_queryset
-from .serializers import CvTemplateSerializer
+from ...selectors import active_cv_templates_queryset
+from ..serializers.legacy import CvTemplateSerializer
 
 
 class CvTemplateListView(LegacyApiDeprecationMixin, generics.ListAPIView):

@@ -7,22 +7,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdmin
-from apps.cvs.services.composition import compose_cv_document
 from apps.cvs.models import CvAsset
 from apps.cvs.services import create_background_asset
+from apps.cvs.services.composition import compose_cv_document
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from .admin_api_serializers import (
-    CvBackgroundAdminSerializer,
-    CvCategoryAdminSerializer,
-    CvColorAdminSerializer,
-    CvContentBlueprintAdminSerializer,
-    CvSampleContentAdminSerializer,
-    CvTemplateAdminSerializer,
-    CvTemplateLocalizationAdminSerializer,
-    CvTemplateVersionAdminSerializer,
-)
-from .models import (
+from ...models import (
     CvCategory,
     CvColor,
     CvContentBlueprint,
@@ -32,15 +22,25 @@ from .models import (
     CvTemplateSection,
     CvTemplateVersion,
 )
-from .services import (
+from ...services import (
     activate_blueprint,
     archive_sample,
     publish_sample,
     publish_template_version,
     retire_template_version,
 )
-from .services.position_content import _content_from_blueprint
-from .tasks import enqueue_template_snapshots, regenerate_all_template_snapshots
+from ...services.position_content import _content_from_blueprint
+from ...tasks import enqueue_template_snapshots, regenerate_all_template_snapshots
+from ..serializers.admin import (
+    CvBackgroundAdminSerializer,
+    CvCategoryAdminSerializer,
+    CvColorAdminSerializer,
+    CvContentBlueprintAdminSerializer,
+    CvSampleContentAdminSerializer,
+    CvTemplateAdminSerializer,
+    CvTemplateLocalizationAdminSerializer,
+    CvTemplateVersionAdminSerializer,
+)
 
 
 def _call(service, **kwargs):

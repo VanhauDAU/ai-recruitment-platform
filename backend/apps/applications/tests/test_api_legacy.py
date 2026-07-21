@@ -7,8 +7,8 @@ from django.test import TestCase
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
 
-from .models import Application
-from .services import (
+from ..models import Application
+from ..services import (
     InvalidApplicationStatusTransition,
     create_application,
     update_application_status,

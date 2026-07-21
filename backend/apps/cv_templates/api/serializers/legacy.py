@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CvTemplate
+from ...models import CvTemplate
 
 
 class CvTemplateSerializer(serializers.ModelSerializer):

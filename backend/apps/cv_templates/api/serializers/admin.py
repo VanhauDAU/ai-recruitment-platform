@@ -3,7 +3,7 @@ from rest_framework import serializers
 from apps.cvs.models import CvAsset
 from apps.jobs.models import JobCategory
 
-from .models import (
+from ...models import (
     CvCategory,
     CvColor,
     CvContentBlueprint,

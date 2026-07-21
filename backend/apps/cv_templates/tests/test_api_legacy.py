@@ -1,8 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from .models import CvTemplate
-from .renderers import validate_renderer_contract
+from ..models import CvTemplate
+from ..renderers import validate_renderer_contract
 
 
 class PublicCvTemplateApiTests(TestCase):

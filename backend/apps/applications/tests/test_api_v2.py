@@ -16,7 +16,7 @@ from apps.employers.models import Company, RecruiterProfile
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
 
-from .models import Application
+from ..models import Application
 
 
 class RecruiterApplicationSnapshotV2Tests(APITestCase):
