@@ -49,6 +49,20 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ✅ |
 | FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
 
+## Epic Audit & Refactor toàn dự án (2026-07-21, nhánh `refactor/phase*`)
+
+Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan-2026-07.md) · Baseline: [baseline-2026-07.md](./09-refactor/baseline-2026-07.md)
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| AR-P0 | Triage nhánh (32→4), đo baseline (coverage FE thật 34%, 170 endpoint, BE 280 test/46s), snapshot OpenAPI, fix `manage.py test` dùng settings test | ✅ |
+| AR-P1 | Env fail-fast, xóa hardcode, Docker Compose, ruff + pre-commit + CI | ⬜ |
+| AR-P2 | Chuẩn hóa 16 app về 1 layout, import-linter, tách test, pytest | ⬜ |
+| AR-P3 | Gộp API v1→v2, dọn schema, squash migrations | ⬜ |
+| AR-P4 | Tối ưu 3 luồng: ứng tuyển, CV builder, tìm việc | ⬜ |
+| AR-P5 | Coverage thật FE, tách 5 file >400 dòng, e2e vào CI | ⬜ |
+| AR-P6 | Cập nhật 10 nhóm tài liệu, báo cáo kết quả | ⬜ |
+
 ## Epic thiết kế trang chủ (2026-07-16, nhánh `feature/design-home`)
 
 | Mục | Nội dung | Trạng thái |
