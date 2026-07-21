@@ -43,9 +43,11 @@ tasks/ → services/
 ```
 
 - `api/` không import model cho logic (chỉ type hint / `Meta.model`).
-- `services/`, `selectors/` không import `api/` và không import `rest_framework`
-  (ngoại lệ: `rest_framework.exceptions` bị cấm — service raise exception domain
-  riêng hoặc `django.core.exceptions`, view chịu trách nhiệm dịch sang HTTP).
+- `services/`, `selectors/` không import `api/` và không import máy móc HTTP
+  của DRF (`serializers`, `views`, `generics`, `viewsets`, `response`).
+  Được phép: `rest_framework.exceptions` (dịch sẵn sang HTTP 400) và
+  `rest_framework_simplejwt` (hạ tầng token). Gác bằng
+  `scripts/check_backend_layering.sh` + import-linter trong CI.
 - App không import `services`/`selectors` **nội bộ** của app khác; giao tiếp
   cross-app qua hàm được re-export tại `<app>/services/__init__.py`.
 - `common/` không import từ `apps/`.

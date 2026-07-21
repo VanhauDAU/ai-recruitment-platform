@@ -30,6 +30,12 @@ step "Backend: ruff check + format"
 run_ruff check .
 run_ruff format --check .
 
+step "Backend: kiến trúc layer (import-linter)"
+(cd backend && ./venv/bin/lint-imports 2>/dev/null) || docker compose run --rm backend lint-imports
+
+step "Backend: layering DRF"
+"$ROOT/scripts/check_backend_layering.sh"
+
 step "Backend: Django system check"
 run_be manage.py check
 

@@ -14,4 +14,16 @@ from .template import (
     CvTemplateVersion,
 )
 
-__all__ = ['CvCategory', 'CvColor', 'CvContentBlueprint', 'CvSampleContent', 'CvSectionDefinition', 'CvTemplate', 'CvTemplateCategoryLink', 'CvTemplateColorLink', 'CvTemplateLocalization', 'CvTemplateSection', 'CvTemplateVersion']
+__all__ = [
+    'CvCategory',
+    'CvColor',
+    'CvContentBlueprint',
+    'CvSampleContent',
+    'CvSectionDefinition',
+    'CvTemplate',
+    'CvTemplateCategoryLink',
+    'CvTemplateColorLink',
+    'CvTemplateLocalization',
+    'CvTemplateSection',
+    'CvTemplateVersion',
+]
