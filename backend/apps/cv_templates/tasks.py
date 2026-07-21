@@ -11,8 +11,8 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cvs.composition import compose_cv_document
-from apps.cvs.pdf_renderer import render_cv_version_pdf
+from apps.cvs.services.composition import compose_cv_document
+from apps.cvs.services.pdf_renderer import render_cv_version_pdf
 from apps.cvs.schemas import empty_content
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image

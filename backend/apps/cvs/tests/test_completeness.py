@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase
 
-from .completeness import COMPLETION_THRESHOLD, cv_completion_score
+from ..services.completeness import COMPLETION_THRESHOLD, cv_completion_score
 
 
 class CvCompletionScoreTests(SimpleTestCase):

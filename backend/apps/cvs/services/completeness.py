@@ -1,6 +1,6 @@
 """Stable, template-agnostic CV completion scoring for candidate workflows."""
 
-from .models import UserCv
+from ..models import UserCv
 
 COMPLETION_THRESHOLD = 70
 

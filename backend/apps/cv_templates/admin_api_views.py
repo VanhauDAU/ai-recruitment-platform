@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsAdmin
-from apps.cvs.composition import compose_cv_document
+from apps.cvs.services.composition import compose_cv_document
 from apps.cvs.models import CvAsset
 from apps.cvs.services import create_background_asset
 from apps.jobs.models import JobCategory, JobCategoryLocalization

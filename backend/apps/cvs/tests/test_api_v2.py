@@ -27,8 +27,7 @@ from apps.cv_templates.models import (
 )
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from .composition import compose_cv_document
-from .models import (
+from ..models import (
     CvAccessLog,
     CvAsset,
     CvDraft,
@@ -38,10 +37,11 @@ from .models import (
     CvVersion,
     UserCv,
 )
-from .pdf_renderer import build_cv_pdf_html, render_cv_version_pdf
-from .schemas import empty_content, empty_layout, empty_style
-from .services.versions import sync_legacy_builder_draft
-from .tasks import (
+from ..schemas import empty_content, empty_layout, empty_style
+from ..services.composition import compose_cv_document
+from ..services.pdf_renderer import build_cv_pdf_html, render_cv_version_pdf
+from ..services.versions import sync_legacy_builder_draft
+from ..tasks import (
     ImportProcessingError,
     generate_cv_thumbnail,
     process_cv_import_job,

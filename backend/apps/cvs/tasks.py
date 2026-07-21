@@ -16,9 +16,9 @@ from apps.ai_core.services import AiCvParseError, structure_cv_text
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 
-from .composition import compose_cv_document, overlay_actor_identity
 from .models import CvExport, CvImportJob, UserCv
-from .pdf_renderer import render_cv_version_pdf
+from .services.composition import compose_cv_document, overlay_actor_identity
+from .services.pdf_renderer import render_cv_version_pdf
 from .services.thumbnails import thumbnail_key_for
 from .services.versions import create_version
 

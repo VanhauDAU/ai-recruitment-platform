@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CvSkill, UserCv
+from ...models import CvSkill, UserCv
 
 
 class CvSkillSerializer(serializers.ModelSerializer):

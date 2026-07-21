@@ -226,7 +226,7 @@ class CvVersion(models.Model):
         ordering = ['cv_id', '-version_number']
 
     def clean(self):
-        from .schemas import validate_cv_document
+        from ..schemas import validate_cv_document
 
         validate_cv_document(
             content_json=self.content_json,
@@ -282,7 +282,7 @@ class CvDraft(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        from .schemas import validate_cv_document
+        from ..schemas import validate_cv_document
 
         validate_cv_document(
             content_json=self.content_json,

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .api_v2_views import (
+from .api.views.v2 import (
     CvV2ApplySampleView,
     CvV2AssetContentView,
     CvV2AssetUploadView,

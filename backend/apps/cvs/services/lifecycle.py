@@ -9,14 +9,14 @@ from django.utils import timezone
 from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.cv_templates.services import resolve_position_content
 
-from ..composition import (
+from ..models import CvDraft, CvVersion, UserCv
+from ..schemas import empty_content
+from .composition import (
     CvCompositionError,
     compose_cv_document,
     layout_for_content,
     overlay_actor_identity,
 )
-from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import empty_content
 from .versions import create_version, document_hash
 
 

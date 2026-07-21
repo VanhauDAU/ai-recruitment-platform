@@ -8,10 +8,10 @@ from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.jobs.models import JobCategory
 from apps.sitecontent.selectors import is_active_locale
 
-from .completeness import COMPLETION_THRESHOLD, cv_completion_score
-from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
-from .schemas import validate_cv_document
-from .services.assets import asset_map, sign_asset
+from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from ...schemas import validate_cv_document
+from ...services.assets import asset_map, sign_asset
+from ...services.completeness import COMPLETION_THRESHOLD, cv_completion_score
 
 
 class CvV2Serializer(serializers.ModelSerializer):
@@ -117,7 +117,7 @@ class CvV2Serializer(serializers.ModelSerializer):
     def get_thumbnail_url(self, obj):
         from django.urls import reverse
 
-        from .services import current_thumbnail_ready
+        from ...services import current_thumbnail_ready
 
         if not current_thumbnail_ready(obj):
             return None
@@ -126,7 +126,7 @@ class CvV2Serializer(serializers.ModelSerializer):
         return request.build_absolute_uri(path) if request else path
 
     def get_thumbnail_status(self, obj):
-        from .services import current_thumbnail_ready
+        from ...services import current_thumbnail_ready
 
         return 'ready' if current_thumbnail_ready(obj) else 'pending'
 
@@ -151,7 +151,7 @@ class CvV2ImportSerializer(serializers.Serializer):
     theme_color = serializers.RegexField(r'^#[0-9A-Fa-f]{6}$', required=False)
 
     def validate_file(self, value):
-        from .services.imports import InvalidCvImport, validate_import_upload
+        from ...services.imports import InvalidCvImport, validate_import_upload
 
         try:
             validate_import_upload(value)
@@ -432,7 +432,7 @@ class CvExportSerializer(serializers.ModelSerializer):
     def get_download_url(self, obj):
         from django.urls import reverse
 
-        from .services import export_download_ready
+        from ...services import export_download_ready
 
         if not export_download_ready(obj):
             return None

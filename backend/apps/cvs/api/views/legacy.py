@@ -9,16 +9,16 @@ from apps.accounts.permissions import IsCandidate
 from common.api_deprecation import LegacyApiDeprecationMixin
 from common.r2_storage import private_media_storage
 
-from .models import UserCv
-from .selectors import candidate_cvs_queryset
-from .serializers import UserCvSerializer
-from .services import (
+from ...models import UserCv
+from ...selectors import candidate_cvs_queryset
+from ...services import (
     UnsupportedCvUpload,
     create_builder_cv,
     permanently_delete_cv,
     update_builder_cv,
     upload_cv,
 )
+from ..serializers import UserCvSerializer
 
 
 class UserCvListCreateView(LegacyApiDeprecationMixin, generics.ListCreateAPIView):

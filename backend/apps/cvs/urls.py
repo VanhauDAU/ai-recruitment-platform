@@ -1,6 +1,11 @@
 from django.urls import path
 
-from .views import UserCvContentView, UserCvDetailView, UserCvListCreateView, UserCvUploadView
+from .api.views.legacy import (
+    UserCvContentView,
+    UserCvDetailView,
+    UserCvListCreateView,
+    UserCvUploadView,
+)
 
 urlpatterns = [
     path('', UserCvListCreateView.as_view(), name='cv-list-create'),

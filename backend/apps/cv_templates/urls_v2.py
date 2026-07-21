@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from apps.cvs.api_v2_views import CvV2BackgroundListView
+from apps.cvs.api.views.v2 import CvV2BackgroundListView
 
 from .admin_api_views import (
     AdminCvBackgroundViewSet,

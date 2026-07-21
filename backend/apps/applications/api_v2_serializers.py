@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.cvs.api_v2_serializers import CvVersionSerializer
+from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.jobs.models import Job
 from apps.locations.models import Location

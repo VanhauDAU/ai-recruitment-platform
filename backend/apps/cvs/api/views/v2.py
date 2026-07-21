@@ -16,35 +16,14 @@ from apps.cv_templates.services import PositionContentUnavailable
 from common.metrics import record_metric
 from common.r2_storage import cv_asset_storage, private_media_storage
 
-from .api_v2_serializers import (
-    CvApplySampleSerializer,
-    CvAssetSerializer,
-    CvAssetUploadSerializer,
-    CvDraftSerializer,
-    CvDraftWriteSerializer,
-    CvExportCreateSerializer,
-    CvExportSerializer,
-    CvSharedLinkCreateSerializer,
-    CvSharedLinkSerializer,
-    CvTemplateSwitchSerializer,
-    CvV2CreateSerializer,
-    CvV2DuplicateSerializer,
-    CvV2ImportSerializer,
-    CvV2MetadataUpdateSerializer,
-    CvV2Serializer,
-    CvVersionSerializer,
-    CvVersionSummarySerializer,
-    SharedCvVersionSerializer,
-)
-from .composition import CvCompositionError, compose_cv_document
-from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
-from .selectors import (
+from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from ...selectors import (
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
     latest_recoverable_cv,
 )
-from .services import (
+from ...services import (
     CvExportPermissionError,
     CvExportStateError,
     CvExportUnavailableError,
@@ -76,7 +55,28 @@ from .services import (
     update_cv_metadata,
     update_draft,
 )
-from .services.assets import resolve_asset_token
+from ...services.assets import resolve_asset_token
+from ...services.composition import CvCompositionError, compose_cv_document
+from ..serializers.v2 import (
+    CvApplySampleSerializer,
+    CvAssetSerializer,
+    CvAssetUploadSerializer,
+    CvDraftSerializer,
+    CvDraftWriteSerializer,
+    CvExportCreateSerializer,
+    CvExportSerializer,
+    CvSharedLinkCreateSerializer,
+    CvSharedLinkSerializer,
+    CvTemplateSwitchSerializer,
+    CvV2CreateSerializer,
+    CvV2DuplicateSerializer,
+    CvV2ImportSerializer,
+    CvV2MetadataUpdateSerializer,
+    CvV2Serializer,
+    CvVersionSerializer,
+    CvVersionSummarySerializer,
+    SharedCvVersionSerializer,
+)
 
 LOCK_HEADER_RE = re.compile(r'^"?lock-version-(\d+)"?$')
 
@@ -443,7 +443,7 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
 
     def get(self, request, public_id):
         cv = self.get_cv()
-        from .services import current_thumbnail_ready
+        from ...services import current_thumbnail_ready
 
         if not current_thumbnail_ready(cv):
             raise Http404
@@ -458,7 +458,7 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
             cv = request_current_cv_thumbnail(cv=self.get_cv(), actor=request.user)
         except (ValueError, CvVersion.DoesNotExist) as error:
             raise Http404 from error
-        from .services import current_thumbnail_ready
+        from ...services import current_thumbnail_ready
 
         ready = current_thumbnail_ready(cv)
         payload = CvV2Serializer(cv, context={'request': request}).data

@@ -18,7 +18,7 @@ from apps.cv_templates.renderers import validate_renderer_contract
 from apps.cv_templates.section_registry import get_section_contract
 from common.r2_storage import cv_asset_storage
 
-from .models import CvAsset
+from ..models import CvAsset
 
 
 class PdfRenderingError(RuntimeError):
