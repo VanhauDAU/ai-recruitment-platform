@@ -168,8 +168,12 @@ R2_PUBLIC_BUCKET = config('R2_PUBLIC_BUCKET', default='procv-public-media').stri
 R2_PRIVATE_BUCKET = config('R2_PRIVATE_BUCKET', default='procv-private-files').strip()
 R2_PUBLIC_BASE_URL = config('R2_PUBLIC_BASE_URL', default='').strip().rstrip('/')
 R2_ENABLED = bool(
-    R2_ENDPOINT_URL and R2_PUBLIC_ACCESS_KEY_ID and R2_PUBLIC_SECRET_ACCESS_KEY
-    and R2_PRIVATE_ACCESS_KEY_ID and R2_PRIVATE_SECRET_ACCESS_KEY and R2_PUBLIC_BASE_URL
+    R2_ENDPOINT_URL
+    and R2_PUBLIC_ACCESS_KEY_ID
+    and R2_PUBLIC_SECRET_ACCESS_KEY
+    and R2_PRIVATE_ACCESS_KEY_ID
+    and R2_PRIVATE_SECRET_ACCESS_KEY
+    and R2_PUBLIC_BASE_URL
 )
 
 # Kept as a compatibility setting for media helpers and deployments that still
@@ -224,12 +228,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'apps.accounts.authentication.AccountJWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': ('apps.accounts.authentication.AccountJWTAuthentication',),
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_PAGINATION_CLASS': 'common.pagination.StandardPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -254,7 +254,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_TOKEN_MINUTES', default=15, cast=int)),
+    'ACCESS_TOKEN_LIFETIME': timedelta(
+        minutes=config('JWT_ACCESS_TOKEN_MINUTES', default=15, cast=int)
+    ),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_DAYS', default=7, cast=int)),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -331,15 +333,21 @@ JOB_VIEWER_COOKIE_SAMESITE = 'Lax'
 
 # SecurityMiddleware protects Django Admin/session cookies as well as API responses.
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=IS_PRODUCTION, cast=bool)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if config(
-    'SECURE_PROXY_SSL_HEADER_ENABLED', default=IS_PRODUCTION, cast=bool
-) else None
+SECURE_PROXY_SSL_HEADER = (
+    ('HTTP_X_FORWARDED_PROTO', 'https')
+    if config('SECURE_PROXY_SSL_HEADER_ENABLED', default=IS_PRODUCTION, cast=bool)
+    else None
+)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=IS_PRODUCTION, cast=bool)
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=IS_PRODUCTION, cast=bool)
 SESSION_COOKIE_HTTPONLY = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31_536_000 if IS_PRODUCTION else 0, cast=int)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=IS_PRODUCTION, cast=bool)
+SECURE_HSTS_SECONDS = config(
+    'SECURE_HSTS_SECONDS', default=31_536_000 if IS_PRODUCTION else 0, cast=int
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
+    'SECURE_HSTS_INCLUDE_SUBDOMAINS', default=IS_PRODUCTION, cast=bool
+)
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
 X_FRAME_OPTIONS = 'DENY'
 
@@ -352,10 +360,14 @@ AUTH_REFRESH_COOKIE_SAMESITE = config('AUTH_REFRESH_COOKIE_SAMESITE', default='L
 AUTH_REFRESH_COOKIE_DOMAIN = config('AUTH_REFRESH_COOKIE_DOMAIN', default='') or None
 AUTH_REFRESH_COOKIE_PATH = config('AUTH_REFRESH_COOKIE_PATH', default='/api/')
 AUTH_SESSION_IDLE_TIMEOUT_SECONDS = config(
-    'AUTH_SESSION_IDLE_TIMEOUT_SECONDS', default=30 * 60, cast=int,
+    'AUTH_SESSION_IDLE_TIMEOUT_SECONDS',
+    default=30 * 60,
+    cast=int,
 )
 AUTH_SESSION_TOUCH_INTERVAL_SECONDS = config(
-    'AUTH_SESSION_TOUCH_INTERVAL_SECONDS', default=5 * 60, cast=int,
+    'AUTH_SESSION_TOUCH_INTERVAL_SECONDS',
+    default=5 * 60,
+    cast=int,
 )
 AUTH_REAUTH_MAX_AGE_SECONDS = config('AUTH_REAUTH_MAX_AGE_SECONDS', default=5 * 60, cast=int)
 TRUSTED_PROXY_IPS = config('TRUSTED_PROXY_IPS', default='', cast=Csv())
@@ -426,8 +438,12 @@ EMAIL_BACKEND = config('EMAIL_BACKEND', default='') or (
 # Người gửi hiển thị; tên có thể override runtime qua site setting `email_from_name`.
 # `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
 EMAIL_FROM_NAME = config('EMAIL_FROM_NAME', default='') or 'ProCV'
-EMAIL_FROM_ADDRESS = config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'
+EMAIL_FROM_ADDRESS = (
+    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
+)
+DEFAULT_FROM_EMAIL = (
+    config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'
+)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # URL frontend để dựng link xác thực trong email.
@@ -443,7 +459,9 @@ EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default=
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
-EMAIL_VERIFICATION_RESEND_COOLDOWN = config('EMAIL_VERIFICATION_RESEND_COOLDOWN', default=60, cast=int)
+EMAIL_VERIFICATION_RESEND_COOLDOWN = config(
+    'EMAIL_VERIFICATION_RESEND_COOLDOWN', default=60, cast=int
+)
 
 # Đặt lại mật khẩu: TTL ngắn hơn xác thực email (30 phút) vì đây là luồng chiếm
 # được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
@@ -466,12 +484,14 @@ OAUTH_FACEBOOK_GRAPH_VERSION = config('OAUTH_FACEBOOK_GRAPH_VERSION', default='v
 OAUTH_LINKEDIN_CLIENT_ID = config('OAUTH_LINKEDIN_CLIENT_ID', default='')
 OAUTH_LINKEDIN_CLIENT_SECRET = config('OAUTH_LINKEDIN_CLIENT_SECRET', default='')
 # Trang callback phía frontend (backend redirect về đây kèm one_time_code hoặc error).
-OAUTH_MAIN_CALLBACK_URL = config('OAUTH_MAIN_CALLBACK_URL', default=f'{FRONTEND_URL}/oauth/callback')
+OAUTH_MAIN_CALLBACK_URL = config(
+    'OAUTH_MAIN_CALLBACK_URL', default=f'{FRONTEND_URL}/oauth/callback'
+)
 OAUTH_EMPLOYER_CALLBACK_URL = config(
     'OAUTH_EMPLOYER_CALLBACK_URL', default=f'{FRONTEND_URL}/tuyendung/app/oauth/callback'
 )
-OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)       # state chống CSRF: 10 phút
-OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)          # one_time_code đổi JWT: 60s
+OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)  # state chống CSRF: 10 phút
+OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)  # one_time_code đổi JWT: 60s
 
 # API docs hữu ích ở local/staging, nhưng không public mặc định ở production.
 API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)
@@ -480,10 +500,12 @@ API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)
 # cutover.  Keep these explicit so the response headers and runbook share one
 # source of truth; do not turn this into an HTTP redirect for write requests.
 LEGACY_CV_API_DEPRECATION_AT = config(
-    'LEGACY_CV_API_DEPRECATION_AT', default='2026-07-15T00:00:00+00:00',
+    'LEGACY_CV_API_DEPRECATION_AT',
+    default='2026-07-15T00:00:00+00:00',
 )
 LEGACY_CV_API_SUNSET_AT = config(
-    'LEGACY_CV_API_SUNSET_AT', default='2027-01-15T00:00:00+00:00',
+    'LEGACY_CV_API_SUNSET_AT',
+    default='2027-01-15T00:00:00+00:00',
 )
 
 # A soft-deleted CV can only be restored during this explicit retention window.

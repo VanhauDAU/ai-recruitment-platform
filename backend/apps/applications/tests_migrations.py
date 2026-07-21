@@ -55,7 +55,9 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
     def _historical_application(self):
         executor = MigrationExecutor(connection)
         executor.loader.build_graph()
-        return executor.loader.project_state(('applications', '0003_initial')).apps.get_model('applications', 'Application')
+        return executor.loader.project_state(('applications', '0003_initial')).apps.get_model(
+            'applications', 'Application'
+        )
 
     def _snapshot_application(self):
         """Return the Application model matching the 0004–0006 test schema.
@@ -71,20 +73,35 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
     def _seed_legacy_application(self, suffix='a', base_public_id=None):
         """Create a legacy Application (no snapshot) + a V1 baseline CvVersion."""
         candidate = get_user_model().objects.create_user(
-            email=f'mig-cand-{suffix}@example.com', password='x', role='candidate', full_name='Legacy Candidate',
+            email=f'mig-cand-{suffix}@example.com',
+            password='x',
+            role='candidate',
+            full_name='Legacy Candidate',
         )
         owner = get_user_model().objects.create_user(
-            email=f'mig-owner-{suffix}@example.com', password='x', role='employer', full_name='Legacy Owner',
+            email=f'mig-owner-{suffix}@example.com',
+            password='x',
+            role='employer',
+            full_name='Legacy Owner',
         )
         company = Company.objects.create(company_name=f'Legacy Co {suffix}', created_by=owner)
-        job = Job.objects.create(title=f'Legacy Job {suffix}', description='d', company=company, posted_by=owner)
+        job = Job.objects.create(
+            title=f'Legacy Job {suffix}', description='d', company=company, posted_by=owner
+        )
         cv = UserCv.objects.create(cv_type='builder', title=f'Legacy CV {suffix}', user=candidate)
         CvVersion.objects.create(
-            public_id=base_public_id or f'cvv-base-{suffix}', version_number=1, cv=cv,
-            plain_text='baseline', content_hash='deadbeef',
+            public_id=base_public_id or f'cvv-base-{suffix}',
+            version_number=1,
+            cv=cv,
+            plain_text='baseline',
+            content_hash='deadbeef',
         )
         application = self._historical_application().objects.create(
-            public_id=f'app-mig-{suffix}', candidate_id=candidate.pk, job_id=job.pk, cv_id=cv.pk, status='submitted',
+            public_id=f'app-mig-{suffix}',
+            candidate_id=candidate.pk,
+            job_id=job.pk,
+            cv_id=cv.pk,
+            status='submitted',
         )
         return application.pk, cv
 
@@ -116,7 +133,7 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         # No applications: contract still enforces NOT NULL and the index exists.
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT is_nullable FROM information_schema.columns "
+                'SELECT is_nullable FROM information_schema.columns '
                 "WHERE table_name='applications_application' AND column_name='submitted_cv_version_id'"
             )
             self.assertEqual(cursor.fetchone()[0], 'NO')
@@ -142,8 +159,12 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         app_pk, cv = self._seed_legacy_application()
         # A correct deterministic snapshot already exists from a prior partial run.
         CvVersion.objects.create(
-            public_id=f'cvv-application-{app_pk}', version_number=2, cv=cv,
-            version_kind='application_snapshot', plain_text='baseline', content_hash='deadbeef',
+            public_id=f'cvv-application-{app_pk}',
+            version_number=2,
+            cv=cv,
+            version_kind='application_snapshot',
+            plain_text='baseline',
+            content_hash='deadbeef',
         )
         self._migrate(AFTER)
         snapshot = self._assert_backfilled(app_pk, cv)
@@ -172,8 +193,12 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         # A deterministic snapshot exists but points at the WRONG cv — must not
         # be silently linked to the recruiter's application view.
         bad = CvVersion.objects.create(
-            public_id=f'cvv-application-{app_pk}', version_number=2, cv=other_cv,
-            version_kind='application_snapshot', plain_text='x', content_hash='x',
+            public_id=f'cvv-application-{app_pk}',
+            version_number=2,
+            cv=other_cv,
+            version_kind='application_snapshot',
+            plain_text='x',
+            content_hash='x',
         )
         with self.assertRaises(RuntimeError):
             self._migrate(AFTER)

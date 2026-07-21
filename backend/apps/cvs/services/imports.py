@@ -55,15 +55,20 @@ def _checksum(upload):
     return digest.hexdigest()
 
 
-def queue_cv_import(*, actor, upload, template, language, theme_color=None, title='', idempotency_key=''):
+def queue_cv_import(
+    *, actor, upload, template, language, theme_color=None, title='', idempotency_key=''
+):
     file_type = validate_import_upload(upload)
     key = (idempotency_key or uuid4().hex)[:100]
-    existing = CvImportJob.objects.select_related('cv').filter(user=actor, idempotency_key=key).first()
+    existing = (
+        CvImportJob.objects.select_related('cv').filter(user=actor, idempotency_key=key).first()
+    )
     if existing:
         return existing.cv, existing, False
     checksum = _checksum(upload)
     storage_key = default_storage.save(
-        f'cvs/imports/{actor.public_id}/{uuid4().hex}.{file_type}', upload,
+        f'cvs/imports/{actor.public_id}/{uuid4().hex}.{file_type}',
+        upload,
     )
     try:
         with transaction.atomic():
@@ -81,16 +86,25 @@ def queue_cv_import(*, actor, upload, template, language, theme_color=None, titl
             cv.file_type = file_type
             cv.status = UserCv.Status.PROCESSING
             cv.processing_status = UserCv.ProcessingStatus.QUEUED
-            cv.save(update_fields=[
-                'source', 'cv_type', 'file_url', 'file_name', 'file_type',
-                'status', 'processing_status', 'updated_at',
-            ])
+            cv.save(
+                update_fields=[
+                    'source',
+                    'cv_type',
+                    'file_url',
+                    'file_name',
+                    'file_type',
+                    'status',
+                    'processing_status',
+                    'updated_at',
+                ]
+            )
             job = CvImportJob.objects.create(
                 cv=cv,
                 user=actor,
                 idempotency_key=key,
                 file_checksum_sha256=checksum,
-                source_expires_at=timezone.now() + timedelta(
+                source_expires_at=timezone.now()
+                + timedelta(
                     days=getattr(settings, 'CV_IMPORT_SOURCE_RETENTION_DAYS', 30),
                 ),
             )

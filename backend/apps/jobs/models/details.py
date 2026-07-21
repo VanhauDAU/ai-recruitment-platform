@@ -11,14 +11,18 @@ class JobCategoryAssignment(models.Model):
         DOMAIN_KNOWLEDGE = 'domain_knowledge', 'Kiến thức chuyên ngành'
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='category_assignments')
-    category = models.ForeignKey(JobCategory, on_delete=models.PROTECT, related_name='job_assignments')
+    category = models.ForeignKey(
+        JobCategory, on_delete=models.PROTECT, related_name='job_assignments'
+    )
     role = models.CharField(max_length=30, choices=Role.choices)
     sort_order = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ['sort_order', 'id']
         constraints = [
-            models.UniqueConstraint(fields=['job', 'category', 'role'], name='uq_job_category_assignment'),
+            models.UniqueConstraint(
+                fields=['job', 'category', 'role'], name='uq_job_category_assignment'
+            ),
             models.UniqueConstraint(
                 fields=['job'],
                 condition=models.Q(role='primary_specialization'),
@@ -45,7 +49,9 @@ class JobLocation(models.Model):
     class Meta:
         ordering = ['sort_order', 'id']
         constraints = [
-            models.UniqueConstraint(fields=['job', 'location', 'address_detail'], name='uq_job_location_address'),
+            models.UniqueConstraint(
+                fields=['job', 'location', 'address_detail'], name='uq_job_location_address'
+            ),
         ]
         indexes = [models.Index(fields=['location', 'job'])]
 
@@ -74,4 +80,3 @@ class JobWorkSchedule(models.Model):
                 name='chk_job_schedule_weekday_to',
             ),
         ]
-

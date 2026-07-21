@@ -117,7 +117,9 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return candidate_cvs_queryset(self.request.user).select_related(
-            'current_template_version', 'latest_version', 'published_version',
+            'current_template_version',
+            'latest_version',
+            'published_version',
         )
 
     def get_serializer_class(self):
@@ -270,6 +272,7 @@ def read_only_cv_payload(cv, version, request=None):
 
 class CvV2OwnerVersionView(CandidateV2CvMixin, APIView):
     """Candidate-only read view deliberately sourced from an immutable version."""
+
     model = UserCv
 
     def get(self, request, public_id):
@@ -283,6 +286,7 @@ class CvV2OwnerVersionView(CandidateV2CvMixin, APIView):
 
 class CvV2SharedLinkListCreateView(CandidateV2CvMixin, APIView):
     """Owner-scoped shared-link management; raw token is returned exactly once."""
+
     model = UserCv
 
     def get(self, request, public_id):
@@ -329,6 +333,7 @@ class CvV2SharedLinkRevokeView(CandidateV2CvMixin, APIView):
 
 class CvV2SharedLinkPublicView(APIView):
     """Unauthenticated bearer endpoint. Invalid/revoked/expired links are indistinguishable."""
+
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
 
@@ -342,11 +347,14 @@ class CvV2SharedLinkPublicView(APIView):
 
 class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
     """Owner-only PDF jobs sourced from immutable versions, never drafts."""
+
     model = UserCv
 
     def get(self, request, public_id):
         cv = self.get_cv()
-        exports = CvExport.objects.filter(cv=cv).select_related('cv', 'version').order_by('-created_at')
+        exports = (
+            CvExport.objects.filter(cv=cv).select_related('cv', 'version').order_by('-created_at')
+        )
         return Response(CvExportSerializer(exports, many=True, context={'request': request}).data)
 
     def post(self, request, public_id):
@@ -363,10 +371,14 @@ class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
         except CvExportUnavailableError as error:
             raise Http404 from error
         except (CvExportPermissionError, DjangoValidationError) as error:
-            detail = error.message_dict if hasattr(error, 'message_dict') else {'detail': str(error)}
+            detail = (
+                error.message_dict if hasattr(error, 'message_dict') else {'detail': str(error)}
+            )
             raise ValidationError(detail) from error
         status_code = status.HTTP_200_OK if reused else status.HTTP_201_CREATED
-        return Response(CvExportSerializer(export, context={'request': request}).data, status=status_code)
+        return Response(
+            CvExportSerializer(export, context={'request': request}).data, status=status_code
+        )
 
 
 class CvV2ExportDetailView(CandidateV2CvMixin, APIView):
@@ -397,11 +409,15 @@ class CvV2ExportRetryView(CandidateV2CvMixin, APIView):
             raise Http404 from error
         except (CvExportPermissionError, CvExportStateError) as error:
             raise ValidationError({'detail': str(error)}) from error
-        return Response(CvExportSerializer(export, context={'request': request}).data, status=status.HTTP_202_ACCEPTED)
+        return Response(
+            CvExportSerializer(export, context={'request': request}).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
     """Controlled owner download; no storage key or public media URL is exposed."""
+
     model = UserCv
 
     def get(self, request, public_id, export_public_id):
@@ -423,6 +439,7 @@ class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
 
 class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
     """Owner-only first-page image; the private storage key is never serialized."""
+
     model = UserCv
 
     def get(self, request, public_id):
@@ -461,7 +478,10 @@ class CvV2DraftView(CandidateV2CvMixin, APIView):
             draft = CvDraft.objects.select_related('base_version').get(cv=cv)
         except CvDraft.DoesNotExist as error:
             raise Http404 from error
-        return Response(CvDraftSerializer(draft, context={'request': request}).data, headers={'ETag': f'"lock-version-{draft.lock_version}"'})
+        return Response(
+            CvDraftSerializer(draft, context={'request': request}).data,
+            headers={'ETag': f'"lock-version-{draft.lock_version}"'},
+        )
 
     def put(self, request, public_id):
         cv = self.get_cv()
@@ -484,11 +504,15 @@ class CvV2DraftView(CandidateV2CvMixin, APIView):
             raise ValidationError(detail) from error
         except CvLifecyclePolicyError as error:
             raise ValidationError({'detail': str(error)}) from error
-        return Response(CvDraftSerializer(draft, context={'request': request}).data, headers={'ETag': f'"lock-version-{draft.lock_version}"'})
+        return Response(
+            CvDraftSerializer(draft, context={'request': request}).data,
+            headers={'ETag': f'"lock-version-{draft.lock_version}"'},
+        )
 
 
 class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
     """Switch presentation contract while keeping the canonical content immutable."""
+
     model = UserCv
 
     def put(self, request, public_id):
@@ -507,16 +531,22 @@ class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
         except StaleDraftError:
             return draft_conflict_response(cv)
         except (CvLifecyclePolicyError, DjangoValidationError) as error:
-            detail = error.message_dict if hasattr(error, 'message_dict') else {'detail': str(error)}
+            detail = (
+                error.message_dict if hasattr(error, 'message_dict') else {'detail': str(error)}
+            )
             raise ValidationError(detail) from error
         return Response(
-            {'cv': CvV2Serializer(switched_cv).data, 'draft': CvDraftSerializer(draft, context={'request': request}).data},
+            {
+                'cv': CvV2Serializer(switched_cv).data,
+                'draft': CvDraftSerializer(draft, context={'request': request}).data,
+            },
             headers={'ETag': f'"lock-version-{draft.lock_version}"'},
         )
 
 
 class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
     """Project one owned draft onto a template without mutating either aggregate."""
+
     model = UserCv
 
     def get(self, request, public_id):
@@ -528,17 +558,24 @@ class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
         if theme_color and re.fullmatch(r'#[0-9A-F]{6}', theme_color) is None:
             raise ValidationError({'theme_color': 'Use a six-digit hex color.'})
         try:
-            template = CvTemplate.objects.select_related(
-                'current_published_version',
-            ).prefetch_related(
-                'current_published_version__sections__section_definition',
-            ).get(public_id=template_public_id)
+            template = (
+                CvTemplate.objects.select_related(
+                    'current_published_version',
+                )
+                .prefetch_related(
+                    'current_published_version__sections__section_definition',
+                )
+                .get(public_id=template_public_id)
+            )
         except CvTemplate.DoesNotExist as error:
             raise Http404 from error
-        if theme_color and not template.color_links.filter(
-            color__hex_code__iexact=theme_color,
-            color__is_active=True,
-        ).exists():
+        if (
+            theme_color
+            and not template.color_links.filter(
+                color__hex_code__iexact=theme_color,
+                color__is_active=True,
+            ).exists()
+        ):
             raise ValidationError({'theme_color': 'Color is not available for this template.'})
         try:
             draft = CvDraft.objects.get(cv=cv)
@@ -552,18 +589,20 @@ class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
         except (CvCompositionError, DjangoValidationError) as error:
             raise ValidationError({'template_public_id': str(error)}) from error
         version = template.current_published_version
-        return Response({
-            'document': document,
-            'renderer': {
-                'key': version.renderer_key,
-                'version': version.renderer_version,
-                'schema_version': version.schema_version,
-                'capabilities': version.capabilities,
-            },
-            'source_cv_public_id': cv.public_id,
-            'lock_version': draft.lock_version,
-            'assets': CvDraftSerializer(draft, context={'request': request}).data['assets'],
-        })
+        return Response(
+            {
+                'document': document,
+                'renderer': {
+                    'key': version.renderer_key,
+                    'version': version.renderer_version,
+                    'schema_version': version.schema_version,
+                    'capabilities': version.capabilities,
+                },
+                'source_cv_public_id': cv.public_id,
+                'lock_version': draft.lock_version,
+                'assets': CvDraftSerializer(draft, context={'request': request}).data['assets'],
+            }
+        )
 
 
 class CvV2AssetUploadView(APIView):
@@ -636,7 +675,9 @@ class CvV2ApplySampleView(CandidateV2CvMixin, APIView):
         except StaleDraftError:
             return draft_conflict_response(cv)
         except (CvLifecyclePolicyError, DjangoValidationError) as error:
-            detail = error.message_dict if hasattr(error, 'message_dict') else {'detail': str(error)}
+            detail = (
+                error.message_dict if hasattr(error, 'message_dict') else {'detail': str(error)}
+            )
             raise ValidationError(detail) from error
         return Response(
             CvDraftSerializer(draft, context={'request': request}).data,

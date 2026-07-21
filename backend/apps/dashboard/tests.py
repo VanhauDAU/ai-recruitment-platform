@@ -20,7 +20,9 @@ class EmployerDashboardApiTests(APITestCase):
             email_verified=True,
         )
         company = Company.objects.create(
-            company_name='Công ty Acme', tax_code='0101234567', created_by=self.user,
+            company_name='Công ty Acme',
+            tax_code='0101234567',
+            created_by=self.user,
         )
         recruiter = RecruiterProfile.objects.create(
             user=self.user,
@@ -71,7 +73,9 @@ class EmployerDashboardApiTests(APITestCase):
         self.assertEqual(response.data['summary']['jobs_pending'], 1)
         self.assertEqual(response.data['summary']['job_views'], 130)
         self.assertEqual(response.data['summary']['applications_total'], 0)
-        self.assertEqual(response.data['recruitment_need']['position_category_name'], 'Kinh doanh phần mềm')
+        self.assertEqual(
+            response.data['recruitment_need']['position_category_name'], 'Kinh doanh phần mềm'
+        )
         self.assertEqual(response.data['recruitment_need']['headcount'], 3)
         self.assertEqual(len(response.data['application_activity']), 7)
         self.assertEqual(len(response.data['recent_jobs']), 2)

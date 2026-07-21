@@ -31,7 +31,11 @@ class JobListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_serializer_class(self):
-        return PublicJobPreviewSerializer if self.request.query_params.get('view') == 'preview' else PublicJobListSerializer
+        return (
+            PublicJobPreviewSerializer
+            if self.request.query_params.get('view') == 'preview'
+            else PublicJobListSerializer
+        )
 
     def get_queryset(self):
         return build_job_list_queryset(
@@ -53,50 +57,74 @@ class JobStatsView(APIView):
                 'active_jobs': serializers.IntegerField(),
                 'companies': serializers.IntegerField(),
                 'new_jobs_24h': serializers.IntegerField(),
-                'growth': inline_serializer('JobStatsGrowth', many=True, fields={
-                    'date': serializers.CharField(),
-                    'count': serializers.IntegerField(),
-                }),
-                'demand': inline_serializer('JobStatsDemand', many=True, fields={
-                    'id': serializers.IntegerField(),
-                    'name': serializers.CharField(),
-                    'slug': serializers.CharField(),
-                    'logo_url': serializers.CharField(allow_blank=True),
-                    'count': serializers.IntegerField(),
-                }),
-                'salary_demand': inline_serializer('JobStatsSalaryDemand', many=True, fields={
-                    'name': serializers.CharField(),
-                    'count': serializers.IntegerField(),
-                }),
-                'latest_jobs': inline_serializer('JobStatsLatest', many=True, fields={
-                    'public_id': serializers.CharField(),
-                    'slug': serializers.CharField(),
-                    'title': serializers.CharField(),
-                    'company_name': serializers.CharField(),
-                    'company_logo_url': serializers.CharField(allow_blank=True),
-                    'location_name': serializers.CharField(),
-                    'location_names': serializers.ListField(child=serializers.CharField()),
-                    'work_type': serializers.CharField(allow_blank=True),
-                    'employment_type': serializers.CharField(allow_blank=True),
-                    'experience_years': serializers.CharField(allow_blank=True),
-                    'salary_min': serializers.DecimalField(max_digits=14, decimal_places=2, allow_null=True),
-                    'salary_max': serializers.DecimalField(max_digits=14, decimal_places=2, allow_null=True),
-                    'currency': serializers.CharField(),
-                    'salary_type': serializers.CharField(),
-                    'number_of_vacancies': serializers.IntegerField(allow_null=True),
-                    'deadline': serializers.DateField(allow_null=True),
-                    'published_at': serializers.DateTimeField(allow_null=True),
-                    'short_description': serializers.CharField(allow_blank=True),
-                }),
-                'featured_employers': inline_serializer('JobStatsFeaturedEmployer', many=True, fields={
-                    'id': serializers.IntegerField(),
-                    'public_id': serializers.CharField(),
-                    'company_name': serializers.CharField(),
-                    'slug': serializers.CharField(),
-                    'company_logo_url': serializers.CharField(allow_blank=True),
-                    'industry': serializers.CharField(allow_blank=True),
-                    'job_count': serializers.IntegerField(),
-                }),
+                'growth': inline_serializer(
+                    'JobStatsGrowth',
+                    many=True,
+                    fields={
+                        'date': serializers.CharField(),
+                        'count': serializers.IntegerField(),
+                    },
+                ),
+                'demand': inline_serializer(
+                    'JobStatsDemand',
+                    many=True,
+                    fields={
+                        'id': serializers.IntegerField(),
+                        'name': serializers.CharField(),
+                        'slug': serializers.CharField(),
+                        'logo_url': serializers.CharField(allow_blank=True),
+                        'count': serializers.IntegerField(),
+                    },
+                ),
+                'salary_demand': inline_serializer(
+                    'JobStatsSalaryDemand',
+                    many=True,
+                    fields={
+                        'name': serializers.CharField(),
+                        'count': serializers.IntegerField(),
+                    },
+                ),
+                'latest_jobs': inline_serializer(
+                    'JobStatsLatest',
+                    many=True,
+                    fields={
+                        'public_id': serializers.CharField(),
+                        'slug': serializers.CharField(),
+                        'title': serializers.CharField(),
+                        'company_name': serializers.CharField(),
+                        'company_logo_url': serializers.CharField(allow_blank=True),
+                        'location_name': serializers.CharField(),
+                        'location_names': serializers.ListField(child=serializers.CharField()),
+                        'work_type': serializers.CharField(allow_blank=True),
+                        'employment_type': serializers.CharField(allow_blank=True),
+                        'experience_years': serializers.CharField(allow_blank=True),
+                        'salary_min': serializers.DecimalField(
+                            max_digits=14, decimal_places=2, allow_null=True
+                        ),
+                        'salary_max': serializers.DecimalField(
+                            max_digits=14, decimal_places=2, allow_null=True
+                        ),
+                        'currency': serializers.CharField(),
+                        'salary_type': serializers.CharField(),
+                        'number_of_vacancies': serializers.IntegerField(allow_null=True),
+                        'deadline': serializers.DateField(allow_null=True),
+                        'published_at': serializers.DateTimeField(allow_null=True),
+                        'short_description': serializers.CharField(allow_blank=True),
+                    },
+                ),
+                'featured_employers': inline_serializer(
+                    'JobStatsFeaturedEmployer',
+                    many=True,
+                    fields={
+                        'id': serializers.IntegerField(),
+                        'public_id': serializers.CharField(),
+                        'company_name': serializers.CharField(),
+                        'slug': serializers.CharField(),
+                        'company_logo_url': serializers.CharField(allow_blank=True),
+                        'industry': serializers.CharField(allow_blank=True),
+                        'job_count': serializers.IntegerField(),
+                    },
+                ),
             },
         ),
         tags=['jobs'],
@@ -112,15 +140,22 @@ class JobSuggestView(APIView):
 
     @extend_schema(
         summary='Gợi ý từ khóa tìm kiếm việc làm (autocomplete)',
-        responses=inline_serializer('JobSuggest', fields={
-            'suggestions': serializers.ListField(child=serializers.CharField()),
-        }),
+        responses=inline_serializer(
+            'JobSuggest',
+            fields={
+                'suggestions': serializers.ListField(child=serializers.CharField()),
+            },
+        ),
         tags=['jobs'],
     )
     def get(self, request):
-        return Response({'suggestions': suggest_job_search_terms(
-            request.query_params.get('q'), request.query_params.get('search_by')
-        )})
+        return Response(
+            {
+                'suggestions': suggest_job_search_terms(
+                    request.query_params.get('q'), request.query_params.get('search_by')
+                )
+            }
+        )
 
 
 class CvJobRecommendationView(APIView):
@@ -136,12 +171,14 @@ class CvJobRecommendationView(APIView):
         results = []
         for item in payload['results']:
             serialized = PublicJobListSerializer(item['job'], context={'request': request}).data
-            serialized.update({
-                'match_score': item['match_score'],
-                'match_details': item['match_details'],
-                'match_reasons': item['match_reasons'],
-                'is_high_match': item['match_score'] >= 70,
-            })
+            serialized.update(
+                {
+                    'match_score': item['match_score'],
+                    'match_details': item['match_details'],
+                    'match_reasons': item['match_reasons'],
+                    'is_high_match': item['match_score'] >= 70,
+                }
+            )
             results.append(serialized)
         return Response({**payload, 'results': results})
 
@@ -151,7 +188,6 @@ class JobDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
     queryset = active_job_detail_queryset()
-
 
 
 class JobViewCreateView(APIView):
@@ -177,7 +213,9 @@ class JobViewCreateView(APIView):
         job = get_object_or_404(active_job_detail_queryset(), slug=slug)
         consent = load_consent(request)
         if not consent or not consent['analytics']:
-            return Response({'counted': False, 'view_count': job.view_count, 'reason': 'consent_required'})
+            return Response(
+                {'counted': False, 'view_count': job.view_count, 'reason': 'consent_required'}
+            )
 
         result = record_consented_job_view(request, job)
         viewer_id = result.pop('viewer_id', None)

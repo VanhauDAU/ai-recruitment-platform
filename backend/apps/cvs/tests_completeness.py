@@ -38,4 +38,6 @@ class CvCompletionScoreTests(SimpleTestCase):
         self.assertEqual(cv_completion_score(self.cv(content)), 0)
 
     def test_uploaded_file_is_complete_as_a_document(self):
-        self.assertEqual(cv_completion_score(self.cv({}, cv_type='uploaded', file_name='cv.pdf')), 100)
+        self.assertEqual(
+            cv_completion_score(self.cv({}, cv_type='uploaded', file_name='cv.pdf')), 100
+        )

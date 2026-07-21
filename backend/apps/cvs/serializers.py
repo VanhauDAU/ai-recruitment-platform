@@ -8,7 +8,16 @@ class CvSkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CvSkill
-        fields = ['id', 'skill', 'skill_name', 'source', 'level', 'years_experience', 'evidence_text', 'confidence_score']
+        fields = [
+            'id',
+            'skill',
+            'skill_name',
+            'source',
+            'level',
+            'years_experience',
+            'evidence_text',
+            'confidence_score',
+        ]
         read_only_fields = ['id', 'skill_name', 'source', 'confidence_score']
 
 
@@ -21,15 +30,39 @@ class UserCvSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCv
         fields = [
-            'public_id', 'template', 'cv_type', 'source', 'title', 'cv_data',
-            'style_config', 'file_url', 'pdf_url', 'thumbnail_url', 'file_name',
-            'file_type', 'current_version', 'status', 'is_default',
-            'cv_skills', 'created_at', 'updated_at',
+            'public_id',
+            'template',
+            'cv_type',
+            'source',
+            'title',
+            'cv_data',
+            'style_config',
+            'file_url',
+            'pdf_url',
+            'thumbnail_url',
+            'file_name',
+            'file_type',
+            'current_version',
+            'status',
+            'is_default',
+            'cv_skills',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = [
-            'public_id', 'cv_type', 'source', 'file_url', 'pdf_url', 'thumbnail_url',
-            'file_name', 'file_type', 'current_version', 'status',
-            'cv_skills', 'created_at', 'updated_at',
+            'public_id',
+            'cv_type',
+            'source',
+            'file_url',
+            'pdf_url',
+            'thumbnail_url',
+            'file_name',
+            'file_type',
+            'current_version',
+            'status',
+            'cv_skills',
+            'created_at',
+            'updated_at',
         ]
 
     def validate(self, attrs):

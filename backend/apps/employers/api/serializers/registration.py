@@ -50,5 +50,7 @@ class EmployerRegisterSerializer(EmployerRegistrationProfileSerializer):
         # tài khoản ứng viên (mô hình tách tài khoản theo cổng như TopCV).
         value = User.objects.normalize_email(value)
         if User.objects.filter(email__iexact=value, role=User.Role.EMPLOYER).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.')
+            raise serializers.ValidationError(
+                'Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.'
+            )
         return value

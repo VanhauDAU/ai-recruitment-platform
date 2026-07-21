@@ -7,9 +7,23 @@ from .models import ConsultationLead, ServiceCategory, ServicePackage
 _PHONE = re.compile(r'^[0-9+ .()-]{8,20}$')
 
 PACKAGE_PUBLIC_FIELDS = [
-    'slug', 'name_vi', 'name_en', 'tagline_vi', 'tagline_en',
-    'price', 'currency', 'unit_vi', 'unit_en', 'vat_note_vi', 'vat_note_en',
-    'benefits_vi', 'benefits_en', 'badge_vi', 'badge_en', 'is_highlight', 'cta_type',
+    'slug',
+    'name_vi',
+    'name_en',
+    'tagline_vi',
+    'tagline_en',
+    'price',
+    'currency',
+    'unit_vi',
+    'unit_en',
+    'vat_note_vi',
+    'vat_note_en',
+    'benefits_vi',
+    'benefits_en',
+    'badge_vi',
+    'badge_en',
+    'is_highlight',
+    'cta_type',
 ]
 
 
@@ -26,7 +40,15 @@ class PublicServiceCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceCategory
-        fields = ['key', 'name_vi', 'name_en', 'description_vi', 'description_en', 'icon', 'packages']
+        fields = [
+            'key',
+            'name_vi',
+            'name_en',
+            'description_vi',
+            'description_en',
+            'icon',
+            'packages',
+        ]
 
 
 def _validate_benefits(value):
@@ -40,8 +62,18 @@ class AdminServiceCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceCategory
-        fields = ['id', 'key', 'name_vi', 'name_en', 'description_vi', 'description_en',
-                  'icon', 'order', 'is_active', 'packages_count']
+        fields = [
+            'id',
+            'key',
+            'name_vi',
+            'name_en',
+            'description_vi',
+            'description_en',
+            'icon',
+            'order',
+            'is_active',
+            'packages_count',
+        ]
 
 
 class AdminServicePackageSerializer(serializers.ModelSerializer):
@@ -49,8 +81,16 @@ class AdminServicePackageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServicePackage
-        fields = ['id', 'category', 'category_key', 'order', 'is_active',
-                  'created_at', 'updated_at', *PACKAGE_PUBLIC_FIELDS]
+        fields = [
+            'id',
+            'category',
+            'category_key',
+            'order',
+            'is_active',
+            'created_at',
+            'updated_at',
+            *PACKAGE_PUBLIC_FIELDS,
+        ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_benefits_vi(self, value):
@@ -63,8 +103,18 @@ class AdminServicePackageSerializer(serializers.ModelSerializer):
 class ConsultationLeadCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConsultationLead
-        fields = ['id', 'full_name', 'company_name', 'email', 'phone', 'province',
-                  'need', 'note', 'source_page', 'created_at']
+        fields = [
+            'id',
+            'full_name',
+            'company_name',
+            'email',
+            'phone',
+            'province',
+            'need',
+            'note',
+            'source_page',
+            'created_at',
+        ]
         read_only_fields = ['id', 'created_at']
         extra_kwargs = {
             'full_name': {'trim_whitespace': True},
@@ -83,7 +133,29 @@ class AdminConsultationLeadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConsultationLead
-        fields = ['id', 'full_name', 'company_name', 'email', 'phone', 'province',
-                  'need', 'need_label', 'note', 'source_page', 'status', 'created_at']
-        read_only_fields = ['id', 'full_name', 'company_name', 'email', 'phone', 'province',
-                            'need', 'note', 'source_page', 'created_at']
+        fields = [
+            'id',
+            'full_name',
+            'company_name',
+            'email',
+            'phone',
+            'province',
+            'need',
+            'need_label',
+            'note',
+            'source_page',
+            'status',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id',
+            'full_name',
+            'company_name',
+            'email',
+            'phone',
+            'province',
+            'need',
+            'note',
+            'source_page',
+            'created_at',
+        ]

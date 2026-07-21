@@ -44,11 +44,7 @@ def layout_for_content(template_version, content_json):
             region['section_instance_ids'] = []
     layout.pop('item_orders', None)
 
-    regions_by_id = {
-        region.get('id'): region
-        for region in regions
-        if isinstance(region, dict)
-    }
+    regions_by_id = {region.get('id'): region for region in regions if isinstance(region, dict)}
     region_for_section = {
         section.section_definition.section_key: section.region_key
         for section in template_version.sections.select_related('section_definition')

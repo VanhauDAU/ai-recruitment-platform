@@ -26,10 +26,15 @@ class Application(models.Model):
         ACCEPTED = 'accepted', 'Accepted'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    candidate = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications')
+    candidate = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications'
+    )
     job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='applications')
     cv = models.ForeignKey(
-        'cvs.UserCv', on_delete=models.SET_NULL, null=True, blank=True,
+        'cvs.UserCv',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='applications',
     )
     # `cv` is a library pointer only. It becomes NULL when a candidate
@@ -68,9 +73,20 @@ class Application(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['candidate', 'job'], name='uq_applications_candidate_job'),
+            models.UniqueConstraint(
+                fields=['candidate', 'job'], name='uq_applications_candidate_job'
+            ),
             models.CheckConstraint(
-                check=models.Q(status__in=['submitted', 'viewed', 'shortlisted', 'interviewed', 'rejected', 'accepted']),
+                check=models.Q(
+                    status__in=[
+                        'submitted',
+                        'viewed',
+                        'shortlisted',
+                        'interviewed',
+                        'rejected',
+                        'accepted',
+                    ]
+                ),
                 name='chk_applications_status',
             ),
         ]

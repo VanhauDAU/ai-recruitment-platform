@@ -16,11 +16,18 @@ class CvImportStructuringTests(TestCase):
             {'personal_info': {}, 'experiences': 'invalid'},
             {
                 'personal_info': {
-                    'full_name': 'Parsed Person', 'headline': 'Engineer',
-                    'email': 'parsed@example.com', 'phone': '', 'address': '', 'links': [],
+                    'full_name': 'Parsed Person',
+                    'headline': 'Engineer',
+                    'email': 'parsed@example.com',
+                    'phone': '',
+                    'address': '',
+                    'links': [],
                 },
                 'summary': 'Builds reliable products.',
-                'experiences': [], 'education': [], 'skills': ['Python'], 'projects': [],
+                'experiences': [],
+                'education': [],
+                'skills': ['Python'],
+                'projects': [],
             },
         ]
 

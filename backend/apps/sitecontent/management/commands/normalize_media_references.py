@@ -49,7 +49,11 @@ class Command(BaseCommand):
                         setattr(instance, field, normalised)
                         updated_fields.append(field)
                 if updated_fields and options['apply']:
-                    instance.save(update_fields=[*updated_fields, 'updated_at'] if hasattr(instance, 'updated_at') else updated_fields)
+                    instance.save(
+                        update_fields=[*updated_fields, 'updated_at']
+                        if hasattr(instance, 'updated_at')
+                        else updated_fields
+                    )
 
         mode = 'Đã cập nhật' if options['apply'] else 'Dry run — sẽ cập nhật'
         self.stdout.write(self.style.SUCCESS(f'{mode} {len(changes)} tham chiếu media.'))

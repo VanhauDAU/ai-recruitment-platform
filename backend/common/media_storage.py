@@ -148,7 +148,7 @@ def media_storage_path(value):
 
     media_url = settings.MEDIA_URL
     if path.startswith(media_url):
-        return _normalise_storage_path(path[len(media_url):].lstrip('/'))
+        return _normalise_storage_path(path[len(media_url) :].lstrip('/'))
 
     # Chỉ URL relative mới có thể là storage key trực tiếp. URL đầy đủ bên thứ
     # ba được giữ nguyên kể cả khi phần path của nó trông giống storage key.

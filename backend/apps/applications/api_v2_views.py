@@ -26,7 +26,11 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
         return candidate_applications_queryset(self.request.user)
 
     def get_serializer_class(self):
-        return CandidateApplicationV2CreateSerializer if self.request.method == 'POST' else CandidateApplicationV2Serializer
+        return (
+            CandidateApplicationV2CreateSerializer
+            if self.request.method == 'POST'
+            else CandidateApplicationV2Serializer
+        )
 
     def create(self, request, *args, **kwargs):
         if not request.user.email_verified:
@@ -54,7 +58,9 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
                 {'detail': 'You already applied to this job.'},
                 status=status.HTTP_409_CONFLICT,
             )
-        return Response(CandidateApplicationV2Serializer(application).data, status=status.HTTP_201_CREATED)
+        return Response(
+            CandidateApplicationV2Serializer(application).data, status=status.HTTP_201_CREATED
+        )
 
 
 class RecruiterApplicationSnapshotView(APIView):
@@ -62,7 +68,9 @@ class RecruiterApplicationSnapshotView(APIView):
 
     def get(self, request, public_id):
         try:
-            application = recruiter_application_snapshot_queryset(request.user).get(public_id=public_id)
+            application = recruiter_application_snapshot_queryset(request.user).get(
+                public_id=public_id
+            )
         except Application.DoesNotExist as error:
             # A 404 deliberately avoids confirming the existence of an
             # application outside the recruiter’s company relationship.

@@ -20,13 +20,19 @@ class PasswordChangeView(APIView):
     @extend_schema(
         summary='Đặt hoặc thay đổi mật khẩu của tài khoản đang đăng nhập',
         request=PasswordChangeSerializer,
-        responses=inline_serializer('PasswordChangeResponse', fields={
-            'detail': serializers.CharField(),
-            'user': SessionUserSerializer(),
-            'tokens': inline_serializer('PasswordChangeTokens', {
-                'access': serializers.CharField(),
-            }),
-        }),
+        responses=inline_serializer(
+            'PasswordChangeResponse',
+            fields={
+                'detail': serializers.CharField(),
+                'user': SessionUserSerializer(),
+                'tokens': inline_serializer(
+                    'PasswordChangeTokens',
+                    {
+                        'access': serializers.CharField(),
+                    },
+                ),
+            },
+        ),
         tags=['auth'],
     )
     def post(self, request):
@@ -39,28 +45,33 @@ class PasswordChangeView(APIView):
             refresh = RefreshToken(refresh_string) if refresh_string else None
             refresh_sid = refresh.get(auth_sessions.SID_CLAIM) if refresh else None
             refresh_user_id = refresh.get(api_settings.USER_ID_CLAIM) if refresh else None
-            session = auth_sessions.active_sessions(user).filter(
-                id=current_sid,
-                refresh_jti=refresh.get(api_settings.JTI_CLAIM) if refresh else '',
-            ).first()
+            session = (
+                auth_sessions.active_sessions(user)
+                .filter(
+                    id=current_sid,
+                    refresh_jti=refresh.get(api_settings.JTI_CLAIM) if refresh else '',
+                )
+                .first()
+            )
         except TokenError:
             refresh = None
             refresh_sid = None
             refresh_user_id = None
             session = None
 
-        if (
-            session is None
-            or refresh_sid != current_sid
-            or str(refresh_user_id) != str(user.pk)
-        ):
+        if session is None or refresh_sid != current_sid or str(refresh_user_id) != str(user.pk):
             return Response(
                 {'detail': 'Cần phiên refresh hiện tại để đổi mật khẩu.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if not user.has_usable_password() and not auth_sessions.is_recent_oauth_reauthentication(session):
+        if not user.has_usable_password() and not auth_sessions.is_recent_oauth_reauthentication(
+            session
+        ):
             return Response(
-                {'detail': 'Hãy đăng nhập lại với OAuth trước khi tạo mật khẩu.', 'code': 'reauth_required'},
+                {
+                    'detail': 'Hãy đăng nhập lại với OAuth trước khi tạo mật khẩu.',
+                    'code': 'reauth_required',
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -79,9 +90,11 @@ class PasswordChangeView(APIView):
             auth_sessions.revoke_session(session)
 
         tokens = issue_tokens(user, request, auth_method='password')
-        response = Response({
-            'detail': 'Cập nhật mật khẩu thành công.',
-            'user': SessionUserSerializer(user, context={'request': request}).data,
-            'tokens': {'access': tokens['access']},
-        })
+        response = Response(
+            {
+                'detail': 'Cập nhật mật khẩu thành công.',
+                'user': SessionUserSerializer(user, context={'request': request}).data,
+                'tokens': {'access': tokens['access']},
+            }
+        )
         return set_refresh_cookie(response, tokens['refresh'], user=user)

@@ -12,7 +12,10 @@ class CompanyUpdateRequest(models.Model):
     bắt buộc kèm lý do và giấy tờ chứng minh (`proof_type` + CompanyDocument)."""
 
     class ProofType(models.TextChoices):
-        BUSINESS_REGISTRATION = 'business_registration', 'Giấy đăng ký doanh nghiệp hoặc tương đương'
+        BUSINESS_REGISTRATION = (
+            'business_registration',
+            'Giấy đăng ký doanh nghiệp hoặc tương đương',
+        )
         AUTHORIZATION_AND_ID = 'authorization_and_id', 'Giấy ủy quyền + giấy tờ định danh'
 
     class Status(models.TextChoices):
@@ -22,7 +25,9 @@ class CompanyUpdateRequest(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='update_requests')
-    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+')
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='+'
+    )
     # Snapshot {field: giá_trị_mới}; admin approve thì service apply vào Company.
     changes = models.JSONField(default=dict)
     is_sensitive = models.BooleanField(default=False)
@@ -91,7 +96,11 @@ class CompanyDocument(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='+'
     )
     update_request = models.ForeignKey(
-        CompanyUpdateRequest, on_delete=models.CASCADE, null=True, blank=True, related_name='documents'
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='documents',
     )
     doc_type = models.CharField(max_length=30, choices=DocType.choices)
     file_url = models.TextField()
@@ -107,7 +116,8 @@ class CompanyDocument(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(doc_type='data_processing_agreement') | models.Q(company__isnull=False),
+                condition=models.Q(doc_type='data_processing_agreement')
+                | models.Q(company__isnull=False),
                 name='company_document_requires_company_unless_dpa',
             ),
         ]

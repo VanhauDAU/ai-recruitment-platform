@@ -3,6 +3,7 @@
 Idempotent: relations use get_or_create; sample contents are keyed by
 (job_category, locale) and skipped when already present.
 """
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -101,7 +102,12 @@ LOCALE_TEXTS = {
         'edu_school': 'Trường Đại học Hà Nội',
         'edu_desc': 'Tốt nghiệp loại Giỏi.',
         'skills_title': 'Kỹ năng',
-        'skills': ['Kỹ năng chuyên môn {position}', 'Làm việc nhóm', 'Giải quyết vấn đề', 'Tiếng Anh giao tiếp'],
+        'skills': [
+            'Kỹ năng chuyên môn {position}',
+            'Làm việc nhóm',
+            'Giải quyết vấn đề',
+            'Tiếng Anh giao tiếp',
+        ],
     },
     'en-US': {
         'title': 'Sample CV — {position}',
@@ -196,28 +202,32 @@ def build_sample_content(locale, position):
                 'section_key': 'experience',
                 'title': texts['experience_title'],
                 'enabled': True,
-                'items': [{
-                    'item_id': 'experience_item_1',
-                    'role': t('exp_role'),
-                    'company': texts['exp_company'],
-                    'start_date': '2022-03',
-                    'end_date': None,
-                    'description': rich_text(t('exp_desc')),
-                }],
+                'items': [
+                    {
+                        'item_id': 'experience_item_1',
+                        'role': t('exp_role'),
+                        'company': texts['exp_company'],
+                        'start_date': '2022-03',
+                        'end_date': None,
+                        'description': rich_text(t('exp_desc')),
+                    }
+                ],
             },
             {
                 'instance_id': 'education_1',
                 'section_key': 'education',
                 'title': texts['education_title'],
                 'enabled': True,
-                'items': [{
-                    'item_id': 'education_item_1',
-                    'degree': texts['edu_degree'],
-                    'institution': texts['edu_school'],
-                    'start_date': '2016-09',
-                    'end_date': '2020-06',
-                    'description': rich_text(texts['edu_desc']),
-                }],
+                'items': [
+                    {
+                        'item_id': 'education_item_1',
+                        'degree': texts['edu_degree'],
+                        'institution': texts['edu_school'],
+                        'start_date': '2016-09',
+                        'end_date': '2020-06',
+                        'description': rich_text(texts['edu_desc']),
+                    }
+                ],
             },
             {
                 'instance_id': 'skills_1',
@@ -225,7 +235,11 @@ def build_sample_content(locale, position):
                 'title': texts['skills_title'],
                 'enabled': True,
                 'items': [
-                    {'item_id': f'skills_item_{index + 1}', 'name': skill.replace('{position}', localized_position), 'level': ''}
+                    {
+                        'item_id': f'skills_item_{index + 1}',
+                        'name': skill.replace('{position}', localized_position),
+                        'level': '',
+                    }
                     for index, skill in enumerate(texts['skills'])
                 ],
             },
@@ -291,7 +305,10 @@ class Command(BaseCommand):
                     'slug': f'color-{theme.lstrip("#").lower()}',
                 },
             )
-            ordered_colors = [theme_color, *[color for color in colors if color.pk != theme_color.pk]]
+            ordered_colors = [
+                theme_color,
+                *[color for color in colors if color.pk != theme_color.pk],
+            ]
             has_default = template.color_links.filter(is_default=True).exists()
             for index, color in enumerate(ordered_colors):
                 _, created = CvTemplateColorLink.objects.get_or_create(
@@ -358,7 +375,9 @@ class Command(BaseCommand):
                     job_category=category,
                     locale=locale,
                     defaults={
-                        'title': LOCALE_TEXTS[locale]['title'].replace('{position}', localized_position),
+                        'title': LOCALE_TEXTS[locale]['title'].replace(
+                            '{position}', localized_position
+                        ),
                         'position_name_vi': POSITION_LABELS['vi-VN'].get(name, name),
                         'content_json': build_sample_content(locale, name),
                         'status': CvSampleContent.Status.PUBLISHED,
@@ -382,14 +401,25 @@ class Command(BaseCommand):
                         for generated_position in generated_positions
                     }
                     if headline in generated_headlines and sample.title in generated_titles:
-                        sample.title = LOCALE_TEXTS[locale]['title'].replace('{position}', localized_position)
+                        sample.title = LOCALE_TEXTS[locale]['title'].replace(
+                            '{position}', localized_position
+                        )
                         sample.content_json = build_sample_content(locale, name)
                         sample.full_clean()
-                        sample.save(update_fields=['title', 'position_name_vi', 'content_json', 'updated_at'])
+                        sample.save(
+                            update_fields=[
+                                'title',
+                                'position_name_vi',
+                                'content_json',
+                                'updated_at',
+                            ]
+                        )
                     elif old_position_name_vi != position_name_vi:
                         sample.save(update_fields=['position_name_vi', 'updated_at'])
 
-        self.stdout.write(self.style.SUCCESS(
-            f'Done. {color_links_created} template color link(s) created; '
-            f'{localizations_created} localization(s) and {samples_created} sample content(s) created.'
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Done. {color_links_created} template color link(s) created; '
+                f'{localizations_created} localization(s) and {samples_created} sample content(s) created.'
+            )
+        )

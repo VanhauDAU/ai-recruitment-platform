@@ -54,7 +54,10 @@ def active_jobs_queryset(include_preview=False):
     )
     if not include_preview:
         queryset = queryset.defer(
-            'description', 'requirements', 'benefits', 'work_schedule_note',
+            'description',
+            'requirements',
+            'benefits',
+            'work_schedule_note',
             'rejected_reason',
         )
     return queryset
@@ -122,13 +125,11 @@ def _filter_salary(queryset, params):
         return filter_salary_bucket(queryset, salary_bucket)
     if salary_gte := params.get('salary_gte'):
         queryset = queryset.filter(
-            Q(salary_max__gte=salary_gte)
-            | Q(salary_max__isnull=True, salary_min__gte=salary_gte)
+            Q(salary_max__gte=salary_gte) | Q(salary_max__isnull=True, salary_min__gte=salary_gte)
         )
     if salary_lte := params.get('salary_lte'):
         queryset = queryset.filter(
-            Q(salary_min__lte=salary_lte)
-            | Q(salary_min__isnull=True, salary_max__lte=salary_lte)
+            Q(salary_min__lte=salary_lte) | Q(salary_min__isnull=True, salary_max__lte=salary_lte)
         )
     return queryset
 
@@ -142,8 +143,7 @@ def _filter_search(queryset, params):
         return queryset.filter(search_q('company__company_name', search))
     if search_by == 'both':
         return queryset.filter(
-            search_q('title', search)
-            | search_q('company__company_name', search)
+            search_q('title', search) | search_q('company__company_name', search)
         )
     return queryset.filter(search_q('title', search))
 

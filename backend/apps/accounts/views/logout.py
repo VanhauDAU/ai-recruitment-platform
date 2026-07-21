@@ -33,16 +33,21 @@ class LogoutView(APIView):
 
     @extend_schema(
         summary='Đăng xuất phiên hiện tại (blacklist refresh token)',
-        request=inline_serializer('LogoutRequest', {
-            'portal': serializers.ChoiceField(choices=sorted(VALID_PORTALS)),
-        }),
+        request=inline_serializer(
+            'LogoutRequest',
+            {
+                'portal': serializers.ChoiceField(choices=sorted(VALID_PORTALS)),
+            },
+        ),
         responses={200: inline_serializer('LogoutResponse', {'detail': serializers.CharField()})},
         tags=['auth'],
     )
     def post(self, request):
         portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
         if portal not in VALID_PORTALS:
-            return Response({'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST
+            )
         token = refresh_from_request(request, portal=portal)
         if token:
             try:
@@ -63,10 +68,14 @@ class LogoutAllView(APIView):
     @extend_schema(
         summary='Đăng xuất khỏi tất cả thiết bị của tài khoản hiện tại',
         request=None,
-        responses={200: inline_serializer('LogoutAllResponse', {'detail': serializers.CharField()})},
+        responses={
+            200: inline_serializer('LogoutAllResponse', {'detail': serializers.CharField()})
+        },
         tags=['auth'],
     )
     def post(self, request):
         revoke_refresh_tokens(request.user)
-        response = Response({'detail': 'Đã đăng xuất khỏi tất cả thiết bị.'}, status=status.HTTP_200_OK)
+        response = Response(
+            {'detail': 'Đã đăng xuất khỏi tất cả thiết bị.'}, status=status.HTTP_200_OK
+        )
         return clear_refresh_cookie(response, portal=portal_for_user(request.user))

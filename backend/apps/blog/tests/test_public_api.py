@@ -13,13 +13,18 @@ class BlogPublicApiTests(APITestCase):
         cls.tag = Tag.objects.create(name='kinh doanh')
 
         cls.published = Post.objects.create(
-            title='Nhân viên Sales là gì?', category=cls.category,
-            summary='Tổng quan nghề Sales.', content='<h2>Sales</h2><p>Nội dung</p>',
-            status=Post.Status.PUBLISHED, published_at=timezone.now(),
+            title='Nhân viên Sales là gì?',
+            category=cls.category,
+            summary='Tổng quan nghề Sales.',
+            content='<h2>Sales</h2><p>Nội dung</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
         )
         cls.published.tags.add(cls.tag)
         cls.draft = Post.objects.create(
-            title='Bài nháp', category=cls.category, content='<p>draft</p>',
+            title='Bài nháp',
+            category=cls.category,
+            content='<p>draft</p>',
             status=Post.Status.DRAFT,
         )
         PinnedPost.objects.create(post=cls.published, order=1)
@@ -32,10 +37,18 @@ class BlogPublicApiTests(APITestCase):
         self.assertIn(self.published.slug, slugs)
         self.assertNotIn(self.draft.slug, slugs)
         item = next(post for post in res.data['results'] if post['slug'] == self.published.slug)
-        self.assertEqual(set(item), {
-            'public_id', 'title', 'slug', 'excerpt', 'thumbnail_url',
-            'category', 'published_at',
-        })
+        self.assertEqual(
+            set(item),
+            {
+                'public_id',
+                'title',
+                'slug',
+                'excerpt',
+                'thumbnail_url',
+                'category',
+                'published_at',
+            },
+        )
         self.assertEqual(set(item['category']), {'name', 'slug'})
         self.assertEqual(item['excerpt'], 'Sales Nội dung')
 
@@ -51,10 +64,21 @@ class BlogPublicApiTests(APITestCase):
         url = reverse('blog-post-detail', args=[self.published.slug])
         res = self.client.get(url)
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(set(res.data), {
-            'public_id', 'title', 'slug', 'thumbnail_url', 'content',
-            'category', 'tags', 'related_job_category', 'published_at', 'seo_title',
-        })
+        self.assertEqual(
+            set(res.data),
+            {
+                'public_id',
+                'title',
+                'slug',
+                'thumbnail_url',
+                'content',
+                'category',
+                'tags',
+                'related_job_category',
+                'published_at',
+                'seo_title',
+            },
+        )
         self.published.refresh_from_db()
         self.assertEqual(self.published.view_count, 1)
         draft = self.client.get(reverse('blog-post-detail', args=[self.draft.slug]))

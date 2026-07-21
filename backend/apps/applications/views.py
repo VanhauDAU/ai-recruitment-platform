@@ -35,7 +35,9 @@ class EmployerApplicationListView(generics.ListAPIView):
     permission_classes = [IsEmployerWithMFA]
 
     def get_queryset(self):
-        return employer_applications_queryset(self.request.user, self.request.query_params.get('job'))
+        return employer_applications_queryset(
+            self.request.user, self.request.query_params.get('job')
+        )
 
 
 class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):

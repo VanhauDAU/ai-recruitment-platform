@@ -32,11 +32,17 @@ def verify_recaptcha(token, action, remote_ip=None):
         response = requests.post(RECAPTCHA_VERIFY_URL, data=payload, timeout=5)
         result = response.json()
     except (requests.RequestException, ValueError):
-        raise serializers.ValidationError({'captcha_token': 'Không thể xác thực captcha, vui lòng thử lại.'})
+        raise serializers.ValidationError(
+            {'captcha_token': 'Không thể xác thực captcha, vui lòng thử lại.'}
+        )
 
     if not result.get('success'):
         raise serializers.ValidationError({'captcha_token': 'Xác thực captcha thất bại.'})
     if 'action' in result and result.get('action') != action:
-        raise serializers.ValidationError({'captcha_token': 'Captcha không hợp lệ cho hành động này.'})
+        raise serializers.ValidationError(
+            {'captcha_token': 'Captcha không hợp lệ cho hành động này.'}
+        )
     if 'score' in result and result.get('score', 0) < settings.RECAPTCHA_SCORE_THRESHOLD:
-        raise serializers.ValidationError({'captcha_token': 'Xác thực captcha thất bại (độ tin cậy thấp).'})
+        raise serializers.ValidationError(
+            {'captcha_token': 'Xác thực captcha thất bại (độ tin cậy thấp).'}
+        )

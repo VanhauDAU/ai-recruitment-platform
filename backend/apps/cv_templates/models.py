@@ -22,12 +22,18 @@ class CvTemplate(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    category = models.CharField(max_length=100, blank=True, help_text='IT, internship, professional, simple')
+    category = models.CharField(
+        max_length=100, blank=True, help_text='IT, internship, professional, simple'
+    )
     description = models.TextField(blank=True)
     thumbnail_url = models.TextField(blank=True)
     preview_url = models.TextField(blank=True)
-    layout_config = models.JSONField(default=dict, blank=True, help_text='one-column, two-column, ...')
-    style_config = models.JSONField(default=dict, blank=True, help_text='color, font, spacing defaults')
+    layout_config = models.JSONField(
+        default=dict, blank=True, help_text='one-column, two-column, ...'
+    )
+    style_config = models.JSONField(
+        default=dict, blank=True, help_text='color, font, spacing defaults'
+    )
     is_premium = models.BooleanField(default=False)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     sort_order = models.IntegerField(default=0)
@@ -60,7 +66,13 @@ class CvTemplate(models.Model):
         blank=True,
     )
     archived_at = models.DateTimeField(null=True, blank=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_cv_templates')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_cv_templates',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -99,7 +111,9 @@ class CvCategory(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['category_type', 'slug'], name='uq_cv_categories_type_slug'),
+            models.UniqueConstraint(
+                fields=['category_type', 'slug'], name='uq_cv_categories_type_slug'
+            ),
         ]
         ordering = ['category_type', 'sort_order', 'name']
 
@@ -155,7 +169,9 @@ class CvTemplateVersion(models.Model):
 
     template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='versions')
     version_number = models.PositiveIntegerField()
-    version_status = models.CharField(max_length=20, choices=VersionStatus.choices, default=VersionStatus.DRAFT)
+    version_status = models.CharField(
+        max_length=20, choices=VersionStatus.choices, default=VersionStatus.DRAFT
+    )
     renderer_key = models.CharField(max_length=100)
     renderer_version = models.CharField(max_length=50, default='1')
     schema_version = models.PositiveIntegerField(default=1)
@@ -178,49 +194,82 @@ class CvTemplateVersion(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['template', 'version_number'], name='uq_cv_template_version'),
-            models.CheckConstraint(check=models.Q(version_number__gt=0), name='chk_cv_template_version_number'),
+            models.UniqueConstraint(
+                fields=['template', 'version_number'], name='uq_cv_template_version'
+            ),
+            models.CheckConstraint(
+                check=models.Q(version_number__gt=0), name='chk_cv_template_version_number'
+            ),
         ]
         indexes = [
-            models.Index(fields=['template', 'version_status', '-version_number'], name='idx_tpl_version_published'),
+            models.Index(
+                fields=['template', 'version_status', '-version_number'],
+                name='idx_tpl_version_published',
+            ),
         ]
         ordering = ['template_id', '-version_number']
 
     _IMMUTABLE_FIELDS = (
-        'template_id', 'version_number', 'renderer_key', 'renderer_version',
-        'schema_version', 'layout_schema', 'style_schema',
-        'default_layout_json', 'default_style_json', 'capabilities',
-        'content_contract', 'created_by_id', 'published_at', 'created_at',
+        'template_id',
+        'version_number',
+        'renderer_key',
+        'renderer_version',
+        'schema_version',
+        'layout_schema',
+        'style_schema',
+        'default_layout_json',
+        'default_style_json',
+        'capabilities',
+        'content_contract',
+        'created_by_id',
+        'published_at',
+        'created_at',
     )
 
     def clean(self):
         from .renderers import validate_renderer_contract
 
         regions = [
-            region.get('id') for region in self.default_layout_json.get('regions', [])
+            region.get('id')
+            for region in self.default_layout_json.get('regions', [])
             if isinstance(region, dict)
         ]
         contract = validate_renderer_contract(self.renderer_key, self.schema_version, regions)
         if self.renderer_version != contract.version:
-            raise ValidationError({'renderer_version': 'Does not match the deployed renderer contract.'})
+            raise ValidationError(
+                {'renderer_version': 'Does not match the deployed renderer contract.'}
+            )
 
     def save(self, *args, **kwargs):
         """Keep a published renderer contract stable for every existing CV."""
         if self.pk:
             persisted = type(self).objects.get(pk=self.pk)
             changed_fields = [
-                field for field in self._IMMUTABLE_FIELDS
+                field
+                for field in self._IMMUTABLE_FIELDS
                 if getattr(self, field) != getattr(persisted, field)
             ]
             if persisted.version_status == self.VersionStatus.RETIRED:
                 raise ValidationError('Retired template versions are immutable.')
             if persisted.version_status == self.VersionStatus.PUBLISHED:
                 if changed_fields:
-                    raise ValidationError({'version': 'Published template configuration is immutable.'})
-                if self.version_status not in {self.VersionStatus.PUBLISHED, self.VersionStatus.RETIRED}:
-                    raise ValidationError({'version_status': 'A published version may only be retired.'})
-                if self.version_status == self.VersionStatus.PUBLISHED and self.retired_at != persisted.retired_at:
-                    raise ValidationError({'retired_at': 'Set retired_at only when retiring a version.'})
+                    raise ValidationError(
+                        {'version': 'Published template configuration is immutable.'}
+                    )
+                if self.version_status not in {
+                    self.VersionStatus.PUBLISHED,
+                    self.VersionStatus.RETIRED,
+                }:
+                    raise ValidationError(
+                        {'version_status': 'A published version may only be retired.'}
+                    )
+                if (
+                    self.version_status == self.VersionStatus.PUBLISHED
+                    and self.retired_at != persisted.retired_at
+                ):
+                    raise ValidationError(
+                        {'retired_at': 'Set retired_at only when retiring a version.'}
+                    )
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -231,8 +280,12 @@ class CvTemplateLocalization(models.Model):
     template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='localizations')
     locale = models.CharField(max_length=16)
     locale_ref = models.ForeignKey(
-        'sitecontent.Locale', to_field='code', db_column='locale_ref_code',
-        on_delete=models.PROTECT, null=True, blank=True,
+        'sitecontent.Locale',
+        to_field='code',
+        db_column='locale_ref_code',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name='cv_template_localizations',
     )
     display_name = models.CharField(max_length=255)
@@ -249,18 +302,26 @@ class CvTemplateLocalization(models.Model):
     def save(self, *args, **kwargs):
         from apps.sitecontent.models import Locale
 
-        self.locale_ref_id = self.locale if Locale.objects.filter(code=self.locale).exists() else None
+        self.locale_ref_id = (
+            self.locale if Locale.objects.filter(code=self.locale).exists() else None
+        )
         super().save(*args, **kwargs)
 
 
 class CvTemplateCategoryLink(models.Model):
-    template = models.ForeignKey(CvTemplate, on_delete=models.CASCADE, related_name='category_links')
-    category = models.ForeignKey(CvCategory, on_delete=models.CASCADE, related_name='template_links')
+    template = models.ForeignKey(
+        CvTemplate, on_delete=models.CASCADE, related_name='category_links'
+    )
+    category = models.ForeignKey(
+        CvCategory, on_delete=models.CASCADE, related_name='template_links'
+    )
     sort_order = models.IntegerField(default=0)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['template', 'category'], name='uq_cv_template_category_link'),
+            models.UniqueConstraint(
+                fields=['template', 'category'], name='uq_cv_template_category_link'
+            ),
         ]
 
 
@@ -304,8 +365,12 @@ class CvSectionDefinition(models.Model):
 
 
 class CvTemplateSection(models.Model):
-    template_version = models.ForeignKey(CvTemplateVersion, on_delete=models.CASCADE, related_name='sections')
-    section_definition = models.ForeignKey(CvSectionDefinition, on_delete=models.PROTECT, related_name='template_sections')
+    template_version = models.ForeignKey(
+        CvTemplateVersion, on_delete=models.CASCADE, related_name='sections'
+    )
+    section_definition = models.ForeignKey(
+        CvSectionDefinition, on_delete=models.PROTECT, related_name='template_sections'
+    )
     region_key = models.CharField(max_length=80)
     default_order = models.IntegerField(default=0)
     is_required = models.BooleanField(default=False)
@@ -324,11 +389,17 @@ class CvTemplateSection(models.Model):
 
     def save(self, *args, **kwargs):
         if self.template_version_id:
-            version_status = CvTemplateVersion.objects.only('version_status').get(
-                pk=self.template_version_id,
-            ).version_status
+            version_status = (
+                CvTemplateVersion.objects.only('version_status')
+                .get(
+                    pk=self.template_version_id,
+                )
+                .version_status
+            )
             if version_status != CvTemplateVersion.VersionStatus.DRAFT:
-                raise ValidationError('Sections of published or retired template versions are immutable.')
+                raise ValidationError(
+                    'Sections of published or retired template versions are immutable.'
+                )
         super().save(*args, **kwargs)
 
 
@@ -350,8 +421,12 @@ class CvSampleContent(models.Model):
     )
     locale = models.CharField(max_length=16)
     locale_ref = models.ForeignKey(
-        'sitecontent.Locale', to_field='code', db_column='locale_ref_code',
-        on_delete=models.PROTECT, null=True, blank=True,
+        'sitecontent.Locale',
+        to_field='code',
+        db_column='locale_ref_code',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name='cv_sample_contents',
     )
     experience_level = models.CharField(max_length=30, default='unspecified')
@@ -377,7 +452,9 @@ class CvSampleContent(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['status', 'locale', 'experience_level'], name='idx_cv_samples_catalog'),
+            models.Index(
+                fields=['status', 'locale', 'experience_level'], name='idx_cv_samples_catalog'
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -392,7 +469,8 @@ class CvSampleContent(models.Model):
 
         content = self.content_json if isinstance(self.content_json, dict) else {}
         section_ids = [
-            section.get('instance_id') for section in content.get('sections', [])
+            section.get('instance_id')
+            for section in content.get('sections', [])
             if isinstance(section, dict) and section.get('instance_id')
         ]
         layout = empty_layout()
@@ -412,7 +490,10 @@ class CvSampleContent(models.Model):
         if not self.public_id:
             self.public_id = generate_public_id('cvsample')
         from apps.sitecontent.models import Locale
-        self.locale_ref_id = self.locale if Locale.objects.filter(code=self.locale).exists() else None
+
+        self.locale_ref_id = (
+            self.locale if Locale.objects.filter(code=self.locale).exists() else None
+        )
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -425,8 +506,12 @@ class CvContentBlueprint(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     locale = models.CharField(max_length=16)
     locale_ref = models.ForeignKey(
-        'sitecontent.Locale', to_field='code', db_column='locale_ref_code',
-        on_delete=models.PROTECT, null=True, blank=True,
+        'sitecontent.Locale',
+        to_field='code',
+        db_column='locale_ref_code',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name='cv_content_blueprints',
     )
     experience_level = models.CharField(max_length=30, default='unspecified')
@@ -436,16 +521,22 @@ class CvContentBlueprint(models.Model):
         help_text='Canonical content template; strings may contain {position}.',
     )
     summary_title = models.CharField(max_length=255)
-    summary_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.')
+    summary_template = models.TextField(
+        help_text='Dùng {position} tại nơi cần chèn tên vị trí đã bản địa hóa.'
+    )
     experience_title = models.CharField(max_length=255)
     experience_company = models.CharField(max_length=255)
-    experience_description_template = models.TextField(help_text='Dùng {position} tại nơi cần chèn tên vị trí.')
+    experience_description_template = models.TextField(
+        help_text='Dùng {position} tại nơi cần chèn tên vị trí.'
+    )
     education_title = models.CharField(max_length=255)
     education_degree = models.CharField(max_length=255)
     education_institution = models.CharField(max_length=255)
     education_description = models.TextField(blank=True)
     skills_title = models.CharField(max_length=255)
-    skill_templates = models.JSONField(default=list, help_text='Danh sách chuỗi; có thể dùng {position}.')
+    skill_templates = models.JSONField(
+        default=list, help_text='Danh sách chuỗi; có thể dùng {position}.'
+    )
     is_active = models.BooleanField(default=True)
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -459,7 +550,9 @@ class CvContentBlueprint(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['locale', 'experience_level'], name='uq_cv_content_blueprint'),
+            models.UniqueConstraint(
+                fields=['locale', 'experience_level'], name='uq_cv_content_blueprint'
+            ),
         ]
         ordering = ['locale', 'experience_level']
 
@@ -475,7 +568,8 @@ class CvContentBlueprint(models.Model):
             content = _materialize_tokens(self.content_json_template, 'Software Engineer')
             content['locale'] = self.locale
             section_ids = [
-                section.get('instance_id') for section in content.get('sections', [])
+                section.get('instance_id')
+                for section in content.get('sections', [])
                 if isinstance(section, dict) and section.get('instance_id')
             ]
             layout = empty_layout()
@@ -491,7 +585,10 @@ class CvContentBlueprint(models.Model):
         if not self.public_id:
             self.public_id = generate_public_id('cvblueprint')
         from apps.sitecontent.models import Locale
-        self.locale_ref_id = self.locale if Locale.objects.filter(code=self.locale).exists() else None
+
+        self.locale_ref_id = (
+            self.locale if Locale.objects.filter(code=self.locale).exists() else None
+        )
         super().save(*args, **kwargs)
 
     def __str__(self):

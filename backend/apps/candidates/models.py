@@ -21,7 +21,9 @@ class CandidateProfile(models.Model):
         NOT_LOOKING = 'not_looking', 'Not looking'
         CASUALLY_LOOKING = 'casually_looking', 'Casually looking'
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='candidate_profile')
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='candidate_profile'
+    )
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
@@ -29,8 +31,12 @@ class CandidateProfile(models.Model):
     desired_position = models.CharField(max_length=255, blank=True)
     experience_years = models.DecimalField(max_digits=4, decimal_places=1, default=0)
     education_level = models.CharField(max_length=255, blank=True)
-    expected_salary_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    expected_salary_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    expected_salary_min = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    expected_salary_max = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
     preferred_location = models.CharField(max_length=255, blank=True)
     preferred_work_type = models.CharField(max_length=50, choices=WorkType.choices, blank=True)
     job_search_status = models.CharField(max_length=50, choices=JobSearchStatus.choices, blank=True)
@@ -84,7 +90,8 @@ class CandidateJobPreference(models.Model):
         db_table = 'candidate_job_preferences'
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(desired_salary_vnd__isnull=True) | models.Q(desired_salary_vnd__gt=0),
+                condition=models.Q(desired_salary_vnd__isnull=True)
+                | models.Q(desired_salary_vnd__gt=0),
                 name='candidate_pref_salary_positive',
             ),
         ]

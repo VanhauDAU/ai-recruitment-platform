@@ -79,6 +79,7 @@ def _artifact_is_valid(export: CvExport) -> bool:
 
 def _dispatch_after_commit(export_id: int) -> None:
     """Use a transaction outbox-style callback so workers never see uncommitted jobs."""
+
     def dispatch():
         try:
             from apps.cvs.tasks import render_cv_export_job
@@ -114,7 +115,9 @@ def _select_version(cv: UserCv, version_public_id: str | None) -> CvVersion:
 
 
 @transaction.atomic
-def request_cv_export(*, cv: UserCv, actor, request, version_public_id: str | None = None) -> tuple[CvExport, bool]:
+def request_cv_export(
+    *, cv: UserCv, actor, request, version_public_id: str | None = None
+) -> tuple[CvExport, bool]:
     """Create one PDF job or reuse the valid artifact for the exact render spec."""
     cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
     _assert_owner(cv, actor)
@@ -123,10 +126,14 @@ def request_cv_export(*, cv: UserCv, actor, request, version_public_id: str | No
     version = _select_version(cv, version_public_id)
     render_config = _render_config(version)
     config_hash = _render_config_hash(render_config)
-    export = CvExport.objects.select_for_update().filter(
-        version=version,
-        render_config_hash=config_hash,
-    ).first()
+    export = (
+        CvExport.objects.select_for_update()
+        .filter(
+            version=version,
+            render_config_hash=config_hash,
+        )
+        .first()
+    )
     dispatch = False
     reused = export is not None
     if export is None:
@@ -153,10 +160,20 @@ def request_cv_export(*, cv: UserCv, actor, request, version_public_id: str | No
         export.completed_at = None
         export.failed_at = None
         export.queued_at = timezone.now()
-        export.save(update_fields=[
-            'status', 'storage_key', 'file_size_bytes', 'checksum_sha256',
-            'last_error', 'started_at', 'completed_at', 'failed_at', 'queued_at', 'updated_at',
-        ])
+        export.save(
+            update_fields=[
+                'status',
+                'storage_key',
+                'file_size_bytes',
+                'checksum_sha256',
+                'last_error',
+                'started_at',
+                'completed_at',
+                'failed_at',
+                'queued_at',
+                'updated_at',
+            ]
+        )
         dispatch = True
         reused = False
     _record_export_audit(cv, version, actor, request)
@@ -171,9 +188,13 @@ def retry_cv_export(*, cv: UserCv, actor, request, export_public_id: str) -> CvE
     cv = UserCv.objects.select_for_update(of=('self',)).get(pk=cv.pk)
     _assert_owner(cv, actor)
     try:
-        export = CvExport.objects.select_for_update().select_related('version').get(
-            cv=cv,
-            public_id=export_public_id,
+        export = (
+            CvExport.objects.select_for_update()
+            .select_related('version')
+            .get(
+                cv=cv,
+                public_id=export_public_id,
+            )
         )
     except CvExport.DoesNotExist as error:
         raise CvExportUnavailableError('Export does not exist.') from error
@@ -188,10 +209,20 @@ def retry_cv_export(*, cv: UserCv, actor, request, export_public_id: str) -> CvE
     export.completed_at = None
     export.failed_at = None
     export.queued_at = timezone.now()
-    export.save(update_fields=[
-        'status', 'storage_key', 'file_size_bytes', 'checksum_sha256',
-        'last_error', 'started_at', 'completed_at', 'failed_at', 'queued_at', 'updated_at',
-    ])
+    export.save(
+        update_fields=[
+            'status',
+            'storage_key',
+            'file_size_bytes',
+            'checksum_sha256',
+            'last_error',
+            'started_at',
+            'completed_at',
+            'failed_at',
+            'queued_at',
+            'updated_at',
+        ]
+    )
     _record_export_audit(cv, export.version, actor, request)
     _dispatch_after_commit(export.pk)
     return export

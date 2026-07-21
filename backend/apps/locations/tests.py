@@ -7,12 +7,16 @@ from .models import Location
 class LocationLookupApiTests(APITestCase):
     def test_lookup_returns_picker_fields_only(self):
         province = Location.objects.create(
-            code='01-contract', name='Hà Nội', level=Location.Level.PROVINCE,
+            code='01-contract',
+            name='Hà Nội',
+            level=Location.Level.PROVINCE,
             merged_from=['Hà Tây'],
         )
         Location.objects.create(
-            code='00001-contract', name='Phường Ba Đình',
-            level=Location.Level.WARD, parent=province,
+            code='00001-contract',
+            name='Phường Ba Đình',
+            level=Location.Level.WARD,
+            parent=province,
         )
 
         response = self.client.get(reverse('location-list'), {'level': Location.Level.PROVINCE})

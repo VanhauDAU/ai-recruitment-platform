@@ -16,7 +16,12 @@ from apps.cvs.schemas import (
     empty_style,
     validate_cv_document,
 )
-from apps.cvs.services.versions import StaleDraftError, create_application_snapshot, create_initial_document, update_draft
+from apps.cvs.services.versions import (
+    StaleDraftError,
+    create_application_snapshot,
+    create_initial_document,
+    update_draft,
+)
 
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
@@ -41,7 +46,9 @@ class CandidateCvApiTests(TestCase):
     def test_upload_uses_cv_service_and_keeps_storage_key(self):
         upload = SimpleUploadedFile('my-cv.pdf', b'%PDF-1.4 test', content_type='application/pdf')
 
-        response = self.client.post('/api/cvs/upload/', {'file': upload, 'title': 'My CV'}, format='multipart')
+        response = self.client.post(
+            '/api/cvs/upload/', {'file': upload, 'title': 'My CV'}, format='multipart'
+        )
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['title'], 'My CV')
@@ -53,7 +60,9 @@ class CandidateCvApiTests(TestCase):
     def test_builder_cv_creation_uses_authenticated_candidate(self):
         template = CvTemplate.objects.create(name='Standard')
 
-        response = self.client.post('/api/cvs/', {'template': template.pk, 'title': 'Builder CV'}, format='json')
+        response = self.client.post(
+            '/api/cvs/', {'template': template.pk, 'title': 'Builder CV'}, format='json'
+        )
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['cv_type'], 'builder')
@@ -80,22 +89,26 @@ class CandidateCvApiTests(TestCase):
 class CanonicalCvDocumentTests(TestCase):
     def valid_document(self):
         content = empty_content()
-        content['sections'] = [{
-            'instance_id': 'sec_experience_1',
-            'section_key': 'experience',
-            'title': 'Experience',
-            'enabled': True,
-            'items': [{
-                'item_id': 'experience_1',
-                'company': 'Acme',
-                'start_date': '2025-01',
-                'end_date': None,
-                'description': {
-                    'format': 'rich_text_v1',
-                    'content': [{'type': 'bullet', 'text': 'Built a safe CV contract.'}],
-                },
-            }],
-        }]
+        content['sections'] = [
+            {
+                'instance_id': 'sec_experience_1',
+                'section_key': 'experience',
+                'title': 'Experience',
+                'enabled': True,
+                'items': [
+                    {
+                        'item_id': 'experience_1',
+                        'company': 'Acme',
+                        'start_date': '2025-01',
+                        'end_date': None,
+                        'description': {
+                            'format': 'rich_text_v1',
+                            'content': [{'type': 'bullet', 'text': 'Built a safe CV contract.'}],
+                        },
+                    }
+                ],
+            }
+        ]
         layout = empty_layout()
         layout['regions'][0]['section_instance_ids'] = ['sec_experience_1']
         return content, layout, empty_style()
@@ -103,7 +116,9 @@ class CanonicalCvDocumentTests(TestCase):
     def test_accepts_canonical_document(self):
         content, layout, style = self.valid_document()
 
-        validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+        validate_cv_document(
+            content_json=content, layout_json=layout, style_json=style, schema_version=1
+        )
 
     def test_legacy_payload_is_adapted_to_the_canonical_three_document_contract(self):
         content, layout, style = canonicalize_legacy_cv_data(
@@ -116,19 +131,27 @@ class CanonicalCvDocumentTests(TestCase):
 
         self.assertEqual(content['personal_info']['full_name'], 'Nguyễn Văn A')
         self.assertEqual(content['sections'][0]['items'][0]['item_id'], 'legacy_skills_1')
-        validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+        validate_cv_document(
+            content_json=content, layout_json=layout, style_json=style, schema_version=1
+        )
 
     def test_rejects_unknown_section_duplicate_ids_and_unsafe_html(self):
         content, layout, style = self.valid_document()
         content['sections'][0]['section_key'] = 'template_specific_magic'
-        content['sections'][0]['items'][0]['description']['content'][0]['text'] = '<script>alert(1)</script>'
-        content['sections'].append({
-            **content['sections'][0],
-            'instance_id': 'sec_experience_1',
-        })
+        content['sections'][0]['items'][0]['description']['content'][0]['text'] = (
+            '<script>alert(1)</script>'
+        )
+        content['sections'].append(
+            {
+                **content['sections'][0],
+                'instance_id': 'sec_experience_1',
+            }
+        )
 
         with self.assertRaises(ValidationError) as context:
-            validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+            validate_cv_document(
+                content_json=content, layout_json=layout, style_json=style, schema_version=1
+            )
 
         self.assertIn('content_json.sections[0].section_key', context.exception.message_dict)
         self.assertIn('content_json.sections[1].instance_id', context.exception.message_dict)
@@ -137,51 +160,73 @@ class CanonicalCvDocumentTests(TestCase):
         content, layout, style = self.valid_document()
         content['sections'][0]['items'][0]['description'] = {
             'format': 'rich_text_v2',
-            'content': [{
-                'type': 'bullet',
-                'text': 'Thiết kế API an toàn',
-                'runs': [
-                    {'text': 'Thiết kế API', 'marks': {'bold': True, 'color': '#0066AA'}},
-                    {'text': ' an toàn', 'marks': {'italic': True, 'font_size_pt': 11}},
-                ],
-            }],
+            'content': [
+                {
+                    'type': 'bullet',
+                    'text': 'Thiết kế API an toàn',
+                    'runs': [
+                        {'text': 'Thiết kế API', 'marks': {'bold': True, 'color': '#0066AA'}},
+                        {'text': ' an toàn', 'marks': {'italic': True, 'font_size_pt': 11}},
+                    ],
+                }
+            ],
         }
-        content['sections'].append({
-            'instance_id': 'sec_interests_1',
-            'section_key': 'interests',
-            'title': 'Sở thích',
-            'enabled': True,
-            'items': [{'item_id': 'interests_1', 'value': 'Đọc sách'}],
-        })
+        content['sections'].append(
+            {
+                'instance_id': 'sec_interests_1',
+                'section_key': 'interests',
+                'title': 'Sở thích',
+                'enabled': True,
+                'items': [{'item_id': 'interests_1', 'value': 'Đọc sách'}],
+            }
+        )
         layout['regions'] = [
             {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
-            {'id': 'main', 'row': 1, 'width_percent': 60, 'section_instance_ids': ['sec_experience_1']},
+            {
+                'id': 'main',
+                'row': 1,
+                'width_percent': 60,
+                'section_instance_ids': ['sec_experience_1'],
+            },
             {'id': 'sidebar', 'row': 1, 'width_percent': 40, 'section_instance_ids': []},
         ]
         layout['hidden_section_instance_ids'] = ['sec_interests_1']
 
-        validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+        validate_cv_document(
+            content_json=content, layout_json=layout, style_json=style, schema_version=1
+        )
 
     def test_rejects_invalid_rich_text_marks_row_width_and_hidden_assignment(self):
         content, layout, style = self.valid_document()
         content['sections'][0]['items'][0]['description'] = {
             'format': 'rich_text_v2',
-            'content': [{
-                'type': 'paragraph',
-                'text': 'Sai',
-                'runs': [{'text': 'Sai', 'marks': {'font_size_pt': 64, 'color': 'red'}}],
-            }],
+            'content': [
+                {
+                    'type': 'paragraph',
+                    'text': 'Sai',
+                    'runs': [{'text': 'Sai', 'marks': {'font_size_pt': 64, 'color': 'red'}}],
+                }
+            ],
         }
         layout['regions'] = [
-            {'id': 'main', 'row': 1, 'width_percent': 70, 'section_instance_ids': ['sec_experience_1']},
+            {
+                'id': 'main',
+                'row': 1,
+                'width_percent': 70,
+                'section_instance_ids': ['sec_experience_1'],
+            },
             {'id': 'sidebar', 'row': 1, 'width_percent': 20, 'section_instance_ids': []},
         ]
         layout['hidden_section_instance_ids'] = ['sec_experience_1']
 
         with self.assertRaises(ValidationError) as context:
-            validate_cv_document(content_json=content, layout_json=layout, style_json=style, schema_version=1)
+            validate_cv_document(
+                content_json=content, layout_json=layout, style_json=style, schema_version=1
+            )
 
-        self.assertIn('content_json.sections[0].items[0].description.content', context.exception.message_dict)
+        self.assertIn(
+            'content_json.sections[0].items[0].description.content', context.exception.message_dict
+        )
         self.assertIn('layout_json.regions', context.exception.message_dict)
         self.assertIn('layout_json.hidden_section_instance_ids', context.exception.message_dict)
 
@@ -189,7 +234,9 @@ class CanonicalCvDocumentTests(TestCase):
 class CvVersioningServiceTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            email='versioned-candidate@example.com', password='password', role='candidate',
+            email='versioned-candidate@example.com',
+            password='password',
+            role='candidate',
         )
         self.cv = UserCv.objects.create(
             user=self.user,
@@ -236,5 +283,6 @@ class CvVersioningServiceTests(TestCase):
                 style_json=draft.style_json,
                 expected_lock_version=0,
             )
+
 
 # Create your tests here.

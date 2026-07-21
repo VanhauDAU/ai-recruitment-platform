@@ -9,7 +9,12 @@ from django.utils import timezone
 from apps.cv_templates.models import CvSampleContent, CvTemplate
 from apps.cv_templates.services import resolve_position_content
 
-from ..composition import CvCompositionError, compose_cv_document, layout_for_content, overlay_actor_identity
+from ..composition import (
+    CvCompositionError,
+    compose_cv_document,
+    layout_for_content,
+    overlay_actor_identity,
+)
 from ..models import CvDraft, CvVersion, UserCv
 from ..schemas import empty_content
 from .versions import create_version, document_hash
@@ -33,7 +38,9 @@ def _content_for_create(sample_content, position, language):
     if sample_content.status != CvSampleContent.Status.PUBLISHED:
         raise CvLifecyclePolicyError('The selected sample content is not published.')
     if sample_content.locale != language:
-        raise CvLifecyclePolicyError('The selected sample content is not available in this language.')
+        raise CvLifecyclePolicyError(
+            'The selected sample content is not available in this language.'
+        )
     return sample_content.content_json
 
 
@@ -53,13 +60,22 @@ def create_v2_cv(
     if not actor.email_verified:
         raise CvLifecyclePolicyError('Verify your email before creating a CV.')
 
-    template = CvTemplate.objects.select_for_update(of=('self',)).select_related(
-        'current_published_version',
-    ).get(pk=template.pk)
+    template = (
+        CvTemplate.objects.select_for_update(of=('self',))
+        .select_related(
+            'current_published_version',
+        )
+        .get(pk=template.pk)
+    )
     if source_cv is not None:
-        source_cv = UserCv.objects.select_for_update(of=('self',)).select_related(
-            'latest_version', 'position',
-        ).get(pk=source_cv.pk, user=actor, is_deleted=False)
+        source_cv = (
+            UserCv.objects.select_for_update(of=('self',))
+            .select_related(
+                'latest_version',
+                'position',
+            )
+            .get(pk=source_cv.pk, user=actor, is_deleted=False)
+        )
         source_draft = CvDraft.objects.select_for_update().filter(cv=source_cv).first()
         source_document = source_draft or source_cv.latest_version
         if source_document is None:
@@ -106,7 +122,11 @@ def create_v2_cv(
     )
     CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
     return UserCv.objects.select_related(
-        'template', 'position', 'current_template_version', 'latest_version', 'published_version',
+        'template',
+        'position',
+        'current_template_version',
+        'latest_version',
+        'published_version',
     ).get(pk=cv.pk)
 
 
@@ -121,7 +141,9 @@ def _lock_draft_for_save(cv, expected_lock_version):
     if draft.lock_version != expected_lock_version:
         from .versions import StaleDraftError
 
-        raise StaleDraftError('This draft was updated in another session. Refresh and merge before saving.')
+        raise StaleDraftError(
+            'This draft was updated in another session. Refresh and merge before saving.'
+        )
     return cv, draft
 
 
@@ -137,7 +159,9 @@ def save_draft_as_version(*, cv, actor, expected_lock_version, publish=False):
         content_json=draft.content_json,
         layout_json=draft.layout_json,
         style_json=draft.style_json,
-        version_kind=(CvVersion.VersionKind.PUBLISHED if publish else CvVersion.VersionKind.MANUAL_SAVE),
+        version_kind=(
+            CvVersion.VersionKind.PUBLISHED if publish else CvVersion.VersionKind.MANUAL_SAVE
+        ),
         template_version=cv.current_template_version,
         parent_version=cv.latest_version,
         update_cv_pointers=True,
@@ -174,15 +198,22 @@ def switch_draft_template(
     """
     cv, draft = _lock_draft_for_save(cv, expected_lock_version)
     try:
-        template = CvTemplate.objects.select_for_update(of=('self',)).select_related(
-            'current_published_version',
-        ).get(public_id=template_public_id)
+        template = (
+            CvTemplate.objects.select_for_update(of=('self',))
+            .select_related(
+                'current_published_version',
+            )
+            .get(public_id=template_public_id)
+        )
     except CvTemplate.DoesNotExist as error:
         raise CvLifecyclePolicyError('The selected template does not exist.') from error
-    if theme_color and not template.color_links.filter(
-        color__hex_code__iexact=theme_color,
-        color__is_active=True,
-    ).exists():
+    if (
+        theme_color
+        and not template.color_links.filter(
+            color__hex_code__iexact=theme_color,
+            color__is_active=True,
+        ).exists()
+    ):
         raise CvLifecyclePolicyError('Color is not available for this template.')
     try:
         document = compose_cv_document(
@@ -205,19 +236,34 @@ def switch_draft_template(
     draft.lock_version += 1
     draft.client_session_id = client_session_id
     draft.updated_by = actor
-    draft.save(update_fields=[
-        'content_json', 'layout_json', 'style_json', 'schema_version', 'document_hash', 'lock_version',
-        'client_session_id', 'updated_by', 'updated_at',
-    ])
+    draft.save(
+        update_fields=[
+            'content_json',
+            'layout_json',
+            'style_json',
+            'schema_version',
+            'document_hash',
+            'lock_version',
+            'client_session_id',
+            'updated_by',
+            'updated_at',
+        ]
+    )
     previous_template_id = cv.template_id
     cv.template = template
     cv.current_template_version = template_version
     # Preserve legacy dual-read projections while the V1 API remains available.
     cv.cv_data = content
     cv.style_config = style
-    cv.save(update_fields=[
-        'template', 'current_template_version', 'cv_data', 'style_config', 'updated_at',
-    ])
+    cv.save(
+        update_fields=[
+            'template',
+            'current_template_version',
+            'cv_data',
+            'style_config',
+            'updated_at',
+        ]
+    )
     if previous_template_id != template.pk:
         CvTemplate.objects.filter(pk=template.pk).update(usage_count=F('usage_count') + 1)
     return cv, draft
@@ -225,7 +271,12 @@ def switch_draft_template(
 
 @transaction.atomic
 def apply_sample_to_draft(
-    *, cv, actor, sample_public_id, expected_lock_version, client_session_id='',
+    *,
+    cv,
+    actor,
+    sample_public_id,
+    expected_lock_version,
+    client_session_id='',
 ):
     """Replace editable sections with one published sample under the current template."""
     cv, draft = _lock_draft_for_save(cv, expected_lock_version)
@@ -243,11 +294,13 @@ def apply_sample_to_draft(
     sample_content = deepcopy(sample.content_json)
     marker_keys = {'nameplate', 'contact', 'avatar'}
     markers = [
-        section for section in current_content.get('sections', [])
+        section
+        for section in current_content.get('sections', [])
         if isinstance(section, dict) and section.get('section_key') in marker_keys
     ]
     sample_sections = [
-        section for section in sample_content.get('sections', [])
+        section
+        for section in sample_content.get('sections', [])
         if isinstance(section, dict) and section.get('section_key') not in marker_keys
     ]
     merged = sample_content
@@ -260,7 +313,10 @@ def apply_sample_to_draft(
     from .assets import validate_document_assets
 
     validate_cv_document(
-        content_json=merged, layout_json=layout, style_json=style, schema_version=1,
+        content_json=merged,
+        layout_json=layout,
+        style_json=style,
+        schema_version=1,
     )
     validate_template_layout_capabilities(
         layout_json=layout,
@@ -274,10 +330,18 @@ def apply_sample_to_draft(
     draft.lock_version += 1
     draft.client_session_id = client_session_id
     draft.updated_by = actor
-    draft.save(update_fields=[
-        'content_json', 'layout_json', 'style_json', 'document_hash', 'lock_version',
-        'client_session_id', 'updated_by', 'updated_at',
-    ])
+    draft.save(
+        update_fields=[
+            'content_json',
+            'layout_json',
+            'style_json',
+            'document_hash',
+            'lock_version',
+            'client_session_id',
+            'updated_by',
+            'updated_at',
+        ]
+    )
     UserCv.objects.filter(pk=cv.pk).update(
         cv_data=merged,
         style_config=style,

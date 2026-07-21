@@ -17,7 +17,15 @@ class AuthSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AuthSession
-        fields = ['id', 'portal', 'device_label', 'ip_address', 'created_at', 'last_seen_at', 'current']
+        fields = [
+            'id',
+            'portal',
+            'device_label',
+            'ip_address',
+            'created_at',
+            'last_seen_at',
+            'current',
+        ]
 
     def get_current(self, obj):
         return str(obj.id) == self.context.get('current_sid')
@@ -38,7 +46,9 @@ class SessionListView(APIView):
     def get(self, request):
         sessions = auth_sessions.active_sessions(request.user)
         data = AuthSessionSerializer(
-            sessions, many=True, context={'current_sid': _current_sid(request)},
+            sessions,
+            many=True,
+            context={'current_sid': _current_sid(request)},
         ).data
         return Response(data)
 
@@ -68,7 +78,9 @@ class SessionRevokeOthersView(APIView):
     @extend_schema(
         summary='Đăng xuất khỏi các thiết bị khác (giữ thiết bị hiện tại)',
         request=None,
-        responses={200: inline_serializer('SessionRevokeOthers', {'detail': serializers.CharField()})},
+        responses={
+            200: inline_serializer('SessionRevokeOthers', {'detail': serializers.CharField()})
+        },
         tags=['auth'],
     )
     def post(self, request):

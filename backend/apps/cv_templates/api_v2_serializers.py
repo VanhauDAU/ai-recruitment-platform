@@ -18,8 +18,15 @@ def _catalog_groups(template):
     tags = []
     for link in links:
         category = link.category
-        item = {'public_id': category.public_id, 'slug': category.slug, 'name': category.name, 'type': category.category_type}
-        (tags if category.category_type == CvCategory.CategoryType.FEATURE else categories).append(item)
+        item = {
+            'public_id': category.public_id,
+            'slug': category.slug,
+            'name': category.name,
+            'type': category.category_type,
+        }
+        (tags if category.category_type == CvCategory.CategoryType.FEATURE else categories).append(
+            item
+        )
     return categories, tags
 
 
@@ -31,10 +38,14 @@ def _catalog_colors(template, request=None):
             'slug': link.color.slug,
             'hex_code': link.color.hex_code,
             'thumbnail_url': media_url_from_value(
-                link.thumbnail_url or template.thumbnail_url, request=request,
+                link.thumbnail_url or template.thumbnail_url,
+                request=request,
             ),
             'preview_url': media_url_from_value(
-                link.preview_url or link.thumbnail_url or template.preview_url or template.thumbnail_url,
+                link.preview_url
+                or link.thumbnail_url
+                or template.preview_url
+                or template.thumbnail_url,
                 request=request,
             ),
             'is_default': link.is_default,
@@ -55,8 +66,17 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = CvTemplate
         fields = [
-            'public_id', 'slug', 'display_name', 'description', 'thumbnail_url',
-            'is_premium', 'theme_color', 'color_variants', 'colors', 'categories', 'tags',
+            'public_id',
+            'slug',
+            'display_name',
+            'description',
+            'thumbnail_url',
+            'is_premium',
+            'theme_color',
+            'color_variants',
+            'colors',
+            'categories',
+            'tags',
         ]
         read_only_fields = fields
 
@@ -70,11 +90,19 @@ class CvTemplateCardSerializer(serializers.ModelSerializer):
 
     def get_theme_color(self, template):
         colors = _catalog_colors(template, self.context.get('request'))
-        default = next((item for item in colors if item['is_default']), colors[0] if colors else None)
-        return default['hex_code'] if default else template.current_published_version.default_style_json.get('theme_color', '#00A66A')
+        default = next(
+            (item for item in colors if item['is_default']), colors[0] if colors else None
+        )
+        return (
+            default['hex_code']
+            if default
+            else template.current_published_version.default_style_json.get('theme_color', '#00A66A')
+        )
 
     def get_color_variants(self, template):
-        return [item['hex_code'] for item in _catalog_colors(template, self.context.get('request'))] or [self.get_theme_color(template)]
+        return [
+            item['hex_code'] for item in _catalog_colors(template, self.context.get('request'))
+        ] or [self.get_theme_color(template)]
 
     def get_colors(self, template):
         return _catalog_colors(template, self.context.get('request'))
@@ -143,8 +171,14 @@ class CvSampleContentCardSerializer(serializers.ModelSerializer):
     class Meta:
         model = CvSampleContent
         fields = [
-            'public_id', 'title', 'locale', 'experience_level', 'job_category_name',
-            'job_category_slug', 'position_name_vi', 'position_name',
+            'public_id',
+            'title',
+            'locale',
+            'experience_level',
+            'job_category_name',
+            'job_category_slug',
+            'position_name_vi',
+            'position_name',
         ]
         read_only_fields = fields
 

@@ -61,5 +61,7 @@ def validate_renderer_contract(renderer_key, schema_version, regions=None):
     if regions is not None:
         unknown_regions = set(regions).difference(contract.allowed_regions)
         if unknown_regions:
-            raise ValidationError({'regions': f'Unsupported renderer regions: {sorted(unknown_regions)}.'})
+            raise ValidationError(
+                {'regions': f'Unsupported renderer regions: {sorted(unknown_regions)}.'}
+            )
     return contract

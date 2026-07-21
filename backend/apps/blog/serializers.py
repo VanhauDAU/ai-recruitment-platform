@@ -32,8 +32,15 @@ class PostListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['public_id', 'title', 'slug', 'excerpt', 'thumbnail_url',
-                  'category', 'published_at']
+        fields = [
+            'public_id',
+            'title',
+            'slug',
+            'excerpt',
+            'thumbnail_url',
+            'category',
+            'published_at',
+        ]
 
     def get_thumbnail_url(self, obj):
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))
@@ -56,8 +63,18 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['public_id', 'title', 'slug', 'thumbnail_url', 'content',
-                  'category', 'tags', 'related_job_category', 'published_at', 'seo_title']
+        fields = [
+            'public_id',
+            'title',
+            'slug',
+            'thumbnail_url',
+            'content',
+            'category',
+            'tags',
+            'related_job_category',
+            'published_at',
+            'seo_title',
+        ]
 
     def get_thumbnail_url(self, obj):
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))

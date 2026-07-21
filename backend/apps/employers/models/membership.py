@@ -32,7 +32,9 @@ class RecruiterProfile(models.Model):
         OTHER = 'other', 'Khác'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recruiter_profile')
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recruiter_profile'
+    )
     company = models.ForeignKey(
         Company, on_delete=models.PROTECT, null=True, blank=True, related_name='recruiters'
     )

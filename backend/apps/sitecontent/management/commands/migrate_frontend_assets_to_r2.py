@@ -50,12 +50,18 @@ class Command(BaseCommand):
     help = 'Copy hard-coded legacy frontend image assets to Cloudflare R2 public media.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--apply', action='store_true', help='Upload missing assets. Without this flag only verify sources.')
+        parser.add_argument(
+            '--apply',
+            action='store_true',
+            help='Upload missing assets. Without this flag only verify sources.',
+        )
 
     def handle(self, *args, **options):
         storage = public_media_storage()
         if storage.__class__.__module__.startswith('django.core.files.storage'):
-            raise CommandError('R2 is not configured. Set all R2_* variables in the local backend .env first.')
+            raise CommandError(
+                'R2 is not configured. Set all R2_* variables in the local backend .env first.'
+            )
 
         copied = verified = failed = 0
         for key, source_url in LEGACY_ASSETS.items():
@@ -73,4 +79,6 @@ class Command(BaseCommand):
         if failed:
             raise CommandError(f'{failed} frontend asset(s) could not be migrated.')
         mode = 'Applied' if options['apply'] else 'Verified'
-        self.stdout.write(self.style.SUCCESS(f'{mode}: {verified} assets; {copied} newly uploaded.'))
+        self.stdout.write(
+            self.style.SUCCESS(f'{mode}: {verified} assets; {copied} newly uploaded.')
+        )

@@ -18,8 +18,14 @@ class LocaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locale
         fields = [
-            'code', 'label_vi', 'native_name', 'flag_emoji', 'catalog_path',
-            'is_default', 'is_active', 'sort_order',
+            'code',
+            'label_vi',
+            'native_name',
+            'flag_emoji',
+            'catalog_path',
+            'is_default',
+            'is_active',
+            'sort_order',
         ]
         read_only_fields = ['is_active']
 
@@ -28,8 +34,16 @@ class AdminLocaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locale
         fields = [
-            'code', 'label_vi', 'native_name', 'flag_emoji', 'catalog_path',
-            'is_default', 'is_active', 'sort_order', 'created_at', 'updated_at',
+            'code',
+            'label_vi',
+            'native_name',
+            'flag_emoji',
+            'catalog_path',
+            'is_default',
+            'is_active',
+            'sort_order',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
         extra_kwargs = {'is_default': {'validators': []}}
@@ -72,8 +86,20 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SiteSetting
-        fields = ['key', 'label', 'group', 'value', 'value_type', 'options',
-                  'description', 'is_public', 'order', 'env_configured', 'display_value', 'updated_at']
+        fields = [
+            'key',
+            'label',
+            'group',
+            'value',
+            'value_type',
+            'options',
+            'description',
+            'is_public',
+            'order',
+            'env_configured',
+            'display_value',
+            'updated_at',
+        ]
 
     def get_env_configured(self, obj):
         if obj.value_type != SiteSetting.ValueType.ENV:
@@ -106,7 +132,16 @@ class BannerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Banner
-        fields = ['id', 'eyebrow', 'title', 'subtitle', 'image_url', 'theme', 'cta_label', 'cta_url']
+        fields = [
+            'id',
+            'eyebrow',
+            'title',
+            'subtitle',
+            'image_url',
+            'theme',
+            'cta_label',
+            'cta_url',
+        ]
 
     def get_image_url(self, obj):
         return media_url_from_value(obj.image_url, request=self.context.get('request'))
@@ -115,7 +150,16 @@ class BannerSerializer(serializers.ModelSerializer):
 class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feedback
-        fields = ['id', 'category', 'content', 'satisfaction', 'phone', 'email', 'page_url', 'created_at']
+        fields = [
+            'id',
+            'category',
+            'content',
+            'satisfaction',
+            'phone',
+            'email',
+            'page_url',
+            'created_at',
+        ]
         read_only_fields = ['id', 'created_at']
         extra_kwargs = {
             'content': {'trim_whitespace': True, 'max_length': 2000},

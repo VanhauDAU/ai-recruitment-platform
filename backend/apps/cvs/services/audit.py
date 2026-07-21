@@ -23,11 +23,17 @@ def _metadata_hash(value: str) -> str:
 def request_access_metadata(request) -> tuple[str, str]:
     """Hash request metadata without retaining raw IP, UA, token, or CV data."""
     forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    ip_address = forwarded_for.split(',', 1)[0].strip() if forwarded_for else request.META.get('REMOTE_ADDR', '')
+    ip_address = (
+        forwarded_for.split(',', 1)[0].strip()
+        if forwarded_for
+        else request.META.get('REMOTE_ADDR', '')
+    )
     return _metadata_hash(ip_address), _metadata_hash(request.META.get('HTTP_USER_AGENT', ''))
 
 
-def record_cv_access(*, cv, version, actor_type, access_channel, request, actor_user=None, shared_link=None) -> CvAccessLog:
+def record_cv_access(
+    *, cv, version, actor_type, access_channel, request, actor_user=None, shared_link=None
+) -> CvAccessLog:
     """Persist only actor/channel/version metadata for a sensitive CV action."""
     ip_hash, user_agent_hash = request_access_metadata(request)
     return CvAccessLog.objects.create(

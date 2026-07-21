@@ -30,10 +30,15 @@ class CandidateProfileApiTests(TestCase):
             category_type=JobCategory.CategoryType.DOMAIN,
         )
         self.province = Location.objects.create(
-            code='01', name='Hà Nội', level=Location.Level.PROVINCE,
+            code='01',
+            name='Hà Nội',
+            level=Location.Level.PROVINCE,
         )
         self.ward = Location.objects.create(
-            code='00001', name='Phường Ba Đình', level=Location.Level.WARD, parent=self.province,
+            code='00001',
+            name='Phường Ba Đình',
+            level=Location.Level.WARD,
+            parent=self.province,
         )
 
     def test_profile_is_owned_by_request_user_and_returns_settings_fields_only(self):
@@ -78,22 +83,30 @@ class CandidateProfileApiTests(TestCase):
         self.assertEqual(anonymous.get('/api/candidate/job-preferences/').status_code, 401)
 
         employer = get_user_model().objects.create_user(
-            email='employer@example.com', password='password', role='employer',
+            email='employer@example.com',
+            password='password',
+            role='employer',
         )
         anonymous.force_authenticate(employer)
         self.assertEqual(anonymous.get('/api/candidate/job-preferences/').status_code, 403)
 
     def test_job_preference_put_replaces_selections_and_marks_profile_configured(self):
         response = self.client.put(
-            '/api/candidate/job-preferences/', self.preference_payload(), format='json',
+            '/api/candidate/job-preferences/',
+            self.preference_payload(),
+            format='json',
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data['job_preferences_configured'])
         self.assertEqual(response.data['desired_position_other'], 'AI engineer')
-        self.assertEqual([item['id'] for item in response.data['desired_specializations']], [
-            self.specialization.pk, self.other_specialization.pk,
-        ])
+        self.assertEqual(
+            [item['id'] for item in response.data['desired_specializations']],
+            [
+                self.specialization.pk,
+                self.other_specialization.pk,
+            ],
+        )
         self.assertTrue(response.data['recruiter_visibility_consent'])
         self.assertFalse(response.data['ai_recommendation_consent'])
         self.user.candidate_profile.refresh_from_db()
@@ -133,7 +146,9 @@ class CandidateProfileApiTests(TestCase):
 
     def test_job_preference_rejects_zero_salary_without_partial_save(self):
         response = self.client.put(
-            '/api/candidate/job-preferences/', self.preference_payload(desired_salary_vnd=0), format='json',
+            '/api/candidate/job-preferences/',
+            self.preference_payload(desired_salary_vnd=0),
+            format='json',
         )
 
         self.assertEqual(response.status_code, 400)
@@ -152,26 +167,46 @@ class CandidateProfileApiTests(TestCase):
 
     def test_recruiter_visibility_requires_confirmation_and_writes_audit_event(self):
         url = '/api/candidate/recruiter-visibility/'
-        rejected = self.client.patch(url, {
-            'enabled': True, 'confirmed': False, 'policy_version': 'v1',
-            'source': 'cv_save_success', 'source_path': '/save-cv-success/cv_1',
-        }, format='json')
+        rejected = self.client.patch(
+            url,
+            {
+                'enabled': True,
+                'confirmed': False,
+                'policy_version': 'v1',
+                'source': 'cv_save_success',
+                'source_path': '/save-cv-success/cv_1',
+            },
+            format='json',
+        )
         self.assertEqual(rejected.status_code, 400)
         self.assertFalse(CandidateConsentEvent.objects.exists())
 
-        accepted = self.client.patch(url, {
-            'enabled': True, 'confirmed': True, 'policy_version': 'v1',
-            'source': 'cv_save_success', 'source_path': '/save-cv-success/cv_1',
-        }, format='json')
+        accepted = self.client.patch(
+            url,
+            {
+                'enabled': True,
+                'confirmed': True,
+                'policy_version': 'v1',
+                'source': 'cv_save_success',
+                'source_path': '/save-cv-success/cv_1',
+            },
+            format='json',
+        )
         self.assertEqual(accepted.status_code, 200, accepted.data)
         self.assertTrue(accepted.data['enabled'])
         event = CandidateConsentEvent.objects.get()
         self.assertEqual(event.source, 'cv_save_success')
         self.assertEqual(event.decision, CandidateConsent.Decision.GRANTED)
 
-        disabled = self.client.patch(url, {
-            'enabled': False, 'source': 'account_settings', 'policy_version': 'v1',
-        }, format='json')
+        disabled = self.client.patch(
+            url,
+            {
+                'enabled': False,
+                'source': 'account_settings',
+                'policy_version': 'v1',
+            },
+            format='json',
+        )
         self.assertEqual(disabled.status_code, 200)
         self.assertFalse(disabled.data['enabled'])
         self.assertEqual(CandidateConsentEvent.objects.count(), 2)

@@ -10,7 +10,10 @@ def employer_job_list_queryset(user):
         .select_related('company')
         .prefetch_related('job_locations__location__parent')
         .defer(
-            'description', 'requirements', 'benefits', 'work_schedule_note',
+            'description',
+            'requirements',
+            'benefits',
+            'work_schedule_note',
             'rejected_reason',
         )
         .order_by('-created_at')

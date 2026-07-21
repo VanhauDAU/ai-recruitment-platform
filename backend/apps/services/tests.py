@@ -40,8 +40,11 @@ def make_category(**overrides):
 
 def make_package(category, **overrides):
     defaults = {
-        'slug': 'top-max', 'name_vi': 'TOP MAX', 'price': 7500000,
-        'benefits_vi': ['Quyền lợi 1'], 'order': 1,
+        'slug': 'top-max',
+        'name_vi': 'TOP MAX',
+        'price': 7500000,
+        'benefits_vi': ['Quyền lợi 1'],
+        'order': 1,
     }
     defaults.update(overrides)
     return ServicePackage.objects.create(category=category, **defaults)
@@ -102,7 +105,9 @@ class ConsultationLeadApiTests(APITestCase):
             self.assertIn(field, response.data)
 
     def test_rejects_invalid_phone(self):
-        response = self.client.post(reverse('services-consultations'), {**LEAD_PAYLOAD, 'phone': 'abc'})
+        response = self.client.post(
+            reverse('services-consultations'), {**LEAD_PAYLOAD, 'phone': 'abc'}
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('phone', response.data)
@@ -120,10 +125,14 @@ class ConsultationLeadApiTests(APITestCase):
 class AdminServicesApiTests(APITestCase):
     def setUp(self):
         self.admin = User.objects.create_user(
-            email='admin@example.com', password='Password@123', role=User.Role.ADMIN,
+            email='admin@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
         )
         self.candidate = User.objects.create_user(
-            email='candidate@example.com', password='Password@123', role=User.Role.CANDIDATE,
+            email='candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
         )
         self.category = make_category()
         self.package = make_package(self.category)
@@ -138,17 +147,27 @@ class AdminServicesApiTests(APITestCase):
     def test_admin_can_crud_package(self):
         self.client.force_authenticate(self.admin)
 
-        created = self.client.post(reverse('services-admin-packages'), {
-            'category': self.category.pk, 'slug': 'top-eco', 'name_vi': 'TOP ECO',
-            'price': 4400000, 'benefits_vi': ['Ưu tiên hiển thị'], 'order': 2,
-        }, format='json')
+        created = self.client.post(
+            reverse('services-admin-packages'),
+            {
+                'category': self.category.pk,
+                'slug': 'top-eco',
+                'name_vi': 'TOP ECO',
+                'price': 4400000,
+                'benefits_vi': ['Ưu tiên hiển thị'],
+                'order': 2,
+            },
+            format='json',
+        )
         self.assertEqual(created.status_code, status.HTTP_201_CREATED)
 
         listed = self.client.get(reverse('services-admin-packages'))
         self.assertEqual({p['slug'] for p in listed.data}, {'top-max', 'top-eco'})
 
         detail_url = reverse('services-admin-package-detail', args=[created.data['id']])
-        patched = self.client.patch(detail_url, {'price': 4000000, 'is_active': False}, format='json')
+        patched = self.client.patch(
+            detail_url, {'price': 4000000, 'is_active': False}, format='json'
+        )
         self.assertEqual(patched.status_code, status.HTTP_200_OK)
         self.assertEqual(patched.data['price'], '4000000')
 
@@ -156,24 +175,34 @@ class AdminServicesApiTests(APITestCase):
 
     def test_package_rejects_invalid_benefits(self):
         self.client.force_authenticate(self.admin)
-        response = self.client.post(reverse('services-admin-packages'), {
-            'category': self.category.pk, 'slug': 'bad', 'name_vi': 'Bad',
-            'benefits_vi': 'không phải list',
-        }, format='json')
+        response = self.client.post(
+            reverse('services-admin-packages'),
+            {
+                'category': self.category.pk,
+                'slug': 'bad',
+                'name_vi': 'Bad',
+                'benefits_vi': 'không phải list',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('benefits_vi', response.data)
 
     def test_cannot_delete_category_with_packages(self):
         self.client.force_authenticate(self.admin)
-        response = self.client.delete(reverse('services-admin-category-detail', args=[self.category.pk]))
+        response = self.client.delete(
+            reverse('services-admin-category-detail', args=[self.category.pk])
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(ServiceCategory.objects.filter(pk=self.category.pk).exists())
 
     def test_admin_can_mark_lead_contacted(self):
         lead = ConsultationLead.objects.create(
-            full_name='Trần B', email='b@example.com', phone='0987654321',
+            full_name='Trần B',
+            email='b@example.com',
+            phone='0987654321',
         )
         self.client.force_authenticate(self.admin)
 
@@ -182,7 +211,8 @@ class AdminServicesApiTests(APITestCase):
 
         response = self.client.patch(
             reverse('services-admin-consultation-detail', args=[lead.pk]),
-            {'status': 'contacted'}, format='json',
+            {'status': 'contacted'},
+            format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lead.refresh_from_db()
@@ -213,7 +243,9 @@ class EmployerFooterLinkFixTests(APITestCase):
     def test_migrated_database_has_no_stale_employer_urls(self):
         # Migration 0006 seed group với prefix cũ /nha-tuyen-dung; 0015 phải sửa
         # hết khi dựng DB — còn sót là footer link 404.
-        urls = list(LinkItem.objects.filter(group__key='footer-employer').values_list('url', flat=True))
+        urls = list(
+            LinkItem.objects.filter(group__key='footer-employer').values_list('url', flat=True)
+        )
         self.assertTrue(urls)
         self.assertFalse([u for u in urls if u.startswith('/nha-tuyen-dung')])
         self.assertIn('/tuyendung/bao-gia', urls)
@@ -221,7 +253,9 @@ class EmployerFooterLinkFixTests(APITestCase):
     def test_fix_function_updates_stale_rows(self):
         migration = import_module('apps.sitecontent.migrations.0015_fix_employer_footer_links')
         group = LinkGroup.objects.get(key='footer-employer')
-        stale = LinkItem.objects.create(group=group, label='Link cũ', url='/nha-tuyen-dung/dich-vu', order=99)
+        stale = LinkItem.objects.create(
+            group=group, label='Link cũ', url='/nha-tuyen-dung/dich-vu', order=99
+        )
 
         migration.fix_employer_footer_links(django_apps, None)
 

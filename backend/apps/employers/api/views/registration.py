@@ -12,7 +12,10 @@ from apps.accounts.services.refresh_cookies import set_refresh_cookie
 
 from ...services.registration import complete_registration_profile, register_employer
 from ..serializers import RecruiterProfileSerializer
-from ..serializers.registration import EmployerRegisterSerializer, EmployerRegistrationProfileSerializer
+from ..serializers.registration import (
+    EmployerRegisterSerializer,
+    EmployerRegistrationProfileSerializer,
+)
 
 
 class EmployerRegisterView(APIView):
@@ -36,7 +39,9 @@ class EmployerRegisterView(APIView):
         response = Response(
             {
                 'user': SessionUserSerializer(user, context={'request': request}).data,
-                'recruiter': RecruiterProfileSerializer(recruiter, context={'request': request}).data,
+                'recruiter': RecruiterProfileSerializer(
+                    recruiter, context={'request': request}
+                ).data,
                 'access': tokens['access'],
             },
             status=status.HTTP_201_CREATED,

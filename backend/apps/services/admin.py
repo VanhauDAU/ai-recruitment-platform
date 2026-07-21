@@ -31,8 +31,17 @@ class ConsultationLeadAdmin(admin.ModelAdmin):
     list_filter = ['status', 'need', 'created_at']
     list_editable = ['status']
     search_fields = ['full_name', 'company_name', 'email', 'phone']
-    readonly_fields = ['full_name', 'company_name', 'email', 'phone', 'province',
-                       'need', 'note', 'source_page', 'created_at']
+    readonly_fields = [
+        'full_name',
+        'company_name',
+        'email',
+        'phone',
+        'province',
+        'need',
+        'note',
+        'source_page',
+        'created_at',
+    ]
 
     def has_add_permission(self, request):
         return False

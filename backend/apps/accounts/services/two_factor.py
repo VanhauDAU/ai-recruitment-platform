@@ -62,9 +62,13 @@ def _fernet():
         try:
             return Fernet(configured_key.encode())
         except (TypeError, ValueError) as error:
-            raise ImproperlyConfigured('TWO_FACTOR_TOTP_ENCRYPTION_KEY must be a valid Fernet key.') from error
+            raise ImproperlyConfigured(
+                'TWO_FACTOR_TOTP_ENCRYPTION_KEY must be a valid Fernet key.'
+            ) from error
     if not settings.DEBUG:
-        raise ImproperlyConfigured('TWO_FACTOR_TOTP_ENCRYPTION_KEY must be configured outside DEBUG.')
+        raise ImproperlyConfigured(
+            'TWO_FACTOR_TOTP_ENCRYPTION_KEY must be configured outside DEBUG.'
+        )
     # Chỉ phục vụ development/test. Production luôn phải dùng khóa tách riêng.
     return Fernet(base64.urlsafe_b64encode(hashlib.sha256(settings.SECRET_KEY.encode()).digest()))
 
@@ -102,17 +106,22 @@ def discard_pending_totp_secret(user):
 
 def _totp_code(secret, counter):
     padded_secret = secret.upper() + '=' * (-len(secret) % 8)
-    digest = hmac.new(base64.b32decode(padded_secret), struct.pack('>Q', counter), hashlib.sha1).digest()
-    offset = digest[-1] & 0x0f
-    value = struct.unpack('>I', digest[offset:offset + 4])[0] & 0x7fffffff
-    return str(value % (10 ** TOTP_DIGITS)).zfill(TOTP_DIGITS)
+    digest = hmac.new(
+        base64.b32decode(padded_secret), struct.pack('>Q', counter), hashlib.sha1
+    ).digest()
+    offset = digest[-1] & 0x0F
+    value = struct.unpack('>I', digest[offset : offset + 4])[0] & 0x7FFFFFFF
+    return str(value % (10**TOTP_DIGITS)).zfill(TOTP_DIGITS)
 
 
 def verify_totp_secret(secret, code, *, now=None):
     if not secret or not code or not str(code).isdigit() or len(str(code)) != TOTP_DIGITS:
         return False
     counter = int((time() if now is None else now) // TOTP_PERIOD_SECONDS)
-    return any(secrets.compare_digest(_totp_code(secret, candidate), str(code)) for candidate in (counter - 1, counter, counter + 1))
+    return any(
+        secrets.compare_digest(_totp_code(secret, candidate), str(code))
+        for candidate in (counter - 1, counter, counter + 1)
+    )
 
 
 def verify_user_totp(user, code):
@@ -120,7 +129,10 @@ def verify_user_totp(user, code):
 
 
 def generate_backup_codes():
-    return [f'{secrets.randbelow(10 ** BACKUP_CODE_LENGTH):0{BACKUP_CODE_LENGTH}d}' for _ in range(BACKUP_CODE_COUNT)]
+    return [
+        f'{secrets.randbelow(10**BACKUP_CODE_LENGTH):0{BACKUP_CODE_LENGTH}d}'
+        for _ in range(BACKUP_CODE_COUNT)
+    ]
 
 
 def replace_backup_codes(user):
@@ -165,7 +177,11 @@ def issue_code(user, purpose):
     """Phát mã mới và thay thế mã cũ cùng mục đích."""
     code = f'{secrets.randbelow(1_000_000):06d}'
     cache.set(_code_key(user.pk, purpose), code, settings.TWO_FACTOR_CODE_TTL)
-    cache.set(_expiry_key(user.pk, purpose), time() + settings.TWO_FACTOR_CODE_TTL, settings.TWO_FACTOR_CODE_TTL)
+    cache.set(
+        _expiry_key(user.pk, purpose),
+        time() + settings.TWO_FACTOR_CODE_TTL,
+        settings.TWO_FACTOR_CODE_TTL,
+    )
     # Mã mới -> bộ đếm sai được làm mới (gửi lại cho lại đủ số lần thử).
     cache.delete(_attempts_key(user.pk, purpose))
     return code
@@ -240,7 +256,13 @@ def send_two_factor_email(user, purpose, *, target=None):
         return
     site_name = site_setting('site_name', 'ProCV')
     minutes = max(1, settings.TWO_FACTOR_CODE_TTL // 60)
-    portal_label = 'Nhà tuyển dụng' if user.is_employer else 'Ứng viên' if user.is_candidate else 'Quản trị viên'
+    portal_label = (
+        'Nhà tuyển dụng'
+        if user.is_employer
+        else 'Ứng viên'
+        if user.is_candidate
+        else 'Quản trị viên'
+    )
     subject = f'[{site_name}] Mã xác thực 2 yếu tố cho tài khoản {portal_label}'
     action = {
         PURPOSE_LOGIN: 'đăng nhập',
@@ -259,7 +281,7 @@ def send_two_factor_email(user, purpose, *, target=None):
             f'Mã có hiệu lực trong {minutes} phút. Không chia sẻ mã này với bất kỳ ai.\n\n'
             f'Trân trọng,\nĐội ngũ {site_name}'
         )
-        html = f'''<div style="margin:0;background:#f3f5f7;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#3f3f46">
+        html = f"""<div style="margin:0;background:#f3f5f7;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#3f3f46">
           <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
             <div style="padding:22px 32px;background:#073e35;color:#fff"><strong style="font-size:22px">{escape(site_name)}</strong><span style="display:block;margin-top:5px;font-size:13px;color:#a7f3d0">Cổng Nhà tuyển dụng</span></div>
             <div style="padding:32px;font-size:16px;line-height:1.65">
@@ -271,7 +293,7 @@ def send_two_factor_email(user, purpose, *, target=None):
               <p style="margin-bottom:0">Trân trọng,<br>Đội ngũ {escape(site_name)}</p>
             </div>
           </div>
-        </div>'''
+        </div>"""
         send_html_email(subject=subject, text=text, html=html, to=user.email)
         return
 
@@ -279,11 +301,11 @@ def send_two_factor_email(user, purpose, *, target=None):
         f'Mã xác minh để {action} của bạn là: {code}. Mã có hiệu lực trong {minutes} phút. '
         f'Không chia sẻ mã này với bất kỳ ai.'
     )
-    html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#1f2937">
+    html = f"""<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#1f2937">
       <h2 style="color:#00b14f">Mã xác minh của bạn</h2>
       <p>Xin chào <strong>{escape(user.full_name or user.email)}</strong>,</p>
       <p>Mã dùng để {escape(action)} là:</p>
       <p style="margin:24px 0;text-align:center;font-size:30px;font-weight:700;letter-spacing:8px;color:#00b14f">{code}</p>
       <p>Mã có hiệu lực trong <strong>{minutes} phút</strong>. Không chia sẻ mã này với bất kỳ ai.</p>
-    </div>'''
+    </div>"""
     send_html_email(subject=subject, text=text, html=html, to=user.email)

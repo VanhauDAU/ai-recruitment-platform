@@ -8,7 +8,11 @@ from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
 
 from .models import Application
-from .services import InvalidApplicationStatusTransition, create_application, update_application_status
+from .services import (
+    InvalidApplicationStatusTransition,
+    create_application,
+    update_application_status,
+)
 
 
 class ApplicationStatusTransitionServiceTests(TestCase):
@@ -48,11 +52,15 @@ class ApplicationStatusTransitionServiceTests(TestCase):
 class ApplicationSnapshotServiceTests(TestCase):
     def test_create_application_uses_a_new_immutable_snapshot(self):
         candidate = get_user_model().objects.create_user(
-            email='application-snapshot@example.com', password='password', role='candidate',
+            email='application-snapshot@example.com',
+            password='password',
+            role='candidate',
         )
         cv = UserCv.objects.create(
-            user=candidate, cv_type=UserCv.CvType.BUILDER,
-            source=UserCv.Source.BUILDER, title='Applied CV',
+            user=candidate,
+            cv_type=UserCv.CvType.BUILDER,
+            source=UserCv.Source.BUILDER,
+            title='Applied CV',
         )
         initial = create_initial_document(cv, candidate)
         serializer = Mock()

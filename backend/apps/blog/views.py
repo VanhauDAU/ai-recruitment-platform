@@ -52,16 +52,18 @@ class BlogHomeView(APIView):
     def get(self, request):
         featured, sections = blog_home_sections()
         ctx = {'request': request}
-        return Response({
-            'featured': PostListSerializer(featured, many=True, context=ctx).data,
-            'sections': [
-                {
-                    'category': PostCategorySerializer(section['category']).data,
-                    'posts': PostListSerializer(section['posts'], many=True, context=ctx).data,
-                }
-                for section in sections
-            ],
-        })
+        return Response(
+            {
+                'featured': PostListSerializer(featured, many=True, context=ctx).data,
+                'sections': [
+                    {
+                        'category': PostCategorySerializer(section['category']).data,
+                        'posts': PostListSerializer(section['posts'], many=True, context=ctx).data,
+                    }
+                    for section in sections
+                ],
+            }
+        )
 
 
 class PostCategoryListView(generics.ListAPIView):
@@ -99,6 +101,12 @@ class BlogImageUploadView(APIView):
     def post(self, request):
         upload = request.FILES.get('file') or request.FILES.get('image')
         if upload is None:
-            return Response({'detail': 'Thiếu file ảnh (field "file").'}, status=status.HTTP_400_BAD_REQUEST)
-        saved = save_image_upload(upload, 'blog/content', request=request, max_dimensions=(1600, 1600))
-        return Response({'url': saved['url'], 'name': saved['name']}, status=status.HTTP_201_CREATED)
+            return Response(
+                {'detail': 'Thiếu file ảnh (field "file").'}, status=status.HTTP_400_BAD_REQUEST
+            )
+        saved = save_image_upload(
+            upload, 'blog/content', request=request, max_dimensions=(1600, 1600)
+        )
+        return Response(
+            {'url': saved['url'], 'name': saved['name']}, status=status.HTTP_201_CREATED
+        )

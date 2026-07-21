@@ -13,7 +13,11 @@ class LocationListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = Location.objects.filter(is_active=True).only(
-            'id', 'name', 'level', 'parent_id', 'merged_from',
+            'id',
+            'name',
+            'level',
+            'parent_id',
+            'merged_from',
         )
         params = self.request.query_params
         if ids := params.get('ids'):

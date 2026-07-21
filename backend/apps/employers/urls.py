@@ -28,10 +28,22 @@ from .api.views.registration import CompleteEmployerRegistrationView, EmployerRe
 
 urlpatterns = [
     path('register/', EmployerRegisterView.as_view(), name='employer-register'),
-    path('onboarding/registration/', CompleteEmployerRegistrationView.as_view(), name='employer-registration-complete'),
+    path(
+        'onboarding/registration/',
+        CompleteEmployerRegistrationView.as_view(),
+        name='employer-registration-complete',
+    ),
     path('consulting-need/', RecruitmentNeedView.as_view(), name='employer-consulting-need'),
-    path('recruitment-needs/', RecruitmentNeedListCreateView.as_view(), name='employer-recruitment-needs'),
-    path('recruitment-needs/<str:public_id>/', RecruitmentNeedDetailView.as_view(), name='employer-recruitment-need-detail'),
+    path(
+        'recruitment-needs/',
+        RecruitmentNeedListCreateView.as_view(),
+        name='employer-recruitment-needs',
+    ),
+    path(
+        'recruitment-needs/<str:public_id>/',
+        RecruitmentNeedDetailView.as_view(),
+        name='employer-recruitment-need-detail',
+    ),
     # Nhà tuyển dụng + onboarding
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
     path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
@@ -46,11 +58,29 @@ urlpatterns = [
     path('company/join/', JoinCompanyView.as_view(), name='employer-company-join'),
     path('company/logo/', CompanyLogoUploadView.as_view(), name='employer-company-logo-upload'),
     path('company/cover/', CompanyCoverUploadView.as_view(), name='employer-company-cover-upload'),
-    path('company/images/', CompanyGalleryUploadView.as_view(), name='employer-company-image-upload'),
-    path('company/images/<int:pk>/', CompanyGalleryDeleteView.as_view(), name='employer-company-image-delete'),
-    path('company/documents/', CompanyDocumentListCreateView.as_view(), name='employer-company-documents'),
-    path('company/documents/<int:pk>/content/', CompanyDocumentContentView.as_view(), name='employer-company-document-content'),
-    path('company/update-requests/', CompanyUpdateRequestListCreateView.as_view(), name='employer-company-update-requests'),
+    path(
+        'company/images/', CompanyGalleryUploadView.as_view(), name='employer-company-image-upload'
+    ),
+    path(
+        'company/images/<int:pk>/',
+        CompanyGalleryDeleteView.as_view(),
+        name='employer-company-image-delete',
+    ),
+    path(
+        'company/documents/',
+        CompanyDocumentListCreateView.as_view(),
+        name='employer-company-documents',
+    ),
+    path(
+        'company/documents/<int:pk>/content/',
+        CompanyDocumentContentView.as_view(),
+        name='employer-company-document-content',
+    ),
+    path(
+        'company/update-requests/',
+        CompanyUpdateRequestListCreateView.as_view(),
+        name='employer-company-update-requests',
+    ),
     # Danh mục lĩnh vực
     path('industries/', IndustryListView.as_view(), name='employer-industries'),
     path('industries/all/', AllIndustryListView.as_view(), name='employer-industries-all'),

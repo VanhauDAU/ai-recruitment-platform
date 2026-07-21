@@ -72,24 +72,75 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
-            'public_id', 'slug', 'title', 'company_name', 'company_logo_url',
-            'company_cover_url', 'brand_slug', 'category', 'category_assignments',
-            'job_locations', 'locations_detail', 'short_description', 'description',
-            'requirements', 'benefits', 'work_schedule_note',
-            'work_type', 'employment_type', 'education_level', 'experience_years',
-            'position_level', 'gender_requirement', 'age_min', 'age_max',
-            'number_of_vacancies', 'salary_type', 'salary_min', 'salary_max', 'currency',
-            'is_salary_visible', 'deadline', 'status', 'view_count',
-            'tier', 'is_hot', 'is_urgent', 'has_flash_badge', 'company_verified',
-            'application_count', 'job_skills', 'work_schedules', 'job_benefits',
-            'language_requirements', 'published_at', 'created_at', 'updated_at',
+            'public_id',
+            'slug',
+            'title',
+            'company_name',
+            'company_logo_url',
+            'company_cover_url',
+            'brand_slug',
+            'category',
+            'category_assignments',
+            'job_locations',
+            'locations_detail',
+            'short_description',
+            'description',
+            'requirements',
+            'benefits',
+            'work_schedule_note',
+            'work_type',
+            'employment_type',
+            'education_level',
+            'experience_years',
+            'position_level',
+            'gender_requirement',
+            'age_min',
+            'age_max',
+            'number_of_vacancies',
+            'salary_type',
+            'salary_min',
+            'salary_max',
+            'currency',
+            'is_salary_visible',
+            'deadline',
+            'status',
+            'view_count',
+            'tier',
+            'is_hot',
+            'is_urgent',
+            'has_flash_badge',
+            'company_verified',
+            'application_count',
+            'job_skills',
+            'work_schedules',
+            'job_benefits',
+            'language_requirements',
+            'published_at',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = [
-            'public_id', 'slug', 'company_name', 'company_logo_url', 'category',
-            'locations_detail', 'short_description', 'is_salary_visible',
-            'company_cover_url', 'brand_slug', 'company_verified', 'status',
-            'tier', 'is_hot', 'is_urgent', 'has_flash_badge',
-            'view_count', 'application_count', 'published_at', 'created_at', 'updated_at',
+            'public_id',
+            'slug',
+            'company_name',
+            'company_logo_url',
+            'category',
+            'locations_detail',
+            'short_description',
+            'is_salary_visible',
+            'company_cover_url',
+            'brand_slug',
+            'company_verified',
+            'status',
+            'tier',
+            'is_hot',
+            'is_urgent',
+            'has_flash_badge',
+            'view_count',
+            'application_count',
+            'published_at',
+            'created_at',
+            'updated_at',
         ]
 
     def validate(self, attrs):
@@ -100,13 +151,19 @@ class JobSerializer(serializers.ModelSerializer):
         if age_max is not None and not 15 <= age_max <= 100:
             raise serializers.ValidationError({'age_max': 'Tuổi tối đa phải từ 15 đến 100.'})
         if age_min is not None and age_max is not None and age_max < age_min:
-            raise serializers.ValidationError({'age_max': 'Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.'})
+            raise serializers.ValidationError(
+                {'age_max': 'Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.'}
+            )
 
-        salary_type = attrs.get('salary_type', getattr(self.instance, 'salary_type', Job.SalaryType.NEGOTIABLE))
+        salary_type = attrs.get(
+            'salary_type', getattr(self.instance, 'salary_type', Job.SalaryType.NEGOTIABLE)
+        )
         salary_min = attrs.get('salary_min', getattr(self.instance, 'salary_min', None))
         salary_max = attrs.get('salary_max', getattr(self.instance, 'salary_max', None))
         salary_errors = {}
-        if salary_type == Job.SalaryType.NEGOTIABLE and (salary_min is not None or salary_max is not None):
+        if salary_type == Job.SalaryType.NEGOTIABLE and (
+            salary_min is not None or salary_max is not None
+        ):
             salary_errors['salary_type'] = 'Lương thỏa thuận không được có mức tối thiểu/tối đa.'
         elif salary_type == Job.SalaryType.RANGE:
             if salary_min is None or salary_max is None:
@@ -127,10 +184,14 @@ class JobSerializer(serializers.ModelSerializer):
                 for item in categories
             )
             if primary_count > 1:
-                raise serializers.ValidationError({'category_assignments': 'Chỉ được chọn một vị trí chuyên môn chính.'})
+                raise serializers.ValidationError(
+                    {'category_assignments': 'Chỉ được chọn một vị trí chuyên môn chính.'}
+                )
             keys = [(item['category'].pk, item['role']) for item in categories]
             if len(keys) != len(set(keys)):
-                raise serializers.ValidationError({'category_assignments': 'Danh mục không được chọn trùng.'})
+                raise serializers.ValidationError(
+                    {'category_assignments': 'Danh mục không được chọn trùng.'}
+                )
 
         self._validate_nested_uniqueness(attrs)
         return attrs
@@ -138,7 +199,10 @@ class JobSerializer(serializers.ModelSerializer):
     def _validate_nested_uniqueness(self, attrs):
         unique_fields = {
             'job_skills': lambda item: item['skill'].pk,
-            'job_locations': lambda item: (item['location'].pk, item['address_detail'].strip().lower()),
+            'job_locations': lambda item: (
+                item['location'].pk,
+                item['address_detail'].strip().lower(),
+            ),
             'job_benefits': lambda item: item['benefit'].pk,
             'language_requirements': lambda item: item['language'].pk,
         }
@@ -148,7 +212,9 @@ class JobSerializer(serializers.ModelSerializer):
                 continue
             keys = [key_builder(item) for item in items]
             if len(keys) != len(set(keys)):
-                raise serializers.ValidationError({relation: 'Danh sách không được chứa mục trùng.'})
+                raise serializers.ValidationError(
+                    {relation: 'Danh sách không được chứa mục trùng.'}
+                )
 
     @transaction.atomic
     def create(self, validated_data):
@@ -165,10 +231,7 @@ class JobSerializer(serializers.ModelSerializer):
         return job
 
     def _pop_nested(self, validated_data, missing=()):
-        return {
-            field: validated_data.pop(field, missing)
-            for field in self.NESTED_RELATIONS
-        }
+        return {field: validated_data.pop(field, missing) for field in self.NESTED_RELATIONS}
 
     def _replace_nested(self, job, nested):
         for field, values in nested.items():
@@ -189,13 +252,16 @@ class JobSerializer(serializers.ModelSerializer):
         return company.slug if company.has_brand_page else None
 
     def get_company_cover_url(self, obj):
-        return media_url_from_value(obj.company.cover_image_url, request=self.context.get('request'))
+        return media_url_from_value(
+            obj.company.cover_image_url, request=self.context.get('request')
+        )
 
     @staticmethod
     def _primary_assignment(obj):
         return next(
             (
-                item for item in obj.category_assignments.all()
+                item
+                for item in obj.category_assignments.all()
                 if item.role == JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
             ),
             None,
@@ -230,14 +296,33 @@ class PublicJobListSerializer(JobSerializer):
 
     class Meta(JobSerializer.Meta):
         fields = [
-            'public_id', 'slug', 'title',
-            'company_name', 'company_logo_url', 'brand_slug', 'company_verified',
-            'category', 'locations_detail', 'job_skills',
-            'work_type', 'employment_type', 'education_level', 'experience_years',
-            'position_level', 'age_min', 'age_max',
-            'salary_type', 'salary_min', 'salary_max', 'currency',
-            'tier', 'is_hot', 'is_urgent', 'has_flash_badge',
-            'published_at', 'created_at',
+            'public_id',
+            'slug',
+            'title',
+            'company_name',
+            'company_logo_url',
+            'brand_slug',
+            'company_verified',
+            'category',
+            'locations_detail',
+            'job_skills',
+            'work_type',
+            'employment_type',
+            'education_level',
+            'experience_years',
+            'position_level',
+            'age_min',
+            'age_max',
+            'salary_type',
+            'salary_min',
+            'salary_max',
+            'currency',
+            'tier',
+            'is_hot',
+            'is_urgent',
+            'has_flash_badge',
+            'published_at',
+            'created_at',
         ]
         read_only_fields = fields
 
@@ -251,9 +336,16 @@ class PublicJobPreviewSerializer(PublicJobListSerializer):
 
     class Meta(PublicJobListSerializer.Meta):
         fields = PublicJobListSerializer.Meta.fields + [
-            'short_description', 'description', 'requirements', 'benefits',
-            'work_schedule_note', 'job_locations', 'work_schedules', 'job_benefits',
-            'number_of_vacancies', 'deadline',
+            'short_description',
+            'description',
+            'requirements',
+            'benefits',
+            'work_schedule_note',
+            'job_locations',
+            'work_schedules',
+            'job_benefits',
+            'number_of_vacancies',
+            'deadline',
         ]
 
 
@@ -284,20 +376,50 @@ class JobDetailSerializer(JobSerializer):
     class Meta:
         model = Job
         fields = [
-            'public_id', 'slug', 'title',
-            'company_name', 'company_logo_url', 'company_cover_url',
-            'brand_slug', 'company_verified',
-            'category', 'category_name', 'locations_detail',
-            'description', 'requirements', 'benefits', 'work_schedule_note',
-            'work_type', 'employment_type', 'education_level', 'experience_years',
-            'position_level', 'number_of_vacancies',
-            'salary_type', 'salary_min', 'salary_max', 'currency', 'deadline',
-            'view_count', 'is_hot', 'is_urgent',
-            'job_locations', 'work_schedules', 'language_requirements',
-            'published_at', 'created_at',
-            'company_size', 'company_address', 'company_description',
-            'company_website_url', 'company_industries', 'primary_specialization',
-            'domain_knowledge', 'workplace_groups', 'requirement_tags', 'benefit_tags',
+            'public_id',
+            'slug',
+            'title',
+            'company_name',
+            'company_logo_url',
+            'company_cover_url',
+            'brand_slug',
+            'company_verified',
+            'category',
+            'category_name',
+            'locations_detail',
+            'description',
+            'requirements',
+            'benefits',
+            'work_schedule_note',
+            'work_type',
+            'employment_type',
+            'education_level',
+            'experience_years',
+            'position_level',
+            'number_of_vacancies',
+            'salary_type',
+            'salary_min',
+            'salary_max',
+            'currency',
+            'deadline',
+            'view_count',
+            'is_hot',
+            'is_urgent',
+            'job_locations',
+            'work_schedules',
+            'language_requirements',
+            'published_at',
+            'created_at',
+            'company_size',
+            'company_address',
+            'company_description',
+            'company_website_url',
+            'company_industries',
+            'primary_specialization',
+            'domain_knowledge',
+            'workplace_groups',
+            'requirement_tags',
+            'benefit_tags',
         ]
         read_only_fields = fields
 
@@ -331,19 +453,24 @@ class JobDetailSerializer(JobSerializer):
         groups = {}
         for item in obj.job_locations.all():
             province = item.location.parent or item.location
-            group = groups.setdefault(province.pk, {
-                'province_id': province.pk,
-                'province_name': province.name,
-                'addresses': [],
-            })
+            group = groups.setdefault(
+                province.pk,
+                {
+                    'province_id': province.pk,
+                    'province_name': province.name,
+                    'addresses': [],
+                },
+            )
             ward_name = item.location.name if item.location.parent_id else ''
             display = ', '.join(part for part in [item.address_detail, ward_name] if part)
-            group['addresses'].append({
-                'ward_id': item.location_id if item.location.parent_id else None,
-                'ward_name': ward_name,
-                'address_detail': item.address_detail,
-                'display': display or province.name,
-            })
+            group['addresses'].append(
+                {
+                    'ward_id': item.location_id if item.location.parent_id else None,
+                    'ward_name': ward_name,
+                    'address_detail': item.address_detail,
+                    'display': display or province.name,
+                }
+            )
         return list(groups.values())
 
     def get_requirement_tags(self, obj):
@@ -405,9 +532,9 @@ class EmployerJobWriteSerializer(JobSerializer):
             return
         emails = contact_data.pop('emails')
         contact = JobApplicationContact.objects.create(job=job, **contact_data)
-        JobApplicationEmail.objects.bulk_create([
-            JobApplicationEmail(contact=contact, **item) for item in emails
-        ])
+        JobApplicationEmail.objects.bulk_create(
+            [JobApplicationEmail(contact=contact, **item) for item in emails]
+        )
 
 
 class EmployerJobDetailSerializer(EmployerJobWriteSerializer):
@@ -419,8 +546,16 @@ class EmployerJobListSerializer(PublicJobListSerializer):
 
     class Meta(PublicJobListSerializer.Meta):
         fields = [
-            'public_id', 'title', 'company_name', 'locations_detail',
-            'employment_type', 'deadline', 'status', 'application_count',
-            'published_at', 'created_at', 'updated_at',
+            'public_id',
+            'title',
+            'company_name',
+            'locations_detail',
+            'employment_type',
+            'deadline',
+            'status',
+            'application_count',
+            'published_at',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = fields

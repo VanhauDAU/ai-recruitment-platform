@@ -40,7 +40,9 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
 
     def setUp(self):
         self.admin = User.objects.create_user(
-            email='admin@example.com', password='Password@123', role=User.Role.ADMIN,
+            email='admin@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
         )
         self.client.force_authenticate(self.admin)
         self.old_path = default_storage.save('site/settings/old-logo.png', ContentFile(PNG_BYTES))
@@ -103,12 +105,17 @@ class LocaleApiTests(APITransactionTestCase):
             Locale.objects.update_or_create(
                 code=code,
                 defaults={
-                    'label_vi': label, 'native_name': native, 'catalog_path': path,
-                    'is_default': is_default, 'sort_order': order,
+                    'label_vi': label,
+                    'native_name': native,
+                    'catalog_path': path,
+                    'is_default': is_default,
+                    'sort_order': order,
                 },
             )
         self.admin = User.objects.create_user(
-            email='locale-admin@example.com', password='Password@123', role=User.Role.ADMIN,
+            email='locale-admin@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
         )
 
     def test_public_api_only_returns_active_locales_in_stable_order(self):

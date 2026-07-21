@@ -33,7 +33,9 @@ class RecruiterVisibilitySerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['enabled'] and not attrs['confirmed']:
-            raise serializers.ValidationError({'confirmed': 'Bạn cần xác nhận trước khi mở hồ sơ cho nhà tuyển dụng.'})
+            raise serializers.ValidationError(
+                {'confirmed': 'Bạn cần xác nhận trước khi mở hồ sơ cho nhà tuyển dụng.'}
+            )
         return attrs
 
 
@@ -59,14 +61,24 @@ class CandidateJobPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = CandidateJobPreference
         fields = [
-            'desired_position_other', 'desired_salary_vnd', 'experience_level', 'willing_to_relocate',
-            'desired_specialization_ids', 'preferred_province_ids',
-            'ai_recommendation_consent', 'recruiter_visibility_consent',
-            'desired_specializations', 'preferred_provinces', 'job_preferences_configured',
+            'desired_position_other',
+            'desired_salary_vnd',
+            'experience_level',
+            'willing_to_relocate',
+            'desired_specialization_ids',
+            'preferred_province_ids',
+            'ai_recommendation_consent',
+            'recruiter_visibility_consent',
+            'desired_specializations',
+            'preferred_provinces',
+            'job_preferences_configured',
         ]
         extra_kwargs = {
             'desired_position_other': {
-                'required': False, 'allow_null': True, 'allow_blank': True, 'trim_whitespace': True,
+                'required': False,
+                'allow_null': True,
+                'allow_blank': True,
+                'trim_whitespace': True,
             },
             'desired_salary_vnd': {'required': True, 'allow_null': False, 'min_value': 1},
             'willing_to_relocate': {'required': False, 'allow_null': True},
@@ -79,38 +91,52 @@ class CandidateJobPreferenceSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         specializations = attrs['desired_specialization_ids']
         if not 1 <= len(specializations) <= 5:
-            raise serializers.ValidationError({
-                'desired_specialization_ids': 'Vui lòng chọn từ 1 đến 5 vị trí chuyên môn.',
-            })
+            raise serializers.ValidationError(
+                {
+                    'desired_specialization_ids': 'Vui lòng chọn từ 1 đến 5 vị trí chuyên môn.',
+                }
+            )
         if len({category.pk for category in specializations}) != len(specializations):
-            raise serializers.ValidationError({'desired_specialization_ids': 'Danh sách vị trí bị trùng.'})
+            raise serializers.ValidationError(
+                {'desired_specialization_ids': 'Danh sách vị trí bị trùng.'}
+            )
         invalid_category = next(
             (
-                category for category in specializations
+                category
+                for category in specializations
                 if category.status != JobCategory.Status.ACTIVE
                 or category.category_type != JobCategory.CategoryType.SPECIALIZATION
             ),
             None,
         )
         if invalid_category:
-            raise serializers.ValidationError({
-                'desired_specialization_ids': 'Chỉ được chọn vị trí chuyên môn đang hoạt động.',
-            })
+            raise serializers.ValidationError(
+                {
+                    'desired_specialization_ids': 'Chỉ được chọn vị trí chuyên môn đang hoạt động.',
+                }
+            )
 
         provinces = attrs['preferred_province_ids']
         if not provinces:
-            raise serializers.ValidationError({'preferred_province_ids': 'Vui lòng chọn ít nhất một tỉnh/thành.'})
+            raise serializers.ValidationError(
+                {'preferred_province_ids': 'Vui lòng chọn ít nhất một tỉnh/thành.'}
+            )
         if len({province.pk for province in provinces}) != len(provinces):
-            raise serializers.ValidationError({'preferred_province_ids': 'Danh sách địa điểm bị trùng.'})
+            raise serializers.ValidationError(
+                {'preferred_province_ids': 'Danh sách địa điểm bị trùng.'}
+            )
         invalid_province = next(
             (
-                province for province in provinces
+                province
+                for province in provinces
                 if province.level != Location.Level.PROVINCE or not province.is_active
             ),
             None,
         )
         if invalid_province:
-            raise serializers.ValidationError({'preferred_province_ids': 'Chỉ được chọn tỉnh/thành đang hoạt động.'})
+            raise serializers.ValidationError(
+                {'preferred_province_ids': 'Chỉ được chọn tỉnh/thành đang hoạt động.'}
+            )
         return attrs
 
     def get_desired_specializations(self, obj):
@@ -138,6 +164,10 @@ class CandidateJobPreferenceSerializer(serializers.ModelSerializer):
             consent.consent_type: consent.decision == CandidateConsent.Decision.GRANTED
             for consent in instance.candidate_profile.consents.all()
         }
-        data['ai_recommendation_consent'] = decisions.get(CandidateConsent.ConsentType.AI_RECOMMENDATION, False)
-        data['recruiter_visibility_consent'] = decisions.get(CandidateConsent.ConsentType.RECRUITER_VISIBILITY, False)
+        data['ai_recommendation_consent'] = decisions.get(
+            CandidateConsent.ConsentType.AI_RECOMMENDATION, False
+        )
+        data['recruiter_visibility_consent'] = decisions.get(
+            CandidateConsent.ConsentType.RECRUITER_VISIBILITY, False
+        )
         return data

@@ -17,11 +17,14 @@ class JobApplicationContact(models.Model):
 
 
 class JobApplicationEmail(models.Model):
-    contact = models.ForeignKey(JobApplicationContact, on_delete=models.CASCADE, related_name='emails')
+    contact = models.ForeignKey(
+        JobApplicationContact, on_delete=models.CASCADE, related_name='emails'
+    )
     email = models.EmailField()
     sort_order = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         ordering = ['sort_order', 'id']
-        constraints = [models.UniqueConstraint(fields=['contact', 'email'], name='uq_job_contact_email')]
-
+        constraints = [
+            models.UniqueConstraint(fields=['contact', 'email'], name='uq_job_contact_email')
+        ]

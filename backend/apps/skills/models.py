@@ -7,7 +7,9 @@ class SkillGroup(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
+    parent = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children'
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -34,7 +36,11 @@ class Skill(models.Model):
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     normalized_name = models.CharField(max_length=255, unique=True, editable=False)
-    aliases = models.JSONField(default=list, blank=True, help_text='Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]')
+    aliases = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]',
+    )
     group = models.ForeignKey(
         SkillGroup,
         on_delete=models.SET_NULL,

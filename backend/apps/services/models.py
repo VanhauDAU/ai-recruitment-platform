@@ -8,12 +8,16 @@ class ServiceCategory(models.Model):
     fallback về tiếng Việt.
     """
 
-    key = models.SlugField(max_length=50, unique=True, help_text='Định danh dùng trong URL/anchor, vd: featured-jobs')
+    key = models.SlugField(
+        max_length=50, unique=True, help_text='Định danh dùng trong URL/anchor, vd: featured-jobs'
+    )
     name_vi = models.CharField(max_length=120)
     name_en = models.CharField(max_length=120, blank=True)
     description_vi = models.TextField(blank=True)
     description_en = models.TextField(blank=True)
-    icon = models.CharField(max_length=50, blank=True, help_text='Tên icon antd, vd: ThunderboltOutlined')
+    icon = models.CharField(
+        max_length=50, blank=True, help_text='Tên icon antd, vd: ThunderboltOutlined'
+    )
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -39,16 +43,25 @@ class ServicePackage(models.Model):
     name_en = models.CharField(max_length=120, blank=True)
     tagline_vi = models.CharField(max_length=255, blank=True, help_text='Mô tả 1 dòng dưới tên gói')
     tagline_en = models.CharField(max_length=255, blank=True)
-    price = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True,
-                                help_text='Để trống = hiển thị "Liên hệ"')
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        help_text='Để trống = hiển thị "Liên hệ"',
+    )
     currency = models.CharField(max_length=10, default='VND')
     unit_vi = models.CharField(max_length=100, blank=True, help_text='VD: / tin đăng 30 ngày')
     unit_en = models.CharField(max_length=100, blank=True)
     vat_note_vi = models.CharField(max_length=100, blank=True, default='Giá chưa bao gồm VAT')
     vat_note_en = models.CharField(max_length=100, blank=True, default='Price excludes VAT')
-    benefits_vi = models.JSONField(default=list, blank=True, help_text='Danh sách quyền lợi (list chuỗi)')
+    benefits_vi = models.JSONField(
+        default=list, blank=True, help_text='Danh sách quyền lợi (list chuỗi)'
+    )
     benefits_en = models.JSONField(default=list, blank=True)
-    badge_vi = models.CharField(max_length=50, blank=True, help_text='Nhãn nổi bật trên card, vd: Bán chạy nhất')
+    badge_vi = models.CharField(
+        max_length=50, blank=True, help_text='Nhãn nổi bật trên card, vd: Bán chạy nhất'
+    )
     badge_en = models.CharField(max_length=50, blank=True)
     is_highlight = models.BooleanField(default=False, help_text='Card viền màu thương hiệu')
     cta_type = models.CharField(max_length=20, choices=CtaType.choices, default=CtaType.CONTACT)
@@ -92,7 +105,9 @@ class ConsultationLead(models.Model):
     province = models.CharField(max_length=100, blank=True)
     need = models.CharField(max_length=30, choices=Need.choices, default=Need.POST_JOB)
     note = models.TextField(blank=True)
-    source_page = models.CharField(max_length=500, blank=True, help_text='Trang khách đang xem lúc gửi')
+    source_page = models.CharField(
+        max_length=500, blank=True, help_text='Trang khách đang xem lúc gửi'
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)
 

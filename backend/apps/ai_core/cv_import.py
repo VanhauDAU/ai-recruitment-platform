@@ -88,7 +88,12 @@ def _call_provider(text, locale):
         response = requests.post(
             'https://api.anthropic.com/v1/messages',
             headers={'x-api-key': key, 'anthropic-version': '2023-06-01'},
-            json={'model': model, 'max_tokens': 4096, 'temperature': 0, 'messages': [{'role': 'user', 'content': prompt}]},
+            json={
+                'model': model,
+                'max_tokens': 4096,
+                'temperature': 0,
+                'messages': [{'role': 'user', 'content': prompt}],
+            },
             timeout=20,
         )
         response.raise_for_status()
@@ -127,7 +132,9 @@ def _validate_payload(payload):
 
 
 def _date(value):
-    return value if isinstance(value, str) and re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', value) else None
+    return (
+        value if isinstance(value, str) and re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', value) else None
+    )
 
 
 def _rich_text(value):
@@ -135,7 +142,8 @@ def _rich_text(value):
         'format': 'rich_text_v1',
         'content': [
             {'type': 'paragraph', 'text': line.strip()}
-            for line in str(value or '').splitlines() if line.strip()
+            for line in str(value or '').splitlines()
+            if line.strip()
         ],
     }
 
@@ -145,17 +153,24 @@ def _canonical(payload, locale):
     personal = payload.get('personal_info', {})
     for key in ('full_name', 'headline', 'email', 'phone', 'address'):
         content['personal_info'][key] = str(personal.get(key) or '')[:500]
-    content['personal_info']['links'] = [str(item)[:500] for item in personal.get('links', []) if isinstance(item, str)][:10]
+    content['personal_info']['links'] = [
+        str(item)[:500] for item in personal.get('links', []) if isinstance(item, str)
+    ][:10]
     labels = {
         'vi-VN': ('Giới thiệu', 'Kinh nghiệm làm việc', 'Học vấn', 'Kỹ năng', 'Dự án'),
         'en-US': ('Summary', 'Work experience', 'Education', 'Skills', 'Projects'),
     }.get(locale, ('Summary', 'Work experience', 'Education', 'Skills', 'Projects'))
     summary = str(payload.get('summary') or '').strip()
     if summary:
-        content['sections'].append({
-            'instance_id': 'summary_1', 'section_key': 'summary', 'title': labels[0],
-            'enabled': True, 'items': [{'item_id': 'summary_item_1', 'value': summary[:4000]}],
-        })
+        content['sections'].append(
+            {
+                'instance_id': 'summary_1',
+                'section_key': 'summary',
+                'title': labels[0],
+                'enabled': True,
+                'items': [{'item_id': 'summary_item_1', 'value': summary[:4000]}],
+            }
+        )
     mappings = [
         ('experiences', 'experience', labels[1], ('role', 'company')),
         ('education', 'education', labels[2], ('degree', 'institution')),
@@ -173,17 +188,29 @@ def _canonical(payload, locale):
             item['description'] = _rich_text(source_item.get('description'))
             items.append(item)
         if items:
-            content['sections'].append({
-                'instance_id': f'{section_key}_1', 'section_key': section_key,
-                'title': title, 'enabled': True, 'items': items,
-            })
+            content['sections'].append(
+                {
+                    'instance_id': f'{section_key}_1',
+                    'section_key': section_key,
+                    'title': title,
+                    'enabled': True,
+                    'items': items,
+                }
+            )
     skills = [str(skill)[:200] for skill in payload.get('skills', []) if str(skill).strip()][:50]
     if skills:
-        content['sections'].append({
-            'instance_id': 'skills_1', 'section_key': 'skills', 'title': labels[3],
-            'enabled': True,
-            'items': [{'item_id': f'skills_item_{index + 1}', 'name': skill, 'level': ''} for index, skill in enumerate(skills)],
-        })
+        content['sections'].append(
+            {
+                'instance_id': 'skills_1',
+                'section_key': 'skills',
+                'title': labels[3],
+                'enabled': True,
+                'items': [
+                    {'item_id': f'skills_item_{index + 1}', 'name': skill, 'level': ''}
+                    for index, skill in enumerate(skills)
+                ],
+            }
+        )
     return content
 
 
@@ -198,7 +225,13 @@ def structure_cv_text(text, locale):
                 payload = _heuristic(text)
             _validate_payload(payload)
             break
-        except (KeyError, TypeError, json.JSONDecodeError, requests.RequestException, AiCvParseError) as error:
+        except (
+            KeyError,
+            TypeError,
+            json.JSONDecodeError,
+            requests.RequestException,
+            AiCvParseError,
+        ) as error:
             if attempt == 1:
                 if isinstance(error, AiCvParseError):
                     raise

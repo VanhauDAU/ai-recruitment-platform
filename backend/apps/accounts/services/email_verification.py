@@ -119,12 +119,12 @@ def send_email_changed_notice(user, old_email):
         f'đổi từ {old_email} sang {user.email}.\n\nNếu bạn KHÔNG thực hiện thay đổi này, tài khoản '
         f'của bạn có thể đã bị xâm phạm — hãy liên hệ ngay {support_email or "bộ phận hỗ trợ"}.'
     )
-    html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
+    html = f"""<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
       <h2 style="color:#dc2626">Email đăng nhập vừa được thay đổi</h2>
       <p>Email đăng nhập của tài khoản <strong>{escape(portal_label)}</strong> tại {escape(site_name)} vừa được đổi từ
       <strong>{escape(old_email)}</strong> sang <strong>{escape(user.email)}</strong>.</p>
       <p style="background:#fef2f2;border-radius:8px;padding:14px 16px;color:#991b1b">Nếu bạn <strong>không</strong> thực hiện
       thay đổi này, tài khoản của bạn có thể đã bị xâm phạm. Vui lòng liên hệ ngay
       {escape(support_email or 'bộ phận hỗ trợ')} để được trợ giúp.</p>
-    </div>'''
+    </div>"""
     send_html_email(subject=subject, text=text, html=html, to=old_email)

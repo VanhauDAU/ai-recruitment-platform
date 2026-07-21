@@ -22,10 +22,17 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = [
-            'application_public_id', 'job_public_id', 'submitted_at',
-            'submitted_cv_title', 'submitted_cv_source', 'cv',
-            'preferred_location_names', 'allow_ai_analysis',
-            'contact_name', 'contact_email', 'contact_phone',
+            'application_public_id',
+            'job_public_id',
+            'submitted_at',
+            'submitted_cv_title',
+            'submitted_cv_source',
+            'cv',
+            'preferred_location_names',
+            'allow_ai_analysis',
+            'contact_name',
+            'contact_email',
+            'contact_phone',
         ]
         read_only_fields = fields
 
@@ -56,21 +63,32 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         try:
             job = Job.objects.get(public_id=attrs['job_public_id'], status=Job.Status.ACTIVE)
         except Job.DoesNotExist as error:
-            raise serializers.ValidationError({'job_public_id': 'This job is unavailable.'}) from error
+            raise serializers.ValidationError(
+                {'job_public_id': 'This job is unavailable.'}
+            ) from error
         try:
             cv = UserCv.objects.get(
-                public_id=attrs['cv_public_id'], user=candidate, is_deleted=False,
+                public_id=attrs['cv_public_id'],
+                user=candidate,
+                is_deleted=False,
             )
         except UserCv.DoesNotExist as error:
-            raise serializers.ValidationError({'cv_public_id': 'Select one of your active CVs.'}) from error
+            raise serializers.ValidationError(
+                {'cv_public_id': 'Select one of your active CVs.'}
+            ) from error
         try:
             version = CvVersion.objects.get(
-                public_id=attrs['version_public_id'], cv=cv,
+                public_id=attrs['version_public_id'],
+                cv=cv,
             )
         except CvVersion.DoesNotExist as error:
-            raise serializers.ValidationError({'version_public_id': 'Select an immutable version of this CV.'}) from error
+            raise serializers.ValidationError(
+                {'version_public_id': 'Select an immutable version of this CV.'}
+            ) from error
         if version.version_kind == CvVersion.VersionKind.APPLICATION_SNAPSHOT:
-            raise serializers.ValidationError({'version_public_id': 'Application snapshots cannot be submitted again.'})
+            raise serializers.ValidationError(
+                {'version_public_id': 'Application snapshots cannot be submitted again.'}
+            )
         if Application.objects.filter(candidate=candidate, job=job).exists():
             raise serializers.ValidationError({'job_public_id': 'You already applied to this job.'})
         province_ids = {
@@ -82,17 +100,23 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         if legacy_id is not None and not selected_ids:
             selected_ids = [legacy_id]
         if province_ids and not selected_ids:
-            raise serializers.ValidationError({
-                'preferred_location_ids': 'Select at least one preferred workplace.',
-            })
+            raise serializers.ValidationError(
+                {
+                    'preferred_location_ids': 'Select at least one preferred workplace.',
+                }
+            )
         if any(location_id not in province_ids for location_id in selected_ids):
-            raise serializers.ValidationError({
-                'preferred_location_ids': 'Select only workplaces offered by this job.',
-            })
+            raise serializers.ValidationError(
+                {
+                    'preferred_location_ids': 'Select only workplaces offered by this job.',
+                }
+            )
         if attrs.get('data_processing_consent') is not True:
-            raise serializers.ValidationError({
-                'data_processing_consent': 'Consent is required before submitting an application.',
-            })
+            raise serializers.ValidationError(
+                {
+                    'data_processing_consent': 'Consent is required before submitting an application.',
+                }
+            )
         attrs['preferred_locations'] = list(
             Location.objects.filter(pk__in=selected_ids).order_by('pk'),
         )
@@ -109,7 +133,9 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
     cv_public_id = serializers.SerializerMethodField()
-    submitted_cv_version_public_id = serializers.CharField(source='submitted_cv_version.public_id', read_only=True)
+    submitted_cv_version_public_id = serializers.CharField(
+        source='submitted_cv_version.public_id', read_only=True
+    )
     preferred_location_ids = serializers.SerializerMethodField()
     preferred_location_names = serializers.SerializerMethodField()
 
@@ -125,12 +151,24 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = [
-            'public_id', 'job_public_id', 'job_title', 'cv_public_id',
-            'submitted_cv_version_public_id', 'submitted_cv_title',
-            'submitted_cv_source', 'submitted_at', 'cover_letter', 'status',
-            'preferred_location_ids', 'preferred_location_names',
-            'allow_ai_analysis', 'data_processing_consent',
-            'contact_name', 'contact_email', 'contact_phone',
-            'applied_at', 'updated_at',
+            'public_id',
+            'job_public_id',
+            'job_title',
+            'cv_public_id',
+            'submitted_cv_version_public_id',
+            'submitted_cv_title',
+            'submitted_cv_source',
+            'submitted_at',
+            'cover_letter',
+            'status',
+            'preferred_location_ids',
+            'preferred_location_names',
+            'allow_ai_analysis',
+            'data_processing_consent',
+            'contact_name',
+            'contact_email',
+            'contact_phone',
+            'applied_at',
+            'updated_at',
         ]
         read_only_fields = fields

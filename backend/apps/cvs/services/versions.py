@@ -8,7 +8,11 @@ from django.db.models import Max
 from django.utils import timezone
 
 from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import canonicalize_legacy_cv_data, validate_cv_document, validate_template_layout_capabilities
+from ..schemas import (
+    canonicalize_legacy_cv_data,
+    validate_cv_document,
+    validate_template_layout_capabilities,
+)
 from .assets import validate_document_assets
 
 
@@ -82,9 +86,13 @@ def create_version(
     create_or_replace_draft=False,
 ):
     """Persist a validated immutable snapshot under a CV row lock."""
-    cv = UserCv.objects.select_for_update(of=('self',)).select_related(
-        'template__current_published_version',
-    ).get(pk=cv.pk)
+    cv = (
+        UserCv.objects.select_for_update(of=('self',))
+        .select_related(
+            'template__current_published_version',
+        )
+        .get(pk=cv.pk)
+    )
     resolved_template_version = template_version or cv.current_template_version
     validate_cv_document(
         content_json=content_json,
@@ -103,7 +111,10 @@ def create_version(
             capabilities=resolved_template_version.capabilities,
         )
     parent_version = parent_version if parent_version is not None else cv.latest_version
-    version_number = (CvVersion.objects.filter(cv=cv).aggregate(max_number=Max('version_number'))['max_number'] or 0) + 1
+    version_number = (
+        CvVersion.objects.filter(cv=cv).aggregate(max_number=Max('version_number'))['max_number']
+        or 0
+    ) + 1
     version = CvVersion(
         cv=cv,
         version_number=version_number,
@@ -125,7 +136,14 @@ def create_version(
         cv.latest_version = version
         cv.current_template_version = resolved_template_version
         cv.current_version = version.version_number  # legacy dual-write projection
-        cv.save(update_fields=['latest_version', 'current_template_version', 'current_version', 'updated_at'])
+        cv.save(
+            update_fields=[
+                'latest_version',
+                'current_template_version',
+                'current_version',
+                'updated_at',
+            ]
+        )
     if create_or_replace_draft:
         CvDraft.objects.update_or_create(
             cv=cv,
@@ -144,7 +162,9 @@ def create_version(
 
 
 @transaction.atomic
-def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_lock_version, client_session_id=''):
+def update_draft(
+    *, cv, actor, content_json, layout_json, style_json, expected_lock_version, client_session_id=''
+):
     """Autosave with compare-and-swap semantics; raises on stale client state."""
     if cv.is_deleted or cv.lifecycle_status == UserCv.LifecycleStatus.ARCHIVED:
         from .lifecycle import CvLifecyclePolicyError
@@ -179,7 +199,9 @@ def update_draft(*, cv, actor, content_json, layout_json, style_json, expected_l
         updated_at=timezone.now(),
     )
     if updated != 1:
-        raise StaleDraftError('This draft was updated in another session. Refresh and merge before saving.')
+        raise StaleDraftError(
+            'This draft was updated in another session. Refresh and merge before saving.'
+        )
     # V2 is the canonical writer, but V1 clients continue to read these legacy
     # projections during the controlled dual-write migration window.
     UserCv.objects.filter(pk=cv.pk).update(
@@ -236,16 +258,25 @@ def sync_legacy_builder_draft(cv, actor):
 
 def create_application_snapshot(cv, actor, source_version=None):
     """Copy one selected immutable document for an application-owned snapshot."""
-    cv = UserCv.objects.select_for_update(of=('self',)).select_related('latest_version').get(pk=cv.pk)
+    cv = (
+        UserCv.objects.select_for_update(of=('self',))
+        .select_related('latest_version')
+        .get(pk=cv.pk)
+    )
     if source_version is None:
         base_version = cv.latest_version or create_initial_document(cv, actor)
     else:
-        base_version = CvVersion.objects.filter(
-            pk=source_version.pk,
-            cv=cv,
-        ).exclude(
-            version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT,
-        ).select_related('template_version').first()
+        base_version = (
+            CvVersion.objects.filter(
+                pk=source_version.pk,
+                cv=cv,
+            )
+            .exclude(
+                version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT,
+            )
+            .select_related('template_version')
+            .first()
+        )
         if base_version is None:
             raise ValueError('Select an immutable CV version owned by this CV.')
     return create_version(

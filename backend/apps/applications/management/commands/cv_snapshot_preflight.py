@@ -22,7 +22,12 @@ SNAPSHOT_MIGRATIONS = [
     '0005_application_snapshot_backfill',
     '0006_application_snapshot_contract',
 ]
-SNAPSHOT_COLUMNS = ['submitted_at', 'submitted_cv_source', 'submitted_cv_title', 'submitted_cv_version_id']
+SNAPSHOT_COLUMNS = [
+    'submitted_at',
+    'submitted_cv_source',
+    'submitted_cv_title',
+    'submitted_cv_version_id',
+]
 SNAPSHOT_INDEX = 'idx_app_submitted_cv_version'
 TABLE = 'applications_application'
 
@@ -44,7 +49,9 @@ def _existing_columns():
 
 def _index_exists(name):
     with connection.cursor() as cursor:
-        cursor.execute('SELECT 1 FROM pg_indexes WHERE tablename = %s AND indexname = %s', [TABLE, name])
+        cursor.execute(
+            'SELECT 1 FROM pg_indexes WHERE tablename = %s AND indexname = %s', [TABLE, name]
+        )
         return cursor.fetchone() is not None
 
 
@@ -77,13 +84,13 @@ def _inconsistencies():
 
     problems = []
     linked_rows = _application_rows('WHERE submitted_cv_version_id IS NOT NULL')
-    snapshots = CvVersion.objects.in_bulk(
-        row[4] for row in linked_rows
-    )
+    snapshots = CvVersion.objects.in_bulk(row[4] for row in linked_rows)
     for app_id, cv_id, _candidate_id, _applied_at, submitted_cv_version_id in linked_rows:
         snapshot = snapshots.get(submitted_cv_version_id)
         if snapshot is None:
-            problems.append(f'application {app_id}: submitted snapshot {submitted_cv_version_id} is missing')
+            problems.append(
+                f'application {app_id}: submitted snapshot {submitted_cv_version_id} is missing'
+            )
         elif snapshot.cv_id != cv_id:
             problems.append(
                 f'application {app_id}: snapshot {snapshot.public_id} belongs to '
@@ -140,20 +147,35 @@ def _repair_missing_snapshots(stdout):
                 )
             snapshot_public_id = f'cvv-application-{app_id}'
             snapshot = CvVersion.objects.filter(public_id=snapshot_public_id).first()
-            if snapshot is not None and (snapshot.cv_id != cv.pk or snapshot.version_kind != 'application_snapshot'):
+            if snapshot is not None and (
+                snapshot.cv_id != cv.pk or snapshot.version_kind != 'application_snapshot'
+            ):
                 raise RuntimeError(
                     f'Refusing to reuse {snapshot_public_id!r} for application {app_id}: '
                     f'cv_id={snapshot.cv_id}/kind={snapshot.version_kind!r} mismatch.'
                 )
             if snapshot is None:
-                next_number = (CvVersion.objects.filter(cv_id=cv.pk).order_by('-version_number')
-                               .values_list('version_number', flat=True).first() or 0) + 1
+                next_number = (
+                    CvVersion.objects.filter(cv_id=cv.pk)
+                    .order_by('-version_number')
+                    .values_list('version_number', flat=True)
+                    .first()
+                    or 0
+                ) + 1
                 snapshot = CvVersion.objects.create(
-                    public_id=snapshot_public_id, cv_id=cv.pk, version_number=next_number,
-                    version_kind='application_snapshot', template_version_id=base.template_version_id,
-                    parent_version_id=base.pk, schema_version=base.schema_version,
-                    content_json=base.content_json, layout_json=base.layout_json, style_json=base.style_json,
-                    plain_text=base.plain_text, content_hash=base.content_hash, created_by_id=candidate_id,
+                    public_id=snapshot_public_id,
+                    cv_id=cv.pk,
+                    version_number=next_number,
+                    version_kind='application_snapshot',
+                    template_version_id=base.template_version_id,
+                    parent_version_id=base.pk,
+                    schema_version=base.schema_version,
+                    content_json=base.content_json,
+                    layout_json=base.layout_json,
+                    style_json=base.style_json,
+                    plain_text=base.plain_text,
+                    content_hash=base.content_hash,
+                    created_by_id=candidate_id,
                 )
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -171,7 +193,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--repair', action='store_true',
+            '--repair',
+            action='store_true',
             help='Backfill snapshots for applications missing one (idempotent, guarded). Not read-only.',
         )
 
@@ -190,7 +213,9 @@ class Command(BaseCommand):
         for column in SNAPSHOT_COLUMNS:
             mark = 'X' if column in columns else ' '
             self.stdout.write(f'  [{mark}] column {column}')
-        self.stdout.write(f'  [{"X" if _index_exists(SNAPSHOT_INDEX) else " "}] index {SNAPSHOT_INDEX}')
+        self.stdout.write(
+            f'  [{"X" if _index_exists(SNAPSHOT_INDEX) else " "}] index {SNAPSHOT_INDEX}'
+        )
 
         has_fk_column = 'submitted_cv_version_id' in columns
         missing_count = _missing_snapshot_count() if has_fk_column else None
@@ -200,7 +225,9 @@ class Command(BaseCommand):
 
         self.stdout.write('\nData:')
         if not has_fk_column:
-            self.stdout.write('  submitted_cv_version_id column absent — run migrations before checking data.')
+            self.stdout.write(
+                '  submitted_cv_version_id column absent — run migrations before checking data.'
+            )
         else:
             self.stdout.write(f'  applications missing snapshot: {missing_count}')
             self.stdout.write(f'  inconsistencies: {len(inconsistencies)}')
@@ -210,9 +237,11 @@ class Command(BaseCommand):
         if options['repair']:
             self.stdout.write('\nRepair:')
             if inconsistencies:
-                self.stdout.write(self.style.ERROR(
-                    '  inconsistencies present — refusing to repair. Resolve them first.'
-                ))
+                self.stdout.write(
+                    self.style.ERROR(
+                        '  inconsistencies present — refusing to repair. Resolve them first.'
+                    )
+                )
                 raise SystemExit(1)
             if not has_fk_column:
                 self.stdout.write(self.style.ERROR('  columns absent — run migrations first.'))

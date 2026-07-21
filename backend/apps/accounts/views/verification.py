@@ -16,7 +16,12 @@ from ..tasks import queue_welcome_email
 @extend_schema(
     summary='Gửi lại email xác thực cho tài khoản hiện tại',
     request=None,
-    responses={200: inline_serializer('VerifyResend', {'detail': serializers.CharField(), 'retry_after': serializers.IntegerField()})},
+    responses={
+        200: inline_serializer(
+            'VerifyResend',
+            {'detail': serializers.CharField(), 'retry_after': serializers.IntegerField()},
+        )
+    },
     tags=['auth'],
 )
 class VerificationSendView(APIView):
@@ -27,20 +32,27 @@ class VerificationSendView(APIView):
     def post(self, request):
         user = request.user
         if user.email_verified:
-            return Response({'detail': 'Email đã được xác thực.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Email đã được xác thực.'}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         remaining = ev.cooldown_remaining(user)
         if remaining > 0:
             return Response(
-                {'detail': f'Vui lòng chờ {remaining}s trước khi gửi lại.', 'retry_after': remaining},
+                {
+                    'detail': f'Vui lòng chờ {remaining}s trước khi gửi lại.',
+                    'retry_after': remaining,
+                },
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
         queue_verification_email(user)
-        return Response({
-            'detail': 'Email xác thực đang được gửi. Vui lòng kiểm tra hòm thư sau ít phút.',
-            'retry_after': ev.cooldown_remaining(user),
-        })
+        return Response(
+            {
+                'detail': 'Email xác thực đang được gửi. Vui lòng kiểm tra hòm thư sau ít phút.',
+                'retry_after': ev.cooldown_remaining(user),
+            }
+        )
 
 
 @extend_schema(
@@ -61,7 +73,9 @@ class VerificationConfirmView(APIView):
             )
         user = User.objects.filter(pk=user_id, is_deleted=False).first()
         if user is None:
-            return Response({'detail': 'Không tìm thấy tài khoản.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Không tìm thấy tài khoản.'}, status=status.HTTP_400_BAD_REQUEST
+            )
         if not user.email_verified:
             user.email_verified = True
             user.save(update_fields=['email_verified', 'updated_at'])

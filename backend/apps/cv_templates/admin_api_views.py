@@ -47,7 +47,9 @@ def _call(service, **kwargs):
     try:
         return service(**kwargs)
     except DjangoValidationError as error:
-        raise ValidationError(error.message_dict if hasattr(error, 'message_dict') else error.messages) from error
+        raise ValidationError(
+            error.message_dict if hasattr(error, 'message_dict') else error.messages
+        ) from error
 
 
 class AdminModelViewSet(viewsets.ModelViewSet):
@@ -58,46 +60,68 @@ class AdminModelViewSet(viewsets.ModelViewSet):
 class AdminCvTemplateViewSet(AdminModelViewSet):
     serializer_class = CvTemplateAdminSerializer
     lookup_field = 'public_id'
-    queryset = CvTemplate.objects.prefetch_related('versions', 'localizations').order_by('sort_order', 'name')
+    queryset = CvTemplate.objects.prefetch_related('versions', 'localizations').order_by(
+        'sort_order', 'name'
+    )
 
     @action(detail=True, methods=['post'], url_path='versions')
     def create_version(self, request, public_id=None):
         template = self.get_object()
         source = template.current_published_version
         if source is None and not request.data:
-            raise ValidationError({'version': 'Provide renderer/layout/style for the first draft version.'})
-        defaults = {
-            key: getattr(source, key)
-            for key in (
-                'renderer_key', 'renderer_version', 'schema_version', 'layout_schema',
-                'style_schema', 'default_layout_json', 'default_style_json',
-                'capabilities', 'content_contract',
+            raise ValidationError(
+                {'version': 'Provide renderer/layout/style for the first draft version.'}
             )
-        } if source else {}
+        defaults = (
+            {
+                key: getattr(source, key)
+                for key in (
+                    'renderer_key',
+                    'renderer_version',
+                    'schema_version',
+                    'layout_schema',
+                    'style_schema',
+                    'default_layout_json',
+                    'default_style_json',
+                    'capabilities',
+                    'content_contract',
+                )
+            }
+            if source
+            else {}
+        )
         serializer = CvTemplateVersionAdminSerializer(data={**defaults, **request.data})
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
-            version_number = (template.versions.aggregate(value=Max('version_number'))['value'] or 0) + 1
+            version_number = (
+                template.versions.aggregate(value=Max('version_number'))['value'] or 0
+            ) + 1
             version = serializer.save(
-                template=template, version_number=version_number,
+                template=template,
+                version_number=version_number,
                 version_status=CvTemplateVersion.VersionStatus.DRAFT,
                 created_by=request.user,
             )
             if source:
-                CvTemplateSection.objects.bulk_create([
-                    CvTemplateSection(
-                        template_version=version,
-                        section_definition=item.section_definition,
-                        region_key=item.region_key,
-                        default_order=item.default_order,
-                        is_required=item.is_required,
-                        is_default_enabled=item.is_default_enabled,
-                        is_draggable=item.is_draggable,
-                        use_theme_color=item.use_theme_color,
-                        config_json=item.config_json,
-                    ) for item in source.sections.all()
-                ])
-        return Response(CvTemplateVersionAdminSerializer(version).data, status=status.HTTP_201_CREATED)
+                CvTemplateSection.objects.bulk_create(
+                    [
+                        CvTemplateSection(
+                            template_version=version,
+                            section_definition=item.section_definition,
+                            region_key=item.region_key,
+                            default_order=item.default_order,
+                            is_required=item.is_required,
+                            is_default_enabled=item.is_default_enabled,
+                            is_draggable=item.is_draggable,
+                            use_theme_color=item.use_theme_color,
+                            config_json=item.config_json,
+                        )
+                        for item in source.sections.all()
+                    ]
+                )
+        return Response(
+            CvTemplateVersionAdminSerializer(version).data, status=status.HTTP_201_CREATED
+        )
 
     def _version(self, template, version_pk):
         try:
@@ -108,14 +132,18 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     @action(detail=True, methods=['post'], url_path=r'versions/(?P<version_pk>\d+)/publish')
     def publish_version(self, request, public_id=None, version_pk=None):
         template = self.get_object()
-        version = _call(publish_template_version, template=template, version=self._version(template, version_pk))
+        version = _call(
+            publish_template_version, template=template, version=self._version(template, version_pk)
+        )
         enqueue_template_snapshots(template)
         return Response(CvTemplateVersionAdminSerializer(version).data)
 
     @action(detail=True, methods=['post'], url_path=r'versions/(?P<version_pk>\d+)/retire')
     def retire_version(self, request, public_id=None, version_pk=None):
         template = self.get_object()
-        version = _call(retire_template_version, template=template, version=self._version(template, version_pk))
+        version = _call(
+            retire_template_version, template=template, version=self._version(template, version_pk)
+        )
         return Response(CvTemplateVersionAdminSerializer(version).data)
 
     @action(detail=True, methods=['post'], url_path='snapshots/regenerate')
@@ -126,7 +154,9 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
 
 class AdminCvTemplateLocalizationViewSet(AdminModelViewSet):
     serializer_class = CvTemplateLocalizationAdminSerializer
-    queryset = CvTemplateLocalization.objects.select_related('template').order_by('template_id', 'locale')
+    queryset = CvTemplateLocalization.objects.select_related('template').order_by(
+        'template_id', 'locale'
+    )
 
 
 class AdminCvCategoryViewSet(AdminModelViewSet):
@@ -228,10 +258,18 @@ class AdminCvContentBlueprintViewSet(AdminModelViewSet):
             template = CvTemplate.objects.get(public_id=request.data.get('template_public_id'))
             position = JobCategory.objects.get(public_id=request.data.get('position_public_id'))
             position_name = JobCategoryLocalization.objects.get(
-                category=position, locale=blueprint.locale, is_active=True,
+                category=position,
+                locale=blueprint.locale,
+                is_active=True,
             ).display_name
-        except (CvTemplate.DoesNotExist, JobCategory.DoesNotExist, JobCategoryLocalization.DoesNotExist) as error:
-            raise ValidationError({'selection': 'Template/position localization is unavailable.'}) from error
+        except (
+            CvTemplate.DoesNotExist,
+            JobCategory.DoesNotExist,
+            JobCategoryLocalization.DoesNotExist,
+        ) as error:
+            raise ValidationError(
+                {'selection': 'Template/position localization is unavailable.'}
+            ) from error
         content = _content_from_blueprint(blueprint, blueprint.locale, position_name)
         return Response({'document': compose_cv_document(template=template, content_json=content)})
 

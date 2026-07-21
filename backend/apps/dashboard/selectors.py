@@ -51,7 +51,10 @@ def _application_activity(applications):
         .order_by('day')
     }
     return [
-        {'date': (start + timedelta(days=offset)), 'count': daily.get(start + timedelta(days=offset), 0)}
+        {
+            'date': (start + timedelta(days=offset)),
+            'count': daily.get(start + timedelta(days=offset), 0),
+        }
         for offset in range(7)
     ]
 
@@ -85,14 +88,22 @@ def _recent_applications(applications):
             'status_label': application.get_status_display(),
             'applied_at': application.applied_at,
         }
-        for application in applications.select_related('candidate', 'job').order_by('-applied_at')[:5]
+        for application in applications.select_related('candidate', 'job').order_by('-applied_at')[
+            :5
+        ]
     ]
 
 
 def build_employer_dashboard(user):
-    recruiter = RecruiterProfile.objects.select_related(
-        'user', 'company', 'work_location',
-    ).prefetch_related('recruitment_needs__position_category').get(user=user)
+    recruiter = (
+        RecruiterProfile.objects.select_related(
+            'user',
+            'company',
+            'work_location',
+        )
+        .prefetch_related('recruitment_needs__position_category')
+        .get(user=user)
+    )
     jobs = Job.objects.filter(posted_by=user)
     applications = Application.objects.filter(job__posted_by=user)
     verification = build_employer_onboarding_steps(recruiter)
@@ -106,12 +117,16 @@ def build_employer_dashboard(user):
             'company_name': company.company_name if company else '',
             'company_verification_status': company.verification_status if company else 'unverified',
             'company_size': company.company_size if company else '',
-            'work_location_name': recruiter.work_location.name if recruiter.work_location_id else '',
+            'work_location_name': recruiter.work_location.name
+            if recruiter.work_location_id
+            else '',
             'verification': verification,
         },
         'summary': _summary(jobs, applications),
         'application_activity': _application_activity(applications),
-        'recruitment_need': None if need is None else {
+        'recruitment_need': None
+        if need is None
+        else {
             'position_category_name': need.position_category.name,
             'position_level': need.position_level,
             'position_level_label': need.get_position_level_display(),

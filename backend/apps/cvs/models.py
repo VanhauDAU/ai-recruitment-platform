@@ -44,7 +44,13 @@ class UserCv(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cvs')
-    template = models.ForeignKey('cv_templates.CvTemplate', on_delete=models.SET_NULL, null=True, blank=True, related_name='cvs')
+    template = models.ForeignKey(
+        'cv_templates.CvTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cvs',
+    )
     position = models.ForeignKey(
         'jobs.JobCategory',
         on_delete=models.SET_NULL,
@@ -120,11 +126,15 @@ class UserCv(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['user', 'is_default']),
-            models.Index(fields=['user', 'lifecycle_status', '-updated_at'], name='idx_user_cvs_lifecycle'),
+            models.Index(
+                fields=['user', 'lifecycle_status', '-updated_at'], name='idx_user_cvs_lifecycle'
+            ),
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(status__in=['draft', 'uploaded', 'processing', 'analyzed', 'failed']),
+                check=models.Q(
+                    status__in=['draft', 'uploaded', 'processing', 'analyzed', 'failed']
+                ),
                 name='chk_user_cvs_status',
             ),
             models.UniqueConstraint(
@@ -170,7 +180,9 @@ class CvVersion(models.Model):
         related_name='versions',
     )
     version_number = models.PositiveIntegerField()
-    version_kind = models.CharField(max_length=30, choices=VersionKind.choices, default=VersionKind.MANUAL_SAVE)
+    version_kind = models.CharField(
+        max_length=30, choices=VersionKind.choices, default=VersionKind.MANUAL_SAVE
+    )
     template_version = models.ForeignKey(
         'cv_templates.CvTemplateVersion',
         on_delete=models.PROTECT,
@@ -203,7 +215,9 @@ class CvVersion(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['cv', 'version_number'], name='uq_cv_version_number'),
-            models.CheckConstraint(check=models.Q(version_number__gt=0), name='chk_cv_version_number'),
+            models.CheckConstraint(
+                check=models.Q(version_number__gt=0), name='chk_cv_version_number'
+            ),
         ]
         indexes = [
             models.Index(fields=['cv', '-version_number'], name='idx_cv_versions_cv_created'),
@@ -377,7 +391,9 @@ class CvAccessLog(models.Model):
         EXPORT = 'export', 'Export'
 
     cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='access_logs')
-    version = models.ForeignKey(CvVersion, on_delete=models.PROTECT, null=True, blank=True, related_name='access_logs')
+    version = models.ForeignKey(
+        CvVersion, on_delete=models.PROTECT, null=True, blank=True, related_name='access_logs'
+    )
     actor_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -424,7 +440,9 @@ class CvExport(models.Model):
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     cv = models.ForeignKey(UserCv, on_delete=models.PROTECT, related_name='exports')
     version = models.ForeignKey(CvVersion, on_delete=models.PROTECT, related_name='exports')
-    export_format = models.CharField(max_length=20, choices=ExportFormat.choices, default=ExportFormat.PDF)
+    export_format = models.CharField(
+        max_length=20, choices=ExportFormat.choices, default=ExportFormat.PDF
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     renderer_key = models.CharField(max_length=100)
     renderer_version = models.CharField(max_length=50)
@@ -492,14 +510,20 @@ class CvImportJob(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     cv = models.OneToOneField(UserCv, on_delete=models.CASCADE, related_name='import_job')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cv_import_jobs')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cv_import_jobs'
+    )
     idempotency_key = models.CharField(max_length=100)
     file_checksum_sha256 = models.CharField(max_length=64)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.QUEUED)
     attempts = models.PositiveIntegerField(default=0)
     failure_code = models.CharField(max_length=80, blank=True)
     result_version = models.ForeignKey(
-        CvVersion, on_delete=models.SET_NULL, null=True, blank=True, related_name='+',
+        CvVersion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
     )
     queued_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
@@ -510,7 +534,9 @@ class CvImportJob(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'idempotency_key'], name='uq_cv_import_user_idempotency'),
+            models.UniqueConstraint(
+                fields=['user', 'idempotency_key'], name='uq_cv_import_user_idempotency'
+            ),
         ]
         indexes = [
             models.Index(fields=['status', 'queued_at'], name='idx_cv_import_pending'),

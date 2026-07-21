@@ -22,13 +22,16 @@ class ConsentApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {
-            'version': settings.CONSENT_POLICY_VERSION,
-            'necessary': True,
-            'preferences': True,
-            'analytics': True,
-            'marketing': False,
-        })
+        self.assertEqual(
+            response.data,
+            {
+                'version': settings.CONSENT_POLICY_VERSION,
+                'necessary': True,
+                'preferences': True,
+                'analytics': True,
+                'marketing': False,
+            },
+        )
         cookie = response.cookies[settings.CONSENT_COOKIE_NAME]
         self.assertTrue(cookie['httponly'])
         self.assertEqual(cookie['samesite'], settings.CONSENT_COOKIE_SAMESITE)

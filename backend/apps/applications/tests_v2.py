@@ -5,7 +5,12 @@ from rest_framework.test import APITestCase
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
 from apps.cvs.models import CvVersion
 from apps.cvs.schemas import empty_layout, empty_style
-from apps.cvs.services import create_application_snapshot, create_v2_cv, save_draft_as_version, update_draft
+from apps.cvs.services import (
+    create_application_snapshot,
+    create_v2_cv,
+    save_draft_as_version,
+    update_draft,
+)
 from apps.employers.models import Company, RecruiterProfile
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
@@ -17,18 +22,32 @@ from .models import Application
 class RecruiterApplicationSnapshotV2Tests(APITestCase):
     def setUp(self):
         self.candidate = get_user_model().objects.create_user(
-            email='snapshot-candidate@example.com', password='password', role='candidate', email_verified=True,
+            email='snapshot-candidate@example.com',
+            password='password',
+            role='candidate',
+            email_verified=True,
         )
         self.owner = get_user_model().objects.create_user(
-            email='snapshot-owner@example.com', password='password', role='employer', two_factor_enabled=True,
+            email='snapshot-owner@example.com',
+            password='password',
+            role='employer',
+            two_factor_enabled=True,
         )
         self.member = get_user_model().objects.create_user(
-            email='snapshot-member@example.com', password='password', role='employer', two_factor_enabled=True,
+            email='snapshot-member@example.com',
+            password='password',
+            role='employer',
+            two_factor_enabled=True,
         )
         self.outsider = get_user_model().objects.create_user(
-            email='snapshot-outsider@example.com', password='password', role='employer', two_factor_enabled=True,
+            email='snapshot-outsider@example.com',
+            password='password',
+            role='employer',
+            two_factor_enabled=True,
         )
-        self.company = Company.objects.create(company_name='Snapshot Company', created_by=self.owner)
+        self.company = Company.objects.create(
+            company_name='Snapshot Company', created_by=self.owner
+        )
         RecruiterProfile.objects.create(
             user=self.member,
             company=self.company,
@@ -37,10 +56,13 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.job = Job.objects.create(
             posted_by=self.owner,
             company=self.company,
-            title='Snapshot Job', description='Read immutable application snapshots.', status=Job.Status.ACTIVE,
+            title='Snapshot Job',
+            description='Read immutable application snapshots.',
+            status=Job.Status.ACTIVE,
         )
         template = CvTemplate.objects.create(
-            name='Snapshot template', lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
+            name='Snapshot template',
+            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
         )
         template_version = CvTemplateVersion.objects.create(
             template=template,
@@ -81,7 +103,12 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         tokens = issue_tokens(self.member, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
-        response = self.client.get(reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}))
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['cv']['public_id'], self.snapshot.public_id)
@@ -92,14 +119,21 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         tokens = issue_tokens(self.outsider, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
-        response = self.client.get(reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}))
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
 
         self.assertEqual(response.status_code, 404)
 
     def test_candidate_delete_removes_library_cv_but_retains_submitted_snapshot(self):
         self.client.force_authenticate(self.candidate)
 
-        response = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': self.cv.public_id}))
+        response = self.client.delete(
+            reverse('cv-v2-detail', kwargs={'public_id': self.cv.public_id})
+        )
 
         self.assertEqual(response.status_code, 204, response.data)
         self.assertFalse(type(self.cv).objects.filter(pk=self.cv.pk).exists())
@@ -112,7 +146,10 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         tokens = issue_tokens(self.member, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         snapshot_response = self.client.get(
-            reverse('recruiter-application-snapshot-v2', kwargs={'public_id': self.application.public_id}),
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            ),
         )
         self.assertEqual(snapshot_response.status_code, 200, snapshot_response.data)
         self.assertEqual(snapshot_response.data['cv']['public_id'], self.snapshot.public_id)
@@ -129,16 +166,25 @@ class CandidateApplicationV2Tests(APITestCase):
             phone='0909000000',
         )
         self.other_candidate = get_user_model().objects.create_user(
-            email='other-apply-candidate@example.com', password='password', role='candidate', email_verified=True,
+            email='other-apply-candidate@example.com',
+            password='password',
+            role='candidate',
+            email_verified=True,
         )
         self.employer = get_user_model().objects.create_user(
-            email='apply-employer@example.com', password='password', role='employer',
+            email='apply-employer@example.com',
+            password='password',
+            role='employer',
         )
-        self.company = Company.objects.create(company_name='Apply Company', created_by=self.employer)
+        self.company = Company.objects.create(
+            company_name='Apply Company', created_by=self.employer
+        )
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=self.company,
-            title='Apply Job', description='Candidate selects an immutable CV version.', status=Job.Status.ACTIVE,
+            title='Apply Job',
+            description='Candidate selects an immutable CV version.',
+            status=Job.Status.ACTIVE,
         )
         self.preferred_location = Location.objects.create(
             code='74',
@@ -153,7 +199,8 @@ class CandidateApplicationV2Tests(APITestCase):
         JobLocation.objects.create(job=self.job, location=self.preferred_location)
         JobLocation.objects.create(job=self.job, location=self.second_preferred_location)
         template = CvTemplate.objects.create(
-            name='Apply template', lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
+            name='Apply template',
+            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
         )
         template_version = CvTemplateVersion.objects.create(
             template=template,
@@ -167,7 +214,9 @@ class CandidateApplicationV2Tests(APITestCase):
         template.current_published_version = template_version
         template.save(update_fields=['current_published_version'])
         self.cv = create_v2_cv(actor=self.candidate, title='Selected CV', template=template)
-        self.other_cv = create_v2_cv(actor=self.other_candidate, title='Other CV', template=template)
+        self.other_cv = create_v2_cv(
+            actor=self.other_candidate, title='Other CV', template=template
+        )
 
     def apply_payload(self, **overrides):
         payload = {
@@ -199,8 +248,14 @@ class CandidateApplicationV2Tests(APITestCase):
         application = Application.objects.get(public_id=response.data['public_id'])
         self.cv.refresh_from_db()
         self.assertEqual(application.submitted_cv_version.parent_version_id, selected_version.id)
-        self.assertEqual(application.submitted_cv_version.version_kind, CvVersion.VersionKind.APPLICATION_SNAPSHOT)
-        self.assertEqual(application.submitted_cv_version.public_id, response.data['submitted_cv_version_public_id'])
+        self.assertEqual(
+            application.submitted_cv_version.version_kind,
+            CvVersion.VersionKind.APPLICATION_SNAPSHOT,
+        )
+        self.assertEqual(
+            application.submitted_cv_version.public_id,
+            response.data['submitted_cv_version_public_id'],
+        )
         self.assertEqual(self.cv.latest_version_id, selected_version.id)
         self.assertEqual(response.data['cv_public_id'], self.cv.public_id)
         self.assertEqual(
@@ -224,10 +279,14 @@ class CandidateApplicationV2Tests(APITestCase):
             format='json',
         )
         first = self.client.post(
-            reverse('candidate-application-list-create-v2'), self.apply_payload(), format='json',
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
         )
         duplicate = self.client.post(
-            reverse('candidate-application-list-create-v2'), self.apply_payload(), format='json',
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
         )
 
         self.assertEqual(forbidden_cv.status_code, 400, forbidden_cv.data)
@@ -262,7 +321,9 @@ class CandidateApplicationV2Tests(APITestCase):
         self.client.force_authenticate(self.employer)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'), self.apply_payload(), format='json',
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
         )
 
         self.assertEqual(response.status_code, 403)

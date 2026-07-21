@@ -36,7 +36,9 @@ class PostAdminForm(forms.ModelForm):
         model = Post
         fields = '__all__'
         widgets = {
-            'content': forms.Textarea(attrs={'rows': 24, 'style': 'font-family: monospace; width: 100%;'}),
+            'content': forms.Textarea(
+                attrs={'rows': 24, 'style': 'font-family: monospace; width: 100%;'}
+            ),
         }
 
     def __init__(self, *args, can_publish=True, **kwargs):
@@ -53,7 +55,15 @@ class PostAdminForm(forms.ModelForm):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     form = PostAdminForm
-    list_display = ['title', 'category', 'status', 'author', 'published_at', 'view_count', 'thumbnail_preview']
+    list_display = [
+        'title',
+        'category',
+        'status',
+        'author',
+        'published_at',
+        'view_count',
+        'thumbnail_preview',
+    ]
     list_filter = ['status', 'category', 'created_at']
     search_fields = ['title', 'slug', 'summary']
     prepopulated_fields = {'slug': ('title',)}
@@ -61,11 +71,26 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ['public_id', 'view_count', 'thumbnail_preview', 'created_at', 'updated_at']
     fieldsets = (
         (None, {'fields': ('title', 'slug', 'category', 'summary', 'status')}),
-        ('Nội dung', {'fields': ('upload_thumbnail', 'thumbnail_url', 'thumbnail_preview', 'content')}),
+        (
+            'Nội dung',
+            {'fields': ('upload_thumbnail', 'thumbnail_url', 'thumbnail_preview', 'content')},
+        ),
         ('Liên kết & thẻ', {'fields': ('related_job_category', 'tags')}),
         ('SEO', {'fields': ('seo_title', 'seo_description'), 'classes': ('collapse',)}),
-        ('Hệ thống', {'fields': ('public_id', 'author', 'published_at', 'view_count', 'created_at', 'updated_at'),
-                      'classes': ('collapse',)}),
+        (
+            'Hệ thống',
+            {
+                'fields': (
+                    'public_id',
+                    'author',
+                    'published_at',
+                    'view_count',
+                    'created_at',
+                    'updated_at',
+                ),
+                'classes': ('collapse',),
+            },
+        ),
     )
 
     def _can_publish(self, request):
@@ -97,7 +122,11 @@ class PostAdmin(admin.ModelAdmin):
             obj.published_at = timezone.now()
 
         upload = form.cleaned_data.get('upload_thumbnail')
-        old_url = Post.objects.filter(pk=obj.pk).values_list('thumbnail_url', flat=True).first() if change else ''
+        old_url = (
+            Post.objects.filter(pk=obj.pk).values_list('thumbnail_url', flat=True).first()
+            if change
+            else ''
+        )
         if upload:
             saved = save_image_upload(upload, 'blog/thumbnails', request=request)
             obj.thumbnail_url = saved['path']

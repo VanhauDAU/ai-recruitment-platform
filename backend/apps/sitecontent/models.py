@@ -32,7 +32,9 @@ class Locale(models.Model):
         if self.is_default and not self.is_active:
             raise ValidationError({'is_active': 'Default locale must remain active.'})
         if self.pk:
-            persisted_code = type(self).objects.filter(pk=self.pk).values_list('code', flat=True).first()
+            persisted_code = (
+                type(self).objects.filter(pk=self.pk).values_list('code', flat=True).first()
+            )
             if persisted_code and persisted_code != self.code:
                 raise ValidationError({'code': 'Locale code is immutable.'})
 
@@ -79,14 +81,23 @@ class SiteSetting(models.Model):
         JSON = 'json', 'JSON'
         ENV = 'env', 'Cấu hình qua .env'
 
-    key = models.SlugField(max_length=100, unique=True, help_text='Định danh dùng ở code/frontend, vd: site_name')
+    key = models.SlugField(
+        max_length=100, unique=True, help_text='Định danh dùng ở code/frontend, vd: site_name'
+    )
     label = models.CharField(max_length=200, help_text='Tên hiển thị trong trang quản trị')
     group = models.CharField(max_length=30, choices=Group.choices, default=Group.GENERAL)
     value = models.JSONField(default=dict, blank=True)
-    value_type = models.CharField(max_length=20, choices=ValueType.choices, default=ValueType.TEXT,
-                                  help_text='Kiểu dữ liệu để trang quản trị tự render form phù hợp')
-    options = models.JSONField(default=dict, blank=True,
-                               help_text='select: {"choices": [{"value","label"}]}; env: {"env_var": "TÊN_BIẾN"}')
+    value_type = models.CharField(
+        max_length=20,
+        choices=ValueType.choices,
+        default=ValueType.TEXT,
+        help_text='Kiểu dữ liệu để trang quản trị tự render form phù hợp',
+    )
+    options = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='select: {"choices": [{"value","label"}]}; env: {"env_var": "TÊN_BIẾN"}',
+    )
     order = models.PositiveSmallIntegerField(default=0, help_text='Thứ tự hiển thị trong nhóm')
     description = models.CharField(max_length=300, blank=True)
     is_public = models.BooleanField(default=True, help_text='Cho phép trả về qua API công khai')
@@ -120,9 +131,13 @@ class LinkGroup(models.Model):
 
     key = models.SlugField(max_length=100, unique=True)
     title = models.CharField(max_length=200)
-    placement = models.CharField(max_length=30, choices=Placement.choices, default=Placement.FOOTER_SEO)
+    placement = models.CharField(
+        max_length=30, choices=Placement.choices, default=Placement.FOOTER_SEO
+    )
     source = models.CharField(max_length=20, choices=Source.choices, default=Source.MANUAL)
-    limit = models.PositiveSmallIntegerField(default=16, help_text='Số link tối đa khi tự sinh từ DB')
+    limit = models.PositiveSmallIntegerField(
+        default=16, help_text='Số link tối đa khi tự sinh từ DB'
+    )
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -134,12 +149,17 @@ class LinkGroup(models.Model):
     def __str__(self):
         return self.title
 
+
 class LinkItem(models.Model):
     """Link nhập tay thuộc một cụm `manual` (bỏ qua khi cụm tự sinh từ DB)."""
 
     group = models.ForeignKey(LinkGroup, on_delete=models.CASCADE, related_name='items')
     label = models.CharField(max_length=200)
-    url = models.CharField(max_length=500, blank=True, help_text='Để trống nếu tính năng chưa có (hiển thị "Sắp ra mắt")')
+    url = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text='Để trống nếu tính năng chưa có (hiển thị "Sắp ra mắt")',
+    )
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -175,17 +195,27 @@ class Banner(models.Model):
         # Chèn giữa danh sách kết quả tìm việc (sau vài tin đầu, kiểu box TopCV Pro).
         JOB_LIST_INLINE = 'job_list_inline', 'Banner chèn giữa danh sách việc làm'
 
-    placement = models.CharField(max_length=30, choices=Placement.choices, default=Placement.HOME_HERO)
-    eyebrow = models.CharField(max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP')
+    placement = models.CharField(
+        max_length=30, choices=Placement.choices, default=Placement.HOME_HERO
+    )
+    eyebrow = models.CharField(
+        max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
+    )
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=300, blank=True)
-    image_url = models.TextField(blank=True, help_text='Để trống để dùng nền gradient theo Theme bên dưới')
+    image_url = models.TextField(
+        blank=True, help_text='Để trống để dùng nền gradient theo Theme bên dưới'
+    )
     theme = models.CharField(max_length=20, choices=Theme.choices, default=Theme.GREEN)
-    cta_label = models.CharField(max_length=100, blank=True, help_text='Để trống nếu banner không có nút bấm')
+    cta_label = models.CharField(
+        max_length=100, blank=True, help_text='Để trống nếu banner không có nút bấm'
+    )
     cta_url = models.CharField(max_length=300, blank=True)
     # Nút phụ — hiện chỉ banner sidebar blog cần 2 nút (Tạo CV + Tìm việc ngay);
     # banner 1 nút để trống cặp này.
-    cta_secondary_label = models.CharField(max_length=100, blank=True, help_text='Nút thứ hai (vd banner blog có 2 nút)')
+    cta_secondary_label = models.CharField(
+        max_length=100, blank=True, help_text='Nút thứ hai (vd banner blog có 2 nút)'
+    )
     cta_secondary_url = models.CharField(max_length=300, blank=True)
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
@@ -228,16 +258,36 @@ class Feedback(models.Model):
         IN_PROGRESS = 'in_progress', 'Đang xử lý'
         RESOLVED = 'resolved', 'Đã xử lý'
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                             related_name='feedbacks', help_text='Null nếu khách gửi khi chưa đăng nhập')
-    category = models.CharField(max_length=20, choices=Category.choices, default=Category.FEATURE,
-                                help_text='Chủ đề cần góp ý')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='feedbacks',
+        help_text='Null nếu khách gửi khi chưa đăng nhập',
+    )
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.FEATURE,
+        help_text='Chủ đề cần góp ý',
+    )
     content = models.TextField(help_text='Mô tả góp ý')
-    satisfaction = models.CharField(max_length=20, choices=Satisfaction.choices, blank=True,
-                                    help_text='Mức hài lòng người dùng chọn (nếu có)')
-    phone = models.CharField(max_length=20, blank=True, help_text='Số điện thoại nhận phản hồi (khách)')
-    email = models.EmailField(blank=True, help_text='Email nhận phản hồi (để trống nếu không cần phản hồi)')
-    page_url = models.CharField(max_length=500, blank=True, help_text='Trang người dùng đang xem lúc gửi')
+    satisfaction = models.CharField(
+        max_length=20,
+        choices=Satisfaction.choices,
+        blank=True,
+        help_text='Mức hài lòng người dùng chọn (nếu có)',
+    )
+    phone = models.CharField(
+        max_length=20, blank=True, help_text='Số điện thoại nhận phản hồi (khách)'
+    )
+    email = models.EmailField(
+        blank=True, help_text='Email nhận phản hồi (để trống nếu không cần phản hồi)'
+    )
+    page_url = models.CharField(
+        max_length=500, blank=True, help_text='Trang người dùng đang xem lúc gửi'
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)
 

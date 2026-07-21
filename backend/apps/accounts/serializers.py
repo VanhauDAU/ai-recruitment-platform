@@ -102,9 +102,18 @@ class SessionUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'email_verified', 'two_factor_enabled', 'two_factor_email_enabled',
-            'two_factor_totp_enabled', 'two_factor_backup_codes_enabled', 'job_preferences_configured',
+            'public_id',
+            'email',
+            'role',
+            'full_name',
+            'phone',
+            'avatar_url',
+            'email_verified',
+            'two_factor_enabled',
+            'two_factor_email_enabled',
+            'two_factor_totp_enabled',
+            'two_factor_backup_codes_enabled',
+            'job_preferences_configured',
             'has_usable_password',
             'employer_onboarding_required',
             'employer_onboarding_step',
@@ -130,6 +139,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
 
     def get_two_factor_email_enabled(self, obj):
         from .services.two_factor import enabled_methods
+
         return enabled_methods(obj)['email']
 
     def get_two_factor_totp_enabled(self, obj):
@@ -178,15 +188,24 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     """
 
     full_name = serializers.CharField(
-        max_length=255, trim_whitespace=True,
-        error_messages={'blank': 'Vui lòng nhập họ và tên.', 'required': 'Vui lòng nhập họ và tên.'},
+        max_length=255,
+        trim_whitespace=True,
+        error_messages={
+            'blank': 'Vui lòng nhập họ và tên.',
+            'required': 'Vui lòng nhập họ và tên.',
+        },
     )
     phone = serializers.CharField(
-        max_length=20, required=False, allow_blank=True, trim_whitespace=True,
-        validators=[RegexValidator(
-            regex=r'^(0|\+84)\d{9,10}$',
-            message='Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).',
-        )],
+        max_length=20,
+        required=False,
+        allow_blank=True,
+        trim_whitespace=True,
+        validators=[
+            RegexValidator(
+                regex=r'^(0|\+84)\d{9,10}$',
+                message='Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).',
+            )
+        ],
     )
 
     class Meta:
@@ -213,7 +232,9 @@ class ChangeEmailSerializer(serializers.Serializer):
         user = self.context['request'].user
         if user.has_usable_password():
             if not user.check_password(attrs.get('current_password') or ''):
-                raise serializers.ValidationError({'current_password': 'Mật khẩu hiện tại không đúng.'})
+                raise serializers.ValidationError(
+                    {'current_password': 'Mật khẩu hiện tại không đúng.'}
+                )
         else:
             from .services import auth_sessions
 
@@ -221,10 +242,12 @@ class ChangeEmailSerializer(serializers.Serializer):
             sid = request.auth.get(auth_sessions.SID_CLAIM) if request.auth else None
             session = auth_sessions.active_sessions(user).filter(id=sid).first()
             if not auth_sessions.is_recent_oauth_reauthentication(session):
-                raise serializers.ValidationError({
-                    'detail': 'Hãy đăng nhập lại với OAuth trước khi đổi email.',
-                    'code': 'reauth_required',
-                })
+                raise serializers.ValidationError(
+                    {
+                        'detail': 'Hãy đăng nhập lại với OAuth trước khi đổi email.',
+                        'code': 'reauth_required',
+                    }
+                )
         return attrs
 
     def validate_email(self, value):
@@ -234,7 +257,9 @@ class ChangeEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError('Email mới trùng với email hiện tại.')
         # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng).
         if User.objects.filter(email__iexact=value, role=user.role).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError('Email này đã được sử dụng cho một tài khoản cùng loại.')
+            raise serializers.ValidationError(
+                'Email này đã được sử dụng cho một tài khoản cùng loại.'
+            )
         return value
 
 
@@ -248,9 +273,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
     captcha_token = serializers.CharField(write_only=True)
-    portal = serializers.ChoiceField(
-        choices=['main', 'employer'], required=False, write_only=True
-    )
+    portal = serializers.ChoiceField(choices=['main', 'employer'], required=False, write_only=True)
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
@@ -275,7 +298,9 @@ class PasswordChangeSerializer(serializers.Serializer):
             if not current_password:
                 raise serializers.ValidationError({'current_password': 'Nhập mật khẩu hiện tại.'})
             if not user.check_password(current_password):
-                raise serializers.ValidationError({'current_password': 'Mật khẩu hiện tại không đúng.'})
+                raise serializers.ValidationError(
+                    {'current_password': 'Mật khẩu hiện tại không đúng.'}
+                )
         return attrs
 
 
@@ -297,7 +322,9 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
 
     captcha_token = serializers.CharField(write_only=True)
     # Bỏ trống -> cổng ứng viên (mặc định). FE luôn gửi 'main'/'employer'/'admin'.
-    portal = serializers.ChoiceField(choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True)
+    portal = serializers.ChoiceField(
+        choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True
+    )
 
     def validate(self, attrs):
         attrs.pop('captcha_token', None)
@@ -311,7 +338,9 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
             or not user.check_password(attrs.get('password') or '')
             or not is_account_accessible(user)
         ):
-            raise AuthenticationFailed(self.error_messages['no_active_account'], 'no_active_account')
+            raise AuthenticationFailed(
+                self.error_messages['no_active_account'], 'no_active_account'
+            )
 
         self.user = user
         return {}

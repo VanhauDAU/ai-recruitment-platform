@@ -91,10 +91,12 @@ class OAuthCallbackView(APIView):
 @extend_schema(
     summary='Đổi one_time_code (từ OAuth callback) lấy JWT',
     request=inline_serializer('OAuthCompleteRequest', {'code': serializers.CharField()}),
-    responses={200: inline_serializer(
-        'OAuthComplete',
-        {'user': SessionUserSerializer(), 'access': serializers.CharField()},
-    )},
+    responses={
+        200: inline_serializer(
+            'OAuthComplete',
+            {'user': SessionUserSerializer(), 'access': serializers.CharField()},
+        )
+    },
     tags=['auth'],
 )
 class OAuthCompleteView(APIView):

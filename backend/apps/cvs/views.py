@@ -11,7 +11,13 @@ from common.r2_storage import private_media_storage
 from .models import UserCv
 from .serializers import UserCvSerializer
 from .selectors import candidate_cvs_queryset
-from .services import UnsupportedCvUpload, create_builder_cv, permanently_delete_cv, update_builder_cv, upload_cv
+from .services import (
+    UnsupportedCvUpload,
+    create_builder_cv,
+    permanently_delete_cv,
+    update_builder_cv,
+    upload_cv,
+)
 
 
 class UserCvListCreateView(LegacyApiDeprecationMixin, generics.ListCreateAPIView):
@@ -89,7 +95,9 @@ class UserCvUploadView(LegacyApiDeprecationMixin, APIView):
             'UserCvUploadRequest',
             fields={
                 'file': serializers.FileField(help_text='File CV định dạng PDF hoặc DOCX'),
-                'title': serializers.CharField(required=False, help_text='Tên CV (mặc định lấy tên file)'),
+                'title': serializers.CharField(
+                    required=False, help_text='Tên CV (mặc định lấy tên file)'
+                ),
             },
         ),
         responses={201: UserCvSerializer},

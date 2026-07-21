@@ -12,7 +12,11 @@ from .serializers import (
     RecruiterVisibilitySerializer,
 )
 from .selectors import candidate_job_preference_for_user, candidate_profile_for_user
-from .services import replace_candidate_job_preferences, set_recruiter_visibility, update_candidate_profile
+from .services import (
+    replace_candidate_job_preferences,
+    set_recruiter_visibility,
+    update_candidate_profile,
+)
 
 
 class MyCandidateProfileView(generics.RetrieveUpdateAPIView):
@@ -47,7 +51,9 @@ class MyCandidateJobPreferencesView(APIView):
         current = candidate_job_preference_for_user(request.user)
         serializer = CandidateJobPreferenceSerializer(current, data=request.data)
         serializer.is_valid(raise_exception=True)
-        preference = replace_candidate_job_preferences(current.candidate_profile, serializer.validated_data)
+        preference = replace_candidate_job_preferences(
+            current.candidate_profile, serializer.validated_data
+        )
         preference = candidate_job_preference_for_user(request.user)
         return Response(CandidateJobPreferenceSerializer(preference).data)
 
@@ -62,18 +68,23 @@ class MyRecruiterVisibilityView(APIView):
         consent = profile.consents.filter(
             consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
         ).first()
-        return Response({
-            'enabled': bool(consent and consent.decision == CandidateConsent.Decision.GRANTED),
-            'policy_version': consent.policy_version if consent else 'v1',
-            'decided_at': consent.decided_at if consent else None,
-        })
+        return Response(
+            {
+                'enabled': bool(consent and consent.decision == CandidateConsent.Decision.GRANTED),
+                'policy_version': consent.policy_version if consent else 'v1',
+                'decided_at': consent.decided_at if consent else None,
+            }
+        )
 
     def patch(self, request):
         serializer = RecruiterVisibilitySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         cv_public_id = data.get('cv_public_id', '')
-        if cv_public_id and not request.user.cvs.filter(public_id=cv_public_id, is_deleted=False).exists():
+        if (
+            cv_public_id
+            and not request.user.cvs.filter(public_id=cv_public_id, is_deleted=False).exists()
+        ):
             from rest_framework.exceptions import ValidationError
 
             raise ValidationError({'cv_public_id': 'CV không thuộc tài khoản hiện tại.'})
@@ -85,8 +96,10 @@ class MyRecruiterVisibilityView(APIView):
             source_path=data.get('source_path', ''),
             cv_public_id=cv_public_id,
         )
-        return Response({
-            'enabled': consent.decision == CandidateConsent.Decision.GRANTED,
-            'policy_version': consent.policy_version,
-            'decided_at': consent.decided_at,
-        })
+        return Response(
+            {
+                'enabled': consent.decision == CandidateConsent.Decision.GRANTED,
+                'policy_version': consent.policy_version,
+                'decided_at': consent.decided_at,
+            }
+        )

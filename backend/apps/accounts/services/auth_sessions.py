@@ -38,7 +38,9 @@ def _is_trusted_proxy(remote):
         return False
     try:
         address = ip_address(remote)
-        return any(address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS)
+        return any(
+            address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS
+        )
     except ValueError:
         return False
 

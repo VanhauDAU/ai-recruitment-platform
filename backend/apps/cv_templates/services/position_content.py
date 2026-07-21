@@ -14,11 +14,7 @@ class PositionContentUnavailable(ValueError):
 def _rich_text(value):
     return {
         'format': 'rich_text_v1',
-        'content': [
-            {'type': 'paragraph', 'text': line}
-            for line in value.split('\n')
-            if line
-        ],
+        'content': [{'type': 'paragraph', 'text': line} for line in value.split('\n') if line],
     }
 
 
@@ -74,7 +70,9 @@ def _blueprint(locale, experience_level):
 
 
 def _content_from_blueprint(blueprint, locale, position_name):
-    if isinstance(blueprint.content_json_template, dict) and blueprint.content_json_template.get('sections'):
+    if isinstance(blueprint.content_json_template, dict) and blueprint.content_json_template.get(
+        'sections'
+    ):
         content = _materialize_tokens(deepcopy(blueprint.content_json_template), position_name)
         content['locale'] = locale
         content['schema_version'] = content.get('schema_version') or 1
@@ -97,41 +95,49 @@ def _content_from_blueprint(blueprint, locale, position_name):
                 'section_key': 'summary',
                 'title': blueprint.summary_title,
                 'enabled': True,
-                'items': [{
-                    'item_id': 'summary_item_1',
-                    'value': _format(blueprint.summary_template, position_name),
-                }],
+                'items': [
+                    {
+                        'item_id': 'summary_item_1',
+                        'value': _format(blueprint.summary_template, position_name),
+                    }
+                ],
             },
             {
                 'instance_id': 'experience_1',
                 'section_key': 'experience',
                 'title': blueprint.experience_title,
                 'enabled': True,
-                'items': [{
-                    'item_id': 'experience_item_1',
-                    'role': position_name,
-                    'company': blueprint.experience_company,
-                    'start_date': '2022-03',
-                    'end_date': None,
-                    'description': _rich_text(_format(
-                        blueprint.experience_description_template,
-                        position_name,
-                    )),
-                }],
+                'items': [
+                    {
+                        'item_id': 'experience_item_1',
+                        'role': position_name,
+                        'company': blueprint.experience_company,
+                        'start_date': '2022-03',
+                        'end_date': None,
+                        'description': _rich_text(
+                            _format(
+                                blueprint.experience_description_template,
+                                position_name,
+                            )
+                        ),
+                    }
+                ],
             },
             {
                 'instance_id': 'education_1',
                 'section_key': 'education',
                 'title': blueprint.education_title,
                 'enabled': True,
-                'items': [{
-                    'item_id': 'education_item_1',
-                    'degree': blueprint.education_degree,
-                    'institution': blueprint.education_institution,
-                    'start_date': '2016-09',
-                    'end_date': '2020-06',
-                    'description': _rich_text(blueprint.education_description),
-                }],
+                'items': [
+                    {
+                        'item_id': 'education_item_1',
+                        'degree': blueprint.education_degree,
+                        'institution': blueprint.education_institution,
+                        'start_date': '2016-09',
+                        'end_date': '2020-06',
+                        'description': _rich_text(blueprint.education_description),
+                    }
+                ],
             },
             {
                 'instance_id': 'skills_1',

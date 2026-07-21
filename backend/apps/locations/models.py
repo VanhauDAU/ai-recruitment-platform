@@ -21,9 +21,17 @@ class Location(models.Model):
     code = models.CharField(max_length=20, unique=True)
     level = models.CharField(max_length=20, choices=Level.choices)
     name = models.CharField(max_length=255)
-    ward_type = models.CharField(max_length=20, blank=True, help_text='xã, phường, đặc khu — chỉ khi level=ward')
-    province_type = models.CharField(max_length=20, blank=True, help_text='tỉnh, thành phố trực thuộc trung ương — chỉ khi level=province')
-    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
+    ward_type = models.CharField(
+        max_length=20, blank=True, help_text='xã, phường, đặc khu — chỉ khi level=ward'
+    )
+    province_type = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text='tỉnh, thành phố trực thuộc trung ương — chỉ khi level=province',
+    )
+    parent = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children'
+    )
     # Tên các tỉnh cũ hợp thành tỉnh này sau sáp nhập 1/7/2025 (chỉ khi level=province).
     # Rỗng = tỉnh giữ nguyên, không sáp nhập. Seed qua `seed_province_merges`, admin sửa được.
     merged_from = models.JSONField(default=list, blank=True)

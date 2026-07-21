@@ -50,7 +50,14 @@ def _rich_text_blocks(value) -> list[dict]:
 
 def _item_projection(item: dict) -> dict:
     """Project registered canonical item fields without template-specific mapping."""
-    heading = next((item[key] for key in ('name', 'degree', 'title', 'role', 'value') if isinstance(item.get(key), str) and item[key]), '')
+    heading = next(
+        (
+            item[key]
+            for key in ('name', 'degree', 'title', 'role', 'value')
+            if isinstance(item.get(key), str) and item[key]
+        ),
+        '',
+    )
     metadata = [
         item[key]
         for key in ('company', 'institution', 'issuer', 'organization', 'start_date', 'end_date')
@@ -58,7 +65,13 @@ def _item_projection(item: dict) -> dict:
     ]
     description = _rich_text_blocks(item.get('description'))
     if not description and isinstance(item.get('value'), str) and item.get('value') != heading:
-        description = [{'type': 'paragraph', 'text': item['value'], 'runs': [{'text': item['value'], 'marks': {}}]}]
+        description = [
+            {
+                'type': 'paragraph',
+                'text': item['value'],
+                'runs': [{'text': item['value'], 'marks': {}}],
+            }
+        ]
     try:
         skill_level = min(5, max(0, int(item.get('level') or 0)))
     except (TypeError, ValueError):
@@ -70,9 +83,17 @@ def _item_projection(item: dict) -> dict:
         'value': item.get('value') if isinstance(item.get('value'), str) else '',
         'role': item.get('role') if isinstance(item.get('role'), str) else '',
         'company': item.get('company') if isinstance(item.get('company'), str) else '',
-        'secondary': next((item[key] for key in ('institution', 'issuer', 'organization') if isinstance(item.get(key), str) and item[key]), ''),
+        'secondary': next(
+            (
+                item[key]
+                for key in ('institution', 'issuer', 'organization')
+                if isinstance(item.get(key), str) and item[key]
+            ),
+            '',
+        ),
         'date_range': ' – '.join(
-            item[key] for key in ('start_date', 'end_date')
+            item[key]
+            for key in ('start_date', 'end_date')
             if isinstance(item.get(key), str) and item[key]
         ),
         'skill_level': skill_level,
@@ -82,7 +103,9 @@ def _item_projection(item: dict) -> dict:
 
 def _ordered_items(section: dict, item_orders: dict) -> list[dict]:
     items = [item for item in section.get('items', []) if isinstance(item, dict)]
-    desired_order = item_orders.get(section.get('instance_id'), []) if isinstance(item_orders, dict) else []
+    desired_order = (
+        item_orders.get(section.get('instance_id'), []) if isinstance(item_orders, dict) else []
+    )
     if not desired_order:
         return items
     by_id = {item.get('item_id'): item for item in items}
@@ -102,7 +125,9 @@ def _section_projection(section: dict, content: dict, layout: dict) -> dict | No
         for item in _ordered_items(section, layout.get('item_orders', {}))
         if _projected_item_has_content(projected := _item_projection(item))
     ]
-    if section_key == 'nameplate' and not any(personal_info.get(key) for key in ('full_name', 'headline')):
+    if section_key == 'nameplate' and not any(
+        personal_info.get(key) for key in ('full_name', 'headline')
+    ):
         return None
     if section_key == 'contact' and not _contact_line(personal_info):
         return None
@@ -113,7 +138,8 @@ def _section_projection(section: dict, content: dict, layout: dict) -> dict | No
     return {
         'section_key': section_key,
         'personal_info_backed': bool(section_contract and section_contract.personal_info_backed),
-        'title': section.get('title') or (section_contract.display_name if section_contract else section_key or ''),
+        'title': section.get('title')
+        or (section_contract.display_name if section_contract else section_key or ''),
         'items': projected_items,
     }
 
@@ -124,7 +150,9 @@ def _project_sections(version, contract) -> list[dict]:
     sections_by_id = {
         section.get('instance_id'): deepcopy(section)
         for section in content.get('sections', [])
-        if isinstance(section, dict) and section.get('instance_id') and section.get('enabled') is True
+        if isinstance(section, dict)
+        and section.get('instance_id')
+        and section.get('enabled') is True
     }
     configured_regions = {
         region.get('id'): region
@@ -147,15 +175,23 @@ def _project_sections(version, contract) -> list[dict]:
             projected = _section_projection(section, content, layout)
             if projected is not None:
                 rendered_sections.append(projected)
-        regions.append({
-            'id': region_key,
-            'row': region.get('row', 0),
-            'width_percent': region.get('width_percent', 100),
-            'sections': rendered_sections,
-        })
+        regions.append(
+            {
+                'id': region_key,
+                'row': region.get('row', 0),
+                'width_percent': region.get('width_percent', 100),
+                'sections': rendered_sections,
+            }
+        )
     if not regions:
-        regions.append({'id': contract.region_order[0], 'row': 0, 'width_percent': 100, 'sections': []})
-    unassigned_sections = [section for section_id, section in sections_by_id.items() if section_id not in rendered_ids and section_id not in hidden_ids]
+        regions.append(
+            {'id': contract.region_order[0], 'row': 0, 'width_percent': 100, 'sections': []}
+        )
+    unassigned_sections = [
+        section
+        for section_id, section in sections_by_id.items()
+        if section_id not in rendered_ids and section_id not in hidden_ids
+    ]
     for section in unassigned_sections:
         projected = _section_projection(section, content, layout)
         if projected is not None:
@@ -177,7 +213,8 @@ def _asset_data_uri(public_id, kind):
 
 def _contact_line(personal_info: dict) -> str:
     return ' · '.join(
-        value for key in ('email', 'phone', 'date_of_birth', 'address', 'website')
+        value
+        for key in ('email', 'phone', 'date_of_birth', 'address', 'website')
         if isinstance((value := personal_info.get(key)), str) and value
     )
 
@@ -223,7 +260,9 @@ def build_cv_pdf_html(version) -> str:
             regions,
         )
     except ValidationError as error:
-        raise PdfRenderingError('The selected CV version does not satisfy its renderer contract.') from error
+        raise PdfRenderingError(
+            'The selected CV version does not satisfy its renderer contract.'
+        ) from error
     if template_version.renderer_version != contract.version:
         raise PdfRenderingError('The selected CV version has an unsupported renderer version.')
     content = version.content_json
@@ -236,32 +275,44 @@ def build_cv_pdf_html(version) -> str:
     projected_regions = _project_sections(version, contract)
     rows = []
     for row_number in sorted({region['row'] for region in projected_regions}):
-        rows.append({'number': row_number, 'regions': [region for region in projected_regions if region['row'] == row_number]})
-    return render_to_string('cvs/pdf/cv_version.html', {
-        'locale': content.get('locale', 'vi-VN'),
-        'renderer_key': contract.key,
-        'renderer_version': contract.version,
-        'margin_mm': version.layout_json.get('page', {}).get('margin_mm', 12),
-        'theme_color': style.get('theme_color', '#00A66A'),
-        'font_stack': FONT_STACKS.get(style.get('font_family'), FONT_STACKS['Roboto']),
-        'font_scale': font_scale,
-        'font_size_px': f'{11 * font_scale:g}',
-        'line_height': style.get('line_height', 1.4),
-        'personal_info': personal_info,
-        'contact_line': _contact_line(personal_info),
-        'contact_values': [
-            personal_info[key]
-            for key in ('email', 'phone', 'date_of_birth', 'address', 'website')
-            if isinstance(personal_info.get(key), str) and personal_info[key]
-        ],
-        'rows': rows,
-        'show_legacy_header': contract.key != 'header_two_column_v1',
-        'avatar_data_uri': _asset_data_uri(personal_info.get('avatar_asset_id'), CvAsset.Kind.AVATAR),
-        'avatar_object_position': _avatar_object_position(personal_info),
-        'avatar_size_mm': f'{_avatar_size_mm(personal_info):g}',
-        'avatar_zoom': f'{_avatar_zoom(personal_info):g}',
-        'background_data_uri': _asset_data_uri(style.get('background_asset_id'), CvAsset.Kind.BACKGROUND),
-    })
+        rows.append(
+            {
+                'number': row_number,
+                'regions': [region for region in projected_regions if region['row'] == row_number],
+            }
+        )
+    return render_to_string(
+        'cvs/pdf/cv_version.html',
+        {
+            'locale': content.get('locale', 'vi-VN'),
+            'renderer_key': contract.key,
+            'renderer_version': contract.version,
+            'margin_mm': version.layout_json.get('page', {}).get('margin_mm', 12),
+            'theme_color': style.get('theme_color', '#00A66A'),
+            'font_stack': FONT_STACKS.get(style.get('font_family'), FONT_STACKS['Roboto']),
+            'font_scale': font_scale,
+            'font_size_px': f'{11 * font_scale:g}',
+            'line_height': style.get('line_height', 1.4),
+            'personal_info': personal_info,
+            'contact_line': _contact_line(personal_info),
+            'contact_values': [
+                personal_info[key]
+                for key in ('email', 'phone', 'date_of_birth', 'address', 'website')
+                if isinstance(personal_info.get(key), str) and personal_info[key]
+            ],
+            'rows': rows,
+            'show_legacy_header': contract.key != 'header_two_column_v1',
+            'avatar_data_uri': _asset_data_uri(
+                personal_info.get('avatar_asset_id'), CvAsset.Kind.AVATAR
+            ),
+            'avatar_object_position': _avatar_object_position(personal_info),
+            'avatar_size_mm': f'{_avatar_size_mm(personal_info):g}',
+            'avatar_zoom': f'{_avatar_zoom(personal_info):g}',
+            'background_data_uri': _asset_data_uri(
+                style.get('background_asset_id'), CvAsset.Kind.BACKGROUND
+            ),
+        },
+    )
 
 
 def render_cv_version_pdf(version) -> bytes:

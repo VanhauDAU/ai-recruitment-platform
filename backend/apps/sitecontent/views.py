@@ -50,10 +50,12 @@ class SiteSettingListView(APIView):
             cache.set(PUBLIC_SETTINGS_CACHE_KEY, data, 60 * 60)
         # Cache storage keys, không cache URL tuyệt đối. Nhờ vậy thay domain/CDN
         # không làm database hay cache giữ lại localhost/domain cũ.
-        return Response({
-            key: media_url_from_value(value, request=request) if is_image else value
-            for key, (value, is_image) in data.items()
-        })
+        return Response(
+            {
+                key: media_url_from_value(value, request=request) if is_image else value
+                for key, (value, is_image) in data.items()
+            }
+        )
 
 
 class LocaleListView(generics.ListAPIView):
@@ -86,7 +88,9 @@ def _validate_value(setting, value):
         return None, 'Giá trị này cấu hình qua .env, không sửa được qua API.'
     if setting.value_type == vt.BOOLEAN and not isinstance(value, bool):
         return None, 'Giá trị phải là true/false.'
-    if setting.value_type == vt.NUMBER and (isinstance(value, bool) or not isinstance(value, (int, float))):
+    if setting.value_type == vt.NUMBER and (
+        isinstance(value, bool) or not isinstance(value, (int, float))
+    ):
         return None, 'Giá trị phải là số.'
     if setting.value_type == vt.COLOR and not (isinstance(value, str) and _HEX_COLOR.match(value)):
         return None, 'Giá trị phải là mã màu hex, vd: #00b14f.'
@@ -94,7 +98,9 @@ def _validate_value(setting, value):
         choices = [c.get('value') for c in setting.options.get('choices', [])]
         if value not in choices:
             return None, f'Giá trị phải thuộc: {", ".join(map(str, choices))}.'
-    if setting.value_type in {vt.TEXT, vt.TEXTAREA, vt.EMAIL, vt.URL, vt.IMAGE} and not isinstance(value, str):
+    if setting.value_type in {vt.TEXT, vt.TEXTAREA, vt.EMAIL, vt.URL, vt.IMAGE} and not isinstance(
+        value, str
+    ):
         return None, 'Giá trị phải là chuỗi.'
     return value, None
 
@@ -114,7 +120,9 @@ class AdminSiteSettingView(APIView):
                 'key': key,
                 'label': label,
                 'settings': AdminSiteSettingSerializer(
-                    by_group.get(key, []), many=True, context={'request': request},
+                    by_group.get(key, []),
+                    many=True,
+                    context={'request': request},
                 ).data,
             }
             for key, label in SiteSetting.Group.choices
@@ -129,8 +137,10 @@ class AdminSiteSettingView(APIView):
             except json.JSONDecodeError:
                 values = None
         if not isinstance(values, dict):
-            return Response({'detail': 'Body phải có dạng {"values": {key: value}}.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Body phải có dạng {"values": {key: value}}.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         image_uploads = {}
         for field_name, upload in request.FILES.items():
@@ -201,8 +211,15 @@ class AdminSiteSettingView(APIView):
                 delete_local_media_url(path)
             raise
 
-        return Response({'updated': updated, 'errors': errors, 'values': saved_values, 'display_values': display_values},
-                        status=status.HTTP_400_BAD_REQUEST if errors and not updated else status.HTTP_200_OK)
+        return Response(
+            {
+                'updated': updated,
+                'errors': errors,
+                'values': saved_values,
+                'display_values': display_values,
+            },
+            status=status.HTTP_400_BAD_REQUEST if errors and not updated else status.HTTP_200_OK,
+        )
 
 
 # Setting nào cần giới hạn kích thước pixel lúc upload (tránh admin upload ảnh
@@ -225,9 +242,12 @@ class AdminSettingUploadView(APIView):
     parser_classes = [MultiPartParser]
 
     def post(self, request):
-        return Response({
-            'detail': 'Endpoint này đã ngưng dùng. Hãy gửi file cùng PATCH /api/site/admin/settings/ khi bấm lưu.'
-        }, status=status.HTTP_410_GONE)
+        return Response(
+            {
+                'detail': 'Endpoint này đã ngưng dùng. Hãy gửi file cùng PATCH /api/site/admin/settings/ khi bấm lưu.'
+            },
+            status=status.HTTP_410_GONE,
+        )
 
 
 class LinkGroupListView(generics.ListAPIView):

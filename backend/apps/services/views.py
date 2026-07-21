@@ -29,13 +29,14 @@ class PublicServicePackageListView(APIView):
     def get(self, request):
         data = cache.get(PUBLIC_PACKAGES_CACHE_KEY)
         if data is None:
-            categories = (
-                ServiceCategory.objects.filter(is_active=True)
-                .prefetch_related(Prefetch(
+            categories = ServiceCategory.objects.filter(is_active=True).prefetch_related(
+                Prefetch(
                     'packages',
-                    queryset=ServicePackage.objects.filter(is_active=True).order_by('order', 'slug'),
+                    queryset=ServicePackage.objects.filter(is_active=True).order_by(
+                        'order', 'slug'
+                    ),
                     to_attr='active_packages',
-                ))
+                )
             )
             data = PublicServiceCategorySerializer(categories, many=True).data
             cache.set(PUBLIC_PACKAGES_CACHE_KEY, data, 60 * 60)
@@ -68,7 +69,9 @@ class AdminServiceCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
             return super().destroy(request, *args, **kwargs)
         except ProtectedError:
             return Response(
-                {'detail': 'Nhóm này còn gói dịch vụ. Hãy xoá hoặc chuyển các gói sang nhóm khác trước.'},
+                {
+                    'detail': 'Nhóm này còn gói dịch vụ. Hãy xoá hoặc chuyển các gói sang nhóm khác trước.'
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

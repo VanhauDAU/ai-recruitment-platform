@@ -31,8 +31,12 @@ class JobLanguageRequirement(models.Model):
         NATIVE = 'native', 'Bản ngữ'
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='language_requirements')
-    language = models.ForeignKey(Language, on_delete=models.PROTECT, related_name='job_requirements')
-    proficiency_level = models.CharField(max_length=30, choices=ProficiencyLevel.choices, blank=True)
+    language = models.ForeignKey(
+        Language, on_delete=models.PROTECT, related_name='job_requirements'
+    )
+    proficiency_level = models.CharField(
+        max_length=30, choices=ProficiencyLevel.choices, blank=True
+    )
     certificate = models.CharField(max_length=255, blank=True)
     note = models.CharField(max_length=500, blank=True)
     is_required = models.BooleanField(default=True)
@@ -42,4 +46,3 @@ class JobLanguageRequirement(models.Model):
         ordering = ['sort_order', 'id']
         constraints = [models.UniqueConstraint(fields=['job', 'language'], name='uq_job_language')]
         indexes = [models.Index(fields=['language', 'proficiency_level'])]
-

@@ -67,7 +67,9 @@ class AccountTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
         if portal not in VALID_PORTALS:
-            return Response({'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST
+            )
         refresh = refresh_from_request(request, portal=portal)
         if not refresh:
             response = Response(

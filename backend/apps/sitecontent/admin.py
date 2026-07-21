@@ -10,7 +10,15 @@ from .models import Banner, Feedback, LinkGroup, LinkItem, Locale, SiteSetting
 
 @admin.register(Locale)
 class LocaleAdmin(admin.ModelAdmin):
-    list_display = ['code', 'native_name', 'label_vi', 'catalog_path', 'is_default', 'is_active', 'sort_order']
+    list_display = [
+        'code',
+        'native_name',
+        'label_vi',
+        'catalog_path',
+        'is_default',
+        'is_active',
+        'sort_order',
+    ]
     list_filter = ['is_default', 'is_active']
     list_editable = ['sort_order', 'is_active']
     search_fields = ['code', 'label_vi', 'native_name']
@@ -29,7 +37,11 @@ class SiteSettingAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        value = self.instance.value if self.instance and self.instance.pk else self.initial.get('value', '')
+        value = (
+            self.instance.value
+            if self.instance and self.instance.pk
+            else self.initial.get('value', '')
+        )
         if isinstance(value, str):
             self.initial['value'] = value
         elif value not in (None, ''):
@@ -96,12 +108,29 @@ class BannerAdmin(admin.ModelAdmin):
     list_filter = ['placement', 'theme', 'is_active']
     list_editable = ['order', 'is_active']
     search_fields = ['title', 'eyebrow']
-    fields = ['placement', 'eyebrow', 'title', 'subtitle', 'upload_image', 'image_url', 'theme',
-              'cta_label', 'cta_url', 'cta_secondary_label', 'cta_secondary_url', 'order', 'is_active']
+    fields = [
+        'placement',
+        'eyebrow',
+        'title',
+        'subtitle',
+        'upload_image',
+        'image_url',
+        'theme',
+        'cta_label',
+        'cta_url',
+        'cta_secondary_label',
+        'cta_secondary_url',
+        'order',
+        'is_active',
+    ]
 
     def save_model(self, request, obj, form, change):
         upload = form.cleaned_data.get('upload_image')
-        old_url = Banner.objects.filter(pk=obj.pk).values_list('image_url', flat=True).first() if change else ''
+        old_url = (
+            Banner.objects.filter(pk=obj.pk).values_list('image_url', flat=True).first()
+            if change
+            else ''
+        )
         if upload:
             saved = save_image_upload(upload, 'site/banners', request=request)
             obj.image_url = saved['path']
@@ -112,11 +141,29 @@ class BannerAdmin(admin.ModelAdmin):
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ['created_at', 'category', 'short_content', 'satisfaction', 'phone', 'email', 'user', 'status']
+    list_display = [
+        'created_at',
+        'category',
+        'short_content',
+        'satisfaction',
+        'phone',
+        'email',
+        'user',
+        'status',
+    ]
     list_filter = ['status', 'category', 'satisfaction', 'created_at']
     list_editable = ['status']
     search_fields = ['content', 'email', 'phone']
-    readonly_fields = ['user', 'category', 'content', 'satisfaction', 'phone', 'email', 'page_url', 'created_at']
+    readonly_fields = [
+        'user',
+        'category',
+        'content',
+        'satisfaction',
+        'phone',
+        'email',
+        'page_url',
+        'created_at',
+    ]
 
     def has_add_permission(self, request):
         return False

@@ -30,8 +30,13 @@ def _source_content(locale):
         .order_by('-updated_at', '-pk')
         .first()
     )
-    return (sample.content_json, f'sample:{sample.public_id}:{sample.updated_at.isoformat()}') if sample else (
-        empty_content(locale), 'blank-v1',
+    return (
+        (sample.content_json, f'sample:{sample.public_id}:{sample.updated_at.isoformat()}')
+        if sample
+        else (
+            empty_content(locale),
+            'blank-v1',
+        )
     )
 
 
@@ -43,7 +48,9 @@ def snapshot_fingerprint(link):
     _, source_revision = _source_content(locale)
     payload = {
         'template_version': version.pk if version else None,
-        'renderer_contract': f'{version.renderer_key}:{version.renderer_version}' if version else None,
+        'renderer_contract': f'{version.renderer_key}:{version.renderer_version}'
+        if version
+        else None,
         'snapshot_renderer': SNAPSHOT_RENDERER_VERSION,
         'color': link.color.hex_code,
         'source_revision': source_revision,
@@ -67,8 +74,11 @@ def generate_template_color_snapshot(link_id):
     started_at = monotonic()
     link = (
         CvTemplateColorLink.objects.select_related(
-            'template__current_published_version', 'color',
-        ).filter(pk=link_id).first()
+            'template__current_published_version',
+            'color',
+        )
+        .filter(pk=link_id)
+        .first()
     )
     if link is None or link.template.current_published_version is None:
         return
@@ -97,7 +107,9 @@ def generate_template_color_snapshot(link_id):
     except Exception:  # noqa: BLE001 - task never logs configured CV content
         logger.warning('Template colour snapshot %s failed.', link_id)
         record_metric('cv_snapshot_failure')
-        record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='failed')
+        record_metric(
+            'cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='failed'
+        )
         return
 
     with transaction.atomic():
@@ -110,24 +122,41 @@ def generate_template_color_snapshot(link_id):
         current.preview_url = preview_key
         current.snapshot_fingerprint = fingerprint
         current.snapshot_generated_at = timezone.now()
-        current.save(update_fields=[
-            'thumbnail_url', 'preview_url', 'snapshot_fingerprint', 'snapshot_generated_at',
-        ])
+        current.save(
+            update_fields=[
+                'thumbnail_url',
+                'preview_url',
+                'snapshot_fingerprint',
+                'snapshot_generated_at',
+            ]
+        )
         for old_key in set(filter(None, old_keys)):
-            if old_key != thumbnail_key and old_key != preview_key and 'cv-templates/snapshots/' in old_key:
+            if (
+                old_key != thumbnail_key
+                and old_key != preview_key
+                and 'cv-templates/snapshots/' in old_key
+            ):
                 transaction.on_commit(lambda key=old_key: public_media_storage().delete(key))
-    record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed')
+    record_metric(
+        'cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed'
+    )
 
 
 def enqueue_template_snapshots(template):
     for link_id in template.color_links.values_list('pk', flat=True):
-        transaction.on_commit(lambda link_id=link_id: generate_template_color_snapshot.delay(link_id))
+        transaction.on_commit(
+            lambda link_id=link_id: generate_template_color_snapshot.delay(link_id)
+        )
 
 
 @shared_task
 def regenerate_all_template_snapshots():
-    for link_id in CvTemplateColorLink.objects.filter(
-        template__current_published_version__isnull=False,
-        color__is_active=True,
-    ).values_list('pk', flat=True).iterator():
+    for link_id in (
+        CvTemplateColorLink.objects.filter(
+            template__current_published_version__isnull=False,
+            color__is_active=True,
+        )
+        .values_list('pk', flat=True)
+        .iterator()
+    ):
         generate_template_color_snapshot.delay(link_id)

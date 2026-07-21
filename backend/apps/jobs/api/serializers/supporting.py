@@ -45,7 +45,15 @@ class JobSkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobSkill
-        fields = ['id', 'skill', 'skill_name', 'importance', 'weight', 'min_level', 'min_years_experience']
+        fields = [
+            'id',
+            'skill',
+            'skill_name',
+            'importance',
+            'weight',
+            'min_level',
+            'min_years_experience',
+        ]
 
 
 class JobCategoryAssignmentSerializer(serializers.ModelSerializer):
@@ -69,7 +77,9 @@ class JobCategoryAssignmentSerializer(serializers.ModelSerializer):
         if category and category.status != JobCategory.Status.ACTIVE:
             raise serializers.ValidationError({'category': 'Danh mục đã ngừng hoạt động.'})
         if category and expected and category.category_type not in expected:
-            raise serializers.ValidationError({'category': 'Loại danh mục không phù hợp với vai trò đã chọn.'})
+            raise serializers.ValidationError(
+                {'category': 'Loại danh mục không phù hợp với vai trò đã chọn.'}
+            )
         return attrs
 
 
@@ -82,13 +92,21 @@ class JobLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobLocation
         fields = [
-            'id', 'location', 'location_name', 'location_level', 'province_id', 'province_name',
-            'address_detail', 'sort_order',
+            'id',
+            'location',
+            'location_name',
+            'location_level',
+            'province_id',
+            'province_name',
+            'address_detail',
+            'sort_order',
         ]
 
     def validate_location(self, location):
         if location.level != Location.Level.WARD or not location.parent_id:
-            raise serializers.ValidationError('Địa điểm làm việc phải là phường/xã có tỉnh/thành cha.')
+            raise serializers.ValidationError(
+                'Địa điểm làm việc phải là phường/xã có tỉnh/thành cha.'
+            )
         if not location.is_active:
             raise serializers.ValidationError('Phường/xã đã ngừng hoạt động.')
         return location
@@ -110,8 +128,12 @@ class PublicJobLocationSerializer(JobLocationSerializer):
 
     class Meta(JobLocationSerializer.Meta):
         fields = [
-            'id', 'location', 'location_name', 'location_level',
-            'province_name', 'address_detail',
+            'id',
+            'location',
+            'location_name',
+            'location_level',
+            'province_name',
+            'address_detail',
         ]
 
 
@@ -119,17 +141,29 @@ class JobWorkScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobWorkSchedule
         fields = [
-            'id', 'weekday_from', 'weekday_to', 'start_time', 'end_time',
-            'is_overnight', 'note', 'sort_order',
+            'id',
+            'weekday_from',
+            'weekday_to',
+            'start_time',
+            'end_time',
+            'is_overnight',
+            'note',
+            'sort_order',
         ]
 
     def validate(self, attrs):
         structured = [
-            attrs.get('weekday_from'), attrs.get('weekday_to'),
-            attrs.get('start_time'), attrs.get('end_time'),
+            attrs.get('weekday_from'),
+            attrs.get('weekday_to'),
+            attrs.get('start_time'),
+            attrs.get('end_time'),
         ]
-        if any(value is not None for value in structured) and not all(value is not None for value in structured):
-            raise serializers.ValidationError('Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu/kết thúc.')
+        if any(value is not None for value in structured) and not all(
+            value is not None for value in structured
+        ):
+            raise serializers.ValidationError(
+                'Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu/kết thúc.'
+            )
         if not any(value is not None for value in structured) and not attrs.get('note', '').strip():
             raise serializers.ValidationError('Cần nhập khung ngày/giờ hoặc ghi chú lịch làm việc.')
         start_time = attrs.get('start_time')
@@ -144,8 +178,13 @@ class PublicJobWorkScheduleSerializer(JobWorkScheduleSerializer):
 
     class Meta(JobWorkScheduleSerializer.Meta):
         fields = [
-            'id', 'weekday_from', 'weekday_to', 'start_time', 'end_time',
-            'is_overnight', 'note',
+            'id',
+            'weekday_from',
+            'weekday_to',
+            'start_time',
+            'end_time',
+            'is_overnight',
+            'note',
         ]
 
 
@@ -171,13 +210,22 @@ class PublicJobBenefitSerializer(JobBenefitSerializer):
 
 class JobLanguageRequirementSerializer(serializers.ModelSerializer):
     language_name = serializers.CharField(source='language.name', read_only=True)
-    proficiency_label = serializers.CharField(source='get_proficiency_level_display', read_only=True)
+    proficiency_label = serializers.CharField(
+        source='get_proficiency_level_display', read_only=True
+    )
 
     class Meta:
         model = JobLanguageRequirement
         fields = [
-            'id', 'language', 'language_name', 'proficiency_level', 'proficiency_label',
-            'certificate', 'note', 'is_required', 'sort_order',
+            'id',
+            'language',
+            'language_name',
+            'proficiency_level',
+            'proficiency_label',
+            'certificate',
+            'note',
+            'is_required',
+            'sort_order',
         ]
 
     def validate_language(self, language):
@@ -191,8 +239,13 @@ class PublicJobLanguageRequirementSerializer(JobLanguageRequirementSerializer):
 
     class Meta(JobLanguageRequirementSerializer.Meta):
         fields = [
-            'id', 'language', 'language_name', 'proficiency_label',
-            'certificate', 'note', 'is_required',
+            'id',
+            'language',
+            'language_name',
+            'proficiency_label',
+            'certificate',
+            'note',
+            'is_required',
         ]
 
 

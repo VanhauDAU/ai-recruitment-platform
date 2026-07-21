@@ -40,7 +40,9 @@ class Command(BaseCommand):
         public_storage = public_media_storage()
         private_storage = private_media_storage()
         if public_storage.__class__.__module__.startswith('django.core.files.storage'):
-            raise CommandError('R2 is not configured. Set all R2_* variables in the local backend .env first.')
+            raise CommandError(
+                'R2 is not configured. Set all R2_* variables in the local backend .env first.'
+            )
 
         root = Path(settings.MEDIA_ROOT)
         if not root.exists():
@@ -63,8 +65,10 @@ class Command(BaseCommand):
                 copied += 1
 
         mode = 'Applied' if options['apply'] else 'Dry run'
-        self.stdout.write(self.style.SUCCESS(
-            f'{mode}: {total} local objects ({public_count} public, {private_count} private); '
-            f'{missing} missing before copy, {copied} newly copied. '
-            'Local files were retained.',
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'{mode}: {total} local objects ({public_count} public, {private_count} private); '
+                f'{missing} missing before copy, {copied} newly copied. '
+                'Local files were retained.',
+            )
+        )

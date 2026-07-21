@@ -40,13 +40,17 @@ def send_phone_otp(user, phone, password=None):
     khẩu và nhập đúng mật khẩu hiện tại thì mới được gửi OTP.
     """
     if phone_taken_by_other(user, phone):
-        raise ValidationError({
-            'phone': 'Đã có nhà tuyển dụng khác xác thực số điện thoại này, vui lòng dùng số khác.'
-        })
+        raise ValidationError(
+            {
+                'phone': 'Đã có nhà tuyển dụng khác xác thực số điện thoại này, vui lòng dùng số khác.'
+            }
+        )
     if not user.has_usable_password():
-        raise ValidationError({
-            'password': 'Tài khoản chưa có mật khẩu. Tạo mật khẩu trước khi xác thực số điện thoại.'
-        })
+        raise ValidationError(
+            {
+                'password': 'Tài khoản chưa có mật khẩu. Tạo mật khẩu trước khi xác thực số điện thoại.'
+            }
+        )
     if not user.check_password((password or '').strip()):
         raise ValidationError({'password': 'Mật khẩu không đúng, vui lòng thử lại.'})
 
@@ -86,14 +90,22 @@ def send_phone_otp(user, phone, password=None):
 
 def verify_phone_otp(user, code):
     """Verify the latest OTP and attach its phone number to the recruiter."""
-    otp = PhoneOtp.objects.filter(
-        user=user,
-        verified_at__isnull=True,
-    ).order_by('-created_at').first()
+    otp = (
+        PhoneOtp.objects.filter(
+            user=user,
+            verified_at__isnull=True,
+        )
+        .order_by('-created_at')
+        .first()
+    )
     if otp is None or otp.expires_at < timezone.now():
-        raise ValidationError({'code': 'Mã đã hết hạn hoặc không tồn tại, vui lòng gửi lại mã mới.'})
+        raise ValidationError(
+            {'code': 'Mã đã hết hạn hoặc không tồn tại, vui lòng gửi lại mã mới.'}
+        )
     if otp.attempts >= OTP_MAX_ATTEMPTS:
-        raise ValidationError({'code': 'Bạn đã nhập sai quá số lần cho phép, vui lòng gửi lại mã mới.'})
+        raise ValidationError(
+            {'code': 'Bạn đã nhập sai quá số lần cho phép, vui lòng gửi lại mã mới.'}
+        )
 
     otp.attempts += 1
     if otp.code_hash != _hash_otp(code):
@@ -107,7 +119,9 @@ def verify_phone_otp(user, code):
     recruiter.contact_phone = otp.phone
     recruiter.verified_phone = otp.phone
     recruiter.phone_verified_at = otp.verified_at
-    recruiter.save(update_fields=['contact_phone', 'verified_phone', 'phone_verified_at', 'updated_at'])
+    recruiter.save(
+        update_fields=['contact_phone', 'verified_phone', 'phone_verified_at', 'updated_at']
+    )
     if user.phone != otp.phone:
         user.phone = otp.phone
         user.save(update_fields=['phone', 'updated_at'])

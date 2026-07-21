@@ -37,7 +37,13 @@ from .sharing import (
     revoke_shared_link,
 )
 from .thumbnails import current_thumbnail_ready, request_current_cv_thumbnail, schedule_cv_thumbnail
-from .versions import StaleDraftError, create_application_snapshot, create_initial_document, create_version, update_draft
+from .versions import (
+    StaleDraftError,
+    create_application_snapshot,
+    create_initial_document,
+    create_version,
+    update_draft,
+)
 
 __all__ = [
     'StaleDraftError',

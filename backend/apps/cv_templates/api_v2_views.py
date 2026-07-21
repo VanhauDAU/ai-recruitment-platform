@@ -97,7 +97,11 @@ class CvTemplateRelatedListView(CvTemplateCatalogDetailView):
     def get(self, request, slug):
         locale = requested_locale(request)
         template = self.get_template(slug, locale)
-        return self.cached_response(CvTemplateCardSerializer(related_published_templates(template, locale=locale), many=True).data)
+        return self.cached_response(
+            CvTemplateCardSerializer(
+                related_published_templates(template, locale=locale), many=True
+            ).data
+        )
 
 
 class CvCategoryCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
@@ -148,7 +152,9 @@ class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
         return active_cv_position_options_queryset(
             self.request.query_params.get('q', '').strip(),
             locale=requested_locale(self.request),
-            experience_level=self.request.query_params.get('experience_level', 'unspecified').strip(),
+            experience_level=self.request.query_params.get(
+                'experience_level', 'unspecified'
+            ).strip(),
         )
 
     def list(self, request, *args, **kwargs):
@@ -205,35 +211,46 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             return self.cached_response(resolved)
 
         try:
-            template = CvTemplate.objects.select_related(
-                'current_published_version',
-            ).prefetch_related(
-                'current_published_version__sections__section_definition',
-            ).get(public_id=template_public_id)
+            template = (
+                CvTemplate.objects.select_related(
+                    'current_published_version',
+                )
+                .prefetch_related(
+                    'current_published_version__sections__section_definition',
+                )
+                .get(public_id=template_public_id)
+            )
         except CvTemplate.DoesNotExist as error:
             raise Http404 from error
 
-        if theme_color and not template.color_links.filter(
-            color__hex_code__iexact=theme_color,
-            color__is_active=True,
-        ).exists():
+        if (
+            theme_color
+            and not template.color_links.filter(
+                color__hex_code__iexact=theme_color,
+                color__is_active=True,
+            ).exists()
+        ):
             raise ValidationError({'theme_color': 'Color is not available for this template.'})
 
-        content_digest = sha256(json.dumps(
-            resolved['content_json'],
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(',', ':'),
-        ).encode('utf-8')).hexdigest()
+        content_digest = sha256(
+            json.dumps(
+                resolved['content_json'],
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(',', ':'),
+            ).encode('utf-8')
+        ).hexdigest()
         version = template.current_published_version
-        cache_key = ':'.join([
-            'cv-position-preview-v2',
-            str(version.pk if version else 'missing'),
-            locale,
-            public_id or 'blank',
-            experience_level,
-            content_digest,
-        ])
+        cache_key = ':'.join(
+            [
+                'cv-position-preview-v2',
+                str(version.pk if version else 'missing'),
+                locale,
+                public_id or 'blank',
+                experience_level,
+                content_digest,
+            ]
+        )
         base_document = cache.get(cache_key)
         cache_hit = base_document is not None
         if base_document is None:
@@ -251,16 +268,18 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             actor=request.user,
             theme_color=theme_color or None,
         )
-        revision = sha256(json.dumps(
-            {
-                'document': base_document,
-                'renderer_key': version.renderer_key,
-                'renderer_version': version.renderer_version,
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(',', ':'),
-        ).encode('utf-8')).hexdigest()
+        revision = sha256(
+            json.dumps(
+                {
+                    'document': base_document,
+                    'renderer_key': version.renderer_key,
+                    'renderer_version': version.renderer_version,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(',', ':'),
+            ).encode('utf-8')
+        ).hexdigest()
         data = {
             **resolved,
             'document': document,

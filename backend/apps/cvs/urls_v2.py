@@ -32,29 +32,75 @@ from .api_v2_views import (
 
 urlpatterns = [
     path('assets/', CvV2AssetUploadView.as_view(), name='cv-v2-asset-upload'),
-    path('assets/<str:asset_public_id>/content/', CvV2AssetContentView.as_view(), name='cv-v2-asset-content'),
+    path(
+        'assets/<str:asset_public_id>/content/',
+        CvV2AssetContentView.as_view(),
+        name='cv-v2-asset-content',
+    ),
     path('backgrounds/', CvV2BackgroundListView.as_view(), name='cv-v2-background-list'),
-    path('shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'),
+    path(
+        'shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'
+    ),
     path('imports/', CvV2ImportView.as_view(), name='cv-v2-import'),
-    path('latest-recoverable-draft/', CvV2LatestRecoverableDraftView.as_view(), name='cv-v2-latest-recoverable-draft'),
+    path(
+        'latest-recoverable-draft/',
+        CvV2LatestRecoverableDraftView.as_view(),
+        name='cv-v2-latest-recoverable-draft',
+    ),
     path('', CvV2ListCreateView.as_view(), name='cv-v2-list-create'),
     path('<str:public_id>/', CvV2DetailView.as_view(), name='cv-v2-detail'),
     path('<str:public_id>/duplicate/', CvV2DuplicateView.as_view(), name='cv-v2-duplicate'),
-    path('<str:public_id>/imports/retry/', CvV2ImportRetryView.as_view(), name='cv-v2-import-retry'),
+    path(
+        '<str:public_id>/imports/retry/', CvV2ImportRetryView.as_view(), name='cv-v2-import-retry'
+    ),
     path('<str:public_id>/view/', CvV2OwnerVersionView.as_view(), name='cv-v2-owner-view'),
     path('<str:public_id>/thumbnail/', CvV2ThumbnailView.as_view(), name='cv-v2-thumbnail'),
-    path('<str:public_id>/shared-links/', CvV2SharedLinkListCreateView.as_view(), name='cv-v2-shared-link-list-create'),
-    path('<str:public_id>/shared-links/<str:link_public_id>/', CvV2SharedLinkRevokeView.as_view(), name='cv-v2-shared-link-revoke'),
-    path('<str:public_id>/exports/', CvV2ExportListCreateView.as_view(), name='cv-v2-export-list-create'),
-    path('<str:public_id>/exports/<str:export_public_id>/', CvV2ExportDetailView.as_view(), name='cv-v2-export-detail'),
-    path('<str:public_id>/exports/<str:export_public_id>/retry/', CvV2ExportRetryView.as_view(), name='cv-v2-export-retry'),
-    path('<str:public_id>/exports/<str:export_public_id>/download/', CvV2ExportDownloadView.as_view(), name='cv-v2-export-download'),
+    path(
+        '<str:public_id>/shared-links/',
+        CvV2SharedLinkListCreateView.as_view(),
+        name='cv-v2-shared-link-list-create',
+    ),
+    path(
+        '<str:public_id>/shared-links/<str:link_public_id>/',
+        CvV2SharedLinkRevokeView.as_view(),
+        name='cv-v2-shared-link-revoke',
+    ),
+    path(
+        '<str:public_id>/exports/',
+        CvV2ExportListCreateView.as_view(),
+        name='cv-v2-export-list-create',
+    ),
+    path(
+        '<str:public_id>/exports/<str:export_public_id>/',
+        CvV2ExportDetailView.as_view(),
+        name='cv-v2-export-detail',
+    ),
+    path(
+        '<str:public_id>/exports/<str:export_public_id>/retry/',
+        CvV2ExportRetryView.as_view(),
+        name='cv-v2-export-retry',
+    ),
+    path(
+        '<str:public_id>/exports/<str:export_public_id>/download/',
+        CvV2ExportDownloadView.as_view(),
+        name='cv-v2-export-download',
+    ),
     path('<str:public_id>/draft/', CvV2DraftView.as_view(), name='cv-v2-draft'),
-    path('<str:public_id>/template/', CvV2TemplateSwitchView.as_view(), name='cv-v2-template-switch'),
-    path('<str:public_id>/template-preview/', CvV2TemplatePreviewView.as_view(), name='cv-v2-template-preview'),
+    path(
+        '<str:public_id>/template/', CvV2TemplateSwitchView.as_view(), name='cv-v2-template-switch'
+    ),
+    path(
+        '<str:public_id>/template-preview/',
+        CvV2TemplatePreviewView.as_view(),
+        name='cv-v2-template-preview',
+    ),
     path('<str:public_id>/apply-sample/', CvV2ApplySampleView.as_view(), name='cv-v2-apply-sample'),
     path('<str:public_id>/save-version/', CvV2SaveVersionView.as_view(), name='cv-v2-save-version'),
     path('<str:public_id>/publish/', CvV2PublishView.as_view(), name='cv-v2-publish'),
     path('<str:public_id>/versions/', CvV2VersionListView.as_view(), name='cv-v2-version-list'),
-    path('<str:public_id>/versions/<str:version_public_id>/', CvV2VersionDetailView.as_view(), name='cv-v2-version-detail'),
+    path(
+        '<str:public_id>/versions/<str:version_public_id>/',
+        CvV2VersionDetailView.as_view(),
+        name='cv-v2-version-detail',
+    ),
 ]

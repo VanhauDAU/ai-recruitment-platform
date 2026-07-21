@@ -15,11 +15,18 @@ class PostCategory(models.Model):
     """
 
     name = models.CharField(max_length=150)
-    slug = models.SlugField(max_length=160, unique=True, blank=True,
-                            help_text='Dùng cho URL /blog/danh-muc/<slug> và SEO')
-    description = models.CharField(max_length=300, blank=True,
-                                   help_text='Mô tả ngắn, dùng cho meta description trang danh mục')
-    order = models.PositiveSmallIntegerField(default=0, help_text='Thứ tự trên thanh danh mục ngang')
+    slug = models.SlugField(
+        max_length=160,
+        unique=True,
+        blank=True,
+        help_text='Dùng cho URL /blog/danh-muc/<slug> và SEO',
+    )
+    description = models.CharField(
+        max_length=300, blank=True, help_text='Mô tả ngắn, dùng cho meta description trang danh mục'
+    )
+    order = models.PositiveSmallIntegerField(
+        default=0, help_text='Thứ tự trên thanh danh mục ngang'
+    )
     is_active = models.BooleanField(default=True, help_text='Tắt danh mục mà không xóa bài')
     seo_title = models.CharField(max_length=200, blank=True, help_text='Ghi đè title tag nếu cần')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -75,28 +82,46 @@ class Post(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     title = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True, blank=True,
-                            help_text='URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO')
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        blank=True,
+        help_text='URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO',
+    )
     category = models.ForeignKey(PostCategory, on_delete=models.PROTECT, related_name='posts')
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                               related_name='blog_posts', help_text='Nhân viên soạn bài; giữ bài khi xóa tài khoản')
-    summary = models.CharField(max_length=500, blank=True,
-                               help_text='Sapo/mô tả ngắn: card danh sách + meta description')
-    thumbnail_url = models.TextField(blank=True,
-                                     help_text='Storage key nội bộ hoặc URL ngoài; API tự resolve thành URL public')
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='blog_posts',
+        help_text='Nhân viên soạn bài; giữ bài khi xóa tài khoản',
+    )
+    summary = models.CharField(
+        max_length=500, blank=True, help_text='Sapo/mô tả ngắn: card danh sách + meta description'
+    )
+    thumbnail_url = models.TextField(
+        blank=True, help_text='Storage key nội bộ hoặc URL ngoài; API tự resolve thành URL public'
+    )
     content = models.TextField(help_text='Nội dung HTML từ rich-text editor')
     related_job_category = models.ForeignKey(
-        'jobs.JobCategory', on_delete=models.SET_NULL, null=True, blank=True, related_name='blog_posts',
+        'jobs.JobCategory',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='blog_posts',
         help_text='Nguồn cho khối "Danh sách việc làm ..." trong bài; để trống thì ẩn khối',
     )
     tags = models.ManyToManyField(Tag, related_name='posts', blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
-    published_at = models.DateTimeField(null=True, blank=True,
-                                        help_text='Ngày đăng hiển thị; set lần đầu khi xuất bản')
+    published_at = models.DateTimeField(
+        null=True, blank=True, help_text='Ngày đăng hiển thị; set lần đầu khi xuất bản'
+    )
     view_count = models.PositiveIntegerField(default=0)
     seo_title = models.CharField(max_length=200, blank=True, help_text='Ghi đè title tag')
-    seo_description = models.CharField(max_length=300, blank=True,
-                                       help_text='Ghi đè meta description (mặc định dùng summary)')
+    seo_description = models.CharField(
+        max_length=300, blank=True, help_text='Ghi đè meta description (mặc định dùng summary)'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -107,7 +132,9 @@ class Post(models.Model):
         permissions = [('can_publish_post', 'Có thể duyệt và xuất bản bài viết')]
         indexes = [
             models.Index(fields=['status', '-published_at']),
-            models.Index(fields=['category', 'status', '-published_at'], name='blog_post_category_status_idx'),
+            models.Index(
+                fields=['category', 'status', '-published_at'], name='blog_post_category_status_idx'
+            ),
         ]
         constraints = [
             models.CheckConstraint(
@@ -142,7 +169,9 @@ class PinnedPost(models.Model):
     class Placement(models.TextChoices):
         SUPPORT_DOCS = 'support_docs', 'Tài liệu hỗ trợ tìm việc (sidebar bài viết)'
 
-    placement = models.CharField(max_length=30, choices=Placement.choices, default=Placement.SUPPORT_DOCS)
+    placement = models.CharField(
+        max_length=30, choices=Placement.choices, default=Placement.SUPPORT_DOCS
+    )
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='pins')
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
@@ -152,7 +181,9 @@ class PinnedPost(models.Model):
         verbose_name = 'Bài viết ghim'
         verbose_name_plural = 'Bài viết ghim'
         constraints = [
-            models.UniqueConstraint(fields=['placement', 'post'], name='uq_blog_pinned_placement_post'),
+            models.UniqueConstraint(
+                fields=['placement', 'post'], name='uq_blog_pinned_placement_post'
+            ),
         ]
 
     def __str__(self):

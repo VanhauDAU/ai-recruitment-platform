@@ -63,9 +63,15 @@ class PasswordResetRequestView(APIView):
 
 @extend_schema(
     summary='Kiểm tra link đặt lại mật khẩu còn hiệu lực (không tiêu token)',
-    responses={200: inline_serializer('PasswordResetValidate', {
-        'email': serializers.EmailField(), 'role': serializers.CharField(),
-    })},
+    responses={
+        200: inline_serializer(
+            'PasswordResetValidate',
+            {
+                'email': serializers.EmailField(),
+                'role': serializers.CharField(),
+            },
+        )
+    },
     tags=['auth'],
 )
 class PasswordResetValidateView(APIView):
@@ -87,9 +93,15 @@ class PasswordResetValidateView(APIView):
 @extend_schema(
     summary='Đặt mật khẩu mới bằng token trong link',
     request=PasswordResetConfirmSerializer,
-    responses={200: inline_serializer('PasswordResetConfirm', {
-        'detail': serializers.CharField(), 'role': serializers.CharField(),
-    })},
+    responses={
+        200: inline_serializer(
+            'PasswordResetConfirm',
+            {
+                'detail': serializers.CharField(),
+                'role': serializers.CharField(),
+            },
+        )
+    },
     tags=['auth'],
 )
 class PasswordResetConfirmView(APIView):

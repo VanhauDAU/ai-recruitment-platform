@@ -8,7 +8,11 @@ from .publishing import (
 )
 
 __all__ = [
-    'PositionContentUnavailable', 'activate_blueprint', 'archive_sample',
-    'publish_sample', 'publish_template_version', 'resolve_position_content',
+    'PositionContentUnavailable',
+    'activate_blueprint',
+    'archive_sample',
+    'publish_sample',
+    'publish_template_version',
+    'resolve_position_content',
     'retire_template_version',
 ]

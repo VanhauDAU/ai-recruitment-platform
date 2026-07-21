@@ -97,13 +97,19 @@ class LoginView(APIView):
         if user.two_factor_enabled:
             challenge = two_factor.start_login_challenge(user, serializer.portal)
             if methods['email']:
-                queue_auth_email(AuthEmailJob.Kind.TWO_FACTOR, user, context={'purpose': two_factor.PURPOSE_LOGIN})
+                queue_auth_email(
+                    AuthEmailJob.Kind.TWO_FACTOR,
+                    user,
+                    context={'purpose': two_factor.PURPOSE_LOGIN},
+                )
             return Response(
                 {
                     'two_factor_required': True,
                     'challenge': challenge,
                     'email': user.email if methods['email'] else '',
-                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN) if methods['email'] else 0,
+                    'expires_in': two_factor.code_remaining(user, two_factor.PURPOSE_LOGIN)
+                    if methods['email']
+                    else 0,
                     'methods': methods,
                     'preferred_method': 'totp' if methods['totp'] else 'email',
                 },
@@ -133,7 +139,9 @@ class MeView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(SessionUserSerializer(request.user, context=self.get_serializer_context()).data)
+        return Response(
+            SessionUserSerializer(request.user, context=self.get_serializer_context()).data
+        )
 
 
 class AvatarUploadView(APIView):
@@ -144,7 +152,9 @@ class AvatarUploadView(APIView):
         summary='Upload avatar người dùng vào storage nội bộ',
         request=inline_serializer(
             'AvatarUploadRequest',
-            fields={'file': serializers.FileField(help_text='Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB')},
+            fields={
+                'file': serializers.FileField(help_text='Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB')
+            },
         ),
         responses={200: SessionUserSerializer},
         tags=['auth'],

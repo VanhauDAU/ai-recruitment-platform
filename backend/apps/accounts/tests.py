@@ -53,7 +53,9 @@ class AvatarUploadTests(APITestCase):
         self.client.force_authenticate(user=user)
 
         upload = SimpleUploadedFile('avatar.png', PNG_BYTES, content_type='image/png')
-        response = self.client.post(reverse('auth-avatar-upload'), {'file': upload}, format='multipart')
+        response = self.client.post(
+            reverse('auth-avatar-upload'), {'file': upload}, format='multipart'
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('/media/users/avatars/', response.data['avatar_url'])
@@ -67,7 +69,9 @@ class ProfileUpdateTests(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email='candidate@example.com', password='Password@123', full_name='Tên Cũ',
+            email='candidate@example.com',
+            password='Password@123',
+            full_name='Tên Cũ',
         )
         self.client.force_authenticate(user=self.user)
         self.url = reverse('auth-me')
@@ -85,21 +89,42 @@ class ProfileUpdateTests(APITestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(set(response.data), {
-            'public_id', 'email', 'role', 'full_name', 'phone', 'avatar_url',
-            'email_verified', 'two_factor_enabled', 'two_factor_email_enabled',
-            'two_factor_totp_enabled', 'two_factor_backup_codes_enabled', 'job_preferences_configured',
-            'has_usable_password',
-            'employer_onboarding_required', 'employer_onboarding_step',
-            'employer_verification_completed',
-        })
+        self.assertEqual(
+            set(response.data),
+            {
+                'public_id',
+                'email',
+                'role',
+                'full_name',
+                'phone',
+                'avatar_url',
+                'email_verified',
+                'two_factor_enabled',
+                'two_factor_email_enabled',
+                'two_factor_totp_enabled',
+                'two_factor_backup_codes_enabled',
+                'job_preferences_configured',
+                'has_usable_password',
+                'employer_onboarding_required',
+                'employer_onboarding_step',
+                'employer_verification_completed',
+            },
+        )
         self.assertIs(response.data['job_preferences_configured'], False)
         self.assertIs(response.data['has_usable_password'], True)
         self.assertIs(response.data['employer_verification_completed'], False)
-        self.assertTrue({
-            'id', 'password', 'token', 'refresh_token', 'permissions',
-            'status', 'date_joined', 'last_login',
-        }.isdisjoint(response.data))
+        self.assertTrue(
+            {
+                'id',
+                'password',
+                'token',
+                'refresh_token',
+                'permissions',
+                'status',
+                'date_joined',
+                'last_login',
+            }.isdisjoint(response.data)
+        )
 
     def test_can_update_multiple_times(self):
         self.client.patch(self.url, {'full_name': 'Lần 1', 'phone': '0900000001'})
@@ -111,7 +136,8 @@ class ProfileUpdateTests(APITestCase):
 
     def test_email_is_read_only(self):
         response = self.client.patch(
-            self.url, {'full_name': 'Ai Đó', 'email': 'hacker@evil.com'},
+            self.url,
+            {'full_name': 'Ai Đó', 'email': 'hacker@evil.com'},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
@@ -149,10 +175,14 @@ class PasswordChangeTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         set_refresh_cookie(self.client, 'main', tokens['refresh'])
 
-        response = self.client.post(reverse('auth-password-change'), {
-            'current_password': 'CandidatePass@123',
-            'password': 'CandidateNewPass@123',
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'current_password': 'CandidatePass@123',
+                'password': 'CandidateNewPass@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         candidate.refresh_from_db()
@@ -162,15 +192,21 @@ class PasswordChangeTests(APITestCase):
 
     def test_change_without_current_refresh_cookie_is_rejected(self):
         user = User.objects.create_user(
-            email='missing-refresh@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='missing-refresh@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         tokens = issue_tokens(user)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
-        response = self.client.post(reverse('auth-password-change'), {
-            'current_password': 'Password@123',
-            'password': 'NewPassword@123',
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'current_password': 'Password@123',
+                'password': 'NewPassword@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         user.refresh_from_db()
@@ -186,9 +222,13 @@ class PasswordChangeTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         set_refresh_cookie(self.client, 'employer', tokens['refresh'])
 
-        response = self.client.post(reverse('auth-password-change'), {
-            'password': 'NewPassword@123',
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'password': 'NewPassword@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         user.refresh_from_db()
@@ -203,13 +243,21 @@ class PasswordChangeTests(APITestCase):
         )
         self.client.force_authenticate(user=user)
 
-        missing = self.client.post(reverse('auth-password-change'), {
-            'password': 'NewPassword@123',
-        }, format='json')
-        wrong = self.client.post(reverse('auth-password-change'), {
-            'current_password': 'WrongPassword@123',
-            'password': 'NewPassword@123',
-        }, format='json')
+        missing = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'password': 'NewPassword@123',
+            },
+            format='json',
+        )
+        wrong = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'current_password': 'WrongPassword@123',
+                'password': 'NewPassword@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
@@ -218,17 +266,23 @@ class PasswordChangeTests(APITestCase):
 
     def test_change_rotates_current_session_and_returns_fresh_tokens(self):
         user = User.objects.create_user(
-            email='rotate@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='rotate@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         old_tokens = issue_tokens(user)
         old_refresh = old_tokens['refresh']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + old_tokens['access'])
         set_refresh_cookie(self.client, 'employer', old_refresh)
 
-        response = self.client.post(reverse('auth-password-change'), {
-            'current_password': 'Password@123',
-            'password': 'NewPassword@123',
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'current_password': 'Password@123',
+                'password': 'NewPassword@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertIn('access', response.data['tokens'])
@@ -246,18 +300,24 @@ class PasswordChangeTests(APITestCase):
 
     def test_change_with_logout_all_revokes_other_devices_but_keeps_current(self):
         user = User.objects.create_user(
-            email='logoutall@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='logoutall@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         other_device = issue_tokens(user)
         current = issue_tokens(user)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + current['access'])
         set_refresh_cookie(self.client, 'employer', current['refresh'])
 
-        response = self.client.post(reverse('auth-password-change'), {
-            'current_password': 'Password@123',
-            'password': 'NewPassword@123',
-            'logout_all_sessions': True,
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-password-change'),
+            {
+                'current_password': 'Password@123',
+                'password': 'NewPassword@123',
+                'logout_all_sessions': True,
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         new_refresh = self.client.cookies[cookie_name('employer')].value
@@ -307,7 +367,9 @@ class SessionManagementTests(APITestCase):
 
         # Access JWT của thiết bị vừa thu hồi bị chặn ngay, không chờ hết hạn.
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + other['access'])
-        self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED
+        )
 
     def test_revoke_others_keeps_current_device(self):
         current = issue_tokens(self.user)
@@ -326,7 +388,9 @@ class SessionManagementTests(APITestCase):
         self.assertEqual(still_valid.status_code, status.HTTP_200_OK)
 
     def test_cannot_revoke_a_session_of_another_account(self):
-        victim = User.objects.create_user(email='sess@example.com', password='Password@123', role=User.Role.EMPLOYER)
+        victim = User.objects.create_user(
+            email='sess@example.com', password='Password@123', role=User.Role.EMPLOYER
+        )
         issue_tokens(victim)
         victim_session = AuthSession.objects.get(user=victim)
         self._auth(issue_tokens(self.user))
@@ -357,12 +421,16 @@ class SessionManagementTests(APITestCase):
         access = AccessToken.for_user(self.user)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(access))
 
-        self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED
+        )
 
     @override_settings(TRUSTED_PROXY_IPS=[])
     def test_x_forwarded_for_is_ignored_from_untrusted_peer(self):
         request = APIRequestFactory().get(
-            '/', HTTP_X_FORWARDED_FOR='203.0.113.9', REMOTE_ADDR='198.51.100.7',
+            '/',
+            HTTP_X_FORWARDED_FOR='203.0.113.9',
+            REMOTE_ADDR='198.51.100.7',
         )
         issue_tokens(self.user, request)
         self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '198.51.100.7')
@@ -370,7 +438,9 @@ class SessionManagementTests(APITestCase):
     @override_settings(TRUSTED_PROXY_IPS=['10.0.0.0/8'])
     def test_x_forwarded_for_is_used_from_configured_proxy(self):
         request = APIRequestFactory().get(
-            '/', HTTP_X_FORWARDED_FOR='203.0.113.9, 10.1.2.3', REMOTE_ADDR='10.1.2.3',
+            '/',
+            HTTP_X_FORWARDED_FOR='203.0.113.9, 10.1.2.3',
+            REMOTE_ADDR='10.1.2.3',
         )
         issue_tokens(self.user, request)
         self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '203.0.113.9')
@@ -413,9 +483,14 @@ class ChangeEmailTests(APITestCase):
         user = self._user()
         self.client.force_authenticate(user=user)
 
-        wrong = self.client.post(reverse('auth-change-email'), {
-            'email': 'new@example.com', 'current_password': 'Wrong@123',
-        }, format='json')
+        wrong = self.client.post(
+            reverse('auth-change-email'),
+            {
+                'email': 'new@example.com',
+                'current_password': 'Wrong@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('current_password', wrong.data)
@@ -428,9 +503,14 @@ class ChangeEmailTests(APITestCase):
         user.save(update_fields=['email_verified'])
         self.client.force_authenticate(user=user)
 
-        response = self.client.post(reverse('auth-change-email'), {
-            'email': 'new@example.com', 'current_password': 'Password@123',
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-change-email'),
+            {
+                'email': 'new@example.com',
+                'current_password': 'Password@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         user.refresh_from_db()
@@ -440,9 +520,14 @@ class ChangeEmailTests(APITestCase):
         user = self._user()
         self.client.force_authenticate(user=user)
 
-        response = self.client.post(reverse('auth-change-email'), {
-            'email': 'new@example.com', 'current_password': 'Password@123',
-        }, format='json')
+        response = self.client.post(
+            reverse('auth-change-email'),
+            {
+                'email': 'new@example.com',
+                'current_password': 'Password@123',
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         user.refresh_from_db()
@@ -474,10 +559,14 @@ class LogoutEndpointTests(APITestCase):
 
     def test_logout_all_revokes_only_the_current_account_not_same_email_other_portal(self):
         candidate = User.objects.create_user(
-            email='dual@example.com', password='Password@123', role=User.Role.CANDIDATE,
+            email='dual@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
         )
         employer = User.objects.create_user(
-            email='dual@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='dual@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         candidate_tokens = issue_tokens(candidate)
         employer_tokens = issue_tokens(employer)
@@ -515,12 +604,15 @@ class AdminAuthenticationPolicyTests(APITestCase):
         )
 
     def test_admin_without_mfa_cannot_login_workspace(self):
-        response = self.client.post(reverse('auth-login'), {
-            'email': self.admin.email,
-            'password': 'Password@123',
-            'captcha_token': 'x',
-            'portal': 'admin',
-        })
+        response = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': self.admin.email,
+                'password': 'Password@123',
+                'captcha_token': 'x',
+                'portal': 'admin',
+            },
+        )
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data['code'], 'admin_mfa_required')
@@ -529,16 +621,23 @@ class AdminAuthenticationPolicyTests(APITestCase):
     def test_admin_mfa_issues_five_minute_access_and_httponly_refresh_cookie(self):
         self.admin.two_factor_enabled = True
         self.admin.save(update_fields=['two_factor_enabled'])
-        login = self.client.post(reverse('auth-login'), {
-            'email': self.admin.email,
-            'password': 'Password@123',
-            'captcha_token': 'x',
-            'portal': 'admin',
-        })
+        login = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': self.admin.email,
+                'password': 'Password@123',
+                'captcha_token': 'x',
+                'portal': 'admin',
+            },
+        )
         code = cache.get(two_factor._code_key(self.admin.pk, two_factor.PURPOSE_LOGIN))
-        verified = self.client.post(reverse('auth-two-factor-login-verify'), {
-            'challenge': login.data['challenge'], 'code': code,
-        })
+        verified = self.client.post(
+            reverse('auth-two-factor-login-verify'),
+            {
+                'challenge': login.data['challenge'],
+                'code': code,
+            },
+        )
 
         self.assertEqual(verified.status_code, status.HTTP_200_OK)
         access = AccessToken(verified.data['access'])
@@ -548,11 +647,14 @@ class AdminAuthenticationPolicyTests(APITestCase):
         self.assertTrue(cookie['httponly'])
 
     def test_admin_public_password_reset_is_rejected(self):
-        response = self.client.post(reverse('auth-password-reset'), {
-            'email': self.admin.email,
-            'captcha_token': 'x',
-            'portal': 'admin',
-        })
+        response = self.client.post(
+            reverse('auth-password-reset'),
+            {
+                'email': self.admin.email,
+                'captcha_token': 'x',
+                'portal': 'admin',
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -614,7 +716,9 @@ class OAuthFlowTests(APITestCase):
     def test_start_unconfigured_provider_redirects_with_error(self):
         # Override tường minh thay vì dựa vào .env của máy đang chạy test có
         # đang để trống Facebook hay không (từng fail khi dev điền credential thật).
-        response = self.client.get(reverse('auth-oauth-start', args=['facebook']), {'portal': 'main'})
+        response = self.client.get(
+            reverse('auth-oauth-start', args=['facebook']), {'portal': 'main'}
+        )
         self.assertEqual(response.status_code, 302)
         self.assertIn('error=provider_not_configured', response.url)
 
@@ -628,7 +732,9 @@ class OAuthFlowTests(APITestCase):
             self.assertIn('/tuyendung/app/oauth/callback', response.url)
 
     def test_admin_portal_has_no_social_login(self):
-        response = self.client.get(reverse('auth-oauth-start', args=['google']), {'portal': 'admin'})
+        response = self.client.get(
+            reverse('auth-oauth-start', args=['google']), {'portal': 'admin'}
+        )
         self.assertEqual(response.status_code, 302)
         self.assertIn('error=portal_not_supported', response.url)
 
@@ -659,7 +765,9 @@ class OAuthFlowTests(APITestCase):
                 user=user, provider='google', provider_user_id='google-uid-1'
             ).exists()
         )
-        self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+        self.assertTrue(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists()
+        )
 
     def test_employer_portal_creates_employer_via_google(self):
         response = self._callback(portal='employer')
@@ -715,7 +823,9 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(emp.data['user']['role'], 'employer')
         self.assertNotEqual(cand.data['user']['public_id'], emp.data['user']['public_id'])
         self.assertEqual(
-            SocialAccount.objects.filter(provider='google', provider_user_id='google-uid-1').count(),
+            SocialAccount.objects.filter(
+                provider='google', provider_user_id='google-uid-1'
+            ).count(),
             2,
         )
 
@@ -738,15 +848,25 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(complete.data['user']['public_id'], str(user.public_id))
         self.assertIn('access', complete.data)
         self.assertNotIn('two_factor_required', complete.data)
-        self.assertFalse(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists())
+        self.assertFalse(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.TWO_FACTOR).exists()
+        )
 
     def test_second_provider_requires_confirmed_linking(self):
         user = oauth.resolve_user('google', dict(GOOGLE_PROFILE), 'main')
         with self.assertRaisesRegex(oauth.OAuthError, 'link_confirmation_required'):
-            oauth.resolve_user('facebook', {
-                'id': 'facebook-uid-1', 'email': user.email, 'email_verified': True,
-                'name': 'Nguyễn Social', 'avatar': '', 'raw': {'verified': True},
-            }, 'main')
+            oauth.resolve_user(
+                'facebook',
+                {
+                    'id': 'facebook-uid-1',
+                    'email': user.email,
+                    'email_verified': True,
+                    'name': 'Nguyễn Social',
+                    'avatar': '',
+                    'raw': {'verified': True},
+                },
+                'main',
+            )
         self.assertEqual(user.social_accounts.count(), 1)
 
     def test_unverified_provider_email_is_rejected(self):
@@ -850,9 +970,14 @@ class LastLoginTests(APITestCase):
         user = User.objects.create_user(email='login@example.com', password='Password@123')
         self.assertIsNone(user.last_login)
 
-        response = self.client.post(reverse('auth-login'), {
-            'email': 'login@example.com', 'password': 'Password@123', 'captcha_token': 'x',
-        })
+        response = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': 'login@example.com',
+                'password': 'Password@123',
+                'captcha_token': 'x',
+            },
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         user.refresh_from_db()
@@ -861,9 +986,14 @@ class LastLoginTests(APITestCase):
     def test_wrong_password_does_not_update_last_login(self):
         user = User.objects.create_user(email='login2@example.com', password='Password@123')
 
-        response = self.client.post(reverse('auth-login'), {
-            'email': 'login2@example.com', 'password': 'wrong', 'captcha_token': 'x',
-        })
+        response = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': 'login2@example.com',
+                'password': 'wrong',
+                'captcha_token': 'x',
+            },
+        )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         user.refresh_from_db()
@@ -873,17 +1003,26 @@ class LastLoginTests(APITestCase):
         """Mô hình tách cổng: cùng email có 2 tài khoản (ứng viên/NTD) mật khẩu
         riêng; đăng nhập mỗi cổng chỉ chấp nhận mật khẩu của tài khoản cổng đó."""
         User.objects.create_user(
-            email='dual@example.com', password='CandPass@123', role=User.Role.CANDIDATE,
+            email='dual@example.com',
+            password='CandPass@123',
+            role=User.Role.CANDIDATE,
         )
         User.objects.create_user(
-            email='dual@example.com', password='EmpPass@123', role=User.Role.EMPLOYER,
+            email='dual@example.com',
+            password='EmpPass@123',
+            role=User.Role.EMPLOYER,
         )
 
         def login(portal, password):
-            return self.client.post(reverse('auth-login'), {
-                'email': 'dual@example.com', 'password': password,
-                'captcha_token': 'x', 'portal': portal,
-            })
+            return self.client.post(
+                reverse('auth-login'),
+                {
+                    'email': 'dual@example.com',
+                    'password': password,
+                    'captcha_token': 'x',
+                    'portal': portal,
+                },
+            )
 
         # Đúng cổng, đúng mật khẩu -> token đúng role.
         emp_ok = login('employer', 'EmpPass@123')
@@ -895,19 +1034,28 @@ class LastLoginTests(APITestCase):
         self.assertEqual(AccessToken(cand_ok.data['access'])['role'], 'candidate')
 
         # Mật khẩu của cổng kia KHÔNG mở được cổng này.
-        self.assertEqual(login('employer', 'CandPass@123').status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            login('employer', 'CandPass@123').status_code, status.HTTP_401_UNAUTHORIZED
+        )
         self.assertEqual(login('main', 'EmpPass@123').status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_login_wrong_portal_account_absent_is_unauthorized(self):
         """Chỉ có tài khoản ứng viên; đăng nhập cổng NTD -> không có tài khoản NTD
         -> 401 (không lộ việc email tồn tại ở cổng khác)."""
         user = User.objects.create_user(
-            email='login3@example.com', password='Password@123', role=User.Role.CANDIDATE,
+            email='login3@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
         )
-        response = self.client.post(reverse('auth-login'), {
-            'email': 'login3@example.com', 'password': 'Password@123',
-            'captcha_token': 'x', 'portal': 'employer',
-        })
+        response = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': 'login3@example.com',
+                'password': 'Password@123',
+                'captcha_token': 'x',
+                'portal': 'employer',
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         user.refresh_from_db()
         self.assertIsNone(user.last_login)
@@ -919,48 +1067,75 @@ class LastLoginTests(APITestCase):
         ):
             user = User.objects.create_user(email=f'{suffix}@example.com', password='Password@123')
             User.objects.filter(pk=user.pk).update(**fields)
-            response = self.client.post(reverse('auth-login'), {
-                'email': user.email, 'password': 'Password@123', 'captcha_token': 'x',
-            })
+            response = self.client.post(
+                reverse('auth-login'),
+                {
+                    'email': user.email,
+                    'password': 'Password@123',
+                    'captcha_token': 'x',
+                },
+            )
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_banned_user_cannot_reuse_access_or_refresh_token(self):
         user = User.objects.create_user(email='revoked@example.com', password='Password@123')
-        login = self.client.post(reverse('auth-login'), {
-            'email': user.email, 'password': 'Password@123', 'captcha_token': 'x',
-        })
+        login = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': user.email,
+                'password': 'Password@123',
+                'captcha_token': 'x',
+            },
+        )
         User.objects.filter(pk=user.pk).update(status=User.Status.BANNED)
 
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {login.data["access"]}')
-        self.assertEqual(self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED
+        )
         self.client.credentials()
         refresh = refresh_session(self.client)
         self.assertEqual(refresh.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_register_auto_login_sets_last_login(self):
-        response = self.client.post(reverse('auth-register'), {
-            'email': 'newuser@example.com', 'password': 'Password@123456',
-            'role': 'candidate', 'captcha_token': 'x',
-        })
+        response = self.client.post(
+            reverse('auth-register'),
+            {
+                'email': 'newuser@example.com',
+                'password': 'Password@123456',
+                'role': 'candidate',
+                'captcha_token': 'x',
+            },
+        )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(email='newuser@example.com')
         self.assertIsNotNone(user.last_login)
 
     def test_register_rejects_password_shorter_than_eight_characters(self):
-        response = self.client.post(reverse('auth-register'), {
-            'email': 'short-password@example.com', 'password': 'short',
-            'role': 'candidate', 'captcha_token': 'x',
-        })
+        response = self.client.post(
+            reverse('auth-register'),
+            {
+                'email': 'short-password@example.com',
+                'password': 'short',
+                'role': 'candidate',
+                'captcha_token': 'x',
+            },
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
 
     def test_register_rejects_password_without_required_character_types(self):
-        response = self.client.post(reverse('auth-register'), {
-            'email': 'weak-password@example.com', 'password': 'matkhaudai',
-            'role': 'candidate', 'captcha_token': 'x',
-        })
+        response = self.client.post(
+            reverse('auth-register'),
+            {
+                'email': 'weak-password@example.com',
+                'password': 'matkhaudai',
+                'role': 'candidate',
+                'captcha_token': 'x',
+            },
+        )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
@@ -1028,10 +1203,14 @@ class AuthSecurityAndEmailTests(APITestCase):
         candidate_tokens = issue_tokens(candidate)
         reset_token = password_reset.issue_token(employer)
 
-        reset = self.client.post(reverse('auth-password-reset-confirm'), {
-            'token': reset_token,
-            'password': 'EmployerNewPass@123',
-        }, format='json')
+        reset = self.client.post(
+            reverse('auth-password-reset-confirm'),
+            {
+                'token': reset_token,
+                'password': 'EmployerNewPass@123',
+            },
+            format='json',
+        )
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + candidate_tokens['access'])
         candidate_me = self.client.get(reverse('auth-me'))
 
@@ -1044,13 +1223,17 @@ class AuthSecurityAndEmailTests(APITestCase):
 
     def test_employer_verification_email_uses_employer_portal_link(self):
         user = User.objects.create_user(
-            email='employer@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
 
         email_verification.send_verification_email(user)
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('https://employer.example.test/app/account/verify?token=', mail.outbox[0].body)
+        self.assertIn(
+            'https://employer.example.test/app/account/verify?token=', mail.outbox[0].body
+        )
         self.assertIn('Mã NTD', mail.outbox[0].body)
         self.assertIn('Xác thực tài khoản', mail.outbox[0].alternatives[0][0])
 
@@ -1064,7 +1247,9 @@ class AuthSecurityAndEmailTests(APITestCase):
         password_reset.send_password_reset_email(user)
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('https://employer.example.test/app/reset-password?token=', mail.outbox[0].body)
+        self.assertIn(
+            'https://employer.example.test/app/reset-password?token=', mail.outbox[0].body
+        )
 
     def test_email_outbox_job_is_marked_sent_after_delivery(self):
         user = User.objects.create_user(email='queue@example.com', password='Password@123')
@@ -1084,11 +1269,15 @@ class AuthSecurityAndEmailTests(APITestCase):
         response = self.client.post(reverse('auth-verify-confirm'), {'token': token})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists())
+        self.assertTrue(
+            AuthEmailJob.objects.filter(user=user, kind=AuthEmailJob.Kind.WELCOME).exists()
+        )
 
     def test_employer_verification_queues_one_employer_welcome_email(self):
         user = User.objects.create_user(
-            email='employer-welcome@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer-welcome@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         token = email_verification.issue_token(user)
 
@@ -1106,7 +1295,9 @@ class AuthSecurityAndEmailTests(APITestCase):
         )
 
     def test_welcome_email_is_delivered_from_the_outbox(self):
-        user = User.objects.create_user(email='welcome@example.com', password='Password@123', email_verified=True)
+        user = User.objects.create_user(
+            email='welcome@example.com', password='Password@123', email_verified=True
+        )
         job = AuthEmailJob.objects.create(user=user, kind=AuthEmailJob.Kind.WELCOME)
 
         deliver_auth_email_job.run(job.pk)
@@ -1174,9 +1365,15 @@ class TwoFactorAuthenticationTests(APITestCase):
         self.user.two_factor_enabled = True
         self.user.save(update_fields=['two_factor_enabled'])
 
-        login = self.client.post(reverse('auth-login'), {
-            'email': self.user.email, 'password': 'Password@123', 'captcha_token': 'x', 'portal': 'main',
-        })
+        login = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': self.user.email,
+                'password': 'Password@123',
+                'captcha_token': 'x',
+                'portal': 'main',
+            },
+        )
         self.assertEqual(login.status_code, status.HTTP_202_ACCEPTED)
         self.assertTrue(login.data['two_factor_required'])
         self.assertNotIn('access', login.data)
@@ -1186,10 +1383,14 @@ class TwoFactorAuthenticationTests(APITestCase):
         challenge = login.data['challenge']
         code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN))
         wrong_code = '000001' if code == '000000' else '000000'
-        wrong = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong_code})
+        wrong = self.client.post(
+            reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong_code}
+        )
         self.assertEqual(wrong.status_code, status.HTTP_400_BAD_REQUEST)
 
-        verified = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code})
+        verified = self.client.post(
+            reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code}
+        )
         self.assertEqual(verified.status_code, status.HTTP_200_OK)
         self.assertIn('access', verified.data)
         self.assertNotIn('refresh', verified.data)
@@ -1200,19 +1401,29 @@ class TwoFactorAuthenticationTests(APITestCase):
     def test_two_factor_code_is_invalidated_after_too_many_wrong_attempts(self):
         self.user.two_factor_enabled = True
         self.user.save(update_fields=['two_factor_enabled'])
-        login = self.client.post(reverse('auth-login'), {
-            'email': self.user.email, 'password': 'Password@123', 'captcha_token': 'x', 'portal': 'main',
-        })
+        login = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': self.user.email,
+                'password': 'Password@123',
+                'captcha_token': 'x',
+                'portal': 'main',
+            },
+        )
         challenge = login.data['challenge']
         code = cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN))
         wrong = '000001' if code == '000000' else '000000'
 
         for _ in range(two_factor.MAX_VERIFY_ATTEMPTS):
-            self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong})
+            self.client.post(
+                reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': wrong}
+            )
 
         # Mã đã bị hủy sau 5 lần sai: mã đúng cũng không còn dùng được.
         self.assertIsNone(cache.get(two_factor._code_key(self.user.pk, two_factor.PURPOSE_LOGIN)))
-        replay = self.client.post(reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code})
+        replay = self.client.post(
+            reverse('auth-two-factor-login-verify'), {'challenge': challenge, 'code': code}
+        )
         self.assertEqual(replay.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_can_disable_two_factor_with_email_code(self):
@@ -1232,7 +1443,9 @@ class TwoFactorAuthenticationTests(APITestCase):
 
     def test_employer_can_enroll_totp_without_storing_the_plain_secret(self):
         employer = User.objects.create_user(
-            email='employer-totp@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer-totp@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         self.client.force_authenticate(user=employer)
 
@@ -1252,7 +1465,9 @@ class TwoFactorAuthenticationTests(APITestCase):
 
     def test_employer_with_totp_only_can_generate_backup_codes(self):
         employer = User.objects.create_user(
-            email='employer-totp-backup@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer-totp-backup@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         self.client.force_authenticate(user=employer)
         setup = self.client.post(reverse('auth-employer-totp-setup'))
@@ -1261,7 +1476,9 @@ class TwoFactorAuthenticationTests(APITestCase):
         confirmed = self.client.post(reverse('auth-employer-totp-confirm'), {'code': code})
         self.assertEqual(confirmed.status_code, status.HTTP_200_OK, confirmed.data)
 
-        generated = self.client.post(reverse('auth-employer-backup-codes'), {'method': 'totp', 'code': code})
+        generated = self.client.post(
+            reverse('auth-employer-backup-codes'), {'method': 'totp', 'code': code}
+        )
         self.assertEqual(generated.status_code, status.HTTP_200_OK, generated.data)
         self.assertFalse(generated.data['two_factor_email_enabled'])
         self.assertTrue(generated.data['two_factor_totp_enabled'])
@@ -1274,43 +1491,65 @@ class TwoFactorAuthenticationTests(APITestCase):
 
     def test_employer_can_disable_each_method_with_another_enabled_method(self):
         employer = User.objects.create_user(
-            email='employer-method-switch@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer-method-switch@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         self.client.force_authenticate(user=employer)
         two_factor.issue_code(employer, two_factor.PURPOSE_SETUP)
         email_code = cache.get(two_factor._code_key(employer.pk, two_factor.PURPOSE_SETUP))
-        email_confirmed = self.client.post(reverse('auth-two-factor-setup-confirm'), {'code': email_code})
+        email_confirmed = self.client.post(
+            reverse('auth-two-factor-setup-confirm'), {'code': email_code}
+        )
         self.assertEqual(email_confirmed.status_code, status.HTTP_200_OK, email_confirmed.data)
         backup_code = email_confirmed.data['backup_codes'][0]
 
         setup = self.client.post(reverse('auth-employer-totp-setup'))
         secret = setup.data['manual_key']
         totp_code = two_factor._totp_code(secret, int(time() // two_factor.TOTP_PERIOD_SECONDS))
-        totp_confirmed = self.client.post(reverse('auth-employer-totp-confirm'), {'code': totp_code})
+        totp_confirmed = self.client.post(
+            reverse('auth-employer-totp-confirm'), {'code': totp_code}
+        )
         self.assertEqual(totp_confirmed.status_code, status.HTTP_200_OK, totp_confirmed.data)
 
         # Email step-up can disable TOTP.
         two_factor.issue_code(employer, two_factor.PURPOSE_DISABLE)
-        disable_email_code = cache.get(two_factor._code_key(employer.pk, two_factor.PURPOSE_DISABLE))
-        totp_disabled = self.client.post(reverse('auth-employer-two-factor-method-disable'), {
-            'target': 'totp', 'method': 'email', 'code': disable_email_code,
-        })
+        disable_email_code = cache.get(
+            two_factor._code_key(employer.pk, two_factor.PURPOSE_DISABLE)
+        )
+        totp_disabled = self.client.post(
+            reverse('auth-employer-two-factor-method-disable'),
+            {
+                'target': 'totp',
+                'method': 'email',
+                'code': disable_email_code,
+            },
+        )
         self.assertEqual(totp_disabled.status_code, status.HTTP_200_OK, totp_disabled.data)
         self.assertFalse(totp_disabled.data['two_factor_totp_enabled'])
         self.assertTrue(totp_disabled.data['two_factor_email_enabled'])
 
         # A recovery code can disable email; as the final primary method, it also clears the remaining recovery codes.
-        email_disabled = self.client.post(reverse('auth-employer-two-factor-method-disable'), {
-            'target': 'email', 'method': 'backup', 'code': backup_code,
-        })
+        email_disabled = self.client.post(
+            reverse('auth-employer-two-factor-method-disable'),
+            {
+                'target': 'email',
+                'method': 'backup',
+                'code': backup_code,
+            },
+        )
         self.assertEqual(email_disabled.status_code, status.HTTP_200_OK, email_disabled.data)
         self.assertFalse(email_disabled.data['two_factor_enabled'])
         self.assertFalse(email_disabled.data['two_factor_backup_codes_enabled'])
 
     @patch('apps.accounts.services.two_factor.send_html_email')
-    def test_employer_two_factor_email_uses_a_consistent_subject_and_targeted_content(self, send_email):
+    def test_employer_two_factor_email_uses_a_consistent_subject_and_targeted_content(
+        self, send_email
+    ):
         employer = User.objects.create_user(
-            email='employer-email-copy@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer-email-copy@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
             full_name='Lê Văn Hậu',
         )
         two_factor.issue_code(employer, two_factor.PURPOSE_DISABLE)
@@ -1319,13 +1558,20 @@ class TwoFactorAuthenticationTests(APITestCase):
 
         self.assertTrue(send_email.called)
         payload = send_email.call_args.kwargs
-        self.assertEqual(payload['subject'], '[ProCV] Mã xác thực 2 yếu tố cho tài khoản Nhà tuyển dụng')
+        self.assertEqual(
+            payload['subject'], '[ProCV] Mã xác thực 2 yếu tố cho tài khoản Nhà tuyển dụng'
+        )
         self.assertIn('Kính gửi Quý khách hàng Lê Văn Hậu', payload['text'])
-        self.assertIn('Tắt xác thực 2 yếu tố sử dụng ứng dụng xác thực (Google Authenticator)', payload['html'])
+        self.assertIn(
+            'Tắt xác thực 2 yếu tố sử dụng ứng dụng xác thực (Google Authenticator)',
+            payload['html'],
+        )
 
     def test_employer_backup_code_is_one_time_login_factor(self):
         employer = User.objects.create_user(
-            email='employer-backup@example.com', password='Password@123', role=User.Role.EMPLOYER,
+            email='employer-backup@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
         )
         self.client.force_authenticate(user=employer)
         two_factor.issue_code(employer, two_factor.PURPOSE_SETUP)
@@ -1335,16 +1581,32 @@ class TwoFactorAuthenticationTests(APITestCase):
         backup_code = confirmed.data['backup_codes'][0]
 
         self.client.force_authenticate(user=None)
-        login = self.client.post(reverse('auth-login'), {
-            'email': employer.email, 'password': 'Password@123', 'captcha_token': 'x', 'portal': 'employer',
-        })
+        login = self.client.post(
+            reverse('auth-login'),
+            {
+                'email': employer.email,
+                'password': 'Password@123',
+                'captcha_token': 'x',
+                'portal': 'employer',
+            },
+        )
         self.assertEqual(login.status_code, status.HTTP_202_ACCEPTED, login.data)
-        verified = self.client.post(reverse('auth-two-factor-login-verify'), {
-            'challenge': login.data['challenge'], 'method': 'backup', 'code': backup_code,
-        })
+        verified = self.client.post(
+            reverse('auth-two-factor-login-verify'),
+            {
+                'challenge': login.data['challenge'],
+                'method': 'backup',
+                'code': backup_code,
+            },
+        )
         self.assertEqual(verified.status_code, status.HTTP_200_OK, verified.data)
 
-        replay = self.client.post(reverse('auth-two-factor-login-verify'), {
-            'challenge': login.data['challenge'], 'method': 'backup', 'code': backup_code,
-        })
+        replay = self.client.post(
+            reverse('auth-two-factor-login-verify'),
+            {
+                'challenge': login.data['challenge'],
+                'method': 'backup',
+                'code': backup_code,
+            },
+        )
         self.assertEqual(replay.status_code, status.HTTP_400_BAD_REQUEST)

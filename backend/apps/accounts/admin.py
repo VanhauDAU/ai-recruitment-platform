@@ -21,7 +21,19 @@ class UserAdmin(DjangoUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password', 'public_id')}),
         ('Profile', {'fields': ('full_name', 'phone', 'avatar_url')}),
-        ('Role & status', {'fields': ('role', 'status', 'is_active', 'is_staff', 'is_superuser', 'email_verified')}),
+        (
+            'Role & status',
+            {
+                'fields': (
+                    'role',
+                    'status',
+                    'is_active',
+                    'is_staff',
+                    'is_superuser',
+                    'email_verified',
+                )
+            },
+        ),
         ('Soft delete', {'fields': ('is_deleted', 'deleted_at')}),
         ('Permissions', {'fields': ('groups', 'user_permissions')}),
         ('Timestamps', {'fields': ('date_joined', 'last_login', 'updated_at')}),
@@ -30,10 +42,13 @@ class UserAdmin(DjangoUserAdmin):
     filter_horizontal = ('groups', 'user_permissions')
     inlines = [SocialAccountInline]
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'role', 'password1', 'password2'),
-        }),
+        (
+            None,
+            {
+                'classes': ('wide',),
+                'fields': ('email', 'role', 'password1', 'password2'),
+            },
+        ),
     )
 
     @admin.display(description='Created at')

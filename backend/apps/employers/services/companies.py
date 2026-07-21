@@ -7,10 +7,22 @@ from rest_framework.exceptions import ValidationError
 from ..models import Company, CompanyDocument, CompanyIndustry, Industry
 
 UPDATABLE_COMPANY_FIELDS = {
-    'business_type', 'tax_code', 'company_name', 'trade_name',
-    'trade_name_same_as_registered', 'website_url', 'has_no_website', 'email',
-    'phone', 'address', 'company_size', 'description', 'employee_benefits',
-    'markets', 'target_customers', 'founded_year',
+    'business_type',
+    'tax_code',
+    'company_name',
+    'trade_name',
+    'trade_name_same_as_registered',
+    'website_url',
+    'has_no_website',
+    'email',
+    'phone',
+    'address',
+    'company_size',
+    'description',
+    'employee_benefits',
+    'markets',
+    'target_customers',
+    'founded_year',
 }
 SENSITIVE_FIELDS = {'tax_code', 'company_name'}
 
@@ -19,14 +31,16 @@ SENSITIVE_FIELDS = {'tax_code', 'company_name'}
 def set_company_industries(company, industries, primary_industry):
     """Replace a company's industry assignments atomically."""
     company.company_industries.all().delete()
-    CompanyIndustry.objects.bulk_create([
-        CompanyIndustry(
-            company=company,
-            industry=industry,
-            is_primary=industry == primary_industry,
-        )
-        for industry in industries
-    ])
+    CompanyIndustry.objects.bulk_create(
+        [
+            CompanyIndustry(
+                company=company,
+                industry=industry,
+                is_primary=industry == primary_industry,
+            )
+            for industry in industries
+        ]
+    )
 
 
 @transaction.atomic
@@ -64,16 +78,20 @@ def apply_update_request(update_request, admin_user, approve, note=''):
             set_company_industries(company, industries, primary)
 
     update_request.status = (
-        update_request.Status.APPROVED
-        if approve
-        else update_request.Status.REJECTED
+        update_request.Status.APPROVED if approve else update_request.Status.REJECTED
     )
     update_request.reviewed_by = admin_user
     update_request.reviewed_at = timezone.now()
     update_request.review_note = note
-    update_request.save(update_fields=[
-        'status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at',
-    ])
+    update_request.save(
+        update_fields=[
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+            'review_note',
+            'updated_at',
+        ]
+    )
     return update_request
 
 
@@ -87,7 +105,12 @@ def verify_company(company, admin_user, approve, reason=''):
     else:
         company.verification_status = Company.VerificationStatus.REJECTED
         company.rejected_reason = reason
-    company.save(update_fields=[
-        'verification_status', 'verified_at', 'rejected_reason', 'updated_at',
-    ])
+    company.save(
+        update_fields=[
+            'verification_status',
+            'verified_at',
+            'rejected_reason',
+            'updated_at',
+        ]
+    )
     return company

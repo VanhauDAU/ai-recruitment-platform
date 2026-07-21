@@ -34,7 +34,9 @@ class RecruitmentNeedView(APIView):
     def post(self, request):
         recruiter = get_or_create_recruiter(request.user)
         if not request.user.email_verified:
-            raise ValidationError({'detail': 'Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng.'})
+            raise ValidationError(
+                {'detail': 'Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng.'}
+            )
         if recruiter.registration_completed_at is None:
             raise ValidationError({'detail': 'Vui lòng hoàn tất hồ sơ nhà tuyển dụng trước.'})
         if recruiter.recruitment_needs.exists():
@@ -47,9 +49,9 @@ class RecruitmentNeedView(APIView):
         try:
             need = serializer.save()
         except IntegrityError as error:
-            raise ValidationError({
-                'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'
-            }) from error
+            raise ValidationError(
+                {'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'}
+            ) from error
         return Response(RecruitmentNeedSerializer(need).data, status=status.HTTP_200_OK)
 
 
@@ -58,14 +60,18 @@ class RecruitmentNeedListCreateView(APIView):
 
     def get(self, request):
         recruiter = get_or_create_recruiter(request.user)
-        needs = recruiter.recruitment_needs.select_related('position_category').order_by('-created_at', '-id')
+        needs = recruiter.recruitment_needs.select_related('position_category').order_by(
+            '-created_at', '-id'
+        )
         return Response(RecruitmentNeedSerializer(needs, many=True).data)
 
     def post(self, request):
         recruiter = get_or_create_recruiter(request.user)
         serializer = RecruitmentNeedSerializer(data=request.data, context={'recruiter': recruiter})
         serializer.is_valid(raise_exception=True)
-        return Response(RecruitmentNeedSerializer(serializer.save()).data, status=status.HTTP_201_CREATED)
+        return Response(
+            RecruitmentNeedSerializer(serializer.save()).data, status=status.HTTP_201_CREATED
+        )
 
 
 class RecruitmentNeedDetailView(APIView):
@@ -79,7 +85,9 @@ class RecruitmentNeedDetailView(APIView):
             raise ValidationError({'detail': 'Không tìm thấy nhu cầu tuyển dụng.'}) from error
 
     def patch(self, request, public_id):
-        serializer = RecruitmentNeedSerializer(self.get_object(request, public_id), data=request.data, partial=True)
+        serializer = RecruitmentNeedSerializer(
+            self.get_object(request, public_id), data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         return Response(RecruitmentNeedSerializer(serializer.save()).data)
 

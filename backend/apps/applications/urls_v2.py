@@ -4,7 +4,11 @@ from .api_v2_views import CandidateApplicationV2ListCreateView, RecruiterApplica
 
 
 urlpatterns = [
-    path('applications/', CandidateApplicationV2ListCreateView.as_view(), name='candidate-application-list-create-v2'),
+    path(
+        'applications/',
+        CandidateApplicationV2ListCreateView.as_view(),
+        name='candidate-application-list-create-v2',
+    ),
     path(
         'recruiter/applications/<str:public_id>/cv/',
         RecruiterApplicationSnapshotView.as_view(),
