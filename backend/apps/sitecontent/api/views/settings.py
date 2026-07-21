@@ -116,7 +116,9 @@ def _validate_value(setting, value):
     patch=extend_schema(summary='Admin: cập nhật site settings'),
     put=extend_schema(summary='Admin: cập nhật site settings'),
 )
-@extend_schema(request=OpenApiTypes.OBJECT, responses={200: OpenApiTypes.OBJECT}, tags=['site-admin'])
+@extend_schema(
+    request=OpenApiTypes.OBJECT, responses={200: OpenApiTypes.OBJECT}, tags=['site-admin']
+)
 class AdminSiteSettingView(APIView):
     """GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt value."""
 
