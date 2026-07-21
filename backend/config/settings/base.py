@@ -393,6 +393,7 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
+    'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
 }
 CELERY_TASK_ACKS_LATE = True

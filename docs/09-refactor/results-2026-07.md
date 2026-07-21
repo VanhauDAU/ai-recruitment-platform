@@ -43,7 +43,7 @@ Baseline chi tiết: [baseline-2026-07.md](./baseline-2026-07.md)
   ứng viên tách theo mối quan tâm (autosave / selection / history) khi cần.
 - factory-boy cho test backend (test đã tách theo tầng ở AR-P7).
 - Squash migrations (chỉ làm khi chắc chắn chưa có production DB).
-- Email đồng bộ trong request ở 2FA/reset/welcome (xem
-  `docs/07-algorithms/flow-audit-2026-07.md`).
+- ~~Email đồng bộ ở 2FA/reset/welcome~~ — audit đầu ghi sai, kiểm lại thấy đã
+  async sẵn; chỉ OTP điện thoại còn đồng bộ và đã sửa ở AR-P8.
 - Build Docker image chưa verify trên máy dev (daemon tắt) — cần
   `docker compose build` một lần.
