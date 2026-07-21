@@ -1,0 +1,21 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["*/migrations/*", "venv", "media"]
+
+[tool.ruff.lint]
+# Bắt đầu nới tay: lỗi thật (E,F), import (I), modern hóa (UP), bug tiềm ẩn (B),
+# rule riêng cho Django (DJ). Siết thêm sau khi kiến trúc ổn định (AR-P2+).
+select = ["E", "F", "I", "UP", "B", "DJ"]
+ignore = [
+  # Django settings dùng star import theo convention (base -> development/production/test)
+  "F403", "F405",
+  # Cho phép line dài trong comment/URL — format lo phần code
+  "E501",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "common", "config"]
+
+[tool.ruff.format]
+quote-style = "single"

@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 
+from ...models import RecruitmentNeed
 from ...services.profiles import get_or_create_recruiter
 from ..serializers import RecruitmentNeedSerializer
 
