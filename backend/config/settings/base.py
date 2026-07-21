@@ -417,11 +417,11 @@ EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
-EMAIL_BACKEND = config(
-    'EMAIL_BACKEND',
-    default='django.core.mail.backends.smtp.EmailBackend'
+# `or` để dòng .env bỏ trống (EMAIL_BACKEND=) vẫn rơi về default theo EMAIL_HOST_USER.
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='') or (
+    'django.core.mail.backends.smtp.EmailBackend'
     if EMAIL_HOST_USER
-    else 'django.core.mail.backends.console.EmailBackend',
+    else 'django.core.mail.backends.console.EmailBackend'
 )
 # Người gửi hiển thị; tên có thể override runtime qua site setting `email_from_name`.
 # `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
