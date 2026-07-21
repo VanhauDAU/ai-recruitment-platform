@@ -17,7 +17,6 @@ from ...selectors import has_explicit_company_link
 from ...services import get_or_create_recruiter
 from ..serializers import RecruiterProfileSerializer
 
-
 DOCUMENT_SIGNATURES = {
     'jpg': (b'\xff\xd8\xff', {'image/jpeg'}),
     'png': (b'\x89PNG\r\n\x1a\n', {'image/png'}),

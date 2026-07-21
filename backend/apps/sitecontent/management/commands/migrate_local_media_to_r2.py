@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from common.r2_storage import private_media_storage, public_media_storage
 
-
 PUBLIC_PREFIXES = (
     'site/',
     'blog/',

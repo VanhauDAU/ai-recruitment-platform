@@ -1,6 +1,6 @@
+import json
 from hashlib import sha256
 from io import BytesIO
-import json
 
 from django.core import signing
 from django.core.files.base import ContentFile
@@ -11,7 +11,6 @@ from rest_framework.exceptions import ValidationError
 from common.r2_storage import private_media_storage, public_media_storage
 
 from ..models import CvAsset, CvVersion
-
 
 MAX_AVATAR_BYTES = 5 * 1024 * 1024
 ASSET_TOKEN_MAX_AGE = 300

@@ -13,8 +13,8 @@ from rest_framework.views import APIView
 from .. import oauth
 from ..models import User
 from ..serializers import SessionUserSerializer
-from ..services.tokens import issue_tokens
 from ..services.refresh_cookies import set_refresh_cookie
+from ..services.tokens import issue_tokens
 from ..tasks import queue_welcome_email
 
 

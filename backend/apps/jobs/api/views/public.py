@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -10,14 +9,15 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
-from ...models import Job, SavedJob
+
+from ...models import SavedJob
 from ...selectors.listing import (
     active_job_detail_queryset,
     build_job_list_queryset,
     suggest_job_search_terms,
 )
-from ...selectors.stats import build_job_stats
 from ...selectors.recommendations import recommend_jobs_for_cv
+from ...selectors.stats import build_job_stats
 from ...services.engagement import record_consented_job_view, set_viewer_cookie
 from ..serializers import (
     JobDetailSerializer,

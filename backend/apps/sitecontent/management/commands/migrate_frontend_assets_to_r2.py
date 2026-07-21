@@ -11,7 +11,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from common.r2_storage import public_media_storage
 
-
 LEGACY_ASSETS = {
     'frontend/legacy/onboarding/bg-step-1.png': 'https://static.topcv.vn/v4/image/onboard-user/bg-step-1.png',
     'frontend/legacy/icons/shield-check.png': 'https://static.topcv.vn/v4/image/icon/icon-shield-check.png',

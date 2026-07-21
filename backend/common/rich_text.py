@@ -7,7 +7,6 @@ attribute also removes event handlers and dangerous URL-bearing attributes.
 from html import escape, unescape
 from html.parser import HTMLParser
 
-
 ALLOWED_RICH_TEXT_TAGS = {'p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li'}
 _DROP_CONTENT_TAGS = {'script', 'style'}
 _TAG_ALIASES = {'b': 'strong', 'i': 'em'}

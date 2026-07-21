@@ -10,7 +10,6 @@ from datetime import timedelta
 from ipaddress import ip_address, ip_network
 
 from django.conf import settings
-from django.db import transaction
 from django.utils import timezone
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken

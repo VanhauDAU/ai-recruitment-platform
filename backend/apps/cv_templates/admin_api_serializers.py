@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from apps.jobs.models import JobCategory
 from apps.cvs.models import CvAsset
+from apps.jobs.models import JobCategory
 
 from .models import (
     CvCategory,

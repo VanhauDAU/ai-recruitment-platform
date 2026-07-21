@@ -48,7 +48,9 @@ class PostAdminForm(forms.ModelForm):
             allowed = {Post.Status.DRAFT, Post.Status.PENDING}
             current = self.instance.status if self.instance and self.instance.pk else None
             self.fields['status'].choices = [
-                (v, l) for v, l in Post.Status.choices if v in allowed or v == current
+                (value, label)
+                for value, label in Post.Status.choices
+                if value in allowed or value == current
             ]
 
 

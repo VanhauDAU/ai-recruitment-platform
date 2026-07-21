@@ -13,8 +13,8 @@ from apps.cvs.services import create_background_asset
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from .admin_api_serializers import (
-    CvCategoryAdminSerializer,
     CvBackgroundAdminSerializer,
+    CvCategoryAdminSerializer,
     CvColorAdminSerializer,
     CvContentBlueprintAdminSerializer,
     CvSampleContentAdminSerializer,

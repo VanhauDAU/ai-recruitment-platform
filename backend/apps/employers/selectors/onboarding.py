@@ -5,7 +5,6 @@ from django.db.models import Q
 from ..models import CompanyDocument
 from .company_status import has_explicit_company_link
 
-
 # Những miền email công khai không được xem là email theo tên miền công ty.
 # Danh sách này chỉ phục vụ việc tính cấp độ hiển thị; việc xác thực email vẫn
 # dựa trên cờ `email_verified` của tài khoản.

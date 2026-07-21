@@ -9,8 +9,8 @@ from .models import (
     CompanyIndustry,
     CompanyUpdateRequest,
     Industry,
-    RecruitmentNeed,
     RecruiterProfile,
+    RecruitmentNeed,
 )
 
 

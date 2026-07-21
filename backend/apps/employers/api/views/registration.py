@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsEmployer
 from apps.accounts.serializers import SessionUserSerializer
 from apps.accounts.services import queue_verification_email, verify_request_captcha
-from apps.accounts.services.tokens import issue_tokens
 from apps.accounts.services.refresh_cookies import set_refresh_cookie
+from apps.accounts.services.tokens import issue_tokens
 
 from ...services.registration import complete_registration_profile, register_employer
 from ..serializers import RecruiterProfileSerializer

@@ -10,7 +10,6 @@ from common.media_storage import media_url_from_value
 from .models import User
 from .services.access import is_account_accessible
 
-
 # Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
 # đăng nhập/đăng ký/quên mật khẩu (một email có thể có nhiều tài khoản khác cổng).
 PORTAL_ROLE_BY_NAME = {

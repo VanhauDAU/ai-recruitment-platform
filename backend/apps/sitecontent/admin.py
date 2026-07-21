@@ -1,9 +1,9 @@
 import json
 
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
 
-from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
+from common.media_storage import delete_local_media_url, save_image_upload
 
 from .models import Banner, Feedback, LinkGroup, LinkItem, Locale, SiteSetting
 

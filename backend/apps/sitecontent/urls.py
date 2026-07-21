@@ -1,9 +1,9 @@
 from django.urls import path
 
 from .views import (
-    AdminSettingUploadView,
     AdminLocaleDetailView,
     AdminLocaleListCreateView,
+    AdminSettingUploadView,
     AdminSiteSettingView,
     BannerListView,
     FeedbackCreateView,

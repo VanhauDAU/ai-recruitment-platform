@@ -1,7 +1,8 @@
 """JWT adapters that enforce the accounts-domain access policy."""
 
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from .services.access import is_account_accessible
 from .services.auth_sessions import active_session_for_access
 

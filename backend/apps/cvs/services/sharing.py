@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import secrets
+from hashlib import sha256
 
 from django.db import transaction
 from django.db.models import Q

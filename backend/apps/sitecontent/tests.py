@@ -15,7 +15,6 @@ from apps.accounts.models import User
 from .models import Locale, SiteSetting
 from .serializers import AdminSiteSettingSerializer
 
-
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
     b'\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89'

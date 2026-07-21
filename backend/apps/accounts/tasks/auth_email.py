@@ -105,7 +105,7 @@ def deliver_auth_email_job(self, job_id):
         if exhausted:
             logger.exception('Auth email job %s thất bại sau %s lần thử.', job.pk, job.attempts)
             raise
-        raise self.retry(exc=exc, countdown=min(2**job.attempts, 60))
+        raise self.retry(exc=exc, countdown=min(2**job.attempts, 60)) from exc
 
     AuthEmailJob.objects.filter(pk=job.pk).update(
         status=AuthEmailJob.Status.SENT,

@@ -4,7 +4,6 @@ import requests
 from django.conf import settings
 from rest_framework import serializers
 
-
 RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
 
 
@@ -31,10 +30,10 @@ def verify_recaptcha(token, action, remote_ip=None):
     try:
         response = requests.post(RECAPTCHA_VERIFY_URL, data=payload, timeout=5)
         result = response.json()
-    except (requests.RequestException, ValueError):
+    except (requests.RequestException, ValueError) as error:
         raise serializers.ValidationError(
             {'captcha_token': 'Không thể xác thực captcha, vui lòng thử lại.'}
-        )
+        ) from error
 
     if not result.get('success'):
         raise serializers.ValidationError({'captcha_token': 'Xác thực captcha thất bại.'})

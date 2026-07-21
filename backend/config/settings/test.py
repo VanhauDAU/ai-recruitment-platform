@@ -2,7 +2,6 @@
 
 from .base import *  # noqa: F403
 
-
 ENVIRONMENT = 'test'
 IS_PRODUCTION = False
 DEBUG = False

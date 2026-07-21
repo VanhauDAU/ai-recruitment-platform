@@ -7,7 +7,6 @@ from apps.cvs.services import create_application_snapshot
 
 from ..models import Application
 
-
 STATUS_TIMESTAMP_FIELD = {
     Application.Status.VIEWED: 'viewed_at',
     Application.Status.SHORTLISTED: 'shortlisted_at',

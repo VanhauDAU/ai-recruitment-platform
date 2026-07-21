@@ -1,34 +1,33 @@
 from django.urls import path
 
 from .api_v2_views import (
-    CvV2DetailView,
     CvV2ApplySampleView,
     CvV2AssetContentView,
     CvV2AssetUploadView,
     CvV2BackgroundListView,
-    CvV2DuplicateView,
+    CvV2DetailView,
     CvV2DraftView,
+    CvV2DuplicateView,
     CvV2ExportDetailView,
     CvV2ExportDownloadView,
     CvV2ExportListCreateView,
     CvV2ExportRetryView,
-    CvV2ImportView,
     CvV2ImportRetryView,
-    CvV2ListCreateView,
+    CvV2ImportView,
     CvV2LatestRecoverableDraftView,
+    CvV2ListCreateView,
     CvV2OwnerVersionView,
     CvV2PublishView,
     CvV2SaveVersionView,
     CvV2SharedLinkListCreateView,
     CvV2SharedLinkPublicView,
     CvV2SharedLinkRevokeView,
-    CvV2TemplateSwitchView,
     CvV2TemplatePreviewView,
+    CvV2TemplateSwitchView,
     CvV2ThumbnailView,
     CvV2VersionDetailView,
     CvV2VersionListView,
 )
-
 
 urlpatterns = [
     path('assets/', CvV2AssetUploadView.as_view(), name='cv-v2-asset-upload'),

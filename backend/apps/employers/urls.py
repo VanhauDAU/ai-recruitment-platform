@@ -3,8 +3,8 @@ from django.urls import path
 from .api.views import (
     AcceptDpaView,
     AllIndustryListView,
-    CompanyCoverUploadView,
     CompanyCatalogView,
+    CompanyCoverUploadView,
     CompanyDocumentContentView,
     CompanyDocumentListCreateView,
     CompanyGalleryDeleteView,
@@ -18,9 +18,9 @@ from .api.views import (
     MyCompanyView,
     PhoneAvailabilityView,
     RecruiterMeView,
-    RecruitmentNeedView,
-    RecruitmentNeedListCreateView,
     RecruitmentNeedDetailView,
+    RecruitmentNeedListCreateView,
+    RecruitmentNeedView,
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )

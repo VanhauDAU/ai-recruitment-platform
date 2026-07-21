@@ -12,7 +12,6 @@ from apps.privacy.constants import VIEWER_SIGNING_SALT
 
 from ..models import Job
 
-
 _DEDUPLICATE_VIEW_SCRIPT = """
 for _, key in ipairs(KEYS) do
   if redis.call('EXISTS', key) == 1 then return 0 end

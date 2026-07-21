@@ -17,8 +17,8 @@ from ..services import auth_sessions
 from ..services.refresh_cookies import (
     VALID_PORTALS,
     clear_refresh_cookie,
-    refresh_from_request,
     portal_for_user,
+    refresh_from_request,
     set_refresh_cookie,
 )
 

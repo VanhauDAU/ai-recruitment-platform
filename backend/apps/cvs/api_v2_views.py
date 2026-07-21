@@ -7,15 +7,14 @@ from django.http import FileResponse, Http404
 from rest_framework import generics, parsers, permissions, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
 from apps.cv_templates.models import CvTemplate
 from apps.cv_templates.services import PositionContentUnavailable
 from common.metrics import record_metric
 from common.r2_storage import cv_asset_storage, private_media_storage
-from .composition import CvCompositionError, compose_cv_document
 
 from .api_v2_serializers import (
     CvApplySampleSerializer,
@@ -23,20 +22,21 @@ from .api_v2_serializers import (
     CvAssetUploadSerializer,
     CvDraftSerializer,
     CvDraftWriteSerializer,
-    CvV2DuplicateSerializer,
     CvExportCreateSerializer,
     CvExportSerializer,
-    CvV2ImportSerializer,
-    CvV2MetadataUpdateSerializer,
     CvSharedLinkCreateSerializer,
     CvSharedLinkSerializer,
     CvTemplateSwitchSerializer,
     CvV2CreateSerializer,
+    CvV2DuplicateSerializer,
+    CvV2ImportSerializer,
+    CvV2MetadataUpdateSerializer,
     CvV2Serializer,
     CvVersionSerializer,
     CvVersionSummarySerializer,
     SharedCvVersionSerializer,
 )
+from .composition import CvCompositionError, compose_cv_document
 from .models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from .selectors import (
     candidate_cv_by_public_id,
@@ -45,39 +45,38 @@ from .selectors import (
     latest_recoverable_cv,
 )
 from .services import (
-    CvLifecyclePolicyError,
     CvExportPermissionError,
     CvExportStateError,
     CvExportUnavailableError,
+    CvLifecyclePolicyError,
     CvSharePermissionError,
     CvShareUnavailableError,
+    InvalidCvImport,
     StaleDraftError,
     UnsupportedCvUpload,
-    InvalidCvImport,
-    create_shared_link,
+    apply_sample_to_draft,
     create_avatar_asset,
+    create_shared_link,
     create_v2_cv,
     duplicate_cv,
-    import_v2_cv,
-    queue_cv_import,
-    retry_import,
     export_download_ready,
+    import_v2_cv,
     owner_cv_export,
     owner_view_version,
-    request_cv_export,
-    request_current_cv_thumbnail,
-    resolve_shared_link,
-    revoke_shared_link,
-    retry_cv_export,
     permanently_delete_cv,
+    queue_cv_import,
+    request_current_cv_thumbnail,
+    request_cv_export,
+    resolve_shared_link,
+    retry_cv_export,
+    retry_import,
+    revoke_shared_link,
     save_draft_as_version,
     switch_draft_template,
     update_cv_metadata,
     update_draft,
-    apply_sample_to_draft,
 )
 from .services.assets import resolve_asset_token
-
 
 LOCK_HEADER_RE = re.compile(r'^"?lock-version-(\d+)"?$')
 

@@ -20,8 +20,8 @@ from common.media_storage import (
 
 from .models import Banner, LinkGroup, Locale, SiteSetting
 from .serializers import (
-    AdminSiteSettingSerializer,
     AdminLocaleSerializer,
+    AdminSiteSettingSerializer,
     BannerSerializer,
     FeedbackSerializer,
     LinkGroupSerializer,

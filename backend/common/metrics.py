@@ -2,7 +2,6 @@
 
 import logging
 
-
 logger = logging.getLogger('product.metrics')
 ALLOWED_METRICS = {
     'cv_preview_latency_ms',

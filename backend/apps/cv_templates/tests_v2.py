@@ -1,8 +1,9 @@
+from unittest.mock import patch
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
-from unittest.mock import patch
 
 from apps.accounts.models import User
 from apps.cvs.schemas import empty_content, empty_layout, empty_style

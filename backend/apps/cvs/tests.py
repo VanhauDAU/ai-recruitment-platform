@@ -23,7 +23,6 @@ from apps.cvs.services.versions import (
     update_draft,
 )
 
-
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
 

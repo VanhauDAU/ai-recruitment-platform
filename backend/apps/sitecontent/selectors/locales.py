@@ -1,6 +1,5 @@
 from ..models import Locale
 
-
 TECHNICAL_FALLBACK_LOCALE = 'vi-VN'
 
 

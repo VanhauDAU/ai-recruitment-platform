@@ -4,7 +4,6 @@ from django.conf import settings
 
 from ..models import User
 
-
 PORTAL_BY_ROLE = {
     User.Role.CANDIDATE: 'main',
     User.Role.EMPLOYER: 'employer',

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import hmac
+from hashlib import sha256
 
 from django.conf import settings
 

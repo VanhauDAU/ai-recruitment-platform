@@ -1,21 +1,21 @@
-from copy import deepcopy
-from hashlib import sha256
-from datetime import timedelta
-from io import BytesIO
 import shutil
 import tempfile
+from copy import deepcopy
+from datetime import timedelta
+from hashlib import sha256
+from io import BytesIO
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework.test import APITestCase
 from PIL import Image
 from pypdf import PdfReader
+from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import (
     CvColor,
@@ -47,7 +47,6 @@ from .tasks import (
     process_cv_import_job,
     render_cv_export_job,
 )
-
 
 TEST_EXPORT_MEDIA_ROOT = tempfile.mkdtemp()
 

@@ -1,8 +1,8 @@
 """Public V2 Template Catalog endpoints with a deliberately compact card contract."""
 
+import json
 from copy import deepcopy
 from hashlib import sha256
-import json
 from time import monotonic
 
 from django.core.cache import cache
@@ -13,15 +13,15 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.jobs.models import JobCategory
 from apps.cvs.composition import (
     CvCompositionError,
     compose_cv_document,
     finalize_preview_document,
 )
 from apps.cvs.schemas import empty_content
-from common.metrics import record_metric
+from apps.jobs.models import JobCategory
 from apps.sitecontent.selectors import default_locale_code, is_active_locale
+from common.metrics import record_metric
 
 from .api_v2_serializers import (
     CvCategorySerializer,

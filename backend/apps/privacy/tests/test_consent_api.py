@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core import signing
-from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 

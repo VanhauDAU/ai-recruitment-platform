@@ -1,0 +1,2 @@
+# Commit chỉ format — bỏ qua khi git blame (git config blame.ignoreRevsFile .git-blame-ignore-revs)
+71454d6512edd512709601a99abcf50a5e3418f4

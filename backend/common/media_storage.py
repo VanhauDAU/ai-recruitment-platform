@@ -10,7 +10,6 @@ from rest_framework.exceptions import ValidationError
 
 from common.r2_storage import public_media_storage
 
-
 ALLOWED_IMAGE_SIGNATURES = {
     'jpg': (b'\xff\xd8\xff', 'image/jpeg'),
     'png': (b'\x89PNG\r\n\x1a\n', 'image/png'),

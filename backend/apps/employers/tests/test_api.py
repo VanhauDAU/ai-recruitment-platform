@@ -14,9 +14,9 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import AuthEmailJob, User
 from apps.accounts.services.tokens import issue_tokens
-from common.r2_storage import private_media_storage
-from apps.locations.models import Location
 from apps.jobs.models import JobCategory
+from apps.locations.models import Location
+from common.r2_storage import private_media_storage
 
 from .. import services
 from ..models import (
@@ -29,7 +29,6 @@ from ..models import (
     RecruiterProfile,
     RecruitmentNeed,
 )
-
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'

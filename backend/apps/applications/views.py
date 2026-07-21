@@ -3,13 +3,12 @@ from rest_framework.exceptions import ValidationError
 
 from apps.accounts.permissions import IsCandidate, IsEmployerWithMFA
 
-from .models import Application
-from .serializers import ApplicationSerializer, ApplicationStatusUpdateSerializer
 from .selectors import (
     candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
 )
+from .serializers import ApplicationSerializer, ApplicationStatusUpdateSerializer
 from .services import (
     InvalidApplicationStatusTransition,
     create_application,

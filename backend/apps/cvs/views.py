@@ -1,5 +1,5 @@
-from drf_spectacular.utils import extend_schema, inline_serializer
 from django.http import FileResponse, Http404
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -8,9 +8,10 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 from common.api_deprecation import LegacyApiDeprecationMixin
 from common.r2_storage import private_media_storage
+
 from .models import UserCv
-from .serializers import UserCvSerializer
 from .selectors import candidate_cvs_queryset
+from .serializers import UserCvSerializer
 from .services import (
     UnsupportedCvUpload,
     create_builder_cv,

@@ -1,16 +1,17 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from apps.cvs.api_v2_views import CvV2BackgroundListView
+
 from .admin_api_views import (
-    AdminCvCategoryViewSet,
     AdminCvBackgroundViewSet,
+    AdminCvCategoryViewSet,
     AdminCvColorViewSet,
     AdminCvContentBlueprintViewSet,
     AdminCvSampleContentViewSet,
     AdminCvTemplateLocalizationViewSet,
     AdminCvTemplateViewSet,
 )
-
 from .api_v2_views import (
     CvCategoryCatalogListView,
     CvPositionOptionListView,
@@ -21,8 +22,6 @@ from .api_v2_views import (
     CvTemplateCatalogListView,
     CvTemplateRelatedListView,
 )
-from apps.cvs.api_v2_views import CvV2BackgroundListView
-
 
 router = DefaultRouter()
 router.register('admin/cv-templates', AdminCvTemplateViewSet, basename='admin-cv-template')

@@ -1,16 +1,16 @@
 from django.urls import path
 
 from .api.views import (
-    CvJobRecommendationView,
     BenefitListView,
+    CvJobRecommendationView,
     EmployerJobDetailView,
     EmployerJobListCreateView,
     JobCategoryListView,
     JobDetailView,
-    JobViewCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
+    JobViewCreateView,
     LanguageListView,
     SavedJobDestroyView,
     SavedJobListCreateView,

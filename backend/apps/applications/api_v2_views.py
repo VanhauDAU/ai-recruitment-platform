@@ -1,7 +1,7 @@
 """V2 candidate submission and recruiter immutable-snapshot reads."""
 
-from django.http import Http404
 from django.db import IntegrityError
+from django.http import Http404
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response

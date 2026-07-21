@@ -1,15 +1,14 @@
 """Deterministic CV-to-job ranking used immediately after a candidate saves."""
 
-from decimal import Decimal
 import re
+from decimal import Decimal
 
-from common.db.search import fold_accents
 from apps.candidates.selectors import candidate_job_preference_for_user
 from apps.cvs.selectors import candidate_cv_by_public_id
+from common.db.search import fold_accents
 
 from ..models import Job, JobCategoryAssignment
 from .listing import active_jobs_queryset
-
 
 EXPERIENCE_RANK = {
     '': 0,

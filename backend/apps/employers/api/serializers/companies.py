@@ -9,13 +9,10 @@ from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
 from ...models import (
     Company,
-    CompanyDocument,
     CompanyImage,
-    CompanyUpdateRequest,
     Industry,
-    RecruiterProfile,
 )
-from ...services import SENSITIVE_FIELDS, UPDATABLE_COMPANY_FIELDS, set_company_industries
+from ...services import set_company_industries
 
 
 class IndustrySerializer(serializers.ModelSerializer):

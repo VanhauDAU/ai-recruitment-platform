@@ -10,10 +10,10 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from apps.cv_templates.models import (
-    CvSampleContent,
-    CvContentBlueprint,
     CvCategory,
     CvColor,
+    CvContentBlueprint,
+    CvSampleContent,
     CvTemplate,
     CvTemplateCategoryLink,
     CvTemplateColorLink,

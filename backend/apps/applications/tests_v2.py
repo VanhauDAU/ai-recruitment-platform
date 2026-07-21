@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.accounts.services.tokens import issue_tokens
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
 from apps.cvs.models import CvVersion
 from apps.cvs.schemas import empty_layout, empty_style
@@ -14,7 +15,6 @@ from apps.cvs.services import (
 from apps.employers.models import Company, RecruiterProfile
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
-from apps.accounts.services.tokens import issue_tokens
 
 from .models import Application
 

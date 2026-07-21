@@ -2,7 +2,6 @@
 
 from .models import UserCv
 
-
 COMPLETION_THRESHOLD = 70
 
 

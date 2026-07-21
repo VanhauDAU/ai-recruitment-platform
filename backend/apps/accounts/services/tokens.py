@@ -1,6 +1,6 @@
 """JWT issuance and revocation workflows."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import update_last_login
@@ -23,7 +23,7 @@ def issue_tokens(user, request=None, *, auth_method='password'):
         # ``access_token`` kế thừa ``iat`` của refresh. Dùng đúng mốc đó để
         # thời hạn 5 phút của admin không bị lệch một giây khi qua boundary.
         access.set_exp(
-            from_time=datetime.fromtimestamp(access['iat'], tz=timezone.utc),
+            from_time=datetime.fromtimestamp(access['iat'], tz=UTC),
             lifetime=timedelta(minutes=settings.ADMIN_ACCESS_TOKEN_MINUTES),
         )
     return {'access': str(access), 'refresh': str(refresh)}

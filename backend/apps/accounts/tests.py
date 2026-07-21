@@ -1,28 +1,27 @@
 import shutil
 import tempfile
-from time import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from time import time
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
+from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core import mail
 from django.db import close_old_connections
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from . import oauth
 from .models import AuthEmailJob, AuthSession, SocialAccount, User
 from .services import email_verification, password_reset, two_factor
-from .services.tokens import issue_tokens
 from .services.refresh_cookies import cookie_name
+from .services.tokens import issue_tokens
 from .tasks import deliver_auth_email_job
-
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'

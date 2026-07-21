@@ -3,12 +3,11 @@
 from django.core.management.base import BaseCommand
 
 from apps.accounts.models import User
-from common.media_storage import normalise_media_value
 from apps.cvs.models import UserCv
 from apps.employers.models import Company, CompanyDocument, CompanyImage
 from apps.jobs.models import JobCategory
 from apps.sitecontent.models import Banner, SiteSetting
-
+from common.media_storage import normalise_media_value
 
 MEDIA_FIELDS = (
     (User, ('avatar_url',)),

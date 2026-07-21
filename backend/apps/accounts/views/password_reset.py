@@ -12,8 +12,8 @@ from ..serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
 )
-from ..services import verify_request_captcha
 from ..services import password_reset as pr
+from ..services import verify_request_captcha
 from ..services.tokens import revoke_refresh_tokens
 from ..tasks import queue_auth_email
 

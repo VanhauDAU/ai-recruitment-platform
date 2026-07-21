@@ -13,7 +13,6 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.http import http_date
 
-
 logger = logging.getLogger(__name__)
 
 

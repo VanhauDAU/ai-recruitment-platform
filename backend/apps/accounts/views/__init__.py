@@ -16,10 +16,7 @@ from .password_reset import (
     PasswordResetValidateView,
 )
 from .sessions import SessionListView, SessionRevokeOthersView, SessionRevokeView
-from .verification import ChangeEmailView, VerificationConfirmView, VerificationSendView
 from .two_factor import (
-    TwoFactorDisableConfirmView,
-    TwoFactorDisableSendView,
     EmployerBackupCodesGenerateView,
     EmployerBackupCodesSendView,
     EmployerTotpConfirmView,
@@ -28,11 +25,14 @@ from .two_factor import (
     EmployerTwoFactorMethodDisableSendView,
     EmployerTwoFactorMethodDisableView,
     EmployerTwoFactorMethodsView,
+    TwoFactorDisableConfirmView,
+    TwoFactorDisableSendView,
     TwoFactorLoginResendView,
     TwoFactorLoginVerifyView,
     TwoFactorSetupConfirmView,
     TwoFactorSetupSendView,
 )
+from .verification import ChangeEmailView, VerificationConfirmView, VerificationSendView
 
 __all__ = [
     'AvatarUploadView',

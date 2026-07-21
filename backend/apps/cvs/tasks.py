@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import logging
+from hashlib import sha256
 from time import monotonic
 
 from celery import shared_task
@@ -11,16 +11,16 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
-from common.metrics import record_metric
-from common.pdf_raster import first_pdf_page_image
 
 from apps.ai_core.cv_import import AiCvParseError, structure_cv_text
+from common.metrics import record_metric
+from common.pdf_raster import first_pdf_page_image
 
 from .composition import compose_cv_document, overlay_actor_identity
 from .models import CvExport, CvImportJob, UserCv
 from .pdf_renderer import render_cv_version_pdf
-from .services.versions import create_version
 from .services.thumbnails import thumbnail_key_for
+from .services.versions import create_version
 
 logger = logging.getLogger(__name__)
 

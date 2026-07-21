@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
 import logging
+from hashlib import sha256
 
 from django.core.files.storage import default_storage
 from django.db import transaction

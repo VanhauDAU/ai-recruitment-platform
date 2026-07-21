@@ -1,8 +1,8 @@
 """Idempotent catalogue snapshot generation from the canonical renderer path."""
 
-from hashlib import sha256
 import json
 import logging
+from hashlib import sha256
 from time import monotonic
 from types import SimpleNamespace
 
@@ -10,13 +10,13 @@ from celery import shared_task
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
-from common.metrics import record_metric
-from common.pdf_raster import first_pdf_page_image
-from common.r2_storage import public_media_storage
 
 from apps.cvs.composition import compose_cv_document
 from apps.cvs.pdf_renderer import render_cv_version_pdf
 from apps.cvs.schemas import empty_content
+from common.metrics import record_metric
+from common.pdf_raster import first_pdf_page_image
+from common.r2_storage import public_media_storage
 
 from .models import CvSampleContent, CvTemplateColorLink
 

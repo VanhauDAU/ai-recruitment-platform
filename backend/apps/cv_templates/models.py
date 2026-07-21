@@ -563,6 +563,7 @@ class CvContentBlueprint(models.Model):
             raise ValidationError({'skill_templates': 'Must be a list of strings.'})
         if self.content_json_template:
             from apps.cvs.schemas import empty_layout, empty_style, validate_cv_document
+
             from .services.position_content import _materialize_tokens
 
             content = _materialize_tokens(self.content_json_template, 'Software Engineer')

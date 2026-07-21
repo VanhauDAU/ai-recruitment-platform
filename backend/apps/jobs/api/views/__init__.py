@@ -5,10 +5,10 @@ from .employer import EmployerJobDetailView, EmployerJobListCreateView
 from .public import (
     CvJobRecommendationView,
     JobDetailView,
-    JobViewCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
+    JobViewCreateView,
     SavedJobDestroyView,
     SavedJobListCreateView,
 )

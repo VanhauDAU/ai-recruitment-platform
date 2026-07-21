@@ -8,13 +8,13 @@ import struct
 from math import ceil
 from time import time
 
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
-from django.contrib.auth.hashers import check_password, make_password
 from django.db import transaction
 from django.utils.html import escape
-from cryptography.fernet import Fernet, InvalidToken
 
 from .mailing import send_html_email, site_setting
 

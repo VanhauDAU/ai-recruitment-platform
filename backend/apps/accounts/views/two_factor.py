@@ -12,8 +12,8 @@ from rest_framework.views import APIView
 from ..models import AuthEmailJob, User
 from ..serializers import SessionUserSerializer
 from ..services import two_factor
-from ..services.tokens import issue_tokens
 from ..services.refresh_cookies import set_refresh_cookie
+from ..services.tokens import issue_tokens
 from ..tasks import queue_auth_email
 
 

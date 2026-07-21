@@ -6,7 +6,6 @@ from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategory
 
-
 SALARY_BUCKETS = [
     ('u10', 'Dưới 10 triệu', None, 10_000_000),
     ('10-15', '10 - 15 triệu', 10_000_000, 15_000_000),

@@ -1,37 +1,24 @@
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
-from rest_framework import generics, parsers, permissions, serializers, status
+from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
-from common.db.search import search_q
-from common.media_storage import delete_local_media_url, save_image_upload
 
 from ...models import (
-    Company,
-    CompanyDocument,
-    CompanyImage,
-    CompanyUpdateRequest,
-    Industry,
     RecruiterProfile,
 )
 from ...selectors import has_explicit_company_link
-from ..serializers import (
-    CompanyDocumentSerializer,
-    CompanyImageSerializer,
-    CompanySearchSerializer,
-    CompanySerializer,
-    CompanyUpdateRequestSerializer,
-    IndustrySerializer,
-    RecruiterProfileSerializer,
-)
 from ...services import (
     get_or_create_recruiter,
     phone_taken_by_other,
     send_phone_otp,
     verify_phone_otp,
+)
+from ..serializers import (
+    RecruiterProfileSerializer,
 )
 
 

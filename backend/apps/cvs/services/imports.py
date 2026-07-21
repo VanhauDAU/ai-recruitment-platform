@@ -8,11 +8,8 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cv_templates.models import CvTemplate
-
 from ..models import CvImportJob, UserCv
 from .lifecycle import create_v2_cv
-
 
 MAX_IMPORT_BYTES = 5 * 1024 * 1024
 

@@ -12,6 +12,9 @@ ignore = [
   "F403", "F405",
   # Cho phép line dài trong comment/URL — format lo phần code
   "E501",
+  # TODO(AR-P2): bật lại khi tách models/ package — các rule này đòi sửa model
+  # hàng loạt (thứ tự thân class, __str__, null trên CharField, fields="__all__").
+  "DJ001", "DJ007", "DJ008", "DJ012",
 ]
 
 [tool.ruff.lint.isort]

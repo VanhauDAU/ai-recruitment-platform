@@ -14,13 +14,11 @@ from ..serializers import (
     ProfileUpdateSerializer,
     RegisterEmailAvailabilitySerializer,
     RegisterSerializer,
-    RoleTokenObtainPairSerializer,
     SessionUserSerializer,
 )
-from ..services import queue_verification_email, verify_request_captcha
-from ..services.tokens import issue_tokens
+from ..services import queue_verification_email, two_factor, verify_request_captcha
 from ..services.refresh_cookies import set_refresh_cookie
-from ..services import two_factor
+from ..services.tokens import issue_tokens
 from ..tasks import queue_auth_email
 
 

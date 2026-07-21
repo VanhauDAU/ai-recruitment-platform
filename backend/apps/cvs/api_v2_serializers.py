@@ -116,6 +116,7 @@ class CvV2Serializer(serializers.ModelSerializer):
 
     def get_thumbnail_url(self, obj):
         from django.urls import reverse
+
         from .services import current_thumbnail_ready
 
         if not current_thumbnail_ready(obj):

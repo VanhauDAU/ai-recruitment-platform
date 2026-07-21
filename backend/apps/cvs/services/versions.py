@@ -1,7 +1,7 @@
 """Version and draft write workflows for the CV aggregate."""
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 
 from django.db import transaction
 from django.db.models import Max

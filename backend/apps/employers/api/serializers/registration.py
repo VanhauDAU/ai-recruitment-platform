@@ -7,7 +7,6 @@ from apps.locations.models import Location
 
 from ...models import RecruiterProfile
 
-
 phone_validator = RegexValidator(
     regex=r'^(0|\+84)\d{9,10}$',
     message='Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).',

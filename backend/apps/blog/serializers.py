@@ -1,8 +1,8 @@
 import re
 
-from rest_framework import serializers
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
+from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
 

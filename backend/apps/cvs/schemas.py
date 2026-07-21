@@ -5,14 +5,13 @@ used before saving mutable drafts and immutable versions, independently of any
 particular CV template or UI renderer.
 """
 
-from copy import deepcopy
 import json
 import re
+from copy import deepcopy
 
 from django.core.exceptions import ValidationError
 
 from apps.cv_templates.section_registry import get_section_contract
-
 
 CANONICAL_SCHEMA_VERSION = 1
 MAX_DOCUMENT_BYTES = 256 * 1024

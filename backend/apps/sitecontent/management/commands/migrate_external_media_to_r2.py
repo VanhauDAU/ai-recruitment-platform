@@ -26,7 +26,6 @@ from apps.jobs.models import JobCategory
 from apps.sitecontent.models import Banner, SiteSetting
 from common.r2_storage import public_media_storage
 
-
 PUBLIC_IMAGE_FIELDS = (
     (User, 'avatar_url'),
     (Company, 'logo_url'),
@@ -97,7 +96,7 @@ class Command(BaseCommand):
 
         apply = options['apply']
         limit = max(options['limit'], 0)
-        inspected = migrated = skipped = failed = 0
+        inspected = migrated = failed = 0
         for model, field in PUBLIC_IMAGE_FIELDS:
             queryset = model.objects.all().only('pk', field)
             if model is SiteSetting:
