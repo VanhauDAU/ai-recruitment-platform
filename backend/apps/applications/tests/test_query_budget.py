@@ -8,8 +8,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
-from apps.cv_templates.models import CvTemplate, CvTemplateVersion
-from apps.cvs.schemas import empty_layout, empty_style
+from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.services import create_v2_cv
 from apps.employers.models import Company
 from apps.jobs.models import Job
@@ -34,21 +33,7 @@ class CandidateApplicationListQueryBudgetTests(APITestCase):
             email='budget-employer@example.com', password='password', role='employer'
         )
         company = Company.objects.create(company_name='Budget Co', created_by=employer)
-        template = CvTemplate.objects.create(
-            name='Budget template',
-            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-        )
-        template_version = CvTemplateVersion.objects.create(
-            template=template,
-            version_number=1,
-            version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
-            renderer_version='1',
-            default_layout_json=empty_layout(),
-            default_style_json=empty_style(),
-        )
-        template.current_published_version = template_version
-        template.save(update_fields=['current_published_version'])
+        template, _version = make_published_template('Budget template')
         for index in range(3):
             job = Job.objects.create(
                 posted_by=employer,

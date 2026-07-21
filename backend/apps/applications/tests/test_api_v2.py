@@ -4,9 +4,8 @@ from django.urls import reverse
 from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
-from apps.cv_templates.models import CvTemplate, CvTemplateVersion
+from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.models import CvVersion
-from apps.cvs.schemas import empty_layout, empty_style
 from apps.cvs.services import (
     create_application_snapshot,
     create_v2_cv,
@@ -61,21 +60,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             description='Read immutable application snapshots.',
             status=Job.Status.ACTIVE,
         )
-        template = CvTemplate.objects.create(
-            name='Snapshot template',
-            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-        )
-        template_version = CvTemplateVersion.objects.create(
-            template=template,
-            version_number=1,
-            version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
-            renderer_version='1',
-            default_layout_json=empty_layout(),
-            default_style_json=empty_style(),
-        )
-        template.current_published_version = template_version
-        template.save(update_fields=['current_published_version'])
+        template, _template_version = make_published_template('Snapshot template')
         self.cv = create_v2_cv(actor=self.candidate, title='Application CV', template=template)
         self.snapshot = create_application_snapshot(self.cv, self.candidate)
         self.application = Application.objects.create(
@@ -199,21 +184,7 @@ class CandidateApplicationV2Tests(APITestCase):
         )
         JobLocation.objects.create(job=self.job, location=self.preferred_location)
         JobLocation.objects.create(job=self.job, location=self.second_preferred_location)
-        template = CvTemplate.objects.create(
-            name='Apply template',
-            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-        )
-        template_version = CvTemplateVersion.objects.create(
-            template=template,
-            version_number=1,
-            version_status=CvTemplateVersion.VersionStatus.PUBLISHED,
-            renderer_key='classic_single_column_v1',
-            renderer_version='1',
-            default_layout_json=empty_layout(),
-            default_style_json=empty_style(),
-        )
-        template.current_published_version = template_version
-        template.save(update_fields=['current_published_version'])
+        template, _template_version = make_published_template('Snapshot template')
         self.cv = create_v2_cv(actor=self.candidate, title='Selected CV', template=template)
         self.other_cv = create_v2_cv(
             actor=self.other_candidate, title='Other CV', template=template
