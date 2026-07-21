@@ -11,7 +11,7 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import User
 from apps.sitecontent.models import LinkGroup, LinkItem
 
-from .models import ConsultationLead, ServiceCategory, ServicePackage
+from ..models import ConsultationLead, ServiceCategory, ServicePackage
 
 LOCAL_CACHE = {
     'default': {

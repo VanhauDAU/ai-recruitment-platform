@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.db.models import Prefetch, ProtectedError
+from django.db.models import ProtectedError
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -7,15 +7,16 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
 
-from .models import ConsultationLead, ServiceCategory, ServicePackage
-from .serializers import (
+from ...models import ConsultationLead, ServiceCategory, ServicePackage
+from ...selectors import active_public_categories_queryset, admin_leads_queryset
+from ...signals import PUBLIC_PACKAGES_CACHE_KEY
+from ..serializers import (
     AdminConsultationLeadSerializer,
     AdminServiceCategorySerializer,
     AdminServicePackageSerializer,
     ConsultationLeadCreateSerializer,
     PublicServiceCategorySerializer,
 )
-from .signals import PUBLIC_PACKAGES_CACHE_KEY
 
 
 class PublicServicePackageListView(APIView):
@@ -29,15 +30,7 @@ class PublicServicePackageListView(APIView):
     def get(self, request):
         data = cache.get(PUBLIC_PACKAGES_CACHE_KEY)
         if data is None:
-            categories = ServiceCategory.objects.filter(is_active=True).prefetch_related(
-                Prefetch(
-                    'packages',
-                    queryset=ServicePackage.objects.filter(is_active=True).order_by(
-                        'order', 'slug'
-                    ),
-                    to_attr='active_packages',
-                )
-            )
+            categories = active_public_categories_queryset()
             data = PublicServiceCategorySerializer(categories, many=True).data
             cache.set(PUBLIC_PACKAGES_CACHE_KEY, data, 60 * 60)
         return Response(data)
@@ -96,10 +89,7 @@ class AdminConsultationLeadListView(generics.ListAPIView):
     permission_classes = [IsAdmin]
 
     def get_queryset(self):
-        qs = ConsultationLead.objects.all()
-        if lead_status := self.request.query_params.get('status'):
-            qs = qs.filter(status=lead_status)
-        return qs
+        return admin_leads_queryset(self.request.query_params.get('status'))
 
 
 class AdminConsultationLeadDetailView(generics.RetrieveUpdateAPIView):

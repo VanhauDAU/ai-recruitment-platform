@@ -2,16 +2,16 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from .cv_import import _provider_api_key, structure_cv_text
+from ..services.cv_import import _provider_api_key, structure_cv_text
 
 
 class CvImportStructuringTests(TestCase):
-    @patch('apps.ai_core.cv_import.config', return_value='provider-secret')
+    @patch('apps.ai_core.services.cv_import.config', return_value='provider-secret')
     def test_provider_secret_is_read_through_decouple(self, config):
         self.assertEqual(_provider_api_key('GEMINI_API_KEY'), 'provider-secret')
         config.assert_called_once_with('GEMINI_API_KEY', default='')
 
-    @patch('apps.ai_core.cv_import._call_provider')
+    @patch('apps.ai_core.services.cv_import._call_provider')
     def test_provider_schema_is_retried_once_then_mapped_to_canonical(self, provider):
         provider.side_effect = [
             {'personal_info': {}, 'experiences': 'invalid'},

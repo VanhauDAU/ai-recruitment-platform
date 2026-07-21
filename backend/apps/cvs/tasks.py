@@ -12,7 +12,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
-from apps.ai_core.cv_import import AiCvParseError, structure_cv_text
+from apps.ai_core.services import AiCvParseError, structure_cv_text
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 

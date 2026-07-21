@@ -4,8 +4,8 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 
-from .selectors import build_employer_dashboard
-from .serializers import EmployerDashboardSerializer
+from ...selectors import build_employer_dashboard
+from ..serializers import EmployerDashboardSerializer
 
 
 class EmployerDashboardView(APIView):

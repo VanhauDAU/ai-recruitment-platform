@@ -2,7 +2,7 @@ import re
 
 from rest_framework import serializers
 
-from .models import ConsultationLead, ServiceCategory, ServicePackage
+from ...models import ConsultationLead, ServiceCategory, ServicePackage
 
 _PHONE = re.compile(r'^[0-9+ .()-]{8,20}$')
 
