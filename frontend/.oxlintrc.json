@@ -1,14 +1,43 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "oxc", "import"],
+  "plugins": [
+    "react",
+    "oxc",
+    "import"
+  ],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
     "react/exhaustive-deps": "error",
     "no-unused-vars": "error",
     "import/first": "error",
     "import/no-duplicates": "error",
     "import/no-self-import": "error",
-    "import/no-cycle": "error"
-  }
+    "import/no-cycle": "error",
+    "max-lines": [
+      "warn",
+      {
+        "max": 300,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "tests/**"
+      ],
+      "rules": {
+        "max-lines": "off"
+      }
+    }
+  ]
 }

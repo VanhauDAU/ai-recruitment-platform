@@ -60,7 +60,7 @@ Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan
 | AR-P2 | 16/16 app layout ADR-0010 (hết views/serializers phẳng), import-linter 2 contract KEPT + layering gate DRF, pytest + coverage BE 85% (gate CI 84%), gỡ 3 vi phạm layer có sẵn | ✅ (tách test lớn + factory-boy dời sang đợt sau) |
 | AR-P3 | Xóa 9 endpoint v1 (cvs/cv-templates/applications), port 2 endpoint employer sang /api/v2/recruiter/, xóa api_deprecation + biến LEGACY_*, ma trận migration, e2e smoke 63/63 xanh | ✅ (52 lỗi schema spectacular + squash migrations dời sau) |
 | AR-P4 | Audit 3 luồng (doc + sequence diagram): idempotency/transaction/PDF-in-Celery đều đạt; khóa query budget bằng test (job list 5q, application list 5q); ghi nhận 2 nợ email đồng bộ | ✅ |
-| AR-P5 | Coverage thật FE, tách 5 file >400 dòng, e2e vào CI | ⬜ |
+| AR-P5 | Coverage FE đo toàn src/ (threshold ratchet 33/29/28/35 thay allowlist 11 file), oxlint max-lines 300 (warn, 10 file tồn), tách ApplyForJobModal 609→4 file <300; e2e smoke đã có sẵn trong CI | ✅ (còn 9 file >300 dòng — tách dần theo rule warn) |
 | AR-P6 | Cập nhật 10 nhóm tài liệu, báo cáo kết quả | ⬜ |
 
 ## Epic thiết kế trang chủ (2026-07-16, nhánh `feature/design-home`)

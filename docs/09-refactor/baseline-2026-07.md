@@ -61,3 +61,4 @@
 | 2026-07-21 (baseline) | 13/16 | 24 / 22 | — / 33.99% | chưa có tool | 46s / — | 2 (chờ xóa) |
 | 2026-07-21 (sau AR-P2) | 0/16 | 11 / 22 | 85% / 33.99% | 0 (2 contract KEPT) | 55s / — | 2 (chờ xóa) |
 | 2026-07-21 (sau AR-P3) | 0/16 | 9 / 22 | 84.5% / 33.99% | 0 | 51s / e2e 63 pass | 2 (chờ xóa) |
+| 2026-07-21 (sau AR-P5) | 0/16 | 9 / 10 (oxlint warn) | 84.5% / 33.95% (gate toàn src) | 0 | 51s / 77 file unit + e2e | 2 (chờ xóa) |
