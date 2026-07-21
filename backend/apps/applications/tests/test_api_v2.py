@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
@@ -327,3 +328,17 @@ class CandidateApplicationV2Tests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+
+class RecruiterApplicationRoutesV2Tests(TestCase):
+    """Route employer port từ v1 sang v2 (AR-P3) phải tồn tại và có guard."""
+
+    def test_recruiter_list_requires_authentication(self):
+        response = APIClient().get(reverse('recruiter-application-list-v2'))
+        self.assertEqual(response.status_code, 401)
+
+    def test_recruiter_status_update_requires_authentication(self):
+        response = APIClient().patch(
+            reverse('recruiter-application-status-v2', args=['app_x']), {'status': 'reviewing'}
+        )
+        self.assertEqual(response.status_code, 401)

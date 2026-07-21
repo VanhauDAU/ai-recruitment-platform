@@ -1,4 +1,3 @@
-from .legacy import UserCvContentView, UserCvDetailView, UserCvListCreateView, UserCvUploadView
 from .v2 import (
     CvV2ApplySampleView,
     CvV2AssetContentView,
@@ -55,8 +54,4 @@ __all__ = [
     'CvV2ThumbnailView',
     'CvV2VersionDetailView',
     'CvV2VersionListView',
-    'UserCvContentView',
-    'UserCvDetailView',
-    'UserCvListCreateView',
-    'UserCvUploadView',
 ]

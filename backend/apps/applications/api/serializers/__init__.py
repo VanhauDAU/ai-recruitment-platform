@@ -1,4 +1,4 @@
-from .legacy import ApplicationSerializer, ApplicationStatusUpdateSerializer
+from .employer import ApplicationSerializer, ApplicationStatusUpdateSerializer
 from .v2 import (
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,

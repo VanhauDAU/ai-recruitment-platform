@@ -8,7 +8,6 @@ from .admin import (
     AdminCvTemplateViewSet,
     AdminModelViewSet,
 )
-from .legacy import CvTemplateDetailView, CvTemplateListView
 from .v2 import (
     CvCategoryCatalogListView,
     CvPositionOptionListView,
@@ -36,7 +35,5 @@ __all__ = [
     'CvSampleContentCatalogListView',
     'CvTemplateCatalogDetailView',
     'CvTemplateCatalogListView',
-    'CvTemplateDetailView',
-    'CvTemplateListView',
     'CvTemplateRelatedListView',
 ]

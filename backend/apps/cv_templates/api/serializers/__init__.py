@@ -8,7 +8,6 @@ from .admin import (
     CvTemplateLocalizationAdminSerializer,
     CvTemplateVersionAdminSerializer,
 )
-from .legacy import CvTemplateSerializer
 from .v2 import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
@@ -32,6 +31,5 @@ __all__ = [
     'CvTemplateCardSerializer',
     'CvTemplateDetailSerializer',
     'CvTemplateLocalizationAdminSerializer',
-    'CvTemplateSerializer',
     'CvTemplateVersionAdminSerializer',
 ]

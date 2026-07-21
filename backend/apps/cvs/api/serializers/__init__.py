@@ -1,4 +1,3 @@
-from .legacy import CvSkillSerializer, UserCvSerializer
 from .v2 import (
     CvApplySampleSerializer,
     CvAssetSerializer,
@@ -30,7 +29,6 @@ __all__ = [
     'CvExportSerializer',
     'CvSharedLinkCreateSerializer',
     'CvSharedLinkSerializer',
-    'CvSkillSerializer',
     'CvTemplateSwitchSerializer',
     'CvV2CreateSerializer',
     'CvV2DuplicateSerializer',
@@ -40,5 +38,4 @@ __all__ = [
     'CvVersionSerializer',
     'CvVersionSummarySerializer',
     'SharedCvVersionSerializer',
-    'UserCvSerializer',
 ]

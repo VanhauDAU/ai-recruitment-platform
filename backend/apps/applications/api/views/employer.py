@@ -1,32 +1,17 @@
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.permissions import IsCandidate, IsEmployerWithMFA
+from apps.accounts.permissions import IsEmployerWithMFA
 
 from ...selectors import (
-    candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
 )
 from ...services import (
     InvalidApplicationStatusTransition,
-    create_application,
     update_application_status,
 )
-from ..serializers.legacy import ApplicationSerializer, ApplicationStatusUpdateSerializer
-
-
-class CandidateApplicationListCreateView(generics.ListCreateAPIView):
-    serializer_class = ApplicationSerializer
-    permission_classes = [IsCandidate]
-
-    def get_queryset(self):
-        return candidate_applications_queryset(self.request.user)
-
-    def perform_create(self, serializer):
-        if not self.request.user.email_verified:
-            raise ValidationError({'detail': 'Verify your email before applying for a job.'})
-        create_application(serializer, self.request.user)
+from ..serializers.employer import ApplicationSerializer, ApplicationStatusUpdateSerializer
 
 
 class EmployerApplicationListView(generics.ListAPIView):

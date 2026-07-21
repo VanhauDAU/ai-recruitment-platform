@@ -51,7 +51,8 @@
 
 - [ ] `manage.py test --parallel` lỗi `cannot pickle 'traceback'` (P2, khi
       chuyển pytest sẽ thay bằng `pytest-xdist`).
-- [ ] 252 lỗi schema spectacular — dọn ở P3 khi gộp v1→v2.
+- [ ] 248 lỗi schema spectacular (52 unique — toàn bộ là APIView thiếu serializer_class/@extend_schema; annotate dần).
+- [ ] Squash migrations các app >15 migration (chưa làm — chỉ khi chưa có prod).
 
 ## Theo dõi hàng tuần
 
@@ -59,3 +60,4 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | 2026-07-21 (baseline) | 13/16 | 24 / 22 | — / 33.99% | chưa có tool | 46s / — | 2 (chờ xóa) |
 | 2026-07-21 (sau AR-P2) | 0/16 | 11 / 22 | 85% / 33.99% | 0 (2 contract KEPT) | 55s / — | 2 (chờ xóa) |
+| 2026-07-21 (sau AR-P3) | 0/16 | 9 / 22 | 84.5% / 33.99% | 0 | 51s / e2e 63 pass | 2 (chờ xóa) |
