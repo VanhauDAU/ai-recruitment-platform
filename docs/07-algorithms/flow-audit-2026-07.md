@@ -57,11 +57,19 @@ sequenceDiagram
 
 ## Nợ còn lại (ghi nhận, chưa sửa)
 
-1. **Email đồng bộ trong request** ở các luồng phụ: 2FA gửi mã, password reset,
-   welcome, onboarding employer (`send_html_email` trực tiếp, `EMAIL_TIMEOUT=10`).
-   SMTP chậm sẽ giữ request tối đa 10s. Luồng verify email đã dùng
-   `AuthEmailJob` + Celery — nên mở rộng pattern đó cho 2FA/reset khi rảnh.
-   (Không sửa ngay: đổi sang async đòi UX chờ mã phức tạp hơn.)
+1. ~~Email đồng bộ trong request~~ — **ghi nhận sai ở bản audit đầu, đã kiểm lại
+   và sửa (AR-P8)**. Thực tế 2FA, password reset, welcome, verification đều đã
+   async qua outbox `AuthEmailJob` + Celery từ trước (21 call site dùng
+   `queue_auth_email`, 0 call site gọi thẳng `send_*`). Chỉ **email OTP số điện
+   thoại NTD** còn đồng bộ — đã chuyển sang Celery ở AR-P8.
+
+   Lưu ý thiết kế: OTP điện thoại **không** dùng được outbox như các email auth
+   khác. `AuthEmailJob` chỉ mang `purpose`, worker đọc lại mã từ cache Redis;
+   còn `PhoneOtp` cố ý chỉ lưu SHA-256 của mã (`_hash_otp`), không đảo ngược
+   được. Persist plaintext vào `AuthEmailJob.context` để worker đọc sẽ phá đúng
+   thiết kế hash-at-rest. Nên mã đi qua **tham số Celery** (Redis broker, tạm
+   thời) — cùng mức phơi nhiễm với mã 2FA vốn đã nằm trong cache Redis 3 phút.
+   Đánh đổi: broker mất message thì người dùng bấm "Gửi lại mã".
 2. `generate_template_color_snapshot` chưa có `autoretry_for` — lỗi transient
    của R2 phải chờ lần regenerate kế tiếp. Chấp nhận được vì là tác vụ cosmetic
    có fingerprint idempotent.

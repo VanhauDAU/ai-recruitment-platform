@@ -15,6 +15,7 @@ import {
   updateCvDraft,
   validateCvDocument,
 } from '@/entities/cv'
+import { useUnsavedChangesGuard } from './use-unsaved-changes-guard'
 
 const AUTOSAVE_DELAY = 700
 
@@ -167,45 +168,14 @@ export default function useCvDraftEditor(publicId) {
     return undefined
   }, [document, phase])
 
-  useEffect(() => {
-    const hasUnsavedChanges = () => {
-      const documentChanged = documentRef.current && signature(documentRef.current) !== lastSavedSignatureRef.current
-      return documentChanged || ['saving', 'failed', 'conflict'].includes(phaseRef.current)
-    }
-    const warnBeforeUnload = (event) => {
-      flushPendingEdits()
-      if (!hasUnsavedChanges()) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-    const flushInternalNavigation = (event) => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-      const link = event.target.closest?.('a[href]')
-      if (!link || link.target || link.download) return
-      const destination = new URL(link.href, window.location.href)
-      if (destination.origin !== window.location.origin || destination.href === window.location.href) return
-      flushPendingEdits()
-      if (!hasUnsavedChanges()) return
-      event.preventDefault()
-      runAutosave().then((saved) => {
-        if (saved) window.location.assign(destination.href)
-      })
-    }
-    const flushWhenHidden = () => {
-      if (globalThis.document.visibilityState === 'hidden') {
-        flushPendingEdits()
-        if (hasUnsavedChanges()) runAutosave()
-      }
-    }
-    window.addEventListener('beforeunload', warnBeforeUnload)
-    globalThis.document.addEventListener('click', flushInternalNavigation, true)
-    globalThis.document.addEventListener('visibilitychange', flushWhenHidden)
-    return () => {
-      window.removeEventListener('beforeunload', warnBeforeUnload)
-      globalThis.document.removeEventListener('click', flushInternalNavigation, true)
-      globalThis.document.removeEventListener('visibilitychange', flushWhenHidden)
-    }
-  }, [flushPendingEdits, runAutosave])
+  useUnsavedChangesGuard({
+    documentRef,
+    lastSavedSignatureRef,
+    phaseRef,
+    signature,
+    flushPendingEdits,
+    runAutosave,
+  })
 
   const updateDocument = useCallback((updater, commandLabel = 'Cập nhật CV', options = {}) => {
     if (phaseRef.current === 'conflict') return

@@ -408,9 +408,13 @@ class PhoneOtpTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
     def _send_otp(self, phone='0912345678', password='Password@123'):
-        return self.client.post(
-            reverse('employer-phone-send-otp'), {'phone': phone, 'password': password}
-        )
+        # Email OTP được enqueue trong transaction.on_commit; TestCase không bao
+        # giờ commit nên phải chạy callback thủ công (CELERY_TASK_ALWAYS_EAGER
+        # khiến task chạy ngay và email rơi vào mail.outbox).
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(
+                reverse('employer-phone-send-otp'), {'phone': phone, 'password': password}
+            )
 
     def test_send_and_verify_otp_marks_phone_verified(self):
         response = self._send_otp()
@@ -425,6 +429,18 @@ class PhoneOtpTests(APITestCase):
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.verified_phone, '0912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
+
+    def test_otp_email_is_deferred_until_commit(self):
+        """Mã chỉ được gửi sau khi hàng PhoneOtp thực sự commit, không sớm hơn."""
+        with self.captureOnCommitCallbacks(execute=False) as callbacks:
+            response = self.client.post(
+                reverse('employer-phone-send-otp'),
+                {'phone': '0912345678', 'password': 'Password@123'},
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Response đã trả về nhưng email chưa gửi -> SMTP không nằm trong request.
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(len(callbacks), 1)
 
     def test_wrong_otp_rejected_and_attempts_counted(self):
         self._send_otp()
