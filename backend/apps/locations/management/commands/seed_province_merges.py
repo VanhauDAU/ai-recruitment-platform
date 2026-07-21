@@ -39,7 +39,7 @@ _PREFIXES = ('Thành phố ', 'Tỉnh ')
 def short_name(name):
     for prefix in _PREFIXES:
         if name.startswith(prefix):
-            return name[len(prefix):]
+            return name[len(prefix) :]
     return name
 
 
@@ -61,5 +61,9 @@ class Command(BaseCommand):
 
         missing = set(PROVINCE_MERGES) - {short_name(p.name) for p in provinces}
         if missing:
-            self.stdout.write(self.style.WARNING(f'Không khớp được tỉnh mới trong DB: {sorted(missing)}'))
-        self.stdout.write(self.style.SUCCESS(f'Xong: {matched}/{len(PROVINCE_MERGES)} tỉnh sáp nhập đã gán.'))
+            self.stdout.write(
+                self.style.WARNING(f'Không khớp được tỉnh mới trong DB: {sorted(missing)}')
+            )
+        self.stdout.write(
+            self.style.SUCCESS(f'Xong: {matched}/{len(PROVINCE_MERGES)} tỉnh sáp nhập đã gán.')
+        )

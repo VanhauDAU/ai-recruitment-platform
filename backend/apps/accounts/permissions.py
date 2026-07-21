@@ -5,9 +5,7 @@ from .services.access import is_account_accessible
 
 def _accessible(request):
     return bool(
-        request.user
-        and request.user.is_authenticated
-        and is_account_accessible(request.user)
+        request.user and request.user.is_authenticated and is_account_accessible(request.user)
     )
 
 
@@ -30,11 +28,7 @@ class IsEmployerWithMFA(BasePermission):
     message = 'Bật MFA trước khi truy cập dữ liệu ứng viên hoặc thay đổi công ty.'
 
     def has_permission(self, request, view):
-        return (
-            _accessible(request)
-            and request.user.is_employer
-            and request.user.two_factor_enabled
-        )
+        return _accessible(request) and request.user.is_employer and request.user.two_factor_enabled
 
 
 class IsEmployerWithRecentReauthentication(IsEmployerWithMFA):

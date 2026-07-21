@@ -10,7 +10,6 @@ from datetime import timedelta
 from ipaddress import ip_address, ip_network
 
 from django.conf import settings
-from django.db import transaction
 from django.utils import timezone
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -38,7 +37,9 @@ def _is_trusted_proxy(remote):
         return False
     try:
         address = ip_address(remote)
-        return any(address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS)
+        return any(
+            address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS
+        )
     except ValueError:
         return False
 

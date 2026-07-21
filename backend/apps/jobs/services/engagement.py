@@ -12,7 +12,6 @@ from apps.privacy.constants import VIEWER_SIGNING_SALT
 
 from ..models import Job
 
-
 _DEDUPLICATE_VIEW_SCRIPT = """
 for _, key in ipairs(KEYS) do
   if redis.call('EXISTS', key) == 1 then return 0 end
@@ -52,12 +51,14 @@ def _claim_first_view(keys):
             return None
         redis_client = client.get_client(write=True)
         redis_keys = [cache.make_key(key) for key in keys]
-        return bool(redis_client.eval(
-            _DEDUPLICATE_VIEW_SCRIPT,
-            len(redis_keys),
-            *redis_keys,
-            settings.JOB_VIEW_DEDUP_TTL_SECONDS,
-        ))
+        return bool(
+            redis_client.eval(
+                _DEDUPLICATE_VIEW_SCRIPT,
+                len(redis_keys),
+                *redis_keys,
+                settings.JOB_VIEW_DEDUP_TTL_SECONDS,
+            )
+        )
     except Exception:
         return None
 

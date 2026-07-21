@@ -22,4 +22,6 @@ def cv_asset_storage(asset):
     """CV backgrounds are catalogue assets; candidate avatars remain private."""
     from apps.cvs.models import CvAsset
 
-    return public_media_storage() if asset.kind == CvAsset.Kind.BACKGROUND else private_media_storage()
+    return (
+        public_media_storage() if asset.kind == CvAsset.Kind.BACKGROUND else private_media_storage()
+    )

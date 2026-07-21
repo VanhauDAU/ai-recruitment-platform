@@ -58,3 +58,34 @@ npm run test:e2e:smoke
 Không bỏ qua lỗi kiến trúc bằng alias sâu, shim vô thời hạn hoặc whitelist mới
 nếu chưa có ADR và lý do cụ thể. Cập nhật `frontend/ARCHITECTURE.md` khi thêm
 quy tắc, portal hoặc mô hình ownership có tác động lâu dài.
+
+## Backend (ADR-0010)
+
+Mọi Django app trong `backend/apps/` theo đúng một layout:
+
+```text
+<app>/api/{views,serializers}/ · models/ · services/ · selectors/ · tasks/ · tests/ · urls.py
+```
+
+- Chiều phụ thuộc: `api → services/selectors → models`; `tasks → services`.
+  Enforce bằng `import-linter` (`backend/pyproject.toml`) — vi phạm fail CI.
+- `services/` (ghi) và `selectors/` (đọc) KHÔNG import máy móc HTTP của DRF
+  (serializers/views/generics/viewsets/response). Được phép:
+  `rest_framework.exceptions`, `rest_framework_simplejwt`.
+- Cross-app: chỉ import model của app khác hoặc hàm được re-export ở
+  `<app>/services/__init__.py`; không deep-import nội bộ.
+- Endpoint list phải giữ số query phẳng theo số bản ghi — xem
+  `tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
+- API: miền CV dùng tiền tố `/api/v2/`; app khác `/api/<app>/`. Không còn v1.
+
+### Kiểm tra trước khi bàn giao (backend)
+
+```bash
+cd backend
+ruff check . && ruff format --check .
+lint-imports
+python manage.py makemigrations --check --dry-run
+pytest --cov --cov-fail-under=84
+```
+
+Hoặc một lệnh cho toàn repo: `./scripts/check_all.sh`.

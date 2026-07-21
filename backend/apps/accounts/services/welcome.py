@@ -64,16 +64,16 @@ def _send_employer_welcome(user, context):
         f'Hỗ trợ: {support_text}\n\n'
         f'Đây là email tự động từ {site_name}, vui lòng không trả lời email này.'
     )
-    hotline_html = (
-        f'<li><strong>Hotline CSKH:</strong> {escape(hotline)}</li>' if hotline else ''
-    )
+    hotline_html = f'<li><strong>Hotline CSKH:</strong> {escape(hotline)}</li>' if hotline else ''
     email_html = (
         f'<li><strong>Email CSKH:</strong> <a href="mailto:{escape(support_email)}" style="color:#0875e1">{escape(support_email)}</a></li>'
-        if support_email else ''
+        if support_email
+        else ''
     )
     zalo_html = (
         f'<li><strong>Zalo CSKH:</strong> <a href="{escape(zalo_url)}" style="color:#0875e1">Mở Zalo</a></li>'
-        if zalo_url else ''
+        if zalo_url
+        else ''
     )
     html = f'''<div style="margin:0;background:#f2f3f5;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#3f3f46">
       <div style="max-width:640px;margin:0 auto">

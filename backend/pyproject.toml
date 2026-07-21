@@ -1,0 +1,68 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["*/migrations/*", "venv", "media"]
+
+[tool.ruff.lint]
+# Bắt đầu nới tay: lỗi thật (E,F), import (I), modern hóa (UP), bug tiềm ẩn (B),
+# rule riêng cho Django (DJ). Siết thêm sau khi kiến trúc ổn định (AR-P2+).
+select = ["E", "F", "I", "UP", "B", "DJ"]
+ignore = [
+  # Django settings dùng star import theo convention (base -> development/production/test)
+  "F403", "F405",
+  # Cho phép line dài trong comment/URL — format lo phần code
+  "E501",
+  # TODO(AR-P2): bật lại khi tách models/ package — các rule này đòi sửa model
+  # hàng loạt (thứ tự thân class, __str__, null trên CharField, fields="__all__").
+  "DJ001", "DJ007", "DJ008", "DJ012",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "common", "config"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+# ─── import-linter: đóng đinh quy tắc layer của ADR-0010 ───
+# DRF-trong-services được gác bằng scripts/check_backend_layering.sh (grep) vì
+# import-linter không forbid được subpackage của external package.
+[tool.importlinter]
+root_packages = ["apps", "common", "config"]
+
+[[tool.importlinter.contracts]]
+name = "common không import từ apps"
+type = "forbidden"
+source_modules = ["common"]
+forbidden_modules = ["apps"]
+ignore_imports = [
+    # Lazy import có chủ ý trong r2_storage (chú thích tại chỗ)
+    "common.r2_storage -> apps.cvs.models",
+]
+
+[[tool.importlinter.contracts]]
+name = "layer trong mỗi app: api -> services/selectors -> models"
+type = "layers"
+containers = [
+    "apps.accounts", "apps.applications", "apps.blog", "apps.candidates",
+    "apps.cv_templates", "apps.cvs", "apps.dashboard", "apps.employers",
+    "apps.jobs", "apps.locations", "apps.privacy", "apps.services",
+    "apps.sitecontent", "apps.skills",
+]
+layers = [
+    "(api)",
+    "(services) | (selectors)",
+    "(models)",
+]
+exhaustive = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "tests.py"]
+# --reuse-db bị cấm: TransactionTestCase truncate cả data seed từ migration,
+# lần chạy sau sẽ fail giả. Luôn tạo DB test mới.
+addopts = "--create-db"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["apps", "common"]
+omit = ["*/migrations/*", "*/tests/*", "*/management/*"]

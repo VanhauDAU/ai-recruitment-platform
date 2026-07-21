@@ -1,5 +1,6 @@
 """Write workflows for the CV domain."""
 
+from .assets import create_avatar_asset, create_background_asset
 from .cvs import (
     UnsupportedCvUpload,
     create_builder_cv,
@@ -19,6 +20,7 @@ from .exports import (
     request_cv_export,
     retry_cv_export,
 )
+from .imports import InvalidCvImport, queue_cv_import, retry_import
 from .lifecycle import (
     CvLifecyclePolicyError,
     apply_sample_to_draft,
@@ -26,8 +28,6 @@ from .lifecycle import (
     save_draft_as_version,
     switch_draft_template,
 )
-from .assets import create_avatar_asset, create_background_asset
-from .imports import InvalidCvImport, queue_cv_import, retry_import
 from .sharing import (
     CvSharePermissionError,
     CvShareUnavailableError,
@@ -37,7 +37,13 @@ from .sharing import (
     revoke_shared_link,
 )
 from .thumbnails import current_thumbnail_ready, request_current_cv_thumbnail, schedule_cv_thumbnail
-from .versions import StaleDraftError, create_application_snapshot, create_initial_document, create_version, update_draft
+from .versions import (
+    StaleDraftError,
+    create_application_snapshot,
+    create_initial_document,
+    create_version,
+    update_draft,
+)
 
 __all__ = [
     'StaleDraftError',

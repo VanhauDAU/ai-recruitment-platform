@@ -33,4 +33,3 @@ class JobBenefit(models.Model):
     class Meta:
         ordering = ['sort_order', 'id']
         constraints = [models.UniqueConstraint(fields=['job', 'benefit'], name='uq_job_benefit')]
-

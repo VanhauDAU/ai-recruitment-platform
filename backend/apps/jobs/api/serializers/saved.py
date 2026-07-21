@@ -5,7 +5,9 @@ from .jobs import PublicJobListSerializer
 
 
 class SavedJobSerializer(serializers.ModelSerializer):
-    job = serializers.SlugRelatedField(slug_field='public_id', queryset=Job.objects.all(), write_only=True)
+    job = serializers.SlugRelatedField(
+        slug_field='public_id', queryset=Job.objects.all(), write_only=True
+    )
     job_detail = PublicJobListSerializer(source='job', read_only=True)
 
     class Meta:

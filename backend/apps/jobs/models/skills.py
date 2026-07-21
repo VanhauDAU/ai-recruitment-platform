@@ -17,10 +17,14 @@ class JobSkill(models.Model):
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='job_skills')
     skill = models.ForeignKey('skills.Skill', on_delete=models.CASCADE, related_name='job_skills')
-    importance = models.CharField(max_length=50, choices=Importance.choices, default=Importance.REQUIRED)
+    importance = models.CharField(
+        max_length=50, choices=Importance.choices, default=Importance.REQUIRED
+    )
     weight = models.DecimalField(max_digits=4, decimal_places=2, default=1.0)
     min_level = models.CharField(max_length=50, choices=MinLevel.choices, blank=True)
-    min_years_experience = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    min_years_experience = models.DecimalField(
+        max_digits=4, decimal_places=1, null=True, blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

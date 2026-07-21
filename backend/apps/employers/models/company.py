@@ -68,7 +68,9 @@ class Company(models.Model):
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    business_type = models.CharField(max_length=20, choices=BusinessType.choices, default=BusinessType.ENTERPRISE)
+    business_type = models.CharField(
+        max_length=20, choices=BusinessType.choices, default=BusinessType.ENTERPRISE
+    )
     # Với hộ kinh doanh là MST người đại diện. Unique (nhiều NULL được phép)
     # là chốt chặn chống tạo trùng công ty; chuỗi rỗng chuẩn hoá về NULL ở save().
     tax_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
@@ -90,9 +92,14 @@ class Company(models.Model):
     # filter — nâng thành bảng riêng nếu về sau có nhu cầu truy vấn.
     markets = models.JSONField(default=list, blank=True)
     target_customers = models.JSONField(default=list, blank=True)
-    industries = models.ManyToManyField(Industry, through='CompanyIndustry', blank=True, related_name='companies')
+    industries = models.ManyToManyField(
+        Industry, through='CompanyIndustry', blank=True, related_name='companies'
+    )
     founded_year = models.IntegerField(null=True, blank=True)
-    has_brand_page = models.BooleanField(default=False, help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty')
+    has_brand_page = models.BooleanField(
+        default=False,
+        help_text='Bật trang thương hiệu — tin tuyển dụng hiển thị dưới URL /brand/... với header công ty',
+    )
     verification_status = models.CharField(
         max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.UNVERIFIED
     )
@@ -123,7 +130,9 @@ class CompanyIndustry(models.Model):
     """Lĩnh vực hoạt động của công ty; đúng 1 lĩnh vực chính (`is_primary`)
     và lĩnh vực chính hiển nhiên nằm trong các lĩnh vực đã chọn (cùng hàng)."""
 
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_industries')
+    company = models.ForeignKey(
+        Company, on_delete=models.CASCADE, related_name='company_industries'
+    )
     industry = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='+')
     is_primary = models.BooleanField(default=False)
 
@@ -132,7 +141,9 @@ class CompanyIndustry(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['company', 'industry'], name='uniq_company_industry'),
             models.UniqueConstraint(
-                fields=['company'], condition=models.Q(is_primary=True), name='uniq_company_primary_industry'
+                fields=['company'],
+                condition=models.Q(is_primary=True),
+                name='uniq_company_primary_industry',
             ),
         ]
 
@@ -155,5 +166,3 @@ class CompanyImage(models.Model):
 
     def __str__(self):
         return f'{self.company_id}:{self.image_url[:50]}'
-
-

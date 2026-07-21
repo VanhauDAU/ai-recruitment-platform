@@ -21,7 +21,11 @@ class JobCategoryListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = JobCategory.objects.filter(status=JobCategory.Status.ACTIVE).only(
-            'id', 'name', 'logo_url', 'parent_id', 'category_type',
+            'id',
+            'name',
+            'logo_url',
+            'parent_id',
+            'category_type',
         )
         if category_type := self.request.query_params.get('category_type'):
             queryset = queryset.filter(category_type=category_type)

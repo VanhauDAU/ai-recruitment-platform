@@ -27,22 +27,34 @@ def _slugs(value):
 def published_template_queryset(*, locale='vi-VN', category=None, tag=None):
     """Public catalogue, always tied to the current published version."""
     localizations = CvTemplateLocalization.objects.filter(locale=locale, is_active=True)
-    categories = CvTemplateCategoryLink.objects.select_related('category').filter(
-        category__is_active=True,
-    ).order_by('sort_order', 'category__sort_order', 'category__name')
-    colors = CvTemplateColorLink.objects.select_related('color').filter(
-        color__is_active=True,
-    ).order_by('sort_order', 'color__sort_order', 'color__name')
-    queryset = CvTemplate.objects.filter(
-        status=CvTemplate.Status.ACTIVE,
-        lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
-        current_published_version__version_status='published',
-        localizations__locale=locale,
-        localizations__is_active=True,
-    ).select_related('current_published_version').prefetch_related(
-        Prefetch('localizations', queryset=localizations, to_attr='catalog_localizations'),
-        Prefetch('category_links', queryset=categories, to_attr='catalog_category_links'),
-        Prefetch('color_links', queryset=colors, to_attr='catalog_color_links'),
+    categories = (
+        CvTemplateCategoryLink.objects.select_related('category')
+        .filter(
+            category__is_active=True,
+        )
+        .order_by('sort_order', 'category__sort_order', 'category__name')
+    )
+    colors = (
+        CvTemplateColorLink.objects.select_related('color')
+        .filter(
+            color__is_active=True,
+        )
+        .order_by('sort_order', 'color__sort_order', 'color__name')
+    )
+    queryset = (
+        CvTemplate.objects.filter(
+            status=CvTemplate.Status.ACTIVE,
+            lifecycle_status=CvTemplate.LifecycleStatus.PUBLISHED,
+            current_published_version__version_status='published',
+            localizations__locale=locale,
+            localizations__is_active=True,
+        )
+        .select_related('current_published_version')
+        .prefetch_related(
+            Prefetch('localizations', queryset=localizations, to_attr='catalog_localizations'),
+            Prefetch('category_links', queryset=categories, to_attr='catalog_category_links'),
+            Prefetch('color_links', queryset=colors, to_attr='catalog_color_links'),
+        )
     )
     category_slugs = _slugs(category)
     if category_slugs:
@@ -81,7 +93,9 @@ def active_cv_categories_queryset(category_type=None):
 
 
 def published_sample_contents_queryset(*, locale=None, experience_level=None):
-    queryset = CvSampleContent.objects.filter(status=CvSampleContent.Status.PUBLISHED).select_related('job_category')
+    queryset = CvSampleContent.objects.filter(
+        status=CvSampleContent.Status.PUBLISHED
+    ).select_related('job_category')
     if locale:
         queryset = queryset.filter(locale=locale)
     if experience_level:
@@ -109,7 +123,9 @@ def active_cv_position_options_queryset(
         localizations__locale=locale,
         localizations__is_active=True,
     ).prefetch_related(
-        Prefetch('localizations', queryset=selected_localizations, to_attr='cv_picker_localizations'),
+        Prefetch(
+            'localizations', queryset=selected_localizations, to_attr='cv_picker_localizations'
+        ),
         Prefetch('localizations', queryset=vi_localizations, to_attr='cv_picker_vi_localizations'),
     )
     has_blueprint = CvContentBlueprint.objects.filter(

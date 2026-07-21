@@ -5,7 +5,6 @@ from django.core import signing
 
 from ..constants import CONSENT_SIGNING_SALT
 
-
 OPTIONAL_CATEGORIES = ('preferences', 'analytics', 'marketing')
 
 

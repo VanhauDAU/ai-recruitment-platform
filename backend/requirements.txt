@@ -15,3 +15,7 @@ pypdfium2==4.30.0
 pypdf==5.7.0
 python-docx==1.2.0
 cryptography==45.0.6
+import-linter==2.13
+pytest==8.4.2
+pytest-django==4.11.1
+pytest-cov==7.0.0

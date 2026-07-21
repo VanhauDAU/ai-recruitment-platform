@@ -8,6 +8,8 @@ from .applications import (
 )
 
 __all__ = [
-    'InvalidApplicationStatusTransition', 'create_application',
-    'create_application_record', 'update_application_status',
+    'InvalidApplicationStatusTransition',
+    'create_application',
+    'create_application_record',
+    'update_application_status',
 ]

@@ -9,8 +9,8 @@ from .models import (
     CompanyIndustry,
     CompanyUpdateRequest,
     Industry,
-    RecruitmentNeed,
     RecruiterProfile,
+    RecruitmentNeed,
 )
 
 
@@ -33,7 +33,14 @@ class CompanyImageInline(admin.TabularInline):
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['company_name', 'tax_code', 'business_type', 'verification_status', 'has_brand_page', 'created_at']
+    list_display = [
+        'company_name',
+        'tax_code',
+        'business_type',
+        'verification_status',
+        'has_brand_page',
+        'created_at',
+    ]
     list_filter = ['verification_status', 'business_type', 'has_brand_page']
     list_editable = ['has_brand_page']
     search_fields = ['company_name', 'trade_name', 'tax_code', 'slug']
@@ -49,7 +56,9 @@ class CompanyAdmin(admin.ModelAdmin):
     @admin.action(description='Từ chối xác thực công ty đã chọn')
     def reject_verification(self, request, queryset):
         for company in queryset:
-            services.verify_company(company, request.user, approve=False, reason='Từ chối qua admin')
+            services.verify_company(
+                company, request.user, approve=False, reason='Từ chối qua admin'
+            )
 
 
 @admin.register(CompanyDocument)
@@ -88,25 +97,48 @@ class CompanyUpdateRequestAdmin(admin.ModelAdmin):
     @admin.action(description='Từ chối yêu cầu cập nhật đã chọn')
     def reject_requests(self, request, queryset):
         for update_request in queryset.filter(status=CompanyUpdateRequest.Status.PENDING):
-            services.apply_update_request(update_request, request.user, approve=False, note='Từ chối qua admin')
+            services.apply_update_request(
+                update_request, request.user, approve=False, note='Từ chối qua admin'
+            )
 
 
 @admin.register(RecruiterProfile)
 class RecruiterProfileAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'company', 'company_role', 'contact_phone',
-        'verified_phone', 'registration_completed_at', 'created_at',
+        'user',
+        'company',
+        'company_role',
+        'contact_phone',
+        'verified_phone',
+        'registration_completed_at',
+        'created_at',
     ]
     list_filter = ['company_role', 'gender', 'marketing_opt_in']
     search_fields = ['user__email', 'company__company_name', 'contact_phone', 'verified_phone']
     readonly_fields = [
-        'registration_completed_at', 'terms_accepted_at', 'terms_policy_version',
-        'marketing_decided_at', 'created_at', 'updated_at',
+        'registration_completed_at',
+        'terms_accepted_at',
+        'terms_policy_version',
+        'marketing_decided_at',
+        'created_at',
+        'updated_at',
     ]
+
 
 @admin.register(RecruitmentNeed)
 class RecruitmentNeedAdmin(admin.ModelAdmin):
-    list_display = ['recruiter', 'position_category', 'position_level', 'headcount', 'budget_source', 'completed_at']
+    list_display = [
+        'recruiter',
+        'position_category',
+        'position_level',
+        'headcount',
+        'budget_source',
+        'completed_at',
+    ]
     list_filter = ['position_level', 'budget_source', 'is_continuous']
-    search_fields = ['recruiter__user__email', 'recruiter__company__company_name', 'position_category__name']
+    search_fields = [
+        'recruiter__user__email',
+        'recruiter__company__company_name',
+        'position_category__name',
+    ]
     readonly_fields = ['public_id', 'completed_at', 'created_at', 'updated_at']

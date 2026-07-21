@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import logging
+from hashlib import sha256
 from time import monotonic
 
 from celery import shared_task
@@ -11,16 +11,16 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
+
+from apps.ai_core.services import AiCvParseError, structure_cv_text
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 
-from apps.ai_core.cv_import import AiCvParseError, structure_cv_text
-
-from .composition import compose_cv_document, overlay_actor_identity
 from .models import CvExport, CvImportJob, UserCv
-from .pdf_renderer import render_cv_version_pdf
-from .services.versions import create_version
+from .services.composition import compose_cv_document, overlay_actor_identity
+from .services.pdf_renderer import render_cv_version_pdf
 from .services.thumbnails import thumbnail_key_for
+from .services.versions import create_version
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,9 @@ def generate_cv_thumbnail(version_id: int) -> None:
     from .models import CvVersion
 
     started_at = monotonic()
-    version = CvVersion.objects.select_related('cv', 'template_version').filter(pk=version_id).first()
+    version = (
+        CvVersion.objects.select_related('cv', 'template_version').filter(pk=version_id).first()
+    )
     if version is None or version.cv_id is None or version.cv.latest_version_id != version.pk:
         return
     cv = version.cv
@@ -41,12 +43,16 @@ def generate_cv_thumbnail(version_id: int) -> None:
             saved_key = storage_key
         else:
             pdf_bytes = render_cv_version_pdf(version)
-            image_bytes = first_pdf_page_image(pdf_bytes, width=900, image_format='WEBP', quality=88)
+            image_bytes = first_pdf_page_image(
+                pdf_bytes, width=900, image_format='WEBP', quality=88
+            )
             saved_key = default_storage.save(storage_key, ContentFile(image_bytes))
     except Exception:  # noqa: BLE001 - never log CV content or renderer payload
         logger.warning('Private CV thumbnail generation failed for version %s.', version_id)
         record_metric('cv_snapshot_failure')
-        record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='failed')
+        record_metric(
+            'cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='failed'
+        )
         return
 
     with transaction.atomic():
@@ -59,7 +65,9 @@ def generate_cv_thumbnail(version_id: int) -> None:
         current.save(update_fields=['thumbnail_url', 'updated_at'])
         if old_key and old_key != saved_key:
             transaction.on_commit(lambda: default_storage.delete(old_key))
-    record_metric('cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed')
+    record_metric(
+        'cv_snapshot_duration_ms', round((monotonic() - started_at) * 1000, 2), status='completed'
+    )
 
 
 def _storage_key(export: CvExport) -> str:
@@ -109,10 +117,14 @@ def render_cv_export_job(export_id: int) -> None:
 
     now = timezone.now()
     with transaction.atomic():
-        completed = CvExport.objects.select_for_update().filter(
-            pk=export_id,
-            status=CvExport.Status.PROCESSING,
-        ).first()
+        completed = (
+            CvExport.objects.select_for_update()
+            .filter(
+                pk=export_id,
+                status=CvExport.Status.PROCESSING,
+            )
+            .first()
+        )
         if completed is None:
             # A manual repair/retry changed state while the worker rendered.
             # Retain no public reference to this unclaimed storage object.
@@ -126,10 +138,18 @@ def render_cv_export_job(export_id: int) -> None:
         completed.last_error = ''
         completed.completed_at = now
         completed.failed_at = None
-        completed.save(update_fields=[
-            'status', 'storage_key', 'file_size_bytes', 'checksum_sha256',
-            'last_error', 'completed_at', 'failed_at', 'updated_at',
-        ])
+        completed.save(
+            update_fields=[
+                'status',
+                'storage_key',
+                'file_size_bytes',
+                'checksum_sha256',
+                'last_error',
+                'completed_at',
+                'failed_at',
+                'updated_at',
+            ]
+        )
         UserCv.objects.filter(pk=completed.cv_id).update(last_exported_at=now, updated_at=now)
 
 
@@ -216,9 +236,15 @@ def _fail_import(job_id, code):
 @shared_task(soft_time_limit=50, time_limit=60)
 def process_cv_import_job(job_id):
     with transaction.atomic():
-        job = CvImportJob.objects.select_for_update(of=('self',)).select_related(
-            'cv__template__current_published_version', 'user',
-        ).filter(pk=job_id).first()
+        job = (
+            CvImportJob.objects.select_for_update(of=('self',))
+            .select_related(
+                'cv__template__current_published_version',
+                'user',
+            )
+            .filter(pk=job_id)
+            .first()
+        )
         if job is None or job.status != CvImportJob.Status.QUEUED:
             return
         job.status = CvImportJob.Status.PROCESSING
@@ -242,7 +268,9 @@ def process_cv_import_job(job_id):
             theme_color=theme_color,
         )
         with transaction.atomic():
-            current = CvImportJob.objects.select_for_update().select_related('cv', 'user').get(pk=job_id)
+            current = (
+                CvImportJob.objects.select_for_update().select_related('cv', 'user').get(pk=job_id)
+            )
             if current.status != CvImportJob.Status.PROCESSING:
                 return
             version = create_version(
@@ -272,10 +300,19 @@ def process_cv_import_job(job_id):
             current.failure_code = ''
             current.completed_at = now
             current.failed_at = None
-            current.save(update_fields=[
-                'status', 'result_version', 'failure_code', 'completed_at', 'failed_at', 'updated_at',
-            ])
-            duration_ms = (now - current.started_at).total_seconds() * 1000 if current.started_at else 0
+            current.save(
+                update_fields=[
+                    'status',
+                    'result_version',
+                    'failure_code',
+                    'completed_at',
+                    'failed_at',
+                    'updated_at',
+                ]
+            )
+            duration_ms = (
+                (now - current.started_at).total_seconds() * 1000 if current.started_at else 0
+            )
             record_metric('cv_import_duration_ms', round(duration_ms, 2), status='completed')
     except ImportProcessingError as error:
         _fail_import(job_id, error.code)
@@ -288,17 +325,26 @@ def process_cv_import_job(job_id):
 
 @shared_task
 def dispatch_pending_cv_import_jobs():
-    for job_id in CvImportJob.objects.filter(status=CvImportJob.Status.QUEUED).values_list('pk', flat=True)[:100]:
+    for job_id in CvImportJob.objects.filter(status=CvImportJob.Status.QUEUED).values_list(
+        'pk', flat=True
+    )[:100]:
         process_cv_import_job.delay(job_id)
 
 
 @shared_task
 def purge_expired_cv_import_sources():
-    for job in CvImportJob.objects.select_related('cv').filter(
-        source_expires_at__lte=timezone.now(),
-        status__in=[CvImportJob.Status.COMPLETED, CvImportJob.Status.FAILED],
-    ).exclude(cv__file_url='').iterator():
+    for job in (
+        CvImportJob.objects.select_related('cv')
+        .filter(
+            source_expires_at__lte=timezone.now(),
+            status__in=[CvImportJob.Status.COMPLETED, CvImportJob.Status.FAILED],
+        )
+        .exclude(cv__file_url='')
+        .iterator()
+    ):
         storage_key = job.cv.file_url
         if default_storage.exists(storage_key):
             default_storage.delete(storage_key)
-        UserCv.objects.filter(pk=job.cv_id, file_url=storage_key).update(file_url='', updated_at=timezone.now())
+        UserCv.objects.filter(pk=job.cv_id, file_url=storage_key).update(
+            file_url='', updated_at=timezone.now()
+        )

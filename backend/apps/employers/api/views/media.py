@@ -23,7 +23,9 @@ class CompanyImageUploadView(APIView):
         summary='Upload ảnh công ty vào storage nội bộ',
         request=inline_serializer(
             'CompanyImageUploadRequest',
-            fields={'file': serializers.FileField(help_text='Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB')},
+            fields={
+                'file': serializers.FileField(help_text='Ảnh JPG, PNG, GIF hoặc WebP, tối đa 5MB')
+            },
         ),
         responses={200: CompanySerializer},
         tags=['employer'],
@@ -35,11 +37,17 @@ class CompanyImageUploadView(APIView):
 
         extension, _ = validate_image_upload(upload)
         if extension == 'gif':
-            return Response({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         company = _require_owner(request.user).company
         if self.kind == 'gallery' and company.images.count() >= 10:
-            return Response({'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         saved = save_image_upload(
             upload,

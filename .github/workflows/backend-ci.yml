@@ -66,7 +66,24 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt ruff import-linter pytest pytest-django pytest-cov
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (ruff format)
+        run: ruff format --check .
+
+      - name: Kiến trúc layer (import-linter)
+        run: lint-imports
+
+      - name: Layering DRF (services/selectors sạch HTTP machinery)
+        working-directory: .
+        run: bash scripts/check_backend_layering.sh
+
+      - name: Env example đồng bộ với code
+        working-directory: .
+        run: bash scripts/check_env_sync.sh
 
       - name: Django system check
         run: python manage.py check
@@ -74,5 +91,5 @@ jobs:
       - name: Migration state (không được có migration treo)
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Test suite
-        run: python manage.py test --verbosity 2
+      - name: Test suite + coverage gate (ratchet — chỉ được tăng)
+        run: pytest --cov --cov-fail-under=84

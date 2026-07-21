@@ -1,6 +1,6 @@
+import json
 from hashlib import sha256
 from io import BytesIO
-import json
 
 from django.core import signing
 from django.core.files.base import ContentFile
@@ -11,7 +11,6 @@ from rest_framework.exceptions import ValidationError
 from common.r2_storage import private_media_storage, public_media_storage
 
 from ..models import CvAsset, CvVersion
-
 
 MAX_AVATAR_BYTES = 5 * 1024 * 1024
 ASSET_TOKEN_MAX_AGE = 300
@@ -138,23 +137,38 @@ def validate_document_assets(*, owner, content_json, style_json):
     avatar_id = content_json.get('personal_info', {}).get('avatar_asset_id')
     if avatar_id:
         avatar = assets[avatar_id]
-        if avatar.kind != CvAsset.Kind.AVATAR or avatar.owner_id != owner.pk or not avatar.is_active:
-            raise ValidationError({'content_json.personal_info.avatar_asset_id': 'Avatar is unavailable.'})
+        if (
+            avatar.kind != CvAsset.Kind.AVATAR
+            or avatar.owner_id != owner.pk
+            or not avatar.is_active
+        ):
+            raise ValidationError(
+                {'content_json.personal_info.avatar_asset_id': 'Avatar is unavailable.'}
+            )
     background_id = style_json.get('background_asset_id')
     if background_id:
         background = assets[background_id]
-        if background.kind != CvAsset.Kind.BACKGROUND or background.owner_id is not None or not background.is_active:
+        if (
+            background.kind != CvAsset.Kind.BACKGROUND
+            or background.owner_id is not None
+            or not background.is_active
+        ):
             raise ValidationError({'style_json.background_asset_id': 'Background is unavailable.'})
 
 
 def sign_asset(asset, version=None):
-    value = json.dumps({'asset': asset.public_id, 'version': version.public_id if version else None}, separators=(',', ':'))
+    value = json.dumps(
+        {'asset': asset.public_id, 'version': version.public_id if version else None},
+        separators=(',', ':'),
+    )
     return signing.TimestampSigner(salt=ASSET_TOKEN_SALT).sign(value)
 
 
 def resolve_asset_token(token):
     try:
-        value = signing.TimestampSigner(salt=ASSET_TOKEN_SALT).unsign(token, max_age=ASSET_TOKEN_MAX_AGE)
+        value = signing.TimestampSigner(salt=ASSET_TOKEN_SALT).unsign(
+            token, max_age=ASSET_TOKEN_MAX_AGE
+        )
         payload = json.loads(value)
         asset = CvAsset.objects.get(public_id=payload['asset'], is_active=True)
     except (signing.BadSignature, ValueError, KeyError, CvAsset.DoesNotExist) as error:

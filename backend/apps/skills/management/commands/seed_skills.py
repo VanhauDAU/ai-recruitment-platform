@@ -41,7 +41,9 @@ SEED_SKILLS = [
 
 
 class Command(BaseCommand):
-    help = 'Seed the skills table with the standard skill catalog (single source of truth for skills).'
+    help = (
+        'Seed the skills table with the standard skill catalog (single source of truth for skills).'
+    )
 
     def handle(self, *args, **options):
         created, updated = 0, 0
@@ -53,4 +55,6 @@ class Command(BaseCommand):
             )
             created += was_created
             updated += not was_created
-        self.stdout.write(self.style.SUCCESS(f'Skills seeded: {created} created, {updated} updated.'))
+        self.stdout.write(
+            self.style.SUCCESS(f'Skills seeded: {created} created, {updated} updated.')
+        )

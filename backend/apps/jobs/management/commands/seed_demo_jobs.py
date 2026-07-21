@@ -39,32 +39,50 @@ COMPANIES = [
 # top-level category name -> list of job titles
 JOBS_BY_CATEGORY = {
     'Công nghệ thông tin': [
-        'Lập trình viên Backend (Java/Python)', 'Lập trình viên Frontend ReactJS',
-        'Kỹ sư DevOps', 'Kỹ sư AI/Machine Learning', 'Nhân viên kiểm thử phần mềm (Tester)',
+        'Lập trình viên Backend (Java/Python)',
+        'Lập trình viên Frontend ReactJS',
+        'Kỹ sư DevOps',
+        'Kỹ sư AI/Machine Learning',
+        'Nhân viên kiểm thử phần mềm (Tester)',
         'Lập trình viên Mobile (Flutter)',
     ],
     'Kinh doanh/Bán hàng': [
-        'Nhân viên kinh doanh B2B', 'Trưởng phòng kinh doanh', 'Nhân viên telesales',
-        'Chuyên viên tư vấn bán hàng', 'Sales Executive',
+        'Nhân viên kinh doanh B2B',
+        'Trưởng phòng kinh doanh',
+        'Nhân viên telesales',
+        'Chuyên viên tư vấn bán hàng',
+        'Sales Executive',
     ],
     'Marketing/PR/Quảng cáo': [
-        'Chuyên viên Digital Marketing', 'Content Marketing', 'Nhân viên SEO',
+        'Chuyên viên Digital Marketing',
+        'Content Marketing',
+        'Nhân viên SEO',
         'Trưởng nhóm truyền thông',
     ],
     'Kế toán/Kiểm toán/Thuế': [
-        'Kế toán tổng hợp', 'Kế toán thuế', 'Chuyên viên kiểm toán nội bộ',
+        'Kế toán tổng hợp',
+        'Kế toán thuế',
+        'Chuyên viên kiểm toán nội bộ',
     ],
     'Nhân sự/Hành chính/Pháp chế': [
-        'Chuyên viên tuyển dụng', 'Nhân viên hành chính nhân sự', 'HR Business Partner',
+        'Chuyên viên tuyển dụng',
+        'Nhân viên hành chính nhân sự',
+        'HR Business Partner',
     ],
     'Chăm sóc khách hàng': [
-        'Nhân viên chăm sóc khách hàng', 'Tổng đài viên', 'Chuyên viên vận hành dịch vụ',
+        'Nhân viên chăm sóc khách hàng',
+        'Tổng đài viên',
+        'Chuyên viên vận hành dịch vụ',
     ],
     'Thiết kế/Sáng tạo': [
-        'Thiết kế đồ hoạ (Graphic Designer)', 'UI/UX Designer', 'Nhân viên dựng phim',
+        'Thiết kế đồ hoạ (Graphic Designer)',
+        'UI/UX Designer',
+        'Nhân viên dựng phim',
     ],
     'Lao động phổ thông': [
-        'Công nhân sản xuất', 'Nhân viên kho', 'Nhân viên giao hàng',
+        'Công nhân sản xuất',
+        'Nhân viên kho',
+        'Nhân viên giao hàng',
     ],
 }
 
@@ -83,7 +101,9 @@ class Command(BaseCommand):
     help = 'Seed demo companies + active jobs (spread over recent days) for the homepage dashboard/demo. Re-runnable.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--clear', action='store_true', help='Only remove demo data, do not reseed.')
+        parser.add_argument(
+            '--clear', action='store_true', help='Only remove demo data, do not reseed.'
+        )
 
     def handle(self, *args, **options):
         removed = User.objects.filter(email__endswith=DEMO_DOMAIN).delete()[0]
@@ -96,13 +116,24 @@ class Command(BaseCommand):
         languages = list(Language.objects.filter(is_active=True))
         skills = list(Skill.objects.all())
 
-        provinces = list(Location.objects.filter(level='province', name__in=[
-            'Thành phố Hà Nội', 'Thành phố Hồ Chí Minh', 'Thành phố Đà Nẵng',
-            'Thành phố Hải Phòng', 'Tỉnh Bắc Ninh', 'Tỉnh Hưng Yên',
-        ]))
+        provinces = list(
+            Location.objects.filter(
+                level='province',
+                name__in=[
+                    'Thành phố Hà Nội',
+                    'Thành phố Hồ Chí Minh',
+                    'Thành phố Đà Nẵng',
+                    'Thành phố Hải Phòng',
+                    'Tỉnh Bắc Ninh',
+                    'Tỉnh Hưng Yên',
+                ],
+            )
+        )
         if not provinces:
             provinces = list(Location.objects.filter(level='province')[:6])
-        wards = list(Location.objects.filter(level='ward', parent__in=provinces).select_related('parent'))
+        wards = list(
+            Location.objects.filter(level='ward', parent__in=provinces).select_related('parent')
+        )
 
         top_cats = {c.name: c for c in JobCategory.objects.filter(parent__isnull=True)}
         children_of = {}
@@ -116,21 +147,27 @@ class Command(BaseCommand):
         companies = []
         for i, (cname, size, industry) in enumerate(COMPANIES):
             user = User.objects.create_user(
-                email=f'company{i + 1}{DEMO_DOMAIN}', password='demo12345',
-                role=User.Role.EMPLOYER, full_name=cname, status=User.Status.ACTIVE,
+                email=f'company{i + 1}{DEMO_DOMAIN}',
+                password='demo12345',
+                role=User.Role.EMPLOYER,
+                full_name=cname,
+                status=User.Status.ACTIVE,
             )
             company = Company.objects.create(
-                company_name=cname, slug=f'{slugify(cname)}-demo-{i + 1}',
+                company_name=cname,
+                slug=f'{slugify(cname)}-demo-{i + 1}',
                 company_size=size,
                 # Vài công ty lớn bật trang thương hiệu để demo luồng URL /brand/...
                 has_brand_page=i in BRAND_COMPANY_INDEXES,
-                verification_status=Company.VerificationStatus.VERIFIED, verified_at=now,
+                verification_status=Company.VerificationStatus.VERIFIED,
+                verified_at=now,
                 created_by=user,
             )
             industry_obj, _ = Industry.objects.get_or_create(name=industry)
             company.company_industries.create(industry=industry_obj, is_primary=True)
             RecruiterProfile.objects.create(
-                user=user, company=company,
+                user=user,
+                company=company,
                 company_role=RecruiterProfile.CompanyRole.OWNER,
             )
             companies.append((user, company))
@@ -163,7 +200,8 @@ class Command(BaseCommand):
                     weights=[65, 25, 10],
                 )[0]
                 job = Job.objects.create(
-                    posted_by=user, company=company,
+                    posted_by=user,
+                    company=company,
                     title=title,
                     description=(
                         f'{company.company_name} đang tuyển {title}.\n\n'
@@ -177,15 +215,19 @@ class Command(BaseCommand):
                     experience_years=rnd.choice(EXP_YEARS),
                     education_level=rnd.choice(EDU_LEVELS),
                     gender_requirement=gender,
-                    age_min=age_min, age_max=age_max,
+                    age_min=age_min,
+                    age_max=age_max,
                     number_of_vacancies=rnd.choice([1, 2, 3, 5, 10]),
-                    salary_type=salary_type, salary_min=smin, salary_max=smax,
+                    salary_type=salary_type,
+                    salary_min=smin,
+                    salary_max=smax,
                     tier=tier,
                     is_hot=rnd.random() < 0.18,
                     is_urgent=rnd.random() < 0.18,
                     has_flash_badge=rnd.random() < 0.3,
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
-                    status=Job.Status.ACTIVE, published_at=published,
+                    status=Job.Status.ACTIVE,
+                    published_at=published,
                 )
                 if category:
                     JobCategoryAssignment.objects.create(
@@ -194,7 +236,10 @@ class Command(BaseCommand):
                         role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
                     )
                     # Chuyên môn thuộc một "kiến thức chuyên ngành" -> gắn thêm tag domain.
-                    if category.parent and category.parent.category_type == JobCategory.CategoryType.DOMAIN:
+                    if (
+                        category.parent
+                        and category.parent.category_type == JobCategory.CategoryType.DOMAIN
+                    ):
                         JobCategoryAssignment.objects.create(
                             job=job,
                             category=category.parent,
@@ -203,56 +248,95 @@ class Command(BaseCommand):
 
                 # Tin remote demo tối đa 1 văn phòng; tin thường 1-3 địa điểm.
                 max_locations = 1 if work_type == 'remote' else min(3, len(wards))
-                location_count = rnd.randint(0, max_locations) if work_type == 'remote' else rnd.randint(1, max_locations)
+                location_count = (
+                    rnd.randint(0, max_locations)
+                    if work_type == 'remote'
+                    else rnd.randint(1, max_locations)
+                )
                 selected_wards = rnd.sample(wards, location_count) if wards else []
-                JobLocation.objects.bulk_create([
-                    JobLocation(job=job, location=ward, address_detail=f'Tầng {rnd.randint(2, 15)}, tòa nhà số {rnd.randint(1, 200)} đường Trung Tâm')
-                    for ward in selected_wards
-                ])
+                JobLocation.objects.bulk_create(
+                    [
+                        JobLocation(
+                            job=job,
+                            location=ward,
+                            address_detail=f'Tầng {rnd.randint(2, 15)}, tòa nhà số {rnd.randint(1, 200)} đường Trung Tâm',
+                        )
+                        for ward in selected_wards
+                    ]
+                )
 
                 # 40% tin làm 2 ca để trang chi tiết render nhiều khung giờ.
                 if rnd.random() < 0.4:
                     JobWorkSchedule.objects.create(
-                        job=job, weekday_from=1, weekday_to=5,
-                        start_time='06:00', end_time='14:00', note='Ca sáng', sort_order=0,
+                        job=job,
+                        weekday_from=1,
+                        weekday_to=5,
+                        start_time='06:00',
+                        end_time='14:00',
+                        note='Ca sáng',
+                        sort_order=0,
                     )
                     JobWorkSchedule.objects.create(
-                        job=job, weekday_from=1, weekday_to=6,
-                        start_time='14:00', end_time='22:00', note='Ca chiều', sort_order=1,
+                        job=job,
+                        weekday_from=1,
+                        weekday_to=6,
+                        start_time='14:00',
+                        end_time='22:00',
+                        note='Ca chiều',
+                        sort_order=1,
                     )
                 else:
                     JobWorkSchedule.objects.create(
-                        job=job, weekday_from=1, weekday_to=5,
-                        start_time='08:00', end_time='17:30',
+                        job=job,
+                        weekday_from=1,
+                        weekday_to=5,
+                        start_time='08:00',
+                        end_time='17:30',
                     )
                 if rnd.random() < 0.3:
                     job.work_schedule_note = 'Nghỉ trưa 1 tiếng; có thể đăng ký OT theo dự án.'
                     job.save(update_fields=['work_schedule_note'])
 
-                JobBenefit.objects.bulk_create([
-                    JobBenefit(job=job, benefit=benefit, sort_order=index)
-                    for index, benefit in enumerate(rnd.sample(benefits, min(rnd.randint(3, 5), len(benefits))))
-                ])
+                JobBenefit.objects.bulk_create(
+                    [
+                        JobBenefit(job=job, benefit=benefit, sort_order=index)
+                        for index, benefit in enumerate(
+                            rnd.sample(benefits, min(rnd.randint(3, 5), len(benefits)))
+                        )
+                    ]
+                )
                 # ~35% tin yêu cầu 1-2 ngoại ngữ (có chứng chỉ + mức ưu tiên) để test render.
                 if languages and rnd.random() < 0.35:
-                    for index, language in enumerate(rnd.sample(languages, rnd.randint(1, min(2, len(languages))))):
+                    for index, language in enumerate(
+                        rnd.sample(languages, rnd.randint(1, min(2, len(languages))))
+                    ):
                         JobLanguageRequirement.objects.create(
-                            job=job, language=language,
-                            proficiency_level=rnd.choice(['basic', 'conversational', 'working', 'professional']),
+                            job=job,
+                            language=language,
+                            proficiency_level=rnd.choice(
+                                ['basic', 'conversational', 'working', 'professional']
+                            ),
                             certificate=LANGUAGE_CERTIFICATES.get(language.code, ''),
                             is_required=rnd.random() < 0.7,
                             sort_order=index,
                         )
                 if skills:
-                    JobSkill.objects.bulk_create([
-                        JobSkill(
-                            job=job, skill=skill,
-                            importance=JobSkill.Importance.REQUIRED if rnd.random() < 0.7 else JobSkill.Importance.PREFERRED,
-                        )
-                        for skill in rnd.sample(skills, min(rnd.randint(2, 4), len(skills)))
-                    ])
+                    JobSkill.objects.bulk_create(
+                        [
+                            JobSkill(
+                                job=job,
+                                skill=skill,
+                                importance=JobSkill.Importance.REQUIRED
+                                if rnd.random() < 0.7
+                                else JobSkill.Importance.PREFERRED,
+                            )
+                            for skill in rnd.sample(skills, min(rnd.randint(2, 4), len(skills)))
+                        ]
+                    )
                 job_count += 1
 
-        self.stdout.write(self.style.SUCCESS(
-            f'Seeded {len(companies)} demo companies and {job_count} active jobs.'
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Seeded {len(companies)} demo companies and {job_count} active jobs.'
+            )
+        )

@@ -1,0 +1,100 @@
+# Môi trường DEV: docker compose up
+# Backend đọc backend/.env; các biến hostname bị override trỏ vào service nội bộ.
+# Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# CELERY_BROKER_URL phải override TƯỜNG MINH: settings chỉ fallback về REDIS_URL
+# khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.
+x-service-hosts: &service-hosts
+  DB_HOST: db
+  REDIS_URL: redis://redis:6379/1
+  CELERY_BROKER_URL: redis://redis:6379/1
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_career_coach
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    env_file: ./backend/.env
+    environment:
+      <<: *service-hosts
+    volumes:
+      - ./backend:/app
+      - backend_media:/app/media
+    ports:
+      - '8000:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: ./backend
+    # -Q bắt buộc: settings route task sang auth-email/cv-export; worker không
+    # khai queue sẽ chỉ nghe 'default' -> email xác thực và export CV chết lặng.
+    command: celery -A config worker --loglevel=info -Q default,auth-email,cv-export
+    env_file: ./backend/.env
+    environment:
+      <<: *service-hosts
+    volumes:
+      - ./backend:/app
+      - backend_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  beat:
+    build: ./backend
+    command: celery -A config beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    env_file: ./backend/.env
+    environment:
+      <<: *service-hosts
+    volumes:
+      - ./backend:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api
+
+volumes:
+  pgdata:
+  backend_media:
+  frontend_node_modules:

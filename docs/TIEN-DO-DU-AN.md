@@ -49,6 +49,21 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P5 | TanStack Query: infra → pilot saved-jobs → jobs pages → thu gọn request-deduplication | ✅ |
 | FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
 
+## Epic Audit & Refactor toàn dự án (2026-07-21, nhánh `refactor/phase*`)
+
+Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan-2026-07.md) · Baseline: [baseline-2026-07.md](./09-refactor/baseline-2026-07.md)
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| AR-P0 | Triage nhánh (32→4), đo baseline (coverage FE thật 34%, 170 endpoint, BE 280 test/46s), snapshot OpenAPI, fix `manage.py test` dùng settings test | ✅ |
+| AR-P1 | Env fail-fast (client.js prod throw, production.py gom lỗi), check_env_sync + 7 biến bổ sung, ruff 206→0 vi phạm (2 bug F821 thật), Docker Compose dev+prod + nginx, pre-commit, CI thêm ruff/env-sync | ✅ (build image chờ verify khi mở Docker) |
+| AR-P2 | 16/16 app layout ADR-0010 (hết views/serializers phẳng), import-linter 2 contract KEPT + layering gate DRF, pytest + coverage BE 85% (gate CI 84%), gỡ 3 vi phạm layer có sẵn | ✅ (tách test lớn + factory-boy dời sang đợt sau) |
+| AR-P3 | Xóa 9 endpoint v1 (cvs/cv-templates/applications), port 2 endpoint employer sang /api/v2/recruiter/, xóa api_deprecation + biến LEGACY_*, ma trận migration, e2e smoke 63/63 xanh | ✅ (52 lỗi schema spectacular + squash migrations dời sau) |
+| AR-P4 | Audit 3 luồng (doc + sequence diagram): idempotency/transaction/PDF-in-Celery đều đạt; khóa query budget bằng test (job list 5q, application list 5q); ghi nhận 2 nợ email đồng bộ | ✅ |
+| AR-P5 | Coverage FE đo toàn src/ (threshold ratchet 33/29/28/35 thay allowlist 11 file), oxlint max-lines 300 (warn, 10 file tồn), tách ApplyForJobModal 609→4 file <300; e2e smoke đã có sẵn trong CI | ✅ (còn 9 file >300 dòng — tách dần theo rule warn) |
+| AR-P7 | Dọn nợ sau đại tu: Docker chạy thật (bắt 2 bug worker), schema OpenAPI 52 lỗi → 0, tách test accounts 1.611 dòng → 4 module, rút model hook khỏi CvSourcePanel (451→219) | ✅ |
+| AR-P6 | README (Docker quickstart + quality gate mới), AGENTS.md thêm phần backend ADR-0010, PR template gates mới, results-2026-07.md (bảng trước/sau + 4 bug + nợ ghi nhận), archive doc refactor cũ | ✅ |
+
 ## Epic thiết kế trang chủ (2026-07-16, nhánh `feature/design-home`)
 
 | Mục | Nội dung | Trạng thái |

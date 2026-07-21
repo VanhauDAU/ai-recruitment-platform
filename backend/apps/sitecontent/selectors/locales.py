@@ -1,6 +1,5 @@
 from ..models import Locale
 
-
 TECHNICAL_FALLBACK_LOCALE = 'vi-VN'
 
 
@@ -18,8 +17,12 @@ def is_active_locale(code):
 
 def default_locale_code():
     return (
-        Locale.objects.filter(is_default=True, is_active=True).values_list('code', flat=True).first()
-        or Locale.objects.filter(is_active=True).order_by('sort_order', 'label_vi', 'code')
-            .values_list('code', flat=True).first()
+        Locale.objects.filter(is_default=True, is_active=True)
+        .values_list('code', flat=True)
+        .first()
+        or Locale.objects.filter(is_active=True)
+        .order_by('sort_order', 'label_vi', 'code')
+        .values_list('code', flat=True)
+        .first()
         or TECHNICAL_FALLBACK_LOCALE
     )

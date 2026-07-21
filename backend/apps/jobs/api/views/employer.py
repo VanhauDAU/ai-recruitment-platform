@@ -16,13 +16,19 @@ class EmployerJobListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsEmployer]
 
     def get_serializer_class(self):
-        return EmployerJobWriteSerializer if self.request.method == 'POST' else EmployerJobListSerializer
+        return (
+            EmployerJobWriteSerializer
+            if self.request.method == 'POST'
+            else EmployerJobListSerializer
+        )
 
     def get_queryset(self):
         return employer_job_list_queryset(self.request.user)
 
     def create(self, request, *args, **kwargs):
-        serializer = EmployerJobWriteSerializer(data=request.data, context=self.get_serializer_context())
+        serializer = EmployerJobWriteSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
         job = create_pending_job(serializer, request.user)
         job = employer_job_detail_queryset(request.user).get(pk=job.pk)
@@ -35,7 +41,11 @@ class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'public_id'
 
     def get_serializer_class(self):
-        return EmployerJobWriteSerializer if self.request.method in {'PUT', 'PATCH'} else EmployerJobDetailSerializer
+        return (
+            EmployerJobWriteSerializer
+            if self.request.method in {'PUT', 'PATCH'}
+            else EmployerJobDetailSerializer
+        )
 
     def get_queryset(self):
         return employer_job_detail_queryset(self.request.user)

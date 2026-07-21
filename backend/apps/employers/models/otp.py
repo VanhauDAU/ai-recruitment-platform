@@ -6,7 +6,9 @@ class PhoneOtp(models.Model):
     """OTP xác thực số điện thoại. Hiện gửi qua email (chưa có SMS gateway),
     schema sẵn sàng cho SMS. Chỉ lưu hash, không lưu mã gốc."""
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='phone_otps')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='phone_otps'
+    )
     phone = models.CharField(max_length=20)
     code_hash = models.CharField(max_length=128)
     expires_at = models.DateTimeField()

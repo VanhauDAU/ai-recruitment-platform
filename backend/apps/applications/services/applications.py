@@ -7,7 +7,6 @@ from apps.cvs.services import create_application_snapshot
 
 from ..models import Application
 
-
 STATUS_TIMESTAMP_FIELD = {
     Application.Status.VIEWED: 'viewed_at',
     Application.Status.SHORTLISTED: 'shortlisted_at',
@@ -107,10 +106,15 @@ def update_application_status(serializer):
     current_status = serializer.instance.status
     next_status = serializer.validated_data.get('status', current_status)
 
-    if next_status != current_status and next_status not in ALLOWED_STATUS_TRANSITIONS[current_status]:
+    if (
+        next_status != current_status
+        and next_status not in ALLOWED_STATUS_TRANSITIONS[current_status]
+    ):
         raise InvalidApplicationStatusTransition(
             f'Cannot change application status from {current_status} to {next_status}.',
         )
 
-    timestamp_field = STATUS_TIMESTAMP_FIELD.get(next_status) if next_status != current_status else None
+    timestamp_field = (
+        STATUS_TIMESTAMP_FIELD.get(next_status) if next_status != current_status else None
+    )
     return serializer.save(**({timestamp_field: timezone.now()} if timestamp_field else {}))

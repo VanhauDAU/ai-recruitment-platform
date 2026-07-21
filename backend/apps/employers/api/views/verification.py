@@ -1,10 +1,9 @@
-from django.db.models import Case, IntegerField, Q, Value, When
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import FileResponse, Http404
-from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import generics, parsers, status
-from rest_framework import serializers
+from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
+from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
@@ -66,18 +65,23 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         # company. API phải trả bản mới trước để consumer không vô tình mở tệp
         # công ty cũ khi cả hai cùng tồn tại.
         return employer_documents_queryset(self.request.user).order_by(
-            'dpa_owner_priority', '-created_at', '-id',
+            'dpa_owner_priority',
+            '-created_at',
+            '-id',
         )
 
     @extend_schema(
         summary='Tải giấy tờ công ty hoặc hồ sơ chứng minh cho yêu cầu cập nhật',
-        request=inline_serializer('CompanyDocumentUploadRequest', fields={
-            'doc_type': serializers.ChoiceField(choices=CompanyDocument.DocType.choices),
-            'file': serializers.FileField(required=False),
-            'source_type': serializers.ChoiceField(choices=['file', 'website'], required=False),
-            'website_url': serializers.URLField(required=False),
-            'update_request': serializers.CharField(required=False),
-        }),
+        request=inline_serializer(
+            'CompanyDocumentUploadRequest',
+            fields={
+                'doc_type': serializers.ChoiceField(choices=CompanyDocument.DocType.choices),
+                'file': serializers.FileField(required=False),
+                'source_type': serializers.ChoiceField(choices=['file', 'website'], required=False),
+                'website_url': serializers.URLField(required=False),
+                'update_request': serializers.CharField(required=False),
+            },
+        ),
         responses={201: CompanyDocumentSerializer},
         tags=['employer'],
     )
@@ -90,7 +94,9 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         if source_type not in {'file', 'website'}:
             raise ValidationError({'source_type': 'Nguồn chứng minh không hợp lệ.'})
         if source_type == 'website' and doc_type != CompanyDocument.DocType.TRADE_NAME_PROOF:
-            raise ValidationError({'source_type': 'Chỉ chứng minh tên thương mại được dùng Website.'})
+            raise ValidationError(
+                {'source_type': 'Chỉ chứng minh tên thương mại được dùng Website.'}
+            )
         if source_type == 'file' and not upload:
             raise ValidationError({'file': 'Vui lòng chọn tệp chứng minh.'})
         if source_type == 'website' and upload:
@@ -106,13 +112,17 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 status=CompanyUpdateRequest.Status.PENDING,
             ).first()
             if update_request is None:
-                raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
+                raise ValidationError(
+                    {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
+                )
         if source_type == 'website':
             website_url = (request.data.get('website_url') or '').strip()
             try:
                 URLValidator(schemes=['http', 'https'])(website_url)
             except DjangoValidationError as error:
-                raise ValidationError({'website_url': 'Nhập URL Website hợp lệ (http hoặc https).'}) from error
+                raise ValidationError(
+                    {'website_url': 'Nhập URL Website hợp lệ (http hoặc https).'}
+                ) from error
             document = CompanyDocument.objects.create(
                 company=_require_company(request.user).company,
                 uploaded_by=request.user,
@@ -135,6 +145,11 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    summary='Tải nội dung giấy tờ pháp lý đã nộp',
+    responses={(200, 'application/octet-stream'): OpenApiTypes.BINARY},
+    tags=['employer-verification'],
+)
 class CompanyDocumentContentView(generics.GenericAPIView):
     """Authorized private-file download for the employer's own documents."""
 
