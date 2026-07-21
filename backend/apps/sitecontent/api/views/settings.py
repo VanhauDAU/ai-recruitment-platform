@@ -3,6 +3,7 @@ import re
 
 from django.core.cache import cache
 from django.db import transaction
+from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
@@ -32,6 +33,11 @@ from ..serializers import (
 _HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')
 
 
+@extend_schema(
+    summary='Site settings công khai (đã resolve giá trị hiển thị)',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['site'],
+)
 class SiteSettingListView(APIView):
     """Trả về cấu hình công khai dạng {key: value} để frontend dùng trực tiếp.
 
@@ -105,6 +111,12 @@ def _validate_value(setting, value):
     return value, None
 
 
+@extend_schema_view(
+    get=extend_schema(summary='Admin: đọc toàn bộ site settings'),
+    patch=extend_schema(summary='Admin: cập nhật site settings'),
+    put=extend_schema(summary='Admin: cập nhật site settings'),
+)
+@extend_schema(request=OpenApiTypes.OBJECT, responses={200: OpenApiTypes.OBJECT}, tags=['site-admin'])
 class AdminSiteSettingView(APIView):
     """GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt value."""
 
@@ -231,6 +243,12 @@ UPLOAD_MAX_DIMENSIONS = {
 }
 
 
+@extend_schema(
+    summary='Admin: tải ảnh cho một site setting',
+    request=OpenApiTypes.OBJECT,
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['site-admin'],
+)
 class AdminSettingUploadView(APIView):
     """Endpoint cũ: upload riêng từng ảnh.
 

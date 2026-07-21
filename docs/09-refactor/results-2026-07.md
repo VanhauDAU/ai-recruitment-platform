@@ -19,6 +19,9 @@ Baseline chi tiết: [baseline-2026-07.md](./baseline-2026-07.md)
 | Env quản trị | 97 biến, 7 biến code đọc mà không khai | fail-fast + `check_env_sync.sh` trong CI |
 | Nhánh local | 32 (main tụt 107 commit) | 4 |
 | Test backend | 280 (4 fail trên máy dev do rò `.env`) | 278 pass + 2 query-budget + isolation fix |
+| Lỗi schema OpenAPI | 52 (endpoint không có schema trong Swagger) | **0** |
+| Operation thiếu response schema | 76/233 | **16/233** — toàn bộ là DELETE 204 (đúng thiết kế) |
+| Operation thiếu requestBody | 36 | **14** |
 
 ## Bug thật phát hiện & sửa trong quá trình dọn
 
@@ -35,7 +38,6 @@ Baseline chi tiết: [baseline-2026-07.md](./baseline-2026-07.md)
 
 - 9 file frontend > 300 dòng (oxlint `max-lines` warn — nâng error khi tách hết).
 - `accounts/tests/test_all.py` 1.611 dòng — tách theo tầng + factory-boy.
-- 52 lỗi schema spectacular (APIView thiếu `serializer_class`/`@extend_schema`).
 - Squash migrations (chỉ làm khi chắc chắn chưa có production DB).
 - Email đồng bộ trong request ở 2FA/reset/welcome (xem
   `docs/07-algorithms/flow-audit-2026-07.md`).

@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from django.db.models import ProtectedError
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -19,6 +20,11 @@ from ..serializers import (
 )
 
 
+@extend_schema(
+    summary='Báo giá công khai: nhóm dịch vụ kèm gói (cache 1h)',
+    responses={200: PublicServiceCategorySerializer(many=True)},
+    tags=['services'],
+)
 class PublicServicePackageListView(APIView):
     """Báo giá công khai: nhóm dịch vụ active kèm các gói active, đã sắp thứ tự.
 

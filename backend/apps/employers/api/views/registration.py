@@ -27,6 +27,7 @@ class EmployerRegisterView(APIView):
     @extend_schema(
         summary='Đăng ký tài khoản và hồ sơ người liên hệ nhà tuyển dụng',
         request=EmployerRegisterSerializer,
+        responses={201: SessionUserSerializer},
         tags=['employer-auth'],
     )
     def post(self, request):

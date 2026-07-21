@@ -159,6 +159,21 @@ class TwoFactorSetupConfirmView(APIView):
         return Response(_session_response(user, request, **extra))
 
 
+@extend_schema(
+    summary='Gửi mã để tắt xác minh hai bước qua email',
+    request=None,
+    responses={
+        200: inline_serializer(
+            'TwoFactorCodeSent',
+            {
+                'detail': serializers.CharField(),
+                'email': serializers.CharField(),
+                'expires_in': serializers.IntegerField(),
+            },
+        )
+    },
+    tags=['auth-2fa'],
+)
 class TwoFactorDisableSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -186,6 +201,12 @@ class TwoFactorDisableSendView(APIView):
         return Response(_code_response(user, two_factor.PURPOSE_DISABLE))
 
 
+@extend_schema(
+    summary='Xác nhận mã để tắt xác minh hai bước',
+    request=TwoFactorCodeSerializer,
+    responses={200: SessionUserSerializer},
+    tags=['auth-2fa'],
+)
 class TwoFactorDisableConfirmView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -225,6 +246,22 @@ class TwoFactorDisableConfirmView(APIView):
         return Response(_session_response(user, request))
 
 
+@extend_schema(
+    summary='Trạng thái các phương thức MFA của nhà tuyển dụng',
+    responses={
+        200: inline_serializer(
+            'EmployerTwoFactorMethods',
+            {
+                'email': serializers.BooleanField(),
+                'totp': serializers.BooleanField(),
+                'backup': serializers.BooleanField(),
+                'two_factor_enabled': serializers.BooleanField(),
+                'backup_codes_remaining': serializers.IntegerField(),
+            },
+        )
+    },
+    tags=['auth-2fa'],
+)
 class EmployerTwoFactorMethodsView(APIView):
     """Status không chứa secret/hash và chỉ dùng cho workspace employer."""
 
@@ -246,6 +283,21 @@ class EmployerTwoFactorMethodsView(APIView):
         )
 
 
+@extend_schema(
+    summary='Khởi tạo TOTP: trả secret và otpauth URL để quét QR',
+    request=None,
+    responses={
+        200: inline_serializer(
+            'EmployerTotpSetup',
+            {
+                'manual_key': serializers.CharField(),
+                'otpauth_url': serializers.CharField(),
+                'expires_in': serializers.IntegerField(),
+            },
+        )
+    },
+    tags=['auth-2fa'],
+)
 class EmployerTotpSetupView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -269,6 +321,12 @@ class EmployerTotpSetupView(APIView):
         )
 
 
+@extend_schema(
+    summary='Xác nhận mã TOTP để bật ứng dụng xác thực',
+    request=TwoFactorCodeSerializer,
+    responses={200: SessionUserSerializer},
+    tags=['auth-2fa'],
+)
 class EmployerTotpConfirmView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -297,6 +355,12 @@ class EmployerTotpConfirmView(APIView):
         return Response(_session_response(request.user, request))
 
 
+@extend_schema(
+    summary='Tắt TOTP sau khi xác minh step-up',
+    request=TwoFactorLoginCodeSerializer,
+    responses={200: SessionUserSerializer},
+    tags=['auth-2fa'],
+)
 class EmployerTotpDisableView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -332,6 +396,21 @@ class EmployerTotpDisableView(APIView):
         return Response(_session_response(request.user, request))
 
 
+@extend_schema(
+    summary='Gửi mã step-up để tắt một phương thức MFA',
+    request=EmployerTwoFactorMethodSerializer,
+    responses={
+        200: inline_serializer(
+            'TwoFactorCodeSent',
+            {
+                'detail': serializers.CharField(),
+                'email': serializers.CharField(),
+                'expires_in': serializers.IntegerField(),
+            },
+        )
+    },
+    tags=['auth-2fa'],
+)
 class EmployerTwoFactorMethodDisableSendView(APIView):
     """Gửi email step-up để tắt một phương thức MFA của employer."""
 
@@ -368,6 +447,12 @@ class EmployerTwoFactorMethodDisableSendView(APIView):
         return Response(_code_response(request.user, two_factor.PURPOSE_DISABLE))
 
 
+@extend_schema(
+    summary='Tắt một phương thức MFA cụ thể',
+    request=EmployerTwoFactorMethodDisableSerializer,
+    responses={200: SessionUserSerializer},
+    tags=['auth-2fa'],
+)
 class EmployerTwoFactorMethodDisableView(APIView):
     """Tắt email, TOTP hoặc recovery codes sau step-up bằng phương thức đang bật."""
 
@@ -422,6 +507,12 @@ class EmployerTwoFactorMethodDisableView(APIView):
         return Response(_session_response(request.user, request))
 
 
+@extend_schema(
+    summary='Sinh bộ mã dự phòng mới (chỉ hiển thị một lần)',
+    request=TwoFactorLoginCodeSerializer,
+    responses={200: SessionUserSerializer},
+    tags=['auth-2fa'],
+)
 class EmployerBackupCodesGenerateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -465,6 +556,21 @@ class EmployerBackupCodesGenerateView(APIView):
         return Response(_session_response(request.user, request, backup_codes=backup_codes))
 
 
+@extend_schema(
+    summary='Gửi mã xác minh để sinh mã dự phòng',
+    request=None,
+    responses={
+        200: inline_serializer(
+            'TwoFactorCodeSent',
+            {
+                'detail': serializers.CharField(),
+                'email': serializers.CharField(),
+                'expires_in': serializers.IntegerField(),
+            },
+        )
+    },
+    tags=['auth-2fa'],
+)
 class EmployerBackupCodesSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]

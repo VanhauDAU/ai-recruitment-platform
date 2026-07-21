@@ -8,6 +8,7 @@ from time import monotonic
 from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -79,6 +80,11 @@ class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
         return response
 
 
+@extend_schema(
+    summary='Chi tiết một mẫu CV trong catalogue công khai',
+    responses={200: CvTemplateDetailSerializer},
+    tags=['cv-templates'],
+)
 class CvTemplateCatalogDetailView(PublicCatalogCacheMixin, APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -93,6 +99,11 @@ class CvTemplateCatalogDetailView(PublicCatalogCacheMixin, APIView):
         return self.cached_response(CvTemplateDetailSerializer(template).data)
 
 
+@extend_schema(
+    summary='Các mẫu CV liên quan',
+    responses={200: CvTemplateCardSerializer(many=True)},
+    tags=['cv-templates'],
+)
 class CvTemplateRelatedListView(CvTemplateCatalogDetailView):
     def get(self, request, slug):
         locale = requested_locale(request)
@@ -161,6 +172,18 @@ class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
 
 
+@extend_schema(
+    summary='Xem trước nội dung mẫu theo vị trí công việc',
+    parameters=[
+        OpenApiParameter('position_public_id', str),
+        OpenApiParameter('experience_level', str),
+        OpenApiParameter('source', str, description='sample | blueprint'),
+        OpenApiParameter('template_public_id', str),
+        OpenApiParameter('theme_color', str),
+    ],
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['cv-templates'],
+)
 class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
     permission_classes = [permissions.AllowAny]
 

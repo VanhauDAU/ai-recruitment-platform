@@ -72,6 +72,25 @@ class RegisterEmailAvailabilityView(APIView):
         return Response({'available': not exists})
 
 
+@extend_schema(
+    summary='Đăng nhập theo cổng (ứng viên / NTD / admin)',
+    request=LoginCredentialsSerializer,
+    responses={
+        200: inline_serializer(
+            'LoginResult',
+            fields={
+                'user': SessionUserSerializer(required=False),
+                'access': serializers.CharField(required=False),
+                'two_factor_required': serializers.BooleanField(required=False),
+                'challenge_token': serializers.CharField(required=False),
+                'methods': serializers.DictField(required=False),
+                'detail': serializers.CharField(required=False),
+                'code': serializers.CharField(required=False),
+            },
+        )
+    },
+    tags=['auth'],
+)
 class LoginView(APIView):
     serializer_class = LoginCredentialsSerializer
     permission_classes = [permissions.AllowAny]

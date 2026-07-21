@@ -277,14 +277,14 @@ test('candidate smoke: job application submits the selected immutable CV version
   const locationSelect = applicationDialog.getByRole('combobox', { name: 'Địa điểm làm việc mong muốn' })
   const locationDropdown = page.locator('.ant-select-dropdown:visible')
   const selectPreferredLocation = async (locationName) => {
-    // Multiple Select may remain open after a selection depending on the input
-    // modality. Open it only when necessary, then assert the selected tag.
-    if (!await locationDropdown.isVisible()) {
-      await locationSelect.click()
-      await expect(locationDropdown).toBeVisible()
-    }
+    await locationSelect.click()
+    await expect(locationDropdown).toBeVisible()
     await locationDropdown.locator('.ant-select-item-option-content', { hasText: locationName }).click()
     await expect(applicationDialog.locator('.ant-select-selection-item-content', { hasText: locationName })).toBeVisible()
+    // A multiple Select can keep its menu open after choosing an option. Dismiss
+    // it explicitly so the next selection is independent of that UI detail.
+    await page.keyboard.press('Escape')
+    await expect(locationDropdown).toHaveCount(0)
   }
   await expect(locationSelect).toBeVisible()
   await selectPreferredLocation('Bình Dương')

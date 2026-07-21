@@ -2,6 +2,7 @@
 
 from django.db import IntegrityError
 from django.http import Http404
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -63,6 +64,11 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
         )
 
 
+@extend_schema(
+    summary='NTD xem snapshot CV bất biến của một đơn ứng tuyển',
+    responses={200: RecruiterApplicationSnapshotSerializer},
+    tags=['applications-v2'],
+)
 class RecruiterApplicationSnapshotView(APIView):
     permission_classes = [IsEmployerWithMFA]
 

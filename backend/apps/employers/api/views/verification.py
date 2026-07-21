@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import FileResponse, Http404
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -145,6 +145,11 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    summary='Tải nội dung giấy tờ pháp lý đã nộp',
+    responses={(200, 'application/octet-stream'): OpenApiTypes.BINARY},
+    tags=['employer-verification'],
+)
 class CompanyDocumentContentView(generics.GenericAPIView):
     """Authorized private-file download for the employer's own documents."""
 

@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -158,6 +158,11 @@ class JobSuggestView(APIView):
         )
 
 
+@extend_schema(
+    summary='Gợi ý việc làm theo một CV của ứng viên',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['jobs'],
+)
 class CvJobRecommendationView(APIView):
     """Candidate-only, explainable job ranking from one owner-scoped saved CV."""
 
@@ -190,6 +195,12 @@ class JobDetailView(generics.RetrieveAPIView):
     queryset = active_job_detail_queryset()
 
 
+@extend_schema(
+    summary='Ghi nhận một lượt xem tin (có dedupe theo cookie)',
+    request=None,
+    responses={201: OpenApiTypes.OBJECT, 200: OpenApiTypes.OBJECT},
+    tags=['jobs'],
+)
 class JobViewCreateView(APIView):
     """Explicit, consent-aware engagement endpoint. GET detail remains read-only."""
 
@@ -250,6 +261,11 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
         serializer.save(candidate=self.request.user)
 
 
+@extend_schema(
+    summary='Bỏ lưu tin tuyển dụng',
+    responses={204: None},
+    tags=['jobs'],
+)
 class SavedJobDestroyView(generics.DestroyAPIView):
     """DELETE /jobs/saved/<job_public_id>/ — bỏ lưu tin."""
 

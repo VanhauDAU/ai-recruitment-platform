@@ -1,3 +1,4 @@
+from drf_spectacular.utils import OpenApiTypes, extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
@@ -44,6 +45,11 @@ class PostDetailView(generics.RetrieveAPIView):
         return record_post_view(super().get_object())
 
 
+@extend_schema(
+    summary='Dữ liệu trang chủ blog (nổi bật + theo chuyên mục)',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['blog'],
+)
 class BlogHomeView(APIView):
     """Dữ liệu trang /blog kiểu magazine: 4 bài nổi bật + section theo danh mục."""
 
@@ -88,6 +94,12 @@ class PinnedPostListView(generics.ListAPIView):
         return pinned_posts()
 
 
+@extend_schema(
+    summary='Tải ảnh dùng trong bài viết',
+    request=OpenApiTypes.OBJECT,
+    responses={201: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT},
+    tags=['blog'],
+)
 class BlogImageUploadView(APIView):
     """Upload ảnh chèn trong nội dung bài (rich-text editor). Chỉ nhân viên biên tập.
 

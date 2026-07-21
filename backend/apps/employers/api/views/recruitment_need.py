@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -55,6 +55,18 @@ class RecruitmentNeedView(APIView):
         return Response(RecruitmentNeedSerializer(need).data, status=status.HTTP_200_OK)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Danh sách nhu cầu tuyển dụng của NTD',
+        responses={200: RecruitmentNeedSerializer(many=True)},
+    ),
+    post=extend_schema(
+        summary='Tạo nhu cầu tuyển dụng',
+        request=RecruitmentNeedSerializer,
+        responses={201: RecruitmentNeedSerializer},
+    ),
+)
+@extend_schema(tags=['employer'])
 class RecruitmentNeedListCreateView(APIView):
     permission_classes = [IsEmployer]
 
@@ -74,6 +86,12 @@ class RecruitmentNeedListCreateView(APIView):
         )
 
 
+@extend_schema(
+    summary='Cập nhật một nhu cầu tuyển dụng',
+    request=RecruitmentNeedSerializer,
+    responses={200: RecruitmentNeedSerializer},
+    tags=['employer'],
+)
 class RecruitmentNeedDetailView(APIView):
     permission_classes = [IsEmployer]
 

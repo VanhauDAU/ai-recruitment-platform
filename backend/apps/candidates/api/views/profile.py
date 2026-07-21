@@ -1,4 +1,5 @@
-from rest_framework import generics
+from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view, inline_serializer
+from rest_framework import generics, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -38,6 +39,18 @@ class MyCandidateProfileView(generics.RetrieveUpdateAPIView):
         return Response(CandidateProfileReadSerializer(serializer.instance).data)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Đọc tiêu chí tìm việc của tôi',
+        responses={200: CandidateJobPreferenceSerializer},
+    ),
+    put=extend_schema(
+        summary='Cập nhật tiêu chí tìm việc',
+        request=CandidateJobPreferenceSerializer,
+        responses={200: CandidateJobPreferenceSerializer},
+    ),
+)
+@extend_schema(tags=['candidate'])
 class MyCandidateJobPreferencesView(APIView):
     """Read and replace the current candidate job-search preference set."""
 
@@ -58,6 +71,27 @@ class MyCandidateJobPreferencesView(APIView):
         return Response(CandidateJobPreferenceSerializer(preference).data)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Trạng thái đồng ý cho NTD tìm thấy hồ sơ',
+        responses={
+            200: inline_serializer(
+                'RecruiterVisibilityStatus',
+                {
+                    'enabled': serializers.BooleanField(),
+                    'policy_version': serializers.CharField(),
+                    'decided_at': serializers.DateTimeField(allow_null=True),
+                },
+            )
+        },
+    ),
+    patch=extend_schema(
+        summary='Bật/tắt đồng ý cho NTD tìm thấy hồ sơ',
+        request=RecruiterVisibilitySerializer,
+        responses={200: OpenApiTypes.OBJECT},
+    ),
+)
+@extend_schema(tags=['candidate'])
 class MyRecruiterVisibilityView(APIView):
     """Purpose-specific recruiter-search consent; independent from job preferences."""
 
