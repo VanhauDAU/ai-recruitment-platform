@@ -5,4 +5,9 @@ from .profile import (
     RecruiterVisibilitySerializer,
 )
 
-__all__ = ['CandidateJobPreferenceSerializer', 'CandidateProfileReadSerializer', 'CandidateProfileUpdateSerializer', 'RecruiterVisibilitySerializer']
+__all__ = [
+    'CandidateJobPreferenceSerializer',
+    'CandidateProfileReadSerializer',
+    'CandidateProfileUpdateSerializer',
+    'RecruiterVisibilitySerializer',
+]

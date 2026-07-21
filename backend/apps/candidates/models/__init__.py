@@ -9,4 +9,11 @@ from .profile import (
     CandidateProfile,
 )
 
-__all__ = ['CandidateConsent', 'CandidateConsentEvent', 'CandidateDesiredSpecialization', 'CandidateJobPreference', 'CandidatePreferredProvince', 'CandidateProfile']
+__all__ = [
+    'CandidateConsent',
+    'CandidateConsentEvent',
+    'CandidateDesiredSpecialization',
+    'CandidateJobPreference',
+    'CandidatePreferredProvince',
+    'CandidateProfile',
+]

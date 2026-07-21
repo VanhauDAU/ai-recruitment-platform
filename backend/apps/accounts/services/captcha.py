@@ -38,10 +38,6 @@ def verify_recaptcha(token, action, remote_ip=None):
     if not result.get('success'):
         raise ValidationError({'captcha_token': 'Xác thực captcha thất bại.'})
     if 'action' in result and result.get('action') != action:
-        raise ValidationError(
-            {'captcha_token': 'Captcha không hợp lệ cho hành động này.'}
-        )
+        raise ValidationError({'captcha_token': 'Captcha không hợp lệ cho hành động này.'})
     if 'score' in result and result.get('score', 0) < settings.RECAPTCHA_SCORE_THRESHOLD:
-        raise ValidationError(
-            {'captcha_token': 'Xác thực captcha thất bại (độ tin cậy thấp).'}
-        )
+        raise ValidationError({'captcha_token': 'Xác thực captcha thất bại (độ tin cậy thấp).'})

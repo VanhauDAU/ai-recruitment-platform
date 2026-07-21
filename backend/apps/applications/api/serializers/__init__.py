@@ -5,4 +5,10 @@ from .v2 import (
     RecruiterApplicationSnapshotSerializer,
 )
 
-__all__ = ['ApplicationSerializer', 'ApplicationStatusUpdateSerializer', 'CandidateApplicationV2CreateSerializer', 'CandidateApplicationV2Serializer', 'RecruiterApplicationSnapshotSerializer']
+__all__ = [
+    'ApplicationSerializer',
+    'ApplicationStatusUpdateSerializer',
+    'CandidateApplicationV2CreateSerializer',
+    'CandidateApplicationV2Serializer',
+    'RecruiterApplicationSnapshotSerializer',
+]

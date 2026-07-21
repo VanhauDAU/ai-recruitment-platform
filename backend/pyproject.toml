@@ -54,3 +54,15 @@ layers = [
     "(models)",
 ]
 exhaustive = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "tests.py"]
+# --reuse-db bị cấm: TransactionTestCase truncate cả data seed từ migration,
+# lần chạy sau sẽ fail giả. Luôn tạo DB test mới.
+addopts = "--create-db"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["apps", "common"]
+omit = ["*/migrations/*", "*/tests/*", "*/management/*"]

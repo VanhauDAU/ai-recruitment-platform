@@ -19,7 +19,7 @@
 | --- | --- |
 | Backend test | 280 test, **OK** (sau fix `manage.py` chọn settings test) |
 | Thời gian suite backend | ~46s (serial; `--parallel` lỗi pickle — cần điều tra ở P2) |
-| Coverage backend | chưa đo được (chưa có pytest-cov — P2) |
+| Coverage backend | **85%** (10.759 stmts — đo sau AR-P2, gate CI 84%) |
 | Coverage frontend **thật** (toàn `src/`) | **Statements 33.99% · Branches 29.90% · Functions 28.40% · Lines 36.08%** |
 | Coverage frontend theo allowlist cũ (11 đường dẫn) | 84.65/67.36/85.33/89.52 — con số này KHÔNG đại diện toàn repo |
 
@@ -58,3 +58,4 @@
 | Tuần | App chưa khớp layout | File >300 dòng (BE/FE) | Coverage (BE/FE stmts) | Vi phạm import | Suite (BE/FE) | Nhánh chưa merge |
 | --- | --- | --- | --- | --- | --- | --- |
 | 2026-07-21 (baseline) | 13/16 | 24 / 22 | — / 33.99% | chưa có tool | 46s / — | 2 (chờ xóa) |
+| 2026-07-21 (sau AR-P2) | 0/16 | 11 / 22 | 85% / 33.99% | 0 (2 contract KEPT) | 55s / — | 2 (chờ xóa) |

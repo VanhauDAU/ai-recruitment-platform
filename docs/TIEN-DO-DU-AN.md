@@ -57,7 +57,7 @@ Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan
 | --- | --- | --- |
 | AR-P0 | Triage nhánh (32→4), đo baseline (coverage FE thật 34%, 170 endpoint, BE 280 test/46s), snapshot OpenAPI, fix `manage.py test` dùng settings test | ✅ |
 | AR-P1 | Env fail-fast (client.js prod throw, production.py gom lỗi), check_env_sync + 7 biến bổ sung, ruff 206→0 vi phạm (2 bug F821 thật), Docker Compose dev+prod + nginx, pre-commit, CI thêm ruff/env-sync | ✅ (build image chờ verify khi mở Docker) |
-| AR-P2 | Chuẩn hóa 16 app về 1 layout, import-linter, tách test, pytest | ⬜ |
+| AR-P2 | 16/16 app layout ADR-0010 (hết views/serializers phẳng), import-linter 2 contract KEPT + layering gate DRF, pytest + coverage BE 85% (gate CI 84%), gỡ 3 vi phạm layer có sẵn | ✅ (tách test lớn + factory-boy dời sang đợt sau) |
 | AR-P3 | Gộp API v1→v2, dọn schema, squash migrations | ⬜ |
 | AR-P4 | Tối ưu 3 luồng: ứng tuyển, CV builder, tìm việc | ⬜ |
 | AR-P5 | Coverage thật FE, tách 5 file >400 dòng, e2e vào CI | ⬜ |

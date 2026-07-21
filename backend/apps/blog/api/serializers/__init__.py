@@ -6,4 +6,10 @@ from .posts import (
     TagSerializer,
 )
 
-__all__ = ['PinnedPostSerializer', 'PostCategorySerializer', 'PostDetailSerializer', 'PostListSerializer', 'TagSerializer']
+__all__ = [
+    'PinnedPostSerializer',
+    'PostCategorySerializer',
+    'PostDetailSerializer',
+    'PostListSerializer',
+    'TagSerializer',
+]
