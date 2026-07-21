@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import SkillGroupListView, SkillListView
+from .api.views import SkillGroupListView, SkillListView
 
 urlpatterns = [
     path('', SkillListView.as_view(), name='skill-list'),

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Skill, SkillGroup
+from ...models import Skill, SkillGroup
 
 
 class SkillGroupSerializer(serializers.ModelSerializer):
