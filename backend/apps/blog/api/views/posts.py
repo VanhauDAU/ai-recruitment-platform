@@ -5,21 +5,21 @@ from rest_framework.views import APIView
 
 from common.media_storage import save_image_upload
 
-from .permissions import CanEditBlog
-from .selectors import (
+from ...permissions import CanEditBlog
+from ...selectors import (
     active_categories,
     blog_home_sections,
     pinned_posts,
     published_post_detail_queryset,
     published_posts_queryset,
 )
-from .serializers import (
+from ...services import record_post_view
+from ..serializers import (
     PinnedPostSerializer,
     PostCategorySerializer,
     PostDetailSerializer,
     PostListSerializer,
 )
-from .services import record_post_view
 
 
 class PostListView(generics.ListAPIView):

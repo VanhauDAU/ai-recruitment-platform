@@ -4,18 +4,18 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
 
-from .models import CandidateConsent
-from .selectors import candidate_job_preference_for_user, candidate_profile_for_user
-from .serializers import (
+from ...models import CandidateConsent
+from ...selectors import candidate_job_preference_for_user, candidate_profile_for_user
+from ...services import (
+    replace_candidate_job_preferences,
+    set_recruiter_visibility,
+    update_candidate_profile,
+)
+from ..serializers import (
     CandidateJobPreferenceSerializer,
     CandidateProfileReadSerializer,
     CandidateProfileUpdateSerializer,
     RecruiterVisibilitySerializer,
-)
-from .services import (
-    replace_candidate_job_preferences,
-    set_recruiter_visibility,
-    update_candidate_profile,
 )
 
 

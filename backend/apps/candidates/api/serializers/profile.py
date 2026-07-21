@@ -3,7 +3,7 @@ from rest_framework import serializers
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 
-from .models import CandidateConsent, CandidateJobPreference, CandidateProfile
+from ...models import CandidateConsent, CandidateJobPreference, CandidateProfile
 
 
 class CandidateProfileReadSerializer(serializers.ModelSerializer):

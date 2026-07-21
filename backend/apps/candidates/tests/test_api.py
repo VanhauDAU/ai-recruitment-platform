@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 
-from .models import CandidateConsent, CandidateConsentEvent, CandidateJobPreference
+from ..models import CandidateConsent, CandidateConsentEvent, CandidateJobPreference
 
 
 class CandidateProfileApiTests(TestCase):

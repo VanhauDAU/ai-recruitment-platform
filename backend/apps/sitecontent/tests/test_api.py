@@ -12,8 +12,8 @@ from rest_framework.test import APITransactionTestCase
 
 from apps.accounts.models import User
 
-from .models import Locale, SiteSetting
-from .serializers import AdminSiteSettingSerializer
+from ..api.serializers import AdminSiteSettingSerializer
+from ..models import Locale, SiteSetting
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -148,7 +148,7 @@ class LocaleApiTests(APITransactionTestCase):
 
 
 class AdminSiteSettingSerializerTests(APITransactionTestCase):
-    @patch('apps.sitecontent.serializers.config', return_value='provider-secret')
+    @patch('apps.sitecontent.api.serializers.settings.config', return_value='provider-secret')
     def test_env_badge_uses_decouple_and_never_exposes_secret(self, config):
         setting = SiteSetting.objects.create(
             key='ai_api_key_configured',

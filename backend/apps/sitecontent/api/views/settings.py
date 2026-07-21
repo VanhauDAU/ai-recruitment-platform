@@ -18,8 +18,9 @@ from common.media_storage import (
     save_image_upload,
 )
 
-from .models import Banner, LinkGroup, Locale, SiteSetting
-from .serializers import (
+from ...models import Banner, LinkGroup, Locale, SiteSetting
+from ...signals import PUBLIC_SETTINGS_CACHE_KEY
+from ..serializers import (
     AdminLocaleSerializer,
     AdminSiteSettingSerializer,
     BannerSerializer,
@@ -27,7 +28,6 @@ from .serializers import (
     LinkGroupSerializer,
     LocaleSerializer,
 )
-from .signals import PUBLIC_SETTINGS_CACHE_KEY
 
 _HEX_COLOR = re.compile(r'^#[0-9a-fA-F]{6}$')
 

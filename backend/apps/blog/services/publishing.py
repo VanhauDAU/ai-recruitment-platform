@@ -1,6 +1,6 @@
 from django.db.models import F
 
-from .models import Post
+from ..models import Post
 
 
 def record_post_view(post):

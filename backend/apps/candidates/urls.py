@@ -1,6 +1,10 @@
 from django.urls import path
 
-from .views import MyCandidateJobPreferencesView, MyCandidateProfileView, MyRecruiterVisibilityView
+from .api.views import (
+    MyCandidateJobPreferencesView,
+    MyCandidateProfileView,
+    MyRecruiterVisibilityView,
+)
 
 urlpatterns = [
     path('profile/', MyCandidateProfileView.as_view(), name='candidate-profile'),
