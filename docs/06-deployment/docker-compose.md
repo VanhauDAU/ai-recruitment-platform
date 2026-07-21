@@ -16,6 +16,11 @@ docker compose up
   không cần sửa `.env`.
 - Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
   `worker` (celery), `beat` (celery beat), `frontend` (vite).
+- **Queue Celery**: settings route task sang 3 queue (`default`, `auth-email`,
+  `cv-export`). Worker trong compose khai đủ `-Q default,auth-email,cv-export`
+  — bỏ cờ này thì email xác thực và export CV im lặng không chạy.
+- **`CELERY_BROKER_URL` được override tường minh** trong compose: settings chỉ
+  fallback về `REDIS_URL` khi biến vắng mặt, mà `.env` lại set sẵn `127.0.0.1`.
 
 ## Production (VPS + Docker Compose)
 
@@ -60,6 +65,14 @@ docker compose logs -f backend worker
 # Rollback code: checkout commit cũ rồi build lại
 git checkout <commit> && docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
+
+## Kiểm chứng đã chạy (2026-07-21)
+
+- `docker compose up`: migrate sạch (gồm extension `unaccent`), API v2 trả 200,
+  endpoint v1 trả 404 đúng như sau AR-P3.
+- WeasyPrint render PDF tiếng Việt trong container: OK (4.004 bytes).
+- Worker nhận và chạy task trên cả `cv-export` lẫn `auth-email`.
+- Image prod frontend (vite build → nginx) build thành công.
 
 ## Ghi chú
 

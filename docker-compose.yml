@@ -1,6 +1,13 @@
 # Môi trường DEV: docker compose up
-# Backend đọc backend/.env; DB_HOST/REDIS_URL bị override trỏ vào service nội bộ.
+# Backend đọc backend/.env; các biến hostname bị override trỏ vào service nội bộ.
 # Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+# CELERY_BROKER_URL phải override TƯỜNG MINH: settings chỉ fallback về REDIS_URL
+# khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.
+x-service-hosts: &service-hosts
+  DB_HOST: db
+  REDIS_URL: redis://redis:6379/1
+  CELERY_BROKER_URL: redis://redis:6379/1
 
 services:
   db:
@@ -34,8 +41,7 @@ services:
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     env_file: ./backend/.env
     environment:
-      DB_HOST: db
-      REDIS_URL: redis://redis:6379/1
+      <<: *service-hosts
     volumes:
       - ./backend:/app
       - backend_media:/app/media
@@ -49,11 +55,12 @@ services:
 
   worker:
     build: ./backend
-    command: celery -A config worker --loglevel=info
+    # -Q bắt buộc: settings route task sang auth-email/cv-export; worker không
+    # khai queue sẽ chỉ nghe 'default' -> email xác thực và export CV chết lặng.
+    command: celery -A config worker --loglevel=info -Q default,auth-email,cv-export
     env_file: ./backend/.env
     environment:
-      DB_HOST: db
-      REDIS_URL: redis://redis:6379/1
+      <<: *service-hosts
     volumes:
       - ./backend:/app
       - backend_media:/app/media
@@ -68,8 +75,7 @@ services:
     command: celery -A config beat --loglevel=info --schedule=/tmp/celerybeat-schedule
     env_file: ./backend/.env
     environment:
-      DB_HOST: db
-      REDIS_URL: redis://redis:6379/1
+      <<: *service-hosts
     volumes:
       - ./backend:/app
     depends_on:
