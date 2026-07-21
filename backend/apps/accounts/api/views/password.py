@@ -8,10 +8,10 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from ...services import auth_sessions
+from ...services.refresh_cookies import refresh_from_request, set_refresh_cookie
+from ...services.tokens import issue_tokens, revoke_refresh_tokens
 from ..serializers import PasswordChangeSerializer, SessionUserSerializer
-from ..services import auth_sessions
-from ..services.refresh_cookies import refresh_from_request, set_refresh_cookie
-from ..services.tokens import issue_tokens, revoke_refresh_tokens
 
 
 class PasswordChangeView(APIView):

@@ -7,8 +7,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 
 from common.media_storage import media_url_from_value
 
-from .models import User
-from .services.access import is_account_accessible
+from ...models import User
+from ...services.access import is_account_accessible
 
 # Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
 # đăng nhập/đăng ký/quên mật khẩu (một email có thể có nhiều tài khoản khác cổng).
@@ -137,7 +137,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
         return obj.has_usable_password()
 
     def get_two_factor_email_enabled(self, obj):
-        from .services.two_factor import enabled_methods
+        from ...services.two_factor import enabled_methods
 
         return enabled_methods(obj)['email']
 
@@ -235,7 +235,7 @@ class ChangeEmailSerializer(serializers.Serializer):
                     {'current_password': 'Mật khẩu hiện tại không đúng.'}
                 )
         else:
-            from .services import auth_sessions
+            from ...services import auth_sessions
 
             request = self.context['request']
             sid = request.auth.get(auth_sessions.SID_CLAIM) if request.auth else None
@@ -350,7 +350,6 @@ class RoleTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     @classmethod
     def get_token(cls, user):
-        token = super().get_token(user)
-        token['role'] = user.role
-        token['email'] = user.email
-        return token
+        from ...services.tokens import build_refresh_token
+
+        return build_refresh_token(user)

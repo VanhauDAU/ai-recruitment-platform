@@ -1,8 +1,8 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
+from apps.accounts.api.serializers import password_field
 from apps.accounts.models import User
-from apps.accounts.serializers import password_field
 from apps.locations.models import Location
 
 from ...models import RecruiterProfile

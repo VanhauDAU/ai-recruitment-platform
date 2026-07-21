@@ -16,12 +16,12 @@ from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from . import oauth
-from .models import AuthEmailJob, AuthSession, SocialAccount, User
-from .services import email_verification, password_reset, two_factor
-from .services.refresh_cookies import cookie_name
-from .services.tokens import issue_tokens
-from .tasks import deliver_auth_email_job
+from ..models import AuthEmailJob, AuthSession, SocialAccount, User
+from ..services import email_verification, password_reset, two_factor
+from ..services.refresh_cookies import cookie_name
+from ..services.tokens import issue_tokens
+from ..tasks import deliver_auth_email_job
+from .. import oauth
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'

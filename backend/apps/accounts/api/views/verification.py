@@ -6,11 +6,11 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from ..models import User
+from ...models import User
+from ...services import email_verification as ev
+from ...services import queue_verification_email
+from ...tasks import queue_welcome_email
 from ..serializers import ChangeEmailSerializer, SessionUserSerializer
-from ..services import email_verification as ev
-from ..services import queue_verification_email
-from ..tasks import queue_welcome_email
 
 
 @extend_schema(

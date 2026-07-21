@@ -10,12 +10,12 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .. import oauth
-from ..models import User
+from ... import oauth
+from ...models import User
+from ...services.refresh_cookies import set_refresh_cookie
+from ...services.tokens import issue_tokens
+from ...tasks import queue_welcome_email
 from ..serializers import SessionUserSerializer
-from ..services.refresh_cookies import set_refresh_cookie
-from ..services.tokens import issue_tokens
-from ..tasks import queue_welcome_email
 
 
 def _oauth_error_redirect(portal, error_code):

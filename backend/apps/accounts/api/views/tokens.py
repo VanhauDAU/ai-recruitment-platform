@@ -12,9 +12,9 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from ..selectors import get_accessible_user
-from ..services import auth_sessions
-from ..services.refresh_cookies import (
+from ...selectors import get_accessible_user
+from ...services import auth_sessions
+from ...services.refresh_cookies import (
     VALID_PORTALS,
     clear_refresh_cookie,
     portal_for_user,

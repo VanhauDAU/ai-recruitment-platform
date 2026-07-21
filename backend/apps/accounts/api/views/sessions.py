@@ -8,8 +8,8 @@ from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import AuthSession
-from ..services import auth_sessions
+from ...models import AuthSession
+from ...services import auth_sessions
 
 
 class AuthSessionSerializer(serializers.ModelSerializer):

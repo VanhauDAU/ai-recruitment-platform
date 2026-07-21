@@ -8,7 +8,11 @@ from rest_framework.views import APIView
 
 from common.media_storage import delete_local_media_url, save_image_upload
 
-from ..models import AuthEmailJob, User
+from ...models import AuthEmailJob, User
+from ...services import queue_verification_email, two_factor, verify_request_captcha
+from ...services.refresh_cookies import set_refresh_cookie
+from ...services.tokens import issue_tokens
+from ...tasks import queue_auth_email
 from ..serializers import (
     LoginCredentialsSerializer,
     ProfileUpdateSerializer,
@@ -16,10 +20,6 @@ from ..serializers import (
     RegisterSerializer,
     SessionUserSerializer,
 )
-from ..services import queue_verification_email, two_factor, verify_request_captcha
-from ..services.refresh_cookies import set_refresh_cookie
-from ..services.tokens import issue_tokens
-from ..tasks import queue_auth_email
 
 
 class RegisterView(generics.CreateAPIView):

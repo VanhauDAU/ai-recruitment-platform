@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (
+from .api.views import (
     AvatarUploadView,
     ChangeEmailView,
     EmployerBackupCodesGenerateView,
@@ -36,7 +36,7 @@ from .views import (
     VerificationConfirmView,
     VerificationSendView,
 )
-from .views.tokens import AccountTokenRefreshView
+from .api.views.tokens import AccountTokenRefreshView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth-register'),

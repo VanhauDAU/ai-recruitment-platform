@@ -6,16 +6,16 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from ..models import AuthEmailJob, User
+from ...models import AuthEmailJob, User
+from ...services import password_reset as pr
+from ...services import verify_request_captcha
+from ...services.tokens import revoke_refresh_tokens
+from ...tasks import queue_auth_email
 from ..serializers import (
     PORTAL_ROLE_BY_NAME,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
 )
-from ..services import password_reset as pr
-from ..services import verify_request_captcha
-from ..services.tokens import revoke_refresh_tokens
-from ..tasks import queue_auth_email
 
 # Trả về cho MỌI email (tồn tại hay không) để không biến endpoint này thành công
 # cụ dò xem địa chỉ nào đã đăng ký.

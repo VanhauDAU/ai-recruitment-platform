@@ -16,14 +16,14 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from ..services import auth_sessions
-from ..services.refresh_cookies import (
+from ...services import auth_sessions
+from ...services.refresh_cookies import (
     VALID_PORTALS,
     clear_refresh_cookie,
     portal_for_user,
     refresh_from_request,
 )
-from ..services.tokens import revoke_refresh_tokens
+from ...services.tokens import revoke_refresh_tokens
 
 
 class LogoutView(APIView):

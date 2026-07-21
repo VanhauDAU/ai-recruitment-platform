@@ -9,12 +9,12 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from ..models import AuthEmailJob, User
+from ...models import AuthEmailJob, User
+from ...services import two_factor
+from ...services.refresh_cookies import set_refresh_cookie
+from ...services.tokens import issue_tokens
+from ...tasks import queue_auth_email
 from ..serializers import SessionUserSerializer
-from ..services import two_factor
-from ..services.refresh_cookies import set_refresh_cookie
-from ..services.tokens import issue_tokens
-from ..tasks import queue_auth_email
 
 
 class TwoFactorCodeSerializer(serializers.Serializer):
