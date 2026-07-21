@@ -36,8 +36,12 @@ Baseline chi tiết: [baseline-2026-07.md](./baseline-2026-07.md)
 
 ## Nợ ghi nhận (có chủ ý, chưa làm)
 
-- 9 file frontend > 300 dòng (oxlint `max-lines` warn — nâng error khi tách hết).
-- `accounts/tests/test_all.py` 1.611 dòng — tách theo tầng + factory-boy.
+- File frontend > 300 dòng: giữ ở mức `warn` **có chủ ý**. Theo quy ước code
+  style của dự án, chỉ tách khi file thực sự khó quản lý — `JobList.jsx` (423)
+  và `CvDraftEditor.jsx` (421) đã decompose sẵn thành 12+ sub-component và
+  5 model hook, tách thêm chỉ làm loãng. Còn `use-cv-draft-editor.js` (424) là
+  ứng viên tách theo mối quan tâm (autosave / selection / history) khi cần.
+- factory-boy cho test backend (test đã tách theo tầng ở AR-P7).
 - Squash migrations (chỉ làm khi chắc chắn chưa có production DB).
 - Email đồng bộ trong request ở 2FA/reset/welcome (xem
   `docs/07-algorithms/flow-audit-2026-07.md`).
