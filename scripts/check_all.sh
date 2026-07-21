@@ -2,9 +2,9 @@
 # Kiểm tra chất lượng toàn repo bằng MỘT lệnh (khớp với CI).
 # Dùng: ./scripts/check_all.sh
 #
-# Backend: system check + migration treo + test.
-# Frontend: lint + unit test + build.
-# Trả về mã lỗi khác 0 nếu bất kỳ bước nào fail (dừng ngay).
+# Backend: ruff + system check + migration treo + test.
+# Frontend: env-sync + boundary + lint + kiến trúc + unit test + build.
+# Backend chạy qua venv local nếu có; không có venv thì fallback Docker Compose.
 
 set -euo pipefail
 
@@ -13,33 +13,48 @@ cd "$ROOT"
 
 step() { printf '\n\033[1;36m==> %s\033[0m\n' "$1"; }
 
-# ---- Backend ----
-# Chạy từ trong backend/ vì Django discover test theo thư mục hiện tại.
-step "Backend: kích hoạt venv"
-# shellcheck disable=SC1091
-if [ -f backend/venv/bin/activate ]; then
-  source backend/venv/bin/activate
+# ---- Chọn cách chạy lệnh backend ----
+if [ -x backend/venv/bin/python ]; then
+  run_be() { (cd backend && ./venv/bin/python "$@"); }
+  run_ruff() { (cd backend && ./venv/bin/ruff "$@"); }
+elif docker compose version >/dev/null 2>&1 && docker ps >/dev/null 2>&1; then
+  run_be() { docker compose run --rm backend python "$@"; }
+  run_ruff() { docker compose run --rm backend ruff "$@"; }
+else
+  echo "Không tìm thấy backend/venv và Docker daemon không chạy — cần một trong hai." >&2
+  exit 1
 fi
 
-pushd backend >/dev/null
+# ---- Backend ----
+step "Backend: ruff check + format"
+run_ruff check .
+run_ruff format --check .
 
 step "Backend: Django system check"
-python manage.py check
+run_be manage.py check
 
 step "Backend: kiểm tra migration treo"
-python manage.py makemigrations --check --dry-run
+run_be manage.py makemigrations --check --dry-run
 
 step "Backend: test suite"
-python manage.py test
+run_be manage.py test
 
-popd >/dev/null
+# ---- Đồng bộ env ----
+step "Env: .env.example đồng bộ với code"
+"$ROOT/scripts/check_env_sync.sh"
 
 # ---- Frontend ----
 step "Frontend: ranh giới API (axios chỉ trong shared/api)"
 "$ROOT/scripts/check_api_boundary.sh"
 
+step "Frontend: ranh giới feature (không deep-import feature khác)"
+"$ROOT/scripts/check_feature_boundary.sh"
+
 step "Frontend: lint"
 npm --prefix frontend run lint
+
+step "Frontend: kiến trúc (dependency-cruiser)"
+npm --prefix frontend run check:architecture
 
 step "Frontend: unit test"
 npm --prefix frontend test
