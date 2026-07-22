@@ -1,13 +1,17 @@
 """V2 application contracts for candidate submission and recruiter snapshot reads."""
 
+from django.db.models import Q
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.jobs.models import Job
 from apps.locations.models import Location
+from common.media_storage import media_url_from_value
 
 from ...models import Application
+from ...services import reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -24,6 +28,7 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
         fields = [
             'application_public_id',
             'job_public_id',
+            'status',
             'submitted_at',
             'submitted_cv_title',
             'submitted_cv_source',
@@ -61,7 +66,11 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         candidate = self.context['request'].user
         try:
-            job = Job.objects.get(public_id=attrs['job_public_id'], status=Job.Status.ACTIVE)
+            job = Job.objects.get(
+                Q(public_id=attrs['job_public_id']),
+                Q(status=Job.Status.ACTIVE),
+                Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()),
+            )
         except Job.DoesNotExist as error:
             raise serializers.ValidationError(
                 {'job_public_id': 'This job is unavailable.'}
@@ -89,8 +98,9 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'version_public_id': 'Application snapshots cannot be submitted again.'}
             )
-        if Application.objects.filter(candidate=candidate, job=job).exists():
-            raise serializers.ValidationError({'job_public_id': 'You already applied to this job.'})
+        application_error = reapplication_error(candidate, job)
+        if application_error:
+            raise serializers.ValidationError({'job_public_id': application_error})
         province_ids = {
             item.location.parent_id or item.location_id
             for item in job.job_locations.select_related('location__parent').all()
@@ -132,12 +142,30 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
 class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
+    job_slug = serializers.CharField(source='job.slug', read_only=True)
+    company_name = serializers.CharField(source='job.company.company_name', read_only=True)
+    company_logo_url = serializers.SerializerMethodField()
     cv_public_id = serializers.SerializerMethodField()
     submitted_cv_version_public_id = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
     )
     preferred_location_ids = serializers.SerializerMethodField()
     preferred_location_names = serializers.SerializerMethodField()
+    candidate_status = serializers.SerializerMethodField()
+    timeline = serializers.SerializerMethodField()
+
+    CANDIDATE_STATUS = {
+        Application.Status.SUBMITTED: 'Tiếp nhận',
+        Application.Status.VIEWED: 'Nhà tuyển dụng đã xem hồ sơ',
+        Application.Status.CONSIDERING: 'Hồ sơ đang được xem xét',
+        Application.Status.SHORTLISTED: 'Hồ sơ đang được xem xét',
+        Application.Status.INTERVIEWED: 'Phỏng vấn',
+        Application.Status.ACCEPTED: 'Đã nhận offer',
+        Application.Status.REJECTED: 'Chưa phù hợp',
+    }
+
+    def get_company_logo_url(self, obj):
+        return media_url_from_value(obj.job.company.logo_url, request=self.context.get('request'))
 
     def get_cv_public_id(self, obj):
         return obj.cv.public_id if obj.cv_id else None
@@ -148,12 +176,29 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     def get_preferred_location_names(self, obj):
         return [location.name for location in obj.preferred_locations.all()]
 
+    def get_candidate_status(self, obj):
+        return self.CANDIDATE_STATUS[obj.status]
+
+    def get_timeline(self, obj):
+        """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi."""
+        return [
+            {
+                'status': item.to_status,
+                'label': self.CANDIDATE_STATUS.get(item.to_status, item.to_status),
+                'occurred_at': item.created_at,
+            }
+            for item in reversed(list(obj.status_history.all()))
+        ]
+
     class Meta:
         model = Application
         fields = [
             'public_id',
             'job_public_id',
             'job_title',
+            'job_slug',
+            'company_name',
+            'company_logo_url',
             'cv_public_id',
             'submitted_cv_version_public_id',
             'submitted_cv_title',
@@ -161,6 +206,8 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'submitted_at',
             'cover_letter',
             'status',
+            'candidate_status',
+            'timeline',
             'preferred_location_ids',
             'preferred_location_names',
             'allow_ai_analysis',

@@ -16,8 +16,9 @@ from apps.jobs.models import Job
 from ..services import create_application_record
 
 # 1 SELECT user (auth) + 1 SELECT auth session + 1 COUNT (pagination) +
-# 1 SELECT applications (JOIN job/cv/version) + 1 prefetch preferred_locations.
-CANDIDATE_APPLICATION_LIST_BUDGET = 5
+# 1 SELECT applications (JOIN job/cv/version) + 1 prefetch preferred_locations
+# + 1 prefetch status history for the candidate-visible timeline.
+CANDIDATE_APPLICATION_LIST_BUDGET = 6
 
 
 class CandidateApplicationListQueryBudgetTests(APITestCase):

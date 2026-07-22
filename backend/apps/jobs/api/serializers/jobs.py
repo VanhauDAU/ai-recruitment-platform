@@ -2,10 +2,12 @@ from django.db import transaction
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
+from apps.employers.models import RecruitmentCampaign
 from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text
 
 from ...models import (
+    Benefit,
     Job,
     JobApplicationContact,
     JobApplicationEmail,
@@ -18,6 +20,7 @@ from ...models import (
 )
 from .supporting import (
     JobApplicationContactSerializer,
+    JobApplicationEmailSerializer,
     JobBenefitSerializer,
     JobCategoryAssignmentSerializer,
     JobLanguageRequirementSerializer,
@@ -42,6 +45,7 @@ class JobListSkillSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
+    allow_incomplete_salary = False
     job_skills = JobSkillSerializer(many=True, required=False)
     category_assignments = JobCategoryAssignmentSerializer(many=True, required=False)
     job_locations = JobLocationSerializer(many=True, required=False)
@@ -89,6 +93,7 @@ class JobSerializer(serializers.ModelSerializer):
             'benefits',
             'work_schedule_note',
             'work_type',
+            'work_types',
             'employment_type',
             'education_level',
             'experience_years',
@@ -100,6 +105,7 @@ class JobSerializer(serializers.ModelSerializer):
             'salary_type',
             'salary_min',
             'salary_max',
+            'income_display_type',
             'currency',
             'is_salary_visible',
             'deadline',
@@ -144,6 +150,22 @@ class JobSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        work_types = attrs.get('work_types')
+        if work_types is not None:
+            allowed = {value for value, _ in Job.WorkType.choices}
+            if not isinstance(work_types, list) or (
+                not work_types and not self.allow_incomplete_salary
+            ):
+                raise serializers.ValidationError(
+                    {'work_types': 'Chọn ít nhất một hình thức làm việc.'}
+                )
+            if len(work_types) != len(set(work_types)) or any(
+                value not in allowed for value in work_types
+            ):
+                raise serializers.ValidationError(
+                    {'work_types': 'Danh sách hình thức làm việc không hợp lệ.'}
+                )
+            attrs['work_type'] = work_types[0] if work_types else ''
         age_min = attrs.get('age_min', getattr(self.instance, 'age_min', None))
         age_max = attrs.get('age_max', getattr(self.instance, 'age_max', None))
         if age_min is not None and not 15 <= age_min <= 100:
@@ -161,14 +183,24 @@ class JobSerializer(serializers.ModelSerializer):
         salary_min = attrs.get('salary_min', getattr(self.instance, 'salary_min', None))
         salary_max = attrs.get('salary_max', getattr(self.instance, 'salary_max', None))
         salary_errors = {}
-        if salary_type == Job.SalaryType.NEGOTIABLE and (
+        salary_is_incomplete = (
+            (salary_type == Job.SalaryType.RANGE and salary_min is None and salary_max is None)
+            or (salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM) and salary_min is None)
+            or (salary_type == Job.SalaryType.UP_TO and salary_max is None)
+        )
+        if self.allow_incomplete_salary and salary_is_incomplete:
+            attrs['salary_type'] = None
+            salary_type = None
+        elif salary_type is None:
+            salary_errors['salary_type'] = 'Chọn loại lương và nhập đầy đủ mức lương.'
+        elif salary_type == Job.SalaryType.NEGOTIABLE and (
             salary_min is not None or salary_max is not None
         ):
             salary_errors['salary_type'] = 'Lương thỏa thuận không được có mức tối thiểu/tối đa.'
         elif salary_type == Job.SalaryType.RANGE:
-            if salary_min is None or salary_max is None:
-                salary_errors['salary_type'] = 'Khoảng lương cần đủ mức tối thiểu và tối đa.'
-            elif salary_max < salary_min:
+            if salary_min is None and salary_max is None:
+                salary_errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+            elif salary_min is not None and salary_max is not None and salary_max < salary_min:
                 salary_errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
         elif salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM) and salary_min is None:
             salary_errors['salary_min'] = 'Loại lương này cần mức lương tối thiểu.'
@@ -307,6 +339,7 @@ class PublicJobListSerializer(JobSerializer):
             'locations_detail',
             'job_skills',
             'work_type',
+            'work_types',
             'employment_type',
             'education_level',
             'experience_years',
@@ -316,6 +349,7 @@ class PublicJobListSerializer(JobSerializer):
             'salary_type',
             'salary_min',
             'salary_max',
+            'income_display_type',
             'currency',
             'tier',
             'is_hot',
@@ -369,6 +403,9 @@ class JobDetailSerializer(JobSerializer):
     workplace_groups = serializers.SerializerMethodField()
     requirement_tags = serializers.SerializerMethodField()
     benefit_tags = serializers.SerializerMethodField()
+    required_skills = serializers.SerializerMethodField()
+    preferred_skills = serializers.SerializerMethodField()
+    benefit_groups = serializers.SerializerMethodField()
     job_locations = PublicJobLocationSerializer(many=True, read_only=True)
     work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
     language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
@@ -400,6 +437,7 @@ class JobDetailSerializer(JobSerializer):
             'salary_type',
             'salary_min',
             'salary_max',
+            'income_display_type',
             'currency',
             'deadline',
             'view_count',
@@ -420,6 +458,9 @@ class JobDetailSerializer(JobSerializer):
             'workplace_groups',
             'requirement_tags',
             'benefit_tags',
+            'required_skills',
+            'preferred_skills',
+            'benefit_groups',
         ]
         read_only_fields = fields
 
@@ -491,24 +532,81 @@ class JobDetailSerializer(JobSerializer):
             tags.append(f'Từ {obj.get_education_level_display()} trở lên')
         if obj.gender_requirement and obj.gender_requirement != Job.GenderRequirement.ANY:
             tags.append(f'Giới tính: {obj.get_gender_requirement_display()}')
-        tags.extend(
-            item.skill.name
-            for item in obj.job_skills.all()
-            if item.importance == JobSkill.Importance.REQUIRED
-        )
+        # Kỹ năng không nằm ở hàng tag tóm tắt nữa: đã có khối riêng dưới "Yêu cầu ứng viên".
         return tags
 
     def get_benefit_tags(self, obj):
         return [item.benefit.name for item in obj.job_benefits.all()]
+
+    @staticmethod
+    def _skill_names(obj, importance):
+        return [item.skill.name for item in obj.job_skills.all() if item.importance == importance]
+
+    def get_required_skills(self, obj):
+        return self._skill_names(obj, JobSkill.Importance.REQUIRED)
+
+    def get_preferred_skills(self, obj):
+        return self._skill_names(obj, JobSkill.Importance.PREFERRED)
+
+    def get_benefit_groups(self, obj):
+        """Quyền lợi đã chọn, gom theo danh mục và giữ thứ tự khai báo của Benefit.Category."""
+        names_by_category = {}
+        for item in obj.job_benefits.all():
+            names_by_category.setdefault(item.benefit.category, []).append(item.benefit.name)
+        return [
+            {
+                'category': category.value,
+                'category_label': category.label,
+                'items': names_by_category[category.value],
+            }
+            for category in Benefit.Category
+            if names_by_category.get(category.value)
+        ]
 
 
 class EmployerJobWriteSerializer(JobSerializer):
     """Create/update DTO for the employer job form; never used for public reads."""
 
     application_contact = JobApplicationContactSerializer(required=False, allow_null=True)
+    campaign = serializers.SlugRelatedField(
+        slug_field='public_id',
+        queryset=RecruitmentCampaign.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    campaign_name = serializers.CharField(source='campaign.name', read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
 
     class Meta(JobSerializer.Meta):
-        fields = JobSerializer.Meta.fields + ['application_contact']
+        fields = JobSerializer.Meta.fields + [
+            'application_contact',
+            'campaign',
+            'campaign_name',
+            'is_expired',
+            'submitted_at',
+            'approved_at',
+            'rejected_reason',
+        ]
+        read_only_fields = JobSerializer.Meta.read_only_fields + [
+            'submitted_at',
+            'approved_at',
+            'rejected_reason',
+        ]
+
+    def validate_campaign(self, campaign):
+        if campaign is None:
+            return campaign
+        request = self.context.get('request')
+        if request is None or campaign.owner.user_id != request.user.id:
+            raise serializers.ValidationError('Chiến dịch không thuộc tài khoản này.')
+        assigned_jobs = Job.objects.filter(campaign=campaign)
+        if self.instance is not None:
+            assigned_jobs = assigned_jobs.exclude(pk=self.instance.pk)
+        if assigned_jobs.exists():
+            raise serializers.ValidationError(
+                'Mỗi chiến dịch chỉ được liên kết với một tin tuyển dụng.'
+            )
+        return campaign
 
     @transaction.atomic
     def create(self, validated_data):
@@ -541,8 +639,39 @@ class EmployerJobDetailSerializer(EmployerJobWriteSerializer):
     """Employer form read DTO, including private application recipients."""
 
 
+class DraftJobApplicationContactSerializer(JobApplicationContactSerializer):
+    recipient_name = serializers.CharField(required=False, allow_blank=True, default='')
+    phone = serializers.CharField(required=False, allow_blank=True, default='')
+    emails = JobApplicationEmailSerializer(many=True, required=False, default=list)
+
+    def validate_emails(self, emails):
+        if len(emails) > 5:
+            raise serializers.ValidationError('Chỉ được nhập tối đa 5 email nhận hồ sơ.')
+        normalized = [item['email'].strip().lower() for item in emails]
+        if len(normalized) != len(set(normalized)):
+            raise serializers.ValidationError('Email nhận hồ sơ không được trùng nhau.')
+        return emails
+
+
+class EmployerJobDraftSerializer(EmployerJobWriteSerializer):
+    """Partial draft contract; final validation happens only at publication time."""
+
+    allow_incomplete_salary = True
+    application_contact = DraftJobApplicationContactSerializer(required=False, allow_null=True)
+
+    class Meta(EmployerJobWriteSerializer.Meta):
+        extra_kwargs = {
+            'title': {'required': False, 'allow_blank': True},
+            'description': {'required': False, 'allow_blank': True},
+        }
+
+
 class EmployerJobListSerializer(PublicJobListSerializer):
     """Compact management-table DTO; rich job content stays on the detail API."""
+
+    campaign = serializers.CharField(source='campaign.public_id', read_only=True, allow_null=True)
+    campaign_name = serializers.CharField(source='campaign.name', read_only=True, allow_null=True)
+    is_expired = serializers.BooleanField(read_only=True)
 
     class Meta(PublicJobListSerializer.Meta):
         fields = [
@@ -553,8 +682,15 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'employment_type',
             'deadline',
             'status',
+            'is_expired',
+            'campaign',
+            'campaign_name',
             'application_count',
+            'view_count',
             'published_at',
+            'submitted_at',
+            'approved_at',
+            'rejected_reason',
             'created_at',
             'updated_at',
         ]

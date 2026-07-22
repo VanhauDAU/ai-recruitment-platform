@@ -97,17 +97,17 @@ class JobLocationSerializer(serializers.ModelSerializer):
         ]
 
     def validate_location(self, location):
-        if location.level != Location.Level.WARD or not location.parent_id:
+        is_province = location.level == Location.Level.PROVINCE and not location.parent_id
+        is_ward = location.level == Location.Level.WARD and location.parent_id
+        if not (is_province or is_ward):
             raise serializers.ValidationError(
-                'Địa điểm làm việc phải là phường/xã có tỉnh/thành cha.'
+                'Địa điểm làm việc phải là tỉnh/thành hoặc phường/xã hợp lệ.'
             )
         if not location.is_active:
-            raise serializers.ValidationError('Phường/xã đã ngừng hoạt động.')
+            raise serializers.ValidationError('Địa điểm đã ngừng hoạt động.')
         return location
 
     def validate_address_detail(self, address_detail):
-        if not address_detail.strip():
-            raise serializers.ValidationError('Cần nhập địa chỉ cụ thể tại phường/xã.')
         return address_detail.strip()
 
     def get_province_id(self, obj):
@@ -146,19 +146,21 @@ class JobWorkScheduleSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        structured = [
+        required_structured = [
             attrs.get('weekday_from'),
             attrs.get('weekday_to'),
             attrs.get('start_time'),
-            attrs.get('end_time'),
         ]
-        if any(value is not None for value in structured) and not all(
-            value is not None for value in structured
+        if any(value is not None for value in required_structured) and not all(
+            value is not None for value in required_structured
         ):
             raise serializers.ValidationError(
-                'Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu/kết thúc.'
+                'Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu.'
             )
-        if not any(value is not None for value in structured) and not attrs.get('note', '').strip():
+        if (
+            not any(value is not None for value in required_structured)
+            and not attrs.get('note', '').strip()
+        ):
             raise serializers.ValidationError('Cần nhập khung ngày/giờ hoặc ghi chú lịch làm việc.')
         start_time = attrs.get('start_time')
         end_time = attrs.get('end_time')

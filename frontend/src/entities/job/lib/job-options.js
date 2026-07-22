@@ -1,7 +1,7 @@
 export const WORK_TYPE_LABELS = {
-  onsite: 'Tại văn phòng',
-  remote: 'Từ xa',
-  hybrid: 'Kết hợp',
+  onsite: 'Làm việc tại văn phòng / Onsite',
+  remote: 'Làm việc từ xa / Remote',
+  hybrid: 'Làm việc linh hoạt / Hybrid',
 }
 
 export const EMPLOYMENT_TYPE_LABELS = {
@@ -9,8 +9,10 @@ export const EMPLOYMENT_TYPE_LABELS = {
   part_time: 'Bán thời gian',
   contract: 'Hợp đồng',
   seasonal: 'Thời vụ',
+  work_from_home: 'Làm tại nhà (việc làm phổ thông)',
   internship: 'Thực tập',
   freelance: 'Freelance',
+  other: 'Khác',
 }
 
 // Kinh nghiệm theo năm (bộ lọc "Kinh nghiệm" — chọn nhiều, ?experience_years=).

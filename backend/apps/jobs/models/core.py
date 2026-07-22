@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 from common.public_id import generate_public_id
@@ -122,8 +123,10 @@ class Job(models.Model):
         PART_TIME = 'part_time', 'Part-time'
         CONTRACT = 'contract', 'Hợp đồng'
         SEASONAL = 'seasonal', 'Thời vụ'
+        WORK_FROM_HOME = 'work_from_home', 'Làm tại nhà (việc làm phổ thông)'
         INTERNSHIP = 'internship', 'Internship'
         FREELANCE = 'freelance', 'Freelance'
+        OTHER = 'other', 'Khác'
 
     class ExperienceYears(models.TextChoices):
         NONE = 'none', 'Không yêu cầu'
@@ -166,12 +169,16 @@ class Job(models.Model):
         FROM = 'from', 'Từ mức'
         UP_TO = 'up_to', 'Đến mức'
 
+    class IncomeDisplayType(models.TextChoices):
+        INCOME = 'income', 'Thu nhập'
+        INCOME_AT_KPI = 'income_at_kpi', 'Thu nhập khi đạt 100% KPI'
+
     class Status(models.TextChoices):
-        DRAFT = 'draft', 'Draft'
-        PENDING = 'pending', 'Pending'
-        ACTIVE = 'active', 'Active'
-        CLOSED = 'closed', 'Closed'
-        REJECTED = 'rejected', 'Rejected'
+        DRAFT = 'draft', 'Nháp'
+        PENDING = 'pending', 'Chờ duyệt'
+        ACTIVE = 'active', 'Đang tuyển'
+        CLOSED = 'closed', 'Đã đóng'
+        REJECTED = 'rejected', 'Từ chối'
 
     class Tier(models.TextChoices):
         """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
@@ -191,6 +198,13 @@ class Job(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs'
     )
     company = models.ForeignKey('employers.Company', on_delete=models.CASCADE, related_name='jobs')
+    campaign = models.ForeignKey(
+        'employers.RecruitmentCampaign',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='jobs',
+    )
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField()
@@ -201,6 +215,11 @@ class Job(models.Model):
         help_text='Mô tả lịch không thể hiện hết bằng các khung giờ có cấu trúc.',
     )
     work_type = models.CharField(max_length=50, choices=WorkType.choices, blank=True)
+    work_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Các hình thức làm việc được áp dụng; work_type giữ giá trị đầu tiên để tương thích bộ lọc cũ.',
+    )
     employment_type = models.CharField(max_length=50, choices=EmploymentType.choices, blank=True)
     experience_years = models.CharField(
         max_length=20,
@@ -230,9 +249,16 @@ class Job(models.Model):
         max_length=20,
         choices=SalaryType.choices,
         default=SalaryType.NEGOTIABLE,
+        null=True,
+        blank=True,
     )
     salary_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     salary_max = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    income_display_type = models.CharField(
+        max_length=30,
+        choices=IncomeDisplayType.choices,
+        default=IncomeDisplayType.INCOME,
+    )
     currency = models.CharField(max_length=20, default='VND')
     deadline = models.DateField(null=True, blank=True)
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
@@ -245,7 +271,10 @@ class Job(models.Model):
     )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     view_count = models.IntegerField(default=0)
+    impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
+    engagement_tracking_started_at = models.DateTimeField(default=timezone.now)
+    submitted_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
@@ -266,8 +295,14 @@ class Job(models.Model):
             models.Index(
                 fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
             ),
+            models.Index(fields=['campaign', 'status'], name='jobs_job_campaign_status_idx'),
         ]
         constraints = [
+            models.UniqueConstraint(
+                fields=['campaign'],
+                condition=models.Q(campaign__isnull=False),
+                name='jobs_one_job_per_campaign',
+            ),
             models.CheckConstraint(
                 check=models.Q(status__in=['draft', 'pending', 'active', 'closed', 'rejected']),
                 name='chk_jobs_status',
@@ -321,3 +356,13 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+
+        return bool(
+            self.status == self.Status.ACTIVE
+            and self.deadline is not None
+            and self.deadline < timezone.localdate()
+        )

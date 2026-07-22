@@ -24,6 +24,7 @@ import {
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_PHONE_VERIFY_URL,
   EMPLOYER_VERIFY_URL,
+  employerAppPath,
 } from '@/shared/config/portals'
 
 const VERIFICATION_STEPS = [
@@ -150,18 +151,22 @@ export function DashboardVerificationJourney({ verification = {}, displayName, h
           </div>
         </div>
 
-        <div className="flex w-40 shrink-0 items-center gap-3 self-stretch rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 opacity-80 sm:w-56" aria-label="Đăng tin tuyển dụng đầu tiên (đang khóa)">
-          <span className="block h-4 w-4 shrink-0 rounded-full border-[1.5px] border-slate-300" />
-          <span className="min-w-0 flex-1 text-xs font-semibold leading-4 text-slate-400">Đăng tin tuyển dụng đầu tiên</span>
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-300"><FileTextOutlined className="text-[11px]" /></span>
-        </div>
+        <Link
+          to={progress.completed === progress.total ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
+          className="group flex w-40 shrink-0 items-center gap-3 self-stretch rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 transition hover:border-emerald-500 sm:w-56"
+          aria-label="Đăng tin tuyển dụng đầu tiên"
+        >
+          <span className="block h-4 w-4 shrink-0 rounded-full border-[1.5px] border-emerald-500" />
+          <span className="min-w-0 flex-1 text-xs font-semibold leading-4 text-emerald-700">Đăng tin tuyển dụng đầu tiên</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"><FileTextOutlined className="text-[11px]" /></span>
+        </Link>
       </div>
     </section>
   )
 }
 
 const DISCOVERY_ITEMS = [
-  { label: 'Đăng tin tuyển dụng', description: 'Tạo và quản lý tin tuyển dụng', icon: FileTextOutlined, tone: 'bg-emerald-50 text-emerald-600' },
+  { label: 'Đăng tin tuyển dụng', description: 'Tạo tin thủ công và gửi duyệt', icon: FileTextOutlined, tone: 'bg-emerald-50 text-emerald-600', to: employerAppPath('/jobs/new') },
   { label: 'Tìm kiếm CV', description: 'Tiếp cận hồ sơ ứng viên phù hợp', icon: SearchOutlined, tone: 'bg-blue-50 text-blue-600' },
   { label: 'Mua dịch vụ', description: 'Khám phá giải pháp tăng hiệu quả', icon: ShoppingCartOutlined, tone: 'bg-violet-50 text-violet-600' },
 ]
@@ -176,7 +181,7 @@ export function DashboardDiscovery() {
           return (
             <article key={item.label} className="flex min-h-28 items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
               <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${item.tone}`}><Icon /></span>
-              <div className="min-w-0 flex-1"><h3 className="text-sm font-extrabold text-slate-800">{item.label}</h3><p className="mt-1 text-[11px] leading-4 text-slate-400">{item.description}</p><Button disabled size="small" className="!mt-3">Sắp mở</Button></div>
+              <div className="min-w-0 flex-1"><h3 className="text-sm font-extrabold text-slate-800">{item.label}</h3><p className="mt-1 text-[11px] leading-4 text-slate-400">{item.description}</p>{item.to ? <Button size="small" type="link" className="!mt-3 !h-auto !p-0"><Link to={item.to}>Tạo tin</Link></Button> : <Button disabled size="small" className="!mt-3">Sắp mở</Button>}</div>
             </article>
           )
         })}

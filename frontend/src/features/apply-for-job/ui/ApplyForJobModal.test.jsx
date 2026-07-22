@@ -127,6 +127,24 @@ describe('ApplyForJobModal', () => {
     expect(cvApi.getMyCvs).toHaveBeenCalledOnce()
   })
 
+  it('shows the reapplication warning above the form', async () => {
+    render(
+      <MemoryRouter>
+        <ApplyForJobModal
+          open
+          onClose={vi.fn()}
+          jobPublicId="job_1"
+          jobTitle="Kỹ sư"
+          isReapplication
+          retriesRemaining={2}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Lưu ý')
+    expect(screen.getByRole('alert')).toHaveTextContent('Bạn còn 2 lượt ứng tuyển lại')
+  })
+
   it('shows the field name when the API reports a required field', async () => {
     const user = userEvent.setup()
     applicationApi.submitJobApplication.mockRejectedValue({

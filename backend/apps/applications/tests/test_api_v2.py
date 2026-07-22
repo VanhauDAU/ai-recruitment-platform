@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.services.tokens import issue_tokens
@@ -72,7 +75,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             submitted_cv_source=self.cv.source,
         )
 
-    def test_approved_company_member_reads_snapshot_not_a_later_mutable_cv_version(self):
+    def test_job_poster_reads_snapshot_not_a_later_mutable_cv_version(self):
         draft = self.cv.draft
         changed_content = draft.content_json
         changed_content['personal_info']['full_name'] = 'Changed after apply'
@@ -87,7 +90,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         save_draft_as_version(cv=self.cv, actor=self.candidate, expected_lock_version=1)
         self.assertEqual(CvVersion.objects.filter(cv=self.cv).count(), 3)
 
-        tokens = issue_tokens(self.member, auth_method='mfa')
+        tokens = issue_tokens(self.owner, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         response = self.client.get(
             reverse(
@@ -114,6 +117,19 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_company_member_cannot_read_the_posters_snapshot(self):
+        tokens = issue_tokens(self.member, auth_method='mfa')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_candidate_delete_removes_library_cv_but_retains_submitted_snapshot(self):
         self.client.force_authenticate(self.candidate)
 
@@ -129,7 +145,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertIsNone(self.snapshot.cv_id)
 
         self.client.force_authenticate(user=None)
-        tokens = issue_tokens(self.member, auth_method='mfa')
+        tokens = issue_tokens(self.owner, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         snapshot_response = self.client.get(
             reverse(
@@ -240,7 +256,7 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(response.data['contact_email'], 'apply-candidate@example.com')
         self.assertEqual(response.data['contact_phone'], '0909000000')
 
-    def test_candidate_cannot_submit_another_candidates_cv_or_submit_twice(self):
+    def test_candidate_can_reapply_after_five_minutes_up_to_three_submissions(self):
         self.client.force_authenticate(self.candidate)
         forbidden_cv = self.client.post(
             reverse('candidate-application-list-create-v2'),
@@ -255,7 +271,29 @@ class CandidateApplicationV2Tests(APITestCase):
             self.apply_payload(),
             format='json',
         )
-        duplicate = self.client.post(
+        too_soon = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+
+        Application.objects.filter(public_id=first.data['public_id']).update(
+            applied_at=timezone.now() - timedelta(minutes=5)
+        )
+        second = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+        Application.objects.filter(public_id=second.data['public_id']).update(
+            applied_at=timezone.now() - timedelta(minutes=5)
+        )
+        third = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+        exhausted = self.client.post(
             reverse('candidate-application-list-create-v2'),
             self.apply_payload(),
             format='json',
@@ -263,7 +301,12 @@ class CandidateApplicationV2Tests(APITestCase):
 
         self.assertEqual(forbidden_cv.status_code, 400, forbidden_cv.data)
         self.assertEqual(first.status_code, 201, first.data)
-        self.assertEqual(duplicate.status_code, 400, duplicate.data)
+        self.assertEqual(too_soon.status_code, 400, too_soon.data)
+        self.assertIn('5 phút', str(too_soon.data))
+        self.assertEqual(second.status_code, 201, second.data)
+        self.assertEqual(third.status_code, 201, third.data)
+        self.assertEqual(exhausted.status_code, 400, exhausted.data)
+        self.assertIn('hết', str(exhausted.data))
 
     def test_candidate_must_consent_and_select_a_workplace_offered_by_the_job(self):
         other_location = Location.objects.create(

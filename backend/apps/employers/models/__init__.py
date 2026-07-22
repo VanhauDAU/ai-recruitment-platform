@@ -1,5 +1,6 @@
 """Public model API for the employers Django app."""
 
+from .campaign import RecruitmentCampaign
 from .company import Company, CompanyImage, CompanyIndustry, Industry
 from .membership import RecruiterProfile
 from .otp import PhoneOtp
@@ -15,5 +16,6 @@ __all__ = [
     'Industry',
     'PhoneOtp',
     'RecruiterProfile',
+    'RecruitmentCampaign',
     'RecruitmentNeed',
 ]

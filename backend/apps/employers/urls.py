@@ -18,6 +18,14 @@ from .api.views import (
     MyCompanyView,
     PhoneAvailabilityView,
     RecruiterMeView,
+    RecruitmentCampaignDetailView,
+    RecruitmentCampaignFromNeedView,
+    RecruitmentCampaignJobPerformanceView,
+    RecruitmentCampaignListCreateView,
+    RecruitmentCampaignOptionsView,
+    RecruitmentCampaignReportView,
+    RecruitmentCampaignStatusView,
+    RecruitmentCampaignSuggestionsView,
     RecruitmentNeedDetailView,
     RecruitmentNeedListCreateView,
     RecruitmentNeedView,
@@ -27,6 +35,42 @@ from .api.views import (
 from .api.views.registration import CompleteEmployerRegistrationView, EmployerRegisterView
 
 urlpatterns = [
+    path('campaigns/', RecruitmentCampaignListCreateView.as_view(), name='employer-campaign-list'),
+    path(
+        'campaigns/options/',
+        RecruitmentCampaignOptionsView.as_view(),
+        name='employer-campaign-options',
+    ),
+    path(
+        'campaigns/suggestions/',
+        RecruitmentCampaignSuggestionsView.as_view(),
+        name='employer-campaign-suggestions',
+    ),
+    path(
+        'campaigns/from-need/<str:public_id>/',
+        RecruitmentCampaignFromNeedView.as_view(),
+        name='employer-campaign-from-need',
+    ),
+    path(
+        'campaigns/<str:public_id>/',
+        RecruitmentCampaignDetailView.as_view(),
+        name='employer-campaign-detail',
+    ),
+    path(
+        'campaigns/<str:public_id>/status/',
+        RecruitmentCampaignStatusView.as_view(),
+        name='employer-campaign-status',
+    ),
+    path(
+        'campaigns/<str:public_id>/report/',
+        RecruitmentCampaignReportView.as_view(),
+        name='employer-campaign-report',
+    ),
+    path(
+        'campaigns/<str:public_id>/job-performance/',
+        RecruitmentCampaignJobPerformanceView.as_view(),
+        name='employer-campaign-job-performance',
+    ),
     path('register/', EmployerRegisterView.as_view(), name='employer-register'),
     path(
         'onboarding/registration/',

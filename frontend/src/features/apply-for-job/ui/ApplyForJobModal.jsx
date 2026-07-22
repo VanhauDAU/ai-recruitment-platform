@@ -23,6 +23,8 @@ export default function ApplyForJobModal({
   candidateName = '',
   candidateEmail = '',
   candidatePhone = '',
+  isReapplication = false,
+  retriesRemaining = 0,
 }) {
   const { settings } = useSiteSettings()
   const supportEmail = settingText(settings.support_email, 'support@procv.vn')
@@ -59,6 +61,15 @@ export default function ApplyForJobModal({
       }}
     >
       <div className="max-h-[min(72vh,820px)] overflow-y-auto bg-white px-8 py-4 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent">
+        {isReapplication && (
+          <Alert
+            type="warning"
+            showIcon
+            title={<strong>Lưu ý</strong>}
+            description={<>Việc ứng tuyển nhiều lần sẽ giảm độ chuyên nghiệp của bạn trong mắt nhà tuyển dụng. Bạn còn <strong>{retriesRemaining} lượt</strong> ứng tuyển lại cho công việc này, hãy cân nhắc kỹ!</>}
+            className="mb-4"
+          />
+        )}
         {form.error && (
           <Alert type="error" showIcon title={form.error} closable onClose={() => form.setError('')} className="mb-4" />
         )}

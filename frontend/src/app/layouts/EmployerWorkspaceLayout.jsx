@@ -1,30 +1,18 @@
 import {
-  ArrowRightOutlined,
+  ArrowLeftOutlined,
   BarChartOutlined,
   BellOutlined,
-  BulbOutlined,
-  CheckCircleFilled,
   CustomerServiceOutlined,
-  DashboardOutlined,
   DoubleRightOutlined,
   FileTextOutlined,
-  GiftOutlined,
-  HistoryOutlined,
-  LikeOutlined,
   LogoutOutlined,
   MenuOutlined,
   MessageOutlined,
-  NotificationOutlined,
+  PlusOutlined,
   QuestionCircleFilled,
-  RobotOutlined,
   SafetyCertificateOutlined,
   SearchOutlined,
   SettingOutlined,
-  ShoppingCartOutlined,
-  TagsOutlined,
-  TeamOutlined,
-  ThunderboltOutlined,
-  ToolOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
@@ -33,16 +21,26 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
+import {
+  calculateCampaignOptimizationScore,
+  campaignKeys,
+  getCampaign,
+  getCampaignReport,
+} from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
-  EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_GENERAL_SETTINGS_URL,
-  EMPLOYER_PHONE_VERIFY_URL,
   EMPLOYER_VERIFY_URL,
   employerAppPath,
 } from '@/shared/config/portals'
+import EmployerAccountVerificationPopover from './EmployerAccountVerificationPopover'
+import {
+  EMPLOYER_NAV_ITEMS,
+  employerRouteTitle,
+  employerSelectedMenuKey,
+} from './EmployerWorkspaceNavigation'
 
 const { Header, Sider, Content } = Layout
 
@@ -51,68 +49,17 @@ const { Header, Sider, Content } = Layout
 const EMPLOYER_SIDEBAR_WIDTH = 240
 const EMPLOYER_SIDEBAR_COLLAPSED_WIDTH = 64
 
-const ACCOUNT_VERIFICATION_LEVEL_STEPS = [
-  { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
-  { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_approved', label: 'Xác thực Giấy đăng ký doanh nghiệp', to: employerAppPath('/account/settings/gpkd') },
-]
-
-function ComingSoonLabel({ children }) {
-  return (
-    <span className="flex min-w-0 items-center justify-between gap-2">
-      <span className="truncate">{children}</span>
-      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-400">Sắp mở</span>
+function TopbarAction({ icon, label, prominent = false, to }) {
+  const content = (
+    <span
+      className={`hidden h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
+    >
+      {icon}{label}
     </span>
   )
-}
-
-const EMPLOYER_NAV_ITEMS = [
-  { key: employerAppPath('/dashboard'), icon: <DashboardOutlined />, label: 'Bảng tin', title: 'Bảng tin' },
-  { key: 'coming-insights', icon: <BulbOutlined />, label: <ComingSoonLabel>ProCV Insights</ComingSoonLabel>, title: 'ProCV Insights — Sắp mở', disabled: true },
-  { key: 'coming-rewards', icon: <GiftOutlined />, label: <ComingSoonLabel>ProCV Rewards</ComingSoonLabel>, title: 'ProCV Rewards — Sắp mở', disabled: true },
-  { key: 'coming-ai', icon: <RobotOutlined />, label: <ComingSoonLabel>AI đề xuất</ComingSoonLabel>, title: 'AI đề xuất — Sắp mở', disabled: true },
-  { key: 'coming-cv-recommendations', icon: <LikeOutlined />, label: <ComingSoonLabel>CV đề xuất</ComingSoonLabel>, title: 'CV đề xuất — Sắp mở', disabled: true },
-  { type: 'divider' },
-  { key: 'coming-campaigns', icon: <ThunderboltOutlined />, label: <ComingSoonLabel>Chiến dịch tuyển dụng</ComingSoonLabel>, title: 'Chiến dịch tuyển dụng — Sắp mở', disabled: true },
-  { key: 'coming-jobs', icon: <FileTextOutlined />, label: <ComingSoonLabel>Tin tuyển dụng</ComingSoonLabel>, title: 'Tin tuyển dụng — Sắp mở', disabled: true },
-  { key: 'coming-applications', icon: <TeamOutlined />, label: <ComingSoonLabel>Quản lý CV</ComingSoonLabel>, title: 'Quản lý CV — Sắp mở', disabled: true },
-  { key: 'coming-reports', icon: <BarChartOutlined />, label: <ComingSoonLabel>Báo cáo tuyển dụng</ComingSoonLabel>, title: 'Báo cáo tuyển dụng — Sắp mở', disabled: true },
-  { type: 'divider' },
-  { key: 'coming-buy-services', icon: <ShoppingCartOutlined />, label: <ComingSoonLabel>Mua dịch vụ</ComingSoonLabel>, title: 'Mua dịch vụ — Sắp mở', disabled: true },
-  { key: 'coming-services', icon: <ToolOutlined />, label: <ComingSoonLabel>Dịch vụ của tôi</ComingSoonLabel>, title: 'Dịch vụ của tôi — Sắp mở', disabled: true },
-  { key: 'coming-coupons', icon: <TagsOutlined />, label: <ComingSoonLabel>Mã ưu đãi</ComingSoonLabel>, title: 'Mã ưu đãi — Sắp mở', disabled: true },
-  { type: 'divider' },
-  { key: 'coming-activity', icon: <HistoryOutlined />, label: <ComingSoonLabel>Lịch sử hoạt động</ComingSoonLabel>, title: 'Lịch sử hoạt động — Sắp mở', disabled: true },
-  { key: EMPLOYER_ACCOUNT_SETTINGS_URL, icon: <SettingOutlined />, label: 'Cài đặt tài khoản', title: 'Cài đặt tài khoản' },
-  { type: 'divider' },
-  { key: 'coming-system-notifications', icon: <NotificationOutlined />, label: <ComingSoonLabel>Thông báo hệ thống</ComingSoonLabel>, title: 'Thông báo hệ thống — Sắp mở', disabled: true },
-]
-
-const ROUTE_TITLES = [
-  [employerAppPath('/dashboard'), 'Bảng tin'],
-  [EMPLOYER_VERIFY_URL, 'Xác thực tài khoản'],
-  [EMPLOYER_PHONE_VERIFY_URL, 'Xác thực số điện thoại'],
-  [EMPLOYER_ACCOUNT_SETTINGS_URL, 'Thông tin tài khoản'],
-  [employerAppPath('/account/settings/password-login'), 'Thay đổi mật khẩu'],
-  [EMPLOYER_COMPANY_SETTINGS_URL, 'Cài đặt tài khoản'],
-  [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
-  [EMPLOYER_DATA_PROTECTION_URL, 'Văn bản xử lý dữ liệu cá nhân'],
-  [employerAppPath('/account/settings/recruitment-demand'), 'Nhu cầu tuyển dụng'],
-  [EMPLOYER_GENERAL_SETTINGS_URL, 'Cài đặt'],
-]
-
-function routeTitle(pathname) {
-  return ROUTE_TITLES.find(([path]) => pathname === path)?.[1] || 'Không gian nhà tuyển dụng'
-}
-
-function selectedMenuKey(pathname) {
-  if (pathname.startsWith(employerAppPath('/account/settings')) || pathname === EMPLOYER_PHONE_VERIFY_URL) {
-    return EMPLOYER_ACCOUNT_SETTINGS_URL
+  if (to) {
+    return <Link to={to} className="rounded-full transition hover:opacity-90">{content}</Link>
   }
-  return pathname
-}
-
-function TopbarAction({ icon, label, prominent = false }) {
   return (
     <Tooltip title={`${label} — chức năng sẽ được mở trong giai đoạn tiếp theo`}>
       <span
@@ -125,50 +72,9 @@ function TopbarAction({ icon, label, prominent = false }) {
   )
 }
 
-function AccountVerificationPopover({ verification, level }) {
-  return (
-    <div className="w-[min(330px,calc(100vw-48px))] p-1 sm:w-[344px]" aria-label="Chi tiết cấp xác thực tài khoản">
-      <div className="flex items-center gap-2 text-base font-bold text-slate-800">
-        <span>Tài khoản xác thực:</span>
-        <strong className="text-emerald-600">Cấp {level.level}/{level.total}</strong>
-      </div>
-      <span className="mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-xl">🌟</span>
-      <p className="mt-4 text-sm text-slate-500">Vui lòng thực hiện các bước xác thực dưới đây:</p>
-      <div className="mt-5 flex items-center justify-between text-sm">
-        <strong className="text-base text-slate-800">Xác thực thông tin</strong>
-        <span className="text-slate-500">Hoàn thành <strong className="text-emerald-600">{level.percent}%</strong></span>
-      </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-        <span className="block h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${level.percent}%` }} />
-      </div>
-      <div className="mt-3 divide-y divide-slate-100">
-        {ACCOUNT_VERIFICATION_LEVEL_STEPS.map((step) => {
-          const completed = Boolean(verification[step.key])
-          return (
-            <Link
-              key={step.key}
-              to={step.to}
-              className="flex items-center gap-3 py-4 text-sm font-semibold text-slate-700 transition hover:text-emerald-700"
-            >
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full ${completed ? 'text-emerald-600' : 'border border-slate-400 text-transparent'}`}>
-                {completed && <CheckCircleFilled />}
-              </span>
-              <span className="min-w-0 flex-1">{step.label}</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><ArrowRightOutlined /></span>
-            </Link>
-          )
-        })}
-      </div>
-      <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
-        <Link to={EMPLOYER_VERIFY_URL} className="rounded-md border border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50">Tìm hiểu thêm</Link>
-      </div>
-    </div>
-  )
-}
-
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
-  const { pathname } = useLocation()
+  const { pathname, key: locationKey } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -180,13 +86,44 @@ export default function EmployerWorkspaceLayout() {
   })
   const profile = profileQuery.data || {}
   const verification = profile.onboarding || {}
-  const accountVerificationLevel = getEmployerAccountVerificationLevel(verification, user)
+  const accountVerificationLevel = getEmployerAccountVerificationLevel(verification)
   // "An toàn" ở đây gắn với bảo mật đăng nhập: bật một trong các phương thức xác
   // thực 2 yếu tố (hiện có email) là đủ để ẩn cảnh báo đỏ ở sidebar.
   const accountSecure = Boolean(user?.two_factor_enabled)
   const showComplianceNotice = profileQuery.isSuccess
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
+  const isCampaignList = pathname === employerAppPath('/campaigns')
+  const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
+  const isCampaignDetail = Boolean(campaignDetailMatch)
+  const campaignPublicId = campaignDetailMatch?.[1]
+  const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
+  const isJobNew = pathname === employerAppPath('/jobs/new')
+  const isJobForm = isJobNew || Boolean(jobEditMatch)
+
+  const campaignQuery = useQuery({
+    queryKey: campaignKeys.detail(campaignPublicId),
+    queryFn: () => getCampaign(campaignPublicId),
+    enabled: isCampaignDetail,
+  })
+  const reportQuery = useQuery({
+    queryKey: campaignKeys.report(campaignPublicId),
+    queryFn: () => getCampaignReport(campaignPublicId),
+    enabled: isCampaignDetail,
+  })
+  const campaignData = campaignQuery.data
+  const reportData = reportQuery.data || {}
+  const campaignOptimizationScore = calculateCampaignOptimizationScore(campaignData, reportData)
+  // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
+  // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
+  // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
+  const goBackFromForm = () => {
+    if (locationKey && locationKey !== 'default') {
+      navigate(-1)
+      return
+    }
+    navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
+  }
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -242,7 +179,7 @@ export default function EmployerWorkspaceLayout() {
 
         <div className="flex items-center gap-2">
           <TopbarAction icon={<BarChartOutlined />} label="Khảo sát thị trường" prominent />
-          <TopbarAction icon={<FileTextOutlined />} label="Đăng tin" />
+          <TopbarAction icon={<FileTextOutlined />} label="Đăng tin" to={employerAppPath('/jobs/new')} />
           <TopbarAction icon={<SearchOutlined />} label="Tìm CV" />
           <TopbarAction icon={<MessageOutlined />} label="Connect" />
           <Tooltip title="Thông báo hệ thống">
@@ -317,7 +254,7 @@ export default function EmployerWorkspaceLayout() {
                       trigger={['hover', 'focus']}
                       placement="rightTop"
                       styles={{ container: { padding: 12 } }}
-                      content={<AccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
+                      content={<EmployerAccountVerificationPopover verification={verification} level={accountVerificationLevel} />}
                     >
                       <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
                     </Popover>
@@ -339,7 +276,7 @@ export default function EmployerWorkspaceLayout() {
               <Menu
                 mode="inline"
                 inlineCollapsed={isCompactSidebar}
-                selectedKeys={[selectedMenuKey(pathname)]}
+                selectedKeys={[employerSelectedMenuKey(pathname)]}
                 items={EMPLOYER_NAV_ITEMS}
                 onClick={navigateFromMenu}
                 className="!border-0 !bg-white [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!px-3 [&_.ant-menu-item]:!text-xs [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"
@@ -355,10 +292,41 @@ export default function EmployerWorkspaceLayout() {
         </Sider>
 
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
-          <div className="flex min-h-11 shrink-0 items-center border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
-            <strong className="min-w-0 truncate text-sm text-slate-700">{routeTitle(pathname)}</strong>
+          <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+              {(isJobForm || isCampaignDetail) && (
+                <Button
+                  size="small"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={isCampaignDetail ? () => navigate(employerAppPath('/campaigns')) : goBackFromForm}
+                  className="!inline-flex !items-center !gap-1.5 !rounded-lg !border !border-slate-300 !bg-white !px-3 !py-1 !text-xs !font-semibold !text-slate-700 shadow-2xs transition hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
+                >
+                  Quay lại
+                </Button>
+              )}
+              {isCampaignDetail ? (
+                <h1 className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base" title={campaignData?.name || 'Chiến dịch tuyển dụng'}>
+                  {campaignData?.name || 'Chiến dịch tuyển dụng'}
+                </h1>
+              ) : (
+                <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
+              )}
+            </div>
+            {isCampaignList && (
+              <Link to={employerAppPath('/campaigns')} state={{ createCampaign: true }}>
+                <Button size="small" type="primary" icon={<PlusOutlined />}>Thêm chiến dịch mới</Button>
+              </Link>
+            )}
+            {isCampaignDetail && (
+              <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-600 shadow-sm">
+                Điểm tối ưu: <strong className="ml-1 text-emerald-600">{campaignOptimizationScore}%</strong>
+              </span>
+            )}
           </div>
-          <Content className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 sm:p-5 xl:p-6">
+          {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}
+          <Content
+            className={`min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 sm:p-5 sm:pt-0 xl:p-6 xl:pt-0 ${showComplianceNotice ? '[--workspace-viewport:calc(100dvh_-_136px)]' : '[--workspace-viewport:calc(100dvh_-_104px)]'}`}
+          >
             <div className="mx-auto w-full max-w-[1320px]">
               <Outlet />
             </div>

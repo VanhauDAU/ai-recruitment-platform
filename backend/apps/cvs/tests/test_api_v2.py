@@ -386,6 +386,9 @@ class CvV2ApiTests(APITestCase):
         self.assertNotIn('file_url', imported.data)
         cv = UserCv.objects.get(public_id=imported.data['public_id'])
         self.assertEqual(cv.latest_version.version_kind, CvVersion.VersionKind.IMPORTED)
+        # Response phải mang sẵn con trỏ version: form ứng tuyển gửi thẳng version_public_id lấy
+        # từ đây, thiếu là API application trả "Phiên bản CV: vui lòng nhập thông tin bắt buộc".
+        self.assertEqual(imported.data['latest_version_public_id'], cv.latest_version.public_id)
 
         metadata = self.client.patch(
             reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}),

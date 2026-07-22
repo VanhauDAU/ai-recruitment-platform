@@ -59,7 +59,7 @@ export default function RecruitmentDemandManager() {
   const [pendingBudgetSource, setPendingBudgetSource] = useState('company')
   const [editing, setEditing] = useState(undefined)
   const needsQuery = useQuery({ queryKey: ['employer', 'recruitment-needs'], queryFn: getEmployerRecruitmentNeeds })
-  const categoriesQuery = useQuery({ queryKey: ['job-categories', 'recruitment-demand'], queryFn: getJobCategories, staleTime: 600000 })
+  const categoriesQuery = useQuery({ queryKey: ['job-categories', 'recruitment-demand'], queryFn: () => getJobCategories(), staleTime: 600000 })
   const categories = useMemo(() => (categoriesQuery.data || []).filter((item) => item.category_type === 'specialization').map((item) => ({ value: item.id, label: item.name })), [categoriesQuery.data])
   const refresh = () => client.invalidateQueries({ queryKey: ['employer', 'recruitment-needs'] })
   const saveMutation = useMutation({ mutationFn: ({ id, payload }) => id ? updateEmployerRecruitmentNeed(id, payload) : createEmployerRecruitmentNeed(payload), onSuccess: () => { message.success('Đã lưu nhu cầu tuyển dụng.'); setEditing(undefined); refresh() }, onError: (error) => message.error(getApiErrorMessage(error, 'Không thể lưu nhu cầu tuyển dụng.')) })

@@ -11,6 +11,9 @@ ALLOWED_METRICS = {
     'cv_import_failure',
     'cv_snapshot_duration_ms',
     'cv_snapshot_failure',
+    'job_engagement',
+    'job_impression_batch_size',
+    'campaign_job_performance_duration_ms',
 }
 
 
@@ -20,7 +23,16 @@ def record_metric(name, value=1, **tags):
     safe_tags = {
         key: str(tag)[:80]
         for key, tag in tags.items()
-        if key in {'source', 'locale', 'cache', 'status', 'failure_code'}
+        if key
+        in {
+            'source',
+            'locale',
+            'cache',
+            'status',
+            'failure_code',
+            'event',
+            'reason',
+        }
     }
     logger.info(
         'product_metric',

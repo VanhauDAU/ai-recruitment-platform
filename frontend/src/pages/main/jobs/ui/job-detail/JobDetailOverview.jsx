@@ -32,17 +32,17 @@ function publishedLabel(value) {
 export function JobBreadcrumbs({ job }) {
   return (
     <nav className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap text-xs text-gray-500 sm:text-sm">
-      <Link to="/" className="shrink-0 hover:text-[var(--brand-primary)]">Trang chủ</Link>
+      <Link to="/" className="shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]">Trang chủ</Link>
       <span className="text-gray-300">›</span>
-      <Link to="/viec-lam" className="shrink-0 hover:text-[var(--brand-primary)]">Việc làm</Link>
-      {job.category_name && <><span className="text-gray-300">›</span><Link to={`/viec-lam?cat=${job.category}`} className="shrink-0 hover:text-[var(--brand-primary)]">{job.category_name}</Link></>}
+      <Link to="/viec-lam" className="shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]">Việc làm</Link>
+      {job.category_name && <><span className="text-gray-300">›</span><Link to={`/viec-lam?cat=${job.category}`} className="shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]">{job.category_name}</Link></>}
       <span className="text-gray-300">›</span>
-      <span className="truncate text-gray-700">{job.title}</span>
+      <span className="truncate font-medium text-slate-700">{job.title}</span>
     </nav>
   )
 }
 
-export function JobHero({ job, saved, onApply, onSave, onShare, savePending }) {
+export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShare, savePending }) {
   const locations = job.locations_detail?.map((location) => location.name).join(' · ') || EMPTY_LABEL
   const deadline = formatDeadline(job.deadline)
   const experience = EXPERIENCE_YEARS_LABELS[job.experience_years] || EMPTY_LABEL
@@ -83,11 +83,30 @@ export function JobHero({ job, saved, onApply, onSave, onShare, savePending }) {
         </div>
 
         <div className="mt-5 flex gap-2 sm:gap-3">
-          <button type="button" onClick={onApply} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)]"><SafetyCertificateOutlined /> Ứng tuyển ngay</button>
+          <div className="min-w-0 flex-1">
+            <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.hasApplied ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SafetyCertificateOutlined />} {applicationStatus.hasApplied ? 'Ứng tuyển lại' : 'Ứng tuyển ngay'}</button>
+            <LatestApplicationNotice application={applicationStatus.latestApplication} />
+          </div>
           <button type="button" onClick={onSave} disabled={savePending} className="hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
         </div>
       </div>
     </section>
+  )
+}
+
+function LatestApplicationNotice({ application }) {
+  if (!application?.applied_at) return null
+  const appliedDate = new Date(application.applied_at)
+  const formattedDate = Number.isNaN(appliedDate.getTime())
+    ? ''
+    : appliedDate.toLocaleDateString('vi-VN')
+  return (
+    <p className="mt-2 text-xs leading-5 text-slate-500">
+      Bạn đã gửi CV cho vị trí này ngày: <strong className="text-slate-700">{formattedDate}.</strong>{' '}
+      {application.cv_public_id
+        ? <Link to={`/cvs/${application.cv_public_id}/view`} target="_blank" rel="noreferrer" className="font-semibold text-[var(--brand-primary)] hover:underline">Xem CV đã nộp</Link>
+        : <span className="font-semibold text-slate-700">Xem CV đã nộp</span>}
+    </p>
   )
 }
 

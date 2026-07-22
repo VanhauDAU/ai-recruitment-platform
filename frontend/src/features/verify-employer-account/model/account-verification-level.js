@@ -1,22 +1,21 @@
 export const EMPLOYER_ACCOUNT_VERIFICATION_LEVEL_STEPS = [
-  'phone_verified',
-  'company_linked',
+  'email_verified',
   'business_doc_approved',
+  'no_report_history',
 ]
 
 const TOTAL_LEVELS = 3
 
-export function getEmployerAccountVerificationLevel(verification = {}, user = {}) {
-  const emailVerified = Boolean(verification.email_verified ?? user?.email_verified)
+export function getEmployerAccountVerificationLevel(verification = {}) {
+  const emailVerified = Boolean(verification.email_verified)
   const phoneVerified = Boolean(verification.phone_verified)
   const businessDocumentApproved = Boolean(verification.business_doc_approved)
-  const companyEmail = Boolean(verification.email_domain_verified)
-  const noReportHistory = verification.no_report_history ?? true
+  const noReportHistory = Boolean(verification.no_report_history)
 
   let level = 0
   if (emailVerified) level = 1
   if (emailVerified && phoneVerified && businessDocumentApproved) level = 2
-  if (level === 2 && companyEmail && noReportHistory) level = 3
+  if (level === 2 && noReportHistory) level = 3
 
   return {
     level,

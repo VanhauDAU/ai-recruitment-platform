@@ -7,9 +7,8 @@ from common.public_id import generate_public_id
 class Application(models.Model):
     """A candidate's application to a job (DB doc section 2.15).
 
-    One candidate can only apply to a given job once — UNIQUE(candidate, job).
-    Re-applying after rejection is handled by updating cv_id/status on the
-    existing row, not by creating a new application.
+    A candidate may submit up to three applications to one job. Each submission
+    keeps its own immutable CV snapshot so recruiters can review every version.
     """
 
     class Source(models.TextChoices):
@@ -20,6 +19,7 @@ class Application(models.Model):
     class Status(models.TextChoices):
         SUBMITTED = 'submitted', 'Submitted'
         VIEWED = 'viewed', 'Viewed'
+        CONSIDERING = 'considering', 'Considering'
         SHORTLISTED = 'shortlisted', 'Shortlisted'
         INTERVIEWED = 'interviewed', 'Interviewed'
         REJECTED = 'rejected', 'Rejected'
@@ -62,6 +62,7 @@ class Application(models.Model):
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.APPLIED)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.SUBMITTED)
     employer_note = models.TextField(blank=True)
+    employer_rating = models.PositiveSmallIntegerField(null=True, blank=True)
     candidate_note = models.TextField(blank=True)
     applied_at = models.DateTimeField(auto_now_add=True)
     viewed_at = models.DateTimeField(null=True, blank=True)
@@ -73,14 +74,12 @@ class Application(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=['candidate', 'job'], name='uq_applications_candidate_job'
-            ),
             models.CheckConstraint(
                 check=models.Q(
                     status__in=[
                         'submitted',
                         'viewed',
+                        'considering',
                         'shortlisted',
                         'interviewed',
                         'rejected',
@@ -92,6 +91,10 @@ class Application(models.Model):
         ]
         indexes = [
             models.Index(fields=['candidate']),
+            models.Index(
+                fields=['candidate', 'job', 'applied_at'],
+                name='idx_app_candidate_job_date',
+            ),
             models.Index(fields=['job']),
             models.Index(fields=['status']),
             models.Index(fields=['submitted_cv_version'], name='idx_app_submitted_cv_version'),

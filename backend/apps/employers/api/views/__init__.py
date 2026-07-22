@@ -1,5 +1,15 @@
 """Public HTTP views grouped by employers use case."""
 
+from .campaigns import (
+    RecruitmentCampaignDetailView,
+    RecruitmentCampaignFromNeedView,
+    RecruitmentCampaignJobPerformanceView,
+    RecruitmentCampaignListCreateView,
+    RecruitmentCampaignOptionsView,
+    RecruitmentCampaignReportView,
+    RecruitmentCampaignStatusView,
+    RecruitmentCampaignSuggestionsView,
+)
 from .catalogs import AllIndustryListView, CompanyCatalogView, IndustryListView
 from .companies import CompanySearchView, CreateCompanyView, MyCompanyView
 from .media import (
@@ -45,6 +55,14 @@ __all__ = [
     'MyCompanyView',
     'PhoneAvailabilityView',
     'RecruiterMeView',
+    'RecruitmentCampaignDetailView',
+    'RecruitmentCampaignFromNeedView',
+    'RecruitmentCampaignListCreateView',
+    'RecruitmentCampaignJobPerformanceView',
+    'RecruitmentCampaignOptionsView',
+    'RecruitmentCampaignReportView',
+    'RecruitmentCampaignStatusView',
+    'RecruitmentCampaignSuggestionsView',
     'RecruitmentNeedView',
     'RecruitmentNeedListCreateView',
     'RecruitmentNeedDetailView',

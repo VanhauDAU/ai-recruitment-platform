@@ -1,0 +1,98 @@
+.post-job-form .ant-form-item {
+  margin-bottom: 16px;
+}
+
+.post-job-form .ant-form-item-label {
+  padding-bottom: 4px;
+}
+
+.post-job-form .ant-form-item-label > label {
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Ba trường nội dung tuyển dụng thường có nhiều gạch đầu dòng; mật độ vừa phải giúp đọc nhanh hơn. */
+.post-job-rich-editor__content {
+  line-height: 1.5;
+}
+
+.post-job-rich-editor__content p {
+  margin-bottom: 6px;
+}
+
+/*
+ * Select nhiều lựa chọn giữ đúng 1 dòng: mặc định .ant-select-content bọc xuống hàng làm ô cao lên.
+ * Cho tag co lại và cắt bằng dấu ..., riêng phần "+N" và ô nhập tìm kiếm thì không được co.
+ */
+.post-job-oneline-select .ant-select-content {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.post-job-oneline-select .ant-select-content-item,
+.post-job-oneline-select .ant-select-selection-item {
+  min-width: 0;
+}
+
+.post-job-oneline-select .ant-select-content-item-rest,
+.post-job-oneline-select .ant-select-content-item-suffix {
+  flex: none;
+}
+
+/*
+ * Cột trái (tiến độ) sticky từ xl, cột phải (xem trước) từ 2xl — cùng bám theo chiều cao vùng cuộn.
+ * top: 0 để khoảng hở trên chỉ còn đúng padding 24px của vùng cuộn (xl:p-6), khớp với xl:pt-0 của lưới
+ * nên vị trí lúc chưa cuộn và lúc đã dính vào nhau là một.
+ * Chiều cao khả dụng = --workspace-viewport - 24 (padding trên) - 24 (padding dưới) - 8 (khoảng thở).
+ */
+@media (min-width: 1280px) {
+  .post-job-sticky-col {
+    position: sticky;
+    top: 0;
+    max-height: calc(var(--workspace-viewport, 100dvh) - 56px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+/* Sticky phải nằm trên chính grid item (aside); đặt ở phần tử con thì containing block chỉ cao bằng panel nên không trượt được. */
+@media (min-width: 1536px) {
+  .post-job-preview-col {
+    position: sticky;
+    top: 0;
+    height: calc(var(--workspace-viewport, 100dvh) - 56px);
+    min-height: 0;
+  }
+
+  .post-job-preview-col > div {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .post-job-preview-scroll {
+    scrollbar-width: none;
+  }
+
+  .post-job-preview-col:hover .post-job-preview-scroll {
+    scrollbar-color: #94a3b8 transparent;
+    scrollbar-width: thin;
+  }
+
+  .post-job-preview-scroll::-webkit-scrollbar {
+    width: 0;
+  }
+
+  .post-job-preview-col:hover .post-job-preview-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .post-job-preview-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+  }
+
+  .post-job-preview-col:hover .post-job-preview-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+  }
+}

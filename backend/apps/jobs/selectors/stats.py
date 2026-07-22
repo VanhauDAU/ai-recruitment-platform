@@ -10,7 +10,7 @@ from apps.employers.models import Company
 from common.media_storage import media_url_from_value
 
 from ..models import Job, JobCategory
-from .listing import SALARY_BUCKETS, filter_salary_bucket
+from .listing import SALARY_BUCKETS, filter_salary_bucket, publicly_available_job_filter
 
 
 def _growth_series(active_jobs, now):
@@ -163,7 +163,7 @@ def _featured_employers(active_jobs, request):
 def build_job_stats(request):
     """Build the homepage market dashboard payload."""
     now = timezone.now()
-    active_jobs = Job.objects.filter(status=Job.Status.ACTIVE).annotate(
+    active_jobs = Job.objects.filter(publicly_available_job_filter()).annotate(
         published=Coalesce('published_at', 'created_at')
     )
     return {

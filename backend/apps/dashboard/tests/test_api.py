@@ -91,3 +91,16 @@ class EmployerDashboardApiTests(APITestCase):
         response = self.client.get(reverse('employer-dashboard'))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_dashboard_repairs_legacy_employer_without_recruiter_profile(self):
+        legacy_employer = User.objects.create_user(
+            email='legacy-dashboard-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.client.force_authenticate(user=legacy_employer)
+
+        response = self.client.get(reverse('employer-dashboard'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(RecruiterProfile.objects.filter(user=legacy_employer).exists())

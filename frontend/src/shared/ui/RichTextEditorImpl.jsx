@@ -11,7 +11,8 @@ import CharacterCount from '@tiptap/extension-character-count'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Button, Tooltip } from 'antd'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import './rich-text-editor.css'
 
 function ToolbarButton({ title, active = false, disabled = false, onClick, children }) {
   return (
@@ -30,7 +31,11 @@ function ToolbarButton({ title, active = false, disabled = false, onClick, child
   )
 }
 
-export default function RichTextEditor({ value = '', onChange, maxLength = 10000, placeholder = '', disabled = false, error = false }) {
+export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '' }) {
+  // `Form.setFieldsValue` có thể chạy trước khi TipTap hoàn tất khởi tạo. Giữ
+  // content ban đầu rỗng và đồng bộ ở layout effect để editor luôn lấy đúng
+  // giá trị controlled sau khi mở trang sửa tin.
+  const hasUserInteraction = useRef(false)
   const editor = useEditor({
     immediatelyRender: false,
     editable: !disabled,
@@ -38,14 +43,26 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
       StarterKit,
       CharacterCount.configure({ limit: maxLength }),
     ],
-    content: value,
+    content: '',
     editorProps: {
       attributes: {
-        class: 'company-rich-editor__content',
+        class: `company-rich-editor__content ${contentClassName}`.trim(),
         'data-placeholder': placeholder,
+        style: `min-height: ${minHeight}px`,
+      },
+      handleDOMEvents: {
+        focus: () => {
+          hasUserInteraction.current = true
+          return false
+        },
       },
     },
-    onUpdate: ({ editor: activeEditor }) => onChange?.(activeEditor.isEmpty ? '' : activeEditor.getHTML()),
+    // TipTap có thể phát một update rỗng khi khởi tạo. Không để update nội bộ
+    // đó ghi đè nội dung vừa được Form nạp cho ba trường rich text.
+    onUpdate: ({ editor: activeEditor }) => {
+      if (!hasUserInteraction.current && !activeEditor.isFocused) return
+      onChange?.(activeEditor.isEmpty ? '' : activeEditor.getHTML())
+    },
   })
 
   useEffect(() => {
@@ -53,7 +70,7 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
     editor.setEditable(!disabled)
   }, [disabled, editor])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!editor || editor.getHTML() === value || (!value && editor.isEmpty)) return
     editor.commands.setContent(value || '', { emitUpdate: false })
   }, [editor, value])

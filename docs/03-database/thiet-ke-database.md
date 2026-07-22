@@ -10,6 +10,9 @@ Nguồn: database_hoan_chinh_ai_recruitment_cv_builder v1.4.
 Thiết kế nâng cấp chuyên sâu cho quy trình đăng tin và trang chi tiết việc làm:
 [Kế hoạch nâng cấp database tin tuyển dụng](./ke-hoach-nang-cap-job-posting.md).
 
+Quyết định hiện hành về chiến dịch, quota, phân quyền tin và pipeline ứng viên:
+[Chiến dịch tuyển dụng, vòng đời tin và pipeline ứng viên](./ke-hoach-chien-dich-va-vong-doi-tin.md).
+
 Kế hoạch tách công ty khỏi nhà tuyển dụng (nhiều HR/công ty, onboarding xác thực kiểu TopCV):
 [Kế hoạch thiết kế lại công ty & nhà tuyển dụng](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md).
 
@@ -44,6 +47,8 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `user_cvs` | `backend/apps/cvs` | CV builder + upload (PDF/DOCX), soft-delete |
 | `cv_skills` | `backend/apps/cvs` | Nested trong API `user_cvs` |
 | `jobs` | `backend/apps/jobs` | Tin tuyển dụng lõi đã tinh gọn; lương dùng `salary_type`, có tuổi, giới tính, học vấn, kinh nghiệm và số lượng tuyển |
+| `recruitment_campaigns` | `backend/apps/employers` | Chiến dịch do một recruiter sở hữu; nhóm tùy chọn các tin cùng chủ sở hữu và mục tiêu/phễu tuyển dụng |
+| `job_status_history` | `backend/apps/jobs` | Lịch sử xuất bản/đóng/mở lại/sao chép tin với actor |
 | `job_category_assignments` | `backend/apps/jobs` | Một vị trí chuyên môn chính và nhiều kiến thức chuyên ngành |
 | `job_locations` | `backend/apps/jobs` | Nhiều địa điểm kèm địa chỉ cụ thể; API ghi mới bắt buộc chọn phường/xã |
 | `job_work_schedules` | `backend/apps/jobs` | Nhiều khung ngày/giờ có cấu trúc và ghi chú bổ sung |
@@ -51,7 +56,7 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `benefits`, `job_benefits` | `backend/apps/jobs` | Danh mục quyền lợi chuẩn hóa và quan hệ theo tin |
 | `languages`, `job_language_requirements` | `backend/apps/jobs` | Yêu cầu ngoại ngữ, trình độ/chứng chỉ và mức bắt buộc |
 | `job_application_contacts`, `job_application_emails` | `backend/apps/jobs` | Người nhận hồ sơ nội bộ và tối đa 5 email; không trả qua public API |
-| `applications` | `backend/apps/applications` | UNIQUE(candidate, job) — chặn ứng tuyển trùng ở cả serializer lẫn DB constraint |
+| `applications`, `application_status_history` | `backend/apps/applications` | UNIQUE(candidate, job), snapshot CV bất biến, pipeline recruiter và timeline ứng viên đã lọc |
 | `blog_postcategory` | `backend/apps/blog` | Danh mục bài viết cẩm nang (taxonomy phẳng 1 cấp), seed 6 danh mục qua `seed_blog` |
 | `blog_post` | `backend/apps/blog` | Bài viết blog: `public_id`, slug SEO, `content` HTML, FK `related_job_category`→`jobs.JobCategory`, vòng đời draft→pending→published→archived, permission `can_publish_post` |
 | `blog_tag`, `blog_post_tags` | `backend/apps/blog` | Thẻ bài viết + M2M UNIQUE(post, tag) |
@@ -59,7 +64,7 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 
 **Ghi chú triển khai khác PRD/DB doc:**
 - PRD mục 13.2 không liệt kê app riêng cho `job_categories`/`locations`/`skills`/`employer_profiles` — đã tách thành app Django riêng (`jobs` chứa job_categories, `locations`, `skills`, `employers`) để tránh phụ thuộc vòng và rõ trách nhiệm từng app.
-- Quy trình duyệt job: employer đăng tin qua API → `status=pending`, admin duyệt thủ công qua Django admin để chuyển `active` (API duyệt riêng cho trang quản trị chưa có — mục 1.15 tracker).
+- `posted_by` là ranh giới quyền: chỉ người tạo tin nhìn/sửa tin và các ứng tuyển của tin, kể cả khi nhiều recruiter cùng company. Tin đi theo `draft → pending → active|rejected`; admin duyệt/từ chối tại API moderation, lý do từ chối lưu trên `jobs.rejected_reason` và audit tại `job_status_history`.
 - Các trường ảnh (`avatar_url`, `Company.logo_url`/`cover_image_url`, `CompanyImage.image_url`, `CompanyDocument.file_url`, `JobCategory.logo_url`, `Banner.image_url`, `SiteSetting` kiểu image, `UserCv.*_url`) lưu **storage key** chứ không phải URL tuyệt đối — URL công khai được resolve khi trả API theo domain/CDN hiện tại. Xem quy ước media ở [../04-api/tai-lieu-api.md](../04-api/tai-lieu-api.md).
 - `jobs.locations` M2M cũ đã được migration `0013` chuyển sang `job_locations` trước khi xóa. Cả 61 liên kết hiện có được giữ nguyên; API mới yêu cầu phường/xã và địa chỉ cụ thể.
 - Tất cả app Django được gom vào `backend/apps/` (thay vì nằm trực tiếp dưới `backend/`) để thư mục gốc backend gọn hơn; `backend/common/` (tiện ích dùng chung như `public_id`) và `backend/config/` (settings/urls) vẫn ở ngoài `apps/` vì không phải Django app.

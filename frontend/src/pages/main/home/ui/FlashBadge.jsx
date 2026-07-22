@@ -2,6 +2,7 @@ import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job'
+import { JobImpressionBoundary } from '@/features/track-job-engagement'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 import { legacyAsset } from '@/shared/config/assets'
 
@@ -225,8 +226,9 @@ export default function FlashBadge() {
                   const topPx = slot * SLOT
                   const isOffscreen = slot < 0 || slot >= VISIBLE
                   return (
-                    <div
+                    <JobImpressionBoundary
                       key={id}
+                      slug={job.slug}
                       onClick={() => !isOffscreen && navigate(jobDetailPath(job))}
                       style={{
                         position: 'absolute',
@@ -266,7 +268,7 @@ export default function FlashBadge() {
                         <p className="truncate text-xs text-gray-500 mt-0.5">{job.company_name}</p>
                       </div>
                       <ArrowRightOutlined className="text-gray-300 group-hover:text-[#02893c] transition-colors shrink-0 text-xs" />
-                    </div>
+                    </JobImpressionBoundary>
                   )
                 })}
           </div>

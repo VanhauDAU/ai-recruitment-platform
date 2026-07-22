@@ -10,6 +10,16 @@ x-service-hosts: &service-hosts
   CELERY_BROKER_URL: redis://redis:6379/1
 
 services:
+  # Named volumes are initially owned by root, while Django deliberately runs
+  # as appuser. Initialise the private-media volume before any service tries
+  # to persist uploads (business documents, CV exports, and similar files).
+  media-init:
+    build: ./backend
+    user: '0:0'
+    command: sh -c 'mkdir -p /app/media && chown -R appuser:appuser /app/media'
+    volumes:
+      - backend_media:/app/media
+
   db:
     image: postgres:16
     environment:
@@ -52,6 +62,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
 
   worker:
     build: ./backend
@@ -69,6 +81,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
 
   beat:
     build: ./backend

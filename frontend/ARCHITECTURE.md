@@ -223,6 +223,28 @@ pages/main/jobs/JobDetail
 - `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
   explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.
 
+## Ownership map — Job engagement
+
+```text
+pages/main job cards + job detail/quick view
+  → features/track-job-engagement
+    → entities/job, entities/consent
+      → shared/api
+
+pages/employer/app/campaigns/CampaignJobsPanel
+  → entities/campaign
+    → shared/api
+```
+
+- `features/track-job-engagement` sở hữu điều kiện viewability 50%/1 giây,
+  timer khi tab visible và batch queue impression. Feature chỉ gửi tracking khi
+  consent Analytics ở trạng thái `ready`; backend vẫn là nguồn xác thực consent
+  và dedupe 24 giờ.
+- `entities/job` sở hữu HTTP contract impression/view; page và widget chỉ gắn
+  boundary/hook vào bề mặt job card hoặc nội dung chi tiết thực sự hiển thị.
+- Báo cáo chiến dịch đọc API performance theo kỳ từ `entities/campaign`; không
+  tự suy ra tỷ lệ từ lifetime counter ở frontend.
+
 ## i18n cổng marketing nhà tuyển dụng
 
 - i18next chỉ được khởi tạo từ `EmployerMarketingLayout`; không import

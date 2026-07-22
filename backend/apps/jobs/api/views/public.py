@@ -9,16 +9,22 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
+from common.metrics import record_metric
 
 from ...models import SavedJob
 from ...selectors.listing import (
     active_job_detail_queryset,
+    active_job_tracking_queryset,
     build_job_list_queryset,
     suggest_job_search_terms,
 )
 from ...selectors.recommendations import recommend_jobs_for_cv
 from ...selectors.stats import build_job_stats
-from ...services.engagement import record_consented_job_view, set_viewer_cookie
+from ...services.engagement import (
+    record_consented_job_impressions,
+    record_consented_job_view,
+    set_viewer_cookie,
+)
 from ..serializers import (
     JobDetailSerializer,
     PublicJobListSerializer,
@@ -224,6 +230,7 @@ class JobViewCreateView(APIView):
         job = get_object_or_404(active_job_detail_queryset(), slug=slug)
         consent = load_consent(request)
         if not consent or not consent['analytics']:
+            record_metric('job_engagement', event='view', reason='consent_required')
             return Response(
                 {'counted': False, 'view_count': job.view_count, 'reason': 'consent_required'}
             )
@@ -232,6 +239,66 @@ class JobViewCreateView(APIView):
         viewer_id = result.pop('viewer_id', None)
         response = Response(result)
         set_viewer_cookie(response, viewer_id)
+        return response
+
+
+class JobImpressionBatchSerializer(serializers.Serializer):
+    slugs = serializers.ListField(
+        child=serializers.SlugField(max_length=255),
+        min_length=1,
+        max_length=50,
+        allow_empty=False,
+    )
+
+    def validate_slugs(self, value):
+        return list(dict.fromkeys(value))
+
+
+@extend_schema(
+    summary='Ghi nhận các lượt hiển thị job card hợp lệ',
+    request=JobImpressionBatchSerializer,
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['jobs'],
+)
+class JobImpressionBatchCreateView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'job_impression'
+
+    def post(self, request):
+        serializer = JobImpressionBatchSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        slugs = serializer.validated_data['slugs']
+        consent = load_consent(request)
+        if not consent or not consent['analytics']:
+            record_metric('job_impression_batch_size', len(slugs), reason='consent_required')
+            record_metric('job_engagement', event='impression', reason='consent_required')
+            return Response(
+                {
+                    'results': [
+                        {'slug': slug, 'counted': False, 'reason': 'consent_required'}
+                        for slug in slugs
+                    ]
+                }
+            )
+
+        jobs_by_slug = {job.slug: job for job in active_job_tracking_queryset(slugs)}
+        jobs = [jobs_by_slug[slug] for slug in slugs if slug in jobs_by_slug]
+        record_metric('job_impression_batch_size', len(slugs), reason='accepted')
+        result = record_consented_job_impressions(request, jobs)
+        tracked_by_slug = {item['slug']: item for item in result['results']}
+        response = Response(
+            {
+                'results': [
+                    tracked_by_slug.get(
+                        slug,
+                        {'slug': slug, 'counted': False, 'reason': 'not_found'},
+                    )
+                    for slug in slugs
+                ]
+            }
+        )
+        set_viewer_cookie(response, result.get('viewer_id'))
         return response
 
 

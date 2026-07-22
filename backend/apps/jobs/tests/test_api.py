@@ -4,12 +4,16 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.employers.models import Company
+from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
 
-from ..api.serializers import EmployerJobWriteSerializer, JobDetailSerializer
-from ..models import Benefit, Job, JobCategory, Language
+from ..api.serializers import (
+    EmployerJobDraftSerializer,
+    EmployerJobWriteSerializer,
+    JobDetailSerializer,
+)
+from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language
 
 
 class JobCategoryApiTests(APITestCase):
@@ -97,6 +101,97 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertIn('procv_viewer_id', response.cookies)
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 1)
+        daily = JobEngagementDaily.objects.get(job=self.job)
+        self.assertEqual(daily.view_count, 1)
+        self.assertEqual(daily.impression_count, 0)
+
+    def test_impression_batch_requires_analytics_consent(self):
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug]},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'][0]['reason'], 'consent_required')
+        self.assertNotIn('procv_viewer_id', response.cookies)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 0)
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=True)
+    def test_consented_impression_batch_increments_lifetime_and_daily_counters(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug, self.job.slug, 'missing-job']},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data['results'],
+            [
+                {'slug': self.job.slug, 'counted': True},
+                {'slug': 'missing-job', 'counted': False, 'reason': 'not_found'},
+            ],
+        )
+        self.assertIn('procv_viewer_id', response.cookies)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 1)
+        daily = JobEngagementDaily.objects.get(job=self.job)
+        self.assertEqual(daily.impression_count, 1)
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=None)
+    def test_redis_failure_does_not_increment_impression(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug]},
+            format='json',
+        )
+
+        self.assertEqual(response.data['results'][0]['reason'], 'redis_error')
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 0)
+        self.assertFalse(JobEngagementDaily.objects.filter(job=self.job).exists())
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=False)
+    def test_duplicate_impression_does_not_increment_counters(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug]},
+            format='json',
+        )
+
+        self.assertEqual(response.data['results'][0]['reason'], 'duplicate')
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 0)
+
+    def test_impression_batch_accepts_at_most_fifty_slugs(self):
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [f'job-{index}' for index in range(51)]},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('slugs', response.data)
 
 
 class JobSalaryBucketFilterTests(APITestCase):
@@ -152,6 +247,7 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'locations_detail',
                 'job_skills',
                 'work_type',
+                'work_types',
                 'employment_type',
                 'education_level',
                 'experience_years',
@@ -161,6 +257,7 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'salary_type',
                 'salary_min',
                 'salary_max',
+                'income_display_type',
                 'currency',
                 'tier',
                 'is_hot',
@@ -212,8 +309,8 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.skill_group = SkillGroup.objects.create(name='Chăm sóc khách hàng')
         self.skill = Skill.objects.create(name='Giao tiếp', group=self.skill_group)
-        self.benefit = Benefit.objects.get(name='Bảo hiểm xã hội')
-        self.language = Language.objects.get(code='ko')
+        self.benefit, _ = Benefit.objects.get_or_create(name='Bảo hiểm xã hội')
+        self.language, _ = Language.objects.get_or_create(name='Tiếng Hàn', code='ko')
 
     def test_employer_list_uses_compact_management_contract(self):
         Job.objects.create(
@@ -238,8 +335,15 @@ class EmployerJobSerializerTests(APITestCase):
                 'employment_type',
                 'deadline',
                 'status',
+                'is_expired',
+                'campaign',
+                'campaign_name',
                 'application_count',
+                'view_count',
                 'published_at',
+                'submitted_at',
+                'approved_at',
+                'rejected_reason',
                 'created_at',
                 'updated_at',
             },
@@ -262,7 +366,8 @@ class EmployerJobSerializerTests(APITestCase):
             'requirements': '<p>Giao tiếp tốt.</p>',
             'benefits': '<p>Đầy đủ chế độ.</p>',
             'work_type': Job.WorkType.ONSITE,
-            'employment_type': Job.EmploymentType.FULL_TIME,
+            'work_types': [Job.WorkType.ONSITE, Job.WorkType.HYBRID],
+            'employment_type': Job.EmploymentType.WORK_FROM_HOME,
             'experience_years': Job.ExperienceYears.UNDER_1,
             'position_level': Job.PositionLevel.EMPLOYEE,
             'education_level': Job.EducationLevel.UNIVERSITY,
@@ -273,6 +378,7 @@ class EmployerJobSerializerTests(APITestCase):
             'salary_type': Job.SalaryType.RANGE,
             'salary_min': '9000000',
             'salary_max': '12000000',
+            'income_display_type': Job.IncomeDisplayType.INCOME_AT_KPI,
             'currency': 'VND',
             'category_assignments': [
                 {'category': self.specialization.pk, 'role': 'primary_specialization'},
@@ -315,6 +421,13 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
         job = serializer.save(posted_by=self.user, company=self.company)
 
+        self.assertEqual(job.employment_type, Job.EmploymentType.WORK_FROM_HOME)
+        self.assertEqual(job.work_types, [Job.WorkType.ONSITE, Job.WorkType.HYBRID])
+        self.assertEqual(job.work_type, Job.WorkType.ONSITE)
+        self.assertEqual(
+            job.income_display_type,
+            Job.IncomeDisplayType.INCOME_AT_KPI,
+        )
         self.assertEqual(job.category_assignments.count(), 2)
         self.assertEqual(job.job_locations.count(), 1)
         self.assertEqual(job.work_schedules.count(), 1)
@@ -323,13 +436,101 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.language_requirements.count(), 1)
         self.assertEqual(job.application_contact.emails.count(), 1)
 
-    def test_new_job_location_rejects_province_only(self):
+    def test_draft_accepts_incomplete_salary_and_partial_contact(self):
+        serializer = EmployerJobDraftSerializer(
+            data={
+                'title': '',
+                'description': '',
+                'salary_type': Job.SalaryType.RANGE,
+                'salary_min': None,
+                'salary_max': None,
+                'income_display_type': Job.IncomeDisplayType.INCOME_AT_KPI,
+                'application_contact': {
+                    'recipient_name': 'Nguyễn Văn A',
+                    'phone': '',
+                    'emails': [],
+                },
+            }
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = serializer.save(posted_by=self.user, company=self.company)
+
+        self.assertIsNone(job.salary_type)
+        self.assertEqual(job.income_display_type, Job.IncomeDisplayType.INCOME_AT_KPI)
+        self.assertEqual(job.application_contact.recipient_name, 'Nguyễn Văn A')
+        self.assertEqual(job.application_contact.phone, '')
+        self.assertEqual(job.application_contact.emails.count(), 0)
+
+    def test_campaign_rejects_a_second_job(self):
+        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=self.company,
+            name='Tuyển chăm sóc khách hàng',
+        )
+        self.client.force_authenticate(self.user)
+        url = f'{reverse("employer-job-list-create")}?as=draft'
+        first_payload = self.payload()
+        first_payload['campaign'] = campaign.public_id
+
+        first = self.client.post(url, first_payload, format='json')
+        second_payload = self.payload()
+        second_payload.update(
+            {'campaign': campaign.public_id, 'title': 'Nhân viên chăm sóc khách hàng ca tối'}
+        )
+        second = self.client.post(url, second_payload, format='json')
+
+        self.assertEqual(first.status_code, 201, first.data)
+        self.assertEqual(second.status_code, 400)
+        self.assertEqual(
+            second.data['campaign'][0],
+            'Mỗi chiến dịch chỉ được liên kết với một tin tuyển dụng.',
+        )
+
+    def test_range_salary_accepts_only_minimum_or_maximum(self):
+        for salary_min, salary_max in ((9000000, None), (None, 12000000)):
+            with self.subTest(salary_min=salary_min, salary_max=salary_max):
+                payload = self.payload()
+                payload['salary_min'] = salary_min
+                payload['salary_max'] = salary_max
+                serializer = EmployerJobWriteSerializer(data=payload)
+
+                self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_location_accepts_province_for_all_wards(self):
         payload = self.payload()
         payload['job_locations'][0]['location'] = self.province.pk
         serializer = EmployerJobWriteSerializer(data=payload)
 
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('job_locations', serializer.errors)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_location_accepts_empty_address_detail(self):
+        payload = self.payload()
+        payload['job_locations'][0]['address_detail'] = ''
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_schedule_accepts_empty_end_time(self):
+        payload = self.payload()
+        payload['work_schedules'][0]['end_time'] = None
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_location_accepts_same_ward_with_different_addresses(self):
+        payload = self.payload()
+        payload['job_locations'].append(
+            {
+                'location': self.ward.pk,
+                'address_detail': 'Một địa chỉ khác',
+                'sort_order': 1,
+            }
+        )
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_contact_rejects_more_than_five_emails(self):
         payload = self.payload()
@@ -382,6 +583,21 @@ class EmployerJobSerializerTests(APITestCase):
             name='Phường Hải Châu',
             parent=province2,
         )
+        preferred_skill = Skill.objects.create(name='Excel', group=self.skill_group)
+        # Đặt category tường minh để khẳng định thứ tự nhóm, không phụ thuộc dữ liệu seed sẵn có.
+        Benefit.objects.filter(pk=self.benefit.pk).update(category=Benefit.Category.OTHER)
+        welfare_benefit, _ = Benefit.objects.update_or_create(
+            name='Thưởng tháng 13', defaults={'category': Benefit.Category.WELFARE}
+        )
+        allowance_benefit, _ = Benefit.objects.update_or_create(
+            name='Phụ cấp ăn trưa', defaults={'category': Benefit.Category.ALLOWANCE}
+        )
+        payload['job_skills'].append({'skill': preferred_skill.pk, 'importance': 'preferred'})
+        # Thêm ngược thứ tự danh mục để chắc chắn nhóm được sắp theo Benefit.Category.
+        payload['job_benefits'] += [
+            {'benefit': welfare_benefit.pk},
+            {'benefit': allowance_benefit.pk},
+        ]
         payload['job_locations'] += [
             {'location': ward2.pk, 'address_detail': '12 Dịch Vọng'},
             {'location': ward3.pk, 'address_detail': '3 Hải Châu'},
@@ -418,6 +634,7 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(danang['addresses'][0]['display'], '3 Hải Châu, Phường Hải Châu')
 
+        # Kỹ năng đã tách khỏi hàng tag tóm tắt, chỉ còn ở required_skills/preferred_skills.
         self.assertEqual(
             data['requirement_tags'],
             [
@@ -425,10 +642,26 @@ class EmployerJobSerializerTests(APITestCase):
                 'Tuổi 22 - 30',
                 'Từ Đại học trở lên',
                 'Giới tính: Nữ',
-                'Giao tiếp',
             ],
         )
-        self.assertEqual(data['benefit_tags'], ['Bảo hiểm xã hội'])
+        self.assertEqual(data['required_skills'], ['Giao tiếp'])
+        self.assertEqual(data['preferred_skills'], ['Excel'])
+        self.assertEqual(
+            data['benefit_groups'],
+            [
+                {
+                    'category': 'allowance',
+                    'category_label': 'Phụ cấp',
+                    'items': ['Phụ cấp ăn trưa'],
+                },
+                {
+                    'category': 'welfare',
+                    'category_label': 'Phúc lợi',
+                    'items': ['Thưởng tháng 13'],
+                },
+                {'category': 'other', 'category_label': 'Khác', 'items': ['Bảo hiểm xã hội']},
+            ],
+        )
 
         language = data['language_requirements'][0]
         self.assertEqual(language['language_name'], 'Tiếng Hàn')
@@ -451,3 +684,6 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(data['workplace_groups'], [])
         self.assertEqual(data['requirement_tags'], [])
         self.assertEqual(data['benefit_tags'], [])
+        self.assertEqual(data['required_skills'], [])
+        self.assertEqual(data['preferred_skills'], [])
+        self.assertEqual(data['benefit_groups'], [])

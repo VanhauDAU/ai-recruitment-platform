@@ -4,6 +4,8 @@ from .benefits import Benefit, JobBenefit
 from .contacts import JobApplicationContact, JobApplicationEmail
 from .core import Job, JobCategory, JobCategoryLocalization
 from .details import JobCategoryAssignment, JobLocation, JobWorkSchedule
+from .engagement import JobEngagementDaily
+from .history import JobStatusHistory
 from .languages import JobLanguageRequirement, Language
 from .saved import SavedJob
 from .skills import JobSkill
@@ -16,6 +18,8 @@ __all__ = [
     'JobBenefit',
     'JobCategory',
     'JobCategoryLocalization',
+    'JobEngagementDaily',
+    'JobStatusHistory',
     'JobCategoryAssignment',
     'JobLanguageRequirement',
     'JobLocation',

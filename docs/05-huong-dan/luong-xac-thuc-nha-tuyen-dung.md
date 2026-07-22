@@ -176,10 +176,29 @@ nhận JPEG/JPG/PNG/PDF tối đa 5 MB, có minh họa local tại
 `frontend/public/images/employer/` và liên kết tới tài liệu hướng dẫn/mẫu giấy
 ủy quyền.
 
-Ở giai đoạn hiện tại, việc chọn file chỉ phục vụ xem trước UI cục bộ. Nút **Lưu**
-luôn disabled, không gọi API upload hoặc tạo trạng thái xác thực giả. Workflow
-persist tài liệu chỉ được mở sau khi thông tin công ty đã được cập nhật và API
-cho đầy đủ hai phương thức hồ sơ được chốt.
+Sau khi đã liên kết công ty, nút **Lưu** bật khi đủ tệp theo phương thức đã
+chọn: một tệp ĐKDN, hoặc cả giấy ủy quyền và CCCD/hộ chiếu. UI gọi
+`POST /api/employer/company/documents/` cho từng tài liệu, hiển thị tiến trình
+trong lúc gửi, popup xác nhận “`{site_name}` đã nhận được Giấy đăng ký doanh
+nghiệp của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ
+lễ, tết theo quy định)” và refresh checklist xác thực. Khi chưa liên kết công
+ty, nút vẫn disabled kèm liên kết đến phần cập nhật công ty; không tạo trạng
+thái xác thực giả. Sau khi có hồ sơ, tiêu đề trang hiển thị trạng thái **Chờ
+duyệt**, **Đã duyệt** hoặc **Từ chối**; trường hợp từ chối hiện lý do admin đã
+nhập. Nút **Chỉnh sửa** mở form nộp thay thế, reset trạng thái về **Chờ duyệt**
+và không tạo thêm bản ghi giấy tờ cũ.
+
+Hai phương thức giấy tờ là loại trừ nhau. Nếu người dùng đổi từ ĐKDN sang giấy
+ủy quyền + giấy tờ định danh (hoặc ngược lại), chỉ bộ tệp của phương thức mới
+được giữ sau khi lưu thành công; bản ghi cũ và tệp private storage tương ứng bị
+xóa. Với phương thức hai tệp, hệ thống chỉ xóa bộ cũ sau khi cả giấy ủy quyền
+và giấy tờ định danh đều tải lên thành công.
+
+Ở trạng thái đã lưu, hai radio vẫn hiện ở chế độ chỉ đọc và từng thẻ giấy tờ giữ
+nguyên bố cục minh họa/mẫu như trước khi lưu. Tên mỗi tệp đã nộp là hành động
+**Xem tệp đã nộp**; frontend lấy nội dung qua endpoint riêng tư đã xác thực rồi
+mở khung xem trước, nên không làm lộ URL storage và vẫn xem được khi access token
+chỉ tồn tại trong phiên ứng dụng.
 
 ### Trang văn bản xử lý Dữ liệu cá nhân
 
@@ -212,15 +231,23 @@ Khối thứ hai là thỏa thuận **nền tảng – Nhà tuyển dụng**: ng
 đầy đủ ở `/data-processing-agreement`, tích xác nhận rồi bấm **Xác nhận** ngay
 trên trang. Cả Lưu và Xác nhận đều hoạt động khi nhà tuyển dụng chưa cập nhật
 thông tin công ty; hai trạng thái `candidate_dpa_submitted` và `dpa_accepted`
-vẫn được tính độc lập. Nút đăng tin đầu tiên bị khóa tới khi đủ năm điều kiện
-trước và workflow đăng tin sẽ được triển khai ở giai đoạn sau. Người dùng vẫn
-có thể chọn “xác thực thêm sau” để vào dashboard.
+vẫn được tính độc lập. Sau khi đủ năm điều kiện, recruiter có thể tạo nháp và
+gửi tin vào hàng chờ admin duyệt; tin chỉ hiển thị với ứng viên khi được duyệt.
+Tài khoản có ba lượt gửi duyệt lần đầu miễn phí trọn đời mặc định; gửi lại tin
+bị từ chối không tiêu thêm lượt. Người dùng vẫn có thể chọn “xác thực thêm sau”
+để vào dashboard, nhưng mỗi lần mở trang tin tuyển dụng sẽ được kiểm tra lại và
+chuyển về checklist nếu chưa đủ năm điều kiện.
 
 ### Cấp xác thực trên sidebar
 
 Sidebar không hiển thị tiến độ của sáu mốc checklist. Nó dùng thang **Cấp 0/3 →
-Cấp 3/3** theo ba điều kiện được tham khảo từ mẫu quản trị: xác thực số điện
-thoại, cập nhật/liên kết thông tin công ty và nộp Giấy đăng ký doanh nghiệp.
+Cấp 3/3**: chưa xác thực email là Cấp 0; xác thực email là Cấp 1; xác thực thêm
+số điện thoại và được duyệt bộ giấy tờ doanh nghiệp là Cấp 2; tài khoản đã đạt
+Cấp 2 và không có lịch sử báo cáo tin đăng là Cấp 3. Bộ tệp **Chờ duyệt** chỉ có
+dấu hoàn thành tại bước “Cập nhật Giấy đăng ký doanh nghiệp” của checklist
+`employer-verify`; nó chưa được tính là giấy tờ đã xác thực, vì vậy tài khoản
+vẫn ở **Cấp 1 – 33%**. Khi giấy tờ được duyệt và tài khoản chưa có lịch sử báo
+cáo tin đăng, hệ thống lần lượt thỏa điều kiện Cấp 2 rồi đạt **Cấp 3 – 100%**.
 Hover hoặc focus vào dấu `?` cạnh nhãn “Tài khoản xác thực” mở popover, hiển thị
 phần trăm hoàn thành, trạng thái từng điều kiện và liên kết đi thẳng tới action
 phù hợp. DLCN và đăng tin đầu tiên vẫn hiển thị riêng ở checklist đầy đủ, không
@@ -229,8 +256,8 @@ làm thay đổi cấp sidebar.
 Backend trả thêm `employer_verification_completed` trong session. Trạng thái này
 bằng `true` khi đã xác thực điện thoại, liên kết công ty với membership được
 duyệt, nộp ĐKDN, nộp thỏa thuận DLCN ứng viên và chấp nhận thỏa thuận nền tảng.
-Nó không phụ thuộc bước đăng tin đầu tiên vì workflow đó chưa triển khai. Sau
-đăng nhập, tài khoản có trạng thái `false` vào `/employer-verify`; trạng thái
+Nó không phụ thuộc bước đăng tin đầu tiên; bước đó chỉ được ghi nhận sau khi
+tin đầu tiên thực sự xuất bản. Sau đăng nhập, tài khoản có trạng thái `false` vào `/employer-verify`; trạng thái
 `true` vào thẳng dashboard hoặc deep-link an toàn.
 
 Dashboard dùng shell quản trị riêng, responsive desktop/mobile. Cấu trúc shell

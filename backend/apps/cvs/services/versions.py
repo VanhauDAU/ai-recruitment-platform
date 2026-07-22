@@ -86,6 +86,10 @@ def create_version(
     create_or_replace_draft=False,
 ):
     """Persist a validated immutable snapshot under a CV row lock."""
+    # Bản CV do caller truyền vào không bị bỏ quên: bên dưới nạp lại một instance khoá hàng để ghi,
+    # nên phải đồng bộ con trỏ ngược lại instance gốc, nếu không caller (và serializer dùng nó)
+    # vẫn thấy latest_version = None dù DB đã có version.
+    caller_cv = cv
     cv = (
         UserCv.objects.select_for_update(of=('self',))
         .select_related(
@@ -144,6 +148,10 @@ def create_version(
                 'updated_at',
             ]
         )
+        if caller_cv is not cv:
+            caller_cv.latest_version = version
+            caller_cv.current_template_version = resolved_template_version
+            caller_cv.current_version = version.version_number
     if create_or_replace_draft:
         CvDraft.objects.update_or_create(
             cv=cv,
