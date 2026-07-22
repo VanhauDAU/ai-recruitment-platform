@@ -209,9 +209,13 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await expect(page.getByText('CV cần xóa', { exact: true })).toBeVisible()
   await page.locator('.group').first().hover()
   await page.getByRole('button', { name: 'Thao tác CV' }).click()
-  await page.getByRole('menuitem', { name: 'Xoá' }).click()
+  const deleteMenuItem = page.getByRole('menuitem', { name: 'Xoá' })
+  await expect(deleteMenuItem).toBeVisible()
   const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV của bạn?' })
-  await expect(deleteDialog).toBeVisible()
+  await Promise.all([
+    expect(deleteDialog).toBeVisible({ timeout: 10_000 }),
+    deleteMenuItem.click(),
+  ])
   const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
   await deleteDialog.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
   await deleteRequest

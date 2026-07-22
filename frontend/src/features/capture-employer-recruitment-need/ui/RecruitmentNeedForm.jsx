@@ -31,7 +31,7 @@ export default function RecruitmentNeedForm({ onCompleted }) {
 
   const categoriesQuery = useQuery({
     queryKey: ['job-categories', 'consulting-need'],
-    queryFn: getJobCategories,
+    queryFn: () => getJobCategories(),
     staleTime: 10 * 60 * 1000,
   })
   const needQuery = useQuery({
