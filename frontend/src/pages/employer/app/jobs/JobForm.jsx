@@ -23,7 +23,7 @@ export default function JobForm() {
   const queryClient = useQueryClient()
   const { user } = useSession()
   const detailQuery = useQuery({ queryKey: jobKeys.employerDetail(publicId), queryFn: () => getEmployerJob(publicId), enabled: Boolean(publicId) })
-  const categoriesQuery = useQuery({ queryKey: jobKeys.categories, queryFn: getJobCategories })
+  const categoriesQuery = useQuery({ queryKey: jobKeys.categories, queryFn: () => getJobCategories() })
   const campaignsQuery = useQuery({ queryKey: campaignKeys.options, queryFn: getCampaignOptions })
   const postingContextQuery = useQuery({ queryKey: jobKeys.postingContext, queryFn: getJobPostingContext })
   const draftMutation = useMutation({

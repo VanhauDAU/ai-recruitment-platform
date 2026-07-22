@@ -46,7 +46,7 @@ export default function PostJobForm({
   const provincesQuery = useQuery({ queryKey: ['locations', 'provinces'], queryFn: getProvinces })
   const benefitsQuery = useQuery({ queryKey: jobKeys.benefits, queryFn: getJobBenefits })
   const languagesQuery = useQuery({ queryKey: jobKeys.languages, queryFn: getJobLanguages })
-  const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: getSkills })
+  const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: () => getSkills() })
   const values = Form.useWatch([], form) || createJobFormValues(initialValues)
   const sections = useMemo(() => getJobFormProgress(values), [values])
 

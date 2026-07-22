@@ -9,7 +9,7 @@ const SIDEBAR_STALE_MS = 5 * 60_000
 export default function useJobSidebarData() {
   const categoriesQuery = useQuery({
     queryKey: jobKeys.categories,
-    queryFn: getJobCategories,
+    queryFn: () => getJobCategories(),
     staleTime: SIDEBAR_STALE_MS,
   })
   const statsQuery = useQuery({

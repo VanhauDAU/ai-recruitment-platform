@@ -501,7 +501,18 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
     })
   })
 
+  const initialCatalogResponses = Promise.all([
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/categories/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/employer/campaigns/options/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/mine/posting-context/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/benefits/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/jobs/languages/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/skills/' && response.status() === 200),
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/locations/' && response.status() === 200),
+  ])
+
   await page.goto('/tuyendung/app/jobs/new?campaign=camp_q3')
+  await initialCatalogResponses
 
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
   await page.getByLabel('Vị trí chuyên môn').click()
@@ -509,7 +520,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin').click()
   await page.locator('.ant-cascader-dropdown:visible').getByText('IT - Phần mềm').click()
   await page.locator('.ant-cascader-dropdown:visible').getByText('Backend Engineer').click()
-  await expect(page.getByTitle('Công nghệ thông tin / IT - Phần mềm / Backend Engineer')).toBeVisible()
+  await expect(page.getByText('Cách ứng viên tìm thấy tin tuyển dụng của bạn')).toBeVisible()
   await expect(page.getByLabel('Kiến thức chuyên ngành')).toBeVisible()
   await page.getByLabel('Kiến thức chuyên ngành').click()
   const domainDropdown = page.locator('.ant-select-dropdown:visible:not(.ant-cascader-dropdown)')
@@ -532,7 +543,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Thông tin nhận hồ sơ' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Dịch vụ và gia tăng hiệu quả' })).toBeVisible()
-  await expect(page.getByLabel('Quyền lợi bổ sung')).toBeVisible()
+  await expect(page.getByText('Quyền lợi bổ sung', { exact: true })).toBeVisible()
   await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)
   await expect(page.locator('.company-rich-editor__content').first()).toHaveCSS('min-height', '230px')
   await page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/).click()
@@ -541,6 +552,9 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await page.locator('.ant-select-dropdown:visible').getByText('Phường Hải Châu', { exact: true }).click()
   await page.getByLabel('Địa điểm chi tiết').fill('123 đường Nguyễn Huệ')
   await page.getByRole('button', { name: 'Thêm phường/xã' }).click()
+  const wardPicker = page.locator('.ant-popover:visible')
+  await wardPicker.getByText('Phường Hòa Cường', { exact: true }).click()
+  await wardPicker.getByRole('button', { name: 'Áp dụng (1)' }).click()
   await expect(page.getByRole('combobox', { name: /Phường\/xã 2/ })).toBeVisible()
   await page.getByRole('button', { name: 'Thêm khu vực làm việc' }).click()
   await expect(page.getByLabel(/Khu vực 2 - Tỉnh\/thành phố/)).toBeVisible()
@@ -550,7 +564,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expect(page.getByLabel('Mô tả thời gian làm việc')).toBeVisible()
   await page.getByRole('button', { name: 'Thêm thời gian' }).click()
   await expect(page.getByLabel('Từ thứ')).toHaveCount(2)
-  await expect(page.getByLabel('Kỹ năng cần có')).toBeVisible()
+  await expect(page.getByText('Kỹ năng cần có', { exact: true })).toBeVisible()
   await expect(page.locator('#expectations').getByText('Ngoại ngữ', { exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên người nhận')).toHaveValue('Nguyễn An')
   await expect(page.locator('#application').getByText('hr@example.com', { exact: true })).toBeVisible()
@@ -565,7 +579,10 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
       { category: 18, role: 'domain_knowledge', sort_order: 1 },
       { category: 19, role: 'domain_knowledge', sort_order: 2 },
     ],
-    job_locations: [{ location: 2, address_detail: '123 đường Nguyễn Huệ', sort_order: 0 }],
+    job_locations: [
+      { location: 2, address_detail: '123 đường Nguyễn Huệ', sort_order: 0 },
+      { location: 3, address_detail: '', sort_order: 1 },
+    ],
   })
 })
 

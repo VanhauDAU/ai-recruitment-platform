@@ -114,6 +114,7 @@ function WorkplaceRow({ areaIndex, index, wards, loading, onRemove }) {
       >
         <Select
           ref={wardSelectRef}
+          aria-label={`Phường/xã ${index + 1} của khu vực ${areaIndex + 1}`}
           showSearch
           optionFilterProp="label"
           loading={loading}
@@ -131,7 +132,7 @@ function WorkplaceRow({ areaIndex, index, wards, loading, onRemove }) {
         className="!mb-0"
         name={[areaIndex, 'workplaces', index, 'address_detail']}
       >
-        <Input placeholder="Nhập địa điểm chi tiết..." />
+        <Input aria-label={`Địa điểm chi tiết ${index + 1} của khu vực ${areaIndex + 1}`} placeholder="Nhập địa điểm chi tiết..." />
       </Form.Item>
       <Button
         className="!absolute right-0 top-0"
@@ -184,6 +185,7 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
         >
           <Select
             ref={provinceSelectRef}
+            aria-label={`Khu vực ${index + 1} - Tỉnh/thành phố`}
             showSearch
             optionFilterProp="label"
             options={provinces.map((item) => ({ value: item.id, label: item.name }))}
