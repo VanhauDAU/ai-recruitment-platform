@@ -220,6 +220,9 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
 
 test('candidate smoke: job application submits the selected immutable CV version through V2', async ({ page }) => {
   let applicationPayload
+  let applications = []
+  const appliedAt = new Date(Date.now() - 6 * 60 * 1000).toISOString()
+  const appliedDateText = new Intl.DateTimeFormat('vi-VN').format(new Date(appliedAt))
   const job = {
     public_id: 'job_1', slug: 'apply-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',
     description: '<p>Mô tả công việc</p>', requirements: '', benefits: '', locations_detail: [],
@@ -237,6 +240,14 @@ test('candidate smoke: job application submits the selected immutable CV version
     const path = new URL(request.url()).pathname
     if (path === '/api/v2/applications/' && request.method() === 'POST') {
       applicationPayload = request.postDataJSON()
+      applications = [{
+        public_id: 'app_1',
+        job_public_id: 'job_1',
+        cv_public_id: 'cv_1',
+        applied_at: appliedAt,
+        submitted_cv_version_public_id: 'cvv_2',
+        status: 'submitted',
+      }]
     }
     const body = path === '/api/auth/me/'
       ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
@@ -260,8 +271,10 @@ test('candidate smoke: job application submits the selected immutable CV version
                 ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
                 : path === '/api/v2/cvs/cv_1/versions/'
                   ? { results: [{ public_id: 'cvv_2', version_number: 2, version_kind: 'published' }] }
-                  : path === '/api/v2/applications/'
-                    ? { public_id: 'app_1', submitted_cv_version_public_id: 'cvv_2', status: 'submitted' }
+              : path === '/api/v2/applications/'
+                    ? (request.method() === 'GET'
+                      ? { results: applications }
+                      : applications[0])
                     : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
@@ -293,6 +306,9 @@ test('candidate smoke: job application submits the selected immutable CV version
   await applicationDialog.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }).check()
   await applicationDialog.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }).click()
   await expect(applicationDialog).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Ứng tuyển lại', exact: true }).first()).toBeVisible()
+  await expect(page.getByText(/Bạn đã gửi CV cho vị trí này ngày:/)).toContainText(`${appliedDateText}.`)
+  await expect(page.getByRole('link', { name: 'Xem CV đã nộp' })).toHaveAttribute('href', '/cvs/cv_1/view')
   expect(applicationPayload).toEqual({
     job_public_id: 'job_1',
     cv_public_id: 'cv_1',
@@ -305,4 +321,7 @@ test('candidate smoke: job application submits the selected immutable CV version
     contact_email: '',
     contact_phone: '',
   })
+
+  await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển lại', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
 })

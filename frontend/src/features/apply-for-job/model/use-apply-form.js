@@ -148,7 +148,7 @@ export function useApplyForm({
           setUploading(false)
         }
       }
-      await submitJobApplication({
+      const application = await submitJobApplication({
         jobPublicId,
         cvPublicId: targetCv.public_id,
         versionPublicId: targetCv.latest_version_public_id,
@@ -161,7 +161,7 @@ export function useApplyForm({
         contactPhone: contactPhone.trim(),
       })
       message.success('Đã gửi hồ sơ ứng tuyển.')
-      onSubmitted?.()
+      onSubmitted?.(application)
       onClose()
     } catch (requestError) {
       setError(requestErrorMessage(

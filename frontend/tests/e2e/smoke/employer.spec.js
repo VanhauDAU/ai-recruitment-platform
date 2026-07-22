@@ -725,6 +725,100 @@ test('employer campaigns: compact list links to a campaign and its single job', 
   await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/new\?campaign=camp_q3$/)
 })
 
+test('employer campaign detail: TopCV-style workspace is responsive and uses API data', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_campaign',
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/campaigns/camp_frontend/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'active',
+        job_count: 1, application_count: 2,
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/campaigns/camp_frontend/report/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        applications: { total: 2, new: 1 },
+        jobs: { total: 1, active: 1 },
+        headcount_target: 2,
+        funnel: { submitted: 1, considering: 1 },
+        daily_applications: [
+          { date: '2026-07-16', count: 0 },
+          { date: '2026-07-17', count: 1 },
+          { date: '2026-07-18', count: 0 },
+          { date: '2026-07-19', count: 0 },
+          { date: '2026-07-20', count: 1 },
+          { date: '2026-07-21', count: 0 },
+          { date: '2026-07-22', count: 0 },
+        ],
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        results: [{
+          public_id: 'app_frontend', candidate_name: 'Trần Minh', candidate_email: 'minh@example.com',
+          job_title: 'Kỹ sư Frontend', submitted_cv_title: 'CV Frontend 2026', status: 'submitted',
+          applied_at: '2026-07-22T09:00:00+07:00',
+        }],
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        results: [{
+          public_id: 'jb_frontend', title: 'Kỹ sư Frontend', status: 'active',
+          application_count: 2, view_count: 18, deadline: '2026-08-31',
+        }],
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/campaigns/camp_frontend?active_tab=apply_cv')
+
+  await expect(page.getByRole('heading', { name: 'Tuyển Frontend' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Quay lại/ })).toBeVisible()
+  await expect(page.getByText('Tổng lượng CV ứng viên')).toBeVisible()
+  await expect(page.getByText('CV đã kết nối')).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'CV ứng tuyển' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByPlaceholder('Tìm ứng viên...')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xuất danh sách CV' })).toBeEnabled()
+  await expect(page.getByText('Trần Minh')).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.getByRole('tab', { name: 'Tin tuyển dụng' }).click()
+  await expect(page).toHaveURL(/active_tab=job/)
+  await expect(page.getByText('Báo cáo Tin tuyển dụng:')).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Biểu đồ lượt ứng tuyển 7 ngày gần nhất' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Kiểm tra CV' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Số lần hiển thị' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Tỷ lệ ứng tuyển' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Xem chi tiết Kỹ sư Frontend' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
 test('employer company settings: recent catalogue and full create form are responsive', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {

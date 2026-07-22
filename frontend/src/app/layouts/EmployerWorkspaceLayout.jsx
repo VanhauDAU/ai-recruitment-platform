@@ -1,4 +1,5 @@
 import {
+  ArrowLeftOutlined,
   BarChartOutlined,
   BellOutlined,
   CustomerServiceOutlined,
@@ -67,7 +68,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
 
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
-  const { pathname } = useLocation()
+  const { pathname, key: locationKey } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -87,6 +88,19 @@ export default function EmployerWorkspaceLayout() {
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
+  const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
+  const isJobNew = pathname === employerAppPath('/jobs/new')
+  const isJobForm = isJobNew || Boolean(jobEditMatch)
+  // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
+  // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
+  // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
+  const goBackFromForm = () => {
+    if (locationKey && locationKey !== 'default') {
+      navigate(-1)
+      return
+    }
+    navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
+  }
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -256,7 +270,20 @@ export default function EmployerWorkspaceLayout() {
 
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
           <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
-            <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+              {isJobForm && (
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={goBackFromForm}
+                  className="!px-2 !font-medium !text-slate-600 hover:!bg-slate-100 hover:!text-emerald-600"
+                >
+                  Quay lại
+                </Button>
+              )}
+              <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
+            </div>
             {isCampaignList && (
               <Link to={employerAppPath('/campaigns')} state={{ createCampaign: true }}>
                 <Button size="small" type="primary" icon={<PlusOutlined />}>Thêm chiến dịch mới</Button>

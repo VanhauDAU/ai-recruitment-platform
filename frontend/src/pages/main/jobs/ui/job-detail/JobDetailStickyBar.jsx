@@ -6,7 +6,7 @@ function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-export default function JobDetailStickyBar({ job, relatedJobs, onApply, onSave, savePending }) {
+export default function JobDetailStickyBar({ job, relatedJobs, applicationStatus, onApply, onSave, savePending }) {
   const headerVisible = useHideOnScroll()
   const [pastHero, setPastHero] = useState(false)
 
@@ -31,7 +31,7 @@ export default function JobDetailStickyBar({ job, relatedJobs, onApply, onSave, 
         </div>
         <div className="hidden shrink-0 items-center gap-2 md:flex">
           <button type="button" onClick={onSave} disabled={savePending} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Lưu tin"><HeartOutlined /></button>
-          <button type="button" onClick={onApply} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)]"><SendOutlined /> Ứng tuyển ngay</button>
+          <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.hasApplied ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SendOutlined />} {applicationStatus.hasApplied ? 'Ứng tuyển lại' : 'Ứng tuyển ngay'}</button>
         </div>
       </div>
     </div>

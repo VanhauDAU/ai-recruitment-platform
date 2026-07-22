@@ -8,6 +8,15 @@ body {
   margin: 0;
 }
 
+/* Tailwind v4 Preflight đặt cursor: default cho button; khôi phục con trỏ tay
+   cho mọi nút bấm còn hoạt động (trừ nút bị disabled giữ nguyên not-allowed). */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]):not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 .cookie-consent-banner {
   background: linear-gradient(100deg, #142f47 0%, #1f3d56 48%, #0f766e 140%);
   border-top: 1px solid rgba(255, 255, 255, 0.14);

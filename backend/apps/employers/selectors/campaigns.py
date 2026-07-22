@@ -54,6 +54,7 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None):
         job_deadline=Subquery(campaign_job.values('deadline')[:1]),
         job_application_count=Subquery(campaign_job.values('application_count')[:1]),
         job_view_count=Subquery(campaign_job.values('view_count')[:1]),
+        job_rejected_reason=Subquery(campaign_job.values('rejected_reason')[:1]),
     )
     if scope == 'open':
         queryset = queryset.filter(status=RecruitmentCampaign.Status.ACTIVE)

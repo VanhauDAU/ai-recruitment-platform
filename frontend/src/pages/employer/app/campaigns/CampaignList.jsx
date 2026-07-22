@@ -1,4 +1,5 @@
 import {
+  CloseCircleFilled,
   FileTextOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
@@ -20,7 +21,7 @@ import {
   Tag,
   message,
 } from 'antd'
-import { useMemo, useState } from 'react'
+import { Children, Fragment, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   CAMPAIGN_SCOPE_OPTIONS,
@@ -32,8 +33,36 @@ import {
   createCampaignFromNeed,
   getCampaigns,
   getCampaignSuggestions,
+  updateCampaign,
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+
+function TextAction({ onClick, danger = false, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-xs font-medium text-slate-900 transition-colors ${danger ? 'hover:text-red-600' : 'hover:text-emerald-600'}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ActionRow({ children, className = '' }) {
+  const items = Children.toArray(children).filter(Boolean)
+  if (items.length === 0) return null
+  return (
+    <div className={`flex flex-wrap items-center gap-x-2.5 gap-y-1 ${className}`}>
+      {items.map((item, index) => (
+        <Fragment key={index}>
+          {index > 0 && <span aria-hidden className="h-3 w-px bg-slate-200" />}
+          {item}
+        </Fragment>
+      ))}
+    </div>
+  )
+}
 
 function recruitmentProgress(campaign) {
   const target = Math.max(campaign.headcount_target || 1, 1)
@@ -71,11 +100,14 @@ function CampaignJobSummary({ campaign, className = '' }) {
 
 export default function CampaignList() {
   const [activityCampaign, setActivityCampaign] = useState(null)
+  const [editCampaign, setEditCampaign] = useState(null)
+  const [rejectJob, setRejectJob] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const createOpen = Boolean(location.state?.createCampaign)
   const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
   const [form] = Form.useForm()
+  const [editForm] = Form.useForm()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const scope = searchParams.get('scope') || ''
@@ -110,6 +142,15 @@ export default function CampaignList() {
       message.success(variables.status === 'active' ? 'Đã mở lại chiến dịch.' : 'Đã dừng chiến dịch.')
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể đổi trạng thái chiến dịch.')),
+  })
+  const updateNameMutation = useMutation({
+    mutationFn: ({ publicId, name }) => updateCampaign(publicId, { name }),
+    onSuccess: () => {
+      invalidateCampaigns()
+      setEditCampaign(null)
+      message.success('Đã cập nhật tên chiến dịch.')
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật chiến dịch.')),
   })
   const fromNeedMutation = useMutation({
     mutationFn: createCampaignFromNeed,
@@ -149,17 +190,39 @@ export default function CampaignList() {
     submitQuickCreate()
   }
 
-  function CampaignActions({ campaign, block = false }) {
-    const canResume = ['draft', 'paused', 'completed'].includes(campaign.status)
+  function CampaignInlineActions({ campaign }) {
+    return (
+      <ActionRow>
+        <TextAction onClick={() => setEditCampaign(campaign)}>Sửa chiến dịch</TextAction>
+        <TextAction onClick={() => navigate(`/tuyendung/app/campaigns/${campaign.public_id}?tab=overview`)}>Xem báo cáo</TextAction>
+        <TextAction onClick={() => navigate(`/tuyendung/app/campaigns/${campaign.public_id}?tab=applications`)}>Xem CV ứng tuyển</TextAction>
+      </ActionRow>
+    )
+  }
+
+  function JobInlineActions({ campaign }) {
     const job = campaign.campaign_job
+    if (!job) {
+      return (
+        <ActionRow>
+          <TextAction onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}>Đăng tin</TextAction>
+        </ActionRow>
+      )
+    }
+    return (
+      <ActionRow>
+        <TextAction onClick={() => navigate(`/tuyendung/app/jobs/${job.public_id}/edit`)}>Chỉnh sửa</TextAction>
+        {job.status === 'rejected' && (
+          <TextAction danger onClick={() => setRejectJob({ ...job, campaignName: campaign.name })}>Xem lý do bị từ chối</TextAction>
+        )}
+      </ActionRow>
+    )
+  }
+
+  function CampaignStatusActions({ campaign, block = false }) {
+    const canResume = ['draft', 'paused', 'completed'].includes(campaign.status)
     return (
       <div className={`flex flex-wrap gap-2 ${block ? '[&>*]:flex-1' : ''}`}>
-        <Button size="small"><Link to={`/tuyendung/app/campaigns/${campaign.public_id}`}>Xem</Link></Button>
-        {job ? (
-          <Button size="small" icon={<FileTextOutlined />}><Link to={`/tuyendung/app/jobs/${job.public_id}`}>Xem tin</Link></Button>
-        ) : (
-          <Button size="small" icon={<FileTextOutlined />} onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}>Đăng tin</Button>
-        )}
         {campaign.status === 'active' && (
           <Popconfirm
             title="Dừng chiến dịch?"
@@ -184,6 +247,9 @@ export default function CampaignList() {
           <span className="text-xs text-slate-400">#{campaign.public_id}</span>
           <Link className="mt-1 block font-bold !text-slate-900 hover:!text-emerald-700" to={`/tuyendung/app/campaigns/${campaign.public_id}`}>{campaign.name}</Link>
           <Tag className="mt-2" color={CAMPAIGN_STATUS_COLORS[campaign.status]}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</Tag>
+          <div className="mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100">
+            <CampaignInlineActions campaign={campaign} />
+          </div>
         </div>
       ),
     },
@@ -197,7 +263,18 @@ export default function CampaignList() {
         </Link>
       ),
     },
-    { title: 'Tin tuyển dụng', width: 300, render: (_, campaign) => <CampaignJobSummary campaign={campaign} /> },
+    {
+      title: 'Tin tuyển dụng',
+      width: 300,
+      render: (_, campaign) => (
+        <div className="group/job min-w-0">
+          <CampaignJobSummary campaign={campaign} />
+          <div className="mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover/job:opacity-100">
+            <JobInlineActions campaign={campaign} />
+          </div>
+        </div>
+      ),
+    },
     {
       title: 'Tiến độ tuyển',
       width: 170,
@@ -208,7 +285,7 @@ export default function CampaignList() {
         </div>
       ),
     },
-    { title: 'Thao tác', width: 240, render: (_, campaign) => <CampaignActions campaign={campaign} /> },
+    { title: 'Thao tác', width: 140, render: (_, campaign) => <CampaignStatusActions campaign={campaign} /> },
   ]
 
   return (
@@ -248,14 +325,14 @@ export default function CampaignList() {
               <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</Tag>
             </div>
             <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">CV ứng tuyển</span><strong>{campaign.application_count || 0}</strong>{campaign.unviewed_application_count > 0 && <span className="ml-1 text-emerald-600">· {campaign.unviewed_application_count} mới</span>}</div>
-            <div className="mt-4"><p className="mb-2 text-xs font-medium text-slate-500">TIN TUYỂN DỤNG</p><CampaignJobSummary campaign={campaign} /></div>
+            <div className="mt-4"><p className="mb-2 text-xs font-medium text-slate-500">TIN TUYỂN DỤNG</p><CampaignJobSummary campaign={campaign} /><div className="mt-2"><JobInlineActions campaign={campaign} /></div></div>
             <div className="mt-4"><div className="mb-1 flex justify-between text-xs text-slate-500"><span>Tiến độ tuyển</span><strong>{campaign.accepted_count || 0}/{campaign.headcount_target || 1}</strong></div><Progress percent={recruitmentProgress(campaign)} showInfo={false} strokeColor="#00b14f" /></div>
-            <div className="mt-4 border-t border-slate-100 pt-4"><CampaignActions campaign={campaign} block /></div>
+            <div className="mt-4 space-y-3 border-t border-slate-100 pt-4"><CampaignInlineActions campaign={campaign} /><CampaignStatusActions campaign={campaign} block /></div>
           </Card>
         ))}
       </div>
       <Card className="hidden lg:block" styles={{ body: { padding: 0 } }}>
-        <Table rowKey="public_id" loading={campaignsQuery.isLoading} dataSource={campaigns} locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }} pagination={false} scroll={{ x: 1160 }} columns={columns} />
+        <Table rowKey="public_id" loading={campaignsQuery.isLoading} dataSource={campaigns} locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }} pagination={false} scroll={{ x: 1080 }} onRow={() => ({ className: 'group' })} columns={columns} />
       </Card>
 
       <Modal destroyOnHidden open={createOpen} title="Tạo chiến dịch tuyển dụng" okText="Tiếp tục" cancelText="Hủy" confirmLoading={createMutation.isPending} onCancel={() => setCreateOpen(false)} onOk={submitQuickCreate}>
@@ -271,6 +348,45 @@ export default function CampaignList() {
           <Card size="small" className="border-emerald-200"><FileTextOutlined className="text-xl text-emerald-600" /><h2 className="mt-3 font-bold text-slate-900">Đăng tin tuyển dụng</h2><p className="mt-1 text-sm text-slate-500">Tạo tin thuộc chiến dịch và gửi quản trị viên duyệt.</p><Button className="mt-4 w-full" type="primary" onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${activityCampaign.public_id}`)}>Đăng tin</Button></Card>
           <Card size="small"><TeamOutlined className="text-xl text-slate-500" /><h2 className="mt-3 font-bold text-slate-900">Xem workspace chiến dịch</h2><p className="mt-1 text-sm text-slate-500">Theo dõi tin, hồ sơ và tiến độ tuyển dụng.</p><Button className="mt-4 w-full" onClick={() => navigate(`/tuyendung/app/campaigns/${activityCampaign.public_id}`)}>Xem chiến dịch</Button></Card>
         </div>
+      </Modal>
+
+      <Modal
+        destroyOnHidden
+        open={Boolean(editCampaign)}
+        title="Sửa chiến dịch tuyển dụng"
+        okText="Lưu"
+        cancelText="Hủy"
+        confirmLoading={updateNameMutation.isPending}
+        onCancel={() => setEditCampaign(null)}
+        onOk={() => editForm.submit()}
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          initialValues={{ name: editCampaign?.name }}
+          onFinish={({ name }) => updateNameMutation.mutate({ publicId: editCampaign.public_id, name: name.trim() })}
+        >
+          <Form.Item label="Tên chiến dịch tuyển dụng" name="name" rules={[{ required: true, whitespace: true, message: 'Nhập tên chiến dịch tuyển dụng.' }]}>
+            <Input autoFocus maxLength={255} onPressEnter={(event) => { event.preventDefault(); editForm.submit() }} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        destroyOnHidden
+        open={Boolean(rejectJob)}
+        title="Lý do tin tuyển dụng bị từ chối"
+        onCancel={() => setRejectJob(null)}
+        footer={[
+          <Button key="close" onClick={() => setRejectJob(null)}>Đóng</Button>,
+          <Button key="edit" type="primary" onClick={() => { const jobId = rejectJob.public_id; setRejectJob(null); navigate(`/tuyendung/app/jobs/${jobId}/edit`) }}>Chỉnh sửa và gửi lại</Button>,
+        ]}
+      >
+        <div className="rounded-lg border border-red-100 border-l-4 border-l-red-500 bg-red-50/70 p-4">
+          <div className="flex items-center gap-2 font-semibold text-red-600"><CloseCircleFilled />{rejectJob?.title || 'Tin tuyển dụng'}</div>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{rejectJob?.rejected_reason?.trim() || 'Quản trị viên chưa cung cấp lý do cụ thể. Vui lòng liên hệ bộ phận hỗ trợ nếu cần thêm thông tin.'}</p>
+        </div>
+        <p className="mt-4 text-xs text-slate-500">Chỉnh sửa tin theo góp ý rồi gửi duyệt lại; lý do này chỉ hiển thị cho bạn.</p>
       </Modal>
     </section>
   )
