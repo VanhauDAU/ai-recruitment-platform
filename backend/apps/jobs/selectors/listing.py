@@ -87,6 +87,11 @@ def active_job_detail_queryset():
     )
 
 
+def active_job_tracking_queryset(slugs):
+    """Return only privacy-safe fields required by the engagement write path."""
+    return Job.objects.filter(publicly_available_job_filter(), slug__in=slugs).only('id', 'slug')
+
+
 def suggest_job_search_terms(query, search_by=None, limit=10):
     """Return de-duplicated autocomplete terms, prioritising prefix matches."""
     query = (query or '').strip()

@@ -708,11 +708,14 @@ test('employer campaigns: compact list links to a campaign and its single job', 
   })
 
   await page.goto('/tuyendung/app/campaigns')
-  await expect(page.getByRole('heading', { name: 'Chiến dịch tuyển dụng' })).toBeVisible()
+  await expect(page.getByText('Tất cả chiến dịch', { exact: true })).toBeVisible()
   await expect(page.getByText('Tìm thấy 1 chiến dịch tuyển dụng')).toBeVisible()
-  await expect(page.getByText('#camp_frontend').first()).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Tuyển Frontend' }).first()).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend')
-  await expect(page.getByRole('link', { name: 'Kỹ sư Frontend' }).first()).toHaveAttribute('href', '/tuyendung/app/jobs/jb_frontend')
+  await expect(page.getByText('CV từ hệ thống', { exact: true }).filter({ visible: true })).toBeVisible()
+  await expect(page.getByText('Lọc CV', { exact: true }).filter({ visible: true })).toBeVisible()
+  await expect(page.getByText('Tiến độ tuyển', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('#camp_frontend').filter({ visible: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Tuyển Frontend' }).filter({ visible: true })).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend')
+  await expect(page.getByRole('link', { name: 'Kỹ sư Frontend' }).filter({ visible: true })).toHaveAttribute('href', '/tuyendung/app/jobs/jb_frontend')
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: /Thêm chiến dịch mới/ }).click()
   await page.getByLabel('Tên chiến dịch tuyển dụng').fill('Tuyển dụng Quý 3/2026')
@@ -771,6 +774,34 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
       }),
     })
   })
+  let performanceDays = 7
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/camp_frontend\/job-performance\/(?:\?.*)?$/, async (route) => {
+    const days = Number(new URL(route.request().url()).searchParams.get('days') || 7)
+    performanceDays = days
+    const daily = Array.from({ length: days }, (_, index) => ({
+      date: new Date(Date.UTC(2026, 6, 22 - (days - 1 - index))).toISOString().slice(0, 10),
+      available: true,
+      impressions: index === days - 1 ? 120 : 0,
+      views: index === days - 1 ? 40 : 0,
+      applications: index === days - 1 ? 3 : 0,
+    }))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        campaign_public_id: 'camp_frontend',
+        range: { days, start: daily[0].date, end: daily[daily.length - 1].date },
+        data_available_from: daily[0].date,
+        summary: { impressions: 120, views: 40, applications: 3, view_rate: 33.33, application_rate: 7.5 },
+        daily,
+        jobs: [{
+          public_id: 'jb_frontend', slug: 'ky-su-frontend', title: 'Kỹ sư Frontend', status: 'active',
+          deadline: '2026-08-31', is_expired: false, available: true,
+          data_available_from: daily[0].date, impressions: 120, views: 40, applications: 3,
+          view_rate: 33.33, application_rate: 7.5,
+        }],
+      }),
+    })
+  })
   await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -805,17 +836,31 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await expect(page.getByPlaceholder('Tìm ứng viên...')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Xuất danh sách CV' })).toBeEnabled()
   await expect(page.getByText('Trần Minh')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Xử lý' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Chi tiết' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   await page.getByRole('tab', { name: 'Tin tuyển dụng' }).click()
   await expect(page).toHaveURL(/active_tab=job/)
   await expect(page.getByText('Báo cáo Tin tuyển dụng:')).toBeVisible()
-  await expect(page.getByRole('img', { name: 'Biểu đồ lượt ứng tuyển 7 ngày gần nhất' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
+  await page.getByTestId('campaign-chart-hit-0').hover({ force: true })
+  await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('16/07/2026 00:00')
+  await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('Lượt hiển thị')
+  await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('Lượt xem')
+  await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('Lượt ứng tuyển')
   await expect(page.getByRole('link', { name: 'Kiểm tra CV' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Số lần hiển thị' })).toBeVisible()
-  await expect(page.getByRole('columnheader', { name: 'Tỷ lệ ứng tuyển' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Xem chi tiết Kỹ sư Frontend' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: /Tỷ lệ ứng tuyển/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' })).toHaveAttribute('href', '/viec-lam/ky-su-frontend')
+  await expect(page.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' })).toHaveAttribute('target', '_blank')
   await expect(page.getByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.getByRole('combobox', { name: 'Khoảng thời gian báo cáo' }).click()
+  await page.getByText('30 ngày qua', { exact: true }).last().click()
+  await expect.poll(() => performanceDays).toBe(30)
+  await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

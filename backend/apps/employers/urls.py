@@ -20,6 +20,7 @@ from .api.views import (
     RecruiterMeView,
     RecruitmentCampaignDetailView,
     RecruitmentCampaignFromNeedView,
+    RecruitmentCampaignJobPerformanceView,
     RecruitmentCampaignListCreateView,
     RecruitmentCampaignOptionsView,
     RecruitmentCampaignReportView,
@@ -64,6 +65,11 @@ urlpatterns = [
         'campaigns/<str:public_id>/report/',
         RecruitmentCampaignReportView.as_view(),
         name='employer-campaign-report',
+    ),
+    path(
+        'campaigns/<str:public_id>/job-performance/',
+        RecruitmentCampaignJobPerformanceView.as_view(),
+        name='employer-campaign-job-performance',
     ),
     path('register/', EmployerRegisterView.as_view(), name='employer-register'),
     path(

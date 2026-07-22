@@ -16,6 +16,7 @@ import { CvDocumentPreview, getCv, getCvVersion } from '@/entities/cv'
 import { formatLocations, formatSalary, getCvJobRecommendations, jobDetailPath } from '@/entities/job'
 import { CvDownloadButton } from '@/features/export-cv-pdf'
 import { RecruiterVisibilityControl } from '@/features/update-recruiter-visibility'
+import { JobImpressionBoundary } from '@/features/track-job-engagement'
 
 function displayCvTitle(title) {
   const normalized = (title || '').trim()
@@ -177,8 +178,9 @@ function VisibilityCard({ publicId }) {
 function JobCard({ job }) {
   const compatibility = job.is_high_match ? 'Rất phù hợp' : `${job.match_score}% phù hợp`
   return (
-    <Link to={jobDetailPath(job)} className="group relative flex gap-4 overflow-hidden rounded-2xl border border-white !bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_10px_28px_rgba(0,177,79,0.12)] md:items-center">
-      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white md:h-24 md:w-24">
+    <JobImpressionBoundary slug={job.slug}>
+      <Link to={jobDetailPath(job)} className="group relative flex gap-4 overflow-hidden rounded-2xl border border-white !bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_10px_28px_rgba(0,177,79,0.12)] md:items-center">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white md:h-24 md:w-24">
         {job.company_logo_url ? <img src={job.company_logo_url} alt="" className="h-full w-full object-contain p-2" /> : <span className="text-2xl font-black text-[#00b14f]">{job.company_name?.charAt(0) || 'P'}</span>}
       </div>
       <div className="min-w-0 flex-1">
@@ -201,8 +203,9 @@ function JobCard({ job }) {
         <span className="mt-3 inline-flex items-center justify-center rounded-full bg-[#00b14f] px-5 py-2 text-sm font-bold text-white shadow-sm transition group-hover:bg-[#009643] md:absolute md:bottom-4 md:right-4 md:mt-0 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
           Ứng tuyển
         </span>
-      </div>
-    </Link>
+        </div>
+      </Link>
+    </JobImpressionBoundary>
   )
 }
 

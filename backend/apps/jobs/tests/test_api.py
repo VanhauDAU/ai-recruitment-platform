@@ -13,7 +13,7 @@ from ..api.serializers import (
     EmployerJobWriteSerializer,
     JobDetailSerializer,
 )
-from ..models import Benefit, Job, JobCategory, Language
+from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language
 
 
 class JobCategoryApiTests(APITestCase):
@@ -101,6 +101,97 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertIn('procv_viewer_id', response.cookies)
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 1)
+        daily = JobEngagementDaily.objects.get(job=self.job)
+        self.assertEqual(daily.view_count, 1)
+        self.assertEqual(daily.impression_count, 0)
+
+    def test_impression_batch_requires_analytics_consent(self):
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug]},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'][0]['reason'], 'consent_required')
+        self.assertNotIn('procv_viewer_id', response.cookies)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 0)
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=True)
+    def test_consented_impression_batch_increments_lifetime_and_daily_counters(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug, self.job.slug, 'missing-job']},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data['results'],
+            [
+                {'slug': self.job.slug, 'counted': True},
+                {'slug': 'missing-job', 'counted': False, 'reason': 'not_found'},
+            ],
+        )
+        self.assertIn('procv_viewer_id', response.cookies)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 1)
+        daily = JobEngagementDaily.objects.get(job=self.job)
+        self.assertEqual(daily.impression_count, 1)
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=None)
+    def test_redis_failure_does_not_increment_impression(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug]},
+            format='json',
+        )
+
+        self.assertEqual(response.data['results'][0]['reason'], 'redis_error')
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 0)
+        self.assertFalse(JobEngagementDaily.objects.filter(job=self.job).exists())
+
+    @patch('apps.jobs.services.engagement._claim_first_view', return_value=False)
+    def test_duplicate_impression_does_not_increment_counters(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [self.job.slug]},
+            format='json',
+        )
+
+        self.assertEqual(response.data['results'][0]['reason'], 'duplicate')
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.impression_count, 0)
+
+    def test_impression_batch_accepts_at_most_fifty_slugs(self):
+        response = self.client.post(
+            reverse('job-impression-batch-create'),
+            {'slugs': [f'job-{index}' for index in range(51)]},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('slugs', response.data)
 
 
 class JobSalaryBucketFilterTests(APITestCase):
@@ -379,7 +470,7 @@ class EmployerJobSerializerTests(APITestCase):
             name='Tuyển chăm sóc khách hàng',
         )
         self.client.force_authenticate(self.user)
-        url = f"{reverse('employer-job-list-create')}?as=draft"
+        url = f'{reverse("employer-job-list-create")}?as=draft'
         first_payload = self.payload()
         first_payload['campaign'] = campaign.public_id
 

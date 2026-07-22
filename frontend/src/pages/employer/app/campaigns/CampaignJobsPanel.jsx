@@ -1,15 +1,21 @@
 import {
   EditOutlined,
-  EyeOutlined,
+  ExportOutlined,
   FileSearchOutlined,
   InfoCircleOutlined,
   LineChartOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Empty, Skeleton, Table, Tag, Tooltip } from 'antd'
+import { Empty, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getEmployerJobs, jobKeys } from '@/entities/job'
+import {
+  campaignKeys,
+  getCampaignJobPerformance,
+} from '@/entities/campaign'
+import { jobDetailPath } from '@/entities/job'
+import CampaignPerformanceChart from './CampaignPerformanceChart'
 
 const JOB_STATUS = {
   draft: ['Nháp', 'default'],
@@ -19,9 +25,19 @@ const JOB_STATUS = {
   rejected: ['Từ chối', 'red'],
 }
 
+const RANGE_OPTIONS = [
+  { value: 7, label: '7 ngày qua' },
+  { value: 30, label: '30 ngày qua' },
+  { value: 90, label: '90 ngày qua' },
+]
+
 function numberValue(value) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
+}
+
+function formatNumber(value) {
+  return numberValue(value).toLocaleString('vi-VN')
 }
 
 function formatDate(value) {
@@ -30,12 +46,9 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? 'Không giới hạn' : date.toLocaleDateString('vi-VN')
 }
 
-function conversionRate(applications, views) {
-  const viewCount = numberValue(views)
-  if (!viewCount) return '—'
-  return `${((numberValue(applications) / viewCount) * 100).toLocaleString('vi-VN', {
-    maximumFractionDigits: 1,
-  })}%`
+function formatRate(value) {
+  if (value == null) return '—'
+  return `${numberValue(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
 }
 
 function JobStatus({ job }) {
@@ -44,113 +57,66 @@ function JobStatus({ job }) {
   return <Tag color={color}>{label}</Tag>
 }
 
-function ApplicationTrend({ data }) {
-  if (!data.length) {
-    return (
-      <Empty
-        className="flex min-h-52 flex-col justify-center"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="Chưa có dữ liệu ứng tuyển 7 ngày gần nhất"
-      />
-    )
-  }
-
-  const width = 840
-  const height = 220
-  const padding = { top: 24, right: 24, bottom: 42, left: 36 }
-  const chartWidth = width - padding.left - padding.right
-  const chartHeight = height - padding.top - padding.bottom
-  const maximum = Math.max(...data.map((item) => numberValue(item.count)), 1)
-  const step = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth
-  const points = data.map((item, index) => ({
-    ...item,
-    x: padding.left + (index * step),
-    y: padding.top + chartHeight - ((numberValue(item.count) / maximum) * chartHeight),
-  }))
-  const polyline = points.map((point) => `${point.x},${point.y}`).join(' ')
-
-  return (
-    <div className="overflow-x-auto pb-1">
-      <div className="min-w-[620px]">
-        <svg
-          role="img"
-          aria-label="Biểu đồ lượt ứng tuyển 7 ngày gần nhất"
-          viewBox={`0 0 ${width} ${height}`}
-          className="h-56 w-full"
-        >
-          {[0, 0.5, 1].map((ratio) => {
-            const y = padding.top + (chartHeight * ratio)
-            const value = Math.round(maximum * (1 - ratio))
-            return (
-              <g key={ratio}>
-                <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="#e2e8f0" strokeWidth="1" />
-                <text x={padding.left - 12} y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="11">{value}</text>
-              </g>
-            )
-          })}
-          <polyline points={polyline} fill="none" stroke="#00b14f" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
-          {points.map((point) => (
-            <g key={point.date}>
-              <circle cx={point.x} cy={point.y} r="4" fill="#fff" stroke="#00b14f" strokeWidth="3" />
-              <text x={point.x} y={height - 14} textAnchor="middle" fill="#64748b" fontSize="11">
-                {new Date(point.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-              </text>
-            </g>
-          ))}
-        </svg>
-        <div className="flex items-center gap-2 px-9 text-xs text-slate-500">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Lượt ứng tuyển
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function JobActions({ job }) {
+  const canViewPublicJob = job.status === 'active' && Boolean(job.slug)
+  const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:!text-emerald-700'
+
   return (
     <div className="flex items-center gap-2">
-      <Tooltip title="Xem chi tiết tin">
-        <Link
-          aria-label={`Xem chi tiết ${job.title || 'tin tuyển dụng'}`}
-          to={`/tuyendung/app/jobs/${job.public_id}`}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 !text-slate-600 hover:bg-emerald-50 hover:!text-emerald-700"
+      <Tooltip title={canViewPublicJob ? 'Xem tin tuyển dụng' : 'Tin chưa công khai'}>
+        <a
+          aria-label={`Xem tin ${job.title || 'tin tuyển dụng'}`}
+          href={canViewPublicJob ? jobDetailPath(job) : undefined}
+          target={canViewPublicJob ? '_blank' : undefined}
+          rel={canViewPublicJob ? 'noopener noreferrer' : undefined}
+          aria-disabled={!canViewPublicJob}
+          onClick={(event) => {
+            if (!canViewPublicJob) event.preventDefault()
+          }}
+          className={`${actionClassName} ${canViewPublicJob ? '' : 'cursor-not-allowed border-slate-200 bg-slate-100 !text-slate-300 hover:border-slate-200 hover:bg-slate-100 hover:!text-slate-300'}`}
         >
-          <EyeOutlined />
+          <ExportOutlined />
+        </a>
+      </Tooltip>
+      <Tooltip title="Chỉnh sửa tin">
+        <Link
+          aria-label={`Chỉnh sửa ${job.title || 'tin tuyển dụng'}`}
+          to={`/tuyendung/app/jobs/${job.public_id}/edit`}
+          className={actionClassName}
+        >
+          <EditOutlined />
         </Link>
       </Tooltip>
-      {job.status !== 'closed' && (
-        <Tooltip title="Chỉnh sửa tin">
-          <Link
-            aria-label={`Chỉnh sửa ${job.title || 'tin tuyển dụng'}`}
-            to={`/tuyendung/app/jobs/${job.public_id}/edit`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 !text-slate-600 hover:bg-emerald-50 hover:!text-emerald-700"
-          >
-            <EditOutlined />
-          </Link>
-        </Tooltip>
-      )}
     </div>
   )
 }
 
-export default function CampaignJobsPanel({ publicId, report = {} }) {
-  const params = { campaign: publicId }
-  const jobsQuery = useQuery({
-    queryKey: jobKeys.employerList(params),
-    queryFn: () => getEmployerJobs(params),
+function MetricValue({ value, available = true }) {
+  if (!available) {
+    return <Tooltip title="Khoảng thời gian này chưa có dữ liệu tracking"><span className="text-slate-400">—</span></Tooltip>
+  }
+  return formatNumber(value)
+}
+
+export default function CampaignJobsPanel({ publicId }) {
+  const [days, setDays] = useState(7)
+  const performanceQuery = useQuery({
+    queryKey: campaignKeys.jobPerformance(publicId, days),
+    queryFn: () => getCampaignJobPerformance(publicId, days),
+    enabled: Boolean(publicId),
   })
-  const jobs = Array.isArray(jobsQuery.data) ? jobsQuery.data : []
+  const performance = performanceQuery.data
+  const jobs = performance?.jobs || []
   const primaryJob = jobs[0]
-  const dailyApplications = Array.isArray(report.daily_applications) ? report.daily_applications : []
 
-  if (jobsQuery.isLoading) return <Skeleton active className="p-6" paragraph={{ rows: 9 }} />
+  if (performanceQuery.isLoading) return <Skeleton active className="p-6" paragraph={{ rows: 9 }} />
 
-  if (jobsQuery.isError) {
+  if (performanceQuery.isError) {
     return (
       <div className="py-16 text-center">
         <FileSearchOutlined className="text-4xl text-slate-300" />
-        <p className="mt-3 font-semibold text-slate-700">Không thể tải danh sách tin tuyển dụng</p>
-        <button type="button" className="mt-3 text-sm font-semibold text-emerald-700" onClick={() => jobsQuery.refetch()}>Thử lại</button>
+        <p className="mt-3 font-semibold text-slate-700">Không thể tải báo cáo tin tuyển dụng</p>
+        <button type="button" className="mt-3 text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>Thử lại</button>
       </div>
     )
   }
@@ -180,11 +146,18 @@ export default function CampaignJobsPanel({ publicId, report = {} }) {
 
       <div className="grid gap-5 py-4 xl:grid-cols-[minmax(0,1fr)_280px]">
         <section className="min-w-0">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="inline-flex h-8 items-center rounded bg-slate-100 px-3 text-xs font-medium text-slate-600">7 ngày qua</span>
-            <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> Cập nhật theo báo cáo chiến dịch</span>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <Select
+              aria-label="Khoảng thời gian báo cáo"
+              data-testid="campaign-performance-range"
+              value={days}
+              onChange={setDays}
+              options={RANGE_OPTIONS}
+              className="w-36"
+            />
+            <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> Số liệu theo ngày</span>
           </div>
-          <ApplicationTrend data={dailyApplications} />
+          <CampaignPerformanceChart data={performance.daily || []} />
         </section>
 
         <aside className="self-start border border-slate-200 bg-white p-4 shadow-sm">
@@ -200,17 +173,17 @@ export default function CampaignJobsPanel({ publicId, report = {} }) {
         </aside>
       </div>
 
-      <div className="overflow-x-auto border border-slate-200">
+      <div className="overflow-x-auto border border-slate-200" data-testid="campaign-performance-table">
         <Table
           rowKey="public_id"
           dataSource={jobs}
           pagination={false}
-          scroll={{ x: 1050 }}
+          scroll={{ x: 1120 }}
           columns={[
             { title: 'Thao tác', width: 100, render: (_, job) => <JobActions job={job} /> },
             {
               title: 'Tin tuyển dụng',
-              width: 240,
+              width: 250,
               render: (_, job) => (
                 <div className="min-w-48">
                   <Link className="font-semibold !text-emerald-700 hover:underline" to={`/tuyendung/app/jobs/${job.public_id}`}>{job.title || 'Tin nháp chưa đặt tên'}</Link>
@@ -221,32 +194,40 @@ export default function CampaignJobsPanel({ publicId, report = {} }) {
             {
               title: 'Số lần hiển thị',
               align: 'right',
-              render: () => <Tooltip title="Hệ thống chưa ghi nhận dữ liệu lượt hiển thị"><span className="text-slate-400">—</span></Tooltip>,
+              render: (_, job) => <MetricValue value={job.impressions} available={job.available} />,
             },
-            { title: 'Số lượt xem', dataIndex: 'view_count', align: 'right', render: (value) => numberValue(value).toLocaleString('vi-VN') },
             {
-              title: 'Tỷ lệ xem tin',
+              title: 'Số lượt xem',
               align: 'right',
-              render: () => <Tooltip title="Cần dữ liệu lượt hiển thị để tính tỷ lệ"><span className="text-slate-400">—</span></Tooltip>,
+              render: (_, job) => <MetricValue value={job.views} available={job.available} />,
+            },
+            {
+              title: <Tooltip title="Số lượt xem / số lần hiển thị × 100"><span>Tỷ lệ xem tin <InfoCircleOutlined /></span></Tooltip>,
+              align: 'right',
+              render: (_, job) => <strong className="text-slate-700">{formatRate(job.view_rate)}</strong>,
             },
             {
               title: 'Số lượt ứng tuyển',
-              dataIndex: 'application_count',
               align: 'right',
-              render: (value, job) => <Link to={`/tuyendung/app/applications?job=${job.public_id}`} className="font-semibold !text-emerald-700">{numberValue(value).toLocaleString('vi-VN')}</Link>,
+              render: (_, job) => (
+                job.available
+                  ? <Link to={`/tuyendung/app/applications?job=${job.public_id}`} className="font-semibold !text-emerald-700">{formatNumber(job.applications)}</Link>
+                  : <span className="text-slate-400">—</span>
+              ),
             },
             {
-              title: 'Tỷ lệ ứng tuyển',
+              title: <Tooltip title="Số lần gửi CV / số lượt xem × 100; có thể lớn hơn 100% khi ứng tuyển lại"><span>Tỷ lệ ứng tuyển <InfoCircleOutlined /></span></Tooltip>,
               align: 'right',
-              render: (_, job) => <strong className="text-slate-700">{conversionRate(job.application_count, job.view_count)}</strong>,
+              render: (_, job) => <strong className="text-slate-700">{formatRate(job.application_rate)}</strong>,
             },
           ]}
         />
       </div>
 
-      <div className="mt-3 space-y-1 text-xs text-slate-500">
-        <p><InfoCircleOutlined className="mr-1.5" />Số liệu báo cáo không cập nhật theo thời gian thực.</p>
-        <p>Hệ thống hiện chưa thu thập số lần hiển thị, vì vậy tỷ lệ xem tin được để trống.</p>
+      <div className="mt-3 space-y-1 text-xs leading-5 text-slate-500">
+        <p><InfoCircleOutlined className="mr-1.5" />Dữ liệu bắt đầu từ {formatDate(performance.data_available_from)}; các ngày trước đó hiển thị “—”, không được coi là 0.</p>
+        <p>Chỉ bao gồm lượt hiển thị và lượt xem của người dùng đã đồng ý Analytics. Số lượt ứng tuyển tính mọi lần gửi CV, bao gồm ứng tuyển lại.</p>
+        <p>Số liệu có thể có độ trễ ngắn và không cập nhật tức thời.</p>
       </div>
     </div>
   )

@@ -119,9 +119,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         if not job_public_id:
             return None
         is_expired = bool(
-            job_status == 'active'
-            and deadline is not None
-            and deadline < timezone.localdate()
+            job_status == 'active' and deadline is not None and deadline < timezone.localdate()
         )
         return {
             'public_id': job_public_id,
@@ -157,6 +155,10 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
 
 class CampaignStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=RecruitmentCampaign.Status.choices)
+
+
+class CampaignPerformanceQuerySerializer(serializers.Serializer):
+    days = serializers.ChoiceField(choices=(7, 30, 90), default=7)
 
 
 class RecruitmentNeedSuggestionSerializer(serializers.ModelSerializer):

@@ -89,6 +89,10 @@ describe('CampaignList', () => {
     const jobLinks = await screen.findAllByRole('link', { name: 'Kỹ sư Frontend' })
     expect(screen.getAllByText('#camp_frontend').length).toBeGreaterThan(0)
     expect(jobLinks[0]).toHaveAttribute('href', '/tuyendung/app/jobs/jb_frontend')
+    expect(screen.queryByText('Tiến độ tuyển')).not.toBeInTheDocument()
+    expect(screen.getAllByText('CV từ hệ thống').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Lọc CV').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Phát triển sau').length).toBeGreaterThanOrEqual(4)
 
     fireEvent.click(screen.getAllByRole('link', { name: 'Tuyển Frontend' })[0])
     expect(await screen.findByText('Campaign detail')).toBeInTheDocument()

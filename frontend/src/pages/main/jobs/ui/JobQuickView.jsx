@@ -16,6 +16,7 @@ import {
   SavedJobTooltipContent,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
+import { useJobView } from '@/features/track-job-engagement'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 
@@ -49,6 +50,8 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
+
+  useJobView(job.slug, { enabled: !loading && Boolean(detail) })
 
   useEffect(() => {
     let cancelled = false

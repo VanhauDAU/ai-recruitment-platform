@@ -54,9 +54,7 @@ describe('CampaignDetail', () => {
   it('renders the TopCV campaign structure with real report metrics', async () => {
     renderPage()
 
-    expect(await screen.findByRole('heading', { name: 'Tuyển Frontend' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Quay lại/i })).toBeInTheDocument()
-    expect(screen.getByText('Tổng lượng CV ứng viên')).toBeInTheDocument()
+    expect(await screen.findByText('Tổng lượng CV ứng viên')).toBeInTheDocument()
     expect(screen.getByText('CV đã kết nối')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'CV ứng tuyển' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Tin tuyển dụng' })).toBeInTheDocument()

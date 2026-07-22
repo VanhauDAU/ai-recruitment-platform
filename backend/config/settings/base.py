@@ -249,6 +249,7 @@ REST_FRAMEWORK = {
         'consultation': '5/min',
         'consent': '20/hour',
         'job_view': '120/hour',
+        'job_impression': '240/hour',
         'cv_import': '10/hour',
     },
 }

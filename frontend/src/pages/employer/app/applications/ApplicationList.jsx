@@ -66,18 +66,46 @@ export default function EmployerApplicationList() {
       setSelected((current) => (current?.public_id === application.public_id ? application : current))
       queryClient.invalidateQueries({ queryKey: ['applications', 'recruiter-list'] })
       queryClient.invalidateQueries({ queryKey: applicationKeys.history(application.public_id) })
+      queryClient.invalidateQueries({ queryKey: applicationKeys.recruiterSnapshot(application.public_id) })
       message.success('Đã cập nhật hồ sơ ứng tuyển.')
     },
     onError: () => message.error('Không thể cập nhật hồ sơ với trạng thái đã chọn.'),
   })
-  const applications = applicationsQuery.data || []
-  const currentStatus = snapshotQuery.data?.status || selected?.status
+  const applications = useMemo(() => applicationsQuery.data || [], [applicationsQuery.data])
+  const currentStatus = selected?.status || snapshotQuery.data?.status
 
-  function selectApplication(application) {
+  function populateSelectedApplication(application) {
     setSelected(application)
     setEmployerNote(application.employer_note || '')
     setEmployerRating(application.employer_rating || null)
   }
+
+  function selectApplication(application) {
+    populateSelectedApplication(application)
+    if (searchParams.get('application') === application.public_id) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('application', application.public_id)
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  function closeApplicationDetail() {
+    setSelected(null)
+    if (!searchParams.has('application')) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('application')
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  useEffect(() => {
+    const selectedPublicId = searchParams.get('application')
+    if (!selectedPublicId || selected?.public_id === selectedPublicId) return
+    const application = applications.find((item) => item.public_id === selectedPublicId)
+    if (application) {
+      setSelected(application)
+      setEmployerNote(application.employer_note || '')
+      setEmployerRating(application.employer_rating || null)
+    }
+  }, [applications, searchParams, selected?.public_id])
 
   function updateStatus(publicId, status) {
     updateMutation.mutate({ publicId, payload: { status } })
@@ -140,14 +168,7 @@ export default function EmployerApplicationList() {
           { title: 'Tin tuyển dụng', dataIndex: 'job_title' },
           {
             title: 'Trạng thái',
-            render: (_, item) => (
-              <Select
-                value={item.status}
-                size="small"
-                options={RECRUITER_APPLICATION_STATUSES.map(([value, label]) => ({ value, label }))}
-                onChange={(status) => updateStatus(item.public_id, status)}
-              />
-            ),
+            render: (_, item) => RECRUITER_APPLICATION_STATUS_LABELS[item.status] || item.status,
           },
           {
             title: 'Ngày nộp',
@@ -160,7 +181,7 @@ export default function EmployerApplicationList() {
         title={selected?.candidate_name || 'Hồ sơ ứng viên'}
         width="min(860px, 100vw)"
         open={Boolean(selected)}
-        onClose={() => setSelected(null)}
+        onClose={closeApplicationDetail}
       >
         {snapshotQuery.isLoading ? (
           <Skeleton active />
@@ -172,6 +193,17 @@ export default function EmployerApplicationList() {
               <p className="mt-2 text-sm text-slate-600">
                 {snapshotQuery.data?.contact_email} · {snapshotQuery.data?.contact_phone}
               </p>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-4">
+              <p className="mb-2 text-sm font-semibold text-slate-800">Trạng thái xử lý</p>
+              <Select
+                aria-label="Cập nhật trạng thái hồ sơ"
+                value={currentStatus}
+                loading={updateMutation.isPending}
+                className="w-full sm:w-64"
+                options={RECRUITER_APPLICATION_STATUSES.map(([value, label]) => ({ value, label }))}
+                onChange={(status) => updateStatus(selected.public_id, status)}
+              />
             </div>
             {snapshotQuery.data?.cv && (
               <div className="overflow-auto rounded-lg bg-slate-100 p-3">

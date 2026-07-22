@@ -3,6 +3,7 @@ import {
   FileTextOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
+  PlusOutlined,
   SearchOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -15,7 +16,6 @@ import {
   Input,
   Modal,
   Popconfirm,
-  Progress,
   Select,
   Table,
   Tag,
@@ -64,11 +64,6 @@ function ActionRow({ children, className = '' }) {
   )
 }
 
-function recruitmentProgress(campaign) {
-  const target = Math.max(campaign.headcount_target || 1, 1)
-  return Math.min(Math.round(((campaign.accepted_count || 0) / target) * 100), 100)
-}
-
 const JOB_STATUS = {
   draft: ['Nháp', 'default'],
   pending: ['Chờ duyệt', 'gold'],
@@ -79,9 +74,7 @@ const JOB_STATUS = {
 
 function CampaignJobSummary({ campaign, className = '' }) {
   const job = campaign.campaign_job
-  if (!job) {
-    return <span className={`text-sm text-slate-400 ${className}`}>Chưa có tin tuyển dụng</span>
-  }
+  if (!job) return null
   const status = job.is_expired ? ['Hết hạn', 'orange'] : (JOB_STATUS[job.status] || [job.status, 'default'])
   const deadline = job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'
   return (
@@ -202,13 +195,7 @@ export default function CampaignList() {
 
   function JobInlineActions({ campaign }) {
     const job = campaign.campaign_job
-    if (!job) {
-      return (
-        <ActionRow>
-          <TextAction onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}>Đăng tin</TextAction>
-        </ActionRow>
-      )
-    }
+    if (!job) return null
     return (
       <ActionRow>
         <TextAction onClick={() => navigate(`/tuyendung/app/jobs/${job.public_id}/edit`)}>Chỉnh sửa</TextAction>
@@ -266,25 +253,32 @@ export default function CampaignList() {
     {
       title: 'Tin tuyển dụng',
       width: 300,
-      render: (_, campaign) => (
-        <div className="group/job min-w-0">
-          <CampaignJobSummary campaign={campaign} />
-          <div className="mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover/job:opacity-100">
-            <JobInlineActions campaign={campaign} />
+      render: (_, campaign) => {
+        const job = campaign.campaign_job
+        if (!job) {
+          return (
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}
+            >
+              Đăng tin
+            </Button>
+          )
+        }
+        return (
+          <div className="group/job min-w-0">
+            <CampaignJobSummary campaign={campaign} />
+            <div className="mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover/job:opacity-100">
+              <JobInlineActions campaign={campaign} />
+            </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
-    {
-      title: 'Tiến độ tuyển',
-      width: 170,
-      render: (_, campaign) => (
-        <div>
-          <div className="mb-1 flex justify-between text-xs text-slate-500"><span>Đã nhận offer</span><strong>{campaign.accepted_count || 0}/{campaign.headcount_target || 1}</strong></div>
-          <Progress percent={recruitmentProgress(campaign)} size="small" showInfo={false} strokeColor="#00b14f" />
-        </div>
-      ),
-    },
+    { title: 'CV từ hệ thống', width: 150, render: () => <span className="text-sm text-slate-400">Phát triển sau</span> },
+    { title: 'Lọc CV', width: 130, render: () => <span className="text-sm text-slate-400">Phát triển sau</span> },
     { title: 'Thao tác', width: 140, render: (_, campaign) => <CampaignStatusActions campaign={campaign} /> },
   ]
 
@@ -325,14 +319,44 @@ export default function CampaignList() {
               <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</Tag>
             </div>
             <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">CV ứng tuyển</span><strong>{campaign.application_count || 0}</strong>{campaign.unviewed_application_count > 0 && <span className="ml-1 text-emerald-600">· {campaign.unviewed_application_count} mới</span>}</div>
-            <div className="mt-4"><p className="mb-2 text-xs font-medium text-slate-500">TIN TUYỂN DỤNG</p><CampaignJobSummary campaign={campaign} /><div className="mt-2"><JobInlineActions campaign={campaign} /></div></div>
-            <div className="mt-4"><div className="mb-1 flex justify-between text-xs text-slate-500"><span>Tiến độ tuyển</span><strong>{campaign.accepted_count || 0}/{campaign.headcount_target || 1}</strong></div><Progress percent={recruitmentProgress(campaign)} showInfo={false} strokeColor="#00b14f" /></div>
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-slate-500">TIN TUYỂN DỤNG</p>
+              {campaign.campaign_job ? (
+                <>
+                  <CampaignJobSummary campaign={campaign} />
+                  <div className="mt-2"><JobInlineActions campaign={campaign} /></div>
+                </>
+              ) : (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}
+                >
+                  Đăng tin
+                </Button>
+              )}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">CV từ hệ thống</span><strong className="mt-1 block text-slate-400">Phát triển sau</strong></div>
+              <div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">Lọc CV</span><strong className="mt-1 block text-slate-400">Phát triển sau</strong></div>
+            </div>
             <div className="mt-4 space-y-3 border-t border-slate-100 pt-4"><CampaignInlineActions campaign={campaign} /><CampaignStatusActions campaign={campaign} block /></div>
           </Card>
         ))}
       </div>
       <Card className="hidden lg:block" styles={{ body: { padding: 0 } }}>
-        <Table rowKey="public_id" loading={campaignsQuery.isLoading} dataSource={campaigns} locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }} pagination={false} scroll={{ x: 1080 }} onRow={() => ({ className: 'group' })} columns={columns} />
+        <Table
+          rowKey="public_id"
+          loading={campaignsQuery.isLoading}
+          dataSource={campaigns}
+          locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }}
+          pagination={false}
+          scroll={{ x: 1080 }}
+          onRow={() => ({ className: 'group' })}
+          columns={columns}
+          className="[&_.ant-table-cell:not(:last-child)]:!border-r [&_.ant-table-cell:not(:last-child)]:!border-slate-200/70"
+        />
       </Card>
 
       <Modal destroyOnHidden open={createOpen} title="Tạo chiến dịch tuyển dụng" okText="Tiếp tục" cancelText="Hủy" confirmLoading={createMutation.isPending} onCancel={() => setCreateOpen(false)} onOk={submitQuickCreate}>
@@ -346,7 +370,7 @@ export default function CampaignList() {
         <p className="mb-4 text-sm text-slate-500">Bạn muốn bắt đầu hoạt động nào? Có thể đóng cửa sổ và thực hiện sau.</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Card size="small" className="border-emerald-200"><FileTextOutlined className="text-xl text-emerald-600" /><h2 className="mt-3 font-bold text-slate-900">Đăng tin tuyển dụng</h2><p className="mt-1 text-sm text-slate-500">Tạo tin thuộc chiến dịch và gửi quản trị viên duyệt.</p><Button className="mt-4 w-full" type="primary" onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${activityCampaign.public_id}`)}>Đăng tin</Button></Card>
-          <Card size="small"><TeamOutlined className="text-xl text-slate-500" /><h2 className="mt-3 font-bold text-slate-900">Xem workspace chiến dịch</h2><p className="mt-1 text-sm text-slate-500">Theo dõi tin, hồ sơ và tiến độ tuyển dụng.</p><Button className="mt-4 w-full" onClick={() => navigate(`/tuyendung/app/campaigns/${activityCampaign.public_id}`)}>Xem chiến dịch</Button></Card>
+          <Card size="small"><TeamOutlined className="text-xl text-slate-500" /><h2 className="mt-3 font-bold text-slate-900">Xem workspace chiến dịch</h2><p className="mt-1 text-sm text-slate-500">Theo dõi tin tuyển dụng và hồ sơ ứng viên.</p><Button className="mt-4 w-full" onClick={() => navigate(`/tuyendung/app/campaigns/${activityCampaign.public_id}`)}>Xem chiến dịch</Button></Card>
         </div>
       </Modal>
 

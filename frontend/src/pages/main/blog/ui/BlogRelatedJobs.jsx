@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { companyInitial, formatLocations, formatSalary, getJobs, JOB_LOGO_TINTS, jobDetailPath, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job'
+import { JobImpressionBoundary } from '@/features/track-job-engagement'
 
 // Khối "Danh sách việc làm ..." trong bài, lấy theo danh mục nghề liên quan.
 export default function BlogRelatedJobs({ jobCategory }) {
@@ -50,8 +51,10 @@ export default function BlogRelatedJobs({ jobCategory }) {
       <p className="mb-3 text-xs text-slate-500">Di chuột vào một việc làm để xem nhanh thông tin chi tiết.</p>
       <ul className="max-h-[26rem] space-y-2 overflow-y-scroll pr-2 [scrollbar-gutter:stable] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-300 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-emerald-50 sm:max-h-[30rem]">
         {jobs.map((job) => (
-          <li
+          <JobImpressionBoundary
+            as="li"
             key={job.public_id}
+            slug={job.slug}
             className="relative"
             onMouseEnter={(event) => openPreview(job, event.currentTarget.getBoundingClientRect())}
             onMouseLeave={() => closePreview(180)}
@@ -78,7 +81,7 @@ export default function BlogRelatedJobs({ jobCategory }) {
                 </span>
               </span>
             </Link>
-          </li>
+          </JobImpressionBoundary>
         ))}
       </ul>
       {preview.job && (

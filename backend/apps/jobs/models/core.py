@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 from common.public_id import generate_public_id
@@ -270,7 +271,9 @@ class Job(models.Model):
     )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     view_count = models.IntegerField(default=0)
+    impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
+    engagement_tracking_started_at = models.DateTimeField(default=timezone.now)
     submitted_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)

@@ -27,6 +27,11 @@ export async function recordJobView(slug) {
   return data
 }
 
+export async function recordJobImpressions(slugs) {
+  const { data } = await api.post('/jobs/impressions/', { slugs }, { withCredentials: true })
+  return data
+}
+
 export async function getJobCategories(params = {}) {
   const cacheKey = `job-categories:${JSON.stringify(params)}`
   return cachedRequest(cacheKey, CATALOG_CACHE_TTL, () => fetchAllPages('/jobs/categories/', { all: '1', ...params }))

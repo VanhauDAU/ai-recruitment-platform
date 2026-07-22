@@ -4,8 +4,8 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Empty, Input, Select, Skeleton, Table, Tag, message } from 'antd'
+import { useQuery } from '@tanstack/react-query'
+import { Empty, Input, Select, Skeleton, Table, Tag } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -13,9 +13,7 @@ import {
   getRecruiterApplications,
   RECRUITER_APPLICATION_STATUSES,
   RECRUITER_APPLICATION_STATUS_LABELS,
-  updateApplicationStatus,
 } from '@/entities/application'
-import { getApiErrorMessage } from '@/shared/api/error-mapper'
 
 const NEW_STATUSES = new Set(['submitted'])
 const UNANSWERED_STATUSES = new Set(['submitted', 'viewed', 'considering'])
@@ -84,21 +82,7 @@ function CandidateCell({ application }) {
   )
 }
 
-function StatusSelect({ application, onChange, updating }) {
-  return (
-    <Select
-      aria-label={`Trạng thái ${application.candidate_name || application.candidate_email || 'ứng viên'}`}
-      value={application.status}
-      loading={updating}
-      className="min-w-36"
-      options={RECRUITER_APPLICATION_STATUSES.map(([value, label]) => ({ value, label }))}
-      onChange={(nextStatus) => onChange(application.public_id, nextStatus)}
-    />
-  )
-}
-
 export default function CampaignApplyCvPanel({ publicId }) {
-  const queryClient = useQueryClient()
   const [keyword, setKeyword] = useState('')
   const [label, setLabel] = useState('all')
   const [scope, setScope] = useState('all')
@@ -108,17 +92,6 @@ export default function CampaignApplyCvPanel({ publicId }) {
   const applicationsQuery = useQuery({
     queryKey: applicationKeys.recruiterList(params),
     queryFn: () => getRecruiterApplications(params),
-  })
-  const statusMutation = useMutation({
-    mutationFn: ({ applicationPublicId, nextStatus }) => (
-      updateApplicationStatus(applicationPublicId, { status: nextStatus })
-    ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: applicationKeys.recruiterList(params) })
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
-      message.success('Đã cập nhật trạng thái hồ sơ.')
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái hồ sơ.')),
   })
 
   const applications = useMemo(
@@ -162,10 +135,6 @@ export default function CampaignApplyCvPanel({ publicId }) {
     setStatus('all')
     setSort('default')
   }
-  const updateStatus = (applicationPublicId, nextStatus) => {
-    statusMutation.mutate({ applicationPublicId, nextStatus })
-  }
-
   return (
     <div>
       <div className="border-b border-slate-200 px-4 py-4 lg:px-5">
@@ -270,16 +239,9 @@ export default function CampaignApplyCvPanel({ publicId }) {
               {
                 title: 'Trạng thái',
                 render: (_, application) => (
-                  <div className="min-w-36">
-                    <Tag color={STATUS_COLORS[application.status]} className="mb-2">
-                      {RECRUITER_APPLICATION_STATUS_LABELS[application.status] || application.status}
-                    </Tag>
-                    <StatusSelect
-                      application={application}
-                      onChange={updateStatus}
-                      updating={statusMutation.isPending && statusMutation.variables?.applicationPublicId === application.public_id}
-                    />
-                  </div>
+                  <Tag color={STATUS_COLORS[application.status]}>
+                    {RECRUITER_APPLICATION_STATUS_LABELS[application.status] || application.status}
+                  </Tag>
                 ),
               },
               {
@@ -290,7 +252,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                     to={`/tuyendung/app/applications?campaign=${publicId}&application=${application.public_id}`}
                     className="inline-flex items-center gap-1 whitespace-nowrap font-semibold !text-emerald-700 hover:!text-emerald-800"
                   >
-                    <EyeOutlined /> Xử lý
+                    <EyeOutlined /> Chi tiết
                   </Link>
                 ),
               },

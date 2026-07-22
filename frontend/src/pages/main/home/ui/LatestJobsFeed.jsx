@@ -9,6 +9,7 @@ import {
   formatSalary,
   jobDetailPath,
 } from '@/entities/job'
+import { JobImpressionBoundary } from '@/features/track-job-engagement'
 import { legacyAsset } from '@/shared/config/assets'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'
@@ -82,7 +83,9 @@ export default function LatestJobsFeed({ jobs, enabled }) {
             title={item.exiting ? null : <LatestJobTooltip job={item.job} />}
             styles={{ inner: { width: 300 } }}
           >
-            <li
+            <JobImpressionBoundary
+              as="li"
+              slug={item.job.slug}
               onClick={() => !item.exiting && window.open(jobDetailPath(item.job), '_blank', 'noopener,noreferrer')}
               className={`relative flex items-center gap-3 rounded-lg bg-white/5 hover:bg-white/10 p-2.5 cursor-pointer transition ${
                 item.exiting
@@ -114,7 +117,7 @@ export default function LatestJobsFeed({ jobs, enabled }) {
                 <p className="text-sm font-medium truncate">{item.job.title}</p>
                 <p className="text-xs text-green-100/70 truncate">{item.job.company_name}</p>
               </div>
-            </li>
+            </JobImpressionBoundary>
           </Tooltip>
         ))}
       </ul>

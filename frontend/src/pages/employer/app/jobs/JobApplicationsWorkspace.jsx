@@ -3,13 +3,12 @@ import {
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Input, Select, Table, Tag, message } from 'antd'
+import { Button, Empty, Input, Select, Table, Tag } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  RECRUITER_APPLICATION_STATUS_LABELS,
   RECRUITER_APPLICATION_STATUSES,
-  updateApplicationStatus,
 } from '@/entities/application'
 
 const SOURCE_LABELS = {
@@ -18,21 +17,7 @@ const SOURCE_LABELS = {
   invited: 'Mời ứng tuyển',
 }
 
-function CandidateStatusSelect({ application, updating, onChange }) {
-  return (
-    <Select
-      aria-label={`Trạng thái của ${application.candidate_name || application.candidate_email}`}
-      size="small"
-      value={application.status}
-      loading={updating}
-      className="min-w-32"
-      options={RECRUITER_APPLICATION_STATUSES.map(([value, label]) => ({ value, label }))}
-      onChange={(status) => onChange(application.public_id, status)}
-    />
-  )
-}
-
-function CandidateMobileCard({ application, updating, onStatusChange, manageUrl }) {
+function CandidateMobileCard({ application, manageUrl }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="flex items-start gap-3">
@@ -48,7 +33,7 @@ function CandidateMobileCard({ application, updating, onStatusChange, manageUrl 
         <div><p className="text-slate-400">Ngày nộp</p><p className="mt-1 font-semibold text-slate-700">{new Date(application.applied_at).toLocaleDateString('vi-VN')}</p></div>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-        <CandidateStatusSelect application={application} updating={updating} onChange={onStatusChange} />
+        <Tag className="!m-0">{RECRUITER_APPLICATION_STATUS_LABELS[application.status] || application.status}</Tag>
         <Button size="small"><Link to={manageUrl}>Xem hồ sơ</Link></Button>
       </div>
     </article>
@@ -56,10 +41,8 @@ function CandidateMobileCard({ application, updating, onStatusChange, manageUrl 
 }
 
 export default function JobApplicationsWorkspace({ jobPublicId, applications, loading }) {
-  const queryClient = useQueryClient()
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState()
-  const [updatingId, setUpdatingId] = useState(null)
   const appliedApplications = useMemo(() => applications.filter((item) => item.source === 'applied'), [applications])
   const filteredApplications = useMemo(() => appliedApplications.filter((item) => {
     const searchText = `${item.candidate_name || ''} ${item.candidate_email || ''} ${item.submitted_cv_title || ''}`.toLocaleLowerCase('vi-VN')
@@ -67,24 +50,10 @@ export default function JobApplicationsWorkspace({ jobPublicId, applications, lo
   }), [appliedApplications, keyword, status])
   const unseenCount = appliedApplications.filter((item) => item.status === 'submitted').length
   const pendingCount = appliedApplications.filter((item) => ['submitted', 'viewed'].includes(item.status)).length
-  const mutation = useMutation({
-    mutationFn: ({ publicId, nextStatus }) => updateApplicationStatus(publicId, { status: nextStatus }),
-    onMutate: ({ publicId }) => setUpdatingId(publicId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications', 'recruiter-list'] })
-      message.success('Đã cập nhật trạng thái ứng viên.')
-    },
-    onError: () => message.error('Không thể cập nhật trạng thái ứng viên.'),
-    onSettled: () => setUpdatingId(null),
-  })
-
-  function updateStatus(publicId, nextStatus) {
-    mutation.mutate({ publicId, nextStatus })
-  }
-
   function manageUrl(application) {
     const query = new URLSearchParams({ job: jobPublicId })
     if (application?.candidate_email) query.set('q', application.candidate_email)
+    if (application?.public_id) query.set('application', application.public_id)
     return `/tuyendung/app/applications?${query}`
   }
 
@@ -104,7 +73,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, applications, lo
     },
     {
       title: 'Trạng thái',
-      render: (_, item) => <CandidateStatusSelect application={item} updating={updatingId === item.public_id} onChange={updateStatus} />,
+      render: (_, item) => <Tag>{RECRUITER_APPLICATION_STATUS_LABELS[item.status] || item.status}</Tag>,
     },
     {
       title: 'Ngày nộp',
@@ -162,8 +131,6 @@ export default function JobApplicationsWorkspace({ jobPublicId, applications, lo
           <CandidateMobileCard
             key={item.public_id}
             application={item}
-            updating={updatingId === item.public_id}
-            onStatusChange={updateStatus}
             manageUrl={manageUrl(item)}
           />
         ))}

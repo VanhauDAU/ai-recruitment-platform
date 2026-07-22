@@ -1,12 +1,11 @@
 import {
-  ArrowLeftOutlined,
   FileAddOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Empty, Skeleton } from 'antd'
 import { useMemo } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   campaignKeys,
   getCampaign,
@@ -48,17 +47,6 @@ function numeric(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-function optimizationScore(campaign, report) {
-  if (campaign?.optimization_score != null) return numeric(campaign.optimization_score)
-  const checks = [
-    Boolean(campaign?.name?.trim()),
-    Boolean(campaign?.status),
-    numeric(campaign?.job_count ?? report?.jobs?.total) > 0,
-    numeric(report?.headcount_target) > 0,
-  ]
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
-}
-
 function CampaignMetric({ label, value, index }) {
   const styles = METRIC_STYLES[index]
   return (
@@ -85,7 +73,6 @@ function EmptyTab({ label }) {
 }
 
 export default function CampaignDetail() {
-  const navigate = useNavigate()
   const { publicId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const campaignQuery = useQuery({
@@ -141,24 +128,8 @@ export default function CampaignDetail() {
   const activeTabLabel = CAMPAIGN_TABS.find((tab) => tab.key === activeTab)?.label || ''
 
   return (
-    <section className="-mx-3 -mt-4 pb-5 sm:-mx-4 lg:-mx-5">
-      <header className="flex min-h-16 flex-col gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <button
-            type="button"
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded bg-slate-100 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
-            onClick={() => navigate('/tuyendung/app/campaigns')}
-          >
-            <ArrowLeftOutlined /> Quay lại
-          </button>
-          <h1 className="truncate text-lg font-bold text-slate-800" title={campaign?.name}>{campaign?.name || 'Chiến dịch tuyển dụng'}</h1>
-        </div>
-        <span className="inline-flex h-9 shrink-0 items-center justify-center self-start rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-600 sm:self-auto">
-          Điểm tối ưu: <strong className="ml-1 text-emerald-600">{optimizationScore(campaign, report)}%</strong>
-        </span>
-      </header>
-
-      <div className="space-y-3 px-3 pt-4 sm:px-4 lg:px-5">
+    <section className="pb-5 pt-3">
+      <div className="space-y-3">
         {reportQuery.isError && (
           <Alert type="warning" showIcon message="Một số chỉ số chiến dịch chưa tải được." closable />
         )}
@@ -194,7 +165,7 @@ export default function CampaignDetail() {
 
           <div role="tabpanel">
             {activeTab === 'apply_cv' && <CampaignApplyCvPanel publicId={publicId} />}
-            {activeTab === 'job' && <CampaignJobsPanel publicId={publicId} report={report} />}
+            {activeTab === 'job' && <CampaignJobsPanel publicId={publicId} />}
             {activeTab === 'upload_cv' && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600"><FileAddOutlined /></span>

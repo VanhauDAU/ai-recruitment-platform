@@ -14,6 +14,7 @@ import {
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
+import { JobImpressionBoundary } from '@/features/track-job-engagement'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 
 function LoadingGrid() {
@@ -95,8 +96,9 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
         const isPending = pendingJobIds.has(job.public_id)
 
         return (
-          <div
+          <JobImpressionBoundary
             key={job.public_id}
+            slug={job.slug}
             className="relative h-full"
             onMouseLeave={() => closePreview(160)}
           >
@@ -189,7 +191,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
                 onApply={() => navigate(jobDetailPath(job))}
               />
             )}
-          </div>
+          </JobImpressionBoundary>
         )
       })}
     </div>

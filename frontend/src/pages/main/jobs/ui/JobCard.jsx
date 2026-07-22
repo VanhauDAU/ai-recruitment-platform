@@ -16,6 +16,7 @@ import {
   SavedJobTooltipContent,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
+import { useJobImpression } from '@/features/track-job-engagement'
 
 // "Đăng hôm nay" / "Đăng 3 ngày trước" / "Đăng 2 tuần trước"…
 function postedLabel(job) {
@@ -103,6 +104,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
   const navigate = useNavigate()
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
   const [hovered, setHovered] = useState(false)
+  const impressionRef = useJobImpression(job.slug)
   const locationLabel = formatLocations(job)
   const elevated = job.tier === 'featured' || job.tier === 'top'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
@@ -154,6 +156,7 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
 
   return (
     <div
+      ref={impressionRef}
       onClick={handleQuickView}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
