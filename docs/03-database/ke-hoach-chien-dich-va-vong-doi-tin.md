@@ -18,9 +18,10 @@ xuất bản ngay.
   Lần gửi duyệt đầu của một tin mới tiêu một lượt; gửi lại tin bị từ chối, cập
   nhật tin đang chờ duyệt, đóng/mở lại hoặc xóa nháp không hoàn hay tiêu thêm
   lượt. Giá trị mặc định quản trị được qua `employer_free_job_quota`.
-- Chiến dịch là nhóm tùy chọn: một tin có thể không thuộc chiến dịch, một chiến
-  dịch có nhiều tin. Chiến dịch giúp theo dõi mục tiêu và phễu, không làm thay
-  đổi quyền truy cập tin. Nhà tuyển dụng tạo chiến dịch chỉ cần tên, không cần
+- Chiến dịch là workspace tùy chọn cho **một tin tuyển dụng**: một tin có thể
+  không thuộc chiến dịch, còn mỗi chiến dịch chỉ liên kết tối đa một tin. Chiến
+  dịch giúp theo dõi mục tiêu và phễu, không làm thay đổi quyền truy cập tin.
+  Nhà tuyển dụng tạo chiến dịch chỉ cần tên, không cần
   liên kết công ty hoặc hoàn tất bất kỳ bước xác thực nào; các điều kiện đó chỉ
   được kiểm tra khi gửi tin tuyển dụng để duyệt.
 - Chiến dịch tạo nhanh được mở ngay. Dừng chiến dịch chỉ thay đổi trạng thái
@@ -39,7 +40,8 @@ lý đó nhưng chỉ hiển thị chức năng đã có domain và dữ liệu 
    workspace chiến dịch.
 2. Danh sách có tìm kiếm, lọc theo tín hiệu cần hành động: chiến dịch đang mở,
    CV mới, tin đang hiển thị, tin chờ duyệt và tin hết hạn.
-3. Mỗi chiến dịch hiển thị tổng/CV mới, trạng thái các tin, số offer trên mục
+3. Mỗi chiến dịch hiển thị tổng/CV mới, chi tiết trạng thái của tin tuyển dụng,
+   số offer trên mục
    tiêu và thao tác xem, đăng tin, dừng/mở lại.
 4. Chi tiết gồm Tổng quan, CV ứng tuyển và Tin tuyển dụng. Tổng quan dùng phễu
    hồ sơ, lượt xem, tiến độ mục tiêu và số CV bảy ngày từ dữ liệu hiện có.
@@ -66,7 +68,7 @@ và [chi tiết chiến dịch](https://tuyendung.topcv.vn/help/dinh-nghia/chi-t
 | Bảng | Chủ sở hữu | Vai trò |
 | --- | --- | --- |
 | `recruitment_campaigns` | `RecruiterProfile` | Kế hoạch tuyển: vị trí, cấp bậc, headcount, ngân sách, hạn/mode tuyển liên tục và trạng thái chiến dịch. `company` có thể rỗng khi tạo nhanh; có thể truy ngược `source_need`. |
-| `jobs.campaign_id` | `Job.posted_by` | Liên kết tùy chọn từ tin sang chiến dịch cùng chủ sở hữu. |
+| `jobs.campaign_id` | `Job.posted_by` | Liên kết tùy chọn, duy nhất từ tin sang chiến dịch cùng chủ sở hữu; mỗi chiến dịch tối đa một tin. |
 | `job_status_history` | `Job` | Audit chuyển trạng thái tin, actor (`employer`/`admin`) và ghi chú/lý do từ chối. |
 | `applications.employer_rating` | `Application` | Điểm nội bộ 1–5, không trả cho ứng viên. |
 | `application_status_history` | `Application` | Audit trạng thái, actor, ghi chú nội bộ; được dùng làm timeline ứng viên với DTO đã lọc. |

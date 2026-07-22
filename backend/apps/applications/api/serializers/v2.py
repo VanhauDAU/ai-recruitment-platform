@@ -8,6 +8,7 @@ from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.jobs.models import Job
 from apps.locations.models import Location
+from common.media_storage import media_url_from_value
 
 from ...models import Application
 
@@ -139,6 +140,9 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
 class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     job_public_id = serializers.CharField(source='job.public_id', read_only=True)
     job_title = serializers.CharField(source='job.title', read_only=True)
+    job_slug = serializers.CharField(source='job.slug', read_only=True)
+    company_name = serializers.CharField(source='job.company.company_name', read_only=True)
+    company_logo_url = serializers.SerializerMethodField()
     cv_public_id = serializers.SerializerMethodField()
     submitted_cv_version_public_id = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
@@ -158,6 +162,9 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         Application.Status.REJECTED: 'Chưa phù hợp',
     }
 
+    def get_company_logo_url(self, obj):
+        return media_url_from_value(obj.job.company.logo_url, request=self.context.get('request'))
+
     def get_cv_public_id(self, obj):
         return obj.cv.public_id if obj.cv_id else None
 
@@ -171,13 +178,14 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         return self.CANDIDATE_STATUS[obj.status]
 
     def get_timeline(self, obj):
+        """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi."""
         return [
             {
                 'status': item.to_status,
                 'label': self.CANDIDATE_STATUS.get(item.to_status, item.to_status),
                 'occurred_at': item.created_at,
             }
-            for item in obj.status_history.all()
+            for item in reversed(list(obj.status_history.all()))
         ]
 
     class Meta:
@@ -186,6 +194,9 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'public_id',
             'job_public_id',
             'job_title',
+            'job_slug',
+            'company_name',
+            'company_logo_url',
             'cv_public_id',
             'submitted_cv_version_public_id',
             'submitted_cv_title',

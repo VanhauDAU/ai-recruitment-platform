@@ -55,6 +55,7 @@ export default function CampaignDetail() {
   if (campaignQuery.isError || reportQuery.isError) return <Alert type="error" showIcon title="Không thể tải chiến dịch." />
   const campaign = campaignQuery.data
   const report = reportQuery.data
+  const campaignJob = campaign.campaign_job
   const canResume = ['draft', 'paused', 'completed'].includes(campaign.status)
   const setTab = (tab) => setSearchParams({ tab })
 
@@ -69,7 +70,7 @@ export default function CampaignDetail() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button icon={<TeamOutlined />} onClick={() => navigate(`/tuyendung/app/applications?campaign=${publicId}`)}>Quản lý CV</Button>
-            <Button type="primary" icon={<FileTextOutlined />} onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${publicId}`)}>Đăng tin</Button>
+            <Button type="primary" icon={<FileTextOutlined />} onClick={() => navigate(campaignJob ? `/tuyendung/app/jobs/${campaignJob.public_id}` : `/tuyendung/app/jobs/new?campaign=${publicId}`)}>{campaignJob ? 'Xem tin tuyển dụng' : 'Đăng tin'}</Button>
             <Button icon={<EditOutlined />} onClick={() => setSearchParams({ tab: activeTab, edit: '1' })}>Chỉnh sửa</Button>
             {campaign.status === 'active' && <Popconfirm title="Dừng chiến dịch?" description="Tin tuyển dụng đang chạy không tự động bị đóng." okText="Dừng" cancelText="Hủy" onConfirm={() => statusMutation.mutate('paused')}><Button icon={<PauseCircleOutlined />}>Dừng</Button></Popconfirm>}
             {canResume && <Button icon={<PlayCircleOutlined />} onClick={() => statusMutation.mutate('active')}>Mở lại</Button>}

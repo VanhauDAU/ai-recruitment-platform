@@ -116,22 +116,19 @@ class RecruitmentCampaignApiTests(TestCase):
             status=Job.Status.ACTIVE,
             deadline=timezone.localdate() + timedelta(days=10),
         )
-        Job.objects.create(
-            posted_by=self.owner,
+        pending_campaign = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile,
             company=self.company,
-            campaign=campaign,
-            title='Frontend pending',
-            description='Pending review.',
-            status=Job.Status.PENDING,
+            name='Backend team',
+            status=RecruitmentCampaign.Status.ACTIVE,
         )
         Job.objects.create(
             posted_by=self.owner,
             company=self.company,
-            campaign=campaign,
-            title='Frontend expired',
-            description='Expired role.',
-            status=Job.Status.ACTIVE,
-            deadline=timezone.localdate() - timedelta(days=1),
+            campaign=pending_campaign,
+            title='Backend pending',
+            description='Pending review.',
+            status=Job.Status.PENDING,
         )
         candidate = get_user_model().objects.create_user(
             email='campaign-candidate@example.com', password='password', role='candidate'
@@ -154,18 +151,20 @@ class RecruitmentCampaignApiTests(TestCase):
             reverse('employer-campaign-report', kwargs={'public_id': campaign.public_id})
         )
 
-        item = listed.data['results'][0]
-        self.assertEqual(item['job_count'], 3)
+        item = next(item for item in listed.data['results'] if item['public_id'] == campaign.public_id)
+        self.assertEqual(item['job_count'], 1)
         self.assertEqual(item['active_job_count'], 1)
-        self.assertEqual(item['pending_job_count'], 1)
-        self.assertEqual(item['expired_job_count'], 1)
+        self.assertEqual(item['pending_job_count'], 0)
+        self.assertEqual(item['expired_job_count'], 0)
         self.assertEqual(item['application_count'], 1)
         self.assertEqual(item['unviewed_application_count'], 1)
+        self.assertEqual(item['campaign_job']['public_id'], active_job.public_id)
+        self.assertEqual(item['campaign_job']['title'], 'Frontend Engineer')
         self.assertEqual(needs_review.data['count'], 1)
         self.assertEqual(pending_jobs.data['count'], 1)
-        self.assertEqual(report.data['jobs']['total'], 3)
+        self.assertEqual(report.data['jobs']['total'], 1)
         self.assertEqual(report.data['jobs']['active'], 1)
-        self.assertEqual(report.data['jobs']['expired'], 1)
+        self.assertEqual(report.data['jobs']['expired'], 0)
 
     def test_campaign_status_uses_explicit_lifecycle_transitions(self):
         campaign = RecruitmentCampaign.objects.create(

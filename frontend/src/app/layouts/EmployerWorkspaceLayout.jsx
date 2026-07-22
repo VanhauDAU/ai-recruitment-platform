@@ -7,6 +7,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   MessageOutlined,
+  PlusOutlined,
   QuestionCircleFilled,
   SafetyCertificateOutlined,
   SearchOutlined,
@@ -85,6 +86,7 @@ export default function EmployerWorkspaceLayout() {
   const showComplianceNotice = profileQuery.isSuccess
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
+  const isCampaignList = pathname === employerAppPath('/campaigns')
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -253,8 +255,13 @@ export default function EmployerWorkspaceLayout() {
         </Sider>
 
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
-          <div className="flex min-h-11 shrink-0 items-center border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
+          <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
             <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
+            {isCampaignList && (
+              <Link to={employerAppPath('/campaigns')} state={{ createCampaign: true }}>
+                <Button size="small" type="primary" icon={<PlusOutlined />}>Thêm chiến dịch mới</Button>
+              </Link>
+            )}
           </div>
           {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}
           <Content

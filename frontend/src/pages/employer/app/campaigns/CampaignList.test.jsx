@@ -4,9 +4,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CampaignList from './CampaignList'
 
-const { changeCampaignStatus, createCampaign, getCampaigns, getCampaignSuggestions } = vi.hoisted(() => ({
+const { changeCampaignStatus, getCampaigns, getCampaignSuggestions } = vi.hoisted(() => ({
   changeCampaignStatus: vi.fn(),
-  createCampaign: vi.fn(),
   getCampaigns: vi.fn(),
   getCampaignSuggestions: vi.fn(),
 }))
@@ -20,20 +19,22 @@ vi.mock('@/entities/campaign', () => ({
   CAMPAIGN_STATUS_LABELS: { active: 'Đang mở' },
   campaignKeys: { all: ['campaigns'], list: (params = {}) => ['campaigns', 'list', params] },
   changeCampaignStatus,
-  createCampaign,
+  createCampaign: vi.fn(),
   createCampaignFromNeed: vi.fn(),
   getCampaigns,
   getCampaignSuggestions,
 }))
 
-function renderPage() {
+function renderPage(initialEntry = '/tuyendung/app/campaigns') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/tuyendung/app/campaigns']}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/tuyendung/app/campaigns" element={<CampaignList />} />
+          <Route path="/tuyendung/app/campaigns/:publicId" element={<p>Campaign detail</p>} />
           <Route path="/tuyendung/app/jobs/new" element={<p>New job page</p>} />
+          <Route path="/tuyendung/app/jobs/:publicId" element={<p>Job detail</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -42,40 +43,11 @@ function renderPage() {
 
 describe('CampaignList', () => {
   beforeEach(() => {
-    createCampaign.mockReset()
     changeCampaignStatus.mockReset()
     getCampaigns.mockReset()
     getCampaignSuggestions.mockReset()
     getCampaigns.mockResolvedValue([])
     getCampaignSuggestions.mockResolvedValue([])
-    createCampaign.mockResolvedValue({
-      public_id: 'camp_q3',
-      name: 'Tuyển dụng Quý 3/2026',
-      status: 'active',
-    })
-  })
-
-  it('creates from a name with Enter then asks the recruiter to choose an activity', async () => {
-    renderPage()
-
-    fireEvent.click(screen.getByRole('button', { name: /Thêm chiến dịch mới/ }))
-    fireEvent.change(screen.getByLabelText('Tên chiến dịch tuyển dụng'), {
-      target: { value: 'Tuyển dụng Quý 3/2026' },
-    })
-    fireEvent.keyDown(screen.getByLabelText('Tên chiến dịch tuyển dụng'), {
-      key: 'Enter',
-      code: 'Enter',
-    })
-
-    expect(await screen.findByText('Khởi động chiến dịch: Tuyển dụng Quý 3/2026')).toBeInTheDocument()
-    expect(createCampaign).toHaveBeenCalledWith(
-      { name: 'Tuyển dụng Quý 3/2026' },
-      expect.anything(),
-    )
-    expect(screen.getByRole('button', { name: 'Xem chiến dịch' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Đăng tin' }))
-    expect(await screen.findByText('New job page')).toBeInTheDocument()
   })
 
   it('searches on Enter and sends the query to the API', async () => {
@@ -91,5 +63,34 @@ describe('CampaignList', () => {
 
     expect(await screen.findByDisplayValue('Frontend')).toBeInTheDocument()
     await waitFor(() => expect(getCampaigns).toHaveBeenLastCalledWith({ q: 'Frontend' }))
+  })
+
+  it('links the campaign name to its detail page and shows its single job', async () => {
+    getCampaigns.mockResolvedValue([
+      {
+        public_id: 'camp_frontend',
+        name: 'Tuyển Frontend',
+        status: 'active',
+        application_count: 3,
+        accepted_count: 1,
+        headcount_target: 2,
+        campaign_job: {
+          public_id: 'jb_frontend',
+          title: 'Kỹ sư Frontend',
+          status: 'active',
+          deadline: '2026-08-31',
+          application_count: 3,
+          view_count: 18,
+        },
+      },
+    ])
+    renderPage()
+
+    const jobLinks = await screen.findAllByRole('link', { name: 'Kỹ sư Frontend' })
+    expect(screen.getAllByText('#camp_frontend').length).toBeGreaterThan(0)
+    expect(jobLinks[0]).toHaveAttribute('href', '/tuyendung/app/jobs/jb_frontend')
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'Tuyển Frontend' })[0])
+    expect(await screen.findByText('Campaign detail')).toBeInTheDocument()
   })
 })

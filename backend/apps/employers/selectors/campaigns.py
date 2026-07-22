@@ -1,16 +1,18 @@
 from datetime import timedelta
 
-from django.db.models import Count, Q
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from apps.applications.models import Application
+from apps.jobs.models import Job
 
 from ..models import RecruiterProfile, RecruitmentCampaign
 
 
 def campaign_list_queryset(user, *, status=None, scope=None, q=None):
     today = timezone.localdate()
+    campaign_job = Job.objects.filter(campaign_id=OuterRef('pk')).order_by('-created_at')
     queryset = RecruitmentCampaign.objects.filter(owner__user=user).select_related(
         'position_category'
     )
@@ -46,6 +48,12 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None):
             filter=Q(jobs__applications__status=Application.Status.ACCEPTED),
             distinct=True,
         ),
+        job_public_id=Subquery(campaign_job.values('public_id')[:1]),
+        job_title=Subquery(campaign_job.values('title')[:1]),
+        job_status=Subquery(campaign_job.values('status')[:1]),
+        job_deadline=Subquery(campaign_job.values('deadline')[:1]),
+        job_application_count=Subquery(campaign_job.values('application_count')[:1]),
+        job_view_count=Subquery(campaign_job.values('view_count')[:1]),
     )
     if scope == 'open':
         queryset = queryset.filter(status=RecruitmentCampaign.Status.ACTIVE)

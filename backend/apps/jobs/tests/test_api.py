@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.employers.models import Company
+from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
 
@@ -370,6 +370,32 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.application_contact.recipient_name, 'Nguyễn Văn A')
         self.assertEqual(job.application_contact.phone, '')
         self.assertEqual(job.application_contact.emails.count(), 0)
+
+    def test_campaign_rejects_a_second_job(self):
+        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=self.company,
+            name='Tuyển chăm sóc khách hàng',
+        )
+        self.client.force_authenticate(self.user)
+        url = f"{reverse('employer-job-list-create')}?as=draft"
+        first_payload = self.payload()
+        first_payload['campaign'] = campaign.public_id
+
+        first = self.client.post(url, first_payload, format='json')
+        second_payload = self.payload()
+        second_payload.update(
+            {'campaign': campaign.public_id, 'title': 'Nhân viên chăm sóc khách hàng ca tối'}
+        )
+        second = self.client.post(url, second_payload, format='json')
+
+        self.assertEqual(first.status_code, 201, first.data)
+        self.assertEqual(second.status_code, 400)
+        self.assertEqual(
+            second.data['campaign'][0],
+            'Mỗi chiến dịch chỉ được liên kết với một tin tuyển dụng.',
+        )
 
     def test_range_salary_accepts_only_minimum_or_maximum(self):
         for salary_min, salary_max in ((9000000, None), (None, 12000000)):

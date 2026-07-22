@@ -8,7 +8,7 @@ from ..models import Application
 def candidate_applications_queryset(candidate):
     return (
         Application.objects.filter(candidate=candidate)
-        .select_related('job', 'cv', 'submitted_cv_version')
+        .select_related('job', 'job__company', 'cv', 'submitted_cv_version')
         .prefetch_related('preferred_locations', 'status_history')
         .order_by('-applied_at')
     )

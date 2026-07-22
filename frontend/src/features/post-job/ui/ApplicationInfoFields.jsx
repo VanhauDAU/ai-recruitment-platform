@@ -2,6 +2,7 @@ import { DatePicker, Form, Input, InputNumber, Select } from 'antd'
 import dayjs from 'dayjs'
 
 export default function ApplicationInfoFields({ campaigns }) {
+  const selectedCampaign = Form.useWatch('campaign')
   return (
     <>
       <div className="grid gap-x-4 md:grid-cols-2">
@@ -17,7 +18,14 @@ export default function ApplicationInfoFields({ campaigns }) {
           allowClear
           showSearch
           optionFilterProp="label"
-          options={campaigns.map((item) => ({ value: item.public_id, label: item.name }))}
+          options={campaigns.map((item) => {
+            const occupied = Boolean(item.campaign_job && item.public_id !== selectedCampaign)
+            return {
+              value: item.public_id,
+              label: occupied ? `${item.name} — đã có tin tuyển dụng` : item.name,
+              disabled: occupied,
+            }
+          })}
           placeholder="Không gắn chiến dịch"
         />
       </Form.Item>

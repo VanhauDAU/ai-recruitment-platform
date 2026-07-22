@@ -7,6 +7,7 @@ from ...models import RecruitmentCampaign, RecruitmentNeed
 
 
 class RecruitmentCampaignSerializer(serializers.ModelSerializer):
+    campaign_job = serializers.SerializerMethodField()
     position_category = serializers.PrimaryKeyRelatedField(
         queryset=JobCategory.objects.filter(
             status=JobCategory.Status.ACTIVE,
@@ -69,6 +70,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'expired_job_count',
             'closed_job_count',
             'rejected_job_count',
+            'campaign_job',
             'created_at',
             'updated_at',
         ]
@@ -89,9 +91,45 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'expired_job_count',
             'closed_job_count',
             'rejected_job_count',
+            'campaign_job',
             'created_at',
             'updated_at',
         ]
+
+    def get_campaign_job(self, campaign):
+        if hasattr(campaign, 'job_public_id'):
+            job_public_id = campaign.job_public_id
+            job_title = campaign.job_title
+            job_status = campaign.job_status
+            deadline = campaign.job_deadline
+            application_count = campaign.job_application_count
+            view_count = campaign.job_view_count
+        else:
+            job = campaign.jobs.order_by('-created_at').first()
+            if job is None:
+                return None
+            job_public_id = job.public_id
+            job_title = job.title
+            job_status = job.status
+            deadline = job.deadline
+            application_count = job.application_count
+            view_count = job.view_count
+        if not job_public_id:
+            return None
+        is_expired = bool(
+            job_status == 'active'
+            and deadline is not None
+            and deadline < timezone.localdate()
+        )
+        return {
+            'public_id': job_public_id,
+            'title': job_title,
+            'status': job_status,
+            'deadline': deadline,
+            'application_count': application_count or 0,
+            'view_count': view_count or 0,
+            'is_expired': is_expired,
+        }
 
     def validate(self, attrs):
         current = self.instance

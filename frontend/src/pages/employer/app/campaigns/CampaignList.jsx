@@ -2,7 +2,6 @@ import {
   FileTextOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
-  PlusOutlined,
   SearchOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -22,7 +21,7 @@ import {
   message,
 } from 'antd'
 import { useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   CAMPAIGN_SCOPE_OPTIONS,
   CAMPAIGN_STATUS_COLORS,
@@ -41,26 +40,40 @@ function recruitmentProgress(campaign) {
   return Math.min(Math.round(((campaign.accepted_count || 0) / target) * 100), 100)
 }
 
-function JobSignals({ campaign }) {
-  const signals = [
-    [campaign.active_job_count, 'Đang hiển thị', 'green'],
-    [campaign.pending_job_count, 'Chờ duyệt', 'gold'],
-    [campaign.expired_job_count, 'Hết hạn', 'orange'],
-    [campaign.rejected_job_count, 'Từ chối', 'red'],
-    [campaign.draft_job_count, 'Nháp', 'default'],
-  ].filter(([count]) => count > 0)
-  if (!signals.length) return <span className="text-sm text-slate-400">Chưa có tin</span>
+const JOB_STATUS = {
+  draft: ['Nháp', 'default'],
+  pending: ['Chờ duyệt', 'gold'],
+  active: ['Đang tuyển', 'green'],
+  closed: ['Đã đóng', 'default'],
+  rejected: ['Từ chối', 'red'],
+}
+
+function CampaignJobSummary({ campaign, className = '' }) {
+  const job = campaign.campaign_job
+  if (!job) {
+    return <span className={`text-sm text-slate-400 ${className}`}>Chưa có tin tuyển dụng</span>
+  }
+  const status = job.is_expired ? ['Hết hạn', 'orange'] : (JOB_STATUS[job.status] || [job.status, 'default'])
+  const deadline = job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'
   return (
-    <div className="flex flex-wrap gap-1">
-      {signals.map(([count, label, color]) => <Tag key={label} color={color}>{count} {label}</Tag>)}
+    <div className={`min-w-0 ${className}`}>
+      <Link className="block truncate font-semibold !text-slate-800 hover:!text-emerald-700" to={`/tuyendung/app/jobs/${job.public_id}`}>
+        {job.title || 'Tin nháp chưa đặt tên'}
+      </Link>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <Tag className="!m-0" color={status[1]}>{status[0]}</Tag>
+        <span className="text-xs text-slate-500">Hạn nộp: {deadline}</span>
+      </div>
+      <p className="mt-1.5 text-xs text-slate-500">{job.application_count || 0} CV · {job.view_count || 0} lượt xem</p>
     </div>
   )
 }
 
 export default function CampaignList() {
-  const [createOpen, setCreateOpen] = useState(false)
   const [activityCampaign, setActivityCampaign] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const createOpen = Boolean(location.state?.createCampaign)
   const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
   const [form] = Form.useForm()
   const navigate = useNavigate()
@@ -110,6 +123,13 @@ export default function CampaignList() {
   })
   const campaigns = campaignsQuery.data || []
 
+  function setCreateOpen(open) {
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: open ? { ...location.state, createCampaign: true } : null,
+    })
+  }
+
   function replaceFilters(next) {
     const values = Object.fromEntries(searchParams)
     Object.entries(next).forEach(([key, value]) => {
@@ -131,10 +151,15 @@ export default function CampaignList() {
 
   function CampaignActions({ campaign, block = false }) {
     const canResume = ['draft', 'paused', 'completed'].includes(campaign.status)
+    const job = campaign.campaign_job
     return (
       <div className={`flex flex-wrap gap-2 ${block ? '[&>*]:flex-1' : ''}`}>
         <Button size="small"><Link to={`/tuyendung/app/campaigns/${campaign.public_id}`}>Xem</Link></Button>
-        <Button size="small" icon={<FileTextOutlined />} onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}>Đăng tin</Button>
+        {job ? (
+          <Button size="small" icon={<FileTextOutlined />}><Link to={`/tuyendung/app/jobs/${job.public_id}`}>Xem tin</Link></Button>
+        ) : (
+          <Button size="small" icon={<FileTextOutlined />} onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}>Đăng tin</Button>
+        )}
         {campaign.status === 'active' && (
           <Popconfirm
             title="Dừng chiến dịch?"
@@ -172,7 +197,7 @@ export default function CampaignList() {
         </Link>
       ),
     },
-    { title: 'Tin tuyển dụng', width: 220, render: (_, campaign) => <JobSignals campaign={campaign} /> },
+    { title: 'Tin tuyển dụng', width: 300, render: (_, campaign) => <CampaignJobSummary campaign={campaign} /> },
     {
       title: 'Tiến độ tuyển',
       width: 170,
@@ -183,18 +208,11 @@ export default function CampaignList() {
         </div>
       ),
     },
-    { title: 'Thao tác', width: 260, render: (_, campaign) => <CampaignActions campaign={campaign} /> },
+    { title: 'Thao tác', width: 240, render: (_, campaign) => <CampaignActions campaign={campaign} /> },
   ]
 
   return (
     <section className="space-y-5">
-      <div className="rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-500 p-5 text-white shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><h1 className="text-2xl font-extrabold">Quản lý chiến dịch tuyển dụng</h1><p className="mt-1 max-w-2xl text-sm text-emerald-50">Mỗi chiến dịch là một workspace cho một mục tiêu tuyển dụng: tin đăng, hồ sơ và tiến độ xử lý được theo dõi tập trung.</p></div>
-          <Button size="large" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>Thêm chiến dịch mới</Button>
-        </div>
-      </div>
-
       <Card styles={{ body: { padding: 16 } }}>
         <div className="grid gap-3 lg:grid-cols-[minmax(220px,300px)_minmax(260px,1fr)_auto]">
           <Select value={scope} options={CAMPAIGN_SCOPE_OPTIONS} onChange={(value) => replaceFilters({ scope: value })} />
@@ -229,15 +247,15 @@ export default function CampaignList() {
               <div className="min-w-0"><span className="text-xs text-slate-400">#{campaign.public_id}</span><Link className="mt-1 block break-words text-base font-bold !text-slate-900" to={`/tuyendung/app/campaigns/${campaign.public_id}`}>{campaign.name}</Link></div>
               <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</Tag>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3 text-sm"><div><span className="block text-xs text-slate-500">Hồ sơ</span><strong>{campaign.application_count || 0}</strong>{campaign.unviewed_application_count > 0 && <span className="ml-1 text-emerald-600">· {campaign.unviewed_application_count} mới</span>}</div><div><span className="block text-xs text-slate-500">Tin tuyển dụng</span><strong>{campaign.job_count || 0}</strong></div></div>
-            <div className="mt-4"><JobSignals campaign={campaign} /></div>
+            <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">CV ứng tuyển</span><strong>{campaign.application_count || 0}</strong>{campaign.unviewed_application_count > 0 && <span className="ml-1 text-emerald-600">· {campaign.unviewed_application_count} mới</span>}</div>
+            <div className="mt-4"><p className="mb-2 text-xs font-medium text-slate-500">TIN TUYỂN DỤNG</p><CampaignJobSummary campaign={campaign} /></div>
             <div className="mt-4"><div className="mb-1 flex justify-between text-xs text-slate-500"><span>Tiến độ tuyển</span><strong>{campaign.accepted_count || 0}/{campaign.headcount_target || 1}</strong></div><Progress percent={recruitmentProgress(campaign)} showInfo={false} strokeColor="#00b14f" /></div>
             <div className="mt-4 border-t border-slate-100 pt-4"><CampaignActions campaign={campaign} block /></div>
           </Card>
         ))}
       </div>
       <Card className="hidden lg:block" styles={{ body: { padding: 0 } }}>
-        <Table rowKey="public_id" loading={campaignsQuery.isLoading} dataSource={campaigns} locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }} pagination={false} scroll={{ x: 1080 }} columns={columns} />
+        <Table rowKey="public_id" loading={campaignsQuery.isLoading} dataSource={campaigns} locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }} pagination={false} scroll={{ x: 1160 }} columns={columns} />
       </Card>
 
       <Modal destroyOnHidden open={createOpen} title="Tạo chiến dịch tuyển dụng" okText="Tiếp tục" cancelText="Hủy" confirmLoading={createMutation.isPending} onCancel={() => setCreateOpen(false)} onOk={submitQuickCreate}>

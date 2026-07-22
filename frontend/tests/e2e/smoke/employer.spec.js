@@ -569,7 +569,99 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   })
 })
 
-test('employer campaigns: quick creation asks for an activity before creating a job', async ({ page }) => {
+test('employer jobs: detail workspace is compact, actionable and responsive', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_verified',
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/jobs/mine/jb_workspace/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'jb_workspace', title: 'Kỹ sư Frontend React', status: 'active',
+        campaign_name: 'Tuyển đội ngũ sản phẩm', deadline: '2026-08-31', view_count: 36,
+        application_count: 2, number_of_vacancies: 2, salary_type: 'range',
+        salary_min: 18000000, salary_max: 30000000, employment_type: 'full_time',
+        work_type: 'hybrid', work_types: ['hybrid', 'onsite'], experience_years: '2',
+        education_level: 'university', position_level: 'employee', gender_requirement: 'any',
+        age_min: 22, age_max: 35,
+        description: '<p>Xây dựng giao diện sản phẩm tuyển dụng.</p>',
+        requirements: '<p>Thành thạo React và JavaScript.</p>',
+        benefits: '<p>Lương tháng 13 và bảo hiểm sức khỏe.</p>',
+        category_assignments: [{ id: 1, category_name: 'Frontend Developer', role: 'primary_specialization' }],
+        job_locations: [{ id: 1, location: 11, province_name: 'Đà Nẵng', location_name: 'Phường Hải Châu', address_detail: '123 Nguyễn Văn Linh' }],
+        work_schedules: [{ id: 1, weekday_from: 1, weekday_to: 5, start_time: '08:30:00', end_time: '17:30:00' }],
+        job_skills: [{ id: 1, skill: 3, skill_name: 'React', importance: 'required' }],
+        job_benefits: [{ id: 1, benefit: 4, benefit_name: 'Bảo hiểm sức khỏe' }],
+        language_requirements: [{ id: 1, language: 2, language_name: 'Tiếng Anh', proficiency_label: 'Sử dụng trong công việc' }],
+        application_contact: { recipient_name: 'Nguyễn An', phone: '0912345678', emails: [{ id: 1, email: 'hr@example.com' }] },
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          public_id: 'app_applied', candidate_name: 'Trần Minh', candidate_email: 'minh@example.com',
+          submitted_cv_title: 'Frontend CV', source: 'applied', status: 'submitted', applied_at: '2026-07-20T08:00:00Z',
+        },
+        {
+          public_id: 'app_recommended', candidate_name: 'Lê Hoa', candidate_email: 'hoa@example.com',
+          submitted_cv_title: 'Product CV', source: 'recommended', status: 'considering', applied_at: '2026-07-19T08:00:00Z',
+        },
+      ]),
+    })
+  })
+
+  await page.goto('/tuyendung/app/jobs/jb_workspace')
+
+  await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | ProCV cho Nhà tuyển dụng')
+  await expect(page.getByRole('heading', { name: 'Kỹ sư Frontend React' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Chỉnh sửa/ })).toBeVisible()
+  await expect(page.getByTestId('job-metric-total-cvs')).toContainText('2')
+  await expect(page.getByTestId('job-metric-applied-cvs')).toContainText('1')
+  await expect(page.getByTestId('job-metric-connected-cvs')).toContainText('1')
+  await expect(page.getByTestId('job-metric-views')).toContainText('36')
+  const usesCompactTabs = page.viewportSize().width < 640
+  if (usesCompactTabs) {
+    await expect(page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' })).toBeVisible()
+  } else {
+    await expect(page.getByRole('tab', { name: /CV ứng tuyển/ })).toBeVisible()
+    await expect(page.getByRole('tab', { name: /Ứng viên đã xem tin/ })).toBeVisible()
+    await expect(page.getByRole('tab', { name: /Thông tin tuyển dụng/ })).toBeVisible()
+    await expect(page.getByRole('tab', { name: /Nhãn/ })).toBeVisible()
+  }
+  await expect(page.getByText('Trần Minh').filter({ visible: true })).toBeVisible()
+  await expect(page.getByText('Lê Hoa')).toHaveCount(0)
+  await expectNoHorizontalOverflow(page)
+
+  if (usesCompactTabs) {
+    await page.getByRole('combobox', { name: 'Chọn nội dung quản lý tin' }).click()
+    await page.locator('.ant-select-dropdown:visible').getByText('Thông tin tuyển dụng', { exact: true }).click()
+  } else {
+    await page.getByRole('tab', { name: /Thông tin tuyển dụng/ }).click()
+  }
+  await expect(page.getByText('18 - 30 triệu')).toBeVisible()
+  await expect(page.getByText('Phường Hải Châu')).toBeVisible()
+  await expect(page.getByText('React', { exact: true })).toBeVisible()
+  await expect(page.getByText('Bảo hiểm sức khỏe', { exact: true })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer campaigns: compact list links to a campaign and its single job', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -597,15 +689,31 @@ test('employer campaigns: quick creation asks for an activity before creating a 
       })
       return
     }
-    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [] }) })
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        results: [{
+          public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'active',
+          job_count: 1, application_count: 2, accepted_count: 1, headcount_target: 2,
+          campaign_job: {
+            public_id: 'jb_frontend', title: 'Kỹ sư Frontend', status: 'active',
+            deadline: '2026-08-31', application_count: 2, view_count: 18,
+          },
+        }],
+      }),
+    })
   })
   await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/suggestions\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
   await page.goto('/tuyendung/app/campaigns')
-  await expect(page.getByRole('heading', { name: 'Quản lý chiến dịch tuyển dụng' })).toBeVisible()
-  await expect(page.getByText('Tìm thấy 0 chiến dịch tuyển dụng')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Chiến dịch tuyển dụng' })).toBeVisible()
+  await expect(page.getByText('Tìm thấy 1 chiến dịch tuyển dụng')).toBeVisible()
+  await expect(page.getByText('#camp_frontend').first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Tuyển Frontend' }).first()).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend')
+  await expect(page.getByRole('link', { name: 'Kỹ sư Frontend' }).first()).toHaveAttribute('href', '/tuyendung/app/jobs/jb_frontend')
+  await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: /Thêm chiến dịch mới/ }).click()
   await page.getByLabel('Tên chiến dịch tuyển dụng').fill('Tuyển dụng Quý 3/2026')
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
