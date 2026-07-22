@@ -1,4 +1,5 @@
 import {
+  ArrowLeftOutlined,
   BarChartOutlined,
   BellOutlined,
   CustomerServiceOutlined,
@@ -20,6 +21,12 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
+import {
+  calculateCampaignOptimizationScore,
+  campaignKeys,
+  getCampaign,
+  getCampaignReport,
+} from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
@@ -67,7 +74,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
 
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
-  const { pathname } = useLocation()
+  const { pathname, key: locationKey } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -87,6 +94,36 @@ export default function EmployerWorkspaceLayout() {
     && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
+  const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
+  const isCampaignDetail = Boolean(campaignDetailMatch)
+  const campaignPublicId = campaignDetailMatch?.[1]
+  const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
+  const isJobNew = pathname === employerAppPath('/jobs/new')
+  const isJobForm = isJobNew || Boolean(jobEditMatch)
+
+  const campaignQuery = useQuery({
+    queryKey: campaignKeys.detail(campaignPublicId),
+    queryFn: () => getCampaign(campaignPublicId),
+    enabled: isCampaignDetail,
+  })
+  const reportQuery = useQuery({
+    queryKey: campaignKeys.report(campaignPublicId),
+    queryFn: () => getCampaignReport(campaignPublicId),
+    enabled: isCampaignDetail,
+  })
+  const campaignData = campaignQuery.data
+  const reportData = reportQuery.data || {}
+  const campaignOptimizationScore = calculateCampaignOptimizationScore(campaignData, reportData)
+  // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
+  // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
+  // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
+  const goBackFromForm = () => {
+    if (locationKey && locationKey !== 'default') {
+      navigate(-1)
+      return
+    }
+    navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
+  }
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -256,11 +293,34 @@ export default function EmployerWorkspaceLayout() {
 
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
           <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
-            <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+              {(isJobForm || isCampaignDetail) && (
+                <Button
+                  size="small"
+                  icon={<ArrowLeftOutlined />}
+                  onClick={isCampaignDetail ? () => navigate(employerAppPath('/campaigns')) : goBackFromForm}
+                  className="!inline-flex !items-center !gap-1.5 !rounded-lg !border !border-slate-300 !bg-white !px-3 !py-1 !text-xs !font-semibold !text-slate-700 shadow-2xs transition hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
+                >
+                  Quay lại
+                </Button>
+              )}
+              {isCampaignDetail ? (
+                <h1 className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base" title={campaignData?.name || 'Chiến dịch tuyển dụng'}>
+                  {campaignData?.name || 'Chiến dịch tuyển dụng'}
+                </h1>
+              ) : (
+                <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
+              )}
+            </div>
             {isCampaignList && (
               <Link to={employerAppPath('/campaigns')} state={{ createCampaign: true }}>
                 <Button size="small" type="primary" icon={<PlusOutlined />}>Thêm chiến dịch mới</Button>
               </Link>
+            )}
+            {isCampaignDetail && (
+              <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-600 shadow-sm">
+                Điểm tối ưu: <strong className="ml-1 text-emerald-600">{campaignOptimizationScore}%</strong>
+              </span>
             )}
           </div>
           {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}

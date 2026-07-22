@@ -1,6 +1,7 @@
 """Public serializers grouped by employers use case."""
 
 from .campaigns import (
+    CampaignPerformanceQuerySerializer,
     CampaignStatusSerializer,
     RecruitmentCampaignSerializer,
     RecruitmentNeedSuggestionSerializer,
@@ -23,6 +24,7 @@ __all__ = [
     'CompanySerializer',
     'CompanyUpdateRequestSerializer',
     'CampaignStatusSerializer',
+    'CampaignPerformanceQuerySerializer',
     'IndustrySerializer',
     'RecruiterProfileSerializer',
     'RecruitmentCampaignSerializer',

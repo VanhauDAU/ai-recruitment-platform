@@ -4,6 +4,11 @@ Tài liệu này là source of truth cho module workspace nhà tuyển dụng. N
 thế giả định cũ rằng công ty là ranh giới phân quyền hoặc tin tuyển dụng được
 xuất bản ngay.
 
+Định hướng mở rộng (đánh giá mô hình 1:1, khác biệt sản phẩm, dịch vụ trả phí
+tương lai, roadmap CAMP-M1…M5) ở
+[ke-hoach-chien-dich-tuyen-dung-mo-rong.md](./ke-hoach-chien-dich-tuyen-dung-mo-rong.md);
+tài liệu đó không thay đổi hành vi nào mô tả tại đây.
+
 ## Quyết định sản phẩm
 
 - Mỗi chiến dịch, tin tuyển dụng và hồ sơ ứng tuyển thuộc **một recruiter cụ

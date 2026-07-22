@@ -104,6 +104,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             deadline = campaign.job_deadline
             application_count = campaign.job_application_count
             view_count = campaign.job_view_count
+            rejected_reason = campaign.job_rejected_reason
         else:
             job = campaign.jobs.order_by('-created_at').first()
             if job is None:
@@ -114,12 +115,11 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             deadline = job.deadline
             application_count = job.application_count
             view_count = job.view_count
+            rejected_reason = job.rejected_reason
         if not job_public_id:
             return None
         is_expired = bool(
-            job_status == 'active'
-            and deadline is not None
-            and deadline < timezone.localdate()
+            job_status == 'active' and deadline is not None and deadline < timezone.localdate()
         )
         return {
             'public_id': job_public_id,
@@ -129,6 +129,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'application_count': application_count or 0,
             'view_count': view_count or 0,
             'is_expired': is_expired,
+            'rejected_reason': rejected_reason or '',
         }
 
     def validate(self, attrs):
@@ -154,6 +155,10 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
 
 class CampaignStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=RecruitmentCampaign.Status.choices)
+
+
+class CampaignPerformanceQuerySerializer(serializers.Serializer):
+    days = serializers.ChoiceField(choices=(7, 30, 90), default=7)
 
 
 class RecruitmentNeedSuggestionSerializer(serializers.ModelSerializer):

@@ -11,6 +11,7 @@ from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
 from ...models import Application
+from ...services import reapplication_error
 
 
 class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
@@ -97,8 +98,9 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'version_public_id': 'Application snapshots cannot be submitted again.'}
             )
-        if Application.objects.filter(candidate=candidate, job=job).exists():
-            raise serializers.ValidationError({'job_public_id': 'You already applied to this job.'})
+        application_error = reapplication_error(candidate, job)
+        if application_error:
+            raise serializers.ValidationError({'job_public_id': application_error})
         province_ids = {
             item.location.parent_id or item.location_id
             for item in job.job_locations.select_related('location__parent').all()

@@ -44,3 +44,10 @@ export async function getCampaignReport(publicId) {
   const { data } = await api.get(`/employer/campaigns/${publicId}/report/`)
   return data
 }
+
+export async function getCampaignJobPerformance(publicId, days = 7) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/job-performance/`, {
+    params: { days },
+  })
+  return data
+}

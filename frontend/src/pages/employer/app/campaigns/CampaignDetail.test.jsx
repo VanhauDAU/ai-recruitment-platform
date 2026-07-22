@@ -4,50 +4,30 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CampaignDetail from './CampaignDetail'
 
-const {
-  getCampaign,
-  getCampaignReport,
-  getEmployerJobs,
-  getRecruiterApplications,
-} = vi.hoisted(() => ({
+const { getCampaign, getCampaignReport } = vi.hoisted(() => ({
   getCampaign: vi.fn(),
   getCampaignReport: vi.fn(),
-  getEmployerJobs: vi.fn(),
-  getRecruiterApplications: vi.fn(),
 }))
 
 vi.mock('@/entities/campaign', () => ({
-  CAMPAIGN_STATUS_COLORS: { active: 'green' },
-  CAMPAIGN_STATUS_LABELS: { active: 'Đang mở' },
   campaignKeys: {
-    all: ['campaigns'],
     detail: (id) => ['campaigns', 'detail', id],
     report: (id) => ['campaigns', 'report', id],
   },
-  changeCampaignStatus: vi.fn(),
   getCampaign,
   getCampaignReport,
-  updateCampaign: vi.fn(),
 }))
-vi.mock('@/entities/job', () => ({
-  getEmployerJobs,
-  getJobCategories: vi.fn(),
-  jobKeys: { employerList: (params) => ['jobs', 'employer-list', params] },
-}))
-vi.mock('@/entities/application', () => ({
-  applicationKeys: { recruiterList: (params) => ['applications', 'recruiter-list', params] },
-  getRecruiterApplications,
-  RECRUITER_APPLICATION_STATUS_LABELS: { submitted: 'Tiếp nhận', accepted: 'Đã nhận offer' },
-}))
-vi.mock('@/features/manage-campaigns', () => ({ CampaignForm: () => <p>Campaign form</p> }))
+vi.mock('./CampaignApplyCvPanel', () => ({ default: () => <p>Bộ lọc CV ứng tuyển</p> }))
+vi.mock('./CampaignJobsPanel', () => ({ default: () => <p>Danh sách tin tuyển dụng</p> }))
 
-function renderPage() {
+function renderPage(initialEntry = '/tuyendung/app/campaigns/camp_frontend') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/tuyendung/app/campaigns/camp_frontend']}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/tuyendung/app/campaigns/:publicId" element={<CampaignDetail />} />
+          <Route path="/tuyendung/app/campaigns" element={<p>Danh sách chiến dịch</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -60,31 +40,33 @@ describe('CampaignDetail', () => {
       public_id: 'camp_frontend',
       name: 'Tuyển Frontend',
       status: 'active',
-      headcount_target: 2,
+      job_count: 2,
+      application_count: 7,
     })
     getCampaignReport.mockResolvedValue({
-      headcount_target: 2,
-      accepted_count: 1,
-      applications: { total: 3, new: 1 },
-      jobs: { total: 1, active: 1, pending: 0, views: 12 },
-      funnel: { submitted: 1, accepted: 1 },
-      daily_applications: [{ date: '2026-07-22', count: 1 }],
+      applications: { total: 7, new: 2 },
+      jobs: { total: 2, active: 1 },
+      headcount_target: 3,
+      funnel: { submitted: 2, considering: 2, accepted: 1 },
     })
-    getEmployerJobs.mockResolvedValue([])
-    getRecruiterApplications.mockResolvedValue([])
   })
 
-  it('uses real campaign metrics and loads operational tabs on demand', async () => {
+  it('renders the TopCV campaign structure with real report metrics', async () => {
     renderPage()
 
-    expect(await screen.findByRole('heading', { name: 'Tuyển Frontend' })).toBeInTheDocument()
-    expect(screen.getByText('3', { exact: true })).toBeInTheDocument()
-    expect(screen.getByText('1/2')).toBeInTheDocument()
+    expect(await screen.findByText('Tổng lượng CV ứng viên')).toBeInTheDocument()
+    expect(screen.getByText('CV đã kết nối')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'CV ứng tuyển' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Tin tuyển dụng' })).toBeInTheDocument()
+    expect(screen.getByText('Bộ lọc CV ứng tuyển')).toBeInTheDocument()
+  })
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Tin tuyển dụng (1)' }))
-    await waitFor(() => expect(getEmployerJobs).toHaveBeenCalledWith({ campaign: 'camp_frontend' }))
+  it('switches content and keeps active_tab in the URL', async () => {
+    renderPage()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'CV ứng tuyển (3)' }))
-    await waitFor(() => expect(getRecruiterApplications).toHaveBeenCalledWith({ campaign: 'camp_frontend' }))
+    fireEvent.click(await screen.findByRole('tab', { name: 'Tin tuyển dụng' }))
+
+    await waitFor(() => expect(screen.getByText('Danh sách tin tuyển dụng')).toBeInTheDocument())
+    expect(screen.getByRole('tab', { name: 'Tin tuyển dụng' })).toHaveAttribute('aria-selected', 'true')
   })
 })

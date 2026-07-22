@@ -3,6 +3,7 @@
 from .campaigns import (
     RecruitmentCampaignDetailView,
     RecruitmentCampaignFromNeedView,
+    RecruitmentCampaignJobPerformanceView,
     RecruitmentCampaignListCreateView,
     RecruitmentCampaignOptionsView,
     RecruitmentCampaignReportView,
@@ -57,6 +58,7 @@ __all__ = [
     'RecruitmentCampaignDetailView',
     'RecruitmentCampaignFromNeedView',
     'RecruitmentCampaignListCreateView',
+    'RecruitmentCampaignJobPerformanceView',
     'RecruitmentCampaignOptionsView',
     'RecruitmentCampaignReportView',
     'RecruitmentCampaignStatusView',

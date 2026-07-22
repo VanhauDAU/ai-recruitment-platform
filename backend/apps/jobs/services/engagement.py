@@ -2,15 +2,19 @@
 
 from hashlib import sha256
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core import signing
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 
 from apps.privacy.constants import VIEWER_SIGNING_SALT
+from common.metrics import record_metric
 
-from ..models import Job
+from ..models import Job, JobEngagementDaily
 
 _DEDUPLICATE_VIEW_SCRIPT = """
 for _, key in ipairs(KEYS) do
@@ -43,6 +47,14 @@ def _dedupe_keys(*, job_id, viewer_id, user_id=None):
     return keys
 
 
+def _impression_dedupe_keys(*, job_id, viewer_id, user_id=None):
+    viewer_hash = sha256(viewer_id.encode()).hexdigest()
+    keys = [f'job-impression:{job_id}:viewer:{viewer_hash}']
+    if user_id:
+        keys.append(f'job-impression:{job_id}:user:{user_id}')
+    return keys
+
+
 def _claim_first_view(keys):
     """Atomically reserve every dedupe key in Redis, or fail closed."""
     try:
@@ -63,23 +75,77 @@ def _claim_first_view(keys):
         return None
 
 
+def _tracking_date():
+    """Use the product reporting timezone instead of the project's UTC timezone."""
+    return timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+
+
+@transaction.atomic
+def _increment_engagement(job, *, lifetime_field, daily_field):
+    tracking_date = _tracking_date()
+    Job.objects.filter(pk=job.pk).update(**{lifetime_field: F(lifetime_field) + 1})
+    JobEngagementDaily.objects.get_or_create(job=job, date=tracking_date)
+    JobEngagementDaily.objects.filter(job=job, date=tracking_date).update(
+        **{daily_field: F(daily_field) + 1}
+    )
+
+
 def record_consented_job_view(request, job):
     """Return a privacy-safe tracking result without exposing identifier data."""
     viewer_id, viewer_created = _viewer_id_from_request(request)
     user_id = request.user.pk if request.user.is_authenticated else None
     claimed = _claim_first_view(_dedupe_keys(job_id=job.pk, viewer_id=viewer_id, user_id=user_id))
     if claimed is None:
+        record_metric('job_engagement', event='view', reason='redis_error')
         job.refresh_from_db(fields=['view_count'])
         return {'counted': False, 'view_count': job.view_count, 'reason': 'redis_error'}
     if not claimed:
+        record_metric('job_engagement', event='view', reason='duplicate')
         job.refresh_from_db(fields=['view_count'])
         return {'counted': False, 'view_count': job.view_count, 'reason': 'duplicate'}
 
-    Job.objects.filter(pk=job.pk).update(view_count=F('view_count') + 1)
+    _increment_engagement(job, lifetime_field='view_count', daily_field='view_count')
+    record_metric('job_engagement', event='view', reason='counted')
     job.refresh_from_db(fields=['view_count'])
     return {
         'counted': True,
         'view_count': job.view_count,
+        'viewer_id': viewer_id if viewer_created else None,
+    }
+
+
+def record_consented_job_impressions(request, jobs):
+    """Record a deduplicated impression for every viewable job in one batch."""
+    viewer_id, viewer_created = _viewer_id_from_request(request)
+    user_id = request.user.pk if request.user.is_authenticated else None
+    results = []
+    for job in jobs:
+        claimed = _claim_first_view(
+            _impression_dedupe_keys(
+                job_id=job.pk,
+                viewer_id=viewer_id,
+                user_id=user_id,
+            )
+        )
+        if claimed is None:
+            record_metric('job_engagement', event='impression', reason='redis_error')
+            results.append({'slug': job.slug, 'counted': False, 'reason': 'redis_error'})
+            continue
+        if not claimed:
+            record_metric('job_engagement', event='impression', reason='duplicate')
+            results.append({'slug': job.slug, 'counted': False, 'reason': 'duplicate'})
+            continue
+
+        _increment_engagement(
+            job,
+            lifetime_field='impression_count',
+            daily_field='impression_count',
+        )
+        record_metric('job_engagement', event='impression', reason='counted')
+        results.append({'slug': job.slug, 'counted': True})
+
+    return {
+        'results': results,
         'viewer_id': viewer_id if viewer_created else None,
     }
 

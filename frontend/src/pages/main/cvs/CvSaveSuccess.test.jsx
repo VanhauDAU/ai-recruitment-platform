@@ -32,6 +32,9 @@ vi.mock('@/entities/job', () => ({
   formatSalary: (job) => job.salary,
   jobDetailPath: (job) => `/viec-lam/${job.slug}`,
 }))
+vi.mock('@/features/track-job-engagement', () => ({
+  JobImpressionBoundary: ({ children }) => children,
+}))
 
 const savedVersion = {
   public_id: 'cvv_2', schema_version: 1, template_renderer_key: 'classic_two_column_v1', assets: {},

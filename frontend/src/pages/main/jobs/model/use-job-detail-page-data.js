@@ -1,13 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { useConsent } from '@/entities/consent'
-import { getJobDetail, getJobs, jobDetailPath, jobKeys, recordJobView } from '@/entities/job'
+import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job'
+import { useJobView } from '@/features/track-job-engagement'
 import { setDocumentTitle } from '@/shared/config/document-title'
 
 const RELATED_PAGE_SIZE = 4
 
 export default function useJobDetailPageData({ slug, companySlug, navigate }) {
-  const { consent, status: consentStatus } = useConsent()
   const queryClient = useQueryClient()
 
   const jobQuery = useQuery({
@@ -40,19 +39,13 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
     if (current !== canonical) navigate(canonical, { replace: true })
   }, [job, companySlug, slug, navigate])
 
-  useEffect(() => {
-    if (consentStatus !== 'ready' || !consent.analytics || !job?.slug) return undefined
-    let cancelled = false
-    recordJobView(job.slug)
-      .then((result) => {
-        if (cancelled || typeof result?.view_count !== 'number') return
-        queryClient.setQueryData(jobKeys.detail(slug), (current) =>
-          current ? { ...current, view_count: result.view_count } : current)
-      })
-      // Tracking is progressive enhancement: never make the job detail fail.
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [consent.analytics, consentStatus, job?.slug, queryClient, slug])
+  useJobView(job?.slug, {
+    onTracked: (result) => {
+      if (typeof result?.view_count !== 'number') return
+      queryClient.setQueryData(jobKeys.detail(slug), (current) =>
+        current ? { ...current, view_count: result.view_count } : current)
+    },
+  })
 
   return {
     job,

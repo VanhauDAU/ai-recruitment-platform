@@ -287,7 +287,9 @@ def duplicate_job(job, user):
     duplicate.approved_at = None
     duplicate.rejected_reason = ''
     duplicate.view_count = 0
+    duplicate.impression_count = 0
     duplicate.application_count = 0
+    duplicate.engagement_tracking_started_at = timezone.now()
     duplicate.title = f'{job.title} (bản sao)'
     duplicate.save()
     for model, relation in (

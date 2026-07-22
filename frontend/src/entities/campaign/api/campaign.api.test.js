@@ -4,6 +4,7 @@ import {
   createCampaign,
   createCampaignFromNeed,
   getCampaign,
+  getCampaignJobPerformance,
   getCampaignOptions,
   getCampaignReport,
   getCampaignSuggestions,
@@ -30,6 +31,7 @@ describe('campaign API', () => {
       .mockResolvedValueOnce({ data: { results: [{ public_id: 'camp_1' }] } })
       .mockResolvedValueOnce({ data: { results: [{ public_id: 'need_1' }] } })
       .mockResolvedValueOnce({ data: { funnel: {} } })
+      .mockResolvedValueOnce({ data: { range: { days: 30 } } })
     post
       .mockResolvedValueOnce({ data: { public_id: 'camp_1' } })
       .mockResolvedValueOnce({ data: { public_id: 'camp_1', status: 'active' } })
@@ -45,6 +47,7 @@ describe('campaign API', () => {
     await expect(getCampaignSuggestions()).resolves.toEqual([{ public_id: 'need_1' }])
     await expect(createCampaignFromNeed('need_1')).resolves.toEqual({ public_id: 'camp_from_need' })
     await expect(getCampaignReport('camp_1')).resolves.toEqual({ funnel: {} })
+    await expect(getCampaignJobPerformance('camp_1', 30)).resolves.toEqual({ range: { days: 30 } })
 
     expect(get).toHaveBeenNthCalledWith(1, '/employer/campaigns/', { params: { status: 'draft' } })
     expect(get).toHaveBeenNthCalledWith(2, '/employer/campaigns/camp_1/')
@@ -55,6 +58,7 @@ describe('campaign API', () => {
     expect(get).toHaveBeenNthCalledWith(4, '/employer/campaigns/suggestions/')
     expect(post).toHaveBeenNthCalledWith(3, '/employer/campaigns/from-need/need_1/')
     expect(get).toHaveBeenNthCalledWith(5, '/employer/campaigns/camp_1/report/')
+    expect(get).toHaveBeenNthCalledWith(6, '/employer/campaigns/camp_1/job-performance/', { params: { days: 30 } })
   })
 
   it('builds stable cache keys for campaign lists and details', () => {
@@ -65,5 +69,6 @@ describe('campaign API', () => {
     ])
     expect(campaignKeys.detail('camp_1')).toEqual(['campaigns', 'detail', 'camp_1'])
     expect(campaignKeys.report('camp_1')).toEqual(['campaigns', 'report', 'camp_1'])
+    expect(campaignKeys.jobPerformance('camp_1', 7)).toEqual(['campaigns', 'job-performance', 'camp_1', 7])
   })
 })

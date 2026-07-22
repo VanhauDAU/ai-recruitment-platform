@@ -1,13 +1,17 @@
+from time import perf_counter
+
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from common.metrics import record_metric
 
 from ...models import RecruitmentNeed
 from ...selectors.campaigns import (
     campaign_detail_queryset,
+    campaign_job_performance,
     campaign_list_queryset,
     campaign_options,
     campaign_report,
@@ -20,6 +24,7 @@ from ...services.campaigns import (
     update_campaign,
 )
 from ..serializers.campaigns import (
+    CampaignPerformanceQuerySerializer,
     CampaignStatusSerializer,
     RecruitmentCampaignSerializer,
     RecruitmentNeedSuggestionSerializer,
@@ -93,6 +98,26 @@ class RecruitmentCampaignReportView(APIView):
     def get(self, request, public_id):
         campaign = get_object_or_404(campaign_detail_queryset(request.user), public_id=public_id)
         return Response(campaign_report(campaign))
+
+
+class RecruitmentCampaignJobPerformanceView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request, public_id):
+        started_at = perf_counter()
+        campaign = get_object_or_404(campaign_detail_queryset(request.user), public_id=public_id)
+        serializer = CampaignPerformanceQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        result = campaign_job_performance(
+            campaign,
+            days=serializer.validated_data['days'],
+        )
+        record_metric(
+            'campaign_job_performance_duration_ms',
+            round((perf_counter() - started_at) * 1000, 2),
+            status='success',
+        )
+        return Response(result)
 
 
 class RecruitmentCampaignFromNeedView(APIView):

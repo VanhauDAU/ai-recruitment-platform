@@ -30,3 +30,19 @@ export const POSITION_LEVEL_OPTIONS = [
 ]
 
 export const BUDGET_SOURCE_OPTIONS = [['company', 'Công ty'], ['personal', 'Cá nhân']]
+
+function numeric(value, fallback = 0) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+export function calculateCampaignOptimizationScore(campaign, report) {
+  if (campaign?.optimization_score != null) return numeric(campaign.optimization_score)
+  const checks = [
+    Boolean(campaign?.name?.trim()),
+    Boolean(campaign?.status),
+    numeric(campaign?.job_count ?? report?.jobs?.total) > 0,
+    numeric(report?.headcount_target) > 0,
+  ]
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
+}

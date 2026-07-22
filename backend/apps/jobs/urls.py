@@ -15,6 +15,7 @@ from .api.views import (
     EmployerJobSubmitView,
     JobCategoryListView,
     JobDetailView,
+    JobImpressionBatchCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
@@ -38,6 +39,11 @@ urlpatterns = [
     path('languages/', LanguageListView.as_view(), name='language-list'),
     path('stats/', JobStatsView.as_view(), name='job-stats'),
     path('suggest/', JobSuggestView.as_view(), name='job-suggest'),
+    path(
+        'impressions/',
+        JobImpressionBatchCreateView.as_view(),
+        name='job-impression-batch-create',
+    ),
     path(
         'recommendations/by-cv/<str:cv_public_id>/',
         CvJobRecommendationView.as_view(),

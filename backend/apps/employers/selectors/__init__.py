@@ -2,6 +2,7 @@
 
 from .campaigns import (
     campaign_detail_queryset,
+    campaign_job_performance,
     campaign_list_queryset,
     campaign_options,
     campaign_report,
@@ -15,6 +16,7 @@ __all__ = [
     'campaign_detail_queryset',
     'campaign_list_queryset',
     'campaign_options',
+    'campaign_job_performance',
     'campaign_report',
     'has_explicit_company_link',
     'is_registration_placeholder_company',

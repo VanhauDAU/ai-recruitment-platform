@@ -1,6 +1,10 @@
 """Public command API for the jobs domain."""
 
-from .engagement import record_consented_job_view, set_viewer_cookie
+from .engagement import (
+    record_consented_job_impressions,
+    record_consented_job_view,
+    set_viewer_cookie,
+)
 from .moderation import approve_job, reject_job
 from .posting import (
     close_job,
@@ -23,6 +27,7 @@ __all__ = [
     'extend_job_deadline',
     'publish_job',
     'record_consented_job_view',
+    'record_consented_job_impressions',
     'reject_job',
     'reopen_job',
     'save_job_draft',

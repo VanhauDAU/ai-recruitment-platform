@@ -12,6 +12,7 @@ import {
   getJobPostingContext,
   getSkills,
   publishEmployerJob,
+  recordJobImpressions,
   reopenEmployerJob,
   reviewAdminJob,
   saveEmployerJob,
@@ -108,5 +109,19 @@ describe('CV job recommendations API', () => {
       action: 'reject',
       reason: 'Thiếu mô tả quyền lợi.',
     })
+  })
+
+  it('sends viewable job impressions as one credentialed batch', async () => {
+    post.mockResolvedValue({ data: { results: [{ slug: 'backend-engineer', counted: true }] } })
+
+    await expect(recordJobImpressions(['backend-engineer'])).resolves.toEqual({
+      results: [{ slug: 'backend-engineer', counted: true }],
+    })
+
+    expect(post).toHaveBeenCalledWith(
+      '/jobs/impressions/',
+      { slugs: ['backend-engineer'] },
+      { withCredentials: true },
+    )
   })
 })

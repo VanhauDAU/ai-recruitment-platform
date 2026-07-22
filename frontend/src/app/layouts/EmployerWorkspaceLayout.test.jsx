@@ -17,8 +17,14 @@ vi.mock('@tanstack/react-query', () => ({
 }))
 vi.mock('@/entities/employer-profile', () => ({ getEmployerProfile }))
 vi.mock('@/entities/session', () => ({ useSession }))
-vi.mock('@/entities/site-settings', () => ({
-  BrandLogo: () => <span>ProCV</span>,
+vi.mock('@/entities/campaign', () => ({
+  campaignKeys: {
+    detail: (id) => ['campaigns', 'detail', id],
+    report: (id) => ['campaigns', 'report', id],
+  },
+  getCampaign: vi.fn(),
+  getCampaignReport: vi.fn(),
+  calculateCampaignOptimizationScore: () => 100,
 }))
 
 describe('EmployerWorkspaceLayout', () => {
@@ -175,5 +181,26 @@ describe('EmployerWorkspaceLayout', () => {
     await waitFor(() => expect(screen.getAllByText('Cài đặt tài khoản')).toHaveLength(2))
     expect(screen.queryByText('Về trang ứng viên')).not.toBeInTheDocument()
     expect(screen.getByText('Đăng xuất')).toBeInTheDocument()
+  })
+
+  it('renders framed back button and campaign title in top sub-header on campaign detail page', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/campaigns/camp_123']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/campaigns/:publicId" element={<p>Chi tiết chiến dịch</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const backBtn = screen.getByRole('button', { name: /Quay lại/i })
+    expect(backBtn).toBeInTheDocument()
+    expect(backBtn).toHaveClass('!border')
   })
 })

@@ -15,6 +15,7 @@ from .moderation import AdminJobModerationListView, AdminJobReviewView
 from .public import (
     CvJobRecommendationView,
     JobDetailView,
+    JobImpressionBatchCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
@@ -38,6 +39,7 @@ __all__ = [
     'EmployerJobSubmitView',
     'JobCategoryListView',
     'JobDetailView',
+    'JobImpressionBatchCreateView',
     'JobViewCreateView',
     'JobListView',
     'JobStatsView',

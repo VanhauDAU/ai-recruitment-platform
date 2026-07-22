@@ -12,7 +12,7 @@ from apps.accounts.permissions import IsCandidate, IsEmployer
 
 from ...models import Application
 from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
-from ...services import create_application_record, mark_application_viewed
+from ...services import InvalidReapplication, create_application_record, mark_application_viewed
 from ..serializers.v2 import (
     CandidateApplicationV2CreateSerializer,
     CandidateApplicationV2Serializer,
@@ -52,11 +52,13 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
                 contact_email=serializer.validated_data['contact_email'],
                 contact_phone=serializer.validated_data['contact_phone'],
             )
+        except InvalidReapplication as error:
+            raise ValidationError({'job_public_id': str(error)}) from error
         except ValueError as error:
             raise ValidationError({'version_public_id': str(error)}) from error
         except IntegrityError:
             return Response(
-                {'detail': 'You already applied to this job.'},
+                {'detail': 'Không thể gửi thêm hồ sơ ứng tuyển vào lúc này.'},
                 status=status.HTTP_409_CONFLICT,
             )
         return Response(

@@ -207,8 +207,10 @@ class JobAdmin(admin.ModelAdmin):
         'submitted_at',
         'approved_at',
         'published_at',
+        'impression_count',
         'view_count',
         'application_count',
+        'engagement_tracking_started_at',
     ]
     actions = ['approve_selected_jobs']
     inlines = [
@@ -266,7 +268,18 @@ class JobAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ('Thống kê', {'fields': ('public_id', 'view_count', 'application_count')}),
+        (
+            'Thống kê',
+            {
+                'fields': (
+                    'public_id',
+                    'impression_count',
+                    'view_count',
+                    'application_count',
+                    'engagement_tracking_started_at',
+                )
+            },
+        ),
     )
 
     @admin.action(description='Duyệt các tin đã chọn')

@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 from apps.applications.models import Application
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import Job, JobCategory, JobEngagementDaily
 
 from ..models import Company, RecruiterProfile, RecruitmentCampaign
 
@@ -151,7 +151,9 @@ class RecruitmentCampaignApiTests(TestCase):
             reverse('employer-campaign-report', kwargs={'public_id': campaign.public_id})
         )
 
-        item = next(item for item in listed.data['results'] if item['public_id'] == campaign.public_id)
+        item = next(
+            item for item in listed.data['results'] if item['public_id'] == campaign.public_id
+        )
         self.assertEqual(item['job_count'], 1)
         self.assertEqual(item['active_job_count'], 1)
         self.assertEqual(item['pending_job_count'], 0)
@@ -185,6 +187,85 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(reopened.status_code, 200, reopened.data)
         self.assertEqual(cancelled.status_code, 200, cancelled.data)
         self.assertEqual(invalid.status_code, 400, invalid.data)
+
+    def test_job_performance_uses_period_daily_counters_and_application_rows(self):
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile,
+            company=self.company,
+            name='Performance campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        job = Job.objects.create(
+            posted_by=self.owner,
+            company=self.company,
+            campaign=campaign,
+            title='Data Engineer',
+            description='Build data products.',
+            status=Job.Status.ACTIVE,
+        )
+        JobEngagementDaily.objects.create(
+            job=job,
+            date=timezone.localdate(),
+            impression_count=100,
+            view_count=20,
+        )
+        candidate = get_user_model().objects.create_user(
+            email='performance-candidate@example.com',
+            password='password',
+            role='candidate',
+        )
+        cv = UserCv.objects.create(user=candidate, title='Data CV')
+        snapshot = create_initial_document(cv, candidate)
+        for _ in range(5):
+            Application.objects.create(
+                candidate=candidate,
+                job=job,
+                cv=cv,
+                submitted_cv_version=snapshot,
+                submitted_cv_title=cv.title,
+            )
+        historic_application = Application.objects.create(
+            candidate=candidate,
+            job=job,
+            cv=cv,
+            submitted_cv_version=snapshot,
+            submitted_cv_title=cv.title,
+        )
+        Application.objects.filter(pk=historic_application.pk).update(
+            applied_at=job.engagement_tracking_started_at - timedelta(minutes=1)
+        )
+
+        self.client.force_authenticate(self.owner)
+        url = reverse(
+            'employer-campaign-job-performance',
+            kwargs={'public_id': campaign.public_id},
+        )
+        with self.assertNumQueries(4):
+            response = self.client.get(url, {'days': 7})
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['range']['days'], 7)
+        self.assertEqual(
+            response.data['summary'],
+            {
+                'impressions': 100,
+                'views': 20,
+                'applications': 5,
+                'view_rate': 20.0,
+                'application_rate': 25.0,
+            },
+        )
+        self.assertEqual(len(response.data['daily']), 7)
+        self.assertTrue(response.data['daily'][-1]['available'])
+        self.assertFalse(response.data['daily'][0]['available'])
+        self.assertEqual(response.data['jobs'][0]['applications'], 5)
+
+        invalid_range = self.client.get(url, {'days': 14})
+        self.assertEqual(invalid_range.status_code, 400)
+
+        self.client.force_authenticate(self.other)
+        foreign = self.client.get(url)
+        self.assertEqual(foreign.status_code, 404)
 
     def test_campaign_list_query_count_stays_flat(self):
         RecruitmentCampaign.objects.create(
