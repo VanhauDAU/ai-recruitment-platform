@@ -2,6 +2,8 @@ from django.db import models
 
 from common.public_id import generate_public_id
 
+from .choices import BudgetSource, PositionLevel
+
 
 class RecruitmentNeed(models.Model):
     """Nhu cầu tuyển dụng ưu tiên được khai báo sau khi xác thực email.
@@ -11,19 +13,8 @@ class RecruitmentNeed(models.Model):
     khởi tạo này thay vì nhân bản state đăng ký.
     """
 
-    class PositionLevel(models.TextChoices):
-        EMPLOYEE = 'employee', 'Nhân viên'
-        TEAM_LEAD = 'team_lead', 'Trưởng nhóm'
-        MANAGER = 'manager', 'Trưởng / Phó phòng'
-        SUPERVISOR = 'supervisor', 'Quản lý / Giám sát'
-        BRANCH_MANAGER = 'branch_manager', 'Trưởng chi nhánh'
-        VICE_DIRECTOR = 'vice_director', 'Phó giám đốc'
-        DIRECTOR = 'director', 'Giám đốc'
-        INTERN = 'intern', 'Thực tập sinh'
-
-    class BudgetSource(models.TextChoices):
-        COMPANY = 'company', 'Công ty'
-        PERSONAL = 'personal', 'Cá nhân'
+    PositionLevel = PositionLevel
+    BudgetSource = BudgetSource
 
     class ConsultationTopic(models.TextChoices):
         FREE_POSTING = 'free_posting', 'Tôi muốn được đăng tin miễn phí'

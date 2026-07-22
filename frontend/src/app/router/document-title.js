@@ -46,8 +46,13 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/account/settings/company'), 'Thông tin công ty'],
   [employerAppPath('/account/settings/gpkd'), 'Giấy đăng ký doanh nghiệp'],
   [employerAppPath('/account/settings/personal-data-protection'), 'Văn bản xử lý dữ liệu cá nhân'],
+  [employerAppPath('/account/settings/recruitment-demand'), 'Nhu cầu tuyển dụng'],
   [employerAppPath('/account/settings/general-setting'), 'Cài đặt'],
+  [employerAppPath('/oauth/callback'), 'Đang xác thực tài khoản'],
   [employerAppPath('/dashboard'), 'Bảng tin'],
+  [employerAppPath('/campaigns'), 'Quản lý chiến dịch tuyển dụng'],
+  [employerAppPath('/jobs'), 'Tin tuyển dụng'],
+  [employerAppPath('/applications'), 'Quản lý CV ứng tuyển'],
 ])
 
 const EXACT_ADMIN_TITLES = new Map([
@@ -90,10 +95,21 @@ function mainTitle(pathname) {
   return 'Trang không tồn tại'
 }
 
-function employerTitle(pathname) {
+export function resolveEmployerRouteTitle(pathname) {
   const exact = EXACT_EMPLOYER_TITLES.get(pathname)
   if (exact) return exact
+
+  if (pathname === employerAppPath('/jobs/new')) return 'Đăng tin tuyển dụng'
+  if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+/edit$`))) return 'Chỉnh sửa tin tuyển dụng'
+  if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`))) return 'Chi tiết tin tuyển dụng'
+  if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`))) return 'Chi tiết chiến dịch tuyển dụng'
   if (pathname.startsWith(employerAppPath('/account/settings/'))) return 'Cài đặt tài khoản'
+
+  // Các URL app không được rơi về title marketing chung; mỗi trang workspace
+  // phải có nhãn nghiệp vụ riêng hoặc hiển thị trạng thái không tồn tại.
+  if (pathname === employerAppPath('') || pathname.startsWith(`${employerAppPath('')}/`)) {
+    return 'Trang không tồn tại'
+  }
   if (pathname.startsWith(employerMarketingPath('/'))) return 'Cổng nhà tuyển dụng'
   return 'Trang không tồn tại'
 }
@@ -105,7 +121,7 @@ function adminTitle(pathname) {
 export function resolveRouteTitle(pathname) {
   const normalized = normalizePath(pathname)
   const portal = getCurrentPortal()
-  if (portal === 'employer') return employerTitle(normalized)
+  if (portal === 'employer') return resolveEmployerRouteTitle(normalized)
   if (portal === 'admin') return adminTitle(normalized)
   return mainTitle(normalized)
 }

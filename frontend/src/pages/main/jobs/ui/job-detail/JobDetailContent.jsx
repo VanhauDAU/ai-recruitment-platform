@@ -3,9 +3,11 @@ import { formatDeadline } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 import JobCard from '../JobCard'
 import {
-  BenefitTags,
+  AdditionalBenefits,
+  JobSkills,
   LanguageRequirementList,
   RequirementTags,
+  SectionHeading,
   SpecialtyTags,
   WorkplaceGroups,
   WorkScheduleList,
@@ -21,17 +23,20 @@ export default function JobDetailContent({ job, relatedJobs, saved, savePending,
       <DetailSection id="job-detail-content" title="Chi tiết tin tuyển dụng">
         <div className="space-y-3">
           <RequirementTags tags={job.requirement_tags} />
-          <BenefitTags tags={job.benefit_tags} />
           <SpecialtyTags primary={job.primary_specialization} domains={job.domain_knowledge} />
         </div>
         <JobText id="job-description" title="Mô tả công việc" content={job.description} />
-        <JobText title="Yêu cầu ứng viên" content={job.requirements} />
-        <JobText title="Quyền lợi" content={job.benefits} />
+        <JobText title="Yêu cầu ứng viên" content={job.requirements}>
+          <JobSkills required={job.required_skills} preferred={job.preferred_skills} />
+        </JobText>
+        <JobText title="Quyền lợi" content={job.benefits}>
+          <AdditionalBenefits groups={job.benefit_groups} />
+        </JobText>
         <LanguageRequirementList items={job.language_requirements} />
         <WorkplaceGroups groups={job.workplace_groups} />
         <WorkScheduleList schedules={job.work_schedules} note={job.work_schedule_note} />
         <section>
-          <h3 className="mb-2 text-sm font-bold text-slate-800">Cách thức ứng tuyển</h3>
+          <SectionHeading>Cách thức ứng tuyển</SectionHeading>
           <p className="text-sm leading-6 text-slate-700">{APPLY_GUIDE}</p>
         </section>
         <JobClosingActions deadline={job.deadline} saved={saved} savePending={savePending} onApply={onApply} onSave={onSave} onReport={onReport} />
@@ -47,9 +52,9 @@ function DetailSection({ id, title, children }) {
   return <section id={id} className="scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-base font-bold text-slate-800 sm:text-lg">{title}</h2><div className="mt-5 space-y-6">{children}</div></section>
 }
 
-function JobText({ id, title, content }) {
+function JobText({ id, title, content, children }) {
   if (!content?.trim()) return null
-  return <section id={id} className={id ? 'scroll-mt-20' : undefined}><h3 className="mb-2 text-sm font-bold text-slate-800">{title}</h3><RichJobContent html={content} /></section>
+  return <section id={id} className={id ? 'scroll-mt-20' : undefined}><SectionHeading>{title}</SectionHeading><RichJobContent html={content} />{children}</section>
 }
 
 function JobClosingActions({ deadline, saved, savePending, onApply, onSave, onReport }) {

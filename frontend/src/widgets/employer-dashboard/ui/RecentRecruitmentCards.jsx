@@ -12,6 +12,7 @@ const JOB_STATUS = {
 const APPLICATION_STATUS = {
   submitted: { label: 'Mới', color: 'blue' },
   viewed: { label: 'Đã xem', color: 'cyan' },
+  considering: { label: 'Cân nhắc', color: 'orange' },
   shortlisted: { label: 'Phù hợp', color: 'gold' },
   interviewed: { label: 'Phỏng vấn', color: 'purple' },
   accepted: { label: 'Đã nhận', color: 'green' },

@@ -6,8 +6,10 @@ from django.test import TestCase
 
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
+from apps.employers.models import Company
+from apps.jobs.models import Job
 
-from ..models import Application
+from ..models import Application, ApplicationStatusHistory
 from ..services import (
     InvalidApplicationStatusTransition,
     create_application,
@@ -63,13 +65,38 @@ class ApplicationSnapshotServiceTests(TestCase):
             title='Applied CV',
         )
         initial = create_initial_document(cv, candidate)
+        employer = get_user_model().objects.create_user(
+            email='application-employer@example.com',
+            password='password',
+            role='employer',
+        )
+        company = Company.objects.create(company_name='Application Company', created_by=employer)
+        job = Job.objects.create(
+            posted_by=employer,
+            company=company,
+            title='Application Job',
+            description='A role used to test the legacy application adapter.',
+        )
         serializer = Mock()
         serializer.validated_data = {'cv': cv}
-        serializer.save.return_value = SimpleNamespace()
 
-        create_application(serializer, candidate)
+        def save(**kwargs):
+            return Application.objects.create(job=job, cv=cv, **kwargs)
+
+        serializer.save.side_effect = save
+
+        application = create_application(serializer, candidate)
 
         snapshot = CvVersion.objects.get(version_kind=CvVersion.VersionKind.APPLICATION_SNAPSHOT)
         self.assertEqual(snapshot.parent_version_id, initial.id)
         self.assertEqual(serializer.save.call_args.kwargs['submitted_cv_version'], snapshot)
         self.assertEqual(serializer.save.call_args.kwargs['submitted_cv_title'], 'Applied CV')
+        self.assertTrue(
+            ApplicationStatusHistory.objects.filter(
+                application=application,
+                from_status='',
+                to_status=Application.Status.SUBMITTED,
+            ).exists()
+        )
+        job.refresh_from_db()
+        self.assertEqual(job.application_count, 1)

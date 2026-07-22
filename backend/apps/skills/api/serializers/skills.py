@@ -15,3 +15,10 @@ class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
         fields = ['id', 'name', 'slug', 'aliases', 'group', 'group_name']
+
+
+class SkillCreateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255, min_length=2, trim_whitespace=True)
+
+    def validate_name(self, value):
+        return ' '.join(value.split())

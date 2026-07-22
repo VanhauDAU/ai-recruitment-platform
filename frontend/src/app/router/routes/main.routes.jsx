@@ -6,6 +6,7 @@ import GuestGuard from '@/app/router/guards/GuestGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import {
   AccountPlaceholderPage,
+  AppliedJobsPage,
   BlogCategoryPage,
   BlogDetailPage,
   BlogHomePage,
@@ -40,6 +41,7 @@ import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu; key nào
 // chưa có ở đây thì dùng AccountPlaceholderPage.
 const ACCOUNT_PAGE_BY_KEY = {
+  'applied-jobs': AppliedJobsPage,
   'personal-info': PersonalInfoPage,
   'my-cv': MyCvsPage,
   'two-factor': TwoFactorAuthenticationPage,

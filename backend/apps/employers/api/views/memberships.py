@@ -28,11 +28,25 @@ DOCUMENT_SIGNATURES = {
     ),
 }
 
+VERIFICATION_METHOD_DOCUMENT_TYPES = {
+    'business_registration': {CompanyDocument.DocType.BUSINESS_REGISTRATION},
+    'authorization_and_id': {
+        CompanyDocument.DocType.AUTHORIZATION_LETTER,
+        CompanyDocument.DocType.IDENTITY_DOCUMENT,
+    },
+}
+VERIFICATION_DOCUMENT_TYPES = frozenset().union(*VERIFICATION_METHOD_DOCUMENT_TYPES.values())
+
 
 def _allowed_extensions(doc_type):
     if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
         return {'pdf', 'doc', 'docx'}
     return {'jpg', 'png', 'pdf'}
+
+
+def _delete_private_document_files(paths):
+    for path in paths:
+        private_media_storage().delete(path)
 
 
 def _save_document_file(upload, directory, doc_type):
@@ -83,34 +97,50 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
         if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
         else upload.name
     )
+    existing = None
     if recruiter is not None and doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
         existing = CompanyDocument.objects.filter(
             recruiter=recruiter,
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         ).first()
-        if existing is not None:
-            previous_path = existing.file_url
-            existing.file_url = path
-            existing.file_name = document_name
-            existing.uploaded_by = request.user
-            existing.status = CompanyDocument.Status.PENDING
-            existing.reviewed_by = None
-            existing.reviewed_at = None
-            existing.review_note = ''
-            existing.save(
-                update_fields=[
-                    'file_url',
-                    'file_name',
-                    'uploaded_by',
-                    'status',
-                    'reviewed_by',
-                    'reviewed_at',
-                    'review_note',
-                ]
+    elif company is not None and update_request is None:
+        # The current verification document is a single replaceable record per
+        # company/type. Re-submission resets it to pending instead of leaving
+        # older approved or rejected files competing for review.
+        existing = (
+            CompanyDocument.objects.filter(
+                company=company,
+                doc_type=doc_type,
+                update_request__isnull=True,
             )
-            if previous_path and previous_path != path:
-                private_media_storage().delete(previous_path)
-            return existing
+            .order_by('-created_at', '-id')
+            .first()
+        )
+    if existing is not None:
+        previous_path = existing.file_url
+        existing.file_url = path
+        existing.file_name = document_name
+        existing.uploaded_by = request.user
+        existing.status = CompanyDocument.Status.PENDING
+        existing.reviewed_by = None
+        existing.reviewed_at = None
+        existing.review_note = ''
+        existing.save(
+            update_fields=[
+                'file_url',
+                'file_name',
+                'uploaded_by',
+                'status',
+                'reviewed_by',
+                'reviewed_at',
+                'review_note',
+            ]
+        )
+        if previous_path and previous_path != path:
+            transaction.on_commit(
+                lambda previous_path=previous_path: _delete_private_document_files([previous_path])
+            )
+        return existing
 
     return CompanyDocument.objects.create(
         company=company,
@@ -120,6 +150,26 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
         doc_type=doc_type,
         file_url=path,
         file_name=document_name,
+    )
+
+
+def remove_obsolete_verification_documents(company, verification_method):
+    """Keep only the current document set after a method switch succeeds."""
+    current_doc_types = VERIFICATION_METHOD_DOCUMENT_TYPES[verification_method]
+    obsolete_documents = list(
+        CompanyDocument.objects.filter(
+            company=company,
+            doc_type__in=VERIFICATION_DOCUMENT_TYPES - current_doc_types,
+            update_request__isnull=True,
+        )
+    )
+    if not obsolete_documents:
+        return
+
+    obsolete_paths = [document.file_url for document in obsolete_documents]
+    CompanyDocument.objects.filter(pk__in=[document.pk for document in obsolete_documents]).delete()
+    transaction.on_commit(
+        lambda obsolete_paths=obsolete_paths: _delete_private_document_files(obsolete_paths)
     )
 
 

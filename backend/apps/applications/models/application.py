@@ -20,6 +20,7 @@ class Application(models.Model):
     class Status(models.TextChoices):
         SUBMITTED = 'submitted', 'Submitted'
         VIEWED = 'viewed', 'Viewed'
+        CONSIDERING = 'considering', 'Considering'
         SHORTLISTED = 'shortlisted', 'Shortlisted'
         INTERVIEWED = 'interviewed', 'Interviewed'
         REJECTED = 'rejected', 'Rejected'
@@ -62,6 +63,7 @@ class Application(models.Model):
     source = models.CharField(max_length=50, choices=Source.choices, default=Source.APPLIED)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.SUBMITTED)
     employer_note = models.TextField(blank=True)
+    employer_rating = models.PositiveSmallIntegerField(null=True, blank=True)
     candidate_note = models.TextField(blank=True)
     applied_at = models.DateTimeField(auto_now_add=True)
     viewed_at = models.DateTimeField(null=True, blank=True)
@@ -81,6 +83,7 @@ class Application(models.Model):
                     status__in=[
                         'submitted',
                         'viewed',
+                        'considering',
                         'shortlisted',
                         'interviewed',
                         'rejected',

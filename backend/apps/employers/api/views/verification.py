@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
+from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import FileResponse, Http404
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
@@ -14,7 +15,11 @@ from ...models import CompanyDocument, CompanyUpdateRequest
 from ...selectors import has_explicit_company_link
 from ...services import get_or_create_recruiter
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
-from .memberships import _save_document
+from .memberships import (
+    VERIFICATION_METHOD_DOCUMENT_TYPES,
+    _save_document,
+    remove_obsolete_verification_documents,
+)
 from .onboarding import _require_company
 
 
@@ -80,6 +85,10 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 'source_type': serializers.ChoiceField(choices=['file', 'website'], required=False),
                 'website_url': serializers.URLField(required=False),
                 'update_request': serializers.CharField(required=False),
+                'verification_method': serializers.ChoiceField(
+                    choices=VERIFICATION_METHOD_DOCUMENT_TYPES,
+                    required=False,
+                ),
             },
         ),
         responses={201: CompanyDocumentSerializer},
@@ -101,6 +110,14 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             raise ValidationError({'file': 'Vui lòng chọn tệp chứng minh.'})
         if source_type == 'website' and upload:
             raise ValidationError({'file': 'Không tải tệp khi chọn nguồn Website.'})
+        verification_method = request.data.get('verification_method')
+        if (
+            verification_method
+            and doc_type not in VERIFICATION_METHOD_DOCUMENT_TYPES[verification_method]
+        ):
+            raise ValidationError(
+                {'verification_method': 'Phương thức xác thực không khớp loại giấy tờ.'}
+            )
         recruiter = get_or_create_recruiter(request.user)
         update_request = None
         update_request_id = request.data.get('update_request')
@@ -115,6 +132,12 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 raise ValidationError(
                     {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
                 )
+        if verification_method and update_request:
+            raise ValidationError(
+                {
+                    'verification_method': 'Không dùng phương thức xác thực cho giấy tờ yêu cầu cập nhật.'
+                }
+            )
         if source_type == 'website':
             website_url = (request.data.get('website_url') or '').strip()
             try:
@@ -134,13 +157,17 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
         elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
             document = _save_document(request, None, doc_type, upload, recruiter=recruiter)
         else:
-            document = _save_document(
-                request,
-                _require_company(request.user).company,
-                doc_type,
-                upload,
-                update_request=update_request,
-            )
+            company = _require_company(request.user).company
+            with transaction.atomic():
+                document = _save_document(
+                    request,
+                    company,
+                    doc_type,
+                    upload,
+                    update_request=update_request,
+                )
+                if verification_method:
+                    remove_obsolete_verification_documents(company, verification_method)
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -163,7 +190,9 @@ class CompanyDocumentContentView(generics.GenericAPIView):
             stream = private_media_storage().open(document.file_url, 'rb')
         except OSError as error:
             raise Http404 from error
-        return FileResponse(stream, as_attachment=False, filename=document.file_name or None)
+        response = FileResponse(stream, as_attachment=False, filename=document.file_name or None)
+        response['Cache-Control'] = 'private, no-store'
+        return response
 
 
 class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):

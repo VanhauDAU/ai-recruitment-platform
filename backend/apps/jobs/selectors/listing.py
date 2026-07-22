@@ -1,5 +1,6 @@
 from django.db.models import Case, F, IntegerField, Q, When
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from common.db.search import fold_accents, search_q
@@ -16,6 +17,13 @@ SALARY_BUCKETS = [
     ('o50', 'Trên 50 triệu', 50_000_000, None),
 ]
 TRUTHY_VALUES = {'1', 'true', 'True'}
+
+
+def publicly_available_job_filter():
+    """One canonical availability predicate for every candidate-facing path."""
+    return Q(status=Job.Status.ACTIVE) & (
+        Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate())
+    )
 
 
 def filter_salary_bucket(queryset, bucket_key):
@@ -47,7 +55,7 @@ def active_jobs_queryset(include_preview=False):
     if include_preview:
         relations.extend(['job_benefits__benefit', 'work_schedules'])
     queryset = (
-        Job.objects.filter(status=Job.Status.ACTIVE)
+        Job.objects.filter(publicly_available_job_filter())
         .select_related('company')
         .prefetch_related(*relations)
     )
@@ -65,7 +73,7 @@ def active_jobs_queryset(include_preview=False):
 def active_job_detail_queryset():
     """Return active jobs with every relation required by the detail serializer."""
     return (
-        Job.objects.filter(status=Job.Status.ACTIVE)
+        Job.objects.filter(publicly_available_job_filter())
         .select_related('company')
         .prefetch_related(
             'category_assignments__category',
@@ -87,7 +95,7 @@ def suggest_job_search_terms(query, search_by=None, limit=10):
 
     field = 'company__company_name' if search_by == 'company' else 'title'
     values = (
-        Job.objects.filter(status=Job.Status.ACTIVE)
+        Job.objects.filter(publicly_available_job_filter())
         .filter(search_q(field, query))
         .values_list(field, flat=True)
         .distinct()

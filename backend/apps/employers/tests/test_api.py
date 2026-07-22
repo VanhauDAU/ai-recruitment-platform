@@ -835,6 +835,7 @@ class JoinCompanyTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(b''.join(response.streaming_content), PNG_BYTES)
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
 
         outsider, _ = make_employer('outside-documents@example.com')
         authenticate_employer(self.client, outsider)
@@ -1045,6 +1046,111 @@ class CompanyUpdateRequestTests(APITestCase):
         onboarding = self.client.get(reverse('employer-me')).data['onboarding']
         self.assertTrue(onboarding['business_doc_submitted'])
         self.assertTrue(onboarding['candidate_dpa_submitted'])
+
+    def test_replacing_a_business_document_resets_its_review_state(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                first = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                        'file': SimpleUploadedFile(
+                            'gpkd-cu.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                document = CompanyDocument.objects.get(pk=first.data['id'])
+                document.status = CompanyDocument.Status.REJECTED
+                document.review_note = 'Tệp chưa rõ nét.'
+                document.save(update_fields=['status', 'review_note'])
+                replacement = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                        'file': SimpleUploadedFile(
+                            'gpkd-moi.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
+        self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
+        self.assertEqual(replacement.data['id'], first.data['id'])
+        document.refresh_from_db()
+        self.assertEqual(document.file_name, 'gpkd-moi.pdf')
+        self.assertEqual(document.status, CompanyDocument.Status.PENDING)
+        self.assertEqual(document.review_note, '')
+        self.assertEqual(
+            CompanyDocument.objects.filter(
+                company=self.company,
+                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                update_request__isnull=True,
+            ).count(),
+            1,
+        )
+
+    def test_switching_verification_method_removes_the_previous_documents(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                business = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                        'verification_method': 'business_registration',
+                        'file': SimpleUploadedFile(
+                            'gpkd.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                old_path = CompanyDocument.objects.get(pk=business.data['id']).file_url
+                authorization = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'file': SimpleUploadedFile(
+                            'uy-quyen.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                with self.captureOnCommitCallbacks(execute=True):
+                    identity = self.client.post(
+                        reverse('employer-company-documents'),
+                        {
+                            'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                            'verification_method': 'authorization_and_id',
+                            'file': SimpleUploadedFile(
+                                'cccd.pdf', PDF_BYTES, content_type='application/pdf'
+                            ),
+                        },
+                        format='multipart',
+                    )
+
+                remaining_documents = CompanyDocument.objects.filter(
+                    company=self.company,
+                    update_request__isnull=True,
+                )
+                self.assertFalse(private_media_storage().exists(old_path))
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(business.status_code, status.HTTP_201_CREATED, business.data)
+        self.assertEqual(authorization.status_code, status.HTTP_201_CREATED, authorization.data)
+        self.assertEqual(identity.status_code, status.HTTP_201_CREATED, identity.data)
+        self.assertSetEqual(
+            set(remaining_documents.values_list('doc_type', flat=True)),
+            {
+                CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                CompanyDocument.DocType.IDENTITY_DOCUMENT,
+            },
+        )
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])

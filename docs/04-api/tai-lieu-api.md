@@ -44,6 +44,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
 | GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |
+| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter đang đăng nhập. POST chỉ cần `name`, tự tạo `RecruiterProfile` khi chưa có, mở chiến dịch ngay và không yêu cầu company/xác thực. Filter gồm `status`, `q`, `scope=open|needs_review|active_jobs|pending_jobs|expired_jobs`; response kèm tổng/CV mới, offer và số tin theo từng trạng thái. |
+| GET/PATCH | `/api/employer/campaigns/{public_id}/` | Xem/sửa chiến dịch do chính recruiter sở hữu. |
+| GET | `/api/employer/campaigns/options/` | `suggestions/` | Option để gắn tin (trừ chiến dịch hoàn tất/hủy) và nhu cầu tuyển dụng chưa chuyển thành chiến dịch. |
+| POST | `/api/employer/campaigns/from-need/{public_id}/` | Tạo và mở chiến dịch từ nhu cầu tuyển dụng của chính recruiter. |
+| POST/GET | `/api/employer/campaigns/{public_id}/status/` | `report/` | Dừng/mở lại/hoàn tất/hủy theo transition hợp lệ; report trả tổng tin theo trạng thái, lượt xem, tổng/CV mới, phễu và hồ sơ 7 ngày. |
 | POST | `/api/employer/phone/send-otp/` | Gửi mã OTP xác thực SĐT (gửi qua email tài khoản; cooldown 60s, hết hạn 10 phút) |
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
 | POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
@@ -136,15 +141,20 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET/POST | `/api/v2/cvs/{public_id}/shared-links/` | Quản lý bearer share link theo owner/version. |
 | GET/POST | `/api/v2/cvs/{public_id}/exports/` | Danh sách/yêu cầu PDF export từ immutable version. |
 | GET | `/api/jobs/?category=&location=&work_type=&employment_type=&experience_level=&search=` | Danh sách job đang active, public. `category`/`location` nhận **nhiều giá trị**; response là card DTO, không gồm description/requirements/benefits/deadline và dữ liệu quản trị. Dùng `?view=preview` khi UI thực sự cần nội dung hover. |
-| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags`, `benefit_tags`, `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. |
+| GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags` (**không còn kèm kỹ năng**), `benefit_tags`, `required_skills`, `preferred_skills`, `benefit_groups` (quyền lợi gom theo danh mục, thứ tự theo `Benefit.Category`), `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
-| GET/POST | `/api/jobs/mine/` | Employer: GET dùng management-list DTO gọn; POST dùng write DTO nested cho `job_skills`, `category_assignments`, `job_locations`, `work_schedules`, `job_benefits`, `language_requirements`, `application_contact` và trả detail form DTO. |
-| GET/PUT/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Employer: sửa/xóa tin của mình |
-| GET/POST | `/api/applications/` | Candidate: xem danh sách/ứng tuyển (job + cv theo `public_id`, chặn ứng tuyển trùng) |
-| GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id` và tùy chọn `cover_letter`; backend tạo `application_snapshot` từ đúng version đã chọn, không dùng draft hoặc tự chọn latest. |
-| GET | `/api/applications/employer/?job=` | Employer: xem hồ sơ ứng tuyển vào job của mình |
-| PATCH | `/api/applications/employer/{public_id}/` | Employer: cập nhật `status`/`employer_note` (tự set mốc thời gian tương ứng) |
+| GET/POST | `/api/jobs/mine/` | Workspace recruiter. `GET` chỉ trả tin có `posted_by` là caller; `POST ?as=draft` lưu nháp thiếu dữ liệu; `POST` thường kiểm tra 5 bước xác thực, dữ liệu và quota tin mới rồi tạo `pending` để admin duyệt. Form thủ công ghi đầy đủ `category_assignments` (một `primary_specialization`, nhiều `domain_knowledge`), `job_locations` (UI nhóm nhiều phường/xã theo tỉnh nhưng payload vẫn là danh sách địa điểm chuẩn hóa), `work_schedules`, `job_skills`, `job_benefits`, `language_requirements`, lương/học vấn/kinh nghiệm/độ tuổi, `work_schedule_note` và `application_contact {recipient_name, phone, emails[]}`. Khi gửi duyệt, mô tả/yêu cầu/quyền lợi, lịch làm việc và người nhận hồ sơ là bắt buộc; kỹ năng, ngoại ngữ, độ tuổi và quyền lợi dạng tag là tùy chọn. Hai luồng AI/import chưa thuộc contract này. |
+| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo đọc/sửa tin, xem `submitted_at`/`approved_at`/`rejected_reason`; chỉ xóa được nháp. Cập nhật tin `active` phải gửi lại review và chuyển về `pending`. |
+| GET | `/api/jobs/mine/posting-context/` | Số tin đã gửi duyệt lần đầu, quota miễn phí trọn đời còn lại, cờ `approval_required` và lý do chặn gửi tin mới. |
+| POST | `/api/jobs/mine/{public_id}/submit/` | Gửi nháp/tin bị từ chối để duyệt lại; cập nhật tin pending giữ hàng chờ. |
+| POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (trở về `pending`, body `{deadline}`), gia hạn tin active hoặc tạo nháp sao chép. |
+| GET | `/api/jobs/admin/moderation/?status=pending` | **Admin**: danh sách tin để kiểm duyệt, gồm người tạo, công ty, thời điểm gửi và lý do từ chối (nếu có). |
+| POST | `/api/jobs/admin/moderation/{public_id}/review/` | **Admin**: body `{"action":"approve"}` để thành `active`, hoặc `{"action":"reject","reason":"..."}`. Lý do từ chối bắt buộc và trả cho chủ tin. |
+| GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, tạo snapshot CV bất biến và trả `candidate_status` cùng timeline đã lọc. |
+| GET | `/api/v2/recruiter/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; filter theo tin, pipeline, chiến dịch hoặc tên/email ứng viên. |
+| PATCH | `/api/v2/recruiter/applications/{public_id}/` | Cập nhật pipeline, `employer_note` và `employer_rating` 1–5. Ghi chú/điểm là nội bộ. |
+| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV đã nộp (lần mở đầu đánh dấu `viewed`) và audit lịch sử pipeline, owner-only. |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
 | GET | `/api/site/link-groups/?placement=footer_seo` | Cụm link SEO đang bật kèm items đã resolve, public |
 | GET | `/api/site/link-groups/?placement=footer_nav` | Các cột menu điều hướng footer, public |

@@ -87,6 +87,7 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 | `employer_require_approval` | Duyệt tài khoản NTD trước khi hoạt động | boolean | true |  |
 | `employer_require_company_info` | Bắt buộc thông tin công ty | boolean | true |  |
 | `employer_max_active_jobs` | Số tin đang đăng tối đa | number | 10 |  |
+| `employer_free_job_quota` | Lượt đăng tin miễn phí trọn đời | number | 3 |  |
 | `employer_allow_logo_upload` | Cho phép upload logo công ty | boolean | true | ✓ |
 
 ### Việc làm (`jobs`)
@@ -95,7 +96,7 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 |---|---|---|---|---|
 | `job_expiry_days` | Số ngày hết hạn tin | number | 30 |  |
 | `jobs_per_page` | Số tin mỗi trang | number | 20 | ✓ |
-| `job_auto_approve` | Tự động duyệt tin | boolean | false |  |
+| `job_auto_approve` | Tự động duyệt tin (legacy, không còn dùng) | boolean | false |  |
 | `job_allow_salary_negotiable` | Cho phép lương thoả thuận | boolean | true | ✓ |
 | `job_require_salary_range` | Bắt buộc khoảng lương | boolean | false |  |
 | `job_allow_urgent_tag` | Cho phép tag tuyển gấp | boolean | true | ✓ |

@@ -6,12 +6,13 @@ import { lazy, Suspense } from 'react'
 const RichTextEditorImpl = lazy(() => import('./RichTextEditorImpl'))
 
 export default function RichTextEditor(props) {
+  const minHeight = props.minHeight || 160
   return (
     <Suspense
       fallback={(
         <div
           className={`company-rich-editor ${props.error ? 'company-rich-editor--error' : ''}`}
-          style={{ minHeight: 160 }}
+          style={{ minHeight }}
           aria-busy="true"
         />
       )}
