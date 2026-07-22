@@ -2,6 +2,7 @@ from django.db import transaction
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
+from apps.employers.models import RecruitmentCampaign
 from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text
 
@@ -506,9 +507,38 @@ class EmployerJobWriteSerializer(JobSerializer):
     """Create/update DTO for the employer job form; never used for public reads."""
 
     application_contact = JobApplicationContactSerializer(required=False, allow_null=True)
+    campaign = serializers.SlugRelatedField(
+        slug_field='public_id',
+        queryset=RecruitmentCampaign.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    campaign_name = serializers.CharField(source='campaign.name', read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
 
     class Meta(JobSerializer.Meta):
-        fields = JobSerializer.Meta.fields + ['application_contact']
+        fields = JobSerializer.Meta.fields + [
+            'application_contact',
+            'campaign',
+            'campaign_name',
+            'is_expired',
+            'submitted_at',
+            'approved_at',
+            'rejected_reason',
+        ]
+        read_only_fields = JobSerializer.Meta.read_only_fields + [
+            'submitted_at',
+            'approved_at',
+            'rejected_reason',
+        ]
+
+    def validate_campaign(self, campaign):
+        if campaign is None:
+            return campaign
+        request = self.context.get('request')
+        if request is None or campaign.owner.user_id != request.user.id:
+            raise serializers.ValidationError('Chiến dịch không thuộc tài khoản này.')
+        return campaign
 
     @transaction.atomic
     def create(self, validated_data):
@@ -541,8 +571,22 @@ class EmployerJobDetailSerializer(EmployerJobWriteSerializer):
     """Employer form read DTO, including private application recipients."""
 
 
+class EmployerJobDraftSerializer(EmployerJobWriteSerializer):
+    """Partial draft contract; final validation happens only at publication time."""
+
+    class Meta(EmployerJobWriteSerializer.Meta):
+        extra_kwargs = {
+            'title': {'required': False, 'allow_blank': True},
+            'description': {'required': False, 'allow_blank': True},
+        }
+
+
 class EmployerJobListSerializer(PublicJobListSerializer):
     """Compact management-table DTO; rich job content stays on the detail API."""
+
+    campaign = serializers.CharField(source='campaign.public_id', read_only=True, allow_null=True)
+    campaign_name = serializers.CharField(source='campaign.name', read_only=True, allow_null=True)
+    is_expired = serializers.BooleanField(read_only=True)
 
     class Meta(PublicJobListSerializer.Meta):
         fields = [
@@ -553,8 +597,15 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'employment_type',
             'deadline',
             'status',
+            'is_expired',
+            'campaign',
+            'campaign_name',
             'application_count',
+            'view_count',
             'published_at',
+            'submitted_at',
+            'approved_at',
+            'rejected_reason',
             'created_at',
             'updated_at',
         ]

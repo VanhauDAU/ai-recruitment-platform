@@ -297,6 +297,16 @@ SETTINGS = [
         {},
     ),
     (
+        'employer_free_job_quota',
+        'Lượt đăng tin miễn phí trọn đời',
+        G.EMPLOYER,
+        T.NUMBER,
+        3,
+        False,
+        'Số lần một tài khoản employer được xuất bản tin lần đầu. Đóng hoặc hết hạn tin không hoàn lượt.',
+        {},
+    ),
+    (
         'employer_allow_logo_upload',
         'Cho phép upload logo công ty',
         G.EMPLOYER,

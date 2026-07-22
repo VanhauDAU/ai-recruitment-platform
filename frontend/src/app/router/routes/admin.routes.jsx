@@ -8,6 +8,7 @@ import {
   AdminCvCataloguePage,
   AdminDashboardPage,
   AdminEmployerServicesPage,
+  AdminJobModerationPage,
   AdminLoginPage,
   AdminSettingsPage,
 } from '../lazy/admin.pages'
@@ -35,6 +36,7 @@ export function adminRoutes() {
           <Route path={adminPath('/cv-catalogue')} element={<AdminCvCataloguePage />} />
           <Route path={adminPath('/services')} element={<AdminEmployerServicesPage />} />
           <Route path={adminPath('/consultation-leads')} element={<AdminConsultationLeadsPage />} />
+          <Route path={adminPath('/job-moderation')} element={<AdminJobModerationPage />} />
         </Route>
       </Route>
     </Route>,

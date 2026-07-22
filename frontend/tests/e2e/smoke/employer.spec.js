@@ -399,6 +399,86 @@ test('employer workspace: completed verification redirects away from the checkli
   await expectNoHorizontalOverflow(page)
 })
 
+test('employer jobs: an incomplete account is redirected to the five-step verification checklist', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_incomplete',
+        onboarding: {
+          phone_verified: true,
+          company_linked: true,
+          business_doc_submitted: false,
+          candidate_dpa_submitted: false,
+          dpa_accepted: false,
+          verification_completed: false,
+        },
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/jobs')
+
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer campaigns: quick creation asks for an activity before creating a job', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_campaign',
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/(?:\?.*)?$/, async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          public_id: 'camp_q3', name: 'Tuyển dụng Quý 3/2026', status: 'draft',
+          job_count: 0, application_count: 0, accepted_count: 0,
+        }),
+      })
+      return
+    }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ results: [] }) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/suggestions\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+
+  await page.goto('/tuyendung/app/campaigns')
+  await expect(page.getByRole('heading', { name: 'Chiến dịch tuyển dụng' })).toBeVisible()
+  await expect(page.getByText('Chưa có chiến dịch')).toBeVisible()
+  await page.getByRole('button', { name: /Tạo chiến dịch/ }).click()
+  await page.getByLabel('Tên chiến dịch tuyển dụng').fill('Tuyển dụng Quý 3/2026')
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+
+  const activityDialog = page.getByRole('dialog', { name: 'Khởi động chiến dịch: Tuyển dụng Quý 3/2026' })
+  await expect(activityDialog.getByText('Đăng tin tuyển dụng')).toBeVisible()
+  await expect(activityDialog.getByText('Chủ động tìm kiếm ứng viên')).toBeVisible()
+  await expect(activityDialog.getByRole('button', { name: 'Sắp mở' })).toBeDisabled()
+  await activityDialog.getByRole('button', { name: 'Đăng tin' }).click()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/new\?campaign=camp_q3$/)
+})
+
 test('employer company settings: recent catalogue and full create form are responsive', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {

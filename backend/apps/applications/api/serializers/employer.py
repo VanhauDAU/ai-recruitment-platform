@@ -17,6 +17,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
         required=False,
     )
     job_title = serializers.CharField(source='job.title', read_only=True)
+    candidate_name = serializers.CharField(source='candidate.full_name', read_only=True)
+    candidate_email = serializers.EmailField(source='candidate.email', read_only=True)
     cv_title = serializers.CharField(source='cv.title', read_only=True)
     submitted_cv_version = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
@@ -28,6 +30,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'public_id',
             'job',
             'job_title',
+            'candidate_name',
+            'candidate_email',
             'cv',
             'cv_title',
             'submitted_cv_version',
@@ -38,6 +42,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'source',
             'status',
             'employer_note',
+            'employer_rating',
             'candidate_note',
             'applied_at',
             'viewed_at',
@@ -82,6 +87,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
 
 class ApplicationStatusUpdateSerializer(serializers.ModelSerializer):
+    employer_rating = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1, max_value=5
+    )
+
     class Meta:
         model = Application
-        fields = ['status', 'employer_note']
+        fields = ['status', 'employer_note', 'employer_rating']

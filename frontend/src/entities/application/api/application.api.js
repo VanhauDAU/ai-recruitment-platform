@@ -26,3 +26,28 @@ export async function submitJobApplication({
   })
   return data
 }
+
+export async function getCandidateApplications() {
+  const { data } = await api.get('/v2/applications/')
+  return data.results || data
+}
+
+export async function getRecruiterApplications(params = {}) {
+  const { data } = await api.get('/v2/recruiter/applications/', { params })
+  return data.results || data
+}
+
+export async function updateApplicationStatus(publicId, payload) {
+  const { data } = await api.patch(`/v2/recruiter/applications/${publicId}/`, payload)
+  return data
+}
+
+export async function getRecruiterApplicationSnapshot(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/cv/`)
+  return data
+}
+
+export async function getApplicationHistory(publicId) {
+  const { data } = await api.get(`/v2/recruiter/applications/${publicId}/history/`)
+  return data.results || data
+}

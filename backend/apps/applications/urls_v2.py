@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .api.views.employer import (
+    EmployerApplicationHistoryView,
     EmployerApplicationListView,
     EmployerApplicationStatusUpdateView,
 )
@@ -26,5 +27,10 @@ urlpatterns = [
         'recruiter/applications/<str:public_id>/cv/',
         RecruiterApplicationSnapshotView.as_view(),
         name='recruiter-application-snapshot-v2',
+    ),
+    path(
+        'recruiter/applications/<str:public_id>/history/',
+        EmployerApplicationHistoryView.as_view(),
+        name='recruiter-application-history-v2',
     ),
 ]

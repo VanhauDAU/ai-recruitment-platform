@@ -4,6 +4,7 @@ import {
   checkEmployerPhoneAvailability,
   completeEmployerRegistration,
   createEmployerCompany,
+  getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerIndustries,
   getEmployerProfile,
@@ -79,6 +80,7 @@ describe('employer profile API', () => {
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('business_registration')
+    expect(formData.get('verification_method')).toBe('business_registration')
     expect(formData.get('file')).toBe(file)
   })
 
@@ -119,5 +121,14 @@ describe('employer profile API', () => {
     expect(post).toHaveBeenCalledWith('/employer/company/join/', expect.any(FormData))
     const dpaBody = post.mock.calls.at(-1)[1]
     expect(dpaBody.get('doc_type')).toBe('data_processing_agreement')
+  })
+
+  it('loads private company-document content through the authenticated client', async () => {
+    const content = new Blob(['document'], { type: 'application/pdf' })
+    get.mockResolvedValue({ data: content })
+
+    await expect(getEmployerCompanyDocumentContent({ file_url: '/employer/company/documents/12/content/' })).resolves.toBe(content)
+
+    expect(get).toHaveBeenCalledWith('/employer/company/documents/12/content/', { responseType: 'blob' })
   })
 })

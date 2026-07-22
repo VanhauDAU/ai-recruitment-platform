@@ -2,18 +2,25 @@ import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import AuthGuard from '@/app/router/guards/AuthGuard'
 import EmployerOnboardingGuard from '@/app/router/guards/EmployerOnboardingGuard'
+import EmployerJobVerificationGuard from '@/app/router/guards/EmployerJobVerificationGuard'
 import GuestGuard from '@/app/router/guards/GuestGuard'
 import RoleGuard from '@/app/router/guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,
+  EmployerApplicationListPage,
   EmployerAccountInformationPage,
   EmployerBusinessLicensePage,
   EmployerCompanySettingsPage,
+  EmployerCampaignDetailPage,
+  EmployerCampaignListPage,
   EmployerContactPage,
   EmployerConsultingNeedPage,
   EmployerDashboardPage,
   EmployerGeneralSettingsPage,
+  EmployerJobDetailPage,
+  EmployerJobFormPage,
+  EmployerJobListPage,
   EmployerLandingPage,
   EmployerLegalPage,
   EmployerLoginPage,
@@ -99,6 +106,15 @@ export function employerRoutes() {
             <Route path={employerAppPath('/account/settings/recruitment-demand')} element={<EmployerRecruitmentDemandPage />} />
             <Route path={employerAppPath('/account/settings/general-setting')} element={<EmployerGeneralSettingsPage />} />
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
+            <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
+            <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />
+            <Route element={<EmployerJobVerificationGuard />}>
+              <Route path={employerAppPath('/jobs')} element={<EmployerJobListPage />} />
+              <Route path={employerAppPath('/jobs/new')} element={<EmployerJobFormPage />} />
+              <Route path={employerAppPath('/jobs/:publicId/edit')} element={<EmployerJobFormPage />} />
+              <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
+            </Route>
+            <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
           </Route>
         </Route>
       </Route>

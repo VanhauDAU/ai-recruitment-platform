@@ -1,11 +1,12 @@
 """Write workflows for the applications domain."""
 
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from apps.cvs.services import create_application_snapshot
 
-from ..models import Application
+from ..models import Application, ApplicationStatusHistory
 
 STATUS_TIMESTAMP_FIELD = {
     Application.Status.VIEWED: 'viewed_at',
@@ -21,18 +22,26 @@ STATUS_TIMESTAMP_FIELD = {
 ALLOWED_STATUS_TRANSITIONS = {
     Application.Status.SUBMITTED: {
         Application.Status.VIEWED,
+        Application.Status.CONSIDERING,
         Application.Status.SHORTLISTED,
         Application.Status.INTERVIEWED,
         Application.Status.REJECTED,
         Application.Status.ACCEPTED,
     },
     Application.Status.VIEWED: {
+        Application.Status.CONSIDERING,
         Application.Status.SHORTLISTED,
         Application.Status.INTERVIEWED,
         Application.Status.REJECTED,
         Application.Status.ACCEPTED,
     },
     Application.Status.SHORTLISTED: {
+        Application.Status.INTERVIEWED,
+        Application.Status.REJECTED,
+        Application.Status.ACCEPTED,
+    },
+    Application.Status.CONSIDERING: {
+        Application.Status.SHORTLISTED,
         Application.Status.INTERVIEWED,
         Application.Status.REJECTED,
         Application.Status.ACCEPTED,
@@ -83,6 +92,12 @@ def create_application_record(
         contact_phone=contact_phone,
     )
     application.preferred_locations.set(preferred_locations)
+    ApplicationStatusHistory.objects.create(
+        application=application,
+        from_status='',
+        to_status=Application.Status.SUBMITTED,
+    )
+    job.__class__.objects.filter(pk=job.pk).update(application_count=F('application_count') + 1)
     return application
 
 
@@ -91,17 +106,26 @@ def create_application(serializer, candidate):
     """Compatibility adapter for the legacy application serializer."""
     cv = serializer.validated_data['cv']
     snapshot = create_application_snapshot(cv, candidate)
-    return serializer.save(
+    application = serializer.save(
         candidate=candidate,
         submitted_cv_version=snapshot,
         submitted_cv_title=cv.title,
         submitted_cv_source=cv.source,
         submitted_at=timezone.now(),
     )
+    ApplicationStatusHistory.objects.create(
+        application=application,
+        from_status='',
+        to_status=Application.Status.SUBMITTED,
+    )
+    application.job.__class__.objects.filter(pk=application.job_id).update(
+        application_count=F('application_count') + 1
+    )
+    return application
 
 
 @transaction.atomic
-def update_application_status(serializer):
+def update_application_status(serializer, *, changed_by=None):
     """Persist one valid status transition and its timestamp exactly once."""
     current_status = serializer.instance.status
     next_status = serializer.validated_data.get('status', current_status)
@@ -117,4 +141,29 @@ def update_application_status(serializer):
     timestamp_field = (
         STATUS_TIMESTAMP_FIELD.get(next_status) if next_status != current_status else None
     )
-    return serializer.save(**({timestamp_field: timezone.now()} if timestamp_field else {}))
+    application = serializer.save(**({timestamp_field: timezone.now()} if timestamp_field else {}))
+    if next_status != current_status and getattr(application, 'pk', None):
+        ApplicationStatusHistory.objects.create(
+            application=application,
+            from_status=current_status,
+            to_status=next_status,
+            changed_by=changed_by,
+            note=serializer.validated_data.get('employer_note', ''),
+        )
+    return application
+
+
+@transaction.atomic
+def mark_application_viewed(application, *, changed_by):
+    if application.status != Application.Status.SUBMITTED:
+        return application
+    application.status = Application.Status.VIEWED
+    application.viewed_at = timezone.now()
+    application.save(update_fields=['status', 'viewed_at', 'updated_at'])
+    ApplicationStatusHistory.objects.create(
+        application=application,
+        from_status=Application.Status.SUBMITTED,
+        to_status=Application.Status.VIEWED,
+        changed_by=changed_by,
+    )
+    return application

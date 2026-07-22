@@ -72,7 +72,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
             submitted_cv_source=self.cv.source,
         )
 
-    def test_approved_company_member_reads_snapshot_not_a_later_mutable_cv_version(self):
+    def test_job_poster_reads_snapshot_not_a_later_mutable_cv_version(self):
         draft = self.cv.draft
         changed_content = draft.content_json
         changed_content['personal_info']['full_name'] = 'Changed after apply'
@@ -87,7 +87,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         save_draft_as_version(cv=self.cv, actor=self.candidate, expected_lock_version=1)
         self.assertEqual(CvVersion.objects.filter(cv=self.cv).count(), 3)
 
-        tokens = issue_tokens(self.member, auth_method='mfa')
+        tokens = issue_tokens(self.owner, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         response = self.client.get(
             reverse(
@@ -114,6 +114,19 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_company_member_cannot_read_the_posters_snapshot(self):
+        tokens = issue_tokens(self.member, auth_method='mfa')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_candidate_delete_removes_library_cv_but_retains_submitted_snapshot(self):
         self.client.force_authenticate(self.candidate)
 
@@ -129,7 +142,7 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertIsNone(self.snapshot.cv_id)
 
         self.client.force_authenticate(user=None)
-        tokens = issue_tokens(self.member, auth_method='mfa')
+        tokens = issue_tokens(self.owner, auth_method='mfa')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
         snapshot_response = self.client.get(
             reverse(

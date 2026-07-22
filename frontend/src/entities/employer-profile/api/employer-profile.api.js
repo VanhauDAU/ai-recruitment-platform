@@ -31,7 +31,9 @@ export async function acceptEmployerDpa() {
 }
 
 export async function uploadEmployerBusinessDocument(file) {
-  return uploadEmployerCompanyDocument('business_registration', file)
+  return uploadEmployerCompanyDocument('business_registration', file, {
+    verificationMethod: 'business_registration',
+  })
 }
 
 export async function uploadEmployerDataProcessingAgreement(file) {
@@ -43,6 +45,7 @@ export async function uploadEmployerCompanyDocument(docType, file, options = {})
   formData.append('doc_type', docType)
   formData.append('file', file)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
+  if (options.verificationMethod) formData.append('verification_method', options.verificationMethod)
   const { data } = await api.post('/employer/company/documents/', formData)
   return data
 }
@@ -60,6 +63,11 @@ export async function saveEmployerCompanyTradeNameWebsite(websiteUrl, options = 
 export async function getEmployerCompanyDocuments() {
   const { data } = await api.get('/employer/company/documents/')
   return data?.results || data || []
+}
+
+export async function getEmployerCompanyDocumentContent(document) {
+  const { data } = await api.get(document.file_url, { responseType: 'blob' })
+  return data
 }
 
 export async function getEmployerIndustries() {

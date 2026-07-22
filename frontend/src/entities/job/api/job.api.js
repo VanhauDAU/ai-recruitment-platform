@@ -27,8 +27,9 @@ export async function recordJobView(slug) {
   return data
 }
 
-export async function getJobCategories() {
-  return cachedRequest('job-categories', CATALOG_CACHE_TTL, () => fetchAllPages('/jobs/categories/', { all: '1' }))
+export async function getJobCategories(params = {}) {
+  const cacheKey = `job-categories:${JSON.stringify(params)}`
+  return cachedRequest(cacheKey, CATALOG_CACHE_TTL, () => fetchAllPages('/jobs/categories/', { all: '1', ...params }))
 }
 
 export async function getJobStats() {
@@ -50,4 +51,68 @@ export async function getJobSuggestions(q, searchBy = 'title') {
   if (searchBy === 'company') params.search_by = 'company'
   const { data } = await api.get('/jobs/suggest/', { params })
   return data.suggestions || []
+}
+
+export async function getEmployerJobs(params = {}) {
+  const { data } = await api.get('/jobs/mine/', { params })
+  return data.results || data
+}
+
+export async function getEmployerJob(publicId) {
+  const { data } = await api.get(`/jobs/mine/${publicId}/`)
+  return data
+}
+
+export async function getJobPostingContext() {
+  const { data } = await api.get('/jobs/mine/posting-context/')
+  return data
+}
+
+export async function saveEmployerJob(payload, publicId) {
+  if (publicId) {
+    const { data } = await api.patch(`/jobs/mine/${publicId}/`, payload)
+    return data
+  }
+  const { data } = await api.post('/jobs/mine/?as=draft', payload)
+  return data
+}
+
+export async function publishEmployerJob(payload, publicId) {
+  if (publicId) {
+    await api.patch(`/jobs/mine/${publicId}/`, payload)
+    const { data } = await api.post(`/jobs/mine/${publicId}/submit/`)
+    return data
+  }
+  const { data } = await api.post('/jobs/mine/', payload)
+  return data
+}
+
+export async function closeEmployerJob(publicId) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/close/`)
+  return data
+}
+
+export async function reopenEmployerJob(publicId, deadline) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/reopen/`, { deadline })
+  return data
+}
+
+export async function extendEmployerJob(publicId, deadline) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/extend/`, { deadline })
+  return data
+}
+
+export async function duplicateEmployerJob(publicId) {
+  const { data } = await api.post(`/jobs/mine/${publicId}/duplicate/`)
+  return data
+}
+
+export async function getAdminJobModeration(params = {}) {
+  const { data } = await api.get('/jobs/admin/moderation/', { params })
+  return data.results || data
+}
+
+export async function reviewAdminJob(publicId, payload) {
+  const { data } = await api.post(`/jobs/admin/moderation/${publicId}/review/`, payload)
+  return data
 }

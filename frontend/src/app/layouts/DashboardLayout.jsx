@@ -13,6 +13,7 @@ const NAV_ITEMS = {
     { key: adminPath('/cv-catalogue'), label: 'Catalogue CV' },
     { key: adminPath('/services'), label: 'Dịch vụ NTD' },
     { key: adminPath('/consultation-leads'), label: 'Lead tư vấn' },
+    { key: adminPath('/job-moderation'), label: 'Duyệt tin tuyển dụng' },
     { key: adminPath('/settings'), label: 'Cài đặt hệ thống' },
   ],
 }

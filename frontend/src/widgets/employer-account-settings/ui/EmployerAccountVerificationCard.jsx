@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
 import { Link } from 'react-router-dom'
 import { getEmployerProfile } from '@/entities/employer-profile'
-import { useSession } from '@/entities/session'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {
   EMPLOYER_BUSINESS_LICENSE_URL,
@@ -19,7 +18,6 @@ const STEPS = [
 ]
 
 export default function EmployerAccountVerificationCard() {
-  const { user } = useSession()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
 
   if (profileQuery.isLoading) {
@@ -31,9 +29,8 @@ export default function EmployerAccountVerificationCard() {
   }
 
   const verification = profileQuery.data?.onboarding || {}
-  const level = getEmployerAccountVerificationLevel(verification, user)
-  const doneCount = STEPS.filter((step) => verification[step.key]).length
-  const percent = Math.round((doneCount / STEPS.length) * 100)
+  const level = getEmployerAccountVerificationLevel(verification)
+  const percent = level.percent
   const nextLevel = Math.min(level.level + 1, level.total)
 
   return (

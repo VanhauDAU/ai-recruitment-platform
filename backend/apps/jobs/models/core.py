@@ -167,11 +167,11 @@ class Job(models.Model):
         UP_TO = 'up_to', 'Đến mức'
 
     class Status(models.TextChoices):
-        DRAFT = 'draft', 'Draft'
-        PENDING = 'pending', 'Pending'
-        ACTIVE = 'active', 'Active'
-        CLOSED = 'closed', 'Closed'
-        REJECTED = 'rejected', 'Rejected'
+        DRAFT = 'draft', 'Nháp'
+        PENDING = 'pending', 'Chờ duyệt'
+        ACTIVE = 'active', 'Đang tuyển'
+        CLOSED = 'closed', 'Đã đóng'
+        REJECTED = 'rejected', 'Từ chối'
 
     class Tier(models.TextChoices):
         """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
@@ -191,6 +191,13 @@ class Job(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs'
     )
     company = models.ForeignKey('employers.Company', on_delete=models.CASCADE, related_name='jobs')
+    campaign = models.ForeignKey(
+        'employers.RecruitmentCampaign',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='jobs',
+    )
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField()
@@ -246,6 +253,7 @@ class Job(models.Model):
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     view_count = models.IntegerField(default=0)
     application_count = models.IntegerField(default=0)
+    submitted_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
@@ -266,6 +274,7 @@ class Job(models.Model):
             models.Index(
                 fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
             ),
+            models.Index(fields=['campaign', 'status'], name='jobs_job_campaign_status_idx'),
         ]
         constraints = [
             models.CheckConstraint(
@@ -321,3 +330,13 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+
+        return bool(
+            self.status == self.Status.ACTIVE
+            and self.deadline is not None
+            and self.deadline < timezone.localdate()
+        )

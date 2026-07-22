@@ -212,8 +212,8 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.skill_group = SkillGroup.objects.create(name='Chăm sóc khách hàng')
         self.skill = Skill.objects.create(name='Giao tiếp', group=self.skill_group)
-        self.benefit = Benefit.objects.get(name='Bảo hiểm xã hội')
-        self.language = Language.objects.get(code='ko')
+        self.benefit, _ = Benefit.objects.get_or_create(name='Bảo hiểm xã hội')
+        self.language, _ = Language.objects.get_or_create(name='Tiếng Hàn', code='ko')
 
     def test_employer_list_uses_compact_management_contract(self):
         Job.objects.create(
@@ -238,8 +238,15 @@ class EmployerJobSerializerTests(APITestCase):
                 'employment_type',
                 'deadline',
                 'status',
+                'is_expired',
+                'campaign',
+                'campaign_name',
                 'application_count',
+                'view_count',
                 'published_at',
+                'submitted_at',
+                'approved_at',
+                'rejected_reason',
                 'created_at',
                 'updated_at',
             },

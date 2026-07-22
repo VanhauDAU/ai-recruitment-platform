@@ -1,5 +1,7 @@
 """V2 application contracts for candidate submission and recruiter snapshot reads."""
 
+from django.db.models import Q
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
@@ -24,6 +26,7 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
         fields = [
             'application_public_id',
             'job_public_id',
+            'status',
             'submitted_at',
             'submitted_cv_title',
             'submitted_cv_source',
@@ -61,7 +64,11 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         candidate = self.context['request'].user
         try:
-            job = Job.objects.get(public_id=attrs['job_public_id'], status=Job.Status.ACTIVE)
+            job = Job.objects.get(
+                Q(public_id=attrs['job_public_id']),
+                Q(status=Job.Status.ACTIVE),
+                Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()),
+            )
         except Job.DoesNotExist as error:
             raise serializers.ValidationError(
                 {'job_public_id': 'This job is unavailable.'}
@@ -138,6 +145,18 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
     )
     preferred_location_ids = serializers.SerializerMethodField()
     preferred_location_names = serializers.SerializerMethodField()
+    candidate_status = serializers.SerializerMethodField()
+    timeline = serializers.SerializerMethodField()
+
+    CANDIDATE_STATUS = {
+        Application.Status.SUBMITTED: 'Tiếp nhận',
+        Application.Status.VIEWED: 'Nhà tuyển dụng đã xem hồ sơ',
+        Application.Status.CONSIDERING: 'Hồ sơ đang được xem xét',
+        Application.Status.SHORTLISTED: 'Hồ sơ đang được xem xét',
+        Application.Status.INTERVIEWED: 'Phỏng vấn',
+        Application.Status.ACCEPTED: 'Đã nhận offer',
+        Application.Status.REJECTED: 'Chưa phù hợp',
+    }
 
     def get_cv_public_id(self, obj):
         return obj.cv.public_id if obj.cv_id else None
@@ -147,6 +166,19 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
 
     def get_preferred_location_names(self, obj):
         return [location.name for location in obj.preferred_locations.all()]
+
+    def get_candidate_status(self, obj):
+        return self.CANDIDATE_STATUS[obj.status]
+
+    def get_timeline(self, obj):
+        return [
+            {
+                'status': item.to_status,
+                'label': self.CANDIDATE_STATUS.get(item.to_status, item.to_status),
+                'occurred_at': item.created_at,
+            }
+            for item in obj.status_history.all()
+        ]
 
     class Meta:
         model = Application
@@ -161,6 +193,8 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'submitted_at',
             'cover_letter',
             'status',
+            'candidate_status',
+            'timeline',
             'preferred_location_ids',
             'preferred_location_names',
             'allow_ai_analysis',

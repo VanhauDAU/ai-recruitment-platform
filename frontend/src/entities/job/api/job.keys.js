@@ -17,4 +17,8 @@ export const jobKeys = {
   stats: ['jobs', 'stats'],
   categories: ['jobs', 'categories'],
   industries: ['jobs', 'industries'],
+  employerList: (params = {}) => ['jobs', 'employer-list', params],
+  employerDetail: (publicId) => ['jobs', 'employer-detail', publicId],
+  postingContext: ['jobs', 'posting-context'],
+  adminModeration: (params = {}) => ['jobs', 'admin-moderation', params],
 }
