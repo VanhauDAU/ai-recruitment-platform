@@ -16,14 +16,21 @@ import {
   SavedJobTooltipContent,
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
+import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
+import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.
 function Section({ title, text }) {
-  if (!text?.trim()) return null
+  const safeHtml = sanitizeHtml(normalizeRichTextHtml(text))
+  const hasText = safeHtml.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+  if (!hasText) return null
   return (
     <section>
       <h3 className="mb-1.5 text-[15px] font-bold text-gray-900">{title}</h3>
-      <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">{text}</p>
+      <div
+        className="text-sm leading-6 text-gray-700 [&_li]:mb-1 [&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5"
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
     </section>
   )
 }

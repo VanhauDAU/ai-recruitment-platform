@@ -7,6 +7,7 @@ from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text
 
 from ...models import (
+    Benefit,
     Job,
     JobApplicationContact,
     JobApplicationEmail,
@@ -402,6 +403,9 @@ class JobDetailSerializer(JobSerializer):
     workplace_groups = serializers.SerializerMethodField()
     requirement_tags = serializers.SerializerMethodField()
     benefit_tags = serializers.SerializerMethodField()
+    required_skills = serializers.SerializerMethodField()
+    preferred_skills = serializers.SerializerMethodField()
+    benefit_groups = serializers.SerializerMethodField()
     job_locations = PublicJobLocationSerializer(many=True, read_only=True)
     work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
     language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
@@ -454,6 +458,9 @@ class JobDetailSerializer(JobSerializer):
             'workplace_groups',
             'requirement_tags',
             'benefit_tags',
+            'required_skills',
+            'preferred_skills',
+            'benefit_groups',
         ]
         read_only_fields = fields
 
@@ -525,15 +532,36 @@ class JobDetailSerializer(JobSerializer):
             tags.append(f'Từ {obj.get_education_level_display()} trở lên')
         if obj.gender_requirement and obj.gender_requirement != Job.GenderRequirement.ANY:
             tags.append(f'Giới tính: {obj.get_gender_requirement_display()}')
-        tags.extend(
-            item.skill.name
-            for item in obj.job_skills.all()
-            if item.importance == JobSkill.Importance.REQUIRED
-        )
+        # Kỹ năng không nằm ở hàng tag tóm tắt nữa: đã có khối riêng dưới "Yêu cầu ứng viên".
         return tags
 
     def get_benefit_tags(self, obj):
         return [item.benefit.name for item in obj.job_benefits.all()]
+
+    @staticmethod
+    def _skill_names(obj, importance):
+        return [item.skill.name for item in obj.job_skills.all() if item.importance == importance]
+
+    def get_required_skills(self, obj):
+        return self._skill_names(obj, JobSkill.Importance.REQUIRED)
+
+    def get_preferred_skills(self, obj):
+        return self._skill_names(obj, JobSkill.Importance.PREFERRED)
+
+    def get_benefit_groups(self, obj):
+        """Quyền lợi đã chọn, gom theo danh mục và giữ thứ tự khai báo của Benefit.Category."""
+        names_by_category = {}
+        for item in obj.job_benefits.all():
+            names_by_category.setdefault(item.benefit.category, []).append(item.benefit.name)
+        return [
+            {
+                'category': category.value,
+                'category_label': category.label,
+                'items': names_by_category[category.value],
+            }
+            for category in Benefit.Category
+            if names_by_category.get(category.value)
+        ]
 
 
 class EmployerJobWriteSerializer(JobSerializer):

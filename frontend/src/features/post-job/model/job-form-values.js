@@ -1,4 +1,7 @@
 import dayjs from 'dayjs'
+import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
+
+export { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 
 const hasText = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
 
@@ -35,6 +38,9 @@ export function createJobFormValues(initialValues = {}) {
     currency: 'VND',
     number_of_vacancies: 1,
     ...initialValues,
+    description: normalizeRichTextHtml(initialValues.description),
+    requirements: normalizeRichTextHtml(initialValues.requirements),
+    benefits: normalizeRichTextHtml(initialValues.benefits),
     work_types: initialValues.work_types?.length
       ? initialValues.work_types
       : initialValues.work_type ? [initialValues.work_type] : [],
@@ -88,6 +94,9 @@ export function buildJobPayload(values) {
 
   return {
     ...persistedValues,
+    description: normalizeRichTextHtml(values.description),
+    requirements: normalizeRichTextHtml(values.requirements),
+    benefits: normalizeRichTextHtml(values.benefits),
     work_type: values.work_types?.[0] || values.work_type || '',
     deadline: values.deadline?.format('YYYY-MM-DD') || null,
     salary_min: ['range', 'fixed', 'from'].includes(salaryType) ? values.salary_min ?? null : null,

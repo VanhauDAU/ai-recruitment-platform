@@ -466,6 +466,21 @@ class EmployerJobSerializerTests(APITestCase):
             name='Phường Hải Châu',
             parent=province2,
         )
+        preferred_skill = Skill.objects.create(name='Excel', group=self.skill_group)
+        # Đặt category tường minh để khẳng định thứ tự nhóm, không phụ thuộc dữ liệu seed sẵn có.
+        Benefit.objects.filter(pk=self.benefit.pk).update(category=Benefit.Category.OTHER)
+        welfare_benefit, _ = Benefit.objects.update_or_create(
+            name='Thưởng tháng 13', defaults={'category': Benefit.Category.WELFARE}
+        )
+        allowance_benefit, _ = Benefit.objects.update_or_create(
+            name='Phụ cấp ăn trưa', defaults={'category': Benefit.Category.ALLOWANCE}
+        )
+        payload['job_skills'].append({'skill': preferred_skill.pk, 'importance': 'preferred'})
+        # Thêm ngược thứ tự danh mục để chắc chắn nhóm được sắp theo Benefit.Category.
+        payload['job_benefits'] += [
+            {'benefit': welfare_benefit.pk},
+            {'benefit': allowance_benefit.pk},
+        ]
         payload['job_locations'] += [
             {'location': ward2.pk, 'address_detail': '12 Dịch Vọng'},
             {'location': ward3.pk, 'address_detail': '3 Hải Châu'},
@@ -502,6 +517,7 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(danang['addresses'][0]['display'], '3 Hải Châu, Phường Hải Châu')
 
+        # Kỹ năng đã tách khỏi hàng tag tóm tắt, chỉ còn ở required_skills/preferred_skills.
         self.assertEqual(
             data['requirement_tags'],
             [
@@ -509,10 +525,26 @@ class EmployerJobSerializerTests(APITestCase):
                 'Tuổi 22 - 30',
                 'Từ Đại học trở lên',
                 'Giới tính: Nữ',
-                'Giao tiếp',
             ],
         )
-        self.assertEqual(data['benefit_tags'], ['Bảo hiểm xã hội'])
+        self.assertEqual(data['required_skills'], ['Giao tiếp'])
+        self.assertEqual(data['preferred_skills'], ['Excel'])
+        self.assertEqual(
+            data['benefit_groups'],
+            [
+                {
+                    'category': 'allowance',
+                    'category_label': 'Phụ cấp',
+                    'items': ['Phụ cấp ăn trưa'],
+                },
+                {
+                    'category': 'welfare',
+                    'category_label': 'Phúc lợi',
+                    'items': ['Thưởng tháng 13'],
+                },
+                {'category': 'other', 'category_label': 'Khác', 'items': ['Bảo hiểm xã hội']},
+            ],
+        )
 
         language = data['language_requirements'][0]
         self.assertEqual(language['language_name'], 'Tiếng Hàn')
@@ -535,3 +567,6 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(data['workplace_groups'], [])
         self.assertEqual(data['requirement_tags'], [])
         self.assertEqual(data['benefit_tags'], [])
+        self.assertEqual(data['required_skills'], [])
+        self.assertEqual(data['preferred_skills'], [])
+        self.assertEqual(data['benefit_groups'], [])

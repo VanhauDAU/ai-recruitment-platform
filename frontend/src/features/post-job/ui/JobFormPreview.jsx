@@ -23,6 +23,7 @@ import {
   formatSalary,
 } from '@/entities/job'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import { normalizeRichTextHtml } from '../model/job-form-values'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
 const GENDER_LABELS = { any: 'Không yêu cầu', male: 'Nam', female: 'Nữ' }
@@ -102,11 +103,12 @@ function Metric({ icon, label, value, compact = false }) {
 }
 
 function RichPreviewText({ html, compact = false, placeholder }) {
-  const safeHtml = useMemo(() => sanitizeHtml(html), [html])
-  if (!safeHtml) return <p className="text-[10px] italic text-slate-400">{placeholder}</p>
+  const safeHtml = useMemo(() => sanitizeHtml(normalizeRichTextHtml(html)), [html])
+  const hasText = safeHtml.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
+  if (!hasText) return <p className="text-[10px] italic text-slate-400">{placeholder}</p>
   return (
     <div
-      className={`job-preview-rich text-slate-600 [&_a]:text-[var(--brand-primary)] [&_h2]:font-bold [&_h2]:text-slate-800 [&_h3]:font-bold [&_h3]:text-slate-800 [&_li]:ml-4 [&_ol]:list-decimal [&_p]:mb-1.5 [&_table]:w-full [&_td]:border [&_td]:p-1 [&_th]:border [&_th]:p-1 [&_ul]:list-disc ${compact ? 'max-h-24 overflow-hidden text-[10px] leading-4' : 'text-sm leading-6'}`}
+      className={`job-preview-rich text-slate-600 [&_a]:text-[var(--brand-primary)] [&_h2]:font-bold [&_h2]:text-slate-800 [&_h3]:font-bold [&_h3]:text-slate-800 [&_li]:ml-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-1.5 [&_table]:w-full [&_td]:border [&_td]:p-1 [&_th]:border [&_th]:p-1 [&_ul]:list-disc [&_ul]:pl-5 ${compact ? 'max-h-24 overflow-hidden text-[10px] leading-4' : 'text-sm leading-6'}`}
       dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   )

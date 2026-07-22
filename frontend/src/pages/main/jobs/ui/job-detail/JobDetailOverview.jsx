@@ -32,12 +32,12 @@ function publishedLabel(value) {
 export function JobBreadcrumbs({ job }) {
   return (
     <nav className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap text-xs text-gray-500 sm:text-sm">
-      <Link to="/" className="shrink-0 hover:text-[var(--brand-primary)]">Trang chủ</Link>
+      <Link to="/" className="shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]">Trang chủ</Link>
       <span className="text-gray-300">›</span>
-      <Link to="/viec-lam" className="shrink-0 hover:text-[var(--brand-primary)]">Việc làm</Link>
-      {job.category_name && <><span className="text-gray-300">›</span><Link to={`/viec-lam?cat=${job.category}`} className="shrink-0 hover:text-[var(--brand-primary)]">{job.category_name}</Link></>}
+      <Link to="/viec-lam" className="shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]">Việc làm</Link>
+      {job.category_name && <><span className="text-gray-300">›</span><Link to={`/viec-lam?cat=${job.category}`} className="shrink-0 font-medium !text-slate-700 transition-colors hover:!text-[var(--brand-primary)]">{job.category_name}</Link></>}
       <span className="text-gray-300">›</span>
-      <span className="truncate text-gray-700">{job.title}</span>
+      <span className="truncate font-medium text-slate-700">{job.title}</span>
     </nav>
   )
 }

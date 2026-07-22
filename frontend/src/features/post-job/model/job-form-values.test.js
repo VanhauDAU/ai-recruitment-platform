@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { buildJobPayload, capitalizeTitleWords, createJobFormValues, getJobFormProgress } from './job-form-values'
+import { buildJobPayload, capitalizeTitleWords, createJobFormValues, getJobFormProgress, normalizeRichTextHtml } from './job-form-values'
 
 describe('manual job form values', () => {
   it('capitalizes the first letter of each title word without lowercasing the remaining characters', () => {
     expect(capitalizeTitleWords('kỹ sư backend iOS - .NET developer')).toBe('Kỹ Sư Backend IOS - .NET Developer')
     expect(capitalizeTitleWords('trưởng/phó phòng (kinh doanh)')).toBe('Trưởng/Phó Phòng (Kinh Doanh)')
+  })
+
+  it('decodes legacy rich-text HTML before editing, previewing, or saving it again', () => {
+    const legacyHtml = '&amp;lt;ul&amp;gt;&amp;lt;li&amp;gt;Python&amp;lt;/li&amp;gt;&amp;lt;/ul&amp;gt;'
+
+    expect(normalizeRichTextHtml(legacyHtml)).toBe('<ul><li>Python</li></ul>')
+    expect(createJobFormValues({ description: legacyHtml }).description).toBe('<ul><li>Python</li></ul>')
+    expect(buildJobPayload({ description: legacyHtml }).description).toBe('<ul><li>Python</li></ul>')
   })
 
   it('normalizes API detail data for the form without losing domain knowledge or contact emails', () => {
