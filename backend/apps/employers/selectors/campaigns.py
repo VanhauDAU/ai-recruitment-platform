@@ -9,7 +9,8 @@ from apps.applications.models import Application
 from ..models import RecruiterProfile, RecruitmentCampaign
 
 
-def campaign_list_queryset(user, *, status=None, q=None):
+def campaign_list_queryset(user, *, status=None, scope=None, q=None):
+    today = timezone.localdate()
     queryset = RecruitmentCampaign.objects.filter(owner__user=user).select_related(
         'position_category'
     )
@@ -17,19 +18,50 @@ def campaign_list_queryset(user, *, status=None, q=None):
         queryset = queryset.filter(status=status)
     if q:
         queryset = queryset.filter(name__icontains=q.strip())
-    return queryset.annotate(
+    queryset = queryset.annotate(
         job_count=Count('jobs', distinct=True),
+        draft_job_count=Count('jobs', filter=Q(jobs__status='draft'), distinct=True),
+        pending_job_count=Count('jobs', filter=Q(jobs__status='pending'), distinct=True),
+        active_job_count=Count(
+            'jobs',
+            filter=Q(jobs__status='active')
+            & (Q(jobs__deadline__isnull=True) | Q(jobs__deadline__gte=today)),
+            distinct=True,
+        ),
+        expired_job_count=Count(
+            'jobs',
+            filter=Q(jobs__status='active', jobs__deadline__lt=today),
+            distinct=True,
+        ),
+        closed_job_count=Count('jobs', filter=Q(jobs__status='closed'), distinct=True),
+        rejected_job_count=Count('jobs', filter=Q(jobs__status='rejected'), distinct=True),
         application_count=Count('jobs__applications', distinct=True),
+        unviewed_application_count=Count(
+            'jobs__applications',
+            filter=Q(jobs__applications__status=Application.Status.SUBMITTED),
+            distinct=True,
+        ),
         accepted_count=Count(
             'jobs__applications',
             filter=Q(jobs__applications__status=Application.Status.ACCEPTED),
             distinct=True,
         ),
-    ).order_by('-created_at')
+    )
+    if scope == 'open':
+        queryset = queryset.filter(status=RecruitmentCampaign.Status.ACTIVE)
+    elif scope == 'needs_review':
+        queryset = queryset.filter(unviewed_application_count__gt=0)
+    elif scope == 'active_jobs':
+        queryset = queryset.filter(active_job_count__gt=0)
+    elif scope == 'pending_jobs':
+        queryset = queryset.filter(pending_job_count__gt=0)
+    elif scope == 'expired_jobs':
+        queryset = queryset.filter(expired_job_count__gt=0)
+    return queryset.order_by('-created_at')
 
 
 def campaign_detail_queryset(user):
-    return campaign_list_queryset(user).prefetch_related('jobs')
+    return campaign_list_queryset(user)
 
 
 def campaign_options(user):
@@ -49,9 +81,13 @@ def campaign_suggestions(user):
 
 def campaign_report(campaign):
     applications = Application.objects.filter(job__campaign=campaign)
-    statuses = {
-        state: applications.filter(status=state).count() for state in Application.Status.values
-    }
+    statuses = {state: 0 for state in Application.Status.values}
+    statuses.update(
+        {
+            row['status']: row['count']
+            for row in applications.values('status').annotate(count=Count('id'))
+        }
+    )
     today = timezone.localdate()
     start = today - timedelta(days=6)
     by_day = {
@@ -62,16 +98,26 @@ def campaign_report(campaign):
         .annotate(count=Count('id'))
     }
     jobs = campaign.jobs.all()
+    job_statuses = {state: 0 for state in ('draft', 'pending', 'active', 'closed', 'rejected')}
+    job_statuses.update(
+        {row['status']: row['count'] for row in jobs.values('status').annotate(count=Count('id'))}
+    )
+    expired_jobs = jobs.filter(status='active', deadline__lt=today).count()
+    total_jobs = sum(job_statuses.values())
+    job_statuses['active'] = max(job_statuses['active'] - expired_jobs, 0)
     return {
         'campaign_public_id': campaign.public_id,
         'headcount_target': campaign.headcount_target,
         'accepted_count': statuses[Application.Status.ACCEPTED],
         'jobs': {
-            'total': jobs.count(),
-            'draft': jobs.filter(status='draft').count(),
-            'active': jobs.filter(status='active').count(),
-            'closed': jobs.filter(status='closed').count(),
+            'total': total_jobs,
+            **job_statuses,
+            'expired': expired_jobs,
             'views': sum(jobs.values_list('view_count', flat=True)),
+        },
+        'applications': {
+            'total': sum(statuses.values()),
+            'new': statuses[Application.Status.SUBMITTED],
         },
         'funnel': statuses,
         'daily_applications': [

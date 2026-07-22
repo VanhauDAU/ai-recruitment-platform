@@ -15,6 +15,7 @@ def _recruiter_for(user):
 @transaction.atomic
 def create_campaign(*, user, **data):
     recruiter = _recruiter_for(user)
+    data.setdefault('status', RecruitmentCampaign.Status.ACTIVE)
     source_need = data.get('source_need')
     if source_need and source_need.recruiter_id != recruiter.id:
         raise ValidationError({'source_need': 'Nhu cầu tuyển dụng không thuộc tài khoản này.'})
@@ -40,6 +41,28 @@ def change_campaign_status(*, campaign, user, status):
     recruiter = _recruiter_for(user)
     if campaign.owner_id != recruiter.id:
         raise ValidationError('Bạn không có quyền đổi trạng thái chiến dịch này.')
+    allowed_transitions = {
+        RecruitmentCampaign.Status.DRAFT: {
+            RecruitmentCampaign.Status.ACTIVE,
+            RecruitmentCampaign.Status.CANCELLED,
+        },
+        RecruitmentCampaign.Status.ACTIVE: {
+            RecruitmentCampaign.Status.PAUSED,
+            RecruitmentCampaign.Status.COMPLETED,
+            RecruitmentCampaign.Status.CANCELLED,
+        },
+        RecruitmentCampaign.Status.PAUSED: {
+            RecruitmentCampaign.Status.ACTIVE,
+            RecruitmentCampaign.Status.COMPLETED,
+            RecruitmentCampaign.Status.CANCELLED,
+        },
+        RecruitmentCampaign.Status.COMPLETED: {RecruitmentCampaign.Status.ACTIVE},
+        RecruitmentCampaign.Status.CANCELLED: set(),
+    }
+    if status == campaign.status:
+        return campaign
+    if status not in allowed_transitions[campaign.status]:
+        raise ValidationError({'status': 'Không thể chuyển sang trạng thái đã chọn.'})
     campaign.status = status
     campaign.save(update_fields=['status', 'updated_at'])
     return campaign
@@ -65,5 +88,5 @@ def create_campaign_from_need(*, need, user):
         budget_min=need.budget_min,
         budget_max=need.budget_max,
         budget_source=need.budget_source,
-        status=RecruitmentCampaign.Status.DRAFT,
+        status=RecruitmentCampaign.Status.ACTIVE,
     )

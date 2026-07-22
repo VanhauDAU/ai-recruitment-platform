@@ -256,7 +256,10 @@ export default function EmployerWorkspaceLayout() {
           <div className="flex min-h-11 shrink-0 items-center border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
             <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
           </div>
-          <Content className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 sm:p-5 xl:p-6">
+          {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}
+          <Content
+            className={`min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 sm:p-5 sm:pt-0 xl:p-6 xl:pt-0 ${showComplianceNotice ? '[--workspace-viewport:calc(100dvh_-_136px)]' : '[--workspace-viewport:calc(100dvh_-_104px)]'}`}
+          >
             <div className="mx-auto w-full max-w-[1320px]">
               <Outlet />
             </div>

@@ -63,6 +63,36 @@ def _validate_publishable(job):
         errors['title'] = 'Nhập tiêu đề tin tuyển dụng.'
     if not job.description.strip():
         errors['description'] = 'Nhập mô tả công việc.'
+    if not job.requirements.strip():
+        errors['requirements'] = 'Nhập yêu cầu ứng viên.'
+    if not job.benefits.strip():
+        errors['benefits'] = 'Nhập quyền lợi ứng viên.'
+    if not job.position_level:
+        errors['position_level'] = 'Chọn cấp bậc.'
+    if not job.employment_type:
+        errors['employment_type'] = 'Chọn loại công việc.'
+    if not (job.work_types or job.work_type):
+        errors['work_types'] = 'Chọn ít nhất một hình thức làm việc.'
+    if not job.education_level:
+        errors['education_level'] = 'Chọn yêu cầu học vấn.'
+    if not job.experience_years:
+        errors['experience_years'] = 'Chọn yêu cầu kinh nghiệm.'
+    if job.salary_type is None:
+        errors['salary_type'] = 'Chọn loại lương và nhập đầy đủ mức lương.'
+    elif job.salary_type == Job.SalaryType.RANGE:
+        if job.salary_min is None and job.salary_max is None:
+            errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+        elif (
+            job.salary_min is not None
+            and job.salary_max is not None
+            and job.salary_max < job.salary_min
+        ):
+            errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
+    elif job.salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM):
+        if job.salary_min is None:
+            errors['salary_min'] = 'Loại lương này cần mức lương tối thiểu.'
+    elif job.salary_type == Job.SalaryType.UP_TO and job.salary_max is None:
+        errors['salary_max'] = 'Loại lương này cần mức lương tối đa.'
     if not job.number_of_vacancies or job.number_of_vacancies < 1:
         errors['number_of_vacancies'] = 'Số lượng tuyển phải từ 1 trở lên.'
     if not job.job_locations.exists():
@@ -73,6 +103,19 @@ def _validate_publishable(job):
         errors['category_assignments'] = 'Chọn một vị trí chuyên môn chính.'
     if job.deadline is None or job.deadline < timezone.localdate():
         errors['deadline'] = 'Hạn nộp phải từ hôm nay trở đi.'
+    contact = getattr(job, 'application_contact', None)
+    if contact is None:
+        errors['application_contact'] = 'Nhập thông tin người nhận hồ sơ.'
+    else:
+        contact_errors = {}
+        if not contact.recipient_name.strip():
+            contact_errors['recipient_name'] = 'Nhập họ tên người nhận hồ sơ.'
+        if not contact.phone.strip():
+            contact_errors['phone'] = 'Nhập số điện thoại người nhận hồ sơ.'
+        if not contact.emails.exists():
+            contact_errors['emails'] = 'Nhập ít nhất một email nhận hồ sơ.'
+        if contact_errors:
+            errors['application_contact'] = contact_errors
     if errors:
         raise ValidationError(errors)
 

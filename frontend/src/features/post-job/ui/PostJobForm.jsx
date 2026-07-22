@@ -1,67 +1,28 @@
-import { PlusOutlined } from '@ant-design/icons'
+import { SaveOutlined, SendOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, DatePicker, Form, Input, InputNumber, Select } from 'antd'
-import dayjs from 'dayjs'
-import { useEffect } from 'react'
-import { getProvinces, getWards } from '@/entities/location'
-import RichTextEditor from '@/shared/ui/RichTextEditor'
-
-function JobLocationRow({ field, form, index, onRemove, provinces }) {
-  const provinceId = Form.useWatch(['job_locations', field.name, 'province_id'], form)
-  const wardsQuery = useQuery({
-    queryKey: ['locations', 'wards', provinceId],
-    queryFn: () => getWards(provinceId),
-    enabled: Boolean(provinceId),
-  })
-
-  function changeProvince(value) {
-    form.setFieldValue(['job_locations', field.name, 'province_id'], value)
-    form.setFieldValue(['job_locations', field.name, 'location'], undefined)
-  }
-
-  return (
-    <div className="grid gap-x-4 rounded-lg bg-slate-50 p-3 sm:grid-cols-2">
-      <Form.Item
-        name={[field.name, 'province_id']}
-        label={`Tỉnh/thành làm việc ${index + 1}`}
-        rules={[{ required: true, message: 'Chọn tỉnh/thành.' }]}
-      >
-        <Select
-          showSearch
-          optionFilterProp="label"
-          options={provinces.map((item) => ({ value: item.id, label: item.name }))}
-          placeholder="Chọn tỉnh/thành"
-          onChange={changeProvince}
-        />
-      </Form.Item>
-      <Form.Item
-        name={[field.name, 'location']}
-        label="Phường/xã"
-        rules={[{ required: true, message: 'Chọn phường/xã.' }]}
-      >
-        <Select
-          showSearch
-          optionFilterProp="label"
-          loading={wardsQuery.isLoading}
-          disabled={!provinceId}
-          options={(wardsQuery.data || []).map((item) => ({ value: item.id, label: item.name }))}
-          placeholder="Chọn phường/xã"
-        />
-      </Form.Item>
-      <Form.Item
-        className="sm:col-span-2 !mb-0"
-        name={[field.name, 'address_detail']}
-        label="Địa chỉ cụ thể"
-        rules={[{ required: true, message: 'Nhập địa chỉ cụ thể.' }]}
-      >
-        <Input
-          addonAfter={index > 0 ? <Button type="text" danger onClick={onRemove}>Xóa địa điểm</Button> : null}
-          placeholder="Ví dụ: 123 đường Nguyễn Huệ"
-        />
-      </Form.Item>
-    </div>
-  )
-}
+import { Alert, Button, Form } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  getJobBenefits,
+  getJobLanguages,
+  getSkills,
+  jobKeys,
+} from '@/entities/job'
+import { getProvinces } from '@/entities/location'
+import {
+  buildJobPayload,
+  createJobFormValues,
+  getJobFormProgress,
+} from '../model/job-form-values'
+import ApplicationInfoFields from './ApplicationInfoFields'
+import BasicJobService from './BasicJobService'
+import CandidateExpectationFields from './CandidateExpectationFields'
+import JobDescriptionFields from './JobDescriptionFields'
+import JobFormPreview from './JobFormPreview'
+import JobFormProgress from './JobFormProgress'
+import JobFormSection from './JobFormSection'
+import JobGeneralFields from './JobGeneralFields'
+import './post-job-form.css'
 
 export default function PostJobForm({
   initialValues,
@@ -72,152 +33,223 @@ export default function PostJobForm({
   requiresNewCredit,
   submitLabel,
   submitting,
+  errorMessage,
+  onCreateSkill,
   onSaveDraft,
   onPublish,
 }) {
   const [form] = Form.useForm()
+  const [activeSection, setActiveSection] = useState('general')
+  const [openSections, setOpenSections] = useState(() => new Set(['general', 'description', 'expectations', 'application', 'services']))
+  const [invalidSections, setInvalidSections] = useState(() => new Set())
+  const [invalidFieldNames, setInvalidFieldNames] = useState(() => new Set())
   const provincesQuery = useQuery({ queryKey: ['locations', 'provinces'], queryFn: getProvinces })
+  const benefitsQuery = useQuery({ queryKey: jobKeys.benefits, queryFn: getJobBenefits })
+  const languagesQuery = useQuery({ queryKey: jobKeys.languages, queryFn: getJobLanguages })
+  const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: getSkills })
+  const values = Form.useWatch([], form) || createJobFormValues(initialValues)
+  const sections = useMemo(() => getJobFormProgress(values), [values])
 
   useEffect(() => {
-    form.setFieldsValue({
-      ...initialValues,
-      deadline: initialValues?.deadline ? dayjs(initialValues.deadline) : null,
-      category_assignments: initialValues?.category_assignments?.length
-        ? initialValues.category_assignments
-        : [{ role: 'primary_specialization', sort_order: 0 }],
-      job_locations: initialValues?.job_locations?.length
-        ? initialValues.job_locations
-        : [{ sort_order: 0 }],
-    })
+    form.setFieldsValue(createJobFormValues(initialValues))
   }, [form, initialValues])
 
-  function payload(values) {
-    return {
-      ...values,
-      deadline: values.deadline?.format('YYYY-MM-DD') || null,
-      category_assignments: (values.category_assignments || [])
-        .filter((item) => item.category)
-        .map((item, index) => ({ ...item, role: 'primary_specialization', sort_order: index })),
-      job_locations: (values.job_locations || [])
-        .filter((item) => item.location && item.address_detail?.trim())
-        .map(({ province_id: _provinceId, ...item }, index) => ({ ...item, sort_order: index })),
-    }
+  const primaryCategory = categories.find((item) => item.id === values.category_assignments?.[0]?.category)
+  const domainNames = categories
+    .filter((item) => values.domain_category_ids?.includes(item.id))
+    .map((item) => item.name)
+  const selectedCampaign = campaigns.find((item) => item.public_id === values.campaign)
+  const benefitNames = (benefitsQuery.data || [])
+    .filter((item) => values.benefit_ids?.includes(item.id))
+    .map((item) => item.name)
+
+  function selectSection(key) {
+    setActiveSection(key)
+    setOpenSections((current) => new Set([...current, key]))
   }
+
+  function toggleSection(key) {
+    setActiveSection(key)
+    setOpenSections((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const updateInvalidSections = useCallback((fields) => {
+    const sectionByField = {
+      title: 'general',
+      category_assignments: 'general',
+      domain_category_ids: 'general',
+      position_level: 'general',
+      employment_type: 'general',
+      work_types: 'general',
+      salary_type: 'general',
+      salary_min: 'general',
+      salary_max: 'general',
+      description: 'description',
+      requirements: 'description',
+      benefits: 'description',
+      work_areas: 'description',
+      work_schedules: 'description',
+      work_schedule_note: 'description',
+      education_level: 'expectations',
+      experience_years: 'expectations',
+      gender_requirement: 'expectations',
+      age_min: 'expectations',
+      age_max: 'expectations',
+      required_skill_ids: 'expectations',
+      preferred_skill_ids: 'expectations',
+      language_requirements: 'expectations',
+      deadline: 'application',
+      number_of_vacancies: 'application',
+      campaign: 'application',
+      application_contact: 'application',
+    }
+    const next = new Set()
+    const nextFieldNames = new Set()
+    fields.forEach((field) => {
+      const rootName = Array.isArray(field.name) ? field.name[0] : field.name
+      const section = sectionByField[rootName]
+      if (field.errors?.length) {
+        if (section) next.add(section)
+        nextFieldNames.add((Array.isArray(field.name) ? field.name : [field.name]).join('.'))
+      }
+    })
+    setInvalidSections(next)
+    setInvalidFieldNames(nextFieldNames)
+  }, [])
 
   return (
     <Form
+      className="post-job-form"
       form={form}
       layout="vertical"
-      initialValues={{ number_of_vacancies: 1, salary_type: 'negotiable' }}
-      onFinish={(values) => onPublish(payload(values))}
+      scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
+      onFinish={(formValues) => onPublish(buildJobPayload(formValues))}
+      onFieldsChange={(_, allFields) => updateInvalidSections(allFields)}
+      onFinishFailed={({ errorFields }) => updateInvalidSections(errorFields)}
     >
-      {requiresNewCredit && postingContext && !postingContext.job_postable && (
-        <Alert
-          className="mb-5"
-          type="warning"
-          showIcon
-          title={postingContext.block_reason}
-          description={`Còn ${postingContext.free_publish_remain}/${postingContext.free_publish_limit} lượt đăng miễn phí. Mỗi tin gửi sẽ chờ quản trị viên duyệt.`}
-        />
-      )}
-      <div className="grid gap-x-4 lg:grid-cols-2">
-        <Form.Item name="title" label="Tiêu đề tin" rules={[{ required: true, message: 'Nhập tiêu đề.' }]}>
-          <Input maxLength={255} placeholder="Ví dụ: Kỹ sư phần mềm Backend" />
-        </Form.Item>
-        <Form.Item name="campaign" label="Chiến dịch">
-          <Select
-            allowClear
-            options={campaigns.map((item) => ({ value: item.public_id, label: item.name }))}
-            placeholder="Không gắn chiến dịch"
+      <div className="grid items-start gap-4 bg-[#fafafa] p-4 sm:p-5 xl:pt-0 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[280px_minmax(0,1fr)_300px]">
+        <div className="post-job-sticky-col min-w-0">
+          <JobFormProgress
+            sections={sections}
+            activeSection={activeSection}
+            openSections={openSections}
+            invalidFieldNames={invalidFieldNames}
+            onSelect={selectSection}
           />
-        </Form.Item>
-      </div>
-      <Form.Item name="description" label="Mô tả công việc" rules={[{ required: true, message: 'Nhập mô tả công việc.' }]}>
-        <RichTextEditor placeholder="Mô tả trách nhiệm, mục tiêu và môi trường làm việc" />
-      </Form.Item>
-      <Form.Item name="requirements" label="Yêu cầu">
-        <RichTextEditor placeholder="Kỹ năng và kinh nghiệm cần có" />
-      </Form.Item>
-      <Form.Item name="benefits" label="Quyền lợi">
-        <RichTextEditor placeholder="Chế độ, phúc lợi và cơ hội phát triển" />
-      </Form.Item>
-      <div className="grid gap-x-4 lg:grid-cols-2">
-        <Form.List name="category_assignments">
-          {(fields) => fields.map((field) => (
-            <Form.Item
-              key={field.key}
-              name={[field.name, 'category']}
-              label="Vị trí chuyên môn"
-              rules={[{ required: true, message: 'Chọn vị trí chuyên môn.' }]}
+        </div>
+
+        <main className="min-w-0 space-y-3">
+          {errorMessage && <Alert type="error" showIcon title="Chưa thể lưu tin tuyển dụng" description={errorMessage} />}
+          {requiresNewCredit && postingContext && !postingContext.job_postable && (
+            <Alert
+              type="warning"
+              showIcon
+              title={postingContext.block_reason}
+              description={`Còn ${postingContext.free_publish_remain}/${postingContext.free_publish_limit} lượt đăng miễn phí. Bạn vẫn có thể lưu bản nháp.`}
+            />
+          )}
+          {(benefitsQuery.isError || languagesQuery.isError || skillsQuery.isError) && (
+            <Alert type="warning" showIcon title="Một số danh mục bổ sung chưa tải được" description="Tải lại trang để chọn đầy đủ quyền lợi, kỹ năng và ngoại ngữ." />
+          )}
+          <JobFormSection
+            id="general"
+            number={1}
+            title="Thông tin chung"
+            progress={sections[0]}
+            invalid={invalidSections.has('general')}
+            open={openSections.has('general')}
+            active={activeSection === 'general'}
+            onToggle={() => toggleSection('general')}
+          >
+            <JobGeneralFields form={form} categories={categories} />
+          </JobFormSection>
+          <JobFormSection
+            id="description"
+            number={2}
+            title="Mô tả công việc"
+            progress={sections[1]}
+            invalid={invalidSections.has('description')}
+            open={openSections.has('description')}
+            active={activeSection === 'description'}
+            onToggle={() => toggleSection('description')}
+          >
+            <JobDescriptionFields form={form} provinces={provincesQuery.data || []} benefits={benefitsQuery.data || []} />
+          </JobFormSection>
+          <JobFormSection
+            id="expectations"
+            number={3}
+            title="Kỳ vọng về ứng viên"
+            progress={sections[2]}
+            invalid={invalidSections.has('expectations')}
+            open={openSections.has('expectations')}
+            active={activeSection === 'expectations'}
+            onToggle={() => toggleSection('expectations')}
+          >
+            <CandidateExpectationFields form={form} skills={skillsQuery.data || []} languages={languagesQuery.data || []} onCreateSkill={onCreateSkill} />
+          </JobFormSection>
+          <JobFormSection
+            id="application"
+            number={4}
+            title="Thông tin nhận hồ sơ"
+            progress={sections[3]}
+            invalid={invalidSections.has('application')}
+            open={openSections.has('application')}
+            active={activeSection === 'application'}
+            onToggle={() => toggleSection('application')}
+          >
+            <ApplicationInfoFields campaigns={campaigns} />
+          </JobFormSection>
+          <JobFormSection
+            id="services"
+            number={5}
+            title="Dịch vụ và gia tăng hiệu quả"
+            progress={sections[4]}
+            invalid={invalidSections.has('services')}
+            open={openSections.has('services')}
+            active={activeSection === 'services'}
+            onToggle={() => toggleSection('services')}
+          >
+            <BasicJobService />
+          </JobFormSection>
+
+          <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">
+            <Button
+              size="large"
+              icon={<SaveOutlined />}
+              loading={submitting}
+              onClick={() => onSaveDraft(buildJobPayload(form.getFieldsValue(true)))}
             >
-              <Select
-                showSearch
-                optionFilterProp="label"
-                options={categories.map((item) => ({ value: item.id, label: item.name }))}
-              />
-            </Form.Item>
-          ))}
-        </Form.List>
-        <Form.Item name="number_of_vacancies" label="Số lượng cần tuyển" rules={[{ required: true, type: 'number', min: 1 }]}>
-          <InputNumber min={1} className="!w-full" />
-        </Form.Item>
-      </div>
-      <Form.List name="job_locations">
-        {(fields, { add, remove }) => (
-          <div className="space-y-3">
-            {fields.map((field, index) => (
-              <JobLocationRow
-                key={field.key}
-                field={field}
-                form={form}
-                index={index}
-                onRemove={() => remove(field.name)}
-                provinces={provincesQuery.data || []}
-              />
-            ))}
-            <Button type="dashed" icon={<PlusOutlined />} onClick={() => add({ sort_order: fields.length })}>
-              Thêm địa điểm làm việc
+              {isDraft ? 'Lưu nháp' : 'Lưu thay đổi'}
+            </Button>
+            <Button
+              size="large"
+              type="primary"
+              htmlType="submit"
+              icon={<SendOutlined />}
+              loading={submitting}
+              disabled={requiresNewCredit && postingContext && !postingContext.job_postable}
+            >
+              {submitLabel || (isDraft ? 'Gửi duyệt tin' : 'Lưu và cập nhật')}
             </Button>
           </div>
-        )}
-      </Form.List>
-      <div className="mt-5 grid gap-x-4 lg:grid-cols-3">
-        <Form.Item name="deadline" label="Hạn nộp" rules={[{ required: true, message: 'Chọn hạn nộp.' }]}>
-          <DatePicker className="!w-full" />
-        </Form.Item>
-        <Form.Item name="employment_type" label="Loại hình">
-          <Select
-            allowClear
-            options={[
-              ['full_time', 'Toàn thời gian'],
-              ['part_time', 'Bán thời gian'],
-              ['internship', 'Thực tập'],
-            ].map(([value, label]) => ({ value, label }))}
-          />
-        </Form.Item>
-        <Form.Item name="work_type" label="Hình thức">
-          <Select
-            allowClear
-            options={[
-              ['onsite', 'Tại văn phòng'],
-              ['remote', 'Từ xa'],
-              ['hybrid', 'Linh hoạt'],
-            ].map(([value, label]) => ({ value, label }))}
-          />
-        </Form.Item>
-      </div>
-      <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button loading={submitting} onClick={() => onSaveDraft(payload(form.getFieldsValue(true)))}>
-          {isDraft ? 'Lưu nháp' : 'Lưu thay đổi'}
-        </Button>
-        <Button
-          type="primary"
-          htmlType="submit"
-          loading={submitting}
-          disabled={requiresNewCredit && postingContext && !postingContext.job_postable}
-        >
-          {submitLabel || (isDraft ? 'Gửi duyệt tin' : 'Lưu và cập nhật')}
-        </Button>
+        </main>
+
+        <JobFormPreview
+          values={values}
+          companyName={initialValues?.company_name}
+          categoryName={primaryCategory?.name}
+          domainNames={domainNames}
+          campaignName={selectedCampaign?.name}
+          provinces={provincesQuery.data || []}
+          skills={skillsQuery.data || []}
+          languages={languagesQuery.data || []}
+          benefitNames={benefitNames}
+        />
       </div>
     </Form>
   )

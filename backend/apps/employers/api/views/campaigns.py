@@ -34,6 +34,7 @@ class RecruitmentCampaignListCreateView(generics.ListCreateAPIView):
         return campaign_list_queryset(
             self.request.user,
             status=self.request.query_params.get('status'),
+            scope=self.request.query_params.get('scope'),
             q=self.request.query_params.get('q'),
         )
 

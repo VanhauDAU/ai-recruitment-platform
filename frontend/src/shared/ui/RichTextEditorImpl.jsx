@@ -12,6 +12,7 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Button, Tooltip } from 'antd'
 import { useEffect } from 'react'
+import './rich-text-editor.css'
 
 function ToolbarButton({ title, active = false, disabled = false, onClick, children }) {
   return (
@@ -30,7 +31,7 @@ function ToolbarButton({ title, active = false, disabled = false, onClick, child
   )
 }
 
-export default function RichTextEditor({ value = '', onChange, maxLength = 10000, placeholder = '', disabled = false, error = false }) {
+export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '' }) {
   const editor = useEditor({
     immediatelyRender: false,
     editable: !disabled,
@@ -41,8 +42,9 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
     content: value,
     editorProps: {
       attributes: {
-        class: 'company-rich-editor__content',
+        class: `company-rich-editor__content ${contentClassName}`.trim(),
         'data-placeholder': placeholder,
+        style: `min-height: ${minHeight}px`,
       },
     },
     onUpdate: ({ editor: activeEditor }) => onChange?.(activeEditor.isEmpty ? '' : activeEditor.getHTML()),

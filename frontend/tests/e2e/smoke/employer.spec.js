@@ -395,7 +395,7 @@ test('employer workspace: completed verification redirects away from the checkli
   await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toHaveCount(0)
-  await expect(page.getByLabel('Đăng tin tuyển dụng đầu tiên (đang khóa)')).toBeVisible()
+  await expect(page.getByLabel('Đăng tin tuyển dụng đầu tiên')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 
@@ -428,6 +428,145 @@ test('employer jobs: an incomplete account is redirected to the five-step verifi
   await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
+})
+
+test('employer jobs: manual job form exposes the complete five-section workflow', async ({ page }) => {
+  let savedDraft = null
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_verified',
+        onboarding: {
+          phone_verified: true,
+          company_linked: true,
+          business_doc_submitted: true,
+          candidate_dpa_submitted: true,
+          dpa_accepted: true,
+          verification_completed: true,
+        },
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/categories\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 10, name: 'Công nghệ thông tin', parent: null, category_type: 'occupation_group' },
+        { id: 18, name: 'IT - Phần mềm', parent: 10, category_type: 'domain' },
+        { id: 19, name: 'Dữ liệu', parent: 10, category_type: 'domain' },
+        { id: 12, name: 'Backend Engineer', parent: 18, category_type: 'specialization' },
+      ]),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/campaigns/options/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ public_id: 'camp_q3', name: 'Tuyển dụng Quý 3' }]) })
+  })
+  await page.route('http://localhost:8000/api/jobs/mine/posting-context/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ job_postable: true, free_publish_limit: 3, free_publish_remain: 3 }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?as=draft$/, async (route) => {
+    savedDraft = route.request().postDataJSON()
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'job_draft', status: 'draft', ...savedDraft }),
+    })
+  })
+  await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Bảo hiểm' }]) })
+  })
+  await page.route('http://localhost:8000/api/jobs/languages/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 2, name: 'Tiếng Anh' }]) })
+  })
+  await page.route('http://localhost:8000/api/skills/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 3, name: 'React' }]) })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/locations\/.*/, async (route) => {
+    const level = new URL(route.request().url()).searchParams.get('level')
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(level === 'ward'
+        ? [{ id: 2, name: 'Phường Hải Châu', level: 'ward', parent: 1 }, { id: 3, name: 'Phường Hòa Cường', level: 'ward', parent: 1 }]
+        : [{ id: 1, name: 'Đà Nẵng', level: 'province' }]),
+    })
+  })
+
+  await page.goto('/tuyendung/app/jobs/new?campaign=camp_q3')
+
+  await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
+  await page.getByLabel('Vị trí chuyên môn').click()
+  await expect(page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin')).toBeVisible()
+  await page.locator('.ant-cascader-dropdown:visible').getByText('Công nghệ thông tin').click()
+  await page.locator('.ant-cascader-dropdown:visible').getByText('IT - Phần mềm').click()
+  await page.locator('.ant-cascader-dropdown:visible').getByText('Backend Engineer').click()
+  await expect(page.getByTitle('Công nghệ thông tin / IT - Phần mềm / Backend Engineer')).toBeVisible()
+  await expect(page.getByLabel('Kiến thức chuyên ngành')).toBeVisible()
+  await page.getByLabel('Kiến thức chuyên ngành').click()
+  const domainDropdown = page.locator('.ant-select-dropdown:visible:not(.ant-cascader-dropdown)')
+  await domainDropdown.getByText('IT - Phần mềm', { exact: true }).click()
+  await domainDropdown.getByText('Dữ liệu', { exact: true }).click()
+  await page.keyboard.press('Escape')
+
+  await page.getByLabel('Loại công việc').click()
+  for (const label of ['Toàn thời gian', 'Bán thời gian', 'Thời vụ', 'Làm tại nhà (việc làm phổ thông)', 'Thực tập', 'Khác']) {
+    await expect(page.locator('.ant-select-dropdown:visible').getByText(label, { exact: true })).toBeVisible()
+  }
+  await page.keyboard.press('Escape')
+  await page.getByLabel('Hình thức làm việc').click()
+  for (const label of ['Làm việc tại văn phòng / Onsite', 'Làm việc từ xa / Remote', 'Làm việc linh hoạt / Hybrid']) {
+    await expect(page.locator('.ant-select-dropdown:visible').getByText(label, { exact: true })).toBeVisible()
+  }
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
+  await expect(page.locator('#description').getByRole('heading', { name: 'Mô tả công việc' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thông tin nhận hồ sơ' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Dịch vụ và gia tăng hiệu quả' })).toBeVisible()
+  await expect(page.getByLabel('Quyền lợi bổ sung')).toBeVisible()
+  await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)
+  await expect(page.locator('.company-rich-editor__content').first()).toHaveCSS('min-height', '230px')
+  await page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/).click()
+  await page.locator('.ant-select-dropdown:visible').getByText('Đà Nẵng', { exact: true }).click()
+  await page.getByRole('combobox', { name: /Phường\/xã 1/ }).click()
+  await page.locator('.ant-select-dropdown:visible').getByText('Phường Hải Châu', { exact: true }).click()
+  await page.getByLabel('Địa điểm chi tiết').fill('123 đường Nguyễn Huệ')
+  await page.getByRole('button', { name: 'Thêm phường/xã' }).click()
+  await expect(page.getByRole('combobox', { name: /Phường\/xã 2/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Thêm khu vực làm việc' }).click()
+  await expect(page.getByLabel(/Khu vực 2 - Tỉnh\/thành phố/)).toBeVisible()
+  await expect(page.getByText(/^Thời gian làm việc/)).toBeVisible()
+  await expect(page.getByLabel('Từ thứ')).toBeVisible()
+  await expect(page.getByLabel('Đến thứ')).toBeVisible()
+  await expect(page.getByLabel('Mô tả thời gian làm việc')).toBeVisible()
+  await page.getByRole('button', { name: 'Thêm thời gian' }).click()
+  await expect(page.getByLabel('Từ thứ')).toHaveCount(2)
+  await expect(page.getByLabel('Kỹ năng cần có')).toBeVisible()
+  await expect(page.locator('#expectations').getByText('Ngoại ngữ', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Họ và tên người nhận')).toHaveValue('Nguyễn An')
+  await expect(page.locator('#application').getByText('hr@example.com', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Lưu nháp' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Gửi duyệt tin' })).toBeVisible()
+  await expect(page.getByText('Đăng tin bằng AI')).toHaveCount(0)
+  await expectNoHorizontalOverflow(page)
+  await page.getByRole('button', { name: 'Lưu nháp' }).click()
+  await expect.poll(() => savedDraft).toMatchObject({
+    category_assignments: [
+      { category: 12, role: 'primary_specialization', sort_order: 0 },
+      { category: 18, role: 'domain_knowledge', sort_order: 1 },
+      { category: 19, role: 'domain_knowledge', sort_order: 2 },
+    ],
+    job_locations: [{ location: 2, address_detail: '123 đường Nguyễn Huệ', sort_order: 0 }],
+  })
 })
 
 test('employer campaigns: quick creation asks for an activity before creating a job', async ({ page }) => {
@@ -465,16 +604,15 @@ test('employer campaigns: quick creation asks for an activity before creating a 
   })
 
   await page.goto('/tuyendung/app/campaigns')
-  await expect(page.getByRole('heading', { name: 'Chiến dịch tuyển dụng' })).toBeVisible()
-  await expect(page.getByText('Chưa có chiến dịch')).toBeVisible()
-  await page.getByRole('button', { name: /Tạo chiến dịch/ }).click()
+  await expect(page.getByRole('heading', { name: 'Quản lý chiến dịch tuyển dụng' })).toBeVisible()
+  await expect(page.getByText('Tìm thấy 0 chiến dịch tuyển dụng')).toBeVisible()
+  await page.getByRole('button', { name: /Thêm chiến dịch mới/ }).click()
   await page.getByLabel('Tên chiến dịch tuyển dụng').fill('Tuyển dụng Quý 3/2026')
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
 
   const activityDialog = page.getByRole('dialog', { name: 'Khởi động chiến dịch: Tuyển dụng Quý 3/2026' })
   await expect(activityDialog.getByText('Đăng tin tuyển dụng')).toBeVisible()
-  await expect(activityDialog.getByText('Chủ động tìm kiếm ứng viên')).toBeVisible()
-  await expect(activityDialog.getByRole('button', { name: 'Sắp mở' })).toBeDisabled()
+  await expect(activityDialog.getByText('Xem workspace chiến dịch')).toBeVisible()
   await activityDialog.getByRole('button', { name: 'Đăng tin' }).click()
   await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/new\?campaign=camp_q3$/)
 })

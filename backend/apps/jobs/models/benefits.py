@@ -5,10 +5,17 @@ from .core import Job
 
 
 class Benefit(models.Model):
+    class Category(models.TextChoices):
+        ALLOWANCE = 'allowance', 'Phụ cấp'
+        EQUIPMENT = 'equipment', 'Hỗ trợ thiết bị làm việc'
+        WELFARE = 'welfare', 'Phúc lợi'
+        OTHER = 'other', 'Khác'
+
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     icon = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.OTHER)
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveSmallIntegerField(default=0)
 

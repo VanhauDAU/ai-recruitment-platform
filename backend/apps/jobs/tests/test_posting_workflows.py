@@ -16,6 +16,7 @@ from ..models import (
     JobCategory,
     JobCategoryAssignment,
     JobLocation,
+    JobWorkSchedule,
 )
 from ..services import (
     close_job,
@@ -55,6 +56,13 @@ class JobPostingWorkflowTests(TestCase):
             company=self.company,
             title=title,
             description='Xây dựng hệ thống backend có khả năng mở rộng.',
+            requirements='Có kinh nghiệm phát triển API và làm việc nhóm.',
+            benefits='Lương thưởng cạnh tranh và bảo hiểm đầy đủ.',
+            work_type=Job.WorkType.ONSITE,
+            employment_type=Job.EmploymentType.FULL_TIME,
+            education_level=Job.EducationLevel.UNIVERSITY,
+            experience_years=Job.ExperienceYears.TWO,
+            position_level=Job.PositionLevel.EMPLOYEE,
             deadline=timezone.localdate() + timedelta(days=14),
             number_of_vacancies=1,
         )
@@ -68,7 +76,33 @@ class JobPostingWorkflowTests(TestCase):
             location=self.ward,
             address_detail='Tòa nhà ProCV, Cầu Giấy',
         )
+        JobWorkSchedule.objects.create(
+            job=job,
+            weekday_from=1,
+            weekday_to=5,
+            start_time='08:00:00',
+            end_time='17:00:00',
+        )
+        contact = JobApplicationContact.objects.create(
+            job=job,
+            recipient_name='Trưởng phòng nhân sự',
+            phone='0900000000',
+        )
+        JobApplicationEmail.objects.create(contact=contact, email='hr@example.com')
         return job
+
+    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
+    def test_publish_rejects_a_draft_missing_the_complete_manual_form(self, readiness):
+        readiness.return_value = (self.recruiter, True)
+        job = self.make_publishable_job()
+        job.requirements = ''
+        job.save(update_fields=['requirements'])
+        job.work_schedules.all().delete()
+
+        with self.assertRaises(ValidationError) as context:
+            publish_job(job, self.user)
+
+        self.assertIn('requirements', context.exception.detail)
 
     @patch('apps.jobs.services.posting.recruiter_posting_readiness')
     def test_publish_enters_review_queue_and_records_owner_history(self, readiness):
@@ -154,12 +188,8 @@ class JobPostingWorkflowTests(TestCase):
 
     def test_duplicate_copies_private_application_contact_and_emails(self):
         job = self.make_publishable_job()
-        contact = JobApplicationContact.objects.create(
-            job=job,
-            recipient_name='Trưởng phòng nhân sự',
-            phone='0900000000',
-        )
-        JobApplicationEmail.objects.create(contact=contact, email='hr@example.com', sort_order=2)
+        contact = job.application_contact
+        contact.emails.update(sort_order=2)
         job.rejected_reason = 'Lý do cũ không được sao chép.'
         job.save(update_fields=['rejected_reason'])
 

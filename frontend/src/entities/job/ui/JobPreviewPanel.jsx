@@ -51,7 +51,7 @@ export default function JobPreviewPanel({
   const locationLabel = formatLocations(job)
   const deadlineLabel = formatDeadline(job.deadline)
   const highlights = [
-    { label: 'Hình thức', value: WORK_TYPE_LABELS[job.work_type] },
+    { label: 'Hình thức', value: (job.work_types?.length ? job.work_types : [job.work_type]).filter(Boolean).map((value) => WORK_TYPE_LABELS[value] || value).join(', ') },
     { label: 'Loại công việc', value: EMPLOYMENT_TYPE_LABELS[job.employment_type] },
     { label: 'Cấp bậc', value: POSITION_LEVEL_LABELS[job.position_level] },
     { label: 'Học vấn', value: EDUCATION_LEVEL_LABELS[job.education_level] },

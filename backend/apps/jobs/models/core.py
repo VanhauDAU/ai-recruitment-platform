@@ -122,8 +122,10 @@ class Job(models.Model):
         PART_TIME = 'part_time', 'Part-time'
         CONTRACT = 'contract', 'Hợp đồng'
         SEASONAL = 'seasonal', 'Thời vụ'
+        WORK_FROM_HOME = 'work_from_home', 'Làm tại nhà (việc làm phổ thông)'
         INTERNSHIP = 'internship', 'Internship'
         FREELANCE = 'freelance', 'Freelance'
+        OTHER = 'other', 'Khác'
 
     class ExperienceYears(models.TextChoices):
         NONE = 'none', 'Không yêu cầu'
@@ -165,6 +167,10 @@ class Job(models.Model):
         FIXED = 'fixed', 'Mức cố định'
         FROM = 'from', 'Từ mức'
         UP_TO = 'up_to', 'Đến mức'
+
+    class IncomeDisplayType(models.TextChoices):
+        INCOME = 'income', 'Thu nhập'
+        INCOME_AT_KPI = 'income_at_kpi', 'Thu nhập khi đạt 100% KPI'
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Nháp'
@@ -208,6 +214,11 @@ class Job(models.Model):
         help_text='Mô tả lịch không thể hiện hết bằng các khung giờ có cấu trúc.',
     )
     work_type = models.CharField(max_length=50, choices=WorkType.choices, blank=True)
+    work_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Các hình thức làm việc được áp dụng; work_type giữ giá trị đầu tiên để tương thích bộ lọc cũ.',
+    )
     employment_type = models.CharField(max_length=50, choices=EmploymentType.choices, blank=True)
     experience_years = models.CharField(
         max_length=20,
@@ -237,9 +248,16 @@ class Job(models.Model):
         max_length=20,
         choices=SalaryType.choices,
         default=SalaryType.NEGOTIABLE,
+        null=True,
+        blank=True,
     )
     salary_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     salary_max = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    income_display_type = models.CharField(
+        max_length=30,
+        choices=IncomeDisplayType.choices,
+        default=IncomeDisplayType.INCOME,
+    )
     currency = models.CharField(max_length=20, default='VND')
     deadline = models.DateField(null=True, blank=True)
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì

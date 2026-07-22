@@ -3,7 +3,6 @@ import { Button, DatePicker, Form, Input, InputNumber, Select, Switch } from 'an
 import dayjs from 'dayjs'
 import {
   BUDGET_SOURCE_OPTIONS,
-  CAMPAIGN_STATUS_LABELS,
   POSITION_LEVEL_OPTIONS,
 } from '@/entities/campaign'
 
@@ -28,7 +27,7 @@ export default function CampaignForm({ initialValues, categories = [], submittin
   }
 
   return (
-    <Form form={form} layout="vertical" onFinish={finish} initialValues={{ status: 'draft', headcount_target: 1, budget_source: 'company', is_continuous: false }}>
+    <Form form={form} layout="vertical" onFinish={finish} initialValues={{ headcount_target: 1, budget_source: 'company', is_continuous: false }}>
       <Form.Item name="name" label="Tên chiến dịch" rules={[{ required: true, message: 'Nhập tên chiến dịch.' }]}>
         <Input placeholder="Ví dụ: Tuyển kỹ sư quý III/2026" maxLength={255} />
       </Form.Item>
@@ -44,9 +43,6 @@ export default function CampaignForm({ initialValues, categories = [], submittin
         </Form.Item>
         <Form.Item name="headcount_target" label="Số lượng cần tuyển" rules={[{ required: true }]}>
           <InputNumber min={1} max={10000} className="!w-full" />
-        </Form.Item>
-        <Form.Item name="status" label="Trạng thái">
-          <Select options={Object.entries(CAMPAIGN_STATUS_LABELS).map(([value, label]) => ({ value, label }))} />
         </Form.Item>
       </div>
       <Form.Item name="is_continuous" label="Tuyển liên tục" valuePropName="checked">

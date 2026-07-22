@@ -7,7 +7,10 @@ import {
   getCvJobRecommendations,
   getEmployerJob,
   getEmployerJobs,
+  getJobBenefits,
+  getJobLanguages,
   getJobPostingContext,
+  getSkills,
   publishEmployerJob,
   reopenEmployerJob,
   reviewAdminJob,
@@ -72,6 +75,21 @@ describe('CV job recommendations API', () => {
     expect(post).toHaveBeenNthCalledWith(5, '/jobs/mine/job_1/reopen/', { deadline: '2026-08-01' })
     expect(post).toHaveBeenNthCalledWith(6, '/jobs/mine/job_1/extend/', { deadline: '2026-08-08' })
     expect(post).toHaveBeenNthCalledWith(7, '/jobs/mine/job_1/duplicate/')
+  })
+
+  it('loads the normalized catalogues used by the complete manual form', async () => {
+    get
+      .mockResolvedValueOnce({ data: { results: [{ id: 1, name: 'Bảo hiểm' }] } })
+      .mockResolvedValueOnce({ data: [{ id: 2, name: 'Tiếng Anh' }] })
+      .mockResolvedValueOnce({ data: { results: [{ id: 3, name: 'React' }] } })
+
+    await expect(getJobBenefits()).resolves.toEqual([{ id: 1, name: 'Bảo hiểm' }])
+    await expect(getJobLanguages()).resolves.toEqual([{ id: 2, name: 'Tiếng Anh' }])
+    await expect(getSkills()).resolves.toEqual([{ id: 3, name: 'React' }])
+
+    expect(get).toHaveBeenNthCalledWith(1, '/jobs/benefits/')
+    expect(get).toHaveBeenNthCalledWith(2, '/jobs/languages/')
+    expect(get).toHaveBeenNthCalledWith(3, '/skills/')
   })
 
   it('uses the administrator-only moderation endpoints', async () => {

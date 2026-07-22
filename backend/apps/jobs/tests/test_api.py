@@ -8,7 +8,11 @@ from apps.employers.models import Company
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
 
-from ..api.serializers import EmployerJobWriteSerializer, JobDetailSerializer
+from ..api.serializers import (
+    EmployerJobDraftSerializer,
+    EmployerJobWriteSerializer,
+    JobDetailSerializer,
+)
 from ..models import Benefit, Job, JobCategory, Language
 
 
@@ -152,6 +156,7 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'locations_detail',
                 'job_skills',
                 'work_type',
+                'work_types',
                 'employment_type',
                 'education_level',
                 'experience_years',
@@ -161,6 +166,7 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'salary_type',
                 'salary_min',
                 'salary_max',
+                'income_display_type',
                 'currency',
                 'tier',
                 'is_hot',
@@ -269,7 +275,8 @@ class EmployerJobSerializerTests(APITestCase):
             'requirements': '<p>Giao tiếp tốt.</p>',
             'benefits': '<p>Đầy đủ chế độ.</p>',
             'work_type': Job.WorkType.ONSITE,
-            'employment_type': Job.EmploymentType.FULL_TIME,
+            'work_types': [Job.WorkType.ONSITE, Job.WorkType.HYBRID],
+            'employment_type': Job.EmploymentType.WORK_FROM_HOME,
             'experience_years': Job.ExperienceYears.UNDER_1,
             'position_level': Job.PositionLevel.EMPLOYEE,
             'education_level': Job.EducationLevel.UNIVERSITY,
@@ -280,6 +287,7 @@ class EmployerJobSerializerTests(APITestCase):
             'salary_type': Job.SalaryType.RANGE,
             'salary_min': '9000000',
             'salary_max': '12000000',
+            'income_display_type': Job.IncomeDisplayType.INCOME_AT_KPI,
             'currency': 'VND',
             'category_assignments': [
                 {'category': self.specialization.pk, 'role': 'primary_specialization'},
@@ -322,6 +330,13 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
         job = serializer.save(posted_by=self.user, company=self.company)
 
+        self.assertEqual(job.employment_type, Job.EmploymentType.WORK_FROM_HOME)
+        self.assertEqual(job.work_types, [Job.WorkType.ONSITE, Job.WorkType.HYBRID])
+        self.assertEqual(job.work_type, Job.WorkType.ONSITE)
+        self.assertEqual(
+            job.income_display_type,
+            Job.IncomeDisplayType.INCOME_AT_KPI,
+        )
         self.assertEqual(job.category_assignments.count(), 2)
         self.assertEqual(job.job_locations.count(), 1)
         self.assertEqual(job.work_schedules.count(), 1)
@@ -330,13 +345,75 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.language_requirements.count(), 1)
         self.assertEqual(job.application_contact.emails.count(), 1)
 
-    def test_new_job_location_rejects_province_only(self):
+    def test_draft_accepts_incomplete_salary_and_partial_contact(self):
+        serializer = EmployerJobDraftSerializer(
+            data={
+                'title': '',
+                'description': '',
+                'salary_type': Job.SalaryType.RANGE,
+                'salary_min': None,
+                'salary_max': None,
+                'income_display_type': Job.IncomeDisplayType.INCOME_AT_KPI,
+                'application_contact': {
+                    'recipient_name': 'Nguyễn Văn A',
+                    'phone': '',
+                    'emails': [],
+                },
+            }
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = serializer.save(posted_by=self.user, company=self.company)
+
+        self.assertIsNone(job.salary_type)
+        self.assertEqual(job.income_display_type, Job.IncomeDisplayType.INCOME_AT_KPI)
+        self.assertEqual(job.application_contact.recipient_name, 'Nguyễn Văn A')
+        self.assertEqual(job.application_contact.phone, '')
+        self.assertEqual(job.application_contact.emails.count(), 0)
+
+    def test_range_salary_accepts_only_minimum_or_maximum(self):
+        for salary_min, salary_max in ((9000000, None), (None, 12000000)):
+            with self.subTest(salary_min=salary_min, salary_max=salary_max):
+                payload = self.payload()
+                payload['salary_min'] = salary_min
+                payload['salary_max'] = salary_max
+                serializer = EmployerJobWriteSerializer(data=payload)
+
+                self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_location_accepts_province_for_all_wards(self):
         payload = self.payload()
         payload['job_locations'][0]['location'] = self.province.pk
         serializer = EmployerJobWriteSerializer(data=payload)
 
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('job_locations', serializer.errors)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_location_accepts_empty_address_detail(self):
+        payload = self.payload()
+        payload['job_locations'][0]['address_detail'] = ''
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_schedule_accepts_empty_end_time(self):
+        payload = self.payload()
+        payload['work_schedules'][0]['end_time'] = None
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_new_job_location_accepts_same_ward_with_different_addresses(self):
+        payload = self.payload()
+        payload['job_locations'].append(
+            {
+                'location': self.ward.pk,
+                'address_detail': 'Một địa chỉ khác',
+                'sort_order': 1,
+            }
+        )
+        serializer = EmployerJobWriteSerializer(data=payload)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_contact_rejects_more_than_five_emails(self):
         payload = self.payload()

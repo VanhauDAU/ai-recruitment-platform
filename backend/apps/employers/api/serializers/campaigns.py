@@ -30,6 +30,13 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
     job_count = serializers.IntegerField(read_only=True, default=0)
     application_count = serializers.IntegerField(read_only=True, default=0)
     accepted_count = serializers.IntegerField(read_only=True, default=0)
+    unviewed_application_count = serializers.IntegerField(read_only=True, default=0)
+    draft_job_count = serializers.IntegerField(read_only=True, default=0)
+    pending_job_count = serializers.IntegerField(read_only=True, default=0)
+    active_job_count = serializers.IntegerField(read_only=True, default=0)
+    expired_job_count = serializers.IntegerField(read_only=True, default=0)
+    closed_job_count = serializers.IntegerField(read_only=True, default=0)
+    rejected_job_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = RecruitmentCampaign
@@ -55,6 +62,13 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'job_count',
             'application_count',
             'accepted_count',
+            'unviewed_application_count',
+            'draft_job_count',
+            'pending_job_count',
+            'active_job_count',
+            'expired_job_count',
+            'closed_job_count',
+            'rejected_job_count',
             'created_at',
             'updated_at',
         ]
@@ -64,9 +78,17 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
             'position_level_label',
             'budget_source_label',
             'status_label',
+            'status',
             'job_count',
             'application_count',
             'accepted_count',
+            'unviewed_application_count',
+            'draft_job_count',
+            'pending_job_count',
+            'active_job_count',
+            'expired_job_count',
+            'closed_job_count',
+            'rejected_job_count',
             'created_at',
             'updated_at',
         ]

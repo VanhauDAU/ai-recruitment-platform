@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 import { fetchAllPages } from '@/shared/api/pagination'
-import { cachedRequest, dedupeRequest } from '@/shared/api/request-deduplication'
+import { cachedRequest, dedupeRequest, invalidateRequestCache } from '@/shared/api/request-deduplication'
 
 const CATALOG_CACHE_TTL = 5 * 60 * 1000
 const STATS_CACHE_TTL = 60 * 1000
@@ -30,6 +30,38 @@ export async function recordJobView(slug) {
 export async function getJobCategories(params = {}) {
   const cacheKey = `job-categories:${JSON.stringify(params)}`
   return cachedRequest(cacheKey, CATALOG_CACHE_TTL, () => fetchAllPages('/jobs/categories/', { all: '1', ...params }))
+}
+
+export async function getJobBenefits() {
+  return cachedRequest('job-benefits', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/jobs/benefits/')
+    return data.results || data
+  })
+}
+
+export async function getJobLanguages() {
+  return cachedRequest('job-languages', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/jobs/languages/')
+    return data.results || data
+  })
+}
+
+export async function getSkills(params = {}) {
+  if (Object.keys(params).length) {
+    const { data } = await api.get('/skills/', { params })
+    return data.results || data
+  }
+
+  return cachedRequest('skills', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/skills/')
+    return data.results || data
+  })
+}
+
+export async function createSkill(name) {
+  const { data } = await api.post('/skills/', { name })
+  invalidateRequestCache('skills')
+  return data
 }
 
 export async function getJobStats() {

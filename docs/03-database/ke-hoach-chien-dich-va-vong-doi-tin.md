@@ -23,6 +23,43 @@ xuất bản ngay.
   đổi quyền truy cập tin. Nhà tuyển dụng tạo chiến dịch chỉ cần tên, không cần
   liên kết công ty hoặc hoàn tất bất kỳ bước xác thực nào; các điều kiện đó chỉ
   được kiểm tra khi gửi tin tuyển dụng để duyệt.
+- Chiến dịch tạo nhanh được mở ngay. Dừng chiến dịch chỉ thay đổi trạng thái
+  workspace, **không tự đóng tin tuyển dụng**; vòng đời và kiểm duyệt của từng
+  tin vẫn độc lập. Chiến dịch đã hủy là trạng thái cuối, không được mở lại.
+
+## Phạm vi sản phẩm sau khi đối chiếu TopCV
+
+TopCV xem chiến dịch là workspace tập trung các hoạt động cho một vị trí: tin
+tuyển dụng, nguồn CV, tiến độ xử lý và dữ liệu đo lường. Website áp dụng nguyên
+lý đó nhưng chỉ hiển thị chức năng đã có domain và dữ liệu thật.
+
+### Ưu tiên triển khai hiện tại
+
+1. Tạo nhanh chỉ bằng tên, nhấn Enter được; sau khi tạo chọn đăng tin hoặc mở
+   workspace chiến dịch.
+2. Danh sách có tìm kiếm, lọc theo tín hiệu cần hành động: chiến dịch đang mở,
+   CV mới, tin đang hiển thị, tin chờ duyệt và tin hết hạn.
+3. Mỗi chiến dịch hiển thị tổng/CV mới, trạng thái các tin, số offer trên mục
+   tiêu và thao tác xem, đăng tin, dừng/mở lại.
+4. Chi tiết gồm Tổng quan, CV ứng tuyển và Tin tuyển dụng. Tổng quan dùng phễu
+   hồ sơ, lượt xem, tiến độ mục tiêu và số CV bảy ngày từ dữ liệu hiện có.
+5. Mobile dùng card theo chiến dịch; desktop dùng bảng. Không bắt người dùng
+   cuộn ngang chỉ để thực hiện các thao tác chính trên màn hình nhỏ.
+
+### Chưa triển khai
+
+- `CV đề xuất`, `CV tìm kiếm`, ứng viên đã xem tin và CV đang theo dõi: chờ
+  workflow kết nối ứng viên/kho CV và contract quyền riêng tư hoàn chỉnh.
+- Credit, lượt mở liên hệ, gói dịch vụ đang chạy và kích hoạt dịch vụ: chờ
+  billing/service entitlement, không hiển thị số 0 giả.
+- Điểm tối ưu/AI recommendation: chỉ làm khi có bộ tiêu chí giải thích được và
+  dữ liệu đo lường; không tự tạo phần trăm mang tính trang trí.
+- Nhãn CV theo chiến dịch và báo cáo chuyển đổi hiển thị→xem→ứng tuyển: chờ
+  event tracking và module nhãn CV thật.
+
+Tham khảo: [khái niệm chiến dịch](https://tuyendung.topcv.vn/help/dinh-nghia/chien-dich-tuyen-dung/),
+[tạo chiến dịch](https://tuyendung.topcv.vn/help/huong-dan-su-dung/tao-chien-dich-tuyen-dung/)
+và [chi tiết chiến dịch](https://tuyendung.topcv.vn/help/dinh-nghia/chi-tiet-chien-dich-tuyen-dung/).
 
 ## Mô hình dữ liệu
 
@@ -34,7 +71,7 @@ xuất bản ngay.
 | `applications.employer_rating` | `Application` | Điểm nội bộ 1–5, không trả cho ứng viên. |
 | `application_status_history` | `Application` | Audit trạng thái, actor, ghi chú nội bộ; được dùng làm timeline ứng viên với DTO đã lọc. |
 
-Các migration liên quan: `employers.0016`–`0018`, `jobs.0020`–`0022`, `applications.0010`.
+Các migration liên quan: `employers.0016`–`0018`, `jobs.0020`–`0023`, `applications.0010`.
 
 ## Vòng đời tin
 
@@ -50,8 +87,10 @@ từ chối ── chỉnh sửa và gửi lại ──> chờ duyệt
 
 - Nháp có thể thiếu dữ liệu; chỉ nháp được xóa.
 - Khi gửi duyệt, backend kiểm tra 5 bước xác thực employer, quota của tin mới,
-  tiêu đề, mô tả, ít nhất một vị trí chuyên môn, ít nhất một địa điểm phường/xã + địa chỉ, số lượng
-  và hạn nộp không ở quá khứ.
+  toàn bộ trường bắt buộc của form thủ công: tiêu đề, mô tả/yêu cầu/quyền lợi,
+  cấp bậc, loại và hình thức làm việc, học vấn, kinh nghiệm, ít nhất một vị trí
+  chuyên môn, địa điểm phường/xã + địa chỉ, lịch làm việc có cấu trúc, số lượng,
+  hạn nộp và người nhận hồ sơ có ít nhất một email.
 - `pending` và `rejected` không hiện ở API public. `rejected_reason` chỉ hiện
   cho chủ tin; không lộ cho ứng viên hoặc recruiter khác.
 - Tin `active` có deadline qua ngày hiện tại bị ẩn trên mọi API public và hiển
@@ -78,12 +117,42 @@ giữa `considering`/`shortlisted`.
 
 ## API và giao diện
 
+### Tạo tin tuyển dụng thủ công
+
+Giai đoạn hiện tại chỉ triển khai cách **Tạo tin thủ công**. Hai hướng tạo tin
+bằng AI hoặc nhập dữ liệu từ tài liệu/mẫu ngoài chưa có workflow backend nên
+không xuất hiện như hành động khả dụng trên giao diện.
+
+Form thủ công được tổ chức thành năm nhóm, tham khảo luồng đăng tin của TopCV
+nhưng sử dụng đúng domain hiện có của hệ thống:
+
+1. **Thông tin chung:** tiêu đề; vị trí chuyên môn chọn đúng một mục qua taxonomy
+   ba cấp Nhóm nghề → Nghề → Vị trí chuyên môn; kiến thức chuyên ngành được chọn
+   nhiều; cấp bậc, loại công việc, hình thức làm việc và mức lương.
+2. **Mô tả công việc:** ba trình soạn thảo nội dung lớn cho mô tả, yêu cầu và
+   quyền lợi; quyền lợi bổ sung; nhiều khu vực tỉnh/thành, mỗi khu vực có nhiều
+   phường/xã kèm địa điểm chi tiết; nhiều khung thứ/giờ và một mô tả thời gian
+   làm việc tự do.
+3. **Kỳ vọng ứng viên:** học vấn, kinh nghiệm, giới tính, khoảng tuổi tùy chọn,
+   kỹ năng bắt buộc/ưu tiên và nhiều ngoại ngữ tùy chọn.
+4. **Thông tin nhận hồ sơ:** hạn nhận hồ sơ, số lượng tuyển, họ tên, điện thoại,
+   tối đa năm email nhận thông báo và chiến dịch tùy chọn.
+5. **Dịch vụ và gia tăng hiệu quả:** xác nhận tin cơ bản không phát sinh chi
+   phí. Gói trả phí chưa triển khai và không tạo dữ liệu/dịch vụ giả.
+
+Desktop rộng hiển thị tiến độ theo nhóm và bản xem trước cạnh form; màn hình
+hẹp hơn đưa tiến độ lên trên hoặc dùng hai cột, ẩn preview bên cạnh và không
+tạo cuộn ngang. `Lưu nháp`
+không validate toàn bộ và không tiêu quota; `Gửi duyệt` validate dữ liệu bắt
+buộc rồi đưa tin vào `pending`. Các tin sửa từ `active` cũng quay lại hàng chờ
+duyệt.
+
 - Campaign: `/api/employer/campaigns/` cùng `options/`, `suggestions/`,
   `from-need/{public_id}/`, `{public_id}/status/`, `{public_id}/report/`.
   Modal tạo nhanh chỉ nhận `name` và có thể submit bằng Enter; không kiểm tra
-  công ty/xác thực. Sau khi tạo, UI yêu cầu chọn hoạt động. Hiện có “Đăng tin
-  tuyển dụng”; “Chủ động tìm kiếm ứng viên” được hiển thị disabled cho đến khi
-  có workflow kho CV.
+  công ty/xác thực. Sau khi tạo, UI yêu cầu chọn hoạt động “Đăng tin tuyển
+  dụng” hoặc mở workspace; không hiển thị CTA tìm CV cho đến khi có workflow
+  kho CV thật.
 - Job workspace: `/api/jobs/mine/`, `posting-context/`, `submit/`, `close/`,
   `reopen/`, `extend/`, `duplicate/`.
 - Admin moderation: `/api/jobs/admin/moderation/` và
