@@ -54,7 +54,7 @@ function MatchReasons({ details = [] }) {
 }
 
 function MatchingJobCard({ job }) {
-  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
+  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
   const detailPath = jobDetailPath(job)
 
   return (

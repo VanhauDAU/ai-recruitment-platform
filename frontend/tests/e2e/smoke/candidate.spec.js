@@ -41,8 +41,8 @@ async function mockCandidatePersonalizationApi(page) {
         ? { consent: { necessary: true, preferences: true, analytics: false, marketing: false } }
         : path === '/api/candidate/email-notification-settings/'
           ? emailNotifications
-          : path === '/api/jobs/recommendations/for-me/'
-            ? {
+            : path === '/api/jobs/recommendations/for-me/'
+              ? {
                 status: 'ready',
                 sources: { job_preferences: true, cv: true, search_activity: false },
                 source_cv: { public_id: 'cv_1', title: 'CV Backend Developer' },
@@ -67,6 +67,29 @@ async function mockCandidatePersonalizationApi(page) {
                   ],
                 }],
               }
+            : path === '/api/jobs/recommendations/by-saved/'
+              ? {
+                  status: 'ready',
+                  strategy: 'recent-active-fallback-v1',
+                  source_saved_job_count: 0,
+                  results: [{
+                    public_id: 'job_2',
+                    slug: 'python-developer',
+                    title: 'Python Developer',
+                    company_name: 'Công ty Công nghệ Mẫu',
+                    company_logo_url: '',
+                    company_verified: true,
+                    salary_type: 'range',
+                    salary_min: '18000000',
+                    salary_max: '28000000',
+                    currency: 'VND',
+                    locations_detail: [{ id: 1, name: 'Hà Nội' }],
+                    job_skills: [],
+                    similarity_score: 0,
+                    similarity_details: [],
+                    similarity_reasons: [],
+                  }],
+                }
             : path === '/api/jobs/saved/'
               ? []
               : path === '/api/site/settings/'
@@ -81,7 +104,9 @@ test('candidate smoke: saved jobs remains protected', async ({ page }) => {
   await mockPublicApi(page)
   await page.goto('/viec-lam-da-luu')
 
-  await expect(page).toHaveURL(/\/login$/)
+  await expect(page).toHaveURL(
+    /\/login\?returnUrl=%2Fviec-lam-da-luu$/,
+  )
 })
 
 test('candidate smoke: personalization pages and compact desktop menu remain usable', async ({ page }, testInfo) => {
@@ -98,7 +123,17 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
   await suitableJobsSwitch.click()
   await updateRequest
   await expect(suitableJobsSwitch).not.toBeChecked()
-  await expect(page.getByText('Đã lưu tự động')).toBeVisible()
+  await expect(page.getByText('Đã lưu tự động')).toHaveCount(0)
+
+  await page.goto('/viec-lam-da-luu')
+  await expect(page.getByRole('heading', {
+    name: 'Danh sách 0 việc làm đã lưu',
+  })).toBeVisible()
+  await expect(page.getByText('Bạn chưa lưu việc làm nào')).toBeVisible()
+  await expect(page.getByRole('heading', {
+    name: 'Việc làm bạn có thể quan tâm',
+  })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Python Developer' })).toBeVisible()
 
   await page.goto('/tai-khoan/viec-lam-phu-hop')
   await expect(page.getByRole('heading', { name: 'Việc làm phù hợp' })).toBeVisible()

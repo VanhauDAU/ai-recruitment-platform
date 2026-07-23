@@ -250,6 +250,7 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
 ```text
 app/router
   → pages/main/account/EmailNotificationSettings|ChangePassword|MatchingJobs
+    + pages/main/jobs/SavedJobs
     → features/configure-email-notifications, change-password, saved-jobs
       → entities/candidate-notification-preferences, job, session
         → shared/api
@@ -271,6 +272,11 @@ widgets/main-header/CandidateUserMenu
   chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
   tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục
   đi qua feature tương ứng.
+- `features/saved-jobs` sở hữu GET/POST/DELETE danh sách lưu, cache optimistic
+  và feed `/recommendations/by-saved/`. `pages/main/jobs/SavedJobs` chỉ compose
+  danh sách, empty/error state và metadata strategy server trả; không tự chọn
+  category hay tính similarity. Feed vẫn hiển thị fallback tin mới khi chưa có
+  lịch sử lưu, nhưng UI không gọi fallback là kết quả cá nhân hóa.
 - Protected route tài khoản giữ `AuthGuard → RoleGuard(candidate)`. URL, consent,
   token/storage key và payload hiện hành không được đổi từ page/widget.
 

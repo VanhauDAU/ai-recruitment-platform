@@ -21,12 +21,21 @@ export default function useToggleSavedJob({ candidateKey, items, publish }) {
 
   const mutation = useMutation({
     mutationFn: ({ publicId, saved }) => (saved ? unsaveJob(publicId) : saveJob(publicId)),
-    onMutate: async ({ publicId, saved }) => {
+    onMutate: async ({ publicId, saved, jobSnapshot }) => {
       const queryKey = savedJobsKeys.list(candidateKey)
       await queryClient.cancelQueries({ queryKey })
       const previous = queryClient.getQueryData(queryKey) ?? []
       const rest = withoutJob(previous, publicId)
-      queryClient.setQueryData(queryKey, saved ? rest : [{ job_detail: { public_id: publicId } }, ...rest])
+      const optimisticItem = jobSnapshot
+        ? {
+            job_detail: jobSnapshot,
+            created_at: new Date().toISOString(),
+          }
+        : null
+      queryClient.setQueryData(
+        queryKey,
+        saved ? rest : optimisticItem ? [optimisticItem, ...rest] : previous,
+      )
       return { previous, queryKey }
     },
     onSuccess: (created, { publicId, saved }, { queryKey }) => {
@@ -34,6 +43,9 @@ export default function useToggleSavedJob({ candidateKey, items, publish }) {
         queryClient.setQueryData(queryKey, (current = []) => [created, ...withoutJob(current, publicId)])
         setSaveSuccess({ publicId, at: Date.now() })
       }
+      queryClient.invalidateQueries({
+        queryKey: savedJobsKeys.recommendations(candidateKey),
+      })
       setError(null)
       publish()
     },
@@ -51,13 +63,13 @@ export default function useToggleSavedJob({ candidateKey, items, publish }) {
     },
   })
 
-  const toggle = useCallback(async (publicId) => {
+  const toggle = useCallback(async (publicId, jobSnapshot) => {
     if (!candidateKey || !publicId || pendingJobIdsRef.current.has(publicId)) return
     pendingJobIdsRef.current.add(publicId)
     setPendingJobIds((current) => new Set(current).add(publicId))
     const saved = items.some((item) => item.job_detail?.public_id === publicId)
     try {
-      await mutation.mutateAsync({ publicId, saved })
+      await mutation.mutateAsync({ publicId, saved, jobSnapshot })
     } catch {
       // lỗi đã được onError xử lý (rollback + setError); nuốt để giữ contract cũ
     }

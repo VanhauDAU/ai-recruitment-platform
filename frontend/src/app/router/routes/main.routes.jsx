@@ -61,7 +61,6 @@ export function mainRoutes() {
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
-      <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       {/* Tin của công ty có trang thương hiệu — cùng JobDetailPage nhưng kèm
@@ -104,6 +103,7 @@ export function mainRoutes() {
           khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
+          <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
           <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
           <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
           <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
