@@ -139,7 +139,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
   return (
     <div className="flex items-center gap-4">
-      <Dropdown trigger={['click']} placement="bottomRight" popupRender={() => notifPanel}>
+      <Dropdown trigger={['hover', 'click']} placement="bottomRight" popupRender={() => notifPanel}>
         <button type="button" aria-label="Mở thông báo" className="flex cursor-pointer text-xl text-gray-500 transition-colors hover:text-[var(--brand-primary)]">
           <BellOutlined />
         </button>
@@ -149,7 +149,7 @@ export default function CandidateUserMenu({ user, logout }) {
         <MessageOutlined />
       </button>
 
-      <Dropdown open={open} onOpenChange={setOpen} trigger={['click']} placement="bottomRight" popupRender={() => userPanel}>
+      <Dropdown open={open} onOpenChange={setOpen} trigger={['hover', 'click']} placement="bottomRight" popupRender={() => userPanel}>
         <button type="button" aria-label="Mở menu tài khoản" aria-expanded={open} className="flex cursor-pointer items-center gap-1">
           <Avatar size={38} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
           <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? '-rotate-90' : 'rotate-90'}`} />
