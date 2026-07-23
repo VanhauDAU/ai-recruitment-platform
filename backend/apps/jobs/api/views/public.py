@@ -198,7 +198,11 @@ class JobDetailView(generics.RetrieveAPIView):
     serializer_class = JobDetailSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = 'slug'
-    queryset = active_job_detail_queryset()
+
+    def get_queryset(self):
+        # Rebuild the availability predicate per request so deadline and
+        # campaign status changes take effect without restarting the process.
+        return active_job_detail_queryset()
 
 
 @extend_schema(

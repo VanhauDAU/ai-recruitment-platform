@@ -1,8 +1,19 @@
-import { DatePicker, Form, Input, InputNumber, Select } from 'antd'
+import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
 import dayjs from 'dayjs'
+import { useState } from 'react'
 
-export default function ApplicationInfoFields({ campaigns }) {
-  const selectedCampaign = Form.useWatch('campaign')
+export default function ApplicationInfoFields({ campaigns, creatingCampaign, onCreateCampaign }) {
+  const form = Form.useFormInstance()
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  const [quickCreateForm] = Form.useForm()
+
+  async function createQuickCampaign({ name }) {
+    const campaign = await onCreateCampaign(name.trim())
+    form.setFieldValue('campaign', campaign.public_id)
+    quickCreateForm.resetFields()
+    setQuickCreateOpen(false)
+  }
+
   return (
     <>
       <div className="grid gap-x-4 md:grid-cols-2">
@@ -18,17 +29,29 @@ export default function ApplicationInfoFields({ campaigns }) {
           allowClear
           showSearch
           optionFilterProp="label"
-          options={campaigns.map((item) => {
-            const occupied = Boolean(item.campaign_job && item.public_id !== selectedCampaign)
-            return {
-              value: item.public_id,
-              label: occupied ? `${item.name} — đã có tin tuyển dụng` : item.name,
-              disabled: occupied,
-            }
-          })}
+          options={campaigns.map((item) => ({ value: item.public_id, label: item.name }))}
           placeholder="Không gắn chiến dịch"
         />
       </Form.Item>
+      <Button type="link" className="!mb-4 !px-0" onClick={() => setQuickCreateOpen(true)}>
+        Tạo nhanh chiến dịch mới
+      </Button>
+      <Modal
+        destroyOnHidden
+        open={quickCreateOpen}
+        title="Tạo nhanh chiến dịch"
+        okText="Tạo và chọn"
+        cancelText="Hủy"
+        confirmLoading={creatingCampaign}
+        onCancel={() => setQuickCreateOpen(false)}
+        onOk={() => quickCreateForm.submit()}
+      >
+        <Form form={quickCreateForm} layout="vertical" onFinish={createQuickCampaign}>
+          <Form.Item name="name" label="Tên chiến dịch" rules={[{ required: true, whitespace: true, message: 'Nhập tên chiến dịch.' }]}>
+            <Input autoFocus maxLength={255} placeholder="Ví dụ: Tuyển đội ngũ kỹ thuật quý III" />
+          </Form.Item>
+        </Form>
+      </Modal>
       <div className="border-t border-slate-200 pt-4">
         <h3 className="text-sm font-extrabold text-slate-800">Người nhận hồ sơ</h3>
         <div className="mt-3 grid gap-x-4 md:grid-cols-2">

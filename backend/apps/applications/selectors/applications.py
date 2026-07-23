@@ -1,6 +1,6 @@
 """Read queries for job applications."""
 
-from django.db.models import Q
+from django.db.models import OuterRef, Q, Subquery
 
 from ..models import Application
 
@@ -15,7 +15,15 @@ def candidate_applications_queryset(candidate):
 
 
 def employer_applications_queryset(
-    employer, job_public_id=None, *, status=None, campaign=None, q=None
+    employer,
+    job_public_id=None,
+    *,
+    status=None,
+    campaign=None,
+    q=None,
+    scope=None,
+    ordering=None,
+    latest_only=False,
 ):
     queryset = (
         Application.objects.filter(job__posted_by=employer)
@@ -38,9 +46,37 @@ def employer_applications_queryset(
         queryset = queryset.filter(job__campaign__public_id=campaign)
     if q:
         queryset = queryset.filter(
-            Q(candidate__full_name__icontains=q) | Q(candidate__email__icontains=q)
+            Q(candidate__full_name__icontains=q)
+            | Q(candidate__email__icontains=q)
+            | Q(job__title__icontains=q)
+            | Q(submitted_cv_title__icontains=q)
         )
-    return queryset.order_by('-applied_at')
+    if latest_only:
+        latest_application_id = (
+            Application.objects.filter(
+                candidate_id=OuterRef('candidate_id'),
+                job_id=OuterRef('job_id'),
+            )
+            .order_by('-applied_at', '-id')
+            .values('id')[:1]
+        )
+        queryset = queryset.filter(id=Subquery(latest_application_id))
+    if scope == 'unread':
+        queryset = queryset.filter(status=Application.Status.SUBMITTED)
+    elif scope == 'unanswered':
+        queryset = queryset.filter(
+            status__in=[
+                Application.Status.SUBMITTED,
+                Application.Status.VIEWED,
+                Application.Status.CONSIDERING,
+            ]
+        )
+    order_fields = {
+        'oldest': 'applied_at',
+        'name': 'candidate__full_name',
+        'newest': '-applied_at',
+    }
+    return queryset.order_by(order_fields.get(ordering, '-applied_at'), '-id')
 
 
 def employer_application_queryset(employer):
