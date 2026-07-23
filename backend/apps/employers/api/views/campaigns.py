@@ -1,33 +1,29 @@
 from time import perf_counter
 
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 from common.metrics import record_metric
 
-from ...models import RecruitmentNeed
 from ...selectors.campaigns import (
     campaign_detail_queryset,
     campaign_job_performance,
     campaign_list_queryset,
     campaign_options,
     campaign_report,
-    campaign_suggestions,
 )
 from ...services.campaigns import (
     change_campaign_status,
     create_campaign,
-    create_campaign_from_need,
     update_campaign,
 )
 from ..serializers.campaigns import (
     CampaignPerformanceQuerySerializer,
     CampaignStatusSerializer,
     RecruitmentCampaignSerializer,
-    RecruitmentNeedSuggestionSerializer,
 )
 
 
@@ -70,15 +66,6 @@ class RecruitmentCampaignOptionsView(APIView):
         )
 
 
-class RecruitmentCampaignSuggestionsView(APIView):
-    permission_classes = [IsEmployer]
-
-    def get(self, request):
-        return Response(
-            RecruitmentNeedSuggestionSerializer(campaign_suggestions(request.user), many=True).data
-        )
-
-
 class RecruitmentCampaignStatusView(APIView):
     permission_classes = [IsEmployer]
 
@@ -118,18 +105,3 @@ class RecruitmentCampaignJobPerformanceView(APIView):
             status='success',
         )
         return Response(result)
-
-
-class RecruitmentCampaignFromNeedView(APIView):
-    permission_classes = [IsEmployer]
-
-    def post(self, request, public_id):
-        need = get_object_or_404(
-            RecruitmentNeed.objects.select_related('position_category'),
-            public_id=public_id,
-            recruiter__user=request.user,
-        )
-        campaign = create_campaign_from_need(need=need, user=request.user)
-        return Response(
-            RecruitmentCampaignSerializer(campaign).data, status=status.HTTP_201_CREATED
-        )

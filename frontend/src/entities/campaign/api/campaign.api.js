@@ -30,16 +30,6 @@ export async function getCampaignOptions() {
   return data.results || data
 }
 
-export async function getCampaignSuggestions() {
-  const { data } = await api.get('/employer/campaigns/suggestions/')
-  return data.results || data
-}
-
-export async function createCampaignFromNeed(publicId) {
-  const { data } = await api.post(`/employer/campaigns/from-need/${publicId}/`)
-  return data
-}
-
 export async function getCampaignReport(publicId) {
   const { data } = await api.get(`/employer/campaigns/${publicId}/report/`)
   return data

@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   changeCampaignStatus,
   createCampaign,
-  createCampaignFromNeed,
   getCampaign,
   getCampaignJobPerformance,
   getCampaignOptions,
   getCampaignReport,
-  getCampaignSuggestions,
   getCampaigns,
   updateCampaign,
 } from './campaign.api'
@@ -29,13 +27,11 @@ describe('campaign API', () => {
       .mockResolvedValueOnce({ data: { results: [{ public_id: 'camp_1' }] } })
       .mockResolvedValueOnce({ data: { public_id: 'camp_1' } })
       .mockResolvedValueOnce({ data: { results: [{ public_id: 'camp_1' }] } })
-      .mockResolvedValueOnce({ data: { results: [{ public_id: 'need_1' }] } })
       .mockResolvedValueOnce({ data: { funnel: {} } })
       .mockResolvedValueOnce({ data: { range: { days: 30 } } })
     post
       .mockResolvedValueOnce({ data: { public_id: 'camp_1' } })
       .mockResolvedValueOnce({ data: { public_id: 'camp_1', status: 'active' } })
-      .mockResolvedValueOnce({ data: { public_id: 'camp_from_need' } })
     patch.mockResolvedValue({ data: { public_id: 'camp_1', name: 'Đã sửa' } })
 
     await expect(getCampaigns({ status: 'draft' })).resolves.toEqual([{ public_id: 'camp_1' }])
@@ -44,8 +40,6 @@ describe('campaign API', () => {
     await expect(updateCampaign('camp_1', { name: 'Đã sửa' })).resolves.toMatchObject({ name: 'Đã sửa' })
     await expect(changeCampaignStatus('camp_1', 'active')).resolves.toMatchObject({ status: 'active' })
     await expect(getCampaignOptions()).resolves.toEqual([{ public_id: 'camp_1' }])
-    await expect(getCampaignSuggestions()).resolves.toEqual([{ public_id: 'need_1' }])
-    await expect(createCampaignFromNeed('need_1')).resolves.toEqual({ public_id: 'camp_from_need' })
     await expect(getCampaignReport('camp_1')).resolves.toEqual({ funnel: {} })
     await expect(getCampaignJobPerformance('camp_1', 30)).resolves.toEqual({ range: { days: 30 } })
 
@@ -55,10 +49,8 @@ describe('campaign API', () => {
     expect(patch).toHaveBeenCalledWith('/employer/campaigns/camp_1/', { name: 'Đã sửa' })
     expect(post).toHaveBeenNthCalledWith(2, '/employer/campaigns/camp_1/status/', { status: 'active' })
     expect(get).toHaveBeenNthCalledWith(3, '/employer/campaigns/options/')
-    expect(get).toHaveBeenNthCalledWith(4, '/employer/campaigns/suggestions/')
-    expect(post).toHaveBeenNthCalledWith(3, '/employer/campaigns/from-need/need_1/')
-    expect(get).toHaveBeenNthCalledWith(5, '/employer/campaigns/camp_1/report/')
-    expect(get).toHaveBeenNthCalledWith(6, '/employer/campaigns/camp_1/job-performance/', { params: { days: 30 } })
+    expect(get).toHaveBeenNthCalledWith(4, '/employer/campaigns/camp_1/report/')
+    expect(get).toHaveBeenNthCalledWith(5, '/employer/campaigns/camp_1/job-performance/', { params: { days: 30 } })
   })
 
   it('builds stable cache keys for campaign lists and details', () => {

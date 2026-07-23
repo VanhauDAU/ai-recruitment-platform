@@ -4,7 +4,6 @@ from .campaigns import (
     CampaignPerformanceQuerySerializer,
     CampaignStatusSerializer,
     RecruitmentCampaignSerializer,
-    RecruitmentNeedSuggestionSerializer,
 )
 from .companies import (
     CompanyImageSerializer,
@@ -29,7 +28,6 @@ __all__ = [
     'RecruiterProfileSerializer',
     'RecruitmentCampaignSerializer',
     'RecruitmentNeedSerializer',
-    'RecruitmentNeedSuggestionSerializer',
     'EmployerRegisterSerializer',
     'EmployerRegistrationProfileSerializer',
 ]

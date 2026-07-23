@@ -69,6 +69,10 @@ describe('CampaignJobsPanel', () => {
     renderPanel()
 
     expect(await screen.findByText('Báo cáo Tin tuyển dụng:')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
+      'href',
+      '/tuyendung/app/jobs/new?campaign=camp_1',
+    )
     expect(screen.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Số lần hiển thị' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: /Tỷ lệ xem tin/ })).toBeInTheDocument()
@@ -122,5 +126,35 @@ describe('CampaignJobsPanel', () => {
 
     expect(await screen.findByText('Chưa đến thời điểm bắt đầu ghi nhận dữ liệu')).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('keeps the add-job action available when the report cannot load', async () => {
+    mocks.getCampaignJobPerformance.mockRejectedValue(new Error('Network error'))
+    renderPanel()
+
+    expect(await screen.findByText('Không thể tải báo cáo tin tuyển dụng')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
+      'href',
+      '/tuyendung/app/jobs/new?campaign=camp_1',
+    )
+  })
+
+  it('shows the rejection reason for a rejected job', async () => {
+    const user = userEvent.setup()
+    const rejected = performance()
+    rejected.jobs[0] = {
+      ...rejected.jobs[0],
+      status: 'rejected',
+      rejected_reason: 'Thiếu thông tin về mức lương và quyền lợi.',
+    }
+    mocks.getCampaignJobPerformance.mockResolvedValue(rejected)
+    renderPanel()
+
+    await user.click(await screen.findByRole('button', { name: 'Xem lý do từ chối Kỹ sư Frontend' }))
+    expect(screen.getByText('Thiếu thông tin về mức lương và quyền lợi.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chỉnh sửa và gửi lại' })).toHaveAttribute(
+      'href',
+      '/tuyendung/app/jobs/job_1/edit',
+    )
   })
 })

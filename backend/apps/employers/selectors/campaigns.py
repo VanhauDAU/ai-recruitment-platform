@@ -1,24 +1,21 @@
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-from django.db.models import Count, F, OuterRef, Q, Subquery
+from django.db.models import Count, F, Q
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from apps.applications.models import Application
 from apps.jobs.models import Job, JobEngagementDaily
 
-from ..models import RecruiterProfile, RecruitmentCampaign
+from ..models import RecruitmentCampaign
 
 REPORT_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
 
 
 def campaign_list_queryset(user, *, status=None, scope=None, q=None):
     today = timezone.localdate()
-    campaign_job = Job.objects.filter(campaign_id=OuterRef('pk')).order_by('-created_at')
-    queryset = RecruitmentCampaign.objects.filter(owner__user=user).select_related(
-        'position_category'
-    )
+    queryset = RecruitmentCampaign.objects.filter(owner__user=user)
     if status:
         queryset = queryset.filter(status=status)
     if q:
@@ -51,13 +48,6 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None):
             filter=Q(jobs__applications__status=Application.Status.ACCEPTED),
             distinct=True,
         ),
-        job_public_id=Subquery(campaign_job.values('public_id')[:1]),
-        job_title=Subquery(campaign_job.values('title')[:1]),
-        job_status=Subquery(campaign_job.values('status')[:1]),
-        job_deadline=Subquery(campaign_job.values('deadline')[:1]),
-        job_application_count=Subquery(campaign_job.values('application_count')[:1]),
-        job_view_count=Subquery(campaign_job.values('view_count')[:1]),
-        job_rejected_reason=Subquery(campaign_job.values('rejected_reason')[:1]),
     )
     if scope == 'open':
         queryset = queryset.filter(status=RecruitmentCampaign.Status.ACTIVE)
@@ -80,15 +70,6 @@ def campaign_options(user):
     return campaign_list_queryset(user).exclude(
         status__in=[RecruitmentCampaign.Status.COMPLETED, RecruitmentCampaign.Status.CANCELLED]
     )
-
-
-def campaign_suggestions(user):
-    recruiter = RecruiterProfile.objects.filter(user=user).first()
-    if recruiter is None:
-        return []
-    return recruiter.recruitment_needs.filter(
-        is_active=True, campaigns__isnull=True
-    ).select_related('position_category')
 
 
 def campaign_report(campaign):
@@ -119,7 +100,6 @@ def campaign_report(campaign):
     job_statuses['active'] = max(job_statuses['active'] - expired_jobs, 0)
     return {
         'campaign_public_id': campaign.public_id,
-        'headcount_target': campaign.headcount_target,
         'accepted_count': statuses[Application.Status.ACCEPTED],
         'jobs': {
             'total': total_jobs,
@@ -165,6 +145,7 @@ def campaign_job_performance(campaign, *, days=7):
             'slug',
             'title',
             'status',
+            'rejected_reason',
             'deadline',
             'engagement_tracking_started_at',
         )
@@ -223,6 +204,7 @@ def campaign_job_performance(campaign, *, days=7):
                 'slug': job['slug'],
                 'title': job['title'],
                 'status': job['status'],
+                'rejected_reason': job['rejected_reason'],
                 'deadline': deadline,
                 'is_expired': bool(
                     job['status'] == Job.Status.ACTIVE and deadline is not None and deadline < today

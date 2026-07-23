@@ -277,9 +277,6 @@ def duplicate_job(job, user):
     duplicate.id = None
     duplicate.public_id = ''
     duplicate.slug = ''
-    # A campaign owns exactly one job. A duplicate starts as an independent draft
-    # so the recruiter can choose another campaign (or leave it unassigned).
-    duplicate.campaign = None
     duplicate.status = Job.Status.DRAFT
     duplicate.submitted_at = None
     duplicate.published_at = None

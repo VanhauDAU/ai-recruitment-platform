@@ -3,7 +3,6 @@
 from .campaigns import (
     change_campaign_status,
     create_campaign,
-    create_campaign_from_need,
     update_campaign,
 )
 from .companies import (
@@ -22,7 +21,6 @@ __all__ = [
     'apply_update_request',
     'change_campaign_status',
     'create_campaign',
-    'create_campaign_from_need',
     'get_or_create_recruiter',
     'recruiter_posting_readiness',
     'phone_taken_by_other',

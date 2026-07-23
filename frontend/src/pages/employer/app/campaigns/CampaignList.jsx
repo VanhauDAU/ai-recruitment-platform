@@ -1,9 +1,7 @@
 import {
-  CloseCircleFilled,
   FileTextOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
-  PlusOutlined,
   SearchOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -30,12 +28,11 @@ import {
   campaignKeys,
   changeCampaignStatus,
   createCampaign,
-  createCampaignFromNeed,
   getCampaigns,
-  getCampaignSuggestions,
   updateCampaign,
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import CampaignJobsSummary from './CampaignJobsSummary'
 
 function TextAction({ onClick, danger = false, children }) {
   return (
@@ -64,37 +61,15 @@ function ActionRow({ children, className = '' }) {
   )
 }
 
-const JOB_STATUS = {
-  draft: ['Nháp', 'default'],
-  pending: ['Chờ duyệt', 'gold'],
-  active: ['Đang tuyển', 'green'],
-  closed: ['Đã đóng', 'default'],
-  rejected: ['Từ chối', 'red'],
-}
-
-function CampaignJobSummary({ campaign, className = '' }) {
-  const job = campaign.campaign_job
-  if (!job) return null
-  const status = job.is_expired ? ['Hết hạn', 'orange'] : (JOB_STATUS[job.status] || [job.status, 'default'])
-  const deadline = job.deadline ? new Date(job.deadline).toLocaleDateString('vi-VN') : 'Không giới hạn'
-  return (
-    <div className={`min-w-0 ${className}`}>
-      <Link className="block truncate font-semibold !text-slate-800 hover:!text-emerald-700" to={`/tuyendung/app/jobs/${job.public_id}`}>
-        {job.title || 'Tin nháp chưa đặt tên'}
-      </Link>
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-        <Tag className="!m-0" color={status[1]}>{status[0]}</Tag>
-        <span className="text-xs text-slate-500">Hạn nộp: {deadline}</span>
-      </div>
-      <p className="mt-1.5 text-xs text-slate-500">{job.application_count || 0} CV · {job.view_count || 0} lượt xem</p>
-    </div>
-  )
+function formatUpdatedAt(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('vi-VN')
 }
 
 export default function CampaignList() {
   const [activityCampaign, setActivityCampaign] = useState(null)
   const [editCampaign, setEditCampaign] = useState(null)
-  const [rejectJob, setRejectJob] = useState(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const createOpen = Boolean(location.state?.createCampaign)
@@ -111,10 +86,6 @@ export default function CampaignList() {
   const campaignsQuery = useQuery({
     queryKey: campaignKeys.list(queryParams),
     queryFn: () => getCampaigns(queryParams),
-  })
-  const suggestionsQuery = useQuery({
-    queryKey: ['campaigns', 'suggestions'],
-    queryFn: getCampaignSuggestions,
   })
   const invalidateCampaigns = () => queryClient.invalidateQueries({ queryKey: campaignKeys.all })
   const createMutation = useMutation({
@@ -144,16 +115,6 @@ export default function CampaignList() {
       message.success('Đã cập nhật tên chiến dịch.')
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật chiến dịch.')),
-  })
-  const fromNeedMutation = useMutation({
-    mutationFn: createCampaignFromNeed,
-    onSuccess: (campaign) => {
-      invalidateCampaigns()
-      queryClient.invalidateQueries({ queryKey: ['campaigns', 'suggestions'] })
-      setActivityCampaign(campaign)
-      message.success('Đã tạo chiến dịch từ nhu cầu tuyển dụng.')
-    },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể tạo chiến dịch.')),
   })
   const campaigns = campaignsQuery.data || []
 
@@ -187,21 +148,8 @@ export default function CampaignList() {
     return (
       <ActionRow>
         <TextAction onClick={() => setEditCampaign(campaign)}>Sửa chiến dịch</TextAction>
-        <TextAction onClick={() => navigate(`/tuyendung/app/campaigns/${campaign.public_id}?tab=overview`)}>Xem báo cáo</TextAction>
+        <TextAction onClick={() => navigate(`/tuyendung/app/campaigns/${campaign.public_id}?active_tab=job`)}>Xem báo cáo</TextAction>
         <TextAction onClick={() => navigate(`/tuyendung/app/campaigns/${campaign.public_id}?tab=applications`)}>Xem CV ứng tuyển</TextAction>
-      </ActionRow>
-    )
-  }
-
-  function JobInlineActions({ campaign }) {
-    const job = campaign.campaign_job
-    if (!job) return null
-    return (
-      <ActionRow>
-        <TextAction onClick={() => navigate(`/tuyendung/app/jobs/${job.public_id}/edit`)}>Chỉnh sửa</TextAction>
-        {job.status === 'rejected' && (
-          <TextAction danger onClick={() => setRejectJob({ ...job, campaignName: campaign.name })}>Xem lý do bị từ chối</TextAction>
-        )}
       </ActionRow>
     )
   }
@@ -241,8 +189,18 @@ export default function CampaignList() {
       ),
     },
     {
-      title: 'CV ứng tuyển',
-      width: 130,
+      title: 'Tin tuyển dụng',
+      width: 320,
+      render: (_, campaign) => (
+        <CampaignJobsSummary
+          campaign={campaign}
+          onCreate={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}
+        />
+      ),
+    },
+    {
+      title: 'Tổng CV',
+      width: 160,
       render: (_, campaign) => (
         <Link to={`/tuyendung/app/applications?campaign=${campaign.public_id}`} className="font-semibold !text-slate-700">
           {campaign.application_count || 0} hồ sơ
@@ -251,34 +209,10 @@ export default function CampaignList() {
       ),
     },
     {
-      title: 'Tin tuyển dụng',
-      width: 300,
-      render: (_, campaign) => {
-        const job = campaign.campaign_job
-        if (!job) {
-          return (
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}
-            >
-              Đăng tin
-            </Button>
-          )
-        }
-        return (
-          <div className="group/job min-w-0">
-            <CampaignJobSummary campaign={campaign} />
-            <div className="mt-2 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover/job:opacity-100">
-              <JobInlineActions campaign={campaign} />
-            </div>
-          </div>
-        )
-      },
+      title: 'Cập nhật',
+      width: 130,
+      render: (_, campaign) => <span>{formatUpdatedAt(campaign.updated_at)}</span>,
     },
-    { title: 'CV từ hệ thống', width: 150, render: () => <span className="text-sm text-slate-400">Phát triển sau</span> },
-    { title: 'Lọc CV', width: 130, render: () => <span className="text-sm text-slate-400">Phát triển sau</span> },
     { title: 'Thao tác', width: 140, render: (_, campaign) => <CampaignStatusActions campaign={campaign} /> },
   ]
 
@@ -296,15 +230,6 @@ export default function CampaignList() {
             onClear={() => replaceFilters({ q: '' })}
             onPressEnter={() => replaceFilters({ q: searchValue.trim() })}
           />
-          {(suggestionsQuery.data || []).length > 0 && (
-            <Select
-              className="lg:min-w-64"
-              loading={fromNeedMutation.isPending}
-              placeholder="Tạo từ nhu cầu đã khai báo"
-              options={(suggestionsQuery.data || []).map((item) => ({ value: item.public_id, label: `${item.position_category_name} · ${item.headcount} người` }))}
-              onChange={(publicId) => fromNeedMutation.mutate(publicId)}
-            />
-          )}
         </div>
         <p className="mt-4 text-sm text-slate-500">Tìm thấy <strong className="text-slate-800">{campaigns.length}</strong> chiến dịch tuyển dụng</p>
       </Card>
@@ -318,29 +243,17 @@ export default function CampaignList() {
               <div className="min-w-0"><span className="text-xs text-slate-400">#{campaign.public_id}</span><Link className="mt-1 block break-words text-base font-bold !text-slate-900" to={`/tuyendung/app/campaigns/${campaign.public_id}`}>{campaign.name}</Link></div>
               <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</Tag>
             </div>
-            <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">CV ứng tuyển</span><strong>{campaign.application_count || 0}</strong>{campaign.unviewed_application_count > 0 && <span className="ml-1 text-emerald-600">· {campaign.unviewed_application_count} mới</span>}</div>
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-medium text-slate-500">TIN TUYỂN DỤNG</p>
-              {campaign.campaign_job ? (
-                <>
-                  <CampaignJobSummary campaign={campaign} />
-                  <div className="mt-2"><JobInlineActions campaign={campaign} /></div>
-                </>
-              ) : (
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  onClick={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}
-                >
-                  Đăng tin
-                </Button>
-              )}
+            <div className="mt-4 space-y-3">
+              <CampaignJobsSummary
+                compact
+                campaign={campaign}
+                onCreate={() => navigate(`/tuyendung/app/jobs/new?campaign=${campaign.public_id}`)}
+              />
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">CV từ hệ thống</span><strong className="mt-1 block text-slate-400">Phát triển sau</strong></div>
-              <div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">Lọc CV</span><strong className="mt-1 block text-slate-400">Phát triển sau</strong></div>
+            <div className="mt-3">
+              <div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="block text-xs text-slate-500">Tổng CV</span><strong className="mt-1 block">{campaign.application_count || 0}</strong>{campaign.unviewed_application_count > 0 && <span className="ml-1 text-emerald-600">· {campaign.unviewed_application_count} mới</span>}</div>
             </div>
+            <p className="mt-3 text-xs text-slate-500">Cập nhật: {formatUpdatedAt(campaign.updated_at)}</p>
             <div className="mt-4 space-y-3 border-t border-slate-100 pt-4"><CampaignInlineActions campaign={campaign} /><CampaignStatusActions campaign={campaign} block /></div>
           </Card>
         ))}
@@ -352,7 +265,7 @@ export default function CampaignList() {
           dataSource={campaigns}
           locale={{ emptyText: <Empty description="Chưa có chiến dịch phù hợp" /> }}
           pagination={false}
-          scroll={{ x: 1080 }}
+          scroll={{ x: 950 }}
           onRow={() => ({ className: 'group' })}
           columns={columns}
           className="[&_.ant-table-cell:not(:last-child)]:!border-r [&_.ant-table-cell:not(:last-child)]:!border-slate-200/70"
@@ -396,22 +309,6 @@ export default function CampaignList() {
         </Form>
       </Modal>
 
-      <Modal
-        destroyOnHidden
-        open={Boolean(rejectJob)}
-        title="Lý do tin tuyển dụng bị từ chối"
-        onCancel={() => setRejectJob(null)}
-        footer={[
-          <Button key="close" onClick={() => setRejectJob(null)}>Đóng</Button>,
-          <Button key="edit" type="primary" onClick={() => { const jobId = rejectJob.public_id; setRejectJob(null); navigate(`/tuyendung/app/jobs/${jobId}/edit`) }}>Chỉnh sửa và gửi lại</Button>,
-        ]}
-      >
-        <div className="rounded-lg border border-red-100 border-l-4 border-l-red-500 bg-red-50/70 p-4">
-          <div className="flex items-center gap-2 font-semibold text-red-600"><CloseCircleFilled />{rejectJob?.title || 'Tin tuyển dụng'}</div>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{rejectJob?.rejected_reason?.trim() || 'Quản trị viên chưa cung cấp lý do cụ thể. Vui lòng liên hệ bộ phận hỗ trợ nếu cần thêm thông tin.'}</p>
-        </div>
-        <p className="mt-4 text-xs text-slate-500">Chỉnh sửa tin theo góp ý rồi gửi duyệt lại; lý do này chỉ hiển thị cho bạn.</p>
-      </Modal>
     </section>
   )
 }

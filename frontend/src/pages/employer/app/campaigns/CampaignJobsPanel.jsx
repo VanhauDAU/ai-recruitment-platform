@@ -7,7 +7,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Empty, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
+import { Button, Empty, Modal, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -57,7 +57,7 @@ function JobStatus({ job }) {
   return <Tag color={color}>{label}</Tag>
 }
 
-function JobActions({ job }) {
+function JobActions({ job, onShowRejectedReason }) {
   const canViewPublicJob = job.status === 'active' && Boolean(job.slug)
   const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:!text-emerald-700'
 
@@ -87,6 +87,18 @@ function JobActions({ job }) {
           <EditOutlined />
         </Link>
       </Tooltip>
+      {job.status === 'rejected' && (
+        <Tooltip title="Xem lý do từ chối">
+          <button
+            type="button"
+            aria-label={`Xem lý do từ chối ${job.title || 'tin tuyển dụng'}`}
+            onClick={() => onShowRejectedReason(job)}
+            className={actionClassName}
+          >
+            <InfoCircleOutlined />
+          </button>
+        </Tooltip>
+      )}
     </div>
   )
 }
@@ -98,8 +110,21 @@ function MetricValue({ value, available = true }) {
   return formatNumber(value)
 }
 
+function AddJobButton({ publicId }) {
+  return (
+    <Link
+      to={`/tuyendung/app/jobs/new?campaign=${publicId}`}
+      className="inline-flex h-9 shrink-0 items-center rounded px-3 text-sm font-semibold !text-white shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+      style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
+    >
+      <PlusOutlined aria-hidden className="mr-2" /> Thêm tin tuyển dụng
+    </Link>
+  )
+}
+
 export default function CampaignJobsPanel({ publicId }) {
   const [days, setDays] = useState(7)
+  const [rejectedJob, setRejectedJob] = useState(null)
   const performanceQuery = useQuery({
     queryKey: campaignKeys.jobPerformance(publicId, days),
     queryFn: () => getCampaignJobPerformance(publicId, days),
@@ -109,39 +134,48 @@ export default function CampaignJobsPanel({ publicId }) {
   const jobs = performance?.jobs || []
   const primaryJob = jobs[0]
 
-  if (performanceQuery.isLoading) return <Skeleton active className="p-6" paragraph={{ rows: 9 }} />
+  if (performanceQuery.isLoading) {
+    return (
+      <div className="px-4 py-5 lg:px-5">
+        <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
+        <Skeleton active className="pt-5" paragraph={{ rows: 9 }} />
+      </div>
+    )
+  }
 
   if (performanceQuery.isError) {
     return (
-      <div className="py-16 text-center">
-        <FileSearchOutlined className="text-4xl text-slate-300" />
-        <p className="mt-3 font-semibold text-slate-700">Không thể tải báo cáo tin tuyển dụng</p>
-        <button type="button" className="mt-3 text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>Thử lại</button>
+      <div className="px-4 py-5 lg:px-5">
+        <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
+        <div className="py-16 text-center">
+          <FileSearchOutlined className="text-4xl text-slate-300" />
+          <p className="mt-3 font-semibold text-slate-700">Không thể tải báo cáo tin tuyển dụng</p>
+          <button type="button" className="mt-3 text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>Thử lại</button>
+        </div>
       </div>
     )
   }
 
   if (!jobs.length) {
     return (
-      <Empty className="py-20" image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chiến dịch chưa có tin tuyển dụng">
-        <Link
-          to={`/tuyendung/app/jobs/new?campaign=${publicId}`}
-          className="inline-flex h-9 items-center rounded bg-emerald-600 px-4 font-semibold !text-white hover:bg-emerald-700"
-        >
-          <PlusOutlined className="mr-2" /> Đăng tin tuyển dụng
-        </Link>
-      </Empty>
+      <div className="px-4 py-5 lg:px-5">
+        <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
+        <Empty className="py-20" image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chiến dịch chưa có tin tuyển dụng" />
+      </div>
     )
   }
 
   return (
     <div className="px-4 py-5 lg:px-5">
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 pb-4 text-sm text-slate-700">
-        <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
-        <Link to={`/tuyendung/app/jobs/${primaryJob.public_id}`} className="font-semibold !text-emerald-700 hover:underline">
-          {primaryJob.title || 'Tin nháp chưa đặt tên'}
-        </Link>
-        {jobs.length > 1 && <span className="text-slate-400">và {jobs.length - 1} tin khác</span>}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 text-sm text-slate-700">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
+          <Link to={`/tuyendung/app/jobs/${primaryJob.public_id}`} className="truncate font-semibold !text-emerald-700 hover:underline">
+            {primaryJob.title || 'Tin nháp chưa đặt tên'}
+          </Link>
+          {jobs.length > 1 && <span className="text-slate-400">và {jobs.length - 1} tin khác</span>}
+        </div>
+        <AddJobButton publicId={publicId} />
       </div>
 
       <div className="grid gap-5 py-4 xl:grid-cols-[minmax(0,1fr)_280px]">
@@ -180,7 +214,11 @@ export default function CampaignJobsPanel({ publicId }) {
           pagination={false}
           scroll={{ x: 1120 }}
           columns={[
-            { title: 'Thao tác', width: 100, render: (_, job) => <JobActions job={job} /> },
+            {
+              title: 'Thao tác',
+              width: 140,
+              render: (_, job) => <JobActions job={job} onShowRejectedReason={setRejectedJob} />,
+            },
             {
               title: 'Tin tuyển dụng',
               width: 250,
@@ -229,6 +267,25 @@ export default function CampaignJobsPanel({ publicId }) {
         <p>Chỉ bao gồm lượt hiển thị và lượt xem của người dùng đã đồng ý Analytics. Số lượt ứng tuyển tính mọi lần gửi CV, bao gồm ứng tuyển lại.</p>
         <p>Số liệu có thể có độ trễ ngắn và không cập nhật tức thời.</p>
       </div>
+      <Modal
+        destroyOnHidden
+        open={Boolean(rejectedJob)}
+        title="Lý do tin tuyển dụng bị từ chối"
+        onCancel={() => setRejectedJob(null)}
+        footer={[
+          <Button key="close" onClick={() => setRejectedJob(null)}>Đóng</Button>,
+          <Button key="edit" type="primary" onClick={() => setRejectedJob(null)} href={rejectedJob ? `/tuyendung/app/jobs/${rejectedJob.public_id}/edit` : undefined}>
+            Chỉnh sửa và gửi lại
+          </Button>,
+        ]}
+      >
+        <div className="rounded-lg border border-red-100 border-l-4 border-l-red-500 bg-red-50/70 p-4">
+          <p className="font-semibold text-red-700">{rejectedJob?.title || 'Tin tuyển dụng'}</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+            {rejectedJob?.rejected_reason?.trim() || 'Quản trị viên chưa cung cấp lý do cụ thể. Vui lòng liên hệ bộ phận hỗ trợ để biết thêm chi tiết.'}
+          </p>
+        </div>
+      </Modal>
     </div>
   )
 }

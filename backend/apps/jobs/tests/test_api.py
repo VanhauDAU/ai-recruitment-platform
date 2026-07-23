@@ -462,7 +462,7 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.application_contact.phone, '')
         self.assertEqual(job.application_contact.emails.count(), 0)
 
-    def test_campaign_rejects_a_second_job(self):
+    def test_campaign_accepts_multiple_jobs(self):
         recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
         campaign = RecruitmentCampaign.objects.create(
             owner=recruiter,
@@ -482,11 +482,72 @@ class EmployerJobSerializerTests(APITestCase):
         second = self.client.post(url, second_payload, format='json')
 
         self.assertEqual(first.status_code, 201, first.data)
-        self.assertEqual(second.status_code, 400)
-        self.assertEqual(
-            second.data['campaign'][0],
-            'Mỗi chiến dịch chỉ được liên kết với một tin tuyển dụng.',
+        self.assertEqual(second.status_code, 201, second.data)
+        self.assertEqual(Job.objects.filter(campaign=campaign).count(), 2)
+
+    def test_campaign_assignment_requires_ownership_and_an_open_campaign(self):
+        other_recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        foreign_owner = User.objects.create_user(
+            email='foreign-campaign@example.com', password='Password@123', role=User.Role.EMPLOYER
         )
+        foreign_company = Company.objects.create(
+            company_name='Foreign Co', created_by=foreign_owner
+        )
+        foreign_campaign = RecruitmentCampaign.objects.create(
+            owner=RecruiterProfile.objects.create(user=foreign_owner, company=foreign_company),
+            company=foreign_company,
+            name='Chiến dịch người khác',
+        )
+        completed_campaign = RecruitmentCampaign.objects.create(
+            owner=other_recruiter,
+            company=self.company,
+            name='Chiến dịch đã hoàn tất',
+            status=RecruitmentCampaign.Status.COMPLETED,
+        )
+        self.client.force_authenticate(self.user)
+        url = f'{reverse("employer-job-list-create")}?as=draft'
+
+        foreign = self.client.post(
+            url, {**self.payload(), 'campaign': foreign_campaign.public_id}, format='json'
+        )
+        completed_payload = self.payload()
+        completed_payload['title'] = 'Tin khác'
+        completed_payload['campaign'] = completed_campaign.public_id
+        completed = self.client.post(url, completed_payload, format='json')
+
+        self.assertEqual(foreign.status_code, 400)
+        self.assertEqual(foreign.data['campaign'][0], 'Chiến dịch không thuộc tài khoản này.')
+        self.assertEqual(completed.status_code, 400)
+        self.assertEqual(
+            completed.data['campaign'][0],
+            'Không thể thêm tin tuyển dụng vào chiến dịch đã hủy hoặc hoàn tất.',
+        )
+
+    def test_job_can_move_between_campaigns_or_be_detached(self):
+        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        first_campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter, company=self.company, name='Chiến dịch A'
+        )
+        second_campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter, company=self.company, name='Chiến dịch B'
+        )
+        job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            campaign=first_campaign,
+            title='Tin nháp',
+            description='Mô tả công việc.',
+        )
+        self.client.force_authenticate(self.user)
+        url = reverse('employer-job-detail', kwargs={'public_id': job.public_id})
+
+        moved = self.client.patch(url, {'campaign': second_campaign.public_id}, format='json')
+        detached = self.client.patch(url, {'campaign': None}, format='json')
+
+        self.assertEqual(moved.status_code, 200, moved.data)
+        self.assertEqual(detached.status_code, 200, detached.data)
+        job.refresh_from_db()
+        self.assertIsNone(job.campaign)
 
     def test_range_salary_accepts_only_minimum_or_maximum(self):
         for salary_min, salary_max in ((9000000, None), (None, 12000000)):
