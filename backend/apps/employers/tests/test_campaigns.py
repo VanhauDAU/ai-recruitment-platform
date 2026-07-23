@@ -1,4 +1,5 @@
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -332,7 +333,7 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         JobEngagementDaily.objects.create(
             job=job,
-            date=timezone.localdate(),
+            date=timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh')),
             impression_count=100,
             view_count=20,
         )
