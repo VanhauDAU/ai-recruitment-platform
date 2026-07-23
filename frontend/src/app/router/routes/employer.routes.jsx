@@ -1,10 +1,10 @@
 import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
-import AuthGuard from '@/app/router/guards/AuthGuard'
-import EmployerOnboardingGuard from '@/app/router/guards/EmployerOnboardingGuard'
-import EmployerJobVerificationGuard from '@/app/router/guards/EmployerJobVerificationGuard'
-import GuestGuard from '@/app/router/guards/GuestGuard'
-import RoleGuard from '@/app/router/guards/RoleGuard'
+import AuthGuard from '../guards/AuthGuard'
+import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'
+import EmployerJobVerificationGuard from '../guards/EmployerJobVerificationGuard'
+import GuestGuard from '../guards/GuestGuard'
+import RoleGuard from '../guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,

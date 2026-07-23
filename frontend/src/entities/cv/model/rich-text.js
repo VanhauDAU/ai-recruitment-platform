@@ -38,10 +38,6 @@ export function toRichTextV2(value) {
   }
 }
 
-export function blocksToPlainText(value) {
-  return Array.isArray(value?.content) ? value.content.map((block) => block.text || '').join('\n') : ''
-}
-
 export function setMarkInRange(value, start, end, mark, markValue = true) {
   const document = structuredClone(toRichTextV2(value))
   if (start >= end) return document

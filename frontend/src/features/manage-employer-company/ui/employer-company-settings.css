@@ -88,7 +88,6 @@
 .company-catalog-card__action { background: #eaf9f0; border-color: transparent; border-radius: 999px; color: var(--brand-primary); font-size: 12px; height: 30px; padding-inline: 12px; }
 .company-catalog-card__action:hover { background: var(--brand-primary) !important; border-color: var(--brand-primary) !important; color: #fff !important; }
 
-.company-proof-options { display: grid; gap: 16px; }
 .company-proof-upload { border-left: 2px solid #d1fae5; margin-left: 10px; padding: 4px 0 4px 22px; }
 .company-proof-upload--double { display: flex; flex-wrap: wrap; gap: 10px; }
 

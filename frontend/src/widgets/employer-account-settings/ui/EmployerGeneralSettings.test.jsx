@@ -8,7 +8,7 @@ const { mocks, useSession } = vi.hoisted(() => ({
   useSession: vi.fn(),
   mocks: {
     confirmEmployerTotpSetup: vi.fn(), confirmTwoFactorDisable: vi.fn(), confirmTwoFactorSetup: vi.fn(),
-    disableEmployerTotp: vi.fn(), disableEmployerTwoFactorMethod: vi.fn(), generateEmployerBackupCodes: vi.fn(), sendEmployerBackupCodesCode: vi.fn(),
+    disableEmployerTwoFactorMethod: vi.fn(), generateEmployerBackupCodes: vi.fn(), sendEmployerBackupCodesCode: vi.fn(),
     sendEmployerMethodDisableCode: vi.fn(),
     sendTwoFactorDisableCode: vi.fn(), sendTwoFactorSetupCode: vi.fn(), startEmployerTotpSetup: vi.fn(),
   },
