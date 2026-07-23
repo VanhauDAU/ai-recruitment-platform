@@ -11,17 +11,37 @@ const { changeCampaignStatus, getCampaigns, updateCampaign } = vi.hoisted(() => 
 }))
 
 vi.mock('@/entities/campaign', () => ({
+  CAMPAIGN_ORDERING_OPTIONS: [
+    { value: 'activity', label: 'Hoạt động gần nhất' },
+  ],
   CAMPAIGN_SCOPE_OPTIONS: [
-    { value: '', label: 'Tất cả chiến dịch' },
+    { value: '', label: 'Tất cả nhu cầu xử lý' },
     { value: 'needs_review', label: 'Có CV ứng tuyển mới cần xem' },
   ],
-  CAMPAIGN_STATUS_COLORS: { active: 'green' },
-  CAMPAIGN_STATUS_LABELS: { active: 'Đang mở' },
+  CAMPAIGN_STATUS_COLORS: { active: 'green', paused: 'orange' },
+  CAMPAIGN_STATUS_LABELS: { active: 'Đang mở', paused: 'Đang tắt' },
+  CAMPAIGN_STATUS_OPTIONS: [
+    { value: '', label: 'Tất cả trạng thái' },
+    { value: 'active', label: 'Đang hoạt động' },
+  ],
   campaignKeys: { all: ['campaigns'], list: (params = {}) => ['campaigns', 'list', params] },
   changeCampaignStatus,
   createCampaign: vi.fn(),
   getCampaigns,
   updateCampaign,
+}))
+vi.mock('@/features/manage-campaigns', () => ({
+  CampaignNameForm: ({ initialName }) => <p>Sửa chiến dịch {initialName}</p>,
+  CampaignLifecycleActions: ({ campaign, variant }) => variant === 'switch'
+    ? (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={campaign.status === 'active'}
+          aria-label={`Dừng chiến dịch ${campaign.name}`}
+        />
+      )
+    : <button type="button">Dừng</button>,
 }))
 
 function CampaignDetailRoute() {
@@ -49,7 +69,7 @@ describe('CampaignList', () => {
   beforeEach(() => {
     changeCampaignStatus.mockReset()
     getCampaigns.mockReset()
-    getCampaigns.mockResolvedValue([])
+    getCampaigns.mockResolvedValue({ count: 0, results: [] })
   })
 
   it('searches on Enter and sends the query to the API', async () => {
@@ -64,38 +84,65 @@ describe('CampaignList', () => {
     })
 
     expect(await screen.findByDisplayValue('Frontend')).toBeInTheDocument()
-    await waitFor(() => expect(getCampaigns).toHaveBeenLastCalledWith({ q: 'Frontend' }))
+    await waitFor(() => expect(getCampaigns).toHaveBeenLastCalledWith({
+      ordering: 'activity',
+      page: 1,
+      q: 'Frontend',
+    }))
   })
 
   it('links the campaign name to its detail page and shows aggregate campaign counts', async () => {
-    getCampaigns.mockResolvedValue([
-      {
+    getCampaigns.mockResolvedValue({
+      count: 1,
+      results: [{
         public_id: 'camp_frontend',
         name: 'Tuyển Frontend',
         status: 'active',
+        candidate_count: 7,
+        candidate_previews: [
+          { public_id: 'candidate_1', full_name: 'Nguyễn Minh Anh' },
+          { public_id: 'candidate_2', full_name: 'Trần Hải Nam' },
+          { public_id: 'candidate_3', full_name: 'Lê Thu Hà' },
+          { public_id: 'candidate_4', full_name: 'Phạm Quốc Bảo' },
+          { public_id: 'candidate_5', full_name: 'Đặng Ngọc Mai' },
+        ],
         application_count: 3,
+        application_pair_count: 2,
         job_count: 2,
         active_job_count: 1,
         pending_job_count: 1,
         unviewed_application_count: 1,
+        last_activity: {
+          label: 'Nhận CV ứng tuyển',
+          occurred_at: '2026-07-22T09:00:00Z',
+        },
         updated_at: '2026-07-22T09:00:00Z',
-      },
-    ])
+      }],
+    })
     renderPage()
 
     await screen.findAllByRole('link', { name: 'Tuyển Frontend' })
     expect(screen.getAllByText('#camp_frontend').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Đang tuyển 1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Chờ duyệt 1').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('2 hồ sơ ứng tuyển').length).toBeGreaterThan(0)
+    expect(screen.queryByText('7 ứng viên')).not.toBeInTheDocument()
+    expect(screen.getAllByTitle('Nguyễn Minh Anh').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('+2').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Đăng thêm tin/).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('columnheader', { name: 'Thao tác' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('switch', {
+      name: 'Dừng chiến dịch Tuyển Frontend',
+    })).not.toHaveLength(0)
 
     fireEvent.click(screen.getAllByRole('link', { name: 'Tuyển Frontend' })[0])
     expect(await screen.findByTestId('campaign-detail-location')).toHaveTextContent('')
   })
 
-  it('opens the jobs report tab from Xem báo cáo', async () => {
-    getCampaigns.mockResolvedValue([
-      {
+  it('does not render a report button in the jobs column', async () => {
+    getCampaigns.mockResolvedValue({
+      count: 1,
+      results: [{
         public_id: 'camp_frontend',
         name: 'Tuyển Frontend',
         status: 'active',
@@ -105,13 +152,30 @@ describe('CampaignList', () => {
         pending_job_count: 1,
         unviewed_application_count: 1,
         updated_at: '2026-07-22T09:00:00Z',
-      },
-    ])
+      }],
+    })
     renderPage()
 
-    await screen.findAllByText('Xem báo cáo')
-    fireEvent.click(screen.getAllByText('Xem báo cáo')[0])
+    await screen.findAllByRole('link', { name: 'Tuyển Frontend' })
+    expect(screen.queryByText('Xem báo cáo')).not.toBeInTheDocument()
+  })
 
-    expect(await screen.findByTestId('campaign-detail-location')).toHaveTextContent('?active_tab=job')
+  it('makes the paused state explicit in the jobs column', async () => {
+    getCampaigns.mockResolvedValue({
+      count: 1,
+      results: [{
+        public_id: 'camp_paused',
+        name: 'Tuyển Backend',
+        status: 'paused',
+        job_count: 2,
+        active_job_count: 1,
+      }],
+    })
+    renderPage()
+
+    expect((await screen.findAllByText('Chiến dịch đang tắt')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Tổng tin tuyển dụng')).not.toBeInTheDocument()
+    expect(screen.queryByText('Đang tuyển 1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Đăng thêm tin')).not.toBeInTheDocument()
   })
 })

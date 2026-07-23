@@ -7,6 +7,8 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.cvs.services import create_application_snapshot
+from apps.employers.models import CampaignActivity
+from apps.employers.services import record_campaign_activity
 
 from ..models import Application, ApplicationStatusHistory
 
@@ -129,6 +131,18 @@ def create_application_record(
         to_status=Application.Status.SUBMITTED,
     )
     job.__class__.objects.filter(pk=job.pk).update(application_count=F('application_count') + 1)
+    if job.campaign_id:
+        record_campaign_activity(
+            campaign=job.campaign,
+            event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
+            group=CampaignActivity.Group.APPLICATION,
+            actor=candidate,
+            subject_public_id=application.public_id,
+            metadata={
+                'candidate_name': candidate.full_name or candidate.email,
+                'job_title': job.title,
+            },
+        )
     return application
 
 
@@ -152,6 +166,18 @@ def create_application(serializer, candidate):
     application.job.__class__.objects.filter(pk=application.job_id).update(
         application_count=F('application_count') + 1
     )
+    if application.job.campaign_id:
+        record_campaign_activity(
+            campaign=application.job.campaign,
+            event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
+            group=CampaignActivity.Group.APPLICATION,
+            actor=candidate,
+            subject_public_id=application.public_id,
+            metadata={
+                'candidate_name': candidate.full_name or candidate.email,
+                'job_title': application.job.title,
+            },
+        )
     return application
 
 
@@ -181,6 +207,22 @@ def update_application_status(serializer, *, changed_by=None):
             changed_by=changed_by,
             note=serializer.validated_data.get('employer_note', ''),
         )
+        if application.job.campaign_id:
+            record_campaign_activity(
+                campaign=application.job.campaign,
+                event_type=CampaignActivity.EventType.APPLICATION_STATUS_CHANGED,
+                group=CampaignActivity.Group.APPLICATION,
+                actor=changed_by,
+                subject_public_id=application.public_id,
+                metadata={
+                    'candidate_name': (
+                        application.candidate.full_name or application.candidate.email
+                    ),
+                    'job_title': application.job.title,
+                    'from_status': current_status,
+                    'to_status': next_status,
+                },
+            )
     return application
 
 
@@ -197,4 +239,18 @@ def mark_application_viewed(application, *, changed_by):
         to_status=Application.Status.VIEWED,
         changed_by=changed_by,
     )
+    if application.job.campaign_id:
+        record_campaign_activity(
+            campaign=application.job.campaign,
+            event_type=CampaignActivity.EventType.APPLICATION_STATUS_CHANGED,
+            group=CampaignActivity.Group.APPLICATION,
+            actor=changed_by,
+            subject_public_id=application.public_id,
+            metadata={
+                'candidate_name': (application.candidate.full_name or application.candidate.email),
+                'job_title': application.job.title,
+                'from_status': Application.Status.SUBMITTED,
+                'to_status': Application.Status.VIEWED,
+            },
+        )
     return application

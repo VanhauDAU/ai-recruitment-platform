@@ -77,6 +77,40 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 0)
 
+    def test_paused_campaign_hides_job_from_every_public_read_and_tracking_surface(self):
+        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=self.company,
+            name='Visibility campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        self.job.campaign = campaign
+        self.job.save(update_fields=['campaign', 'updated_at'])
+
+        visible_detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        visible_list = self.client.get(reverse('job-list'))
+        visible_suggest = self.client.get(reverse('job-suggest'), {'q': 'Backend'})
+
+        campaign.status = RecruitmentCampaign.Status.PAUSED
+        campaign.save(update_fields=['status', 'updated_at'])
+        hidden_detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        hidden_list = self.client.get(reverse('job-list'))
+        hidden_suggest = self.client.get(reverse('job-suggest'), {'q': 'Backend'})
+        hidden_tracking = self.client.post(
+            reverse('job-view-create', kwargs={'slug': self.job.slug})
+        )
+
+        self.assertEqual(visible_detail.status_code, 200)
+        self.assertEqual(visible_list.data['count'], 1)
+        self.assertEqual(visible_suggest.data['suggestions'], [self.job.title])
+        self.assertEqual(hidden_detail.status_code, 404)
+        self.assertEqual(hidden_list.data['count'], 0)
+        self.assertEqual(hidden_suggest.data['suggestions'], [])
+        self.assertEqual(hidden_tracking.status_code, 404)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.ACTIVE)
+
     def test_tracking_requires_analytics_consent_and_does_not_set_viewer_cookie(self):
         response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
 

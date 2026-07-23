@@ -22,10 +22,8 @@ import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import {
-  calculateCampaignOptimizationScore,
   campaignKeys,
   getCampaign,
-  getCampaignReport,
 } from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {
@@ -106,14 +104,7 @@ export default function EmployerWorkspaceLayout() {
     queryFn: () => getCampaign(campaignPublicId),
     enabled: isCampaignDetail,
   })
-  const reportQuery = useQuery({
-    queryKey: campaignKeys.report(campaignPublicId),
-    queryFn: () => getCampaignReport(campaignPublicId),
-    enabled: isCampaignDetail,
-  })
   const campaignData = campaignQuery.data
-  const reportData = reportQuery.data || {}
-  const campaignOptimizationScore = calculateCampaignOptimizationScore(campaignData, reportData)
   // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
   // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
   // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
@@ -314,13 +305,14 @@ export default function EmployerWorkspaceLayout() {
             </div>
             {isCampaignList && (
               <Link to={employerAppPath('/campaigns')} state={{ createCampaign: true }}>
-                <Button size="small" type="primary" icon={<PlusOutlined />}>Thêm chiến dịch mới</Button>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined aria-hidden />}
+                  className="!h-9 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-3.5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
+                >
+                  Thêm chiến dịch mới
+                </Button>
               </Link>
-            )}
-            {isCampaignDetail && (
-              <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-600 shadow-sm">
-                Điểm tối ưu: <strong className="ml-1 text-emerald-600">{campaignOptimizationScore}%</strong>
-              </span>
             )}
           </div>
           {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}

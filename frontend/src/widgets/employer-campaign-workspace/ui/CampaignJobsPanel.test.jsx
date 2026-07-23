@@ -49,12 +49,12 @@ function performance(days = 7) {
   }
 }
 
-function renderPanel() {
+function renderPanel(campaign) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <CampaignJobsPanel publicId="camp_1" />
+        <CampaignJobsPanel publicId="camp_1" campaign={campaign} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -85,7 +85,7 @@ describe('CampaignJobsPanel', () => {
       'href',
       '/tuyendung/app/jobs/job_1/edit',
     )
-    expect(screen.getByText('100')).toBeInTheDocument()
+    expect(screen.getAllByText('100').length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText('20%').length).toBeGreaterThan(0)
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0)
     expect(screen.getByText(/bao gồm ứng tuyển lại/)).toBeInTheDocument()
@@ -136,6 +136,24 @@ describe('CampaignJobsPanel', () => {
     expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
       'href',
       '/tuyendung/app/jobs/new?campaign=camp_1',
+    )
+  })
+
+  it('keeps editing and add-job actions available while warning that public jobs are hidden', async () => {
+    renderPanel({ public_id: 'camp_1', status: 'paused' })
+
+    expect(await screen.findByText('Chiến dịch đang tắt')).toBeInTheDocument()
+    expect(await screen.findByText('Đang ẩn theo chiến dịch')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
+      'href',
+      '/tuyendung/app/jobs/new?campaign=camp_1',
+    )
+    expect(await screen.findByRole('link', {
+      name: 'Chỉnh sửa Kỹ sư Frontend',
+    })).toBeInTheDocument()
+    expect(screen.getByLabelText('Xem tin Kỹ sư Frontend')).toHaveAttribute(
+      'aria-disabled',
+      'true',
     )
   })
 

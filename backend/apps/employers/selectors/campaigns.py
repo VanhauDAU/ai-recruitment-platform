@@ -1,25 +1,67 @@
+from collections import defaultdict
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-from django.db.models import Count, F, Q
-from django.db.models.functions import TruncDate
+from django.db.models import Count, DateTimeField, F, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce, TruncDate
 from django.utils import timezone
 
 from apps.applications.models import Application
 from apps.jobs.models import Job, JobEngagementDaily
 
-from ..models import RecruitmentCampaign
+from ..models import CampaignActivity, RecruitmentCampaign
 
 REPORT_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
 
 
-def campaign_list_queryset(user, *, status=None, scope=None, q=None):
+def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=None):
     today = timezone.localdate()
+    latest_activity = CampaignActivity.objects.filter(campaign_id=OuterRef('pk')).order_by(
+        '-occurred_at', '-id'
+    )
+    latest_application_for_pair = (
+        Application.objects.filter(
+            candidate_id=OuterRef('candidate_id'),
+            job_id=OuterRef('job_id'),
+        )
+        .order_by('-applied_at', '-id')
+        .values('id')[:1]
+    )
+    latest_unviewed = (
+        Application.objects.filter(
+            job__campaign_id=OuterRef('pk'),
+            status=Application.Status.SUBMITTED,
+            id=Subquery(latest_application_for_pair),
+        )
+        .values('job__campaign_id')
+        .annotate(total=Count('id'))
+        .values('total')[:1]
+    )
+    latest_application_pairs = (
+        Application.objects.filter(
+            job__campaign_id=OuterRef('pk'),
+            id=Subquery(latest_application_for_pair),
+        )
+        .values('job__campaign_id')
+        .annotate(total=Count('id'))
+        .values('total')[:1]
+    )
+    latest_accepted = (
+        Application.objects.filter(
+            job__campaign_id=OuterRef('pk'),
+            status=Application.Status.ACCEPTED,
+            id=Subquery(latest_application_for_pair),
+        )
+        .values('job__campaign_id')
+        .annotate(total=Count('candidate_id', distinct=True))
+        .values('total')[:1]
+    )
     queryset = RecruitmentCampaign.objects.filter(owner__user=user)
     if status:
         queryset = queryset.filter(status=status)
     if q:
-        queryset = queryset.filter(name__icontains=q.strip())
+        term = q.strip()
+        queryset = queryset.filter(Q(name__icontains=term) | Q(public_id__icontains=term))
     queryset = queryset.annotate(
         job_count=Count('jobs', distinct=True),
         draft_job_count=Count('jobs', filter=Q(jobs__status='draft'), distinct=True),
@@ -38,16 +80,29 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None):
         closed_job_count=Count('jobs', filter=Q(jobs__status='closed'), distinct=True),
         rejected_job_count=Count('jobs', filter=Q(jobs__status='rejected'), distinct=True),
         application_count=Count('jobs__applications', distinct=True),
-        unviewed_application_count=Count(
-            'jobs__applications',
-            filter=Q(jobs__applications__status=Application.Status.SUBMITTED),
-            distinct=True,
+        application_submission_count=Count('jobs__applications', distinct=True),
+        application_pair_count=Coalesce(
+            Subquery(latest_application_pairs, output_field=IntegerField()),
+            0,
         ),
-        accepted_count=Count(
-            'jobs__applications',
-            filter=Q(jobs__applications__status=Application.Status.ACCEPTED),
-            distinct=True,
+        candidate_count=Count('jobs__applications__candidate', distinct=True),
+        unviewed_application_count=Coalesce(
+            Subquery(latest_unviewed, output_field=IntegerField()),
+            0,
         ),
+        unviewed_count=Coalesce(
+            Subquery(latest_unviewed, output_field=IntegerField()),
+            0,
+        ),
+        accepted_count=Coalesce(
+            Subquery(latest_accepted, output_field=IntegerField()),
+            0,
+        ),
+        last_activity_at=Coalesce(
+            Subquery(latest_activity.values('occurred_at')[:1], output_field=DateTimeField()),
+            F('updated_at'),
+        ),
+        last_activity_type=Subquery(latest_activity.values('event_type')[:1]),
     )
     if scope == 'open':
         queryset = queryset.filter(status=RecruitmentCampaign.Status.ACTIVE)
@@ -59,11 +114,72 @@ def campaign_list_queryset(user, *, status=None, scope=None, q=None):
         queryset = queryset.filter(pending_job_count__gt=0)
     elif scope == 'expired_jobs':
         queryset = queryset.filter(expired_job_count__gt=0)
-    return queryset.order_by('-created_at')
+    order_fields = {
+        'newest': '-created_at',
+        'oldest': 'created_at',
+        'activity': '-last_activity_at',
+        'name': 'name',
+    }
+    return queryset.order_by(order_fields.get(ordering, '-last_activity_at'), '-created_at')
 
 
 def campaign_detail_queryset(user):
     return campaign_list_queryset(user)
+
+
+def attach_campaign_candidate_previews(campaigns, *, limit=5):
+    """Attach up to ``limit`` recent, unique candidate previews per campaign.
+
+    The campaign list is paginated before this function runs. One query covers
+    the entire page and Python trims each campaign's preview list, so the query
+    count remains flat while duplicate submissions never duplicate an avatar.
+    """
+    campaign_ids = [campaign.pk for campaign in campaigns]
+    previews_by_campaign = defaultdict(list)
+    seen_candidates = defaultdict(set)
+    for campaign in campaigns:
+        campaign.candidate_previews = []
+    if not campaign_ids:
+        return campaigns
+
+    preview_rows = (
+        Application.objects.filter(job__campaign_id__in=campaign_ids)
+        .order_by('job__campaign_id', '-applied_at', '-id')
+        .values(
+            'job__campaign_id',
+            'candidate_id',
+            'candidate__public_id',
+            'candidate__full_name',
+            'candidate__avatar_url',
+        )
+    )
+    remaining_campaigns = set(campaign_ids)
+    for row in preview_rows:
+        campaign_id = row['job__campaign_id']
+        candidate_id = row['candidate_id']
+        if candidate_id in seen_candidates[campaign_id]:
+            continue
+        seen_candidates[campaign_id].add(candidate_id)
+        previews_by_campaign[campaign_id].append(
+            {
+                'public_id': row['candidate__public_id'],
+                'full_name': row['candidate__full_name'] or 'Ứng viên',
+                'avatar_url': row['candidate__avatar_url'],
+            }
+        )
+        if len(previews_by_campaign[campaign_id]) >= limit:
+            remaining_campaigns.discard(campaign_id)
+            if not remaining_campaigns:
+                break
+
+    for campaign in campaigns:
+        campaign.candidate_previews = previews_by_campaign[campaign.pk]
+    return campaigns
+
+
+def owned_campaign_queryset(user):
+    """Lean tenant-scoped campaign query for campaign endpoints."""
+    return RecruitmentCampaign.objects.filter(owner__user=user)
 
 
 def campaign_options(user):
@@ -74,11 +190,21 @@ def campaign_options(user):
 
 def campaign_report(campaign):
     applications = Application.objects.filter(job__campaign=campaign)
+    latest_application_id = (
+        Application.objects.filter(
+            job__campaign=campaign,
+            candidate_id=OuterRef('candidate_id'),
+            job_id=OuterRef('job_id'),
+        )
+        .order_by('-applied_at', '-id')
+        .values('id')[:1]
+    )
+    latest_applications = applications.filter(id=Subquery(latest_application_id))
     statuses = {state: 0 for state in Application.Status.values}
     statuses.update(
         {
             row['status']: row['count']
-            for row in applications.values('status').annotate(count=Count('id'))
+            for row in latest_applications.values('status').annotate(count=Count('id'))
         }
     )
     today = timezone.localdate()
@@ -100,7 +226,22 @@ def campaign_report(campaign):
     job_statuses['active'] = max(job_statuses['active'] - expired_jobs, 0)
     return {
         'campaign_public_id': campaign.public_id,
-        'accepted_count': statuses[Application.Status.ACCEPTED],
+        'candidate_count': applications.values('candidate_id').distinct().count(),
+        'application_submission_count': applications.count(),
+        'application_pair_count': latest_applications.count(),
+        'unviewed_count': statuses[Application.Status.SUBMITTED],
+        'unanswered_count': sum(
+            statuses[state]
+            for state in (
+                Application.Status.SUBMITTED,
+                Application.Status.VIEWED,
+                Application.Status.CONSIDERING,
+            )
+        ),
+        'accepted_count': latest_applications.filter(status=Application.Status.ACCEPTED)
+        .values('candidate_id')
+        .distinct()
+        .count(),
         'jobs': {
             'total': total_jobs,
             **job_statuses,
@@ -108,7 +249,9 @@ def campaign_report(campaign):
             'views': sum(jobs.values_list('view_count', flat=True)),
         },
         'applications': {
-            'total': sum(statuses.values()),
+            'total': applications.count(),
+            'latest_total': sum(statuses.values()),
+            'candidate_count': applications.values('candidate_id').distinct().count(),
             'new': statuses[Application.Status.SUBMITTED],
         },
         'funnel': statuses,
@@ -119,6 +262,30 @@ def campaign_report(campaign):
             }
             for offset in range(7)
         ],
+    }
+
+
+def campaign_activity_queryset(campaign, *, group=None):
+    queryset = campaign.activities.select_related('actor')
+    if group:
+        queryset = queryset.filter(group=group)
+    return queryset.order_by('-occurred_at', '-id')
+
+
+def campaign_pause_impact(campaign):
+    today = timezone.localdate()
+    active_jobs = campaign.jobs.filter(status=Job.Status.ACTIVE).filter(
+        Q(deadline__isnull=True) | Q(deadline__gte=today)
+    )
+    return {
+        'campaign_public_id': campaign.public_id,
+        'campaign_name': campaign.name,
+        'confirmation_code': campaign.public_id,
+        'active_public_job_count': active_jobs.count(),
+        'active_public_jobs': list(
+            active_jobs.order_by('-created_at').values('public_id', 'title', 'deadline')[:10]
+        ),
+        'active_services': [],
     }
 
 

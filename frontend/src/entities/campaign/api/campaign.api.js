@@ -2,7 +2,9 @@ import api from '@/shared/api/client'
 
 export async function getCampaigns(params = {}) {
   const { data } = await api.get('/employer/campaigns/', { params })
-  return data.results || data
+  return Array.isArray(data)
+    ? { count: data.length, next: null, previous: null, results: data }
+    : data
 }
 
 export async function getCampaign(publicId) {
@@ -20,9 +22,24 @@ export async function updateCampaign(publicId, payload) {
   return data
 }
 
-export async function changeCampaignStatus(publicId, status) {
-  const { data } = await api.post(`/employer/campaigns/${publicId}/status/`, { status })
+export async function changeCampaignStatus(publicId, status, confirmationCode = '') {
+  const { data } = await api.post(`/employer/campaigns/${publicId}/status/`, {
+    status,
+    ...(confirmationCode ? { confirmation_code: confirmationCode } : {}),
+  })
   return data
+}
+
+export async function getCampaignPauseImpact(publicId) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/pause-impact/`)
+  return data
+}
+
+export async function getCampaignActivities(publicId, params = {}) {
+  const { data } = await api.get(`/employer/campaigns/${publicId}/activities/`, { params })
+  return Array.isArray(data)
+    ? { count: data.length, next: null, previous: null, results: data }
+    : data
 }
 
 export async function getCampaignOptions() {

@@ -7,7 +7,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Empty, Modal, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
+import { Alert, Button, Empty, Modal, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -51,19 +51,30 @@ function formatRate(value) {
   return `${numberValue(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
 }
 
-function JobStatus({ job }) {
+function JobStatus({ job, campaignPaused = false }) {
   if (job.is_expired) return <Tag color="orange">Hết hạn</Tag>
+  if (campaignPaused && job.status === 'active') {
+    return <Tag color="orange">Đang ẩn theo chiến dịch</Tag>
+  }
   const [label, color] = JOB_STATUS[job.status] || [job.status, 'default']
   return <Tag color={color}>{label}</Tag>
 }
 
-function JobActions({ job, onShowRejectedReason }) {
-  const canViewPublicJob = job.status === 'active' && Boolean(job.slug)
+function JobActions({ job, onShowRejectedReason, campaignPaused = false }) {
+  const canViewPublicJob = job.status === 'active' && Boolean(job.slug) && !campaignPaused
   const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:!text-emerald-700'
 
   return (
     <div className="flex items-center gap-2">
-      <Tooltip title={canViewPublicJob ? 'Xem tin tuyển dụng' : 'Tin chưa công khai'}>
+      <Tooltip
+        title={
+          canViewPublicJob
+            ? 'Xem tin tuyển dụng'
+            : campaignPaused
+              ? 'Chiến dịch đang tắt'
+              : 'Tin chưa công khai'
+        }
+      >
         <a
           aria-label={`Xem tin ${job.title || 'tin tuyển dụng'}`}
           href={canViewPublicJob ? jobDetailPath(job) : undefined}
@@ -122,8 +133,22 @@ function AddJobButton({ publicId }) {
   )
 }
 
-export default function CampaignJobsPanel({ publicId }) {
+function PausedCampaignAlert({ campaign }) {
+  if (campaign?.status !== 'paused') return null
+  return (
+    <Alert
+      className="mb-4"
+      type="warning"
+      showIcon
+      title="Chiến dịch đang tắt"
+      description="Bạn vẫn có thể thêm hoặc chỉnh sửa tin. Các tin đang hoạt động hiện bị ẩn và chỉ công khai trở lại sau khi mở chiến dịch nếu còn hạn."
+    />
+  )
+}
+
+export default function CampaignJobsPanel({ publicId, campaign }) {
   const [days, setDays] = useState(7)
+  const [status, setStatus] = useState('')
   const [rejectedJob, setRejectedJob] = useState(null)
   const performanceQuery = useQuery({
     queryKey: campaignKeys.jobPerformance(publicId, days),
@@ -132,11 +157,19 @@ export default function CampaignJobsPanel({ publicId }) {
   })
   const performance = performanceQuery.data
   const jobs = performance?.jobs || []
+  const visibleJobs = status === 'expired'
+    ? jobs.filter((job) => job.is_expired)
+    : status === 'active'
+      ? jobs.filter((job) => job.status === status && !job.is_expired)
+      : status
+        ? jobs.filter((job) => job.status === status)
+        : jobs
   const primaryJob = jobs[0]
 
   if (performanceQuery.isLoading) {
     return (
       <div className="px-4 py-5 lg:px-5">
+        <PausedCampaignAlert campaign={campaign} />
         <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
         <Skeleton active className="pt-5" paragraph={{ rows: 9 }} />
       </div>
@@ -146,6 +179,7 @@ export default function CampaignJobsPanel({ publicId }) {
   if (performanceQuery.isError) {
     return (
       <div className="px-4 py-5 lg:px-5">
+        <PausedCampaignAlert campaign={campaign} />
         <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
         <div className="py-16 text-center">
           <FileSearchOutlined className="text-4xl text-slate-300" />
@@ -159,6 +193,7 @@ export default function CampaignJobsPanel({ publicId }) {
   if (!jobs.length) {
     return (
       <div className="px-4 py-5 lg:px-5">
+        <PausedCampaignAlert campaign={campaign} />
         <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
         <Empty className="py-20" image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chiến dịch chưa có tin tuyển dụng" />
       </div>
@@ -167,6 +202,7 @@ export default function CampaignJobsPanel({ publicId }) {
 
   return (
     <div className="px-4 py-5 lg:px-5">
+      <PausedCampaignAlert campaign={campaign} />
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 text-sm text-slate-700">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
@@ -178,17 +214,47 @@ export default function CampaignJobsPanel({ publicId }) {
         <AddJobButton publicId={publicId} />
       </div>
 
+      <div className="grid grid-cols-2 gap-3 py-4 lg:grid-cols-5">
+        {[
+          ['Lượt hiển thị', performance.summary?.impressions],
+          ['Lượt xem tin', performance.summary?.views],
+          ['Lượt ứng tuyển', performance.summary?.applications],
+          ['Tỷ lệ xem', formatRate(performance.summary?.view_rate)],
+          ['Tỷ lệ ứng tuyển', formatRate(performance.summary?.application_rate)],
+        ].map(([label, value], index) => (
+          <article key={label} className={`border border-slate-200 bg-slate-50 p-3 ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}>
+            <p className="text-xs text-slate-500">{label}</p>
+            <strong className="mt-1 block text-lg text-slate-800">
+              {typeof value === 'number' ? formatNumber(value) : value ?? '—'}
+            </strong>
+          </article>
+        ))}
+      </div>
+
       <div className="grid gap-5 py-4 xl:grid-cols-[minmax(0,1fr)_280px]">
         <section className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <Select
-              aria-label="Khoảng thời gian báo cáo"
-              data-testid="campaign-performance-range"
-              value={days}
-              onChange={setDays}
-              options={RANGE_OPTIONS}
-              className="w-36"
-            />
+            <div className="flex flex-wrap gap-2">
+              <Select
+                aria-label="Khoảng thời gian báo cáo"
+                data-testid="campaign-performance-range"
+                value={days}
+                onChange={setDays}
+                options={RANGE_OPTIONS}
+                className="w-36"
+              />
+              <Select
+                aria-label="Lọc trạng thái tin"
+                value={status}
+                onChange={setStatus}
+                className="w-36"
+                options={[
+                  { value: '', label: 'Tất cả trạng thái' },
+                  ...Object.entries(JOB_STATUS).map(([value, [label]]) => ({ value, label })),
+                  { value: 'expired', label: 'Hết hạn' },
+                ]}
+              />
+            </div>
             <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> Số liệu theo ngày</span>
           </div>
           <CampaignPerformanceChart data={performance.daily || []} />
@@ -210,14 +276,20 @@ export default function CampaignJobsPanel({ publicId }) {
       <div className="overflow-x-auto border border-slate-200" data-testid="campaign-performance-table">
         <Table
           rowKey="public_id"
-          dataSource={jobs}
+          dataSource={visibleJobs}
           pagination={false}
           scroll={{ x: 1120 }}
           columns={[
             {
               title: 'Thao tác',
               width: 140,
-              render: (_, job) => <JobActions job={job} onShowRejectedReason={setRejectedJob} />,
+              render: (_, job) => (
+                <JobActions
+                  job={job}
+                  campaignPaused={campaign?.status === 'paused'}
+                  onShowRejectedReason={setRejectedJob}
+                />
+              ),
             },
             {
               title: 'Tin tuyển dụng',
@@ -225,7 +297,7 @@ export default function CampaignJobsPanel({ publicId }) {
               render: (_, job) => (
                 <div className="min-w-48">
                   <Link className="font-semibold !text-emerald-700 hover:underline" to={`/tuyendung/app/jobs/${job.public_id}`}>{job.title || 'Tin nháp chưa đặt tên'}</Link>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} /><span className="text-xs text-slate-400">Hạn {formatDate(job.deadline)}</span></div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} campaignPaused={campaign?.status === 'paused'} /><span className="text-xs text-slate-400">Hạn {formatDate(job.deadline)}</span></div>
                 </div>
               ),
             },

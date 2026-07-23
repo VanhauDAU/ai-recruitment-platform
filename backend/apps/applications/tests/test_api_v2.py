@@ -15,7 +15,12 @@ from apps.cvs.services import (
     save_draft_as_version,
     update_draft,
 )
-from apps.employers.models import Company, RecruiterProfile
+from apps.employers.models import (
+    CampaignActivity,
+    Company,
+    RecruiterProfile,
+    RecruitmentCampaign,
+)
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
 
@@ -342,6 +347,52 @@ class CandidateApplicationV2Tests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+    def test_recruiter_campaign_list_and_export_use_latest_submission_per_candidate_job(self):
+        recruiter = RecruiterProfile.objects.create(user=self.employer, company=self.company)
+        campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=self.company,
+            name='Application campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        self.job.campaign = campaign
+        self.job.save(update_fields=['campaign', 'updated_at'])
+        self.client.force_authenticate(self.candidate)
+        first = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+        Application.objects.filter(public_id=first.data['public_id']).update(
+            applied_at=timezone.now() - timedelta(minutes=6)
+        )
+        second = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+
+        self.client.force_authenticate(self.employer)
+        params = {
+            'campaign': campaign.public_id,
+            'latest': '1',
+            'q': self.candidate.email,
+        }
+        listed = self.client.get(reverse('recruiter-application-list-v2'), params)
+        exported = self.client.get(reverse('recruiter-application-export-v2'), params)
+
+        self.assertEqual(listed.status_code, 200, listed.data)
+        self.assertEqual(listed.data['count'], 1)
+        self.assertEqual(listed.data['results'][0]['public_id'], second.data['public_id'])
+        self.assertEqual(exported.status_code, 200)
+        self.assertEqual(exported['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertEqual(len(exported.content.decode('utf-8-sig').splitlines()), 2)
+        received_events = CampaignActivity.objects.filter(
+            campaign=campaign,
+            event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
+        )
+        self.assertEqual(received_events.count(), 2)
 
 
 class RecruiterApplicationRoutesV2Tests(TestCase):
