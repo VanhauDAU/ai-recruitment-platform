@@ -4,6 +4,7 @@ from .api.views import (
     AdminJobModerationListView,
     AdminJobReviewView,
     BenefitListView,
+    CandidateJobRecommendationView,
     CvJobRecommendationView,
     EmployerJobCloseView,
     EmployerJobDetailView,
@@ -43,6 +44,11 @@ urlpatterns = [
         'impressions/',
         JobImpressionBatchCreateView.as_view(),
         name='job-impression-batch-create',
+    ),
+    path(
+        'recommendations/for-me/',
+        CandidateJobRecommendationView.as_view(),
+        name='candidate-job-recommendations',
     ),
     path(
         'recommendations/by-cv/<str:cv_public_id>/',
