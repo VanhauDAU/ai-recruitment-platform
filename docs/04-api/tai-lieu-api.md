@@ -73,6 +73,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |
 | GET | `/api/jobs/recommendations/for-me/?page=&page_size=` | Candidate-only: feed preference-first có phân trang, CV active bổ sung, trạng thái setup/consent, nguồn dữ liệu và lý do/điểm khớp. Loại job đã ứng tuyển và CV archived/failed; không dùng search activity trong phiên bản hiện tại. |
 | GET | `/api/jobs/recommendations/by-cv/{cv_public_id}/` | Candidate owner-only: tối đa 6 việc làm giải thích được cho CV vừa lưu; yêu cầu consent gợi ý trước khi đọc nội dung CV, thiếu consent trả `403` và client hiển thị CTA tới cài đặt. |
+| GET | `/api/jobs/recommendations/by-saved/?limit=` | Candidate-only: so pairwise tối đa 20 tin lưu gần nhất, trả similarity score/details/reasons, loại tin đã lưu/đã ứng tuyển/không còn public; fallback tin active mới nhất khi chưa có tín hiệu. `limit` từ 1–20, mặc định 12. |
 | GET | `/api/cv-templates/` | **Legacy V1** public catalogue; chuyển sang `/api/v2/cv-templates/` |
 | GET | `/api/cv-templates/{slug}/` | **Legacy V1** template detail; chuyển sang `/api/v2/cv-templates/{slug}/` |
 | GET/POST | `/api/cvs/` | **Legacy V1** candidate CV; không dùng cho client mới |

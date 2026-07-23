@@ -77,3 +77,33 @@ class CandidateJobRecommendationResponseSerializer(serializers.Serializer):
 
 class RecommendationPermissionDeniedSerializer(serializers.Serializer):
     detail = serializers.CharField()
+
+
+class SavedJobSimilarityDetailSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    label = serializers.CharField()
+    points = serializers.IntegerField()
+
+
+class SavedJobSimilaritySerializer(PublicJobListSerializer):
+    similarity_score = serializers.IntegerField()
+    similarity_reasons = serializers.ListField(child=serializers.CharField())
+    similarity_details = SavedJobSimilarityDetailSerializer(many=True)
+
+    class Meta(PublicJobListSerializer.Meta):
+        fields = [
+            *PublicJobListSerializer.Meta.fields,
+            'similarity_score',
+            'similarity_reasons',
+            'similarity_details',
+        ]
+        read_only_fields = fields
+
+
+class SavedJobRecommendationResponseSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=['ready', 'empty'])
+    strategy = serializers.ChoiceField(
+        choices=['saved-job-similarity-v1', 'recent-active-fallback-v1']
+    )
+    source_saved_job_count = serializers.IntegerField(min_value=0)
+    results = SavedJobSimilaritySerializer(many=True)

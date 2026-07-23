@@ -16,6 +16,7 @@ from .recommendations import (
     CandidateJobRecommendationResponseSerializer,
     CvJobRecommendationResponseSerializer,
     RecommendationPermissionDeniedSerializer,
+    SavedJobRecommendationResponseSerializer,
 )
 from .saved import SavedJobSerializer
 from .supporting import (
@@ -65,5 +66,6 @@ __all__ = [
     'PublicJobPreviewSerializer',
     'PublicJobWorkScheduleSerializer',
     'RecommendationPermissionDeniedSerializer',
+    'SavedJobRecommendationResponseSerializer',
     'SavedJobSerializer',
 ]

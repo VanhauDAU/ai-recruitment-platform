@@ -24,6 +24,7 @@ from .public import (
     SavedJobDestroyView,
     SavedJobListCreateView,
 )
+from .recommendations import SavedJobRecommendationView
 
 __all__ = [
     'BenefitListView',
@@ -49,4 +50,5 @@ __all__ = [
     'LanguageListView',
     'SavedJobDestroyView',
     'SavedJobListCreateView',
+    'SavedJobRecommendationView',
 ]

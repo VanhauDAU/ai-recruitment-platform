@@ -27,6 +27,7 @@ hoặc cấu trúc database.
 | Cài đặt email candidate | `GET/PATCH /api/candidate/email-notification-settings/` | `CandidateEmailNotificationSettingsSerializer` | 12 boolean preference mặc định bật; PATCH chỉ gửi field vừa đổi, không có field email giao dịch bảo mật |
 | Việc làm phù hợp | `GET /api/jobs/recommendations/for-me/` | `CandidateJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `status`, `sources`, `source_cv`, `pagination`; mỗi job thêm score/details/reasons/high-match |
 | Việc làm sau lưu CV | `GET /api/jobs/recommendations/by-cv/{public_id}/` | `CvJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `focus_keyword`, related positions và tối đa 6 job giải thích được; `403` khi chưa có consent |
+| Gợi ý từ việc đã lưu | `GET /api/jobs/recommendations/by-saved/?limit=` | `SavedJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `status`, `strategy`, `source_saved_job_count`; mỗi job thêm similarity score/details/reasons, fallback có score 0 |
 | Picker địa điểm | `GET /api/locations/` | `LocationLookupSerializer` | `id`, `name`, `level`, `parent`, `merged_from` |
 | Picker vị trí chuyên môn | `GET /api/jobs/categories/` | `JobCategoryListSerializer` | `id`, `name`, `logo_url`, `parent`, `category_type` |
 | Job card / kết quả tìm kiếm / việc đã lưu | `GET /api/jobs/` | `PublicJobListSerializer` | định danh public, tiêu đề/công ty, địa điểm, skill, loại việc, kinh nghiệm/cấp bậc/học vấn/tuổi, lương, badge/tier, thời gian đăng |
@@ -49,6 +50,8 @@ permission admin.
 - Job detail prefetch đúng các relation được DTO chi tiết và view-model sử dụng.
 - Recommendation prefilter không dấu theo category/title/skill, chấm tối đa 500
   job đã prefetch; query-budget regression bảo đảm số query phẳng theo số kết quả.
+- Recommendation theo saved job so pairwise tối đa 20 nguồn gần nhất, loại tin
+  đã lưu/đã ứng tuyển; không có tín hiệu thì fallback tin active mới nhất.
 - Employer list dùng query riêng, không tải nội dung rich text hoặc toàn bộ nested
   form; detail/write dùng query đầy đủ riêng.
 - Blog list dùng `select_related(category)` + `only()` các cột card; detail mới

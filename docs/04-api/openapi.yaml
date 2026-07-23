@@ -2350,6 +2350,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecommendationPermissionDenied'
           description: ''
+  /api/jobs/recommendations/by-saved/:
+    get:
+      operationId: jobs_recommendations_by_saved_retrieve
+      summary: Việc làm tương tự các tin ứng viên đã lưu
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 20
+          minimum: 1
+          default: 12
+      tags:
+      - jobs
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedJobRecommendationResponse'
+          description: ''
   /api/jobs/recommendations/for-me/:
     get:
       operationId: jobs_recommendations_for_me_retrieve
@@ -13945,6 +13966,33 @@ components:
       required:
       - created_at
       - job_detail
+    SavedJobRecommendationResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SavedJobRecommendationResponseStatusEnum'
+        strategy:
+          $ref: '#/components/schemas/StrategyEnum'
+        source_saved_job_count:
+          type: integer
+          minimum: 0
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SavedJobSimilarity'
+      required:
+      - results
+      - source_saved_job_count
+      - status
+      - strategy
+    SavedJobRecommendationResponseStatusEnum:
+      enum:
+      - ready
+      - empty
+      type: string
+      description: |-
+        * `ready` - ready
+        * `empty` - empty
     SavedJobRequest:
       type: object
       properties:
@@ -13954,6 +14002,204 @@ components:
           writeOnly: true
       required:
       - job
+    SavedJobSimilarity:
+      type: object
+      description: Compact contract for public search, related jobs, and saved-job
+        cards.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_logo_url:
+          type: string
+          readOnly: true
+        brand_slug:
+          type: string
+          readOnly: true
+        company_verified:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        locations_detail:
+          type: string
+          readOnly: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobListSkill'
+          readOnly: true
+        work_type:
+          allOf:
+          - $ref: '#/components/schemas/WorkTypeEnum'
+          readOnly: true
+        work_types:
+          readOnly: true
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          allOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        education_level:
+          allOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          readOnly: true
+        experience_years:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          readOnly: true
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+        position_level:
+          allOf:
+          - $ref: '#/components/schemas/PositionLevel615Enum'
+          readOnly: true
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+        age_min:
+          type: integer
+          readOnly: true
+          nullable: true
+        age_max:
+          type: integer
+          readOnly: true
+          nullable: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        tier:
+          allOf:
+          - $ref: '#/components/schemas/TierEnum'
+          readOnly: true
+        is_hot:
+          type: boolean
+          readOnly: true
+          description: Nhãn HOT (đỏ) trên card
+        is_urgent:
+          type: boolean
+          readOnly: true
+          description: Nhãn GẤP / tuyển gấp (cam) trên card
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        similarity_score:
+          type: integer
+        similarity_reasons:
+          type: array
+          items:
+            type: string
+        similarity_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/SavedJobSimilarityDetail'
+      required:
+      - age_max
+      - age_min
+      - brand_slug
+      - category
+      - company_logo_url
+      - company_name
+      - company_verified
+      - created_at
+      - currency
+      - education_level
+      - employment_type
+      - experience_years
+      - has_flash_badge
+      - income_display_type
+      - is_hot
+      - is_urgent
+      - job_skills
+      - locations_detail
+      - position_level
+      - public_id
+      - published_at
+      - salary_max
+      - salary_min
+      - salary_type
+      - similarity_details
+      - similarity_reasons
+      - similarity_score
+      - slug
+      - tier
+      - title
+      - work_type
+      - work_types
+    SavedJobSimilarityDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        points:
+          type: integer
+      required:
+      - code
+      - label
+      - points
     SendPhoneOtpRequest:
       type: object
       properties:
@@ -14216,6 +14462,14 @@ components:
         * `pending` - Chờ duyệt
         * `approved` - Đã duyệt
         * `rejected` - Từ chối
+    StrategyEnum:
+      enum:
+      - saved-job-similarity-v1
+      - recent-active-fallback-v1
+      type: string
+      description: |-
+        * `saved-job-similarity-v1` - saved-job-similarity-v1
+        * `recent-active-fallback-v1` - recent-active-fallback-v1
     Tag:
       type: object
       properties:

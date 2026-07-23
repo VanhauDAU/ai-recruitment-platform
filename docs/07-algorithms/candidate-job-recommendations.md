@@ -7,6 +7,9 @@ Tài liệu này mô tả đúng phiên bản rule-based đang chạy cho:
 - `GET /api/jobs/recommendations/for-me/`: feed “Việc làm phù hợp” trong tài khoản.
 - `GET /api/jobs/recommendations/by-cv/{cv_public_id}/`: tối đa 6 việc làm sau khi lưu một CV.
 
+Gợi ý riêng từ lịch sử lưu dùng contract và trọng số khác, xem
+[`saved-job-recommendations.md`](./saved-job-recommendations.md).
+
 TopCV được dùng để khảo sát nhu cầu sản phẩm, không phải nguồn cho công thức nội
 bộ. [FAQ TopCV](https://www.topcv.vn/faqs/find-job-and-apply/cai-dat-thong-bao-viec-lam-cai-dat-goi-y-viec-lam-phu-hop-nhu-the-nao.html)
 nêu ba nhóm tín hiệu: cài đặt gợi ý, từ khóa hồ sơ/CV và hành vi tìm kiếm.
@@ -110,8 +113,9 @@ Frontend chỉ giải thích từ các field này, không tự tính lại đi�
 ## Giới hạn hiện tại
 
 - Không có search history theo candidate, time decay hoặc learning-to-rank.
-- Không dùng saved job làm điểm để tránh vòng phản hồi tự khuếch đại; việc đã
-  ứng tuyển chỉ được loại.
+- Feed `for-me` không dùng saved job làm điểm để tránh vòng phản hồi tự khuếch
+  đại; endpoint `by-saved` độc lập mới được phép dùng hành động lưu tường minh.
+  Việc đã ứng tuyển tiếp tục bị loại.
 - Chưa lưu snapshot score. Khi tin hoặc preference thay đổi, kết quả lần đọc sau
   có thể thay đổi.
 - Nếu bổ sung hành vi tìm kiếm, cần event server riêng, consent, retention/xóa
