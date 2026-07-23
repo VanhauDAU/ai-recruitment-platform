@@ -47,6 +47,14 @@ CvDraft --save-version--> CvVersion
   (`code`, `label`, `points`) bên cạnh `match_score`, `match_reasons`,
   `is_high_match`, `focus_keyword` và related positions. Không giả danh rule
   này là AI model.
+- Cả ranking theo CV và feed candidate-wide phải kiểm tra
+  `AI_RECOMMENDATION` consent trước khi đọc nội dung CV. Companion endpoint
+  `GET /api/jobs/recommendations/for-me/` dùng preference làm nguồn chính, CV
+  mặc định/gần nhất làm nguồn bổ sung và hỗ trợ preference-only; thuật toán,
+  trạng thái setup/consent và giới hạn được mô tả tại
+  [candidate-job-recommendations](../07-algorithms/candidate-job-recommendations.md).
+  Khi endpoint by-CV trả `403` vì thiếu consent, trang lưu CV thành công phải
+  hiển thị CTA bật quyền; không được biến trạng thái này thành empty result.
 - Recruiter visibility có purpose-specific endpoint và immutable audit event.
   Bật quyền bắt buộc confirmation; tắt quyền không cần modal. Consent này không
   thay đổi `UserCv.visibility`, vốn là access policy của share/application.

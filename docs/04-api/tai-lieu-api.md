@@ -33,13 +33,15 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/password-reset/` | Gửi email chứa link đặt lại mật khẩu (public, cần `captcha_token`). **Luôn trả 200 kèm cùng một `detail`** dù email có tồn tại hay không — chống dò danh sách email. Cooldown 60s/tài khoản (im lặng), throttle 5/phút theo IP |
 | GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn. Dùng để hiện ngay màn "hết hạn" thay vì bắt user gõ xong mật khẩu mới báo lỗi |
 | POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
-| POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu được đặt lần đầu chỉ với `new_password`. Có thể gửi `logout_all_sessions` để thu hồi refresh token cũ |
+| POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu đặt lần đầu chỉ với `password`. Có thể gửi `logout_all_sessions` để thu hồi các phiên khác; response xoay token của phiên hiện tại. Phiên OAuth không còn đủ mới trả `403 {code: "reauth_required"}` để client xóa phiên cũ và đưa người dùng đăng nhập lại. |
 | POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`; DB lưu storage key) |
 | GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
 | GET | `/api/auth/oauth/{provider}/callback/` | Provider gọi lại; verify state, tạo/liên kết user, redirect về trang callback frontend kèm `one_time_code` (hoặc `?error=`) |
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PATCH | `/api/candidate/profile/` | Đọc/cập nhật `gender` cho onboarding và cài đặt gợi ý việc làm (tự tạo profile legacy khi cần) |
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
+| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 opt-in email candidate. GET chưa có row trả defaults tắt mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu/2FA không thuộc contract và luôn bật. |
+| GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + state onboarding bắt buộc và checklist xác thực có thể hoàn thiện dần (chỉ `position_title` sửa được) |
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
@@ -69,6 +71,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |
 | GET | `/api/jobs/languages/` | Danh mục ngoại ngữ (đang active), public, không phân trang |
 | GET | `/api/jobs/stats/` | Thống kê thị trường việc làm cho dashboard trang chủ (số job/công ty, job mới 24h, tăng trưởng 7 ngày, nhu cầu theo ngành, job mới nhất), public |
+| GET | `/api/jobs/recommendations/for-me/?page=&page_size=` | Candidate-only: feed preference-first có phân trang, CV active bổ sung, trạng thái setup/consent, nguồn dữ liệu và lý do/điểm khớp. Loại job đã ứng tuyển và CV archived/failed; không dùng search activity trong phiên bản hiện tại. |
+| GET | `/api/jobs/recommendations/by-cv/{cv_public_id}/` | Candidate owner-only: tối đa 6 việc làm giải thích được cho CV vừa lưu; yêu cầu consent gợi ý trước khi đọc nội dung CV, thiếu consent trả `403` và client hiển thị CTA tới cài đặt. |
 | GET | `/api/cv-templates/` | **Legacy V1** public catalogue; chuyển sang `/api/v2/cv-templates/` |
 | GET | `/api/cv-templates/{slug}/` | **Legacy V1** template detail; chuyển sang `/api/v2/cv-templates/{slug}/` |
 | GET/POST | `/api/cvs/` | **Legacy V1** candidate CV; không dùng cho client mới |

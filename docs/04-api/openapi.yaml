@@ -883,6 +883,46 @@ paths:
                 items:
                   $ref: '#/components/schemas/PinnedPost'
           description: ''
+  /api/candidate/email-notification-settings/:
+    get:
+      operationId: candidate_email_notification_settings_retrieve
+      description: Read defaults without persistence and create settings on the first
+        patch.
+      summary: Đọc cài đặt thông báo email của tôi
+      tags:
+      - candidate
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateEmailNotificationSettings'
+          description: ''
+    patch:
+      operationId: candidate_email_notification_settings_partial_update
+      description: Read defaults without persistence and create settings on the first
+        patch.
+      summary: Cập nhật cài đặt thông báo email của tôi
+      tags:
+      - candidate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCandidateEmailNotificationSettingsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCandidateEmailNotificationSettingsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCandidateEmailNotificationSettingsRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateEmailNotificationSettings'
+          description: ''
   /api/candidate/job-preferences/:
     get:
       operationId: candidate_job_preferences_retrieve
@@ -1010,6 +1050,223 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmployerDashboard'
           description: ''
+  /api/employer/campaigns/:
+    get:
+      operationId: employer_campaigns_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - employer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecruitmentCampaignList'
+          description: ''
+    post:
+      operationId: employer_campaigns_create
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecruitmentCampaignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecruitmentCampaignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecruitmentCampaignRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentCampaign'
+          description: ''
+  /api/employer/campaigns/{public_id}/:
+    get:
+      operationId: employer_campaigns_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentCampaign'
+          description: ''
+    put:
+      operationId: employer_campaigns_update
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecruitmentCampaignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecruitmentCampaignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecruitmentCampaignRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentCampaign'
+          description: ''
+    patch:
+      operationId: employer_campaigns_partial_update
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRecruitmentCampaignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRecruitmentCampaignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRecruitmentCampaignRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentCampaign'
+          description: ''
+  /api/employer/campaigns/{public_id}/activities/:
+    get:
+      operationId: employer_campaigns_activities_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCampaignActivityList'
+          description: ''
+  /api/employer/campaigns/{public_id}/job-performance/:
+    get:
+      operationId: employer_campaigns_job_performance_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/pause-impact/:
+    get:
+      operationId: employer_campaigns_pause_impact_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/report/:
+    get:
+      operationId: employer_campaigns_report_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/{public_id}/status/:
+    post:
+      operationId: employer_campaigns_status_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      responses:
+        '200':
+          description: No response body
+  /api/employer/campaigns/options/:
+    get:
+      operationId: employer_campaigns_options_retrieve
+      tags:
+      - employer
+      responses:
+        '200':
+          description: No response body
   /api/employer/company/:
     get:
       operationId: employer_company_retrieve
@@ -1728,6 +1985,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/JobViewResult'
           description: ''
+  /api/jobs/admin/moderation/:
+    get:
+      operationId: jobs_admin_moderation_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - jobs
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminJobModerationList'
+          description: ''
+  /api/jobs/admin/moderation/{public_id}/review/:
+    post:
+      operationId: jobs_admin_moderation_review_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: No response body
   /api/jobs/benefits/:
     get:
       operationId: jobs_benefits_list
@@ -1770,6 +2066,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedJobCategoryListList'
+          description: ''
+  /api/jobs/impressions/:
+    post:
+      operationId: jobs_impressions_create
+      summary: Ghi nhận các lượt hiển thị job card hợp lệ
+      tags:
+      - jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobImpressionBatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/JobImpressionBatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JobImpressionBatchRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/jobs/languages/:
     get:
@@ -1820,20 +2144,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmployerJobWriteRequest'
+              $ref: '#/components/schemas/EmployerJobDraftRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmployerJobWriteRequest'
+              $ref: '#/components/schemas/EmployerJobDraftRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmployerJobWriteRequest'
-        required: true
+              $ref: '#/components/schemas/EmployerJobDraftRequest'
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmployerJobWrite'
+                $ref: '#/components/schemas/EmployerJobDraft'
           description: ''
   /api/jobs/mine/{public_id}/:
     get:
@@ -1867,20 +2190,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmployerJobWriteRequest'
+              $ref: '#/components/schemas/EmployerJobDraftRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmployerJobWriteRequest'
+              $ref: '#/components/schemas/EmployerJobDraftRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmployerJobWriteRequest'
-        required: true
+              $ref: '#/components/schemas/EmployerJobDraftRequest'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmployerJobWrite'
+                $ref: '#/components/schemas/EmployerJobDraft'
           description: ''
     patch:
       operationId: jobs_mine_partial_update
@@ -1896,19 +2218,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedEmployerJobWriteRequest'
+              $ref: '#/components/schemas/PatchedEmployerJobDraftRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedEmployerJobWriteRequest'
+              $ref: '#/components/schemas/PatchedEmployerJobDraftRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedEmployerJobWriteRequest'
+              $ref: '#/components/schemas/PatchedEmployerJobDraftRequest'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmployerJobWrite'
+                $ref: '#/components/schemas/EmployerJobDraft'
           description: ''
     delete:
       operationId: jobs_mine_destroy
@@ -1922,6 +2244,84 @@ paths:
       - jobs
       responses:
         '204':
+          description: No response body
+  /api/jobs/mine/{public_id}/close/:
+    post:
+      operationId: jobs_mine_close_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: No response body
+  /api/jobs/mine/{public_id}/duplicate/:
+    post:
+      operationId: jobs_mine_duplicate_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: No response body
+  /api/jobs/mine/{public_id}/extend/:
+    post:
+      operationId: jobs_mine_extend_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: No response body
+  /api/jobs/mine/{public_id}/reopen/:
+    post:
+      operationId: jobs_mine_reopen_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: No response body
+  /api/jobs/mine/{public_id}/submit/:
+    post:
+      operationId: jobs_mine_submit_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs
+      responses:
+        '200':
+          description: No response body
+  /api/jobs/mine/posting-context/:
+    get:
+      operationId: jobs_mine_posting_context_retrieve
+      tags:
+      - jobs
+      responses:
+        '200':
           description: No response body
   /api/jobs/recommendations/by-cv/{cv_public_id}/:
     get:
@@ -1942,8 +2342,42 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: {}
+                $ref: '#/components/schemas/CvJobRecommendationResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationPermissionDenied'
+          description: ''
+  /api/jobs/recommendations/for-me/:
+    get:
+      operationId: jobs_recommendations_for_me_retrieve
+      description: Explainable preference-first ranking for the candidate account
+        page.
+      summary: Việc làm phù hợp với ứng viên hiện tại
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 20
+          minimum: 1
+          default: 10
+      tags:
+      - jobs
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateJobRecommendationResponse'
           description: ''
   /api/jobs/saved/:
     get:
@@ -2793,6 +3227,29 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Skill'
+          description: ''
+    post:
+      operationId: skills_create
+      tags:
+      - skills
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
           description: ''
   /api/skills/groups/:
     get:
@@ -5146,6 +5603,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecruiterApplicationSnapshot'
           description: ''
+  /api/v2/recruiter/applications/{public_id}/history/:
+    get:
+      operationId: v2_recruiter_applications_history_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v2
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApplicationStatusHistoryList'
+          description: ''
+  /api/v2/recruiter/applications/export/:
+    get:
+      operationId: v2_recruiter_applications_export_retrieve
+      tags:
+      - v2
+      responses:
+        '200':
+          description: No response body
 components:
   schemas:
     AccountTokenRefresh:
@@ -5234,6 +5729,70 @@ components:
       description: |-
         * `new` - Mới
         * `contacted` - Đã liên hệ
+    AdminJobModeration:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        employer_name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        rejected_reason:
+          type: string
+          readOnly: true
+        application_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - application_count
+      - approved_at
+      - company_name
+      - created_at
+      - deadline
+      - description
+      - employer_name
+      - public_id
+      - rejected_reason
+      - status
+      - status_label
+      - submitted_at
+      - title
     AdminLocale:
       type: object
       properties:
@@ -5555,6 +6114,13 @@ components:
         job_title:
           type: string
           readOnly: true
+        candidate_name:
+          type: string
+          readOnly: true
+        candidate_email:
+          type: string
+          format: email
+          readOnly: true
         cv:
           type: string
           nullable: true
@@ -5588,6 +6154,11 @@ components:
         employer_note:
           type: string
           readOnly: true
+        employer_rating:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
         candidate_note:
           type: string
         applied_at:
@@ -5626,6 +6197,8 @@ components:
       required:
       - accepted_at
       - applied_at
+      - candidate_email
+      - candidate_name
       - cv_title
       - employer_note
       - interviewed_at
@@ -5667,6 +6240,7 @@ components:
       enum:
       - submitted
       - viewed
+      - considering
       - shortlisted
       - interviewed
       - rejected
@@ -5675,10 +6249,36 @@ components:
       description: |-
         * `submitted` - Submitted
         * `viewed` - Viewed
+        * `considering` - Considering
         * `shortlisted` - Shortlisted
         * `interviewed` - Interviewed
         * `rejected` - Rejected
         * `accepted` - Accepted
+    ApplicationStatusHistory:
+      type: object
+      properties:
+        from_status:
+          type: string
+          readOnly: true
+        to_status:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        changed_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - changed_by_name
+      - created_at
+      - from_status
+      - note
+      - to_status
     ApplicationStatusUpdate:
       type: object
       properties:
@@ -5686,6 +6286,11 @@ components:
           $ref: '#/components/schemas/ApplicationStatusEnum'
         employer_note:
           type: string
+        employer_rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
     ApplicationStatusUpdateRequest:
       type: object
       properties:
@@ -5693,6 +6298,11 @@ components:
           $ref: '#/components/schemas/ApplicationStatusEnum'
         employer_note:
           type: string
+        employer_rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
     AuthSession:
       type: object
       properties:
@@ -5784,9 +6394,23 @@ components:
           maxLength: 100
         description:
           type: string
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
       required:
       - id
       - name
+    BenefitCategoryEnum:
+      enum:
+      - allowance
+      - equipment
+      - welfare
+      - other
+      type: string
+      description: |-
+        * `allowance` - Phụ cấp
+        * `equipment` - Hỗ trợ thiết bị làm việc
+        * `welfare` - Phúc lợi
+        * `other` - Khác
     BlankEnum:
       enum:
       - ''
@@ -5806,6 +6430,40 @@ components:
       description: |-
         * `enterprise` - Doanh nghiệp
         * `household` - Hộ kinh doanh
+    CampaignActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        group:
+          $ref: '#/components/schemas/GroupEnum'
+        group_label:
+          type: string
+          readOnly: true
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        event_label:
+          type: string
+          readOnly: true
+        actor_name:
+          type: string
+          readOnly: true
+        subject_public_id:
+          type: string
+          maxLength: 50
+        metadata: {}
+        occurred_at:
+          type: string
+          format: date-time
+      required:
+      - actor_name
+      - event_label
+      - event_type
+      - group
+      - group_label
+      - id
+      - occurred_at
     CandidateApplicationV2:
       type: object
       properties:
@@ -5816,6 +6474,15 @@ components:
           type: string
           readOnly: true
         job_title:
+          type: string
+          readOnly: true
+        job_slug:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_logo_url:
           type: string
           readOnly: true
         cv_public_id:
@@ -5841,6 +6508,12 @@ components:
         status:
           allOf:
           - $ref: '#/components/schemas/ApplicationStatusEnum'
+          readOnly: true
+        candidate_status:
+          type: string
+          readOnly: true
+        timeline:
+          type: string
           readOnly: true
         preferred_location_ids:
           type: string
@@ -5875,6 +6548,9 @@ components:
       required:
       - allow_ai_analysis
       - applied_at
+      - candidate_status
+      - company_logo_url
+      - company_name
       - contact_email
       - contact_name
       - contact_phone
@@ -5882,6 +6558,7 @@ components:
       - cv_public_id
       - data_processing_consent
       - job_public_id
+      - job_slug
       - job_title
       - preferred_location_ids
       - preferred_location_names
@@ -5891,6 +6568,7 @@ components:
       - submitted_cv_source
       - submitted_cv_title
       - submitted_cv_version_public_id
+      - timeline
       - updated_at
     CandidateApplicationV2Create:
       type: object
@@ -5975,6 +6653,34 @@ components:
       - data_processing_consent
       - job_public_id
       - version_public_id
+    CandidateEmailNotificationSettings:
+      type: object
+      description: Candidate-owned email notification opt-ins.
+      properties:
+        important_system_updates:
+          type: boolean
+        employer_viewed_cv:
+          type: boolean
+        new_features_and_cv_templates:
+          type: boolean
+        other_system_notifications:
+          type: boolean
+        configured_job_alerts:
+          type: boolean
+        suitable_job_recommendations:
+          type: boolean
+        top_candidate_alerts:
+          type: boolean
+        employer_invitations:
+          type: boolean
+        job_and_career_events:
+          type: boolean
+        service_introductions:
+          type: boolean
+        program_and_event_introductions:
+          type: boolean
+        partner_gifts_and_discounts:
+          type: boolean
     CandidateJobPreference:
       type: object
       description: Read/write contract shared by onboarding and account preference
@@ -6053,6 +6759,62 @@ components:
       - experience_level
       - preferred_province_ids
       - recruiter_visibility_consent
+    CandidateJobRecommendationResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/CandidateJobRecommendationResponseStatusEnum'
+        strategy:
+          type: string
+        minimum_match_score:
+          type: integer
+        preference_configured:
+          type: boolean
+        needs_setup:
+          type: boolean
+        consent_required:
+          type: boolean
+        sources:
+          $ref: '#/components/schemas/RecommendationSources'
+        source_cv:
+          allOf:
+          - $ref: '#/components/schemas/RecommendationSourceCv'
+          nullable: true
+        focus_keyword:
+          type: string
+        related_positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedPosition'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendedJob'
+        pagination:
+          $ref: '#/components/schemas/RecommendationPagination'
+      required:
+      - consent_required
+      - focus_keyword
+      - minimum_match_score
+      - needs_setup
+      - pagination
+      - preference_configured
+      - related_positions
+      - results
+      - source_cv
+      - sources
+      - status
+      - strategy
+    CandidateJobRecommendationResponseStatusEnum:
+      enum:
+      - preferences_required
+      - consent_required
+      - ready
+      type: string
+      description: |-
+        * `preferences_required` - preferences_required
+        * `consent_required` - consent_required
+        * `ready` - ready
     CandidateProfileRead:
       type: object
       description: Minimal profile data rendered by onboarding and job-preference
@@ -6071,22 +6833,6 @@ components:
         gender:
           type: string
           maxLength: 20
-    CategoryEnum:
-      enum:
-      - ui_ux
-      - feature
-      - job_quality
-      - account
-      - performance
-      - other
-      type: string
-      description: |-
-        * `ui_ux` - Giao diện, trải nghiệm
-        * `feature` - Tính năng sản phẩm
-        * `job_quality` - Chất lượng tin tuyển dụng
-        * `account` - Tài khoản & bảo mật
-        * `performance` - Tốc độ, hiệu năng
-        * `other` - Khác
     CategoryTypeA75Enum:
       enum:
       - style
@@ -7219,6 +7965,29 @@ components:
         * `processing` - Processing
         * `completed` - Completed
         * `failed` - Failed
+    CvJobRecommendationResponse:
+      type: object
+      properties:
+        focus_keyword:
+          type: string
+        strategy:
+          type: string
+        minimum_match_score:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendedJob'
+        related_positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedPosition'
+      required:
+      - focus_keyword
+      - minimum_match_score
+      - related_positions
+      - results
+      - strategy
     CvPositionOption:
       type: object
       properties:
@@ -8170,6 +8939,32 @@ components:
         * `authorization_letter` - Giấy ủy quyền
         * `identity_document` - Giấy tờ định danh (CCCD/hộ chiếu)
         * `data_processing_agreement` - Thỏa thuận xử lý dữ liệu cá nhân
+    DraftJobApplicationContact:
+      type: object
+      properties:
+        recipient_name:
+          type: string
+          default: ''
+        phone:
+          type: string
+          default: ''
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobApplicationEmail'
+    DraftJobApplicationContactRequest:
+      type: object
+      properties:
+        recipient_name:
+          type: string
+          default: ''
+        phone:
+          type: string
+          default: ''
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobApplicationEmailRequest'
     EducationLevelEnum:
       enum:
       - none
@@ -8331,6 +9126,9 @@ components:
           oneOf:
           - $ref: '#/components/schemas/WorkTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        work_types:
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
         employment_type:
           oneOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
@@ -8388,7 +9186,11 @@ components:
           nullable: true
           description: Số lượng cần tuyển; null = không giới hạn
         salary_type:
-          $ref: '#/components/schemas/SalaryTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         salary_min:
           type: string
           format: decimal
@@ -8399,6 +9201,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
           nullable: true
+        income_display_type:
+          $ref: '#/components/schemas/IncomeDisplayTypeEnum'
         currency:
           type: string
           maxLength: 20
@@ -8471,9 +9275,33 @@ components:
           allOf:
           - $ref: '#/components/schemas/JobApplicationContact'
           nullable: true
+        campaign:
+          type: string
+          nullable: true
+        campaign_name:
+          type: string
+          readOnly: true
+        is_expired:
+          type: boolean
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        rejected_reason:
+          type: string
+          readOnly: true
       required:
       - application_count
+      - approved_at
       - brand_slug
+      - campaign_name
       - category
       - company_cover_url
       - company_logo_url
@@ -8482,81 +9310,26 @@ components:
       - created_at
       - description
       - has_flash_badge
+      - is_expired
       - is_hot
       - is_salary_visible
       - is_urgent
       - locations_detail
       - public_id
       - published_at
+      - rejected_reason
       - short_description
       - slug
       - status
+      - submitted_at
       - tier
       - title
       - updated_at
       - view_count
-    EmployerJobList:
+    EmployerJobDraft:
       type: object
-      description: Compact management-table DTO; rich job content stays on the detail
-        API.
-      properties:
-        public_id:
-          type: string
-          readOnly: true
-        title:
-          type: string
-          readOnly: true
-        company_name:
-          type: string
-          readOnly: true
-        locations_detail:
-          type: string
-          readOnly: true
-        employment_type:
-          allOf:
-          - $ref: '#/components/schemas/EmploymentTypeEnum'
-          readOnly: true
-        deadline:
-          type: string
-          format: date
-          readOnly: true
-          nullable: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/JobStatusEnum'
-          readOnly: true
-        application_count:
-          type: integer
-          readOnly: true
-        published_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - application_count
-      - company_name
-      - created_at
-      - deadline
-      - employment_type
-      - locations_detail
-      - public_id
-      - published_at
-      - status
-      - title
-      - updated_at
-    EmployerJobWrite:
-      type: object
-      description: Create/update DTO for the employer job form; never used for public
-        reads.
+      description: Partial draft contract; final validation happens only at publication
+        time.
       properties:
         public_id:
           type: string
@@ -8610,6 +9383,9 @@ components:
           oneOf:
           - $ref: '#/components/schemas/WorkTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        work_types:
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
         employment_type:
           oneOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
@@ -8667,7 +9443,11 @@ components:
           nullable: true
           description: Số lượng cần tuyển; null = không giới hạn
         salary_type:
-          $ref: '#/components/schemas/SalaryTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         salary_min:
           type: string
           format: decimal
@@ -8678,6 +9458,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
           nullable: true
+        income_display_type:
+          $ref: '#/components/schemas/IncomeDisplayTypeEnum'
         currency:
           type: string
           maxLength: 20
@@ -8748,40 +9530,64 @@ components:
           readOnly: true
         application_contact:
           allOf:
-          - $ref: '#/components/schemas/JobApplicationContact'
+          - $ref: '#/components/schemas/DraftJobApplicationContact'
           nullable: true
+        campaign:
+          type: string
+          nullable: true
+        campaign_name:
+          type: string
+          readOnly: true
+        is_expired:
+          type: boolean
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        rejected_reason:
+          type: string
+          readOnly: true
       required:
       - application_count
+      - approved_at
       - brand_slug
+      - campaign_name
       - category
       - company_cover_url
       - company_logo_url
       - company_name
       - company_verified
       - created_at
-      - description
       - has_flash_badge
+      - is_expired
       - is_hot
       - is_salary_visible
       - is_urgent
       - locations_detail
       - public_id
       - published_at
+      - rejected_reason
       - short_description
       - slug
       - status
+      - submitted_at
       - tier
-      - title
       - updated_at
       - view_count
-    EmployerJobWriteRequest:
+    EmployerJobDraftRequest:
       type: object
-      description: Create/update DTO for the employer job form; never used for public
-        reads.
+      description: Partial draft contract; final validation happens only at publication
+        time.
       properties:
         title:
           type: string
-          minLength: 1
           maxLength: 255
         category_assignments:
           type: array
@@ -8793,7 +9599,6 @@ components:
             $ref: '#/components/schemas/JobLocationRequest'
         description:
           type: string
-          minLength: 1
         requirements:
           type: string
         benefits:
@@ -8805,6 +9610,9 @@ components:
           oneOf:
           - $ref: '#/components/schemas/WorkTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        work_types:
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
         employment_type:
           oneOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
@@ -8862,7 +9670,11 @@ components:
           nullable: true
           description: Số lượng cần tuyển; null = không giới hạn
         salary_type:
-          $ref: '#/components/schemas/SalaryTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         salary_min:
           type: string
           format: decimal
@@ -8873,6 +9685,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
           nullable: true
+        income_display_type:
+          $ref: '#/components/schemas/IncomeDisplayTypeEnum'
         currency:
           type: string
           minLength: 1
@@ -8899,11 +9713,104 @@ components:
             $ref: '#/components/schemas/JobLanguageRequirementRequest'
         application_contact:
           allOf:
-          - $ref: '#/components/schemas/JobApplicationContactRequest'
+          - $ref: '#/components/schemas/DraftJobApplicationContactRequest'
           nullable: true
+        campaign:
+          type: string
+          minLength: 1
+          nullable: true
+    EmployerJobList:
+      type: object
+      description: Compact management-table DTO; rich job content stays on the detail
+        API.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        locations_detail:
+          type: string
+          readOnly: true
+        employment_type:
+          allOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        is_expired:
+          type: boolean
+          readOnly: true
+        campaign:
+          type: string
+          readOnly: true
+          nullable: true
+        campaign_name:
+          type: string
+          readOnly: true
+          nullable: true
+        application_count:
+          type: integer
+          readOnly: true
+        view_count:
+          type: integer
+          readOnly: true
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        rejected_reason:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
-      - description
+      - application_count
+      - approved_at
+      - campaign
+      - campaign_name
+      - company_name
+      - created_at
+      - deadline
+      - employment_type
+      - is_expired
+      - locations_detail
+      - public_id
+      - published_at
+      - rejected_reason
+      - status
+      - submitted_at
       - title
+      - updated_at
+      - view_count
     EmployerRegisterRequest:
       type: object
       properties:
@@ -9036,16 +9943,46 @@ components:
       - part_time
       - contract
       - seasonal
+      - work_from_home
       - internship
       - freelance
+      - other
       type: string
       description: |-
         * `full_time` - Full-time
         * `part_time` - Part-time
         * `contract` - Hợp đồng
         * `seasonal` - Thời vụ
+        * `work_from_home` - Làm tại nhà (việc làm phổ thông)
         * `internship` - Internship
         * `freelance` - Freelance
+        * `other` - Khác
+    EventTypeEnum:
+      enum:
+      - legacy_synced
+      - campaign_created
+      - campaign_updated
+      - campaign_paused
+      - campaign_resumed
+      - job_added
+      - job_removed
+      - job_updated
+      - job_status_changed
+      - application_received
+      - application_status_changed
+      type: string
+      description: |-
+        * `legacy_synced` - Đồng bộ dữ liệu hiện có
+        * `campaign_created` - Tạo chiến dịch
+        * `campaign_updated` - Cập nhật chiến dịch
+        * `campaign_paused` - Dừng chiến dịch
+        * `campaign_resumed` - Mở lại chiến dịch
+        * `job_added` - Thêm tin tuyển dụng
+        * `job_removed` - Gỡ tin tuyển dụng
+        * `job_updated` - Cập nhật tin tuyển dụng
+        * `job_status_changed` - Đổi trạng thái tin
+        * `application_received` - Nhận CV ứng tuyển
+        * `application_status_changed` - Đổi trạng thái ứng viên
     ExperienceLevelEnum:
       enum:
       - no_experience
@@ -9099,7 +10036,7 @@ components:
           readOnly: true
         category:
           allOf:
-          - $ref: '#/components/schemas/CategoryEnum'
+          - $ref: '#/components/schemas/FeedbackCategoryEnum'
           description: |-
             Chủ đề cần góp ý
 
@@ -9146,12 +10083,28 @@ components:
       - content
       - created_at
       - id
+    FeedbackCategoryEnum:
+      enum:
+      - ui_ux
+      - feature
+      - job_quality
+      - account
+      - performance
+      - other
+      type: string
+      description: |-
+        * `ui_ux` - Giao diện, trải nghiệm
+        * `feature` - Tính năng sản phẩm
+        * `job_quality` - Chất lượng tin tuyển dụng
+        * `account` - Tài khoản & bảo mật
+        * `performance` - Tốc độ, hiệu năng
+        * `other` - Khác
     FeedbackRequest:
       type: object
       properties:
         category:
           allOf:
-          - $ref: '#/components/schemas/CategoryEnum'
+          - $ref: '#/components/schemas/FeedbackCategoryEnum'
           description: |-
             Chủ đề cần góp ý
 
@@ -9213,6 +10166,16 @@ components:
         * `any` - Không yêu cầu
         * `male` - Nam
         * `female` - Nữ
+    GroupEnum:
+      enum:
+      - campaign
+      - job
+      - application
+      type: string
+      description: |-
+        * `campaign` - Chiến dịch
+        * `job` - Tin tuyển dụng
+        * `application` - Ứng viên
     ImportanceEnum:
       enum:
       - required
@@ -9221,6 +10184,14 @@ components:
       description: |-
         * `required` - Required
         * `preferred` - Preferred
+    IncomeDisplayTypeEnum:
+      enum:
+      - income
+      - income_at_kpi
+      type: string
+      description: |-
+        * `income` - Thu nhập
+        * `income_at_kpi` - Thu nhập khi đạt 100% KPI
     Industry:
       type: object
       properties:
@@ -9250,25 +10221,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JobApplicationEmail'
-      required:
-      - emails
-      - phone
-      - recipient_name
-    JobApplicationContactRequest:
-      type: object
-      properties:
-        recipient_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        phone:
-          type: string
-          minLength: 1
-          maxLength: 30
-        emails:
-          type: array
-          items:
-            $ref: '#/components/schemas/JobApplicationEmailRequest'
       required:
       - emails
       - phone
@@ -9521,9 +10473,11 @@ components:
           nullable: true
           description: Số lượng cần tuyển; null = không giới hạn
         salary_type:
-          allOf:
-          - $ref: '#/components/schemas/SalaryTypeEnum'
           readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
         salary_min:
           type: string
           format: decimal
@@ -9536,6 +10490,10 @@ components:
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
         currency:
           type: string
           readOnly: true
@@ -9609,7 +10567,17 @@ components:
         benefit_tags:
           type: string
           readOnly: true
+        required_skills:
+          type: string
+          readOnly: true
+        preferred_skills:
+          type: string
+          readOnly: true
+        benefit_groups:
+          type: string
+          readOnly: true
       required:
+      - benefit_groups
       - benefit_tags
       - benefits
       - brand_slug
@@ -9632,6 +10600,7 @@ components:
       - education_level
       - employment_type
       - experience_years
+      - income_display_type
       - is_hot
       - is_urgent
       - job_locations
@@ -9639,9 +10608,11 @@ components:
       - locations_detail
       - number_of_vacancies
       - position_level
+      - preferred_skills
       - primary_specialization
       - public_id
       - published_at
+      - required_skills
       - requirement_tags
       - requirements
       - salary_max
@@ -9654,6 +10625,20 @@ components:
       - work_schedules
       - work_type
       - workplace_groups
+    JobImpressionBatchRequest:
+      type: object
+      properties:
+        slugs:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          maxItems: 50
+          minItems: 1
+      required:
+      - slugs
     JobLanguageRequirement:
       type: object
       properties:
@@ -10003,11 +10988,11 @@ components:
       - rejected
       type: string
       description: |-
-        * `draft` - Draft
-        * `pending` - Pending
-        * `active` - Active
-        * `closed` - Closed
-        * `rejected` - Rejected
+        * `draft` - Nháp
+        * `pending` - Chờ duyệt
+        * `active` - Đang tuyển
+        * `closed` - Đã đóng
+        * `rejected` - Từ chối
     JobSuggest:
       type: object
       properties:
@@ -10365,6 +11350,9 @@ components:
         * `ai_solution` - Giải pháp AI sàng lọc CV
         * `employer_branding` - Truyền thông thương hiệu
         * `other` - Khác
+    NullEnum:
+      enum:
+      - null
     OAuthComplete:
       type: object
       properties:
@@ -10432,6 +11420,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminConsultationLead'
+    PaginatedAdminJobModerationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminJobModeration'
     PaginatedApplicationList:
       type: object
       required:
@@ -10455,6 +11466,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Application'
+    PaginatedApplicationStatusHistoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationStatusHistory'
+    PaginatedCampaignActivityList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CampaignActivity'
     PaginatedCandidateApplicationV2List:
       type: object
       required:
@@ -10662,6 +11719,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PublicJobList'
+    PaginatedRecruitmentCampaignList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecruitmentCampaign'
     PasswordChangeRequest:
       type: object
       description: Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện
@@ -10921,6 +12001,39 @@ components:
           $ref: '#/components/schemas/ApplicationStatusEnum'
         employer_note:
           type: string
+        employer_rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+    PatchedCandidateEmailNotificationSettingsRequest:
+      type: object
+      description: Candidate-owned email notification opt-ins.
+      properties:
+        important_system_updates:
+          type: boolean
+        employer_viewed_cv:
+          type: boolean
+        new_features_and_cv_templates:
+          type: boolean
+        other_system_notifications:
+          type: boolean
+        configured_job_alerts:
+          type: boolean
+        suitable_job_recommendations:
+          type: boolean
+        top_candidate_alerts:
+          type: boolean
+        employer_invitations:
+          type: boolean
+        job_and_career_events:
+          type: boolean
+        service_introductions:
+          type: boolean
+        program_and_event_introductions:
+          type: boolean
+        partner_gifts_and_discounts:
+          type: boolean
     PatchedCandidateProfileUpdateRequest:
       type: object
       description: Write DTO for the only candidate-profile field exposed by current
@@ -11125,14 +12238,13 @@ components:
           maxLength: 255
         is_default:
           type: boolean
-    PatchedEmployerJobWriteRequest:
+    PatchedEmployerJobDraftRequest:
       type: object
-      description: Create/update DTO for the employer job form; never used for public
-        reads.
+      description: Partial draft contract; final validation happens only at publication
+        time.
       properties:
         title:
           type: string
-          minLength: 1
           maxLength: 255
         category_assignments:
           type: array
@@ -11144,7 +12256,6 @@ components:
             $ref: '#/components/schemas/JobLocationRequest'
         description:
           type: string
-          minLength: 1
         requirements:
           type: string
         benefits:
@@ -11156,6 +12267,9 @@ components:
           oneOf:
           - $ref: '#/components/schemas/WorkTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        work_types:
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
         employment_type:
           oneOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
@@ -11213,7 +12327,11 @@ components:
           nullable: true
           description: Số lượng cần tuyển; null = không giới hạn
         salary_type:
-          $ref: '#/components/schemas/SalaryTypeEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         salary_min:
           type: string
           format: decimal
@@ -11224,6 +12342,8 @@ components:
           format: decimal
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
           nullable: true
+        income_display_type:
+          $ref: '#/components/schemas/IncomeDisplayTypeEnum'
         currency:
           type: string
           minLength: 1
@@ -11250,7 +12370,11 @@ components:
             $ref: '#/components/schemas/JobLanguageRequirementRequest'
         application_contact:
           allOf:
-          - $ref: '#/components/schemas/JobApplicationContactRequest'
+          - $ref: '#/components/schemas/DraftJobApplicationContactRequest'
+          nullable: true
+        campaign:
+          type: string
+          minLength: 1
           nullable: true
     PatchedProfileUpdateRequest:
       type: object
@@ -11296,6 +12420,13 @@ components:
         source_path:
           type: string
           maxLength: 2048
+    PatchedRecruitmentCampaignRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
     PatchedRecruitmentNeedRequest:
       type: object
       properties:
@@ -11619,6 +12750,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/WorkTypeEnum'
           readOnly: true
+        work_types:
+          readOnly: true
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
         employment_type:
           allOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
@@ -11666,9 +12801,11 @@ components:
           readOnly: true
           nullable: true
         salary_type:
-          allOf:
-          - $ref: '#/components/schemas/SalaryTypeEnum'
           readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
         salary_min:
           type: string
           format: decimal
@@ -11681,6 +12818,10 @@ components:
           pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
           readOnly: true
           nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
         currency:
           type: string
           readOnly: true
@@ -11723,6 +12864,7 @@ components:
       - employment_type
       - experience_years
       - has_flash_badge
+      - income_display_type
       - is_hot
       - is_urgent
       - job_skills
@@ -11737,6 +12879,7 @@ components:
       - tier
       - title
       - work_type
+      - work_types
     PublicJobLocation:
       type: object
       description: Location fields rendered by quick-view/detail; excludes write metadata.
@@ -11953,6 +13096,264 @@ components:
       - status_label
       - title
       - view_count
+    RecommendationMatchDetail:
+      type: object
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        points:
+          type: integer
+      required:
+      - code
+      - label
+      - points
+    RecommendationPagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        next_page:
+          type: integer
+          nullable: true
+        previous_page:
+          type: integer
+          nullable: true
+      required:
+      - next_page
+      - page
+      - page_size
+      - previous_page
+      - total
+      - total_pages
+    RecommendationPermissionDenied:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    RecommendationSourceCv:
+      type: object
+      properties:
+        public_id:
+          type: string
+        title:
+          type: string
+        is_default:
+          type: boolean
+      required:
+      - is_default
+      - public_id
+      - title
+    RecommendationSources:
+      type: object
+      properties:
+        job_preferences:
+          type: boolean
+        cv:
+          type: boolean
+        search_activity:
+          type: boolean
+      required:
+      - cv
+      - job_preferences
+      - search_activity
+    RecommendedJob:
+      type: object
+      description: Compact contract for public search, related jobs, and saved-job
+        cards.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_logo_url:
+          type: string
+          readOnly: true
+        brand_slug:
+          type: string
+          readOnly: true
+        company_verified:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        locations_detail:
+          type: string
+          readOnly: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobListSkill'
+          readOnly: true
+        work_type:
+          allOf:
+          - $ref: '#/components/schemas/WorkTypeEnum'
+          readOnly: true
+        work_types:
+          readOnly: true
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          allOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        education_level:
+          allOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          readOnly: true
+        experience_years:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          readOnly: true
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+        position_level:
+          allOf:
+          - $ref: '#/components/schemas/PositionLevel615Enum'
+          readOnly: true
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+        age_min:
+          type: integer
+          readOnly: true
+          nullable: true
+        age_max:
+          type: integer
+          readOnly: true
+          nullable: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        tier:
+          allOf:
+          - $ref: '#/components/schemas/TierEnum'
+          readOnly: true
+        is_hot:
+          type: boolean
+          readOnly: true
+          description: Nhãn HOT (đỏ) trên card
+        is_urgent:
+          type: boolean
+          readOnly: true
+          description: Nhãn GẤP / tuyển gấp (cam) trên card
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        match_score:
+          type: integer
+        match_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationMatchDetail'
+        match_reasons:
+          type: array
+          items:
+            type: string
+        is_high_match:
+          type: boolean
+      required:
+      - age_max
+      - age_min
+      - brand_slug
+      - category
+      - company_logo_url
+      - company_name
+      - company_verified
+      - created_at
+      - currency
+      - education_level
+      - employment_type
+      - experience_years
+      - has_flash_badge
+      - income_display_type
+      - is_high_match
+      - is_hot
+      - is_urgent
+      - job_skills
+      - locations_detail
+      - match_details
+      - match_reasons
+      - match_score
+      - position_level
+      - public_id
+      - published_at
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - tier
+      - title
+      - work_type
+      - work_types
     RecruiterApplicationSnapshot:
       type: object
       properties:
@@ -11961,6 +13362,10 @@ components:
           readOnly: true
         job_public_id:
           type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatusEnum'
           readOnly: true
         submitted_at:
           type: string
@@ -12002,6 +13407,7 @@ components:
       - cv
       - job_public_id
       - preferred_location_names
+      - status
       - submitted_at
       - submitted_cv_source
       - submitted_cv_title
@@ -12122,6 +13528,138 @@ components:
       - decided_at
       - enabled
       - policy_version
+    RecruitmentCampaign:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RecruitmentCampaignStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        last_activity:
+          type: string
+          readOnly: true
+        candidate_previews:
+          type: string
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        candidate_count:
+          type: integer
+          readOnly: true
+          default: 0
+        application_submission_count:
+          type: integer
+          readOnly: true
+          default: 0
+        application_pair_count:
+          type: integer
+          readOnly: true
+          default: 0
+        application_count:
+          type: integer
+          readOnly: true
+          default: 0
+        accepted_count:
+          type: integer
+          readOnly: true
+          default: 0
+        unviewed_count:
+          type: integer
+          readOnly: true
+          default: 0
+        unviewed_application_count:
+          type: integer
+          readOnly: true
+          default: 0
+        draft_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        pending_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        active_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        expired_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        closed_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        rejected_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - accepted_count
+      - active_job_count
+      - application_count
+      - application_pair_count
+      - application_submission_count
+      - candidate_count
+      - candidate_previews
+      - closed_job_count
+      - created_at
+      - draft_job_count
+      - expired_job_count
+      - job_count
+      - last_activity
+      - name
+      - pending_job_count
+      - public_id
+      - rejected_job_count
+      - status
+      - status_label
+      - unviewed_application_count
+      - unviewed_count
+      - updated_at
+    RecruitmentCampaignRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - name
+    RecruitmentCampaignStatusEnum:
+      enum:
+      - draft
+      - active
+      - paused
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Nháp
+        * `active` - Đang chạy
+        * `paused` - Tạm dừng
+        * `completed` - Hoàn tất
+        * `cancelled` - Đã hủy
     RecruitmentNeed:
       type: object
       properties:
@@ -12337,6 +13875,16 @@ components:
       - email
       - password
       - role
+    RelatedPosition:
+      type: object
+      properties:
+        label:
+          type: string
+        search:
+          type: string
+      required:
+      - label
+      - search
     Role3faEnum:
       enum:
       - candidate
@@ -12630,6 +14178,24 @@ components:
         * `beginner` - Beginner
         * `intermediate` - Intermediate
         * `advanced` - Advanced
+    SkillRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        slug:
+          type: string
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        aliases:
+          description: Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]
+        group:
+          type: integer
+          nullable: true
+      required:
+      - name
     Status399Enum:
       enum:
       - draft

@@ -24,6 +24,9 @@ hoặc cấu trúc database.
 | Sửa thông tin tài khoản | `PATCH /api/auth/me/` | `ProfileUpdateSerializer` → session DTO | request `full_name`, `phone`; response thống nhất như `/me` |
 | Onboarding / cài đặt gợi ý | `GET/PATCH /api/candidate/profile/` | `CandidateProfileReadSerializer` / `CandidateProfileUpdateSerializer` | `gender` |
 | Onboarding / cài đặt gợi ý | `GET/PUT /api/candidate/job-preferences/` | `CandidateJobPreferenceSerializer` | vị trí chuyên môn, vị trí khác, lương, kinh nghiệm, tỉnh, relocate và hai consent |
+| Cài đặt email candidate | `GET/PATCH /api/candidate/email-notification-settings/` | `CandidateEmailNotificationSettingsSerializer` | 12 boolean opt-in dương; PATCH chỉ gửi field vừa đổi, không có field email bảo mật |
+| Việc làm phù hợp | `GET /api/jobs/recommendations/for-me/` | `CandidateJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `status`, `sources`, `source_cv`, `pagination`; mỗi job thêm score/details/reasons/high-match |
+| Việc làm sau lưu CV | `GET /api/jobs/recommendations/by-cv/{public_id}/` | `CvJobRecommendationResponseSerializer` (job nền là `PublicJobListSerializer`) | `focus_keyword`, related positions và tối đa 6 job giải thích được; `403` khi chưa có consent |
 | Picker địa điểm | `GET /api/locations/` | `LocationLookupSerializer` | `id`, `name`, `level`, `parent`, `merged_from` |
 | Picker vị trí chuyên môn | `GET /api/jobs/categories/` | `JobCategoryListSerializer` | `id`, `name`, `logo_url`, `parent`, `category_type` |
 | Job card / kết quả tìm kiếm / việc đã lưu | `GET /api/jobs/` | `PublicJobListSerializer` | định danh public, tiêu đề/công ty, địa điểm, skill, loại việc, kinh nghiệm/cấp bậc/học vấn/tuổi, lương, badge/tier, thời gian đăng |
@@ -44,6 +47,8 @@ permission admin.
 - Job list defer các cột rich text; chỉ prefetch location/skill, và chỉ thêm
   benefit/schedule khi `view=preview`.
 - Job detail prefetch đúng các relation được DTO chi tiết và view-model sử dụng.
+- Recommendation prefilter không dấu theo category/title/skill, chấm tối đa 500
+  job đã prefetch; query-budget regression bảo đảm số query phẳng theo số kết quả.
 - Employer list dùng query riêng, không tải nội dung rich text hoặc toàn bộ nested
   form; detail/write dùng query đầy đủ riêng.
 - Blog list dùng `select_related(category)` + `only()` các cột card; detail mới
