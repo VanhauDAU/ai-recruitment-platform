@@ -1,5 +1,4 @@
 import {
-  CheckCircleFilled,
   ExclamationCircleFilled,
   ReloadOutlined,
 } from '@ant-design/icons'
@@ -84,7 +83,7 @@ export default function EmailNotificationSettingsForm() {
         ...current,
         [field]: typeof saved?.[field] === 'boolean' ? saved[field] : enabled,
       }))
-      setSaveState('saved')
+      setSaveState('idle')
     } catch (error) {
       setPreferences((current) => ({ ...current, [field]: previousValue }))
       const errorMessage = getApiErrorMessage(
@@ -134,11 +133,6 @@ export default function EmailNotificationSettingsForm() {
         {saveState === 'saving' && (
           <span className="inline-flex items-center gap-2 text-slate-500">
             <Spin size="small" /> Đang lưu thay đổi...
-          </span>
-        )}
-        {saveState === 'saved' && (
-          <span className="inline-flex items-center gap-1.5 text-emerald-600">
-            <CheckCircleFilled /> Đã lưu tự động
           </span>
         )}
         {saveState === 'error' && (

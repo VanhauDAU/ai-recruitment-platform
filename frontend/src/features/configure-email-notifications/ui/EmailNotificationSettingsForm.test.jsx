@@ -68,7 +68,7 @@ describe('EmailNotificationSettingsForm', () => {
         suitable_job_recommendations: false,
       })
     })
-    expect(await screen.findByText('Đã lưu tự động')).toBeInTheDocument()
+    expect(screen.queryByText('Đã lưu tự động')).not.toBeInTheDocument()
   })
 
   it('rolls back the switch when the PATCH request fails', async () => {
