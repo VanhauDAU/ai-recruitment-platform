@@ -2,7 +2,7 @@ import {
   ExclamationCircleFilled,
   ReloadOutlined,
 } from '@ant-design/icons'
-import { Button, Skeleton, Spin, Switch } from 'antd'
+import { Button, Skeleton, Switch } from 'antd'
 import { useEffect, useState } from 'react'
 import {
   getCandidateNotificationPreferences,
@@ -37,9 +37,7 @@ export default function EmailNotificationSettingsForm() {
   const [preferences, setPreferences] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-  const [saveError, setSaveError] = useState('')
   const [savingField, setSavingField] = useState('')
-  const [saveState, setSaveState] = useState('idle')
   const [reloadVersion, setReloadVersion] = useState(0)
 
   useEffect(() => {
@@ -68,14 +66,12 @@ export default function EmailNotificationSettingsForm() {
     }
   }, [reloadVersion])
 
-  async function handlePreferenceChange(field, enabled) {
+  async function handlePreferenceChange(field, enabled, label) {
     if (savingField || !preferences) return
 
     const previousValue = preferences[field]
     setPreferences((current) => ({ ...current, [field]: enabled }))
     setSavingField(field)
-    setSaveState('saving')
-    setSaveError('')
 
     try {
       const saved = await updateCandidateNotificationPreferences({ [field]: enabled })
@@ -83,15 +79,13 @@ export default function EmailNotificationSettingsForm() {
         ...current,
         [field]: typeof saved?.[field] === 'boolean' ? saved[field] : enabled,
       }))
-      setSaveState('idle')
+      if (enabled) message.success(`Đã bật: ${label}.`)
     } catch (error) {
       setPreferences((current) => ({ ...current, [field]: previousValue }))
       const errorMessage = getApiErrorMessage(
         error,
         'Không thể lưu lựa chọn này. Thay đổi đã được hoàn tác.',
       )
-      setSaveError(errorMessage)
-      setSaveState('error')
       message.error(errorMessage)
     } finally {
       setSavingField('')
@@ -123,31 +117,6 @@ export default function EmailNotificationSettingsForm() {
 
   return (
     <div>
-      <div
-        aria-live="polite"
-        className={saveState === 'idle'
-          ? 'sr-only'
-          : 'flex items-center justify-end px-5 py-2 text-xs font-medium sm:px-6'}
-        role="status"
-      >
-        {saveState === 'saving' && (
-          <span className="inline-flex items-center gap-2 text-slate-500">
-            <Spin size="small" /> Đang lưu thay đổi...
-          </span>
-        )}
-        {saveState === 'error' && (
-          <span className="inline-flex items-center gap-1.5 text-red-600">
-            <ExclamationCircleFilled /> Chưa lưu được thay đổi
-          </span>
-        )}
-      </div>
-
-      {saveError && (
-        <p role="alert" className="bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-6">
-          {saveError}
-        </p>
-      )}
-
       {NOTIFICATION_SETTING_GROUPS.map((group) => {
         return (
           <section
@@ -175,7 +144,7 @@ export default function EmailNotificationSettingsForm() {
                       checked={Boolean(preferences[item.key])}
                       disabled={Boolean(savingField)}
                       loading={savingField === item.key}
-                      onChange={(checked) => handlePreferenceChange(item.key, checked)}
+                      onChange={(checked) => handlePreferenceChange(item.key, checked, item.label)}
                       className="shrink-0"
                     />
                   </li>

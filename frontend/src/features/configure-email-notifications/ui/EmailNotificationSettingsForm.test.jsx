@@ -32,6 +32,7 @@ describe('EmailNotificationSettingsForm', () => {
     notificationApi.updateCandidateNotificationPreferences.mockReset()
     notificationApi.getCandidateNotificationPreferences.mockResolvedValue(ALL_ENABLED)
     vi.spyOn(message, 'error').mockImplementation(() => {})
+    vi.spyOn(message, 'success').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -49,7 +50,7 @@ describe('EmailNotificationSettingsForm', () => {
     expect(screen.queryByText('Email bảo mật luôn được bật')).not.toBeInTheDocument()
   })
 
-  it('optimistically disables one preference and patches only that field', async () => {
+  it('saves a disabled preference silently', async () => {
     const user = userEvent.setup()
     notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
       suitable_job_recommendations: false,
@@ -69,6 +70,25 @@ describe('EmailNotificationSettingsForm', () => {
       })
     })
     expect(screen.queryByText('Đã lưu tự động')).not.toBeInTheDocument()
+    expect(message.success).not.toHaveBeenCalled()
+  })
+
+  it('shows a toast only after enabling a preference', async () => {
+    const user = userEvent.setup()
+    notificationApi.getCandidateNotificationPreferences.mockResolvedValue({
+      ...ALL_ENABLED,
+      suitable_job_recommendations: false,
+    })
+    notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
+      suitable_job_recommendations: true,
+    })
+    render(<EmailNotificationSettingsForm />)
+
+    await user.click(await screen.findByRole('switch', { name: 'Thông báo việc làm phù hợp' }))
+
+    await waitFor(() => {
+      expect(message.success).toHaveBeenCalledWith('Đã bật: Thông báo việc làm phù hợp.')
+    })
   })
 
   it('rolls back the switch when the PATCH request fails', async () => {
@@ -82,7 +102,6 @@ describe('EmailNotificationSettingsForm', () => {
     await user.click(configuredJobSwitch)
 
     await waitFor(() => expect(configuredJobSwitch).toBeChecked())
-    expect(screen.getByRole('alert')).toHaveTextContent('Không thể cập nhật lúc này.')
     expect(message.error).toHaveBeenCalledWith('Không thể cập nhật lúc này.')
   })
 
