@@ -7,8 +7,11 @@ from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import RecruiterProfile
-from apps.employers.services import recruiter_posting_readiness
+from apps.employers.models import CampaignActivity, RecruiterProfile
+from apps.employers.services import (
+    record_campaign_activity,
+    recruiter_posting_readiness,
+)
 from apps.sitecontent.selectors.settings import get_int_setting
 
 from ..models import (
@@ -55,6 +58,49 @@ def _record_status(
         actor_role=actor_role,
         note=note,
     )
+    if job.campaign_id:
+        record_campaign_activity(
+            campaign=job.campaign,
+            event_type=CampaignActivity.EventType.JOB_STATUS_CHANGED,
+            group=CampaignActivity.Group.JOB,
+            actor=user,
+            subject_public_id=job.public_id,
+            metadata={
+                'title': job.title,
+                'from_status': from_status,
+                'to_status': to_status,
+            },
+        )
+
+
+def _record_job_assignment(job, *, previous_campaign, user):
+    if previous_campaign and previous_campaign.pk != job.campaign_id:
+        record_campaign_activity(
+            campaign=previous_campaign,
+            event_type=CampaignActivity.EventType.JOB_REMOVED,
+            group=CampaignActivity.Group.JOB,
+            actor=user,
+            subject_public_id=job.public_id,
+            metadata={'title': job.title},
+        )
+    if job.campaign_id and (previous_campaign is None or previous_campaign.pk != job.campaign_id):
+        record_campaign_activity(
+            campaign=job.campaign,
+            event_type=CampaignActivity.EventType.JOB_ADDED,
+            group=CampaignActivity.Group.JOB,
+            actor=user,
+            subject_public_id=job.public_id,
+            metadata={'title': job.title},
+        )
+    elif job.campaign_id:
+        record_campaign_activity(
+            campaign=job.campaign,
+            event_type=CampaignActivity.EventType.JOB_UPDATED,
+            group=CampaignActivity.Group.JOB,
+            actor=user,
+            subject_public_id=job.public_id,
+            metadata={'title': job.title},
+        )
 
 
 def _validate_publishable(job):
@@ -146,11 +192,15 @@ def save_job_draft(serializer, user):
     recruiter = _locked_recruiter(user)
     if serializer.instance is None:
         job = serializer.save(posted_by=user, company=recruiter.company, status=Job.Status.DRAFT)
+        _record_job_assignment(job, previous_campaign=None, user=user)
         _record_status(job, from_status='', to_status=Job.Status.DRAFT, user=user)
         return job
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền lưu nháp tin này.')
-    return serializer.save()
+    previous_campaign = serializer.instance.campaign
+    job = serializer.save()
+    _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
+    return job
 
 
 @transaction.atomic
@@ -213,7 +263,10 @@ def update_employer_job(serializer, user):
     """Persist an employer's existing job through the domain mutation boundary."""
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
-    return serializer.save()
+    previous_campaign = serializer.instance.campaign
+    job = serializer.save()
+    _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
+    return job
 
 
 @transaction.atomic
@@ -265,6 +318,15 @@ def extend_job_deadline(job, user, deadline):
         raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
     job.deadline = deadline
     job.save(update_fields=['deadline', 'updated_at'])
+    if job.campaign_id:
+        record_campaign_activity(
+            campaign=job.campaign,
+            event_type=CampaignActivity.EventType.JOB_UPDATED,
+            group=CampaignActivity.Group.JOB,
+            actor=user,
+            subject_public_id=job.public_id,
+            metadata={'title': job.title, 'deadline': deadline.isoformat()},
+        )
     return job
 
 
@@ -277,9 +339,6 @@ def duplicate_job(job, user):
     duplicate.id = None
     duplicate.public_id = ''
     duplicate.slug = ''
-    # A campaign owns exactly one job. A duplicate starts as an independent draft
-    # so the recruiter can choose another campaign (or leave it unassigned).
-    duplicate.campaign = None
     duplicate.status = Job.Status.DRAFT
     duplicate.submitted_at = None
     duplicate.published_at = None
@@ -292,6 +351,7 @@ def duplicate_job(job, user):
     duplicate.engagement_tracking_started_at = timezone.now()
     duplicate.title = f'{job.title} (bản sao)'
     duplicate.save()
+    _record_job_assignment(duplicate, previous_campaign=None, user=user)
     for model, relation in (
         (JobCategoryAssignment, 'category_assignments'),
         (JobLocation, 'job_locations'),

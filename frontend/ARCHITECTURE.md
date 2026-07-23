@@ -231,7 +231,7 @@ pages/main job cards + job detail/quick view
     → entities/job, entities/consent
       → shared/api
 
-pages/employer/app/campaigns/CampaignJobsPanel
+widgets/employer-campaign-workspace/CampaignJobsPanel
   → entities/campaign
     → shared/api
 ```
@@ -244,6 +244,32 @@ pages/employer/app/campaigns/CampaignJobsPanel
   boundary/hook vào bề mặt job card hoặc nội dung chi tiết thực sự hiển thị.
 - Báo cáo chiến dịch đọc API performance theo kỳ từ `entities/campaign`; không
   tự suy ra tỷ lệ từ lifetime counter ở frontend.
+
+## Ownership map — Chiến dịch tuyển dụng
+
+```text
+pages/employer/app/campaigns/CampaignList|CampaignDetail
+  → widgets/employer-campaign-workspace
+    → features/manage-campaigns
+      → entities/campaign, entities/application, entities/job
+        → shared/api
+```
+
+- `entities/campaign` sở hữu HTTP contract, query key, tên và trạng thái.
+  Các trường nhu cầu tuyển dụng không thuộc campaign; chúng do
+  `entities/recruitment-need` và feature tương ứng sở hữu.
+  `entities/application` sở hữu list/export hồ sơ phía server;
+  `entities/job` sở hữu contract tin tuyển dụng.
+- `features/manage-campaigns` sở hữu các workflow tạo nhanh, đổi tên,
+  dừng và mở lại. Xác nhận dừng luôn tải `pause-impact`, yêu cầu mã chiến dịch
+  khớp hoàn toàn và không tự đổi trạng thái tin.
+- `widgets/employer-campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
+  Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
+  chỉ đọc route param rồi compose widget; query `active_tab` là contract URL,
+  còn `tab=applications|jobs` chỉ là mapping tương thích.
+- Không thêm KPI/tab credit, kết nối CV, nhãn, dịch vụ hoặc danh tính người xem
+  khi chưa có domain backend. Lượt xem tin chỉ được dùng dưới dạng thống kê
+  engagement ẩn danh.
 
 ## i18n cổng marketing nhà tuyển dụng
 

@@ -298,11 +298,6 @@ class Job(models.Model):
             models.Index(fields=['campaign', 'status'], name='jobs_job_campaign_status_idx'),
         ]
         constraints = [
-            models.UniqueConstraint(
-                fields=['campaign'],
-                condition=models.Q(campaign__isnull=False),
-                name='jobs_one_job_per_campaign',
-            ),
             models.CheckConstraint(
                 check=models.Q(status__in=['draft', 'pending', 'active', 'closed', 'rejected']),
                 name='chk_jobs_status',
