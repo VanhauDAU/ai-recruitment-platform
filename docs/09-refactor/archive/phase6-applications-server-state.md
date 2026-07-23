@@ -29,7 +29,7 @@
 ## Quyết định server state
 
 Không thêm Query library ở R6. Lý do và ngưỡng xem xét lại được ghi tại
-[ADR 0006](../adr/0006-custom-server-state-during-refactor.md): resource server
+[ADR 0006](../../adr/0006-custom-server-state-during-refactor.md): resource server
 state hiện còn ít, có dedupe/TTL trong `shared/api`, và migration toàn cục sẽ
 vượt phạm vi lát cắt này.
 

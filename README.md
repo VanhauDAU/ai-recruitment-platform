@@ -94,7 +94,8 @@ Tạo tài khoản quản trị riêng bằng `python manage.py createsuperuser`
 
 ## Kiểm tra chất lượng
 
-Một lệnh kiểm tra toàn repo (khớp với CI — backend check/migration/test + frontend lint/test/build):
+Một lệnh kiểm tra toàn repo (khớp các gate CI: backend architecture/migration/coverage
++ frontend boundaries/lint/architecture/coverage/build/budget/E2E smoke):
 
 ```bash
 ./scripts/check_all.sh
