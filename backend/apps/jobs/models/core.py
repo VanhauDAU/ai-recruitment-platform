@@ -299,23 +299,23 @@ class Job(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(status__in=['draft', 'pending', 'active', 'closed', 'rejected']),
+                condition=models.Q(status__in=['draft', 'pending', 'active', 'closed', 'rejected']),
                 name='chk_jobs_status',
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(age_min__isnull=True) | models.Q(age_min__gte=15, age_min__lte=100)
                 ),
                 name='chk_jobs_age_min_range',
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(age_max__isnull=True) | models.Q(age_max__gte=15, age_max__lte=100)
                 ),
                 name='chk_jobs_age_max_range',
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(age_min__isnull=True)
                     | models.Q(age_max__isnull=True)
                     | models.Q(age_max__gte=models.F('age_min'))
@@ -323,14 +323,14 @@ class Job(models.Model):
                 name='chk_jobs_age_order',
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(number_of_vacancies__isnull=True)
                     | models.Q(number_of_vacancies__gte=1)
                 ),
                 name='chk_jobs_vacancies_positive',
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     ~models.Q(salary_type='range')
                     | (
                         models.Q(salary_min__isnull=False, salary_max__isnull=False)

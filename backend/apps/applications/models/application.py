@@ -75,7 +75,7 @@ class Application(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     status__in=[
                         'submitted',
                         'viewed',

@@ -107,11 +107,11 @@ class User(AbstractUser):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(status__in=['active', 'inactive', 'banned', 'pending']),
+                condition=models.Q(status__in=['active', 'inactive', 'banned', 'pending']),
                 name='chk_users_status',
             ),
             models.CheckConstraint(
-                check=models.Q(role__in=['candidate', 'employer', 'admin']),
+                condition=models.Q(role__in=['candidate', 'employer', 'admin']),
                 name='chk_users_role',
             ),
             # Duy nhất theo (email, role), không phân biệt hoa/thường: chặn tạo hai

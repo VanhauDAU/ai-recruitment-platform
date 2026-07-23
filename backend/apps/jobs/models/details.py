@@ -72,11 +72,13 @@ class JobWorkSchedule(models.Model):
         ordering = ['sort_order', 'id']
         constraints = [
             models.CheckConstraint(
-                check=(models.Q(weekday_from__isnull=True) | models.Q(weekday_from__range=(1, 7))),
+                condition=(
+                    models.Q(weekday_from__isnull=True) | models.Q(weekday_from__range=(1, 7))
+                ),
                 name='chk_job_schedule_weekday_from',
             ),
             models.CheckConstraint(
-                check=(models.Q(weekday_to__isnull=True) | models.Q(weekday_to__range=(1, 7))),
+                condition=(models.Q(weekday_to__isnull=True) | models.Q(weekday_to__range=(1, 7))),
                 name='chk_job_schedule_weekday_to',
             ),
         ]

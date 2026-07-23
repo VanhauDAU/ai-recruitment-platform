@@ -198,7 +198,7 @@ class CvTemplateVersion(models.Model):
                 fields=['template', 'version_number'], name='uq_cv_template_version'
             ),
             models.CheckConstraint(
-                check=models.Q(version_number__gt=0), name='chk_cv_template_version_number'
+                condition=models.Q(version_number__gt=0), name='chk_cv_template_version_number'
             ),
         ]
         indexes = [
