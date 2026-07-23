@@ -245,6 +245,35 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
 - Báo cáo chiến dịch đọc API performance theo kỳ từ `entities/campaign`; không
   tự suy ra tỷ lệ từ lifetime counter ở frontend.
 
+## Ownership map — Tài khoản và cá nhân hóa ứng viên
+
+```text
+app/router
+  → pages/main/account/EmailNotificationSettings|ChangePassword|MatchingJobs
+    → features/configure-email-notifications, change-password, saved-jobs
+      → entities/candidate-notification-preferences, job, session
+        → shared/api
+
+widgets/main-header/CandidateUserMenu
+  → entities/account
+```
+
+- `entities/account` là nguồn duy nhất cho nhóm/item/route tài khoản.
+  `CandidateUserMenu` và `AccountSidebar` chỉ render config này; dropdown desktop
+  dùng single-open accordion, giới hạn theo viewport và để vùng item cuộn riêng.
+- `entities/candidate-notification-preferences` sở hữu GET/PATCH opt-in email.
+  Feature email điều phối optimistic auto-save/rollback; page chỉ compose header
+  và feature. Email bảo mật luôn bật không thuộc DTO preference.
+- `features/change-password` dùng chung hai portal và không chứa redirect/copy
+  riêng của employer. Page portal truyền `successRedirect` khi cần; candidate
+  giữ nguyên route và có thể hiển thị email read-only.
+- `entities/job` sở hữu contract/keys của feed recommendation. Trang matching
+  chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
+  tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục
+  đi qua feature tương ứng.
+- Protected route tài khoản giữ `AuthGuard → RoleGuard(candidate)`. URL, consent,
+  token/storage key và payload hiện hành không được đổi từ page/widget.
+
 ## Ownership map — Chiến dịch tuyển dụng
 
 ```text

@@ -1,11 +1,134 @@
 import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
+const EMAIL_NOTIFICATION_DEFAULTS = {
+  important_system_updates: false,
+  employer_viewed_cv: false,
+  new_features_and_cv_templates: false,
+  other_system_notifications: false,
+  configured_job_alerts: false,
+  suitable_job_recommendations: false,
+  top_candidate_alerts: false,
+  employer_invitations: false,
+  job_and_career_events: false,
+  service_introductions: false,
+  program_and_event_introductions: false,
+  partner_gifts_and_discounts: false,
+}
+
+async function mockCandidatePersonalizationApi(page) {
+  let emailNotifications = { ...EMAIL_NOTIFICATION_DEFAULTS }
+
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+
+    if (path === '/api/candidate/email-notification-settings/' && request.method() === 'PATCH') {
+      emailNotifications = { ...emailNotifications, ...request.postDataJSON() }
+    }
+
+    const body = path === '/api/auth/me/'
+      ? {
+          public_id: 'candidate_1',
+          role: 'candidate',
+          email: 'candidate@example.com',
+          full_name: 'Nguyễn An',
+          email_verified: true,
+          has_usable_password: true,
+          job_preferences_configured: true,
+        }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: true, analytics: false, marketing: false } }
+        : path === '/api/candidate/email-notification-settings/'
+          ? emailNotifications
+          : path === '/api/jobs/recommendations/for-me/'
+            ? {
+                status: 'ready',
+                sources: { job_preferences: true, cv: true, search_activity: false },
+                source_cv: { public_id: 'cv_1', title: 'CV Backend Developer' },
+                pagination: { page: 1, page_size: 10, total: 1, total_pages: 1 },
+                results: [{
+                  public_id: 'job_1',
+                  slug: 'backend-developer',
+                  title: 'Backend Developer',
+                  company_name: 'Công ty Công nghệ Mẫu',
+                  company_logo_url: '',
+                  company_verified: true,
+                  salary_type: 'range',
+                  salary_min: '20000000',
+                  salary_max: '30000000',
+                  currency: 'VND',
+                  locations_detail: [{ id: 1, name: 'Hà Nội' }],
+                  match_score: 86,
+                  is_high_match: true,
+                  match_details: [
+                    { code: 'category', label: 'Đúng ngành nghề mong muốn', points: 38 },
+                    { code: 'skills', label: 'Khớp kỹ năng Python', points: 18 },
+                  ],
+                }],
+              }
+            : path === '/api/jobs/saved/'
+              ? []
+              : path === '/api/site/settings/'
+                ? {}
+                : {}
+
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+}
+
 test('candidate smoke: saved jobs remains protected', async ({ page }) => {
   await mockPublicApi(page)
   await page.goto('/viec-lam-da-luu')
 
   await expect(page).toHaveURL(/\/login$/)
+})
+
+test('candidate smoke: personalization pages and compact desktop menu remain usable', async ({ page }, testInfo) => {
+  await mockCandidatePersonalizationApi(page)
+
+  await page.goto('/tai-khoan/cai-dat-nhan-email')
+  await expect(page.getByRole('heading', { name: 'Cài đặt thông báo qua email' })).toBeVisible()
+  const suitableJobsSwitch = page.getByRole('switch', { name: 'Gợi ý việc làm phù hợp' })
+  const updateRequest = page.waitForRequest((request) => {
+    if (!request.url().endsWith('/api/candidate/email-notification-settings/')) return false
+    return request.method() === 'PATCH'
+      && request.postDataJSON()?.suitable_job_recommendations === true
+  })
+  await suitableJobsSwitch.click()
+  await updateRequest
+  await expect(suitableJobsSwitch).toBeChecked()
+  await expect(page.getByText('Đã lưu tự động')).toBeVisible()
+
+  await page.goto('/tai-khoan/viec-lam-phu-hop')
+  await expect(page.getByRole('heading', { name: 'Việc làm phù hợp' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Backend Developer', exact: true })).toBeVisible()
+  await expect(page.getByText('Rất phù hợp')).toBeVisible()
+  await expect(page.getByText('CV: CV Backend Developer')).toBeVisible()
+
+  await page.goto('/tai-khoan/doi-mat-khau')
+  await expect(page.getByRole('heading', { name: 'Đổi mật khẩu' })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Email đăng nhập' })).toHaveValue('candidate@example.com')
+  await expect(page.getByLabel('Mật khẩu hiện tại')).toBeVisible()
+
+  if (testInfo.project.name === 'desktop-chromium') {
+    await page.setViewportSize({ width: 1280, height: 600 })
+    await page.getByRole('button', { name: 'Mở menu tài khoản' }).click()
+    const accountPopup = page.locator('.ant-dropdown:visible')
+    await expect(accountPopup.getByRole('button', { name: 'Đăng xuất' })).toBeVisible()
+    const logoutBox = await accountPopup.getByRole('button', { name: 'Đăng xuất' }).boundingBox()
+    expect(logoutBox).not.toBeNull()
+    expect(logoutBox.y + logoutBox.height).toBeLessThanOrEqual(600)
+
+    await accountPopup.getByRole('button', { name: 'Cài đặt email & thông báo' }).click()
+    await expect(accountPopup.getByRole('button', { name: 'Cài đặt thông báo qua email' })).toBeVisible()
+    await expect(accountPopup.getByRole('button', { name: 'Cá nhân & Bảo mật' })).toHaveAttribute('aria-expanded', 'false')
+  }
+
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(hasHorizontalOverflow).toBe(false)
 })
 
 test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ page }) => {

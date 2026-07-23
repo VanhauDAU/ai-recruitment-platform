@@ -23,6 +23,8 @@ export const jobKeys = {
   industries: ['jobs', 'industries'],
   employerList: (params = {}) => ['jobs', 'employer-list', params],
   employerDetail: (publicId) => ['jobs', 'employer-detail', publicId],
+  candidateRecommendationsRoot: ['jobs', 'candidate-recommendations'],
+  candidateRecommendations: (params = {}) => ['jobs', 'candidate-recommendations', params],
   postingContext: ['jobs', 'posting-context'],
   adminModeration: (params = {}) => ['jobs', 'admin-moderation', params],
 }

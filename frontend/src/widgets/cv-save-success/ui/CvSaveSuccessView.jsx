@@ -226,8 +226,14 @@ export default function CvSaveSuccessView({ publicId, savedCv = null, savedVersi
     })
     getCvJobRecommendations(publicId).then((value) => {
       if (active) setRecommendations(value)
-    }).catch(() => {
-      if (active) setRecommendations({ results: [], related_positions: [], focus_keyword: '' })
+    }).catch((recommendationError) => {
+      if (!active) return
+      setRecommendations({
+        results: [],
+        related_positions: [],
+        focus_keyword: '',
+        consent_required: recommendationError.response?.status === 403,
+      })
     })
     return () => { active = false }
   }, [publicId, savedCv])
@@ -270,7 +276,29 @@ export default function CvSaveSuccessView({ publicId, savedCv = null, savedVersi
           <VisibilityCard publicId={publicId} />
           <section>
             <h2 className="mb-4 text-2xl font-extrabold text-[#26384a]">Việc làm {jobs.focus_keyword && <>&ldquo;{jobs.focus_keyword}&rdquo; </>}phù hợp với CV của bạn</h2>
-            {!recommendations ? <Skeleton active paragraph={{ rows: 5 }} /> : jobs.results.length ? <div className="space-y-4">{jobs.results.map((job) => <JobCard key={job.public_id} job={job} />)}</div> : <div className="rounded-2xl bg-white p-10 text-center text-slate-500">Chưa có việc làm đủ phù hợp. Hệ thống sẽ tiếp tục cập nhật cho bạn.</div>}
+            {!recommendations ? (
+              <Skeleton active paragraph={{ rows: 5 }} />
+            ) : jobs.consent_required ? (
+              <div className="rounded-2xl border border-emerald-200 bg-white p-7 text-center shadow-sm">
+                <SafetyCertificateOutlined className="text-3xl text-[#00b14f]" />
+                <h3 className="mt-3 text-lg font-bold text-[#26384a]">Bật quyền gợi ý việc làm</h3>
+                <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
+                  Hệ thống chỉ đọc nhu cầu và CV để tìm cơ hội phù hợp sau khi bạn đồng ý.
+                </p>
+                <Link
+                  to="/tai-khoan/cai-dat-goi-y-viec-lam"
+                  className="mt-4 inline-flex rounded-full bg-[#00b14f] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#009643]"
+                >
+                  Đi tới cài đặt gợi ý
+                </Link>
+              </div>
+            ) : jobs.results.length ? (
+              <div className="space-y-4">{jobs.results.map((job) => <JobCard key={job.public_id} job={job} />)}</div>
+            ) : (
+              <div className="rounded-2xl bg-white p-10 text-center text-slate-500">
+                Chưa có việc làm đủ phù hợp. Hệ thống sẽ tiếp tục cập nhật cho bạn.
+              </div>
+            )}
             <div className="mt-6 flex justify-center"><Link to={viewAllPath} className="inline-flex items-center gap-2 rounded-full border-2 border-[#00b14f] bg-white px-7 py-3 font-bold text-[#00b14f] transition hover:bg-emerald-50">Việc làm phù hợp với CV của bạn <ArrowRightOutlined /></Link></div>
           </section>
           {jobs.related_positions.length > 0 && (
