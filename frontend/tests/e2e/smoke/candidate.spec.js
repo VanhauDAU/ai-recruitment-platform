@@ -2,18 +2,18 @@ import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
 const EMAIL_NOTIFICATION_DEFAULTS = {
-  important_system_updates: false,
-  employer_viewed_cv: false,
-  new_features_and_cv_templates: false,
-  other_system_notifications: false,
-  configured_job_alerts: false,
-  suitable_job_recommendations: false,
-  top_candidate_alerts: false,
-  employer_invitations: false,
-  job_and_career_events: false,
-  service_introductions: false,
-  program_and_event_introductions: false,
-  partner_gifts_and_discounts: false,
+  important_system_updates: true,
+  employer_viewed_cv: true,
+  new_features_and_cv_templates: true,
+  other_system_notifications: true,
+  configured_job_alerts: true,
+  suitable_job_recommendations: true,
+  top_candidate_alerts: true,
+  employer_invitations: true,
+  job_and_career_events: true,
+  service_introductions: true,
+  program_and_event_introductions: true,
+  partner_gifts_and_discounts: true,
 }
 
 async function mockCandidatePersonalizationApi(page) {
@@ -89,15 +89,15 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
 
   await page.goto('/tai-khoan/cai-dat-nhan-email')
   await expect(page.getByRole('heading', { name: 'Cài đặt thông báo qua email' })).toBeVisible()
-  const suitableJobsSwitch = page.getByRole('switch', { name: 'Gợi ý việc làm phù hợp' })
+  const suitableJobsSwitch = page.getByRole('switch', { name: 'Thông báo việc làm phù hợp' })
   const updateRequest = page.waitForRequest((request) => {
     if (!request.url().endsWith('/api/candidate/email-notification-settings/')) return false
     return request.method() === 'PATCH'
-      && request.postDataJSON()?.suitable_job_recommendations === true
+      && request.postDataJSON()?.suitable_job_recommendations === false
   })
   await suitableJobsSwitch.click()
   await updateRequest
-  await expect(suitableJobsSwitch).toBeChecked()
+  await expect(suitableJobsSwitch).not.toBeChecked()
   await expect(page.getByText('Đã lưu tự động')).toBeVisible()
 
   await page.goto('/tai-khoan/viec-lam-phu-hop')

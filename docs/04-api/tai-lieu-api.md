@@ -40,7 +40,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/oauth/complete/` | Đổi `one_time_code` (1 lần dùng, TTL 60s) lấy `{user, access, refresh}` |
 | GET/PATCH | `/api/candidate/profile/` | Đọc/cập nhật `gender` cho onboarding và cài đặt gợi ý việc làm (tự tạo profile legacy khi cần) |
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
-| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 opt-in email candidate. GET chưa có row trả defaults tắt mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu/2FA không thuộc contract và luôn bật. |
+| GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu/2FA là email giao dịch, không thuộc contract hay UI preference. |
 | GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + state onboarding bắt buộc và checklist xác thực có thể hoàn thiện dần (chỉ `position_title` sửa được) |
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |

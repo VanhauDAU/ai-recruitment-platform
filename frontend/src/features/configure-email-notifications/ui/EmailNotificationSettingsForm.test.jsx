@@ -11,26 +11,26 @@ const notificationApi = vi.hoisted(() => ({
 
 vi.mock('@/entities/candidate-notification-preferences', () => notificationApi)
 
-const ALL_DISABLED = {
-  important_system_updates: false,
-  employer_viewed_cv: false,
-  new_features_and_cv_templates: false,
-  other_system_notifications: false,
-  configured_job_alerts: false,
-  suitable_job_recommendations: false,
-  top_candidate_alerts: false,
-  employer_invitations: false,
-  job_and_career_events: false,
-  service_introductions: false,
-  program_and_event_introductions: false,
-  partner_gifts_and_discounts: false,
+const ALL_ENABLED = {
+  important_system_updates: true,
+  employer_viewed_cv: true,
+  new_features_and_cv_templates: true,
+  other_system_notifications: true,
+  configured_job_alerts: true,
+  suitable_job_recommendations: true,
+  top_candidate_alerts: true,
+  employer_invitations: true,
+  job_and_career_events: true,
+  service_introductions: true,
+  program_and_event_introductions: true,
+  partner_gifts_and_discounts: true,
 }
 
 describe('EmailNotificationSettingsForm', () => {
   beforeEach(() => {
     notificationApi.getCandidateNotificationPreferences.mockReset()
     notificationApi.updateCandidateNotificationPreferences.mockReset()
-    notificationApi.getCandidateNotificationPreferences.mockResolvedValue(ALL_DISABLED)
+    notificationApi.getCandidateNotificationPreferences.mockResolvedValue(ALL_ENABLED)
     vi.spyOn(message, 'error').mockImplementation(() => {})
   })
 
@@ -38,34 +38,34 @@ describe('EmailNotificationSettingsForm', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders all three groups and keeps security emails enabled', async () => {
+  it('renders the three compact groups with every preference enabled by default', async () => {
     render(<EmailNotificationSettingsForm />)
 
-    expect(await screen.findByText('Tài khoản và hoạt động quan trọng')).toBeInTheDocument()
-    expect(screen.getByText('Cơ hội việc làm dành cho bạn')).toBeInTheDocument()
-    expect(screen.getByText('Nội dung, sự kiện và ưu đãi')).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: 'Email bảo mật luôn bật' })).toBeChecked()
-    expect(screen.getByRole('switch', { name: 'Email bảo mật luôn bật' })).toBeDisabled()
-    expect(screen.getAllByRole('switch')).toHaveLength(13)
+    expect(await screen.findByText('Thông báo từ hệ thống')).toBeInTheDocument()
+    expect(screen.getByText('Thông báo cơ hội việc làm')).toBeInTheDocument()
+    expect(screen.getByText('Thông báo giới thiệu dịch vụ')).toBeInTheDocument()
+    expect(screen.getAllByRole('switch')).toHaveLength(12)
+    screen.getAllByRole('switch').forEach((item) => expect(item).toBeChecked())
+    expect(screen.queryByText('Email bảo mật luôn được bật')).not.toBeInTheDocument()
   })
 
-  it('optimistically enables one preference and patches only that field', async () => {
+  it('optimistically disables one preference and patches only that field', async () => {
     const user = userEvent.setup()
     notificationApi.updateCandidateNotificationPreferences.mockResolvedValue({
-      suitable_job_recommendations: true,
+      suitable_job_recommendations: false,
     })
     render(<EmailNotificationSettingsForm />)
 
     const recommendationSwitch = await screen.findByRole(
       'switch',
-      { name: 'Gợi ý việc làm phù hợp' },
+      { name: 'Thông báo việc làm phù hợp' },
     )
     await user.click(recommendationSwitch)
 
-    expect(recommendationSwitch).toBeChecked()
+    expect(recommendationSwitch).not.toBeChecked()
     await waitFor(() => {
       expect(notificationApi.updateCandidateNotificationPreferences).toHaveBeenCalledWith({
-        suitable_job_recommendations: true,
+        suitable_job_recommendations: false,
       })
     })
     expect(await screen.findByText('Đã lưu tự động')).toBeInTheDocument()
@@ -81,7 +81,7 @@ describe('EmailNotificationSettingsForm', () => {
     const configuredJobSwitch = await screen.findByRole('switch', { name: 'Việc làm theo thiết lập' })
     await user.click(configuredJobSwitch)
 
-    await waitFor(() => expect(configuredJobSwitch).not.toBeChecked())
+    await waitFor(() => expect(configuredJobSwitch).toBeChecked())
     expect(screen.getByRole('alert')).toHaveTextContent('Không thể cập nhật lúc này.')
     expect(message.error).toHaveBeenCalledWith('Không thể cập nhật lúc này.')
   })
@@ -90,14 +90,14 @@ describe('EmailNotificationSettingsForm', () => {
     const user = userEvent.setup()
     notificationApi.getCandidateNotificationPreferences
       .mockRejectedValueOnce({ response: { status: 503, data: {} } })
-      .mockResolvedValueOnce(ALL_DISABLED)
+      .mockResolvedValueOnce(ALL_ENABLED)
 
     render(<EmailNotificationSettingsForm />)
 
     expect(await screen.findByText('Chưa tải được cài đặt nhận email')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Thử lại' }))
 
-    expect(await screen.findByText('Tài khoản và hoạt động quan trọng')).toBeInTheDocument()
+    expect(await screen.findByText('Thông báo từ hệ thống')).toBeInTheDocument()
     expect(notificationApi.getCandidateNotificationPreferences).toHaveBeenCalledTimes(2)
   })
 })

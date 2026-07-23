@@ -11,7 +11,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Added — Cá nhân hóa tài khoản ứng viên
 
 - Mở ba trang thật trong cụm `/tai-khoan`: cài đặt thông báo qua email, đổi mật khẩu và danh sách việc làm phù hợp; route tiếp tục được bảo vệ theo thứ tự `AuthGuard → RoleGuard(candidate)`.
-- Thêm 12 lựa chọn email theo ba nhóm hệ thống/cơ hội việc làm/giới thiệu dịch vụ. Các lựa chọn tùy chọn mặc định tắt, tự lưu từng thay đổi qua `GET/PATCH /api/candidate/email-notification-settings/`; email xác thực, đặt lại mật khẩu và 2FA luôn bật ngoài preference này.
+- Thêm 12 lựa chọn email theo ba nhóm hệ thống/cơ hội việc làm/giới thiệu dịch vụ. Các lựa chọn mặc định bật và tự lưu từng thay đổi qua `GET/PATCH /api/candidate/email-notification-settings/`; email xác thực, đặt lại mật khẩu và 2FA là email giao dịch ngoài preference này.
 - Thêm feed `GET /api/jobs/recommendations/for-me/` có phân trang, lý do/điểm khớp, nguồn CV đang dùng và trạng thái thiết lập/consent. Preference là nguồn chính, CV mặc định hoặc CV gần nhất bổ sung vị trí/headline/kỹ năng; không tuyên bố dùng lịch sử tìm kiếm vì backend chưa lưu tín hiệu đó.
 
 #### Changed — Menu, consent và bảo mật ứng viên
@@ -19,6 +19,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Dropdown tài khoản desktop chuyển sang mở bằng click, single-open accordion, tự mở nhóm chứa route hiện tại và cuộn nội bộ theo viewport; header tài khoản cùng nút đăng xuất luôn nhìn thấy. Bỏ badge thông báo giả.
 - Form nhu cầu việc làm luôn cho phép bật hoặc rút consent gợi ý; nội dung giải thích đúng nguồn dữ liệu thực tế và nhãn quyền hiển thị hồ sơ cho nhà tuyển dụng không còn bị diễn đạt thành email/sự kiện. Endpoint gợi ý theo CV cũng dừng đọc nội dung CV khi chưa có consent; cập nhật hoặc rút consent xóa cache feed để không lóe lại kết quả cũ.
 - Form đổi mật khẩu dùng chung candidate/employer nhưng không còn hardcode điều hướng employer; candidate thấy email đăng nhập read-only, rule mật khẩu khớp backend và tiếp tục hỗ trợ xoay token/đăng xuất thiết bị khác.
+- Trang cài đặt email rút về ba nhóm phẳng theo TopCV, bỏ card/icon/mô tả lặp và không hiển thị email giao dịch bảo mật như một switch riêng.
 
 #### Documentation & Verification
 

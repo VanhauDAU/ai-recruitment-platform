@@ -170,7 +170,7 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
 | 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
 | 1.24e | Tối ưu menu tài khoản desktop: click, single accordion, tự mở route active, cuộn trong viewport và giữ logout hiển thị | ✅ |
-| 1.24f | Cài đặt 12 loại thông báo email candidate, opt-in mặc định tắt, PATCH tự lưu và email bảo mật luôn bật | ✅ |
+| 1.24f | Cài đặt 12 loại thông báo email candidate, mặc định bật, PATCH tự lưu và UI ba nhóm phẳng | ✅ |
 | 1.24g | Trang đổi mật khẩu candidate dùng workflow chung, email read-only, token/session rotation và validation khớp backend | ✅ |
 | 1.24h | Trang việc làm phù hợp preference-first: consent, CV bổ sung/fallback không CV, score/reasons, pagination và lưu việc | ✅ |
 | 1.25 | Cookie consent + job view tracking: signed cookie, UI tùy chỉnh, policy, optional-storage gate và deduplicated tracking | ✅ |
@@ -505,11 +505,12 @@ và nút đăng xuất luôn nhìn thấy. Ba placeholder được thay bằng t
 `/tai-khoan/cai-dat-nhan-email`, `/tai-khoan/doi-mat-khau` và
 `/tai-khoan/viec-lam-phu-hop`.
 
-Email dùng model one-to-one `CandidateEmailNotificationSettings` (migration
-`candidates.0004`), 12 positive opt-in mặc định tắt, GET không ghi row và PATCH
-partial create-on-first-write. Frontend chia đúng 3 nhóm 4/5/3, optimistic
-auto-save/rollback và tách email bảo mật luôn bật khỏi preference. Đây là policy
-store; chưa có producer gửi email sản phẩm mới.
+Email dùng model one-to-one `CandidateEmailNotificationSettings` (migrations
+`candidates.0004–0005`), 12 preference mặc định bật, GET không ghi row và PATCH
+partial create-on-first-write. Frontend chia đúng 3 nhóm phẳng 4/5/3, optimistic
+auto-save/rollback. Email xác thực/reset mật khẩu/2FA là email giao dịch, vẫn
+ngoài preference và không chiếm một switch riêng. Đây là policy store; chưa có
+producer gửi email sản phẩm mới.
 
 Đổi mật khẩu tái dùng `/api/auth/password/`; feature không còn hardcode redirect
 employer, hiển thị email candidate read-only, giữ token/session rotation và tùy

@@ -261,7 +261,7 @@ widgets/main-header/CandidateUserMenu
 - `entities/account` là nguồn duy nhất cho nhóm/item/route tài khoản.
   `CandidateUserMenu` và `AccountSidebar` chỉ render config này; dropdown desktop
   dùng single-open accordion, giới hạn theo viewport và để vùng item cuộn riêng.
-- `entities/candidate-notification-preferences` sở hữu GET/PATCH opt-in email.
+- `entities/candidate-notification-preferences` sở hữu GET/PATCH preference email.
   Feature email điều phối optimistic auto-save/rollback; page chỉ compose header
   và feature. Email bảo mật luôn bật không thuộc DTO preference.
 - `features/change-password` dùng chung hai portal và không chứa redirect/copy

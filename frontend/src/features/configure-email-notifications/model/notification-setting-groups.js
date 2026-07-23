@@ -1,94 +1,67 @@
-import {
-  GiftOutlined,
-  SafetyCertificateOutlined,
-  SolutionOutlined,
-} from '@ant-design/icons'
-
 export const NOTIFICATION_SETTING_GROUPS = [
   {
     key: 'account',
-    title: 'Tài khoản và hoạt động quan trọng',
-    description: 'Theo dõi thay đổi quan trọng liên quan đến tài khoản và hồ sơ tìm việc.',
-    icon: SafetyCertificateOutlined,
-    tone: 'emerald',
+    title: 'Thông báo từ hệ thống',
     items: [
       {
         key: 'important_system_updates',
-        label: 'Cập nhật hệ thống quan trọng',
-        description: 'Các thay đổi có thể ảnh hưởng đến tài khoản hoặc quá trình tìm việc của bạn.',
+        label: 'Cập nhật quan trọng từ hệ thống',
       },
       {
         key: 'employer_viewed_cv',
-        label: 'Nhà tuyển dụng đã xem CV',
-        description: 'Biết khi hồ sơ của bạn nhận được sự quan tâm từ nhà tuyển dụng.',
+        label: 'Thông báo nhà tuyển dụng đã xem CV',
       },
       {
         key: 'new_features_and_cv_templates',
-        label: 'Tính năng và mẫu CV mới',
-        description: 'Khám phá công cụ mới và các mẫu CV vừa được phát hành.',
+        label: 'Thông báo tính năng và mẫu CV mới',
       },
       {
         key: 'other_system_notifications',
-        label: 'Thông báo hệ thống khác',
-        description: 'Nhận các thông tin vận hành hữu ích khác từ nền tảng.',
+        label: 'Thông báo khác từ hệ thống',
       },
     ],
   },
   {
     key: 'jobs',
-    title: 'Cơ hội việc làm dành cho bạn',
-    description: 'Không bỏ lỡ công việc và lời mời phù hợp với mục tiêu nghề nghiệp.',
-    icon: SolutionOutlined,
-    tone: 'blue',
+    title: 'Thông báo cơ hội việc làm',
     items: [
       {
         key: 'configured_job_alerts',
         label: 'Việc làm theo thiết lập',
-        description: 'Nhận email theo các bộ tiêu chí việc làm bạn đã chủ động thiết lập.',
       },
       {
         key: 'suitable_job_recommendations',
-        label: 'Gợi ý việc làm phù hợp',
-        description: 'Các cơ hội được đề xuất từ nhu cầu công việc và CV của bạn.',
+        label: 'Thông báo việc làm phù hợp',
       },
       {
         key: 'top_candidate_alerts',
-        label: 'Cơ hội dành cho ứng viên nổi bật',
-        description: 'Thông tin khi hồ sơ của bạn phù hợp với chương trình tuyển dụng ưu tiên.',
+        label: 'Thông báo việc làm bạn là ứng viên hàng đầu',
       },
       {
         key: 'employer_invitations',
-        label: 'Lời mời từ nhà tuyển dụng',
-        description: 'Nhận email khi nhà tuyển dụng muốn kết nối hoặc mời bạn ứng tuyển.',
+        label: 'Thông báo nhà tuyển dụng gửi mời lời phỏng vấn / ứng tuyển',
       },
       {
         key: 'job_and_career_events',
-        label: 'Thông tin việc làm và sự kiện nghề nghiệp',
-        description: 'Ngày hội tuyển dụng, workshop và hoạt động phát triển sự nghiệp.',
+        label: 'Thông tin liên quan đến việc làm, sự kiện nghề nghiệp',
       },
     ],
   },
   {
     key: 'updates',
-    title: 'Nội dung, sự kiện và ưu đãi',
-    description: 'Tùy chọn các nội dung phát triển nghề nghiệp và chương trình bạn quan tâm.',
-    icon: GiftOutlined,
-    tone: 'amber',
+    title: 'Thông báo giới thiệu dịch vụ',
     items: [
       {
         key: 'service_introductions',
-        label: 'Giới thiệu dịch vụ',
-        description: 'Thông tin về các dịch vụ hỗ trợ CV và tìm việc trên nền tảng.',
+        label: 'Giới thiệu các dịch vụ',
       },
       {
         key: 'program_and_event_introductions',
-        label: 'Chương trình và sự kiện mới',
-        description: 'Các chương trình cộng đồng và sự kiện nổi bật sắp diễn ra.',
+        label: 'Giới thiệu chương trình, sự kiện',
       },
       {
         key: 'partner_gifts_and_discounts',
-        label: 'Quà tặng và ưu đãi đối tác',
-        description: 'Nhận mã ưu đãi, quà tặng và quyền lợi từ các đối tác phù hợp.',
+        label: 'Quà tặng / Mã giảm giá từ đối tác',
       },
     ],
   },

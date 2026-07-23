@@ -6655,7 +6655,7 @@ components:
       - version_public_id
     CandidateEmailNotificationSettings:
       type: object
-      description: Candidate-owned email notification opt-ins.
+      description: Candidate-owned email notification preferences, enabled by default.
       properties:
         important_system_updates:
           type: boolean
@@ -12008,7 +12008,7 @@ components:
           nullable: true
     PatchedCandidateEmailNotificationSettingsRequest:
       type: object
-      description: Candidate-owned email notification opt-ins.
+      description: Candidate-owned email notification preferences, enabled by default.
       properties:
         important_system_updates:
           type: boolean
