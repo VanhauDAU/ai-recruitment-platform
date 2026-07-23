@@ -126,7 +126,9 @@ export default function EmailNotificationSettingsForm() {
     <div>
       <div
         aria-live="polite"
-        className="flex min-h-10 items-center justify-end border-b border-slate-100 px-5 text-xs font-medium sm:px-6"
+        className={saveState === 'idle'
+          ? 'sr-only'
+          : 'flex items-center justify-end px-5 py-2 text-xs font-medium sm:px-6'}
         role="status"
       >
         {saveState === 'saving' && (
@@ -147,7 +149,7 @@ export default function EmailNotificationSettingsForm() {
       </div>
 
       {saveError && (
-        <p role="alert" className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-6">
+        <p role="alert" className="bg-red-50 px-5 py-3 text-sm text-red-700 sm:px-6">
           {saveError}
         </p>
       )}
@@ -157,21 +159,21 @@ export default function EmailNotificationSettingsForm() {
           <section
             key={group.key}
             aria-labelledby={`notification-group-${group.key}`}
-            className="px-5 py-5 sm:px-6"
+            className="border-t border-slate-100 px-5 py-3.5 sm:px-6"
           >
-            <h2 id={`notification-group-${group.key}`} className="text-sm font-bold text-slate-800">
+            <h2 id={`notification-group-${group.key}`} className="text-sm font-semibold text-slate-800">
               {group.title}
             </h2>
 
-            <ul className="mt-2 divide-y divide-slate-100">
+            <ul className="mt-1">
               {group.items.map((item) => {
                 const labelId = `notification-setting-${item.key}`
                 return (
                   <li
                     key={item.key}
-                    className="flex items-center justify-between gap-4 py-3.5"
+                    className="flex items-center justify-between gap-3 py-2"
                   >
-                    <h3 id={labelId} className="min-w-0 text-sm font-medium leading-6 text-slate-700">
+                    <h3 id={labelId} className="min-w-0 text-sm font-medium leading-5 text-slate-700">
                       {item.label}
                     </h3>
                     <Switch
