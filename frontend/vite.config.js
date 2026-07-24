@@ -23,6 +23,9 @@ export default defineConfig({
     port: Number(process.env.PORT) || 5173,
   },
   build: {
+    // Bundle budget tooling uses the manifest to attribute every emitted chunk
+    // and the incremental JS/CSS graph of each lazy route.
+    manifest: true,
     rollupOptions: {
       output: {
         // Chỉ tách core React (dùng ở mọi route, ít đổi) thành vendor chunk riêng
