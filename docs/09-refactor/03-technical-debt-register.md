@@ -26,7 +26,7 @@ Không phát hiện issue Critical.
 | FE-001 | 27 `/tuyendung/app` literals trong 8 employer files, trong khi subdomain dùng `/app` | Production navigation vào NotFound | Dùng `employerAppPath()` + test subdomain | Low | M | Portal config/E2E | Resolved in Phase 5 |
 | FE-002 | Application/job/CV adapters bỏ pagination metadata; backend page size 20 | List/metrics/`hasApplied` sai sau 20 record | Canonical envelope, page-aware UI/status endpoint, migrate từng domain | Med–High | L | Backend contract + many consumers | Open/confirmed |
 | FE-003 | Refresh failure chỉ clear token, không clear `SessionProvider.user`; single-flight global | Protected shell giữ phiên giả, lặp 401; portal có thể ảnh hưởng nhau | Auth-expired coordinator per portal; phân biệt terminal auth và transient errors | High | M | Session/guard/query cache | Proposal required |
-| CV-001 | Explicit Save/Publish/Switch/Sample không drain edit queue như `saveDraft`; save-version không idempotent | Commit draft cũ, sample ghi đè edit, double click tạo version trùng | Autosave operation barrier/mutex + backend idempotency/CAS | High | M–L | Editor state machine/API contract | Proposal required |
+| CV-001 | Explicit Save/Publish/Switch/Sample không drain edit queue như `saveDraft`; save-version không idempotent | Commit draft cũ, sample ghi đè edit, double click tạo version trùng | Autosave operation barrier/mutex + backend idempotency/CAS | High | M–L | Editor state machine/API contract | Proposal required; resource isolation/retry fixed in Phase 6 |
 | CV-002 | Application Admin sửa được `cv/submitted_cv_version`; immutable guard chỉ ở `CvVersion.save`; hard delete mất source parent | Snapshot provenance có thể bị viết lại hoặc không audit được nguồn | Read-only admin + model/service/DB invariant + provenance retention | High | M–L | Migration/data/legal retention | Proposal required |
 
 ## Medium
@@ -51,6 +51,7 @@ Không phát hiện issue Critical.
 | FE-008 | ConsultationLeads request thủ công không cancel/request-id | Response filter cũ ghi đè filter mới | TanStack Query keyed `{status,page}` với signal | Low | S | Pagination migration | Resolved in Phase 5 |
 | CV-003 | Có archive fields/restore window nhưng DELETE V2 hard-delete; không restore version | Người dùng không dùng được retention contract, thao tác xóa khó phục hồi | Product policy; archive/restore; restore version tạo draft mới | High | L | Data retention/API/UI | Proposal required |
 | CV-004 | Snapshot content còn nhưng hard delete xóa source version, `parent_version=SET_NULL` | Mất exact provenance version gốc | Lưu immutable source IDs/hash hoặc giữ source version theo retention | High | M–L | CV-002/policy/migration | Proposal required |
+| CV-005 | Read-only/PDF chưa áp toàn bộ `inline_text_styles`; browser/PDF khác nguồn row topology và renderer-version fallback | Format đã lưu hoặc template version tương lai có thể hiển thị khác giữa editor, shared view và export | Kiểm kê version; parity matrix; một pure projection/contract cho từng renderer | Medium | M | Template/version inventory, renderer regression | Partially resolved in Phase 6 |
 | SEC-005 | DOCX/PDF/image/legal upload thiếu ZIP expansion/pixel/malware sandbox đầy đủ | ZIP/pixel bomb, malicious document làm worker/resource quá tải | Parser budgets, quarantine/AV, resource limits/throttle | Med–High | M–L | Worker/storage/scanner | Open/partially mitigated |
 | SEC-006 | MFA counter/challenge consume không atomic; TOTP thiếu per-challenge attempt/replay | Parallel verify/lost attempt, TOTP reuse trong window | Redis atomic script/transaction + last timestep + tests | Medium | M | Redis/auth proposal | Proposal required |
 | SEC-007 | Bearer/private CV response chưa explicit `private, no-store`; token trong URL path | Browser/proxy cache/history/log giữ dữ liệu/token | Cache headers, log redaction, review token exchange | Medium | S–M | Proxy/frontend share flow | Open |
@@ -106,3 +107,20 @@ Không phát hiện issue Critical.
   fixtures chứng minh cả ba rule đang thực sự bắt vi phạm.
 - `FE-010`: manifest report đo 263 JavaScript chunk và 67 lazy route. Initial
   budget vẫn là gate; lazy route mới có baseline, chưa đặt threshold.
+
+## Cập nhật triển khai Giai đoạn 6
+
+- `CV-001`: không thay operation barrier/idempotency. Page editor remount theo
+  `publicId`, tách hoàn toàn refs và promise autosave giữa hai CV; retry sau lỗi
+  tạo version đưa UI về `saved` nếu draft thực tế không dirty, không gửi PUT
+  thừa.
+- `CV-002`/`CV-004`: chưa đổi admin/model/DB/provenance. Regression xác nhận
+  application snapshot bị FK `PROTECT` và version submit phải thuộc đúng CV,
+  kể cả candidate sở hữu cả hai CV.
+- `CV-003`: không triển khai archive/restore vì setting restore-window, API
+  hard-delete và tài liệu rollout đang mô tả policy khác nhau.
+- `CV-005`: PDF Summary giữ bold/italic/underline/font/size/color như preview,
+  markup candidate được escape và browser dùng đúng lề 5 mm mà PDF hỗ trợ.
+  Inline field styles, row topology, renderer version và asset parity vẫn mở.
+- Không sửa schema canonical/template, migration CV, version pointer, delete
+  contract, application payload hay renderer persistence.

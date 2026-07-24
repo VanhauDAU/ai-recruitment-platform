@@ -244,3 +244,17 @@ Chưa triển khai các target auth/authorization/CV/production-data cần propo
 Giai đoạn này không đổi token/session/refresh, role guard, onboarding return URL,
 CV autosave/version/snapshot, route contract hay API payload. Các target cần
 proposal vẫn được giữ nguyên trạng thái.
+
+## 12. Tiến độ hiện thực hóa sau Giai đoạn 6
+
+| Target CV Builder | Đã triển khai an toàn | Enforcement | Phần cần proposal / kiểm kê |
+| --- | --- | --- | --- |
+| Autosave theo aggregate | Editor remount khi `publicId` đổi nên promise/ref của CV cũ không đi vào CV mới; retry no-op trả UI về trạng thái draft đã lưu | Route lifecycle regression; editor retry/queue/conflict tests; smoke ba viewport | Drain barrier chung cho Save/Publish/Switch/Sample, mutex và idempotency save-version (`CV-001`) |
+| Renderer compatibility | Summary PDF dùng cùng rich-text mark renderer với section khác; HTML vẫn autoescape; browser/PDF cùng hỗ trợ lề 5 mm | Pure PDF tests không DB; preview margin test; export/preview suite | `inline_text_styles`, row topology, renderer-version fallback và asset parity cần inventory (`CV-005`) |
+| Application snapshot | FK `PROTECT` được khóa bằng regression; candidate không thể ghép CV với version của CV khác dù cùng owner | Service/API/migration tests; recruiter snapshot và hard-delete smoke | Admin/model/DB append-only pointer, source provenance sau delete (`CV-002`, `CV-004`) |
+| Retention và restore | Chỉ audit; không đổi model, migration hay DELETE contract | Existing hard-delete/detach regressions | Chốt product/legal policy trước archive/restore/purge (`CV-003`) |
+
+Giai đoạn 6 không đổi schema canonical, template schema, API payload, migration,
+version numbering, hard-delete policy hoặc application snapshot. Các thay đổi
+presentation không đọc mutable draft khi export và không refactor persistence
+cùng renderer.
