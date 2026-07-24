@@ -22,6 +22,7 @@ from ..services import (
     close_job,
     duplicate_job,
     employer_job_posting_context,
+    extend_job_deadline,
     publish_job,
     reopen_job,
 )
@@ -185,6 +186,45 @@ class JobPostingWorkflowTests(TestCase):
                 (Job.Status.ACTIVE, Job.Status.CLOSED),
             ],
         )
+
+    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
+    def test_stale_job_instances_cannot_overwrite_a_completed_transition(self, readiness):
+        readiness.return_value = (self.recruiter, True)
+        job = self.make_publishable_job()
+        job.status = Job.Status.ACTIVE
+        job.submitted_at = timezone.now()
+        job.save(update_fields=['status', 'submitted_at'])
+        stale_for_publish = Job.objects.get(pk=job.pk)
+        stale_for_extend = Job.objects.get(pk=job.pk)
+
+        close_job(job, self.user)
+
+        with self.assertRaises(ValidationError):
+            publish_job(stale_for_publish, self.user)
+        with self.assertRaises(ValidationError):
+            extend_job_deadline(
+                stale_for_extend,
+                self.user,
+                timezone.localdate() + timedelta(days=30),
+            )
+
+        stale_for_reopen = Job.objects.get(pk=job.pk)
+        reopened = reopen_job(
+            Job.objects.get(pk=job.pk),
+            self.user,
+            timezone.localdate() + timedelta(days=21),
+        )
+        with self.assertRaises(ValidationError):
+            reopen_job(
+                stale_for_reopen,
+                self.user,
+                timezone.localdate() + timedelta(days=28),
+            )
+
+        job.refresh_from_db()
+        self.assertEqual(job.status, Job.Status.PENDING)
+        self.assertEqual(job.deadline, reopened.deadline)
+        self.assertEqual(job.status_history.count(), 2)
 
     def test_duplicate_copies_private_application_contact_and_emails(self):
         job = self.make_publishable_job()

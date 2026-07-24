@@ -11,6 +11,7 @@ from .posting import _record_status
 @transaction.atomic
 def approve_job(*, job, user):
     """Make one pending job public after an administrator approves it."""
+    job = Job.objects.select_for_update().get(pk=job.pk)
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể duyệt tin đang chờ duyệt.')
 
@@ -35,6 +36,7 @@ def approve_job(*, job, user):
 @transaction.atomic
 def reject_job(*, job, user, reason):
     """Reject one pending job with a mandatory, employer-visible explanation."""
+    job = Job.objects.select_for_update().get(pk=job.pk)
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể từ chối tin đang chờ duyệt.')
     reason = reason.strip()
