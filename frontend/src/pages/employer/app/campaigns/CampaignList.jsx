@@ -3,25 +3,22 @@ import {
   EditOutlined,
   EyeOutlined,
   FileAddOutlined,
-  RocketOutlined,
   SearchOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   Button,
   Card,
   Alert,
   Empty,
-  Form,
   Input,
   Modal,
   Pagination,
   Select,
   Table,
   Tag,
-  message,
 } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -32,13 +29,12 @@ import {
   CAMPAIGN_STATUS_LABELS,
   CAMPAIGN_STATUS_OPTIONS,
   campaignKeys,
-  createCampaign,
   getCampaigns,
-  updateCampaign,
 } from '@/entities/campaign'
 import {
-  CampaignNameForm,
   CampaignLifecycleActions,
+  CreateCampaignModal,
+  RenameCampaignModal,
 } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
@@ -186,9 +182,7 @@ export default function CampaignList() {
   const location = useLocation()
   const createOpen = Boolean(location.state?.createCampaign)
   const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
-  const [form] = Form.useForm()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const status = searchParams.get('status') || ''
   const scope = searchParams.get('scope') || ''
   const ordering = searchParams.get('ordering') || 'activity'
@@ -203,33 +197,6 @@ export default function CampaignList() {
   const campaignsQuery = useQuery({
     queryKey: campaignKeys.list(queryParams),
     queryFn: () => getCampaigns(queryParams),
-  })
-  const invalidateCampaigns = () => queryClient.invalidateQueries({
-    queryKey: campaignKeys.all,
-  })
-  const createMutation = useMutation({
-    mutationFn: createCampaign,
-    onSuccess: (campaign) => {
-      invalidateCampaigns()
-      form.resetFields()
-      setCreateOpen(false)
-      setActivityCampaign(campaign)
-      message.success('Đã tạo và mở chiến dịch.')
-    },
-    onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể tạo chiến dịch.'),
-    ),
-  })
-  const updateMutation = useMutation({
-    mutationFn: ({ publicId, values }) => updateCampaign(publicId, values),
-    onSuccess: () => {
-      invalidateCampaigns()
-      setEditCampaign(null)
-      message.success('Đã cập nhật chiến dịch.')
-    },
-    onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể cập nhật chiến dịch.'),
-    ),
   })
   const pageData = campaignsQuery.data || {
     count: 0,
@@ -477,51 +444,11 @@ export default function CampaignList() {
         />
       </Card>
 
-      <Modal
-        destroyOnHidden
+      <CreateCampaignModal
         open={createOpen}
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <RocketOutlined className="text-emerald-600" />
-            Tạo chiến dịch tuyển dụng
-          </span>
-        )}
-        okText="Tạo chiến dịch"
-        cancelText="Hủy"
-        okButtonProps={{
-          className: '!h-10 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!shadow-lg active:!translate-y-0',
-        }}
-        cancelButtonProps={{
-          className: '!h-10 !rounded-xl !border-slate-200 !px-4 !font-semibold !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-900',
-        }}
-        confirmLoading={createMutation.isPending}
-        onCancel={() => setCreateOpen(false)}
-        onOk={() => form.submit()}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={({ name }) => createMutation.mutate({ name: name.trim() })}
-        >
-          <Form.Item
-            label="Tên chiến dịch tuyển dụng"
-            name="name"
-            rules={[{ required: true, whitespace: true, message: 'Nhập tên chiến dịch.' }]}
-          >
-            <Input
-              autoFocus
-              maxLength={255}
-              placeholder="Ví dụ: Tuyển dụng nhân viên Marketing tháng 10"
-              onPressEnter={(event) => {
-                if (!event.nativeEvent.isComposing) {
-                  event.preventDefault()
-                  form.submit()
-                }
-              }}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+        onClose={() => setCreateOpen(false)}
+        onCreated={setActivityCampaign}
+      />
 
       <Modal
         destroyOnHidden
@@ -558,28 +485,10 @@ export default function CampaignList() {
         </div>
       </Modal>
 
-      <Modal
-        destroyOnHidden
-        footer={null}
-        open={Boolean(editCampaign)}
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <EditOutlined className="text-emerald-600" />
-            Sửa chiến dịch
-          </span>
-        )}
-        onCancel={() => setEditCampaign(null)}
-      >
-        <CampaignNameForm
-          initialName={editCampaign?.name}
-          submitting={updateMutation.isPending}
-          onCancel={() => setEditCampaign(null)}
-          onSubmit={(values) => updateMutation.mutate({
-            publicId: editCampaign.public_id,
-            values,
-          })}
-        />
-      </Modal>
+      <RenameCampaignModal
+        campaign={editCampaign}
+        onClose={() => setEditCampaign(null)}
+      />
     </section>
   )
 }

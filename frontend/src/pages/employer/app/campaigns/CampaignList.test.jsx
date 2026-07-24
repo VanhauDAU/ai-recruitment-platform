@@ -31,7 +31,6 @@ vi.mock('@/entities/campaign', () => ({
   updateCampaign,
 }))
 vi.mock('@/features/manage-campaigns', () => ({
-  CampaignNameForm: ({ initialName }) => <p>Sửa chiến dịch {initialName}</p>,
   CampaignLifecycleActions: ({ campaign, variant }) => variant === 'switch'
     ? (
         <button
@@ -42,6 +41,12 @@ vi.mock('@/features/manage-campaigns', () => ({
         />
       )
     : <button type="button">Dừng</button>,
+  CreateCampaignModal: ({ open }) => open
+    ? <p>Tạo chiến dịch tuyển dụng</p>
+    : null,
+  RenameCampaignModal: ({ campaign }) => campaign
+    ? <p>Sửa chiến dịch {campaign.name}</p>
+    : null,
 }))
 
 function CampaignDetailRoute() {
