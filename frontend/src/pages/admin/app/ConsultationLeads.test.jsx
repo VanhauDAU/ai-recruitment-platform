@@ -154,6 +154,47 @@ describe('AdminConsultationLeads', () => {
     expect(message.success).toHaveBeenCalledWith('Đã đánh dấu lead là đã liên hệ.')
   })
 
+  it('moves back before refetching when the only lead on the last new page is removed', async () => {
+    let contacted = false
+    getAdminConsultationLeads.mockImplementation(async ({ page }) => {
+      if (page === 1) {
+        return {
+          count: contacted ? 20 : 21,
+          results: [lead(1)],
+        }
+      }
+      if (page === 2 && !contacted) {
+        return {
+          count: 21,
+          results: [lead(21)],
+        }
+      }
+      throw new Error('page out of range')
+    })
+    updateAdminConsultationLead.mockImplementation(async () => {
+      contacted = true
+      return { id: 21, status: 'contacted' }
+    })
+    const user = userEvent.setup()
+    renderPage()
+
+    expect(await screen.findByText('Lead 1')).toBeInTheDocument()
+    await user.click(screen.getByTitle('2'))
+    expect(await screen.findByText('Lead 21')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Đã liên hệ' }))
+
+    await waitFor(() => {
+      const pageOneCalls = getAdminConsultationLeads.mock.calls
+        .filter(([params]) => params.page === 1)
+      expect(pageOneCalls).toHaveLength(2)
+    })
+    expect(
+      getAdminConsultationLeads.mock.calls.filter(([params]) => params.page === 2),
+    ).toHaveLength(1)
+    expect(await screen.findByText('Lead 1')).toBeInTheDocument()
+    expect(message.error).not.toHaveBeenCalled()
+  })
+
   it('uses the provider retry policy before showing the final load error', async () => {
     getAdminConsultationLeads.mockRejectedValue(new Error('network unavailable'))
     renderPage({ retry: 1 })

@@ -22,10 +22,20 @@ export default function AdminConsultationLeads() {
     ),
     placeholderData: (previousData) => previousData,
   })
+  const response = leadsQuery.data
+  const data = response?.results || (Array.isArray(response) ? response : [])
+  const total = response?.count ?? data.length
   const contactMutation = useMutation({
     mutationFn: ({ id }) => updateAdminConsultationLead(id, { status: 'contacted' }),
     onSuccess: () => {
       message.success('Đã đánh dấu lead là đã liên hệ.')
+      if (status === 'new' && data.length === 1 && page > 1) {
+        setPage(page - 1)
+        return queryClient.invalidateQueries({
+          queryKey: consultationLeadKeys.adminLists,
+          refetchType: 'none',
+        })
+      }
       return queryClient.invalidateQueries({ queryKey: consultationLeadKeys.adminLists })
     },
     onError: () => {
@@ -37,9 +47,6 @@ export default function AdminConsultationLeads() {
     if (leadsQuery.isError) message.error('Không thể tải danh sách yêu cầu tư vấn.')
   }, [leadsQuery.error, leadsQuery.isError])
 
-  const response = leadsQuery.data
-  const data = response?.results || (Array.isArray(response) ? response : [])
-  const total = response?.count ?? data.length
   const updatingId = contactMutation.isPending ? contactMutation.variables?.id : null
 
   const columns = [
