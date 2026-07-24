@@ -219,3 +219,14 @@ local edit → dirty revision
 Không coi target hoàn tất chỉ vì folder đúng; hành vi, contract và enforcement
 test mới là tiêu chí nghiệm thu.
 
+## 10. Tiến độ hiện thực hóa sau Giai đoạn 4
+
+| Target | Đã triển khai | Enforcement | Phần còn lại |
+| --- | --- | --- | --- |
+| Cache side effect sau commit | `services` và `sitecontent` dùng `transaction.on_commit(cache.delete)` | Save/delete/rollback regression | Audit các cache signal mới khi thêm domain |
+| Read model có query phẳng | Blog sliced prefetch; service category `Count`; site link-group batch theo source | Budget lần lượt 3, 1 và tối đa 4 query | Mở rộng budget cho các list tải cao khác |
+| Command initial recruitment need | View chỉ validate/map lỗi; service khóa parent recruiter, re-check và create; selector đọc record đầu tiên | Sequential + 2-thread PostgreSQL race, GET/list budget 2 | General CRUD vẫn dùng serializer persistence; template `Max+1` chưa xử lý |
+| State transition canonical | Job moderation/posting và application status/mark-viewed re-read row có lock trước khi kiểm state | Stale-instance tests và race tests hai worker | Job PATCH nested data, draft delete và serializer command DTO |
+
+Các lát cắt trên giữ nguyên URL, payload, permission, state graph và schema DB.
+Chưa triển khai các target auth/authorization/CV/production-data cần proposal.
