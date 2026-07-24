@@ -8,11 +8,22 @@ const listSlices = (layer) =>
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const entitySlices = listSlices('entities')
 const featureSlices = listSlices('features')
 const widgetSlices = listSlices('widgets')
+const pagePortals = listSlices('pages')
 
 module.exports = {
   forbidden: [
+    {
+      name: 'no-circular',
+      comment: 'src modules must not participate in circular dependencies',
+      severity: 'error',
+      from: { path: '^src/' },
+      to: { circular: true },
+    },
     {
       name: 'shared-only-depends-on-shared',
       comment: 'shared must not depend on any higher architectural layer',
@@ -69,20 +80,42 @@ module.exports = {
       from: { path: '^src/(app|pages)/' },
       to: { path: '^src/widgets/[^/]+/(?!index\\.js$)' },
     },
+    ...entitySlices.map((slice) => ({
+      name: `no-cross-entity-import-${slice}`,
+      comment: `entities/${slice} may not depend on another entity`,
+      severity: 'error',
+      from: { path: `^src/entities/${escapeRegExp(slice)}/` },
+      to: { path: `^src/entities/(?!${escapeRegExp(slice)}/)` },
+    })),
     ...featureSlices.map((slice) => ({
       name: `no-cross-feature-import-${slice}`,
       comment: `features/${slice} may not depend on another feature`,
       severity: 'error',
-      from: { path: `^src/features/${slice}/` },
-      to: { path: `^src/features/(?!${slice}/)` },
+      from: { path: `^src/features/${escapeRegExp(slice)}/` },
+      to: { path: `^src/features/(?!${escapeRegExp(slice)}/)` },
     })),
     ...widgetSlices.map((slice) => ({
       name: `no-cross-widget-import-${slice}`,
       comment: `widgets/${slice} may not depend on another widget`,
       severity: 'error',
-      from: { path: `^src/widgets/${slice}/` },
-      to: { path: `^src/widgets/(?!${slice}/)` },
+      from: { path: `^src/widgets/${escapeRegExp(slice)}/` },
+      to: { path: `^src/widgets/(?!${escapeRegExp(slice)}/)` },
     })),
+    ...pagePortals.flatMap((portal) => {
+      const otherPortals = pagePortals
+        .filter((candidate) => candidate !== portal)
+        .map(escapeRegExp)
+
+      return otherPortals.length === 0
+        ? []
+        : [{
+            name: `no-cross-page-portal-${portal}`,
+            comment: `pages/${portal} may not depend on another portal's pages`,
+            severity: 'error',
+            from: { path: `^src/pages/${escapeRegExp(portal)}/` },
+            to: { path: `^src/pages/(?:${otherPortals.join('|')})/` },
+          }]
+    }),
   ],
   options: {
     includeOnly: '^src/',
