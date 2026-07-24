@@ -15,6 +15,7 @@ import {
 } from '@/entities/job'
 import { PostJobForm } from '@/features/post-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 
 export default function JobForm() {
   const { publicId } = useParams()
@@ -39,7 +40,7 @@ export default function JobForm() {
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(job.status === 'draft' ? 'Đã lưu nháp.' : 'Đã lưu thay đổi.')
-      navigate(`/tuyendung/app/jobs/${job.public_id}/edit`, { replace: true })
+      navigate(employerAppPath(`/jobs/${job.public_id}/edit`), { replace: true })
     },
   })
   const publishMutation = useMutation({
@@ -51,7 +52,7 @@ export default function JobForm() {
           ? 'Đã gửi tin để quản trị viên duyệt.'
           : 'Đã cập nhật tin tuyển dụng.',
       )
-      navigate(`/tuyendung/app/jobs/${job.public_id}`)
+      navigate(employerAppPath(`/jobs/${job.public_id}`))
     },
   })
   const createSkillMutation = useMutation({
