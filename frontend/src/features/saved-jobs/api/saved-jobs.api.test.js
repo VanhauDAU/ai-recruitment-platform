@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getSavedJobs, saveJob, unsaveJob } from './saved-jobs.api'
+import {
+  getSavedJobRecommendations,
+  getSavedJobs,
+  saveJob,
+  unsaveJob,
+} from './saved-jobs.api'
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
@@ -23,5 +28,20 @@ describe('saved jobs API', () => {
     expect(mocks.get).toHaveBeenCalledWith('/jobs/saved/')
     expect(mocks.post).toHaveBeenCalledWith('/jobs/saved/', { job: 'job-1' })
     expect(mocks.delete).toHaveBeenCalledWith('/jobs/saved/job-1/')
+  })
+
+  it('loads rule-based recommendations from saved-job history', async () => {
+    const payload = {
+      status: 'ready',
+      strategy: 'saved-job-similarity-v1',
+      source_saved_job_count: 2,
+      results: [{ public_id: 'job-2', similarity_score: 74 }],
+    }
+    mocks.get.mockResolvedValue({ data: payload })
+
+    await expect(getSavedJobRecommendations(8)).resolves.toEqual(payload)
+    expect(mocks.get).toHaveBeenCalledWith('/jobs/recommendations/by-saved/', {
+      params: { limit: 8 },
+    })
   })
 })

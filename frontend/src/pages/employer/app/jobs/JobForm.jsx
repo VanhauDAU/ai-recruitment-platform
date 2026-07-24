@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Skeleton, message } from 'antd'
 import { useMemo } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { getCampaignOptions, campaignKeys } from '@/entities/campaign'
+import { createCampaign, getCampaignOptions, campaignKeys } from '@/entities/campaign'
 import { useSession } from '@/entities/session'
 import {
   getEmployerJob,
@@ -15,6 +15,7 @@ import {
 } from '@/entities/job'
 import { PostJobForm } from '@/features/post-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 
 export default function JobForm() {
   const { publicId } = useParams()
@@ -26,12 +27,20 @@ export default function JobForm() {
   const categoriesQuery = useQuery({ queryKey: jobKeys.categories, queryFn: () => getJobCategories() })
   const campaignsQuery = useQuery({ queryKey: campaignKeys.options, queryFn: getCampaignOptions })
   const postingContextQuery = useQuery({ queryKey: jobKeys.postingContext, queryFn: getJobPostingContext })
+  const quickCampaignMutation = useMutation({
+    mutationFn: createCampaign,
+    onSuccess: (campaign) => {
+      queryClient.setQueryData(campaignKeys.options, (current = []) => [campaign, ...current])
+      queryClient.invalidateQueries({ queryKey: campaignKeys.all })
+      message.success('Đã tạo và chọn chiến dịch.')
+    },
+  })
   const draftMutation = useMutation({
     mutationFn: (payload) => saveEmployerJob(payload, publicId),
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(job.status === 'draft' ? 'Đã lưu nháp.' : 'Đã lưu thay đổi.')
-      navigate(`/tuyendung/app/jobs/${job.public_id}/edit`, { replace: true })
+      navigate(employerAppPath(`/jobs/${job.public_id}/edit`), { replace: true })
     },
   })
   const publishMutation = useMutation({
@@ -43,7 +52,7 @@ export default function JobForm() {
           ? 'Đã gửi tin để quản trị viên duyệt.'
           : 'Đã cập nhật tin tuyển dụng.',
       )
-      navigate(`/tuyendung/app/jobs/${job.public_id}`)
+      navigate(employerAppPath(`/jobs/${job.public_id}`))
     },
   })
   const createSkillMutation = useMutation({
@@ -96,6 +105,8 @@ export default function JobForm() {
         submitLabel={submitLabel}
         submitting={draftMutation.isPending || publishMutation.isPending}
         errorMessage={mutationError ? getApiErrorMessage(mutationError, 'Không thể lưu tin tuyển dụng.') : ''}
+        creatingCampaign={quickCampaignMutation.isPending}
+        onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name })}
         onCreateSkill={(name) => createSkillMutation.mutateAsync(name)}
         onSaveDraft={(payload) => draftMutation.mutate(payload)}
         onPublish={(payload) => publishMutation.mutate(payload)}

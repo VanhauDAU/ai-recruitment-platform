@@ -9,6 +9,7 @@ import {
 import { Button, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { Link, useNavigate } from 'react-router-dom'
+import { employerAppPath } from '@/shared/config/portals'
 
 const STATUS = {
   draft: ['Nháp', 'default'],
@@ -24,7 +25,7 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
   const deadline = job.deadline ? dayjs(job.deadline).format('DD/MM/YYYY') : 'Không giới hạn'
   return (
     <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <Link to="/tuyendung/app/jobs" className="inline-flex items-center gap-2 text-sm !text-slate-500 hover:!text-[var(--brand-primary)]">
+      <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-2 text-sm !text-slate-500 hover:!text-[var(--brand-primary)]">
         <ArrowLeftOutlined /> Quay lại danh sách tin
       </Link>
       <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -43,7 +44,7 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           {job.status !== 'closed' && (
-            <Button className="!w-full sm:!w-auto" icon={<EditOutlined />} onClick={() => navigate(`/tuyendung/app/jobs/${publicId}/edit`)}>
+            <Button className="!w-full sm:!w-auto" icon={<EditOutlined />} onClick={() => navigate(employerAppPath(`/jobs/${publicId}/edit`))}>
               {job.status === 'rejected' ? 'Chỉnh sửa và gửi lại' : 'Chỉnh sửa'}
             </Button>
           )}

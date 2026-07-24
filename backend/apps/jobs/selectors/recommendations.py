@@ -2,10 +2,13 @@
 
 import re
 from decimal import Decimal
+from math import ceil
 
-from apps.candidates.selectors import candidate_job_preference_for_user
-from apps.cvs.selectors import candidate_cv_by_public_id
-from common.db.search import fold_accents
+from django.db.models import Q
+
+from apps.candidates.models import CandidateConsent, CandidateJobPreference, CandidateProfile
+from apps.cvs.models import UserCv
+from common.db.search import fold_accents, search_q
 
 from ..models import Job, JobCategoryAssignment
 from .listing import active_jobs_queryset
@@ -27,6 +30,11 @@ EXPERIENCE_RANK = {
 # weaker signals (for example skills + location) before it is called suitable.
 # This prevents a fresh but unrelated job from filling an otherwise short list.
 MIN_RECOMMENDATION_SCORE = 20
+MAX_SCORING_CANDIDATES = 500
+
+
+class RecommendationConsentRequired(Exception):
+    """Raised before CV data is read when recommendation consent is absent."""
 
 
 def _normalized(value):
@@ -76,23 +84,90 @@ def _position_from_cv_title(title):
     return value if value and value != str(title or '').strip() else ''
 
 
-def _cv_context(user, public_id):
-    cv = candidate_cv_by_public_id(user, public_id)
-    preference = candidate_job_preference_for_user(user)
+def _preference_state(user):
+    """Read preference + consent without mutating data from a selector."""
+    preference = (
+        CandidateJobPreference.objects.select_related('candidate_profile')
+        .prefetch_related(
+            'desired_specializations__job_category',
+            'preferred_provinces__location',
+            'candidate_profile__consents',
+        )
+        .filter(candidate_profile__user=user)
+        .first()
+    )
+    if preference:
+        return preference.candidate_profile, preference
+    profile = CandidateProfile.objects.prefetch_related('consents').filter(user=user).first()
+    return profile, None
+
+
+def _ai_recommendation_allowed(profile):
+    if not profile:
+        return False
+    return any(
+        consent.consent_type == CandidateConsent.ConsentType.AI_RECOMMENDATION
+        and consent.decision == CandidateConsent.Decision.GRANTED
+        for consent in profile.consents.all()
+    )
+
+
+def _candidate_cvs(user):
+    return (
+        UserCv.objects.filter(user=user, is_deleted=False)
+        .exclude(lifecycle_status=UserCv.LifecycleStatus.ARCHIVED)
+        .exclude(status=UserCv.Status.FAILED)
+        .exclude(processing_status=UserCv.ProcessingStatus.FAILED)
+        .select_related('position', 'latest_version')
+        .prefetch_related('cv_skills__skill')
+        .order_by('-is_default', '-updated_at', '-pk')
+    )
+
+
+def _cv_content(cv):
     version = cv.latest_version
     content = version.content_json if version else (cv.cv_data or {})
     personal = content.get('personal_info', {}) if isinstance(content, dict) else {}
     headline = str(personal.get('headline') or personal.get('job_title') or '').strip()
+    return content, headline
 
+
+def _cv_skills(cv, content):
     skills = {_normalized(item.skill.name) for item in cv.cv_skills.all() if item.skill_id}
+    skill_ids = {item.skill_id for item in cv.cv_skills.all() if item.skill_id}
     for section in content.get('sections', []) if isinstance(content, dict) else []:
         if not isinstance(section, dict) or section.get('section_key') != 'skills':
             continue
         for item in section.get('items', []):
             if isinstance(item, dict) and item.get('name'):
                 skills.add(_normalized(item['name']))
+    return skills, skill_ids
 
-    desired_categories = list(preference.desired_specializations.all())
+
+def _preference_values(preference):
+    return {
+        'experience_level': preference.experience_level if preference else '',
+        'desired_salary': preference.desired_salary_vnd if preference else None,
+        'willing_to_relocate': preference.willing_to_relocate if preference else False,
+        'province_ids': (
+            {item.location_id for item in preference.preferred_provinces.all()}
+            if preference
+            else set()
+        ),
+    }
+
+
+def _cv_context(user, public_id):
+    if not _candidate_cvs(user).filter(public_id=public_id).exists():
+        raise UserCv.DoesNotExist
+    profile, preference = _preference_state(user)
+    if not _ai_recommendation_allowed(profile):
+        raise RecommendationConsentRequired
+
+    cv = _candidate_cvs(user).get(public_id=public_id)
+    content, headline = _cv_content(cv)
+    skills, skill_ids = _cv_skills(cv, content)
+    desired_categories = list(preference.desired_specializations.all()) if preference else []
     title_position = _position_from_cv_title(cv.title)
 
     # This endpoint explains matches for the CV that was just saved. Its own
@@ -108,28 +183,65 @@ def _cv_context(user, public_id):
     else:
         category_ids = {item.job_category_id for item in desired_categories}
         position_labels = [item.job_category.name for item in desired_categories]
-        if preference.desired_position_other:
+        if preference and preference.desired_position_other:
             position_labels.append(preference.desired_position_other)
     position_terms = {_normalized(value) for value in [headline, *position_labels] if value}
     if not position_terms and title_position:
         position_terms.add(_normalized(title_position))
-    province_ids = {item.location_id for item in preference.preferred_provinces.all()}
     focus_keyword = (
         headline
         or (cv.position.name if cv.position_id else '')
         or title_position
-        or preference.desired_position_other
+        or (preference.desired_position_other if preference else '')
         or cv.title
     )
     return {
         'cv': cv,
-        'preference': preference,
         'skills': skills,
+        'skill_ids': skill_ids,
         'category_ids': category_ids,
         'position_labels': position_labels,
         'position_terms': position_terms,
-        'province_ids': province_ids,
+        'position_query_labels': [headline, *position_labels],
+        'position_reason': 'Khớp vị trí trên CV',
         'focus_keyword': focus_keyword,
+        **_preference_values(preference),
+    }
+
+
+def _candidate_context(preference, cv):
+    desired_categories = list(preference.desired_specializations.all())
+    position_labels = [item.job_category.name for item in desired_categories]
+    if preference.desired_position_other:
+        position_labels.append(preference.desired_position_other)
+
+    skills, skill_ids, cv_labels = set(), set(), []
+    if cv:
+        content, headline = _cv_content(cv)
+        skills, skill_ids = _cv_skills(cv, content)
+        title_position = _position_from_cv_title(cv.title)
+        cv_labels = [
+            headline,
+            cv.position.name if cv.position_id else '',
+            title_position,
+        ]
+
+    all_position_labels = [*position_labels, *cv_labels]
+    focus_keyword = next((label for label in position_labels if label), '')
+    if not focus_keyword:
+        focus_keyword = next((label for label in cv_labels if label), '')
+    return {
+        'cv': cv,
+        'skills': skills,
+        'skill_ids': skill_ids,
+        'category_ids': {item.job_category_id for item in desired_categories}
+        or ({cv.position_id} if cv and cv.position_id else set()),
+        'position_labels': position_labels,
+        'position_terms': {_normalized(label) for label in all_position_labels if label},
+        'position_query_labels': all_position_labels,
+        'position_reason': 'Khớp vị trí bạn quan tâm',
+        'focus_keyword': focus_keyword,
+        **_preference_values(preference),
     }
 
 
@@ -153,7 +265,7 @@ def _score_job(job, context):
         add_detail('category', 'Đúng vị trí chuyên môn', 38)
 
     if _contains_term(title, context['position_terms']):
-        add_detail('position', 'Khớp vị trí trên CV', 24)
+        add_detail('position', context['position_reason'], 24)
 
     job_skills = {_normalized(item.skill.name) for item in job.job_skills.all()}
     matched_skills = sorted(context['skills'] & job_skills)
@@ -165,18 +277,27 @@ def _score_job(job, context):
     provinces = {item.location.parent_id or item.location_id for item in job.job_locations.all()}
     if provinces & context['province_ids']:
         add_detail('location', 'Đúng địa điểm mong muốn', 10)
+    elif provinces and context['willing_to_relocate']:
+        add_detail('relocation', 'Phù hợp với lựa chọn sẵn sàng chuyển địa điểm', 3)
 
-    candidate_experience = EXPERIENCE_RANK.get(context['preference'].experience_level, 0)
+    candidate_experience = EXPERIENCE_RANK.get(context['experience_level'], 0)
     required_experience = EXPERIENCE_RANK.get(job.experience_years, 0)
     if job.experience_years and candidate_experience >= required_experience:
         add_detail('experience', 'Kinh nghiệm phù hợp', 6)
 
-    desired_salary = context['preference'].desired_salary_vnd
-    if job.salary_type != Job.SalaryType.NEGOTIABLE and desired_salary:
+    desired_salary = context['desired_salary']
+    if job.salary_type != Job.SalaryType.NEGOTIABLE and job.currency == 'VND' and desired_salary:
         desired = Decimal(desired_salary)
-        lower = job.salary_min or job.salary_max or Decimal('0')
-        upper = job.salary_max or job.salary_min or Decimal('0')
-        if lower <= desired * Decimal('1.25') and upper >= desired * Decimal('0.8'):
+        if job.salary_type == Job.SalaryType.FROM:
+            lower, upper = job.salary_min or Decimal('0'), None
+        elif job.salary_type == Job.SalaryType.UP_TO:
+            lower, upper = Decimal('0'), job.salary_max
+        else:
+            lower = job.salary_min or job.salary_max or Decimal('0')
+            upper = job.salary_max or job.salary_min
+        if lower <= desired * Decimal('1.25') and (
+            upper is None or upper >= desired * Decimal('0.8')
+        ):
             add_detail('salary', 'Mức lương phù hợp', 8)
 
     # Paid tier is intentionally excluded from compatibility. It is only a
@@ -185,11 +306,33 @@ def _score_job(job, context):
     return score, details
 
 
-def recommend_jobs_for_cv(user, public_id, *, limit=6):
-    context = _cv_context(user, public_id)
-    candidates = list(active_jobs_queryset().order_by('-published_at', '-created_at')[:200])
+def _ranking_candidates(context, *, user=None):
+    """Prefilter by strong signals, then score a bounded, relation-prefetched pool."""
+    signal_filter = Q()
+    if context['category_ids']:
+        signal_filter |= Q(category_assignments__category_id__in=context['category_ids'])
+    if context['skill_ids']:
+        signal_filter |= Q(job_skills__skill_id__in=context['skill_ids'])
+    for skill_name in sorted(context['skills'])[:20]:
+        signal_filter |= search_q('job_skills__skill__name', skill_name)
+    for label in context['position_query_labels']:
+        label = str(label or '').strip()
+        if label:
+            signal_filter |= search_q('title', label)
+    if not signal_filter:
+        return []
+
+    queryset = active_jobs_queryset().filter(signal_filter)
+    if user is not None:
+        queryset = queryset.exclude(applications__candidate=user)
+    return list(
+        queryset.distinct().order_by('-published_at', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
+    )
+
+
+def _rank_jobs(context, *, user=None):
     ranked = []
-    for job in candidates:
+    for job in _ranking_candidates(context, user=user):
         score, details = _score_job(job, context)
         if score < MIN_RECOMMENDATION_SCORE:
             continue
@@ -207,22 +350,114 @@ def recommend_jobs_for_cv(user, public_id, *, limit=6):
             item['match_score'],
             tier_rank.get(item['job'].tier, 0),
             item['job'].published_at or item['job'].created_at,
+            item['job'].pk,
         ),
         reverse=True,
     )
-    selected = ranked[:limit]
+    return ranked
 
+
+def _related_positions(labels):
     related = []
     seen = set()
-    for label in context['position_labels']:
+    for label in labels:
         key = _normalized(label)
         if key and key not in seen:
             seen.add(key)
             related.append({'label': label, 'search': label})
+    return related[:9]
+
+
+def recommend_jobs_for_cv(user, public_id, *, limit=6):
+    context = _cv_context(user, public_id)
+    selected = _rank_jobs(context)[:limit]
     return {
         'focus_keyword': context['focus_keyword'],
         'strategy': 'profile-rule-v2',
         'minimum_match_score': MIN_RECOMMENDATION_SCORE,
         'results': selected,
-        'related_positions': related[:9],
+        'related_positions': _related_positions(context['position_labels']),
+    }
+
+
+def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
+    """Rank candidate-wide opportunities from explicit preferences and default CV."""
+    profile, preference = _preference_state(user)
+    preferences_ready = bool(profile and profile.job_preferences_configured and preference)
+    base = {
+        'strategy': 'candidate-profile-rule-v1',
+        'minimum_match_score': MIN_RECOMMENDATION_SCORE,
+        'preference_configured': preferences_ready,
+        'sources': {
+            'job_preferences': preferences_ready,
+            'cv': False,
+            'search_activity': False,
+        },
+        'source_cv': None,
+        'focus_keyword': '',
+        'related_positions': [],
+        'results': [],
+    }
+    empty_pagination = {
+        'page': page,
+        'page_size': page_size,
+        'total': 0,
+        'total_pages': 0,
+        'next_page': None,
+        'previous_page': page - 1 if page > 1 else None,
+    }
+    if not preferences_ready:
+        return {
+            **base,
+            'status': 'preferences_required',
+            'needs_setup': True,
+            'consent_required': False,
+            'pagination': empty_pagination,
+        }
+    if not _ai_recommendation_allowed(profile):
+        return {
+            **base,
+            'status': 'consent_required',
+            'needs_setup': False,
+            'consent_required': True,
+            'pagination': empty_pagination,
+        }
+
+    cv = _candidate_cvs(user).first()
+    context = _candidate_context(preference, cv)
+    ranked = _rank_jobs(context, user=user)
+    total = len(ranked)
+    total_pages = ceil(total / page_size) if total else 0
+    start = (page - 1) * page_size
+    selected = ranked[start : start + page_size]
+    source_cv = (
+        {
+            'public_id': cv.public_id,
+            'title': cv.title,
+            'is_default': cv.is_default,
+        }
+        if cv
+        else None
+    )
+    return {
+        **base,
+        'status': 'ready',
+        'needs_setup': False,
+        'consent_required': False,
+        'sources': {
+            **base['sources'],
+            'cv': bool(cv),
+        },
+        'source_cv': source_cv,
+        'focus_keyword': context['focus_keyword'],
+        'related_positions': _related_positions(context['position_labels']),
+        'results': selected,
+        'pagination': {
+            'page': page,
+            'page_size': page_size,
+            'total': total,
+            'total_pages': total_pages,
+            'next_page': page + 1 if page < total_pages else None,
+            'previous_page': page - 1 if page > 1 else None,
+        },
     }

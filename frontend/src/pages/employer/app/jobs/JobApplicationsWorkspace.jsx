@@ -10,6 +10,7 @@ import {
   RECRUITER_APPLICATION_STATUS_LABELS,
   RECRUITER_APPLICATION_STATUSES,
 } from '@/entities/application'
+import { employerAppPath } from '@/shared/config/portals'
 
 const SOURCE_LABELS = {
   applied: 'Ứng tuyển',
@@ -54,7 +55,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, applications, lo
     const query = new URLSearchParams({ job: jobPublicId })
     if (application?.candidate_email) query.set('q', application.candidate_email)
     if (application?.public_id) query.set('application', application.public_id)
-    return `/tuyendung/app/applications?${query}`
+    return employerAppPath(`/applications?${query}`)
   }
 
   const columns = [

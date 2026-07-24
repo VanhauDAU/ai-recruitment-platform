@@ -4,7 +4,6 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Switch } from 'antd'
 import { useState } from 'react'
-import { message } from '@/shared/lib/toast'
 import { Link } from 'react-router-dom'
 import { useSession } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
@@ -78,13 +77,8 @@ function GreetingCard() {
 }
 
 function SuggestionToggleRow() {
-  // TODO(candidate-settings): đọc/ghi cờ gợi ý việc làm qua API candidate profile.
-  const [enabled, setEnabled] = useState(false)
-
-  function toggle(next) {
-    setEnabled(next)
-    message.success(next ? 'Đã bật gợi ý việc làm.' : 'Đã tắt gợi ý việc làm.')
-  }
+  const { user } = useSession()
+  const configured = Boolean(user?.job_preferences_configured)
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
@@ -92,17 +86,12 @@ function SuggestionToggleRow() {
         Gợi ý việc làm
         <QuestionCircleOutlined className="text-xs text-slate-400" title="Nhận gợi ý việc làm phù hợp với hồ sơ của bạn" />
       </span>
-      <button
-        type="button"
-        onClick={() => toggle(!enabled)}
-        className={`cursor-pointer rounded-full border px-4 py-1.5 text-sm font-bold transition-colors duration-200 ${
-          enabled
-            ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white'
-            : 'border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]'
-        }`}
+      <Link
+        to="/tai-khoan/cai-dat-goi-y-viec-lam"
+        className="rounded-full border border-[var(--brand-primary)] px-4 py-1.5 text-sm font-bold text-[var(--brand-primary)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)]"
       >
-        {enabled ? 'Đang bật' : 'Bật gợi ý'}
-      </button>
+        {configured ? 'Quản lý' : 'Thiết lập'}
+      </Link>
     </div>
   )
 }

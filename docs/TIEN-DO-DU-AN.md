@@ -11,7 +11,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | Giai đoạn | Tiến độ | Trạng thái |
 | --- | --- | --- |
 | 0 — Khởi tạo dự án | 5/5 | ✅ Hoàn thành |
-| 1 — MVP lõi | 40/42 | 🟡 Còn 1.14 (một phần), 1.15 |
+| 1 — MVP lõi | 44/46 | 🟡 Còn 1.14 (một phần), 1.15 |
 | 2 — AI cơ bản | 0/8 | ⬜ |
 | 3 — Tối ưu tìm kiếm / matching | 0/2 | ⬜ |
 | 4 — CV nâng cao | 0/2 | ⬜ |
@@ -19,7 +19,7 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 6 — Thương mại & quản trị | 13/16 | 🟡 |
 | 7 — Phỏng vấn AI | 0/4 | ⬜ |
 | 8 — Deployment | 0/2 | ⬜ |
-| **Tổng** | **59/84** | |
+| **Tổng** | **63/88** | |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -50,8 +50,6 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 | FE-P6 | Perf: precompress, WebP logo (favicon + manualChunks đã xong từ trước) | ✅ |
 
 ## Epic Audit & Refactor toàn dự án (2026-07-21, nhánh `refactor/phase*`)
-
-Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan-2026-07.md) · Baseline: [baseline-2026-07.md](./09-refactor/baseline-2026-07.md)
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -90,7 +88,7 @@ Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
-Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích. Chi tiết baseline: [docs/09-refactor/baseline](./09-refactor/baseline/README.md); quyết định kiến trúc: [docs/adr](./adr/).
+Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích.
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -169,6 +167,10 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược 9s + nút đi ngay) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
 | 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
 | 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
+| 1.24e | Tối ưu menu tài khoản desktop: click, single accordion, tự mở route active, cuộn trong viewport và giữ logout hiển thị | ✅ |
+| 1.24f | Cài đặt 12 loại thông báo email candidate, mặc định bật, PATCH tự lưu và UI ba nhóm phẳng | ✅ |
+| 1.24g | Trang đổi mật khẩu candidate dùng workflow chung, email read-only, token/session rotation và validation khớp backend | ✅ |
+| 1.24h | Trang việc làm phù hợp preference-first: consent, CV bổ sung/fallback không CV, score/reasons, pagination và lưu việc | ✅ |
 | 1.25 | Cookie consent + job view tracking: signed cookie, UI tùy chỉnh, policy, optional-storage gate và deduplicated tracking | ✅ |
 | 1.26 | API response DTO theo màn hình: list/detail/write riêng, query tối thiểu và contract test chống field dư/nhạy cảm | ✅ |
 
@@ -261,7 +263,7 @@ Click card (ngoài tiêu đề) hoặc nút "Xem nhanh" → ẩn sidebar lọc, 
 <details>
 <summary><b>1.14l</b> — Header ứng viên sau đăng nhập</summary>
 
-Khi `isAuthenticated && role==='candidate'` thay 2 nút cũ bằng `CandidateUserMenu` (chuông thông báo badge + icon chat, avatar; **chuông và avatar mở dropdown khi hover** qua AntD `popupRender` + `mouseLeaveDelay`) + cụm "Bạn là nhà tuyển dụng? Đăng tuyển ngay »" sang `EMPLOYER_PORTAL_URL`. Dropdown: khối profile (avatar, tên, trạng thái xác thực — chưa xác thực thì link `/tai-khoan/xac-thuc-email`, ID `public_id` + email), 5 section thu/mở với animation mượt (grid-rows `0fr↔1fr`): Quản lý tìm việc, Quản lý CV & Cover letter (mặc định mở, độc lập) + nhóm accordion Cài đặt email & thông báo / Cá nhân & Bảo mật / Nâng cấp tài khoản (**mở 1 đóng 2**), nút Đăng xuất bo tròn; màu lấy từ CSS var brand (`--brand-primary/-soft`), item chưa có trang → `message.info('Tính năng sẽ sớm ra mắt.')`. Role employer/admin vẫn giữ nút "Trang quản lý".
+Khi `isAuthenticated && role==='candidate'` thay 2 nút cũ bằng `CandidateUserMenu` (chuông thông báo + icon chat, avatar; chuông/avatar mở bằng click) + cụm "Bạn là nhà tuyển dụng? Đăng tuyển ngay »" sang `EMPLOYER_PORTAL_URL`. Dropdown: khối profile (avatar, tên, trạng thái xác thực — chưa xác thực thì link `/tai-khoan/xac-thuc-email`, ID `public_id` + email), 5 section thu/mở với animation `grid-rows`; toàn bộ section dùng single-open accordion và tự mở nhóm chứa route hiện tại. Panel giới hạn theo viewport, chỉ vùng menu cuộn để profile/nút đăng xuất luôn nhìn thấy; màu lấy từ CSS var brand (`--brand-primary/-soft`), item chưa có trang → `message.info('Tính năng sẽ sớm ra mắt.')`. Role employer/admin vẫn giữ nút "Trang quản lý".
 
 </details>
 
@@ -283,6 +285,8 @@ Bật extension Postgres `unaccent` (migration `0008_unaccent_extension` + `djan
 <summary><b>1.14o</b> — Việc làm đã lưu + cụm nút nổi Góp ý/Hỗ trợ</summary>
 
 **Việc làm đã lưu** giờ là **trang riêng** `/viec-lam-da-luu` (không phải Drawer): heading "Danh sách N việc làm đã lưu", danh sách `JobCard` đầy đủ, mục "Việc làm tương tự việc bạn đã lưu" (lấy job cùng danh mục hay gặp nhất trong các tin đã lưu, loại tin đã lưu, tối đa 6; fallback tin mới nhất khi tin lưu không có danh mục), cột phải banner quảng bá tạo CV; guard chỉ ứng viên (`Navigate` về `/login` nếu chưa đăng nhập/không phải candidate, chờ `authLoading` xong mới quyết định); vào từ menu **"Việc làm đã lưu"** trên header (bỏ placeholder "sắp ra mắt"). Backend saved job: model `SavedJob` (`candidate`+`job`, `UniqueConstraint` chống trùng, index `(candidate,-created_at)`); `SavedJobSerializer` ghi bằng `job` public_id (`SlugRelatedField`), đọc trả `job_detail` = **`JobSerializer` đầy đủ** (để `JobCard` render giống hệt trang danh sách + có `category` cho gợi ý tương tự), `validators=[]` vì `candidate` đến từ `perform_create` (tránh `UniqueTogetherValidator` tự sinh văng lỗi thiếu field — trùng do `get_or_create` lo, lưu 2 lần là no-op); endpoints `GET/POST /api/jobs/saved/` (`IsCandidate`, `pagination_class=None` để frontend có trọn bộ id tô tim mọi card + đếm badge; queryset prefetch `job__job_skills__skill`) và `DELETE /api/jobs/saved/<job_public_id>/`. **`useSavedJob` chuyển localStorage→API**: `SavedJobsProvider` + context dùng chung (optimistic: bỏ lưu xoá ngay rồi rollback nếu lỗi; lưu dùng `pending` Set để tim sáng tức thì), tim trên `JobCard`/`JobQuickView`, badge và trang đã lưu luôn khớp và **đồng bộ đa thiết bị** (hook cũ `pages/main/jobs/hooks/useSavedJob.js` xoá, chuyển lên `hooks/useSavedJobs.js`). **Cụm nút nổi = 3 nút** (`FloatingActions` trong `MainLayout`): **Việc làm đã lưu** (icon trái tim + `Badge` đếm số tin đã lưu → điều hướng `/viec-lam-da-luu`), **Góp ý** (mở **Modal giữa màn hình** "Bạn muốn?" — 2 thẻ lớn _Góp ý sản phẩm_ → form và _Chat Zalo_ → `contact_zalo_url`, kèm dải xanh "…Nhà tuyển dụng sẽ không đọc được góp ý này"), **Hỗ trợ** (panel "Trung tâm hỗ trợ ứng viên" neo cạnh nút: header gradient + "{sitename} thường phản hồi trong vòng 24h"; mục Hướng dẫn tìm việc an toàn \*, Các câu hỏi thường gặp, Hỗ trợ qua Zalo, Liên hệ {sitename}→`tel:hotline`). **Form góp ý** (UI chip, không dropdown): Chủ đề cần góp ý = 6 **chip chọn trực tiếp** (bắt buộc, validate thủ công vì ngoài AntD Form), Mô tả (TextArea, **bắt buộc**, ≥10 ký tự), "Bạn có hài lòng về {sitename} không?" (5 mức emoji chọn 1, không bắt buộc), **khi chưa đăng nhập** thêm SĐT + Email (đều không bắt buộc) + label "{sitename} sẽ phản hồi tới số điện thoại hoặc email bạn nhập trong vòng 24h (không kể Thứ 7, CN, ngày lễ)". Backend feedback: model `Feedback` mở rộng — `category` đổi thành 6 chủ đề sản phẩm, thêm `satisfaction` (5 mức) + `phone`, `user` nullable; `POST /api/site/feedback/` (`AllowAny`, throttle `feedback:5/min`, mô tả ≥10 ký tự, user đăng nhập bỏ trống email thì lấy email tài khoản); Django admin đọc-only + sửa `status`, chặn add. Kênh Zalo/hotline **đọc từ site settings** (nhóm "Liên hệ / hỗ trợ"), rỗng thì báo "chưa cấu hình". Verify: round-trip HTTP thật (POST 201 → idempotent 201 count=1 → GET 200 `job_detail` đầy đủ 34 field gồm `category`+`job_skills` → DELETE 204 → 404 → anon 401), feedback anon 201 với `satisfaction`+`phone`, mô tả ngắn 400; lint + `vite build` pass. **Chưa verify bằng mắt** (2 cổng dev do người dùng chạy, không chiếm cổng mở preview được).
+
+**Nâng cấp 24/07/2026:** Trang hiển thị thời điểm lưu, empty/error/retry rõ ràng, CTA tạo CV đúng đích và feed gợi ý luôn hiện cả khi danh sách lưu rỗng. `GET /api/jobs/recommendations/by-saved/` so pairwise tối đa 20 tin lưu gần nhất theo category chính, token tiêu đề, kỹ năng, tỉnh, kinh nghiệm và hình thức làm việc; lấy cặp mạnh nhất để không trộn sai sở thích, loại tin đã lưu/đã ứng tuyển/không còn public và fallback tin active mới nhất khi chưa có tín hiệu. UI phân biệt “Việc làm tương tự” với fallback “Việc làm bạn có thể quan tâm”; frontend không tự tính category/score. Route standalone chuyển sang `AuthGuard → RoleGuard(candidate)`; lưu/bỏ lưu thành công invalidate feed. Sau review đã chặn lưu tin không public, tách nhóm taxonomy để không lẫn chuyên môn, loại token chức danh chung và giữ snapshot đầy đủ khi optimistic save. Verify: backend coverage 85,50%, 374 frontend test, lint/architecture/build, 81 smoke E2E desktop/tablet/mobile và 15 regression cuối cho saved-job. Tài liệu thuật toán: `docs/07-algorithms/saved-job-recommendations.md`.
 
 </details>
 
@@ -370,7 +374,16 @@ Sửa bất đối xứng phát hiện ở 1.19: `password-reset` tra user bằn
 <details>
 <summary><b>1.22</b> — Khung layout 3 cột trang tài khoản ứng viên</summary>
 
-Dựng khung + cấu trúc code cho cụm trang cài đặt candidate (theo tài liệu "Cài đặt trang candidate" 12/07/2026) — nội dung từng trang sẽ đào sâu sau. **Một nguồn dữ liệu duy nhất** `config/candidateMenu.jsx`: 5 nhóm menu (Quản lý tìm việc / CV & Cover letter / Email & thông báo / Cá nhân & Bảo mật / Nâng cấp tài khoản) với quy ước item `path` + `blank` (trang khác layout, mở tab mới: Việc làm đã lưu, NTD muốn kết nối, VIP, quà tặng) + `todo` (chưa xây → "Sắp có"); dropdown avatar header (`CandidateUserMenu`) refactor bỏ SECTIONS hard-code để dùng chung config này, và **route con cũng sinh từ config** (thêm trang mới = sửa 1 file). `CandidateAccountLayout` (3 cột 3/6/3, nền `#f7f9fc`): trái `AccountSidebar` — accordion **chỉ mở 1 nhóm/lần** (mở nhóm này nhóm kia tự đóng) animation `grid-template-rows`, hover + active (nền brand-soft + thanh dọc trái), tự mở nhóm chứa route hiện tại; giữa `<Outlet/>` (mỗi trang 1 file riêng khi xây thật, tạm thời `AccountPlaceholder`); phải `ProfileSidebar` — card chào (avatar + badge VERIFIED + trạng thái xác thực), hàng "Gợi ý việc làm" + nút bật, khối "Đang Tắt/Bật tìm việc" (Switch + 2 dòng lợi ích), "Cho phép NTD tìm kiếm hồ sơ" (đếm CV + Quản lý danh sách), banner tải app QR, card "CV của bạn đã đủ tốt?" (đếm lượt xem) — các toggle mới đổi state cục bộ, wiring API đánh dấu `TODO(candidate-settings)`. Routes: `/tai-khoan` redirect trang mặc định, 11 route con `/tai-khoan/<slug>` bọc `ProtectedRoute allowedRoles=['candidate']`, nằm trong `MainLayout` (header/footer chung); `document.title` theo trang. Mobile: sidebar thu vào Drawer (nút "Danh mục"), cột phải dồn xuống dưới. Verify: build + lint pass, đăng nhập candidate demo trên browser — redirect, accordion mở-1-đóng-kia, active state, Drawer mobile, title đổi theo trang, console sạch. Menu text để **màu đen** toàn bộ (yêu cầu người dùng 12/07); item là `<Link>` nên phải dùng `!text-slate-900` để không bị màu link mặc định của AntD đè.
+Dựng khung + cấu trúc code cho cụm trang cài đặt candidate. **Một nguồn dữ
+liệu duy nhất** `entities/account/config/candidate-menu.jsx`: 5 nhóm menu với
+quy ước item `path`, `blank`, `todo`; dropdown avatar, sidebar và route con cùng
+đọc config này. `CandidateAccountLayout` dùng lưới 3/6/3: trái là accordion tự
+mở nhóm chứa route hiện tại, giữa là `<Outlet/>`, phải là `ProfileSidebar`.
+Dropdown desktop hiện dùng click + single-open accordion, menu cuộn trong
+viewport và giữ profile/logout cố định. Hàng gợi ý bên phải điều hướng tới
+settings thật thay cho toast thành công giả; toggle tìm việc và số lượt xem còn
+lại vẫn được đánh dấu TODO. Route con bọc `AuthGuard →
+RoleGuard(candidate)`; mobile đưa sidebar vào Drawer và dồn cột phải xuống dưới.
 
 </details>
 
@@ -480,6 +493,41 @@ cat=75 (lá, 0 kết quả) hiện SEO text đúng chuỗi "Frontend Developer �
 trình Web → Công nghệ thông tin" + chip liên quan đúng tổ tiên/anh em, khảo
 sát lưu đúng `satisfied` vào DB, API `ordering=urgent` trả tin flash badge
 trước.
+
+</details>
+
+<details>
+<summary><b>1.24e–h</b> — Hoàn thiện cá nhân hóa tài khoản ứng viên</summary>
+
+Menu avatar desktop bỏ hover/badge giả, chuyển sang click + single-open accordion,
+tự mở nhóm chứa route hiện tại; panel giới hạn theo `100dvh`, menu cuộn độc lập
+và nút đăng xuất luôn nhìn thấy. Ba placeholder được thay bằng trang thật:
+`/tai-khoan/cai-dat-nhan-email`, `/tai-khoan/doi-mat-khau` và
+`/tai-khoan/viec-lam-phu-hop`.
+
+Email dùng model one-to-one `CandidateEmailNotificationSettings` (migrations
+`candidates.0004–0005`), 12 preference mặc định bật, GET không ghi row và PATCH
+partial create-on-first-write. Frontend chia đúng 3 nhóm phẳng 4/5/3, optimistic
+auto-save/rollback. Email xác thực/reset mật khẩu/2FA là email giao dịch, vẫn
+ngoài preference và không chiếm một switch riêng. Đây là policy store; chưa có
+producer gửi email sản phẩm mới.
+
+Đổi mật khẩu tái dùng `/api/auth/password/`; feature không còn hardcode redirect
+employer, hiển thị email candidate read-only, giữ token/session rotation và tùy
+chọn đăng xuất thiết bị khác. Rule UI đồng bộ backend: 8–25 ký tự, hoa, thường,
+số.
+
+Feed mới `/api/jobs/recommendations/for-me/` ưu tiên preference, dùng CV mặc
+định/CV gần nhất để bổ sung position/headline/skills và vẫn hoạt động khi không
+có CV. Consent được kiểm trước khi đọc CV; job active/chưa hết hạn, loại job đã
+ứng tuyển, salary chỉ so VND, relocate được tính riêng. Response có trạng thái
+setup/consent, nguồn dữ liệu, phân trang và `match_details`; search activity
+được khai báo `false` vì backend chưa có lịch sử tìm kiếm theo candidate.
+Endpoint by-CV cũng được bổ sung consent gate. Verify tập trung: 23 backend test,
+31 frontend test đều xanh. Verify cuối toàn repo: Ruff và format check, 2 import
+contracts, migration check, 338 backend test với coverage 85,36%; lint và
+architecture check frontend, 105 file/369 Vitest, production build và 81/81
+Playwright smoke trên desktop/tablet/mobile đều đạt.
 
 </details>
 
@@ -725,7 +773,10 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-22g (CAMP-DETAIL REBUILD — dựng lại trang chi tiết chiến dịch theo layout TopCV (tab CV ứng tuyển): header gọn (tên + trạng thái + #id + hành động Báo cáo/Chỉnh sửa/Tạm dừng/Đăng tin) + tabs underline Tổng quan|CV ứng tuyển|Tin tuyển dụng, mặc định CV ứng tuyển. Tab CV ứng tuyển = `CampaignApplyCvPanel` tĩnh: pipeline trạng thái ngang (Tất cả/CV mới/Đã xem/Phù hợp/Phỏng vấn/Nhận việc/Không phù hợp), sidebar bộ lọc (tin, nguồn, mức phù hợp, kinh nghiệm, thời gian) + Drawer bộ lọc mobile, toolbar (chọn tất cả/tìm/sắp xếp), thẻ CV mẫu (avatar, headline, vòng % phù hợp, Xem CV/tải/trạng thái). Overview & Tin tuyển dụng = placeholder. Dữ liệu mẫu, chưa nối API. Xóa CampaignOverview/UpcomingFeatures/ApplicationsPanel/JobsPanel cũ; giữ getCampaign cho header + modal sửa tên. Verify: oxlint sạch, 4/4 test campaign pass (viết lại CampaignDetail.test), vite build xanh.)
+Cập nhật lần cuối: 2026-07-24 (CANDIDATE-PERSONALIZATION — tối ưu menu
+desktop và hoàn thiện cài đặt email, đổi mật khẩu, feed việc làm phù hợp có
+consent/giải thích/phân trang. Chi tiết tại mục 1.24e–h và
+`docs/07-algorithms/candidate-job-recommendations.md`.)
 
 Cập nhật 2026-07-22f (CAMP-SIMPLIFY — chốt "chiến dịch chỉ cần tên": form chỉnh sửa (`CampaignForm.jsx`) rút còn đúng ô Tên (bỏ mô tả/vị trí/cấp bậc/headcount/ngân sách/ngày/tuyển liên tục), modal thu gọn 760→480; trang chi tiết bỏ thẻ "Thông tin chiến dịch" (các field kế hoạch trống), bỏ query danh mục không dùng; giữ phần phân tích (KPI, phễu, biểu đồ 7 ngày, gauge tiến độ, nguồn CV, tính năng sắp ra mắt). PATCH campaign chỉ gửi { name }. Verify: oxlint sạch, 3 test campaign pass (cập nhật matcher getAllByText cho KPI trùng), vite build xanh.)
 

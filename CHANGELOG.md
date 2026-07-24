@@ -6,6 +6,44 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-24
+
+#### Added — Cá nhân hóa tài khoản ứng viên
+
+- Mở ba trang thật trong cụm `/tai-khoan`: cài đặt thông báo qua email, đổi mật khẩu và danh sách việc làm phù hợp; route tiếp tục được bảo vệ theo thứ tự `AuthGuard → RoleGuard(candidate)`.
+- Thêm 12 lựa chọn email theo ba nhóm hệ thống/cơ hội việc làm/giới thiệu dịch vụ. Các lựa chọn mặc định bật và tự lưu từng thay đổi qua `GET/PATCH /api/candidate/email-notification-settings/`; email xác thực, đặt lại mật khẩu và 2FA là email giao dịch ngoài preference này.
+- Thêm feed `GET /api/jobs/recommendations/for-me/` có phân trang, lý do/điểm khớp, nguồn CV đang dùng và trạng thái thiết lập/consent. Preference là nguồn chính, CV mặc định hoặc CV gần nhất bổ sung vị trí/headline/kỹ năng; không tuyên bố dùng lịch sử tìm kiếm vì backend chưa lưu tín hiệu đó.
+
+#### Changed — Menu, consent và bảo mật ứng viên
+
+- Dropdown tài khoản desktop chuyển sang mở bằng click, single-open accordion, tự mở nhóm chứa route hiện tại và cuộn nội bộ theo viewport; header tài khoản cùng nút đăng xuất luôn nhìn thấy. Bỏ badge thông báo giả.
+- Form nhu cầu việc làm luôn cho phép bật hoặc rút consent gợi ý; nội dung giải thích đúng nguồn dữ liệu thực tế và nhãn quyền hiển thị hồ sơ cho nhà tuyển dụng không còn bị diễn đạt thành email/sự kiện. Endpoint gợi ý theo CV cũng dừng đọc nội dung CV khi chưa có consent; cập nhật hoặc rút consent xóa cache feed để không lóe lại kết quả cũ.
+- Form đổi mật khẩu dùng chung candidate/employer nhưng không còn hardcode điều hướng employer; candidate thấy email đăng nhập read-only, rule mật khẩu khớp backend và tiếp tục hỗ trợ xoay token/đăng xuất thiết bị khác.
+- Trang cài đặt email rút về ba nhóm phẳng theo TopCV, bỏ card/icon/mô tả lặp và không hiển thị email giao dịch bảo mật như một switch riêng.
+
+#### Changed — Việc làm đã lưu và gợi ý tương tự
+
+- Nâng cấp `/viec-lam-da-luu` với empty/error/retry rõ ràng, thời điểm lưu, CTA tạo CV đúng đích và feed việc làm vẫn hữu ích khi ứng viên chưa lưu tin nào.
+- Thay phép chọn một category phổ biến ở frontend bằng
+  `GET /api/jobs/recommendations/by-saved/`: xếp hạng pairwise tối đa 20 tin lưu
+  gần nhất theo chuyên môn, tiêu đề, kỹ năng, địa điểm và hình thức làm việc;
+  loại tin đã lưu, đã ứng tuyển hoặc không còn public.
+- Khi chưa có tín hiệu, trả tin active mới nhất và hiển thị trung thực là “Việc
+  làm bạn có thể quan tâm”; lưu/bỏ lưu thành công tự làm mới feed. Route
+  standalone được bảo vệ bằng `AuthGuard → RoleGuard(candidate)`.
+- Siết public availability khi lưu tin và semantic anchor khi xếp hạng: không
+  thể lưu tin nháp/đóng bằng public ID; kỹ năng nhiễu hoặc từ chức danh chung
+  không đủ để biến một công việc khác chuyên môn thành “tương tự”.
+
+#### Documentation & Verification
+
+- Bổ sung tài liệu thuật toán recommendation, schema email preference, contract API/frontend, ownership map FSD, tiến độ và OpenAPI.
+- Ghi lại khảo sát TopCV ở trạng thái 0 và 3 tin đã lưu, tài liệu hóa trọng số,
+  fallback, privacy và contract của feed gợi ý theo lịch sử lưu.
+- Thêm regression backend cho preference email, permission/consent, fallback không CV và feed candidate; thêm unit frontend cho menu, email auto-save, đổi mật khẩu, API và các trạng thái trang việc làm phù hợp.
+- Sau review, bổ sung regression cho prefilter không dấu/kỹ năng JSON, salary mở, CV archived/failed, job đã ứng tuyển, số query phẳng, consent trên trang lưu CV, cache khi rút quyền, lỗi tải preference, re-auth OAuth và accessibility keyboard/link.
+- Ổn định regression báo cáo chiến dịch ở ranh giới ngày UTC bằng cách tạo daily counter theo cùng múi giờ báo cáo `Asia/Ho_Chi_Minh`; quality gate đã đạt backend coverage 85,50%, 374 frontend test và 81 smoke E2E; regression cuối cho saved-job đạt 15 test.
+
 ### 2026-07-20
 
 #### Added — Quản lý hồ sơ công ty đầy đủ

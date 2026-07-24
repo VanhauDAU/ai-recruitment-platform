@@ -125,7 +125,7 @@ function A4Page({ page, document, contract, assets, renderRegion, renderHeader, 
   const { content_json, style_json } = document
   const personal = content_json.personal_info || {}
   const background = assets?.[style_json.background_asset_id]
-  const pageMargin = Math.min(18, Math.max(6, Number(document.layout_json?.page?.margin_mm) || 10))
+  const pageMargin = Math.min(16, Math.max(5, Number(document.layout_json?.page?.margin_mm) || 10))
 
   return (
     <div className="cv-document-preview__page-wrap relative mb-5">

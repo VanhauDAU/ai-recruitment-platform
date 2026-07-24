@@ -599,12 +599,12 @@ class EmployerJobWriteSerializer(JobSerializer):
         request = self.context.get('request')
         if request is None or campaign.owner.user_id != request.user.id:
             raise serializers.ValidationError('Chiến dịch không thuộc tài khoản này.')
-        assigned_jobs = Job.objects.filter(campaign=campaign)
-        if self.instance is not None:
-            assigned_jobs = assigned_jobs.exclude(pk=self.instance.pk)
-        if assigned_jobs.exists():
+        if campaign.status in {
+            RecruitmentCampaign.Status.CANCELLED,
+            RecruitmentCampaign.Status.COMPLETED,
+        }:
             raise serializers.ValidationError(
-                'Mỗi chiến dịch chỉ được liên kết với một tin tuyển dụng.'
+                'Không thể thêm tin tuyển dụng vào chiến dịch đã hủy hoặc hoàn tất.'
             )
         return campaign
 

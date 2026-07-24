@@ -3,6 +3,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.blog.models import PinnedPost, Post, PostCategory, Tag
+from apps.blog.selectors import blog_home_sections
 
 
 class BlogPublicApiTests(APITestCase):
@@ -102,3 +103,45 @@ class BlogPublicApiTests(APITestCase):
         section = res.data['sections'][0]
         self.assertEqual(section['category']['slug'], self.category.slug)
         self.assertEqual([p['slug'] for p in section['posts']], [self.published.slug])
+
+    def test_home_section_query_count_is_flat_across_categories(self):
+        for index in range(5):
+            category = PostCategory.objects.create(name=f'Danh mục {index}', order=10 + index)
+            Post.objects.create(
+                title=f'Bài xuất bản {index}',
+                category=category,
+                content='<p>Nội dung</p>',
+                status=Post.Status.PUBLISHED,
+                published_at=timezone.now(),
+            )
+
+        with self.assertNumQueries(3):
+            featured, sections = blog_home_sections()
+
+        self.assertEqual(len(featured), 4)
+        self.assertEqual(len(sections), 6)
+
+    def test_home_keeps_featured_scope_and_limits_each_active_section(self):
+        hidden = PostCategory.objects.create(name='Danh mục ẩn', is_active=False)
+        for index in range(5):
+            Post.objects.create(
+                title=f'Bài chuyên ngành {index}',
+                category=self.category,
+                content='<p>Nội dung</p>',
+                status=Post.Status.PUBLISHED,
+                published_at=timezone.now(),
+            )
+        hidden_post = Post.objects.create(
+            title='Bài thuộc danh mục ẩn',
+            category=hidden,
+            content='<p>Nội dung</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
+        )
+
+        featured, sections = blog_home_sections(per_section=4)
+
+        self.assertIn(hidden_post.slug, [post.slug for post in featured])
+        sections_by_category = {section['category'].slug: section for section in sections}
+        self.assertNotIn(hidden.slug, sections_by_category)
+        self.assertEqual(len(sections_by_category[self.category.slug]['posts']), 4)

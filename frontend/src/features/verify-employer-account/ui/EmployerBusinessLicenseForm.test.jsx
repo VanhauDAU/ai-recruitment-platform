@@ -6,12 +6,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerBusinessLicenseForm from './EmployerBusinessLicenseForm'
 
 const {
+  employerProfileKeys,
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
   uploadEmployerBusinessDocument,
   uploadEmployerCompanyDocument,
 } = vi.hoisted(() => ({
+  employerProfileKeys: {
+    companyDocuments: ['employer', 'company', 'documents'],
+  },
   getEmployerProfile: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerCompanyDocumentContent: vi.fn(),
@@ -20,6 +24,7 @@ const {
 }))
 
 vi.mock('@/entities/employer-profile', () => ({
+  employerProfileKeys,
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,

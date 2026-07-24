@@ -37,6 +37,25 @@ export async function getRecruiterApplications(params = {}) {
   return data.results || data
 }
 
+export async function getRecruiterApplicationPage(params = {}) {
+  const { data } = await api.get('/v2/recruiter/applications/', { params })
+  return Array.isArray(data)
+    ? { count: data.length, next: null, previous: null, results: data }
+    : data
+}
+
+export async function exportRecruiterApplications(params = {}) {
+  const { data, headers } = await api.get('/v2/recruiter/applications/export/', {
+    params,
+    responseType: 'blob',
+  })
+  return {
+    blob: data,
+    filename: headers['content-disposition']?.match(/filename="?([^"]+)"?/)?.[1]
+      || `danh-sach-cv-${new Date().toISOString().slice(0, 10)}.csv`,
+  }
+}
+
 export async function updateApplicationStatus(publicId, payload) {
   const { data } = await api.patch(`/v2/recruiter/applications/${publicId}/`, payload)
   return data

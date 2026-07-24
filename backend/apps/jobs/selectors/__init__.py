@@ -3,6 +3,7 @@
 from .employer import employer_job_detail_queryset, employer_job_list_queryset
 from .listing import build_job_list_queryset
 from .moderation import job_moderation_queryset
+from .saved_recommendations import recommend_jobs_from_saved
 from .stats import build_job_stats
 
 __all__ = [
@@ -11,4 +12,5 @@ __all__ = [
     'employer_job_detail_queryset',
     'employer_job_list_queryset',
     'job_moderation_queryset',
+    'recommend_jobs_from_saved',
 ]

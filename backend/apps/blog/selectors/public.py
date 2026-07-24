@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+
 from common.db.search import search_q
 
 from ..models import PinnedPost, Post, PostCategory
@@ -66,8 +68,8 @@ def blog_home_sections(per_section=4):
 
     Trả về (featured, sections): featured là 4 bài mới nhất toàn trang; mỗi
     section là 1 danh mục đang bật kèm 4 bài mới nhất của nó (bỏ danh mục
-    chưa có bài). Mỗi danh mục 1 query — 6 danh mục là chấp nhận được, không
-    đáng phức tạp hóa bằng window function.
+    chưa có bài). Sliced prefetch dùng window function để số query không tăng
+    theo số danh mục.
     """
     base = (
         Post.objects.filter(status=Post.Status.PUBLISHED)
@@ -85,11 +87,14 @@ def blog_home_sections(per_section=4):
         )
     )
     featured = list(base[:per_section])
-    sections = []
-    for category in active_categories():
-        posts = list(base.filter(category=category)[:per_section])
-        if posts:
-            sections.append({'category': category, 'posts': posts})
+    categories = active_categories().prefetch_related(
+        Prefetch('posts', queryset=base[:per_section], to_attr='home_posts')
+    )
+    sections = [
+        {'category': category, 'posts': category.home_posts}
+        for category in categories
+        if category.home_posts
+    ]
     return featured, sections
 
 

@@ -68,10 +68,10 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
           <button type="button" onClick={onShare} className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-[var(--brand-primary)]" aria-label="Chia sẻ việc làm" title="Sao chép liên kết để chia sẻ"><ShareAltOutlined /></button>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <HeroMetric icon={<WalletOutlined />} label="Mức lương" value={formatSalary(job)} />
-          <HeroMetric icon={<EnvironmentOutlined />} label="Địa điểm" value={locations} />
-          <HeroMetric icon={<UserOutlined />} label="Kinh nghiệm" value={experience} />
+        <div className="mt-5 grid gap-4 border-y border-gray-100 py-4 sm:grid-cols-3 sm:divide-x sm:divide-gray-100">
+          <HeroMetric icon={<WalletOutlined />} label="Mức lương" value={formatSalary(job)} highlight />
+          <HeroMetric icon={<EnvironmentOutlined />} label="Địa điểm" value={locations} className="sm:pl-4" />
+          <HeroMetric icon={<UserOutlined />} label="Kinh nghiệm" value={experience} className="sm:pl-4" />
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -114,8 +114,8 @@ function StatusBadge({ children, className }) {
   return <span className={`rounded px-2 py-0.5 text-[10px] font-bold ring-1 ${className}`}>{children}</span>
 }
 
-function HeroMetric({ icon, label, value }) {
-  return <div className="flex min-w-0 items-center gap-3 rounded-xl bg-slate-50 px-3 py-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-base text-[var(--brand-primary)]">{icon}</span><div className="min-w-0"><p className="text-xs text-gray-500">{label}</p><p className="truncate text-sm font-semibold text-slate-800" title={value}>{value}</p></div></div>
+function HeroMetric({ icon, label, value, highlight = false, className = '' }) {
+  return <div className={`flex min-w-0 items-center gap-2.5 ${className}`}><span className={`shrink-0 text-[var(--brand-primary)] ${highlight ? 'text-lg' : 'text-base'}`}>{icon}</span><div className="min-w-0"><p className="text-xs text-gray-500">{label}</p><p className={`truncate ${highlight ? 'text-lg font-bold text-[var(--brand-primary)] sm:text-xl' : 'text-sm font-semibold text-slate-800'}`} title={value}>{value}</p></div></div>
 }
 
 export function JobDetailSkeleton() {

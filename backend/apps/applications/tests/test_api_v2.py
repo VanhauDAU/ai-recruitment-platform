@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db.models.deletion import ProtectedError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -15,7 +16,12 @@ from apps.cvs.services import (
     save_draft_as_version,
     update_draft,
 )
-from apps.employers.models import Company, RecruiterProfile
+from apps.employers.models import (
+    CampaignActivity,
+    Company,
+    RecruiterProfile,
+    RecruitmentCampaign,
+)
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
 
@@ -103,6 +109,13 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(response.data['cv']['public_id'], self.snapshot.public_id)
         self.assertEqual(response.data['cv']['content_json']['personal_info']['full_name'], '')
         self.assertNotIn('cv_data', response.data['cv'])
+
+    def test_submitted_snapshot_cannot_be_deleted_while_the_application_exists(self):
+        with self.assertRaises(ProtectedError):
+            self.snapshot.delete()
+
+        self.assertTrue(CvVersion.objects.filter(pk=self.snapshot.pk).exists())
+        self.assertTrue(Application.objects.filter(pk=self.application.pk).exists())
 
     def test_recruiter_outside_the_application_company_receives_404(self):
         tokens = issue_tokens(self.outsider, auth_method='mfa')
@@ -256,6 +269,26 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(response.data['contact_email'], 'apply-candidate@example.com')
         self.assertEqual(response.data['contact_phone'], '0909000000')
 
+    def test_candidate_cannot_mix_a_cv_with_a_version_from_another_owned_cv(self):
+        other_owned_cv = create_v2_cv(
+            actor=self.candidate,
+            title='Another owned CV',
+            template=self.cv.template,
+        )
+        self.client.force_authenticate(self.candidate)
+
+        response = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(version_public_id=other_owned_cv.latest_version.public_id),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn('version_public_id', response.data)
+        self.assertFalse(
+            Application.objects.filter(candidate=self.candidate, job=self.job).exists()
+        )
+
     def test_candidate_can_reapply_after_five_minutes_up_to_three_submissions(self):
         self.client.force_authenticate(self.candidate)
         forbidden_cv = self.client.post(
@@ -342,6 +375,52 @@ class CandidateApplicationV2Tests(APITestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+    def test_recruiter_campaign_list_and_export_use_latest_submission_per_candidate_job(self):
+        recruiter = RecruiterProfile.objects.create(user=self.employer, company=self.company)
+        campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=self.company,
+            name='Application campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        self.job.campaign = campaign
+        self.job.save(update_fields=['campaign', 'updated_at'])
+        self.client.force_authenticate(self.candidate)
+        first = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+        Application.objects.filter(public_id=first.data['public_id']).update(
+            applied_at=timezone.now() - timedelta(minutes=6)
+        )
+        second = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(),
+            format='json',
+        )
+
+        self.client.force_authenticate(self.employer)
+        params = {
+            'campaign': campaign.public_id,
+            'latest': '1',
+            'q': self.candidate.email,
+        }
+        listed = self.client.get(reverse('recruiter-application-list-v2'), params)
+        exported = self.client.get(reverse('recruiter-application-export-v2'), params)
+
+        self.assertEqual(listed.status_code, 200, listed.data)
+        self.assertEqual(listed.data['count'], 1)
+        self.assertEqual(listed.data['results'][0]['public_id'], second.data['public_id'])
+        self.assertEqual(exported.status_code, 200)
+        self.assertEqual(exported['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertEqual(len(exported.content.decode('utf-8-sig').splitlines()), 2)
+        received_events = CampaignActivity.objects.filter(
+            campaign=campaign,
+            event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
+        )
+        self.assertEqual(received_events.count(), 2)
 
 
 class RecruiterApplicationRoutesV2Tests(TestCase):

@@ -29,6 +29,14 @@ function postedLabel(job) {
   return `Đăng ${Math.floor(days / 30)} tháng trước`
 }
 
+function savedLabel(value) {
+  const savedAt = new Date(value)
+  if (!value || Number.isNaN(savedAt.getTime())) return null
+  const date = savedAt.toLocaleDateString('vi-VN')
+  const time = savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  return `Đã lưu ${date} - ${time}`
+}
+
 function Chip({ children, elevated = false }) {
   // `elevated`: card nền xanh (featured/top) dùng chip trắng nổi trên nền;
   // card thường nền trắng dùng chip xám để vẫn tách khỏi nền.
@@ -100,15 +108,25 @@ function RequirementTooltip({ details }) {
 // `onQuickView`: click vào card (ngoài tiêu đề) / nút "Xem nhanh" mở panel xem nhanh
 // thay vì sang trang chi tiết (tiêu đề vẫn là link sang trang chi tiết).
 // `compact`: bản gọn cho cột danh sách khi panel xem nhanh đang mở; `active`: card đang xem.
-export default function JobCard({ job, isAuthenticated = true, onRequireLogin, onQuickView, compact = false, active = false, showQuickView = true }) {
+export default function JobCard({
+  job,
+  isAuthenticated = true,
+  onRequireLogin,
+  onQuickView,
+  compact = false,
+  active = false,
+  showQuickView = true,
+  savedAt,
+}) {
   const navigate = useNavigate()
-  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
+  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
   const [hovered, setHovered] = useState(false)
   const impressionRef = useJobImpression(job.slug)
   const locationLabel = formatLocations(job)
   const elevated = job.tier === 'featured' || job.tier === 'top'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
   const posted = postedLabel(job)
+  const savedAtLabel = savedLabel(savedAt)
   const ageRequirement = job.age_min && job.age_max
     ? `${job.age_min} - ${job.age_max} tuổi`
     : job.age_min ? `Từ ${job.age_min} tuổi` : job.age_max ? `Đến ${job.age_max} tuổi` : null
@@ -235,7 +253,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
             </p>
           </Tooltip>
           <span className="flex shrink-0 items-center gap-3">
-            {posted && !compact && <span className="text-xs text-gray-400">{posted}</span>}
+            {!compact && (savedAtLabel || posted) && (
+              <span className="text-xs text-gray-400">{savedAtLabel || posted}</span>
+            )}
             {!compact && (
               <button
                 type="button"
@@ -255,7 +275,9 @@ export default function JobCard({ job, isAuthenticated = true, onRequireLogin, o
                 aria-label={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}
                 className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-gray-400" />}
+                {saved
+                  ? <HeartFilled className="!text-[var(--brand-primary)]" />
+                  : <HeartOutlined className="!text-gray-400" />}
               </button>
             </Tooltip>
           </span>

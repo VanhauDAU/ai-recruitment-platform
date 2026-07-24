@@ -4,6 +4,7 @@ from .api.views import (
     AdminJobModerationListView,
     AdminJobReviewView,
     BenefitListView,
+    CandidateJobRecommendationView,
     CvJobRecommendationView,
     EmployerJobCloseView,
     EmployerJobDetailView,
@@ -23,6 +24,7 @@ from .api.views import (
     LanguageListView,
     SavedJobDestroyView,
     SavedJobListCreateView,
+    SavedJobRecommendationView,
 )
 
 urlpatterns = [
@@ -45,9 +47,19 @@ urlpatterns = [
         name='job-impression-batch-create',
     ),
     path(
+        'recommendations/for-me/',
+        CandidateJobRecommendationView.as_view(),
+        name='candidate-job-recommendations',
+    ),
+    path(
         'recommendations/by-cv/<str:cv_public_id>/',
         CvJobRecommendationView.as_view(),
         name='cv-job-recommendations',
+    ),
+    path(
+        'recommendations/by-saved/',
+        SavedJobRecommendationView.as_view(),
+        name='saved-job-recommendations',
     ),
     path('saved/', SavedJobListCreateView.as_view(), name='saved-job-list-create'),
     path('saved/<str:public_id>/', SavedJobDestroyView.as_view(), name='saved-job-destroy'),

@@ -7,11 +7,15 @@ import EmployerDataProtectionForm from './EmployerDataProtectionForm'
 
 const {
   acceptEmployerDpa,
+  employerProfileKeys,
   getEmployerCompanyDocuments,
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
 } = vi.hoisted(() => ({
   acceptEmployerDpa: vi.fn(),
+  employerProfileKeys: {
+    companyDocuments: ['employer', 'company', 'documents'],
+  },
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerProfile: vi.fn(),
   uploadEmployerDataProcessingAgreement: vi.fn(),
@@ -20,6 +24,7 @@ const { message } = vi.hoisted(() => ({ message: { error: vi.fn(), success: vi.f
 
 vi.mock('@/entities/employer-profile', () => ({
   acceptEmployerDpa,
+  employerProfileKeys,
   getEmployerCompanyDocuments,
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,

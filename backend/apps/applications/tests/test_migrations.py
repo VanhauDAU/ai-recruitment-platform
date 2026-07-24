@@ -29,7 +29,6 @@ from apps.jobs.models import Job
 BEFORE = [('applications', '0003_initial')]
 EXPAND = [('applications', '0004_application_snapshot_expand')]
 AFTER = [('applications', '0006_application_snapshot_contract')]
-LATEST = [('applications', '0009_application_multiple_locations_and_contact')]
 
 # DDL identical to migration 0004, used to fake a partially-applied database.
 PARTIAL_EXPAND_SQL = """
@@ -209,4 +208,6 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
 
     def tearDown(self):
         # Leave the database fully migrated forward for the rest of the suite.
-        self._migrate(LATEST)
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        self._migrate(executor.loader.graph.leaf_nodes())

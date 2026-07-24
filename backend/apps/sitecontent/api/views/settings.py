@@ -19,7 +19,8 @@ from common.media_storage import (
     save_image_upload,
 )
 
-from ...models import Banner, LinkGroup, Locale, SiteSetting
+from ...models import Banner, Locale, SiteSetting
+from ...selectors import resolved_link_groups
 from ...signals import PUBLIC_SETTINGS_CACHE_KEY
 from ..serializers import (
     AdminLocaleSerializer,
@@ -278,10 +279,7 @@ class LinkGroupListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        qs = LinkGroup.objects.filter(is_active=True).prefetch_related('items')
-        if placement := self.request.query_params.get('placement'):
-            qs = qs.filter(placement=placement)
-        return qs
+        return resolved_link_groups(placement=self.request.query_params.get('placement'))
 
 
 class BannerListView(generics.ListAPIView):

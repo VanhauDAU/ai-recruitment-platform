@@ -4,6 +4,7 @@ import { Alert, Button, Modal, Radio, Skeleton, Tag, message } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  employerProfileKeys,
   getEmployerProfile,
   getEmployerCompanyDocuments,
   getEmployerCompanyDocumentContent,
@@ -22,8 +23,6 @@ const DOCUMENT_STATUS = {
   approved: { color: 'green', label: 'Đã duyệt' },
   rejected: { color: 'red', label: 'Từ chối' },
 }
-
-const COMPANY_DOCUMENTS_QUERY_KEY = ['employer', 'company-documents']
 
 function savedDocumentsFromResponse(response) {
   return (Array.isArray(response) ? response : [response]).filter(Boolean)
@@ -76,7 +75,7 @@ export default function EmployerBusinessLicenseForm() {
   const { siteName } = useSiteSettings()
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const documentsQuery = useQuery({
-    queryKey: COMPANY_DOCUMENTS_QUERY_KEY,
+    queryKey: employerProfileKeys.companyDocuments,
     queryFn: getEmployerCompanyDocuments,
   })
 
@@ -105,7 +104,7 @@ export default function EmployerBusinessLicenseForm() {
     },
     onSuccess: async (response, { selectedMethod }) => {
       const savedDocuments = savedDocumentsFromResponse(response)
-      queryClient.setQueryData(COMPANY_DOCUMENTS_QUERY_KEY, (cachedDocuments) => (
+      queryClient.setQueryData(employerProfileKeys.companyDocuments, (cachedDocuments) => (
         replaceCachedDocuments(cachedDocuments, savedDocuments, selectedMethod)
       ))
       setBusinessFiles([])

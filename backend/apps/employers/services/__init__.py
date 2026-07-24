@@ -3,7 +3,7 @@
 from .campaigns import (
     change_campaign_status,
     create_campaign,
-    create_campaign_from_need,
+    record_campaign_activity,
     update_campaign,
 )
 from .companies import (
@@ -15,14 +15,20 @@ from .companies import (
 )
 from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import get_or_create_recruiter, recruiter_posting_readiness
+from .recruitment_needs import (
+    InitialRecruitmentNeedAlreadyExists,
+    create_initial_recruitment_need,
+)
 
 __all__ = [
+    'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'UPDATABLE_COMPANY_FIELDS',
     'apply_update_request',
     'change_campaign_status',
     'create_campaign',
-    'create_campaign_from_need',
+    'create_initial_recruitment_need',
+    'record_campaign_activity',
     'get_or_create_recruiter',
     'recruiter_posting_readiness',
     'phone_taken_by_other',

@@ -7,6 +7,13 @@ export async function getSavedJobs() {
   return data
 }
 
+export async function getSavedJobRecommendations(limit = 12) {
+  const { data } = await api.get('/jobs/recommendations/by-saved/', {
+    params: { limit },
+  })
+  return data
+}
+
 export async function saveJob(publicId) {
   const { data } = await api.post('/jobs/saved/', { job: publicId })
   return data

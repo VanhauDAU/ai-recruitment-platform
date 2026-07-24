@@ -24,7 +24,6 @@ vi.mock('@/entities/campaign', () => ({
   },
   getCampaign: vi.fn(),
   getCampaignReport: vi.fn(),
-  calculateCampaignOptimizationScore: () => 100,
 }))
 
 describe('EmployerWorkspaceLayout', () => {

@@ -10,13 +10,18 @@ export default function SavedJobsProvider({ children }) {
   const isCandidate = isAuthenticated && user?.role === 'candidate'
   const candidateKey = isCandidate ? (user?.public_id || user?.id) : null
   const syncSourceId = useRef(`saved-jobs-${Math.random().toString(36).slice(2)}`)
-  const { items, loading, error: loadError, reload } = useSavedJobsQuery(candidateKey)
+  const {
+    items,
+    loading,
+    refreshing,
+    error: loadError,
+    reload,
+  } = useSavedJobsQuery(candidateKey)
   const publish = useCallback(
     () => publishSavedJobsChanged({ candidateKey, sourceId: syncSourceId.current }),
     [candidateKey],
   )
   const { pendingJobIds, saveSuccess, toggle, error: toggleError } = useToggleSavedJob({ candidateKey, items, publish })
-  const error = toggleError ?? loadError
   const savedIds = useMemo(() => new Set(items.map((item) => item.job_detail?.public_id).filter(Boolean)), [items])
 
   useEffect(() => {
@@ -27,8 +32,33 @@ export default function SavedJobsProvider({ children }) {
   }, [candidateKey, reload])
 
   const value = useMemo(
-    () => ({ items, savedIds, pendingJobIds, loading, error, reload, toggle, isCandidate, saveSuccess }),
-    [items, savedIds, pendingJobIds, loading, error, reload, toggle, isCandidate, saveSuccess],
+    () => ({
+      items,
+      savedIds,
+      pendingJobIds,
+      loading,
+      refreshing,
+      error: toggleError ?? loadError,
+      loadError,
+      toggleError,
+      reload,
+      toggle,
+      isCandidate,
+      saveSuccess,
+    }),
+    [
+      items,
+      savedIds,
+      pendingJobIds,
+      loading,
+      refreshing,
+      toggleError,
+      loadError,
+      reload,
+      toggle,
+      isCandidate,
+      saveSuccess,
+    ],
   )
 
   return <SavedJobsContext.Provider value={value}>{children}</SavedJobsContext.Provider>

@@ -1,9 +1,9 @@
 import { Navigate, Route } from 'react-router-dom'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
 import { employerAppPath } from '@/shared/config/portals'
-import AuthGuard from '@/app/router/guards/AuthGuard'
-import GuestGuard from '@/app/router/guards/GuestGuard'
-import RoleGuard from '@/app/router/guards/RoleGuard'
+import AuthGuard from '../guards/AuthGuard'
+import GuestGuard from '../guards/GuestGuard'
+import RoleGuard from '../guards/RoleGuard'
 import {
   AccountPlaceholderPage,
   AppliedJobsPage,
@@ -11,12 +11,15 @@ import {
   BlogDetailPage,
   BlogHomePage,
   CandidateAccountLayout,
+  ChangePasswordPage,
+  EmailNotificationSettingsPage,
   ForgotPasswordPage,
   HomePage,
   JobDetailPage,
   JobListPage,
   MainLoginPage,
   MainRegisterPage,
+  MatchingJobsPage,
   OAuthCallbackPage,
   CookiePolicyPage,
   CvEditorPage,
@@ -46,6 +49,9 @@ const ACCOUNT_PAGE_BY_KEY = {
   'my-cv': MyCvsPage,
   'two-factor': TwoFactorAuthenticationPage,
   'suggestion-settings': JobPreferenceSettingsPage,
+  'change-password': ChangePasswordPage,
+  'email-settings': EmailNotificationSettingsPage,
+  'matching-jobs': MatchingJobsPage,
   security: SecuritySettingsPage,
 }
 
@@ -55,7 +61,6 @@ export function mainRoutes() {
     <Route key="main" element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
-      <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       {/* Tin của công ty có trang thương hiệu — cùng JobDetailPage nhưng kèm
@@ -98,6 +103,7 @@ export function mainRoutes() {
           khi xây trang thật thì thay AccountPlaceholderPage bằng component riêng. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
+          <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
           <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
           <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
           <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />

@@ -5,6 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerCompanySettings from './EmployerCompanySettings'
 
 const api = vi.hoisted(() => ({
+  employerProfileKeys: {
+    company: ['employer', 'company'],
+    companyDocuments: ['employer', 'company', 'documents'],
+  },
   getEmployerProfile: vi.fn(),
   getEmployerIndustries: vi.fn(),
   getEmployerCompanyCatalogs: vi.fn(),

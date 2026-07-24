@@ -85,11 +85,6 @@ export async function getEmployerCompanyList({ query = '', page = 1 } = {}) {
   return data
 }
 
-export async function getEmployerCompany() {
-  const { data } = await api.get('/employer/company/')
-  return data
-}
-
 export async function getEmployerCompanyCatalogs() {
   const { data } = await api.get('/employer/company/catalogs/')
   return data

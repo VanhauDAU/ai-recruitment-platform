@@ -34,6 +34,8 @@ export default function PostJobForm({
   submitLabel,
   submitting,
   errorMessage,
+  creatingCampaign,
+  onCreateCampaign,
   onCreateSkill,
   onSaveDraft,
   onPublish,
@@ -202,7 +204,11 @@ export default function PostJobForm({
             active={activeSection === 'application'}
             onToggle={() => toggleSection('application')}
           >
-            <ApplicationInfoFields campaigns={campaigns} />
+            <ApplicationInfoFields
+              campaigns={campaigns}
+              creatingCampaign={creatingCampaign}
+              onCreateCampaign={onCreateCampaign}
+            />
           </JobFormSection>
           <JobFormSection
             id="services"

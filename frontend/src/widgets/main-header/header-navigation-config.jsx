@@ -24,7 +24,7 @@ export const HEADER_NAVIGATION = [
             { label: 'Tìm việc làm', to: '/viec-lam', icon: <SearchOutlined /> },
             { label: 'Việc làm đã lưu', icon: <BookOutlined />, action: 'saved-jobs' },
             soon('Việc làm đã ứng tuyển', <FileDoneOutlined />),
-            soon('Việc làm phù hợp', <LikeOutlined />),
+            { label: 'Việc làm phù hợp', to: '/tai-khoan/viec-lam-phu-hop', icon: <LikeOutlined /> },
           ],
         },
         { title: 'Công ty', items: [soon('Danh sách công ty', <BankOutlined />)] },

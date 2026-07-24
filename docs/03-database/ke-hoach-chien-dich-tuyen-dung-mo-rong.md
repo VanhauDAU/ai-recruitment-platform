@@ -117,9 +117,9 @@ sẽ gợi ý lại các ứng viên trong pool để mời ứng tuyển (`Appl
 - Phía ứng viên: được biết mình trong danh sách quan tâm của công ty — trải
   nghiệm tích cực hiếm có sau một lần bị từ chối.
 - **Điều kiện tiên quyết về consent**: chỉ đưa ứng viên vào pool khi có đồng ý
-  rõ ràng. Phải xử lý mục nợ đã ghi nhận về nhãn `recruiter_visibility_consent`
-  (nhãn checkbox hiện lệch nghĩa với việc nhà tuyển dụng tìm/lưu hồ sơ) trước
-  hoặc ngay trong phase này.
+  rõ ràng. Từ 2026-07-24, nhãn `recruiter_visibility_consent` đã nói đúng quyền
+  “nhà tuyển dụng tìm thấy và xem hồ sơ/CV”; phase talent pool vẫn phải bổ sung
+  consent riêng nếu phạm vi lưu/mời lại vượt quá quyền hiển thị hiện tại.
 - Liên kết với hai mục sidebar "Quản lý nhãn CV"/"Quản lý yêu cầu kết nối CV"
   đang disabled: pool là workflow thật đầu tiên lấp vào đó.
 

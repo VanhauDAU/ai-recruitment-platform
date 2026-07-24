@@ -8,7 +8,12 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsEmployer
 
 from ...models import RecruitmentNeed
-from ...services.profiles import get_or_create_recruiter
+from ...selectors import first_recruitment_need
+from ...services import (
+    InitialRecruitmentNeedAlreadyExists,
+    create_initial_recruitment_need,
+    get_or_create_recruiter,
+)
 from ..serializers import RecruitmentNeedSerializer
 
 
@@ -22,7 +27,7 @@ class RecruitmentNeedView(APIView):
     )
     def get(self, request):
         recruiter = get_or_create_recruiter(request.user)
-        need = recruiter.recruitment_needs.order_by('created_at', 'id').first()
+        need = first_recruitment_need(recruiter)
         return Response(RecruitmentNeedSerializer(need).data if need else None)
 
     @extend_schema(
@@ -47,8 +52,11 @@ class RecruitmentNeedView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         try:
-            need = serializer.save()
-        except IntegrityError as error:
+            need = create_initial_recruitment_need(
+                recruiter=recruiter,
+                validated_data=serializer.validated_data,
+            )
+        except (InitialRecruitmentNeedAlreadyExists, IntegrityError) as error:
             raise ValidationError(
                 {'detail': 'Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.'}
             ) from error

@@ -1,7 +1,11 @@
+import csv
+
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
 
@@ -17,6 +21,12 @@ from ..serializers.employer import ApplicationSerializer, ApplicationStatusUpdat
 from ..serializers.history import ApplicationStatusHistorySerializer
 
 
+def _csv_cell(value):
+    """Prevent spreadsheet formula execution when the exported CSV is opened."""
+    text = str(value or '')
+    return f"'{text}" if text.startswith(('=', '+', '-', '@')) else text
+
+
 class EmployerApplicationListView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
     permission_classes = [IsEmployer]
@@ -28,7 +38,52 @@ class EmployerApplicationListView(generics.ListAPIView):
             status=self.request.query_params.get('status'),
             campaign=self.request.query_params.get('campaign'),
             q=self.request.query_params.get('q'),
+            scope=self.request.query_params.get('scope'),
+            ordering=self.request.query_params.get('ordering'),
+            latest_only=self.request.query_params.get('latest') in {'1', 'true'},
         )
+
+
+class EmployerApplicationExportView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request):
+        queryset = employer_applications_queryset(
+            request.user,
+            request.query_params.get('job'),
+            status=request.query_params.get('status'),
+            campaign=request.query_params.get('campaign'),
+            q=request.query_params.get('q'),
+            scope=request.query_params.get('scope'),
+            ordering=request.query_params.get('ordering'),
+            latest_only=True,
+        )
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="campaign-applications.csv"'
+        response.write('\ufeff')
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                'Ứng viên',
+                'Email',
+                'Tin tuyển dụng',
+                'CV đã nộp',
+                'Trạng thái',
+                'Ngày ứng tuyển',
+            ]
+        )
+        for application in queryset.iterator(chunk_size=200):
+            writer.writerow(
+                [
+                    _csv_cell(application.candidate.full_name or application.candidate.email),
+                    _csv_cell(application.candidate.email),
+                    _csv_cell(application.job.title),
+                    _csv_cell(application.submitted_cv_title),
+                    _csv_cell(application.get_status_display()),
+                    application.applied_at.isoformat(),
+                ]
+            )
+        return response
 
 
 class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
