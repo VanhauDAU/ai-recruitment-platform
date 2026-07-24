@@ -5,8 +5,8 @@ export async function createConsultationLead(payload) {
   return data
 }
 
-export async function getAdminConsultationLeads(params = {}) {
-  const { data } = await client.get('/services/admin/consultations/', { params })
+export async function getAdminConsultationLeads(params = {}, { signal } = {}) {
+  const { data } = await client.get('/services/admin/consultations/', { params, signal })
   return data
 }
 
