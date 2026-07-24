@@ -58,7 +58,7 @@ def _validate_benefits(value):
 
 
 class AdminServiceCategorySerializer(serializers.ModelSerializer):
-    packages_count = serializers.IntegerField(source='packages.count', read_only=True)
+    packages_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ServiceCategory
@@ -74,6 +74,12 @@ class AdminServiceCategorySerializer(serializers.ModelSerializer):
             'is_active',
             'packages_count',
         ]
+
+    def get_packages_count(self, obj):
+        annotated_count = getattr(obj, 'packages_count', None)
+        if annotated_count is not None:
+            return annotated_count
+        return obj.packages.count()
 
 
 class AdminServicePackageSerializer(serializers.ModelSerializer):
