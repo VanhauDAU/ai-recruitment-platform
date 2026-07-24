@@ -193,6 +193,23 @@ describe('CV draft editor', () => {
     await waitFor(() => expect(mocks.getCvDraft).toHaveBeenCalledTimes(2))
   })
 
+  it('returns to the saved draft state when retrying after version creation fails', async () => {
+    mocks.saveCvVersion.mockRejectedValueOnce({
+      response: { data: { detail: 'Không thể tạo phiên bản' } },
+    })
+    renderLegacyEditor()
+    await screen.findByLabelText('Họ và tên')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản' }))
+    await screen.findByText('Không thể autosave bản nháp')
+    expect(mocks.updateCvDraft).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lưu lại' }))
+
+    await screen.findByText('Đã lưu')
+    expect(mocks.updateCvDraft).not.toHaveBeenCalled()
+  })
+
   it('runs local validation before publishing and publishes an immutable version only when valid', async () => {
     const invalid = draft()
     invalid.content_json.sections[2].items[0].item_id = 'experience_item_1'

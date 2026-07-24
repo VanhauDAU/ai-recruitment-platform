@@ -6,7 +6,7 @@ export default function CvEditor() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const saveType = searchParams.get('mode') === 'create' ? 'create' : 'edit'
-  return <CvDraftEditor publicId={publicId} onSaved={({ cv, version }) => navigate(
+  return <CvDraftEditor key={publicId} publicId={publicId} onSaved={({ cv, version }) => navigate(
     `/save-cv-success/${publicId}?type=${saveType}`,
     { state: { savedCv: cv, savedVersion: version } },
   )} />

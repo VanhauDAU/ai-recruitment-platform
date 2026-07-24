@@ -218,10 +218,15 @@ export default function useCvDraftEditor(publicId) {
     setSavePhase('unsaved')
   }, [flushPendingEdits, setSavePhase])
 
-  const retryAutosave = useCallback(() => {
+  const retryAutosave = useCallback(async () => {
     if (phaseRef.current === 'conflict') return Promise.resolve(false)
     setSavePhase('unsaved')
-    return runAutosave()
+    const saved = await runAutosave()
+    if (saved && signature(documentRef.current) === lastSavedSignatureRef.current) {
+      setError(null)
+      setSavePhase('saved')
+    }
+    return saved
   }, [runAutosave, setSavePhase])
 
   const saveDraft = useCallback(async () => {
