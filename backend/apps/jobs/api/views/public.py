@@ -2,6 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
@@ -18,7 +19,11 @@ from ...selectors.listing import (
     build_job_list_queryset,
     suggest_job_search_terms,
 )
-from ...selectors.recommendations import recommend_jobs_for_cv
+from ...selectors.recommendations import (
+    RecommendationConsentRequired,
+    recommend_jobs_for_candidate,
+    recommend_jobs_for_cv,
+)
 from ...selectors.stats import build_job_stats
 from ...services.engagement import (
     record_consented_job_impressions,
@@ -26,9 +31,12 @@ from ...services.engagement import (
     set_viewer_cookie,
 )
 from ..serializers import (
+    CandidateJobRecommendationResponseSerializer,
+    CvJobRecommendationResponseSerializer,
     JobDetailSerializer,
     PublicJobListSerializer,
     PublicJobPreviewSerializer,
+    RecommendationPermissionDeniedSerializer,
     SavedJobSerializer,
 )
 
@@ -164,9 +172,28 @@ class JobSuggestView(APIView):
         )
 
 
+def _serialize_recommendation_results(payload, request):
+    results = []
+    for item in payload['results']:
+        serialized = PublicJobListSerializer(item['job'], context={'request': request}).data
+        serialized.update(
+            {
+                'match_score': item['match_score'],
+                'match_details': item['match_details'],
+                'match_reasons': item['match_reasons'],
+                'is_high_match': item['match_score'] >= 70,
+            }
+        )
+        results.append(serialized)
+    return {**payload, 'results': results}
+
+
 @extend_schema(
     summary='Gợi ý việc làm theo một CV của ứng viên',
-    responses={200: OpenApiTypes.OBJECT},
+    responses={
+        200: CvJobRecommendationResponseSerializer,
+        403: RecommendationPermissionDeniedSerializer,
+    },
     tags=['jobs'],
 )
 class CvJobRecommendationView(APIView):
@@ -179,19 +206,38 @@ class CvJobRecommendationView(APIView):
             payload = recommend_jobs_for_cv(request.user, cv_public_id, limit=6)
         except UserCv.DoesNotExist as error:
             raise Http404 from error
-        results = []
-        for item in payload['results']:
-            serialized = PublicJobListSerializer(item['job'], context={'request': request}).data
-            serialized.update(
-                {
-                    'match_score': item['match_score'],
-                    'match_details': item['match_details'],
-                    'match_reasons': item['match_reasons'],
-                    'is_high_match': item['match_score'] >= 70,
-                }
-            )
-            results.append(serialized)
-        return Response({**payload, 'results': results})
+        except RecommendationConsentRequired as error:
+            raise PermissionDenied(
+                'Bạn cần đồng ý nhận gợi ý việc làm trước khi hệ thống đọc dữ liệu CV.'
+            ) from error
+        return Response(_serialize_recommendation_results(payload, request))
+
+
+class CandidateRecommendationQuerySerializer(serializers.Serializer):
+    page = serializers.IntegerField(min_value=1, default=1)
+    page_size = serializers.IntegerField(min_value=1, max_value=20, default=10)
+
+
+@extend_schema(
+    summary='Việc làm phù hợp với ứng viên hiện tại',
+    parameters=[CandidateRecommendationQuerySerializer],
+    responses={200: CandidateJobRecommendationResponseSerializer},
+    tags=['jobs'],
+)
+class CandidateJobRecommendationView(APIView):
+    """Explainable preference-first ranking for the candidate account page."""
+
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        query = CandidateRecommendationQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        payload = recommend_jobs_for_candidate(
+            request.user,
+            page=query.validated_data['page'],
+            page_size=query.validated_data['page_size'],
+        )
+        return Response(_serialize_recommendation_results(payload, request))
 
 
 class JobDetailView(generics.RetrieveAPIView):

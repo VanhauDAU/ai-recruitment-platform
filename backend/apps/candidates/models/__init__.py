@@ -1,5 +1,6 @@
 """Public model API for the candidates Django app."""
 
+from .email_notifications import CandidateEmailNotificationSettings
 from .profile import (
     CandidateConsent,
     CandidateConsentEvent,
@@ -13,6 +14,7 @@ __all__ = [
     'CandidateConsent',
     'CandidateConsentEvent',
     'CandidateDesiredSpecialization',
+    'CandidateEmailNotificationSettings',
     'CandidateJobPreference',
     'CandidatePreferredProvince',
     'CandidateProfile',

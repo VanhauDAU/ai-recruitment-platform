@@ -132,7 +132,7 @@ class UserCv(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     status__in=['draft', 'uploaded', 'processing', 'analyzed', 'failed']
                 ),
                 name='chk_user_cvs_status',
@@ -216,7 +216,7 @@ class CvVersion(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['cv', 'version_number'], name='uq_cv_version_number'),
             models.CheckConstraint(
-                check=models.Q(version_number__gt=0), name='chk_cv_version_number'
+                condition=models.Q(version_number__gt=0), name='chk_cv_version_number'
             ),
         ]
         indexes = [
@@ -476,11 +476,11 @@ class CvExport(models.Model):
                 name='uq_cv_export_version_render_config',
             ),
             models.CheckConstraint(
-                check=models.Q(export_format__in=['pdf']),
+                condition=models.Q(export_format__in=['pdf']),
                 name='chk_cv_export_format',
             ),
             models.CheckConstraint(
-                check=models.Q(status__in=['pending', 'processing', 'completed', 'failed']),
+                condition=models.Q(status__in=['pending', 'processing', 'completed', 'failed']),
                 name='chk_cv_export_status',
             ),
         ]

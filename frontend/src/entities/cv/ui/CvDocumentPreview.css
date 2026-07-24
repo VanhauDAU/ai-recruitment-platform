@@ -102,8 +102,7 @@
     padding: 0 !important;
   }
 
-  .cv-document-preview__page-label,
-  .cv-document-preview__overflow {
+  .cv-document-preview__page-label {
     display: none !important;
   }
 

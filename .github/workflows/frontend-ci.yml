@@ -1,52 +1,104 @@
 name: Frontend CI
 
-# Quality gate cho frontend: static checks, coverage, build, bundle budget,
-# smoke E2E và dependency audit. Chạy khi PR/đẩy có đụng tới frontend hoặc
-# chính workflow này.
+# Six job IDs below are required checks on main. Keep them stable while heavy
+# work becomes path-aware and quality, coverage, and E2E run in parallel.
 on:
-  push:
-    branches: [main, 'feature/**', 'epic/**']
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
-  # Sáu job bên dưới là required checks của PR. Không lọc theo paths ở đây:
-  # khi workflow bị skip, GitHub không tạo status và PR ngoài frontend bị kẹt
-  # ở "Waiting for status to be reported".
   pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Dependency audit at 01:17 Asia/Ho_Chi_Minh every day.
+    - cron: '17 18 * * *'
 
-defaults:
-  run:
-    working-directory: frontend
+permissions:
+  contents: read
 
 concurrency:
-  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  group: frontend-ci-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: true
 
 jobs:
-  install:
+  changes:
+    name: detect-frontend-changes
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
+    outputs:
+      backend: ${{ steps.areas.outputs.backend }}
+      frontend: ${{ steps.areas.outputs.frontend }}
+      docs: ${{ steps.areas.outputs.docs }}
+      ci: ${{ steps.areas.outputs.ci }}
+      deploy: ${{ steps.areas.outputs.deploy }}
+      audit: ${{ steps.areas.outputs.frontend_audit }}
+      changed_count: ${{ steps.areas.outputs.changed_count }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Classify changed areas
+        id: areas
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BEFORE_SHA: ${{ github.event.before || '' }}
+        run: |
+          set -o pipefail
+          bash scripts/ci_changed_areas.sh | tee -a "$GITHUB_OUTPUT"
+
+      - name: Publish change summary
+        env:
+          BACKEND: ${{ steps.areas.outputs.backend }}
+          FRONTEND: ${{ steps.areas.outputs.frontend }}
+          DOCS: ${{ steps.areas.outputs.docs }}
+          CI_AREA: ${{ steps.areas.outputs.ci }}
+          DEPLOY: ${{ steps.areas.outputs.deploy }}
+          AUDIT: ${{ steps.areas.outputs.frontend_audit }}
+          CHANGED_COUNT: ${{ steps.areas.outputs.changed_count }}
+        run: |
+          {
+            echo '## Frontend CI change detection'
+            echo
+            echo '| Field | Value |'
+            echo '| --- | --- |'
+            echo "| Event | ${{ github.event_name }} |"
+            echo "| Changed files | ${CHANGED_COUNT:-0} |"
+            echo "| Areas | backend=${BACKEND:-unknown}, frontend=${FRONTEND:-unknown}, docs=${DOCS:-unknown}, ci=${CI_AREA:-unknown}, deploy=${DEPLOY:-unknown} |"
+            echo "| Dependency audit | ${AUDIT:-unknown} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   static-quality:
-    needs: install
+    name: static-quality
+    needs: changes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
     steps:
+      - name: Validate change detection
+        working-directory: .
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+        run: |
+          [[ "$CHANGES_RESULT" == success ]]
+          [[ "$FRONTEND_CHANGED" == true || "$FRONTEND_CHANGED" == false ]]
+
+      - name: Start job timer
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
+        id: timer
+        working-directory: .
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
 
       - name: Setup Node
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -54,28 +106,103 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         run: npm ci
 
       - name: API boundary (axios chỉ trong shared/api)
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         working-directory: .
         run: bash scripts/check_api_boundary.sh
 
       - name: Feature boundary (không deep-import feature khác)
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         working-directory: .
         run: bash scripts/check_feature_boundary.sh
 
+      - name: Env example đồng bộ với code
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
+        working-directory: .
+        run: bash scripts/check_env_sync.sh
+
       - name: Lint (oxlint)
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         run: npm run lint
 
       - name: Check layered architecture
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         run: npm run check:architecture
 
+      - name: Build production bundle
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
+        run: npm run build
+
+      - name: Check initial bundle gzip budget
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
+        run: npm run check:bundle-budget
+
+      - name: Publish static-quality summary
+        if: ${{ always() }}
+        working-directory: .
+        env:
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+          JOB_STATUS: ${{ job.status }}
+          STARTED_AT: ${{ steps.timer.outputs.epoch }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+
+          frontend_changed = os.environ.get('FRONTEND_CHANGED') == 'true'
+          js_size = css_size = 'n/a'
+          stats_path = Path('frontend/dist/bundle-stats.json')
+          if stats_path.exists():
+              try:
+                  stats = json.loads(stats_path.read_text())
+                  initial = stats.get('initial', {})
+                  js_size = f"{initial.get('javascriptGzipBytes', 0) / 1024:.1f} KiB"
+                  css_size = f"{initial.get('stylesheetsGzipBytes', 0) / 1024:.1f} KiB"
+              except (AttributeError, OSError, ValueError, TypeError):
+                  pass
+
+          started_at = os.environ.get('STARTED_AT')
+          elapsed = f'{max(0, int(time.time()) - int(started_at))}s' if started_at else 'skipped'
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a') as stream:
+              stream.write('## Frontend static quality\n\n')
+              stream.write('| Metric | Value |\n| --- | --- |\n')
+              stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
+              stream.write(f"| Heavy checks | {'run' if frontend_changed else 'skipped'} |\n")
+              stream.write(f'| Initial JavaScript gzip | {js_size} |\n')
+              stream.write(f'| Initial CSS gzip | {css_size} |\n')
+              stream.write(f'| Measured checks elapsed | {elapsed} |\n')
+          PY
+
+      - name: Upload static diagnostics
+        if: ${{ failure() && needs.changes.outputs.frontend == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-static-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: frontend/dist/bundle-stats.json
+          if-no-files-found: ignore
+          retention-days: 5
+
   coverage:
-    needs: install
+    name: coverage
+    needs: changes
+    if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start job timer
+        id: timer
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -88,80 +215,74 @@ jobs:
         run: npm ci
 
       - name: Unit tests and coverage gate
-        run: npm run test:coverage
+        shell: bash
+        run: |
+          set -o pipefail
+          # Vitest automatically adds its github-actions reporter in CI; it
+          # writes exact file/test counts to $GITHUB_STEP_SUMMARY.
+          npm run test:coverage 2>&1 | tee coverage.log
 
-      - name: Upload coverage report
-        if: always()
+      - name: Publish coverage summary
+        if: ${{ always() }}
+        env:
+          JOB_STATUS: ${{ job.status }}
+          STARTED_AT: ${{ steps.timer.outputs.epoch }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          from pathlib import Path
+
+          values = {key: 'n/a' for key in ('lines', 'statements', 'functions', 'branches')}
+          coverage_path = Path('coverage/coverage-summary.json')
+          if coverage_path.exists():
+              try:
+                  total = json.loads(coverage_path.read_text()).get('total', {})
+                  for key in values:
+                      if key in total:
+                          values[key] = f"{total[key].get('pct', 'n/a')}%"
+              except (AttributeError, OSError, ValueError, TypeError):
+                  pass
+
+          started_at = int(os.environ.get('STARTED_AT') or time.time())
+          elapsed = max(0, int(time.time()) - started_at)
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a') as stream:
+              stream.write('## Frontend coverage\n\n')
+              stream.write('| Metric | Value |\n| --- | --- |\n')
+              stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
+              stream.write(f"| Statements / branches | {values['statements']} / {values['branches']} |\n")
+              stream.write(f"| Functions / lines | {values['functions']} / {values['lines']} |\n")
+              stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
+          PY
+
+      - name: Upload coverage diagnostics
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-coverage
-          path: frontend/coverage
-          if-no-files-found: warn
-          retention-days: 7
-
-  build:
-    needs: install
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build (vite)
-        run: npm run build
-
-      - name: Upload production bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
-          retention-days: 1
-
-  bundle-budget:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Download production bundle
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
-
-      - name: Check initial bundle gzip budget
-        run: npm run check:bundle-budget
-
-      - name: Upload bundle statistics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-bundle-stats
-          path: frontend/dist/bundle-stats.json
-          if-no-files-found: warn
-          retention-days: 7
+          name: frontend-coverage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            frontend/coverage
+            frontend/coverage.log
+          if-no-files-found: ignore
+          retention-days: 5
 
   e2e-smoke:
-    needs: [static-quality, coverage, bundle-budget]
+    name: e2e-smoke
+    needs: changes
+    if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start job timer
+        id: timer
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -177,35 +298,223 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run portal smoke tests
-        run: npm run test:e2e:smoke
+        shell: bash
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/e2e-results.xml
+        run: |
+          set -o pipefail
+          npm run test:e2e:smoke -- --reporter=line,junit 2>&1 | tee e2e.log
+
+      - name: Re-run failed tests with trace for diagnostics
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:e2e:smoke -- \
+            --last-failed \
+            --last-failed-file=test-results/.last-run.json \
+            --output=test-results/diagnostic \
+            --reporter=line \
+            --trace=on \
+            2>&1 | tee e2e-diagnostic.log
+
+      - name: Publish E2E summary
+        if: ${{ always() }}
+        env:
+          JOB_STATUS: ${{ job.status }}
+          STARTED_AT: ${{ steps.timer.outputs.epoch }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import time
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          metrics = {key: 'n/a' for key in ('tests', 'failures', 'errors', 'skipped', 'time')}
+          report_path = Path('test-results/e2e-results.xml')
+          if report_path.exists():
+              try:
+                  root = ET.parse(report_path).getroot()
+                  for key in metrics:
+                      metrics[key] = root.attrib.get(key, 'n/a')
+              except (OSError, ET.ParseError):
+                  pass
+
+          started_at = int(os.environ.get('STARTED_AT') or time.time())
+          elapsed = max(0, int(time.time()) - started_at)
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a') as stream:
+              stream.write('## Frontend E2E smoke\n\n')
+              stream.write('| Metric | Value |\n| --- | --- |\n')
+              stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
+              stream.write(f"| Tests | {metrics['tests']} |\n")
+              stream.write(f"| Failures / errors / skipped | {metrics['failures']} / {metrics['errors']} / {metrics['skipped']} |\n")
+              stream.write(f"| Playwright duration | {metrics['time']}s |\n")
+              stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
+          PY
 
       - name: Upload Playwright diagnostics
-        if: always()
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-smoke-report
+          name: playwright-smoke-report-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             frontend/playwright-report
             frontend/test-results
-          if-no-files-found: warn
-          retention-days: 7
+            frontend/e2e.log
+            frontend/e2e-diagnostic.log
+          if-no-files-found: ignore
+          retention-days: 5
 
   audit:
-    needs: install
+    name: audit
+    needs: changes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
     steps:
+      - name: Validate change detection
+        working-directory: .
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          AUDIT_REQUIRED: ${{ needs.changes.outputs.audit }}
+        run: |
+          [[ "$CHANGES_RESULT" == success ]]
+          [[ "$AUDIT_REQUIRED" == true || "$AUDIT_REQUIRED" == false ]]
+
       - uses: actions/checkout@v4
+        if: ${{ needs.changes.outputs.audit == 'true' }}
+
+      - name: Start job timer
+        if: ${{ needs.changes.outputs.audit == 'true' }}
+        id: timer
+        working-directory: .
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
+        if: ${{ needs.changes.outputs.audit == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Fail on high-severity dependency vulnerabilities
-        run: npm audit --audit-level=high
+        if: ${{ needs.changes.outputs.audit == 'true' }}
+        run: npm audit --package-lock-only --audit-level=high
+
+      - name: Publish dependency audit summary
+        if: ${{ always() }}
+        working-directory: .
+        env:
+          AUDIT_REQUIRED: ${{ needs.changes.outputs.audit }}
+          JOB_STATUS: ${{ job.status }}
+          STARTED_AT: ${{ steps.timer.outputs.epoch }}
+        run: |
+          if [[ "$AUDIT_REQUIRED" == true ]]; then
+            if [[ -n "$STARTED_AT" ]]; then
+              elapsed="$(( $(date +%s) - STARTED_AT ))s"
+            else
+              elapsed='n/a'
+            fi
+            reason='Dependency files changed, main was updated, or this is a scheduled/manual run.'
+          else
+            elapsed='skipped'
+            reason='No dependency audit trigger in this pull request.'
+          fi
+          {
+            echo '## Frontend dependency audit'
+            echo
+            echo '| Field | Value |'
+            echo '| --- | --- |'
+            echo "| Result | $JOB_STATUS |"
+            echo "| Audit command | $([[ "$AUDIT_REQUIRED" == true ]] && echo run || echo skipped) |"
+            echo "| Duration | $elapsed |"
+            echo "| Reason | $reason |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: build
+    needs: [changes, static-quality]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Preserve build required check
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          STATIC_RESULT: ${{ needs.static-quality.result }}
+        run: |
+          echo 'Build now runs inside static-quality; this job preserves the required context.' >> "$GITHUB_STEP_SUMMARY"
+          [[ "$CHANGES_RESULT" == success && "$STATIC_RESULT" == success ]]
+
+  bundle-budget:
+    name: bundle-budget
+    needs: [changes, static-quality]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Preserve bundle-budget required check
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          STATIC_RESULT: ${{ needs.static-quality.result }}
+        run: |
+          echo 'Bundle budget now runs inside static-quality; this job preserves the required context.' >> "$GITHUB_STEP_SUMMARY"
+          [[ "$CHANGES_RESULT" == success && "$STATIC_RESULT" == success ]]
+
+  final:
+    name: frontend-final-gate
+    needs: [changes, static-quality, coverage, build, bundle-budget, e2e-smoke, audit]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate frontend quality gate
+        shell: bash
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+          AUDIT_REQUIRED: ${{ needs.changes.outputs.audit }}
+          STATIC_RESULT: ${{ needs.static-quality.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          BUDGET_RESULT: ${{ needs.bundle-budget.result }}
+          E2E_RESULT: ${{ needs.e2e-smoke.result }}
+          AUDIT_RESULT: ${{ needs.audit.result }}
+        run: |
+          gate=success
+
+          [[ "$CHANGES_RESULT" == success ]] || gate=failure
+          [[ "$STATIC_RESULT" == success ]] || gate=failure
+          [[ "$BUILD_RESULT" == success ]] || gate=failure
+          [[ "$BUDGET_RESULT" == success ]] || gate=failure
+          [[ "$AUDIT_RESULT" == success ]] || gate=failure
+
+          if [[ "$FRONTEND_CHANGED" == true ]]; then
+            [[ "$COVERAGE_RESULT" == success ]] || gate=failure
+            [[ "$E2E_RESULT" == success ]] || gate=failure
+          elif [[ "$FRONTEND_CHANGED" == false ]]; then
+            [[ "$COVERAGE_RESULT" == skipped ]] || gate=failure
+            [[ "$E2E_RESULT" == skipped ]] || gate=failure
+          else
+            gate=failure
+          fi
+
+          {
+            echo '## Frontend final gate'
+            echo
+            echo '| Check | Result |'
+            echo '| --- | --- |'
+            echo "| Changed frontend | ${FRONTEND_CHANGED:-unknown} |"
+            echo "| static-quality | ${STATIC_RESULT:-unknown} |"
+            echo "| coverage | ${COVERAGE_RESULT:-unknown} |"
+            echo "| build | ${BUILD_RESULT:-unknown} |"
+            echo "| bundle-budget | ${BUDGET_RESULT:-unknown} |"
+            echo "| e2e-smoke | ${E2E_RESULT:-unknown} |"
+            echo "| audit (required=${AUDIT_REQUIRED:-unknown}) | ${AUDIT_RESULT:-unknown} |"
+            echo "| Overall gate | ${gate^^} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          [[ "$gate" == success ]]

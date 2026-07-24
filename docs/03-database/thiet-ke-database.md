@@ -30,6 +30,9 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `social_accounts` | `backend/apps/accounts` | Liên kết OAuth (Google/Facebook/LinkedIn) với user; UNIQUE(provider, provider_user_id), lưu `raw_profile` |
 | `skills`, `skill_groups` | `backend/apps/skills` | Nguồn kỹ năng chuẩn duy nhất; nhóm kỹ năng là taxonomy mở thay cho choices IT hard-code |
 | `candidate_profiles` | `backend/apps/candidates` | Tự tạo rỗng khi candidate đăng ký (signal) |
+| `candidate_job_preferences`, `candidate_desired_specializations`, `candidate_preferred_provinces` | `backend/apps/candidates` | Nhu cầu việc làm chuẩn hóa làm nguồn chính cho onboarding và recommendation |
+| `candidate_consents`, `candidate_consent_events` | `backend/apps/candidates` | Quyết định hiện hành và audit trail bất biến cho gợi ý/hiển thị với NTD |
+| `candidate_email_notification_settings` | `backend/apps/candidates` | 12 preference email candidate, one-to-one profile, mặc định bật; email giao dịch bảo mật không thuộc bảng |
 | `companies` | `backend/apps/employers` | Pháp nhân tuyển dụng (doanh nghiệp/hộ kinh doanh), `tax_code` unique, `verification_status`; thay thế `employer_profiles` cũ — dữ liệu đổ qua migration `0007` (gộp theo tax_code), bảng cũ đã xóa ở migration `0008` ([kế hoạch](./ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md)) |
 | `company_industries` | `backend/apps/employers` | M2M công ty–lĩnh vực + `is_primary` (partial unique: đúng 1 lĩnh vực chính/công ty) |
 | `company_images` | `backend/apps/employers` | Ảnh giới thiệu công ty, khuyến nghị 3:2 |
@@ -66,6 +69,10 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 - PRD mục 13.2 không liệt kê app riêng cho `job_categories`/`locations`/`skills`/`employer_profiles` — đã tách thành app Django riêng (`jobs` chứa job_categories, `locations`, `skills`, `employers`) để tránh phụ thuộc vòng và rõ trách nhiệm từng app.
 - `posted_by` là ranh giới quyền: chỉ người tạo tin nhìn/sửa tin và các ứng tuyển của tin, kể cả khi nhiều recruiter cùng company. Tin đi theo `draft → pending → active|rejected`; admin duyệt/từ chối tại API moderation, lý do từ chối lưu trên `jobs.rejected_reason` và audit tại `job_status_history`.
 - Các trường ảnh (`avatar_url`, `Company.logo_url`/`cover_image_url`, `CompanyImage.image_url`, `CompanyDocument.file_url`, `JobCategory.logo_url`, `Banner.image_url`, `SiteSetting` kiểu image, `UserCv.*_url`) lưu **storage key** chứ không phải URL tuyệt đối — URL công khai được resolve khi trả API theo domain/CDN hiện tại. Xem quy ước media ở [../04-api/tai-lieu-api.md](../04-api/tai-lieu-api.md).
+- `candidate_email_notification_settings` là policy preference, không phải hàng
+  đợi gửi mail. Producer email sản phẩm bổ sung sau phải kiểm tra preference
+  đang bật ngay trước delivery, còn email xác thực/reset mật khẩu/2FA tiếp tục
+  đi qua luồng bảo mật riêng và không được tắt ở trang này.
 - `jobs.locations` M2M cũ đã được migration `0013` chuyển sang `job_locations` trước khi xóa. Cả 61 liên kết hiện có được giữ nguyên; API mới yêu cầu phường/xã và địa chỉ cụ thể.
 - Tất cả app Django được gom vào `backend/apps/` (thay vì nằm trực tiếp dưới `backend/`) để thư mục gốc backend gọn hơn; `backend/common/` (tiện ích dùng chung như `public_id`) và `backend/config/` (settings/urls) vẫn ở ngoài `apps/` vì không phải Django app.
 

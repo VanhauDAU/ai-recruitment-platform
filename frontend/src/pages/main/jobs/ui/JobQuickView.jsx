@@ -49,7 +49,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
   const navigate = useNavigate()
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id)
+  const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
 
   useJobView(job.slug, { enabled: !loading && Boolean(detail) })
 

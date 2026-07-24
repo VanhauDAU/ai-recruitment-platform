@@ -26,6 +26,12 @@ hoặc `features → pages`) bị cấm. Một feature cũng không import featu
 `dependency-cruiser` và `npm run check:architecture` là source of truth tự động
 cho các quy tắc này.
 
+Gate còn cấm cycle trong toàn bộ `src`, import giữa hai entity slice và import
+page xuyên portal (`main`, `employer`, `admin`). Danh sách slice/portal được đọc
+từ filesystem để folder mới tự nhận rule. `npm run check:architecture` chạy cả
+graph thật và negative fixtures; fixture phải bị đúng các rule no-cycle,
+cross-entity và portal isolation bắt lại, tránh config bị nới lỏng âm thầm.
+
 ## Public API rule
 
 - Import feature/entity/widget từ public API: `@/features/saved-jobs`,
@@ -108,6 +114,21 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
 4. Thêm route vào file tương ứng trong `src/app/router/routes/`; giữ guard và
    URL contract hiện có hoặc bổ sung test redirect/404 khi contract mới.
 5. Chạy `npm run lint`, `npm run check:architecture`, unit tests và E2E phù hợp.
+
+## Đo bundle và lazy route
+
+- Production build sinh Vite manifest tại `dist/.vite/manifest.json`.
+  `npm run check:bundle-budget` dùng manifest này để ghi mọi JavaScript chunk
+  vào `dist/bundle-stats.json`, gồm static import, dynamic import và stylesheet
+  trực tiếp của chunk.
+- Hai budget initial giữ nguyên và vẫn là gate fail build: JavaScript gzip
+  `320 KiB`, CSS gzip `35 KiB`.
+- `dynamicRoutes` đo chi phí tăng thêm của từng lazy entry trong `src/pages`:
+  JavaScript/CSS của entry và toàn bộ static import transitively, trừ asset đã
+  có trong initial HTML. Asset nhị phân được liệt kê để audit nhưng không cộng
+  vào gzip JS/CSS.
+- Lazy route hiện chỉ có measurement, chưa có threshold. Chỉ thêm budget theo
+  route sau khi có baseline đủ ổn định và lý do sản phẩm/hiệu năng rõ ràng.
 
 ## Thêm portal route mới
 
@@ -244,6 +265,41 @@ widgets/employer-campaign-workspace/CampaignJobsPanel
   boundary/hook vào bề mặt job card hoặc nội dung chi tiết thực sự hiển thị.
 - Báo cáo chiến dịch đọc API performance theo kỳ từ `entities/campaign`; không
   tự suy ra tỷ lệ từ lifetime counter ở frontend.
+
+## Ownership map — Tài khoản và cá nhân hóa ứng viên
+
+```text
+app/router
+  → pages/main/account/EmailNotificationSettings|ChangePassword|MatchingJobs
+    + pages/main/jobs/SavedJobs
+    → features/configure-email-notifications, change-password, saved-jobs
+      → entities/candidate-notification-preferences, job, session
+        → shared/api
+
+widgets/main-header/CandidateUserMenu
+  → entities/account
+```
+
+- `entities/account` là nguồn duy nhất cho nhóm/item/route tài khoản.
+  `CandidateUserMenu` và `AccountSidebar` chỉ render config này; dropdown desktop
+  dùng single-open accordion, giới hạn theo viewport và để vùng item cuộn riêng.
+- `entities/candidate-notification-preferences` sở hữu GET/PATCH preference email.
+  Feature email điều phối optimistic auto-save/rollback; page chỉ compose header
+  và feature. Email bảo mật luôn bật không thuộc DTO preference.
+- `features/change-password` dùng chung hai portal và không chứa redirect/copy
+  riêng của employer. Page portal truyền `successRedirect` khi cần; candidate
+  giữ nguyên route và có thể hiển thị email read-only.
+- `entities/job` sở hữu contract/keys của feed recommendation. Trang matching
+  chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
+  tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục
+  đi qua feature tương ứng.
+- `features/saved-jobs` sở hữu GET/POST/DELETE danh sách lưu, cache optimistic
+  và feed `/recommendations/by-saved/`. `pages/main/jobs/SavedJobs` chỉ compose
+  danh sách, empty/error state và metadata strategy server trả; không tự chọn
+  category hay tính similarity. Feed vẫn hiển thị fallback tin mới khi chưa có
+  lịch sử lưu, nhưng UI không gọi fallback là kết quả cá nhân hóa.
+- Protected route tài khoản giữ `AuthGuard → RoleGuard(candidate)`. URL, consent,
+  token/storage key và payload hiện hành không được đổi từ page/widget.
 
 ## Ownership map — Chiến dịch tuyển dụng
 

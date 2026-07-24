@@ -1,26 +1,82 @@
 name: Backend CI
 
-# Quality gate cho backend: system check + kiểm tra migration treo + test suite.
-# Cần Postgres (migration bật extension unaccent) và Redis (cache/Celery broker).
+# Keep the stable `quality` context visible on every pull request. The
+# change detector skips PostgreSQL and the heavy checks when backend inputs
+# are untouched, while the final gate still fails closed if detection breaks.
 on:
-  push:
-    branches: [main, 'feature/**', 'epic/**']
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
   pull_request:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
 
-defaults:
-  run:
-    working-directory: backend
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}
+  cancel-in-progress: true
 
 jobs:
-  quality:
+  changes:
+    name: detect-backend-changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      backend: ${{ steps.areas.outputs.backend }}
+      frontend: ${{ steps.areas.outputs.frontend }}
+      docs: ${{ steps.areas.outputs.docs }}
+      ci: ${{ steps.areas.outputs.ci }}
+      deploy: ${{ steps.areas.outputs.deploy }}
+      changed_count: ${{ steps.areas.outputs.changed_count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Classify changed areas
+        id: areas
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BEFORE_SHA: ${{ github.event.before || '' }}
+        run: |
+          set -o pipefail
+          bash scripts/ci_changed_areas.sh | tee -a "$GITHUB_OUTPUT"
+
+      - name: Publish change summary
+        env:
+          BACKEND: ${{ steps.areas.outputs.backend }}
+          FRONTEND: ${{ steps.areas.outputs.frontend }}
+          DOCS: ${{ steps.areas.outputs.docs }}
+          CI_AREA: ${{ steps.areas.outputs.ci }}
+          DEPLOY: ${{ steps.areas.outputs.deploy }}
+          CHANGED_COUNT: ${{ steps.areas.outputs.changed_count }}
+        run: |
+          {
+            echo '## Backend CI change detection'
+            echo
+            echo '| Field | Value |'
+            echo '| --- | --- |'
+            echo "| Event | ${{ github.event_name }} |"
+            echo "| Changed files | ${CHANGED_COUNT:-0} |"
+            echo "| Backend | ${BACKEND:-unknown} |"
+            echo "| Frontend | ${FRONTEND:-unknown} |"
+            echo "| Docs | ${DOCS:-unknown} |"
+            echo "| CI | ${CI_AREA:-unknown} |"
+            echo "| Deploy | ${DEPLOY:-unknown} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  backend-checks:
+    name: backend-checks
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
     services:
       postgres:
         image: postgres:16
@@ -34,28 +90,21 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      redis:
-        image: redis:7
-        ports: ['6379:6379']
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
-      # Trùng default trong config/settings.py; chỉ trỏ HOST về service CI.
       DB_NAME: ai_career_coach
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_HOST: localhost
       DB_PORT: '5432'
-      REDIS_URL: redis://127.0.0.1:6379/1
       SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
       DEBUG: 'True'
       DJANGO_SETTINGS_MODULE: config.settings.test
-
     steps:
+      - name: Start job timer
+        id: timer
+        working-directory: .
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
 
       - name: Setup Python
@@ -66,7 +115,7 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt ruff import-linter pytest pytest-django pytest-cov
+        run: python -m pip install -r requirements.txt ruff==0.15.22
 
       - name: Lint (ruff)
         run: ruff check .
@@ -92,4 +141,122 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Test suite + coverage gate (ratchet — chỉ được tăng)
-        run: pytest --cov --cov-fail-under=84
+        shell: bash
+        run: |
+          set -o pipefail
+          pytest \
+            --cov \
+            --cov-fail-under=84 \
+            --cov-report=term-missing \
+            --cov-report=json:coverage.json \
+            --junitxml=pytest-results.xml \
+            2>&1 | tee pytest.log
+
+      - name: Publish backend metrics
+        if: ${{ always() }}
+        env:
+          JOB_STATUS: ${{ job.status }}
+          STARTED_AT: ${{ steps.timer.outputs.epoch }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          tests = failures = errors = skipped = 'n/a'
+          test_duration = 'n/a'
+          junit_path = Path('pytest-results.xml')
+          if junit_path.exists():
+              try:
+                  root = ET.parse(junit_path).getroot()
+                  cases = root.findall('.//testcase')
+                  tests = str(len(cases))
+                  failures = str(sum(case.find('failure') is not None for case in cases))
+                  errors = str(sum(case.find('error') is not None for case in cases))
+                  skipped = str(sum(case.find('skipped') is not None for case in cases))
+                  test_duration = f"{sum(float(case.attrib.get('time', 0)) for case in cases):.2f}"
+              except (OSError, ET.ParseError, TypeError, ValueError):
+                  pass
+
+          coverage = 'n/a'
+          coverage_path = Path('coverage.json')
+          if coverage_path.exists():
+              try:
+                  payload = json.loads(coverage_path.read_text())
+                  value = payload.get('totals', {}).get('percent_covered')
+                  if value is not None:
+                      coverage = f'{float(value):.2f}%'
+              except (AttributeError, OSError, ValueError, TypeError):
+                  pass
+
+          started_at = int(os.environ.get('STARTED_AT') or time.time())
+          elapsed = max(0, int(time.time()) - started_at)
+          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
+          with summary.open('a') as stream:
+              stream.write('## Backend checks\n\n')
+              stream.write('| Metric | Value |\n| --- | --- |\n')
+              stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
+              stream.write(f'| Tests | {tests} |\n')
+              stream.write(f'| Failures / errors / skipped | {failures} / {errors} / {skipped} |\n')
+              stream.write(f'| Coverage | {coverage} |\n')
+              stream.write(f'| Pytest duration | {test_duration}s |\n')
+              stream.write(f'| Measured steps elapsed | {elapsed}s |\n')
+          PY
+
+      - name: Upload backend diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            backend/pytest.log
+            backend/pytest-results.xml
+            backend/coverage.json
+          if-no-files-found: ignore
+          retention-days: 5
+
+  quality:
+    name: quality
+    needs: [changes, backend-checks]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate backend quality gate
+        shell: bash
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          BACKEND_CHANGED: ${{ needs.changes.outputs.backend }}
+          BACKEND_RESULT: ${{ needs.backend-checks.result }}
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+          DOCS_CHANGED: ${{ needs.changes.outputs.docs }}
+          CI_CHANGED: ${{ needs.changes.outputs.ci }}
+          DEPLOY_CHANGED: ${{ needs.changes.outputs.deploy }}
+          CHANGED_COUNT: ${{ needs.changes.outputs.changed_count }}
+        run: |
+          gate=failure
+          reason='Change detection or backend checks did not complete successfully.'
+
+          if [[ "$CHANGES_RESULT" == success && "$BACKEND_CHANGED" == true && "$BACKEND_RESULT" == success ]]; then
+            gate=success
+            reason='All backend checks passed.'
+          elif [[ "$CHANGES_RESULT" == success && "$BACKEND_CHANGED" == false && "$BACKEND_RESULT" == skipped ]]; then
+            gate=success
+            reason='No backend-impacting changes; heavy checks were skipped.'
+          fi
+
+          {
+            echo '## Backend quality gate'
+            echo
+            echo '| Field | Value |'
+            echo '| --- | --- |'
+            echo "| Changed files | ${CHANGED_COUNT:-unknown} |"
+            echo "| Areas | backend=${BACKEND_CHANGED:-unknown}, frontend=${FRONTEND_CHANGED:-unknown}, docs=${DOCS_CHANGED:-unknown}, ci=${CI_CHANGED:-unknown}, deploy=${DEPLOY_CHANGED:-unknown} |"
+            echo "| Heavy checks | ${BACKEND_RESULT:-unknown} |"
+            echo "| Gate | ${gate^^} |"
+            echo "| Reason | $reason |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          [[ "$gate" == success ]]

@@ -79,7 +79,7 @@
                 <div class="item">
                   {% if section.section_key == "summary" %}
                     {% if item.description_blocks %}<div class="item-description">
-                      {% for block in item.description_blocks %}{% if block.type == "bullet" %}<ul><li>{% else %}<p>{% endif %}{% for run in block.runs %}{{ run.text }}{% endfor %}{% if block.type == "bullet" %}</li></ul>{% else %}</p>{% endif %}{% endfor %}
+                      {% for block in item.description_blocks %}{% include "cvs/pdf/_rich_text_block.html" with block=block only %}{% endfor %}
                     </div>{% elif item.value %}<p>{{ item.value }}</p>{% endif %}
                   {% elif section.section_key == "experience" %}
                     {% if item.date_range %}<p class="date-range">{{ item.date_range }}</p>{% endif %}
@@ -93,13 +93,7 @@
                     {% if item.secondary %}<p class="item-secondary">{{ item.secondary }}</p>{% endif %}
                   {% endif %}
                   {% if section.section_key != "summary" and item.description_blocks %}<div class="item-description">
-                    {% for block in item.description_blocks %}
-                      {% if block.type == "bullet" %}<ul><li>{% else %}<p>{% endif %}
-                      {% for run in block.runs %}
-                        <span{% if run.marks.font_family or run.marks.font_size_pt or run.marks.color %} style="{% if run.marks.font_family %}font-family:{{ run.marks.font_family }};{% endif %}{% if run.marks.font_size_pt %}font-size:{{ run.marks.font_size_pt }}pt;{% endif %}{% if run.marks.color %}color:{{ run.marks.color }};{% endif %}"{% endif %}>{% if run.marks.bold %}<strong>{% endif %}{% if run.marks.italic %}<em>{% endif %}{% if run.marks.underline %}<u>{% endif %}{{ run.text }}{% if run.marks.underline %}</u>{% endif %}{% if run.marks.italic %}</em>{% endif %}{% if run.marks.bold %}</strong>{% endif %}</span>
-                      {% endfor %}
-                      {% if block.type == "bullet" %}</li></ul>{% else %}</p>{% endif %}
-                    {% endfor %}
+                    {% for block in item.description_blocks %}{% include "cvs/pdf/_rich_text_block.html" with block=block only %}{% endfor %}
                   </div>{% endif %}
                 </div>
               {% endfor %}

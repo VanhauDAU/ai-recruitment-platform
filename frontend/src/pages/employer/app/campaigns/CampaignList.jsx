@@ -3,25 +3,22 @@ import {
   EditOutlined,
   EyeOutlined,
   FileAddOutlined,
-  RocketOutlined,
   SearchOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   Button,
   Card,
   Alert,
   Empty,
-  Form,
   Input,
   Modal,
   Pagination,
   Select,
   Table,
   Tag,
-  message,
 } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -32,15 +29,15 @@ import {
   CAMPAIGN_STATUS_LABELS,
   CAMPAIGN_STATUS_OPTIONS,
   campaignKeys,
-  createCampaign,
   getCampaigns,
-  updateCampaign,
 } from '@/entities/campaign'
 import {
-  CampaignNameForm,
   CampaignLifecycleActions,
+  CreateCampaignModal,
+  RenameCampaignModal,
 } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 import CampaignJobsSummary from './CampaignJobsSummary'
 
 const ACTION_TONES = {
@@ -159,7 +156,7 @@ function CampaignCandidateAvatars({ campaign }) {
 function CampaignCandidateSummary({ campaign }) {
   return (
     <Link
-      to={`/tuyendung/app/campaigns/${campaign.public_id}?active_tab=apply_cv`}
+      to={employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`)}
       className="block min-w-36 !text-slate-700"
     >
       <CampaignCandidateAvatars campaign={campaign} />
@@ -185,9 +182,7 @@ export default function CampaignList() {
   const location = useLocation()
   const createOpen = Boolean(location.state?.createCampaign)
   const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
-  const [form] = Form.useForm()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const status = searchParams.get('status') || ''
   const scope = searchParams.get('scope') || ''
   const ordering = searchParams.get('ordering') || 'activity'
@@ -202,33 +197,6 @@ export default function CampaignList() {
   const campaignsQuery = useQuery({
     queryKey: campaignKeys.list(queryParams),
     queryFn: () => getCampaigns(queryParams),
-  })
-  const invalidateCampaigns = () => queryClient.invalidateQueries({
-    queryKey: campaignKeys.all,
-  })
-  const createMutation = useMutation({
-    mutationFn: createCampaign,
-    onSuccess: (campaign) => {
-      invalidateCampaigns()
-      form.resetFields()
-      setCreateOpen(false)
-      setActivityCampaign(campaign)
-      message.success('Đã tạo và mở chiến dịch.')
-    },
-    onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể tạo chiến dịch.'),
-    ),
-  })
-  const updateMutation = useMutation({
-    mutationFn: ({ publicId, values }) => updateCampaign(publicId, values),
-    onSuccess: () => {
-      invalidateCampaigns()
-      setEditCampaign(null)
-      message.success('Đã cập nhật chiến dịch.')
-    },
-    onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể cập nhật chiến dịch.'),
-    ),
   })
   const pageData = campaignsQuery.data || {
     count: 0,
@@ -268,7 +236,7 @@ export default function CampaignList() {
         <CampaignActionButton
           icon={<BarChartOutlined aria-hidden />}
           onClick={() => navigate(
-            `/tuyendung/app/campaigns/${campaign.public_id}?active_tab=overview`,
+            employerAppPath(`/campaigns/${campaign.public_id}?active_tab=overview`),
           )}
         >
           Tổng quan
@@ -277,7 +245,7 @@ export default function CampaignList() {
           icon={<TeamOutlined aria-hidden />}
           tone="blue"
           onClick={() => navigate(
-            `/tuyendung/app/campaigns/${campaign.public_id}?active_tab=apply_cv`,
+            employerAppPath(`/campaigns/${campaign.public_id}?active_tab=apply_cv`),
           )}
         >
           Xem CV
@@ -298,7 +266,7 @@ export default function CampaignList() {
             <span className="text-xs text-slate-400">#{campaign.public_id}</span>
             <Link
               className="mt-1 block font-bold !text-slate-900 hover:!text-emerald-700"
-              to={`/tuyendung/app/campaigns/${campaign.public_id}`}
+              to={employerAppPath(`/campaigns/${campaign.public_id}`)}
             >
               {campaign.name}
             </Link>
@@ -319,7 +287,7 @@ export default function CampaignList() {
         <CampaignJobsSummary
           campaign={campaign}
           onCreate={() => navigate(
-            `/tuyendung/app/jobs/new?campaign=${campaign.public_id}`,
+            employerAppPath(`/jobs/new?campaign=${campaign.public_id}`),
           )}
         />
       ),
@@ -412,7 +380,7 @@ export default function CampaignList() {
                   <span className="text-xs text-slate-400">#{campaign.public_id}</span>
                   <Link
                     className="mt-1 block break-words text-base font-bold !text-slate-900"
-                    to={`/tuyendung/app/campaigns/${campaign.public_id}`}
+                    to={employerAppPath(`/campaigns/${campaign.public_id}`)}
                   >
                     {campaign.name}
                   </Link>
@@ -430,7 +398,7 @@ export default function CampaignList() {
                 compact
                 campaign={campaign}
                 onCreate={() => navigate(
-                  `/tuyendung/app/jobs/new?campaign=${campaign.public_id}`,
+                  employerAppPath(`/jobs/new?campaign=${campaign.public_id}`),
                 )}
               />
             </div>
@@ -476,51 +444,11 @@ export default function CampaignList() {
         />
       </Card>
 
-      <Modal
-        destroyOnHidden
+      <CreateCampaignModal
         open={createOpen}
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <RocketOutlined className="text-emerald-600" />
-            Tạo chiến dịch tuyển dụng
-          </span>
-        )}
-        okText="Tạo chiến dịch"
-        cancelText="Hủy"
-        okButtonProps={{
-          className: '!h-10 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!shadow-lg active:!translate-y-0',
-        }}
-        cancelButtonProps={{
-          className: '!h-10 !rounded-xl !border-slate-200 !px-4 !font-semibold !text-slate-600 hover:!border-slate-300 hover:!bg-slate-50 hover:!text-slate-900',
-        }}
-        confirmLoading={createMutation.isPending}
-        onCancel={() => setCreateOpen(false)}
-        onOk={() => form.submit()}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={({ name }) => createMutation.mutate({ name: name.trim() })}
-        >
-          <Form.Item
-            label="Tên chiến dịch tuyển dụng"
-            name="name"
-            rules={[{ required: true, whitespace: true, message: 'Nhập tên chiến dịch.' }]}
-          >
-            <Input
-              autoFocus
-              maxLength={255}
-              placeholder="Ví dụ: Tuyển dụng nhân viên Marketing tháng 10"
-              onPressEnter={(event) => {
-                if (!event.nativeEvent.isComposing) {
-                  event.preventDefault()
-                  form.submit()
-                }
-              }}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+        onClose={() => setCreateOpen(false)}
+        onCreated={setActivityCampaign}
+      />
 
       <Modal
         destroyOnHidden
@@ -540,7 +468,7 @@ export default function CampaignList() {
             icon={<EyeOutlined aria-hidden />}
             className="!h-11 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
             onClick={() => navigate(
-              `/tuyendung/app/campaigns/${activityCampaign.public_id}`,
+              employerAppPath(`/campaigns/${activityCampaign.public_id}`),
             )}
           >
             Xem chiến dịch
@@ -549,7 +477,7 @@ export default function CampaignList() {
             icon={<FileAddOutlined aria-hidden />}
             className="!h-11 !rounded-xl !border-slate-200 !bg-white !font-semibold !text-slate-700 !shadow-sm transition-all duration-200 hover:!-translate-y-0.5 hover:!border-emerald-300 hover:!text-emerald-700 hover:!shadow-md active:!translate-y-0"
             onClick={() => navigate(
-              `/tuyendung/app/jobs/new?campaign=${activityCampaign.public_id}`,
+              employerAppPath(`/jobs/new?campaign=${activityCampaign.public_id}`),
             )}
           >
             Đăng tin tuyển dụng
@@ -557,28 +485,10 @@ export default function CampaignList() {
         </div>
       </Modal>
 
-      <Modal
-        destroyOnHidden
-        footer={null}
-        open={Boolean(editCampaign)}
-        title={(
-          <span className="inline-flex items-center gap-2">
-            <EditOutlined className="text-emerald-600" />
-            Sửa chiến dịch
-          </span>
-        )}
-        onCancel={() => setEditCampaign(null)}
-      >
-        <CampaignNameForm
-          initialName={editCampaign?.name}
-          submitting={updateMutation.isPending}
-          onCancel={() => setEditCampaign(null)}
-          onSubmit={(values) => updateMutation.mutate({
-            publicId: editCampaign.public_id,
-            values,
-          })}
-        />
-      </Modal>
+      <RenameCampaignModal
+        campaign={editCampaign}
+        onClose={() => setEditCampaign(null)}
+      />
     </section>
   )
 }

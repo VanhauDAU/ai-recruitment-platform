@@ -14,7 +14,8 @@ export default function useSavedJobsQuery(candidateKey) {
 
   return {
     items: candidateKey ? (query.data ?? []) : [],
-    loading: query.isFetching,
+    loading: Boolean(candidateKey) && query.isPending,
+    refreshing: Boolean(candidateKey) && query.isFetching && !query.isPending,
     error: query.error ?? null,
     reload: query.refetch,
   }

@@ -59,14 +59,16 @@ describe('SavedJobsProvider mutations', () => {
 
     let togglePromise
     act(() => {
-      togglePromise = result.current.toggle('job-1')
-      result.current.toggle('job-1')
+      const jobSnapshot = { public_id: 'job-1', title: 'React developer' }
+      togglePromise = result.current.toggle('job-1', jobSnapshot)
+      result.current.toggle('job-1', jobSnapshot)
     })
 
     // mutationFn chạy sau microtask (onMutate async) nhưng khóa pending là đồng bộ
     expect(result.current.pendingJobIds.has('job-1')).toBe(true)
     await waitFor(() => expect(mocks.saveJob).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(result.current.savedIds.has('job-1')).toBe(true))
+    expect(result.current.items[0].job_detail.title).toBe('React developer')
 
     await act(async () => {
       request.resolve({ job_detail: { public_id: 'job-1', title: 'React developer' } })
@@ -82,7 +84,10 @@ describe('SavedJobsProvider mutations', () => {
     const { result } = await renderSavedJobs()
 
     await act(async () => {
-      await result.current.toggle('job-1')
+      await result.current.toggle(
+        'job-1',
+        { public_id: 'job-1', title: 'React developer' },
+      )
     })
 
     expect(result.current.savedIds.has('job-1')).toBe(false)

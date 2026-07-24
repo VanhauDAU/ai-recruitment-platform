@@ -20,11 +20,6 @@ export async function confirmTwoFactorDisable(code) {
   return data
 }
 
-export async function getEmployerTwoFactorMethods() {
-  const { data } = await api.get('/auth/two-factor/employer/methods/')
-  return data
-}
-
 export async function startEmployerTotpSetup() {
   const { data } = await api.post('/auth/two-factor/employer/totp/setup/')
   return data
@@ -32,11 +27,6 @@ export async function startEmployerTotpSetup() {
 
 export async function confirmEmployerTotpSetup(code) {
   const { data } = await api.post('/auth/two-factor/employer/totp/confirm/', { code })
-  return data
-}
-
-export async function disableEmployerTotp(code) {
-  const { data } = await api.post('/auth/two-factor/employer/totp/disable/', { code })
   return data
 }
 

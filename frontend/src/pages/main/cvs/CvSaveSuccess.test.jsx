@@ -123,6 +123,21 @@ describe('CV save success page', () => {
     expect(await screen.findByTestId('saved-version-document')).toHaveTextContent('Nguyễn An')
   })
 
+  it('explains the consent requirement instead of pretending no jobs match', async () => {
+    mocks.getCvJobRecommendations.mockRejectedValue({
+      response: { status: 403, data: { detail: 'Consent required.' } },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Bật quyền gợi ý việc làm')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Đi tới cài đặt gợi ý' })).toHaveAttribute(
+      'href',
+      '/tai-khoan/cai-dat-goi-y-viec-lam',
+    )
+    expect(screen.queryByText(/Chưa có việc làm đủ phù hợp/)).not.toBeInTheDocument()
+  })
+
   it('cancels pending preview frames when the page unmounts', async () => {
     const requestAnimationFrame = vi.spyOn(globalThis, 'requestAnimationFrame')
     const cancelAnimationFrame = vi.spyOn(globalThis, 'cancelAnimationFrame')

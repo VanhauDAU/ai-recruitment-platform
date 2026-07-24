@@ -21,7 +21,7 @@ export default function JobDetail() {
   const { isAuthenticated, user } = useSession()
   const { promptLogin } = useLoginPrompt()
   const { job, relatedJobs, loading, notFound } = useJobDetailPageData({ slug, companySlug, navigate })
-  const [saved, toggleSaved, savePending] = useSavedJob(job?.public_id)
+  const [saved, toggleSaved, savePending] = useSavedJob(job?.public_id, job)
   const [applyOpen, setApplyOpen] = useState(false)
   const applicationStatus = useJobApplicationStatus({
     jobPublicId: job?.public_id,

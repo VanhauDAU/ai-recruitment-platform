@@ -12,6 +12,12 @@ from .jobs import (
     PublicJobPreviewSerializer,
 )
 from .moderation import AdminJobModerationSerializer, AdminJobReviewSerializer
+from .recommendations import (
+    CandidateJobRecommendationResponseSerializer,
+    CvJobRecommendationResponseSerializer,
+    RecommendationPermissionDeniedSerializer,
+    SavedJobRecommendationResponseSerializer,
+)
 from .saved import SavedJobSerializer
 from .supporting import (
     JobApplicationContactSerializer,
@@ -34,6 +40,8 @@ __all__ = [
     'BenefitSerializer',
     'AdminJobModerationSerializer',
     'AdminJobReviewSerializer',
+    'CandidateJobRecommendationResponseSerializer',
+    'CvJobRecommendationResponseSerializer',
     'EmployerJobDetailSerializer',
     'EmployerJobDraftSerializer',
     'EmployerJobListSerializer',
@@ -57,5 +65,7 @@ __all__ = [
     'PublicJobLocationSerializer',
     'PublicJobPreviewSerializer',
     'PublicJobWorkScheduleSerializer',
+    'RecommendationPermissionDeniedSerializer',
+    'SavedJobRecommendationResponseSerializer',
     'SavedJobSerializer',
 ]

@@ -11,6 +11,7 @@ import { Button, Checkbox, Skeleton, Tag, Upload } from 'antd'
 import { useState } from 'react'
 import {
   acceptEmployerDpa,
+  employerProfileKeys,
   getEmployerCompanyDocuments,
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
@@ -122,7 +123,7 @@ export default function EmployerDataProtectionForm() {
   const [platformAgreementAccepted, setPlatformAgreementAccepted] = useState(false)
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const documentsQuery = useQuery({
-    queryKey: ['employer', 'company-documents'],
+    queryKey: employerProfileKeys.companyDocuments,
     queryFn: getEmployerCompanyDocuments,
   })
 

@@ -7,6 +7,7 @@ import {
   createEmployerCompanyUpdateRequest,
   deleteEmployerCompanyImage,
   deleteEmployerCompanyLogo,
+  employerProfileKeys,
   getEmployerCompanyDocuments,
   saveEmployerCompanyTradeNameWebsite,
   uploadEmployerCompanyDocument,
@@ -79,7 +80,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   const industryOptions = industries.map((item) => ({ value: item.id, label: item.name }))
   const selectedIndustryOptions = industryOptions.filter((item) => selectedIndustries.includes(item.value))
   const documentsQuery = useQuery({
-    queryKey: ['employer', 'company', 'documents'],
+    queryKey: employerProfileKeys.companyDocuments,
     queryFn: getEmployerCompanyDocuments,
     enabled: isEdit,
   })
@@ -90,7 +91,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     mutationFn: save,
     onSuccess: async ({ partialFailures = [] }) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['employer', 'company'] }),
+        queryClient.invalidateQueries({ queryKey: employerProfileKeys.company }),
         queryClient.invalidateQueries({ queryKey: ['employer', 'profile'] }),
         queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
       ])

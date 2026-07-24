@@ -31,11 +31,6 @@ export async function getCvSampleContents(locale = 'vi-VN') {
   return results(data)
 }
 
-export async function getCvSampleContent(publicId) {
-  const { data } = await api.get(`/v2/cv-sample-contents/${publicId}/`)
-  return data
-}
-
 export async function getCvBackgrounds() {
   const { data } = await api.get('/v2/cv-backgrounds/')
   return results(data)

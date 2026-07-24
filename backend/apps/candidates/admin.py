@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     CandidateConsent,
     CandidateDesiredSpecialization,
+    CandidateEmailNotificationSettings,
     CandidateJobPreference,
     CandidatePreferredProvince,
     CandidateProfile,
@@ -42,3 +43,20 @@ class CandidatePreferredProvinceAdmin(admin.ModelAdmin):
 class CandidateConsentAdmin(admin.ModelAdmin):
     list_display = ['candidate_profile', 'consent_type', 'decision', 'policy_version', 'updated_at']
     list_filter = ['consent_type', 'decision']
+
+
+@admin.register(CandidateEmailNotificationSettings)
+class CandidateEmailNotificationSettingsAdmin(admin.ModelAdmin):
+    list_display = [
+        'candidate_profile',
+        'configured_job_alerts',
+        'suitable_job_recommendations',
+        'employer_invitations',
+        'updated_at',
+    ]
+    list_filter = [
+        'configured_job_alerts',
+        'suitable_job_recommendations',
+        'employer_invitations',
+    ]
+    search_fields = ['candidate_profile__user__email']

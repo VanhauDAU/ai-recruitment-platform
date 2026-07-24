@@ -18,6 +18,7 @@ import {
 import { campaignKeys, getCampaignReport } from '@/entities/campaign'
 import { getEmployerJobs, jobKeys } from '@/entities/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 
 const STATUS_COLORS = {
   submitted: 'blue',
@@ -309,7 +310,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 align: 'right',
                 render: (_, application) => (
                   <Link
-                    to={`/tuyendung/app/applications?campaign=${publicId}&application=${application.public_id}`}
+                    to={employerAppPath(`/applications?campaign=${publicId}&application=${application.public_id}`)}
                     className="inline-flex items-center gap-1 whitespace-nowrap font-semibold !text-emerald-700"
                   >
                     <EyeOutlined /> Chi tiết

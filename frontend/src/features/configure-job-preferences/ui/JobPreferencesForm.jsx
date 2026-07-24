@@ -29,7 +29,7 @@ const FIELD_LABELS = {
   preferred_province_ids: 'Địa điểm làm việc',
   willing_to_relocate: 'Khả năng thay đổi địa điểm làm việc',
   ai_recommendation_consent: 'Đồng ý nhận gợi ý việc làm',
-  recruiter_visibility_consent: 'Đồng ý nhận thông tin việc làm và sự kiện',
+  recruiter_visibility_consent: 'Cho phép nhà tuyển dụng tìm thấy và xem hồ sơ',
 }
 
 function toFormValues(preference) {
@@ -110,8 +110,6 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
           ...preferenceValues,
           desired_position_other: (values.desired_position_other || '').trim(),
           desired_salary_vnd: values.desired_salary_vnd ?? null,
-          // These consent controls are intentionally hidden after being granted,
-          // but the API still requires the boolean on every replacement PUT.
           ai_recommendation_consent: values.ai_recommendation_consent ?? Boolean(preference?.ai_recommendation_consent),
           recruiter_visibility_consent: values.recruiter_visibility_consent ?? Boolean(preference?.recruiter_visibility_consent),
         }),
@@ -263,24 +261,14 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
       )}
 
       <div className={isOnboarding || isAccountSettings ? 'space-y-2 text-sm text-slate-700' : 'space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700'}>
-        {preference?.ai_recommendation_consent ? (
-          <Form.Item name="ai_recommendation_consent" hidden>
-            <Input />
-          </Form.Item>
-        ) : (
-          <Form.Item name="ai_recommendation_consent" valuePropName="checked" className="!mb-0">
-            <Checkbox>Đồng ý để ProCV gợi ý việc làm dựa trên CV và hoạt động tìm việc của tôi.</Checkbox>
-          </Form.Item>
-        )}
-        {preference?.recruiter_visibility_consent ? (
-          <Form.Item name="recruiter_visibility_consent" hidden>
-            <Input />
-          </Form.Item>
-        ) : (
-          <Form.Item name="recruiter_visibility_consent" valuePropName="checked" className="!mb-0">
-            <Checkbox>Đồng ý để ProCV gửi thông tin liên quan đến việc làm, sự kiện nghề nghiệp.</Checkbox>
-          </Form.Item>
-        )}
+        <Form.Item name="ai_recommendation_consent" valuePropName="checked" className="!mb-0">
+          <Checkbox>Đồng ý để hệ thống gợi ý việc làm dựa trên nhu cầu công việc và CV của tôi.</Checkbox>
+        </Form.Item>
+        <Form.Item name="recruiter_visibility_consent" valuePropName="checked" className="!mb-0">
+          <Checkbox>
+            Đồng ý cho phép nhà tuyển dụng tìm thấy và xem thông tin hồ sơ/CV của tôi.
+          </Checkbox>
+        </Form.Item>
       </div>
 
       {isOnboarding && <p className="mt-4 text-xs font-medium text-slate-500">(*) Thông tin bắt buộc</p>}

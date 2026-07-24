@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .api.views import (
+    MyCandidateEmailNotificationSettingsView,
     MyCandidateJobPreferencesView,
     MyCandidateProfileView,
     MyRecruiterVisibilityView,
@@ -8,6 +9,11 @@ from .api.views import (
 
 urlpatterns = [
     path('profile/', MyCandidateProfileView.as_view(), name='candidate-profile'),
+    path(
+        'email-notification-settings/',
+        MyCandidateEmailNotificationSettingsView.as_view(),
+        name='candidate-email-notification-settings',
+    ),
     path(
         'job-preferences/',
         MyCandidateJobPreferencesView.as_view(),

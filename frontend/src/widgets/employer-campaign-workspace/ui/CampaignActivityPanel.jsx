@@ -12,6 +12,7 @@ import {
   getCampaignActivities,
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { employerAppPath } from '@/shared/config/portals'
 
 const GROUP_ICONS = {
   campaign: HistoryOutlined,
@@ -31,10 +32,10 @@ function activityText(activity) {
 function activityLink(publicId, activity) {
   if (!activity.subject_public_id) return null
   if (activity.group === 'job') {
-    return `/tuyendung/app/jobs/${activity.subject_public_id}`
+    return employerAppPath(`/jobs/${activity.subject_public_id}`)
   }
   if (activity.group === 'application') {
-    return `/tuyendung/app/applications?campaign=${publicId}&application=${activity.subject_public_id}`
+    return employerAppPath(`/applications?campaign=${publicId}&application=${activity.subject_public_id}`)
   }
   return null
 }

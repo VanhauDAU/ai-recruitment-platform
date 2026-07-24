@@ -8,8 +8,12 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin
 
-from ...models import ConsultationLead, ServiceCategory, ServicePackage
-from ...selectors import active_public_categories_queryset, admin_leads_queryset
+from ...models import ConsultationLead, ServicePackage
+from ...selectors import (
+    active_public_categories_queryset,
+    admin_leads_queryset,
+    admin_service_categories_queryset,
+)
 from ...signals import PUBLIC_PACKAGES_CACHE_KEY
 from ..serializers import (
     AdminConsultationLeadSerializer,
@@ -55,13 +59,13 @@ class AdminServiceCategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminServiceCategorySerializer
     permission_classes = [IsAdmin]
     pagination_class = None
-    queryset = ServiceCategory.objects.all()
+    queryset = admin_service_categories_queryset()
 
 
 class AdminServiceCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminServiceCategorySerializer
     permission_classes = [IsAdmin]
-    queryset = ServiceCategory.objects.all()
+    queryset = admin_service_categories_queryset()
 
     def destroy(self, request, *args, **kwargs):
         try:

@@ -15,6 +15,7 @@ import {
   getCampaignJobPerformance,
 } from '@/entities/campaign'
 import { jobDetailPath } from '@/entities/job'
+import { employerAppPath } from '@/shared/config/portals'
 import CampaignPerformanceChart from './CampaignPerformanceChart'
 
 const JOB_STATUS = {
@@ -92,7 +93,7 @@ function JobActions({ job, onShowRejectedReason, campaignPaused = false }) {
       <Tooltip title="Chỉnh sửa tin">
         <Link
           aria-label={`Chỉnh sửa ${job.title || 'tin tuyển dụng'}`}
-          to={`/tuyendung/app/jobs/${job.public_id}/edit`}
+          to={employerAppPath(`/jobs/${job.public_id}/edit`)}
           className={actionClassName}
         >
           <EditOutlined />
@@ -124,7 +125,7 @@ function MetricValue({ value, available = true }) {
 function AddJobButton({ publicId }) {
   return (
     <Link
-      to={`/tuyendung/app/jobs/new?campaign=${publicId}`}
+      to={employerAppPath(`/jobs/new?campaign=${publicId}`)}
       className="inline-flex h-9 shrink-0 items-center rounded px-3 text-sm font-semibold !text-white shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
     >
@@ -206,7 +207,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 text-sm text-slate-700">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
-          <Link to={`/tuyendung/app/jobs/${primaryJob.public_id}`} className="truncate font-semibold !text-emerald-700 hover:underline">
+          <Link to={employerAppPath(`/jobs/${primaryJob.public_id}`)} className="truncate font-semibold !text-emerald-700 hover:underline">
             {primaryJob.title || 'Tin nháp chưa đặt tên'}
           </Link>
           {jobs.length > 1 && <span className="text-slate-400">và {jobs.length - 1} tin khác</span>}
@@ -265,7 +266,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
             <strong className="text-slate-800">48 giờ</strong> là khoảng thời gian lý tưởng để phản hồi ứng viên. Hãy kiểm tra và trả lời ứng viên ngay!
           </p>
           <Link
-            to={`/tuyendung/app/applications?campaign=${publicId}`}
+            to={employerAppPath(`/applications?campaign=${publicId}`)}
             className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-emerald-50 px-3 text-sm font-semibold !text-emerald-700 hover:bg-emerald-100"
           >
             <FileSearchOutlined /> Kiểm tra CV
@@ -296,7 +297,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
               width: 250,
               render: (_, job) => (
                 <div className="min-w-48">
-                  <Link className="font-semibold !text-emerald-700 hover:underline" to={`/tuyendung/app/jobs/${job.public_id}`}>{job.title || 'Tin nháp chưa đặt tên'}</Link>
+                  <Link className="font-semibold !text-emerald-700 hover:underline" to={employerAppPath(`/jobs/${job.public_id}`)}>{job.title || 'Tin nháp chưa đặt tên'}</Link>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} campaignPaused={campaign?.status === 'paused'} /><span className="text-xs text-slate-400">Hạn {formatDate(job.deadline)}</span></div>
                 </div>
               ),
@@ -321,7 +322,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
               align: 'right',
               render: (_, job) => (
                 job.available
-                  ? <Link to={`/tuyendung/app/applications?job=${job.public_id}`} className="font-semibold !text-emerald-700">{formatNumber(job.applications)}</Link>
+                  ? <Link to={employerAppPath(`/applications?job=${job.public_id}`)} className="font-semibold !text-emerald-700">{formatNumber(job.applications)}</Link>
                   : <span className="text-slate-400">—</span>
               ),
             },
@@ -346,7 +347,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
         onCancel={() => setRejectedJob(null)}
         footer={[
           <Button key="close" onClick={() => setRejectedJob(null)}>Đóng</Button>,
-          <Button key="edit" type="primary" onClick={() => setRejectedJob(null)} href={rejectedJob ? `/tuyendung/app/jobs/${rejectedJob.public_id}/edit` : undefined}>
+          <Button key="edit" type="primary" onClick={() => setRejectedJob(null)} href={rejectedJob ? employerAppPath(`/jobs/${rejectedJob.public_id}/edit`) : undefined}>
             Chỉnh sửa và gửi lại
           </Button>,
         ]}

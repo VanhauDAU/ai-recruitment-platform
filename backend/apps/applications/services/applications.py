@@ -184,7 +184,9 @@ def create_application(serializer, candidate):
 @transaction.atomic
 def update_application_status(serializer, *, changed_by=None):
     """Persist one valid status transition and its timestamp exactly once."""
-    current_status = serializer.instance.status
+    application = Application.objects.select_for_update().get(pk=serializer.instance.pk)
+    serializer.instance = application
+    current_status = application.status
     next_status = serializer.validated_data.get('status', current_status)
 
     if (
@@ -228,6 +230,7 @@ def update_application_status(serializer, *, changed_by=None):
 
 @transaction.atomic
 def mark_application_viewed(application, *, changed_by):
+    application = Application.objects.select_for_update().get(pk=application.pk)
     if application.status != Application.Status.SUBMITTED:
         return application
     application.status = Application.Status.VIEWED

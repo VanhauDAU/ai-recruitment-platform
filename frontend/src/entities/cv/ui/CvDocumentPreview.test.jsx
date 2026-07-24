@@ -26,6 +26,17 @@ describe('CV document preview', () => {
     expect(screen.getByText('React')).toBeInTheDocument()
   })
 
+  it('uses the same supported page margin as the editor and PDF renderer', () => {
+    const compactDocument = JSON.parse(JSON.stringify(document))
+    compactDocument.layout_json.page = { size: 'A4', margin_mm: 5 }
+
+    render(<CvDocumentPreview document={compactDocument} rendererKey="classic_two_column_v1" />)
+
+    expect(screen.getByLabelText('Xem trước CV classic_two_column_v1 trang 1')).toHaveStyle({
+      padding: '5mm',
+    })
+  })
+
   it('exposes A4 page breaks without showing an overflow warning to the reader', () => {
     const longDocument = JSON.parse(JSON.stringify(document))
     longDocument.content_json.sections.push(...Array.from({ length: 6 }, (_, index) => ({

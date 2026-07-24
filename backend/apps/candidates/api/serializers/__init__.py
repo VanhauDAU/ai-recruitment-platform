@@ -1,3 +1,4 @@
+from .email_notifications import CandidateEmailNotificationSettingsSerializer
 from .profile import (
     CandidateJobPreferenceSerializer,
     CandidateProfileReadSerializer,
@@ -6,6 +7,7 @@ from .profile import (
 )
 
 __all__ = [
+    'CandidateEmailNotificationSettingsSerializer',
     'CandidateJobPreferenceSerializer',
     'CandidateProfileReadSerializer',
     'CandidateProfileUpdateSerializer',

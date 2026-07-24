@@ -37,6 +37,10 @@ def _locked_recruiter(user):
     return recruiter
 
 
+def _locked_job(job):
+    return Job.objects.select_for_update().get(pk=job.pk)
+
+
 def _free_job_quota():
     return max(get_int_setting('employer_free_job_quota', FREE_JOB_QUOTA), 0)
 
@@ -207,6 +211,7 @@ def save_job_draft(serializer, user):
 def publish_job(job, user):
     """Submit a recruiter-owned job to the mandatory admin review queue."""
     _locked_recruiter(user)
+    job = _locked_job(job)
     if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền gửi duyệt tin này.')
     if job.status == Job.Status.CLOSED:
@@ -271,6 +276,7 @@ def update_employer_job(serializer, user):
 
 @transaction.atomic
 def close_job(job, user):
+    job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể đóng tin đang tuyển của bạn.')
     job.status = Job.Status.CLOSED
@@ -282,6 +288,7 @@ def close_job(job, user):
 
 @transaction.atomic
 def reopen_job(job, user, deadline):
+    job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.CLOSED:
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
     if deadline < timezone.localdate():
@@ -312,6 +319,7 @@ def reopen_job(job, user, deadline):
 
 @transaction.atomic
 def extend_job_deadline(job, user, deadline):
+    job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
     if deadline < timezone.localdate():

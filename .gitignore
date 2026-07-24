@@ -18,6 +18,8 @@ celerybeat-schedule*
 .coverage
 .pytest_cache/
 htmlcov/
+backend/coverage.json
+backend/pytest-results.xml
 
 # Node
 node_modules/

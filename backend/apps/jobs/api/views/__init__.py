@@ -13,6 +13,7 @@ from .employer import (
 )
 from .moderation import AdminJobModerationListView, AdminJobReviewView
 from .public import (
+    CandidateJobRecommendationView,
     CvJobRecommendationView,
     JobDetailView,
     JobImpressionBatchCreateView,
@@ -23,11 +24,13 @@ from .public import (
     SavedJobDestroyView,
     SavedJobListCreateView,
 )
+from .recommendations import SavedJobRecommendationView
 
 __all__ = [
     'BenefitListView',
     'AdminJobModerationListView',
     'AdminJobReviewView',
+    'CandidateJobRecommendationView',
     'CvJobRecommendationView',
     'EmployerJobCloseView',
     'EmployerJobDetailView',
@@ -47,4 +50,5 @@ __all__ = [
     'LanguageListView',
     'SavedJobDestroyView',
     'SavedJobListCreateView',
+    'SavedJobRecommendationView',
 ]

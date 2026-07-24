@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   closeEmployerJob,
   duplicateEmployerJob,
+  getCandidateJobRecommendations,
   getAdminJobModeration,
   extendEmployerJob,
   getCvJobRecommendations,
@@ -33,6 +34,26 @@ describe('CV job recommendations API', () => {
 
     await expect(getCvJobRecommendations('cv_1')).resolves.toMatchObject({ strategy: 'profile-rule-v1' })
     expect(get).toHaveBeenCalledWith('/jobs/recommendations/by-cv/cv_1/')
+  })
+
+  it('loads the paginated candidate-wide matching feed', async () => {
+    get.mockResolvedValue({
+      data: {
+        strategy: 'candidate-profile-rule-v1',
+        pagination: { page: 2, total: 12 },
+        results: [],
+      },
+    })
+
+    await expect(
+      getCandidateJobRecommendations({ page: 2, page_size: 10 }),
+    ).resolves.toMatchObject({
+      strategy: 'candidate-profile-rule-v1',
+      pagination: { page: 2, total: 12 },
+    })
+    expect(get).toHaveBeenCalledWith('/jobs/recommendations/for-me/', {
+      params: { page: 2, page_size: 10 },
+    })
   })
 
   it('uses owner-scoped job workflow endpoints and persists draft data before publishing it', async () => {

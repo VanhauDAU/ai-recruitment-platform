@@ -39,7 +39,7 @@ trên database đã có dữ liệu cũ.
 
 Tham chiếu mẫu: `backend/apps/applications/migrations/0004_application_snapshot_expand.py`
 → `0005_application_snapshot_backfill.py` → `0006_application_snapshot_contract.py`,
-kèm test nâng cấp `backend/apps/applications/tests_migrations.py`.
+kèm test nâng cấp `backend/apps/applications/tests/test_migrations.py`.
 
 ### Không được
 
@@ -60,6 +60,6 @@ python manage.py migrate
 python manage.py test                          # gồm cả test nâng cấp migration
 ```
 
-Test nâng cấp migration (`apps.applications.tests_migrations`) chạy trên PostgreSQL
+Test nâng cấp migration (`apps.applications.tests.test_migrations`) chạy trên PostgreSQL
 thật: nó lùi `applications` về `0003`, tạo một application "legacy" không có
 snapshot, rồi migrate lên mới nhất và khẳng định snapshot được backfill đúng.

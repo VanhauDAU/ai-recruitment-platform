@@ -220,6 +220,3 @@ class CvVersioningServiceTests(TestCase):
                 style_json=draft.style_json,
                 expected_lock_version=0,
             )
-
-
-# Create your tests here.

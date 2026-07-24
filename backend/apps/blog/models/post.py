@@ -138,11 +138,11 @@ class Post(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(status__in=['draft', 'pending', 'published', 'archived']),
+                condition=models.Q(status__in=['draft', 'pending', 'published', 'archived']),
                 name='chk_blog_post_status',
             ),
             models.CheckConstraint(
-                check=~models.Q(status='published') | models.Q(published_at__isnull=False),
+                condition=~models.Q(status='published') | models.Q(published_at__isnull=False),
                 name='chk_blog_post_published_at',
             ),
         ]

@@ -1,6 +1,6 @@
 """Fast, isolated settings for Django's test runner and CI."""
 
-from .base import *  # noqa: F403
+from .base import *
 
 ENVIRONMENT = 'test'
 IS_PRODUCTION = False
@@ -9,16 +9,21 @@ R2_ENABLED = False
 R2_PUBLIC_BASE_URL = ''
 MEDIA_PUBLIC_BASE_URL = ''
 
+# Test cryptography must be deterministic and independent from a developer's
+# local .env. Keep both Django and SimpleJWT on the same sufficiently long key.
+SECRET_KEY = 'test-only-secret-key-at-least-32-characters-long'
+SIMPLE_JWT = {**SIMPLE_JWT, 'SIGNING_KEY': SECRET_KEY}
+
 # Never let a local .env switch test storage to a real R2 bucket. Tests use the
 # same local media contract as before and must not require network credentials.
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},  # noqa: F405
+        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
     },
     'public_media': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},  # noqa: F405
+        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
     },
     'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
 }
