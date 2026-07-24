@@ -3,6 +3,7 @@ from importlib import import_module
 from django.apps import apps as django_apps
 from django.core.cache import cache
 from django.core.management import call_command
+from django.db import transaction
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -12,6 +13,7 @@ from apps.accounts.models import User
 from apps.sitecontent.models import LinkGroup, LinkItem
 
 from ..models import ConsultationLead, ServiceCategory, ServicePackage
+from ..signals import PUBLIC_PACKAGES_CACHE_KEY
 
 LOCAL_CACHE = {
     'default': {
@@ -76,10 +78,36 @@ class PublicPackagesApiTests(APITestCase):
         first = self.client.get(reverse('services-packages'))
         self.assertEqual(len(first.data[0]['packages']), 1)
 
-        make_package(category, slug='top-eco', name_vi='TOP ECO', order=2)
+        with self.captureOnCommitCallbacks(execute=True):
+            make_package(category, slug='top-eco', name_vi='TOP ECO', order=2)
 
         second = self.client.get(reverse('services-packages'))
         self.assertEqual(len(second.data[0]['packages']), 2)
+
+    def test_cache_invalidation_waits_for_the_database_commit(self):
+        category = make_category()
+        cache.set(PUBLIC_PACKAGES_CACHE_KEY, [{'key': 'still-valid'}], 60)
+
+        with self.captureOnCommitCallbacks(execute=False) as callbacks:
+            make_package(category)
+            self.assertEqual(cache.get(PUBLIC_PACKAGES_CACHE_KEY), [{'key': 'still-valid'}])
+
+        self.assertEqual(len(callbacks), 1)
+        callbacks[0]()
+        self.assertIsNone(cache.get(PUBLIC_PACKAGES_CACHE_KEY))
+
+    def test_rolled_back_package_change_keeps_the_committed_cache(self):
+        category = make_category()
+        cache.set(PUBLIC_PACKAGES_CACHE_KEY, [{'key': 'committed'}], 60)
+
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+            with self.assertRaises(RuntimeError):
+                with transaction.atomic():
+                    make_package(category)
+                    raise RuntimeError('rollback')
+
+        self.assertEqual(callbacks, [])
+        self.assertEqual(cache.get(PUBLIC_PACKAGES_CACHE_KEY), [{'key': 'committed'}])
 
 
 @override_settings(CACHES=LOCAL_CACHE)

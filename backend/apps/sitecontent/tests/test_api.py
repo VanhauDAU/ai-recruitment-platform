@@ -2,10 +2,12 @@ import shutil
 import tempfile
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import override_settings
+from django.db import transaction
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITransactionTestCase
@@ -14,6 +16,7 @@ from apps.accounts.models import User
 
 from ..api.serializers import AdminSiteSettingSerializer
 from ..models import Locale, SiteSetting
+from ..signals import PUBLIC_SETTINGS_CACHE_KEY
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -28,6 +31,54 @@ LOCAL_CACHE = {
         'LOCATION': 'sitecontent-tests',
     }
 }
+
+
+@override_settings(CACHES=LOCAL_CACHE)
+class SiteSettingCacheInvalidationTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_cache_invalidation_waits_for_the_database_commit(self):
+        cache.set(PUBLIC_SETTINGS_CACHE_KEY, {'brand_name': ('ProCV', False)}, 60)
+
+        with self.captureOnCommitCallbacks(execute=False) as callbacks:
+            SiteSetting.objects.create(key='brand_name', label='Tên thương hiệu', value='ProCV')
+            self.assertEqual(
+                cache.get(PUBLIC_SETTINGS_CACHE_KEY),
+                {'brand_name': ('ProCV', False)},
+            )
+
+        self.assertEqual(len(callbacks), 1)
+        callbacks[0]()
+        self.assertIsNone(cache.get(PUBLIC_SETTINGS_CACHE_KEY))
+
+    def test_delete_is_deferred_and_rollback_keeps_the_committed_cache(self):
+        setting = SiteSetting.objects.create(
+            key='brand_name', label='Tên thương hiệu', value='ProCV'
+        )
+        committed = {'brand_name': ('ProCV', False)}
+        cache.set(PUBLIC_SETTINGS_CACHE_KEY, committed, 60)
+
+        with self.captureOnCommitCallbacks(execute=False) as delete_callbacks:
+            setting.delete()
+            self.assertEqual(cache.get(PUBLIC_SETTINGS_CACHE_KEY), committed)
+        self.assertEqual(len(delete_callbacks), 1)
+        delete_callbacks[0]()
+        self.assertIsNone(cache.get(PUBLIC_SETTINGS_CACHE_KEY))
+
+        setting = SiteSetting.objects.create(
+            key='brand_name', label='Tên thương hiệu', value='ProCV'
+        )
+        cache.set(PUBLIC_SETTINGS_CACHE_KEY, committed, 60)
+        with self.captureOnCommitCallbacks(execute=True) as rollback_callbacks:
+            with self.assertRaises(RuntimeError):
+                with transaction.atomic():
+                    setting.value = 'Rolled back'
+                    setting.save(update_fields=['value', 'updated_at'])
+                    raise RuntimeError('rollback')
+
+        self.assertEqual(rollback_callbacks, [])
+        self.assertEqual(cache.get(PUBLIC_SETTINGS_CACHE_KEY), committed)
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'], CACHES=LOCAL_CACHE)
