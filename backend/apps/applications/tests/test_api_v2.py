@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db.models.deletion import ProtectedError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -108,6 +109,13 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(response.data['cv']['public_id'], self.snapshot.public_id)
         self.assertEqual(response.data['cv']['content_json']['personal_info']['full_name'], '')
         self.assertNotIn('cv_data', response.data['cv'])
+
+    def test_submitted_snapshot_cannot_be_deleted_while_the_application_exists(self):
+        with self.assertRaises(ProtectedError):
+            self.snapshot.delete()
+
+        self.assertTrue(CvVersion.objects.filter(pk=self.snapshot.pk).exists())
+        self.assertTrue(Application.objects.filter(pk=self.application.pk).exists())
 
     def test_recruiter_outside_the_application_company_receives_404(self):
         tokens = issue_tokens(self.outsider, auth_method='mfa')
@@ -260,6 +268,26 @@ class CandidateApplicationV2Tests(APITestCase):
         self.assertEqual(response.data['contact_name'], 'Apply Candidate')
         self.assertEqual(response.data['contact_email'], 'apply-candidate@example.com')
         self.assertEqual(response.data['contact_phone'], '0909000000')
+
+    def test_candidate_cannot_mix_a_cv_with_a_version_from_another_owned_cv(self):
+        other_owned_cv = create_v2_cv(
+            actor=self.candidate,
+            title='Another owned CV',
+            template=self.cv.template,
+        )
+        self.client.force_authenticate(self.candidate)
+
+        response = self.client.post(
+            reverse('candidate-application-list-create-v2'),
+            self.apply_payload(version_public_id=other_owned_cv.latest_version.public_id),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn('version_public_id', response.data)
+        self.assertFalse(
+            Application.objects.filter(candidate=self.candidate, job=self.job).exists()
+        )
 
     def test_candidate_can_reapply_after_five_minutes_up_to_three_submissions(self):
         self.client.force_authenticate(self.candidate)
