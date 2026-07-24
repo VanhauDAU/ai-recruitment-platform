@@ -37,7 +37,7 @@ Template catalogue → chọn nguồn/màu → initial version + draft
 
 Phase 0 đã chuyển create và template switch sang
 `apps.cvs.composition.compose_cv_document`; CAS, immutable version và dual-write
-giữ nguyên. Quyết định kiến trúc: [ADR 0007](../adr/0007-canonical-cv-composition.md).
+giữ nguyên.
 
 Phase 1 đã mở rộng position options theo locale/content availability, thêm thứ
 tự vị trí, trả canonical document từ preview API và xóa sample/layout hardcode
@@ -150,8 +150,7 @@ trợ token `{position}` đệ quy và fallback sang các field cũ. Frontend d�
 ## CVB-8 — WYSIWYG CV Builder
 
 Contract chính thức nằm tại
-[cv-builder-wysiwyg-editor-plan.md](cv-builder-wysiwyg-editor-plan.md), quyết
-định renderer/asset tại [ADR 0008](../adr/0008-cv-wysiwyg-renderer-assets.md).
+[cv-builder-wysiwyg-editor-plan.md](cv-builder-wysiwyg-editor-plan.md).
 Code đã hoàn tất sau feature flag với migration additive; không rewrite version
 cũ. Panel WYSIWYG không còn nhúng biểu mẫu cũ; legacy editor vẫn được giữ nguyên
 làm fallback. Gate 2026-07-16: 63 backend tests, 152 frontend tests,

@@ -51,8 +51,6 @@ Audit FSD không có vi phạm layer; ngân sách dồn vào enforcement, quy ư
 
 ## Epic Audit & Refactor toàn dự án (2026-07-21, nhánh `refactor/phase*`)
 
-Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan-2026-07.md) · Baseline: [baseline-2026-07.md](./09-refactor/baseline-2026-07.md)
-
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | AR-P0 | Triage nhánh (32→4), đo baseline (coverage FE thật 34%, 170 endpoint, BE 280 test/46s), snapshot OpenAPI, fix `manage.py test` dùng settings test | ✅ |
@@ -90,7 +88,7 @@ Kế hoạch: [audit-refactor-plan-2026-07.md](./09-refactor/audit-refactor-plan
 
 ## Epic tái cấu trúc (song song, nhánh `feature/restructuring`)
 
-Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích. Chi tiết baseline: [docs/09-refactor/baseline](./09-refactor/baseline/README.md); quyết định kiến trúc: [docs/adr](./adr/).
+Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 giai đoạn, tăng dần, giữ tương thích.
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |

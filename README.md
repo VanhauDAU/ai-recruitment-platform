@@ -122,7 +122,7 @@ npm run test:e2e:smoke
 ```
 
 CI (GitHub Actions) tự chạy `backend-ci` và `frontend-ci` trên mọi pull request đụng
-tới `backend/` hoặc `frontend/`. Quyết định kiến trúc của đợt tái cấu trúc: [docs/adr/](docs/adr/).
+tới `backend/` hoặc `frontend/`.
 
 ## Tài liệu
 

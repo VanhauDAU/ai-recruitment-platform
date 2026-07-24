@@ -21,6 +21,5 @@
 | [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Hướng dẫn deploy, Docker, môi trường production                         |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
-| [architecture/adr](architecture/adr/) | [001-frontend-layered-architecture.md](architecture/adr/001-frontend-layered-architecture.md) | Quyết định kiến trúc frontend sau PR #28                                |
 
 Nội dung chi tiết sẽ được bổ sung dần theo từng bước triển khai.
