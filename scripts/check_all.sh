@@ -2,6 +2,7 @@
 # Kiểm tra chất lượng toàn repo bằng MỘT lệnh (khớp với CI).
 # Dùng: ./scripts/check_all.sh
 #
+# Docs: kiểm tra link Markdown nội bộ trên các file được Git track.
 # Backend: ruff + architecture + system check + migration state + coverage gate.
 # Frontend: env-sync + boundary + lint + architecture + coverage + build/budget + E2E smoke.
 # Backend chạy qua venv local nếu có; không có venv thì fallback Docker Compose.
@@ -12,6 +13,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 step() { printf '\n\033[1;36m==> %s\033[0m\n' "$1"; }
+
+step "Docs: liên kết Markdown nội bộ"
+python3 "$ROOT/scripts/check_markdown_links.py"
 
 # ---- Chọn cách chạy lệnh backend ----
 if [ -x backend/venv/bin/python ]; then
