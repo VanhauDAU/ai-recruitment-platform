@@ -230,3 +230,17 @@ test mới là tiêu chí nghiệm thu.
 
 Các lát cắt trên giữ nguyên URL, payload, permission, state graph và schema DB.
 Chưa triển khai các target auth/authorization/CV/production-data cần proposal.
+
+## 11. Tiến độ hiện thực hóa sau Giai đoạn 5
+
+| Target | Đã triển khai | Enforcement | Phần còn lại |
+| --- | --- | --- | --- |
+| Portal-aware navigation | Employer workspace production links dùng `employerAppPath` thay 27 literal | Host regression cho main/employer; smoke ba viewport | Audit literal mới qua review/gate khi thêm route |
+| Canonical server state | Company documents có entity key factory; consultation leads keyed theo status/page, cancel request cũ và phân trang server | Key/API/page tests, stale-response và empty-last-page regression | Migrate pagination/error model của application/job/CV theo từng contract |
+| Feature-owned workflow | Create/rename campaign sở hữu mutation, invalidation và feedback trong `manage-campaigns` | Success/error/invalidation feature tests; page characterization | JobForm, ApplicationList và admin CRUD vẫn cần tách incremental |
+| Frontend boundary | No-cycle, cross-entity và portal-page isolation | Production graph cùng ba negative fixtures | Mở rộng fixture nếu thêm boundary dài hạn |
+| Lazy bundle measurement | Vite manifest ghi mọi JS chunk và incremental JS/CSS của lazy route | Initial budget vẫn fail build; 263 chunk và 67 route được đo | Chưa có per-route threshold hoặc optimization dựa trên baseline |
+
+Giai đoạn này không đổi token/session/refresh, role guard, onboarding return URL,
+CV autosave/version/snapshot, route contract hay API payload. Các target cần
+proposal vẫn được giữ nguyên trạng thái.

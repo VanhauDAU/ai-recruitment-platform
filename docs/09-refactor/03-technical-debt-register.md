@@ -23,7 +23,7 @@ Không phát hiện issue Critical.
 | ARCH-001 | Import-linter chỉ gác nội app; deep cross-app service/API imports và vòng `cvs ↔ cv_templates` còn tồn tại | Coupling private contract, refactor một app dễ phá app khác | Public facades + gate cross-app; tháo cycle incremental | Med–High | L | ADR/tests, CV contract | Open/confirmed |
 | CONC-001 | Phone OTP cooldown/attempt/verify read-modify-write không atomic, view thiếu explicit scopes | Concurrent send/verify, lost attempts, unique-phone conflict thành 500 | Row/cache lock, invalidate previous OTP, scoped throttle, transaction tests | Medium | M | PostgreSQL/Redis policy | Open/confirmed |
 | CONC-002 | Job moderation/posting và application status dùng stale instance, không row lock | Concurrent transition sinh state/history mâu thuẫn | Service nhận ID, `select_for_update`, transition/history atomic | Medium | M | Transaction tests/state machine | Partially resolved in Phase 4 |
-| FE-001 | 27 `/tuyendung/app` literals trong 8 employer files, trong khi subdomain dùng `/app` | Production navigation vào NotFound | Dùng `employerAppPath()` + test subdomain | Low | M | Portal config/E2E | Open/confirmed |
+| FE-001 | 27 `/tuyendung/app` literals trong 8 employer files, trong khi subdomain dùng `/app` | Production navigation vào NotFound | Dùng `employerAppPath()` + test subdomain | Low | M | Portal config/E2E | Resolved in Phase 5 |
 | FE-002 | Application/job/CV adapters bỏ pagination metadata; backend page size 20 | List/metrics/`hasApplied` sai sau 20 record | Canonical envelope, page-aware UI/status endpoint, migrate từng domain | Med–High | L | Backend contract + many consumers | Open/confirmed |
 | FE-003 | Refresh failure chỉ clear token, không clear `SessionProvider.user`; single-flight global | Protected shell giữ phiên giả, lặp 401; portal có thể ảnh hưởng nhau | Auth-expired coordinator per portal; phân biệt terminal auth và transient errors | High | M | Session/guard/query cache | Proposal required |
 | CV-001 | Explicit Save/Publish/Switch/Sample không drain edit queue như `saveDraft`; save-version không idempotent | Commit draft cũ, sample ghi đè edit, double click tạo version trùng | Autosave operation barrier/mutex + backend idempotency/CAS | High | M–L | Editor state machine/API contract | Proposal required |
@@ -46,9 +46,9 @@ Không phát hiện issue Critical.
 | SIZE-001 | CV V2 view 939, 2FA view 702, Job serializer 697 và các core file >500 dòng | Review/ownership khó, sửa dễ lan | Tách theo resource/workflow trong cùng slice, giữ public API | Medium | L | Focused regression | Open |
 | FE-004 | Protected list collapse error thành `[]`; một số mutation lỗi im lặng | 401/500 bị hiểu là “chưa có dữ liệu” | Explicit error/retry + mutation feedback tests | Low | S–M | Per-page tests | Open |
 | FE-005 | Login qua onboarding làm mất safe `returnUrl` | Deep link không resume sau gate | Carry validated returnUrl xuyên gate, consume một lần | Medium | M | Auth navigation tests | Proposal required |
-| FE-006 | Company documents dùng hai query-key namespace | Duplicate GET và stale verification cache | Public entity key factory + invalidation canonical | Low | S | Employer-profile entity | Open |
-| FE-007 | CampaignList/JobForm/ApplicationList/admin CRUD page trộn workflow và UI | Page lớn, mutation/cache policy rải rác | Extract controller hooks/features incremental | Medium | L | Existing FSD/tests | Open |
-| FE-008 | ConsultationLeads request thủ công không cancel/request-id | Response filter cũ ghi đè filter mới | TanStack Query keyed `{status,page}` với signal | Low | S | Pagination migration | Open |
+| FE-006 | Company documents dùng hai query-key namespace | Duplicate GET và stale verification cache | Public entity key factory + invalidation canonical | Low | S | Employer-profile entity | Resolved in Phase 5 |
+| FE-007 | CampaignList/JobForm/ApplicationList/admin CRUD page trộn workflow và UI | Page lớn, mutation/cache policy rải rác | Extract controller hooks/features incremental | Medium | L | Existing FSD/tests | Partially resolved in Phase 5 |
+| FE-008 | ConsultationLeads request thủ công không cancel/request-id | Response filter cũ ghi đè filter mới | TanStack Query keyed `{status,page}` với signal | Low | S | Pagination migration | Resolved in Phase 5 |
 | CV-003 | Có archive fields/restore window nhưng DELETE V2 hard-delete; không restore version | Người dùng không dùng được retention contract, thao tác xóa khó phục hồi | Product policy; archive/restore; restore version tạo draft mới | High | L | Data retention/API/UI | Proposal required |
 | CV-004 | Snapshot content còn nhưng hard delete xóa source version, `parent_version=SET_NULL` | Mất exact provenance version gốc | Lưu immutable source IDs/hash hoặc giữ source version theo retention | High | M–L | CV-002/policy/migration | Proposal required |
 | SEC-005 | DOCX/PDF/image/legal upload thiếu ZIP expansion/pixel/malware sandbox đầy đủ | ZIP/pixel bomb, malicious document làm worker/resource quá tải | Parser budgets, quarantine/AV, resource limits/throttle | Med–High | M–L | Worker/storage/scanner | Open/partially mitigated |
@@ -61,8 +61,8 @@ Không phát hiện issue Critical.
 | ID | Vị trí / hiện trạng / nguyên nhân | Ảnh hưởng | Hướng xử lý | Risk | Est. | Dependency | Trạng thái |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | DB-002 | Explicit FK/single-field indexes có vẻ trùng implicit index | Storage/write amplification | Xác nhận catalog/EXPLAIN rồi mới drop concurrently | Medium | S | Production DB evidence | Needs verification |
-| FE-009 | Dependency-cruiser thiếu no-cycle/portal isolation/cross-entity rule dù code sạch | Vi phạm tương lai có thể lọt gate | Bổ sung rule + fixture regression | Low | S | Architecture config | Open |
-| FE-010 | Initial JS 89%, CSS 95,7% budget; checker không đo lazy chunks | Ít headroom và không thấy lazy regression | Thêm per-chunk/route report trước optimization | Low | S–M | Build script | Open |
+| FE-009 | Dependency-cruiser thiếu no-cycle/portal isolation/cross-entity rule dù code sạch | Vi phạm tương lai có thể lọt gate | Bổ sung rule + fixture regression | Low | S | Architecture config | Resolved in Phase 5 |
+| FE-010 | Initial JS 89%, CSS 95,7% budget; checker không đo lazy chunks | Ít headroom và không thấy lazy regression | Thêm per-chunk/route report trước optimization | Low | S–M | Build script | Partially resolved in Phase 5 |
 | FE-011 | Wrong role redirect về login | UX vòng/confusion, không phải backend security gap | Chốt product UX forbidden/handoff rồi test | Low | S–M | Product decision | Deferred |
 | QA-001 | Backend có 146 warning; local venv lệch pin; frontend JSDOM/canvas/no-color warnings | Log nhiễu, future Django 6 upgrade khó hơn | Đồng bộ env và xử lý warning theo nhóm, không suppress rộng | Low | S–M | Dependency upgrade | Partially resolved in Phase 3 |
 
@@ -88,3 +88,21 @@ Không phát hiện issue Critical.
 - `CONC-003`: initial recruitment need đã khóa parent `RecruiterProfile` và
   re-check trong transaction. Template version `Max+1` và general multi-need
   policy chưa thay đổi.
+
+## Cập nhật triển khai Giai đoạn 5
+
+- `FE-001`: 27 literal route trong 8 file employer đã dùng
+  `employerAppPath`; regression khóa `/app` trên employer host và
+  `/tuyendung/app` trên main host.
+- `FE-006`: ba consumer company document dùng
+  `employerProfileKeys.companyDocuments`, nằm dưới prefix company canonical.
+- `FE-007`: create/rename campaign đã chuyển vào
+  `features/manage-campaigns`; `CampaignList` còn composition/filter/URL state.
+  JobForm, ApplicationList và admin CRUD vẫn là phần debt còn lại.
+- `FE-008`: admin consultation leads dùng TanStack Query theo `{status,page}`,
+  forward `AbortSignal`, pagination server và canonical invalidation; trang cuối
+  tự lùi trước refetch nếu mutation làm trang rỗng.
+- `FE-009`: gate cấm cycle, cross-entity và cross-portal page import; negative
+  fixtures chứng minh cả ba rule đang thực sự bắt vi phạm.
+- `FE-010`: manifest report đo 263 JavaScript chunk và 67 lazy route. Initial
+  budget vẫn là gate; lazy route mới có baseline, chưa đặt threshold.

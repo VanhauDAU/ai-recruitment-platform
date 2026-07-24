@@ -26,6 +26,12 @@ hoặc `features → pages`) bị cấm. Một feature cũng không import featu
 `dependency-cruiser` và `npm run check:architecture` là source of truth tự động
 cho các quy tắc này.
 
+Gate còn cấm cycle trong toàn bộ `src`, import giữa hai entity slice và import
+page xuyên portal (`main`, `employer`, `admin`). Danh sách slice/portal được đọc
+từ filesystem để folder mới tự nhận rule. `npm run check:architecture` chạy cả
+graph thật và negative fixtures; fixture phải bị đúng các rule no-cycle,
+cross-entity và portal isolation bắt lại, tránh config bị nới lỏng âm thầm.
+
 ## Public API rule
 
 - Import feature/entity/widget từ public API: `@/features/saved-jobs`,
@@ -108,6 +114,21 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
 4. Thêm route vào file tương ứng trong `src/app/router/routes/`; giữ guard và
    URL contract hiện có hoặc bổ sung test redirect/404 khi contract mới.
 5. Chạy `npm run lint`, `npm run check:architecture`, unit tests và E2E phù hợp.
+
+## Đo bundle và lazy route
+
+- Production build sinh Vite manifest tại `dist/.vite/manifest.json`.
+  `npm run check:bundle-budget` dùng manifest này để ghi mọi JavaScript chunk
+  vào `dist/bundle-stats.json`, gồm static import, dynamic import và stylesheet
+  trực tiếp của chunk.
+- Hai budget initial giữ nguyên và vẫn là gate fail build: JavaScript gzip
+  `320 KiB`, CSS gzip `35 KiB`.
+- `dynamicRoutes` đo chi phí tăng thêm của từng lazy entry trong `src/pages`:
+  JavaScript/CSS của entry và toàn bộ static import transitively, trừ asset đã
+  có trong initial HTML. Asset nhị phân được liệt kê để audit nhưng không cộng
+  vào gzip JS/CSS.
+- Lazy route hiện chỉ có measurement, chưa có threshold. Chỉ thêm budget theo
+  route sau khi có baseline đủ ổn định và lý do sản phẩm/hiệu năng rõ ràng.
 
 ## Thêm portal route mới
 
