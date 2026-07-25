@@ -63,6 +63,10 @@ docker compose up
 # Frontend: http://localhost:5173 · API: http://localhost:8000/api · Swagger: /api/docs/
 ```
 
+Postgres của compose mở ở host cổng **5433** (`postgres/postgres`, DB `ai_career_coach`)
+để không trùng Postgres cài trực tiếp trên máy ở 5432 — hai DB trùng tên nên rất
+dễ nối lẫn khi mở bằng DBeaver/psql.
+
 Đầy đủ (gồm production trên VPS): [docs/06-deployment/docker-compose.md](docs/06-deployment/docker-compose.md).
 
 ### Cách 2 — Chạy trực tiếp (venv + PostgreSQL + Redis local)

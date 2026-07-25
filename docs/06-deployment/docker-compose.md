@@ -14,6 +14,14 @@ docker compose up
 - Swagger UI: http://localhost:8000/api/docs/
 - `DB_HOST`/`REDIS_URL` được compose override trỏ vào service `db`/`redis` —
   không cần sửa `.env`.
+- **Postgres của compose ở host cổng `5433`** (trong mạng compose vẫn là
+  `db:5432`). Tránh trùng Postgres cài trực tiếp trên máy đang giữ 5432: cả hai
+  đều là DB `ai_career_coach` / `postgres:postgres` nên nếu dùng chung cổng thì
+  DBeaver, `psql` và backend chạy ngoài Docker luôn nối vào Postgres local mà
+  không báo lỗi gì. Kết nối DBeaver vào DB trong Docker:
+  `localhost:5433/ai_career_coach`, user `postgres`, password `postgres`.
+- Muốn backend chạy ngoài Docker dùng DB trong Docker thì đặt `DB_PORT=5433`
+  trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
   `worker` (celery), `beat` (celery beat), `frontend` (vite).
 - **Queue Celery**: settings route task sang 3 queue (`default`, `auth-email`,
