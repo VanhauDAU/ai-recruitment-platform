@@ -9,7 +9,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import User
+from apps.accounts.models import AdminPermission, AdminRole, Department, User
+from apps.accounts.services import assign_membership
 from apps.sitecontent.models import LinkGroup, LinkItem
 
 from ..models import ConsultationLead, ServiceCategory, ServicePackage
@@ -157,6 +158,31 @@ class AdminServicesApiTests(APITestCase):
             password='Password@123',
             role=User.Role.ADMIN,
         )
+        department = Department.objects.create(
+            code='employer-services',
+            name='Dịch vụ nhà tuyển dụng',
+        )
+        role = AdminRole.objects.create(
+            department=department,
+            code='manager',
+            name='Trưởng phòng',
+        )
+        role.permissions.add(
+            *[
+                AdminPermission.objects.create(
+                    code=code,
+                    module=code.split('.')[0],
+                    label=code,
+                )
+                for code in (
+                    'service_catalog.view',
+                    'service_catalog.manage',
+                    'consultation_lead.view',
+                    'consultation_lead.manage',
+                )
+            ]
+        )
+        assign_membership(self.admin, role, actor=self.admin)
         self.candidate = User.objects.create_user(
             email='candidate@example.com',
             password='Password@123',

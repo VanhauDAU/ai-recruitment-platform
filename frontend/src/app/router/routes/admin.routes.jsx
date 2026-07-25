@@ -2,23 +2,21 @@ import { Navigate, Route } from 'react-router-dom'
 import { adminPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
+import PermissionGuard from '../guards/PermissionGuard'
 import RoleGuard from '../guards/RoleGuard'
-import {
-  AdminConsultationLeadsPage,
-  AdminCvCataloguePage,
-  AdminDashboardPage,
-  AdminEmployerServicesPage,
-  AdminJobModerationPage,
-  AdminLoginPage,
-  AdminSettingsPage,
-} from '../lazy/admin.pages'
+import { ADMIN_PAGE_BY_KEY, AdminLoginPage } from '../lazy/admin.pages'
 import { AuthLayout, DashboardLayout } from '../lazy/layouts'
+import { ADMIN_ROUTES } from '../admin/admin-routes.config'
+import { resolveAdminDestination } from '../admin/admin-destination'
 
 export function adminRoutes() {
   return [
     <Route key="admin-auth" element={<AuthLayout />}>
       <Route element={<GuestGuard allowedRoles={['admin']} />}>
-        <Route path={adminPath('/login')} element={<AdminLoginPage />} />
+        <Route
+          path={adminPath('/login')}
+          element={<AdminLoginPage destinationResolver={resolveAdminDestination} />}
+        />
       </Route>
     </Route>,
 
@@ -31,12 +29,20 @@ export function adminRoutes() {
     <Route key="admin-authenticated" element={<AuthGuard loginPath={adminPath('/login')} />}>
       <Route element={<RoleGuard allowedRoles={['admin']} loginPath={adminPath('/login')} />}>
         <Route element={<DashboardLayout />}>
-          <Route path={adminPath('/dashboard')} element={<AdminDashboardPage />} />
-          <Route path={adminPath('/settings')} element={<AdminSettingsPage />} />
-          <Route path={adminPath('/cv-catalogue')} element={<AdminCvCataloguePage />} />
-          <Route path={adminPath('/services')} element={<AdminEmployerServicesPage />} />
-          <Route path={adminPath('/consultation-leads')} element={<AdminConsultationLeadsPage />} />
-          <Route path={adminPath('/job-moderation')} element={<AdminJobModerationPage />} />
+          {ADMIN_ROUTES.map((route) => {
+            const Page = ADMIN_PAGE_BY_KEY[route.lazyKey]
+            return (
+              <Route
+                key={route.segment}
+                path={adminPath(route.segment)}
+                element={(
+                  <PermissionGuard route={route}>
+                    <Page />
+                  </PermissionGuard>
+                )}
+              />
+            )
+          })}
         </Route>
       </Route>
     </Route>,

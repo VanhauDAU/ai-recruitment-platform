@@ -5,7 +5,8 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.accounts.models import User
+from apps.accounts.models import AdminPermission, AdminRole, Department, User
+from apps.accounts.services import assign_membership
 from apps.cvs.schemas import empty_content, empty_layout, empty_style
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
@@ -314,6 +315,7 @@ class TemplateCatalogV2Tests(TestCase):
             email='cv-admin@example.com',
             password='Password@123',
             role=User.Role.ADMIN,
+            is_superuser=True,
         )
         self.client.force_authenticate(admin)
         create_response = self.client.post(
@@ -338,6 +340,80 @@ class TemplateCatalogV2Tests(TestCase):
             publish_response.data['version_status'], CvTemplateVersion.VersionStatus.PUBLISHED
         )
         self.assertEqual(enqueue.call_count, 2)
+
+    def test_content_staff_creates_hidden_data_and_cannot_change_lifecycle(self):
+        admin = User.objects.create_user(
+            email='cv-staff@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+        )
+        department = Department.objects.create(code='content-cv', name='Nội dung & CV')
+        role = AdminRole.objects.create(
+            department=department,
+            code='staff',
+            name='Nhân viên',
+        )
+        role.permissions.add(
+            *[
+                AdminPermission.objects.create(
+                    code=code,
+                    module='cv_template',
+                    label=code,
+                )
+                for code in (
+                    'cv_template.view',
+                    'cv_template.create',
+                    'cv_template.edit',
+                )
+            ]
+        )
+        assign_membership(admin, role, actor=admin)
+        self.client.force_authenticate(admin)
+
+        created = self.client.post(
+            '/api/v2/admin/cv-categories/',
+            {
+                'category_type': 'style',
+                'name': 'Nội bộ',
+                'slug': 'internal-only',
+            },
+            format='json',
+        )
+        self.assertEqual(created.status_code, 201, created.data)
+        created_category = CvCategory.objects.get(public_id=created.data['public_id'])
+        self.assertFalse(created_category.is_active)
+
+        explicit_public = self.client.post(
+            '/api/v2/admin/cv-categories/',
+            {
+                'category_type': 'style',
+                'name': 'Public',
+                'slug': 'public-now',
+                'is_active': True,
+            },
+            format='json',
+        )
+        self.assertEqual(explicit_public.status_code, 403)
+        self.assertEqual(explicit_public.data['code'], 'admin_permission_denied')
+
+        unchanged = self.client.patch(
+            f'/api/v2/admin/cv-categories/{created_category.public_id}/',
+            {'is_active': False, 'description': 'Có thể chỉnh nội dung'},
+            format='json',
+        )
+        self.assertEqual(unchanged.status_code, 200, unchanged.data)
+
+        archive = self.client.patch(
+            f'/api/v2/admin/cv-categories/{self.style.public_id}/',
+            {'is_active': False},
+            format='json',
+        )
+        self.assertEqual(archive.status_code, 403)
+        self.style.refresh_from_db()
+        self.assertTrue(self.style.is_active)
+
+        deleted = self.client.delete(f'/api/v2/admin/cv-categories/{created_category.public_id}/')
+        self.assertEqual(deleted.status_code, 403)
 
     def test_admin_endpoints_require_admin_role(self):
         response = self.client.get('/api/v2/admin/cv-templates/')

@@ -140,6 +140,10 @@ jobs:
       - name: Migration state (không được có migration treo)
         run: python manage.py makemigrations --check --dry-run
 
+      - name: Admin permission registry sync
+        working-directory: .
+        run: bash scripts/check_admin_permissions_sync.sh
+
       - name: Test suite + coverage gate (ratchet — chỉ được tăng)
         shell: bash
         run: |

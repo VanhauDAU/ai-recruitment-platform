@@ -77,3 +77,18 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 - Tất cả app Django được gom vào `backend/apps/` (thay vì nằm trực tiếp dưới `backend/`) để thư mục gốc backend gọn hơn; `backend/common/` (tiện ích dùng chung như `public_id`) và `backend/config/` (settings/urls) vẫn ở ngoài `apps/` vì không phải Django app.
 
 Trạng thái đầy đủ theo từng giai đoạn: xem [../TIEN-DO-DU-AN.md](../TIEN-DO-DU-AN.md).
+
+## RBAC admin theo phòng ban
+
+Migration `accounts.0013` bổ sung năm bảng:
+
+| Bảng | Quan hệ chính |
+| --- | --- |
+| `accounts_adminpermission` | Registry permission code-owned, có deprecate |
+| `accounts_department` | Một phòng ban có nhiều role |
+| `accounts_adminrole` | FK department, M2M permission, unique `(department, code)` |
+| `accounts_adminmembership` | FK user/role/actor; giữ lịch sử revoke và partial unique active |
+| `accounts_adminaccessauditlog` | Actor nullable, target public ID, payload JSON và thời điểm |
+
+Chi tiết constraint, cache, seed và rollout:
+[phân quyền admin theo phòng ban](./ke-hoach-database-phan-quyen-admin.md).

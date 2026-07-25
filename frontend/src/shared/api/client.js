@@ -1,7 +1,12 @@
 // Axios instance dùng chung + interceptor auth/refresh. Đây là hạ tầng HTTP:
 // KHÔNG biết endpoint nghiệp vụ (domain service tự khai path). Xem ADR 0002.
 import axios from 'axios'
-import { clearTokens, getAccessToken, setTokens } from './token-store'
+import {
+  clearTokens,
+  getAccessToken,
+  notifyPermissionDenied,
+  setTokens,
+} from './token-store'
 import { getCurrentPortal } from '@/shared/config/portals'
 
 // Fallback localhost CHỈ dành cho dev/test. Build production thiếu
@@ -66,6 +71,12 @@ client.interceptors.response.use(
       } catch {
         clearTokens()
       }
+    }
+    if (
+      error.response?.status === 403
+      && error.response?.data?.code === 'admin_permission_denied'
+    ) {
+      notifyPermissionDenied()
     }
     return Promise.reject(error)
   },

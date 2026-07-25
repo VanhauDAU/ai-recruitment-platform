@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import HasAdminPermission
 from common.media_storage import (
     delete_local_media_url,
     media_storage_path,
@@ -76,14 +76,25 @@ class LocaleListView(generics.ListAPIView):
 
 class AdminLocaleListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminLocaleSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['site_setting.view'],
+        'POST': ['site_setting.manage'],
+    }
+    require_superuser = True
     pagination_class = None
     queryset = Locale.objects.all()
 
 
 class AdminLocaleDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = AdminLocaleSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['site_setting.view'],
+        'PUT': ['site_setting.manage'],
+        'PATCH': ['site_setting.manage'],
+    }
+    require_superuser = True
     queryset = Locale.objects.all()
     lookup_field = 'code'
 
@@ -123,7 +134,13 @@ def _validate_value(setting, value):
 class AdminSiteSettingView(APIView):
     """GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt value."""
 
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['site_setting.view'],
+        'PUT': ['site_setting.manage'],
+        'PATCH': ['site_setting.manage'],
+    }
+    require_superuser = True
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def get(self, request):
@@ -259,7 +276,9 @@ class AdminSettingUploadView(APIView):
     "Lưu thay đổi", nên endpoint này không còn ghi setting để tránh auto-save.
     """
 
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'POST': ['site_setting.manage']}
+    require_superuser = True
     parser_classes = [MultiPartParser]
 
     def post(self, request):

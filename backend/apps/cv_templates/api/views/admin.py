@@ -6,7 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import HasAdminPermission
+from apps.accounts.selectors import effective_permission_codes
 from apps.cvs.models import CvAsset
 from apps.cvs.services import create_background_asset
 from apps.cvs.services.composition import compose_cv_document
@@ -53,8 +54,29 @@ def _call(service, **kwargs):
 
 
 class AdminModelViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
     pagination_class = None
+    required_admin_permissions = {
+        'list': ['cv_template.view'],
+        'retrieve': ['cv_template.view'],
+        'create': ['cv_template.create'],
+        'update': ['cv_template.edit'],
+        'partial_update': ['cv_template.edit'],
+        'destroy': ['cv_template.delete'],
+    }
+
+    def _safe_create_overrides(self, serializer):
+        if 'cv_template.publish' in effective_permission_codes(self.request.user):
+            return {}
+        model = serializer.Meta.model
+        if model is CvTemplate:
+            return {'status': CvTemplate.Status.INACTIVE}
+        if hasattr(model, 'is_active'):
+            return {'is_active': False}
+        return {}
+
+    def perform_create(self, serializer):
+        serializer.save(**self._safe_create_overrides(serializer))
 
 
 class AdminCvTemplateViewSet(AdminModelViewSet):
@@ -63,6 +85,13 @@ class AdminCvTemplateViewSet(AdminModelViewSet):
     queryset = CvTemplate.objects.prefetch_related('versions', 'localizations').order_by(
         'sort_order', 'name'
     )
+    required_admin_permissions = {
+        **AdminModelViewSet.required_admin_permissions,
+        'create_version': ['cv_template.create'],
+        'publish_version': ['cv_template.publish'],
+        'retire_version': ['cv_template.archive'],
+        'regenerate_snapshots': ['cv_template.edit'],
+    }
 
     @action(detail=True, methods=['post'], url_path='versions')
     def create_version(self, request, public_id=None):
@@ -185,10 +214,13 @@ class AdminCvBackgroundViewSet(AdminModelViewSet):
         upload = serializer.validated_data.get('file')
         if upload is None:
             raise ValidationError({'file': 'This field is required.'})
-        asset = create_background_asset(
-            upload=upload,
-            title=serializer.validated_data.get('title', ''),
-        )
+        can_publish = 'cv_template.publish' in effective_permission_codes(request.user)
+        with transaction.atomic():
+            asset = create_background_asset(
+                upload=upload,
+                title=serializer.validated_data.get('title', ''),
+                is_active=can_publish,
+            )
         return Response(
             self.get_serializer(asset).data,
             status=status.HTTP_201_CREATED,
@@ -213,6 +245,12 @@ class AdminCvSampleContentViewSet(AdminModelViewSet):
     serializer_class = CvSampleContentAdminSerializer
     lookup_field = 'public_id'
     queryset = CvSampleContent.objects.select_related('job_category').order_by('-updated_at')
+    required_admin_permissions = {
+        **AdminModelViewSet.required_admin_permissions,
+        'preview': ['cv_template.view'],
+        'publish': ['cv_template.publish'],
+        'archive': ['cv_template.archive'],
+    }
 
     @action(detail=True, methods=['post'])
     def preview(self, request, public_id=None):
@@ -244,9 +282,17 @@ class AdminCvContentBlueprintViewSet(AdminModelViewSet):
     serializer_class = CvContentBlueprintAdminSerializer
     lookup_field = 'public_id'
     queryset = CvContentBlueprint.objects.order_by('locale', 'experience_level')
+    required_admin_permissions = {
+        **AdminModelViewSet.required_admin_permissions,
+        'preview': ['cv_template.view'],
+        'activate': ['cv_template.publish'],
+    }
 
     def perform_create(self, serializer):
-        serializer.save(updated_by=self.request.user)
+        serializer.save(
+            updated_by=self.request.user,
+            **self._safe_create_overrides(serializer),
+        )
 
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)

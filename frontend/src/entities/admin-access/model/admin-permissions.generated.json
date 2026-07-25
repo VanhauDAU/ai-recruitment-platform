@@ -1,0 +1,122 @@
+[
+  {
+    "code": "admin_access.manage_department",
+    "module": "admin_access",
+    "label": "Quản lý phòng ban"
+  },
+  {
+    "code": "admin_access.manage_role",
+    "module": "admin_access",
+    "label": "Quản lý chức danh"
+  },
+  {
+    "code": "admin_access.manage_staff",
+    "module": "admin_access",
+    "label": "Quản lý nhân viên"
+  },
+  {
+    "code": "admin_access.view",
+    "module": "admin_access",
+    "label": "Xem phân quyền"
+  },
+  {
+    "code": "audit_log.view",
+    "module": "audit_log",
+    "label": "Xem lịch sử phân quyền"
+  },
+  {
+    "code": "blog.manage",
+    "module": "blog",
+    "label": "Quản lý bài viết"
+  },
+  {
+    "code": "blog.publish",
+    "module": "blog",
+    "label": "Phát hành bài viết"
+  },
+  {
+    "code": "blog.view",
+    "module": "blog",
+    "label": "Xem bài viết"
+  },
+  {
+    "code": "consultation_lead.manage",
+    "module": "consultation_lead",
+    "label": "Xử lý lead tư vấn"
+  },
+  {
+    "code": "consultation_lead.view",
+    "module": "consultation_lead",
+    "label": "Xem lead tư vấn"
+  },
+  {
+    "code": "cv_template.archive",
+    "module": "cv_template",
+    "label": "Lưu trữ mẫu CV"
+  },
+  {
+    "code": "cv_template.create",
+    "module": "cv_template",
+    "label": "Tạo mẫu CV"
+  },
+  {
+    "code": "cv_template.delete",
+    "module": "cv_template",
+    "label": "Xoá mẫu CV"
+  },
+  {
+    "code": "cv_template.edit",
+    "module": "cv_template",
+    "label": "Sửa mẫu CV"
+  },
+  {
+    "code": "cv_template.publish",
+    "module": "cv_template",
+    "label": "Phát hành mẫu CV"
+  },
+  {
+    "code": "cv_template.view",
+    "module": "cv_template",
+    "label": "Xem catalogue CV"
+  },
+  {
+    "code": "dashboard.view",
+    "module": "dashboard",
+    "label": "Xem tổng quan"
+  },
+  {
+    "code": "job_moderation.approve",
+    "module": "job_moderation",
+    "label": "Duyệt tin tuyển dụng"
+  },
+  {
+    "code": "job_moderation.reject",
+    "module": "job_moderation",
+    "label": "Từ chối tin tuyển dụng"
+  },
+  {
+    "code": "job_moderation.view",
+    "module": "job_moderation",
+    "label": "Xem tin chờ duyệt"
+  },
+  {
+    "code": "service_catalog.manage",
+    "module": "service_catalog",
+    "label": "Quản lý gói dịch vụ"
+  },
+  {
+    "code": "service_catalog.view",
+    "module": "service_catalog",
+    "label": "Xem gói dịch vụ"
+  },
+  {
+    "code": "site_setting.manage",
+    "module": "site_setting",
+    "label": "Quản lý cài đặt hệ thống"
+  },
+  {
+    "code": "site_setting.view",
+    "module": "site_setting",
+    "label": "Xem cài đặt hệ thống"
+  }
+]

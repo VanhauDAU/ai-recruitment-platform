@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { ADMIN_ROUTES } from '../../../src/app/router/admin/admin-routes.config.js'
 import { mockPublicApi } from './helpers'
 
 test('admin smoke: login loads and dashboard stays role-protected', async ({ page }) => {
@@ -6,15 +7,8 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
   await page.goto('/admin/app/login')
   await expect(page.getByRole('heading', { name: 'Đăng nhập Quản trị hệ thống' })).toBeVisible()
 
-  await page.goto('/admin/app/dashboard')
-  await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
-
-  await page.goto('/admin/app/cv-catalogue')
-  await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
-
-  await page.goto('/admin/app/services')
-  await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
-
-  await page.goto('/admin/app/consultation-leads')
-  await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
+  for (const route of ADMIN_ROUTES) {
+    await page.goto(`/admin/app${route.segment}`)
+    await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
+  }
 })

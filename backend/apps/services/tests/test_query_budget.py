@@ -22,6 +22,7 @@ class AdminServiceCategoryQueryBudgetTests(APITestCase):
             email='service-budget-admin@example.com',
             password='Password@123',
             role=User.Role.ADMIN,
+            is_superuser=True,
         )
         self.categories = []
         for category_index in range(5):
