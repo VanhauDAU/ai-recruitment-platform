@@ -6,6 +6,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-26
+
+#### Added — RBAC admin G1.1
+
+- Thêm registry permission code-owned, phòng ban, chức danh, membership có lịch
+  sử thu hồi, primary deterministic, cache 60 giây và audit log luôn bật.
+- Thêm command đồng bộ/deprecate permission, seed hội tụ ma trận phòng ban,
+  export contract frontend, bootstrap MFA và readiness gate trước khi siết API.
+- `/api/auth/me/` trả `admin_access`; cổng admin có trang “Quyền của tôi”, badge
+  phòng ban, sidebar/route/login destination dùng chung một access policy.
+
+#### Security — RBAC admin G1.2
+
+- Siết site settings ở mức superuser; áp permission chi tiết cho catalogue dịch
+  vụ, lead tư vấn, catalogue CV và kiểm duyệt tin.
+- Chặn nhân viên CV đi vòng qua `PATCH is_active/status`; dữ liệu do staff tạo
+  mặc định ẩn/draft, gồm cả upload background đi qua service riêng.
+- Chuẩn hoá mọi lỗi thiếu quyền thành `403 admin_permission_denied`; frontend
+  revalidate session có cooldown khi nhận chùm 403.
+
+#### Documentation & Verification
+
+- Bổ sung thiết kế database RBAC, ma trận seed, runbook hai release, cảnh báo
+  endpoint dashboard/blog còn legacy và gate chống lệch registry backend/frontend.
+
 ### 2026-07-24
 
 #### Added — Cá nhân hóa tài khoản ứng viên

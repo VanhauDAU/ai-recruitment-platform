@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { withQueryClient } from '@/test/render-with-query-client'
+import { notifyPermissionDenied } from '@/shared/api/token-store'
 import SessionProvider from './SessionProvider'
 import { useSession } from './use-session'
 const { getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices } = vi.hoisted(() => ({
@@ -10,12 +11,14 @@ const { getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices } = vi.hois
   logoutAllDevices: vi.fn(),
 }))
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
+const { message } = vi.hoisted(() => ({ message: { warning: vi.fn() } }))
 
 vi.mock('../api/session.api', () => ({ getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices }))
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...await importOriginal(),
   useNavigate: () => navigate,
 }))
+vi.mock('@/shared/lib/toast', () => ({ message }))
 
 function wrapper({ children }) {
   return withQueryClient(
@@ -25,11 +28,13 @@ function wrapper({ children }) {
 
 describe('SessionProvider', () => {
   beforeEach(() => {
+    window.history.replaceState({}, '', '/')
     localStorage.clear()
     getCurrentSessionUser.mockReset()
     logoutCurrentPortal.mockReset().mockResolvedValue(undefined)
     logoutAllDevices.mockReset().mockResolvedValue(undefined)
     navigate.mockReset()
+    message.warning.mockReset()
   })
 
   it('restores a valid session through the cookie-backed API bootstrap', async () => {
@@ -129,5 +134,25 @@ describe('SessionProvider', () => {
 
     expect(result.current.isAuthenticated).toBe(false)
     expect(localStorage.getItem('main_access_token')).toBeNull()
+  })
+
+  it('coalesces a burst of admin permission denials into one refresh and toast', async () => {
+    window.history.replaceState({}, '', '/admin/app/dashboard')
+    getCurrentSessionUser.mockResolvedValue({
+      public_id: 'admin-1',
+      role: 'admin',
+      admin_access: { permissions: ['dashboard.view'], memberships: [] },
+    })
+    const { result } = renderHook(() => useSession(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => {
+      notifyPermissionDenied()
+      notifyPermissionDenied()
+      notifyPermissionDenied()
+    })
+
+    await waitFor(() => expect(getCurrentSessionUser).toHaveBeenCalledTimes(2))
+    expect(message.warning).toHaveBeenCalledTimes(1)
   })
 })

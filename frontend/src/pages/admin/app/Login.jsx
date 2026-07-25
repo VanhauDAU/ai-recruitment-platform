@@ -2,7 +2,7 @@ import { AuthLogo, LoginForm } from '@/features/auth'
 
 // Cổng quản trị — sau này chạy trên subdomain riêng (vd. admin.procv.vn).
 // Không có link đăng ký: tài khoản admin chỉ tạo qua backend.
-export default function AdminLogin() {
+export default function AdminLogin({ destinationResolver }) {
   return (
     <div className="w-full">
       <div className="login-card mb-7 text-center">
@@ -12,7 +12,12 @@ export default function AdminLogin() {
         </h2>
       </div>
 
-      <LoginForm portal="admin" expectedRoles={['admin']} forgotPasswordLink={null} />
+      <LoginForm
+        portal="admin"
+        expectedRoles={['admin']}
+        forgotPasswordLink={null}
+        destinationResolver={destinationResolver}
+      />
     </div>
   )
 }

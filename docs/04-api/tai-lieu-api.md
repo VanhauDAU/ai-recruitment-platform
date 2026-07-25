@@ -93,6 +93,59 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 registry active. API tiếp tục nhận/trả locale code để giữ tương thích; FK
 `locale_ref` là chi tiết migration nội bộ, không làm đổi public payload.
 
+### Contract phân quyền admin G1
+
+`GET /api/auth/me/` trả thêm `admin_access` với admin và `null` với
+candidate/employer:
+
+```json
+{
+  "is_superuser": false,
+  "permissions": ["job_moderation.approve", "job_moderation.view"],
+  "primary_department": {
+    "code": "job-moderation",
+    "name": "Kiểm duyệt tin tuyển dụng"
+  },
+  "memberships": [
+    {
+      "department": {
+        "code": "job-moderation",
+        "name": "Kiểm duyệt tin tuyển dụng"
+      },
+      "role": {"code": "staff", "name": "Nhân viên", "rank": 10}
+    }
+  ]
+}
+```
+
+`primary_department` có thể `null`. Permission luôn sort theo code. Khi thiếu
+quyền, endpoint RBAC trả:
+
+```json
+{
+  "code": "admin_permission_denied",
+  "message": "Bạn không có quyền thực hiện hành động này."
+}
+```
+
+| Bề mặt admin | Trạng thái G1 |
+| --- | --- |
+| Site locale/settings/upload | `HasAdminPermission`, luôn `require_superuser` |
+| Service category/package | `service_catalog.view/manage` |
+| Consultation lead | `consultation_lead.view/manage` |
+| CV catalogue | `cv_template.view/create/edit/publish/archive/delete` theo action |
+| Job moderation | `.view` ở cửa vào, `.approve/.reject` sau khi serializer hợp lệ |
+| `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
+| Blog admin upload | Vẫn legacy `CanEditBlog` + Django Groups, chuyển ở G2 |
+
+Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
+qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
+`is_active` của localization/category/color/background/blueprint và
+`CvSampleContent.status/published_at`. Staff tạo template ở `inactive`; các tài
+nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
+ẩn → hiện cần `.publish`, hiện → ẩn cần `.archive`; gửi lại giá trị không đổi
+không bị chặn.
+
 ### CV catalogue admin (admin-only)
 
 | Method | Endpoint | Mô tả |

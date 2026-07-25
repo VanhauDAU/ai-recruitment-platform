@@ -56,7 +56,14 @@ export function AuthFormStyles() {
  * - `forgotPasswordLink`: null để ẩn (cổng admin).
  * - `onSuccess`: nếu truyền (vd. nhúng trong modal), gọi callback thay vì điều hướng.
  */
-export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL, appearance = 'default' }) {
+export default function LoginForm({
+  portal,
+  expectedRoles,
+  onSuccess,
+  forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL,
+  appearance = 'default',
+  destinationResolver = (user, returnUrl) => getAuthDestination({ user, returnUrl }),
+}) {
   // Cổng NTD/admin chạy subdomain riêng -> link tuyệt đối, không đi qua router.
   const ForgotLink = forgotPasswordLink?.startsWith('http') ? 'a' : Link
   const forgotLinkProps = forgotPasswordLink?.startsWith('http')
@@ -77,7 +84,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const employerAppearance = appearance === 'employer'
 
   function navigateAfterLogin(user) {
-    navigate(getAuthDestination({ user, returnUrl }), { replace: true })
+    navigate(destinationResolver(user, returnUrl), { replace: true })
   }
 
   function clearPassword() {

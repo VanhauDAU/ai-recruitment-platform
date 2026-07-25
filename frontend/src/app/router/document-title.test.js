@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { employerAppPath } from '@/shared/config/portals'
-import { resolveEmployerRouteTitle } from './document-title'
+import { resolveEmployerRouteTitle, resolveRouteTitle } from './document-title'
 
 describe('resolveEmployerRouteTitle', () => {
   it('uses a specific title for each employer job workflow route', () => {
@@ -18,5 +18,13 @@ describe('resolveEmployerRouteTitle', () => {
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns'))).toBe('Quản lý chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123'))).toBe('Chi tiết chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/applications'))).toBe('Quản lý CV ứng tuyển')
+  })
+})
+
+describe('admin route titles', () => {
+  it('derives job moderation and access titles from the admin route config', () => {
+    window.history.replaceState({}, '', '/admin/app/job-moderation')
+    expect(resolveRouteTitle('/admin/app/job-moderation')).toBe('Duyệt tin tuyển dụng')
+    expect(resolveRouteTitle('/admin/app/my-access')).toBe('Quyền của tôi')
   })
 })

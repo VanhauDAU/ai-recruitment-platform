@@ -14,6 +14,7 @@ const LEGACY_KEYS = ['access_token', 'refresh_token']
 const LOGOUT_EVENT_NAME = 'procv:auth-logout'
 const LOGOUT_POLL_INTERVAL_MS = 1000
 const accessTokens = new Map()
+const permissionDeniedSubscribers = new Set()
 
 // One-time migration cleanup: no JWT from an older release may remain readable
 // through localStorage after this bundle starts.
@@ -158,4 +159,13 @@ export function subscribeToSessionLogout(onLogout) {
     window.removeEventListener('storage', handleStorageEvent)
     window.clearInterval(pollId)
   }
+}
+
+export function notifyPermissionDenied() {
+  permissionDeniedSubscribers.forEach((subscriber) => subscriber())
+}
+
+export function subscribeToPermissionDenied(subscriber) {
+  permissionDeniedSubscribers.add(subscriber)
+  return () => permissionDeniedSubscribers.delete(subscriber)
 }

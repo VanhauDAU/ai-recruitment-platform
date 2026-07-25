@@ -93,6 +93,7 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
             email='admin@example.com',
             password='Password@123',
             role=User.Role.ADMIN,
+            is_superuser=True,
         )
         self.client.force_authenticate(self.admin)
         self.old_path = default_storage.save('site/settings/old-logo.png', ContentFile(PNG_BYTES))
@@ -166,6 +167,7 @@ class LocaleApiTests(APITransactionTestCase):
             email='locale-admin@example.com',
             password='Password@123',
             role=User.Role.ADMIN,
+            is_superuser=True,
         )
 
     def test_public_api_only_returns_active_locales_in_stable_order(self):

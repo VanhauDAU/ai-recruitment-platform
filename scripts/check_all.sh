@@ -50,6 +50,9 @@ run_be manage.py check
 step "Backend: kiểm tra migration treo"
 run_be manage.py makemigrations --check --dry-run
 
+step "Backend/Frontend: contract admin permission"
+"$ROOT/scripts/check_admin_permissions_sync.sh"
+
 step "Backend: test suite + coverage gate"
 run_pytest --cov --cov-fail-under=84
 

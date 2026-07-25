@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser, logoutAllDevices, logoutCurrentPortal } from '../api/session.api'
@@ -9,7 +9,12 @@ import {
   clearCurrentPortalSession,
   clearTokens,
   subscribeToSessionLogout,
+  subscribeToPermissionDenied,
 } from '@/shared/api/token-store'
+import { message } from '@/shared/lib/toast'
+
+const ADMIN_SESSION_REFRESH_INTERVAL_MS = 60_000
+const PERMISSION_DENIED_COOLDOWN_MS = 5_000
 
 function loginPathForCurrentPortal() {
   const portal = getCurrentPortal()
@@ -23,6 +28,8 @@ export default function SessionProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const lastRefreshAt = useRef(0)
+  const permissionDeniedAt = useRef(0)
 
   const clearSessionState = useCallback(() => {
     setUser(null)
@@ -80,6 +87,7 @@ export default function SessionProvider({ children }) {
     try {
       const currentUser = await getCurrentSessionUser()
       setUser(currentUser)
+      lastRefreshAt.current = Date.now()
       return currentUser
     } catch (error) {
       clearCurrentSession()
@@ -106,6 +114,33 @@ export default function SessionProvider({ children }) {
     () => subscribeToSessionLogout(clearSessionState),
     [clearSessionState],
   )
+
+  useEffect(() => subscribeToPermissionDenied(() => {
+    const now = Date.now()
+    if (
+      getCurrentPortal() !== 'admin'
+      || now - permissionDeniedAt.current < PERMISSION_DENIED_COOLDOWN_MS
+    ) return
+    permissionDeniedAt.current = now
+    message.warning('Quyền truy cập vừa thay đổi. Hệ thống đang cập nhật phiên của bạn.')
+    refreshSession().catch(() => {})
+  }), [refreshSession])
+
+  useEffect(() => {
+    function refreshVisibleAdminSession() {
+      if (
+        document.visibilityState !== 'visible'
+        || getCurrentPortal() !== 'admin'
+        || Date.now() - lastRefreshAt.current <= ADMIN_SESSION_REFRESH_INTERVAL_MS
+      ) return
+      refreshSession().catch(() => {})
+    }
+    document.addEventListener('visibilitychange', refreshVisibleAdminSession)
+    return () => document.removeEventListener(
+      'visibilitychange',
+      refreshVisibleAdminSession,
+    )
+  }, [refreshSession])
 
   const value = useMemo(
     () => ({

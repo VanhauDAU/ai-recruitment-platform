@@ -5,6 +5,7 @@ import {
   employerMarketingPath,
   getCurrentPortal,
 } from '@/shared/config/portals'
+import { ADMIN_ROUTES } from './admin/admin-routes.config'
 
 const EXACT_MAIN_TITLES = new Map([
   ['/', 'Trang chủ'],
@@ -57,11 +58,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
 
 const EXACT_ADMIN_TITLES = new Map([
   [adminPath('/login'), 'Đăng nhập quản trị'],
-  [adminPath('/dashboard'), 'Bảng điều khiển'],
-  [adminPath('/settings'), 'Cài đặt hệ thống'],
-  [adminPath('/cv-catalogue'), 'Catalogue CV'],
-  [adminPath('/services'), 'Dịch vụ nhà tuyển dụng'],
-  [adminPath('/consultation-leads'), 'Khách hàng tư vấn'],
+  ...ADMIN_ROUTES.map((route) => [adminPath(route.segment), route.title]),
 ])
 
 function normalizePath(pathname) {

@@ -87,8 +87,10 @@ class ProfileUpdateTests(APITestCase):
                 'employer_onboarding_required',
                 'employer_onboarding_step',
                 'employer_verification_completed',
+                'admin_access',
             },
         )
+        self.assertIsNone(response.data['admin_access'])
         self.assertIs(response.data['job_preferences_configured'], False)
         self.assertIs(response.data['has_usable_password'], True)
         self.assertIs(response.data['employer_verification_completed'], False)

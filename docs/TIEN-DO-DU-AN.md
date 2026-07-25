@@ -16,10 +16,10 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 3 — Tối ưu tìm kiếm / matching | 0/2 | ⬜ |
 | 4 — CV nâng cao | 0/2 | ⬜ |
 | 5 — Tuyển dụng nâng cao | 1/3 | 🟡 |
-| 6 — Thương mại & quản trị | 13/16 | 🟡 |
+| 6 — Thương mại & quản trị | 13/16 + 1 phần | 🟡 |
 | 7 — Phỏng vấn AI | 0/4 | ⬜ |
 | 8 — Deployment | 0/2 | ⬜ |
-| **Tổng** | **63/88** | |
+| **Tổng** | **63/88 + 2 phần** | |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -658,7 +658,7 @@ frontend unit tests và 22 smoke desktop/mobile.
 | --- | --- | --- |
 | 6.1 | Bảng `subscription_plans` | ⬜ |
 | 6.2 | Bảng `user_subscriptions` (quota AI) | ⬜ |
-| 6.3 | Bảng `audit_logs` | ⬜ |
+| 6.3 | RBAC admin theo phòng ban + audit log phân quyền | 🟡 |
 | 6.4 | App `sitecontent`: `SiteSetting` + `LinkGroup`/`LinkItem` + admin + API public `/api/site/` | ✅ |
 | 6.5 | `sitecontent.Banner` (carousel trang chủ cấu hình từ admin) + API `/api/site/banners/` | ✅ |
 | 6.6 | `SiteSetting` schema-driven: 11 value_type, 15 nhóm, seed 96 keys, cache 1h | ✅ |
@@ -674,6 +674,20 @@ frontend unit tests và 22 smoke desktop/mobile.
 | 6.16 | Employer verify + dashboard quản trị: checklist bảo mật, KPI/activity/pipeline, recent job/application và shell responsive | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 6
+
+<details>
+<summary><b>6.3</b> — RBAC admin G1 và audit log phân quyền</summary>
+
+Thêm registry permission code-owned và năm bảng `AdminPermission`,
+`Department`, `AdminRole`, `AdminMembership`, `AdminAccessAuditLog`; quyền hiệu
+dụng là hợp các membership còn hiệu lực, superuser bypass. Audit luôn ghi cùng
+transaction và chỉ dùng public ID. `/auth/me` trả snapshot phòng ban/chức danh;
+frontend dùng một config route để lọc sidebar, guard và điều hướng. Backend G1C
+siết site settings (superuser-only), dịch vụ/lead, catalogue CV (gồm lifecycle
+field guard) và job moderation. Dashboard/blog còn thuộc G2 nên mục 6.3 ở trạng
+thái một phần. Phát hành theo G1.1 → gán membership/readiness gate → G1.2.
+
+</details>
 
 <details>
 <summary><b>6.4</b> — App <code>sitecontent</code></summary>
@@ -773,10 +787,10 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-24 (CANDIDATE-PERSONALIZATION — tối ưu menu
-desktop và hoàn thiện cài đặt email, đổi mật khẩu, feed việc làm phù hợp có
-consent/giải thích/phân trang. Chi tiết tại mục 1.24e–h và
-`docs/07-algorithms/candidate-job-recommendations.md`.)
+Cập nhật lần cuối: 2026-07-26 (ADMIN-RBAC-G1 — nền tảng permission/department/
+role/membership, audit bất biến, cache invalidation sau commit, `/auth/me`,
+frontend guard/sidebar và siết các endpoint nguy hiểm. Dashboard/blog còn G2;
+phát hành theo G1.1 → readiness gate → G1.2.)
 
 Cập nhật 2026-07-22f (CAMP-SIMPLIFY — chốt "chiến dịch chỉ cần tên": form chỉnh sửa (`CampaignForm.jsx`) rút còn đúng ô Tên (bỏ mô tả/vị trí/cấp bậc/headcount/ngân sách/ngày/tuyển liên tục), modal thu gọn 760→480; trang chi tiết bỏ thẻ "Thông tin chiến dịch" (các field kế hoạch trống), bỏ query danh mục không dùng; giữ phần phân tích (KPI, phễu, biểu đồ 7 ngày, gauge tiến độ, nguồn CV, tính năng sắp ra mắt). PATCH campaign chỉ gửi { name }. Verify: oxlint sạch, 3 test campaign pass (cập nhật matcher getAllByText cho KPI trùng), vite build xanh.)
 
