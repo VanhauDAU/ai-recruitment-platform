@@ -10,6 +10,7 @@ from .companies import (
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
     apply_update_request,
+    review_company_update_document,
     set_company_industries,
     verify_company,
 )
@@ -58,6 +59,7 @@ __all__ = [
     'reconcile_completed_verification_cases',
     'recruiter_posting_readiness',
     'record_verification_upload',
+    'review_company_update_document',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',
     'review_verification_document',

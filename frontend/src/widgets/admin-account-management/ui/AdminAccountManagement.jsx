@@ -1,11 +1,3 @@
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  FileProtectOutlined,
-  SafetyCertificateOutlined,
-  StopOutlined,
-  TeamOutlined,
-} from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Badge, Form, Tabs } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
@@ -28,8 +20,10 @@ import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import AccountEditModal from './AccountEditModal'
 import AccountFilters from './AccountFilters'
+import AccountOverview from './AccountOverview'
 import AccountQuickDrawer from './AccountQuickDrawer'
 import AccountTable from './AccountTable'
+import CompanyUpdateQueuePanel from './CompanyUpdateQueuePanel'
 import InvitationPanel from './InvitationPanel'
 import VerificationQueuePanel from './VerificationQueuePanel'
 import '../admin-account-management.css'
@@ -49,17 +43,8 @@ const DEFAULT_FILTERS = {
   last_login_range: [],
 }
 
-function StatCard({ icon, label, value, detail, tone }) {
-  return (
-    <article className={`account-stat account-stat--${tone}`}>
-      <span className="account-stat__icon" aria-hidden="true">{icon}</span>
-      <div>
-        <p>{label}</p>
-        <strong>{Number(value || 0).toLocaleString('vi-VN')}</strong>
-        <span>{detail}</span>
-      </div>
-    </article>
-  )
+function QueueTabLabel({ children, count }) {
+  return <span>{children}<Badge className="ml-2" count={count || 0} overflowCount={999} /></span>
 }
 
 function queryParams(tab, filters, search, page) {
@@ -93,21 +78,33 @@ export default function AdminAccountManagement() {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const canInvite = isSuperuser || has('account.admin.invite')
-  const canVerifyEmployers = (
+  const canViewEmployerVerifications = (
     isSuperuser
     || has('employer_verification.view')
-    || has('employer_verification.review')
   )
-  const canReadAccounts = (
+  const canViewCompanyUpdates = (
+    isSuperuser
+    || has('company_update.view')
+  )
+  const canBrowseAccounts = (
     isSuperuser
     || has('account.view')
     || has('account.admin.view')
-    || canVerifyEmployers
+  )
+  const canReadAccounts = (
+    canBrowseAccounts
+    || canViewEmployerVerifications
+    || canViewCompanyUpdates
   )
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [editForm] = Form.useForm()
-  const [activeTab, setActiveTab] = useState(canReadAccounts ? 'all' : 'invitations')
+  const [activeTab, setActiveTab] = useState(() => {
+    if (canBrowseAccounts) return 'all'
+    if (canViewEmployerVerifications) return 'verification'
+    if (canViewCompanyUpdates) return 'company-updates'
+    return 'invitations'
+  })
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
   const [selectedAccount, setSelectedAccount] = useState(null)
@@ -126,17 +123,18 @@ export default function AdminAccountManagement() {
   const accountsQuery = useQuery({
     queryKey: adminAccountKeys.list(params),
     queryFn: ({ signal }) => getAdminAccounts(params, { signal }),
-    enabled: !['invitations', 'verification'].includes(activeTab) && canReadAccounts,
+    enabled: !['invitations', 'verification', 'company-updates'].includes(activeTab)
+      && canBrowseAccounts,
   })
   const departmentsQuery = useQuery({
     queryKey: adminAccessKeys.departments,
     queryFn: ({ signal }) => getAdminDepartments({ signal }),
-    enabled: canReadAccounts || canInvite,
+    enabled: canBrowseAccounts || canInvite,
   })
   const rolesQuery = useQuery({
     queryKey: adminAccessKeys.roles(''),
     queryFn: ({ signal }) => getAdminRoles('', { signal }),
-    enabled: canReadAccounts || canInvite,
+    enabled: canBrowseAccounts || canInvite,
   })
 
   const departments = departmentsQuery.data || []
@@ -196,11 +194,13 @@ export default function AdminAccountManagement() {
   }
 
   const accountList = (
-    <>
+    <div className="account-management-tab-content">
       <AccountFilters
         filters={filters}
         departments={departments}
         roles={roles}
+        total={accounts.count}
+        loading={accountsQuery.isLoading}
         onChange={changeFilters}
         onClear={() => changeFilters(DEFAULT_FILTERS)}
       />
@@ -225,39 +225,45 @@ export default function AdminAccountManagement() {
         canEdit={canEdit}
         canManageSecurity={canManageSecurity}
       />
-    </>
+    </div>
   )
 
   const tabs = [
-    ...(canReadAccounts ? [
+    ...(canBrowseAccounts ? [
       { key: 'all', label: 'Tất cả', children: accountList },
       { key: 'candidate', label: 'Ứng viên', children: accountList },
       { key: 'employer', label: 'Nhà tuyển dụng', children: accountList },
       { key: 'admin', label: 'Admin', children: accountList },
     ] : []),
-    ...(canVerifyEmployers ? [{
+    ...(canViewEmployerVerifications ? [{
       key: 'verification',
-      label: (
-        <span>
-          Chờ xác thực NTD
-          <Badge
-            className="ml-2"
-            count={summary.employer_verification_pending || 0}
-            overflowCount={999}
-          />
-        </span>
+      label: <QueueTabLabel count={summary.employer_verification_pending}>Chờ xác thực NTD</QueueTabLabel>,
+      children: (
+        <div className="account-management-tab-content">
+          <VerificationQueuePanel />
+        </div>
       ),
-      children: <VerificationQueuePanel />,
+    }] : []),
+    ...(canViewCompanyUpdates ? [{
+      key: 'company-updates',
+      label: <QueueTabLabel count={summary.company_update_pending}>Sửa thông tin công ty</QueueTabLabel>,
+      children: (
+        <div className="account-management-tab-content">
+          <CompanyUpdateQueuePanel />
+        </div>
+      ),
     }] : []),
     ...(canInvite ? [{
       key: 'invitations',
       label: 'Lời mời Admin',
       children: (
-        <InvitationPanel
-          departments={departments}
-          roles={roles}
-          isSuperuser={isSuperuser}
-        />
+        <div className="account-management-tab-content">
+          <InvitationPanel
+            departments={departments}
+            roles={roles}
+            isSuperuser={isSuperuser}
+          />
+        </div>
       ),
     }] : []),
   ]
@@ -265,14 +271,13 @@ export default function AdminAccountManagement() {
   return (
     <div className="min-w-0 space-y-5">
       {canReadAccounts && (
-        <section className="account-stats" aria-label="Tổng quan tài khoản">
-          <StatCard icon={<TeamOutlined />} label="Tổng tài khoản" value={summary.total} detail="Trong phạm vi được xem" tone="blue" />
-          <StatCard icon={<CheckCircleOutlined />} label="Đang hoạt động" value={summary.active} detail="Có thể đăng nhập" tone="green" />
-          <StatCard icon={<StopOutlined />} label="Bị hạn chế" value={summary.restricted} detail="Tạm khóa hoặc đã cấm" tone="red" />
-          <StatCard icon={<SafetyCertificateOutlined />} label="Email chưa xác minh" value={summary.unverified} detail="Cần hoàn tất xác thực" tone="slate" />
-          <StatCard icon={<FileProtectOutlined />} label="Hồ sơ NTD chờ xử lý" value={summary.employer_verification_pending} detail="Chờ duyệt hoặc đang xử lý" tone="amber" />
-          <StatCard icon={<ClockCircleOutlined />} label="Hồ sơ NTD quá hạn" value={summary.employer_verification_overdue} detail="Đã chờ trên 72 giờ" tone="red" />
-        </section>
+        <AccountOverview
+          summary={summary}
+          canViewEmployerVerifications={canViewEmployerVerifications}
+          canViewCompanyUpdates={canViewCompanyUpdates}
+          canInvite={canInvite}
+          onOpenQueue={changeTab}
+        />
       )}
 
       <section className="admin-panel account-management-panel">

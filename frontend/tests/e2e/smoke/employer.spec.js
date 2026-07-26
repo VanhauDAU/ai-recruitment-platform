@@ -364,6 +364,89 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 })
 
+test('employer company settings: document revision request shows reason and replacement action', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_revision',
+        company_role: 'owner',
+        onboarding: { company_linked: true, verification_completed: true },
+        company: {
+          public_id: 'co_revision',
+          company_name: 'FPT Software',
+          trade_name: 'FPT Software',
+          trade_name_same_as_registered: true,
+          tax_code: '0101234567',
+          verification_status: 'verified',
+          industries_detail: [{ id: 1, name: 'IT - Phần mềm', is_primary: true }],
+          images: [],
+        },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/industries/all/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{ id: 1, name: 'IT - Phần mềm' }]),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/company/catalogs/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        business_types: [{ value: 'enterprise', label: 'Doanh nghiệp' }],
+        company_sizes: [], markets: [], target_customers: [],
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/company/documents/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route('http://localhost:8000/api/employer/company/update-requests/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{
+        public_id: 'cur_revision',
+        status: 'pending',
+        proof_type: 'business_registration',
+        reason: 'Đổi tên theo đăng ký mới',
+        changes: { company_name: 'FPT Software 2' },
+        updated_at: '2026-07-27T00:00:00Z',
+        documents: [{
+          id: 12,
+          public_id: 'doc_revision',
+          doc_type: 'business_registration',
+          doc_type_label: 'Giấy đăng ký doanh nghiệp',
+          is_current: true,
+          status: 'changes_requested',
+          status_label: 'Cần bổ sung',
+          review_note: 'Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.',
+        }],
+      }]),
+    })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/company?update=true')
+
+  await expect(page.getByText('Quản trị viên yêu cầu bổ sung giấy tờ')).toBeVisible()
+  await expect(page.getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeVisible()
+  await page.getByRole('button', { name: 'Bổ sung giấy tờ ngay' }).click()
+  await expect(page.getByText('Yêu cầu này cần bổ sung giấy tờ')).toBeVisible()
+  await page.getByRole('button', { name: 'Chọn giấy tờ thay thế' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Xác nhận thay đổi thông tin pháp lý' })
+  await expect(dialog.getByText('Giấy tờ trước chưa đạt yêu cầu')).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Chọn giấy đăng ký doanh nghiệp' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
 test('employer workspace: completed verification redirects away from the checklist while keeping the first-job action separate', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
@@ -983,5 +1066,117 @@ test('employer company settings: recent catalogue and full create form are respo
   await page.locator('label.ant-radio-button-wrapper').filter({ hasText: 'Hộ kinh doanh' }).click()
   await expect(page.getByLabel(/Mã số thuế người đại diện/)).toBeVisible()
   await expect(page.getByLabel(/Tên hộ kinh doanh/)).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer company settings: pending values remain editable without creating another request', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  const company = {
+    public_id: 'co_pending',
+    company_name: 'FE Credit',
+    trade_name: 'FE Credit',
+    trade_name_same_as_registered: true,
+    tax_code: '0101234567',
+    business_type: 'enterprise',
+    logo_url: '',
+    has_no_logo: true,
+    website_url: 'https://fecredit.vn/',
+    has_no_website: false,
+    email: 'hr@fecredit.vn',
+    phone: '0912345678',
+    address: 'TP.HCM',
+    company_size: '25-99',
+    description: '<p>Giới thiệu công ty</p>',
+    employee_benefits: '',
+    markets: ['domestic'],
+    target_customers: ['b2b'],
+    industries_detail: [{ id: 1, name: 'Tài chính', is_primary: true }],
+    primary_industry_id: 1,
+    images: [],
+    verification_status: 'verified',
+  }
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_pending',
+        company,
+        company_role: 'owner',
+        onboarding: { company_linked: true },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/industries/all/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Tài chính', slug: 'tai-chinh' }]) })
+  })
+  await page.route('http://localhost:8000/api/employer/company/catalogs/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        business_types: [{ value: 'enterprise', label: 'Doanh nghiệp' }],
+        company_sizes: [{ value: '25-99', label: '25 - 99 nhân viên' }],
+        markets: [{ value: 'domestic', label: 'Nội địa' }],
+        target_customers: [{ value: 'b2b', label: 'B2B' }],
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/company/update-requests/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          public_id: 'cur_pending',
+          status: 'pending',
+          changes: {
+            website_url: 'https://fecredit.vn/abc',
+            gallery_additions: ['employers/co_pending/gallerys/office.png'],
+          },
+          media_previews: {
+            gallery_additions: ['http://localhost:8000/media/employers/co_pending/gallerys/office.png'],
+          },
+          revision: 1,
+          lock_version: 0,
+          documents: [],
+          created_at: '2026-07-25T10:00:00Z',
+          updated_at: '2026-07-26T10:00:00Z',
+        },
+        {
+          public_id: 'cur_rejected',
+          status: 'rejected',
+          changes: { trade_name: 'Tên cũ đã bị từ chối' },
+          review_note: 'Lý do từ chối của yêu cầu trước.',
+          created_at: '2026-07-24T10:00:00Z',
+          updated_at: '2026-07-24T11:00:00Z',
+        },
+      ]),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/company/documents/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/company')
+  await expect(page.getByText('Đang xử lý', { exact: true })).toBeVisible()
+  await expect(page.getByText('Bị từ chối', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Lý do từ chối của yêu cầu trước.')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Chỉnh sửa yêu cầu' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Chỉnh sửa yêu cầu' }).click()
+
+  await expect(page.getByRole('textbox', { name: /^Website/ })).toHaveValue('https://fecredit.vn/abc')
+  await expect(page.getByRole('img', { name: 'Ảnh công ty đang chờ duyệt 1' })).toHaveAttribute(
+    'src',
+    'http://localhost:8000/media/employers/co_pending/gallerys/office.png',
+  )
+  await expect(page.getByText('Chờ duyệt')).toBeVisible()
+  await page.getByLabel('Tên công ty').fill('FE Credit mới')
+  await page.getByRole('button', { name: 'Gửi yêu cầu cập nhật' }).click()
+  await expect(page.getByRole('dialog', { name: 'Xác nhận thay đổi thông tin pháp lý' })).toBeVisible()
+  await expect(page.getByLabel('Lý do thay đổi')).toBeVisible()
+  await expect(page.getByText('Giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })

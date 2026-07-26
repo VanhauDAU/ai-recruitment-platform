@@ -17,9 +17,15 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 
 # 1 COUNT (pagination) + 1 SELECT jobs + 3 prefetch (categories, locations,
 # skills). select_related company nằm trong SELECT chính.
-JOB_LIST_QUERY_BUDGET = 5
-SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8
-SAVED_JOB_FALLBACK_QUERY_BUDGET = 9
+#
+# +4 cho huy hiệu xác thực nhà tuyển dụng (`company_verified`): 1 đọc ngưỡng
+# tuổi tài khoản từ site settings, 3 gom điều kiện của mọi công ty trong trang
+# (hồ sơ NTD, giấy phép kinh doanh đã duyệt, báo cáo tin bị xác nhận vi phạm).
+# Bốn query này chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
+BADGE_QUERY_BUDGET = 4
+JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
+SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
+SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET
 
 
 class JobListQueryBudgetTests(APITestCase):

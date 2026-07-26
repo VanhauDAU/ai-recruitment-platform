@@ -27,6 +27,22 @@ const permissions = [
     is_active: false,
     is_granted_to_role: false,
   },
+  {
+    code: 'company_update.view',
+    module: 'company_update',
+    label: 'Xem yêu cầu sửa công ty',
+    description: 'Xem hàng chờ sửa công ty.',
+    is_active: true,
+    is_granted_to_role: false,
+  },
+  {
+    code: 'company_update.review',
+    module: 'company_update',
+    label: 'Duyệt sửa thông tin công ty',
+    description: 'Duyệt và áp dụng thay đổi.',
+    is_active: true,
+    is_granted_to_role: false,
+  },
 ]
 
 describe('PermissionPicker', () => {
@@ -54,5 +70,44 @@ describe('PermissionPicker', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'Xem catalogue CV' }))
     expect(onChange).toHaveBeenCalledWith(['cv_template.view'])
+  })
+
+  it('searches by permission label and hides unrelated modules', async () => {
+    const user = userEvent.setup()
+    render(<PermissionPicker permissions={permissions} value={[]} onChange={vi.fn()} />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Tìm quyền' }), 'company_update')
+
+    expect(screen.getByText('Duyệt sửa thông tin công ty')).toBeInTheDocument()
+    expect(screen.queryByText('Xem catalogue CV')).not.toBeInTheDocument()
+    expect(screen.getByText(/2 quyền phù hợp/)).toBeInTheDocument()
+  })
+
+  it('automatically adds view permission when review is selected', async () => {
+    const onChange = vi.fn()
+    const user = userEvent.setup()
+    render(<PermissionPicker permissions={permissions} value={[]} onChange={onChange} />)
+
+    await user.click(screen.getByRole('checkbox', { name: 'Duyệt sửa thông tin công ty' }))
+
+    expect(onChange).toHaveBeenLastCalledWith([
+      'company_update.review',
+      'company_update.view',
+    ])
+  })
+
+  it('selects a whole permission module in one action', async () => {
+    const onChange = vi.fn()
+    const user = userEvent.setup()
+    render(<PermissionPicker permissions={permissions} value={[]} onChange={onChange} />)
+
+    await user.click(screen.getByRole('checkbox', {
+      name: 'Chọn toàn bộ Cập nhật thông tin công ty',
+    }))
+
+    expect(onChange).toHaveBeenLastCalledWith([
+      'company_update.review',
+      'company_update.view',
+    ])
   })
 })

@@ -90,6 +90,7 @@
 
 .company-proof-upload { border-left: 2px solid #d1fae5; margin-left: 10px; padding: 4px 0 4px 22px; }
 .company-proof-upload--double { display: flex; flex-wrap: wrap; gap: 10px; }
+.company-proof-upload__required { color: #b45309; display: block; flex-basis: 100%; }
 
 .company-form { display: grid; gap: 0; }
 .company-form-section { background: transparent; border: 0; border-radius: 0; padding: 8px 0; }
@@ -127,6 +128,8 @@
 .company-gallery__item img { height: 100%; object-fit: cover; width: 100%; }
 .company-gallery__item > .ant-btn { position: absolute; right: 7px; top: 7px; z-index: 2; }
 .company-gallery__item > span:not(.ant-image), .company-gallery__item > small { background: rgba(15, 23, 42, .78); bottom: 0; color: #fff; left: 0; max-width: 75%; overflow: hidden; padding: 3px 7px; position: absolute; text-overflow: ellipsis; white-space: nowrap; }
+.company-gallery__item--pending { border-color: #f59e0b; box-shadow: inset 0 0 0 1px rgba(245, 158, 11, .16); }
+.company-gallery__item > .company-gallery__pending-label { background: #b45309; border-radius: 0 7px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .02em; }
 .company-gallery__item > small { left: auto; right: 0; }
 .company-gallery__add { align-items: center; aspect-ratio: 3 / 2; background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 10px; color: #64748b; cursor: pointer; display: flex; flex-direction: column; gap: 7px; justify-content: center; min-width: 140px; width: 100%; }
 .company-gallery__add:hover { background: var(--brand-primary-soft); border-color: var(--brand-primary); color: var(--brand-primary); }
@@ -136,14 +139,23 @@
 .company-form-intro { margin: 0 0 10px; }
 .company-form-intro h2 { color: #1f2937; font-size: 17px; font-weight: 700; margin: 0; }
 .company-form-intro p { color: #64748b; font-size: 14px; margin: 3px 0 0; }
+.company-form-document-request { margin-bottom: 14px; }
+.company-form-document-request__content { display: grid; gap: 8px; }
+.company-form-document-request__content p { color: #78350f; margin: 0; }
+.company-form-document-request__content .ant-btn { justify-self: start; }
 .linked-company-panel { display: grid; gap: 16px; }
-.linked-company-panel__alert { margin: 0 !important; }
-.linked-company-panel__request-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .company-update-request { align-items: center; border: 1px solid #e5e7eb; display: flex; gap: 14px; justify-content: space-between; padding: 15px 16px; }
 .company-update-request h2 { color: #263238; font-size: 15px; font-weight: 700; margin: 0; }
 .company-update-request p { color: #6b7280; font-size: 12px; margin: 4px 0 0; }
+.company-update-request__actions { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.company-update-request__actions .ant-tag { margin: 0; }
 .company-update-request .ant-btn { color: #4b5563; font-weight: 500; padding-right: 0; }
 .company-update-request .ant-btn:not([disabled]):hover { color: var(--brand-primary) !important; }
+.company-update-document-request__content { display: grid; gap: 12px; }
+.company-update-document-request__content ul { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.company-update-document-request__content li { display: grid; gap: 2px; }
+.company-update-document-request__content li span { color: #78350f; }
+.company-update-document-request__content .ant-btn { justify-self: start; }
 .linked-company-card { border-color: #dfe4e8; border-radius: 8px; padding: 28px 30px; }
 .linked-company-card__header { align-items: center; display: flex; gap: 16px; margin-bottom: 26px; }
 .linked-company-card__logo { background: #f3faf5 !important; color: var(--brand-primary) !important; flex: 0 0 auto; }

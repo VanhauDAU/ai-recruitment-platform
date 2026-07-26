@@ -1,5 +1,4 @@
 import {
-  CheckCircleFilled,
   EnvironmentOutlined,
   EyeOutlined,
   HeartFilled,
@@ -18,6 +17,7 @@ import {
   formatSalary,
 } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
+import VerifiedEmployerBadge from './VerifiedEmployerBadge'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
 
@@ -59,16 +59,20 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
               {job.is_urgent && <StatusBadge className="bg-orange-50 text-orange-600 ring-orange-100">TUYỂN GẤP</StatusBadge>}
               {published && <span className="text-xs text-gray-400">{published}</span>}
             </div>
-            <h1 className="text-xl font-bold leading-snug text-slate-900 sm:text-2xl">{job.title}</h1>
-            <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-gray-600">
-              {job.company_name}
-              {job.company_verified && <CheckCircleFilled className="text-emerald-500" title="Nhà tuyển dụng đã xác thực" />}
-            </p>
+            <h1 className="text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
+              {job.title}
+              {' '}
+              <VerifiedEmployerBadge
+                verification={job.company_verification}
+                verified={job.company_verified}
+              />
+            </h1>
+            <p className="mt-1 text-sm font-medium text-gray-600">{job.company_name}</p>
           </div>
           <button type="button" onClick={onShare} className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-[var(--brand-primary)]" aria-label="Chia sẻ việc làm" title="Sao chép liên kết để chia sẻ"><ShareAltOutlined /></button>
         </div>
 
-        <div className="mt-5 grid gap-4 border-y border-gray-100 py-4 sm:grid-cols-3 sm:divide-x sm:divide-gray-100">
+        <div className="mt-5 grid gap-3 border-y border-gray-100 py-4 sm:grid-cols-[1.15fr_1fr_0.8fr] sm:gap-0 sm:divide-x sm:divide-gray-100">
           <HeroMetric icon={<WalletOutlined />} label="Mức lương" value={formatSalary(job)} highlight />
           <HeroMetric icon={<EnvironmentOutlined />} label="Địa điểm" value={locations} className="sm:pl-4" />
           <HeroMetric icon={<UserOutlined />} label="Kinh nghiệm" value={experience} className="sm:pl-4" />
@@ -115,7 +119,33 @@ function StatusBadge({ children, className }) {
 }
 
 function HeroMetric({ icon, label, value, highlight = false, className = '' }) {
-  return <div className={`flex min-w-0 items-center gap-2.5 ${className}`}><span className={`shrink-0 text-[var(--brand-primary)] ${highlight ? 'text-lg' : 'text-base'}`}>{icon}</span><div className="min-w-0"><p className="text-xs text-gray-500">{label}</p><p className={`truncate ${highlight ? 'text-lg font-bold text-[var(--brand-primary)] sm:text-xl' : 'text-sm font-semibold text-slate-800'}`} title={value}>{value}</p></div></div>
+  if (highlight) {
+    return (
+      <div
+        role="group"
+        aria-label={`${label}: ${value}`}
+        className="flex min-w-0 items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white px-3.5 py-3 shadow-[0_4px_16px_rgba(0,176,80,0.08)] sm:-my-1 sm:mr-4"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-lg text-white shadow-sm">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{label}</p>
+          <p className="mt-0.5 break-words text-xl font-extrabold leading-tight text-[var(--brand-primary)] sm:text-2xl" title={value}>{value}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div role="group" aria-label={`${label}: ${value}`} className={`flex min-w-0 items-center gap-2.5 ${className}`}>
+      <span className="shrink-0 text-base text-[var(--brand-primary)]">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="truncate text-sm font-semibold text-slate-800" title={value}>{value}</p>
+      </div>
+    </div>
+  )
 }
 
 export function JobDetailSkeleton() {

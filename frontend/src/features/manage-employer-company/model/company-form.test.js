@@ -34,6 +34,18 @@ describe('company form model', () => {
     expect(buildCompanyChanges(values, company)).toEqual({ address: 'TP.HCM' })
   })
 
+  it('uses the latest pending values when reopening an update request', () => {
+    expect(companyToForm(company, {
+      website_url: 'https://acme.vn/abc',
+      industries: [3],
+      primary_industry: 3,
+    })).toMatchObject({
+      website_url: 'https://acme.vn/abc',
+      industries: [3],
+      primary_industry: 3,
+    })
+  })
+
   it('validates image type and the 5 MB boundary before upload', () => {
     expect(validateCompanyImage(new File(['ok'], 'office.webp', { type: 'image/webp' }))).toBe('')
     expect(validateCompanyImage(new File(['bad'], 'office.gif', { type: 'image/gif' }))).toMatch(/JPG/)

@@ -20,7 +20,7 @@ class Command(BaseCommand):
         output = Path(options['output']).resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         payload = [
-            {key: item[key] for key in ('code', 'module', 'label')}
+            {key: item[key] for key in ('code', 'module', 'label', 'description')}
             for item in sorted(ADMIN_PERMISSIONS, key=lambda item: item['code'])
         ]
         output.write_text(

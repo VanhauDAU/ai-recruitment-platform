@@ -69,9 +69,41 @@ class CompanyDocumentAdmin(admin.ModelAdmin):
     actions = ['approve_documents', 'reject_documents']
 
     def _review(self, request, queryset, status):
-        queryset.filter(status=CompanyDocument.Status.PENDING).update(
-            status=status, reviewed_by=request.user, reviewed_at=timezone.now()
-        )
+        for document in queryset.filter(
+            status=CompanyDocument.Status.PENDING,
+            is_current=True,
+        ).select_related('verification_case', 'update_request'):
+            reason = '' if status == CompanyDocument.Status.APPROVED else 'Từ chối qua admin'
+            if document.verification_case_id:
+                services.review_verification_document(
+                    document,
+                    actor=request.user,
+                    decision=status,
+                    reason=reason,
+                    lock_version=document.verification_case.lock_version,
+                )
+            elif document.update_request_id:
+                services.review_company_update_document(
+                    document,
+                    admin_user=request.user,
+                    decision=status,
+                    note=reason,
+                    lock_version=document.update_request.lock_version,
+                )
+            else:
+                document.status = status
+                document.reviewed_by = request.user
+                document.reviewed_at = timezone.now()
+                document.review_note = reason
+                document.save(
+                    update_fields=[
+                        'status',
+                        'reviewed_by',
+                        'reviewed_at',
+                        'review_note',
+                        'updated_at',
+                    ]
+                )
 
     @admin.action(description='Duyệt giấy tờ đã chọn')
     def approve_documents(self, request, queryset):

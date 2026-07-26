@@ -10,6 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import AuthEmailJob, User
@@ -24,6 +25,7 @@ from ..models import (
     CompanyDocument,
     CompanyImage,
     CompanyUpdateRequest,
+    EmployerVerificationCase,
     Industry,
     PhoneOtp,
     RecruiterProfile,
@@ -873,16 +875,30 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('reason', response.data)
 
-    def test_only_one_pending_request_per_company(self):
-        payload = {'changes': {'address': 'TP.HCM'}}
+    def test_repeated_submit_updates_the_same_pending_request(self):
+        payload = {'changes': {'website_url': 'https://example.com/abc'}}
         first = self.client.post(
             reverse('employer-company-update-requests'), payload, format='json'
         )
         self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
         second = self.client.post(
-            reverse('employer-company-update-requests'), payload, format='json'
+            reverse('employer-company-update-requests'),
+            {'changes': {'website_url': 'https://example.com/def'}},
+            format='json',
         )
-        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(second.status_code, status.HTTP_200_OK, second.data)
+        self.assertEqual(second.data['public_id'], first.data['public_id'])
+        self.assertEqual(second.data['revision'], 2)
+        self.assertEqual(
+            CompanyUpdateRequest.objects.filter(company=self.company).count(),
+            1,
+        )
+        self.assertEqual(
+            second.data['changes']['website_url'],
+            'https://example.com/def',
+        )
+        self.company.refresh_from_db()
+        self.assertNotEqual(self.company.website_url, 'https://example.com/def')
 
     def test_linked_member_can_create_update_request_without_mfa(self):
         member_user, member = make_employer('member-update@example.com')
@@ -925,12 +941,42 @@ class CompanyUpdateRequestTests(APITestCase):
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url='employers/documents/update-proof.pdf',
             file_name='update-proof.pdf',
+            status=CompanyDocument.Status.APPROVED,
         )
         services.apply_update_request(update_request, admin, approve=True)
 
         self.company.refresh_from_db()
         self.assertEqual(self.company.company_name, 'Acme Global')
         self.assertEqual(self.company.address, 'TP.HCM')
+
+    def test_sensitive_update_cannot_be_approved_before_its_document(self):
+        self.client.post(
+            reverse('employer-company-update-requests'),
+            {
+                'changes': {'company_name': 'Acme Global'},
+                'reason': 'Đổi tên theo giấy phép mới',
+                'proof_type': 'business_registration',
+            },
+            format='json',
+        )
+        update_request = CompanyUpdateRequest.objects.get(company=self.company)
+        CompanyDocument.objects.create(
+            company=self.company,
+            update_request=update_request,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/documents/update-proof.pdf',
+        )
+        admin = User.objects.create_superuser(
+            email='approval-admin@example.com',
+            password='Password@123',
+        )
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'giấy tờ chứng minh đã được duyệt',
+        ):
+            services.apply_update_request(update_request, admin, approve=True)
 
     def test_sensitive_proof_is_bound_to_update_request(self):
         create_response = self.client.post(
@@ -1219,6 +1265,87 @@ class CompanyImageUploadTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.company.images.count(), 10)
+
+    def test_edit_logo_is_staged_until_the_update_request_is_approved(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={'logo_pending': True},
+        )
+        upload = SimpleUploadedFile('new-logo.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'),
+            {
+                'file': upload,
+                'update_request': update_request.public_id,
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.logo_url, '')
+        update_request.refresh_from_db()
+        self.assertIn('logo_url', update_request.changes)
+        self.assertNotIn('logo_pending', update_request.changes)
+
+        admin = User.objects.create_superuser(
+            email='media-reviewer@example.com',
+            password='Password@123',
+        )
+        services.apply_update_request(
+            update_request,
+            admin,
+            approve=True,
+            lock_version=update_request.lock_version,
+        )
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.logo_url, update_request.changes['logo_url'])
+
+    def test_pending_gallery_upload_is_returned_for_the_next_edit(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={'gallery_pending': True},
+        )
+        upload = SimpleUploadedFile('office.png', PNG_BYTES, content_type='image/png')
+
+        upload_response = self.client.post(
+            reverse('employer-company-image-upload'),
+            {
+                'file': upload,
+                'update_request': update_request.public_id,
+            },
+            format='multipart',
+        )
+        list_response = self.client.get(reverse('employer-company-update-requests'))
+
+        self.assertEqual(upload_response.status_code, status.HTTP_200_OK, upload_response.data)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK, list_response.data)
+        pending = next(
+            item for item in list_response.data if item['public_id'] == update_request.public_id
+        )
+        self.assertEqual(len(pending['changes']['gallery_additions']), 1)
+        self.assertEqual(len(pending['media_previews']['gallery_additions']), 1)
+        self.assertIn('/media/employers/', pending['media_previews']['gallery_additions'][0])
+
+    def test_direct_media_edit_is_blocked_after_verification_was_submitted(self):
+        EmployerVerificationCase.objects.create(
+            recruiter=self.recruiter,
+            company=self.company,
+            status=EmployerVerificationCase.Status.PENDING,
+        )
+        upload = SimpleUploadedFile('bypass.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'), {'file': upload}, format='multipart'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('update_request', response.data)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.logo_url, '')
 
     def test_member_cannot_upload_logo(self):
         member, member_recruiter = make_employer('member@example.com')

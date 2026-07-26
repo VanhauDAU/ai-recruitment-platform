@@ -120,7 +120,20 @@ def _save_document(
     )
     verification_case = None
     existing = None
-    if update_request is None and doc_type in VERIFICATION_DOCUMENT_TYPES | {
+    if update_request is not None:
+        existing = (
+            CompanyDocument.objects.select_for_update()
+            .filter(
+                update_request=update_request,
+                doc_type=doc_type,
+                is_current=True,
+            )
+            .first()
+        )
+        if existing is not None:
+            existing.is_current = False
+            existing.save(update_fields=['is_current', 'updated_at'])
+    elif doc_type in VERIFICATION_DOCUMENT_TYPES | {
         CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
     }:
         verification_case = get_or_create_verification_case(recruiter)

@@ -8,6 +8,7 @@ from apps.candidates.models import CandidateConsent
 from apps.cvs.models import UserCv
 from apps.employers.models import RecruitmentCampaign, RecruitmentNeed
 from apps.jobs.models import Job
+from common.media_storage import media_url_from_value
 
 
 def _masked(value, *, visible, keep=4):
@@ -101,6 +102,12 @@ class AdminAccountProfileSerializer(serializers.Serializer):
         except ObjectDoesNotExist:
             return None
         company = recruiter.company
+        request = self.context.get('request')
+        industry_assignments = list(company.company_industries.all()) if company else []
+        primary_industry = next(
+            (item.industry.name for item in industry_assignments if item.is_primary),
+            None,
+        )
         return {
             'position_title': recruiter.position_title,
             'gender': recruiter.gender,
@@ -126,21 +133,31 @@ class AdminAccountProfileSerializer(serializers.Serializer):
             'company': (
                 {
                     'public_id': company.public_id,
+                    'slug': company.slug,
                     'business_type': company.business_type,
                     'legal_name': company.company_name,
                     'trade_name': company.trade_name,
+                    'trade_name_same_as_registered': company.trade_name_same_as_registered,
                     'tax_code': _masked(company.tax_code, visible=sensitive),
+                    'logo_url': media_url_from_value(company.logo_url, request=request),
+                    'has_no_logo': company.has_no_logo,
+                    'cover_image_url': media_url_from_value(
+                        company.cover_image_url,
+                        request=request,
+                    ),
                     'industries': [
                         {
                             'id': item.industry_id,
                             'name': item.industry.name,
                             'is_primary': item.is_primary,
                         }
-                        for item in company.company_industries.all()
+                        for item in industry_assignments
                     ],
+                    'primary_industry': primary_industry,
                     'company_size': company.company_size,
                     'address': _masked(company.address, visible=sensitive),
                     'website_url': company.website_url,
+                    'has_no_website': company.has_no_website,
                     'email': _masked(company.email, visible=sensitive),
                     'phone': _masked(company.phone, visible=sensitive),
                     'description': company.description,
@@ -148,9 +165,27 @@ class AdminAccountProfileSerializer(serializers.Serializer):
                     'markets': company.markets,
                     'target_customers': company.target_customers,
                     'founded_year': company.founded_year,
+                    'has_brand_page': company.has_brand_page,
                     'verification_status': company.verification_status,
                     'verified_at': company.verified_at,
                     'rejected_reason': company.rejected_reason,
+                    'created_by_public_id': company.created_by.public_id,
+                    'created_by_email': company.created_by.email,
+                    'created_at': company.created_at,
+                    'updated_at': company.updated_at,
+                    'images': [
+                        {
+                            'id': image.id,
+                            'image_url': media_url_from_value(
+                                image.image_url,
+                                request=request,
+                            ),
+                            'caption': image.caption,
+                            'sort_order': image.sort_order,
+                            'created_at': image.created_at,
+                        }
+                        for image in company.images.all()
+                    ],
                 }
                 if company
                 else None

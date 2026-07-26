@@ -114,6 +114,18 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem thông tin lead tư vấn doanh nghiệp.',
     },
     {
+        'code': 'company_update.review',
+        'module': 'company_update',
+        'label': 'Duyệt sửa thông tin công ty',
+        'description': 'Duyệt giấy tờ, từ chối hoặc áp dụng yêu cầu sửa thông tin công ty; cần cấp kèm quyền xem.',
+    },
+    {
+        'code': 'company_update.view',
+        'module': 'company_update',
+        'label': 'Xem yêu cầu sửa công ty',
+        'description': 'Xem hàng chờ và đối chiếu thông tin công ty hiện tại với nội dung đề xuất.',
+    },
+    {
         'code': 'cv_template.archive',
         'module': 'cv_template',
         'label': 'Lưu trữ mẫu CV',

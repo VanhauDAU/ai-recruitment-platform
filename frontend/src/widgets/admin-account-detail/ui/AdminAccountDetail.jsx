@@ -1,8 +1,6 @@
 import {
   ArrowLeftOutlined,
   EditOutlined,
-  EyeInvisibleOutlined,
-  EyeOutlined,
   KeyOutlined,
   MailOutlined,
   SafetyCertificateOutlined,
@@ -15,7 +13,6 @@ import {
   Button,
   Card,
   Descriptions,
-  Empty,
   Skeleton,
   Space,
   Table,
@@ -45,8 +42,10 @@ import { EmployerVerificationReview } from '@/features/review-employer-verificat
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import AccountProfilePanel from './AccountProfilePanel'
 import '../admin-account-detail.css'
 import { resolveActiveAdminAccountTab } from '../model/tab-state'
+import AdminAccountAccessPanel from './AdminAccountAccessPanel'
 
 const ROLE_META = {
   candidate: { label: 'Ứng viên', color: 'blue' },
@@ -61,165 +60,12 @@ const STATUS_META = {
   banned: { label: 'Đã cấm', color: 'red' },
 }
 
-const PROFILE_LABELS = {
-  date_of_birth: 'Ngày sinh',
-  gender: 'Giới tính',
-  address: 'Địa chỉ',
-  headline: 'Tiêu đề nghề nghiệp',
-  bio: 'Giới thiệu',
-  career_objective: 'Mục tiêu nghề nghiệp',
-  current_position: 'Vị trí hiện tại',
-  desired_position: 'Vị trí mong muốn',
-  experience_years: 'Số năm kinh nghiệm',
-  education_level: 'Trình độ học vấn',
-  expected_salary_min: 'Lương mong muốn tối thiểu',
-  expected_salary_max: 'Lương mong muốn tối đa',
-  preferred_location: 'Địa điểm mong muốn',
-  preferred_work_type: 'Hình thức làm việc',
-  job_search_status: 'Trạng thái tìm việc',
-  portfolio_url: 'Portfolio',
-  github_url: 'GitHub',
-  linkedin_url: 'LinkedIn',
-  position_title: 'Chức danh',
-  contact_phone: 'Số liên hệ',
-  verified_phone: 'Số điện thoại đã xác minh',
-  phone_verified_at: 'Xác minh điện thoại lúc',
-  company_role: 'Vai trò tại công ty',
-  registration_completed_at: 'Hoàn tất đăng ký lúc',
-  terms_accepted_at: 'Chấp nhận điều khoản lúc',
-  terms_policy_version: 'Phiên bản điều khoản',
-  marketing_opt_in: 'Đồng ý nhận thông tin',
-  marketing_decided_at: 'Quyết định marketing lúc',
-  dpa_accepted_at: 'Chấp nhận DPA lúc',
-  onboarding_completed_at: 'Hoàn tất onboarding lúc',
-}
-
-const COMPANY_LABELS = {
-  business_type: 'Loại hình doanh nghiệp',
-  legal_name: 'Tên pháp lý',
-  trade_name: 'Tên thương mại',
-  tax_code: 'Mã số thuế',
-  company_size: 'Quy mô',
-  address: 'Địa chỉ',
-  website_url: 'Website',
-  email: 'Email doanh nghiệp',
-  phone: 'Điện thoại doanh nghiệp',
-  description: 'Giới thiệu',
-  employee_benefits: 'Phúc lợi',
-  markets: 'Thị trường',
-  target_customers: 'Khách hàng mục tiêu',
-  founded_year: 'Năm thành lập',
-  verification_status: 'Trạng thái pháp nhân',
-  verified_at: 'Xác thực pháp nhân lúc',
-  rejected_reason: 'Lý do từ chối',
-}
-
 function StatusTag({ value, role = false }) {
   const meta = (role ? ROLE_META : STATUS_META)[value] || {
     label: value || 'Chưa xác định',
     color: 'default',
   }
   return <Tag color={meta.color}>{meta.label}</Tag>
-}
-
-function displayValue(value) {
-  if (value === null || value === undefined || value === '') return 'Chưa cập nhật'
-  if (typeof value === 'boolean') return value ? 'Có' : 'Không'
-  if (Array.isArray(value)) {
-    return value.map((item) => item?.name || item).filter(Boolean).join(', ') || 'Chưa cập nhật'
-  }
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-    return formatAdminDate(value)
-  }
-  return String(value)
-}
-
-function FieldDescriptions({ data, labels }) {
-  const entries = Object.entries(data || {}).filter(([key, value]) => (
-    labels[key] && typeof value !== 'object'
-  ))
-  if (!entries.length) return <Empty description="Chưa có dữ liệu" />
-  return (
-    <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
-      {entries.map(([key, value]) => (
-        <Descriptions.Item key={key} label={labels[key]}>
-          {displayValue(value)}
-        </Descriptions.Item>
-      ))}
-    </Descriptions>
-  )
-}
-
-function ProfilePanel({ publicId, account, canReveal, onEdit }) {
-  const [reveal, setReveal] = useState(false)
-  const query = useQuery({
-    queryKey: adminAccountKeys.profile(publicId, reveal),
-    queryFn: ({ signal }) => getAdminAccountProfile(publicId, { reveal, signal }),
-  })
-  if (query.isLoading) return <Skeleton active paragraph={{ rows: 10 }} />
-  if (query.isError) {
-    return <Alert showIcon type="error" title="Không thể tải hồ sơ" description={getApiErrorMessage(query.error)} />
-  }
-  const profile = query.data
-  const roleProfile = profile?.[account.role]
-  return (
-    <div className="space-y-5">
-      <div className="account-detail-toolbar">
-        <Typography.Text type="secondary">
-          Dữ liệu nhạy cảm được che mặc định và mọi lần xem đều được ghi audit.
-        </Typography.Text>
-        <Space wrap>
-          {canReveal && (
-            <Button
-              icon={reveal ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-              onClick={() => setReveal((value) => !value)}
-            >
-              {reveal ? 'Che dữ liệu' : 'Hiện dữ liệu nhạy cảm'}
-            </Button>
-          )}
-          {onEdit && <Button icon={<EditOutlined />} onClick={() => onEdit(profile)}>Sửa hồ sơ</Button>}
-        </Space>
-      </div>
-      <Card title={account.role === 'employer' ? 'Hồ sơ nhà tuyển dụng' : 'Hồ sơ cá nhân'}>
-        <FieldDescriptions data={roleProfile} labels={PROFILE_LABELS} />
-      </Card>
-      {account.role === 'candidate' && roleProfile?.job_preference && (
-        <Card title="Nhu cầu tìm việc có cấu trúc">
-          <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
-            <Descriptions.Item label="Vị trí khác">
-              {displayValue(roleProfile.job_preference.desired_position_other)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Lương mong muốn">
-              {roleProfile.job_preference.desired_salary_vnd
-                ? `${Number(roleProfile.job_preference.desired_salary_vnd).toLocaleString('vi-VN')} ₫`
-                : 'Chưa cập nhật'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Mức kinh nghiệm">
-              {displayValue(roleProfile.job_preference.experience_level)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Sẵn sàng chuyển nơi ở">
-              {displayValue(roleProfile.job_preference.willing_to_relocate)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Chuyên môn mong muốn">
-              {displayValue(roleProfile.job_preference.desired_specializations)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tỉnh/thành mong muốn">
-              {displayValue(roleProfile.job_preference.preferred_provinces)}
-            </Descriptions.Item>
-          </Descriptions>
-        </Card>
-      )}
-      {account.role === 'employer' && roleProfile?.company && (
-        <Card title="Thông tin công ty">
-          <FieldDescriptions data={roleProfile.company} labels={COMPANY_LABELS} />
-          <div className="mt-4">
-            <Typography.Text strong>Ngành nghề: </Typography.Text>
-            {displayValue(roleProfile.company.industries)}
-          </div>
-        </Card>
-      )}
-    </div>
-  )
 }
 
 function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
@@ -251,7 +97,7 @@ function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
   )
 }
 
-function SecurityPanel({ publicId, account, canManage }) {
+function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
   const sessions = useQuery({
     queryKey: adminAccountKeys.sessions(publicId),
     queryFn: ({ signal }) => getAdminAccountSessions(publicId, { signal }),
@@ -306,9 +152,12 @@ function SecurityPanel({ publicId, account, canManage }) {
                 Gửi lại xác minh email
               </Button>
             )}
+            {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
+                thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
+                bị cấm sẽ không còn đường mở lại từ giao diện. */}
             <AdminAccountSecurityActions
               account={account}
-              allowStatus={account.role !== 'admin'}
+              allowStatus={account.role !== 'admin' || isSuperuser}
             />
           </div>
         )}
@@ -568,20 +417,36 @@ export default function AdminAccountDetail({ publicId }) {
   const canEdit = isSuperuser || has('account.profile.manage')
   const canReveal = isSuperuser || has('account.sensitive.view')
   const canSecurity = isSuperuser || has('account.security.manage') || has('account.admin.manage')
-  const canReview = isSuperuser || has('employer_verification.review')
+  const canViewVerification = isSuperuser || has('employer_verification.view')
+  const canReviewVerification = isSuperuser || has('employer_verification.review')
+  const canViewCompanyUpdates = isSuperuser || has('company_update.view')
+  const canReviewCompanyUpdates = isSuperuser || has('company_update.review')
   const canViewSensitiveDocument = canReveal
   const activeTab = searchParams.get('tab') || 'overview'
 
   const profilePanel = account && (
-    <ProfilePanel
+    <AccountProfilePanel
       publicId={publicId}
       account={account}
       canReveal={canReveal}
       onEdit={canEdit ? setEditState : null}
     />
   )
+  const companyPanel = account && (
+    <AccountProfilePanel
+      publicId={publicId}
+      account={account}
+      canReveal={canReveal}
+      section="company"
+    />
+  )
   const security = account && (
-    <SecurityPanel publicId={publicId} account={account} canManage={canSecurity} />
+    <SecurityPanel
+      publicId={publicId}
+      account={account}
+      canManage={canSecurity}
+      isSuperuser={isSuperuser}
+    />
   )
   const activity = <ActivityPanel publicId={publicId} />
   const tabs = (() => {
@@ -593,18 +458,22 @@ export default function AdminAccountDetail({ publicId }) {
       return [
         { key: 'overview', label: 'Tổng quan' },
         { key: 'profile', label: 'Hồ sơ NTD', children: profilePanel },
-        { key: 'company', label: 'Công ty', children: profilePanel },
-        {
+        { key: 'company', label: 'Công ty', children: companyPanel },
+        ...((canViewVerification || canReviewVerification || canViewCompanyUpdates || canReviewCompanyUpdates) ? [{
           key: 'verification',
           label: 'Xác thực',
           children: (
             <EmployerVerificationReview
               casePublicId={account.context?.verification?.public_id}
-              canReview={canReview}
+              companyPublicId={account.context?.company?.public_id}
+              canViewVerification={canViewVerification}
+              canReviewVerification={canReviewVerification}
+              canViewCompanyUpdates={canViewCompanyUpdates}
+              canReviewCompanyUpdates={canReviewCompanyUpdates}
               canViewSensitive={canViewSensitiveDocument}
             />
           ),
-        },
+        }] : []),
         {
           key: 'recruitment',
           label: 'Hoạt động tuyển dụng',
@@ -616,7 +485,11 @@ export default function AdminAccountDetail({ publicId }) {
     }
     return [
       { key: 'overview', label: 'Tổng quan' },
-      { key: 'access', label: 'Quyền truy cập', children: profilePanel },
+      {
+        key: 'access',
+        label: 'Quyền truy cập',
+        children: <AdminAccountAccessPanel account={account} />,
+      },
       { key: 'security', label: 'Bảo mật', children: security },
       { key: 'activity', label: 'Hoạt động', children: activity },
     ]

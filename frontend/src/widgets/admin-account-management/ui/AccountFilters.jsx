@@ -1,186 +1,157 @@
+import { FilterOutlined, SearchOutlined, SortAscendingOutlined } from '@ant-design/icons'
+import { Badge, Button, Drawer, Grid, Input, Popover, Select, Tag, Tooltip } from 'antd'
+import { useState } from 'react'
 import {
-  CloseCircleOutlined,
-  FilterOutlined,
-  SearchOutlined,
-} from '@ant-design/icons'
-import { Badge, Button, DatePicker, Input, Popover, Select, Space, Tooltip } from 'antd'
-
-const { RangePicker } = DatePicker
-
-const booleanOptions = [
-  { value: '', label: 'Tất cả' },
-  { value: 'true', label: 'Có' },
-  { value: 'false', label: 'Không' },
-]
+  ADVANCED_KEYS,
+  BOOLEAN_OPTIONS,
+  emptyValueOf,
+  isFilled,
+  labelOf,
+  ORDERING_OPTIONS,
+  rangeText,
+  STATUS_OPTIONS,
+} from '../model/account-filter-options'
+import AccountAdvancedFilters from './AccountAdvancedFilters'
 
 export default function AccountFilters({
   filters,
   departments,
   roles,
+  total,
+  loading,
   onChange,
   onClear,
 }) {
-  const advancedCount = [
-    filters.status,
-    filters.email_verified,
-    filters.mfa,
-    filters.has_active_session,
-    filters.department,
-    filters.admin_role,
-    filters.company,
-    filters.created_range?.length,
-    filters.last_login_range?.length,
-  ].filter(Boolean).length
-
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  // Popover 640px không lọt viewport điện thoại nên dưới `md` dùng drawer đáy.
+  const isCompact = !Grid.useBreakpoint().md
   const patch = (name, value) => onChange({ ...filters, [name]: value })
-  const content = (
-    <div className="account-filter-popover">
-      <div className="account-filter-grid">
-        <label>
-          <span>Trạng thái</span>
-          <Select
-            value={filters.status}
-            onChange={(value) => patch('status', value)}
-            options={[
-              { value: '', label: 'Tất cả trạng thái' },
-              { value: 'active', label: 'Đang hoạt động' },
-              { value: 'pending', label: 'Chờ kích hoạt' },
-              { value: 'inactive', label: 'Tạm khóa' },
-              { value: 'banned', label: 'Đã cấm' },
-            ]}
-          />
-        </label>
-        <label>
-          <span>Xác minh email</span>
-          <Select
-            value={filters.email_verified}
-            onChange={(value) => patch('email_verified', value)}
-            options={booleanOptions}
-          />
-        </label>
-        <label>
-          <span>Đã bật MFA</span>
-          <Select
-            value={filters.mfa}
-            onChange={(value) => patch('mfa', value)}
-            options={booleanOptions}
-          />
-        </label>
-        <label>
-          <span>Có phiên hoạt động</span>
-          <Select
-            value={filters.has_active_session}
-            onChange={(value) => patch('has_active_session', value)}
-            options={booleanOptions}
-          />
-        </label>
-        <label>
-          <span>Phòng ban Admin</span>
-          <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Chọn phòng ban"
-            value={filters.department || undefined}
-            onChange={(value) => patch('department', value || '')}
-            options={departments.map((item) => ({
-              value: item.public_id,
-              label: item.name,
-            }))}
-          />
-        </label>
-        <label>
-          <span>Chức danh Admin</span>
-          <Select
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Chọn chức danh"
-            value={filters.admin_role || undefined}
-            onChange={(value) => patch('admin_role', value || '')}
-            options={roles.map((item) => ({
-              value: item.public_id,
-              label: `${item.department.name} · ${item.name}`,
-            }))}
-          />
-        </label>
-        <label>
-          <span>Mã công ty</span>
-          <Input
-            allowClear
-            placeholder="Ví dụ: cmp_..."
-            value={filters.company}
-            onChange={(event) => patch('company', event.target.value)}
-          />
-        </label>
-        <label>
-          <span>Sắp xếp</span>
-          <Select
-            value={filters.ordering}
-            onChange={(value) => patch('ordering', value)}
-            options={[
-              { value: '-date_joined', label: 'Mới tạo gần đây' },
-              { value: 'date_joined', label: 'Tạo lâu nhất' },
-              { value: '-last_login', label: 'Đăng nhập gần nhất' },
-              { value: 'full_name', label: 'Tên A–Z' },
-              { value: 'email', label: 'Email A–Z' },
-            ]}
-          />
-        </label>
-        <label className="account-filter-grid__wide">
-          <span>Ngày tạo tài khoản</span>
-          <RangePicker
-            value={filters.created_range || null}
-            onChange={(value) => patch('created_range', value || [])}
-            format="DD/MM/YYYY"
-          />
-        </label>
-        <label className="account-filter-grid__wide">
-          <span>Lần đăng nhập gần nhất</span>
-          <RangePicker
-            value={filters.last_login_range || null}
-            onChange={(value) => patch('last_login_range', value || [])}
-            format="DD/MM/YYYY"
-          />
-        </label>
-      </div>
-      <div className="account-filter-popover__footer">
-        <Button icon={<CloseCircleOutlined />} onClick={onClear}>Xóa bộ lọc</Button>
-      </div>
-    </div>
+
+  const advancedCount = ADVANCED_KEYS.filter((key) => isFilled(filters[key])).length
+  const chips = [
+    ['q', 'Từ khóa', filters.q.trim()],
+    ['status', 'Trạng thái', labelOf(STATUS_OPTIONS, filters.status)],
+    ['email_verified', 'Xác minh email', labelOf(BOOLEAN_OPTIONS, filters.email_verified)],
+    ['mfa', 'Bật MFA', labelOf(BOOLEAN_OPTIONS, filters.mfa)],
+    ['has_active_session', 'Phiên hoạt động', labelOf(BOOLEAN_OPTIONS, filters.has_active_session)],
+    ['department', 'Phòng ban', departments.find((item) => item.public_id === filters.department)?.name],
+    ['admin_role', 'Chức danh', roles.find((item) => item.public_id === filters.admin_role)?.name],
+    ['company', 'Mã công ty', filters.company.trim()],
+    ['created_range', 'Ngày tạo', filters.created_range?.length === 2 && rangeText(filters.created_range)],
+    ['last_login_range', 'Đăng nhập', filters.last_login_range?.length === 2 && rangeText(filters.last_login_range)],
+  ].filter(([, , value]) => Boolean(value))
+
+  const advanced = (
+    <AccountAdvancedFilters
+      filters={filters}
+      departments={departments}
+      roles={roles}
+      onChange={onChange}
+      onDone={() => setAdvancedOpen(false)}
+    />
   )
 
   return (
-    <div className="account-filter-bar">
-      <Input
-        allowClear
-        className="account-filter-bar__search"
-        prefix={<SearchOutlined className="text-slate-400" />}
-        placeholder="Tìm theo tên, email hoặc mã tài khoản"
-        value={filters.q}
-        onChange={(event) => patch('q', event.target.value)}
-      />
-      <Space>
-        {advancedCount > 0 && (
-          <Tooltip title="Xóa toàn bộ điều kiện lọc">
+    <div className="account-filters">
+      <div className="account-filters__controls">
+        <Input
+          allowClear
+          className="account-filters__search"
+          size="large"
+          prefix={<SearchOutlined className="text-slate-400" />}
+          placeholder="Tìm theo tên, email hoặc mã tài khoản"
+          value={filters.q}
+          onChange={(event) => patch('q', event.target.value)}
+        />
+        <Select
+          className="account-filters__status"
+          size="large"
+          value={filters.status}
+          onChange={(value) => patch('status', value)}
+          options={STATUS_OPTIONS}
+        />
+        <Select
+          className="account-filters__ordering"
+          size="large"
+          value={filters.ordering}
+          onChange={(value) => patch('ordering', value)}
+          options={ORDERING_OPTIONS}
+          prefix={<SortAscendingOutlined className="text-slate-400" />}
+        />
+        {/* Badge phải bọc ngoài Popover: antd v6 không chuyển tiếp handler của
+            trigger qua Badge nên popover sẽ không mở nếu lồng ngược lại. */}
+        <Badge count={advancedCount} size="small" offset={[-8, 8]}>
+          {isCompact ? (
             <Button
-              aria-label="Xóa bộ lọc"
-              icon={<CloseCircleOutlined />}
-              onClick={onClear}
-            />
-          </Tooltip>
-        )}
-        <Popover
-          trigger="click"
-          placement="bottomRight"
-          content={content}
+              size="large"
+              icon={<FilterOutlined />}
+              className="account-filters__advanced"
+              onClick={() => setAdvancedOpen(true)}
+            >
+              Bộ lọc
+            </Button>
+          ) : (
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              open={advancedOpen}
+              onOpenChange={setAdvancedOpen}
+              content={advanced}
+              title="Bộ lọc nâng cao"
+            >
+              <Button size="large" icon={<FilterOutlined />} className="account-filters__advanced">
+                Bộ lọc
+              </Button>
+            </Popover>
+          )}
+        </Badge>
+      </div>
+
+      {isCompact && (
+        <Drawer
           title="Bộ lọc nâng cao"
+          placement="bottom"
+          size="large"
+          open={advancedOpen}
+          onClose={() => setAdvancedOpen(false)}
+          classNames={{ wrapper: 'account-filter-drawer' }}
         >
-          <Badge count={advancedCount} size="small" offset={[-2, 3]}>
-            <Button icon={<FilterOutlined />}>Bộ lọc</Button>
-          </Badge>
-        </Popover>
-      </Space>
+          {advanced}
+        </Drawer>
+      )}
+
+      <div className="account-filters__meta">
+        <span className="account-filters__count">
+          {loading ? 'Đang tải danh sách…' : (
+            <>
+              <strong>{Number(total || 0).toLocaleString('vi-VN')}</strong>
+              {' tài khoản'}
+              {chips.length > 0 ? ' khớp bộ lọc' : ' trong phạm vi được xem'}
+            </>
+          )}
+        </span>
+        {chips.length > 0 && (
+          <div className="account-filters__chips">
+            {chips.map(([key, label, value]) => (
+              <Tag
+                key={key}
+                closable
+                className="account-filters__chip"
+                onClose={() => patch(key, emptyValueOf(key))}
+              >
+                <span>{label}:</span>
+                {' '}
+                {value}
+              </Tag>
+            ))}
+            <Tooltip title="Xóa toàn bộ điều kiện lọc">
+              <Button type="link" size="small" onClick={onClear}>
+                Xóa tất cả
+              </Button>
+            </Tooltip>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

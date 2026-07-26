@@ -317,6 +317,17 @@ SETTINGS = [
         {},
     ),
     (
+        'employer_badge_min_account_months',
+        'Tuổi tài khoản tối thiểu để tin có dấu tick (tháng)',
+        G.EMPLOYER,
+        T.NUMBER,
+        6,
+        False,
+        'Một trong năm điều kiện gắn dấu tick "đã xác thực" lên tin tuyển dụng. '
+        'Đặt 0 để bỏ qua điều kiện tuổi tài khoản khi hệ thống mới vận hành.',
+        {},
+    ),
+    (
         'employer_allow_logo_upload',
         'Cho phép upload logo công ty',
         G.EMPLOYER,

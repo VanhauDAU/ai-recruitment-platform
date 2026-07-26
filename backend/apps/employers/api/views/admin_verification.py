@@ -3,6 +3,7 @@ from io import BytesIO
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit
 
+from django.db.models import Q
 from django.http import FileResponse, Http404
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -19,16 +20,20 @@ from apps.accounts.services import (
 from common.pagination import StandardPagination
 from common.r2_storage import private_media_storage
 
-from ...models import EmployerVerificationEvent
+from ...models import CompanyUpdateRequest, EmployerVerificationEvent, Industry
 from ...selectors import admin_verification_cases_queryset, admin_verification_summary
 from ...services import (
+    apply_update_request,
     confirm_verification_decision,
     render_office_document_preview,
+    review_company_update_document,
     review_verification_document,
     start_verification_review,
     verification_decision_impact,
 )
 from ..serializers.admin_verification import (
+    AdminCompanyUpdateRequestSerializer,
+    AdminCompanyUpdateReviewSerializer,
     AdminVerificationCaseDetailSerializer,
     AdminVerificationCaseListSerializer,
     AdminVerificationDecisionSerializer,
@@ -269,6 +274,148 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
                     filename=f'{document.public_id}.pdf',
                     as_attachment=False,
                 )
+        try:
+            stream = private_media_storage().open(document.file_url, 'rb')
+        except (FileNotFoundError, OSError) as error:
+            raise Http404 from error
+        response = FileResponse(
+            stream,
+            content_type=content_type,
+            filename=document.file_name or f'{document.public_id}.bin',
+            as_attachment=not _supports_inline_preview(content_type),
+        )
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin review workflow for staged company-profile changes."""
+
+    permission_classes = [HasAdminPermission]
+    pagination_class = StandardPagination
+    lookup_field = 'public_id'
+    serializer_class = AdminCompanyUpdateRequestSerializer
+    required_admin_permissions = {
+        'list': ['company_update.view'],
+        'retrieve': ['company_update.view'],
+        'review_document': ['company_update.review'],
+        'review': ['company_update.review'],
+        'document_content': [
+            'company_update.view',
+            'account.sensitive.view',
+        ],
+    }
+
+    def get_queryset(self):
+        queryset = CompanyUpdateRequest.objects.select_related(
+            'company',
+            'requested_by',
+            'reviewed_by',
+        ).prefetch_related(
+            'documents__uploaded_by',
+            'documents__reviewed_by',
+            'company__company_industries__industry',
+        )
+        params = self.request.query_params
+        if params.get('status'):
+            queryset = queryset.filter(status=params['status'])
+        if params.get('company'):
+            queryset = queryset.filter(company__public_id=params['company'])
+        query = (params.get('q') or '').strip()
+        if query:
+            queryset = queryset.filter(
+                Q(public_id__icontains=query)
+                | Q(company__company_name__icontains=query)
+                | Q(company__tax_code__icontains=query)
+                | Q(requested_by__email__icontains=query)
+            )
+        return queryset.order_by('-updated_at', '-id')
+
+    def get_serializer_context(self):
+        return {
+            **super().get_serializer_context(),
+            'can_view_sensitive': _can_view_sensitive(self.request.user),
+            'industry_labels': dict(Industry.objects.values_list('id', 'name')),
+        }
+
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path=r'documents/(?P<document_public_id>[^/.]+)/review',
+    )
+    def review_document(self, request, public_id=None, document_public_id=None):
+        update_request = self.get_object()
+        document = update_request.documents.filter(
+            public_id=document_public_id,
+            is_current=True,
+        ).first()
+        if document is None:
+            raise Http404
+        serializer = AdminVerificationDocumentReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        try:
+            _, update_request = review_company_update_document(
+                document,
+                admin_user=request.user,
+                decision=values['decision'],
+                note=values.get('reason', ''),
+                lock_version=values['lock_version'],
+            )
+        except StaleImpactToken as error:
+            raise AdminResourceChanged() from error
+        current = self.get_queryset().get(pk=update_request.pk)
+        return Response(self.get_serializer(current).data)
+
+    @action(detail=True, methods=['post'])
+    def review(self, request, public_id=None):
+        serializer = AdminCompanyUpdateReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        try:
+            update_request = apply_update_request(
+                self.get_object(),
+                request.user,
+                approve=values['decision'] == CompanyUpdateRequest.Status.APPROVED,
+                note=values.get('note', ''),
+                lock_version=values['lock_version'],
+            )
+        except StaleImpactToken as error:
+            raise AdminResourceChanged() from error
+        current = self.get_queryset().get(pk=update_request.pk)
+        return Response(self.get_serializer(current).data)
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path=r'documents/(?P<document_public_id>[^/.]+)/content',
+    )
+    def document_content(self, request, public_id=None, document_public_id=None):
+        document = (
+            self.get_object()
+            .documents.filter(
+                public_id=document_public_id,
+            )
+            .first()
+        )
+        if document is None or document.file_url.startswith(('http://', 'https://')):
+            raise Http404
+        record_admin_action(
+            actor=request.user,
+            action='view_company_update_document',
+            target_type='company_update_document',
+            target_public_id=document.public_id,
+            payload={'update_request_public_id': document.update_request.public_id},
+        )
+        content_type = _document_content_type(document)
+        preview = render_office_document_preview(document.file_url, content_type)
+        if preview is not None:
+            return FileResponse(
+                BytesIO(preview),
+                content_type='application/pdf',
+                filename=f'{document.public_id}.pdf',
+                as_attachment=False,
+            )
         try:
             stream = private_media_storage().open(document.file_url, 'rb')
         except (FileNotFoundError, OSError) as error:

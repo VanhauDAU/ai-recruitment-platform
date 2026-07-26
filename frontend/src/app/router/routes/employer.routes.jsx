@@ -2,6 +2,7 @@ import { Navigate, Route } from 'react-router-dom'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'
+import EmployerVerificationGuard from '../guards/EmployerVerificationGuard'
 import GuestGuard from '../guards/GuestGuard'
 import RoleGuard from '../guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
@@ -107,11 +108,13 @@ export function employerRoutes() {
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
             <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
             <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />
-            <Route path={employerAppPath('/jobs')} element={<EmployerJobListPage />} />
-            <Route path={employerAppPath('/jobs/new')} element={<EmployerJobFormPage />} />
-            <Route path={employerAppPath('/jobs/:publicId/edit')} element={<EmployerJobFormPage />} />
-            <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
-            <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
+            <Route element={<EmployerVerificationGuard />}>
+              <Route path={employerAppPath('/jobs')} element={<EmployerJobListPage />} />
+              <Route path={employerAppPath('/jobs/new')} element={<EmployerJobFormPage />} />
+              <Route path={employerAppPath('/jobs/:publicId/edit')} element={<EmployerJobFormPage />} />
+              <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
+              <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
+            </Route>
           </Route>
         </Route>
       </Route>

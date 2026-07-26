@@ -121,6 +121,10 @@ export default function VerificationQueuePanel() {
         />
       </div>
 
+      <Typography.Title level={5} className="!mb-2 !mt-0">
+        Hồ sơ xác thực nhà tuyển dụng
+      </Typography.Title>
+
       {query.isError && (
         <Alert
           showIcon

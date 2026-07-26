@@ -9,9 +9,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
+from common.media_storage import delete_local_media_url
 from common.r2_storage import private_media_storage
 
-from ...models import CompanyDocument, CompanyUpdateRequest
+from ...models import Company, CompanyDocument, CompanyUpdateRequest
 from ...selectors import has_explicit_company_link
 from ...services import (
     get_or_create_recruiter,
@@ -154,15 +155,32 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 raise ValidationError(
                     {'website_url': 'Nhập URL Website hợp lệ (http hoặc https).'}
                 ) from error
-            document = CompanyDocument.objects.create(
-                company=_require_company(request.user).company,
-                recruiter=recruiter,
-                uploaded_by=request.user,
-                update_request=update_request,
-                doc_type=doc_type,
-                file_url=website_url,
-                file_name='Website chứng minh tên thương mại',
-            )
+            with transaction.atomic():
+                existing = None
+                if update_request is not None:
+                    existing = (
+                        CompanyDocument.objects.select_for_update()
+                        .filter(
+                            update_request=update_request,
+                            doc_type=doc_type,
+                            is_current=True,
+                        )
+                        .first()
+                    )
+                    if existing is not None:
+                        existing.is_current = False
+                        existing.save(update_fields=['is_current', 'updated_at'])
+                document = CompanyDocument.objects.create(
+                    company=_require_company(request.user).company,
+                    recruiter=recruiter,
+                    uploaded_by=request.user,
+                    update_request=update_request,
+                    supersedes=existing,
+                    version=(existing.version + 1 if existing else 1),
+                    doc_type=doc_type,
+                    file_url=website_url,
+                    file_name='Website chứng minh tên thương mại',
+                )
         elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
             document = _save_document(request, None, doc_type, upload, recruiter=recruiter)
         else:
@@ -210,7 +228,11 @@ class CompanyDocumentContentView(generics.GenericAPIView):
 
 
 class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
-    """Yêu cầu cập nhật công ty của tôi (mọi thành viên đã liên kết tạo được)."""
+    """Yêu cầu cập nhật công ty.
+
+    POST đầu tiên tạo yêu cầu; các POST tiếp theo trong lúc chờ duyệt cập nhật
+    chính record đó để người dùng luôn tiếp tục từ bản nháp gần nhất.
+    """
 
     serializer_class = CompanyUpdateRequestSerializer
     permission_classes = [IsEmployer]
@@ -226,10 +248,70 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
         context['company'] = _require_company(self.request.user).company
         return context
 
-    def perform_create(self, serializer):
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
         recruiter = _require_company(self.request.user)
-        if CompanyUpdateRequest.objects.filter(
-            company=recruiter.company, status=CompanyUpdateRequest.Status.PENDING
-        ).exists():
-            raise ValidationError({'detail': 'Công ty đang có một yêu cầu cập nhật chờ duyệt.'})
-        serializer.save(company=recruiter.company, requested_by=self.request.user)
+        company = Company.objects.select_for_update().get(pk=recruiter.company_id)
+        pending = (
+            CompanyUpdateRequest.objects.select_for_update()
+            .filter(
+                company=company,
+                status=CompanyUpdateRequest.Status.PENDING,
+            )
+            .first()
+        )
+        serializer = self.get_serializer(pending, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        previous = None
+        staged_paths_to_delete = []
+        if pending is not None:
+            previous = {
+                'changes': pending.changes,
+                'reason': pending.reason,
+                'proof_type': pending.proof_type,
+            }
+            pending.revision += 1
+            pending.lock_version += 1
+            next_changes = serializer.validated_data['changes']
+            if 'logo_url' in pending.changes and not next_changes.get('has_no_logo'):
+                next_changes['logo_url'] = pending.changes['logo_url']
+            elif 'logo_url' in pending.changes:
+                staged_paths_to_delete.append(pending.changes['logo_url'])
+            if 'cover_image_url' in pending.changes:
+                next_changes['cover_image_url'] = pending.changes['cover_image_url']
+            if 'gallery_additions' in pending.changes:
+                next_changes['gallery_additions'] = pending.changes['gallery_additions']
+        update_request = serializer.save(
+            company=company,
+            requested_by=self.request.user,
+            revision=pending.revision if pending is not None else 1,
+            lock_version=pending.lock_version if pending is not None else 0,
+            reviewed_by=None,
+            reviewed_at=None,
+            review_note='',
+        )
+        current = {
+            'changes': update_request.changes,
+            'reason': update_request.reason,
+            'proof_type': update_request.proof_type,
+        }
+        if previous is not None and previous != current:
+            update_request.documents.filter(is_current=True).update(
+                status=CompanyDocument.Status.PENDING,
+                reviewed_by=None,
+                reviewed_at=None,
+                review_note='',
+            )
+        if staged_paths_to_delete:
+
+            def delete_discarded_media():
+                for path in staged_paths_to_delete:
+                    delete_local_media_url(path)
+
+            transaction.on_commit(delete_discarded_media)
+        update_request.refresh_from_db()
+        response = self.get_serializer(update_request)
+        return Response(
+            response.data,
+            status=status.HTTP_200_OK if pending is not None else status.HTTP_201_CREATED,
+        )

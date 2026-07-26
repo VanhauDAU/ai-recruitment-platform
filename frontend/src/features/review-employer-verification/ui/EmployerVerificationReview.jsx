@@ -1,6 +1,4 @@
 import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   DownloadOutlined,
   EyeOutlined,
   FileProtectOutlined,
@@ -34,7 +32,6 @@ import {
   reviewAdminEmployerDocument,
   startAdminEmployerVerificationReview,
   verificationStatusMeta,
-  VERIFICATION_CHECK_LABELS,
 } from '@/entities/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
@@ -43,6 +40,8 @@ import {
   resolveDocumentMimeType,
 } from '../model/document-preview'
 import { buildVerificationTimeline } from '../model/event-timeline'
+import CompanyUpdateReviewPanel from './CompanyUpdateReviewPanel'
+import VerificationJourney from './VerificationJourney'
 import './employer-verification-review.css'
 
 const DECISIONS = [
@@ -62,27 +61,6 @@ function formatDate(value) {
 function StatusTag({ status, document = false }) {
   const meta = document ? documentStatusMeta(status) : verificationStatusMeta(status)
   return <Tag color={meta.color}>{meta.label}</Tag>
-}
-
-function Checklist({ checks = {} }) {
-  return (
-    <ol className="verification-checklist" aria-label="Tiến độ xác thực">
-      {Object.entries(VERIFICATION_CHECK_LABELS).map(([key, label], index) => {
-        const complete = Boolean(checks[key])
-        return (
-          <li key={key} className={complete ? 'is-complete' : 'is-pending'}>
-            <span aria-hidden="true">
-              {complete ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
-            </span>
-            <div>
-              <strong>{`${index + 1}. ${label}`}</strong>
-              <small>{complete ? 'Đã hoàn tất' : 'Chưa hoàn tất'}</small>
-            </div>
-          </li>
-        )
-      })}
-    </ol>
-  )
 }
 
 function DocumentPreview({ verificationCase, document, canViewSensitive }) {
@@ -373,7 +351,11 @@ function DecisionModal({ open, title, lockVersion, onClose, onSubmit, loading })
 
 export default function EmployerVerificationReview({
   casePublicId,
-  canReview,
+  companyPublicId,
+  canViewVerification,
+  canReviewVerification,
+  canViewCompanyUpdates,
+  canReviewCompanyUpdates,
   canViewSensitive,
 }) {
   const queryClient = useQueryClient()
@@ -382,7 +364,7 @@ export default function EmployerVerificationReview({
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.detail(casePublicId),
     queryFn: ({ signal }) => getAdminEmployerVerification(casePublicId, { signal }),
-    enabled: Boolean(casePublicId),
+    enabled: Boolean(casePublicId && canViewVerification),
   })
   const verificationCase = query.data
   const currentDocuments = useMemo(
@@ -437,12 +419,40 @@ export default function EmployerVerificationReview({
       await refresh()
     },
   })
+  if (!canViewVerification) {
+    return (
+      <div className="verification-review-layout">
+        <Alert
+          showIcon
+          type="info"
+          title="Phạm vi xử lý yêu cầu sửa công ty"
+          description="Tài khoản chỉ được xem hoặc duyệt yêu cầu cập nhật công ty, không có quyền xem hồ sơ xác thực nhà tuyển dụng."
+        />
+        {canViewCompanyUpdates && (
+          <CompanyUpdateReviewPanel
+            companyPublicId={companyPublicId}
+            canReview={canReviewCompanyUpdates}
+            canViewSensitive={canViewSensitive}
+          />
+        )}
+      </div>
+    )
+  }
   if (!casePublicId) {
     return (
-      <Empty
-        description="Tài khoản này chưa có hồ sơ xác thực"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-      />
+      <div className="verification-review-layout">
+        <Empty
+          description="Tài khoản này chưa có hồ sơ xác thực"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+        {canViewCompanyUpdates && (
+          <CompanyUpdateReviewPanel
+            companyPublicId={companyPublicId}
+            canReview={canReviewCompanyUpdates}
+            canViewSensitive={canViewSensitive}
+          />
+        )}
+      </div>
     )
   }
   if (query.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
@@ -459,8 +469,8 @@ export default function EmployerVerificationReview({
 
   const caseMeta = verificationStatusMeta(verificationCase.status)
   return (
-    <div className="space-y-5">
-      <Card className="account-detail-card">
+    <div className="verification-review-layout">
+      <Card size="small" className="account-detail-card verification-overview-card">
         <div className="verification-case-heading">
           <div>
             <Space wrap>
@@ -474,7 +484,7 @@ export default function EmployerVerificationReview({
               {`${verificationCase.full_name || 'Chưa cập nhật họ tên'} · ${verificationCase.email}`}
             </Typography.Text>
           </div>
-          {canReview && (
+          {canReviewVerification && (
             <Space wrap>
               {verificationCase.status === 'pending' && (
                 <Button
@@ -488,7 +498,7 @@ export default function EmployerVerificationReview({
             </Space>
           )}
         </div>
-        <Descriptions className="mt-5" bordered size="small" column={{ xs: 1, md: 2 }}>
+        <Descriptions className="mt-4" bordered size="small" column={{ xs: 1, md: 2, xl: 3 }}>
           <Descriptions.Item label="Phương thức">
             {verificationCase.verification_method_label || 'Chưa chọn'}
           </Descriptions.Item>
@@ -510,12 +520,24 @@ export default function EmployerVerificationReview({
         </Descriptions>
       </Card>
 
-      <Card title="9 bước xác thực" className="account-detail-card">
-        <Checklist checks={verificationCase.checks} />
+      <Card
+        size="small"
+        className="account-detail-card verification-progress-card"
+      >
+        <VerificationJourney checks={verificationCase.checks} />
       </Card>
 
+      {canViewCompanyUpdates && (
+        <CompanyUpdateReviewPanel
+          companyPublicId={verificationCase.company?.public_id || companyPublicId}
+          canReview={canReviewCompanyUpdates}
+          canViewSensitive={canViewSensitive}
+          onChanged={refresh}
+        />
+      )}
+
       <section className="verification-workbench">
-        <Card title="Bộ giấy tờ" className="account-detail-card verification-document-list">
+        <Card size="small" title="Bộ giấy tờ" className="account-detail-card verification-document-list">
           <List
             dataSource={currentDocuments}
             locale={{ emptyText: 'Chưa có giấy tờ hiện hành' }}
@@ -525,7 +547,7 @@ export default function EmployerVerificationReview({
                 <List.Item
                   className={active ? 'is-selected' : ''}
                   onClick={() => setSelectedDocumentId(document.public_id)}
-                  actions={canReview ? [
+                  actions={canReviewVerification ? [
                     <Button
                       key="review"
                       type="link"
@@ -562,6 +584,7 @@ export default function EmployerVerificationReview({
           />
         </Card>
         <Card
+          size="small"
           title={selectedDocument ? `Đối chiếu: ${selectedDocument.doc_type_label}` : 'Preview'}
           className="account-detail-card verification-preview"
           extra={selectedDocument && (
@@ -587,7 +610,7 @@ export default function EmployerVerificationReview({
         </Card>
       </section>
 
-      <Card title="Lịch sử xử lý" className="account-detail-card">
+      <Card size="small" title="Lịch sử xử lý" className="account-detail-card verification-history-card">
         <div
           className="verification-timeline-scroll"
           role="region"

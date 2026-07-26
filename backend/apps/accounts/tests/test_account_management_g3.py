@@ -118,6 +118,29 @@ class AccountManagementG3ApiTests(TestCase):
     def authenticate(self, user):
         self.client.force_authenticate(user)
 
+    def test_admin_detail_returns_complete_effective_access(self):
+        self.authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-account-detail', kwargs={'public_id': self.provisioner.public_id})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        access = response.json()['admin_access']
+        self.assertEqual(access['access_source'], 'role')
+        self.assertEqual(access['permissions'], ['account.admin.invite'])
+        self.assertEqual(access['permission_count'], 1)
+        self.assertFalse(access['is_superuser'])
+        self.assertTrue(access['membership']['is_active'])
+        self.assertTrue(access['membership']['is_primary'])
+        self.assertEqual(access['membership']['assigned_by_email'], self.superuser.email)
+        self.assertEqual(access['membership']['assigned_by_name'], self.superuser.full_name)
+        self.assertEqual(access['membership']['role']['code'], self.source_role.code)
+        self.assertEqual(
+            access['membership']['role']['department']['code'],
+            self.department.code,
+        )
+
     def test_locking_employer_pauses_only_their_active_campaigns(self):
         employer = User.objects.create_user(
             'campaign-owner@example.com',

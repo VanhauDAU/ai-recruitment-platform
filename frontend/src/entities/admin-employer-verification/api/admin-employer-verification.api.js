@@ -77,3 +77,33 @@ export function downloadAdminEmployerDocument(casePublicId, documentPublicId) {
     { intent: 'download' },
   )
 }
+
+export function getAdminCompanyUpdateRequests(params = {}, { signal } = {}) {
+  return data(client.get('/admin/company-update-requests/', { params, signal }))
+}
+
+export function reviewAdminCompanyUpdateDocument(requestPublicId, documentPublicId, payload) {
+  return data(client.post(
+    `/admin/company-update-requests/${requestPublicId}/documents/${documentPublicId}/review/`,
+    payload,
+  ))
+}
+
+export function reviewAdminCompanyUpdateRequest(requestPublicId, payload) {
+  return data(client.post(
+    `/admin/company-update-requests/${requestPublicId}/review/`,
+    payload,
+  ))
+}
+
+export async function getAdminCompanyUpdateDocumentContent(
+  requestPublicId,
+  documentPublicId,
+  { signal } = {},
+) {
+  const response = await client.get(
+    `/admin/company-update-requests/${requestPublicId}/documents/${documentPublicId}/content/`,
+    { responseType: 'blob', signal },
+  )
+  return response.data
+}

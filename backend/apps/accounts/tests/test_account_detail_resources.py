@@ -4,6 +4,13 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.candidates.models import CandidateConsent, CandidateProfile
+from apps.employers.models import (
+    Company,
+    CompanyImage,
+    CompanyIndustry,
+    Industry,
+    RecruiterProfile,
+)
 
 from ..models import AdminAccessAuditLog, User
 
@@ -104,4 +111,65 @@ class AdminAccountDetailResourceTests(APITestCase):
         self.assertEqual(
             response.data['results'][0]['consent_type'],
             CandidateConsent.ConsentType.AI_RECOMMENDATION,
+        )
+
+    def test_employer_company_profile_includes_complete_media_and_metadata(self):
+        employer = User.objects.create_user(
+            email='employer-company-detail@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+            full_name='Nhà tuyển dụng kiểm thử',
+        )
+        company = Company.objects.create(
+            company_name='Công ty đầy đủ',
+            trade_name='Thương hiệu đầy đủ',
+            trade_name_same_as_registered=False,
+            tax_code='0107777777',
+            logo_url='employers/company/logo.png',
+            cover_image_url='employers/company/cover.png',
+            website_url='https://example.com',
+            email='contact@example.com',
+            phone='0901234567',
+            address='Đà Nẵng',
+            company_size=Company.Size.S100_499,
+            founded_year=2015,
+            has_brand_page=True,
+            created_by=employer,
+        )
+        industry = Industry.objects.create(name='Công nghệ kiểm thử tab công ty')
+        CompanyIndustry.objects.create(
+            company=company,
+            industry=industry,
+            is_primary=True,
+        )
+        CompanyImage.objects.create(
+            company=company,
+            image_url='employers/company/office.png',
+            caption='Văn phòng chính',
+        )
+        recruiter, _ = RecruiterProfile.objects.get_or_create(user=employer)
+        recruiter.company = company
+        recruiter.save(update_fields=['company', 'updated_at'])
+
+        response = self.client.get(
+            reverse('admin-account-profile', kwargs={'public_id': employer.public_id})
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        company_data = response.data['employer']['company']
+        self.assertEqual(company_data['public_id'], company.public_id)
+        self.assertEqual(company_data['primary_industry'], industry.name)
+        self.assertEqual(company_data['created_by_email'], employer.email)
+        self.assertEqual(
+            company_data['logo_url'],
+            'http://testserver/media/employers/company/logo.png',
+        )
+        self.assertEqual(
+            company_data['cover_image_url'],
+            'http://testserver/media/employers/company/cover.png',
+        )
+        self.assertEqual(company_data['images'][0]['caption'], 'Văn phòng chính')
+        self.assertEqual(
+            company_data['images'][0]['image_url'],
+            'http://testserver/media/employers/company/office.png',
         )
