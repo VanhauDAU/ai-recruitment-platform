@@ -4,10 +4,9 @@ import {
   Card,
   Form,
   Input,
-  InputNumber,
   Modal,
   Select,
-  Switch,
+  Typography,
 } from 'antd'
 import { IMPACT_COPY } from '../model/access-control-view'
 import { ImpactDetails } from './AccessControlFeedback'
@@ -23,42 +22,41 @@ export default function AccessControlModals({
   return (
     <>
       <Modal
-        title={department.editor?.row ? 'Sửa phòng ban' : 'Thêm phòng ban'}
+        title={department.editor?.row ? 'Chỉnh sửa phòng ban' : 'Tạo phòng ban'}
         open={Boolean(department.editor)}
         onCancel={department.onClose}
         onOk={department.onSave}
-        okText="Lưu phòng ban"
+        okText={department.editor?.row ? 'Lưu thay đổi' : 'Tạo phòng ban'}
         confirmLoading={department.saving}
         width={680}
         destroyOnHidden
       >
-        <Form form={department.form} layout="vertical">
-          <Form.Item name="code" label="Mã phòng ban" rules={[{ required: true, message: 'Nhập mã phòng ban.' }]}>
-            <Input disabled={Boolean(department.editor?.row)} placeholder="content-operations" />
-          </Form.Item>
+        <Form form={department.form} layout="vertical" requiredMark="optional">
           <Form.Item name="name" label="Tên phòng ban" rules={[{ required: true, message: 'Nhập tên phòng ban.' }]}>
-            <Input />
+            <Input size="large" autoFocus placeholder="Ví dụ: Nội dung & CV" />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea rows={4} />
+          <Form.Item name="description" label="Mô tả (tuỳ chọn)">
+            <Input.TextArea rows={4} showCount maxLength={500} placeholder="Phạm vi công việc hoặc mục đích của phòng ban" />
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title={role.editor?.row ? 'Sửa chức danh' : 'Thêm chức danh'}
+        title={role.editor?.row ? 'Chỉnh sửa chức danh' : 'Tạo chức danh'}
         open={Boolean(role.editor)}
         onCancel={role.onClose}
         onOk={role.onSave}
-        okText="Lưu chức danh"
+        okText={role.editor?.row ? 'Lưu thay đổi' : 'Tạo chức danh'}
         confirmLoading={role.saving}
         width={680}
         destroyOnHidden
       >
-        <Form form={role.form} layout="vertical">
+        <Form form={role.form} layout="vertical" requiredMark="optional">
           {!role.editor?.row && (
             <Form.Item name="department" label="Phòng ban" rules={[{ required: true, message: 'Chọn phòng ban.' }]}>
               <Select
+                size="large"
+                placeholder="Chọn phòng ban sở hữu chức danh này"
                 options={role.departments.map((item) => ({
                   value: item.public_id,
                   label: item.name,
@@ -66,17 +64,11 @@ export default function AccessControlModals({
               />
             </Form.Item>
           )}
-          {!role.editor?.row && (
-            <Form.Item name="code" label="Mã chức danh" rules={[{ required: true, message: 'Nhập mã chức danh.' }]}>
-              <Input placeholder="reviewer" />
-            </Form.Item>
-          )}
           <Form.Item name="name" label="Tên chức danh" rules={[{ required: true, message: 'Nhập tên chức danh.' }]}>
-            <Input />
+            <Input size="large" placeholder="Ví dụ: Chuyên viên kiểm duyệt" />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả"><Input.TextArea rows={3} /></Form.Item>
-          <Form.Item name="rank" label="Rank" extra="Rank chỉ dùng cho hiển thị và chọn phòng ban chính; không cấp quyền.">
-            <InputNumber min={0} max={32767} className="w-full" />
+          <Form.Item name="description" label="Mô tả (tuỳ chọn)">
+            <Input.TextArea rows={3} showCount maxLength={500} placeholder="Trách nhiệm chính của chức danh" />
           </Form.Item>
         </Form>
       </Modal>
@@ -91,12 +83,6 @@ export default function AccessControlModals({
         width={920}
         destroyOnHidden
       >
-        <Alert
-          showIcon
-          type="info"
-          className="!mb-4"
-          title="Quyền đã ngừng sử dụng được giữ nguyên để hỗ trợ rollback."
-        />
         <PermissionPicker
           permissions={permission.query.data}
           value={permission.codes}
@@ -107,47 +93,62 @@ export default function AccessControlModals({
       </Modal>
 
       <Modal
-        title="Gán nhân viên vào chức danh"
+        title={assignment.member ? 'Đổi chức danh' : 'Gán chức danh'}
         open={assignment.open}
         onCancel={assignment.onClose}
         onOk={assignment.onPreview}
-        okText="Xem tác động"
+        okText="Xem thay đổi"
         width={680}
         destroyOnHidden
       >
-        <Form form={assignment.form} layout="vertical" initialValues={{ is_primary: false }}>
-          <Form.Item
-            name="user_public_id"
-            label="Nhân viên"
-            extra="Tìm trong các tài khoản admin đang hoạt động."
-            rules={[{ required: true, message: 'Chọn nhân viên.' }]}
-          >
+        <Typography.Paragraph type="secondary" className="!mb-5">
+          {assignment.member
+            ? 'Chức danh cũ sẽ được thay bằng chức danh mới sau khi bạn xác nhận tác động.'
+            : 'Chọn nhân viên và chức danh. Bạn sẽ xem được quyền thay đổi trước khi xác nhận.'}
+        </Typography.Paragraph>
+        <Form form={assignment.form} layout="vertical">
+          {assignment.member ? (
+            <>
+              <Form.Item name="user_public_id" hidden><Input /></Form.Item>
+              <Card size="small" className="!mb-5 border-slate-200 bg-slate-50">
+                <Typography.Text strong>{assignment.member.user.full_name || assignment.member.user.email}</Typography.Text>
+                {assignment.member.user.full_name && (
+                  <div><Typography.Text type="secondary">{assignment.member.user.email}</Typography.Text></div>
+                )}
+                <div className="mt-2 text-sm text-slate-600">
+                  Hiện tại: <strong>{assignment.member.role.name}</strong> · {assignment.member.department.name}
+                </div>
+              </Card>
+            </>
+          ) : (
+            <Form.Item
+              name="user_public_id"
+              label="Nhân viên"
+              rules={[{ required: true, message: 'Chọn nhân viên.' }]}
+            >
+              <Select
+                showSearch
+                filterOption={false}
+                onSearch={assignment.onSearch}
+                loading={assignment.staffQuery.isFetching}
+                placeholder="Nhập email hoặc họ tên"
+                options={assignment.staff.map((item) => ({
+                  value: item.public_id,
+                  label: `${item.full_name || item.email}${item.full_name ? ` · ${item.email}` : ''}`,
+                }))}
+                notFoundContent={assignment.staffQuery.isLoading ? 'Đang tìm…' : 'Không tìm thấy tài khoản'}
+              />
+            </Form.Item>
+          )}
+          <Form.Item name="role_public_id" label="Chức danh mới" rules={[{ required: true, message: 'Chọn chức danh.' }]}>
             <Select
+              size="large"
               showSearch
-              filterOption={false}
-              onSearch={assignment.onSearch}
-              loading={assignment.staffQuery.isFetching}
-              placeholder="Nhập email hoặc họ tên"
-              options={assignment.staff.map((item) => ({
-                value: item.public_id,
-                label: `${item.full_name || item.email}${item.full_name ? ` · ${item.email}` : ''}`,
-              }))}
-              notFoundContent={assignment.staffQuery.isLoading ? 'Đang tìm…' : 'Không tìm thấy tài khoản'}
-            />
-          </Form.Item>
-          <Form.Item name="role_public_id" label="Chức danh" rules={[{ required: true, message: 'Chọn chức danh.' }]}>
-            <Select
+              optionFilterProp="label"
+              placeholder="Chọn chức danh"
               loading={assignment.rolesQuery.isLoading}
               options={assignment.roleOptions}
             />
-          </Form.Item>
-          <Form.Item
-            name="is_primary"
-            label="Đặt làm phòng ban chính"
-            valuePropName="checked"
-            extra="Nếu đây là membership đầu tiên, hệ thống sẽ tự đặt làm chính."
-          >
-            <Switch />
           </Form.Item>
         </Form>
       </Modal>

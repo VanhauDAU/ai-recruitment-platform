@@ -116,17 +116,12 @@ class AdminMembership(models.Model):
     revoked_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ['-is_primary', '-role__rank', 'assigned_at', 'id']
+        ordering = ['-assigned_at', '-id']
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'role'],
-                condition=models.Q(is_active=True),
-                name='uq_admin_membership_active_user_role',
-            ),
-            models.UniqueConstraint(
                 fields=['user'],
-                condition=models.Q(is_primary=True, is_active=True),
-                name='uq_admin_membership_active_primary',
+                condition=models.Q(is_active=True),
+                name='uq_admin_membership_active_user',
             ),
         ]
 

@@ -141,8 +141,8 @@ class AdminAccessTests(TestCase):
         self.admin.save(update_fields=['is_superuser'])
         self.assertEqual(effective_permission_codes(self.admin), ADMIN_PERMISSION_CODES)
 
-    def test_first_membership_is_primary_and_revoke_promotes_deterministically(self):
-        first = self.assign(primary=False)
+    def test_assign_replaces_the_active_membership(self):
+        first = self.assign()
         self.assertTrue(first.is_primary)
         manager = AdminRole.objects.create(
             department=self.department,
@@ -152,9 +152,15 @@ class AdminAccessTests(TestCase):
         )
         manager.permissions.add(self.permission)
         second = self.assign(role=manager)
-        revoke_membership(first, actor=self.other_admin)
+        first.refresh_from_db()
         second.refresh_from_db()
+        self.assertFalse(first.is_active)
+        self.assertFalse(first.is_primary)
         self.assertTrue(second.is_primary)
+        self.assertEqual(
+            AdminMembership.objects.filter(user=self.admin, is_active=True).count(),
+            1,
+        )
 
     def test_snapshot_excludes_inactive_memberships_and_sorts_permissions(self):
         self.assign()

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { SettingOutlined } from '@ant-design/icons'
 import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { message } from '@/shared/lib/toast'
+import { AdminPageHeader, AdminPanel } from '@/widgets/admin-workspace'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
@@ -167,15 +169,22 @@ export default function AdminSettings() {
   }))
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-sm">
-      <Typography.Title level={4} className="!mb-6">Cài đặt hệ thống</Typography.Title>
-      <Tabs
-        tabPlacement="left"
-        activeKey={activeGroup}
-        onChange={handleTabChange}
-        items={items}
-        className="[&_.ant-tabs-tab]:!py-2"
+    <div className="space-y-5">
+      <AdminPageHeader
+        eyebrow="Cấu hình nền tảng"
+        title="Cài đặt hệ thống"
+        description="Quản lý cấu hình hiển thị và vận hành. Các thay đổi chỉ được lưu khi bạn xác nhận trong từng nhóm."
+        icon={<SettingOutlined />}
       />
+      <AdminPanel>
+        <Tabs
+          tabPlacement="top"
+          activeKey={activeGroup}
+          onChange={handleTabChange}
+          items={items}
+          className="[&_.ant-tabs-tab]:!py-2"
+        />
+      </AdminPanel>
     </div>
   )
 }

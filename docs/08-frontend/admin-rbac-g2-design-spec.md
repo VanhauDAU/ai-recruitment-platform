@@ -4,11 +4,12 @@
 
 Trang `/admin/app/access-control` là công cụ vận hành nội bộ cho superuser và
 admin có `admin_access.view`. Thiết kế giữ nguyên Ant Design 6, Tailwind, Inter,
-brand token từ `ConfigProvider` và cấu trúc sidebar hiện tại. Không thay API,
-permission contract hoặc mở rộng sang audit/G3.
+brand token từ `ConfigProvider` và cấu trúc sidebar hiện tại. Permission contract
+và phạm vi G3 không thay đổi; contract membership được cập nhật thành một chức
+danh hiệu lực cho mỗi nhân viên.
 
-UI/UX Pro Max được chạy với hướng `enterprise recruitment RBAC admin access
-control dense secure`, variance 3, motion 2, density 8. Các khuyến nghị phù hợp
+UI/UX Pro Max được chạy với hướng `enterprise admin user access reassignment
+single role permission management`, density 7. Các khuyến nghị phù hợp
 được áp dụng: bố cục dashboard dày vừa phải, tương phản rõ, focus keyboard,
 touch target tối thiểu 44px, chuyển động nhẹ 150–250ms và không dùng màu làm tín
 hiệu duy nhất.
@@ -46,10 +47,10 @@ Phân quyền quản trị
 │   └── Khôi phục mặc định qua impact modal
 └── Nhân viên (chỉ superuser)
     ├── Tìm tài khoản admin theo email
-    ├── Gán chức danh qua assignment impact modal
-    ├── Danh sách membership + MFA + primary
+    ├── Gán hoặc đổi một chức danh qua assignment impact modal
+    ├── Danh sách một chức danh hiệu lực/người + MFA
     ├── Thu hồi qua impact modal
-    └── Đặt phòng ban chính qua impact modal
+    └── Xem quyền được thêm/mất trước khi xác nhận
 ```
 
 ## Wireframe
@@ -134,9 +135,11 @@ trang/modal chỉ dùng ở route này nên đặt cạnh page.
 ## Modal impact cho thao tác nguy hiểm
 
 Mọi modal có tiêu đề nêu rõ đối tượng, câu tóm tắt hành động, số người bị ảnh
-hưởng, tối đa 20 tài khoản preview, trạng thái `has_more`, cảnh báo primary/MFA,
-và diff permission/metadata khi có. Nút xác nhận dùng nhãn hành động cụ thể
-(`Khoá phòng ban`, `Gán chức danh`, `Lưu thay đổi quyền`), không dùng “OK”.
+hưởng, tối đa 20 tài khoản preview, trạng thái `has_more`, cảnh báo MFA, và diff
+permission/metadata khi có. Khi đổi chức danh, modal khoá sẵn nhân viên, nêu rõ
+chức danh hiện tại và quyền được thêm/mất. Nút xác nhận dùng nhãn hành động cụ
+thể (`Khoá phòng ban`, `Xác nhận thay đổi`, `Lưu thay đổi quyền`), không dùng
+“OK”.
 
 Khi API trả `409 admin_resource_changed`, modal giữ mở, tải lại impact, thay
 token và hiển thị alert “Dữ liệu đã thay đổi, vui lòng xem lại”; không tự gửi

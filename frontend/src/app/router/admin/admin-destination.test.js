@@ -20,8 +20,8 @@ describe('resolveAdminDestination', () => {
     )
   })
 
-  it('falls back to my access when no business permission exists', () => {
-    expect(resolveAdminDestination(admin([]))).toBe('/admin/app/my-access')
+  it('falls back to the account settings page when no business permission exists', () => {
+    expect(resolveAdminDestination(admin([]))).toBe('/admin/app/account')
   })
 
   it('rejects a settings return URL for a non-superuser with the permission', () => {

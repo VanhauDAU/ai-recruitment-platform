@@ -352,6 +352,22 @@ class SessionManagementTests(APITestCase):
             self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED
         )
 
+    def test_history_scope_also_returns_revoked_sessions(self):
+        current = issue_tokens(self.user)
+        issue_tokens(self.user)
+        self._auth(current)
+        listed = self.client.get(reverse('auth-sessions')).data
+        other_row = next(s for s in listed if not s['current'])
+        self.client.delete(reverse('auth-session-revoke', args=[other_row['id']]))
+
+        # Mặc định vẫn chỉ trả phiên còn hiệu lực (hợp đồng cũ không đổi).
+        self.assertEqual(len(self.client.get(reverse('auth-sessions')).data), 1)
+
+        history = self.client.get(reverse('auth-sessions'), {'scope': 'history'}).data
+        self.assertEqual(len(history), 2)
+        self.assertIsNotNone(next(row for row in history if not row['current'])['revoked_at'])
+        self.assertIsNone(next(row for row in history if row['current'])['revoked_at'])
+
     def test_revoke_others_keeps_current_device(self):
         current = issue_tokens(self.user)
         issue_tokens(self.user)

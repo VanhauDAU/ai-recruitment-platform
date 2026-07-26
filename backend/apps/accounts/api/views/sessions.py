@@ -9,7 +9,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...models import AuthSession
-from ...services import auth_sessions
+from ...services import auth_sessions, record_admin_self_action
+
+HISTORY_LIMIT = 50
 
 
 class AuthSessionSerializer(serializers.ModelSerializer):
@@ -24,6 +26,7 @@ class AuthSessionSerializer(serializers.ModelSerializer):
             'ip_address',
             'created_at',
             'last_seen_at',
+            'revoked_at',
             'current',
         ]
 
@@ -44,7 +47,13 @@ class SessionListView(APIView):
         tags=['auth'],
     )
     def get(self, request):
-        sessions = auth_sessions.active_sessions(request.user)
+        # Mặc định giữ nguyên hợp đồng cũ (chỉ phiên còn hiệu lực).
+        # `?scope=history` trả thêm phiên đã thu hồi/hết hạn cho màn hình nhật ký
+        # đăng nhập — chỉ có dữ liệu từ khi AuthSession được đưa vào.
+        if request.query_params.get('scope') == 'history':
+            sessions = AuthSession.objects.filter(user=request.user)[:HISTORY_LIMIT]
+        else:
+            sessions = auth_sessions.active_sessions(request.user)
         data = AuthSessionSerializer(
             sessions,
             many=True,
@@ -69,6 +78,9 @@ class SessionRevokeView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         auth_sessions.revoke_session(session)
+        record_admin_self_action(
+            request.user, 'self_session_revoke', {'device_label': session.device_label}
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -88,6 +100,9 @@ class SessionRevokeOthersView(APIView):
         sid = _current_sid(request)
         if sid:
             sessions = sessions.exclude(id=sid)
+        revoked = 0
         for session in sessions:
             auth_sessions.revoke_session(session)
+            revoked += 1
+        record_admin_self_action(request.user, 'self_session_revoke_others', {'revoked': revoked})
         return Response({'detail': 'Đã đăng xuất khỏi các thiết bị khác.'})

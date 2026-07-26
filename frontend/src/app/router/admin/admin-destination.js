@@ -18,5 +18,7 @@ export function resolveAdminDestination(user, returnUrl) {
     return returnUrl
   }
   const firstRoute = firstAccessibleAdminRoute(ADMIN_ROUTES, adminAccess)
-  return adminPath(firstRoute?.segment || '/my-access')
+  // `/account` không đòi quyền nào nên luôn là đích hạ cánh an toàn cho tài
+  // khoản chưa được gán phòng ban.
+  return adminPath(firstRoute?.segment || '/account')
 }

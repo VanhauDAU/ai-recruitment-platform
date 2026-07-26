@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-26
 
+#### Changed — Gán chức danh nhân viên
+
+- Migration `accounts.0015` hợp nhất dữ liệu lịch sử về một membership active
+  cho mỗi nhân viên và thêm ràng buộc database tương ứng. Gán chức danh mới nay
+  là thao tác thay thế nguyên tử: thu hồi chức danh cũ, audit trước/sau và bust
+  cache quyền sau commit.
+- Bỏ endpoint, payload và UI “phòng ban chính”. Preview đổi chức danh hiển thị
+  rõ chức danh hiện tại cùng quyền được thêm/mất; trang Nhân viên chỉ còn một
+  dòng chức danh hiệu lực cho mỗi người.
+- Thêm regression cho thay thế membership và hai xác nhận đồng thời: chỉ một
+  transaction được commit, yêu cầu còn lại nhận stale impact token.
+- Bổ sung bộ lọc nhanh theo nội dung/trạng thái/MFA, action icon có tooltip và
+  drawer xem chi tiết nhân viên; bảng phòng ban/chức danh hiển thị thêm mã và
+  số liệu vận hành nhưng không lặp thao tác chỉnh sửa trong menu.
+
 #### Added — Quản trị phân quyền (RBAC G2)
 
 - Thêm migration `accounts.0014`, cờ `is_system_managed` cho department/role,

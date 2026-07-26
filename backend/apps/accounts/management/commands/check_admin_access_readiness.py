@@ -30,23 +30,19 @@ class Command(BaseCommand):
                     )
                 )
 
-        invalid_primaries = AdminMembership.objects.filter(
-            is_active=True,
-            is_primary=True,
-        ).exclude(role__is_active=True, role__department__is_active=True)
-        for membership in invalid_primaries.select_related('user', 'role__department'):
-            errors.append(
-                f'{membership.user.email}: primary trỏ vào {membership.role} đang bị khoá.'
-            )
-
-        primary_counts = Counter(
-            AdminMembership.objects.filter(is_active=True, is_primary=True).values_list(
-                'user_id', flat=True
-            )
+        active_counts = Counter(
+            AdminMembership.objects.filter(is_active=True).values_list('user_id', flat=True)
         )
-        duplicate_ids = [user_id for user_id, count in primary_counts.items() if count > 1]
+        duplicate_ids = [user_id for user_id, count in active_counts.items() if count > 1]
         for user in User.objects.filter(pk__in=duplicate_ids):
-            errors.append(f'{user.email}: có nhiều hơn một primary active.')
+            errors.append(f'{user.email}: có nhiều hơn một chức danh đang hiệu lực.')
+
+        invalid_legacy_markers = AdminMembership.objects.filter(
+            is_active=True,
+            is_primary=False,
+        )
+        for membership in invalid_legacy_markers.select_related('user'):
+            errors.append(f'{membership.user.email}: marker tương thích snapshot chưa nhất quán.')
 
         deprecated_roles = AdminRole.objects.filter(permissions__is_active=False).distinct()
         for role in deprecated_roles.prefetch_related('permissions'):

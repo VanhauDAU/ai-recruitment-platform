@@ -7,4 +7,5 @@ export const adminAccessKeys = {
   permissions: (role = '') => [...root, 'permissions', { role }],
   memberships: (params = {}) => [...root, 'memberships', params],
   staff: (query = '') => [...root, 'staff', { query }],
+  auditLogs: (params = {}) => [...root, 'audit-logs', params],
 }

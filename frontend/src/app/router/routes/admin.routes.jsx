@@ -24,6 +24,8 @@ export function adminRoutes() {
     <Route key="admin-redirect-login" path="/admin/login" element={<Navigate to={adminPath('/login')} replace />} />,
     <Route key="admin-redirect-dashboard" path="/admin/dashboard" element={<Navigate to={adminPath('/dashboard')} replace />} />,
     <Route key="admin-redirect-settings" path="/admin/settings" element={<Navigate to={adminPath('/settings')} replace />} />,
+    // Trang "Quyền của tôi" đã gộp vào tab của Cài đặt tài khoản.
+    <Route key="admin-redirect-my-access" path={adminPath('/my-access')} element={<Navigate to={`${adminPath('/account')}?tab=access`} replace />} />,
     <Route key="admin-app-root" path={adminPath('')} element={<Navigate to={adminPath('/login')} replace />} />,
 
     <Route key="admin-authenticated" element={<AuthGuard loginPath={adminPath('/login')} />}>

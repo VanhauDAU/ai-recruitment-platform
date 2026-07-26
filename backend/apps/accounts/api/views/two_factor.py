@@ -10,11 +10,16 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from ...models import AuthEmailJob, User
-from ...services import two_factor
+from ...services import record_admin_self_action, two_factor
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.tokens import issue_tokens
 from ...tasks import queue_auth_email
 from ..serializers import SessionUserSerializer
+
+TOTP_ISSUER_BY_ROLE = {
+    User.Role.EMPLOYER: 'ProCV Nhà tuyển dụng',
+    User.Role.ADMIN: 'ProCV Quản trị',
+}
 
 
 class TwoFactorCodeSerializer(serializers.Serializer):
@@ -65,8 +70,38 @@ def _session_response(user, request, **extra):
     return {**SessionUserSerializer(user, context={'request': request}).data, **extra}
 
 
-def _employer_only(request):
-    return request.user.is_employer
+def _supports_mfa_methods(request):
+    """TOTP và mã dự phòng chỉ mở cho tài khoản đặc quyền: NTD và quản trị viên.
+
+    Ứng viên vẫn chỉ dùng OTP email. Các path URL còn giữ tiền tố ``employer/``
+    vì lý do lịch sử — đổi URL là task riêng cần ADR.
+    """
+    return request.user.is_employer or request.user.is_admin_role
+
+
+def _mfa_methods_forbidden():
+    return Response(
+        {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng và quản trị viên.'},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _admin_mfa_locked(request):
+    """Quản trị viên không tự hạ cấp MFA của mình.
+
+    Cùng chính sách với ``TwoFactorDisableSendView``: admin bật thêm phương thức
+    thì được, gỡ bỏ thì phải đi qua quy trình quản trị (management command).
+    """
+    return request.user.is_admin_role
+
+
+def _admin_mfa_locked_response():
+    return Response(
+        {
+            'detail': 'MFA của tài khoản quản trị chỉ có thể thay đổi qua quy trình quản trị an toàn.'
+        },
+        status=status.HTTP_403_FORBIDDEN,
+    )
 
 
 def _available_disable_verification_methods(user, target):
@@ -154,8 +189,9 @@ class TwoFactorSetupConfirmView(APIView):
         two_factor.refresh_enabled_flag(user)
         user.save(update_fields=['two_factor_email_enabled', 'two_factor_enabled', 'updated_at'])
         extra = {}
-        if user.is_employer:
+        if _supports_mfa_methods(request):
             extra['backup_codes'] = two_factor.replace_backup_codes(user)
+        record_admin_self_action(user, 'self_mfa_enable', {'method': 'email'})
         return Response(_session_response(user, request, **extra))
 
 
@@ -181,13 +217,8 @@ class TwoFactorDisableSendView(APIView):
 
     def post(self, request):
         user = request.user
-        if user.is_admin_role:
-            return Response(
-                {
-                    'detail': 'MFA của tài khoản quản trị chỉ có thể thay đổi qua quy trình quản trị an toàn.'
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if _admin_mfa_locked(request):
+            return _admin_mfa_locked_response()
         if not two_factor.enabled_methods(user)['email']:
             return Response(
                 {'detail': 'Xác minh hai bước chưa được bật.'}, status=status.HTTP_400_BAD_REQUEST
@@ -216,11 +247,8 @@ class TwoFactorDisableConfirmView(APIView):
         serializer = TwoFactorCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = request.user
-        if user.is_admin_role:
-            return Response(
-                {'detail': 'Không thể tắt MFA cho tài khoản quản trị.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if _admin_mfa_locked(request):
+            return _admin_mfa_locked_response()
         if not two_factor.enabled_methods(user)['email'] or not two_factor.verify_code(
             user, two_factor.PURPOSE_DISABLE, serializer.validated_data['code']
         ):
@@ -263,16 +291,13 @@ class TwoFactorDisableConfirmView(APIView):
     tags=['auth-2fa'],
 )
 class EmployerTwoFactorMethodsView(APIView):
-    """Status không chứa secret/hash và chỉ dùng cho workspace employer."""
+    """Status không chứa secret/hash; dùng cho workspace employer và admin."""
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
         methods = two_factor.enabled_methods(request.user)
         return Response(
             {
@@ -304,14 +329,14 @@ class EmployerTotpSetupView(APIView):
     throttle_scope = 'two_factor'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
         secret = two_factor.start_totp_setup(request.user)
-        issuer = quote('ProCV Nhà tuyển dụng')
-        label = quote(f'ProCV Nhà tuyển dụng:{request.user.email}')
+        # Nhãn hiển thị trong app Authenticator: phải tách theo cổng, nếu không
+        # một người có cả tài khoản NTD lẫn admin sẽ thấy hai mục trùng tên.
+        issuer_name = TOTP_ISSUER_BY_ROLE[request.user.role]
+        issuer = quote(issuer_name)
+        label = quote(f'{issuer_name}:{request.user.email}')
         return Response(
             {
                 'manual_key': secret,
@@ -333,11 +358,8 @@ class EmployerTotpConfirmView(APIView):
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
         serializer = TwoFactorCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         secret = two_factor.pending_totp_secret(request.user)
@@ -352,6 +374,7 @@ class EmployerTotpConfirmView(APIView):
             update_fields=['two_factor_totp_secret', 'two_factor_enabled', 'updated_at']
         )
         two_factor.discard_pending_totp_secret(request.user)
+        record_admin_self_action(request.user, 'self_mfa_enable', {'method': 'totp'})
         return Response(_session_response(request.user, request))
 
 
@@ -367,11 +390,10 @@ class EmployerTotpDisableView(APIView):
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
+        if _admin_mfa_locked(request):
+            return _admin_mfa_locked_response()
         serializer = TwoFactorCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if not two_factor.verify_user_totp(request.user, serializer.validated_data['code']):
@@ -412,18 +434,17 @@ class EmployerTotpDisableView(APIView):
     tags=['auth-2fa'],
 )
 class EmployerTwoFactorMethodDisableSendView(APIView):
-    """Gửi email step-up để tắt một phương thức MFA của employer."""
+    """Gửi email step-up để tắt một phương thức MFA (không mở cho admin)."""
 
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
+        if _admin_mfa_locked(request):
+            return _admin_mfa_locked_response()
         serializer = EmployerTwoFactorMethodSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         methods = two_factor.enabled_methods(request.user)
@@ -461,11 +482,10 @@ class EmployerTwoFactorMethodDisableView(APIView):
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
+        if _admin_mfa_locked(request):
+            return _admin_mfa_locked_response()
         serializer = EmployerTwoFactorMethodDisableSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         target = serializer.validated_data['target']
@@ -519,11 +539,8 @@ class EmployerBackupCodesGenerateView(APIView):
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
         serializer = TwoFactorLoginCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         methods = two_factor.enabled_methods(request.user)
@@ -553,6 +570,7 @@ class EmployerBackupCodesGenerateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         backup_codes = two_factor.replace_backup_codes(request.user)
+        record_admin_self_action(request.user, 'self_backup_codes_regenerate', {'method': method})
         return Response(_session_response(request.user, request, backup_codes=backup_codes))
 
 
@@ -577,11 +595,8 @@ class EmployerBackupCodesSendView(APIView):
     throttle_scope = 'two_factor'
 
     def post(self, request):
-        if not _employer_only(request):
-            return Response(
-                {'detail': 'Chức năng này chỉ dành cho nhà tuyển dụng.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if not _supports_mfa_methods(request):
+            return _mfa_methods_forbidden()
         if not two_factor.enabled_methods(request.user)['email']:
             return Response(
                 {'detail': 'Hãy bật xác thực email trước khi tạo mã dự phòng.'},

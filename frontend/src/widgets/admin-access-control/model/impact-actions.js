@@ -3,7 +3,6 @@ import {
   getDepartmentRestoreImpact,
   getDepartmentStatusImpact,
   getMembershipAssignmentImpact,
-  getMembershipPrimaryImpact,
   getMembershipRevokeImpact,
   getRolePermissionsImpact,
   getRoleRestoreImpact,
@@ -12,7 +11,6 @@ import {
   restoreAdminRole,
   revokeAdminMembership,
   setAdminDepartmentStatus,
-  setAdminMembershipPrimary,
   setAdminRoleStatus,
   updateAdminRolePermissions,
 } from '@/entities/admin-access'
@@ -28,7 +26,6 @@ export async function fetchImpact(descriptor) {
   }
   if (kind === 'assignment') return getMembershipAssignmentImpact(payload)
   if (kind === 'revoke') return getMembershipRevokeImpact(target.public_id)
-  if (kind === 'primary') return getMembershipPrimaryImpact(target.public_id)
   if (kind === 'departmentRestore') return getDepartmentRestoreImpact(target.public_id)
   if (kind === 'roleRestore') return getRoleRestoreImpact(target.public_id)
   throw new Error('Unknown impact action')
@@ -51,7 +48,6 @@ export async function confirmImpact(descriptor, impactToken) {
   }
   if (kind === 'assignment') return createAdminMembership(payload, impactToken)
   if (kind === 'revoke') return revokeAdminMembership(target.public_id, impactToken)
-  if (kind === 'primary') return setAdminMembershipPrimary(target.public_id, impactToken)
   if (kind === 'departmentRestore') return restoreAdminDepartment(target.public_id, impactToken)
   if (kind === 'roleRestore') return restoreAdminRole(target.public_id, impactToken)
   throw new Error('Unknown impact action')

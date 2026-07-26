@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd'
+import { FileDoneOutlined } from '@ant-design/icons'
+import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tag, message } from 'antd'
 import { getAdminJobModeration, jobKeys, reviewAdminJob } from '@/entities/job'
+import { AdminPageHeader, AdminPanel } from '@/widgets/admin-workspace'
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Chờ duyệt' },
@@ -114,23 +116,38 @@ export default function AdminJobModeration() {
   ]
 
   return (
-    <section>
-      <Typography.Title level={2}>Duyệt tin tuyển dụng</Typography.Title>
-      <Typography.Paragraph type="secondary">
-        Tin chỉ hiển thị với ứng viên sau khi được duyệt. Khi từ chối, lý do sẽ hiện cho người tạo tin.
-      </Typography.Paragraph>
-      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <Alert className="max-w-2xl" showIcon type="info" message="Mọi tin gửi mới đều cần duyệt" />
-        <Select className="w-full sm:w-40" value={status} options={STATUS_OPTIONS} onChange={setStatus} />
-      </div>
-      <Table
-        rowKey="public_id"
-        loading={jobsQuery.isLoading}
-        dataSource={jobsQuery.data || []}
-        columns={columns}
-        scroll={{ x: 1500 }}
-        pagination={{ pageSize: 20, showSizeChanger: false }}
+    <section className="space-y-5">
+      <AdminPageHeader
+        eyebrow="Kiểm duyệt nội dung"
+        title="Duyệt tin tuyển dụng"
+        description="Kiểm tra chất lượng tin trước khi hiển thị với ứng viên; mọi quyết định từ chối đều kèm lý do rõ ràng."
+        icon={<FileDoneOutlined />}
       />
+      <AdminPanel
+        title="Hàng chờ kiểm duyệt"
+        description="Lọc theo trạng thái để tập trung vào các tin cần xử lý."
+        extra={(
+          <Select
+            aria-label="Lọc trạng thái tin"
+            className="w-full sm:w-44"
+            value={status}
+            options={STATUS_OPTIONS}
+            onChange={setStatus}
+          />
+        )}
+      >
+        <Alert className="mb-5 max-w-2xl" showIcon type="info" title="Mọi tin gửi mới đều cần duyệt" />
+        <div className="overflow-x-auto">
+          <Table
+            rowKey="public_id"
+            loading={jobsQuery.isLoading}
+            dataSource={jobsQuery.data || []}
+            columns={columns}
+            scroll={{ x: 1500 }}
+            pagination={{ pageSize: 20, showSizeChanger: false }}
+          />
+        </div>
+      </AdminPanel>
       <Modal
         destroyOnHidden
         open={Boolean(rejectingJob)}
