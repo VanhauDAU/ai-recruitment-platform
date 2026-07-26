@@ -51,6 +51,61 @@ describe('DashboardLayout admin access', () => {
     expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()
   })
 
+  it('groups related administration routes into expandable navigation sections', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'superuser@example.com',
+        admin_access: {
+          is_superuser: true,
+          permissions: [],
+          memberships: [],
+        },
+      },
+      logout: vi.fn(),
+    })
+    render(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Nội dung & kiểm duyệt')).toBeInTheDocument()
+    expect(screen.queryByText('Catalogue CV')).not.toBeInTheDocument()
+
+    await user.click(screen.getByText('Nội dung & kiểm duyệt'))
+
+    expect(await screen.findByText('Catalogue CV')).toBeInTheDocument()
+    expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
+  })
+
+  it('keeps only one navigation section expanded at a time', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'superuser@example.com',
+        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+      },
+      logout: vi.fn(),
+    })
+    render(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    const contentSection = screen.getByText('Nội dung & kiểm duyệt').closest('li')
+    const accountSection = screen.getByText('Quản trị tài khoản').closest('li')
+    await user.click(screen.getByText('Nội dung & kiểm duyệt'))
+    expect(contentSection).toHaveClass('ant-menu-submenu-open')
+
+    await user.click(screen.getByText('Quản trị tài khoản'))
+    expect(accountSection).toHaveClass('ant-menu-submenu-open')
+    expect(contentSection).not.toHaveClass('ant-menu-submenu-open')
+  })
+
   it('shows a useful empty state for an unassigned admin', () => {
     useSession.mockReturnValue({
       user: {

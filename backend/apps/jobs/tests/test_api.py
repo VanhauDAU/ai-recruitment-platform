@@ -111,6 +111,32 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
 
+    def test_locked_employer_hides_job_from_every_public_read_and_tracking_surface(self):
+        visible_detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        visible_list = self.client.get(reverse('job-list'))
+        visible_suggest = self.client.get(reverse('job-suggest'), {'q': 'Backend'})
+
+        self.user.status = User.Status.BANNED
+        self.user.is_active = False
+        self.user.save(update_fields=['status', 'is_active', 'updated_at'])
+
+        hidden_detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        hidden_list = self.client.get(reverse('job-list'))
+        hidden_suggest = self.client.get(reverse('job-suggest'), {'q': 'Backend'})
+        hidden_tracking = self.client.post(
+            reverse('job-view-create', kwargs={'slug': self.job.slug})
+        )
+
+        self.assertEqual(visible_detail.status_code, 200)
+        self.assertEqual(visible_list.data['count'], 1)
+        self.assertEqual(visible_suggest.data['suggestions'], [self.job.title])
+        self.assertEqual(hidden_detail.status_code, 404)
+        self.assertEqual(hidden_list.data['count'], 0)
+        self.assertEqual(hidden_suggest.data['suggestions'], [])
+        self.assertEqual(hidden_tracking.status_code, 404)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.ACTIVE)
+
     def test_tracking_requires_analytics_consent_and_does_not_set_viewer_cookie(self):
         response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
 

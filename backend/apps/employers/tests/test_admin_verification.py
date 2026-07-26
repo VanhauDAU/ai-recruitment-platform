@@ -1,4 +1,6 @@
 from datetime import timedelta
+from io import BytesIO
+from unittest.mock import patch
 
 from django.core.exceptions import PermissionDenied
 from django.test import override_settings
@@ -14,6 +16,7 @@ from ..models import (
     Company,
     CompanyDocument,
     EmployerVerificationCase,
+    EmployerVerificationEvent,
     EmployerVerificationNotification,
     RecruiterProfile,
     RecruitmentNeed,
@@ -22,6 +25,7 @@ from ..services import (
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
     get_or_create_verification_case,
+    reconcile_completed_verification_cases,
     recruiter_is_approved,
     recruiter_posting_readiness,
     verification_decision_impact,
@@ -197,6 +201,55 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 409, response.data)
 
+    def test_reviewer_approval_of_the_final_document_approves_the_case(self):
+        self.client.force_authenticate(self.admin)
+        document = self.first_case.documents.filter(is_current=True).first()
+
+        response = self.client.post(
+            reverse(
+                'admin-employer-verification-review-document',
+                kwargs={
+                    'public_id': self.first_case.public_id,
+                    'document_public_id': document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.APPROVED,
+                'reason': '',
+                'lock_version': self.first_case.lock_version,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        document.refresh_from_db()
+        self.first_case.refresh_from_db()
+        self.assertEqual(document.status, CompanyDocument.Status.APPROVED)
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(self.first_case.lock_version, 2)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.verification_status, Company.VerificationStatus.VERIFIED)
+        self.assertTrue(
+            EmployerVerificationNotification.objects.filter(
+                verification_case=self.first_case,
+                event_type=EmployerVerificationCase.Status.APPROVED,
+            ).exists()
+        )
+
+    def test_reconciliation_approves_a_previously_completed_case(self):
+        reconciled = reconcile_completed_verification_cases()
+
+        self.first_case.refresh_from_db()
+        self.assertIn(self.first_case, reconciled)
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertTrue(
+            EmployerVerificationEvent.objects.filter(
+                verification_case=self.first_case,
+                event_type=EmployerVerificationEvent.EventType.APPROVED,
+                payload__source='reconciliation',
+            ).exists()
+        )
+
     def test_queue_filters_overdue_cases(self):
         EmployerVerificationCase.objects.filter(pk=self.first_case.pk).update(
             submitted_at=timezone.now() - timedelta(hours=80),
@@ -254,3 +307,69 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(queue.status_code, 200, queue.data)
         self.assertEqual(content.status_code, 403, content.data)
+
+    def test_document_content_infers_legacy_image_mime_for_inline_preview(self):
+        self.client.force_authenticate(self.admin)
+        document = self.first_case.documents.filter(is_current=True).first()
+        document.file_name = 'Giấy đăng ký doanh nghiệp'
+        document.file_url = 'employers/legacy/business-registration.webp'
+        document.mime_type = ''
+        document.save(update_fields=['file_name', 'file_url', 'mime_type', 'updated_at'])
+
+        with patch(
+            'apps.employers.api.views.admin_verification.private_media_storage'
+        ) as storage_factory:
+            storage_factory.return_value.open.return_value = BytesIO(b'RIFFxxxxWEBP')
+            response = self.client.get(
+                reverse(
+                    'admin-employer-verification-document-content',
+                    kwargs={
+                        'public_id': self.first_case.public_id,
+                        'document_public_id': document.public_id,
+                    },
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/webp')
+        self.assertIn('inline', response['Content-Disposition'])
+        event = EmployerVerificationEvent.objects.filter(
+            verification_case=self.first_case,
+            event_type=EmployerVerificationEvent.EventType.SENSITIVE_VIEWED,
+        ).latest('created_at')
+        self.assertEqual(event.payload['action'], 'preview')
+        self.assertEqual(event.payload['audit_version'], 2)
+        self.assertEqual(event.payload['document_file_name'], 'Giấy đăng ký doanh nghiệp')
+
+    def test_document_content_converts_private_docx_to_pdf_for_preview(self):
+        self.client.force_authenticate(self.admin)
+        document = self.first_case.documents.filter(is_current=True).first()
+        document.file_url = 'employers/legacy/agreement.docx'
+        document.file_name = 'agreement.docx'
+        document.mime_type = (
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        document.save(update_fields=['file_url', 'file_name', 'mime_type', 'updated_at'])
+
+        with patch(
+            'apps.employers.api.views.admin_verification.render_office_document_preview',
+            return_value=b'%PDF-preview',
+        ) as render_preview:
+            response = self.client.get(
+                reverse(
+                    'admin-employer-verification-document-content',
+                    kwargs={
+                        'public_id': self.first_case.public_id,
+                        'document_public_id': document.public_id,
+                    },
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('inline', response['Content-Disposition'])
+        self.assertEqual(b''.join(response.streaming_content), b'%PDF-preview')
+        render_preview.assert_called_once_with(
+            document.file_url,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )

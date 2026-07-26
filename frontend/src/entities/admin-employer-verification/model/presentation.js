@@ -24,7 +24,6 @@ export const VERIFICATION_CHECK_LABELS = {
   business_documents_approved: 'Giấy tờ doanh nghiệp đã được duyệt',
   candidate_dpa_approved: 'Văn bản xử lý dữ liệu đã được duyệt',
   dpa_accepted: 'Đã chấp nhận DPA nền tảng',
-  case_approved: 'Admin đã duyệt cuối cùng',
 }
 
 export function verificationStatusMeta(status) {

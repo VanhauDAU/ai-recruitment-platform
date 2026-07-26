@@ -49,7 +49,7 @@ export default function AdminDashboard() {
         />
         <AdminStatCard
           icon={<SafetyCertificateOutlined />}
-          label="Phạm vi quyền"
+          label="Quyền thao tác"
           value={adminAccess?.isSuperuser ? 'Toàn quyền' : (adminAccess?.permissions?.length || 0)}
           detail={adminAccess?.isSuperuser ? 'Superuser hệ thống' : 'Quyền thao tác được cấp'}
           tone="amber"

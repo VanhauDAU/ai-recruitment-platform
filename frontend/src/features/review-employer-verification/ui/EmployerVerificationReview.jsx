@@ -27,9 +27,8 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import {
   adminEmployerVerificationKeys,
-  decideAdminEmployerVerification,
   documentStatusMeta,
-  getAdminEmployerDecisionImpact,
+  downloadAdminEmployerDocument,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
   reviewAdminEmployerDocument,
@@ -39,6 +38,11 @@ import {
 } from '@/entities/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import {
+  documentPreviewKind,
+  resolveDocumentMimeType,
+} from '../model/document-preview'
+import { buildVerificationTimeline } from '../model/event-timeline'
 import './employer-verification-review.css'
 
 const DECISIONS = [
@@ -82,6 +86,7 @@ function Checklist({ checks = {} }) {
 }
 
 function DocumentPreview({ verificationCase, document, canViewSensitive }) {
+  const queryClient = useQueryClient()
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.document(
       verificationCase.public_id,
@@ -93,10 +98,24 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
       { signal },
     ),
     enabled: Boolean(document && canViewSensitive),
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   })
   const [objectUrl, setObjectUrl] = useState('')
+  const [imageError, setImageError] = useState(false)
+  const [textContent, setTextContent] = useState('')
+  const [textError, setTextError] = useState(false)
+  const [textLoading, setTextLoading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+
+  const contentType = resolveDocumentMimeType({
+    responseMimeType: query.data?.contentType,
+    storedMimeType: document?.mime_type,
+    fileName: document?.file_name,
+  })
+  const previewKind = documentPreviewKind(contentType)
 
   useEffect(() => {
     if (!query.data?.blob) return undefined
@@ -107,6 +126,43 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
       setObjectUrl('')
     }
   }, [query.data])
+
+  useEffect(() => {
+    if (!query.data?.blob) return
+    queryClient.invalidateQueries({
+      queryKey: adminEmployerVerificationKeys.detail(verificationCase.public_id),
+      exact: true,
+    })
+  }, [query.data?.blob, queryClient, verificationCase.public_id])
+
+  useEffect(() => {
+    setImageError(false)
+  }, [document?.public_id, contentType])
+
+  useEffect(() => {
+    let active = true
+    setTextContent('')
+    setTextError(false)
+    setTextLoading(false)
+    if (previewKind !== 'text' || !query.data?.blob) return undefined
+    setTextLoading(true)
+    query.data.blob.text()
+      .then((value) => {
+        if (active) {
+          setTextContent(value.slice(0, 1_000_000))
+          setTextLoading(false)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setTextError(true)
+          setTextLoading(false)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [previewKind, query.data])
 
   if (!document) return <Empty description="Chọn giấy tờ để xem" />
   if (!canViewSensitive) {
@@ -130,58 +186,132 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
       />
     )
   }
+  if (!objectUrl) return <Skeleton active paragraph={{ rows: 8 }} />
 
-  const previewable = ['application/pdf', 'image/jpeg', 'image/png'].includes(
-    document.mime_type,
+  const downloadDocument = async () => {
+    setDownloading(true)
+    try {
+      const result = await downloadAdminEmployerDocument(
+        verificationCase.public_id,
+        document.public_id,
+      )
+      const url = URL.createObjectURL(result.blob)
+      const link = window.document.createElement('a')
+      link.href = url
+      link.download = document.file_name
+      link.click()
+      URL.revokeObjectURL(url)
+      await queryClient.invalidateQueries({
+        queryKey: adminEmployerVerificationKeys.detail(verificationCase.public_id),
+        exact: true,
+      })
+    } catch (error) {
+      message.error(getApiErrorMessage(error))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const actions = (
+    <div className="verification-preview-actions" aria-label="Thao tác với giấy tờ">
+      {previewKind !== 'download' && (
+        <Button
+          icon={<EyeOutlined />}
+          href={objectUrl}
+          target="_blank"
+          rel="noreferrer"
+          disabled={!objectUrl}
+        >
+          Mở bản gốc
+        </Button>
+      )}
+      <Button
+        icon={<DownloadOutlined />}
+        loading={downloading}
+        disabled={!objectUrl || downloading}
+        onClick={downloadDocument}
+      >
+        Tải xuống
+      </Button>
+    </div>
   )
-  if (!previewable) {
+
+  if (previewKind === 'image' && !imageError) {
+    return (
+      <div className="verification-preview-shell">
+        {actions}
+        <div className="verification-image-canvas">
+          <img
+            src={objectUrl}
+            alt={`Bản xem trước ${document.doc_type_label}: ${document.file_name}`}
+            className="verification-document-image"
+            onError={() => setImageError(true)}
+          />
+        </div>
+        <Typography.Text type="secondary" className="verification-preview-meta">
+          {`${contentType} · Ảnh tự co giãn theo khung, mở bản gốc để phóng to.`}
+        </Typography.Text>
+      </div>
+    )
+  }
+
+  if (previewKind === 'pdf') {
+    return (
+      <div className="verification-preview-shell">
+        {actions}
+        <iframe
+          className="verification-document-frame"
+          src={objectUrl}
+          title={`Xem trước ${document.file_name}`}
+        />
+      </div>
+    )
+  }
+
+  if (previewKind === 'text' && !textError) {
+    return (
+      <div className="verification-preview-shell">
+        {actions}
+        {textLoading ? (
+          <Skeleton active paragraph={{ rows: 10 }} />
+        ) : (
+          <pre className="verification-document-text" tabIndex={0}>
+            {textContent || 'Tệp không có nội dung văn bản.'}
+          </pre>
+        )}
+      </div>
+    )
+  }
+
+  if (previewKind === 'download' || imageError || textError) {
     return (
       <Empty
         image={<FileProtectOutlined className="text-4xl text-slate-400" />}
-        description="Định dạng này không hỗ trợ preview trực tiếp"
+        description={imageError
+          ? `Trình duyệt không giải mã được ảnh ${contentType}.`
+          : 'Định dạng này cần mở bằng ứng dụng chuyên dụng.'}
       >
-        <Button
-          icon={<DownloadOutlined />}
-          href={objectUrl}
-          download={document.file_name}
-          disabled={!objectUrl}
-        >
-          Tải file bảo mật
-        </Button>
+        {actions}
       </Empty>
     )
   }
-  return (
-    <iframe
-      className="verification-document-frame"
-      src={objectUrl}
-      title={`Xem trước ${document.file_name}`}
-    />
-  )
+
+  return null
 }
 
-function DecisionModal({ open, title, lockVersion, overall, onClose, onSubmit, loading }) {
+function DecisionModal({ open, title, lockVersion, onClose, onSubmit, loading }) {
   const [form] = Form.useForm()
-  const [impact, setImpact] = useState(null)
   const selectedDecision = Form.useWatch('decision', form)
 
   const reset = () => {
     form.resetFields()
-    setImpact(null)
     onClose()
   }
 
   const submit = async () => {
     const values = await form.validateFields()
     const payload = { ...values, lock_version: lockVersion }
-    if (overall && !impact) {
-      setImpact(await onSubmit(payload, { preview: true }))
-      return
-    }
-    await onSubmit(
-      overall ? { ...values, impact_token: impact.impact_token } : payload,
-      { preview: false },
-    )
+    await onSubmit(payload)
     reset()
   }
 
@@ -189,7 +319,7 @@ function DecisionModal({ open, title, lockVersion, overall, onClose, onSubmit, l
     <Modal
       open={open}
       title={title}
-      okText={overall && !impact ? 'Xem tác động' : 'Xác nhận'}
+      okText="Xác nhận"
       cancelText="Hủy"
       confirmLoading={loading}
       okButtonProps={{ danger: selectedDecision === 'rejected' }}
@@ -197,60 +327,46 @@ function DecisionModal({ open, title, lockVersion, overall, onClose, onSubmit, l
       onOk={submit}
       destroyOnHidden
     >
-      {impact ? (
-        <div className="space-y-4">
-          <Alert
-            showIcon
-            type={impact.unlocks_employer_capabilities ? 'success' : 'warning'}
-            title={impact.unlocks_employer_capabilities
-              ? 'Các quyền NTD sẽ được mở'
-              : 'Hồ sơ sẽ chưa được mở quyền'}
-            description="Quyết định sử dụng phiên bản hồ sơ hiện tại. Nếu dữ liệu thay đổi, hệ thống sẽ yêu cầu tải lại."
-          />
-          <Checklist checks={impact.checks} />
-        </div>
-      ) : (
-        <Form
-          form={form}
-          layout="vertical"
-          requiredMark={false}
-          initialValues={{ decision: 'approved', reason: '' }}
-          scrollToFirstError={{ focus: true }}
+      <Form
+        form={form}
+        layout="vertical"
+        requiredMark={false}
+        initialValues={{ decision: 'approved', reason: '' }}
+        scrollToFirstError={{ focus: true }}
+      >
+        <Form.Item name="decision" label="Kết quả xử lý" rules={[{ required: true }]}>
+          <div className="verification-decision-options">
+            {DECISIONS.map((item) => (
+              <Button
+                key={item.value}
+                type={selectedDecision === item.value ? 'primary' : 'default'}
+                danger={item.tone === 'danger'}
+                onClick={() => form.setFieldValue('decision', item.value)}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
+        </Form.Item>
+        <Form.Item
+          name="reason"
+          label="Lý do / hướng dẫn bổ sung"
+          dependencies={['decision']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (getFieldValue('decision') === 'approved' || value?.trim()) {
+                  return Promise.resolve()
+                }
+                return Promise.reject(new Error('Nhập lý do để NTD biết bước tiếp theo.'))
+              },
+            }),
+            { max: 2000, message: 'Tối đa 2.000 ký tự.' },
+          ]}
         >
-          <Form.Item name="decision" label="Kết quả xử lý" rules={[{ required: true }]}>
-            <div className="verification-decision-options">
-              {DECISIONS.map((item) => (
-                <Button
-                  key={item.value}
-                  type={selectedDecision === item.value ? 'primary' : 'default'}
-                  danger={item.tone === 'danger'}
-                  onClick={() => form.setFieldValue('decision', item.value)}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </Form.Item>
-          <Form.Item
-            name="reason"
-            label="Lý do / hướng dẫn bổ sung"
-            dependencies={['decision']}
-            rules={[
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (getFieldValue('decision') === 'approved' || value?.trim()) {
-                    return Promise.resolve()
-                  }
-                  return Promise.reject(new Error('Nhập lý do để NTD biết bước tiếp theo.'))
-                },
-              }),
-              { max: 2000, message: 'Tối đa 2.000 ký tự.' },
-            ]}
-          >
-            <Input.TextArea rows={4} maxLength={2000} showCount />
-          </Form.Item>
-        </Form>
-      )}
+          <Input.TextArea rows={4} maxLength={2000} showCount />
+        </Form.Item>
+      </Form>
     </Modal>
   )
 }
@@ -263,7 +379,6 @@ export default function EmployerVerificationReview({
   const queryClient = useQueryClient()
   const [selectedDocumentId, setSelectedDocumentId] = useState('')
   const [documentDecision, setDocumentDecision] = useState(null)
-  const [caseDecisionOpen, setCaseDecisionOpen] = useState(false)
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.detail(casePublicId),
     queryFn: ({ signal }) => getAdminEmployerVerification(casePublicId, { signal }),
@@ -274,14 +389,34 @@ export default function EmployerVerificationReview({
     () => (verificationCase?.documents || []).filter((item) => item.is_current),
     [verificationCase],
   )
+  const timelineEvents = useMemo(
+    () => buildVerificationTimeline(
+      verificationCase?.events || [],
+      verificationCase?.documents || [],
+    ),
+    [verificationCase],
+  )
   const selectedDocument = currentDocuments.find(
     (item) => item.public_id === selectedDocumentId,
   ) || currentDocuments[0]
 
   const refresh = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: adminEmployerVerificationKeys.all,
-    })
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: adminEmployerVerificationKeys.detail(casePublicId),
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: adminEmployerVerificationKeys.summary,
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        predicate: ({ queryKey }) => (
+          queryKey[0] === adminEmployerVerificationKeys.all[0]
+          && queryKey[1] === 'list'
+        ),
+      }),
+    ])
   }
   const startMutation = useMutation({
     mutationFn: () => startAdminEmployerVerificationReview(casePublicId),
@@ -302,14 +437,6 @@ export default function EmployerVerificationReview({
       await refresh()
     },
   })
-  const caseMutation = useMutation({
-    mutationFn: (payload) => decideAdminEmployerVerification(casePublicId, payload),
-    onSuccess: async () => {
-      message.success('Đã cập nhật kết quả xác thực tài khoản.')
-      await refresh()
-    },
-  })
-
   if (!casePublicId) {
     return (
       <Empty
@@ -358,13 +485,6 @@ export default function EmployerVerificationReview({
                   Nhận xử lý
                 </Button>
               )}
-              <Button
-                type="primary"
-                icon={<FileProtectOutlined />}
-                onClick={() => setCaseDecisionOpen(true)}
-              >
-                Quyết định hồ sơ
-              </Button>
             </Space>
           )}
         </div>
@@ -390,7 +510,7 @@ export default function EmployerVerificationReview({
         </Descriptions>
       </Card>
 
-      <Card title="10 bước xác thực" className="account-detail-card">
+      <Card title="9 bước xác thực" className="account-detail-card">
         <Checklist checks={verificationCase.checks} />
       </Card>
 
@@ -468,19 +588,36 @@ export default function EmployerVerificationReview({
       </section>
 
       <Card title="Lịch sử xử lý" className="account-detail-card">
-        <Timeline
-          items={(verificationCase.events || []).map((event) => ({
-            color: event.event_type === 'rejected' ? 'red' : 'blue',
-            children: (
-              <div>
-                <strong>{event.event_type_label}</strong>
-                <p className="mb-0 text-xs text-slate-500">
-                  {`${formatDate(event.created_at)} · ${event.actor_email || 'Hệ thống'}`}
-                </p>
-              </div>
-            ),
-          }))}
-        />
+        <div
+          className="verification-timeline-scroll"
+          role="region"
+          aria-label="Danh sách lịch sử xử lý"
+          tabIndex={0}
+        >
+          <Timeline
+            items={timelineEvents.map((event) => ({
+              color: event.event_type === 'rejected' ? 'red' : 'blue',
+              children: (
+                <div>
+                  <strong>
+                    {event.title}
+                    {event.count > 1 && (
+                      <Tag className="ml-2" color="blue">{`${event.count} lượt`}</Tag>
+                    )}
+                  </strong>
+                  {event.documentLabel && (
+                    <p className="verification-timeline-document">
+                      {event.documentLabel}
+                    </p>
+                  )}
+                  <p className="mb-0 text-xs text-slate-500">
+                    {`${formatDate(event.created_at)} · ${event.actor_email || 'Hệ thống'}`}
+                  </p>
+                </div>
+              ),
+            }))}
+          />
+        </div>
       </Card>
 
       <DecisionModal
@@ -498,29 +635,6 @@ export default function EmployerVerificationReview({
           } catch (error) {
             if (error?.response?.status === 409) {
               message.warning('Hồ sơ đã thay đổi. Vui lòng tải lại trước khi xử lý.')
-              await refresh()
-            } else {
-              message.error(getApiErrorMessage(error))
-            }
-            throw error
-          }
-        }}
-      />
-      <DecisionModal
-        overall
-        open={caseDecisionOpen}
-        title="Quyết định toàn bộ hồ sơ"
-        lockVersion={verificationCase.lock_version}
-        loading={caseMutation.isPending}
-        onClose={() => setCaseDecisionOpen(false)}
-        onSubmit={async (payload, { preview }) => {
-          try {
-            if (preview) return await getAdminEmployerDecisionImpact(casePublicId, payload)
-            await caseMutation.mutateAsync(payload)
-            return null
-          } catch (error) {
-            if (error?.response?.status === 409) {
-              message.warning('Hồ sơ đã thay đổi. Vui lòng tải lại và xem lại tác động.')
               await refresh()
             } else {
               message.error(getApiErrorMessage(error))

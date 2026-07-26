@@ -1,5 +1,6 @@
 export {
   decideAdminEmployerVerification,
+  downloadAdminEmployerDocument,
   getAdminEmployerDecisionImpact,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,

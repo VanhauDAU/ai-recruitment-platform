@@ -79,6 +79,96 @@
   width: 100%;
 }
 
+.verification-preview-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.verification-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.verification-preview-actions .ant-btn {
+  min-height: 40px;
+}
+
+.verification-image-canvas {
+  align-items: center;
+  background:
+    linear-gradient(45deg, #f8fafc 25%, transparent 25%),
+    linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f8fafc 75%),
+    linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  min-height: 460px;
+  overflow: auto;
+  padding: 16px;
+}
+
+.verification-document-image {
+  display: block;
+  height: auto;
+  max-height: 720px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.verification-preview-meta {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.verification-document-text {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  max-height: 540px;
+  min-height: 420px;
+  overflow: auto;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.verification-timeline-document {
+  color: #334155;
+  font-size: 13px;
+  margin: 4px 0 2px;
+  overflow-wrap: anywhere;
+}
+
+.verification-timeline-scroll {
+  max-height: min(560px, 60vh);
+  overflow-y: auto;
+  padding: 4px 12px 0 4px;
+  scrollbar-gutter: stable;
+}
+
+.verification-timeline-scroll:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
+}
+
+.verification-timeline-scroll .ant-timeline {
+  margin-bottom: 0;
+}
+
 .verification-decision-options {
   display: flex;
   flex-wrap: wrap;
@@ -110,5 +200,23 @@
   .verification-document-frame {
     height: calc(100vh - 230px);
     min-height: 480px;
+  }
+
+  .verification-preview-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .verification-preview-actions .ant-btn {
+    min-height: 44px;
+  }
+
+  .verification-image-canvas {
+    min-height: 360px;
+    padding: 8px;
+  }
+
+  .verification-timeline-scroll {
+    max-height: min(480px, 55vh);
   }
 }

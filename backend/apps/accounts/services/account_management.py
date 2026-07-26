@@ -8,7 +8,8 @@ from django.db.models import Max
 from django.utils import timezone
 
 from apps.candidates.models import CandidateProfile
-from apps.employers.models import RecruiterProfile
+from apps.employers.models import CampaignActivity, RecruiterProfile, RecruitmentCampaign
+from apps.employers.services import record_campaign_activity
 from apps.locations.models import Location
 
 from ..admin_access_cache import bust_admin_permission_cache
@@ -685,6 +686,25 @@ def confirm_account_status(user, *, status, reason, impact_token, actor):
         user.status = status
         user.is_active = status == User.Status.ACTIVE
         user.save(update_fields=['status', 'is_active', 'updated_at'])
+        paused_campaign_count = 0
+        if status != User.Status.ACTIVE and user.role == User.Role.EMPLOYER:
+            active_campaigns = list(
+                RecruitmentCampaign.objects.select_for_update().filter(
+                    owner__user=user,
+                    status=RecruitmentCampaign.Status.ACTIVE,
+                )
+            )
+            for campaign in active_campaigns:
+                campaign.status = RecruitmentCampaign.Status.PAUSED
+                campaign.save(update_fields=['status', 'updated_at'])
+                record_campaign_activity(
+                    campaign=campaign,
+                    event_type=CampaignActivity.EventType.CAMPAIGN_PAUSED,
+                    group=CampaignActivity.Group.CAMPAIGN,
+                    actor=actor,
+                    metadata={'reason': 'employer_account_locked'},
+                )
+            paused_campaign_count = len(active_campaigns)
         revoked = 0
         if status != User.Status.ACTIVE:
             for session in sessions:
@@ -701,6 +721,7 @@ def confirm_account_status(user, *, status, reason, impact_token, actor):
                 'after': status,
                 'reason': reason,
                 'revoked_session_count': revoked,
+                'paused_campaign_count': paused_campaign_count,
             },
         )
         transaction.on_commit(lambda: bust_admin_permission_cache({user.pk}))

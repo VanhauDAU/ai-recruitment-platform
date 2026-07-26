@@ -107,4 +107,20 @@ describe('EmployerDataProtectionForm', () => {
     await user.click(screen.getByRole('button', { name: 'Hủy' }))
     expect(screen.queryByText('Chọn hoặc kéo file vào đây')).not.toBeInTheDocument()
   })
+
+  it('shows an approved status after the candidate data agreement is reviewed', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: true, candidate_dpa_approved: true, dpa_accepted: true },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([{
+      id: 1,
+      doc_type: 'data_processing_agreement',
+      file_url: 'https://files.example.com/thoa-thuan.pdf',
+    }])
+
+    renderForm()
+
+    expect(await screen.findByText('Đã duyệt')).toBeVisible()
+    expect(screen.queryByText('Hệ thống đang xử lý')).not.toBeInTheDocument()
+  })
 })

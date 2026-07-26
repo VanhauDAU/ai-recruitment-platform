@@ -92,4 +92,23 @@ describe('EmployerAccountVerificationCard', () => {
     expect(screen.getByText('Cấp 3/3')).toBeInTheDocument()
     expect(screen.getByText('Hoàn thành')).toHaveTextContent('Hoàn thành 100%')
   })
+
+  it('does not require a separate final approval to unlock the quota', () => {
+    queryState.data = {
+      onboarding: {
+        email_verified: true,
+        phone_verified: true,
+        company_linked: true,
+        business_doc_submitted: true,
+        business_doc_approved: true,
+        no_report_history: true,
+        representative_verified: false,
+      },
+    }
+
+    renderCard()
+
+    expect(screen.getByText(/Quota sẽ được mở tự động/)).toBeInTheDocument()
+    expect(screen.queryByText(/admin duyệt cuối cùng/)).not.toBeInTheDocument()
+  })
 })

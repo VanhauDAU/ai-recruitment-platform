@@ -23,11 +23,19 @@ from apps.accounts.models import (
     Department,
     User,
 )
+from apps.accounts.selectors import account_status_impact
 from apps.accounts.services import (
     accept_admin_invitation,
     assign_membership,
+    confirm_account_status,
     create_admin_invitation,
     create_provisioning_scope,
+)
+from apps.employers.models import (
+    CampaignActivity,
+    Company,
+    RecruiterProfile,
+    RecruitmentCampaign,
 )
 
 
@@ -109,6 +117,53 @@ class AccountManagementG3ApiTests(TestCase):
 
     def authenticate(self, user):
         self.client.force_authenticate(user)
+
+    def test_locking_employer_pauses_only_their_active_campaigns(self):
+        employer = User.objects.create_user(
+            'campaign-owner@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+        )
+        company = Company.objects.create(company_name='Campaign owner', created_by=employer)
+        recruiter = RecruiterProfile.objects.create(user=employer, company=company)
+        active_campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=company,
+            name='Active campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        completed_campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=company,
+            name='Completed campaign',
+            status=RecruitmentCampaign.Status.COMPLETED,
+        )
+        impact = account_status_impact(
+            employer,
+            status=User.Status.BANNED,
+            reason='Vi phạm chính sách.',
+        )
+
+        confirm_account_status(
+            employer,
+            status=User.Status.BANNED,
+            reason='Vi phạm chính sách.',
+            impact_token=impact['impact_token'],
+            actor=self.superuser,
+        )
+
+        active_campaign.refresh_from_db()
+        completed_campaign.refresh_from_db()
+        self.assertEqual(active_campaign.status, RecruitmentCampaign.Status.PAUSED)
+        self.assertEqual(completed_campaign.status, RecruitmentCampaign.Status.COMPLETED)
+        self.assertTrue(
+            CampaignActivity.objects.filter(
+                campaign=active_campaign,
+                event_type=CampaignActivity.EventType.CAMPAIGN_PAUSED,
+                actor=self.superuser,
+                metadata={'reason': 'employer_account_locked'},
+            ).exists()
+        )
 
     def invite(self, *, email='new-admin@example.com', actor=None):
         self.authenticate(actor or self.provisioner)

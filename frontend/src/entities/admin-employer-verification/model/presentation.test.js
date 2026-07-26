@@ -20,9 +20,9 @@ describe('employer verification presentation', () => {
     expect(documentStatusMeta('approved').label).toBe('Đã duyệt')
   })
 
-  it('keeps the shared admin and employer checklist at ten explicit steps', () => {
-    expect(Object.keys(VERIFICATION_CHECK_LABELS)).toHaveLength(10)
-    expect(VERIFICATION_CHECK_LABELS.case_approved).toBe('Admin đã duyệt cuối cùng')
+  it('keeps the shared admin and employer checklist at nine explicit steps', () => {
+    expect(Object.keys(VERIFICATION_CHECK_LABELS)).toHaveLength(9)
+    expect(VERIFICATION_CHECK_LABELS.case_approved).toBeUndefined()
   })
 
   it('renders an unknown backend status without exposing an empty label', () => {

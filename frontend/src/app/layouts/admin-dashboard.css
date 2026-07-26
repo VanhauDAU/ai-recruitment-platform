@@ -30,6 +30,8 @@
     radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--admin-primary) 18%, transparent), transparent 28%),
     var(--admin-sidebar) !important;
   border-right: 1px solid rgba(148, 163, 184, 0.12);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Giữ điều hướng desktop trong viewport khi trang quản trị cuộn. Selector con
@@ -50,6 +52,7 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
   height: 82px;
   justify-content: center;
   padding: 0 20px;
@@ -70,10 +73,16 @@
   text-transform: uppercase;
 }
 
+.admin-sider__navigation {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px 0 18px;
+}
+
 .admin-sider .ant-menu {
   background: transparent !important;
   border: 0 !important;
-  padding: 14px 10px;
+  padding: 0 10px;
 }
 
 .admin-sider .ant-menu-item-group-title {
@@ -92,9 +101,63 @@
   min-height: 44px;
 }
 
+.admin-sider .ant-menu-submenu-title {
+  border-radius: 10px;
+  color: #cbd5e1 !important;
+  font-weight: 600;
+  margin-block: 3px !important;
+  min-height: 44px;
+}
+
+.admin-sider:not(.ant-layout-sider-collapsed) .ant-menu-item,
+.admin-sider:not(.ant-layout-sider-collapsed) .ant-menu-submenu-title {
+  align-items: center;
+  display: flex;
+  height: auto !important;
+  line-height: 1.35 !important;
+  padding-block: 10px !important;
+}
+
+.admin-sider:not(.ant-layout-sider-collapsed) .ant-menu-title-content {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: break-word;
+}
+
 .admin-sider .ant-menu-item:hover {
   background: color-mix(in srgb, var(--admin-primary) 11%, var(--admin-sidebar)) !important;
   color: #ffffff !important;
+}
+
+.admin-sider .ant-menu-submenu-title:hover {
+  background: color-mix(in srgb, var(--admin-primary) 11%, var(--admin-sidebar)) !important;
+  color: #ffffff !important;
+}
+
+.admin-sider .ant-menu-submenu-arrow,
+.admin-sider .ant-menu-submenu-arrow::after,
+.admin-sider .ant-menu-submenu-arrow::before {
+  color: var(--admin-sidebar-muted) !important;
+}
+
+.admin-sider .ant-motion-collapse {
+  transition:
+    height 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 150ms ease-out !important;
+  will-change: height, opacity;
+}
+
+.admin-sider .ant-menu-sub.ant-menu-inline {
+  background: rgba(15, 23, 42, 0.35) !important;
+  border-left: 1px solid rgba(148, 163, 184, 0.18) !important;
+  border-radius: 0 10px 10px 0;
+  margin: 2px 0 6px 18px;
+  padding: 4px 0 4px 4px;
+}
+
+.admin-sider .ant-menu-sub.ant-menu-inline .ant-menu-item {
+  min-height: 40px;
 }
 
 .admin-sider .ant-menu-item-selected {
