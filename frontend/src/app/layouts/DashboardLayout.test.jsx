@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardLayout from './DashboardLayout'
@@ -39,7 +40,7 @@ describe('DashboardLayout admin access', () => {
     )
 
     expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
-    expect(screen.getByText('Quyền của tôi')).toBeInTheDocument()
+    expect(screen.getByText('Tài khoản của tôi')).toBeInTheDocument()
     expect(screen.queryByText('Cài đặt hệ thống')).not.toBeInTheDocument()
     expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()
   })
@@ -64,5 +65,33 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText(/Liên hệ quản trị hệ thống/)).toBeInTheDocument()
+  })
+
+  it('asks for confirmation before logging out', async () => {
+    const logout = vi.fn().mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'admin@example.com',
+        admin_access: {
+          is_superuser: true,
+          permissions: [],
+          memberships: [],
+        },
+      },
+      logout,
+    })
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Đăng xuất' }))
+
+    expect(await screen.findByText('Đăng xuất khỏi phiên này?')).toBeInTheDocument()
+    expect(logout).not.toHaveBeenCalled()
   })
 })

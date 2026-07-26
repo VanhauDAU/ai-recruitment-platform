@@ -1,5 +1,6 @@
 import { Tabs } from 'antd'
 import MembershipPanel from './MembershipPanel'
+import ProvisioningScopePanel from './ProvisioningScopePanel'
 import { DepartmentPanel, RolePanel } from './StructurePanels'
 
 export default function AccessControlTabs({
@@ -55,6 +56,10 @@ export default function AccessControlTabs({
           onImpact={membership.onImpact}
         />
       ),
+    }, {
+      key: 'provisioning',
+      label: 'Cấp tài khoản',
+      children: <ProvisioningScopePanel />,
     }] : []),
   ]
 

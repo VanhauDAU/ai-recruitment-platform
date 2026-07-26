@@ -4,7 +4,12 @@ import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
 import PermissionGuard from '../guards/PermissionGuard'
 import RoleGuard from '../guards/RoleGuard'
-import { ADMIN_PAGE_BY_KEY, AdminLoginPage } from '../lazy/admin.pages'
+import {
+  ADMIN_PAGE_BY_KEY,
+  AdminInvitationAcceptPage,
+  AdminLoginPage,
+  AdminPasswordResetPage,
+} from '../lazy/admin.pages'
 import { AuthLayout, DashboardLayout } from '../lazy/layouts'
 import { ADMIN_ROUTES } from '../admin/admin-routes.config'
 import { resolveAdminDestination } from '../admin/admin-destination'
@@ -12,6 +17,14 @@ import { resolveAdminDestination } from '../admin/admin-destination'
 export function adminRoutes() {
   return [
     <Route key="admin-auth" element={<AuthLayout />}>
+      <Route
+        path={adminPath('/invitation')}
+        element={<AdminInvitationAcceptPage />}
+      />
+      <Route
+        path={adminPath('/reset-password')}
+        element={<AdminPasswordResetPage />}
+      />
       <Route element={<GuestGuard allowedRoles={['admin']} />}>
         <Route
           path={adminPath('/login')}

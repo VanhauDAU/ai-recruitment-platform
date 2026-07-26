@@ -1,9 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminAccountSettings from './AdminAccountSettings'
 
+const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
+
+vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('./AdminProfilePanel', () => ({ default: () => <div>panel-profile</div> }))
 vi.mock('./AdminSecurityPanel', () => ({ default: () => <div>panel-security</div> }))
 vi.mock('./AdminMyAccessPanel', () => ({ default: () => <div>panel-access</div> }))
@@ -18,9 +21,24 @@ function renderAt(initialEntry = '/admin/app/account') {
 }
 
 describe('AdminAccountSettings', () => {
+  beforeEach(() => {
+    useSession.mockReturnValue({
+      user: {
+        full_name: 'Quản trị viên',
+        email: 'admin@example.com',
+        email_verified: true,
+        two_factor_enabled: true,
+        admin_access: { is_superuser: true, memberships: [] },
+      },
+    })
+  })
+
   it('renders the four tabs and opens the profile panel by default', () => {
     renderAt()
 
+    expect(screen.getByRole('heading', { name: 'Tài khoản của tôi' })).toBeInTheDocument()
+    expect(screen.getByText('Đã xác minh')).toBeInTheDocument()
+    expect(screen.getByText('Đang bật')).toBeInTheDocument()
     for (const label of ['Hồ sơ', 'Bảo mật', 'Quyền của tôi', 'Nhật ký hoạt động']) {
       expect(screen.getByRole('tab', { name: new RegExp(label) })).toBeInTheDocument()
     }

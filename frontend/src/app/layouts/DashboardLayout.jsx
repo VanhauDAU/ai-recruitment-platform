@@ -12,9 +12,10 @@ import {
   SafetyCertificateOutlined,
   SettingOutlined,
   SolutionOutlined,
+  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, ConfigProvider, Drawer, Layout, Menu, Typography } from 'antd'
+import { Avatar, Button, ConfigProvider, Drawer, Layout, Menu, Popconfirm, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -33,6 +34,7 @@ const { Header, Sider, Content } = Layout
 const ICONS = {
   access: <KeyOutlined />,
   account: <IdcardOutlined />,
+  accounts: <TeamOutlined />,
   cv: <FileTextOutlined />,
   dashboard: <AppstoreOutlined />,
   leads: <ContactsOutlined />,
@@ -92,7 +94,7 @@ function AdminBrand({ collapsed = false }) {
         imageClassName={collapsed ? 'h-8 w-8 object-contain object-left' : 'h-8 max-w-[148px]'}
         textClassName="text-sm"
       />
-      {!collapsed && <span className="admin-sider__product">Admin Console</span>}
+      {!collapsed && <span className="admin-sider__product">ProCV - Quản trị</span>}
     </div>
   )
 }
@@ -120,7 +122,10 @@ export default function DashboardLayout() {
     && !adminAccess.isSuperuser
     && adminAccess.memberships.length === 0
   )
-  const currentRoute = items.find((item) => item.path === pathname)
+  const currentRoute = items.find((item) => (
+    item.path === pathname || pathname.startsWith(`${item.path}/`)
+  ))
+  const navigationPath = currentRoute?.path || pathname
 
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
@@ -154,7 +159,7 @@ export default function DashboardLayout() {
           <AdminBrand collapsed={sidebarCollapsed} />
           <AdminNavigation
             items={items}
-            pathname={pathname}
+            pathname={navigationPath}
             navigate={navigate}
             collapsed={sidebarCollapsed}
           />
@@ -178,7 +183,7 @@ export default function DashboardLayout() {
             <AdminBrand />
             <AdminNavigation
               items={items}
-              pathname={pathname}
+              pathname={navigationPath}
               navigate={navigate}
               onNavigate={() => setMobileNavOpen(false)}
             />
@@ -234,13 +239,22 @@ export default function DashboardLayout() {
                   </div>
                 </div>
               </button>
-              <Button
-                className="admin-icon-button"
-                icon={<LogoutOutlined />}
-                aria-label="Đăng xuất"
-                title="Đăng xuất"
-                onClick={logout}
-              />
+              <Popconfirm
+                title="Đăng xuất khỏi phiên này?"
+                description="Bạn sẽ cần đăng nhập lại để tiếp tục quản lý hệ thống."
+                okText="Đăng xuất"
+                cancelText="Ở lại"
+                okButtonProps={{ danger: true }}
+                onConfirm={logout}
+                placement="bottomRight"
+              >
+                <Button
+                  className="admin-icon-button"
+                  icon={<LogoutOutlined />}
+                  aria-label="Đăng xuất"
+                  title="Đăng xuất"
+                />
+              </Popconfirm>
             </div>
           </Header>
           <Content>

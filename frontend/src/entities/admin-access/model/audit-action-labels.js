@@ -30,6 +30,20 @@ export const AUDIT_ACTION_LABELS = {
   restore_system_role: 'Khôi phục chức danh mặc định',
   sync_permission_catalog: 'Đồng bộ danh mục quyền',
 
+  // Quản lý tài khoản và cấp phát Admin.
+  create_admin_invitation: 'Mời tài khoản Admin',
+  update_admin_invitation: 'Đổi chức danh lời mời',
+  resend_admin_invitation: 'Gửi lại lời mời Admin',
+  revoke_admin_invitation: 'Thu hồi lời mời Admin',
+  accept_admin_invitation: 'Chấp nhận lời mời Admin',
+  create_provisioning_scope: 'Tạo phạm vi cấp tài khoản',
+  set_provisioning_scope_active: 'Đổi trạng thái phạm vi cấp tài khoản',
+  update_account_profile: 'Cập nhật hồ sơ tài khoản',
+  change_account_status: 'Đổi trạng thái tài khoản',
+  revoke_account_sessions: 'Thu hồi phiên tài khoản',
+  send_account_password_reset: 'Gửi đặt lại mật khẩu',
+  resend_account_verification: 'Gửi lại xác minh email',
+
   // Thao tác từ management command / seed.
   bootstrap_mfa: 'Khởi tạo MFA qua CLI',
   mark_email_verified: 'Đánh dấu email đã xác minh',

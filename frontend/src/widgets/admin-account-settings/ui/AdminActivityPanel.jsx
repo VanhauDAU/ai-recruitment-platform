@@ -10,7 +10,7 @@ import {
   useAdminAccess,
 } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
-import { listSessionHistory } from '@/features/session-management'
+import { groupSessions, listSessionHistory } from '@/features/session-management'
 
 const PAGE_SIZE = 10
 
@@ -123,7 +123,7 @@ export default function AdminActivityPanel() {
 
       <Card title="Lịch sử đăng nhập">
         <p className="mb-4 text-sm text-slate-500">
-          50 phiên gần nhất, gồm cả phiên đã đăng xuất. Nếu thấy thiết bị lạ, hãy đổi mật khẩu ngay.
+          Mỗi thiết bị/IP chỉ hiển thị một lần. Nếu thấy thiết bị lạ, hãy đổi mật khẩu ngay.
         </p>
         <div className="overflow-x-auto">
           <Table
@@ -131,12 +131,12 @@ export default function AdminActivityPanel() {
             size="middle"
             loading={history.isLoading}
             pagination={false}
-            dataSource={history.data || []}
+            dataSource={groupSessions(history.data || [])}
             locale={{ emptyText: <Empty description="Chưa có phiên đăng nhập nào." /> }}
             columns={[
               { title: 'Thiết bị', dataIndex: 'device_label', render: (value) => value || 'Không xác định' },
               { title: 'IP', dataIndex: 'ip_address', width: 150, render: (value) => value || '—' },
-              { title: 'Bắt đầu', dataIndex: 'created_at', width: 170, render: formatDateTime },
+              { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', width: 170, render: formatDateTime },
               {
                 title: 'Trạng thái',
                 dataIndex: 'revoked_at',

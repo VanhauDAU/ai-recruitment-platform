@@ -101,7 +101,7 @@ describe('TwoFactorMethodsPanel', () => {
 
     renderPanel()
     const row = screen.getByTestId('two-factor-method-backup')
-    await user.click(within(row).getByRole('switch'))
+    await user.click(within(row).getByRole('button', { name: 'Tạo mã' }))
 
     expect(await screen.findByText('Xác nhận tạo mã dự phòng')).toBeInTheDocument()
     await user.click(screen.getAllByRole('textbox')[0])
@@ -111,21 +111,39 @@ describe('TwoFactorMethodsPanel', () => {
     await waitFor(() => expect(mocks.generateBackupCodes).toHaveBeenCalledWith('123456', 'totp'))
   })
 
-  it('uses TOTP first and offers email when creating backup codes with both methods enabled', async () => {
+  it('uses Email first and still offers an authenticator app when creating backup codes with both methods enabled', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: { email: 'hr@example.com', two_factor_email_enabled: true, two_factor_totp_enabled: true, two_factor_backup_codes_enabled: false }, setCurrentUser: vi.fn() })
     mocks.sendBackupCodesCode.mockResolvedValue({ email: 'hr@example.com', expires_in: 180 })
 
     renderPanel()
     const row = screen.getByTestId('two-factor-method-backup')
-    await user.click(within(row).getByRole('switch'))
+    await user.click(within(row).getByRole('button', { name: 'Tạo mã' }))
 
     expect(await screen.findByText('Xác nhận tạo mã dự phòng')).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'Ứng dụng xác thực' })).toBeChecked()
-    await user.click(screen.getByRole('radio', { name: 'Nhận mã qua Email' }))
-
+    expect(screen.getByRole('radio', { name: 'Nhận mã qua Email' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Ứng dụng xác thực' })).toBeInTheDocument()
     await waitFor(() => expect(mocks.sendBackupCodesCode).toHaveBeenCalledOnce())
     expect(screen.getByText('hr@example.com')).toBeInTheDocument()
+  })
+
+  it('lets an admin disable backup codes after step-up verification', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({ user: { email: 'root@example.com', two_factor_email_enabled: false, two_factor_totp_enabled: true, two_factor_backup_codes_enabled: true }, setCurrentUser: vi.fn() })
+    mocks.disableMfaMethod.mockResolvedValue({
+      email: 'root@example.com', two_factor_email_enabled: false, two_factor_totp_enabled: true, two_factor_backup_codes_enabled: false,
+    })
+
+    renderPanel()
+    const row = screen.getByTestId('two-factor-method-backup')
+    await user.click(within(row).getByRole('button', { name: 'Tắt' }))
+    expect(await screen.findByText('Xác nhận tắt mã dự phòng')).toBeInTheDocument()
+
+    await user.click(screen.getAllByRole('textbox')[0])
+    await user.keyboard('123456')
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }))
+
+    await waitFor(() => expect(mocks.disableMfaMethod).toHaveBeenCalledWith('backup', 'totp', '123456'))
   })
 
   it('lets the account switch to a backup code when disabling email', async () => {
@@ -150,18 +168,18 @@ describe('TwoFactorMethodsPanel', () => {
     await waitFor(() => expect(mocks.disableMfaMethod).toHaveBeenCalledWith('email', 'backup', '12345678'))
   })
 
-  it('locks enabled methods but still allows enrolling when canDisableMethods is false', async () => {
+  it('allows an admin to turn off an enabled Email MFA method', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: { email: 'root@example.com', two_factor_email_enabled: true, two_factor_totp_enabled: false }, setCurrentUser: vi.fn() })
-    mocks.startTotpSetup.mockResolvedValue({ otpauth_url: 'otpauth://totp/ProCV?secret=ABC123', manual_key: 'ABC123', expires_in: 180 })
+    mocks.sendMfaMethodDisableCode.mockResolvedValue({ email: 'root@example.com', expires_in: 180 })
 
-    renderPanel({ canDisableMethods: false })
+    renderPanel()
 
     const emailSwitch = within(screen.getByTestId('two-factor-method-email')).getByRole('switch')
-    expect(emailSwitch).toBeDisabled()
+    expect(emailSwitch).toBeEnabled()
+    await user.click(emailSwitch)
 
-    // Phương thức chưa bật vẫn phải bật được — khoá chỉ áp cho việc hạ cấp.
-    await user.click(within(screen.getByTestId('two-factor-method-totp')).getByRole('switch'))
-    await waitFor(() => expect(mocks.startTotpSetup).toHaveBeenCalledOnce())
+    expect(await screen.findByText('Xác nhận tắt Email')).toBeInTheDocument()
+    await waitFor(() => expect(mocks.sendMfaMethodDisableCode).toHaveBeenCalledWith('email'))
   })
 })

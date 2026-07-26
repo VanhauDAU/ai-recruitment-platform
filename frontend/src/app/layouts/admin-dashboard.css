@@ -16,11 +16,33 @@
   min-height: 100dvh;
 }
 
+/* Ant Layout đặt width: 100% cho cột nội dung; khi đứng cạnh Sider, giá trị đó
+ * làm tổng chiều rộng thành viewport + sidebar. Cho cột này co theo phần còn
+ * lại để bảng rộng tự cuộn bên trong thay vì kéo tràn toàn bộ trang. */
+.admin-shell > .ant-layout {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+}
+
 .admin-sider {
   background:
     radial-gradient(circle at 20% 0%, rgba(14, 165, 233, 0.18), transparent 28%),
     var(--admin-sidebar) !important;
   border-right: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+/* Giữ điều hướng desktop trong viewport khi trang quản trị cuộn. Selector con
+ * trực tiếp để không biến navigation trong Drawer mobile thành sticky. */
+.admin-shell > .admin-sider.ant-layout-sider {
+  align-self: flex-start;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  position: sticky !important;
+  scrollbar-gutter: stable;
+  top: 0;
+  z-index: 20;
 }
 
 .admin-sider__brand {

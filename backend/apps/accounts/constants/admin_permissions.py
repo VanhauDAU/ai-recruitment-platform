@@ -6,6 +6,48 @@ instead of deleted so a code rollback can restore grants without data loss.
 
 ADMIN_PERMISSIONS = (
     {
+        'code': 'account.admin.invite',
+        'module': 'account',
+        'label': 'Mời tài khoản quản trị',
+        'description': 'Mời và quản lý lời mời quản trị viên trong phạm vi chức danh được cấp.',
+    },
+    {
+        'code': 'account.admin.manage',
+        'module': 'account',
+        'label': 'Quản lý tài khoản quản trị',
+        'description': 'Quản lý tài khoản quản trị đã kích hoạt; thao tác ghi vẫn superuser-only.',
+    },
+    {
+        'code': 'account.admin.view',
+        'module': 'account',
+        'label': 'Xem tài khoản quản trị',
+        'description': 'Xem danh sách và chi tiết tài khoản quản trị nội bộ.',
+    },
+    {
+        'code': 'account.profile.manage',
+        'module': 'account',
+        'label': 'Sửa thông tin tài khoản',
+        'description': 'Sửa họ tên và số điện thoại của ứng viên hoặc nhà tuyển dụng.',
+    },
+    {
+        'code': 'account.security.manage',
+        'module': 'account',
+        'label': 'Hỗ trợ bảo mật tài khoản',
+        'description': 'Gửi xác minh, đặt lại mật khẩu và thu hồi phiên tài khoản.',
+    },
+    {
+        'code': 'account.status.manage',
+        'module': 'account',
+        'label': 'Quản lý trạng thái tài khoản',
+        'description': 'Tạm khóa, mở khóa hoặc cấm tài khoản ứng viên và nhà tuyển dụng.',
+    },
+    {
+        'code': 'account.view',
+        'module': 'account',
+        'label': 'Xem tài khoản người dùng',
+        'description': 'Xem danh sách và chi tiết tài khoản ứng viên, nhà tuyển dụng.',
+    },
+    {
         'code': 'admin_access.manage_department',
         'module': 'admin_access',
         'label': 'Quản lý phòng ban',

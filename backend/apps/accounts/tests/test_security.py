@@ -1,4 +1,4 @@
-"""Chính sách bảo mật: MFA bắt buộc cho admin, last_login, rate limit, email job."""
+"""Chính sách bảo mật: phiên admin, last_login, rate limit và email job."""
 
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
@@ -35,7 +35,7 @@ class AdminAuthenticationPolicyTests(APITestCase):
             role=User.Role.ADMIN,
         )
 
-    def test_admin_without_mfa_cannot_login_workspace(self):
+    def test_admin_without_mfa_can_login_workspace(self):
         response = self.client.post(
             reverse('auth-login'),
             {
@@ -46,9 +46,9 @@ class AdminAuthenticationPolicyTests(APITestCase):
             },
         )
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data['code'], 'admin_mfa_required')
-        self.assertNotIn(cookie_name('admin'), response.cookies)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn(cookie_name('admin'), response.cookies)
 
     def test_admin_mfa_issues_five_minute_access_and_httponly_refresh_cookie(self):
         self.admin.two_factor_enabled = True
@@ -310,6 +310,8 @@ class LastLoginTests(APITestCase):
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     FRONTEND_URL='https://main.example.test',
     EMPLOYER_FRONTEND_URL='https://employer.example.test',
+    ADMIN_FRONTEND_URL='https://admin.example.test',
+    ADMIN_PASSWORD_RESET_PATH='/app/reset-password',
     EMPLOYER_EMAIL_VERIFICATION_PATH='/app/account/verify',
     EMPLOYER_PASSWORD_RESET_PATH='/app/reset-password',
 )
@@ -392,6 +394,66 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertIn(
             'https://employer.example.test/app/reset-password?token=', mail.outbox[0].body
         )
+
+    def test_admin_password_reset_email_uses_admin_portal_link_and_label(self):
+        user = User.objects.create_user(
+            email='admin-reset@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+            is_active=True,
+        )
+
+        password_reset.send_password_reset_email(user)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Đặt lại mật khẩu tài khoản Quản trị ProCV', mail.outbox[0].subject)
+        self.assertIn(
+            'https://admin.example.test/app/reset-password?token=',
+            mail.outbox[0].body,
+        )
+        self.assertIn('portal=admin', mail.outbox[0].body)
+
+    def test_admin_reset_token_requires_admin_portal_and_active_account(self):
+        user = User.objects.create_user(
+            email='admin-token@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+            is_active=True,
+        )
+        token = password_reset.issue_token(user)
+
+        missing_portal = self.client.get(
+            reverse('auth-password-reset-validate'),
+            {'token': token},
+        )
+        valid = self.client.get(
+            reverse('auth-password-reset-validate'),
+            {'token': token, 'portal': 'admin'},
+        )
+        reset = self.client.post(
+            reverse('auth-password-reset-confirm'),
+            {'token': token, 'password': 'AdminNewPass@123', 'portal': 'admin'},
+            format='json',
+        )
+
+        self.assertEqual(missing_portal.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(valid.status_code, status.HTTP_200_OK)
+        self.assertEqual(valid.data['role'], User.Role.ADMIN)
+        self.assertEqual(reset.status_code, status.HTTP_200_OK, reset.data)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('AdminNewPass@123'))
+
+        disabled_token = password_reset.issue_token(user)
+        user.status = User.Status.BANNED
+        user.is_active = False
+        user.save(update_fields=['status', 'is_active', 'updated_at'])
+        blocked = self.client.get(
+            reverse('auth-password-reset-validate'),
+            {'token': disabled_token, 'portal': 'admin'},
+        )
+        self.assertEqual(blocked.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_email_outbox_job_is_marked_sent_after_delivery(self):
         user = User.objects.create_user(email='queue@example.com', password='Password@123')

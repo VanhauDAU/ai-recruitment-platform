@@ -1,0 +1,200 @@
+.admin-account-settings {
+  display: grid;
+  grid-template-columns: minmax(15.5rem, 19rem) minmax(0, 1fr);
+  align-items: start;
+  gap: 1.25rem;
+  margin-block: 0.5rem 1.5rem;
+}
+
+.admin-account-settings__rail {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.admin-account-settings__heading {
+  min-width: 0;
+}
+
+.admin-account-settings__eyebrow {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.admin-account-settings__title {
+  margin: 0.25rem 0 0;
+  color: #0f172a;
+  font-size: 1.375rem;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.admin-account-settings__status-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.admin-account-settings__status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 3.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  background: #f8fafc;
+}
+
+.admin-account-settings__status-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.625rem;
+  color: #0369a1;
+  background: #f0f9ff;
+}
+
+.admin-account-settings__status-icon.is-positive {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.admin-account-settings__tabs {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.admin-account-settings__tab {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  color: #475569;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.admin-account-settings__tab:hover {
+  color: #0369a1;
+  background: #f0f9ff;
+}
+
+.admin-account-settings__tab[aria-selected='true'] {
+  color: #075985;
+  background: #e0f2fe;
+  font-weight: 700;
+}
+
+.admin-account-settings__tab:focus-visible,
+.admin-account-settings__content:focus-visible {
+  outline: 3px solid rgb(3 105 161 / 0.35);
+  outline-offset: 2px;
+}
+
+.admin-account-settings__content {
+  min-width: 0;
+  padding-block: 0.125rem;
+}
+
+/* Mỗi panel hiện có dùng một wrapper `space-y-5`. Chuyển thành grid gap tại
+ * boundary của layout để khoảng cách giữa các section luôn đồng nhất, kể cả
+ * khi một panel có Alert hoặc lưới card ở giữa. */
+.admin-account-settings__content > .space-y-5 {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-account-settings__content > .space-y-5 > * {
+  margin-block: 0 !important;
+}
+
+.admin-account-settings__content .ant-card {
+  overflow: hidden;
+  border-color: #e2e8f0;
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.admin-account-settings__content .ant-card .ant-card-head {
+  min-height: 3.75rem;
+  border-bottom-color: #f1f5f9;
+  padding-inline: 1.375rem;
+}
+
+.admin-account-settings__content .ant-card .ant-card-head-title {
+  padding-block: 1rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.admin-account-settings__content .ant-card .ant-card-body {
+  padding: 1.375rem;
+}
+
+@media (max-width: 900px) {
+  .admin-account-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-account-settings__rail {
+    position: static;
+  }
+
+  .admin-account-settings__status-grid,
+  .admin-account-settings__tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-account-settings__tab {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-account-settings__status-grid,
+  .admin-account-settings__tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-account-settings__status-item {
+    padding: 0.625rem;
+  }
+
+  .admin-account-settings__tab {
+    min-height: 3rem;
+    padding-inline: 0.5rem;
+  }
+
+  .admin-account-settings__tab {
+    font-size: 0.8125rem;
+  }
+
+  .admin-account-settings__content .ant-card .ant-card-head,
+  .admin-account-settings__content .ant-card .ant-card-body {
+    padding-inline: 1rem;
+  }
+}

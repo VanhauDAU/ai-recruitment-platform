@@ -1,4 +1,5 @@
 export const MODULE_LABELS = {
+  account: 'Quản lý tài khoản',
   admin_access: 'Quản lý phân quyền',
   audit_log: 'Lịch sử hệ thống',
   blog: 'Bài viết',

@@ -1,0 +1,417 @@
+.account-page {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  width: 100%;
+}
+
+.account-page__intro {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.account-page__intro > div,
+.account-page > *,
+.account-management-panel,
+.account-management-panel > .ant-tabs,
+.account-management-panel .ant-tabs-content-holder,
+.account-management-panel .ant-tabs-content,
+.account-management-panel .ant-tabs-tabpane {
+  min-width: 0;
+}
+
+.account-management-panel {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.account-page__icon {
+  align-items: center;
+  background: linear-gradient(145deg, #0f766e, #0d9488);
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgb(13 148 136 / 22%);
+  color: #fff;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 21px;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.account-page__intro p,
+.account-page__intro h1,
+.account-page__intro span {
+  margin: 0;
+}
+
+.account-page__intro p {
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.account-page__intro h1 {
+  color: #0f172a;
+  font-size: clamp(22px, 2.2vw, 29px);
+  letter-spacing: -0.025em;
+  line-height: 1.22;
+}
+
+.account-page__intro div > span {
+  color: #64748b;
+  display: block;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.account-stats {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.account-stat {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 15px;
+  box-shadow: var(--admin-shadow);
+  display: flex;
+  gap: 12px;
+  min-height: 106px;
+  padding: 16px;
+}
+
+.account-stat__icon {
+  align-items: center;
+  background: #eff6ff;
+  border-radius: 12px;
+  color: #2563eb;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 19px;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.account-stat--green .account-stat__icon { background: #ecfdf5; color: #059669; }
+.account-stat--red .account-stat__icon { background: #fff1f2; color: #e11d48; }
+.account-stat--amber .account-stat__icon { background: #fffbeb; color: #d97706; }
+.account-stat--slate .account-stat__icon { background: #f1f5f9; color: #475569; }
+
+.account-stat p,
+.account-stat span {
+  color: #64748b;
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.account-stat p {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-stat strong {
+  color: #0f172a;
+  display: block;
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  margin: 3px 0 1px;
+}
+
+.account-management-panel > .ant-tabs > .ant-tabs-nav {
+  margin: 0;
+  padding: 0 20px;
+}
+
+.account-management-panel > .ant-tabs > .ant-tabs-content-holder {
+  padding: 20px;
+}
+
+.account-filter-bar,
+.account-list-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.account-filter-bar__search {
+  max-width: 440px;
+}
+
+.account-filter-popover {
+  max-width: calc(100vw - 32px);
+  width: 680px;
+}
+
+.account-filter-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-filter-grid label,
+.account-modal-field {
+  display: grid;
+  gap: 6px;
+}
+
+.account-filter-grid label > span,
+.account-modal-field > span {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.account-filter-grid .ant-select,
+.account-filter-grid .ant-picker {
+  width: 100%;
+}
+
+.account-filter-grid__wide {
+  grid-column: span 1;
+}
+
+.account-filter-popover__footer {
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.account-identity {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  gap: 11px;
+  margin: -6px;
+  max-width: 100%;
+  padding: 6px;
+  width: calc(100% + 12px);
+}
+
+.account-identity:hover,
+.account-identity:focus-visible {
+  background: #f0f9ff;
+}
+
+.account-identity:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 1px;
+}
+
+.account-security-stack {
+  display: grid;
+  font-size: 12px;
+  gap: 3px;
+}
+
+.account-security-stack .is-positive { color: #047857; }
+.account-security-stack .is-warning { color: #b45309; }
+
+.account-drawer__hero {
+  align-items: center;
+  background: linear-gradient(135deg, #f0f9ff, #f8fafc);
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+}
+
+.account-drawer__summary {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.account-drawer__line {
+  align-items: flex-start;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0369a1;
+  display: flex;
+  gap: 12px;
+  padding: 0 2px 12px;
+}
+
+.account-drawer__line p {
+  color: #64748b;
+  font-size: 11px;
+  margin: 0 0 2px;
+  text-transform: uppercase;
+}
+
+.account-drawer__line strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.account-drawer__access,
+.invitation-role-summary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  margin-top: 18px;
+  padding: 16px;
+}
+
+.account-drawer__access p {
+  color: #475569;
+  margin: 8px 0 12px;
+}
+
+.account-list-toolbar__filters {
+  display: grid;
+  flex: 1;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(4, minmax(150px, 1fr));
+}
+
+.invitation-role-summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: -4px 0 18px;
+}
+
+.invitation-role-summary span {
+  color: #64748b;
+  display: block;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.invitation-role-summary strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.invitation-role-summary__permissions {
+  border-top: 1px solid #e2e8f0;
+  grid-column: 1 / -1;
+  padding-top: 10px;
+}
+
+@media (max-width: 1280px) {
+  .account-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .account-list-toolbar__filters { grid-template-columns: repeat(3, minmax(170px, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .account-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-management-panel > .ant-tabs > .ant-tabs-content-holder { padding: 14px; }
+  .account-filter-bar,
+  .account-list-toolbar { align-items: stretch; flex-direction: column; }
+  .account-filter-bar__search { max-width: none; }
+  .account-filter-grid,
+  .account-list-toolbar__filters { grid-template-columns: 1fr; width: 100%; }
+  .account-filter-grid__wide { grid-column: auto; }
+  .account-list-toolbar > .ant-btn { min-height: 44px; width: 100%; }
+}
+
+@media (max-width: 520px) {
+  .account-stats { grid-template-columns: 1fr; }
+  .account-stat { min-height: 90px; }
+}
+
+.account-detail-hero {
+  align-items: center;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(14, 165, 233, 0.12), transparent 30%),
+    #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  box-shadow: var(--admin-shadow);
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 22px;
+}
+
+.account-detail-hero__identity {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+.account-detail-tabs {
+  padding: 0 20px 20px;
+}
+
+.account-detail-tabs > .ant-tabs > .ant-tabs-nav {
+  margin-bottom: 20px;
+}
+
+.account-detail-card {
+  border-color: #e2e8f0;
+  box-shadow: none;
+}
+
+.account-detail-metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-detail-metrics div {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  min-height: 94px;
+  padding: 14px;
+}
+
+.account-detail-metrics span {
+  color: #64748b;
+  display: block;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+
+.account-detail-metrics strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.account-security-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .account-detail-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .account-detail-hero > .ant-space {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .account-detail-hero > .ant-space .ant-btn,
+  .account-security-actions .ant-btn {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .account-detail-metrics { grid-template-columns: 1fr; }
+  .account-security-actions { display: grid; }
+}

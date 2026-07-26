@@ -184,6 +184,7 @@ class AuthEmailJob(models.Model):
         WELCOME = 'welcome', 'Welcome email'
         PASSWORD_RESET = 'password_reset', 'Password reset'
         TWO_FACTOR = 'two_factor', 'Two-factor authentication code'
+        ADMIN_INVITATION = 'admin_invitation', 'Admin invitation'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
@@ -248,6 +249,10 @@ class AuthSession(models.Model):
         ordering = ['-last_seen_at']
         indexes = [
             models.Index(fields=['user', 'revoked_at'], name='auth_session_user_active_idx'),
+            models.Index(
+                fields=['user', 'portal', 'ip_address', 'revoked_at'],
+                name='auth_session_device_active_idx',
+            ),
         ]
         constraints = [
             models.UniqueConstraint(fields=['refresh_jti'], name='uq_auth_session_refresh_jti'),

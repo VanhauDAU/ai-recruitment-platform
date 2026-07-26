@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileDoneOutlined } from '@ant-design/icons'
 import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tag, message } from 'antd'
 import { getAdminJobModeration, jobKeys, reviewAdminJob } from '@/entities/job'
-import { AdminPageHeader, AdminPanel } from '@/widgets/admin-workspace'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Chờ duyệt' },
@@ -117,12 +116,6 @@ export default function AdminJobModeration() {
 
   return (
     <section className="space-y-5">
-      <AdminPageHeader
-        eyebrow="Kiểm duyệt nội dung"
-        title="Duyệt tin tuyển dụng"
-        description="Kiểm tra chất lượng tin trước khi hiển thị với ứng viên; mọi quyết định từ chối đều kèm lý do rõ ràng."
-        icon={<FileDoneOutlined />}
-      />
       <AdminPanel
         title="Hàng chờ kiểm duyệt"
         description="Lọc theo trạng thái để tập trung vào các tin cần xử lý."

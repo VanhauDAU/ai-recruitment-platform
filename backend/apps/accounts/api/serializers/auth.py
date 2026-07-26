@@ -287,6 +287,11 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     token = serializers.CharField(write_only=True)
     password = password_field()
+    # Cổng admin không có endpoint quên mật khẩu công khai. Giá trị này chỉ có
+    # trong link reset được một superuser gửi từ khu vực quản trị.
+    portal = serializers.ChoiceField(
+        choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True
+    )
 
 
 class PasswordChangeSerializer(serializers.Serializer):

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { SolutionOutlined } from '@ant-design/icons'
 import {
   Button,
   Form,
@@ -25,7 +24,7 @@ import {
   updateAdminServicePackage,
 } from '@/entities/service-package'
 import { message } from '@/shared/lib/toast'
-import { AdminPageHeader, AdminPanel } from '@/widgets/admin-workspace'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 const CATEGORY_DEFAULTS = { order: 0, is_active: true }
 const PACKAGE_DEFAULTS = { currency: 'VND', cta_type: 'contact', order: 0, is_active: true, is_highlight: false }
@@ -136,12 +135,6 @@ export default function AdminEmployerServices() {
 
   return (
     <div className="space-y-5">
-      <AdminPageHeader
-        eyebrow="Danh mục thương mại"
-        title="Dịch vụ nhà tuyển dụng"
-        description="Quản lý nhóm dịch vụ, giá, quyền lợi và CTA hiển thị trên trang báo giá công khai."
-        icon={<SolutionOutlined />}
-      />
       <AdminPanel>
         <Tabs items={[
           { key: 'categories', label: `Danh mục (${categories.length})`, children: <><div className="mb-4 flex justify-end"><Button type="primary" onClick={() => openEditor('category')}>Thêm danh mục</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={categories} columns={categoryColumns} pagination={false} scroll={{ x: 1000 }} /></div></> },
