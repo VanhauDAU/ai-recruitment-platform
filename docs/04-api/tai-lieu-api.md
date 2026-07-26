@@ -146,6 +146,53 @@ nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draf
 ẩn → hiện cần `.publish`, hiện → ẩn cần `.archive`; gửi lại giá trị không đổi
 không bị chặn.
 
+### API quản trị phân quyền G2
+
+Base path: `/api/admin/`. Cột “SU” nghĩa là endpoint bắt buộc
+`is_superuser=True`, kể cả khi tài khoản có permission tương ứng.
+
+| Method | Endpoint | Permission | SU |
+| --- | --- | --- | :---: |
+| GET | `/departments/`, `/departments/{public_id}/` | `admin_access.view` | |
+| POST/PATCH | `/departments/`, `/departments/{public_id}/` | `admin_access.manage_department` | ✓ |
+| POST | `/departments/{id}/status-impact/`, `activate/`, `deactivate/` | `admin_access.manage_department` | ✓ |
+| GET/POST | `/departments/{id}/restore-system-default/` | `admin_access.manage_department` | ✓ |
+| GET | `/roles/?department={code}`, `/roles/{public_id}/` | `admin_access.view` | |
+| POST/PATCH | `/roles/`, `/roles/{public_id}/` | `admin_access.manage_role` | ✓ |
+| POST | `/roles/{id}/status-impact/`, `activate/`, `deactivate/` | `admin_access.manage_role` | ✓ |
+| POST/PUT | `/roles/{id}/permissions-impact/`, `/roles/{id}/permissions/` | `admin_access.manage_role` | ✓ |
+| GET/POST | `/roles/{id}/restore-system-default/` | `admin_access.manage_role` | ✓ |
+| GET | `/permissions/?role={role_public_id}` | `admin_access.view` | |
+| GET | `/memberships/?department=&user=&include_revoked=` | `admin_access.view` | ✓ |
+| POST | `/memberships/assignment-impact/`, `/memberships/` | `admin_access.manage_staff` | ✓ |
+| GET/POST | `/memberships/{id}/revoke-impact/`, `revoke/` | `admin_access.manage_staff` | ✓ |
+| GET/POST | `/memberships/{id}/set-primary-impact/`, `set-primary/` | `admin_access.manage_staff` | ✓ |
+| GET | `/staff/?q={email}` | `admin_access.view` | ✓ |
+
+Action xác nhận nhận `impact_token` từ preview tương ứng. Token chỉ dùng đúng
+operation/resource/payload đã xem và hết hạn sau 600 giây. Operation hợp lệ:
+
+```text
+department.status.change · department.restore
+role.status.change · role.permissions.update · role.restore
+membership.assign · membership.revoke · membership.set_primary
+```
+
+Thiếu quyền trả `403 admin_permission_denied`. Preview stale, đổi payload, dùng
+token sai resource/operation hoặc có audit mới xen giữa trả:
+
+```json
+{
+  "code": "admin_resource_changed",
+  "message": "Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục."
+}
+```
+
+Permission picker chỉ đọc `/permissions/?role=...`; JSON generated là contract
+build-time. Permission deprecated đang được role giữ vẫn xuất hiện với
+`is_active=false`, `is_granted_to_role=true` và không được gửi trong
+`permission_codes` active.
+
 ### CV catalogue admin (admin-only)
 
 | Method | Endpoint | Mô tả |

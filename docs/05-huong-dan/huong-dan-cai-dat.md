@@ -74,6 +74,13 @@ python manage.py createsuperuser
 # createsuperuser chưa xác minh email/bật MFA; bootstrap tin cậy từ CLI:
 python manage.py bootstrap_admin_mfa <email-admin> \
   --mark-email-verified --actor-email <email-superuser>
+
+# Tài khoản nhân viên admin: không dùng createsuperuser vì sẽ bypass RBAC.
+# Command hỏi mật khẩu tương tác và tạo is_superuser=False, is_staff=False:
+python manage.py create_admin_user <email-nhan-vien> \
+  --actor-email <email-superuser>
+python manage.py bootstrap_admin_mfa <email-nhan-vien> \
+  --mark-email-verified --actor-email <email-superuser>
 python manage.py runserver 8000
 ```
 
