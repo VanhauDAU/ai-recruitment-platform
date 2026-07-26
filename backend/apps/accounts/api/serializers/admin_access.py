@@ -1,7 +1,14 @@
 from rest_framework import serializers
 
 from ...constants import system_department_definition, system_role_definition
-from ...models import AdminMembership, AdminPermission, AdminRole, Department, User
+from ...models import (
+    AdminAccessAuditLog,
+    AdminMembership,
+    AdminPermission,
+    AdminRole,
+    Department,
+    User,
+)
 
 
 class StrippedTextMixin:
@@ -134,7 +141,6 @@ class AdminMembershipReadSerializer(serializers.ModelSerializer):
             'user',
             'department',
             'role',
-            'is_primary',
             'is_active',
             'assigned_at',
             'revoked_at',
@@ -176,7 +182,6 @@ class AdminMembershipCreateSerializer(serializers.Serializer):
         slug_field='public_id',
         queryset=AdminRole.objects.select_related('department'),
     )
-    is_primary = serializers.BooleanField(default=False)
     impact_token = serializers.CharField(write_only=True, trim_whitespace=True)
 
 
@@ -209,6 +214,26 @@ class AdminStaffSerializer(serializers.ModelSerializer):
             'full_name',
             'two_factor_enabled',
             'active_membership_count',
+        ]
+
+
+class AdminAuditLogSerializer(serializers.ModelSerializer):
+    """Một dòng nhật ký. ``actor_email`` rỗng khi thao tác đến từ CLI/seed."""
+
+    actor_email = serializers.CharField(source='actor.email', default='', read_only=True)
+
+    class Meta:
+        model = AdminAccessAuditLog
+        fields = [
+            'public_id',
+            'action',
+            'source',
+            'actor_email',
+            'actor_identifier',
+            'target_type',
+            'target_public_id',
+            'payload',
+            'created_at',
         ]
 
 
@@ -276,4 +301,3 @@ class MembershipAssignmentImpactSerializer(serializers.Serializer):
         slug_field='public_id',
         queryset=AdminRole.objects.select_related('department'),
     )
-    is_primary = serializers.BooleanField(default=False)

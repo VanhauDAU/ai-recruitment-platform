@@ -123,19 +123,21 @@ export function revokeAdminMembership(publicId, impactToken) {
   }))
 }
 
-export function getMembershipPrimaryImpact(publicId) {
-  return data(client.get(`/admin/memberships/${publicId}/set-primary-impact/`))
-}
-
-export function setAdminMembershipPrimary(publicId, impactToken) {
-  return data(client.post(`/admin/memberships/${publicId}/set-primary/`, {
-    impact_token: impactToken,
-  }))
-}
-
 export function getAdminStaff(query = '', { signal } = {}) {
   return data(client.get('/admin/staff/', {
     params: query ? { q: query } : {},
+    signal,
+  }))
+}
+
+// `scope: 'all'` cần quyền `audit_log.view`; mặc định chỉ trả log của chính mình.
+export function getAdminAuditLogs({ scope = 'mine', action = '', page = 1, signal } = {}) {
+  return data(client.get('/admin/audit-logs/', {
+    params: {
+      page,
+      ...(scope === 'all' ? { scope: 'all' } : {}),
+      ...(action ? { action } : {}),
+    },
     signal,
   }))
 }

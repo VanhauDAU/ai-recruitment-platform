@@ -16,7 +16,6 @@ const { api, message, useSession } = vi.hoisted(() => {
     'getDepartmentRestoreImpact',
     'getDepartmentStatusImpact',
     'getMembershipAssignmentImpact',
-    'getMembershipPrimaryImpact',
     'getMembershipRevokeImpact',
     'getRolePermissionsImpact',
     'getRoleRestoreImpact',
@@ -25,7 +24,6 @@ const { api, message, useSession } = vi.hoisted(() => {
     'restoreAdminRole',
     'revokeAdminMembership',
     'setAdminDepartmentStatus',
-    'setAdminMembershipPrimary',
     'setAdminRoleStatus',
     'updateAdminDepartment',
     'updateAdminRole',
@@ -93,7 +91,6 @@ const membership = {
     name: role.name,
     rank: role.rank,
   },
-  is_primary: true,
   is_active: true,
   assigned_at: '2026-07-25T00:00:00Z',
   revoked_at: null,
@@ -164,6 +161,30 @@ describe('AccessControl', () => {
 
     expect(await screen.findByText('Nguyễn Văn A')).toBeInTheDocument()
     expect(screen.getByText('Chưa bật MFA')).toBeInTheDocument()
+    expect(screen.getByText('Nhân viên & chức danh')).toBeInTheDocument()
+    expect(screen.getByText('Mỗi nhân viên chỉ có một chức danh đang hiệu lực.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Gán chức danh' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Đổi chức danh' })).toBeInTheDocument()
+  })
+
+  it('derives a department code from its name instead of asking an admin to enter one', async () => {
+    api.createAdminDepartment.mockResolvedValue({ ...department, public_id: 'dept_legal' })
+    renderPage(true)
+    fireEvent.click(await screen.findByRole('button', { name: 'Thêm phòng ban' }))
+
+    const nameInput = screen.getByLabelText('Tên phòng ban')
+    fireEvent.change(nameInput, { target: { value: 'Pháp chế' } })
+
+    expect(screen.queryByLabelText(/Mã phòng ban/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo phòng ban' }))
+    await waitFor(() => {
+      expect(api.createAdminDepartment).toHaveBeenCalledWith({
+        name: 'Pháp chế',
+        description: '',
+        code: 'phap-che',
+      })
+    })
   })
 
   it('uses real permission impact and disables confirmation when blocked', async () => {
@@ -186,7 +207,7 @@ describe('AccessControl', () => {
     })
     renderPage(true)
     fireEvent.click(await screen.findByRole('tab', { name: 'Chức danh' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Sửa quyền' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Quyền/ }))
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Xem catalogue CV' }))
     fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
 
@@ -220,7 +241,8 @@ describe('AccessControl', () => {
     renderPage(true)
     fireEvent.click(await screen.findByRole('tab', { name: 'Chức danh' }))
     const table = await screen.findByRole('table')
-    fireEvent.click(within(table).getByRole('button', { name: 'Khoá' }))
+    fireEvent.click(within(table).getByRole('button', { name: 'Thao tác khác cho Nhân viên' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Khoá' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận đổi trạng thái' }))
 
     expect(await screen.findByText('Dữ liệu đã thay đổi')).toBeInTheDocument()
@@ -248,7 +270,7 @@ describe('AccessControl', () => {
     })
     renderPage(true)
     fireEvent.click(await screen.findByRole('tab', { name: 'Chức danh' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Sửa quyền' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Quyền/ }))
     const checkbox = await screen.findByRole('checkbox', { name: 'Xem catalogue CV' })
     fireEvent.click(checkbox)
     fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
@@ -266,4 +288,14 @@ describe('AccessControl', () => {
       ['cv_template.view'],
     )
   }, 90_000)
+
+  it('opens the employee detail drawer from the personnel table', async () => {
+    renderPage(true)
+    fireEvent.click(await screen.findByRole('tab', { name: 'Nhân viên' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Xem chi tiết Nguyễn Văn A/ }))
+
+    expect(await screen.findByText('Chi tiết nhân viên')).toBeInTheDocument()
+    expect(screen.getByText('Người cấp')).toBeInTheDocument()
+    expect(screen.getByText('root@example.com')).toBeInTheDocument()
+  })
 })

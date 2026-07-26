@@ -73,9 +73,9 @@ def admin_access_snapshot(user):
             role__department__is_active=True,
         )
         .select_related('role__department')
-        .order_by('-is_primary', '-role__rank', 'assigned_at', 'id')
+        .order_by('-assigned_at', '-id')
     )
-    primary = next((item for item in memberships if item.is_primary), None)
+    primary = memberships[0] if memberships else None
     return {
         'is_superuser': bool(user.is_superuser),
         'permissions': sorted(effective_permission_codes(user)),
@@ -153,7 +153,7 @@ def memberships_queryset(
         'role__department',
         'assigned_by',
         'revoked_by',
-    ).order_by('-is_primary', '-role__rank', 'assigned_at', 'id')
+    ).order_by('-assigned_at', '-id')
     if not include_revoked:
         queryset = queryset.filter(is_active=True)
     if department_code:
@@ -191,6 +191,22 @@ def permissions_queryset(*, role=None):
         return queryset.annotate(
             is_granted_to_role=Q(pk__in=granted_ids),
         )
+    return queryset
+
+
+def audit_logs_queryset(*, actor=None, action=None, target_type=None):
+    """Nhật ký phân quyền + thao tác bảo mật tự phục vụ.
+
+    ``actor=None`` trả toàn hệ thống — chỉ dùng cho tài khoản có
+    ``audit_log.view``; view phải tự kiểm quyền trước khi bỏ filter actor.
+    """
+    queryset = AdminAccessAuditLog.objects.select_related('actor')
+    if actor is not None:
+        queryset = queryset.filter(actor=actor)
+    if action:
+        queryset = queryset.filter(action=action)
+    if target_type:
+        queryset = queryset.filter(target_type=target_type)
     return queryset
 
 
@@ -478,22 +494,15 @@ def role_permissions_impact(role, *, permission_codes):
     return _finish_affected_preview(result, affected)
 
 
-def membership_assignment_impact(user, role, *, is_primary):
+def membership_assignment_impact(user, role):
     grouped = _impact_memberships({user.pk})
     memberships = grouped.get(user.pk, [])
     current_permissions = _effective_codes(memberships)
     role_permissions = set(role.permissions.filter(is_active=True).values_list('code', flat=True))
-    current_primary = _primary_membership(memberships)
-    make_primary = bool(is_primary) or current_primary is None
-    next_department = (
-        role.department
-        if make_primary
-        else (current_primary.role.department if current_primary else role.department)
-    )
+    current_membership = memberships[0] if memberships else None
     payload = {
         'user_public_id': user.public_id,
         'role_public_id': role.public_id,
-        'is_primary': bool(is_primary),
     }
     return {
         'user': {
@@ -507,11 +516,21 @@ def membership_assignment_impact(user, role, *, is_primary):
             'name': role.name,
         },
         'permissions_gained': sorted(role_permissions - current_permissions),
+        'permissions_lost': sorted(current_permissions - role_permissions),
         'permissions_already_available': sorted(role_permissions & current_permissions),
-        'current_primary_department': (
-            _department_summary(current_primary.role.department) if current_primary else None
+        'replaced_membership': (
+            {
+                'public_id': current_membership.public_id,
+                'department': _department_summary(current_membership.role.department),
+                'role': {
+                    'public_id': current_membership.role.public_id,
+                    'code': current_membership.role.code,
+                    'name': current_membership.role.name,
+                },
+            }
+            if current_membership
+            else None
         ),
-        'next_primary_department': _department_summary(next_department),
         'mfa_warning': not user.two_factor_enabled,
         'impact_token': create_impact_token(
             revision=current_rbac_revision(),
@@ -530,44 +549,15 @@ def membership_revoke_impact(membership):
         memberships,
         excluded_membership_ids={membership.pk},
     )
-    current_primary = _primary_membership(memberships)
-    next_primary = _primary_membership(
-        memberships,
-        excluded_membership_ids={membership.pk},
-    )
     return {
         'membership': membership.public_id,
         'user': _user_summary(membership.user),
         'department': _department_summary(membership.role.department),
         'role': {'code': membership.role.code, 'name': membership.role.name},
         'permissions_lost': sorted(before - after),
-        'is_primary': bool(current_primary and current_primary.pk == membership.pk),
-        'next_primary_department': (
-            _department_summary(next_primary.role.department) if next_primary else None
-        ),
         'impact_token': create_impact_token(
             revision=current_rbac_revision(),
             operation='membership.revoke',
-            resource_key=f'membership:{membership.public_id}',
-            normalized_payload={},
-        ),
-    }
-
-
-def membership_set_primary_impact(membership):
-    grouped = _impact_memberships({membership.user_id})
-    memberships = grouped.get(membership.user_id, [])
-    current = _primary_membership(memberships)
-    return {
-        'membership': membership.public_id,
-        'user': _user_summary(membership.user),
-        'current_primary_department': (
-            _department_summary(current.role.department) if current else None
-        ),
-        'next_primary_department': _department_summary(membership.role.department),
-        'impact_token': create_impact_token(
-            revision=current_rbac_revision(),
-            operation='membership.set_primary',
             resource_key=f'membership:{membership.public_id}',
             normalized_payload={},
         ),

@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .api.views.admin_access import (
+    AdminAuditLogViewSet,
     AdminDepartmentViewSet,
     AdminMembershipViewSet,
     AdminPermissionViewSet,
@@ -10,6 +11,7 @@ from .api.views.admin_access import (
 )
 
 router = DefaultRouter()
+router.register('audit-logs', AdminAuditLogViewSet, basename='admin-audit-log')
 router.register('departments', AdminDepartmentViewSet, basename='admin-department')
 router.register('roles', AdminRoleViewSet, basename='admin-role')
 router.register('permissions', AdminPermissionViewSet, basename='admin-permission')

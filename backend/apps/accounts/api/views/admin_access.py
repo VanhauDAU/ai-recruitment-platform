@@ -4,17 +4,19 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 
+from common.pagination import StandardPagination
+
 from ...admin_access_rules import InvalidImpactToken, StaleImpactToken
 from ...exceptions import AdminResourceChanged
 from ...models import AdminMembership, AdminRole
-from ...permissions import HasAdminPermission
+from ...permissions import HasAdminPermission, IsAdmin, require_admin_permission
 from ...selectors import (
     admin_staff_queryset,
+    audit_logs_queryset,
     department_status_impact,
     departments_queryset,
     membership_assignment_impact,
     membership_revoke_impact,
-    membership_set_primary_impact,
     memberships_queryset,
     permissions_queryset,
     restore_system_department_impact,
@@ -27,7 +29,6 @@ from ...services import (
     confirm_department_status_change,
     confirm_membership_assignment,
     confirm_membership_revoke,
-    confirm_membership_set_primary,
     confirm_restore_system_department,
     confirm_restore_system_role,
     confirm_role_permissions_update,
@@ -38,6 +39,7 @@ from ...services import (
     update_role,
 )
 from ..serializers.admin_access import (
+    AdminAuditLogSerializer,
     AdminMembershipCreateSerializer,
     AdminMembershipReadSerializer,
     AdminPermissionSerializer,
@@ -406,8 +408,6 @@ class AdminMembershipViewSet(
         'assignment_impact': ['admin_access.manage_staff'],
         'revoke': ['admin_access.manage_staff'],
         'revoke_impact': ['admin_access.manage_staff'],
-        'set_primary': ['admin_access.manage_staff'],
-        'set_primary_impact': ['admin_access.manage_staff'],
     }
 
     def get_queryset(self):
@@ -435,7 +435,6 @@ class AdminMembershipViewSet(
             confirm_membership_assignment,
             user=data['user'],
             role=data['role'],
-            primary=data['is_primary'],
             impact_token=data['impact_token'],
             **_actor_kwargs(request),
         )
@@ -466,12 +465,11 @@ class AdminMembershipViewSet(
             role=data['role'],
             is_active=True,
         ).exists():
-            raise ValidationError({'role_public_id': 'Tài khoản đã có chức danh này.'})
+            raise ValidationError({'role_public_id': 'Nhân viên đã có chức danh này.'})
         return Response(
             membership_assignment_impact(
                 data['user'],
                 data['role'],
-                is_primary=data['is_primary'],
             )
         )
 
@@ -485,26 +483,6 @@ class AdminMembershipViewSet(
         serializer.is_valid(raise_exception=True)
         membership = _confirmed_call(
             confirm_membership_revoke,
-            membership=self.get_object(),
-            impact_token=serializer.validated_data['impact_token'],
-            **_actor_kwargs(request),
-        )
-        return Response(
-            AdminMembershipReadSerializer(
-                memberships_queryset(include_revoked=True).get(pk=membership.pk)
-            ).data
-        )
-
-    @action(detail=True, methods=['get'], url_path='set-primary-impact')
-    def set_primary_impact(self, request, public_id=None):
-        return Response(membership_set_primary_impact(self.get_object()))
-
-    @action(detail=True, methods=['post'], url_path='set-primary')
-    def set_primary(self, request, public_id=None):
-        serializer = MembershipActionConfirmationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        membership = _confirmed_call(
-            confirm_membership_set_primary,
             membership=self.get_object(),
             impact_token=serializer.validated_data['impact_token'],
             **_actor_kwargs(request),
@@ -532,3 +510,29 @@ class AdminStaffViewSet(
 
     def get_queryset(self):
         return admin_staff_queryset(query=self.request.query_params.get('q', '').strip())
+
+
+class AdminAuditLogViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """Nhật ký hoạt động cho trang Cài đặt tài khoản.
+
+    Mặc định chỉ trả log của chính người gọi nên mọi quản trị viên đều xem được,
+    kể cả tài khoản chưa được gán phòng ban. ``?scope=all`` mở rộng ra toàn hệ
+    thống và yêu cầu quyền ``audit_log.view`` — vì thế permission class là
+    ``IsAdmin`` chứ không phải ``HasAdminPermission`` (class đó fail-closed khi
+    view không khai báo sẵn permission code).
+    """
+
+    permission_classes = [IsAdmin]
+    serializer_class = AdminAuditLogSerializer
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        params = self.request.query_params
+        scope_is_all = params.get('scope') == 'all'
+        if scope_is_all:
+            require_admin_permission(self.request.user, 'audit_log.view')
+        return audit_logs_queryset(
+            actor=None if scope_is_all else self.request.user,
+            action=params.get('action', '').strip(),
+            target_type=params.get('target_type', '').strip(),
+        )

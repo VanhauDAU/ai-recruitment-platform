@@ -8,17 +8,13 @@ from django.apps import apps as django_apps
 from django.core import management
 from django.core.exceptions import ValidationError
 from django.core.management.base import CommandError
-from django.db import close_old_connections, connection
+from django.db import IntegrityError, close_old_connections, connection, transaction
 from django.test import TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from apps.accounts.admin_access_rules import (
-    StaleImpactToken,
-    create_impact_token,
-    select_primary_successor,
-)
+from apps.accounts.admin_access_rules import StaleImpactToken, create_impact_token
 from apps.accounts.constants import system_role_definition
 from apps.accounts.models import (
     AdminAccessAuditLog,
@@ -32,11 +28,13 @@ from apps.accounts.permissions import HasAdminPermission
 from apps.accounts.selectors import (
     current_rbac_revision,
     department_status_impact,
+    membership_assignment_impact,
     role_permissions_impact,
     role_status_impact,
 )
 from apps.accounts.services import (
     assign_membership,
+    confirm_membership_assignment,
     confirm_role_status_change,
     restore_system_role,
     set_role_permissions,
@@ -191,8 +189,6 @@ class AdminAccessG2ApiTests(TestCase):
             ('post', reverse('admin-membership-list'), {}),
             ('get', reverse('admin-membership-revoke-impact', kwargs=membership_kwargs), {}),
             ('post', reverse('admin-membership-revoke', kwargs=membership_kwargs), {}),
-            ('get', reverse('admin-membership-set-primary-impact', kwargs=membership_kwargs), {}),
-            ('post', reverse('admin-membership-set-primary', kwargs=membership_kwargs), {}),
         ]
         for method, url, payload in requests:
             response = getattr(self.client, method)(url, payload, format='json')
@@ -293,7 +289,7 @@ class AdminAccessG2ApiTests(TestCase):
             1,
         )
 
-    def test_impact_counts_ignore_locked_structure_and_shared_permissions(self):
+    def test_impact_counts_ignore_locked_structure_and_replaced_memberships(self):
         locked_role = AdminRole.objects.create(
             department=self.department,
             code='locked',
@@ -326,11 +322,13 @@ class AdminAccessG2ApiTests(TestCase):
             role=User.Role.ADMIN,
             status=User.Status.ACTIVE,
         )
-        assign_membership(shared_user, first_role, actor=self.superuser)
+        first_membership = assign_membership(shared_user, first_role, actor=self.superuser)
         assign_membership(shared_user, second_role, actor=self.superuser)
+        first_membership.refresh_from_db()
+        self.assertFalse(first_membership.is_active)
 
         impact = role_permissions_impact(first_role, permission_codes=[])
-        self.assertEqual(impact['active_membership_count'], 1)
+        self.assertEqual(impact['active_membership_count'], 0)
         self.assertEqual(impact['effective_users_changed_count'], 0)
         self.assertEqual(impact['affected_user_count'], 0)
 
@@ -416,7 +414,6 @@ class AdminAccessG2ApiTests(TestCase):
             {
                 'user_public_id': self.staff.public_id,
                 'role_public_id': self.role.public_id,
-                'is_primary': True,
             },
             format='json',
         )
@@ -429,13 +426,13 @@ class AdminAccessG2ApiTests(TestCase):
             {
                 'user_public_id': self.staff.public_id,
                 'role_public_id': self.role.public_id,
-                'is_primary': True,
                 'impact_token': preview.json()['impact_token'],
             },
             format='json',
         )
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(response.json()['is_primary'])
+        self.assertTrue(response.json()['is_active'])
+        self.assertNotIn('is_primary', response.json())
 
     def test_assignment_rejects_empty_permission_role(self):
         empty_role = AdminRole.objects.create(
@@ -621,7 +618,6 @@ class AdminAccessG2ApiTests(TestCase):
             {
                 'user_public_id': self.staff.public_id,
                 'role_public_id': self.role.public_id,
-                'is_primary': False,
             },
             format='json',
         )
@@ -630,7 +626,6 @@ class AdminAccessG2ApiTests(TestCase):
             {
                 'user_public_id': self.staff.public_id,
                 'role_public_id': second_role.public_id,
-                'is_primary': False,
                 'impact_token': assignment.json()['impact_token'],
             },
             format='json',
@@ -862,7 +857,7 @@ class AdminAccessRuleTests(TestCase):
             )
         )
 
-    def test_select_primary_successor_is_deterministic_and_excludes(self):
+    def test_only_one_active_membership_can_exist_for_a_user(self):
         department = Department.objects.create(code='ops', name='Ops')
         user = User.objects.create_user(
             'rules@example.com',
@@ -882,16 +877,9 @@ class AdminAccessRuleTests(TestCase):
             name='High',
             rank=100,
         )
-        first = AdminMembership.objects.create(user=user, role=low)
-        second = AdminMembership.objects.create(user=user, role=high)
-        self.assertEqual(select_primary_successor([first, second]), second)
-        self.assertEqual(
-            select_primary_successor(
-                [first, second],
-                excluded_membership_ids={second.pk},
-            ),
-            first,
-        )
+        AdminMembership.objects.create(user=user, role=low, is_primary=True)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            AdminMembership.objects.create(user=user, role=high, is_primary=True)
 
     def test_role_permission_service_noop_and_empty_invariant(self):
         actor = User.objects.create_user(
@@ -940,6 +928,73 @@ class AdminAccessConcurrencyTests(TransactionTestCase):
     # Preserve data-migration fixtures and suppress post_migrate re-creation
     # between this row-locking suite and other serialized TransactionTestCases.
     serialized_rollback = True
+
+    def test_two_role_replacements_leave_one_active_membership(self):
+        actor = User.objects.create_user(
+            'root-replacement@example.com',
+            'TestPass123',
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+            is_superuser=True,
+        )
+        employee = User.objects.create_user(
+            'employee-replacement@example.com',
+            'TestPass123',
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+        )
+        department = Department.objects.create(code='replacement', name='Replacement')
+        old_role = AdminRole.objects.create(department=department, code='old', name='Old')
+        new_role = AdminRole.objects.create(department=department, code='new', name='New')
+        permission = AdminPermission.objects.create(
+            code='replacement.view',
+            module='replacement',
+            label='Replacement',
+        )
+        old_role.permissions.add(permission)
+        new_role.permissions.add(permission)
+        old_membership = assign_membership(employee, old_role, actor=actor)
+        token = membership_assignment_impact(employee, new_role)['impact_token']
+        barrier = threading.Barrier(2)
+        outcomes = []
+        outcome_lock = threading.Lock()
+
+        def run_confirmation():
+            close_old_connections()
+            local_employee = User.objects.get(pk=employee.pk)
+            local_role = AdminRole.objects.get(pk=new_role.pk)
+            local_actor = User.objects.get(pk=actor.pk)
+            barrier.wait()
+            try:
+                confirm_membership_assignment(
+                    local_employee,
+                    local_role,
+                    impact_token=token,
+                    actor=local_actor,
+                )
+                outcome = 'committed'
+            except StaleImpactToken:
+                outcome = 'stale'
+            finally:
+                close_old_connections()
+            with outcome_lock:
+                outcomes.append(outcome)
+
+        threads = [threading.Thread(target=run_confirmation) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=10)
+
+        self.assertEqual(sorted(outcomes), ['committed', 'stale'])
+        old_membership.refresh_from_db()
+        self.assertFalse(old_membership.is_active)
+        active = AdminMembership.objects.get(user=employee, is_active=True)
+        self.assertEqual(active.role_id, new_role.pk)
+        self.assertEqual(
+            AdminAccessAuditLog.objects.filter(action='replace_membership').count(),
+            1,
+        )
 
     def test_two_confirmations_for_one_role_only_one_commits(self):
         actor = User.objects.create_user(

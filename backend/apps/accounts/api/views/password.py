@@ -8,7 +8,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from ...services import auth_sessions
+from ...services import auth_sessions, record_admin_self_action
 from ...services.refresh_cookies import refresh_from_request, set_refresh_cookie
 from ...services.tokens import issue_tokens, revoke_refresh_tokens
 from ..serializers import PasswordChangeSerializer, SessionUserSerializer
@@ -77,6 +77,11 @@ class PasswordChangeView(APIView):
 
         user.set_password(serializer.validated_data['password'])
         user.save(update_fields=['password', 'updated_at'])
+        record_admin_self_action(
+            user,
+            'self_password_change',
+            {'logout_all_sessions': serializer.validated_data['logout_all_sessions']},
+        )
 
         # Đổi mật khẩu là thao tác nhạy cảm: luôn rotate phiên hiện tại (OWASP —
         # thay session identifier sau thay đổi nhạy cảm) và cấp cặp token mới để

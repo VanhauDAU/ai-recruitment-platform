@@ -7,6 +7,7 @@ export {
   createAdminDepartment,
   createAdminMembership,
   createAdminRole,
+  getAdminAuditLogs,
   getAdminDepartments,
   getAdminMemberships,
   getAdminPermissions,
@@ -15,7 +16,6 @@ export {
   getDepartmentRestoreImpact,
   getDepartmentStatusImpact,
   getMembershipAssignmentImpact,
-  getMembershipPrimaryImpact,
   getMembershipRevokeImpact,
   getRolePermissionsImpact,
   getRoleRestoreImpact,
@@ -24,14 +24,18 @@ export {
   restoreAdminRole,
   revokeAdminMembership,
   setAdminDepartmentStatus,
-  setAdminMembershipPrimary,
   setAdminRoleStatus,
   updateAdminDepartment,
   updateAdminRole,
   updateAdminRolePermissions,
 } from './api/admin-access.api'
+export {
+  auditActionLabel,
+  auditSourceLabel,
+  AUDIT_ACTION_LABELS,
+  SELF_SERVICE_ACTIONS,
+} from './model/audit-action-labels'
 export { groupPermissionsByModule } from './model/group-by-module'
 export { MODULE_LABELS } from './model/module-labels'
 export { createAdminAccess, useAdminAccess } from './model/use-admin-access'
-export { default as DepartmentBadge } from './ui/DepartmentBadge'
 export { default as adminPermissionCatalog } from './model/admin-permissions.generated.json'

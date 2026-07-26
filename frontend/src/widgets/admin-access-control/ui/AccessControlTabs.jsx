@@ -51,6 +51,7 @@ export default function AccessControlTabs({
           onPageChange={membership.onPageChange}
           onIncludeRevokedChange={membership.onIncludeRevokedChange}
           onAssign={membership.onAssign}
+          onReplace={membership.onReplace}
           onImpact={membership.onImpact}
         />
       ),

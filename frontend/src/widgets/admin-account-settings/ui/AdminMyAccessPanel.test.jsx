@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import MyAccess from './MyAccess'
+import AdminMyAccessPanel from './AdminMyAccessPanel'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
-describe('MyAccess', () => {
+describe('AdminMyAccessPanel', () => {
   beforeEach(() => useSession.mockReset())
 
   it('shows the department, role and grouped permission labels', () => {
@@ -28,7 +28,7 @@ describe('MyAccess', () => {
         },
       },
     })
-    render(<MyAccess />)
+    render(<AdminMyAccessPanel />)
 
     expect(screen.getAllByText('Kiểm duyệt tin tuyển dụng').length).toBeGreaterThan(0)
     expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
@@ -46,7 +46,7 @@ describe('MyAccess', () => {
         },
       },
     })
-    render(<MyAccess />)
+    render(<AdminMyAccessPanel />)
     expect(screen.getByText(/Liên hệ quản trị hệ thống/)).toBeInTheDocument()
   })
 })

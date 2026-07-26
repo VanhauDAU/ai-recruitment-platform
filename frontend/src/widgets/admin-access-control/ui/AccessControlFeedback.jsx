@@ -71,7 +71,7 @@ export function ImpactDetails({ preview, stale }) {
 
       <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }}>
         {preview.active_membership_count !== undefined && (
-          <Descriptions.Item label="Membership hoạt động">
+          <Descriptions.Item label="Nhân viên có chức danh">
             {preview.active_membership_count.toLocaleString('vi-VN')}
           </Descriptions.Item>
         )}
@@ -80,19 +80,9 @@ export function ImpactDetails({ preview, stale }) {
             {preview.effective_users_changed_count.toLocaleString('vi-VN')}
           </Descriptions.Item>
         )}
-        {preview.primary_membership_count !== undefined && (
-          <Descriptions.Item label="Đang là phòng ban chính">
-            {preview.primary_membership_count.toLocaleString('vi-VN')}
-          </Descriptions.Item>
-        )}
-        {preview.current_primary_department && (
-          <Descriptions.Item label="Phòng ban chính hiện tại">
-            {preview.current_primary_department.name}
-          </Descriptions.Item>
-        )}
-        {preview.next_primary_department && (
-          <Descriptions.Item label="Phòng ban chính sau thay đổi">
-            {preview.next_primary_department.name}
+        {preview.replaced_membership && (
+          <Descriptions.Item label="Chức danh hiện tại">
+            {preview.replaced_membership.role.name} · {preview.replaced_membership.department.name}
           </Descriptions.Item>
         )}
       </Descriptions>
@@ -152,7 +142,6 @@ export function ImpactDetails({ preview, stale }) {
                       <div><Typography.Text type="secondary">{affectedUser.email}</Typography.Text></div>
                     )}
                   </div>
-                  {affectedUser.currently_primary && <Tag color="blue">Đang là chính</Tag>}
                 </div>
               ))}
             </div>

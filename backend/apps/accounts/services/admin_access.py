@@ -9,7 +9,6 @@ from ..admin_access_cache import bust_admin_permission_cache
 from ..admin_access_rules import (
     StaleImpactToken,
     decode_impact_token,
-    select_primary_successor,
 )
 from ..constants import (
     ADMIN_PERMISSIONS,
@@ -73,6 +72,26 @@ def _audit(
     )
 
 
+def record_admin_self_action(user, action, payload=None):
+    """Ghi nhật ký thao tác bảo mật do chính quản trị viên thực hiện.
+
+    Gọi được từ các view dùng chung cho mọi cổng: no-op với tài khoản không phải
+    admin nên không làm phình bảng audit bằng hoạt động của ứng viên/NTD.
+    Payload chỉ chứa metadata không nhạy cảm (không mật khẩu, mã, token).
+    """
+    if not user or not user.is_authenticated or not user.is_admin_role:
+        return None
+    return _audit(
+        actor=user,
+        source='api',
+        actor_identifier=user.email,
+        action=action,
+        target_type='user',
+        target_public_id=user.public_id,
+        payload=payload or {},
+    )
+
+
 def _schedule_cache_bust(user_ids):
     affected = set(user_ids)
     if affected:
@@ -94,8 +113,7 @@ def _valid_memberships(user):
 
 def _reevaluate_primary(user):
     active_memberships = list(_valid_memberships(user))
-    current = next((item for item in active_memberships if item.is_primary), None)
-    chosen = current or select_primary_successor(active_memberships)
+    chosen = active_memberships[0] if active_memberships else None
 
     AdminMembership.objects.filter(user=user, is_primary=True).exclude(
         pk=chosen.pk if chosen else None
@@ -166,7 +184,6 @@ def assign_membership(
     *,
     actor,
     source='api',
-    primary=None,
     actor_identifier='',
 ):
     if not user.is_admin_role:
@@ -181,22 +198,36 @@ def assign_membership(
             raise ValidationError('Không thể gán chức danh hoặc phòng ban đang bị khoá.')
         if not role.permissions.filter(is_active=True).exists():
             raise ValidationError('Không thể gán nhân viên vào chức danh chưa có quyền hiệu lực.')
-        locked = list(AdminMembership.objects.select_for_update().filter(user=user).order_by('id'))
-        if any(item.is_active and item.role_id == role.pk for item in locked):
-            raise ValidationError('Tài khoản đã có chức danh này.')
-
-        has_valid_membership = any(
-            item.is_active and item.role.is_active and item.role.department.is_active
-            for item in AdminMembership.objects.filter(user=user).select_related('role__department')
+        locked = list(
+            AdminMembership.objects.select_for_update()
+            .select_related('role__department')
+            .filter(user=user, is_active=True)
+            .order_by('id')
         )
-        make_primary = not has_valid_membership or primary is True
-        if make_primary:
-            AdminMembership.objects.filter(user=user, is_primary=True).update(is_primary=False)
+        if len(locked) == 1 and locked[0].role_id == role.pk:
+            raise ValidationError('Nhân viên đã được gán chức danh này.')
+
+        now = timezone.now()
+        replaced = [
+            {
+                'membership_public_id': item.public_id,
+                'department': item.role.department.code,
+                'role': item.role.code,
+            }
+            for item in locked
+        ]
+        if locked:
+            AdminMembership.objects.filter(pk__in=[item.pk for item in locked]).update(
+                is_active=False,
+                is_primary=False,
+                revoked_by=actor,
+                revoked_at=now,
+            )
         membership = AdminMembership(
             user=user,
             role=role,
             assigned_by=actor,
-            is_primary=make_primary,
+            is_primary=True,
         )
         membership.full_clean()
         membership.save()
@@ -204,7 +235,7 @@ def assign_membership(
             actor=actor,
             source=source,
             actor_identifier=actor_identifier,
-            action='assign_membership',
+            action='replace_membership' if replaced else 'assign_membership',
             target_type='membership',
             target_public_id=membership.public_id,
             payload={
@@ -212,6 +243,7 @@ def assign_membership(
                 'department': role.department.code,
                 'role': role.code,
                 'user_public_id': user.public_id,
+                'replaced_memberships': replaced,
             },
         )
         _schedule_cache_bust({user.pk})
@@ -233,7 +265,6 @@ def revoke_membership(
         )
         if not membership.is_active:
             return membership
-        was_primary = membership.is_primary
         membership.is_active = False
         membership.is_primary = False
         membership.revoked_by = actor
@@ -246,7 +277,6 @@ def revoke_membership(
                 'revoked_at',
             ]
         )
-        promoted = _reevaluate_primary(membership.user) if was_primary else None
         _audit(
             actor=actor,
             source=source,
@@ -257,55 +287,9 @@ def revoke_membership(
             payload={
                 'membership_public_id': membership.public_id,
                 'user_public_id': membership.user.public_id,
-                'promoted_membership_public_id': promoted.public_id if promoted else None,
             },
         )
         _schedule_cache_bust({membership.user_id})
-    return membership
-
-
-def set_primary_membership(
-    user,
-    membership,
-    *,
-    actor,
-    source='api',
-    actor_identifier='',
-):
-    with transaction.atomic():
-        list(AdminMembership.objects.select_for_update().filter(user=user))
-        membership = (
-            AdminMembership.objects.select_related('role__department')
-            .filter(pk=membership.pk, user=user)
-            .first()
-        )
-        if (
-            membership is None
-            or not membership.is_active
-            or not membership.role.is_active
-            or not membership.role.department.is_active
-        ):
-            raise ValidationError('Membership không còn hiệu lực.')
-        current = AdminMembership.objects.filter(user=user, is_active=True, is_primary=True).first()
-        if current and current.pk == membership.pk:
-            return membership
-        AdminMembership.objects.filter(user=user, is_primary=True).update(is_primary=False)
-        membership.is_primary = True
-        membership.save(update_fields=['is_primary'])
-        _audit(
-            actor=actor,
-            source=source,
-            actor_identifier=actor_identifier,
-            action='set_primary_membership',
-            target_type='membership',
-            target_public_id=membership.public_id,
-            payload={
-                'user_public_id': user.public_id,
-                'before_membership_public_id': current.public_id if current else None,
-                'after_membership_public_id': membership.public_id,
-            },
-        )
-        _schedule_cache_bust({user.pk})
     return membership
 
 
@@ -950,7 +934,6 @@ def confirm_membership_assignment(
     user,
     role,
     *,
-    primary,
     impact_token,
     actor,
     source='api',
@@ -959,7 +942,6 @@ def confirm_membership_assignment(
     payload = {
         'user_public_id': user.public_id,
         'role_public_id': role.public_id,
-        'is_primary': bool(primary),
     }
     claims = decode_impact_token(
         impact_token,
@@ -982,7 +964,6 @@ def confirm_membership_assignment(
             role,
             actor=actor,
             source=source,
-            primary=primary,
             actor_identifier=actor_identifier,
         )
 
@@ -1013,40 +994,6 @@ def confirm_membership_revoke(
         )
         _assert_current_revision(claims)
         return revoke_membership(
-            membership,
-            actor=actor,
-            source=source,
-            actor_identifier=actor_identifier,
-        )
-
-
-def confirm_membership_set_primary(
-    membership,
-    *,
-    impact_token,
-    actor,
-    source='api',
-    actor_identifier='',
-):
-    claims = decode_impact_token(
-        impact_token,
-        operation='membership.set_primary',
-        resource_key=f'membership:{membership.public_id}',
-        normalized_payload={},
-    )
-    with transaction.atomic():
-        membership = (
-            AdminMembership.objects.select_for_update().select_related('user').get(pk=membership.pk)
-        )
-        user = User.objects.select_for_update().get(pk=membership.user_id)
-        list(
-            AdminMembership.objects.select_for_update()
-            .filter(user=user, is_active=True)
-            .order_by('id')
-        )
-        _assert_current_revision(claims)
-        return set_primary_membership(
-            user,
             membership,
             actor=actor,
             source=source,

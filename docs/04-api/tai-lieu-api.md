@@ -166,8 +166,13 @@ Base path: `/api/admin/`. Cột “SU” nghĩa là endpoint bắt buộc
 | GET | `/memberships/?department=&user=&include_revoked=` | `admin_access.view` | ✓ |
 | POST | `/memberships/assignment-impact/`, `/memberships/` | `admin_access.manage_staff` | ✓ |
 | GET/POST | `/memberships/{id}/revoke-impact/`, `revoke/` | `admin_access.manage_staff` | ✓ |
-| GET/POST | `/memberships/{id}/set-primary-impact/`, `set-primary/` | `admin_access.manage_staff` | ✓ |
 | GET | `/staff/?q={email}` | `admin_access.view` | ✓ |
+
+Mỗi nhân viên chỉ có **một membership đang hiệu lực**. `POST /memberships/`
+thay chức danh hiện tại trong cùng transaction: membership cũ được thu hồi, quyền
+hiệu dụng được cache-bust và audit ghi lại cả trước/sau. Preview assignment trả
+`permissions_gained`, `permissions_lost` và `replaced_membership`; client không
+tự tính diff. Không còn endpoint hay payload `set-primary` / `is_primary`.
 
 Action xác nhận nhận `impact_token` từ preview tương ứng. Token chỉ dùng đúng
 operation/resource/payload đã xem và hết hạn sau 600 giây. Operation hợp lệ:
@@ -175,7 +180,7 @@ operation/resource/payload đã xem và hết hạn sau 600 giây. Operation h�
 ```text
 department.status.change · department.restore
 role.status.change · role.permissions.update · role.restore
-membership.assign · membership.revoke · membership.set_primary
+membership.assign · membership.revoke
 ```
 
 Thiếu quyền trả `403 admin_permission_denied`. Preview stale, đổi payload, dùng

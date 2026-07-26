@@ -4,7 +4,6 @@ import {
   Alert,
   Card,
   Form,
-  Typography,
 } from 'antd'
 import {
   adminAccessKeys,
@@ -23,6 +22,7 @@ import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { activeRoleOptions, pagedResults } from '../model/access-control-view'
+import { generateAccessCode } from '../model/generate-access-code'
 import { confirmImpact, fetchImpact } from '../model/impact-actions'
 import AccessControlModals from './AccessControlModals'
 import AccessControlTabs from './AccessControlTabs'
@@ -38,7 +38,7 @@ export default function AdminAccessControl() {
   const [roleEditor, setRoleEditor] = useState(null)
   const [permissionEditor, setPermissionEditor] = useState(null)
   const [permissionCodes, setPermissionCodes] = useState([])
-  const [assignmentOpen, setAssignmentOpen] = useState(false)
+  const [assignmentEditor, setAssignmentEditor] = useState(null)
   const [staffSearch, setStaffSearch] = useState('')
   const deferredStaffSearch = useDeferredValue(staffSearch.trim())
   const [roleFilter, setRoleFilter] = useState('')
@@ -72,12 +72,12 @@ export default function AdminAccessControl() {
   const staffQuery = useQuery({
     queryKey: adminAccessKeys.staff(deferredStaffSearch),
     queryFn: ({ signal }) => getAdminStaff(deferredStaffSearch, { signal }),
-    enabled: assignmentOpen,
+    enabled: Boolean(assignmentEditor),
   })
   const assignmentRolesQuery = useQuery({
     queryKey: adminAccessKeys.roles(''),
     queryFn: ({ signal }) => getAdminRoles('', { signal }),
-    enabled: assignmentOpen,
+    enabled: Boolean(assignmentEditor),
   })
 
   const departments = departmentsQuery.data || []
@@ -85,14 +85,18 @@ export default function AdminAccessControl() {
   const assignmentRoles = assignmentRolesQuery.data || []
   const memberships = pagedResults(membershipsQuery.data)
   const staff = pagedResults(staffQuery.data)
-  const roleOptions = activeRoleOptions(departments, assignmentRoles)
+  const roleOptions = activeRoleOptions(
+    departments,
+    assignmentRoles,
+    assignmentEditor?.member?.role.public_id,
+  )
 
   const invalidateAll = async () => {
     await queryClient.invalidateQueries({ queryKey: adminAccessKeys.all })
   }
 
   const openDepartmentEditor = (row = null) => {
-    departmentForm.setFieldsValue(row || { code: '', name: '', description: '' })
+    departmentForm.setFieldsValue(row || { name: '', description: '' })
     setDepartmentEditor({ row })
   }
 
@@ -103,7 +107,10 @@ export default function AdminAccessControl() {
       if (departmentEditor.row) {
         await updateAdminDepartment(departmentEditor.row.public_id, values)
       } else {
-        await createAdminDepartment(values)
+        await createAdminDepartment({
+          ...values,
+          code: generateAccessCode(values.name),
+        })
       }
       message.success('Đã lưu phòng ban.')
       setDepartmentEditor(null)
@@ -123,7 +130,6 @@ export default function AdminAccessControl() {
       rank: row.rank,
     } : {
       department: departments[0]?.public_id,
-      code: '',
       name: '',
       description: '',
       rank: 0,
@@ -136,7 +142,12 @@ export default function AdminAccessControl() {
     setSaving(true)
     try {
       if (roleEditor.row) await updateAdminRole(roleEditor.row.public_id, values)
-      else await createAdminRole(values)
+      else {
+        await createAdminRole({
+          ...values,
+          code: generateAccessCode(values.name),
+        })
+      }
       message.success('Đã lưu chức danh.')
       setRoleEditor(null)
       roleForm.resetFields()
@@ -177,7 +188,7 @@ export default function AdminAccessControl() {
       message.success('Đã cập nhật phân quyền.')
       if (danger.kind === 'rolePermissions') setPermissionEditor(null)
       if (danger.kind === 'assignment') {
-        setAssignmentOpen(false)
+        setAssignmentEditor(null)
         assignmentForm.resetFields()
       }
       setDanger(null)
@@ -212,15 +223,15 @@ export default function AdminAccessControl() {
     loadImpact({ kind: 'assignment', payload: values })
   }
 
-  return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div>
-        <Typography.Title level={2} className="!mb-1">Phân quyền quản trị</Typography.Title>
-        <Typography.Paragraph type="secondary" className="!mb-0">
-          Quản lý phòng ban, chức danh và quyền truy cập. Mọi thay đổi đều được ghi audit.
-        </Typography.Paragraph>
-      </div>
+  const openAssignment = (member = null) => {
+    assignmentForm.resetFields()
+    if (member) assignmentForm.setFieldsValue({ user_public_id: member.user.public_id })
+    setStaffSearch('')
+    setAssignmentEditor({ member })
+  }
 
+  return (
+    <div className="space-y-5">
       {!isSuperuser && (
         <Alert
           showIcon
@@ -230,7 +241,7 @@ export default function AdminAccessControl() {
         />
       )}
 
-      <Card>
+      <Card className="border-slate-200 shadow-sm">
         <AccessControlTabs
           isSuperuser={isSuperuser}
           department={{
@@ -258,7 +269,8 @@ export default function AdminAccessControl() {
               setIncludeRevoked(checked)
               setMembershipPage(1)
             },
-            onAssign: () => setAssignmentOpen(true),
+            onAssign: () => openAssignment(),
+            onReplace: openAssignment,
             onImpact: loadImpact,
           }}
         />
@@ -289,13 +301,14 @@ export default function AdminAccessControl() {
           onCodesChange: setPermissionCodes,
         }}
         assignment={{
-          open: assignmentOpen,
+          open: Boolean(assignmentEditor),
+          member: assignmentEditor?.member || null,
           form: assignmentForm,
           staff,
           staffQuery,
           rolesQuery: assignmentRolesQuery,
           roleOptions,
-          onClose: () => setAssignmentOpen(false),
+          onClose: () => setAssignmentEditor(null),
           onPreview: previewAssignment,
           onSearch: setStaffSearch,
         }}
