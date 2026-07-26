@@ -39,4 +39,14 @@ describe('sanitizeHtml', () => {
     expect(out).toContain('color: red')
     expect(out).not.toContain('javascript:')
   })
+
+  it('chỉ giữ kích thước và căn lề ảnh thuộc allowlist', () => {
+    const safe = sanitizeHtml('<img src="/a.webp" data-width="50%" data-align="right">')
+    expect(safe).toContain('data-width="50%"')
+    expect(safe).toContain('data-align="right"')
+
+    const unsafe = sanitizeHtml('<img src="/a.webp" data-width="999px" data-align="fixed">')
+    expect(unsafe).not.toContain('data-width')
+    expect(unsafe).not.toContain('data-align')
+  })
 })

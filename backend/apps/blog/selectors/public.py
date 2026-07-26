@@ -2,7 +2,7 @@ from django.db.models import Prefetch
 
 from common.db.search import search_q
 
-from ..models import PinnedPost, Post, PostCategory
+from ..models import PinnedPost, Post, PostCategory, Tag
 
 
 def published_posts_queryset(params):
@@ -18,11 +18,14 @@ def published_posts_queryset(params):
             'title',
             'slug',
             'content',
+            'summary',
             'thumbnail_url',
             'published_at',
             'category_id',
             'category__name',
             'category__slug',
+            'category__description',
+            'category__seo_title',
         )
     )
     if category := params.get('category'):
@@ -39,18 +42,22 @@ def published_post_detail_queryset():
     return (
         Post.objects.filter(status=Post.Status.PUBLISHED)
         .select_related('category', 'related_job_category')
-        .prefetch_related('tags')
+        .prefetch_related(Prefetch('tags', queryset=Tag.objects.filter(is_active=True)))
         .only(
             'public_id',
             'title',
             'slug',
             'thumbnail_url',
             'content',
+            'summary',
             'published_at',
             'seo_title',
+            'seo_description',
             'category_id',
             'category__name',
             'category__slug',
+            'category__description',
+            'category__seo_title',
             'related_job_category_id',
             'related_job_category__name',
             'related_job_category__slug',
@@ -60,7 +67,9 @@ def published_post_detail_queryset():
 
 def active_categories():
     """Danh mục đang bật cho thanh danh mục ngang."""
-    return PostCategory.objects.filter(is_active=True).only('id', 'name', 'slug')
+    return PostCategory.objects.filter(is_active=True).only(
+        'id', 'name', 'slug', 'description', 'seo_title'
+    )
 
 
 def blog_home_sections(per_section=4):
@@ -79,11 +88,14 @@ def blog_home_sections(per_section=4):
             'title',
             'slug',
             'content',
+            'summary',
             'thumbnail_url',
             'published_at',
             'category_id',
             'category__name',
             'category__slug',
+            'category__description',
+            'category__seo_title',
         )
     )
     featured = list(base[:per_section])

@@ -31,7 +31,7 @@ export default function BlogSidebar() {
 
       {pinned.length > 0 && (
         <section className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.05)] sm:rounded-2xl sm:p-5">
-          <h2 className="mb-3 text-base font-bold text-[var(--brand-primary)]">{docsTitle}</h2>
+          <h2 className="mb-3 text-base font-bold text-slate-950">{docsTitle}</h2>
           <ul className="space-y-1">
             {pinned.map((item) => (
               <li key={item.slug}>
@@ -39,9 +39,9 @@ export default function BlogSidebar() {
                   to={blogPostPath(item.slug)}
                   target="_blank"
                   rel="noopener"
-                  className="group flex gap-2 rounded-lg px-2 py-1.5 text-sm leading-5 text-slate-600 transition-colors duration-200 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+                  className="group flex min-h-11 items-center gap-2 rounded-lg px-2 py-2 text-sm leading-5 !text-slate-950 transition-colors duration-200 hover:bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)] focus-visible:bg-[var(--brand-primary-soft)] focus-visible:!text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
                 >
-                  <span className="text-[var(--brand-primary)] transition-transform duration-200 group-hover:translate-x-0.5">›</span>
+                  <span aria-hidden="true" className="text-slate-950 transition duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)] group-focus-visible:text-[var(--brand-primary)]">›</span>
                   <span className="line-clamp-2">{item.title}</span>
                 </Link>
               </li>

@@ -1,0 +1,18 @@
+.blog-rich-content img {
+  display: block;
+}
+
+.blog-rich-content img[data-width="25%"] { width: 25%; }
+.blog-rich-content img[data-width="50%"] { width: 50%; }
+.blog-rich-content img[data-width="75%"] { width: 75%; }
+.blog-rich-content img[data-width="100%"] { width: 100%; }
+.blog-rich-content img[data-align="left"] { margin-left: 0; margin-right: auto; }
+.blog-rich-content img[data-align="center"] { margin-left: auto; margin-right: auto; }
+.blog-rich-content img[data-align="right"] { margin-left: auto; margin-right: 0; }
+
+@media (max-width: 640px) {
+  .blog-rich-content img[data-width="25%"],
+  .blog-rich-content img[data-width="50%"] {
+    min-width: min(100%, 220px);
+  }
+}

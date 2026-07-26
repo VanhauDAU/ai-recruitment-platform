@@ -183,6 +183,27 @@ Route được đăng ký trong `app/router/routes`, còn page và layout đư�
 theo portal. Compatibility shim đã hết consumer phải được xóa, không giữ lại để
 phòng hờ.
 
+## Ownership map — Cẩm nang nghề nghiệp
+
+```text
+app/router
+  → pages/main/blog + pages/admin/app/Blog*
+    → features/edit-blog-post, manage-blog-content, manage-blog-tags
+      → entities/blog, job
+        → shared/api, shared/ui
+```
+
+- `entities/blog` sở hữu public/admin HTTP contract, formatter và renderer HTML
+  đã sanitize dùng chung giữa trang ứng viên với preview admin.
+- `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
+  preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
+  `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;
+  `features/manage-blog-tags` sở hữu tab quản trị, ẩn, xóa và gộp thẻ. Page
+  admin compose hai feature; các feature không import lẫn nhau.
+- Page admin chỉ lấy `publicId` hoặc compose feature. Route blog admin dùng
+  `blog.view`; action ghi và phát hành tiếp tục được backend khóa bằng
+  `blog.manage`/`blog.publish`.
+
 ## Ownership map — CV Builder
 
 ```text

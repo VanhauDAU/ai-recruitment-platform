@@ -6,7 +6,32 @@ from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
 
-from ...models import PinnedPost, Post, PostCategory, Tag
+from ...models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
+
+
+class BlogMediaAssetSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+    uploaded_by = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogMediaAsset
+        fields = [
+            'public_id',
+            'url',
+            'original_name',
+            'content_type',
+            'size',
+            'uploaded_by',
+            'created_at',
+        ]
+
+    def get_url(self, obj):
+        return media_url_from_value(obj.storage_key, request=self.context.get('request'))
+
+    def get_uploaded_by(self, obj):
+        if not obj.uploaded_by:
+            return None
+        return obj.uploaded_by.full_name or obj.uploaded_by.email
 
 
 class PostCategorySerializer(serializers.ModelSerializer):
@@ -14,7 +39,7 @@ class PostCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostCategory
-        fields = ['name', 'slug']
+        fields = ['name', 'slug', 'description', 'seo_title']
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -46,6 +71,8 @@ class PostListSerializer(serializers.ModelSerializer):
         return media_url_from_value(obj.thumbnail_url, request=self.context.get('request'))
 
     def get_excerpt(self, obj):
+        if obj.summary.strip():
+            return obj.summary
         # Nội dung là rich-text HTML; lấy phần văn bản đầu để card phản ánh đúng
         # bài viết thay vì phải duy trì một trường summary riêng.
         html = re.sub(r'</(?:p|div|h[1-6]|li|br)\s*>', ' ', obj.content or '', flags=re.IGNORECASE)
@@ -69,11 +96,13 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'slug',
             'thumbnail_url',
             'content',
+            'summary',
             'category',
             'tags',
             'related_job_category',
             'published_at',
             'seo_title',
+            'seo_description',
         ]
 
     def get_thumbnail_url(self, obj):
