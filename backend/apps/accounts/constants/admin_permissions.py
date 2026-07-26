@@ -30,6 +30,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Sửa họ tên và số điện thoại của ứng viên hoặc nhà tuyển dụng.',
     },
     {
+        'code': 'account.sensitive.view',
+        'module': 'account',
+        'label': 'Xem dữ liệu tài khoản nhạy cảm',
+        'description': 'Xem dữ liệu cá nhân, consent, CV và giấy tờ riêng tư có ghi audit.',
+    },
+    {
         'code': 'account.security.manage',
         'module': 'account',
         'label': 'Hỗ trợ bảo mật tài khoản',
@@ -148,6 +154,18 @@ ADMIN_PERMISSIONS = (
         'module': 'dashboard',
         'label': 'Xem tổng quan',
         'description': 'Xem bảng điều khiển quản trị.',
+    },
+    {
+        'code': 'employer_verification.review',
+        'module': 'employer_verification',
+        'label': 'Duyệt xác thực nhà tuyển dụng',
+        'description': 'Duyệt, yêu cầu bổ sung hoặc từ chối hồ sơ xác thực nhà tuyển dụng.',
+    },
+    {
+        'code': 'employer_verification.view',
+        'module': 'employer_verification',
+        'label': 'Xem xác thực nhà tuyển dụng',
+        'description': 'Xem hàng chờ, giấy tờ và lịch sử xác thực nhà tuyển dụng.',
     },
     {
         'code': 'job_moderation.approve',

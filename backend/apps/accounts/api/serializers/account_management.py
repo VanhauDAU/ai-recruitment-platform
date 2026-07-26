@@ -2,6 +2,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.employers.services import verification_checks
+
 from ...models import (
     AdminAccessAuditLog,
     AdminInvitation,
@@ -10,6 +12,7 @@ from ...models import (
     AuthSession,
     User,
 )
+from .admin_account_resources import AdminAccountProfileSerializer
 from .auth import password_field
 
 
@@ -92,14 +95,43 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             except ObjectDoesNotExist:
                 return {'kind': 'employer'}
             company = recruiter.company
+            verification = getattr(recruiter, 'verification_case', None)
+            checks = verification_checks(verification) if verification else {}
+            tax_code = company.tax_code if company else ''
             return {
                 'kind': 'employer',
                 'position_title': recruiter.position_title,
                 'company_role': recruiter.company_role,
+                'verification': (
+                    {
+                        'public_id': verification.public_id,
+                        'status': verification.status,
+                        'status_label': verification.get_status_display(),
+                        'submitted_at': verification.submitted_at,
+                        'missing_step_count': len(
+                            [
+                                key
+                                for key, complete in checks.items()
+                                if not complete and key != 'case_approved'
+                            ]
+                        ),
+                    }
+                    if verification
+                    else {
+                        'public_id': None,
+                        'status': 'draft',
+                        'status_label': 'Chưa nộp',
+                        'submitted_at': None,
+                        'missing_step_count': 10,
+                    }
+                ),
                 'company': (
                     {
                         'public_id': company.public_id,
                         'name': company.company_name,
+                        'tax_code': (f'***{tax_code[-4:]}' if len(tax_code) > 4 else '****')
+                        if tax_code
+                        else '',
                         'verification_status': company.verification_status,
                     }
                     if company
@@ -148,68 +180,56 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
 
 class ManagedAccountDetailSerializer(ManagedAccountSerializer):
     profile = serializers.SerializerMethodField()
+    section_counts = serializers.SerializerMethodField()
 
     class Meta(ManagedAccountSerializer.Meta):
-        fields = [*ManagedAccountSerializer.Meta.fields, 'profile']
+        fields = [
+            *ManagedAccountSerializer.Meta.fields,
+            'profile',
+            'section_counts',
+        ]
 
     def get_profile(self, obj):
+        payload = AdminAccountProfileSerializer(
+            obj,
+            context={
+                'can_view_sensitive': self.context.get('can_view_sensitive', False),
+            },
+        ).data
         if obj.is_candidate:
-            try:
-                profile = obj.candidate_profile
-            except ObjectDoesNotExist:
-                return None
-            return {
-                'date_of_birth': profile.date_of_birth,
-                'gender': profile.gender,
-                'address': profile.address,
-                'current_position': profile.current_position,
-                'desired_position': profile.desired_position,
-                'experience_years': profile.experience_years,
-                'education_level': profile.education_level,
-                'expected_salary_min': profile.expected_salary_min,
-                'expected_salary_max': profile.expected_salary_max,
-                'preferred_location': profile.preferred_location,
-                'preferred_work_type': profile.preferred_work_type,
-                'job_search_status': profile.job_search_status,
-                'headline': profile.headline,
-                'portfolio_url': profile.portfolio_url,
-                'github_url': profile.github_url,
-                'linkedin_url': profile.linkedin_url,
-                'job_preferences_configured': profile.job_preferences_configured,
-            }
+            return payload.get('candidate')
         if obj.is_employer:
-            try:
-                recruiter = obj.recruiter_profile
-            except ObjectDoesNotExist:
-                return None
-            company = recruiter.company
-            return {
-                'position_title': recruiter.position_title,
-                'gender': recruiter.gender,
-                'contact_phone': recruiter.contact_phone,
-                'verified_phone': recruiter.verified_phone,
-                'phone_verified_at': recruiter.phone_verified_at,
-                'company_role': recruiter.company_role,
-                'registration_completed_at': recruiter.registration_completed_at,
-                'terms_accepted_at': recruiter.terms_accepted_at,
-                'dpa_accepted_at': recruiter.dpa_accepted_at,
-                'onboarding_completed_at': recruiter.onboarding_completed_at,
-                'company': (
-                    {
-                        'public_id': company.public_id,
-                        'name': company.company_name,
-                        'trade_name': company.trade_name,
-                        'tax_code': company.tax_code,
-                        'email': company.email,
-                        'phone': company.phone,
-                        'address': company.address,
-                        'verification_status': company.verification_status,
-                    }
-                    if company
-                    else None
+            return payload.get('employer')
+        return payload.get('admin')
+
+    def get_section_counts(self, obj):
+        counts = {
+            'active_sessions': obj.active_session_count,
+            'activity': AdminAccessAuditLog.objects.filter(target_public_id=obj.public_id).count(),
+        }
+        if obj.is_candidate:
+            counts.update(
+                cvs=obj.cvs.filter(is_deleted=False).count(),
+                applications=obj.applications.count(),
+                consents=(
+                    obj.candidate_profile.consents.count()
+                    if hasattr(obj, 'candidate_profile')
+                    else 0
                 ),
-            }
-        return self.get_admin_access(obj)
+            )
+        elif obj.is_employer:
+            recruiter = getattr(obj, 'recruiter_profile', None)
+            counts.update(
+                recruitment_needs=(recruiter.recruitment_needs.count() if recruiter else 0),
+                jobs=obj.posted_jobs.count(),
+                campaigns=recruiter.campaigns.count() if recruiter else 0,
+                verification_documents=(
+                    recruiter.verification_case.documents.count()
+                    if recruiter and hasattr(recruiter, 'verification_case')
+                    else 0
+                ),
+            )
+        return counts
 
 
 class ManagedAccountUpdateSerializer(serializers.Serializer):

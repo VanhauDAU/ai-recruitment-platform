@@ -138,7 +138,6 @@ export default function DashboardLayout() {
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#0369a1',
           borderRadius: 10,
           colorText: '#0f172a',
           colorTextSecondary: '#64748b',

@@ -1,12 +1,13 @@
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
+  FileProtectOutlined,
   SafetyCertificateOutlined,
   StopOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Form, Tabs } from 'antd'
+import { Alert, Badge, Form, Tabs } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -30,6 +31,7 @@ import AccountFilters from './AccountFilters'
 import AccountQuickDrawer from './AccountQuickDrawer'
 import AccountTable from './AccountTable'
 import InvitationPanel from './InvitationPanel'
+import VerificationQueuePanel from './VerificationQueuePanel'
 import '../admin-account-management.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
@@ -91,7 +93,17 @@ export default function AdminAccountManagement() {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const canInvite = isSuperuser || has('account.admin.invite')
-  const canReadAccounts = isSuperuser || has('account.view') || has('account.admin.view')
+  const canVerifyEmployers = (
+    isSuperuser
+    || has('employer_verification.view')
+    || has('employer_verification.review')
+  )
+  const canReadAccounts = (
+    isSuperuser
+    || has('account.view')
+    || has('account.admin.view')
+    || canVerifyEmployers
+  )
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [editForm] = Form.useForm()
@@ -114,7 +126,7 @@ export default function AdminAccountManagement() {
   const accountsQuery = useQuery({
     queryKey: adminAccountKeys.list(params),
     queryFn: ({ signal }) => getAdminAccounts(params, { signal }),
-    enabled: activeTab !== 'invitations' && canReadAccounts,
+    enabled: !['invitations', 'verification'].includes(activeTab) && canReadAccounts,
   })
   const departmentsQuery = useQuery({
     queryKey: adminAccessKeys.departments,
@@ -223,6 +235,20 @@ export default function AdminAccountManagement() {
       { key: 'employer', label: 'Nhà tuyển dụng', children: accountList },
       { key: 'admin', label: 'Admin', children: accountList },
     ] : []),
+    ...(canVerifyEmployers ? [{
+      key: 'verification',
+      label: (
+        <span>
+          Chờ xác thực NTD
+          <Badge
+            className="ml-2"
+            count={summary.employer_verification_pending || 0}
+            overflowCount={999}
+          />
+        </span>
+      ),
+      children: <VerificationQueuePanel />,
+    }] : []),
     ...(canInvite ? [{
       key: 'invitations',
       label: 'Lời mời Admin',
@@ -243,8 +269,9 @@ export default function AdminAccountManagement() {
           <StatCard icon={<TeamOutlined />} label="Tổng tài khoản" value={summary.total} detail="Trong phạm vi được xem" tone="blue" />
           <StatCard icon={<CheckCircleOutlined />} label="Đang hoạt động" value={summary.active} detail="Có thể đăng nhập" tone="green" />
           <StatCard icon={<StopOutlined />} label="Bị hạn chế" value={summary.restricted} detail="Tạm khóa hoặc đã cấm" tone="red" />
-          <StatCard icon={<ClockCircleOutlined />} label="Admin chờ kích hoạt" value={summary.pending_admin} detail="Lời mời chưa hoàn tất" tone="amber" />
           <StatCard icon={<SafetyCertificateOutlined />} label="Email chưa xác minh" value={summary.unverified} detail="Cần hoàn tất xác thực" tone="slate" />
+          <StatCard icon={<FileProtectOutlined />} label="Hồ sơ NTD chờ xử lý" value={summary.employer_verification_pending} detail="Chờ duyệt hoặc đang xử lý" tone="amber" />
+          <StatCard icon={<ClockCircleOutlined />} label="Hồ sơ NTD quá hạn" value={summary.employer_verification_overdue} detail="Đã chờ trên 72 giờ" tone="red" />
         </section>
       )}
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
+import { useSiteSettings } from '@/entities/site-settings'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { message } from '@/shared/lib/toast'
 import { AdminPanel } from '@/widgets/admin-workspace'
@@ -7,6 +8,7 @@ import { AdminPanel } from '@/widgets/admin-workspace'
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
 export default function AdminSettings() {
+  const { retry: refreshSiteSettings } = useSiteSettings()
   const [groups, setGroups] = useState(null)
   const [values, setValues] = useState({})
   const [initial, setInitial] = useState({})
@@ -74,6 +76,7 @@ export default function AdminSettings() {
             )),
           })))
         }
+        if (updated.includes('brand_primary_color')) await refreshSiteSettings()
         message.success('Đã lưu cấu hình.')
       }
     } catch {

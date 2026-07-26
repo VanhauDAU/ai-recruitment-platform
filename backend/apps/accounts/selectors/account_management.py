@@ -1,7 +1,15 @@
 """Read models for administrator account management."""
 
+from datetime import timedelta
+
 from django.db.models import Count, Max, Prefetch, Q
 from django.utils import timezone
+
+from apps.employers.models import (
+    CompanyDocument,
+    EmployerVerificationCase,
+    RecruitmentNeed,
+)
 
 from ..admin_access_rules import create_impact_token
 from ..models import (
@@ -32,6 +40,8 @@ def _account_visibility(actor):
     visible = Q(pk__in=[])
     if 'account.view' in permissions:
         visible |= Q(role__in=[User.Role.CANDIDATE, User.Role.EMPLOYER])
+    if 'employer_verification.view' in permissions:
+        visible |= Q(role=User.Role.EMPLOYER)
     if 'account.admin.view' in permissions:
         visible |= Q(role=User.Role.ADMIN)
     if 'account.admin.invite' in permissions:
@@ -44,7 +54,13 @@ def accounts_queryset(actor, *, params=None):
     queryset = (
         User.objects.filter(is_deleted=False)
         .filter(_account_visibility(actor))
-        .select_related('candidate_profile', 'recruiter_profile__company')
+        .select_related(
+            'candidate_profile',
+            'candidate_profile__job_preference',
+            'recruiter_profile__company',
+            'recruiter_profile__verification_case',
+            'recruiter_profile__work_location',
+        )
         .prefetch_related(
             Prefetch(
                 'admin_memberships',
@@ -61,6 +77,19 @@ def accounts_queryset(actor, *, params=None):
                 to_attr='account_admin_invitations',
             ),
             'social_accounts',
+            'candidate_profile__job_preference__desired_specializations__job_category',
+            'candidate_profile__job_preference__preferred_provinces__location',
+            'recruiter_profile__company__company_industries__industry',
+            Prefetch(
+                'recruiter_profile__verification_case__documents',
+                queryset=CompanyDocument.objects.filter(is_current=True),
+                to_attr='current_documents_for_checks',
+            ),
+            Prefetch(
+                'recruiter_profile__recruitment_needs',
+                queryset=RecruitmentNeed.objects.only('id', 'recruiter_id'),
+                to_attr='verification_recruitment_needs',
+            ),
         )
         .annotate(
             active_session_count=Count(
@@ -137,7 +166,7 @@ def accounts_queryset(actor, *, params=None):
 
 def account_summary(actor):
     base = User.objects.filter(is_deleted=False).filter(_account_visibility(actor)).distinct()
-    return base.aggregate(
+    summary = base.aggregate(
         total=Count('id', distinct=True),
         active=Count('id', filter=Q(status=User.Status.ACTIVE), distinct=True),
         restricted=Count(
@@ -152,6 +181,19 @@ def account_summary(actor):
             distinct=True,
         ),
     )
+    verification_base = EmployerVerificationCase.objects.filter(recruiter__user__in=base)
+    pending_states = [
+        EmployerVerificationCase.Status.PENDING,
+        EmployerVerificationCase.Status.IN_REVIEW,
+    ]
+    summary.update(
+        employer_verification_pending=verification_base.filter(status__in=pending_states).count(),
+        employer_verification_overdue=verification_base.filter(
+            status__in=pending_states,
+            submitted_at__lt=timezone.now() - timedelta(hours=72),
+        ).count(),
+    )
+    return summary
 
 
 def account_sessions_queryset(user):

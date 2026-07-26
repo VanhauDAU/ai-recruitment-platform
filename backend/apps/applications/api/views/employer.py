@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...selectors import (
     employer_application_queryset,
@@ -32,6 +33,7 @@ class EmployerApplicationListView(generics.ListAPIView):
     permission_classes = [IsEmployer]
 
     def get_queryset(self):
+        ensure_recruiter_candidate_data_access(self.request.user)
         return employer_applications_queryset(
             self.request.user,
             self.request.query_params.get('job'),
@@ -48,6 +50,7 @@ class EmployerApplicationExportView(APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request):
+        ensure_recruiter_candidate_data_access(request.user)
         queryset = employer_applications_queryset(
             request.user,
             request.query_params.get('job'),
@@ -92,6 +95,7 @@ class EmployerApplicationStatusUpdateView(generics.UpdateAPIView):
     lookup_field = 'public_id'
 
     def get_queryset(self):
+        ensure_recruiter_candidate_data_access(self.request.user)
         return employer_application_queryset(self.request.user)
 
     def perform_update(self, serializer):
@@ -115,6 +119,7 @@ class EmployerApplicationHistoryView(generics.ListAPIView):
     serializer_class = ApplicationStatusHistorySerializer
 
     def get_queryset(self):
+        ensure_recruiter_candidate_data_access(self.request.user)
         application = get_object_or_404(
             employer_application_queryset(self.request.user), public_id=self.kwargs['public_id']
         )

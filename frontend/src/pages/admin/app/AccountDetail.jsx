@@ -1,11 +1,11 @@
 import { useParams } from 'react-router-dom'
-import { AccountDetailView } from '@/widgets/admin-account-management'
+import { AdminAccountDetail } from '@/widgets/admin-account-detail'
 
 export default function AccountDetail() {
   const { publicId } = useParams()
   return (
     <div className="mx-auto max-w-[1500px]">
-      <AccountDetailView publicId={publicId} />
+      <AdminAccountDetail publicId={publicId} />
     </div>
   )
 }

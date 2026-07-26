@@ -19,16 +19,21 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
         model = CompanyDocument
         fields = [
             'id',
+            'public_id',
             'doc_type',
             'source_type',
             'file_url',
             'file_name',
+            'mime_type',
+            'file_size',
+            'version',
+            'is_current',
             'status',
             'review_note',
             'update_request',
             'created_at',
         ]
-        read_only_fields = ['id', 'file_url', 'file_name', 'status', 'review_note', 'created_at']
+        read_only_fields = fields
 
     def get_file_url(self, obj):
         if obj.file_url.startswith(('http://', 'https://')):

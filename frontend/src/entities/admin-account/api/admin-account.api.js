@@ -21,6 +21,24 @@ export function updateAdminAccount(publicId, payload) {
   return data(client.patch(`/admin/accounts/${publicId}/`, payload))
 }
 
+export function getAdminAccountProfile(publicId, { reveal = false, signal } = {}) {
+  return data(client.get(`/admin/accounts/${publicId}/profile/`, {
+    params: reveal ? { reveal: true } : {},
+    signal,
+  }))
+}
+
+export function updateAdminAccountProfile(publicId, payload) {
+  return data(client.patch(`/admin/accounts/${publicId}/profile/`, payload))
+}
+
+export function getAdminAccountResource(publicId, resource, page = 1, { signal } = {}) {
+  return data(client.get(`/admin/accounts/${publicId}/${resource}/`, {
+    params: { page },
+    signal,
+  }))
+}
+
 export function getAdminAccountSessions(publicId, { signal } = {}) {
   return data(client.get(`/admin/accounts/${publicId}/sessions/`, { signal }))
 }

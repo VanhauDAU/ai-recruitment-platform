@@ -1,0 +1,114 @@
+.verification-case-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.verification-checklist {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.verification-checklist li {
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  gap: 10px;
+  min-height: 64px;
+  padding: 10px 12px;
+}
+
+.verification-checklist li > span {
+  color: #d97706;
+  font-size: 18px;
+}
+
+.verification-checklist li.is-complete > span {
+  color: #059669;
+}
+
+.verification-checklist strong,
+.verification-checklist small {
+  display: block;
+}
+
+.verification-checklist strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.verification-checklist small {
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.verification-workbench {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(300px, 0.85fr) minmax(440px, 1.4fr);
+  min-height: 620px;
+}
+
+.verification-document-list .ant-list-item {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 6px;
+  padding: 12px;
+}
+
+.verification-document-list .ant-list-item:hover,
+.verification-document-list .ant-list-item.is-selected {
+  background: var(--admin-primary-soft);
+  border-color: color-mix(in srgb, var(--admin-primary) 25%, white);
+}
+
+.verification-preview .ant-card-body {
+  min-height: 540px;
+}
+
+.verification-document-frame {
+  border: 0;
+  height: 540px;
+  width: 100%;
+}
+
+.verification-decision-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 992px) {
+  .verification-workbench {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .verification-checklist {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .verification-case-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .verification-case-heading .ant-btn,
+  .verification-decision-options .ant-btn {
+    min-height: 44px;
+  }
+
+  .verification-document-frame {
+    height: calc(100vh - 230px);
+    min-height: 480px;
+  }
+}

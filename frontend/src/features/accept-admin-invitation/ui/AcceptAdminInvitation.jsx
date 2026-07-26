@@ -78,10 +78,10 @@ export default function AcceptAdminInvitation() {
   return (
     <div>
       <div className="mb-6 text-center">
-        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-xl text-sky-700">
+        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-primary-soft)] text-xl text-[var(--brand-primary)]">
           <SafetyCertificateOutlined />
         </span>
-        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700">
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           Admin invitation
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">

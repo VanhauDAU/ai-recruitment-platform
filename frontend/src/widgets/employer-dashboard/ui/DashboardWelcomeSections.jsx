@@ -21,6 +21,7 @@ import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/
 import {
   EMPLOYER_BUSINESS_LICENSE_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
+  EMPLOYER_CONSULTING_NEED_URL,
   EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_PHONE_VERIFY_URL,
   EMPLOYER_VERIFY_URL,
@@ -28,15 +29,20 @@ import {
 } from '@/shared/config/portals'
 
 const VERIFICATION_STEPS = [
+  { key: 'email_verified', label: 'Xác minh email', to: EMPLOYER_VERIFY_URL },
+  { key: 'registration_completed', label: 'Hoàn tất hồ sơ NTD', to: EMPLOYER_VERIFY_URL },
+  { key: 'consulting_need_completed', label: 'Khai báo nhu cầu tuyển dụng', to: EMPLOYER_CONSULTING_NEED_URL },
   { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_submitted', label: 'Cập nhật Giấy đăng ký doanh nghiệp', to: EMPLOYER_BUSINESS_LICENSE_URL },
-  { key: 'candidate_dpa_submitted', label: 'Cập nhật Thỏa thuận xử lý DLCN với ứng viên', to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'business_doc_submitted', label: 'Nộp giấy tờ đại diện', to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'business_doc_approved', label: 'Giấy tờ doanh nghiệp được duyệt', to: EMPLOYER_VERIFY_URL },
+  { key: 'candidate_dpa_approved', label: 'Văn bản xử lý dữ liệu được duyệt', to: EMPLOYER_DATA_PROTECTION_URL },
   { key: 'dpa_accepted', label: 'Đồng ý Thỏa thuận xử lý DLCN với hệ thống', to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'representative_verified', label: 'Admin duyệt tài khoản', to: EMPLOYER_VERIFY_URL },
 ]
 
 export function DashboardComplianceNotice({ verification = {} }) {
-  if (verification.candidate_dpa_submitted && verification.dpa_accepted) return null
+  if (verification.candidate_dpa_approved && verification.dpa_accepted) return null
   return (
     <section className="flex flex-wrap items-center gap-3 rounded-lg border-l-4 border-blue-500 bg-white px-4 py-3 shadow-sm" aria-label="Thông báo quan trọng">
       <InfoCircleOutlined className="text-lg text-blue-600" />

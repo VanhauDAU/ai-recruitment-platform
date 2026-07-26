@@ -1,4 +1,6 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Count
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -9,9 +11,9 @@ from common.pagination import StandardPagination
 
 from ...admin_access_rules import InvalidImpactToken, StaleImpactToken
 from ...admin_invitation_tokens import InvalidAdminInvitationToken
-from ...exceptions import AdminResourceChanged
+from ...exceptions import AdminPermissionDenied, AdminResourceChanged
 from ...models import AuthEmailJob
-from ...permissions import HasAdminPermission
+from ...permissions import HasAdminPermission, require_admin_permission
 from ...selectors import (
     account_activity_queryset,
     account_revoke_sessions_impact,
@@ -38,6 +40,7 @@ from ...services import (
     revoke_admin_invitation,
     update_account_profile,
     update_admin_invitation_role,
+    update_managed_account_profile,
 )
 from ..serializers.account_management import (
     AccountActivitySerializer,
@@ -59,6 +62,16 @@ from ..serializers.account_management import (
     ProvisioningScopeStatusSerializer,
     ReasonSerializer,
     RevokeSessionsSerializer,
+)
+from ..serializers.admin_account_resources import (
+    AdminAccountProfileSerializer,
+    AdminAccountProfileUpdateSerializer,
+    AdminApplicationSerializer,
+    AdminCampaignSerializer,
+    AdminCandidateConsentSerializer,
+    AdminCvSerializer,
+    AdminJobSerializer,
+    AdminRecruitmentNeedSerializer,
 )
 
 
@@ -83,7 +96,15 @@ def _confirmed_call(service, **kwargs):
 def _serialize_account(user, actor, *, detail=False):
     current = accounts_queryset(actor).get(pk=user.pk)
     serializer = ManagedAccountDetailSerializer if detail else ManagedAccountSerializer
-    return serializer(current).data
+    return serializer(current, context={'can_view_sensitive': False}).data
+
+
+def _can_view_sensitive(user):
+    try:
+        require_admin_permission(user, 'account.sensitive.view')
+    except AdminPermissionDenied:
+        return False
+    return True
 
 
 class AdminAccountViewSet(
@@ -94,11 +115,38 @@ class AdminAccountViewSet(
     pagination_class = StandardPagination
     lookup_field = 'public_id'
     required_admin_permissions = {
-        'list': ['account.view', 'account.admin.view', 'account.admin.invite'],
-        'retrieve': ['account.view', 'account.admin.view', 'account.admin.invite'],
-        'summary': ['account.view', 'account.admin.view', 'account.admin.invite'],
+        'list': [
+            'account.view',
+            'account.admin.view',
+            'account.admin.invite',
+            'employer_verification.view',
+        ],
+        'retrieve': [
+            'account.view',
+            'account.admin.view',
+            'account.admin.invite',
+            'employer_verification.view',
+        ],
+        'summary': [
+            'account.view',
+            'account.admin.view',
+            'account.admin.invite',
+            'employer_verification.view',
+        ],
         'update': ['account.profile.manage'],
         'partial_update': ['account.profile.manage'],
+        'profile': [
+            'account.view',
+            'account.admin.view',
+            'account.profile.manage',
+            'employer_verification.view',
+        ],
+        'cvs': ['account.view'],
+        'applications': ['account.view'],
+        'consents': ['account.view'],
+        'recruitment_needs': ['account.view', 'employer_verification.view'],
+        'jobs': ['account.view', 'employer_verification.view'],
+        'campaigns': ['account.view', 'employer_verification.view'],
         'sessions': ['account.view', 'account.admin.view', 'account.admin.invite'],
         'activity': ['account.view', 'account.admin.view', 'account.admin.invite'],
         'status_impact': ['account.status.manage', 'account.admin.manage'],
@@ -120,6 +168,19 @@ class AdminAccountViewSet(
             else ManagedAccountSerializer
         )
 
+    def get_serializer_context(self):
+        return {
+            **super().get_serializer_context(),
+            # Sensitive values are revealed only through the explicit profile
+            # request so merely opening a shared URL never creates exposure.
+            'can_view_sensitive': False,
+        }
+
+    def _paginated(self, queryset, serializer_class):
+        page = self.paginate_queryset(queryset)
+        serializer = serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
     @action(detail=False, methods=['get'])
     def summary(self, request):
         return Response(account_summary(request.user))
@@ -138,6 +199,115 @@ class AdminAccountViewSet(
 
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['get', 'patch'])
+    def profile(self, request, public_id=None):
+        user = self.get_object()
+        if request.method == 'PATCH':
+            require_admin_permission(request.user, 'account.profile.manage')
+            serializer = AdminAccountProfileUpdateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = _call(
+                update_managed_account_profile,
+                user=user,
+                actor=request.user,
+                changes=serializer.validated_data,
+            )
+            user = accounts_queryset(request.user).get(pk=user.pk)
+            return Response(
+                AdminAccountProfileSerializer(
+                    user,
+                    context={'can_view_sensitive': False},
+                ).data
+            )
+
+        reveal = request.query_params.get('reveal', '').lower() in {'1', 'true'}
+        if reveal:
+            require_admin_permission(request.user, 'account.sensitive.view')
+            from ...services import record_admin_action
+
+            record_admin_action(
+                actor=request.user,
+                action='reveal_account_sensitive_profile',
+                target_type='user',
+                target_public_id=user.public_id,
+                payload={'user_public_id': user.public_id},
+            )
+        return Response(
+            AdminAccountProfileSerializer(
+                user,
+                context={'can_view_sensitive': reveal and _can_view_sensitive(request.user)},
+            ).data
+        )
+
+    @action(detail=True, methods=['get'])
+    def cvs(self, request, public_id=None):
+        user = self.get_object()
+        return self._paginated(
+            user.cvs.filter(is_deleted=False)
+            .select_related('template')
+            .order_by(
+                '-updated_at',
+                '-id',
+            ),
+            AdminCvSerializer,
+        )
+
+    @action(detail=True, methods=['get'])
+    def applications(self, request, public_id=None):
+        user = self.get_object()
+        return self._paginated(
+            user.applications.select_related(
+                'job__company',
+                'submitted_cv_version',
+            ).order_by('-applied_at', '-id'),
+            AdminApplicationSerializer,
+        )
+
+    @action(detail=True, methods=['get'])
+    def consents(self, request, public_id=None):
+        user = self.get_object()
+        try:
+            queryset = user.candidate_profile.consents.order_by('consent_type')
+        except ObjectDoesNotExist:
+            queryset = user.applications.none()
+        return self._paginated(queryset, AdminCandidateConsentSerializer)
+
+    @action(detail=True, methods=['get'], url_path='recruitment-needs')
+    def recruitment_needs(self, request, public_id=None):
+        user = self.get_object()
+        try:
+            queryset = user.recruiter_profile.recruitment_needs.select_related(
+                'position_category'
+            ).order_by('-updated_at', '-id')
+        except ObjectDoesNotExist:
+            queryset = user.posted_jobs.none()
+        return self._paginated(queryset, AdminRecruitmentNeedSerializer)
+
+    @action(detail=True, methods=['get'])
+    def jobs(self, request, public_id=None):
+        return self._paginated(
+            self.get_object()
+            .posted_jobs.select_related('company', 'campaign')
+            .order_by('-updated_at', '-id'),
+            AdminJobSerializer,
+        )
+
+    @action(detail=True, methods=['get'])
+    def campaigns(self, request, public_id=None):
+        user = self.get_object()
+        try:
+            queryset = (
+                user.recruiter_profile.campaigns.select_related('position_category')
+                .annotate(
+                    job_count=Count('jobs', distinct=True),
+                    application_count=Count('jobs__applications', distinct=True),
+                )
+                .order_by('-updated_at', '-id')
+            )
+        except ObjectDoesNotExist:
+            queryset = user.posted_jobs.none()
+        return self._paginated(queryset, AdminCampaignSerializer)
 
     @action(detail=True, methods=['get'])
     def sessions(self, request, public_id=None):

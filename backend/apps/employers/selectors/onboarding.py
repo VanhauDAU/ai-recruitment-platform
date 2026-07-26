@@ -1,8 +1,9 @@
 """Read model for recruiter onboarding and account-verification progress."""
 
+from django.conf import settings
 from django.db.models import Q
 
-from ..models import CompanyDocument
+from ..models import CompanyDocument, EmployerVerificationCase
 from .company_status import has_explicit_company_link
 
 # Những miền email công khai không được xem là email theo tên miền công ty.
@@ -44,20 +45,25 @@ def _is_company_email(recruiter):
 def build_employer_onboarding_steps(recruiter):
     """Derive every onboarding/checklist state from its canonical record."""
     company_linked = has_explicit_company_link(recruiter)
-    has_business_doc = (
-        company_linked
-        and recruiter.company.documents.filter(
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-        )
-        .exclude(status=CompanyDocument.Status.REJECTED)
-        .exists()
+    case = getattr(recruiter, 'verification_case', None)
+    case_documents = (
+        CompanyDocument.objects.filter(verification_case=case, is_current=True)
+        if case is not None
+        else CompanyDocument.objects.none()
     )
+    business_types = {
+        CompanyDocument.DocType.AUTHORIZATION_LETTER,
+        CompanyDocument.DocType.BUSINESS_REGISTRATION,
+        CompanyDocument.DocType.IDENTITY_DOCUMENT,
+    }
+    has_business_doc = case_documents.filter(doc_type__in=business_types).exists()
     has_approved_business_doc = (
-        company_linked
-        and recruiter.company.documents.filter(
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            status=CompanyDocument.Status.APPROVED,
-        ).exists()
+        has_business_doc
+        and not case_documents.filter(
+            doc_type__in=business_types,
+        )
+        .exclude(status=CompanyDocument.Status.APPROVED)
+        .exists()
     )
     candidate_dpa = Q(
         doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
@@ -70,12 +76,36 @@ def build_employer_onboarding_steps(recruiter):
             company=recruiter.company,
         )
     has_candidate_dpa = (
-        CompanyDocument.objects.filter(candidate_dpa)
+        case_documents.filter(
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        )
         .exclude(
             status=CompanyDocument.Status.REJECTED,
         )
         .exists()
     )
+    has_approved_candidate_dpa = case_documents.filter(
+        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        status=CompanyDocument.Status.APPROVED,
+    ).exists()
+    case_approved = case is not None and case.status == EmployerVerificationCase.Status.APPROVED
+    if not getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
+        # Compatibility while rollout is still in read-only/backlog mode.
+        legacy_business = (
+            company_linked
+            and recruiter.company.documents.filter(
+                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            )
+            .exclude(status=CompanyDocument.Status.REJECTED)
+            .exists()
+        )
+        legacy_dpa = (
+            CompanyDocument.objects.filter(candidate_dpa)
+            .exclude(status=CompanyDocument.Status.REJECTED)
+            .exists()
+        )
+        has_business_doc = has_business_doc or legacy_business
+        has_candidate_dpa = has_candidate_dpa or legacy_dpa
     steps = {
         'email_verified': recruiter.user.email_verified,
         'registration_completed': recruiter.registration_completed_at is not None,
@@ -89,7 +119,9 @@ def build_employer_onboarding_steps(recruiter):
         # khi bổ sung workflow báo cáo chỉ cần thay nguồn dữ liệu tại đây.
         'no_report_history': True,
         'candidate_dpa_submitted': has_candidate_dpa,
+        'candidate_dpa_approved': has_approved_candidate_dpa,
         'dpa_accepted': recruiter.dpa_accepted_at is not None,
+        'representative_verified': case_approved,
         'first_job_posted': recruiter.user.posted_jobs.exists(),
     }
     steps['account_ready'] = all(
@@ -102,7 +134,7 @@ def build_employer_onboarding_steps(recruiter):
     # Xác thực tài khoản hoàn tất sau năm workflow bảo mật/pháp lý đang khả
     # dụng. Đăng tin đầu tiên là bước kích hoạt sản phẩm riêng và chưa được dùng
     # để buộc một tài khoản đã xác thực quay lại checklist ở mỗi lần đăng nhập.
-    steps['verification_completed'] = all(
+    legacy_completed = all(
         [
             steps['account_ready'],
             steps['phone_verified'],
@@ -111,6 +143,11 @@ def build_employer_onboarding_steps(recruiter):
             steps['candidate_dpa_submitted'],
             steps['dpa_accepted'],
         ]
+    )
+    steps['verification_completed'] = (
+        case_approved
+        if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False)
+        else legacy_completed
     )
     steps['completed'] = steps['verification_completed'] and steps['first_job_posted']
     return steps

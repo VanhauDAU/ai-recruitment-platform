@@ -15,6 +15,7 @@ from .account_management import (
     revoke_admin_invitation,
     update_account_profile,
     update_admin_invitation_role,
+    update_managed_account_profile,
 )
 from .admin_access import (
     assign_membership,
@@ -42,6 +43,12 @@ from .admin_access import (
     update_system_role_metadata,
 )
 from .captcha import verify_recaptcha, verify_request_captcha
+from .impact_tokens import (
+    InvalidImpactToken,
+    StaleImpactToken,
+    create_impact_token,
+    decode_impact_token,
+)
 from .verification_delivery import queue_verification_email
 
 __all__ = [
@@ -62,11 +69,14 @@ __all__ = [
     'create_role',
     'create_provisioning_scope',
     'ensure_account_write_allowed',
+    'InvalidImpactToken',
     'is_account_accessible',
     'queue_verification_email',
     'queue_account_security_email',
     'record_admin_action',
     'record_admin_self_action',
+    'create_impact_token',
+    'decode_impact_token',
     'resend_admin_invitation',
     'resolve_admin_invitation',
     'revoke_admin_invitation',
@@ -77,8 +87,10 @@ __all__ = [
     'set_role_active',
     'set_role_permissions',
     'sync_permission_catalog',
+    'StaleImpactToken',
     'update_department',
     'update_account_profile',
+    'update_managed_account_profile',
     'update_admin_invitation_role',
     'update_role',
     'update_system_department_metadata',

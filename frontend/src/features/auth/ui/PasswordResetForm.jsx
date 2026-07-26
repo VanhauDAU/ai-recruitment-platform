@@ -108,10 +108,12 @@ export default function PasswordResetForm({
   }
 
   return (
-    <div className="w-full" style={isAdminReset ? { '--brand-primary': '#0369a1', '--brand-primary-hover': '#075985' } : undefined}>
+    <div className="w-full">
       <AuthFormStyles />
       <div className="login-card mb-7 text-center">
-        {isAdminReset ? <SafetyCertificateOutlined className="mb-3 text-4xl text-sky-700" /> : <AuthLogo className="mb-3" />}
+        {isAdminReset
+          ? <SafetyCertificateOutlined className="mb-3 text-4xl text-[var(--brand-primary)]" />
+          : <AuthLogo className="mb-3" />}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           {isAdminReset ? 'Đặt lại mật khẩu quản trị' : 'Tạo mật khẩu mới'}
         </h2>

@@ -5,14 +5,8 @@ import { AuthLogo, LoginForm } from '@/features/auth'
 // Không có link đăng ký: tài khoản admin chỉ tạo qua backend.
 export default function AdminLogin({ destinationResolver }) {
   return (
-    <ConfigProvider theme={{ token: { colorPrimary: '#0369a1', borderRadius: 10 } }}>
-      <div
-        className="w-full"
-        style={{
-          '--brand-primary': '#0369a1',
-          '--brand-primary-hover': '#075985',
-        }}
-      >
+    <ConfigProvider theme={{ token: { borderRadius: 10 } }}>
+      <div className="w-full">
         <div className="login-card mb-7 text-center">
           <AuthLogo className="mb-4" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">

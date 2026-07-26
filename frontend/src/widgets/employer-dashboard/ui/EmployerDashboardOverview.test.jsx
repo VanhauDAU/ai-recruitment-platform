@@ -14,18 +14,23 @@ vi.mock('@/entities/employer-dashboard', () => ({ getEmployerDashboard }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
 describe('EmployerDashboardOverview', () => {
-  it('opens the manual job form after all five verification steps are complete', () => {
+  it('opens the manual job form after all ten verification steps are complete', () => {
     render(
       <MemoryRouter>
         <DashboardVerificationJourney
           displayName="Nguyễn An"
           hasPassword
           verification={{
+            email_verified: true,
+            registration_completed: true,
+            consulting_need_completed: true,
             phone_verified: true,
             company_linked: true,
             business_doc_submitted: true,
-            candidate_dpa_submitted: true,
+            business_doc_approved: true,
+            candidate_dpa_approved: true,
             dpa_accepted: true,
+            representative_verified: true,
           }}
         />
       </MemoryRouter>,

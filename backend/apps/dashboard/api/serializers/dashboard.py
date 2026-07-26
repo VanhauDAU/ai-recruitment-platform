@@ -12,9 +12,12 @@ class VerificationProgressSerializer(serializers.Serializer):
     email_domain_verified = serializers.BooleanField()
     no_report_history = serializers.BooleanField()
     candidate_dpa_submitted = serializers.BooleanField()
+    candidate_dpa_approved = serializers.BooleanField()
     dpa_accepted = serializers.BooleanField()
+    representative_verified = serializers.BooleanField()
     first_job_posted = serializers.BooleanField()
     account_ready = serializers.BooleanField()
+    verification_completed = serializers.BooleanField()
     completed = serializers.BooleanField()
 
 

@@ -13,7 +13,9 @@ from common.r2_storage import private_media_storage
 
 from ...models import CompanyDocument, CompanyUpdateRequest
 from ...selectors import has_explicit_company_link
-from ...services import get_or_create_recruiter
+from ...services import (
+    get_or_create_recruiter,
+)
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 from .memberships import (
     VERIFICATION_METHOD_DOCUMENT_TYPES,
@@ -26,16 +28,22 @@ from .onboarding import _require_company
 def employer_documents_queryset(user):
     """Documents visible to the authenticated recruiter; never expose R2 URLs."""
     recruiter = get_or_create_recruiter(user)
-    candidate_dpa = Q(
-        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        recruiter=recruiter,
-    )
+    # Keep recruiter-owned legacy rows visible while migrations/backfill attach
+    # them to the account-specific verification case.
+    candidate_dpa = Q(verification_case__recruiter=recruiter) | Q(recruiter=recruiter)
     if has_explicit_company_link(recruiter):
-        candidate_dpa |= Q(
-            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-            company=recruiter.company,
+        queryset = CompanyDocument.objects.filter(
+            candidate_dpa
+            | Q(
+                company=recruiter.company,
+                update_request__isnull=False,
+            )
+            | Q(
+                company=recruiter.company,
+                verification_case__isnull=True,
+                uploaded_by=user,
+            )
         )
-        queryset = CompanyDocument.objects.filter(Q(company=recruiter.company) | candidate_dpa)
     else:
         queryset = CompanyDocument.objects.filter(candidate_dpa)
     return queryset.annotate(
@@ -148,6 +156,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 ) from error
             document = CompanyDocument.objects.create(
                 company=_require_company(request.user).company,
+                recruiter=recruiter,
                 uploaded_by=request.user,
                 update_request=update_request,
                 doc_type=doc_type,
@@ -165,9 +174,14 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     doc_type,
                     upload,
                     update_request=update_request,
+                    recruiter=recruiter,
+                    verification_method=verification_method or '',
                 )
                 if verification_method:
-                    remove_obsolete_verification_documents(company, verification_method)
+                    remove_obsolete_verification_documents(
+                        document.verification_case,
+                        verification_method,
+                    )
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

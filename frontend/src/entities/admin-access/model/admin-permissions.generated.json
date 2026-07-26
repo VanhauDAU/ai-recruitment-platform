@@ -25,6 +25,11 @@
     "label": "Hỗ trợ bảo mật tài khoản"
   },
   {
+    "code": "account.sensitive.view",
+    "module": "account",
+    "label": "Xem dữ liệu tài khoản nhạy cảm"
+  },
+  {
     "code": "account.status.manage",
     "module": "account",
     "label": "Quản lý trạng thái tài khoản"
@@ -118,6 +123,16 @@
     "code": "dashboard.view",
     "module": "dashboard",
     "label": "Xem tổng quan"
+  },
+  {
+    "code": "employer_verification.review",
+    "module": "employer_verification",
+    "label": "Duyệt xác thực nhà tuyển dụng"
+  },
+  {
+    "code": "employer_verification.view",
+    "module": "employer_verification",
+    "label": "Xem xác thực nhà tuyển dụng"
   },
   {
     "code": "job_moderation.approve",

@@ -22,11 +22,11 @@ describe('EmployerVerificationChecklist', () => {
       </MemoryRouter>,
     )
 
-    const title = screen.getByText('Cập nhật Giấy đăng ký doanh nghiệp')
+    const title = screen.getByText('Nộp giấy tờ chứng minh quyền đại diện')
     const stepRow = title.closest('.grid')
 
     expect(stepRow).not.toBeNull()
     expect(within(stepRow).getByText('Hoàn tất')).toBeInTheDocument()
-    expect(screen.getByText('Hoàn thành 20%')).toBeInTheDocument()
+    expect(screen.getByText('Hoàn thành 10%')).toBeInTheDocument()
   })
 })

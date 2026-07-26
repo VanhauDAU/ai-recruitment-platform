@@ -1,8 +1,10 @@
 """Recruiter profile workflows."""
 
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 
-from ..models import CompanyDocument, RecruiterProfile
+from ..models import CompanyDocument, EmployerVerificationCase, RecruiterProfile
 
 
 def get_or_create_recruiter(user):
@@ -20,6 +22,12 @@ def recruiter_posting_readiness(user):
     recruiter = RecruiterProfile.objects.select_related('company', 'user').filter(user=user).first()
     if recruiter is None or not _has_explicit_company_link(recruiter):
         return recruiter, False
+    if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
+        return recruiter, EmployerVerificationCase.objects.filter(
+            recruiter=recruiter,
+            company=recruiter.company,
+            status=EmployerVerificationCase.Status.APPROVED,
+        ).exists()
     has_business_document = (
         recruiter.company.documents.filter(
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
@@ -51,6 +59,30 @@ def recruiter_posting_readiness(user):
         ]
     )
     return recruiter, verified
+
+
+def ensure_recruiter_candidate_data_access(user):
+    """Enforce the rollout gate before exposing candidate personal data."""
+    if recruiter_candidate_data_access_allowed(user):
+        return
+    raise PermissionDenied(
+        'Tài khoản cần được xác thực quyền đại diện trước khi truy cập dữ liệu ứng viên.'
+    )
+
+
+def recruiter_candidate_data_access_allowed(user):
+    """Return whether personal candidate data may be included in a response."""
+    if not getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS', False):
+        return True
+    recruiter = RecruiterProfile.objects.filter(user=user).first()
+    return (
+        recruiter is not None
+        and EmployerVerificationCase.objects.filter(
+            recruiter=recruiter,
+            company_id=recruiter.company_id,
+            status=EmployerVerificationCase.Status.APPROVED,
+        ).exists()
+    )
 
 
 def _has_explicit_company_link(recruiter):

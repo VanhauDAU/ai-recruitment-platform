@@ -8,6 +8,8 @@ export {
   getAccountStatusImpact,
   getAdminAccount,
   getAdminAccountActivity,
+  getAdminAccountProfile,
+  getAdminAccountResource,
   getAdminAccountSessions,
   getAdminAccounts,
   getAdminAccountSummary,
@@ -22,6 +24,7 @@ export {
   sendAdminAccountPasswordReset,
   setProvisioningScopeStatus,
   updateAdminAccount,
+  updateAdminAccountProfile,
   updateAdminInvitation,
   validateAdminInvitation,
 } from './api/admin-account.api'

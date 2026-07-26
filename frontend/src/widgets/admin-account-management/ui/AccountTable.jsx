@@ -4,7 +4,7 @@ import {
   MoreOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, Dropdown, Space, Table, Tooltip, Typography } from 'antd'
+import { Avatar, Button, Dropdown, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import {
   accountSubtitle,
   formatAdminDate,
@@ -73,6 +73,32 @@ export default function AccountTable({
       dataIndex: 'status',
       width: 150,
       render: (status) => <AccountStatusTag status={status} />,
+    },
+    {
+      title: 'Xác thực NTD',
+      key: 'verification',
+      width: 190,
+      render: (_, row) => {
+        if (row.role !== 'employer') return <Typography.Text type="secondary">Không áp dụng</Typography.Text>
+        const verification = row.context?.verification
+        const colors = {
+          approved: 'green',
+          rejected: 'red',
+          changes_requested: 'orange',
+          in_review: 'blue',
+          pending: 'gold',
+        }
+        return (
+          <div className="account-security-stack">
+            <Tag color={colors[verification?.status] || 'default'}>
+              {verification?.status_label || 'Chưa nộp'}
+            </Tag>
+            <span className="text-slate-500">
+              {`${verification?.missing_step_count ?? 10} bước còn thiếu`}
+            </span>
+          </div>
+        )
+      },
     },
     {
       title: 'Bảo mật',

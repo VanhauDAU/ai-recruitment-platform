@@ -748,16 +748,22 @@ class JoinCompanyTests(APITestCase):
             recruiter=self.recruiter,
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         )
-        self.assertEqual(documents.count(), 1)
-        document = documents.get()
+        self.assertEqual(documents.count(), 2)
+        previous = documents.get(pk=first.data['id'])
+        document = documents.get(pk=replacement.data['id'])
         self.assertIsNone(document.company)
         self.assertEqual(document.file_name, 'Thỏa thuận xử lý DLCN')
+        self.assertFalse(previous.is_current)
+        self.assertTrue(document.is_current)
+        self.assertEqual(document.version, 2)
+        self.assertEqual(document.supersedes, previous)
         self.assertTrue(
             self.client.get(reverse('employer-me')).data['onboarding']['candidate_dpa_submitted']
         )
         listed = self.client.get(reverse('employer-company-documents'))
         self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
-        self.assertEqual(len(listed.data), 1)
+        self.assertEqual(len(listed.data), 2)
+        self.assertEqual(listed.data[0]['id'], document.id)
 
     def test_current_recruiter_dpa_is_listed_before_legacy_company_dpa(self):
         self.recruiter.company = self.company
@@ -1047,7 +1053,7 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertTrue(onboarding['business_doc_submitted'])
         self.assertTrue(onboarding['candidate_dpa_submitted'])
 
-    def test_replacing_a_business_document_resets_its_review_state(self):
+    def test_replacing_a_business_document_keeps_immutable_history(self):
         media_root = tempfile.mkdtemp()
         try:
             with self.settings(MEDIA_ROOT=media_root):
@@ -1080,21 +1086,28 @@ class CompanyUpdateRequestTests(APITestCase):
 
         self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
         self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
-        self.assertEqual(replacement.data['id'], first.data['id'])
+        self.assertNotEqual(replacement.data['id'], first.data['id'])
         document.refresh_from_db()
-        self.assertEqual(document.file_name, 'gpkd-moi.pdf')
-        self.assertEqual(document.status, CompanyDocument.Status.PENDING)
-        self.assertEqual(document.review_note, '')
+        current = CompanyDocument.objects.get(pk=replacement.data['id'])
+        self.assertEqual(document.file_name, 'gpkd-cu.pdf')
+        self.assertEqual(document.status, CompanyDocument.Status.REJECTED)
+        self.assertEqual(document.review_note, 'Tệp chưa rõ nét.')
+        self.assertFalse(document.is_current)
+        self.assertEqual(current.file_name, 'gpkd-moi.pdf')
+        self.assertEqual(current.status, CompanyDocument.Status.PENDING)
+        self.assertTrue(current.is_current)
+        self.assertEqual(current.version, 2)
+        self.assertEqual(current.supersedes, document)
         self.assertEqual(
             CompanyDocument.objects.filter(
                 company=self.company,
                 doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
                 update_request__isnull=True,
             ).count(),
-            1,
+            2,
         )
 
-    def test_switching_verification_method_removes_the_previous_documents(self):
+    def test_switching_verification_method_retains_previous_documents_as_history(self):
         media_root = tempfile.mkdtemp()
         try:
             with self.settings(MEDIA_ROOT=media_root):
@@ -1136,8 +1149,9 @@ class CompanyUpdateRequestTests(APITestCase):
                 remaining_documents = CompanyDocument.objects.filter(
                     company=self.company,
                     update_request__isnull=True,
+                    is_current=True,
                 )
-                self.assertFalse(private_media_storage().exists(old_path))
+                self.assertTrue(private_media_storage().exists(old_path))
         finally:
             shutil.rmtree(media_root, ignore_errors=True)
 
@@ -1150,6 +1164,13 @@ class CompanyUpdateRequestTests(APITestCase):
                 CompanyDocument.DocType.AUTHORIZATION_LETTER,
                 CompanyDocument.DocType.IDENTITY_DOCUMENT,
             },
+        )
+        self.assertTrue(
+            CompanyDocument.objects.filter(
+                company=self.company,
+                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                is_current=False,
+            ).exists()
         )
 
 

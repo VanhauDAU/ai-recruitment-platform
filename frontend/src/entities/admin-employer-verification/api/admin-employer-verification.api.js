@@ -1,0 +1,55 @@
+import client from '@/shared/api/client'
+
+async function data(request) {
+  const response = await request
+  return response.data
+}
+
+export function getAdminEmployerVerifications(params = {}, { signal } = {}) {
+  return data(client.get('/admin/employer-verifications/', { params, signal }))
+}
+
+export function getAdminEmployerVerificationSummary({ signal } = {}) {
+  return data(client.get('/admin/employer-verifications/summary/', { signal }))
+}
+
+export function getAdminEmployerVerification(publicId, { signal } = {}) {
+  return data(client.get(`/admin/employer-verifications/${publicId}/`, { signal }))
+}
+
+export function startAdminEmployerVerificationReview(publicId) {
+  return data(client.post(`/admin/employer-verifications/${publicId}/start-review/`))
+}
+
+export function reviewAdminEmployerDocument(casePublicId, documentPublicId, payload) {
+  return data(client.post(
+    `/admin/employer-verifications/${casePublicId}/documents/${documentPublicId}/review/`,
+    payload,
+  ))
+}
+
+export function getAdminEmployerDecisionImpact(publicId, payload) {
+  return data(client.post(
+    `/admin/employer-verifications/${publicId}/decision-impact/`,
+    payload,
+  ))
+}
+
+export function decideAdminEmployerVerification(publicId, payload) {
+  return data(client.post(`/admin/employer-verifications/${publicId}/decision/`, payload))
+}
+
+export async function getAdminEmployerDocumentContent(
+  casePublicId,
+  documentPublicId,
+  { signal } = {},
+) {
+  const response = await client.get(
+    `/admin/employer-verifications/${casePublicId}/documents/${documentPublicId}/content/`,
+    { responseType: 'blob', signal },
+  )
+  return {
+    blob: response.data,
+    contentType: response.headers['content-type'] || response.data.type,
+  }
+}

@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/health/', health_check, name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/admin/', include('apps.accounts.urls_admin')),
+    path('api/admin/', include('apps.employers.urls_admin')),
     path('api/candidate/', include('apps.candidates.urls')),
     path('api/employer/', include('apps.employers.urls')),
     path('api/v2/cvs/', include('apps.cvs.urls_v2')),

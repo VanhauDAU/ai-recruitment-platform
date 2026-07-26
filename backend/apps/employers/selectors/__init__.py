@@ -1,5 +1,9 @@
 """Public read/query API for the employers domain."""
 
+from .admin_verification import (
+    admin_verification_cases_queryset,
+    admin_verification_summary,
+)
 from .campaigns import (
     attach_campaign_candidate_previews,
     campaign_activity_queryset,
@@ -18,6 +22,8 @@ from .recruitment_needs import first_recruitment_need
 
 __all__ = [
     'build_employer_onboarding_steps',
+    'admin_verification_cases_queryset',
+    'admin_verification_summary',
     'attach_campaign_candidate_previews',
     'campaign_detail_queryset',
     'campaign_activity_queryset',

@@ -461,6 +461,16 @@ EMPLOYER_PASSWORD_RESET_PATH = config(
     'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/reset-password'
 )
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
+REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
+    'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
+    default=False,
+    cast=bool,
+)
+REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
+    'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS',
+    default=False,
+    cast=bool,
+)
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)

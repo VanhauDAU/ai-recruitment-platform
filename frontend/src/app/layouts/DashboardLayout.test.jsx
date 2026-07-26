@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { ConfigProvider, theme as antdTheme } from 'antd'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardLayout from './DashboardLayout'
 
@@ -9,6 +10,11 @@ vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('@/entities/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
 }))
+
+function ThemeProbe() {
+  const { token } = antdTheme.useToken()
+  return <span data-testid="admin-primary-token">{token.colorPrimary}</span>
+}
 
 describe('DashboardLayout admin access', () => {
   beforeEach(() => useSession.mockReset())
@@ -93,5 +99,34 @@ describe('DashboardLayout admin access', () => {
 
     expect(await screen.findByText('Đăng xuất khỏi phiên này?')).toBeInTheDocument()
     expect(logout).not.toHaveBeenCalled()
+  })
+
+  it('inherits the primary color from the application theme', () => {
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'admin@example.com',
+        admin_access: {
+          is_superuser: true,
+          permissions: [],
+          memberships: [],
+        },
+      },
+      logout: vi.fn(),
+    })
+
+    render(
+      <ConfigProvider theme={{ token: { colorPrimary: '#7c3aed' } }}>
+        <MemoryRouter>
+          <Routes>
+            <Route element={<DashboardLayout />}>
+              <Route index element={<ThemeProbe />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </ConfigProvider>,
+    )
+
+    expect(screen.getByTestId('admin-primary-token')).toHaveTextContent('#7c3aed')
   })
 })

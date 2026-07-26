@@ -66,8 +66,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 0.625rem;
-  color: #0369a1;
-  background: #f0f9ff;
+  color: var(--admin-primary);
+  background: var(--admin-primary-soft);
 }
 
 .admin-account-settings__status-icon.is-positive {
@@ -98,19 +98,19 @@
 }
 
 .admin-account-settings__tab:hover {
-  color: #0369a1;
-  background: #f0f9ff;
+  color: var(--admin-primary);
+  background: var(--admin-primary-soft);
 }
 
 .admin-account-settings__tab[aria-selected='true'] {
-  color: #075985;
-  background: #e0f2fe;
+  color: var(--admin-primary-hover);
+  background: var(--admin-primary-soft);
   font-weight: 700;
 }
 
 .admin-account-settings__tab:focus-visible,
 .admin-account-settings__content:focus-visible {
-  outline: 3px solid rgb(3 105 161 / 0.35);
+  outline: 3px solid color-mix(in srgb, var(--admin-primary) 35%, transparent);
   outline-offset: 2px;
 }
 
