@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLoginPrompt } from '@/features/auth'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/apply-for-job'
+import { ReportJobModal } from '@/features/report-job'
 import { useSession } from '@/entities/session'
 import { useSavedJob } from '@/features/saved-jobs'
 import { message } from '@/shared/lib/toast'
@@ -23,6 +24,7 @@ export default function JobDetail() {
   const { job, relatedJobs, loading, notFound } = useJobDetailPageData({ slug, companySlug, navigate })
   const [saved, toggleSaved, savePending] = useSavedJob(job?.public_id, job)
   const [applyOpen, setApplyOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const applicationStatus = useJobApplicationStatus({
     jobPublicId: job?.public_id,
     enabled: isAuthenticated && user?.role === 'candidate',
@@ -58,6 +60,18 @@ export default function JobDetail() {
     toggleSaved()
   }
 
+  function handleReport() {
+    if (!isAuthenticated) {
+      promptLogin(() => setReportOpen(true))
+      return
+    }
+    if (user?.role !== 'candidate') {
+      message.warning('Chỉ ứng viên mới có thể báo cáo tin tuyển dụng.')
+      return
+    }
+    setReportOpen(true)
+  }
+
   async function handleShare() {
     try {
       await navigator.clipboard.writeText(window.location.href)
@@ -91,7 +105,7 @@ export default function JobDetail() {
                 applicationStatus={applicationStatus}
                 onApply={handleApply}
                 onSave={handleSave}
-                onReport={() => message.info('Cảm ơn bạn. Tính năng báo cáo chi tiết sẽ sớm được mở trong Trung tâm hỗ trợ.')}
+                onReport={handleReport}
                 onRequireLogin={promptLogin}
               />
             </div>
@@ -113,6 +127,12 @@ export default function JobDetail() {
         isReapplication={applicationStatus.hasApplied}
         retriesRemaining={applicationStatus.retriesRemaining}
         onSubmitted={applicationStatus.recordSubmission}
+      />
+      <ReportJobModal
+        jobPublicId={job.public_id}
+        jobTitle={job.title}
+        onClose={() => setReportOpen(false)}
+        open={reportOpen}
       />
     </>
   )

@@ -15,6 +15,7 @@ import {
   formatDeadline,
   formatNumber,
   formatSalary,
+  getSalaryDisplayNote,
 } from '@/entities/job'
 import { formatJobDate } from '../../lib/job-detail-presentation'
 import VerifiedEmployerBadge from './VerifiedEmployerBadge'
@@ -73,7 +74,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
         </div>
 
         <div className="mt-5 grid gap-3 border-y border-gray-100 py-4 sm:grid-cols-[1.15fr_1fr_0.8fr] sm:gap-0 sm:divide-x sm:divide-gray-100">
-          <HeroMetric icon={<WalletOutlined />} label="Mức lương" value={formatSalary(job)} highlight />
+          <HeroMetric icon={<WalletOutlined />} label="Mức lương" value={formatSalary(job)} note={getSalaryDisplayNote(job)} highlight />
           <HeroMetric icon={<EnvironmentOutlined />} label="Địa điểm" value={locations} className="sm:pl-4" />
           <HeroMetric icon={<UserOutlined />} label="Kinh nghiệm" value={experience} className="sm:pl-4" />
         </div>
@@ -118,12 +119,12 @@ function StatusBadge({ children, className }) {
   return <span className={`rounded px-2 py-0.5 text-[10px] font-bold ring-1 ${className}`}>{children}</span>
 }
 
-function HeroMetric({ icon, label, value, highlight = false, className = '' }) {
+function HeroMetric({ icon, label, value, note, highlight = false, className = '' }) {
   if (highlight) {
     return (
       <div
         role="group"
-        aria-label={`${label}: ${value}`}
+        aria-label={`${label}: ${value}${note ? `, ${note}` : ''}`}
         className="flex min-w-0 items-center gap-3 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white px-3.5 py-3 shadow-[0_4px_16px_rgba(0,176,80,0.08)] sm:-my-1 sm:mr-4"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-lg text-white shadow-sm">
@@ -132,6 +133,7 @@ function HeroMetric({ icon, label, value, highlight = false, className = '' }) {
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{label}</p>
           <p className="mt-0.5 break-words text-xl font-extrabold leading-tight text-[var(--brand-primary)] sm:text-2xl" title={value}>{value}</p>
+          {note && <p className="mt-1 text-xs font-medium leading-4 text-emerald-700">{note}</p>}
         </div>
       </div>
     )

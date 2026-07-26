@@ -302,6 +302,11 @@ class AdminAccessTests(TestCase):
             AdminJobModerationListView,
             AdminJobReviewView,
         )
+        from apps.jobs.api.views.reports import (
+            AdminJobReportListView,
+            AdminJobReportResolveView,
+            AdminJobReportReverseView,
+        )
         from apps.services.api.views import catalog as service_catalog
         from apps.sitecontent.api.views import settings as site_settings
 
@@ -322,6 +327,9 @@ class AdminAccessTests(TestCase):
             site_settings.AdminSettingUploadView,
             AdminJobModerationListView,
             AdminJobReviewView,
+            AdminJobReportListView,
+            AdminJobReportResolveView,
+            AdminJobReportReverseView,
             AdminEmployerVerificationViewSet,
             AdminCompanyUpdateRequestViewSet,
             AdminDepartmentViewSet,

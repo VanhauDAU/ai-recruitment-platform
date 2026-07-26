@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tag, message } from 'antd'
+import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tabs, Tag, message } from 'antd'
+import { useSearchParams } from 'react-router-dom'
 import { getAdminJobModeration, jobKeys, reviewAdminJob } from '@/entities/job'
+import { JobReportQueue } from '@/features/review-job-reports'
 import { AdminPanel } from '@/widgets/admin-workspace'
 
 const STATUS_OPTIONS = [
@@ -25,7 +27,7 @@ function formatDateTime(value) {
   return value ? new Date(value).toLocaleString('vi-VN') : '—'
 }
 
-export default function AdminJobModeration() {
+function JobModerationQueue() {
   const [status, setStatus] = useState('pending')
   const [rejectingJob, setRejectingJob] = useState(null)
   const [form] = Form.useForm()
@@ -158,6 +160,41 @@ export default function AdminJobModeration() {
           </Form.Item>
         </Form>
       </Modal>
+    </section>
+  )
+}
+
+export default function AdminJobModeration() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') === 'reports' ? 'reports' : 'jobs'
+
+  function changeTab(tab) {
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'reports') next.set('tab', 'reports')
+    else next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }
+
+  return (
+    <section className="space-y-4">
+      <Tabs
+        activeKey={activeTab}
+        items={[
+          { key: 'jobs', label: 'Tin chờ duyệt' },
+          { key: 'reports', label: 'Báo cáo vi phạm' },
+        ]}
+        onChange={changeTab}
+      />
+      {activeTab === 'reports'
+        ? (
+          <AdminPanel
+            title="Báo cáo chờ xử lý"
+            description="Các báo cáo do ứng viên gửi đang chờ xem xét bằng chứng và đưa ra kết luận."
+          >
+            <JobReportQueue />
+          </AdminPanel>
+        )
+        : <JobModerationQueue />}
     </section>
   )
 }

@@ -177,7 +177,10 @@ def _serialize_recommendation_results(payload, request):
     # Context dùng chung cho cả trang: nạp cờ huy hiệu một lần thay vì để mỗi
     # tin tự truy vấn lại điều kiện xác thực của công ty.
     context = {'request': request}
-    prime_badge_cache(context, {item['job'].company_id for item in payload['results']})
+    prime_badge_cache(
+        context,
+        {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
+    )
     results = []
     for item in payload['results']:
         serialized = PublicJobListSerializer(item['job'], context=context).data

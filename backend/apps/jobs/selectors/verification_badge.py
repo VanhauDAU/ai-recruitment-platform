@@ -24,7 +24,10 @@ CRITERIA_LABELS = (
     ('phone_verified', 'Đã xác thực số điện thoại'),
     ('business_doc_approved', 'Đã được duyệt Giấy phép kinh doanh'),
     ('account_age_reached', 'Tài khoản NTD được tạo tối thiểu {months} tháng'),
-    ('no_report_history', 'Chưa có lịch sử bị báo cáo tin đăng'),
+    (
+        'no_report_history',
+        'Chưa có tin đăng vi phạm được quản trị viên xác nhận',
+    ),
 )
 
 
@@ -33,36 +36,28 @@ def minimum_account_age_months():
     return max(months, 0)
 
 
-def _recruiter_for(company):
-    """Chủ sở hữu công ty — mốc tuổi tài khoản tính theo người tạo công ty."""
-    return (
-        RecruiterProfile.objects.filter(company=company)
-        .select_related('user')
-        .order_by('created_at', 'id')
-        .first()
-    )
-
-
-def employer_badge_criteria(company, recruiter=None):
-    """Trả về trạng thái từng tiêu chí của một công ty.
-
-    `recruiter` truyền vào khi caller đã có sẵn hồ sơ để tránh truy vấn thừa.
-    """
+def job_badge_criteria(job):
+    """Trả về năm tiêu chí của chính tài khoản đã đăng ``job``."""
     months = minimum_account_age_months()
     empty = {key: False for key, _ in CRITERIA_LABELS}
-    if company is None:
+    if job is None or job.company_id is None or job.posted_by_id is None:
         return {**empty, 'verified': False, 'min_account_age_months': months}
 
-    if recruiter is None:
-        recruiter = _recruiter_for(company)
-    user = getattr(recruiter, 'user', None)
+    company = job.company
+    user = job.posted_by
+    try:
+        recruiter = user.recruiter_profile
+    except RecruiterProfile.DoesNotExist:
+        recruiter = None
+    recruiter_matches_company = bool(recruiter and recruiter.company_id == company.pk)
 
     email_domain_verified = bool(
         user and user.email_verified and is_company_domain_email(user.email, company.email)
     )
-    phone_verified = bool(recruiter and recruiter.phone_verified_at)
+    phone_verified = bool(recruiter_matches_company and recruiter.phone_verified_at)
     business_doc_approved = CompanyDocument.objects.filter(
         company=company,
+        uploaded_by=user,
         doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
         status=CompanyDocument.Status.APPROVED,
     ).exists()
@@ -73,7 +68,7 @@ def employer_badge_criteria(company, recruiter=None):
     )
     # Chỉ báo cáo đã được admin xác nhận vi phạm mới làm mất huy hiệu.
     no_report_history = not JobReport.objects.filter(
-        job__company=company,
+        job__posted_by=user,
         status=JobReport.Status.UPHELD,
     ).exists()
 
@@ -91,48 +86,57 @@ def employer_badge_criteria(company, recruiter=None):
     }
 
 
-def badge_verified_map(company_ids):
-    """Cờ huy hiệu cho nhiều công ty bằng số truy vấn cố định.
+def badge_verified_map(badge_keys):
+    """Cờ huy hiệu cho nhiều cặp ``(company_id, posted_by_id)`` bằng query cố định.
 
-    Serializer danh sách gọi hàm này một lần cho cả trang; tính từng công ty sẽ
+    Serializer danh sách gọi hàm này một lần cho cả trang; tính từng tài khoản sẽ
     thành N+1 và phá vỡ ngân sách truy vấn của endpoint list.
     """
-    ids = {company_id for company_id in company_ids if company_id}
-    if not ids:
+    keys = {
+        (company_id, posted_by_id)
+        for company_id, posted_by_id in badge_keys
+        if company_id and posted_by_id
+    }
+    if not keys:
         return {}
 
     months = minimum_account_age_months()
     threshold = timezone.now() - timedelta(days=months * DAYS_PER_MONTH)
+    company_ids = {company_id for company_id, _ in keys}
+    user_ids = {posted_by_id for _, posted_by_id in keys}
 
-    owners = {}
-    recruiters = (
-        RecruiterProfile.objects.filter(company_id__in=ids)
-        .select_related('user', 'company')
-        .order_by('company_id', 'created_at', 'id')
-    )
-    for recruiter in recruiters:
-        owners.setdefault(recruiter.company_id, recruiter)
+    recruiters = {
+        (recruiter.company_id, recruiter.user_id): recruiter
+        for recruiter in (
+            RecruiterProfile.objects.filter(
+                company_id__in=company_ids,
+                user_id__in=user_ids,
+            ).select_related('user', 'company')
+        )
+    }
 
     approved_docs = set(
         CompanyDocument.objects.filter(
-            company_id__in=ids,
+            company_id__in=company_ids,
+            uploaded_by_id__in=user_ids,
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             status=CompanyDocument.Status.APPROVED,
-        ).values_list('company_id', flat=True)
+        ).values_list('company_id', 'uploaded_by_id')
     )
     reported = set(
         JobReport.objects.filter(
-            job__company_id__in=ids,
+            job__posted_by_id__in=user_ids,
             status=JobReport.Status.UPHELD,
-        ).values_list('job__company_id', flat=True)
+        ).values_list('job__posted_by_id', flat=True)
     )
 
     result = {}
-    for company_id in ids:
-        recruiter = owners.get(company_id)
+    for key in keys:
+        company_id, user_id = key
+        recruiter = recruiters.get(key)
         user = getattr(recruiter, 'user', None)
         company = getattr(recruiter, 'company', None)
-        result[company_id] = all(
+        result[key] = all(
             [
                 bool(
                     user
@@ -141,9 +145,9 @@ def badge_verified_map(company_ids):
                     and is_company_domain_email(user.email, company.email)
                 ),
                 bool(recruiter and recruiter.phone_verified_at),
-                company_id in approved_docs,
+                key in approved_docs,
                 bool(user and user.date_joined and user.date_joined <= threshold),
-                company_id not in reported,
+                user_id not in reported,
             ]
         )
     return result
@@ -152,7 +156,7 @@ def badge_verified_map(company_ids):
 BADGE_CACHE_KEY = '_job_badge_cache'
 
 
-def prime_badge_cache(context, company_ids):
+def prime_badge_cache(context, badge_keys):
     """Nạp cờ huy hiệu vào cache dùng chung cho cả một response.
 
     Một response có thể chứa nhiều danh sách tin (kết quả, gợi ý, vị trí liên
@@ -160,15 +164,15 @@ def prime_badge_cache(context, company_ids):
     sách chứ không chỉ theo số dòng.
     """
     cache = context.setdefault(BADGE_CACHE_KEY, {})
-    missing = {company_id for company_id in company_ids if company_id and company_id not in cache}
+    missing = {key for key in badge_keys if all(key) and key not in cache}
     if missing:
         cache.update(badge_verified_map(missing))
     return cache
 
 
-def badge_criteria_payload(company, recruiter=None):
+def badge_criteria_payload(job):
     """Dạng dữ liệu cho API: cờ tổng kèm danh sách tiêu chí đã dịch nhãn."""
-    criteria = employer_badge_criteria(company, recruiter=recruiter)
+    criteria = job_badge_criteria(job)
     months = criteria['min_account_age_months']
     return {
         'verified': criteria['verified'],

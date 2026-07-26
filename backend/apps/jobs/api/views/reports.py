@@ -10,9 +10,10 @@ from apps.accounts.permissions import HasAdminPermission
 
 from ...models import Job, JobReport
 from ...selectors import job_report_queryset
-from ...services import resolve_job_report, submit_job_report
+from ...services import resolve_job_report, reverse_job_report, submit_job_report
 from ..serializers import (
     AdminJobReportResolveSerializer,
+    AdminJobReportReverseSerializer,
     AdminJobReportSerializer,
     JobReportCreateSerializer,
 )
@@ -62,7 +63,7 @@ class AdminJobReportListView(generics.ListAPIView):
 )
 class AdminJobReportResolveView(APIView):
     permission_classes = [HasAdminPermission]
-    required_admin_permissions = {'POST': ['job_moderation.view']}
+    required_admin_permissions = {'POST': ['job_moderation.view', 'job_moderation.resolve_report']}
 
     def post(self, request, public_id):
         report = get_object_or_404(JobReport, public_id=public_id)
@@ -73,5 +74,27 @@ class AdminJobReportResolveView(APIView):
             status=serializer.validated_data['status'],
             actor=request.user,
             note=serializer.validated_data.get('note', ''),
+        )
+        return Response(AdminJobReportSerializer(report).data)
+
+
+@extend_schema(
+    summary='Gỡ kết luận vi phạm của một báo cáo tuyển dụng',
+    request=AdminJobReportReverseSerializer,
+    responses={200: AdminJobReportSerializer},
+    tags=['jobs'],
+)
+class AdminJobReportReverseView(APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'POST': ['job_moderation.view', 'job_moderation.resolve_report']}
+
+    def post(self, request, public_id):
+        report = get_object_or_404(JobReport, public_id=public_id)
+        serializer = AdminJobReportReverseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        report = reverse_job_report(
+            report=report,
+            actor=request.user,
+            note=serializer.validated_data['note'],
         )
         return Response(AdminJobReportSerializer(report).data)

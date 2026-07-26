@@ -20,6 +20,7 @@ export default function VerifiedEmployerBadge({ verification, verified }) {
     <Tooltip
       placement="bottom"
       color="#1f2733"
+      trigger={['hover', 'focus', 'click']}
       styles={{ root: { maxWidth: 'min(340px, calc(100vw - 32px))' } }}
       title={(
         <div className="py-0.5">
@@ -37,12 +38,13 @@ export default function VerifiedEmployerBadge({ verification, verified }) {
         </div>
       )}
     >
-      <span
-        className="inline-flex shrink-0 cursor-help items-center align-middle"
-        aria-label="Nhà tuyển dụng đã được xác thực"
+      <button
+        type="button"
+        className="-m-2 inline-flex min-h-8 min-w-8 shrink-0 cursor-help items-center justify-center rounded-full align-middle outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+        aria-label="Nhà tuyển dụng đã được xác thực, xem 5 tiêu chí"
       >
         {icon}
-      </span>
+      </button>
     </Tooltip>
   )
 }

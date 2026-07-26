@@ -9,8 +9,12 @@ from apps.employers.models import Company, CompanyDocument, RecruiterProfile
 from apps.sitecontent.models import SiteSetting
 
 from ..models import Job, JobReport
-from ..selectors.verification_badge import employer_badge_criteria
-from ..services import resolve_job_report, submit_job_report
+from ..selectors.verification_badge import job_badge_criteria
+from ..services import (
+    resolve_job_report,
+    reverse_job_report,
+    submit_job_report,
+)
 
 
 def _fully_verified_company(suffix='1', *, months_old=12):
@@ -43,11 +47,22 @@ def _fully_verified_company(suffix='1', *, months_old=12):
     return user, company
 
 
+def _job_for(user, company, suffix=''):
+    return Job.objects.create(
+        posted_by=user,
+        company=company,
+        title=f'Chuyên viên SAP {suffix}'.strip(),
+        description='Mô tả',
+        status=Job.Status.ACTIVE,
+    )
+
+
 class EmployerBadgeCriteriaTests(APITestCase):
     def test_all_five_criteria_met_grants_the_badge(self):
-        _, company = _fully_verified_company()
+        user, company = _fully_verified_company()
+        job = _job_for(user, company)
 
-        criteria = employer_badge_criteria(company)
+        criteria = job_badge_criteria(job)
 
         self.assertTrue(criteria['verified'])
         self.assertTrue(criteria['email_domain_verified'])
@@ -60,8 +75,9 @@ class EmployerBadgeCriteriaTests(APITestCase):
         user, company = _fully_verified_company('2')
         user.email = 'nguoidung@gmail.com'
         user.save(update_fields=['email'])
+        job = _job_for(user, company)
 
-        criteria = employer_badge_criteria(company)
+        criteria = job_badge_criteria(job)
 
         self.assertFalse(criteria['email_domain_verified'])
         self.assertFalse(criteria['verified'])
@@ -69,19 +85,21 @@ class EmployerBadgeCriteriaTests(APITestCase):
     def test_company_without_business_email_fails_the_domain_criterion(self):
         # Quy tắc cũ cho mọi tên miền không công khai đi qua khi công ty bỏ trống
         # email, nên `hr@ten-mien-bat-ky.vn` cũng đạt tiêu chí.
-        _, company = _fully_verified_company('3')
+        user, company = _fully_verified_company('3')
         company.email = ''
         company.save(update_fields=['email'])
+        job = _job_for(user, company)
 
-        criteria = employer_badge_criteria(company)
+        criteria = job_badge_criteria(job)
 
         self.assertFalse(criteria['email_domain_verified'])
         self.assertFalse(criteria['verified'])
 
     def test_account_younger_than_the_configured_threshold_fails(self):
-        _, company = _fully_verified_company('4', months_old=1)
+        user, company = _fully_verified_company('4', months_old=1)
+        job = _job_for(user, company)
 
-        self.assertFalse(employer_badge_criteria(company)['account_age_reached'])
+        self.assertFalse(job_badge_criteria(job)['account_age_reached'])
 
     def test_threshold_of_zero_months_accepts_a_brand_new_account(self):
         SiteSetting.objects.create(
@@ -89,38 +107,97 @@ class EmployerBadgeCriteriaTests(APITestCase):
             label='Tuổi tài khoản tối thiểu',
             value=0,
         )
-        _, company = _fully_verified_company('5', months_old=0)
+        user, company = _fully_verified_company('5', months_old=0)
+        job = _job_for(user, company)
 
-        criteria = employer_badge_criteria(company)
+        criteria = job_badge_criteria(job)
 
         self.assertTrue(criteria['account_age_reached'])
         self.assertTrue(criteria['verified'])
 
     def test_only_an_upheld_report_removes_the_badge(self):
         user, company = _fully_verified_company('6')
-        job = Job.objects.create(
-            posted_by=user,
-            company=company,
-            title='Chuyên viên SAP',
-            description='Mô tả',
-            status=Job.Status.ACTIVE,
+        dismissed_job = _job_for(user, company, 'bị bác')
+        upheld_job = _job_for(user, company, 'vi phạm')
+        first_reporter = User.objects.create_user(
+            email='ungvien-1@example.com', password='Password@123', role=User.Role.CANDIDATE
         )
-        reporter = User.objects.create_user(
-            email='ungvien@example.com', password='Password@123', role=User.Role.CANDIDATE
+        second_reporter = User.objects.create_user(
+            email='ungvien-2@example.com', password='Password@123', role=User.Role.CANDIDATE
         )
-        report = submit_job_report(job=job, reporter=reporter, reason=JobReport.Reason.SCAM)
+        dismissed = submit_job_report(
+            job=dismissed_job,
+            reporter=first_reporter,
+            reason=JobReport.Reason.SCAM,
+        )
 
-        self.assertTrue(employer_badge_criteria(company)['no_report_history'])
+        self.assertTrue(job_badge_criteria(upheld_job)['no_report_history'])
 
-        resolve_job_report(report=report, status=JobReport.Status.DISMISSED, actor=user)
-        self.assertTrue(employer_badge_criteria(company)['no_report_history'])
+        resolve_job_report(
+            report=dismissed,
+            status=JobReport.Status.DISMISSED,
+            actor=user,
+        )
+        self.assertTrue(job_badge_criteria(upheld_job)['no_report_history'])
 
-        report.status = JobReport.Status.PENDING
-        report.save(update_fields=['status'])
-        resolve_job_report(report=report, status=JobReport.Status.UPHELD, actor=user)
-        criteria = employer_badge_criteria(company)
+        upheld = submit_job_report(
+            job=upheld_job,
+            reporter=second_reporter,
+            reason=JobReport.Reason.SCAM,
+        )
+        resolve_job_report(report=upheld, status=JobReport.Status.UPHELD, actor=user)
+        criteria = job_badge_criteria(dismissed_job)
         self.assertFalse(criteria['no_report_history'])
         self.assertFalse(criteria['verified'])
+
+        reverse_job_report(report=upheld, actor=user, note='Đã xác minh lại chứng cứ.')
+        self.assertTrue(job_badge_criteria(dismissed_job)['no_report_history'])
+        self.assertTrue(job_badge_criteria(dismissed_job)['verified'])
+
+    def test_two_recruiters_in_one_company_have_independent_badges(self):
+        owner, company = _fully_verified_company('shared')
+        member = User.objects.create_user(
+            email='member@congtyshared.vn',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+            email_verified=True,
+        )
+        member.date_joined = timezone.now() - timedelta(days=365)
+        member.save(update_fields=['date_joined'])
+        RecruiterProfile.objects.create(
+            user=member,
+            company=company,
+            phone_verified_at=timezone.now(),
+        )
+        owner_job = _job_for(owner, company, 'owner')
+        member_job = _job_for(member, company, 'member')
+
+        self.assertTrue(job_badge_criteria(owner_job)['verified'])
+        self.assertFalse(job_badge_criteria(member_job)['business_doc_approved'])
+
+        CompanyDocument.objects.create(
+            company=company,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            status=CompanyDocument.Status.APPROVED,
+            file_url='docs/member-gpkd.pdf',
+            uploaded_by=member,
+        )
+        self.assertTrue(job_badge_criteria(member_job)['verified'])
+
+        reporter = User.objects.create_user(
+            email='candidate-shared@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        report = submit_job_report(
+            job=member_job,
+            reporter=reporter,
+            reason=JobReport.Reason.WRONG_INFO,
+        )
+        resolve_job_report(report=report, status=JobReport.Status.UPHELD, actor=owner)
+
+        self.assertTrue(job_badge_criteria(owner_job)['verified'])
+        self.assertFalse(job_badge_criteria(member_job)['verified'])
 
 
 class JobBadgeApiTests(APITestCase):

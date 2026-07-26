@@ -565,6 +565,12 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
       body: JSON.stringify({ public_id: 'job_draft', status: 'draft', ...savedDraft }),
     })
   })
+  await page.route('http://localhost:8000/api/jobs/mine/job_draft/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ public_id: 'job_draft', status: 'draft', ...savedDraft }),
+    })
+  })
   await page.route('http://localhost:8000/api/jobs/benefits/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 1, name: 'Bảo hiểm' }]) })
   })
@@ -622,6 +628,9 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   }
   await page.keyboard.press('Escape')
   await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
+  await page.getByRole('combobox', { name: 'Cách hiển thị thu nhập' }).click()
+  await page.locator('.ant-select-dropdown:visible').getByText('Thu nhập khi đạt 100% KPI', { exact: true }).click()
+  await page.getByLabel('Đến mức').fill('7000000')
   await expect(page.locator('#description').getByRole('heading', { name: 'Mô tả công việc' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Thông tin nhận hồ sơ' })).toBeVisible()
@@ -657,6 +666,10 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
   await expectNoHorizontalOverflow(page)
   await page.getByRole('button', { name: 'Lưu nháp' }).click()
   await expect.poll(() => savedDraft).toMatchObject({
+    salary_type: 'up_to',
+    salary_min: null,
+    salary_max: 7000000,
+    income_display_type: 'income_at_kpi',
     category_assignments: [
       { category: 12, role: 'primary_specialization', sort_order: 0 },
       { category: 18, role: 'domain_knowledge', sort_order: 1 },
@@ -667,6 +680,9 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
       { location: 3, address_detail: '', sort_order: 1 },
     ],
   })
+  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/job_draft\/edit$/)
+  await expect(page.getByLabel('Từ mức thu nhập')).toHaveValue('')
+  await expect(page.getByLabel('Đến mức')).toHaveValue('7.000.000')
 })
 
 test('employer jobs: detail workspace is compact, actionable and responsive', async ({ page }) => {

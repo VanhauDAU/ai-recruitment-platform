@@ -192,6 +192,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Từ chối tin tuyển dụng và ghi lý do.',
     },
     {
+        'code': 'job_moderation.resolve_report',
+        'module': 'job_moderation',
+        'label': 'Xử lý báo cáo tin tuyển dụng',
+        'description': 'Xác nhận, bác bỏ hoặc gỡ kết luận vi phạm của báo cáo tin tuyển dụng.',
+    },
+    {
         'code': 'job_moderation.view',
         'module': 'job_moderation',
         'label': 'Xem tin chờ duyệt',

@@ -17,7 +17,7 @@ from .posting import (
     save_job_draft,
     update_employer_job,
 )
-from .reports import resolve_job_report, submit_job_report
+from .reports import resolve_job_report, reverse_job_report, submit_job_report
 
 __all__ = [
     'close_job',
@@ -32,6 +32,7 @@ __all__ = [
     'reject_job',
     'reopen_job',
     'resolve_job_report',
+    'reverse_job_report',
     'submit_job_report',
     'save_job_draft',
     'set_viewer_cookie',

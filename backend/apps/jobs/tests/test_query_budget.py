@@ -19,8 +19,8 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 # skills). select_related company nằm trong SELECT chính.
 #
 # +4 cho huy hiệu xác thực nhà tuyển dụng (`company_verified`): 1 đọc ngưỡng
-# tuổi tài khoản từ site settings, 3 gom điều kiện của mọi công ty trong trang
-# (hồ sơ NTD, giấy phép kinh doanh đã duyệt, báo cáo tin bị xác nhận vi phạm).
+# tuổi tài khoản từ site settings, 3 gom điều kiện của mọi cặp (công ty, người
+# đăng) trong trang (hồ sơ NTD, GPKD do người đăng tải, báo cáo upheld của họ).
 # Bốn query này chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
 BADGE_QUERY_BUDGET = 4
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET

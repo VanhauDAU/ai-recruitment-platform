@@ -3,6 +3,22 @@ import { describe, expect, it } from 'vitest'
 import { WorkplaceGroups } from './JobDetailBlocks'
 
 describe('WorkplaceGroups', () => {
+  it('labels a province-wide workplace as all wards instead of repeating the province name', () => {
+    render(
+      <WorkplaceGroups
+        groups={[{
+          province_id: 31,
+          province_name: 'Thành phố Hải Phòng',
+          addresses: [{ display: 'Thành phố Hải Phòng', ward_name: '', address_detail: '' }],
+        }]}
+      />,
+    )
+
+    expect(screen.getByText('Thành phố Hải Phòng:', { exact: false })).toBeInTheDocument()
+    expect(screen.getByText('(Tất cả phường/xã)')).toBeInTheDocument()
+    expect(screen.queryByText('Thành phố Hải Phòng: Thành phố Hải Phòng')).not.toBeInTheDocument()
+  })
+
   it('renders at most three locations, grouped by province, and summarizes the remainder', () => {
     render(
       <WorkplaceGroups

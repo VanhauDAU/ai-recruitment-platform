@@ -341,8 +341,13 @@ test('admin detail: complete effective permissions render in access tab', async 
     admin_access: {
       is_superuser: false,
       access_source: 'role',
-      permissions: ['job_moderation.approve', 'job_moderation.reject', 'job_moderation.view'],
-      permission_count: 3,
+      permissions: [
+        'job_moderation.approve',
+        'job_moderation.reject',
+        'job_moderation.resolve_report',
+        'job_moderation.view',
+      ],
+      permission_count: 4,
       membership: {
         is_active: true,
         is_primary: true,
@@ -356,7 +361,12 @@ test('admin detail: complete effective permissions render in access tab', async 
           rank: 10,
           is_active: true,
           is_system_managed: true,
-          permission_codes: ['job_moderation.approve', 'job_moderation.reject', 'job_moderation.view'],
+          permission_codes: [
+            'job_moderation.approve',
+            'job_moderation.reject',
+            'job_moderation.resolve_report',
+            'job_moderation.view',
+          ],
           department: {
             code: 'job-moderation',
             name: 'Kiểm duyệt tin tuyển dụng',
@@ -388,8 +398,9 @@ test('admin detail: complete effective permissions render in access tab', async 
   await expect(page.getByRole('heading', { name: 'Quyền hiệu lực' })).toBeVisible()
   await expect(page.getByText('Duyệt tin tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Từ chối tin tuyển dụng', { exact: true })).toBeVisible()
+  await expect(page.getByText('Xử lý báo cáo tin tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Xem tin chờ duyệt', { exact: true })).toBeVisible()
-  await expect(page.getByText('3 quyền')).toBeVisible()
+  await expect(page.getByText('4 quyền')).toBeVisible()
   await expect(page.getByText('Đã chấp nhận')).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
@@ -565,4 +576,88 @@ test('admin password reset stays on the Admin portal', async ({ page }) => {
   await page.getByRole('button', { name: 'Đặt lại mật khẩu' }).click()
   await expect(page.getByRole('heading', { name: 'Đã đổi mật khẩu' })).toBeVisible()
   await expect(page.getByText(/xác minh MFA email/i)).toBeVisible()
+})
+
+test('admin job reports: deep link, filter and resolve workflow are permission-gated', async ({ page }) => {
+  let status = 'pending'
+  let resolvePayload
+  const adminUser = {
+    public_id: 'usr_moderator',
+    email: 'moderator@example.com',
+    full_name: 'Nguyễn Kiểm Duyệt',
+    role: 'admin',
+    status: 'active',
+    admin_access: {
+      is_superuser: false,
+      permissions: ['job_moderation.view', 'job_moderation.resolve_report'],
+      memberships: [],
+    },
+  }
+  const report = {
+    public_id: 'jrep_1',
+    job_slug: 'backend-engineer',
+    brand_slug: null,
+    job_title: 'Backend Engineer',
+    company_name: 'Công ty Mẫu',
+    reporter_email: 'candidate@example.com',
+    reason: 'wrong_info',
+    reason_label: 'Thông tin tin đăng sai sự thật',
+    detail: 'Mức lương công bố không chính xác.',
+    status,
+    resolution_note: '',
+    resolved_by_email: null,
+    resolved_at: null,
+    created_at: '2026-07-27T01:00:00Z',
+    resolution_history: [],
+  }
+
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const url = new URL(request.url())
+    const path = url.pathname
+    if (path === '/api/jobs/admin/reports/jrep_1/resolve/' && request.method() === 'POST') {
+      resolvePayload = request.postDataJSON()
+      status = resolvePayload.status
+    }
+    const currentReport = { ...report, status }
+    const matchesFilter = !url.searchParams.get('status')
+      || url.searchParams.get('status') === status
+    const body = path === '/api/auth/me/'
+      ? adminUser
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+        : path === '/api/jobs/admin/reports/'
+          ? {
+              count: matchesFilter ? 1 : 0,
+              next: null,
+              previous: null,
+              results: matchesFilter ? [currentReport] : [],
+            }
+          : path === '/api/jobs/admin/reports/jrep_1/resolve/'
+            ? currentReport
+            : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/admin/app/job-moderation?tab=reports')
+  await expect(page.getByRole('tab', { name: 'Báo cáo vi phạm' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(page.getByText('Backend Engineer')).toBeVisible()
+  await page.getByRole('button', { name: 'Xác nhận vi phạm' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('textbox', { name: 'Ghi chú xử lý' }).fill('Đã đối chiếu nội dung tin.')
+  await dialog.getByRole('button', { name: 'Xác nhận vi phạm' }).click()
+
+  await expect(dialog).toBeHidden()
+  expect(resolvePayload).toEqual({
+    status: 'upheld',
+    note: 'Đã đối chiếu nội dung tin.',
+  })
+  await expect(page.getByText('Không có báo cáo phù hợp.')).toBeVisible()
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
 })

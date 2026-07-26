@@ -59,7 +59,7 @@ def active_jobs_queryset(include_preview=False):
         relations.extend(['job_benefits__benefit', 'work_schedules'])
     queryset = (
         Job.objects.filter(publicly_available_job_filter())
-        .select_related('company', 'campaign')
+        .select_related('company', 'campaign', 'posted_by', 'posted_by__recruiter_profile')
         .prefetch_related(*relations)
     )
     if not include_preview:
@@ -77,7 +77,7 @@ def active_job_detail_queryset():
     """Return active jobs with every relation required by the detail serializer."""
     return (
         Job.objects.filter(publicly_available_job_filter())
-        .select_related('company', 'campaign')
+        .select_related('company', 'campaign', 'posted_by', 'posted_by__recruiter_profile')
         .prefetch_related(
             'category_assignments__category',
             'job_locations__location__parent',
