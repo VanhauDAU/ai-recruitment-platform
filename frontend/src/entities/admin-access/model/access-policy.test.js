@@ -21,4 +21,19 @@ describe('canAccessAdminRoute', () => {
       isSuperuser: false,
     })).toBe(false)
   })
+
+  it('requires every permission declared by a route', () => {
+    expect(canAccessAdminRoute({
+      permissionsAll: ['blog.view', 'blog.manage'],
+    }, {
+      has: (code) => code === 'blog.manage',
+      isSuperuser: false,
+    })).toBe(false)
+    expect(canAccessAdminRoute({
+      permissionsAll: ['blog.view', 'blog.manage'],
+    }, {
+      has: (code) => ['blog.view', 'blog.manage'].includes(code),
+      isSuperuser: false,
+    })).toBe(true)
+  })
 })

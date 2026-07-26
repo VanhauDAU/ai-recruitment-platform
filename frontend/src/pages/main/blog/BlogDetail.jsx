@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer, Result, Skeleton, Tag } from 'antd'
 import { Link, useParams } from 'react-router-dom'
-import { BLOG_ROOT, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
+import { BLOG_ROOT, BlogPostContent, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { setDocumentTitle } from '@/shared/config/document-title'
+import { setDocumentMetaDescription } from '@/shared/config/document-meta'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogBenefits from './ui/BlogBenefits'
-import BlogContent from './ui/BlogContent'
 import BlogRelatedJobs from './ui/BlogRelatedJobs'
 import BlogShareRail from './ui/BlogShareRail'
 import BlogSidebar from './ui/BlogSidebar'
@@ -45,7 +45,8 @@ export default function BlogDetail() {
     if (!post?.title) return undefined
     const previous = document.title
     setDocumentTitle(post.seo_title || post.title)
-    return () => { setDocumentTitle(previous) }
+    const restoreDescription = setDocumentMetaDescription(post.seo_description || post.summary)
+    return () => { setDocumentTitle(previous); restoreDescription() }
   }, [post])
 
   const handleToc = useCallback((items) => setToc(items), [])
@@ -114,7 +115,7 @@ export default function BlogDetail() {
                 )}
 
                 <div className="mt-6">
-                  <BlogContent html={post.content} onToc={handleToc} />
+                  <BlogPostContent html={post.content} onToc={handleToc} />
                 </div>
 
                 <BlogRelatedJobs jobCategory={post.related_job_category} />

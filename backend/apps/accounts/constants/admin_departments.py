@@ -16,6 +16,8 @@ ADMIN_DEPARTMENTS = (
                     'cv_template.view',
                     'cv_template.create',
                     'cv_template.edit',
+                    'blog.view',
+                    'blog.manage',
                 ),
             },
             {
@@ -31,6 +33,9 @@ ADMIN_DEPARTMENTS = (
                     'cv_template.publish',
                     'cv_template.archive',
                     'cv_template.delete',
+                    'blog.view',
+                    'blog.manage',
+                    'blog.publish',
                 ),
             },
         ),

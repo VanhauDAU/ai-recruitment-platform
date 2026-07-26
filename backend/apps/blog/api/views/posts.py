@@ -4,18 +4,21 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.permissions import HasAdminPermission, require_admin_permission
 from common.media_storage import save_image_upload
+from common.pagination import StandardPagination
 
-from ...permissions import CanEditBlog
 from ...selectors import (
     active_categories,
+    admin_media_queryset,
     blog_home_sections,
     pinned_posts,
     published_post_detail_queryset,
     published_posts_queryset,
 )
-from ...services import record_post_view
+from ...services import record_post_view, upload_blog_media
 from ..serializers import (
+    BlogMediaAssetSerializer,
     PinnedPostSerializer,
     PostCategorySerializer,
     PostDetailSerializer,
@@ -100,25 +103,50 @@ class PinnedPostListView(generics.ListAPIView):
     responses={201: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT},
     tags=['blog'],
 )
-class BlogImageUploadView(APIView):
+class BlogImageUploadView(generics.ListAPIView):
     """Upload ảnh chèn trong nội dung bài (rich-text editor). Chỉ nhân viên biên tập.
 
     Trả về URL công khai để editor nhúng thẳng vào HTML `content`; ảnh nội dung
     lưu URL cuối cùng (khác thumbnail lưu storage key).
     """
 
-    permission_classes = [CanEditBlog]
+    permission_classes = [HasAdminPermission]
     parser_classes = [MultiPartParser, FormParser]
+    serializer_class = BlogMediaAssetSerializer
+    pagination_class = StandardPagination
+
+    def get_required_admin_permissions(self, request):
+        return ['blog.view']
+
+    def get_queryset(self):
+        return admin_media_queryset(self.request.query_params)
 
     def post(self, request):
+        require_admin_permission(request.user, 'blog.manage', 'blog.publish', match='any')
         upload = request.FILES.get('file') or request.FILES.get('image')
         if upload is None:
             return Response(
                 {'detail': 'Thiếu file ảnh (field "file").'}, status=status.HTTP_400_BAD_REQUEST
             )
+        asset = upload_blog_media(upload=upload, actor=request.user, request=request)
+        data = BlogMediaAssetSerializer(asset, context={'request': request}).data
+        return Response({**data, 'name': asset.original_name}, status=status.HTTP_201_CREATED)
+
+
+class BlogThumbnailUploadView(APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'POST': ['blog.view']}
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        require_admin_permission(request.user, 'blog.manage', 'blog.publish', match='any')
+        upload = request.FILES.get('file') or request.FILES.get('image')
+        if upload is None:
+            return Response({'detail': 'Thiếu file ảnh (field "file").'}, status=400)
         saved = save_image_upload(
-            upload, 'blog/content', request=request, max_dimensions=(1600, 1600)
+            upload, 'blog/thumbnails', request=request, max_dimensions=(1600, 900)
         )
         return Response(
-            {'url': saved['url'], 'name': saved['name']}, status=status.HTTP_201_CREATED
+            {'path': saved['path'], 'url': saved['url'], 'name': saved['name']},
+            status=status.HTTP_201_CREATED,
         )

@@ -50,8 +50,8 @@ class BlogPublicApiTests(APITestCase):
                 'published_at',
             },
         )
-        self.assertEqual(set(item['category']), {'name', 'slug'})
-        self.assertEqual(item['excerpt'], 'Sales Nội dung')
+        self.assertEqual(set(item['category']), {'name', 'slug', 'description', 'seo_title'})
+        self.assertEqual(item['excerpt'], 'Tổng quan nghề Sales.')
 
     def test_filter_by_category_and_tag(self):
         by_cat = self.client.get(reverse('blog-post-list'), {'category': self.category.slug})
@@ -73,11 +73,13 @@ class BlogPublicApiTests(APITestCase):
                 'slug',
                 'thumbnail_url',
                 'content',
+                'summary',
                 'category',
                 'tags',
                 'related_job_category',
                 'published_at',
                 'seo_title',
+                'seo_description',
             },
         )
         self.published.refresh_from_db()

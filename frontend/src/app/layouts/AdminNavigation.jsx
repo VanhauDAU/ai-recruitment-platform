@@ -18,6 +18,7 @@ const ICONS = {
   account: <IdcardOutlined />,
   accounts: <TeamOutlined />,
   cv: <FileTextOutlined />,
+  blog: <FileTextOutlined />,
   dashboard: <AppstoreOutlined />,
   leads: <ContactsOutlined />,
   moderation: <FileDoneOutlined />,
@@ -31,7 +32,7 @@ const NAVIGATION_SECTIONS = [
     key: 'content',
     label: 'Nội dung & kiểm duyệt',
     icon: <FileDoneOutlined />,
-    routeIcons: ['cv', 'moderation'],
+    routeIcons: ['cv', 'moderation', 'blog'],
   },
   {
     key: 'commercial',
