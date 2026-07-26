@@ -8,6 +8,7 @@ import CompanyUpdateReviewPanel from './CompanyUpdateReviewPanel'
 const api = vi.hoisted(() => ({
   getAdminCompanyUpdateDocumentContent: vi.fn(),
   getAdminCompanyUpdateRequests: vi.fn(),
+  refreshAdminCompanyUpdateTaxLookup: vi.fn(),
   reviewAdminCompanyUpdateDocument: vi.fn(),
   reviewAdminCompanyUpdateRequest: vi.fn(),
 }))
@@ -114,6 +115,21 @@ describe('CompanyUpdateReviewPanel', () => {
         reason: 'Đổi tên theo đăng ký mới',
         proof_type: 'business_registration',
         proof_type_label: 'Giấy đăng ký doanh nghiệp',
+        tax_lookup_evidence: {
+          public_id: 'tle_1',
+          provider: 'vietqr',
+          status: 'found',
+          workflow_revision: 1,
+          tax_code: '0101234567',
+          returned_tax_code: '0101234567',
+          submitted_company_name: 'FPT Software 2',
+          registered_name: 'FPT SOFTWARE 2',
+          comparison: {
+            tax_code: 'match',
+            company_name: 'match',
+          },
+          completed_at: '2026-07-27T00:00:00Z',
+        },
         documents: [{
           public_id: 'doc_business',
           doc_type: 'business_registration',
@@ -134,6 +150,8 @@ describe('CompanyUpdateReviewPanel', () => {
     const dialog = screen.getByRole('dialog', { name: 'Đối chiếu yêu cầu sửa thông tin công ty' })
     expect(within(dialog).getByText('1 giấy tờ đang chờ nhà tuyển dụng bổ sung')).toBeInTheDocument()
     expect(within(dialog).getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeInTheDocument()
+    expect(within(dialog).getByText('VietQR.io')).toBeInTheDocument()
+    expect(within(dialog).getAllByText('Khớp')).toHaveLength(2)
     expect(within(dialog).getByRole('button', { name: 'Đã yêu cầu bổ sung' })).toBeDisabled()
   })
 })

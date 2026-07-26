@@ -55,11 +55,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
 | POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
-| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới, không phụ thuộc trạng thái xác thực SĐT; người tạo là owner, hiệu lực ngay, trạng thái `unverified`. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
+| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới, không phụ thuộc trạng thái xác thực SĐT hoặc MFA; người tạo là owner, hiệu lực ngay, trạng thái `unverified`. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
 | GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
 | POST | `/api/employer/company/join/` | Liên kết ngay với công ty có sẵn, không phụ thuộc trạng thái xác thực SĐT hay admin duyệt: multipart chỉ cần `company`; membership có hiệu lực ngay. API vẫn nhận tùy chọn `proof_type` (`business_registration` hoặc `authorization_and_id`) và file giấy tờ khi cần bổ sung hồ sơ. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
-| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; JPG/PNG/WebP, tối đa 5 MB, multipart `file`). Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ |
+| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; không yêu cầu MFA; JPG/PNG/WebP, tối đa 5 MB, multipart `file`). Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ |
 | DELETE | `/api/employer/company/logo/` \| `cover/` | Xóa logo/cover (owner); xóa logo đồng thời đặt `has_no_logo=true` |
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
 | GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; mặc định POST multipart `doc_type` + `file`, có thể kèm `update_request` public id để gắn hồ sơ chứng minh vào request pending. Riêng `trade_name_proof` nhận thêm `source_type=website` + `website_url` (HTTP/HTTPS), không kèm file; response trả `source_type` để UI mở đúng link. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra MIME + chữ ký, tối đa 5 MB |
@@ -294,7 +294,7 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, tạo snapshot CV bất biến và trả `candidate_status` cùng timeline đã lọc. |
 | GET | `/api/v2/recruiter/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; filter theo tin, pipeline, chiến dịch hoặc tên/email ứng viên. |
 | PATCH | `/api/v2/recruiter/applications/{public_id}/` | Cập nhật pipeline, `employer_note` và `employer_rating` 1–5. Ghi chú/điểm là nội bộ. |
-| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV đã nộp (lần mở đầu đánh dấu `viewed`) và audit lịch sử pipeline, owner-only. |
+| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV đã nộp (lần mở đầu đánh dấu `viewed`) và audit lịch sử pipeline, owner-only; không yêu cầu MFA. |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
 | GET | `/api/site/link-groups/?placement=footer_seo` | Cụm link SEO đang bật kèm items đã resolve, public |
 | GET | `/api/site/link-groups/?placement=footer_nav` | Các cột menu điều hướng footer, public |

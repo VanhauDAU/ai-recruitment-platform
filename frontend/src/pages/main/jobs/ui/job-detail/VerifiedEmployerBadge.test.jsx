@@ -40,6 +40,12 @@ describe('VerifiedEmployerBadge', () => {
     expect(await screen.findByText(CRITERIA[0].label)).toBeInTheDocument()
   })
 
+  it('uses the brand green for the verified tick', () => {
+    const { container } = renderBadge({ verification: { verified: true, criteria: CRITERIA } })
+
+    expect(container.querySelector('.anticon-check-circle')).toHaveClass('text-[#00b14f]')
+  })
+
   it('renders nothing when a criterion has not been met', () => {
     // Dấu mờ trên tin chưa đủ điều kiện khiến tin thường trông như bị đánh dấu xấu.
     const criteria = CRITERIA.map((item, index) => ({ ...item, passed: index !== 3 }))

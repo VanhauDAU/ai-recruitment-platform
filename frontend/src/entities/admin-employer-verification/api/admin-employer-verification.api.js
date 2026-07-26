@@ -39,6 +39,10 @@ export function decideAdminEmployerVerification(publicId, payload) {
   return data(client.post(`/admin/employer-verifications/${publicId}/decision/`, payload))
 }
 
+export function refreshAdminEmployerTaxLookup(publicId) {
+  return data(client.post(`/admin/employer-verifications/${publicId}/refresh-tax-lookup/`))
+}
+
 async function getAdminEmployerDocumentBlob(
   casePublicId,
   documentPublicId,
@@ -93,6 +97,12 @@ export function reviewAdminCompanyUpdateRequest(requestPublicId, payload) {
   return data(client.post(
     `/admin/company-update-requests/${requestPublicId}/review/`,
     payload,
+  ))
+}
+
+export function refreshAdminCompanyUpdateTaxLookup(requestPublicId) {
+  return data(client.post(
+    `/admin/company-update-requests/${requestPublicId}/refresh-tax-lookup/`,
   ))
 }
 

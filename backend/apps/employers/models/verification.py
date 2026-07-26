@@ -86,6 +86,7 @@ class EmployerVerificationEvent(models.Model):
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Đã từ chối'
         SENSITIVE_VIEWED = 'sensitive_viewed', 'Đã xem dữ liệu nhạy cảm'
+        TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', 'Đã tra cứu lại mã số thuế'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     verification_case = models.ForeignKey(
@@ -211,6 +212,90 @@ class CompanyUpdateRequest(models.Model):
 
     def __str__(self):
         return f'{self.company_id}:{self.status}'
+
+
+class CompanyTaxLookupEvidence(models.Model):
+    """Immutable VietQR lookup evidence for one submitted workflow revision."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Đang tra cứu'
+        FOUND = 'found', 'Đã tìm thấy'
+        NOT_FOUND = 'not_found', 'Không tìm thấy'
+        UNAVAILABLE = 'unavailable', 'Nguồn không khả dụng'
+        INVALID_RESPONSE = 'invalid_response', 'Phản hồi không hợp lệ'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    provider = models.CharField(max_length=30, default='vietqr', editable=False)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='tax_lookup_evidences',
+    )
+    verification_case = models.ForeignKey(
+        EmployerVerificationCase,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='tax_lookup_evidences',
+    )
+    update_request = models.ForeignKey(
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='tax_lookup_evidences',
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='+',
+    )
+    workflow_revision = models.PositiveIntegerField()
+    tax_code = models.CharField(max_length=100)
+    submitted_company_name = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=24, choices=Status.choices, default=Status.PENDING)
+    returned_tax_code = models.CharField(max_length=100, blank=True)
+    registered_name = models.CharField(max_length=255, blank=True)
+    international_name = models.CharField(max_length=255, blank=True)
+    short_name = models.CharField(max_length=255, blank=True)
+    provider_code = models.CharField(max_length=40, blank=True)
+    provider_description = models.CharField(max_length=500, blank=True)
+    response_hash = models.CharField(max_length=64, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(verification_case__isnull=False, update_request__isnull=True)
+                    | models.Q(verification_case__isnull=True, update_request__isnull=False)
+                ),
+                name='tax_lookup_evidence_exactly_one_workflow',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['company', 'tax_code', '-created_at'],
+                name='company_tax_lookup_time_idx',
+            ),
+            models.Index(
+                fields=['status', '-created_at'],
+                name='tax_lookup_status_time_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('tle')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.tax_code}:{self.status}:r{self.workflow_revision}'
 
 
 class CompanyDocument(models.Model):

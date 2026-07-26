@@ -20,6 +20,7 @@ from ..models import (
     EmployerVerificationEvent,
     EmployerVerificationNotification,
 )
+from .tax_lookup import queue_company_tax_lookup
 
 BUSINESS_DOCUMENT_TYPES = frozenset(
     {
@@ -220,6 +221,22 @@ def record_verification_upload(
             'revision': case.revision,
         },
     )
+    if (
+        case.company_id
+        and case.company.tax_code
+        and not case.tax_lookup_evidences.filter(workflow_revision=case.revision).exists()
+    ):
+        try:
+            queue_company_tax_lookup(
+                company=case.company,
+                requested_by=recruiter.user,
+                verification_case=case,
+                workflow_revision=case.revision,
+            )
+        except ValueError:
+            # Legacy companies may contain a pre-validation tax code. Their
+            # documents still enter manual review without an external lookup.
+            pass
     return case
 
 
@@ -336,7 +353,16 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
         action='review_employer_verification_document',
         target_type='employer_verification_document',
         target_public_id=document.public_id,
-        payload={'decision': decision, 'case_public_id': case.public_id},
+        payload={
+            'decision': decision,
+            'case_public_id': case.public_id,
+            'tax_lookup_evidence_public_id': (
+                case.tax_lookup_evidences.filter(workflow_revision=case.revision)
+                .order_by('-created_at', '-id')
+                .values_list('public_id', flat=True)
+                .first()
+            ),
+        },
     )
     if automatically_approved:
         _queue_verification_notification(
@@ -486,7 +512,16 @@ def confirm_verification_decision(case, *, actor, decision, reason, impact_token
         action='decide_employer_verification',
         target_type='employer_verification',
         target_public_id=case.public_id,
-        payload={'decision': decision, 'user_public_id': case.recruiter.user.public_id},
+        payload={
+            'decision': decision,
+            'user_public_id': case.recruiter.user.public_id,
+            'tax_lookup_evidence_public_id': (
+                case.tax_lookup_evidences.filter(workflow_revision=case.revision)
+                .order_by('-created_at', '-id')
+                .values_list('public_id', flat=True)
+                .first()
+            ),
+        },
     )
     _queue_verification_notification(
         case,

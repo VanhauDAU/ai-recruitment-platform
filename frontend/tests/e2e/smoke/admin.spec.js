@@ -186,7 +186,35 @@ test('admin employer detail: company media and compact verification comparison r
       candidate_dpa_approved: false,
       dpa_accepted: true,
     },
-    documents: [],
+    tax_lookup_evidence: {
+      provider: 'vietqr',
+      status: 'found',
+      workflow_revision: 2,
+      tax_code: '0101234567',
+      returned_tax_code: '0101234567',
+      submitted_company_name: 'FPT Software',
+      registered_name: 'FPT SOFTWARE',
+      registered_address: 'Trường dữ liệu cũ không được hiển thị',
+      comparison: {
+        tax_code: 'match',
+        company_name: 'match',
+        registered_address: 'mismatch',
+      },
+      completed_at: '2026-07-26T08:05:00Z',
+    },
+    documents: [{
+      public_id: 'doc_business',
+      doc_type: 'business_registration',
+      doc_type_label: 'Giấy đăng ký doanh nghiệp',
+      file_name: 'dang-ky-doanh-nghiep.svg',
+      mime_type: 'image/svg+xml',
+      version: 1,
+      is_current: true,
+      status: 'pending',
+      status_label: 'Chờ duyệt',
+      created_at: '2026-07-26T08:00:00Z',
+      duplicate_company_count: 0,
+    }],
     events: [],
   }
   const mediaImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='100%25' height='100%25' fill='%230ea5e9'/%3E%3C/svg%3E"
@@ -263,6 +291,13 @@ test('admin employer detail: company media and compact verification comparison r
     if (path === '/api/auth/me/') body = adminUser
     else if (path === '/api/admin/accounts/usr_employer/') body = employer
     else if (path === '/api/admin/accounts/usr_employer/profile/') body = accountProfile
+    else if (path === '/api/admin/employer-verifications/evc_1/documents/doc_business/content/') {
+      await route.fulfill({
+        contentType: 'image/svg+xml',
+        body: "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='1200'><rect width='100%' height='100%' fill='#fff'/><text x='60' y='100' font-size='40'>Giấy đăng ký doanh nghiệp</text></svg>",
+      })
+      return
+    }
     else if (path === '/api/admin/employer-verifications/evc_1/') body = verificationCase
     else if (path === '/api/admin/company-update-requests/') {
       body = { count: 1, next: null, previous: null, results: [companyUpdate] }
@@ -289,6 +324,13 @@ test('admin employer detail: company media and compact verification comparison r
 
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('heading', { name: 'Theo dõi hành trình xác thực' })).toBeVisible()
+  await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Phóng to giấy tờ' })).toBeVisible()
+  await expect(page.locator('.verification-image-zoom-value')).toHaveText('Vừa khung')
+  await page.getByRole('button', { name: 'Phóng to giấy tờ' }).click()
+  await expect(page.locator('.verification-image-zoom-value')).toHaveText('125%')
+  await page.getByRole('button', { name: 'Đưa toàn bộ giấy tờ vừa khung xem' }).click()
+  await expect(page.locator('.verification-image-zoom-value')).toHaveText('Vừa khung')
   await expect.poll(() => page.locator('.verification-review-layout').evaluate(
     (element) => getComputedStyle(element).gap,
   )).toBe('20px')

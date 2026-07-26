@@ -1,3 +1,7 @@
+import mimetypes
+from io import BytesIO
+from pathlib import PurePosixPath
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
@@ -16,6 +20,8 @@ from ...models import Company, CompanyDocument, CompanyUpdateRequest
 from ...selectors import has_explicit_company_link
 from ...services import (
     get_or_create_recruiter,
+    queue_company_tax_lookup,
+    render_office_document_preview,
 )
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 from .memberships import (
@@ -222,7 +228,29 @@ class CompanyDocumentContentView(generics.GenericAPIView):
             stream = private_media_storage().open(document.file_url, 'rb')
         except OSError as error:
             raise Http404 from error
-        response = FileResponse(stream, as_attachment=False, filename=document.file_name or None)
+        stored_suffix = PurePosixPath(document.file_url).suffix
+        filename = document.file_name or PurePosixPath(document.file_url).name
+        if filename and not PurePosixPath(filename).suffix and stored_suffix:
+            filename = f'{filename}{stored_suffix}'
+        content_type = (document.mime_type or '').partition(';')[0].strip().lower()
+        if not content_type or content_type in {'application/octet-stream', 'binary/octet-stream'}:
+            content_type = mimetypes.guess_type(document.file_url)[0] or 'application/octet-stream'
+        preview = render_office_document_preview(document.file_url, content_type)
+        if preview is not None:
+            stream.close()
+            response = FileResponse(
+                BytesIO(preview),
+                content_type='application/pdf',
+                filename=f'{document.public_id}.pdf',
+                as_attachment=False,
+            )
+        else:
+            response = FileResponse(
+                stream,
+                content_type=content_type,
+                as_attachment=False,
+                filename=filename or None,
+            )
         response['Cache-Control'] = 'private, no-store'
         return response
 
@@ -310,6 +338,24 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
 
             transaction.on_commit(delete_discarded_media)
         update_request.refresh_from_db()
+        if update_request.is_sensitive:
+            proposed_tax_code = update_request.changes.get('tax_code', company.tax_code)
+            try:
+                queue_company_tax_lookup(
+                    company=company,
+                    requested_by=request.user,
+                    update_request=update_request,
+                    workflow_revision=update_request.revision,
+                    tax_code=proposed_tax_code,
+                    company_name=update_request.changes.get(
+                        'company_name',
+                        company.company_name,
+                    ),
+                )
+            except ValueError:
+                # The serializer rejects invalid new tax codes. This only
+                # preserves manual review for malformed legacy company data.
+                pass
         response = self.get_serializer(update_request)
         return Response(
             response.data,

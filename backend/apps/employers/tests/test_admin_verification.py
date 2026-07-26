@@ -17,6 +17,7 @@ from ..models import (
     Company,
     CompanyDocument,
     CompanyIndustry,
+    CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     EmployerVerificationEvent,
@@ -513,6 +514,32 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(review_response.status_code, 200, review_response.data)
         self.company.refresh_from_db()
         self.assertEqual(self.company.company_name, 'Công ty dùng chung mới')
+
+    def test_admin_can_refresh_company_update_tax_lookup(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'company_name': 'Công ty dùng chung mới'},
+            is_sensitive=True,
+            reason='Đổi tên theo đăng ký doanh nghiệp',
+            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-company-update-request-refresh-tax-lookup',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['lock_version'], 1)
+        self.assertEqual(response.data['tax_lookup_evidence']['status'], 'pending')
+        evidence = CompanyTaxLookupEvidence.objects.get(update_request=update_request)
+        self.assertEqual(evidence.workflow_revision, update_request.revision)
+        self.assertEqual(evidence.submitted_company_name, 'Công ty dùng chung mới')
 
     def test_employer_sees_company_update_document_revision_request(self):
         update_request = CompanyUpdateRequest.objects.create(
