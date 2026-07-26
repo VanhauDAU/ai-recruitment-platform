@@ -39,17 +39,71 @@ export function decideAdminEmployerVerification(publicId, payload) {
   return data(client.post(`/admin/employer-verifications/${publicId}/decision/`, payload))
 }
 
-export async function getAdminEmployerDocumentContent(
+async function getAdminEmployerDocumentBlob(
+  casePublicId,
+  documentPublicId,
+  { signal, intent },
+) {
+  const response = await client.get(
+    `/admin/employer-verifications/${casePublicId}/documents/${documentPublicId}/content/`,
+    { responseType: 'blob', signal, params: { intent } },
+  )
+  const contentType = response.headers['content-type'] || response.data.type
+  const blob = contentType && response.data.type !== contentType
+    ? response.data.slice(0, response.data.size, contentType)
+    : response.data
+  return {
+    blob,
+    contentType,
+  }
+}
+
+export function getAdminEmployerDocumentContent(
   casePublicId,
   documentPublicId,
   { signal } = {},
 ) {
+  return getAdminEmployerDocumentBlob(
+    casePublicId,
+    documentPublicId,
+    { signal, intent: 'preview' },
+  )
+}
+
+export function downloadAdminEmployerDocument(casePublicId, documentPublicId) {
+  return getAdminEmployerDocumentBlob(
+    casePublicId,
+    documentPublicId,
+    { intent: 'download' },
+  )
+}
+
+export function getAdminCompanyUpdateRequests(params = {}, { signal } = {}) {
+  return data(client.get('/admin/company-update-requests/', { params, signal }))
+}
+
+export function reviewAdminCompanyUpdateDocument(requestPublicId, documentPublicId, payload) {
+  return data(client.post(
+    `/admin/company-update-requests/${requestPublicId}/documents/${documentPublicId}/review/`,
+    payload,
+  ))
+}
+
+export function reviewAdminCompanyUpdateRequest(requestPublicId, payload) {
+  return data(client.post(
+    `/admin/company-update-requests/${requestPublicId}/review/`,
+    payload,
+  ))
+}
+
+export async function getAdminCompanyUpdateDocumentContent(
+  requestPublicId,
+  documentPublicId,
+  { signal } = {},
+) {
   const response = await client.get(
-    `/admin/employer-verifications/${casePublicId}/documents/${documentPublicId}/content/`,
+    `/admin/company-update-requests/${requestPublicId}/documents/${documentPublicId}/content/`,
     { responseType: 'blob', signal },
   )
-  return {
-    blob: response.data,
-    contentType: response.headers['content-type'] || response.data.type,
-  }
+  return response.data
 }

@@ -1,11 +1,16 @@
 export {
   decideAdminEmployerVerification,
+  downloadAdminEmployerDocument,
   getAdminEmployerDecisionImpact,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
   getAdminEmployerVerifications,
   getAdminEmployerVerificationSummary,
+  getAdminCompanyUpdateDocumentContent,
+  getAdminCompanyUpdateRequests,
   reviewAdminEmployerDocument,
+  reviewAdminCompanyUpdateDocument,
+  reviewAdminCompanyUpdateRequest,
   startAdminEmployerVerificationReview,
 } from './api/admin-employer-verification.api'
 export { adminEmployerVerificationKeys } from './api/admin-employer-verification.keys'

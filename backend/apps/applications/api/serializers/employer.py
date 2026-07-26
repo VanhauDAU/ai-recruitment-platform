@@ -2,13 +2,14 @@ from rest_framework import serializers
 
 from apps.cvs.models import UserCv
 from apps.jobs.models import Job
+from apps.jobs.selectors.listing import publicly_available_job_filter
 
 from ...models import Application
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
     job = serializers.SlugRelatedField(
-        slug_field='public_id', queryset=Job.objects.filter(status=Job.Status.ACTIVE)
+        slug_field='public_id', queryset=Job.objects.filter(publicly_available_job_filter())
     )
     cv = serializers.SlugRelatedField(
         slug_field='public_id',

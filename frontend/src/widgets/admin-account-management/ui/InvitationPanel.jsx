@@ -433,10 +433,10 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
           className="mb-4"
           type="warning"
           showIcon
-          title="Chưa có chức danh nào được phép cấp"
+          title="Chưa có chức danh nào bạn được phép mời"
           description={isSuperuser
             ? 'Hãy tạo một chức danh hoạt động có quyền trước khi gửi lời mời.'
-            : 'Superuser cần cấu hình phạm vi cấp tài khoản cho chức danh của bạn.'}
+            : 'Superuser cần thêm quy tắc mời Admin cho chức danh của bạn.'}
         />
       )}
 

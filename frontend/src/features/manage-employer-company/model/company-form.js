@@ -1,6 +1,6 @@
 export const COMPANY_FORM_FIELDS = [
   'business_type', 'tax_code', 'company_name', 'trade_name',
-  'trade_name_same_as_registered', 'website_url', 'has_no_website', 'email',
+  'trade_name_same_as_registered', 'has_no_logo', 'website_url', 'has_no_website', 'email',
   'phone', 'address', 'company_size', 'description', 'employee_benefits',
   'markets', 'target_customers', 'founded_year', 'industries', 'primary_industry',
 ]
@@ -16,8 +16,8 @@ export const DEFAULT_COMPANY_FORM = {
   employee_benefits: '',
 }
 
-export function companyToForm(company = {}) {
-  return {
+export function companyToForm(company = {}, pendingChanges = {}) {
+  const base = {
     ...DEFAULT_COMPANY_FORM,
     ...Object.fromEntries(COMPANY_FORM_FIELDS.map((field) => [field, company[field]])),
     has_no_logo: Boolean(company.has_no_logo),
@@ -26,6 +26,14 @@ export function companyToForm(company = {}) {
       || (company.industries_detail || []).find((item) => item.is_primary)?.id,
     markets: company.markets || [],
     target_customers: company.target_customers || [],
+  }
+  return {
+    ...base,
+    ...Object.fromEntries(
+      COMPANY_FORM_FIELDS
+        .filter((field) => Object.hasOwn(pendingChanges, field))
+        .map((field) => [field, pendingChanges[field]]),
+    ),
   }
 }
 

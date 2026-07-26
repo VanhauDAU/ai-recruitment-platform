@@ -1,21 +1,11 @@
 import {
-  AppstoreOutlined,
-  ContactsOutlined,
-  FileDoneOutlined,
-  FileTextOutlined,
-  IdcardOutlined,
-  KeyOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuOutlined,
   MenuUnfoldOutlined,
-  SafetyCertificateOutlined,
-  SettingOutlined,
-  SolutionOutlined,
-  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, ConfigProvider, Drawer, Layout, Menu, Popconfirm, Typography } from 'antd'
+import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -26,64 +16,11 @@ import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
+import AdminNavigation from './AdminNavigation'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import './admin-dashboard.css'
 
 const { Header, Sider, Content } = Layout
-
-const ICONS = {
-  access: <KeyOutlined />,
-  account: <IdcardOutlined />,
-  accounts: <TeamOutlined />,
-  cv: <FileTextOutlined />,
-  dashboard: <AppstoreOutlined />,
-  leads: <ContactsOutlined />,
-  moderation: <FileDoneOutlined />,
-  services: <SolutionOutlined />,
-  settings: <SettingOutlined />,
-  shield: <SafetyCertificateOutlined />,
-}
-
-function AdminNavigation({ items, pathname, navigate, onNavigate, collapsed = false }) {
-  const groupedItems = [
-    {
-      type: 'group',
-      label: 'Vận hành',
-      children: items
-        .filter((item) => item.navGroup === 'operations')
-        .map((item) => ({
-          key: item.path,
-          icon: ICONS[item.iconKey],
-          label: item.navLabel,
-        })),
-    },
-    {
-      type: 'group',
-      label: 'Hệ thống',
-      children: items
-        .filter((item) => item.navGroup === 'system')
-        .map((item) => ({
-          key: item.path,
-          icon: ICONS[item.iconKey],
-          label: item.navLabel,
-        })),
-    },
-  ].filter((group) => group.children.length)
-
-  return (
-    <Menu
-      theme="dark"
-      mode="inline"
-      inlineCollapsed={collapsed}
-      selectedKeys={[pathname]}
-      items={groupedItems}
-      onClick={({ key }) => {
-        navigate(key)
-        onNavigate?.()
-      }}
-    />
-  )
-}
 
 function AdminBrand({ collapsed = false }) {
   return (
@@ -150,7 +87,7 @@ export default function DashboardLayout() {
         <a className="admin-skip-link" href="#admin-main">Bỏ qua điều hướng</a>
         <Sider
           className="admin-sider !hidden lg:!block"
-          width={248}
+          width={280}
           collapsedWidth={80}
           collapsed={sidebarCollapsed}
           trigger={null}
@@ -173,12 +110,12 @@ export default function DashboardLayout() {
         <Drawer
           open={mobileNavOpen}
           placement="left"
-          size={288}
+          size={320}
           closable={false}
           onClose={() => setMobileNavOpen(false)}
           styles={{ body: { padding: 0, background: '#0b172a' } }}
         >
-          <nav className="admin-sider min-h-full" aria-label="Điều hướng quản trị">
+          <div className="admin-sider min-h-full">
             <AdminBrand />
             <AdminNavigation
               items={items}
@@ -187,7 +124,7 @@ export default function DashboardLayout() {
               onNavigate={() => setMobileNavOpen(false)}
             />
             {hasNoDepartment && <p className="admin-sider__notice">Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống để được cấp quyền.</p>}
-          </nav>
+          </div>
         </Drawer>
 
         <Layout className="!min-w-0 !bg-transparent">

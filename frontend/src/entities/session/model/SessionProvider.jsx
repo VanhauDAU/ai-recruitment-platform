@@ -127,6 +127,16 @@ export default function SessionProvider({ children }) {
   }), [refreshSession])
 
   useEffect(() => {
+    if (getCurrentPortal() !== 'admin') return undefined
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshSession().catch(() => {})
+    }, ADMIN_SESSION_REFRESH_INTERVAL_MS)
+
+    return () => window.clearInterval(intervalId)
+  }, [refreshSession])
+
+  useEffect(() => {
     function refreshVisibleAdminSession() {
       if (
         document.visibilityState !== 'visible'

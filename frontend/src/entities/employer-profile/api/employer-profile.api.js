@@ -95,19 +95,20 @@ export async function createEmployerCompany(payload) {
   return data
 }
 
-async function uploadEmployerCompanyMedia(endpoint, file) {
+async function uploadEmployerCompanyMedia(endpoint, file, options = {}) {
   const formData = new FormData()
   formData.append('file', file)
+  if (options.updateRequest) formData.append('update_request', options.updateRequest)
   const { data } = await api.post(endpoint, formData)
   return data
 }
 
-export function uploadEmployerCompanyLogo(file) {
-  return uploadEmployerCompanyMedia('/employer/company/logo/', file)
+export function uploadEmployerCompanyLogo(file, options) {
+  return uploadEmployerCompanyMedia('/employer/company/logo/', file, options)
 }
 
-export function uploadEmployerCompanyImage(file) {
-  return uploadEmployerCompanyMedia('/employer/company/images/', file)
+export function uploadEmployerCompanyImage(file, options) {
+  return uploadEmployerCompanyMedia('/employer/company/images/', file, options)
 }
 
 export async function deleteEmployerCompanyLogo() {

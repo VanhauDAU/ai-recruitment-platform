@@ -74,13 +74,24 @@ export default function AccessControlModals({
       </Modal>
 
       <Modal
-        title={`Sửa quyền · ${permission.editor?.name || ''}`}
+        title={(
+          <div>
+            <div>Sửa quyền</div>
+            <Typography.Text type="secondary" className="!text-sm !font-normal">
+              {permission.editor
+                ? `${permission.editor.department.name} · ${permission.editor.name}`
+                : ''}
+            </Typography.Text>
+          </div>
+        )}
         open={Boolean(permission.editor)}
         onCancel={permission.onClose}
         onOk={permission.onPreview}
-        okText="Xem tác động"
+        okText="Tiếp tục xem tác động"
+        cancelText="Hủy"
         okButtonProps={{ disabled: permission.query.isLoading || permission.query.isError }}
-        width={920}
+        width={1240}
+        styles={{ body: { maxHeight: '72vh', overflowY: 'auto', paddingTop: 16 } }}
         destroyOnHidden
       >
         <PermissionPicker

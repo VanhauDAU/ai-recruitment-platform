@@ -23,6 +23,7 @@ def publicly_available_job_filter():
     """One canonical availability predicate for every candidate-facing path."""
     return (
         Q(status=Job.Status.ACTIVE)
+        & Q(posted_by__is_active=True)
         & (Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()))
         & (Q(campaign__isnull=True) | Q(campaign__status='active'))
     )

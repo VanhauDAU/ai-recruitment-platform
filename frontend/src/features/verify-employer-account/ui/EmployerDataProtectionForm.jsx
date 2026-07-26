@@ -168,6 +168,7 @@ export default function EmployerDataProtectionForm() {
   const canSaveCandidateAgreement = Boolean(selectedFile && candidateAgreementAccepted)
   const candidateAgreementDocument = documents[0]
   const candidateAgreementSubmitted = Boolean(verification.candidate_dpa_submitted || candidateAgreementDocument)
+  const candidateAgreementApproved = Boolean(verification.candidate_dpa_approved)
   const showCandidateAgreementForm = !candidateAgreementSubmitted || editingCandidateAgreement
   const agreementAcceptedAt = formatAgreementAcceptedAt(profileQuery.data?.dpa_accepted_at)
 
@@ -179,7 +180,11 @@ export default function EmployerDataProtectionForm() {
             <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa Ứng viên - Nhà tuyển dụng</h2>
           </div>
           <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
-            <StatusTag completed={candidateAgreementSubmitted} completedColor="gold" completedLabel="Hệ thống đang xử lý" pendingLabel="Chưa cập nhật" />
+            <StatusTag
+              completed={candidateAgreementApproved}
+              completedLabel="Đã duyệt"
+              pendingLabel={candidateAgreementSubmitted ? 'Hệ thống đang xử lý' : 'Chưa cập nhật'}
+            />
             {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label="Chỉnh sửa văn bản" icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700">Chỉnh sửa</Button>}
           </div>
         </div>

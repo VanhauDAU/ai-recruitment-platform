@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.employers.models import (
     CompanyDocument,
+    CompanyUpdateRequest,
     EmployerVerificationCase,
     RecruitmentNeed,
 )
@@ -41,6 +42,8 @@ def _account_visibility(actor):
     if 'account.view' in permissions:
         visible |= Q(role__in=[User.Role.CANDIDATE, User.Role.EMPLOYER])
     if 'employer_verification.view' in permissions:
+        visible |= Q(role=User.Role.EMPLOYER)
+    if 'company_update.view' in permissions:
         visible |= Q(role=User.Role.EMPLOYER)
     if 'account.admin.view' in permissions:
         visible |= Q(role=User.Role.ADMIN)
@@ -191,6 +194,10 @@ def account_summary(actor):
         employer_verification_overdue=verification_base.filter(
             status__in=pending_states,
             submitted_at__lt=timezone.now() - timedelta(hours=72),
+        ).count(),
+        company_update_pending=CompanyUpdateRequest.objects.filter(
+            requested_by__in=base,
+            status=CompanyUpdateRequest.Status.PENDING,
         ).count(),
     )
     return summary

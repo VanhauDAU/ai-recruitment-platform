@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from apps.employers.services import verification_checks
 
+from ...constants import ADMIN_PERMISSION_CODES
 from ...models import (
     AdminAccessAuditLog,
     AdminInvitation,
@@ -21,10 +22,17 @@ def role_payload(role):
         'public_id': role.public_id,
         'code': role.code,
         'name': role.name,
+        'description': role.description,
+        'rank': role.rank,
+        'is_active': role.is_active,
+        'is_system_managed': role.is_system_managed,
         'department': {
             'public_id': role.department.public_id,
             'code': role.department.code,
             'name': role.department.name,
+            'description': role.department.description,
+            'is_active': role.department.is_active,
+            'is_system_managed': role.department.is_system_managed,
         },
         'permission_codes': sorted(item.code for item in role.permissions.all() if item.is_active),
     }
@@ -145,15 +153,37 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             return None
         memberships = getattr(obj, 'active_admin_memberships', [])
         membership = memberships[0] if memberships else None
+        role = membership.role if membership else None
+        role_is_effective = bool(role and role.is_active and role.department.is_active)
+        permissions = (
+            sorted(ADMIN_PERMISSION_CODES)
+            if obj.is_superuser
+            else role_payload(role)['permission_codes']
+            if role_is_effective
+            else []
+        )
         return {
             'is_superuser': obj.is_superuser,
+            'access_source': (
+                'superuser' if obj.is_superuser else 'role' if role_is_effective else 'none'
+            ),
+            'permissions': permissions,
+            'permission_count': len(permissions),
             'membership': (
                 {
                     'public_id': membership.public_id,
-                    'role': role_payload(membership.role),
+                    'is_active': membership.is_active,
+                    'is_primary': membership.is_primary,
+                    'role': role_payload(role),
                     'assigned_at': membership.assigned_at,
+                    'assigned_by_public_id': (
+                        membership.assigned_by.public_id if membership.assigned_by else None
+                    ),
                     'assigned_by_email': (
                         membership.assigned_by.email if membership.assigned_by else None
+                    ),
+                    'assigned_by_name': (
+                        membership.assigned_by.full_name if membership.assigned_by else None
                     ),
                 }
                 if membership

@@ -147,12 +147,21 @@ export default function PostJobForm({
 
         <main className="min-w-0 space-y-3">
           {errorMessage && <Alert type="error" showIcon title="Chưa thể lưu tin tuyển dụng" description={errorMessage} />}
-          {requiresNewCredit && postingContext && !postingContext.job_postable && (
-            <Alert
-              type="warning"
-              showIcon
-              title={postingContext.block_reason}
-              description={`Còn ${postingContext.free_publish_remain}/${postingContext.free_publish_limit} lượt đăng miễn phí. Bạn vẫn có thể lưu bản nháp.`}
+          {requiresNewCredit && postingContext && (
+    <Alert
+      type={postingContext.job_postable ? 'info' : 'warning'}
+      showIcon
+      closable={postingContext.job_postable}
+      title={postingContext.job_postable
+                ? (postingContext.verified_job_quota_eligible
+                  ? 'Quota đăng tin Cấp 3 đã được mở'
+                  : 'Bạn đang dùng quota đăng tin miễn phí')
+                : postingContext.block_reason}
+              description={postingContext.verified_job_quota_eligible
+                ? `Còn ${postingContext.publish_remain}/${postingContext.publish_limit} tin. Hồ sơ xác thực đã hoàn tất và tài khoản đạt Cấp 3.`
+                : postingContext.job_postable
+                  ? `Còn ${postingContext.publish_remain}/${postingContext.publish_limit} tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.`
+                  : `Bạn vẫn có thể lưu bản nháp. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.`}
             />
           )}
           {(benefitsQuery.isError || languagesQuery.isError || skillsQuery.isError) && (

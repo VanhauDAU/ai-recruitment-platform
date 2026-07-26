@@ -6,7 +6,13 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import Company, RecruiterProfile
+from apps.employers.models import (
+    Company,
+    CompanyDocument,
+    EmployerVerificationCase,
+    RecruiterProfile,
+    RecruitmentNeed,
+)
 from apps.locations.models import Location
 
 from ..models import (
@@ -50,6 +56,12 @@ class JobPostingWorkflowTests(TestCase):
             name='Phường Dịch Vọng',
             parent=province,
         )
+        self.free_entitlement = {
+            'verification_completed': False,
+            'admin_approved': False,
+            'account_level': 0,
+            'verified_job_quota_eligible': False,
+        }
 
     def make_publishable_job(self, *, title='Backend Engineer'):
         job = Job.objects.create(
@@ -92,9 +104,9 @@ class JobPostingWorkflowTests(TestCase):
         JobApplicationEmail.objects.create(contact=contact, email='hr@example.com')
         return job
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_publish_rejects_a_draft_missing_the_complete_manual_form(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+    @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
+    def test_publish_rejects_a_draft_missing_the_complete_manual_form(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_publishable_job()
         job.requirements = ''
         job.save(update_fields=['requirements'])
@@ -105,9 +117,9 @@ class JobPostingWorkflowTests(TestCase):
 
         self.assertIn('requirements', context.exception.detail)
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_publish_enters_review_queue_and_records_owner_history(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+    @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
+    def test_publish_enters_review_queue_and_records_owner_history(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_publishable_job()
 
         published = publish_job(job, self.user)
@@ -119,9 +131,9 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(published.status_history.count(), 1)
         self.assertEqual(published.status_history.get().to_status, Job.Status.PENDING)
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_only_lifetime_publications_count_towards_the_free_quota(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+    @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
+    def test_only_lifetime_publications_count_towards_the_free_quota(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
         for index in range(3):
             job = self.make_publishable_job(title=f'Published {index}')
             job.submitted_at = timezone.now()
@@ -133,12 +145,82 @@ class JobPostingWorkflowTests(TestCase):
         self.assertEqual(context['published_jobs_count'], 3)
         self.assertEqual(context['free_publish_remain'], 0)
         self.assertFalse(context['job_postable'])
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError) as error:
             publish_job(draft, self.user)
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_active_job_returns_to_pending_when_its_owner_resubmits_a_revision(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+        self.assertIn('Hoàn tất xác thực hồ sơ', str(error.exception.detail))
+        self.assertNotIn('được admin duyệt', str(error.exception.detail))
+
+    def test_verified_level_three_account_has_a_100_job_quota(self):
+        self.user.email_verified = True
+        self.user.save(update_fields=['email_verified'])
+        self.company.tax_code = '0101234567'
+        self.company.save(update_fields=['tax_code'])
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.verified_phone = '0901234567'
+        self.recruiter.phone_verified_at = timezone.now()
+        self.recruiter.registration_completed_at = timezone.now()
+        self.recruiter.dpa_accepted_at = timezone.now()
+        self.recruiter.save(
+            update_fields=[
+                'company_role',
+                'verified_phone',
+                'phone_verified_at',
+                'registration_completed_at',
+                'dpa_accepted_at',
+            ]
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=self.recruiter,
+            position_category=self.category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            is_continuous=True,
+            headcount=1,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=timezone.now(),
+        )
+        verification_case = EmployerVerificationCase.objects.create(
+            recruiter=self.recruiter,
+            company=self.company,
+            status=EmployerVerificationCase.Status.APPROVED,
+        )
+        for doc_type in (
+            CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        ):
+            CompanyDocument.objects.create(
+                company=self.company,
+                recruiter=self.recruiter,
+                uploaded_by=self.user,
+                verification_case=verification_case,
+                doc_type=doc_type,
+                file_url=f'employers/posting/{doc_type}.pdf',
+                file_name=f'{doc_type}.pdf',
+                mime_type='application/pdf',
+                file_size=1024,
+                sha256=f'{self.recruiter.pk:064x}',
+                status=CompanyDocument.Status.APPROVED,
+            )
+
+        for index in range(3):
+            prior = self.make_publishable_job(title=f'Free job {index}')
+            prior.submitted_at = timezone.now()
+            prior.status = Job.Status.CLOSED
+            prior.save(update_fields=['submitted_at', 'status'])
+
+        context = employer_job_posting_context(self.user)
+        self.assertTrue(context['admin_approved'])
+        self.assertEqual(context['account_level'], 3)
+        self.assertTrue(context['verified_job_quota_eligible'])
+        self.assertEqual(context['publish_limit'], 100)
+        self.assertEqual(context['publish_remain'], 97)
+
+        published = publish_job(self.make_publishable_job(title='Job after upgrade'), self.user)
+        self.assertEqual(published.status, Job.Status.PENDING)
+
+    @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
+    def test_active_job_returns_to_pending_when_its_owner_resubmits_a_revision(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_publishable_job()
         job.status = Job.Status.ACTIVE
         job.submitted_at = timezone.now()
@@ -153,9 +235,9 @@ class JobPostingWorkflowTests(TestCase):
         self.assertIsNone(revised.approved_at)
         self.assertEqual(revised.status_history.get().from_status, Job.Status.ACTIVE)
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_another_recruiter_cannot_publish_or_duplicate_the_job(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+    @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
+    def test_another_recruiter_cannot_publish_or_duplicate_the_job(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_publishable_job()
 
         with self.assertRaises(ValidationError):
@@ -163,9 +245,7 @@ class JobPostingWorkflowTests(TestCase):
         with self.assertRaises(ValidationError):
             duplicate_job(job, self.other_user)
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_owner_reopens_a_closed_job_into_the_review_queue(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+    def test_owner_reopens_a_closed_job_into_the_review_queue(self):
         job = self.make_publishable_job()
         job.status = Job.Status.ACTIVE
         job.published_at = timezone.now()
@@ -187,9 +267,9 @@ class JobPostingWorkflowTests(TestCase):
             ],
         )
 
-    @patch('apps.jobs.services.posting.recruiter_posting_readiness')
-    def test_stale_job_instances_cannot_overwrite_a_completed_transition(self, readiness):
-        readiness.return_value = (self.recruiter, True)
+    @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
+    def test_stale_job_instances_cannot_overwrite_a_completed_transition(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
         job = self.make_publishable_job()
         job.status = Job.Status.ACTIVE
         job.submitted_at = timezone.now()

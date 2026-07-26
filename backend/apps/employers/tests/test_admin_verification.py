@@ -1,4 +1,6 @@
 from datetime import timedelta
+from io import BytesIO
+from unittest.mock import patch
 
 from django.core.exceptions import PermissionDenied
 from django.test import override_settings
@@ -6,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
+from apps.accounts.admin_access_cache import bust_admin_permission_cache
 from apps.accounts.models import AdminPermission, AdminRole, Department, User
 from apps.accounts.services import assign_membership
 from apps.jobs.models import JobCategory
@@ -13,8 +16,12 @@ from apps.jobs.models import JobCategory
 from ..models import (
     Company,
     CompanyDocument,
+    CompanyIndustry,
+    CompanyUpdateRequest,
     EmployerVerificationCase,
+    EmployerVerificationEvent,
     EmployerVerificationNotification,
+    Industry,
     RecruiterProfile,
     RecruitmentNeed,
 )
@@ -22,6 +29,7 @@ from ..services import (
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
     get_or_create_verification_case,
+    reconcile_completed_verification_cases,
     recruiter_is_approved,
     recruiter_posting_readiness,
     verification_decision_impact,
@@ -197,6 +205,55 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 409, response.data)
 
+    def test_reviewer_approval_of_the_final_document_approves_the_case(self):
+        self.client.force_authenticate(self.admin)
+        document = self.first_case.documents.filter(is_current=True).first()
+
+        response = self.client.post(
+            reverse(
+                'admin-employer-verification-review-document',
+                kwargs={
+                    'public_id': self.first_case.public_id,
+                    'document_public_id': document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.APPROVED,
+                'reason': '',
+                'lock_version': self.first_case.lock_version,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        document.refresh_from_db()
+        self.first_case.refresh_from_db()
+        self.assertEqual(document.status, CompanyDocument.Status.APPROVED)
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(self.first_case.lock_version, 2)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.verification_status, Company.VerificationStatus.VERIFIED)
+        self.assertTrue(
+            EmployerVerificationNotification.objects.filter(
+                verification_case=self.first_case,
+                event_type=EmployerVerificationCase.Status.APPROVED,
+            ).exists()
+        )
+
+    def test_reconciliation_approves_a_previously_completed_case(self):
+        reconciled = reconcile_completed_verification_cases()
+
+        self.first_case.refresh_from_db()
+        self.assertIn(self.first_case, reconciled)
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertTrue(
+            EmployerVerificationEvent.objects.filter(
+                verification_case=self.first_case,
+                event_type=EmployerVerificationEvent.EventType.APPROVED,
+                payload__source='reconciliation',
+            ).exists()
+        )
+
     def test_queue_filters_overdue_cases(self):
         EmployerVerificationCase.objects.filter(pk=self.first_case.pk).update(
             submitted_at=timezone.now() - timedelta(hours=80),
@@ -254,3 +311,319 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(queue.status_code, 200, queue.data)
         self.assertEqual(content.status_code, 403, content.data)
+
+    def test_company_update_permissions_are_independent_from_verification_review(self):
+        reviewer = User.objects.create_user(
+            email='company-update-reviewer@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+        )
+        view_permission, _ = AdminPermission.objects.get_or_create(
+            code='company_update.view',
+            defaults={
+                'module': 'company_update',
+                'label': 'Xem yêu cầu sửa công ty',
+            },
+        )
+        review_permission, _ = AdminPermission.objects.get_or_create(
+            code='company_update.review',
+            defaults={
+                'module': 'company_update',
+                'label': 'Duyệt sửa thông tin công ty',
+            },
+        )
+        department = Department.objects.create(
+            code='company-update-ops',
+            name='Vận hành cập nhật công ty',
+        )
+        role = AdminRole.objects.create(
+            department=department,
+            code='company-update-reviewer',
+            name='Chuyên viên duyệt sửa công ty',
+        )
+        role.permissions.add(view_permission)
+        assign_membership(reviewer, role, actor=self.admin)
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'website_url': 'https://example.com/new'},
+        )
+        self.client.force_authenticate(reviewer)
+
+        company_queue = self.client.get(reverse('admin-company-update-request-list'))
+        account_detail = self.client.get(
+            reverse('admin-account-detail', kwargs={'public_id': self.first_user.public_id})
+        )
+        verification_queue = self.client.get(reverse('admin-employer-verification-list'))
+        denied_review = self.client.post(
+            reverse(
+                'admin-company-update-request-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {
+                'decision': CompanyUpdateRequest.Status.REJECTED,
+                'note': 'Chưa đủ thông tin.',
+                'lock_version': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(company_queue.status_code, 200, company_queue.data)
+        self.assertEqual(account_detail.status_code, 200, account_detail.data)
+        self.assertEqual(verification_queue.status_code, 403, verification_queue.data)
+        self.assertEqual(denied_review.status_code, 403, denied_review.data)
+
+        role.permissions.add(review_permission)
+        bust_admin_permission_cache({reviewer.pk})
+        accepted_review = self.client.post(
+            reverse(
+                'admin-company-update-request-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {
+                'decision': CompanyUpdateRequest.Status.REJECTED,
+                'note': 'Chưa đủ thông tin.',
+                'lock_version': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(accepted_review.status_code, 200, accepted_review.data)
+        update_request.refresh_from_db()
+        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.REJECTED)
+
+    def test_document_content_infers_legacy_image_mime_for_inline_preview(self):
+        self.client.force_authenticate(self.admin)
+        document = self.first_case.documents.filter(is_current=True).first()
+        document.file_name = 'Giấy đăng ký doanh nghiệp'
+        document.file_url = 'employers/legacy/business-registration.webp'
+        document.mime_type = ''
+        document.save(update_fields=['file_name', 'file_url', 'mime_type', 'updated_at'])
+
+        with patch(
+            'apps.employers.api.views.admin_verification.private_media_storage'
+        ) as storage_factory:
+            storage_factory.return_value.open.return_value = BytesIO(b'RIFFxxxxWEBP')
+            response = self.client.get(
+                reverse(
+                    'admin-employer-verification-document-content',
+                    kwargs={
+                        'public_id': self.first_case.public_id,
+                        'document_public_id': document.public_id,
+                    },
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/webp')
+        self.assertIn('inline', response['Content-Disposition'])
+        event = EmployerVerificationEvent.objects.filter(
+            verification_case=self.first_case,
+            event_type=EmployerVerificationEvent.EventType.SENSITIVE_VIEWED,
+        ).latest('created_at')
+        self.assertEqual(event.payload['action'], 'preview')
+        self.assertEqual(event.payload['audit_version'], 2)
+        self.assertEqual(event.payload['document_file_name'], 'Giấy đăng ký doanh nghiệp')
+
+    def test_document_content_converts_private_docx_to_pdf_for_preview(self):
+        self.client.force_authenticate(self.admin)
+        document = self.first_case.documents.filter(is_current=True).first()
+        document.file_url = 'employers/legacy/agreement.docx'
+        document.file_name = 'agreement.docx'
+        document.mime_type = (
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        document.save(update_fields=['file_url', 'file_name', 'mime_type', 'updated_at'])
+
+        with patch(
+            'apps.employers.api.views.admin_verification.render_office_document_preview',
+            return_value=b'%PDF-preview',
+        ) as render_preview:
+            response = self.client.get(
+                reverse(
+                    'admin-employer-verification-document-content',
+                    kwargs={
+                        'public_id': self.first_case.public_id,
+                        'document_public_id': document.public_id,
+                    },
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('inline', response['Content-Disposition'])
+        self.assertEqual(b''.join(response.streaming_content), b'%PDF-preview')
+        render_preview.assert_called_once_with(
+            document.file_url,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+    def test_admin_reviews_company_update_proof_before_applying_change(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'company_name': 'Công ty dùng chung mới'},
+            is_sensitive=True,
+            reason='Đổi tên theo đăng ký doanh nghiệp',
+            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
+        )
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.first,
+            uploaded_by=self.first_user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/update-requests/business-registration.pdf',
+            file_name='business-registration.pdf',
+            mime_type='application/pdf',
+        )
+        self.client.force_authenticate(self.admin)
+
+        document_response = self.client.post(
+            reverse(
+                'admin-company-update-request-review-document',
+                kwargs={
+                    'public_id': update_request.public_id,
+                    'document_public_id': document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.APPROVED,
+                'reason': '',
+                'lock_version': 0,
+            },
+            format='json',
+        )
+        self.assertEqual(document_response.status_code, 200, document_response.data)
+        self.assertEqual(document_response.data['lock_version'], 1)
+
+        review_response = self.client.post(
+            reverse(
+                'admin-company-update-request-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {
+                'decision': CompanyUpdateRequest.Status.APPROVED,
+                'note': '',
+                'lock_version': 1,
+            },
+            format='json',
+        )
+
+        self.assertEqual(review_response.status_code, 200, review_response.data)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.company_name, 'Công ty dùng chung mới')
+
+    def test_employer_sees_company_update_document_revision_request(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'company_name': 'Công ty dùng chung mới'},
+            is_sensitive=True,
+            reason='Đổi tên theo đăng ký doanh nghiệp',
+            proof_type=CompanyUpdateRequest.ProofType.BUSINESS_REGISTRATION,
+        )
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.first,
+            uploaded_by=self.first_user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/update-requests/business-registration.pdf',
+            file_name='business-registration.pdf',
+            mime_type='application/pdf',
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-company-update-request-review-document',
+                kwargs={
+                    'public_id': update_request.public_id,
+                    'document_public_id': document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.CHANGES_REQUESTED,
+                'reason': 'Ảnh chụp bị mờ, vui lòng tải bản rõ đủ bốn góc.',
+                'lock_version': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.client.force_authenticate(self.first_user)
+        employer_response = self.client.get(reverse('employer-company-update-requests'))
+        current_document = employer_response.data[0]['documents'][0]
+        self.assertEqual(current_document['status'], CompanyDocument.Status.CHANGES_REQUESTED)
+        self.assertEqual(current_document['status_label'], 'Cần bổ sung')
+        self.assertEqual(current_document['doc_type_label'], 'Giấy đăng ký doanh nghiệp')
+        self.assertEqual(
+            current_document['review_note'],
+            'Ảnh chụp bị mờ, vui lòng tải bản rõ đủ bốn góc.',
+        )
+
+    def test_admin_company_update_includes_current_values_for_comparison(self):
+        current_industry = Industry.objects.create(name='Lĩnh vực hiện tại đối chiếu')
+        proposed_industry = Industry.objects.create(name='Lĩnh vực đề xuất đối chiếu')
+        CompanyIndustry.objects.create(
+            company=self.company,
+            industry=current_industry,
+            is_primary=True,
+        )
+        CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={
+                'company_name': 'Công ty dùng chung mới',
+                'industries': [proposed_industry.id],
+                'primary_industry': proposed_industry.id,
+                'gallery_additions': ['employers/company/gallery/proposed.jpg'],
+            },
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(reverse('admin-company-update-request-list'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        request_data = response.data['results'][0]
+        self.assertEqual(request_data['current_values']['company_name'], 'Công ty dùng chung')
+        self.assertEqual(request_data['current_values']['industries'], [current_industry.id])
+        self.assertEqual(
+            request_data['current_values']['primary_industry'],
+            current_industry.id,
+        )
+        self.assertEqual(
+            request_data['industry_labels'][str(proposed_industry.id)],
+            'Lĩnh vực đề xuất đối chiếu',
+        )
+        self.assertEqual(
+            request_data['media_previews']['gallery_additions'],
+            ['http://testserver/media/employers/company/gallery/proposed.jpg'],
+        )
+
+    def test_stale_company_update_review_returns_conflict(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'website_url': 'https://example.com/new'},
+            lock_version=2,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-company-update-request-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {
+                'decision': CompanyUpdateRequest.Status.APPROVED,
+                'note': '',
+                'lock_version': 1,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 409, response.data)
+        update_request.refresh_from_db()
+        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.PENDING)

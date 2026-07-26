@@ -71,13 +71,13 @@ export default function ProvisioningScopePanel() {
     setSaving(true)
     try {
       await createProvisioningScope(values)
-      message.success('Đã thêm phạm vi cấp tài khoản.')
+      message.success('Đã thêm quy tắc mời Admin.')
       setEditorOpen(false)
       form.resetFields()
       await invalidate()
     } catch (error) {
       if (!error?.errorFields) {
-        message.error(getApiErrorMessage(error, 'Không thể tạo phạm vi cấp tài khoản.'))
+        message.error(getApiErrorMessage(error, 'Không thể tạo quy tắc mời Admin.'))
       }
     } finally {
       setSaving(false)
@@ -103,7 +103,7 @@ export default function ProvisioningScopePanel() {
         impact.isActive,
         impact.preview.impact_token,
       )
-      message.success(impact.isActive ? 'Đã kích hoạt phạm vi.' : 'Đã thu hồi phạm vi.')
+      message.success(impact.isActive ? 'Đã bật quy tắc mời.' : 'Đã tắt quy tắc mời.')
       setImpact(null)
       await invalidate()
     } catch (error) {
@@ -131,9 +131,9 @@ export default function ProvisioningScopePanel() {
     <div>
       <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-center">
         <div>
-          <Typography.Title level={5} className="!mb-1">Ủy quyền cấp tài khoản Admin</Typography.Title>
+          <Typography.Title level={5} className="!mb-1">Quy tắc mời tài khoản Admin</Typography.Title>
           <Typography.Text type="secondary">
-            Chọn chính xác chức danh nguồn được mời vào từng chức danh đích.
+            Quy định chức danh nào được gửi lời mời và chức danh được cấp cho người nhận.
           </Typography.Text>
         </div>
         <Button
@@ -141,15 +141,15 @@ export default function ProvisioningScopePanel() {
           icon={<PlusOutlined />}
           onClick={() => setEditorOpen(true)}
         >
-          Thêm phạm vi
+          Thêm quy tắc
         </Button>
       </div>
       <Alert
         className="mb-4"
         showIcon
         type="info"
-        title="Whitelist được kiểm tra lại ở mọi thao tác ghi"
-        description="Rank không được dùng để suy luận quyền. Chức danh đích có quyền cấp phát hoặc quản trị đặc quyền luôn bị chặn với Admin thường."
+        title="Quy tắc này luôn được kiểm tra trước khi gửi lời mời"
+        description="Ví dụ: “Trưởng nhóm Tuyển dụng → Chuyên viên kiểm duyệt” nghĩa là Trưởng nhóm Tuyển dụng chỉ được mời người mới vào chức danh Chuyên viên kiểm duyệt. Cấp bậc không tự tạo quyền mời."
       />
       <div className="overflow-x-auto">
         <Table
@@ -159,14 +159,14 @@ export default function ProvisioningScopePanel() {
           pagination={false}
           scroll={{ x: 900 }}
           columns={[
-            { title: 'Chức danh được cấp phát', dataIndex: 'source_role', render: roleCell },
+            { title: 'Chức danh người gửi lời mời', dataIndex: 'source_role', render: roleCell },
             {
               title: '',
               width: 60,
               align: 'center',
               render: () => <LinkOutlined className="text-slate-400" />,
             },
-            { title: 'Chức danh được phép cấp', dataIndex: 'target_role', render: roleCell },
+            { title: 'Chức danh cấp cho người được mời', dataIndex: 'target_role', render: roleCell },
             {
               title: 'Lời mời đang chờ',
               dataIndex: 'pending_invitation_count',
@@ -207,8 +207,8 @@ export default function ProvisioningScopePanel() {
 
       <Modal
         open={editorOpen}
-        title="Thêm phạm vi cấp tài khoản"
-        okText="Thêm phạm vi"
+        title="Thêm quy tắc mời Admin"
+        okText="Thêm quy tắc"
         cancelText="Hủy"
         confirmLoading={saving}
         onCancel={() => setEditorOpen(false)}
@@ -218,14 +218,14 @@ export default function ProvisioningScopePanel() {
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item
             name="source_role_public_id"
-            label="Chức danh được quyền cấp"
-            rules={[{ required: true, message: 'Chọn chức danh nguồn.' }]}
-            extra="Chỉ hiển thị chức danh có quyền account.admin.invite."
+            label="Chức danh của người gửi lời mời"
+            rules={[{ required: true, message: 'Chọn chức danh người gửi lời mời.' }]}
+            extra="Chỉ hiển thị chức danh có quyền gửi lời mời Admin."
           >
             <Select
               showSearch
               optionFilterProp="label"
-              placeholder="Chọn chức danh nguồn"
+              placeholder="Chọn chức danh người gửi lời mời"
               options={sourceRoles.map((role) => ({
                 value: role.public_id,
                 label: `${role.department.name} · ${role.name}`,
@@ -234,14 +234,14 @@ export default function ProvisioningScopePanel() {
           </Form.Item>
           <Form.Item
             name="target_role_public_id"
-            label="Chức danh được phép cấp"
-            rules={[{ required: true, message: 'Chọn chức danh đích.' }]}
-            extra="Chức danh nhạy cảm được loại khỏi danh sách và vẫn bị backend chặn."
+            label="Chức danh cấp cho người được mời"
+            rules={[{ required: true, message: 'Chọn chức danh cấp cho người được mời.' }]}
+            extra="Các chức danh quản trị đặc quyền đã được loại khỏi danh sách và vẫn bị backend chặn."
           >
             <Select
               showSearch
               optionFilterProp="label"
-              placeholder="Chọn chức danh đích"
+              placeholder="Chọn chức danh cấp cho người được mời"
               options={targetRoles.map((role) => ({
                 value: role.public_id,
                 label: `${role.department.name} · ${role.name}`,
@@ -253,8 +253,8 @@ export default function ProvisioningScopePanel() {
 
       <Modal
         open={Boolean(impact)}
-        title={impact?.isActive ? 'Kích hoạt phạm vi cấp tài khoản' : 'Thu hồi phạm vi cấp tài khoản'}
-        okText={impact?.isActive ? 'Kích hoạt' : 'Thu hồi phạm vi'}
+        title={impact?.isActive ? 'Bật quy tắc mời Admin' : 'Tắt quy tắc mời Admin'}
+        okText={impact?.isActive ? 'Bật quy tắc' : 'Tắt quy tắc'}
         okButtonProps={{ danger: !impact?.isActive }}
         cancelText="Hủy"
         loading={impact?.loading}
@@ -274,10 +274,10 @@ export default function ProvisioningScopePanel() {
               />
             )}
             <Descriptions bordered size="small" column={1}>
-              <Descriptions.Item label="Chức danh nguồn">
+              <Descriptions.Item label="Chức danh người gửi lời mời">
                 {impact.preview.target.source_role}
               </Descriptions.Item>
-              <Descriptions.Item label="Chức danh đích">
+              <Descriptions.Item label="Chức danh cấp cho người được mời">
                 {impact.preview.target.target_role}
               </Descriptions.Item>
               <Descriptions.Item label="Lời mời bị ảnh hưởng">

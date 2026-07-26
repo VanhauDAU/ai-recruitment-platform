@@ -10,7 +10,7 @@ from rest_framework.exceptions import ValidationError
 from apps.employers.models import CampaignActivity, RecruiterProfile
 from apps.employers.services import (
     record_campaign_activity,
-    recruiter_posting_readiness,
+    recruiter_job_posting_entitlement,
 )
 from apps.sitecontent.selectors.settings import get_int_setting
 
@@ -28,6 +28,7 @@ from ..models import (
 )
 
 FREE_JOB_QUOTA = 3
+VERIFIED_LEVEL_THREE_JOB_QUOTA = 100
 
 
 def _locked_recruiter(user):
@@ -43,6 +44,35 @@ def _locked_job(job):
 
 def _free_job_quota():
     return max(get_int_setting('employer_free_job_quota', FREE_JOB_QUOTA), 0)
+
+
+def _verified_level_three_job_quota():
+    return max(
+        get_int_setting(
+            'employer_verified_level_three_job_quota',
+            VERIFIED_LEVEL_THREE_JOB_QUOTA,
+        ),
+        0,
+    )
+
+
+def _posting_quota(user):
+    recruiter, entitlement = recruiter_job_posting_entitlement(user)
+    is_verified_level_three = entitlement['verified_job_quota_eligible']
+    return (
+        recruiter,
+        entitlement,
+        (_verified_level_three_job_quota() if is_verified_level_three else _free_job_quota()),
+    )
+
+
+def _quota_exhausted_message(*, verified_level_three, limit):
+    if verified_level_three:
+        return f'Bạn đã dùng hết {limit} lượt đăng tin của tài khoản Cấp 3.'
+    return (
+        f'Bạn đã dùng hết {limit} lượt đăng tin miễn phí. '
+        'Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.'
+    )
 
 
 def _record_status(
@@ -171,20 +201,29 @@ def _validate_publishable(job):
 
 
 def employer_job_posting_context(user):
-    _, verified = recruiter_posting_readiness(user)
-    limit = _free_job_quota()
+    recruiter, entitlement, limit = _posting_quota(user)
     count = Job.objects.filter(posted_by=user, submitted_at__isnull=False).count()
     reason = ''
-    if not verified:
-        reason = 'Hoàn tất các bước xác thực tài khoản trước khi đăng tin.'
+    has_company = recruiter is not None and recruiter.company_id is not None
+    if not has_company:
+        reason = 'Cập nhật thông tin công ty trước khi đăng tin.'
     elif count >= limit:
-        reason = 'Bạn đã dùng hết lượt đăng tin miễn phí.'
+        reason = _quota_exhausted_message(
+            verified_level_three=entitlement['verified_job_quota_eligible'],
+            limit=limit,
+        )
     return {
-        'verification_completed': verified,
+        'verification_completed': entitlement['verification_completed'],
+        'admin_approved': entitlement['admin_approved'],
+        'account_level': entitlement['account_level'],
+        'verified_job_quota_eligible': entitlement['verified_job_quota_eligible'],
         'published_jobs_count': count,
+        'publish_limit': limit,
+        'publish_remain': max(limit - count, 0),
+        # Compatibility for clients deployed before the quota contract rename.
         'free_publish_limit': limit,
         'free_publish_remain': max(limit - count, 0),
-        'job_postable': verified and count < limit,
+        'job_postable': has_company and count < limit,
         'approval_required': True,
         'block_reason': reason,
     }
@@ -217,16 +256,18 @@ def publish_job(job, user):
     if job.status == Job.Status.CLOSED:
         raise ValidationError('Mở lại tin trước khi gửi duyệt lại.')
     _validate_publishable(job)
-    _, verified = recruiter_posting_readiness(user)
-    if not verified:
-        raise ValidationError(
-            {'detail': 'Hoàn tất 5 bước xác thực tài khoản trước khi gửi tin duyệt.'}
-        )
     if job.submitted_at is None:
-        limit = _free_job_quota()
+        _, entitlement, limit = _posting_quota(user)
         used = Job.objects.filter(posted_by=user, submitted_at__isnull=False).count()
         if used >= limit:
-            raise ValidationError({'detail': 'Bạn đã dùng hết lượt đăng tin miễn phí.'})
+            raise ValidationError(
+                {
+                    'detail': _quota_exhausted_message(
+                        verified_level_three=entitlement['verified_job_quota_eligible'],
+                        limit=limit,
+                    ),
+                }
+            )
     # A pending post was already charged and remains in the same review queue
     # after an owner updates its content. An active post becomes pending again
     # so every public revision is reviewed before it is shown to candidates.
@@ -293,11 +334,6 @@ def reopen_job(job, user, deadline):
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
     if deadline < timezone.localdate():
         raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
-    _, verified = recruiter_posting_readiness(user)
-    if not verified:
-        raise ValidationError(
-            {'detail': 'Hoàn tất 5 bước xác thực tài khoản trước khi gửi tin duyệt.'}
-        )
     job.deadline = deadline
     job.status = Job.Status.PENDING
     job.published_at = None

@@ -120,18 +120,21 @@ class AdminAccountViewSet(
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
+            'company_update.view',
         ],
         'retrieve': [
             'account.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
+            'company_update.view',
         ],
         'summary': [
             'account.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
+            'company_update.view',
         ],
         'update': ['account.profile.manage'],
         'partial_update': ['account.profile.manage'],
@@ -140,6 +143,7 @@ class AdminAccountViewSet(
             'account.admin.view',
             'account.profile.manage',
             'employer_verification.view',
+            'company_update.view',
         ],
         'cvs': ['account.view'],
         'applications': ['account.view'],
@@ -159,7 +163,14 @@ class AdminAccountViewSet(
 
     def get_queryset(self):
         params = self.request.query_params if self.action == 'list' else {}
-        return accounts_queryset(self.request.user, params=params)
+        queryset = accounts_queryset(self.request.user, params=params)
+        if self.action == 'profile':
+            queryset = queryset.select_related(
+                'recruiter_profile__company__created_by',
+            ).prefetch_related(
+                'recruiter_profile__company__images',
+            )
+        return queryset
 
     def get_serializer_class(self):
         return (
@@ -217,7 +228,7 @@ class AdminAccountViewSet(
             return Response(
                 AdminAccountProfileSerializer(
                     user,
-                    context={'can_view_sensitive': False},
+                    context={'can_view_sensitive': False, 'request': request},
                 ).data
             )
 
@@ -236,7 +247,10 @@ class AdminAccountViewSet(
         return Response(
             AdminAccountProfileSerializer(
                 user,
-                context={'can_view_sensitive': reveal and _can_view_sensitive(request.user)},
+                context={
+                    'can_view_sensitive': reveal and _can_view_sensitive(request.user),
+                    'request': request,
+                },
             ).data
         )
 

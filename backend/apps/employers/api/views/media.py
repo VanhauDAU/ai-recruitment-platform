@@ -1,15 +1,51 @@
+from django.db import transaction
 from django.db.models import Max
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployerWithMFA
 from common.media_storage import delete_local_media_url, save_image_upload, validate_image_upload
 
-from ...models import CompanyImage
+from ...models import Company, CompanyImage, CompanyUpdateRequest
 from ..serializers import CompanyImageSerializer, CompanySerializer
 from .onboarding import _require_owner
+
+
+def _approval_is_required(company):
+    """Initial onboarding may upload media directly; later edits need a request."""
+    return (
+        company.verification_status != Company.VerificationStatus.UNVERIFIED
+        or company.recruiter_verification_cases.exists()
+        or company.update_requests.exists()
+    )
+
+
+def _get_update_request(request, company):
+    update_request_id = request.data.get('update_request') or request.query_params.get(
+        'update_request'
+    )
+    if not update_request_id:
+        if _approval_is_required(company):
+            raise ValidationError(
+                {
+                    'update_request': (
+                        'Mọi thay đổi ảnh sau khi nộp hồ sơ công ty phải thuộc một yêu cầu '
+                        'cập nhật chờ duyệt.'
+                    )
+                }
+            )
+        return None
+    update_request = CompanyUpdateRequest.objects.filter(
+        public_id=update_request_id,
+        company=company,
+        status=CompanyUpdateRequest.Status.PENDING,
+    ).first()
+    if update_request is None:
+        raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
+    return update_request
 
 
 class CompanyImageUploadView(APIView):
@@ -43,7 +79,8 @@ class CompanyImageUploadView(APIView):
             )
 
         company = _require_owner(request.user).company
-        if self.kind == 'gallery' and company.images.count() >= 10:
+        update_request = _get_update_request(request, company)
+        if self.kind == 'gallery' and not update_request and company.images.count() >= 10:
             return Response(
                 {'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -57,7 +94,45 @@ class CompanyImageUploadView(APIView):
         )
 
         try:
-            if self.kind == 'gallery':
+            if update_request is not None:
+                with transaction.atomic():
+                    update_request = CompanyUpdateRequest.objects.select_for_update().get(
+                        pk=update_request.pk
+                    )
+                    if update_request.status != CompanyUpdateRequest.Status.PENDING:
+                        raise ValidationError(
+                            {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
+                        )
+                    changes = dict(update_request.changes)
+                    replaced_path = ''
+                    if self.kind == 'gallery':
+                        additions = list(changes.get('gallery_additions', []))
+                        deletions = set(changes.get('gallery_deletions', []))
+                        final_count = (
+                            company.images.exclude(id__in=deletions).count() + len(additions) + 1
+                        )
+                        if final_count > 10:
+                            raise ValidationError(
+                                {'file': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'}
+                            )
+                        additions.append(saved['path'])
+                        changes['gallery_additions'] = additions
+                        changes.pop('gallery_pending', None)
+                    elif self.kind == 'logo':
+                        replaced_path = changes.get('logo_url', '')
+                        changes['logo_url'] = saved['path']
+                        changes['has_no_logo'] = False
+                        changes.pop('logo_pending', None)
+                    else:
+                        replaced_path = changes.get('cover_image_url', '')
+                        changes['cover_image_url'] = saved['path']
+                        changes.pop('cover_pending', None)
+                    update_request.changes = changes
+                    update_request.lock_version += 1
+                    update_request.save(update_fields=['changes', 'lock_version', 'updated_at'])
+                    if replaced_path:
+                        transaction.on_commit(lambda: delete_local_media_url(replaced_path))
+            elif self.kind == 'gallery':
                 last_order = company.images.aggregate(value=Max('sort_order'))['value']
                 CompanyImage.objects.create(
                     company=company,
@@ -78,6 +153,13 @@ class CompanyImageUploadView(APIView):
             delete_local_media_url(saved['path'])
             raise
 
+        if update_request is not None:
+            return Response(
+                {
+                    'update_request': update_request.public_id,
+                    'lock_version': update_request.lock_version,
+                }
+            )
         return Response(CompanySerializer(company, context={'request': request}).data)
 
     @extend_schema(
@@ -90,7 +172,35 @@ class CompanyImageUploadView(APIView):
         if self.kind == 'gallery':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         company = _require_owner(request.user).company
+        update_request = _get_update_request(request, company)
         field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
+        if update_request is not None:
+            with transaction.atomic():
+                update_request = CompanyUpdateRequest.objects.select_for_update().get(
+                    pk=update_request.pk
+                )
+                if update_request.status != CompanyUpdateRequest.Status.PENDING:
+                    raise ValidationError(
+                        {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
+                    )
+                changes = dict(update_request.changes)
+                staged_path = changes.pop(field, '')
+                changes.pop(f'{self.kind}_pending', None)
+                if self.kind == 'logo':
+                    changes['has_no_logo'] = True
+                else:
+                    changes['cover_image_url'] = ''
+                update_request.changes = changes
+                update_request.lock_version += 1
+                update_request.save(update_fields=['changes', 'lock_version', 'updated_at'])
+                if staged_path:
+                    transaction.on_commit(lambda: delete_local_media_url(staged_path))
+            return Response(
+                {
+                    'update_request': update_request.public_id,
+                    'lock_version': update_request.lock_version,
+                }
+            )
         delete_local_media_url(getattr(company, field))
         setattr(company, field, '')
         update_fields = [field, 'updated_at']
@@ -125,5 +235,14 @@ class CompanyGalleryDeleteView(generics.DestroyAPIView):
         return CompanyImage.objects.filter(company=_require_owner(self.request.user).company)
 
     def perform_destroy(self, instance):
+        company = instance.company
+        if _approval_is_required(company):
+            raise ValidationError(
+                {
+                    'update_request': (
+                        'Xóa ảnh sau khi nộp hồ sơ công ty phải được gửi trong yêu cầu cập nhật.'
+                    )
+                }
+            )
         delete_local_media_url(instance.image_url)
         instance.delete()

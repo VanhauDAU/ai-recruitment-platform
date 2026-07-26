@@ -185,6 +185,8 @@ class CompanyUpdateRequest(models.Model):
     reason = models.TextField(blank=True)
     proof_type = models.CharField(max_length=30, choices=ProofType.choices, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    revision = models.PositiveIntegerField(default=1)
+    lock_version = models.PositiveIntegerField(default=0)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )

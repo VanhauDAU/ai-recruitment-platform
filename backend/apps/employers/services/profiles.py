@@ -61,6 +61,69 @@ def recruiter_posting_readiness(user):
     return recruiter, verified
 
 
+def recruiter_job_posting_entitlement(user):
+    """Return the account-level conditions required for the 100-job quota.
+
+    Recruiters who have not reached this entitlement still retain their
+    separate introductory quota. The final job-posting service enforces the
+    appropriate limit under a transaction.
+    """
+    recruiter, verification_completed = recruiter_posting_readiness(user)
+    if recruiter is None or recruiter.company_id is None:
+        return recruiter, {
+            'verification_completed': False,
+            'admin_approved': False,
+            'account_level': 0,
+            'verified_job_quota_eligible': False,
+        }
+
+    verification_case = EmployerVerificationCase.objects.filter(
+        recruiter=recruiter,
+        company=recruiter.company,
+    ).first()
+    admin_approved = (
+        verification_case is not None
+        and verification_case.status == EmployerVerificationCase.Status.APPROVED
+    )
+    business_document_approved = False
+    if verification_case is not None:
+        business_documents = CompanyDocument.objects.filter(
+            verification_case=verification_case,
+            is_current=True,
+            doc_type__in=[
+                CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                CompanyDocument.DocType.IDENTITY_DOCUMENT,
+            ],
+        )
+        business_document_approved = (
+            business_documents.exists()
+            and not business_documents.exclude(
+                status=CompanyDocument.Status.APPROVED,
+            ).exists()
+        )
+
+    account_level = 0
+    if recruiter.user.email_verified:
+        account_level = 1
+    if account_level == 1 and recruiter.phone_verified_at and business_document_approved:
+        account_level = 2
+    # The current product model has no report-history record yet. This is kept
+    # aligned with the employer portal's Cấp 3 read-model until that workflow
+    # is introduced.
+    if account_level == 2:
+        account_level = 3
+
+    return recruiter, {
+        'verification_completed': verification_completed,
+        'admin_approved': admin_approved,
+        'account_level': account_level,
+        'verified_job_quota_eligible': (
+            verification_completed and admin_approved and account_level >= 3
+        ),
+    }
+
+
 def ensure_recruiter_candidate_data_access(user):
     """Enforce the rollout gate before exposing candidate personal data."""
     if recruiter_candidate_data_access_allowed(user):

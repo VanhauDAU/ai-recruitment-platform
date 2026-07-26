@@ -1,4 +1,4 @@
-import { BankOutlined, CheckCircleFilled, EditOutlined, LinkOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { BankOutlined, CheckCircleFilled, EditOutlined, LinkOutlined, SafetyCertificateOutlined, UploadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
@@ -13,12 +13,17 @@ const VERIFICATION_STATUS = {
   unverified: ['default', 'Chưa xác thực'],
 }
 
-const FIELD_LABELS = {
-  business_type: 'Loại hình', tax_code: 'Mã số thuế', company_name: 'Tên đăng ký',
-  trade_name: 'Tên thương mại', website_url: 'Website', email: 'Email', phone: 'Số điện thoại',
-  address: 'Địa chỉ', company_size: 'Quy mô', description: 'Mô tả', employee_benefits: 'Phúc lợi',
-  markets: 'Thị trường', target_customers: 'Khách hàng mục tiêu', industries: 'Lĩnh vực',
-  primary_industry: 'Lĩnh vực chính',
+const UPDATE_REQUEST_STATUS = {
+  pending: ['processing', 'Đang xử lý'],
+  approved: ['success', 'Đã duyệt'],
+  rejected: ['error', 'Bị từ chối'],
+}
+
+const DOCUMENT_LABELS = {
+  business_registration: 'Giấy đăng ký doanh nghiệp',
+  trade_name_proof: 'Chứng minh tên thương mại',
+  authorization_letter: 'Giấy ủy quyền',
+  identity_document: 'Giấy tờ định danh (CCCD/hộ chiếu)',
 }
 
 export default function LinkedCompanyPanel({ profile, catalogs, industries, onRefresh }) {
@@ -34,24 +39,63 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const requests = requestsQuery.data || []
   const latestRequest = requests[0]
   const pendingRequest = requests.find((item) => item.status === 'pending')
-  const rejectedRequest = requests.find((item) => item.status === 'rejected')
+  const documentsRequiringAction = (pendingRequest?.documents || []).filter((document) => (
+    document.is_current && ['changes_requested', 'rejected'].includes(document.status)
+  ))
+  const hasDocumentAction = documentsRequiringAction.length > 0
+  const [defaultRequestStatusColor, defaultRequestStatusText] = UPDATE_REQUEST_STATUS[latestRequest?.status] || []
+  const requestStatusColor = hasDocumentAction ? 'warning' : defaultRequestStatusColor
+  const requestStatusText = hasDocumentAction ? 'Cần bổ sung giấy tờ' : defaultRequestStatusText
 
-  if (editing) return <CompanyForm company={company} catalogs={catalogs} industries={industries} canManageMedia={owner} onCompleted={async () => { setEditing(false); await onRefresh() }} onCancel={() => setEditing(false)} />
+  if (editing) return <CompanyForm company={company} pendingRequest={pendingRequest} catalogs={catalogs} industries={industries} canManageMedia={owner} onCompleted={async () => { setEditing(false); await onRefresh() }} onCancel={() => setEditing(false)} />
   if (canRequestUpdate && requestsQuery.isLoading) return <Skeleton active paragraph={{ rows: 8 }} />
   const [statusColor, statusText] = VERIFICATION_STATUS[company.verification_status] || VERIFICATION_STATUS.unverified
 
   return (
     <div className="linked-company-panel">
-      {pendingRequest && <Alert className="linked-company-panel__alert" type="warning" showIcon title="Yêu cầu cập nhật đang được xử lý" description={<div className="linked-company-panel__request-tags">{Object.entries(pendingRequest.changes || {}).map(([field, value]) => <Tag key={field}>{FIELD_LABELS[field] || field}: {formatValue(value)}</Tag>)}</div>} />}
-      {rejectedRequest && <Alert className="linked-company-panel__alert" type="error" showIcon title="Yêu cầu cập nhật gần nhất bị từ chối" description={rejectedRequest.review_note || 'Quản trị viên chưa cung cấp lý do.'} />}
-
       <section className="company-update-request" aria-label="Yêu cầu cập nhật thông tin công ty">
         <div>
           <h2>Yêu cầu cập nhật thông tin công ty</h2>
-          <p>Ngày yêu cầu gần nhất: {latestRequest ? formatDateTime(latestRequest.created_at) : '--:-- --/--/--'}</p>
+          <p>Ngày gửi gần nhất: {latestRequest ? formatDateTime(latestRequest.updated_at || latestRequest.created_at) : '--:-- --/--/--'}</p>
         </div>
-        {canRequestUpdate && <Button type="link" icon={<EditOutlined />} disabled={Boolean(pendingRequest)} onClick={() => setEditing(true)}>{pendingRequest ? 'Đang xử lý' : 'Tạo yêu cầu'}</Button>}
+        {canRequestUpdate && (
+          <div className="company-update-request__actions">
+            {requestStatusText && <Tag color={requestStatusColor}>{requestStatusText}</Tag>}
+            <Button
+              type="link"
+              aria-label={hasDocumentAction ? 'Bổ sung giấy tờ' : undefined}
+              icon={hasDocumentAction ? <UploadOutlined /> : <EditOutlined />}
+              onClick={() => setEditing(true)}
+            >
+              {hasDocumentAction ? 'Bổ sung giấy tờ' : pendingRequest ? 'Chỉnh sửa yêu cầu' : 'Tạo yêu cầu'}
+            </Button>
+          </div>
+        )}
       </section>
+
+      {hasDocumentAction && (
+        <Alert
+          className="company-update-document-request"
+          type="warning"
+          showIcon
+          title="Quản trị viên yêu cầu bổ sung giấy tờ"
+          description={(
+            <div className="company-update-document-request__content">
+              <ul>
+                {documentsRequiringAction.map((document) => (
+                  <li key={document.public_id || document.id}>
+                    <strong>{document.doc_type_label || DOCUMENT_LABELS[document.doc_type] || document.doc_type}</strong>
+                    <span>{document.review_note || 'Vui lòng tải lên bản giấy tờ mới rõ ràng và đầy đủ hơn.'}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button type="primary" aria-label="Bổ sung giấy tờ ngay" icon={<UploadOutlined />} onClick={() => setEditing(true)}>
+                Bổ sung giấy tờ ngay
+              </Button>
+            </div>
+          )}
+        />
+      )}
 
       <section className="linked-company-card">
         <header className="linked-company-card__header">

@@ -32,6 +32,9 @@ export default function EmployerAccountVerificationCard() {
   const level = getEmployerAccountVerificationLevel(verification)
   const percent = level.percent
   const nextLevel = Math.min(level.level + 1, level.total)
+  const verifiedJobQuotaUnlocked = (
+    level.level === level.total && verification.representative_verified
+  )
 
   return (
     <div className="mb-5 rounded-sm border border-slate-200 bg-white p-5 sm:p-6">
@@ -39,14 +42,29 @@ export default function EmployerAccountVerificationCard() {
         Tài khoản xác thực: <span className="text-emerald-600">Cấp {level.level}/{level.total}</span>
       </h2>
 
-      {level.level < level.total && (
+      {!verifiedJobQuotaUnlocked && (
         <div className="mt-4 flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌟</span>
           <p className="text-sm leading-6 text-slate-600">
-            Nâng cấp tài khoản lên <strong className="text-slate-800">cấp {nextLevel}/{level.total}</strong> để nhận{' '}
-            <strong className="text-emerald-600">100 lượt xem CV ứng viên từ công cụ tìm kiếm CV</strong>.
+            Bạn còn tối đa <strong className="text-slate-800">3 tin đăng miễn phí</strong>.{' '}
+            {level.level < level.total ? (
+              <>
+                Hoàn tất <strong className="text-slate-800">Cấp {nextLevel}/{level.total}</strong> và xác thực đủ hồ sơ để nhận{' '}
+                <strong className="text-emerald-600">quota 100 tin đăng</strong>.
+              </>
+            ) : (
+              <>
+                Quota sẽ được mở tự động khi mọi giấy tờ và điều kiện xác thực hoàn tất:{' '}
+                <strong className="text-emerald-600">quota 100 tin đăng</strong>.
+              </>
+            )}
           </p>
         </div>
+      )}
+      {verifiedJobQuotaUnlocked && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+          Hồ sơ xác thực đã hoàn tất và tài khoản đạt Cấp 3. Bạn có quota tối đa <strong>100 tin đăng</strong>.
+        </p>
       )}
 
       <p className="mt-4 text-sm text-slate-500">Vui lòng thực hiện các bước xác thực dưới đây:</p>

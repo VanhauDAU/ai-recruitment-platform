@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       shared-mime-info \
       fonts-dejavu-core \
       fonts-noto-core \
+      libreoffice-writer \
       curl \
     && rm -rf /var/lib/apt/lists/*
 

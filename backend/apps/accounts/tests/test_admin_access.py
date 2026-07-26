@@ -294,6 +294,10 @@ class AdminAccessTests(TestCase):
             AdminStaffViewSet,
         )
         from apps.cv_templates.api.views import admin as cv_admin
+        from apps.employers.api.views.admin_verification import (
+            AdminCompanyUpdateRequestViewSet,
+            AdminEmployerVerificationViewSet,
+        )
         from apps.jobs.api.views.moderation import (
             AdminJobModerationListView,
             AdminJobReviewView,
@@ -318,6 +322,8 @@ class AdminAccessTests(TestCase):
             site_settings.AdminSettingUploadView,
             AdminJobModerationListView,
             AdminJobReviewView,
+            AdminEmployerVerificationViewSet,
+            AdminCompanyUpdateRequestViewSet,
             AdminDepartmentViewSet,
             AdminRoleViewSet,
             AdminPermissionViewSet,
