@@ -28,6 +28,7 @@ from .recommendations import SavedJobRecommendationView
 from .reports import (
     AdminJobReportListView,
     AdminJobReportResolveView,
+    AdminJobReportReverseView,
     JobReportCreateView,
 )
 
@@ -36,6 +37,7 @@ __all__ = [
     'AdminJobModerationListView',
     'AdminJobReportListView',
     'AdminJobReportResolveView',
+    'AdminJobReportReverseView',
     'AdminJobReviewView',
     'JobReportCreateView',
     'CandidateJobRecommendationView',

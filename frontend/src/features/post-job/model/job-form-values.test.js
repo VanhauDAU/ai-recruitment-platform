@@ -70,6 +70,27 @@ describe('manual job form values', () => {
     expect(values.work_types).toEqual(['onsite'])
   })
 
+  it.each([
+    ['from', 10_000_000, null],
+    ['up_to', null, 30_000_000],
+  ])('opens a saved %s salary as a two-bound range editor', (
+    salaryType,
+    salaryMinimum,
+    salaryMaximum,
+  ) => {
+    const values = createJobFormValues({
+      salary_type: salaryType,
+      salary_min: salaryMinimum,
+      salary_max: salaryMaximum,
+    })
+
+    expect(values).toMatchObject({
+      salary_type: 'range',
+      salary_min: salaryMinimum,
+      salary_max: salaryMaximum,
+    })
+  })
+
   it('builds the nested write payload and clears salary fields that do not match the selected type', () => {
     const payload = buildJobPayload({
       title: 'Backend Engineer',
@@ -146,6 +167,32 @@ describe('manual job form values', () => {
       note: '',
       is_required: true,
       sort_order: 0,
+    })
+  })
+
+  it.each([
+    ['income', 10_000_000, null, 'from'],
+    ['income', null, 30_000_000, 'up_to'],
+    ['income_at_kpi', 10_000_000, null, 'from'],
+    ['income_at_kpi', null, 30_000_000, 'up_to'],
+  ])('normalizes a one-sided %s salary without losing its income label', (
+    incomeDisplayType,
+    salaryMinimum,
+    salaryMaximum,
+    expectedSalaryType,
+  ) => {
+    const payload = buildJobPayload({
+      salary_type: 'range',
+      income_display_type: incomeDisplayType,
+      salary_min: salaryMinimum,
+      salary_max: salaryMaximum,
+    })
+
+    expect(payload).toMatchObject({
+      salary_type: expectedSalaryType,
+      income_display_type: incomeDisplayType,
+      salary_min: salaryMinimum,
+      salary_max: salaryMaximum,
     })
   })
 

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminJobModeration from './JobModeration'
 
@@ -14,11 +15,17 @@ vi.mock('@/entities/job', () => ({
   reviewAdminJob,
 }))
 
-function renderPage() {
+vi.mock('@/features/review-job-reports', () => ({
+  JobReportQueue: () => <div>Mock report queue</div>,
+}))
+
+function renderPage(initialEntry = '/admin/app/job-moderation') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <AdminJobModeration />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <AdminJobModeration />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -70,5 +77,16 @@ describe('AdminJobModeration', () => {
       action: 'reject',
       reason: 'Vui lòng bổ sung quyền lợi.',
     }))
+  })
+
+  it('opens the report queue from a deep-linked tab', async () => {
+    renderPage('/admin/app/job-moderation?tab=reports')
+
+    expect(screen.getByRole('tab', { name: 'Báo cáo vi phạm' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByText('Mock report queue')).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Báo cáo chờ xử lý' })).toBeVisible()
   })
 })

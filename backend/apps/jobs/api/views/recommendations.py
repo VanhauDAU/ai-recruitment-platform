@@ -22,7 +22,10 @@ class SavedJobRecommendationQuerySerializer(serializers.Serializer):
 def _serialize_results(payload, request):
     # Xem chú thích ở `public._serialize_recommendation_results`.
     context = {'request': request}
-    prime_badge_cache(context, {item['job'].company_id for item in payload['results']})
+    prime_badge_cache(
+        context,
+        {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
+    )
     results = []
     for item in payload['results']:
         job = PublicJobListSerializer(item['job'], context=context).data

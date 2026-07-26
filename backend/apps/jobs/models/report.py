@@ -73,3 +73,42 @@ class JobReport(models.Model):
 
     def __str__(self):
         return f'{self.public_id} - {self.job_id} - {self.status}'
+
+
+class JobReportResolutionEvent(models.Model):
+    """Lịch sử bất biến cho mọi lần kết luận hoặc đảo kết luận báo cáo."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    report = models.ForeignKey(
+        JobReport,
+        on_delete=models.CASCADE,
+        related_name='resolution_history',
+    )
+    from_status = models.CharField(max_length=20, choices=JobReport.Status.choices)
+    to_status = models.CharField(max_length=20, choices=JobReport.Status.choices)
+    note = models.TextField(blank=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='job_report_resolution_events',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        indexes = [
+            models.Index(
+                fields=['report', 'created_at'],
+                name='jobs_report_event_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('jre')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.report_id}: {self.from_status} -> {self.to_status}'

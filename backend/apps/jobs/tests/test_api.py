@@ -609,15 +609,31 @@ class EmployerJobSerializerTests(APITestCase):
         job.refresh_from_db()
         self.assertIsNone(job.campaign)
 
-    def test_range_salary_accepts_only_minimum_or_maximum(self):
-        for salary_min, salary_max in ((9000000, None), (None, 12000000)):
-            with self.subTest(salary_min=salary_min, salary_max=salary_max):
+    def test_range_salary_with_one_bound_is_normalized_and_saved(self):
+        cases = (
+            (Job.IncomeDisplayType.INCOME, 9000000, None, Job.SalaryType.FROM),
+            (Job.IncomeDisplayType.INCOME, None, 12000000, Job.SalaryType.UP_TO),
+            (Job.IncomeDisplayType.INCOME_AT_KPI, 9000000, None, Job.SalaryType.FROM),
+            (Job.IncomeDisplayType.INCOME_AT_KPI, None, 12000000, Job.SalaryType.UP_TO),
+        )
+        for income_display_type, salary_min, salary_max, expected_type in cases:
+            with self.subTest(
+                income_display_type=income_display_type,
+                salary_min=salary_min,
+                salary_max=salary_max,
+            ):
                 payload = self.payload()
                 payload['salary_min'] = salary_min
                 payload['salary_max'] = salary_max
+                payload['income_display_type'] = income_display_type
                 serializer = EmployerJobWriteSerializer(data=payload)
 
                 self.assertTrue(serializer.is_valid(), serializer.errors)
+                job = serializer.save(posted_by=self.user, company=self.company)
+                self.assertEqual(job.salary_type, expected_type)
+                self.assertEqual(job.salary_min, salary_min)
+                self.assertEqual(job.salary_max, salary_max)
+                self.assertEqual(job.income_display_type, income_display_type)
 
     def test_new_job_location_accepts_province_for_all_wards(self):
         payload = self.payload()

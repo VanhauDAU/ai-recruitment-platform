@@ -25,6 +25,9 @@ export function createJobFormValues(initialValues = {}) {
   const domains = assignments.filter((item) => item.role === 'domain_knowledge')
   const contact = initialValues.application_contact || {}
   const skills = initialValues.job_skills || []
+  const editableSalaryType = ['from', 'up_to'].includes(initialValues.salary_type)
+    ? 'range'
+    : initialValues.salary_type || 'range'
   const groupedAreas = new Map()
   ;(initialValues.job_locations || []).forEach((item) => {
     const area = groupedAreas.get(item.province_id) || {
@@ -35,16 +38,16 @@ export function createJobFormValues(initialValues = {}) {
     groupedAreas.set(item.province_id, area)
   })
   return {
-    currency: 'VND',
     number_of_vacancies: 1,
     ...initialValues,
+    currency: initialValues.currency || 'VND',
     description: normalizeRichTextHtml(initialValues.description),
     requirements: normalizeRichTextHtml(initialValues.requirements),
     benefits: normalizeRichTextHtml(initialValues.benefits),
     work_types: initialValues.work_types?.length
       ? initialValues.work_types
       : initialValues.work_type ? [initialValues.work_type] : [],
-    salary_type: initialValues.salary_type || 'range',
+    salary_type: editableSalaryType,
     income_display_type: initialValues.income_display_type || 'income',
     deadline: initialValues.deadline ? dayjs(initialValues.deadline) : null,
     category_assignments: [primary || { role: 'primary_specialization', sort_order: 0 }],
@@ -77,6 +80,13 @@ export function createJobFormValues(initialValues = {}) {
 
 export function buildJobPayload(values) {
   const salaryType = values.salary_type || 'range'
+  const salaryMinimum = values.salary_min ?? null
+  const salaryMaximum = values.salary_max ?? null
+  const normalizedSalaryType = salaryType === 'range' && salaryMinimum != null && salaryMaximum == null
+    ? 'from'
+    : salaryType === 'range' && salaryMinimum == null && salaryMaximum != null
+      ? 'up_to'
+      : salaryType
   const contact = values.application_contact || {}
   const emails = (contact.emails || []).map((email, index) => ({
     email: email.trim().toLowerCase(),
@@ -94,13 +104,15 @@ export function buildJobPayload(values) {
 
   return {
     ...persistedValues,
+    currency: values.currency || 'VND',
+    salary_type: normalizedSalaryType,
     description: normalizeRichTextHtml(values.description),
     requirements: normalizeRichTextHtml(values.requirements),
     benefits: normalizeRichTextHtml(values.benefits),
     work_type: values.work_types?.[0] || values.work_type || '',
     deadline: values.deadline?.format('YYYY-MM-DD') || null,
-    salary_min: ['range', 'fixed', 'from'].includes(salaryType) ? values.salary_min ?? null : null,
-    salary_max: ['range', 'up_to'].includes(salaryType) ? values.salary_max ?? null : null,
+    salary_min: ['range', 'fixed', 'from'].includes(normalizedSalaryType) ? salaryMinimum : null,
+    salary_max: ['range', 'up_to'].includes(normalizedSalaryType) ? salaryMaximum : null,
     age_min: values.age_min ?? null,
     age_max: values.age_max ?? null,
     category_assignments: [

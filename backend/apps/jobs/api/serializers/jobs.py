@@ -52,13 +52,16 @@ class JobListSkillSerializer(serializers.ModelSerializer):
 class JobBadgeListSerializer(serializers.ListSerializer):
     """Nạp sẵn cờ huy hiệu cho cả trang trước khi render từng tin.
 
-    Không có bước này, mỗi tin sẽ tự truy vấn điều kiện xác thực của công ty và
-    endpoint list vỡ ngân sách truy vấn.
+    Không có bước này, mỗi tin sẽ tự truy vấn điều kiện xác thực của cặp
+    (công ty, người đăng) và endpoint list vỡ ngân sách truy vấn.
     """
 
     def to_representation(self, data):
         items = list(data)
-        prime_badge_cache(self.child.context, {item.company_id for item in items})
+        prime_badge_cache(
+            self.child.context,
+            {(item.company_id, item.posted_by_id) for item in items},
+        )
         return super().to_representation(items)
 
 
@@ -219,6 +222,12 @@ class JobSerializer(serializers.ModelSerializer):
         elif salary_type == Job.SalaryType.RANGE:
             if salary_min is None and salary_max is None:
                 salary_errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+            elif salary_min is not None and salary_max is None:
+                attrs['salary_type'] = Job.SalaryType.FROM
+                salary_type = Job.SalaryType.FROM
+            elif salary_min is None and salary_max is not None:
+                attrs['salary_type'] = Job.SalaryType.UP_TO
+                salary_type = Job.SalaryType.UP_TO
             elif salary_min is not None and salary_max is not None and salary_max < salary_min:
                 salary_errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
         elif salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM) and salary_min is None:
@@ -297,14 +306,16 @@ class JobSerializer(serializers.ModelSerializer):
 
     def _badge_payload(self, obj):
         cache = self.__dict__.setdefault('_badge_payload_cache', {})
-        if obj.company_id not in cache:
-            cache[obj.company_id] = badge_criteria_payload(obj.company)
-        return cache[obj.company_id]
+        key = (obj.company_id, obj.posted_by_id)
+        if key not in cache:
+            cache[key] = badge_criteria_payload(obj)
+        return cache[key]
 
     def get_company_verified(self, obj):
         cached = self.context.get(BADGE_CACHE_KEY, {})
-        if obj.company_id in cached:
-            return cached[obj.company_id]
+        key = (obj.company_id, obj.posted_by_id)
+        if key in cached:
+            return cached[key]
         return self._badge_payload(obj)['verified']
 
     def get_brand_slug(self, obj):
@@ -495,7 +506,7 @@ class JobDetailSerializer(JobSerializer):
         read_only_fields = fields
 
     def get_company_verification(self, obj):
-        return badge_criteria_payload(obj.company)
+        return badge_criteria_payload(obj)
 
     def get_category_name(self, obj):
         assignment = self._primary_assignment(obj)

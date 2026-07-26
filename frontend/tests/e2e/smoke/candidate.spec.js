@@ -385,7 +385,8 @@ test('candidate smoke: job application submits the selected immutable CV version
   const appliedDateText = new Intl.DateTimeFormat('vi-VN').format(new Date(appliedAt))
   const job = {
     public_id: 'job_1', slug: 'apply-job', title: 'Kỹ sư phần mềm', company_name: 'Công ty Mẫu',
-    description: '<p>Mô tả công việc</p>', requirements: '', benefits: '', locations_detail: [],
+    description: Array.from({ length: 24 }, (_, index) => `<p>Nội dung mô tả công việc chi tiết ${index + 1}</p>`).join(''),
+    requirements: '<p>Có kinh nghiệm phát triển sản phẩm phần mềm.</p>', benefits: '', locations_detail: [],
     requirement_tags: [], benefit_tags: [], domain_knowledge: [],
     workplace_groups: [
       { province_id: 3, province_name: 'Bình Dương', addresses: [] },
@@ -441,6 +442,11 @@ test('candidate smoke: job application submits the selected immutable CV version
 
   await page.goto('/viec-lam/apply-job')
   await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  const expandDetailsButton = page.getByRole('button', { name: /Xem đầy đủ mô tả công việc/ })
+  await expect(expandDetailsButton).toBeVisible()
+  await expect(expandDetailsButton).toHaveAttribute('aria-expanded', 'false')
+  await expandDetailsButton.click()
+  await expect(page.getByRole('button', { name: /Thu gọn mô tả công việc/ })).toHaveAttribute('aria-expanded', 'true')
   await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển ngay', exact: true }).click()
   const applicationDialog = page.getByRole('dialog')
   await expect(applicationDialog).toBeVisible()
@@ -484,4 +490,110 @@ test('candidate smoke: job application submits the selected immutable CV version
 
   await page.locator('#job-detail-content').getByRole('button', { name: 'Ứng tuyển lại', exact: true }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
+})
+
+test('candidate smoke: verified badge and job report modal work on desktop and mobile', async ({ page }) => {
+  let reportPayload
+  const criteria = [
+    { key: 'company_email', label: 'Email tên miền công ty', passed: true },
+    { key: 'phone_verified', label: 'Số điện thoại đã xác thực', passed: true },
+    { key: 'business_registration', label: 'Giấy phép kinh doanh đã được duyệt', passed: true },
+    { key: 'account_age', label: 'Tài khoản nhà tuyển dụng đủ 6 tháng', passed: true },
+    {
+      key: 'no_upheld_reports',
+      label: 'Chưa có tin đăng vi phạm được quản trị viên xác nhận',
+      passed: true,
+    },
+  ]
+  const job = {
+    public_id: 'job_report_1',
+    slug: 'report-job',
+    title: 'Junior NodeJS',
+    company_name: 'Công ty TNHH Digital Innovation',
+    company_verified: true,
+    company_verification: { verified: true, criteria },
+    description: '<p>Mô tả công việc</p>',
+    requirements: '',
+    benefits: '',
+    locations_detail: [],
+    requirement_tags: [],
+    benefit_tags: [],
+    domain_knowledge: [],
+    workplace_groups: [],
+    work_schedules: [],
+    language_requirements: [],
+    category: null,
+    category_name: '',
+    experience_years: 'none',
+    salary_type: 'negotiable',
+    work_type: 'office',
+    employment_type: 'full_time',
+    view_count: 0,
+    status: 'active',
+  }
+
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    if (path === '/api/jobs/job_report_1/report/' && request.method() === 'POST') {
+      reportPayload = request.postDataJSON()
+    }
+    const body = path === '/api/auth/me/'
+      ? {
+          public_id: 'candidate_1',
+          role: 'candidate',
+          email: 'candidate@example.com',
+          full_name: 'Nguyễn An',
+          email_verified: true,
+          job_preferences_configured: true,
+        }
+      : path === '/api/privacy/consent/'
+        ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+        : path === '/api/jobs/report-job/'
+          ? job
+          : path === '/api/jobs/job_report_1/report/' && request.method() === 'POST'
+            ? { public_id: 'jrep_1', status: 'pending' }
+            : path === '/api/jobs/'
+              ? { count: 0, results: [] }
+              : path === '/api/jobs/categories/' || path === '/api/locations/'
+                ? []
+                : path === '/api/v2/applications/'
+                  ? { results: [] }
+                  : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/viec-lam/report-job')
+  await page.getByRole('button', {
+    name: 'Nhà tuyển dụng đã được xác thực, xem 5 tiêu chí',
+  }).click()
+  await expect(page.getByText('Chưa có tin đăng vi phạm được quản trị viên xác nhận')).toBeVisible()
+
+  const reportNotice = page.locator('#job-detail-content')
+  await expect(reportNotice.getByText('Báo cáo tin tuyển dụng:', { exact: true })).toBeVisible()
+  await expect(reportNotice).toContainText('Nếu bạn thấy rằng tin tuyển dụng này không đúng hoặc có dấu hiệu lừa đảo,')
+  await reportNotice.getByRole('button', { name: 'hãy phản ánh với chúng tôi' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByRole('heading', {
+    name: 'Phản ánh tin tuyển dụng không chính xác',
+  })).toBeVisible()
+  await expect(dialog.getByText('Junior NodeJS')).toBeVisible()
+
+  await dialog.getByRole('combobox', { name: 'Lý do báo cáo' }).click()
+  await page.locator('.ant-select-item-option-content', {
+    hasText: 'Lừa đảo, thu phí ứng viên',
+  }).click()
+  await dialog.getByRole('textbox', { name: 'Mô tả chi tiết' })
+    .fill('Nhà tuyển dụng yêu cầu ứng viên đóng phí.')
+  await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
+
+  await expect(dialog).toBeHidden()
+  expect(reportPayload).toEqual({
+    reason: 'scam',
+    detail: 'Nhà tuyển dụng yêu cầu ứng viên đóng phí.',
+  })
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
 })

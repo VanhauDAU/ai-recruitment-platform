@@ -173,6 +173,10 @@ class Job(models.Model):
         INCOME = 'income', 'Thu nhập'
         INCOME_AT_KPI = 'income_at_kpi', 'Thu nhập khi đạt 100% KPI'
 
+    class Currency(models.TextChoices):
+        VND = 'VND', 'VND'
+        USD = 'USD', 'USD'
+
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Nháp'
         PENDING = 'pending', 'Chờ duyệt'
@@ -259,7 +263,7 @@ class Job(models.Model):
         choices=IncomeDisplayType.choices,
         default=IncomeDisplayType.INCOME,
     )
-    currency = models.CharField(max_length=20, default='VND')
+    currency = models.CharField(max_length=20, choices=Currency.choices, default=Currency.VND)
     deadline = models.DateField(null=True, blank=True)
     # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
     # suy ra từ company.verified_at; nhãn "Mới"/"Sắp hết hạn" tính từ ngày.

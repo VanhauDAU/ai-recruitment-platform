@@ -171,7 +171,9 @@ export function WorkplaceGroups({ groups }) {
 
 function workplaceAddressLabel(address, provinceName) {
   const location = [address.address_detail, address.ward_name].filter(Boolean).join(', ')
-  return location || (address.display !== provinceName ? address.display : '')
+  if (location) return location
+  if (address.display && address.display !== provinceName) return address.display
+  return '(Tất cả phường/xã)'
 }
 
 const WEEKDAY_LABELS = { 1: 'Thứ 2', 2: 'Thứ 3', 3: 'Thứ 4', 4: 'Thứ 5', 5: 'Thứ 6', 6: 'Thứ 7', 7: 'Chủ nhật' }

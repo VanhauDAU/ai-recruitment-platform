@@ -2,6 +2,7 @@ import { Checkbox, Form, Input, InputNumber, Select } from 'antd'
 import {
   EMPLOYMENT_TYPE_LABELS,
   POSITION_LEVEL_LABELS,
+  SALARY_CURRENCY_OPTIONS,
   WORK_TYPE_LABELS,
 } from '@/entities/job'
 import { capitalizeTitleWords } from '../model/job-form-values'
@@ -19,6 +20,7 @@ const parseAmount = (value) => (value || '').replace(/\./g, '')
 export default function JobGeneralFields({ form, categories }) {
   const salaryType = Form.useWatch('salary_type', form)
   const incomeDisplayType = Form.useWatch('income_display_type', form) || 'income'
+  const currency = Form.useWatch('currency', form) || 'VND'
   const showsSalaryMinimum = ['range', 'fixed', 'from'].includes(salaryType)
   const showsSalaryMaximum = ['range', 'up_to'].includes(salaryType)
   const domainOptions = categories
@@ -78,6 +80,14 @@ export default function JobGeneralFields({ form, categories }) {
               options={INCOME_LABEL_OPTIONS}
             />
           </Form.Item>
+          <Form.Item name="currency" noStyle>
+            <Select
+              aria-label="Đơn vị tiền tệ"
+              className="w-[112px]"
+              size="small"
+              options={SALARY_CURRENCY_OPTIONS}
+            />
+          </Form.Item>
           <Checkbox
             checked={salaryType === 'negotiable'}
             onChange={(event) => {
@@ -99,7 +109,7 @@ export default function JobGeneralFields({ form, categories }) {
                 label={salaryType === 'fixed' ? 'Mức thu nhập' : incomeDisplayType === 'income_at_kpi' ? 'Từ mức thu nhập' : 'Từ mức'}
                 rules={salaryType === 'range' ? [] : [{ required: true, message: 'Nhập mức lương.' }]}
               >
-                <InputNumber min={0} step={1_000_000} className="!w-[210px]" suffix="VND" formatter={formatAmount} parser={parseAmount} placeholder="10.000.000" />
+                <InputNumber min={0} step={currency === 'VND' ? 1_000_000 : 100} className="!w-[210px]" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '10.000.000' : '1,000'} />
               </Form.Item>
             )}
             {showsSalaryMaximum && (
@@ -121,7 +131,7 @@ export default function JobGeneralFields({ form, categories }) {
                   }),
                 ]}
               >
-                <InputNumber min={0} step={1_000_000} className="!w-[210px]" suffix="VND" formatter={formatAmount} parser={parseAmount} placeholder="30.000.000" />
+                <InputNumber min={0} step={currency === 'VND' ? 1_000_000 : 100} className="!w-[210px]" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '30.000.000' : '2,000'} />
               </Form.Item>
             )}
           </div>
