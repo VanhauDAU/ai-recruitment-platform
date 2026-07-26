@@ -11,6 +11,16 @@ def _accessible(request):
     )
 
 
+def _resolve_permission_key(request, view):
+    action = getattr(view, 'action', None)
+    if action:
+        return 'actions', action
+    method = request.method.upper()
+    if method in {'HEAD', 'OPTIONS'}:
+        method = 'GET'
+    return 'methods', method
+
+
 class IsCandidate(BasePermission):
     def has_permission(self, request, view):
         return _accessible(request) and request.user.is_candidate
@@ -52,13 +62,17 @@ class HasAdminPermission(IsAdmin):
         if not isinstance(required, dict):
             return required
 
-        action = getattr(view, 'action', None)
-        if action:
-            return required.get(action)
-        method = request.method.upper()
-        if method in {'HEAD', 'OPTIONS'}:
-            method = 'GET'
-        return required.get(method)
+        _, key = _resolve_permission_key(request, view)
+        return required.get(key)
+
+    def _requires_superuser(self, request, view):
+        requirement = getattr(view, 'require_superuser', False)
+        if isinstance(requirement, bool):
+            return requirement
+        if not isinstance(requirement, dict):
+            return False
+        namespace, key = _resolve_permission_key(request, view)
+        return key in set(requirement.get(namespace, ()))
 
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
@@ -67,7 +81,7 @@ class HasAdminPermission(IsAdmin):
         required = self._required_permissions(request, view)
         if not required:
             raise AdminPermissionDenied()
-        if getattr(view, 'require_superuser', False) and not request.user.is_superuser:
+        if self._requires_superuser(request, view) and not request.user.is_superuser:
             raise AdminPermissionDenied()
         require_admin_permission(
             request.user,

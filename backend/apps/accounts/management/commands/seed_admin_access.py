@@ -1,107 +1,19 @@
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.accounts.constants import ADMIN_DEPARTMENTS
 from apps.accounts.models import AdminPermission, AdminRole, Department, User
-from apps.accounts.services import assign_membership, set_role_permissions
+from apps.accounts.services import (
+    assign_membership,
+    set_role_permissions,
+    update_system_department_metadata,
+    update_system_role_metadata,
+)
 
 from ._admin_access import cli_actor_identifier, resolve_actor
 
-DEPARTMENTS = (
-    {
-        'code': 'content-cv',
-        'name': 'Nội dung & CV',
-        'description': 'Quản lý nội dung và catalogue mẫu CV.',
-        'roles': (
-            {
-                'code': 'staff',
-                'name': 'Nhân viên',
-                'rank': 10,
-                'permissions': (
-                    'dashboard.view',
-                    'cv_template.view',
-                    'cv_template.create',
-                    'cv_template.edit',
-                ),
-            },
-            {
-                'code': 'manager',
-                'name': 'Trưởng phòng',
-                'rank': 100,
-                'permissions': (
-                    'dashboard.view',
-                    'cv_template.view',
-                    'cv_template.create',
-                    'cv_template.edit',
-                    'cv_template.publish',
-                    'cv_template.archive',
-                    'cv_template.delete',
-                ),
-            },
-        ),
-    },
-    {
-        'code': 'job-moderation',
-        'name': 'Kiểm duyệt tin tuyển dụng',
-        'description': 'Kiểm tra và quyết định tin tuyển dụng được phép hiển thị.',
-        'roles': (
-            {
-                'code': 'staff',
-                'name': 'Nhân viên',
-                'rank': 10,
-                'permissions': (
-                    'dashboard.view',
-                    'job_moderation.view',
-                    'job_moderation.approve',
-                    'job_moderation.reject',
-                ),
-            },
-            {
-                'code': 'manager',
-                'name': 'Trưởng phòng',
-                'rank': 100,
-                'permissions': (
-                    'dashboard.view',
-                    'job_moderation.view',
-                    'job_moderation.approve',
-                    'job_moderation.reject',
-                ),
-            },
-        ),
-    },
-    {
-        'code': 'employer-services',
-        'name': 'Dịch vụ nhà tuyển dụng',
-        'description': 'Quản lý dịch vụ và lead tư vấn của nhà tuyển dụng.',
-        'roles': (
-            {
-                'code': 'staff',
-                'name': 'Nhân viên',
-                'rank': 10,
-                'permissions': (
-                    'dashboard.view',
-                    'service_catalog.view',
-                    'consultation_lead.view',
-                    'consultation_lead.manage',
-                ),
-            },
-            {
-                'code': 'manager',
-                'name': 'Trưởng phòng',
-                'rank': 100,
-                'permissions': (
-                    'dashboard.view',
-                    'service_catalog.view',
-                    'service_catalog.manage',
-                    'consultation_lead.view',
-                    'consultation_lead.manage',
-                ),
-            },
-        ),
-    },
-)
-
 
 class Command(BaseCommand):
-    help = 'Seed hội tụ phòng ban/chức danh G1 và tuỳ chọn gán admin hiện có.'
+    help = 'Seed hội tụ phòng ban/chức danh hệ thống và tuỳ chọn gán admin hiện có.'
 
     def add_arguments(self, parser):
         parser.add_argument('--actor-email')
@@ -124,25 +36,52 @@ class Command(BaseCommand):
         source = 'management_command' if actor else 'seed'
         actor_identifier = '' if actor else cli_actor_identifier()
 
-        for definition in DEPARTMENTS:
-            department, _ = Department.objects.update_or_create(
+        for definition in ADMIN_DEPARTMENTS:
+            department, created = Department.objects.get_or_create(
                 code=definition['code'],
                 defaults={
                     'name': definition['name'],
                     'description': definition['description'],
-                    'is_active': True,
+                    'is_system_managed': True,
                 },
             )
+            if not created and department.is_system_managed:
+                department = update_system_department_metadata(
+                    department,
+                    name=definition['name'],
+                    description=definition['description'],
+                    actor=actor,
+                    source=source,
+                    actor_identifier=actor_identifier,
+                )
+            elif not created:
+                self.stdout.write(
+                    f'Phòng ban {department.code} đã tuỳ chỉnh qua UI — bỏ qua metadata.'
+                )
             for role_definition in definition['roles']:
-                role, _ = AdminRole.objects.update_or_create(
+                role, role_created = AdminRole.objects.get_or_create(
                     department=department,
                     code=role_definition['code'],
                     defaults={
                         'name': role_definition['name'],
+                        'description': role_definition.get('description', ''),
                         'rank': role_definition['rank'],
-                        'is_active': True,
+                        'is_system_managed': True,
                     },
                 )
+                if not role_created and role.is_system_managed:
+                    role = update_system_role_metadata(
+                        role,
+                        name=role_definition['name'],
+                        description=role_definition.get('description', ''),
+                        rank=role_definition['rank'],
+                        actor=actor,
+                        source=source,
+                        actor_identifier=actor_identifier,
+                    )
+                elif not role_created:
+                    self.stdout.write(f'Role {role} đã tuỳ chỉnh qua UI — bỏ qua.')
+                    continue
                 desired = set(role_definition['permissions']) & active_codes
                 set_role_permissions(
                     role,
@@ -169,4 +108,4 @@ class Command(BaseCommand):
                 actor=actor,
                 source='management_command',
             )
-        self.stdout.write(self.style.SUCCESS('Đã đồng bộ ma trận phân quyền admin G1.'))
+        self.stdout.write(self.style.SUCCESS('Đã đồng bộ ma trận phân quyền admin hệ thống.'))

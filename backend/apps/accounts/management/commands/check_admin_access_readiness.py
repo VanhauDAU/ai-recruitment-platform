@@ -23,6 +23,12 @@ class Command(BaseCommand):
             effective = valid.filter(role__permissions__is_active=True).exists()
             if not effective:
                 errors.append(f'{user.email}: membership không sinh permission hiệu dụng.')
+            if memberships.exists() and not user.two_factor_enabled:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'WARNING: {user.email} có membership hiệu lực nhưng chưa bật MFA.'
+                    )
+                )
 
         invalid_primaries = AdminMembership.objects.filter(
             is_active=True,

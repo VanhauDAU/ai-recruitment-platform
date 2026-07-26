@@ -1,4 +1,4 @@
-# Phân quyền admin theo phòng ban — RBAC Giai đoạn 1
+# Phân quyền admin theo phòng ban — RBAC Giai đoạn 1–2
 
 ## Mục tiêu và ranh giới
 
@@ -16,16 +16,16 @@ thoát vận hành và bypass mọi permission. `rank` chỉ phục vụ hiển 
 membership chính; không cấp quyền.
 
 Frontend lọc menu và `PermissionGuard` chỉ cải thiện trải nghiệm. Ranh giới bảo
-mật là `HasAdminPermission` tại backend. G1 mới siết site settings, catalogue
-dịch vụ/lead, catalogue CV và kiểm duyệt tin; dashboard và blog được chuyển ở G2.
+mật là `HasAdminPermission` tại backend. G1 siết site settings, catalogue
+dịch vụ/lead, catalogue CV và kiểm duyệt tin; dashboard và blog thuộc G3.
 
 ## Bảng dữ liệu
 
 | Bảng | Trách nhiệm | Quy tắc quan trọng |
 | --- | --- | --- |
 | `accounts_adminpermission` | Mirror registry permission trong code | Code bị bỏ được deprecate, không tự xoá |
-| `accounts_department` | Đơn vị tổ chức | Chỉ deactivate/reactivate, không hard-delete qua API |
-| `accounts_adminrole` | Chức danh trong một phòng ban | Unique `(department, code)`; M2M permission |
+| `accounts_department` | Đơn vị tổ chức | Chỉ deactivate/reactivate; `is_system_managed` phân biệt seed/UI |
+| `accounts_adminrole` | Chức danh trong một phòng ban | Unique `(department, code)`; M2M permission; `is_system_managed` |
 | `accounts_adminmembership` | Lịch sử gán chức danh cho admin | Partial unique cho active `(user, role)` và active primary |
 | `accounts_adminaccessauditlog` | Nhật ký thay đổi quyền | Luôn ghi cùng transaction; chỉ lưu public ID |
 
@@ -68,8 +68,10 @@ CI chạy `scripts/check_admin_permissions_sync.sh` để ngăn hai phía lệch
 
 `site_setting.*` không thuộc phòng ban nào và chỉ superuser dùng ở G1. `blog.*`
 có trong registry nhưng chưa seed vì blog vẫn dùng Django Groups. Seed là hội
-tụ: chạy lại sẽ sửa rank/trạng thái và exact-sync tập permission active, đồng
-thời giữ grant deprecated để rollback an toàn.
+tụ nhưng không sở hữu `is_active`: chạy lại chỉ đồng bộ metadata và permission
+của bản ghi `is_system_managed=True`, đồng thời giữ grant deprecated để rollback
+an toàn. Bản ghi đã tuỳ chỉnh qua UI được bỏ qua; department và role có quyền sở
+hữu độc lập.
 
 ```bash
 python manage.py seed_admin_access --actor-email root@example.com \
@@ -106,6 +108,28 @@ Quy trình chi tiết: [runbook RBAC admin](../06-deployment/admin-rbac-g1-runbo
 
 ## G2
 
-G2 bổ sung UI/API CRUD phòng ban/chức danh/nhân viên, audit viewer, quyền tạm
-thời, siết dashboard, hợp nhất Django Groups của blog và định nghĩa riêng quy
-tắc “ai quản lý được ai”.
+Migration `accounts.0014` thêm và backfill `is_system_managed` cho ba department
+và sáu role mặc định. G2 mở `/api/admin/` cùng trang
+`/admin/app/access-control` để CRUD mềm phòng ban/chức danh, sửa permission và
+quản lý membership. Không có DELETE; trạng thái vận hành đi qua
+`activate/deactivate`.
+
+Mọi ghi, impact preview và dữ liệu nhân sự là **superuser-only**. Admin có
+`admin_access.view` chỉ đọc cấu trúc tổ chức. Ba permission `manage_*` vẫn được
+khai để G3 có thể thêm mô hình phạm vi quản lý mà không đổi contract. Schema
+hiện chưa biểu diễn actor được quản department nào, nên delegation ngay ở G2
+cho phép tự gán role mạnh hoặc khoá cả phòng ban.
+
+Các action nguy hiểm bắt buộc lấy impact preview. Token ký có hạn 10 phút, chứa
+`revision + operation + resource_key + payload_hash`; lúc xác nhận server khoá
+toàn bộ resource phụ thuộc bằng `select_for_update`, đọc lại revision sau lock,
+tính lại trạng thái rồi mới ghi và audit trong cùng transaction. Token cũ/sai
+trả `409 admin_resource_changed`.
+
+`restore-system-default` chỉ đồng bộ field do seed sở hữu và không mở lại
+department/role đang bị khoá. Sửa metadata/permission thực sự lật cờ
+`is_system_managed=False`; payload no-op không audit, không bust cache và giữ cờ.
+
+**Ngoài G2, chuyển sang G3:** delegation/scope và luật tự-bảo-vệ, audit viewer,
+quyền tạm thời, siết dashboard, hợp nhất Django Groups của blog và luồng mời
+admin qua email.

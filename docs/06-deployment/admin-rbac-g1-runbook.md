@@ -61,7 +61,7 @@ Deploy code `HasAdminPermission`, rồi smoke test không phá dữ liệu:
 
 Các endpoint được siết: site locales/settings/upload, service category/package,
 consultation lead, toàn bộ admin CV catalogue và job moderation. Dashboard vẫn
-`IsAdmin`; blog vẫn dùng legacy `CanEditBlog` + Django Groups cho tới G2.
+`IsAdmin`; blog vẫn dùng legacy `CanEditBlog` + Django Groups cho tới G3.
 
 ## Rollback
 
@@ -71,3 +71,39 @@ code trở lại rồi chạy `sync_admin_permissions` sẽ phục hồi grant.
 
 Các thử nghiệm phá trạng thái (deactivate role/department, sửa registry, purge)
 chỉ chạy trên staging, không chạy production.
+
+## G2 — quản trị qua UI/API
+
+Sau khi deploy migration `accounts.0014`:
+
+```bash
+python manage.py migrate
+python manage.py sync_admin_permissions --actor-email root@example.com
+python manage.py seed_admin_access --actor-email root@example.com
+python manage.py check_admin_access_readiness
+```
+
+`is_system_managed=True` tiếp tục được seed đồng bộ metadata/permission. Bản ghi
+đã tuỳ chỉnh qua UI (`False`) không bị seed ghi đè; muốn quay lại dùng action
+`restore-system-default`, không sửa cờ hoặc M2M trực tiếp trong database. Khoá/mở
+là trạng thái vận hành, seed và restore không tự mở lại.
+
+### Tạo admin thường
+
+Không dùng `createsuperuser` cho nhân viên vì superuser bypass toàn bộ RBAC:
+
+```bash
+python manage.py create_admin_user staff@example.com --actor-email root@example.com
+python manage.py bootstrap_admin_mfa staff@example.com \
+  --mark-email-verified --actor-email root@example.com
+```
+
+Sau đó superuser vào `/admin/app/access-control`, tab **Nhân viên**, để gán
+department/role. Readiness gate cảnh báo admin có membership nhưng chưa bật MFA.
+
+### Maintenance window
+
+`seed_admin_access` và `purge_deprecated_admin_permissions` chỉ chạy trong
+maintenance/deployment window, không đồng thời với thao tác RBAC trên UI.
+`purge_deprecated_admin_permissions` không ghi audit revision nên vi phạm quy
+tắc này có thể làm impact preview không phản ánh thay đổi vừa purge.

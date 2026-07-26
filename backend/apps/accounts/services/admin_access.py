@@ -1,17 +1,28 @@
 """Transactional administrator-access use cases."""
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.db.models import Max
 from django.utils import timezone
 
 from ..admin_access_cache import bust_admin_permission_cache
-from ..constants import ADMIN_PERMISSIONS
+from ..admin_access_rules import (
+    StaleImpactToken,
+    decode_impact_token,
+    select_primary_successor,
+)
+from ..constants import (
+    ADMIN_PERMISSIONS,
+    system_department_definition,
+    system_role_definition,
+)
 from ..models import (
     AdminAccessAuditLog,
     AdminMembership,
     AdminPermission,
     AdminRole,
     Department,
+    User,
 )
 
 
@@ -84,7 +95,7 @@ def _valid_memberships(user):
 def _reevaluate_primary(user):
     active_memberships = list(_valid_memberships(user))
     current = next((item for item in active_memberships if item.is_primary), None)
-    chosen = current or (active_memberships[0] if active_memberships else None)
+    chosen = current or select_primary_successor(active_memberships)
 
     AdminMembership.objects.filter(user=user, is_primary=True).exclude(
         pk=chosen.pk if chosen else None
@@ -164,6 +175,12 @@ def assign_membership(
         raise ValidationError('Không thể gán chức danh hoặc phòng ban đang bị khoá.')
 
     with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
+        role = AdminRole.objects.select_for_update().select_related('department').get(pk=role.pk)
+        if not role.is_active or not role.department.is_active:
+            raise ValidationError('Không thể gán chức danh hoặc phòng ban đang bị khoá.')
+        if not role.permissions.filter(is_active=True).exists():
+            raise ValidationError('Không thể gán nhân viên vào chức danh chưa có quyền hiệu lực.')
         locked = list(AdminMembership.objects.select_for_update().filter(user=user).order_by('id'))
         if any(item.is_active and item.role_id == role.pk for item in locked):
             raise ValidationError('Tài khoản đã có chức danh này.')
@@ -299,6 +316,7 @@ def set_role_permissions(
     actor,
     source='api',
     preserve_deprecated=True,
+    mark_customized=False,
     actor_identifier='',
 ):
     desired_codes = set(desired_active_codes)
@@ -326,8 +344,20 @@ def set_role_permissions(
         final = {**desired_permissions, **deprecated}
         if set(before) == set(final):
             return role
+        if not desired_codes and role.memberships.filter(is_active=True).exists():
+            raise ValidationError(
+                {
+                    'permission_codes': (
+                        'Không thể xoá toàn bộ quyền của chức danh đang có nhân viên hoạt động.'
+                    )
+                }
+            )
 
         affected_user_ids = users_affected_by_role(role)
+        before_system_managed = role.is_system_managed
+        if mark_customized and role.is_system_managed:
+            role.is_system_managed = False
+            role.save(update_fields=['is_system_managed', 'updated_at'])
         role.permissions.set(final.values())
         added = sorted(set(final) - set(before))
         removed = sorted(set(before) - set(final))
@@ -340,8 +370,14 @@ def set_role_permissions(
             target_public_id=role.public_id,
             payload={
                 'role_public_id': role.public_id,
-                'before': {'permission_codes': sorted(before)},
-                'after': {'permission_codes': sorted(final)},
+                'before': {
+                    'permission_codes': sorted(before),
+                    'is_system_managed': before_system_managed,
+                },
+                'after': {
+                    'permission_codes': sorted(final),
+                    'is_system_managed': role.is_system_managed,
+                },
                 'permission_codes_added': added,
                 'permission_codes_removed': removed,
             },
@@ -360,11 +396,18 @@ def create_department(
     actor_identifier='',
 ):
     with transaction.atomic():
-        department = Department.objects.create(
-            code=code,
-            name=name,
-            description=description,
-        )
+        if Department.objects.filter(code=code).exists():
+            raise ValidationError({'code': 'Mã phòng ban đã tồn tại.'})
+        try:
+            with transaction.atomic():
+                department = Department.objects.create(
+                    code=code,
+                    name=name,
+                    description=description,
+                    is_system_managed=False,
+                )
+        except IntegrityError as error:
+            raise ValidationError({'code': 'Mã phòng ban đã tồn tại.'}) from error
         _audit(
             actor=actor,
             source=source,
@@ -375,6 +418,205 @@ def create_department(
             payload={'code': code, 'name': name},
         )
     return department
+
+
+def update_department(
+    department,
+    *,
+    name,
+    description,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    with transaction.atomic():
+        department = Department.objects.select_for_update().get(pk=department.pk)
+        before = {
+            'name': department.name,
+            'description': department.description,
+            'is_system_managed': department.is_system_managed,
+        }
+        if department.name == name and department.description == description:
+            return department
+        department.name = name
+        department.description = description
+        department.is_system_managed = False
+        department.save(update_fields=['name', 'description', 'is_system_managed', 'updated_at'])
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='update_department',
+            target_type='department',
+            target_public_id=department.public_id,
+            payload={
+                'before': before,
+                'after': {
+                    'name': department.name,
+                    'description': department.description,
+                    'is_system_managed': department.is_system_managed,
+                },
+            },
+        )
+    return department
+
+
+def create_role(
+    department,
+    *,
+    code,
+    name,
+    description='',
+    rank=0,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    with transaction.atomic():
+        department = Department.objects.select_for_update().get(pk=department.pk)
+        if AdminRole.objects.filter(department=department, code=code).exists():
+            raise ValidationError({'code': 'Mã chức danh đã tồn tại trong phòng ban.'})
+        try:
+            with transaction.atomic():
+                role = AdminRole.objects.create(
+                    department=department,
+                    code=code,
+                    name=name,
+                    description=description,
+                    rank=rank,
+                    is_system_managed=False,
+                )
+        except IntegrityError as error:
+            raise ValidationError({'code': 'Mã chức danh đã tồn tại trong phòng ban.'}) from error
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='create_role',
+            target_type='role',
+            target_public_id=role.public_id,
+            payload={
+                'department': department.code,
+                'code': role.code,
+                'name': role.name,
+                'rank': role.rank,
+            },
+        )
+    return role
+
+
+def update_role(
+    role,
+    *,
+    name,
+    description,
+    rank,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    with transaction.atomic():
+        role = AdminRole.objects.select_for_update().get(pk=role.pk)
+        before = {
+            'name': role.name,
+            'description': role.description,
+            'rank': role.rank,
+            'is_system_managed': role.is_system_managed,
+        }
+        if role.name == name and role.description == description and role.rank == rank:
+            return role
+        role.name = name
+        role.description = description
+        role.rank = rank
+        role.is_system_managed = False
+        role.save(
+            update_fields=[
+                'name',
+                'description',
+                'rank',
+                'is_system_managed',
+                'updated_at',
+            ]
+        )
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='update_role',
+            target_type='role',
+            target_public_id=role.public_id,
+            payload={
+                'before': before,
+                'after': {
+                    'name': role.name,
+                    'description': role.description,
+                    'rank': role.rank,
+                    'is_system_managed': role.is_system_managed,
+                },
+            },
+        )
+    return role
+
+
+def update_system_department_metadata(
+    department,
+    *,
+    name,
+    description,
+    actor=None,
+    source='seed',
+    actor_identifier='',
+):
+    with transaction.atomic():
+        department = Department.objects.select_for_update().get(pk=department.pk)
+        before = {'name': department.name, 'description': department.description}
+        if before == {'name': name, 'description': description}:
+            return department
+        department.name = name
+        department.description = description
+        department.save(update_fields=['name', 'description', 'updated_at'])
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='sync_system_department_metadata',
+            target_type='department',
+            target_public_id=department.public_id,
+            payload={'before': before, 'after': {'name': name, 'description': description}},
+        )
+    return department
+
+
+def update_system_role_metadata(
+    role,
+    *,
+    name,
+    description,
+    rank,
+    actor=None,
+    source='seed',
+    actor_identifier='',
+):
+    with transaction.atomic():
+        role = AdminRole.objects.select_for_update().get(pk=role.pk)
+        before = {'name': role.name, 'description': role.description, 'rank': role.rank}
+        after = {'name': name, 'description': description, 'rank': rank}
+        if before == after:
+            return role
+        role.name = name
+        role.description = description
+        role.rank = rank
+        role.save(update_fields=['name', 'description', 'rank', 'updated_at'])
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='sync_system_role_metadata',
+            target_type='role',
+            target_public_id=role.public_id,
+            payload={'before': before, 'after': after},
+        )
+    return role
 
 
 def _set_active(
@@ -396,14 +638,8 @@ def _set_active(
         target.save(update_fields=['is_active', 'updated_at'])
 
         reassigned_user_public_ids = []
-        users = (
-            AdminMembership.objects.filter(user_id__in=affected_user_ids)
-            .select_related('user')
-            .values_list('user_id', 'user__public_id')
-            .distinct()
-        )
-        for user_id, public_id in users:
-            user = AdminMembership.objects.filter(user_id=user_id).first().user
+        users = User.objects.filter(pk__in=affected_user_ids).only('id', 'public_id')
+        for user in users:
             before_primary = AdminMembership.objects.filter(
                 user=user, is_active=True, is_primary=True
             ).first()
@@ -411,7 +647,7 @@ def _set_active(
             if (before_primary.pk if before_primary else None) != (
                 after_primary.pk if after_primary else None
             ):
-                reassigned_user_public_ids.append(public_id)
+                reassigned_user_public_ids.append(user.public_id)
 
         _audit(
             actor=actor,
@@ -467,3 +703,402 @@ def set_department_active(
         target_type='department',
         affected_user_ids=users_affected_by_department(department),
     )
+
+
+def restore_system_department(
+    department,
+    *,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    definition = system_department_definition(department.code)
+    if definition is None:
+        raise ValidationError('Phòng ban này không có cấu hình mặc định hệ thống.')
+    with transaction.atomic():
+        department = Department.objects.select_for_update().get(pk=department.pk)
+        before = {
+            'name': department.name,
+            'description': department.description,
+            'is_system_managed': department.is_system_managed,
+        }
+        after = {
+            'name': definition['name'],
+            'description': definition['description'],
+            'is_system_managed': True,
+        }
+        if before == after:
+            return department
+        department.name = definition['name']
+        department.description = definition['description']
+        department.is_system_managed = True
+        department.save(update_fields=['name', 'description', 'is_system_managed', 'updated_at'])
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='restore_system_department',
+            target_type='department',
+            target_public_id=department.public_id,
+            payload={'before': before, 'after': after},
+        )
+    return department
+
+
+def restore_system_role(
+    role,
+    *,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    definition = system_role_definition(role.department.code, role.code)
+    if definition is None:
+        raise ValidationError('Chức danh này không có cấu hình mặc định hệ thống.')
+    with transaction.atomic():
+        role = AdminRole.objects.select_for_update().select_related('department').get(pk=role.pk)
+        before_permissions = {item.code: item for item in role.permissions.all()}
+        desired_codes = set(definition['permissions'])
+        desired = {
+            item.code: item
+            for item in AdminPermission.objects.filter(
+                code__in=desired_codes,
+                is_active=True,
+            )
+        }
+        deprecated = {code: item for code, item in before_permissions.items() if not item.is_active}
+        final_permissions = {**desired, **deprecated}
+        before = {
+            'name': role.name,
+            'description': role.description,
+            'rank': role.rank,
+            'permission_codes': sorted(before_permissions),
+            'is_system_managed': role.is_system_managed,
+        }
+        after = {
+            'name': definition['name'],
+            'description': definition.get('description', ''),
+            'rank': definition['rank'],
+            'permission_codes': sorted(final_permissions),
+            'is_system_managed': True,
+        }
+        if before == after:
+            return role
+
+        permissions_changed = set(before_permissions) != set(final_permissions)
+        affected_user_ids = users_affected_by_role(role) if permissions_changed else set()
+        role.name = definition['name']
+        role.description = definition.get('description', '')
+        role.rank = definition['rank']
+        role.is_system_managed = True
+        role.save(
+            update_fields=[
+                'name',
+                'description',
+                'rank',
+                'is_system_managed',
+                'updated_at',
+            ]
+        )
+        if permissions_changed:
+            role.permissions.set(final_permissions.values())
+        _audit(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            action='restore_system_role',
+            target_type='role',
+            target_public_id=role.public_id,
+            payload={'before': before, 'after': after},
+        )
+        if permissions_changed:
+            _schedule_cache_bust(affected_user_ids)
+    return role
+
+
+def _current_rbac_revision():
+    return AdminAccessAuditLog.objects.aggregate(value=Max('id'))['value'] or 0
+
+
+def _assert_current_revision(claims):
+    if _current_rbac_revision() != claims['revision']:
+        raise StaleImpactToken('Dữ liệu phân quyền đã thay đổi.')
+
+
+def _lock_role_dependencies(role):
+    role = AdminRole.objects.select_for_update().select_related('department').get(pk=role.pk)
+    Department.objects.select_for_update().filter(pk=role.department_id).exists()
+    through = AdminRole.permissions.through
+    list(through.objects.select_for_update().filter(adminrole_id=role.pk))
+    member_user_ids = set(
+        AdminMembership.objects.select_for_update()
+        .filter(role=role, is_active=True)
+        .values_list('user_id', flat=True)
+    )
+    if member_user_ids:
+        list(
+            AdminMembership.objects.select_for_update()
+            .filter(user_id__in=member_user_ids)
+            .order_by('id')
+        )
+    return role
+
+
+def confirm_department_status_change(
+    department,
+    is_active,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    payload = {'is_active': bool(is_active)}
+    claims = decode_impact_token(
+        impact_token,
+        operation='department.status.change',
+        resource_key=f'department:{department.public_id}',
+        normalized_payload=payload,
+    )
+    with transaction.atomic():
+        department = Department.objects.select_for_update().get(pk=department.pk)
+        role_ids = list(
+            AdminRole.objects.select_for_update()
+            .filter(department=department)
+            .values_list('id', flat=True)
+        )
+        user_ids = set(
+            AdminMembership.objects.select_for_update()
+            .filter(role_id__in=role_ids, is_active=True)
+            .values_list('user_id', flat=True)
+        )
+        if user_ids:
+            list(
+                AdminMembership.objects.select_for_update()
+                .filter(user_id__in=user_ids)
+                .order_by('id')
+            )
+        _assert_current_revision(claims)
+        return set_department_active(
+            department,
+            is_active,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+        )
+
+
+def confirm_role_status_change(
+    role,
+    is_active,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    payload = {'is_active': bool(is_active)}
+    claims = decode_impact_token(
+        impact_token,
+        operation='role.status.change',
+        resource_key=f'role:{role.public_id}',
+        normalized_payload=payload,
+    )
+    with transaction.atomic():
+        role = _lock_role_dependencies(role)
+        _assert_current_revision(claims)
+        return set_role_active(
+            role,
+            is_active,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+        )
+
+
+def confirm_role_permissions_update(
+    role,
+    permission_codes,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    codes = sorted(set(permission_codes))
+    claims = decode_impact_token(
+        impact_token,
+        operation='role.permissions.update',
+        resource_key=f'role:{role.public_id}',
+        normalized_payload={'permission_codes': codes},
+    )
+    with transaction.atomic():
+        role = _lock_role_dependencies(role)
+        _assert_current_revision(claims)
+        return set_role_permissions(
+            role,
+            codes,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+            preserve_deprecated=True,
+            mark_customized=True,
+        )
+
+
+def confirm_membership_assignment(
+    user,
+    role,
+    *,
+    primary,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    payload = {
+        'user_public_id': user.public_id,
+        'role_public_id': role.public_id,
+        'is_primary': bool(primary),
+    }
+    claims = decode_impact_token(
+        impact_token,
+        operation='membership.assign',
+        resource_key=f'membership-assignment:{user.public_id}:{role.public_id}',
+        normalized_payload=payload,
+    )
+    with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
+        role = AdminRole.objects.select_for_update().select_related('department').get(pk=role.pk)
+        Department.objects.select_for_update().filter(pk=role.department_id).exists()
+        list(
+            AdminMembership.objects.select_for_update()
+            .filter(user=user, is_active=True)
+            .order_by('id')
+        )
+        _assert_current_revision(claims)
+        return assign_membership(
+            user,
+            role,
+            actor=actor,
+            source=source,
+            primary=primary,
+            actor_identifier=actor_identifier,
+        )
+
+
+def confirm_membership_revoke(
+    membership,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    claims = decode_impact_token(
+        impact_token,
+        operation='membership.revoke',
+        resource_key=f'membership:{membership.public_id}',
+        normalized_payload={},
+    )
+    with transaction.atomic():
+        membership = (
+            AdminMembership.objects.select_for_update().select_related('user').get(pk=membership.pk)
+        )
+        User.objects.select_for_update().filter(pk=membership.user_id).exists()
+        list(
+            AdminMembership.objects.select_for_update()
+            .filter(user_id=membership.user_id, is_active=True)
+            .order_by('id')
+        )
+        _assert_current_revision(claims)
+        return revoke_membership(
+            membership,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+        )
+
+
+def confirm_membership_set_primary(
+    membership,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    claims = decode_impact_token(
+        impact_token,
+        operation='membership.set_primary',
+        resource_key=f'membership:{membership.public_id}',
+        normalized_payload={},
+    )
+    with transaction.atomic():
+        membership = (
+            AdminMembership.objects.select_for_update().select_related('user').get(pk=membership.pk)
+        )
+        user = User.objects.select_for_update().get(pk=membership.user_id)
+        list(
+            AdminMembership.objects.select_for_update()
+            .filter(user=user, is_active=True)
+            .order_by('id')
+        )
+        _assert_current_revision(claims)
+        return set_primary_membership(
+            user,
+            membership,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+        )
+
+
+def confirm_restore_system_role(
+    role,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    claims = decode_impact_token(
+        impact_token,
+        operation='role.restore',
+        resource_key=f'role:{role.public_id}',
+        normalized_payload={},
+    )
+    with transaction.atomic():
+        role = _lock_role_dependencies(role)
+        _assert_current_revision(claims)
+        return restore_system_role(
+            role,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+        )
+
+
+def confirm_restore_system_department(
+    department,
+    *,
+    impact_token,
+    actor,
+    source='api',
+    actor_identifier='',
+):
+    claims = decode_impact_token(
+        impact_token,
+        operation='department.restore',
+        resource_key=f'department:{department.public_id}',
+        normalized_payload={},
+    )
+    with transaction.atomic():
+        department = Department.objects.select_for_update().get(pk=department.pk)
+        _assert_current_revision(claims)
+        return restore_system_department(
+            department,
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier,
+        )

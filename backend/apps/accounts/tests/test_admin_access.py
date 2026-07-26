@@ -150,6 +150,7 @@ class AdminAccessTests(TestCase):
             name='Trưởng phòng',
             rank=100,
         )
+        manager.permissions.add(self.permission)
         second = self.assign(role=manager)
         revoke_membership(first, actor=self.other_admin)
         second.refresh_from_db()
@@ -279,6 +280,13 @@ class AdminAccessTests(TestCase):
             self.assertRegex(code, re.compile(r'^[a-z_]+\.[a-z_]+$'))
 
     def test_every_declared_view_permission_exists_in_the_registry(self):
+        from apps.accounts.api.views.admin_access import (
+            AdminDepartmentViewSet,
+            AdminMembershipViewSet,
+            AdminPermissionViewSet,
+            AdminRoleViewSet,
+            AdminStaffViewSet,
+        )
         from apps.cv_templates.api.views import admin as cv_admin
         from apps.jobs.api.views.moderation import (
             AdminJobModerationListView,
@@ -304,6 +312,11 @@ class AdminAccessTests(TestCase):
             site_settings.AdminSettingUploadView,
             AdminJobModerationListView,
             AdminJobReviewView,
+            AdminDepartmentViewSet,
+            AdminRoleViewSet,
+            AdminPermissionViewSet,
+            AdminMembershipViewSet,
+            AdminStaffViewSet,
         ]
         declared = set()
         for view_class in view_classes:

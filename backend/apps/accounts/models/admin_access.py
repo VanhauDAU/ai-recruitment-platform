@@ -27,6 +27,7 @@ class Department(models.Model):
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    is_system_managed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -60,6 +61,7 @@ class AdminRole(models.Model):
     description = models.TextField(blank=True)
     rank = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    is_system_managed = models.BooleanField(default=False)
     permissions = models.ManyToManyField(AdminPermission, related_name='roles', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -8,6 +8,29 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-26
 
+#### Added — Quản trị phân quyền (RBAC G2)
+
+- Thêm migration `accounts.0014`, cờ `is_system_managed` cho department/role,
+  ma trận seed code-owned và command tạo admin thường không bypass RBAC.
+- Mở API `/api/admin/` cho phòng ban, chức danh, permission runtime, membership
+  và staff; có impact preview, restore mặc định, audit/cache và primary
+  deterministic.
+- Thêm trang `/admin/app/access-control` ba tab, PermissionPicker giữ grant
+  deprecated, badge MFA, trạng thái loading/empty/error và impact modal cho mọi
+  thao tác nguy hiểm.
+
+#### Security — RBAC admin G2
+
+- Mọi ghi, mọi impact preview và dữ liệu nhân sự là superuser-only; admin
+  `admin_access.view` chỉ được đọc cấu trúc tổ chức.
+- Impact token ký ràng buộc revision/operation/resource/payload, hết hạn 10
+  phút; xác nhận khoá row phụ thuộc và trả `409 admin_resource_changed` khi
+  preview stale.
+- Chặn gán người vào role không có permission active và chặn xoá sạch quyền của
+  role còn membership hoạt động; code trùng được map ổn định về 400.
+- Quality gate cuối: 417 backend test (85,54% coverage), 416 frontend test,
+  architecture/import contract sạch, build trong bundle budget và 81 smoke E2E.
+
 #### Added — RBAC admin G1.1
 
 - Thêm registry permission code-owned, phòng ban, chức danh, membership có lịch
