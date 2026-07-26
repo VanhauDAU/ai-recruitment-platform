@@ -10,6 +10,9 @@ describe('ADMIN_ROUTES contract', () => {
     const codes = new Set(adminPermissionCatalog.map((permission) => permission.code))
     ADMIN_ROUTES.forEach((route) => {
       if (route.permission) expect(codes.has(route.permission)).toBe(true)
+      route.permissionsAny?.forEach((permission) => {
+        expect(codes.has(permission)).toBe(true)
+      })
     })
   })
 

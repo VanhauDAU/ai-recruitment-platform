@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ContactsOutlined } from '@ant-design/icons'
 import { Button, Select, Table, Tag } from 'antd'
 import {
   consultationLeadKeys,
@@ -8,7 +7,7 @@ import {
   updateAdminConsultationLead,
 } from '@/entities/consultation-lead'
 import { message } from '@/shared/lib/toast'
-import { AdminPageHeader, AdminPanel } from '@/widgets/admin-workspace'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 const PAGE_SIZE = 20
 
@@ -65,12 +64,6 @@ export default function AdminConsultationLeads() {
 
   return (
     <div className="space-y-5">
-      <AdminPageHeader
-        eyebrow="Chăm sóc khách hàng"
-        title="Yêu cầu tư vấn"
-        description="Theo dõi và xử lý lead gửi từ các trang marketing dành cho nhà tuyển dụng."
-        icon={<ContactsOutlined />}
-      />
       <AdminPanel
         title="Danh sách khách hàng"
         description={`${total.toLocaleString('vi-VN')} yêu cầu phù hợp với bộ lọc hiện tại`}

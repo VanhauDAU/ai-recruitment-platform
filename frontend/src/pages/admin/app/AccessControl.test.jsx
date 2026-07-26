@@ -161,10 +161,9 @@ describe('AccessControl', () => {
 
     expect(await screen.findByText('Nguyễn Văn A')).toBeInTheDocument()
     expect(screen.getByText('Chưa bật MFA')).toBeInTheDocument()
-    expect(screen.getByText('Nhân viên & chức danh')).toBeInTheDocument()
-    expect(screen.getByText('Mỗi nhân viên chỉ có một chức danh đang hiệu lực.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Gán chức danh' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Đổi chức danh' })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Tìm nhân viên hoặc chức danh')).toBeInTheDocument()
+    expect(screen.getByLabelText('Gán chức danh')).toBeInTheDocument()
+    expect(screen.getByLabelText('Đổi chức danh của Nguyễn Văn A')).toBeInTheDocument()
   })
 
   it('derives a department code from its name instead of asking an admin to enter one', async () => {
@@ -292,7 +291,7 @@ describe('AccessControl', () => {
   it('opens the employee detail drawer from the personnel table', async () => {
     renderPage(true)
     fireEvent.click(await screen.findByRole('tab', { name: 'Nhân viên' }))
-    fireEvent.click(await screen.findByRole('button', { name: /Xem chi tiết Nguyễn Văn A/ }))
+    fireEvent.click(await screen.findByLabelText('Xem chi tiết Nguyễn Văn A'))
 
     expect(await screen.findByText('Chi tiết nhân viên')).toBeInTheDocument()
     expect(screen.getByText('Người cấp')).toBeInTheDocument()

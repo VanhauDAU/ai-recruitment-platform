@@ -283,7 +283,7 @@ class AdminAccessTests(TestCase):
 
     def test_registry_codes_follow_the_stable_format(self):
         for code in ADMIN_PERMISSION_CODES:
-            self.assertRegex(code, re.compile(r'^[a-z_]+\.[a-z_]+$'))
+            self.assertRegex(code, re.compile(r'^[a-z_]+(?:\.[a-z_]+)+$'))
 
     def test_every_declared_view_permission_exists_in_the_registry(self):
         from apps.accounts.api.views.admin_access import (

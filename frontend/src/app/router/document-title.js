@@ -58,7 +58,11 @@ const EXACT_EMPLOYER_TITLES = new Map([
 
 const EXACT_ADMIN_TITLES = new Map([
   [adminPath('/login'), 'Đăng nhập quản trị'],
-  ...ADMIN_ROUTES.map((route) => [adminPath(route.segment), route.title]),
+  [adminPath('/invitation'), 'Hoàn tất tài khoản quản trị'],
+  [adminPath('/reset-password'), 'Đặt lại mật khẩu quản trị'],
+  ...ADMIN_ROUTES
+    .filter((route) => !route.segment.includes(':'))
+    .map((route) => [adminPath(route.segment), route.title]),
 ])
 
 function normalizePath(pathname) {
@@ -112,7 +116,16 @@ export function resolveEmployerRouteTitle(pathname) {
 }
 
 function adminTitle(pathname) {
-  return EXACT_ADMIN_TITLES.get(pathname) || 'Trang không tồn tại'
+  const exact = EXACT_ADMIN_TITLES.get(pathname)
+  if (exact) return exact
+
+  const accountDetailPrefix = `${adminPath('/accounts/')}`
+  const accountPublicId = pathname.slice(accountDetailPrefix.length)
+  if (pathname.startsWith(accountDetailPrefix) && accountPublicId && !accountPublicId.includes('/')) {
+    return 'Chi tiết tài khoản'
+  }
+
+  return 'Trang không tồn tại'
 }
 
 export function resolveRouteTitle(pathname) {

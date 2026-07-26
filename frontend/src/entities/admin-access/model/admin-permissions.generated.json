@@ -1,5 +1,40 @@
 [
   {
+    "code": "account.admin.invite",
+    "module": "account",
+    "label": "Mời tài khoản quản trị"
+  },
+  {
+    "code": "account.admin.manage",
+    "module": "account",
+    "label": "Quản lý tài khoản quản trị"
+  },
+  {
+    "code": "account.admin.view",
+    "module": "account",
+    "label": "Xem tài khoản quản trị"
+  },
+  {
+    "code": "account.profile.manage",
+    "module": "account",
+    "label": "Sửa thông tin tài khoản"
+  },
+  {
+    "code": "account.security.manage",
+    "module": "account",
+    "label": "Hỗ trợ bảo mật tài khoản"
+  },
+  {
+    "code": "account.status.manage",
+    "module": "account",
+    "label": "Quản lý trạng thái tài khoản"
+  },
+  {
+    "code": "account.view",
+    "module": "account",
+    "label": "Xem tài khoản người dùng"
+  },
+  {
     "code": "admin_access.manage_department",
     "module": "admin_access",
     "label": "Quản lý phòng ban"

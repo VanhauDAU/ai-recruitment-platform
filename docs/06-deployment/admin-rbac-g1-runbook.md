@@ -15,7 +15,7 @@ python manage.py seed_admin_access --actor-email root@example.com \
   --assign moderation@example.com:job-moderation:staff
 ```
 
-Superuser mới tạo cần bootstrap MFA:
+Tùy chọn, khuyến nghị bật MFA Email cho superuser mới tạo:
 
 ```bash
 python manage.py createsuperuser

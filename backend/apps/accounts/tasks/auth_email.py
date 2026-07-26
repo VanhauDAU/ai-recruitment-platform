@@ -9,7 +9,13 @@ from django.db.models import Q
 from django.utils import timezone
 
 from ..models import AuthEmailJob
-from ..services import email_verification, password_reset, two_factor, welcome
+from ..services import (
+    admin_invitation_mail,
+    email_verification,
+    password_reset,
+    two_factor,
+    welcome,
+)
 
 logger = logging.getLogger(__name__)
 MAX_DELIVERY_ATTEMPTS = 4
@@ -66,6 +72,12 @@ def _send(job):
             job.user,
             job.context.get('purpose', two_factor.PURPOSE_LOGIN),
             target=job.context.get('target'),
+        )
+        return
+    if job.kind == AuthEmailJob.Kind.ADMIN_INVITATION:
+        admin_invitation_mail.send_admin_invitation_email(
+            job.context.get('invitation_public_id', ''),
+            job.context.get('token_version', 0),
         )
         return
     raise ValueError(f'Unsupported authentication email kind: {job.kind}')

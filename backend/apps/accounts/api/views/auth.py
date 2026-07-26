@@ -107,14 +107,6 @@ class LoginView(APIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.user
-        if user.is_admin_role and not user.two_factor_enabled:
-            return Response(
-                {
-                    'detail': 'Tài khoản quản trị bắt buộc bật MFA trước khi đăng nhập workspace.',
-                    'code': 'admin_mfa_required',
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         methods = two_factor.enabled_methods(user)
         if user.two_factor_enabled:
             challenge = two_factor.start_login_challenge(user, serializer.portal)

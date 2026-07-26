@@ -414,6 +414,40 @@ class SessionManagementTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + rotated.data['access'])
         self.assertTrue(self.client.get(reverse('auth-sessions')).data[0]['current'])
 
+    def test_relogin_from_same_device_and_ip_reuses_the_session(self):
+        request = APIRequestFactory().post(
+            '/',
+            REMOTE_ADDR='203.0.113.10',
+            HTTP_USER_AGENT='Mozilla/5.0 Chrome/138.0 macOS',
+        )
+        first = issue_tokens(self.user, request)
+        first_session = AuthSession.objects.get(user=self.user)
+
+        second = issue_tokens(self.user, request)
+
+        self.assertEqual(AuthSession.objects.filter(user=self.user).count(), 1)
+        session = AuthSession.objects.get(user=self.user)
+        self.assertEqual(session.id, first_session.id)
+        self.assertNotEqual(session.refresh_jti, first_session.refresh_jti)
+
+        set_refresh_cookie(self.client, 'main', first['refresh'])
+        self.assertEqual(refresh_session(self.client).status_code, status.HTTP_401_UNAUTHORIZED)
+        set_refresh_cookie(self.client, 'main', second['refresh'])
+        self.assertEqual(refresh_session(self.client).status_code, status.HTTP_200_OK)
+
+    def test_different_devices_on_the_same_ip_remain_separate_sessions(self):
+        chrome = APIRequestFactory().post(
+            '/', REMOTE_ADDR='203.0.113.10', HTTP_USER_AGENT='Mozilla/5.0 Chrome/138.0 macOS'
+        )
+        safari = APIRequestFactory().post(
+            '/', REMOTE_ADDR='203.0.113.10', HTTP_USER_AGENT='Mozilla/5.0 Safari/18.0 macOS'
+        )
+
+        issue_tokens(self.user, chrome)
+        issue_tokens(self.user, safari)
+
+        self.assertEqual(AuthSession.objects.filter(user=self.user).count(), 2)
+
     def test_access_token_without_sid_is_rejected(self):
         access = AccessToken.for_user(self.user)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(access))

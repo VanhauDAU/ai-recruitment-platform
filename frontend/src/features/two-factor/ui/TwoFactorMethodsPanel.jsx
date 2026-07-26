@@ -8,7 +8,7 @@ import {
   MobileOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { Button, Input, Modal, QRCode, Radio, Switch, Tooltip } from 'antd'
+import { Button, Input, Modal, Popconfirm, QRCode, Radio, Switch, Tooltip } from 'antd'
 import { useState } from 'react'
 import { useSession } from '@/entities/session'
 import { useSiteSettings } from '@/entities/site-settings'
@@ -37,16 +37,17 @@ function StatusBadge({ active, activeLabel = 'Đang hoạt động' }) {
   )
 }
 
-function MethodRow({ id, icon, title, description, checked, loading, disabled, onChange, tooltip }) {
-  const control = <Switch checked={checked} loading={loading} disabled={disabled} onChange={onChange} />
+function MethodRow({ id, icon, title, description, checked, loading, disabled, onChange, tooltip, control }) {
+  const switchControl = <Switch checked={checked} loading={loading} disabled={disabled} onChange={onChange} />
+  const methodControl = control || switchControl
   return (
-    <div data-testid={`two-factor-method-${id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 p-3 sm:gap-4 sm:p-4">
+    <div data-testid={`two-factor-method-${id}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-slate-200 p-3 max-sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-4 sm:p-4">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-600">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-800">{title}</p>
         <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
       </div>
-      {tooltip ? <Tooltip title={tooltip}>{control}</Tooltip> : control}
+      <div className="justify-self-end max-sm:col-span-2">{tooltip ? <Tooltip title={tooltip}><span>{methodControl}</span></Tooltip> : methodControl}</div>
     </div>
   )
 }
@@ -160,18 +161,8 @@ function TotpSetupModal({ setup, code, error, submitting, onCancel, onCodeChange
   )
 }
 
-/**
- * Quản lý các phương thức MFA (ứng dụng xác thực, email, mã dự phòng).
- *
- * Dùng chung cho cổng NTD và cổng quản trị. `canDisableMethods=false` phản chiếu
- * chính sách backend với tài khoản admin: bật thêm phương thức thì được, gỡ bỏ
- * phải qua quy trình quản trị — nên switch đang bật sẽ bị khoá thay vì báo lỗi
- * 403 sau khi người dùng đã thao tác.
- */
-export default function TwoFactorMethodsPanel({
-  canDisableMethods = true,
-  lockedHint = 'Không thể tắt phương thức này từ đây.',
-}) {
+/** Quản lý các phương thức MFA dùng chung cho cổng NTD và quản trị. */
+export default function TwoFactorMethodsPanel() {
   const { user, setCurrentUser } = useSession()
   const { siteName } = useSiteSettings()
   const [verification, setVerification] = useState(null)
@@ -193,7 +184,7 @@ export default function TwoFactorMethodsPanel({
     if (codes.length) setBackupCodes(codes)
   }
 
-  async function startEmailAction(action) {
+  async function startEmailAction(action, options = {}) {
     setSending(true)
     try {
       const response = action === 'email-disable'
@@ -201,7 +192,7 @@ export default function TwoFactorMethodsPanel({
         : action === 'backup'
           ? await sendBackupCodesCode()
           : await sendTwoFactorSetupCode()
-      setVerification({ action, method: action === 'backup' ? 'email' : undefined, email: response.email || user?.email || '', expiresIn: response.expires_in || 180 })
+      setVerification({ action, method: action === 'backup' ? 'email' : undefined, email: response.email || user?.email || '', expiresIn: response.expires_in || 180, ...options })
     } catch (error) {
       message.error(getApiErrorMessage(error, 'Không thể gửi mã xác minh. Vui lòng thử lại.'))
     } finally {
@@ -219,7 +210,13 @@ export default function TwoFactorMethodsPanel({
         : await confirmTwoFactorSetup(code)
     applyUserResponse(response)
     setVerification(null)
-    message.success(verification.action === 'method-disable' || verification.action === 'email-disable' ? 'Đã cập nhật phương thức xác thực.' : 'Đã cập nhật xác thực hai yếu tố.')
+    message.success(
+      verification.action === 'backup'
+        ? verification.reset ? 'Đã đặt lại mã dự phòng. Mã cũ đã bị vô hiệu hóa.' : 'Đã tạo mã dự phòng.'
+        : verification.action === 'method-disable' || verification.action === 'email-disable'
+          ? 'Đã cập nhật phương thức xác thực.'
+          : 'Đã cập nhật xác thực hai yếu tố.',
+    )
   }
 
   async function resendEmailAction() {
@@ -235,23 +232,20 @@ export default function TwoFactorMethodsPanel({
     return response
   }
 
-  function startBackupAction() {
-    if (backupEnabled) {
-      startMethodDisable('backup')
-      return
-    }
+  function startBackupCodesAction() {
+    const reset = backupEnabled
     const method = availableBackupMethods()[0]?.value
     if (method === 'email') {
-      startEmailAction('backup')
+      startEmailAction('backup', { reset })
       return
     }
-    if (method === 'totp') setVerification({ action: 'backup', method })
+    if (method === 'totp') setVerification({ action: 'backup', method, reset })
   }
 
   function availableBackupMethods() {
     return [
-      totpEnabled && { value: 'totp', label: 'Ứng dụng xác thực' },
       emailEnabled && { value: 'email', label: 'Nhận mã qua Email' },
+      totpEnabled && { value: 'totp', label: 'Ứng dụng xác thực' },
     ].filter(Boolean)
   }
 
@@ -335,20 +329,38 @@ export default function TwoFactorMethodsPanel({
     }
   }
 
-  // Switch của phương thức đang bật bị khoá khi tài khoản không được tự hạ cấp MFA.
-  const lockedFor = (enabled) => !canDisableMethods && enabled
+  const backupActionDisabled = sending || !twoFactorEnabled
+  const backupButton = (
+    <Button className="!h-11 !px-4" loading={sending} disabled={backupActionDisabled} onClick={backupEnabled ? undefined : startBackupCodesAction}>
+      {backupEnabled ? 'Đặt lại mã' : 'Tạo mã'}
+    </Button>
+  )
+  const backupAction = backupEnabled ? (
+    <Popconfirm
+      title="Đặt lại mã dự phòng?"
+      description="Toàn bộ mã dự phòng hiện tại sẽ không còn hiệu lực."
+      okText="Đặt lại mã"
+      cancelText="Hủy"
+      okButtonProps={{ danger: true }}
+      onConfirm={startBackupCodesAction}
+    >
+      {backupButton}
+    </Popconfirm>
+  ) : (
+    backupButton
+  )
 
   return (
     <div className="rounded-lg border border-slate-200 p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2"><SafetyCertificateOutlined className="text-slate-600" /><p className="text-sm font-bold text-slate-800">Xác thực 2 yếu tố</p><StatusBadge active={twoFactorEnabled} activeLabel="Đang bật" /></div>
       {!twoFactorEnabled && <div className="mt-4 flex items-start gap-2 rounded-md border-l-4 border-blue-400 bg-blue-50 p-3 text-sm leading-6 text-slate-700"><InfoCircleFilled className="mt-0.5 shrink-0 text-blue-500" /><span>Vui lòng bật tính năng Xác thực bảo mật để tăng cường an toàn cho tài khoản của bạn.</span></div>}
       <div className="mt-4 space-y-3">
-        <MethodRow id="totp" icon={<MobileOutlined />} title="Sử dụng Ứng dụng xác thực" description="Quét QR bằng Google Authenticator hoặc ứng dụng tương tự" checked={totpEnabled} loading={sending} disabled={sending || lockedFor(totpEnabled)} tooltip={lockedFor(totpEnabled) ? lockedHint : undefined} onChange={(checked) => checked ? startTotp() : startMethodDisable('totp')} />
-        <MethodRow id="email" icon={<MailOutlined />} title="Sử dụng Email" description="Lấy mã OTP qua email đăng ký tài khoản" checked={emailEnabled} loading={sending} disabled={sending || lockedFor(emailEnabled)} tooltip={lockedFor(emailEnabled) ? lockedHint : undefined} onChange={(checked) => checked ? startEmailAction('email-enable') : startMethodDisable('email')} />
-        <MethodRow id="backup" icon={<KeyOutlined />} title="Sử dụng Mã dự phòng" description="Dùng khi không lấy được mã OTP qua ứng dụng hoặc email" checked={backupEnabled} loading={sending} disabled={sending || !twoFactorEnabled || lockedFor(backupEnabled)} tooltip={!twoFactorEnabled ? 'Hãy bật xác thực email hoặc ứng dụng xác thực trước.' : lockedFor(backupEnabled) ? lockedHint : undefined} onChange={startBackupAction} />
+        <MethodRow id="totp" icon={<MobileOutlined />} title="Sử dụng Ứng dụng xác thực" description="Quét QR bằng Google Authenticator hoặc ứng dụng tương tự" checked={totpEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startTotp() : startMethodDisable('totp')} />
+        <MethodRow id="email" icon={<MailOutlined />} title="Sử dụng Email" description="Lấy mã OTP qua email đăng ký tài khoản" checked={emailEnabled} loading={sending} disabled={sending} onChange={(checked) => checked ? startEmailAction('email-enable') : startMethodDisable('email')} />
+        <MethodRow id="backup" icon={<KeyOutlined />} title="Sử dụng Mã dự phòng" description={backupEnabled ? 'Lưu mã ở nơi an toàn. Đặt lại sẽ vô hiệu toàn bộ mã hiện tại.' : 'Dùng khi không lấy được mã OTP qua ứng dụng hoặc email'} tooltip={!twoFactorEnabled ? 'Hãy bật xác thực email hoặc ứng dụng xác thực trước.' : undefined} control={<div className="flex flex-wrap justify-end gap-2">{backupAction}{backupEnabled && <Button type="text" danger className="!h-11 !px-3" disabled={sending} onClick={() => startMethodDisable('backup')}>Tắt</Button>}</div>} />
       </div>
 
-      <TwoFactorCodeModal open={Boolean(verification)} email={verification?.email} expiresIn={verification?.expiresIn || 180} onCancel={() => setVerification(null)} onConfirm={confirmEmailAction} onResend={resendEmailAction} showResend={verification?.action === 'method-disable' ? verification.method === 'email' : verification?.method !== 'totp'} title={verification?.action === 'method-disable' ? `Xác nhận tắt ${verification.target === 'email' ? 'Email' : verification.target === 'totp' ? 'ứng dụng xác thực' : 'mã dự phòng'}` : verification?.action === 'backup' ? 'Xác nhận tạo mã dự phòng' : undefined} description={verification?.action === 'method-disable' && verification.method === 'totp' ? 'Nhập mã 6 chữ số từ ứng dụng xác thực để xác nhận thay đổi.' : verification?.action === 'method-disable' && verification.method === 'backup' ? 'Nhập mã dự phòng 8 chữ số để xác nhận thay đổi.' : verification?.action === 'backup' && verification.method === 'totp' ? 'Nhập mã 6 chữ số từ ứng dụng xác thực để tạo mã dự phòng.' : undefined} codeLength={verification?.method === 'backup' ? 8 : TWO_FACTOR_CODE_LENGTH} methodOptions={(verification?.action === 'method-disable' || verification?.action === 'backup') && <div className="mt-4 text-left"><p className="mb-2 text-sm font-medium text-slate-700">Xác minh bằng</p><Radio.Group value={verification.method} onChange={(event) => selectVerificationMethod(event.target.value)} disabled={sending || totpSubmitting}><div className="flex flex-wrap gap-x-4 gap-y-2">{availableVerificationMethods().map((option) => <Radio key={option.value} value={option.value}>{option.label}</Radio>)}</div></Radio.Group></div>} success={false} />
+      <TwoFactorCodeModal open={Boolean(verification)} email={verification?.email} expiresIn={verification?.expiresIn || 180} onCancel={() => setVerification(null)} onConfirm={confirmEmailAction} onResend={resendEmailAction} showResend={verification?.action === 'method-disable' ? verification.method === 'email' : verification?.method !== 'totp'} title={verification?.action === 'method-disable' ? `Xác nhận tắt ${verification.target === 'email' ? 'Email' : verification.target === 'totp' ? 'ứng dụng xác thực' : 'mã dự phòng'}` : verification?.action === 'backup' ? verification.reset ? 'Xác nhận đặt lại mã dự phòng' : 'Xác nhận tạo mã dự phòng' : undefined} description={verification?.action === 'method-disable' && verification.method === 'totp' ? 'Nhập mã 6 chữ số từ ứng dụng xác thực để xác nhận thay đổi.' : verification?.action === 'method-disable' && verification.method === 'backup' ? 'Nhập mã dự phòng 8 chữ số để xác nhận thay đổi.' : verification?.action === 'backup' && verification.method === 'totp' ? `Nhập mã 6 chữ số từ ứng dụng xác thực để ${verification.reset ? 'đặt lại' : 'tạo'} mã dự phòng.${verification.reset ? ' Mã cũ sẽ không còn hiệu lực.' : ''}` : undefined} codeLength={verification?.method === 'backup' ? 8 : TWO_FACTOR_CODE_LENGTH} methodOptions={(verification?.action === 'method-disable' || verification?.action === 'backup') && <div className="mt-4 text-left"><p className="mb-2 text-sm font-medium text-slate-700">Xác minh bằng</p><Radio.Group value={verification.method} onChange={(event) => selectVerificationMethod(event.target.value)} disabled={sending || totpSubmitting}><div className="flex flex-wrap gap-x-4 gap-y-2">{availableVerificationMethods().map((option) => <Radio key={option.value} value={option.value}>{option.label}</Radio>)}</div></Radio.Group></div>} success={false} />
       <TotpSetupModal setup={totpSetup} code={totpCode} error={totpError} submitting={totpSubmitting} onCancel={() => setTotpSetup(null)} onCodeChange={setTotpCode} onConfirm={() => confirmTotp()} />
       <BackupCodesModal codes={backupCodes} email={user?.email} brandName={siteName} onClose={() => setBackupCodes([])} />
     </div>

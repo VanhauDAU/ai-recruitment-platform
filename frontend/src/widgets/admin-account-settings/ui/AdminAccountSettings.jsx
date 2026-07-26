@@ -1,10 +1,18 @@
-import { HistoryOutlined, KeyOutlined, SafetyCertificateOutlined, UserOutlined } from '@ant-design/icons'
-import { Tabs } from 'antd'
+import {
+  CheckCircleFilled,
+  HistoryOutlined,
+  KeyOutlined,
+  MailOutlined,
+  SafetyCertificateOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
+import { useSession } from '@/entities/session'
 import AdminActivityPanel from './AdminActivityPanel'
 import AdminMyAccessPanel from './AdminMyAccessPanel'
 import AdminProfilePanel from './AdminProfilePanel'
 import AdminSecurityPanel from './AdminSecurityPanel'
+import './admin-account-settings.css'
 
 const TABS = [
   { key: 'profile', label: 'Hồ sơ', icon: <UserOutlined />, Panel: AdminProfilePanel },
@@ -22,20 +30,83 @@ const DEFAULT_TAB = TABS[0].key
  * `/my-access` cũ sang `?tab=access`). Tab không hợp lệ rơi về `profile`.
  */
 export default function AdminAccountSettings() {
+  const { user } = useSession()
   const [searchParams, setSearchParams] = useSearchParams()
   const requested = searchParams.get('tab')
   const activeKey = TABS.some((tab) => tab.key === requested) ? requested : DEFAULT_TAB
+  const activeTab = TABS.find((tab) => tab.key === activeKey) || TABS[0]
+  const isSuperuser = Boolean(user?.admin_access?.is_superuser || user?.is_superuser)
+  const roleCount = user?.admin_access?.memberships?.length || 0
+
+  function selectTab(key) {
+    setSearchParams(key === DEFAULT_TAB ? {} : { tab: key }, { replace: true })
+  }
+
+  function handleTabKeyDown(event, index) {
+    if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'].includes(event.key)) return
+
+    event.preventDefault()
+    const direction = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1
+    const nextKey = TABS[(index + direction + TABS.length) % TABS.length].key
+    selectTab(nextKey)
+    requestAnimationFrame(() => document.getElementById(`admin-account-tab-${nextKey}`)?.focus())
+  }
 
   return (
-    <Tabs
-      activeKey={activeKey}
-      onChange={(key) => setSearchParams(key === DEFAULT_TAB ? {} : { tab: key }, { replace: true })}
-      className="[&_.ant-tabs-tab]:!py-2"
-      items={TABS.map(({ key, label, icon, Panel }) => ({
-        key,
-        label: <span className="whitespace-nowrap">{icon} {label}</span>,
-        children: <Panel />,
-      }))}
-    />
+    <section className="admin-account-settings">
+      <aside className="admin-account-settings__rail">
+        <header className="admin-account-settings__heading">
+          <p className="admin-account-settings__eyebrow">Không gian quản trị</p>
+          <h1 className="admin-account-settings__title">Tài khoản của tôi</h1>
+        </header>
+
+        <div className="admin-account-settings__status-grid" aria-label="Trạng thái tài khoản">
+          <StatusItem icon={<MailOutlined />} label="Email" value={user?.email_verified ? 'Đã xác minh' : 'Chưa xác minh'} positive={Boolean(user?.email_verified)} />
+          <StatusItem icon={<SafetyCertificateOutlined />} label="Xác thực 2 yếu tố" value={user?.two_factor_enabled ? 'Đang bật' : 'Chưa bật'} positive={Boolean(user?.two_factor_enabled)} />
+          <StatusItem icon={<KeyOutlined />} label="Quyền truy cập" value={isSuperuser ? 'Superuser' : roleCount ? `${roleCount} vai trò` : 'Chưa được gán'} positive={isSuperuser || roleCount > 0} />
+        </div>
+
+        <nav className="admin-account-settings__tabs" aria-label="Các mục tài khoản" role="tablist" aria-orientation="vertical">
+          {TABS.map(({ key, label, icon }, index) => (
+            <button
+              key={key}
+              id={`admin-account-tab-${key}`}
+              type="button"
+              role="tab"
+              aria-controls={`admin-account-panel-${key}`}
+              aria-selected={key === activeKey}
+              tabIndex={key === activeKey ? 0 : -1}
+              className="admin-account-settings__tab"
+              onClick={() => selectTab(key)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+            >
+              {icon}<span>{label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <main
+        id={`admin-account-panel-${activeKey}`}
+        className="admin-account-settings__content"
+        role="tabpanel"
+        aria-labelledby={`admin-account-tab-${activeKey}`}
+        tabIndex={0}
+      >
+        <activeTab.Panel />
+      </main>
+    </section>
+  )
+}
+
+function StatusItem({ icon, label, value, positive }) {
+  return (
+    <div className="admin-account-settings__status-item">
+      <span className={`admin-account-settings__status-icon ${positive ? 'is-positive' : ''}`}>{positive ? <CheckCircleFilled /> : icon}</span>
+      <span className="min-w-0">
+        <span className="block text-xs font-medium text-slate-500">{label}</span>
+        <span className="block truncate text-sm font-semibold text-slate-800">{value}</span>
+      </span>
+    </div>
   )
 }

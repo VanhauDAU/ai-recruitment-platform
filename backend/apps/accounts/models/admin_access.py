@@ -167,3 +167,108 @@ class AdminAccessAuditLog(models.Model):
 
     def __str__(self):
         return f'{self.action}:{self.target_type}:{self.target_public_id}'
+
+
+class AdminProvisioningScope(models.Model):
+    """Whitelist chức danh mà một chức danh cấp phát được phép mời."""
+
+    public_id = models.CharField(max_length=64, unique=True, editable=False)
+    source_role = models.ForeignKey(
+        AdminRole,
+        related_name='provisioning_scopes',
+        on_delete=models.PROTECT,
+    )
+    target_role = models.ForeignKey(
+        AdminRole,
+        related_name='provisioned_by_scopes',
+        on_delete=models.PROTECT,
+    )
+    is_active = models.BooleanField(default=True)
+    configured_by = models.ForeignKey(
+        User,
+        related_name='configured_admin_provisioning_scopes',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['source_role__department__name', 'source_role__name', 'target_role__name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source_role', 'target_role'],
+                name='uq_admin_provisioning_source_target',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('apscope')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.source_role} -> {self.target_role}'
+
+
+class AdminInvitation(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        ACCEPTED = 'accepted', 'Accepted'
+        REVOKED = 'revoked', 'Revoked'
+        EXPIRED = 'expired', 'Expired'
+
+    public_id = models.CharField(max_length=64, unique=True, editable=False)
+    user = models.ForeignKey(
+        User,
+        related_name='admin_invitations_received',
+        on_delete=models.PROTECT,
+    )
+    target_role = models.ForeignKey(
+        AdminRole,
+        related_name='admin_invitations',
+        on_delete=models.PROTECT,
+    )
+    provisioning_scope = models.ForeignKey(
+        AdminProvisioningScope,
+        related_name='admin_invitations',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    invited_by = models.ForeignKey(
+        User,
+        related_name='admin_invitations_sent',
+        on_delete=models.PROTECT,
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reason = models.CharField(max_length=500)
+    token_version = models.PositiveIntegerField(default=1)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(status='pending'),
+                name='uq_admin_invitation_pending_user',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['status', 'expires_at'], name='admin_invite_status_exp_idx'),
+            models.Index(fields=['invited_by', 'status'], name='admin_invite_actor_status_idx'),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('ainv')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.user.email}:{self.target_role}:{self.status}'

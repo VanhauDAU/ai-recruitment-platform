@@ -1,5 +1,4 @@
 import { Button, Input, Modal, Space, Switch, Table, Tabs, Tag, Typography, Upload } from 'antd'
-import { FileTextOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useState } from 'react'
 import {
   activateAdminCvBlueprint,
@@ -21,7 +20,7 @@ import {
 } from '@/entities/cv-template'
 import { getAdminLocales } from '@/entities/locale'
 import { message } from '@/shared/lib/toast'
-import { AdminPageHeader, AdminPanel } from '@/widgets/admin-workspace'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 function statusTag(value) {
   const color = value === 'published' || value === true ? 'green' : value === 'draft' ? 'gold' : 'default'
@@ -159,12 +158,6 @@ export default function AdminCvCatalogue() {
 
   return (
     <div className="space-y-5">
-      <AdminPageHeader
-        eyebrow="Nội dung CV"
-        title="Catalogue CV"
-        description="Quản lý publishing, nội dung có cấu trúc và snapshot bằng cùng canonical pipeline với ứng viên."
-        icon={<FileTextOutlined />}
-      />
       <AdminPanel>
         <Tabs items={[
         { key: 'templates', label: 'Templates', children: <Table rowKey="public_id" loading={loading} dataSource={data.templates} columns={templateColumns} pagination={false} /> },

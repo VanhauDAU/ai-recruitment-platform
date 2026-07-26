@@ -57,6 +57,6 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'Đã tạo admin thường {user.email}.'))
         self.stdout.write(
-            'Bước tiếp theo: python manage.py bootstrap_admin_mfa '
+            'Tùy chọn (khuyến nghị): python manage.py bootstrap_admin_mfa '
             f'{user.email} --mark-email-verified'
         )

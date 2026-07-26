@@ -1,6 +1,5 @@
 import {
   AppstoreOutlined,
-  CheckCircleOutlined,
   ContactsOutlined,
   FileDoneOutlined,
   FileTextOutlined,
@@ -11,9 +10,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { Link, useOutletContext } from 'react-router-dom'
-import { useSession } from '@/entities/session'
 import {
-  AdminPageHeader,
   AdminPanel,
   AdminStatCard,
 } from '@/widgets/admin-workspace'
@@ -30,31 +27,11 @@ const ICONS = {
 }
 
 export default function AdminDashboard() {
-  const { user } = useSession()
   const { availableRoutes = [], adminAccess } = useOutletContext() || {}
   const workspaceRoutes = availableRoutes.filter((route) => route.segment !== '/dashboard')
-  const displayName = user?.full_name || user?.email?.split('@')[0] || 'quản trị viên'
 
   return (
     <div className="space-y-5">
-      <AdminPageHeader
-        title="Bảng điều khiển"
-        description="Tổng quan phạm vi quản trị và lối tắt đến những khu vực bạn được cấp quyền."
-        icon={<AppstoreOutlined />}
-      />
-
-      <section className="admin-hero">
-        <div className="relative z-10 max-w-2xl">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-sky-200">AI Recruitment Admin</p>
-          <h2 className="m-0 text-2xl font-bold leading-tight sm:text-3xl">
-            Chào {displayName}, sẵn sàng vận hành hệ thống.
-          </h2>
-          <p className="mb-0 mt-3 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-            Theo dõi nội dung, dịch vụ, khách hàng và phân quyền từ một không gian làm việc thống nhất.
-          </p>
-        </div>
-        <CheckCircleOutlined className="pointer-events-none absolute -bottom-7 right-6 hidden text-[118px] text-white/[0.06] sm:block" aria-hidden="true" />
-      </section>
 
       <section className="grid gap-4 md:grid-cols-3" aria-label="Tóm tắt quyền truy cập">
         <AdminStatCard

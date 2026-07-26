@@ -1,5 +1,17 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-07-26 — Vá reset mật khẩu Admin
+
+- Luồng “Gửi đặt lại mật khẩu” từ Quản lý tài khoản nhận diện đúng `role=admin`:
+  email dùng nhãn **Quản trị**, URL `/admin/app/reset-password` và binding
+  `portal=admin`; không còn rơi vào template/link Ứng viên.
+- API validate/confirm chỉ chấp nhận reset Admin khi token có binding `portal=admin`
+  và tài khoản còn `active`. Tài khoản `inactive`/`banned` bị từ chối ở lúc gửi
+  lẫn lúc dùng link, tránh mở lại tài khoản bị khóa qua email cũ.
+- Frontend có màn reset Admin riêng, hiển thị ngữ cảnh quản trị và quay về trang
+  đăng nhập Admin khi link hết hiệu lực. Nút gửi reset ở chi tiết tài khoản bị
+  vô hiệu hóa kèm giải thích khi tài khoản không hoạt động.
+
 > Quy ước: mỗi khi hoàn thành một công việc (xong code + test), đổi icon trạng thái ngay trong lần commit đó — không để dồn việc cập nhật lại sau. Tiêu đề trong bảng giữ **ngắn gọn 1 dòng**; ghi chú kỹ thuật chi tiết đặt trong khối `<details>` ở mục "Ghi chú chi tiết" cuối mỗi giai đoạn. Cập nhật dòng "Cập nhật lần cuối" ở cuối file.
 
 Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối chiếu với PRD mục 11.
@@ -803,6 +815,23 @@ revision sau `select_for_update`, audit/cache trong transaction; UI
 `/admin/app/access-control` ba tab với picker runtime/deprecated, badge MFA và
 409 buộc xem lại; command `create_admin_user`; backend concurrency/regression,
 frontend unit/architecture/build được bổ sung.)
+
+Cập nhật 2026-07-26b (ACCOUNT-MANAGEMENT-G3 — migration `accounts.0016` thêm
+provisioning scope/lời mời Admin và seed permission `account.*`, `accounts.0017`
+thêm index truy vấn thiết bị/phiên; backend có
+whitelist fail-closed, token mời versioned 72 giờ, accept transaction + row
+locking, MFA email/mã dự phòng, impact token cho trạng thái/scope/phiên,
+audit/cache và query budget. Frontend mở `/admin/app/accounts` năm tab với bộ
+lọc nâng cao, drawer + chi tiết hồ sơ/bảo mật/audit, form mời chỉ dùng
+`available-roles`, luồng accept public và tab Cấp tài khoản superuser. Có seed
+Docker demo, backend concurrency/API test, frontend unit/architecture/build và
+E2E smoke responsive.)
+
+Xác minh bàn giao G3: backend **443/443** test với coverage **84,85%** trên
+PostgreSQL Docker; frontend **441/441** unit test, dependency-cruiser **0**
+violation, production bundle **286,8/320 KiB JS** và **33,8/35 KiB CSS** gzip;
+Playwright smoke **87/87** trên desktop/tablet/mobile. Migration drift, Ruff,
+format và import-linter đều sạch.
 
 Xác minh bàn giao G2: `./scripts/check_all.sh` xanh toàn bộ; backend **417/417**
 test với coverage **85,54%**, frontend **416/416** test với coverage

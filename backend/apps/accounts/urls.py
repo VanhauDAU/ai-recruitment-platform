@@ -36,9 +36,23 @@ from .api.views import (
     VerificationConfirmView,
     VerificationSendView,
 )
+from .api.views.account_management import (
+    AdminInvitationAcceptView,
+    AdminInvitationValidateView,
+)
 from .api.views.tokens import AccountTokenRefreshView
 
 urlpatterns = [
+    path(
+        'admin-invitations/validate/',
+        AdminInvitationValidateView.as_view(),
+        name='auth-admin-invitation-validate',
+    ),
+    path(
+        'admin-invitations/accept/',
+        AdminInvitationAcceptView.as_view(),
+        name='auth-admin-invitation-accept',
+    ),
     path('register/', RegisterView.as_view(), name='auth-register'),
     path(
         'register/email-availability/',

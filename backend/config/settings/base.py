@@ -451,6 +451,9 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 # URL frontend để dựng link xác thực trong email.
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
+ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
+ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
+ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
     'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/account/verify'
 )

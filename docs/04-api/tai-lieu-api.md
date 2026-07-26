@@ -31,8 +31,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/verify/confirm/` | Xác nhận email bằng `token` trong link (public) |
 | POST | `/api/auth/change-email/` | Đổi email → reset xác thực + gửi lại link |
 | POST | `/api/auth/password-reset/` | Gửi email chứa link đặt lại mật khẩu (public, cần `captcha_token`). **Luôn trả 200 kèm cùng một `detail`** dù email có tồn tại hay không — chống dò danh sách email. Cooldown 60s/tài khoản (im lặng), throttle 5/phút theo IP |
-| GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn. Dùng để hiện ngay màn "hết hạn" thay vì bắt user gõ xong mật khẩu mới báo lỗi |
-| POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
+| GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn/tài khoản đã khóa. Link Admin phải thêm `portal=admin` và chỉ được phát từ khu vực quản trị. |
+| POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Với Admin, body bắt buộc có `portal: "admin"`; tài khoản không active bị từ chối. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
 | POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu đặt lần đầu chỉ với `password`. Có thể gửi `logout_all_sessions` để thu hồi các phiên khác; response xoay token của phiên hiện tại. Phiên OAuth không còn đủ mới trả `403 {code: "reauth_required"}` để client xóa phiên cũ và đưa người dùng đăng nhập lại. |
 | POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`; DB lưu storage key) |
 | GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
@@ -145,6 +145,36 @@ qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
 nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
 ẩn → hiện cần `.publish`, hiện → ẩn cần `.archive`; gửi lại giá trị không đổi
 không bị chặn.
+
+### API quản lý tài khoản G3
+
+Base quản trị: `/api/admin/`; public accept: `/api/auth/admin-invitations/`.
+
+| Method | Endpoint | Mô tả |
+| --- | --- | --- |
+| GET | `/accounts/`, `/accounts/summary/`, `/accounts/{id}/` | Danh sách, KPI và chi tiết theo permission đọc |
+| PATCH | `/accounts/{id}/` | Sửa họ tên/SĐT; Admin active vẫn superuser-only |
+| GET | `/accounts/{id}/sessions/`, `/activity/` | Phiên và audit liên quan |
+| POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận khóa, mở khóa hoặc cấm |
+| POST | `/accounts/{id}/revoke-sessions-impact/`, `/revoke-sessions/` | Preview/xác nhận thu hồi phiên |
+| POST | `/accounts/{id}/send-password-reset/`, `/resend-verification/` | Xếp lịch email bảo mật. Admin nhận template/link cổng Admin; không gửi reset cho tài khoản `inactive`/`banned`. |
+| GET/POST | `/account-invitations/` | Danh sách theo scope người mời / tạo lời mời |
+| GET | `/account-invitations/available-roles/` | Chức danh backend đã lọc theo whitelist |
+| PATCH | `/account-invitations/{id}/` | Đổi chức danh trước khi accept |
+| POST | `/account-invitations/{id}/resend/`, `/revoke/` | Làm token cũ mất hiệu lực / thu hồi |
+| GET/POST | `/provisioning-scopes/` | Đọc/tạo whitelist; ghi superuser-only |
+| POST | `/provisioning-scopes/{id}/status-impact/`, `/activate/`, `/deactivate/` | Impact token và xác nhận trạng thái scope |
+| GET | `/api/auth/admin-invitations/validate/?token=...` | Kiểm tra link mời công khai |
+| POST | `/api/auth/admin-invitations/accept/` | Đặt mật khẩu, bật MFA email, trả mã dự phòng một lần |
+
+Filter tài khoản gồm `q`, `role`, `status`, `email_verified`, `mfa`,
+`has_active_session`, `department`, `admin_role`, `company`, khoảng ngày tạo,
+khoảng lần đăng nhập và `ordering`. Lời mời hỗ trợ `q`, `status`, `department`,
+`role`; superuser có thêm `invited_by`.
+
+Các POST xác nhận impact bắt buộc gửi lại `impact_token` từ preview. Token stale
+trả `409 admin_resource_changed`. Role ngoài whitelist và thao tác vượt scope
+trả `403 admin_permission_denied`; validation field thông thường trả `400`.
 
 ### API quản trị phân quyền G2
 

@@ -10,7 +10,10 @@ const { getAdminAuditLogs, listSessionHistory, useSession } = vi.hoisted(() => (
 }))
 
 vi.mock('@/entities/session', () => ({ useSession }))
-vi.mock('@/features/session-management', () => ({ listSessionHistory }))
+vi.mock('@/features/session-management', () => ({
+  groupSessions: (sessions) => sessions,
+  listSessionHistory,
+}))
 vi.mock('@/entities/admin-access', async (importOriginal) => ({
   ...(await importOriginal()),
   getAdminAuditLogs,

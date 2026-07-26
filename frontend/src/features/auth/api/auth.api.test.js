@@ -132,6 +132,21 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/auth/password-reset/confirm/', { token: 'reset-token', password: 'Abc123' })
   })
 
+  it('binds an administrator reset token to the admin portal', async () => {
+    post.mockResolvedValue({ data: { role: 'admin' } })
+    get.mockResolvedValue({ data: { role: 'admin' } })
+
+    await validatePasswordResetToken('admin-reset-token', { portal: 'admin' })
+    await confirmPasswordReset({ token: 'admin-reset-token', password: 'Abc123', portal: 'admin' })
+
+    expect(get).toHaveBeenCalledWith('/auth/password-reset/validate/', {
+      params: { token: 'admin-reset-token', portal: 'admin' },
+    })
+    expect(post).toHaveBeenCalledWith('/auth/password-reset/confirm/', {
+      token: 'admin-reset-token', password: 'Abc123', portal: 'admin',
+    })
+  })
+
   it('builds OAuth URLs and persists OAuth tokens for the requested portal', async () => {
     post.mockResolvedValue({ data: { access: 'access-token', refresh: 'refresh-token' } })
 

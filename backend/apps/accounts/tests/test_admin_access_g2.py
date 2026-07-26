@@ -924,7 +924,6 @@ class AdminAccessRuleTests(TestCase):
 
 
 class AdminAccessConcurrencyTests(TransactionTestCase):
-    reset_sequences = True
     # Preserve data-migration fixtures and suppress post_migrate re-creation
     # between this row-locking suite and other serialized TransactionTestCases.
     serialized_rollback = True

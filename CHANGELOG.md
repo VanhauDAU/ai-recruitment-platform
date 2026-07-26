@@ -8,6 +8,39 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-26
 
+#### Added — Account Management G3
+
+- Thêm migration `accounts.0016`, seed bảy permission `account.*`,
+  `AdminProvisioningScope` và `AdminInvitation`; mỗi lời mời dùng token ký có
+  version, hết hạn 72 giờ và chỉ chấp nhận một lần.
+- Thêm migration `accounts.0017` cho index phiên theo user/portal/IP/trạng thái
+  thu hồi, phục vụ danh sách thiết bị và impact thu hồi phiên.
+- Mở API quản lý Candidate/Employer/Admin, phiên, hoạt động, impact đổi trạng
+  thái/thu hồi phiên, lời mời Admin và whitelist cấp tài khoản. Các thao tác
+  ghi dùng transaction, row locking, audit và impact token; thu hồi scope đồng
+  thời thu hồi mọi lời mời pending liên quan.
+- Thêm `/admin/app/accounts` với năm tab, bộ lọc nâng cao, action icon/tooltip,
+  drawer xem nhanh, trang chi tiết hồ sơ–bảo mật–audit và luồng nhận lời mời có
+  MFA email cùng mã dự phòng chỉ hiển thị một lần.
+- Trang Phân quyền có tab “Cấp tài khoản” dành riêng cho superuser, hiển thị
+  whitelist nguồn–đích, số lời mời pending và impact preview trước khi thu hồi.
+- Thêm command local idempotent `seed_admin_account_demo` tạo superuser, nhân
+  sự được ủy quyền và Admin kiểm duyệt kèm mã dự phòng demo.
+
+#### Security — Account Management G3
+
+- Admin được ủy quyền phải đồng thời có một membership hiệu lực, permission
+  `account.admin.invite` và scope nguồn–đích active; backend chặn request giả
+  mạo role ngoài whitelist và mọi role chứa quyền quản trị nhạy cảm.
+- Người mời thường chỉ thấy và quản lý lời mời của chính mình. Sau kích hoạt,
+  mọi thay đổi trạng thái, chức danh hoặc bảo mật của Admin vẫn superuser-only.
+- Accept đồng thời được serialize bằng row lock; chỉ một transaction tạo đúng
+  một membership. Audit không ghi token, mật khẩu, MFA secret hay mã dự phòng.
+- Sửa reset mật khẩu Admin: email dùng đúng nhãn “Quản trị” và link cổng
+  `/admin/app/reset-password?portal=admin`; backend ràng buộc token với cổng
+  Admin, kiểm tra trạng thái ở lúc gửi/lúc dùng, và từ chối reset cho tài khoản
+  `inactive` hoặc `banned`.
+
 #### Changed — Gán chức danh nhân viên
 
 - Migration `accounts.0015` hợp nhất dữ liệu lịch sử về một membership active
@@ -22,6 +55,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Bổ sung bộ lọc nhanh theo nội dung/trạng thái/MFA, action icon có tooltip và
   drawer xem chi tiết nhân viên; bảng phòng ban/chức danh hiển thị thêm mã và
   số liệu vận hành nhưng không lặp thao tác chỉnh sửa trong menu.
+
+#### Changed — Bảo mật tài khoản quản trị
+
+- Admin có thể bật hoặc tắt Email MFA, ứng dụng xác thực và mã dự phòng như
+  các tài khoản khác. Mọi thao tác tắt vẫn bắt buộc step-up bằng phương thức
+  MFA đang có và được ghi audit không chứa mã xác minh hay secret.
 
 #### Added — Quản trị phân quyền (RBAC G2)
 

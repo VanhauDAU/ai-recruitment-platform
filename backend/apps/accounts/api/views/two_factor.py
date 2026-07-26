@@ -86,24 +86,6 @@ def _mfa_methods_forbidden():
     )
 
 
-def _admin_mfa_locked(request):
-    """Quản trị viên không tự hạ cấp MFA của mình.
-
-    Cùng chính sách với ``TwoFactorDisableSendView``: admin bật thêm phương thức
-    thì được, gỡ bỏ thì phải đi qua quy trình quản trị (management command).
-    """
-    return request.user.is_admin_role
-
-
-def _admin_mfa_locked_response():
-    return Response(
-        {
-            'detail': 'MFA của tài khoản quản trị chỉ có thể thay đổi qua quy trình quản trị an toàn.'
-        },
-        status=status.HTTP_403_FORBIDDEN,
-    )
-
-
 def _available_disable_verification_methods(user, target):
     """Các phương thức đủ điều kiện step-up để tắt một phương thức MFA."""
     methods = two_factor.enabled_methods(user)
@@ -217,8 +199,6 @@ class TwoFactorDisableSendView(APIView):
 
     def post(self, request):
         user = request.user
-        if _admin_mfa_locked(request):
-            return _admin_mfa_locked_response()
         if not two_factor.enabled_methods(user)['email']:
             return Response(
                 {'detail': 'Xác minh hai bước chưa được bật.'}, status=status.HTTP_400_BAD_REQUEST
@@ -247,8 +227,6 @@ class TwoFactorDisableConfirmView(APIView):
         serializer = TwoFactorCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = request.user
-        if _admin_mfa_locked(request):
-            return _admin_mfa_locked_response()
         if not two_factor.enabled_methods(user)['email'] or not two_factor.verify_code(
             user, two_factor.PURPOSE_DISABLE, serializer.validated_data['code']
         ):
@@ -271,6 +249,7 @@ class TwoFactorDisableConfirmView(APIView):
                 'updated_at',
             ]
         )
+        record_admin_self_action(user, 'self_mfa_disable', {'method': 'email'})
         return Response(_session_response(user, request))
 
 
@@ -392,8 +371,6 @@ class EmployerTotpDisableView(APIView):
     def post(self, request):
         if not _supports_mfa_methods(request):
             return _mfa_methods_forbidden()
-        if _admin_mfa_locked(request):
-            return _admin_mfa_locked_response()
         serializer = TwoFactorCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if not two_factor.verify_user_totp(request.user, serializer.validated_data['code']):
@@ -415,6 +392,7 @@ class EmployerTotpDisableView(APIView):
                 'updated_at',
             ]
         )
+        record_admin_self_action(request.user, 'self_mfa_disable', {'method': 'totp'})
         return Response(_session_response(request.user, request))
 
 
@@ -434,7 +412,7 @@ class EmployerTotpDisableView(APIView):
     tags=['auth-2fa'],
 )
 class EmployerTwoFactorMethodDisableSendView(APIView):
-    """Gửi email step-up để tắt một phương thức MFA (không mở cho admin)."""
+    """Gửi email step-up để tắt một phương thức MFA."""
 
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
@@ -443,8 +421,6 @@ class EmployerTwoFactorMethodDisableSendView(APIView):
     def post(self, request):
         if not _supports_mfa_methods(request):
             return _mfa_methods_forbidden()
-        if _admin_mfa_locked(request):
-            return _admin_mfa_locked_response()
         serializer = EmployerTwoFactorMethodSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         methods = two_factor.enabled_methods(request.user)
@@ -484,8 +460,6 @@ class EmployerTwoFactorMethodDisableView(APIView):
     def post(self, request):
         if not _supports_mfa_methods(request):
             return _mfa_methods_forbidden()
-        if _admin_mfa_locked(request):
-            return _admin_mfa_locked_response()
         serializer = EmployerTwoFactorMethodDisableSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         target = serializer.validated_data['target']
@@ -524,6 +498,7 @@ class EmployerTwoFactorMethodDisableView(APIView):
                 'updated_at',
             ]
         )
+        record_admin_self_action(request.user, 'self_mfa_disable', {'method': target})
         return Response(_session_response(request.user, request))
 
 

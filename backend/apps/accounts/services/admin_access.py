@@ -92,6 +92,29 @@ def record_admin_self_action(user, action, payload=None):
     )
 
 
+def record_admin_action(
+    *,
+    actor,
+    action,
+    target_type,
+    target_public_id,
+    payload=None,
+    source='api',
+    actor_identifier='',
+):
+    """Public audit boundary for other account-domain services."""
+
+    return _audit(
+        actor=actor,
+        source=source,
+        actor_identifier=actor_identifier or (actor.email if actor else ''),
+        action=action,
+        target_type=target_type,
+        target_public_id=target_public_id,
+        payload=payload or {},
+    )
+
+
 def _schedule_cache_bust(user_ids):
     affected = set(user_ids)
     if affected:

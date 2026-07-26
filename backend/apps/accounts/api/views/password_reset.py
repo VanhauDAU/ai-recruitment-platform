@@ -25,6 +25,24 @@ _RESET_SENT_DETAIL = (
 )
 
 
+def _reset_token_user(token, portal=None, *, consume=False):
+    """Resolve a reset token without allowing an admin token on another portal."""
+
+    user_id = pr.consume_token(token) if consume else pr.peek_token(token)
+    user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
+    expected_role = PORTAL_ROLE_BY_NAME.get(portal) if portal else None
+    if (
+        user is None
+        or not pr.is_reset_eligible(user)
+        or (expected_role is not None and user.role != expected_role)
+        # Admin reset links are issued only by the authenticated admin-account
+        # workflow and always carry this explicit portal binding.
+        or (user.is_admin_role and portal != 'admin')
+    ):
+        return None
+    return user
+
+
 @extend_schema(
     summary='Gửi email chứa link đặt lại mật khẩu',
     request=PasswordResetRequestSerializer,
@@ -80,9 +98,11 @@ class PasswordResetValidateView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        user_id = pr.peek_token(request.query_params.get('token'))
-        user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
-        if user is None or user.is_admin_role:
+        user = _reset_token_user(
+            request.query_params.get('token'),
+            request.query_params.get('portal'),
+        )
+        if user is None:
             return Response(
                 {'detail': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -114,9 +134,12 @@ class PasswordResetConfirmView(APIView):
         # Validate mật khẩu TRƯỚC khi tiêu token: mật khẩu yếu không được đốt link.
         serializer.is_valid(raise_exception=True)
 
-        user_id = pr.consume_token(serializer.validated_data['token'])
-        user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
-        if user is None or user.is_admin_role:
+        user = _reset_token_user(
+            serializer.validated_data['token'],
+            serializer.validated_data.get('portal'),
+            consume=True,
+        )
+        if user is None:
             return Response(
                 {'detail': 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,
