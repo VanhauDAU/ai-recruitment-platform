@@ -32,7 +32,7 @@ jobs:
       audit: ${{ steps.areas.outputs.frontend_audit }}
       changed_count: ${{ steps.areas.outputs.changed_count }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -94,12 +94,12 @@ jobs:
         working-directory: .
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: ${{ needs.changes.outputs.frontend == 'true' }}
 
       - name: Setup Node
         if: ${{ needs.changes.outputs.frontend == 'true' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -107,7 +107,7 @@ jobs:
 
       - name: Install dependencies
         if: ${{ needs.changes.outputs.frontend == 'true' }}
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: API boundary (axios chỉ trong shared/api)
         if: ${{ needs.changes.outputs.frontend == 'true' }}
@@ -198,21 +198,21 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Start job timer
         id: timer
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Unit tests and coverage gate
         shell: bash
@@ -278,21 +278,21 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Start job timer
         id: timer
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
@@ -385,7 +385,7 @@ jobs:
           [[ "$CHANGES_RESULT" == success ]]
           [[ "$AUDIT_REQUIRED" == true || "$AUDIT_REQUIRED" == false ]]
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: ${{ needs.changes.outputs.audit == 'true' }}
 
       - name: Start job timer
@@ -396,7 +396,7 @@ jobs:
 
       - name: Setup Node
         if: ${{ needs.changes.outputs.audit == 'true' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
 

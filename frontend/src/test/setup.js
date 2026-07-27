@@ -51,6 +51,19 @@ if (typeof globalThis.ResizeObserver !== 'function') {
   }
 }
 
+// jsdom intentionally does not implement pseudo-element styles. Ant Design's
+// wave/motion helpers still ask for them after every click, which prints a
+// warning and makes interaction-heavy suites spend most of their time inside
+// jsdom's virtual console. Ignoring the unsupported second argument preserves
+// jsdom's real computed-style behavior while removing that test-only overhead.
+const getComputedStyle = window.getComputedStyle.bind(window)
+window.getComputedStyle = (element) => getComputedStyle(element)
+
+// jsdom also logs on every canvas context request before returning null.
+// Returning that same unsupported value directly keeps canvas fallbacks
+// testable without flooding CI output.
+HTMLCanvasElement.prototype.getContext = () => null
+
 afterEach(() => {
   cleanup()
   localStorage.clear()
