@@ -220,7 +220,10 @@ jobs:
           set -o pipefail
           # Vitest automatically adds its github-actions reporter in CI; it
           # writes exact file/test counts to $GITHUB_STEP_SUMMARY.
-          npm run test:coverage 2>&1 | tee coverage.log
+          # Bound concurrency so jsdom/Ant Design interaction tests do not
+          # oversubscribe GitHub-hosted runners. Two workers retain parallel
+          # throughput after the expensive workflow tests were made lightweight.
+          npm run test:coverage -- --maxWorkers=2 2>&1 | tee coverage.log
 
       - name: Publish coverage summary
         if: ${{ always() }}

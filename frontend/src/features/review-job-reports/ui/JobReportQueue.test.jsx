@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { App } from 'antd'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobReportQueue from './JobReportQueue'
@@ -104,10 +103,12 @@ describe('JobReportQueue', () => {
     renderQueue()
 
     expect(await screen.findByText('Backend Engineer')).toBeVisible()
-    await userEvent.click(screen.getByRole('button', { name: 'Xác nhận vi phạm' }))
-    await userEvent.type(screen.getByLabelText('Ghi chú xử lý'), 'Đã kiểm tra.')
+    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận vi phạm' }))
+    fireEvent.change(screen.getByLabelText('Ghi chú xử lý'), {
+      target: { value: 'Đã kiểm tra.' },
+    })
     const dialog = screen.getByRole('dialog')
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận vi phạm' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Xác nhận vi phạm' }))
 
     await waitFor(() => expect(mocks.resolveAdminJobReport).toHaveBeenCalledWith('jrep_1', {
       status: 'upheld',
@@ -135,19 +136,19 @@ describe('JobReportQueue', () => {
     mocks.reverseAdminJobReport.mockResolvedValue({ ...REPORT, status: 'dismissed' })
     renderQueue()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Gỡ kết luận' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Gỡ kết luận' }))
     const dialog = screen.getByRole('dialog')
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Gỡ kết luận' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Gỡ kết luận' }))
     expect(
       await within(dialog).findByText('Nhập lý do gỡ kết luận.'),
     ).toBeInTheDocument()
     expect(mocks.reverseAdminJobReport).not.toHaveBeenCalled()
 
-    await userEvent.type(
+    fireEvent.change(
       within(dialog).getByRole('textbox', { name: 'Lý do gỡ kết luận' }),
-      'Bằng chứng mới xác nhận tin không vi phạm.',
+      { target: { value: 'Bằng chứng mới xác nhận tin không vi phạm.' } },
     )
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Gỡ kết luận' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Gỡ kết luận' }))
 
     await waitFor(() => expect(mocks.reverseAdminJobReport).toHaveBeenCalledWith(
       'jrep_1',

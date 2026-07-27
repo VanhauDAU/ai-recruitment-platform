@@ -31,7 +31,7 @@ export default function AccountQuickDrawer({ account, open, onClose, onOpenDetai
   return (
     <Drawer
       open={open}
-      width="min(480px, 100vw)"
+      size="min(480px, 100vw)"
       push={false}
       destroyOnHidden
       title="Thông tin tài khoản"

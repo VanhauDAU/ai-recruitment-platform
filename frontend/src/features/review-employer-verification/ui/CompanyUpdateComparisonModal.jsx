@@ -1,5 +1,5 @@
 import { FileSearchOutlined } from '@ant-design/icons'
-import { Alert, Button, Descriptions, Image, List, Modal, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Descriptions, Image, Modal, Space, Tag, Typography } from 'antd'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
 
@@ -254,24 +254,13 @@ export default function CompanyUpdateComparisonModal({
                 description="Lý do bên dưới được hiển thị trên trang thông tin công ty của nhà tuyển dụng."
               />
             )}
-            <List
-              className="company-comparison-documents"
-              dataSource={currentDocuments}
-              renderItem={(document) => (
-                <List.Item
-                  actions={[
-                    <Button key="open" type="link" disabled={!canViewSensitive && !document.source_url} onClick={() => onOpenDocument(document)}>Mở</Button>,
-                    ...(canReview ? [
-                      <Button key="approve" type="link" disabled={document.status === 'approved'} loading={documentLoading} onClick={() => onReviewDocument(document, 'approved')}>{document.status === 'approved' ? 'Đã duyệt' : 'Duyệt'}</Button>,
-                      <Button key="changes" type="link" disabled={document.status === 'changes_requested'} onClick={() => onReviewDocument(document, 'changes_requested')}>{document.status === 'changes_requested' ? 'Đã yêu cầu bổ sung' : 'Bổ sung'}</Button>,
-                      <Button key="reject" type="link" danger disabled={document.status === 'rejected'} onClick={() => onReviewDocument(document, 'rejected')}>{document.status === 'rejected' ? 'Đã từ chối' : 'Từ chối'}</Button>,
-                    ] : []),
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={<FileSearchOutlined />}
-                    title={document.doc_type_label}
-                    description={(
+            <div className="company-comparison-documents">
+              {currentDocuments.map((document) => (
+                <article className="company-comparison-document" key={document.public_id || document.id}>
+                  <div className="company-comparison-document__main">
+                    <FileSearchOutlined className="company-comparison-document__icon" />
+                    <div>
+                      <Typography.Text strong>{document.doc_type_label}</Typography.Text>
                       <div className="company-comparison-document-meta">
                         <span>{`${document.file_name} · v${document.version}`}</span>
                         {document.review_note && (
@@ -280,12 +269,22 @@ export default function CompanyUpdateComparisonModal({
                           </span>
                         )}
                       </div>
+                    </div>
+                  </div>
+                  <Space wrap>
+                    <Tag color={document.status === 'approved' ? 'green' : document.status === 'rejected' ? 'red' : 'gold'}>{document.status_label}</Tag>
+                    <Button type="link" disabled={!canViewSensitive && !document.source_url} onClick={() => onOpenDocument(document)}>Mở</Button>
+                    {canReview && (
+                      <>
+                        <Button type="link" disabled={document.status === 'approved'} loading={documentLoading} onClick={() => onReviewDocument(document, 'approved')}>{document.status === 'approved' ? 'Đã duyệt' : 'Duyệt'}</Button>
+                        <Button type="link" disabled={document.status === 'changes_requested'} onClick={() => onReviewDocument(document, 'changes_requested')}>{document.status === 'changes_requested' ? 'Đã yêu cầu bổ sung' : 'Bổ sung'}</Button>
+                        <Button type="link" danger disabled={document.status === 'rejected'} onClick={() => onReviewDocument(document, 'rejected')}>{document.status === 'rejected' ? 'Đã từ chối' : 'Từ chối'}</Button>
+                      </>
                     )}
-                  />
-                  <Space><Tag color={document.status === 'approved' ? 'green' : document.status === 'rejected' ? 'red' : 'gold'}>{document.status_label}</Tag></Space>
-                </List.Item>
-              )}
-            />
+                  </Space>
+                </article>
+              ))}
+            </div>
           </section>
         )}
       </div>

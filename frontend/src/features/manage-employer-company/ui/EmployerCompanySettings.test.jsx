@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerCompanySettings from './EmployerCompanySettings'
 
@@ -182,7 +181,7 @@ describe('EmployerCompanySettings', () => {
       </QueryClientProvider>,
     )
 
-    await userEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa yêu cầu/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Chỉnh sửa yêu cầu/ }))
 
     const pendingImage = await screen.findByRole('img', {
       name: 'Ảnh công ty đang chờ duyệt 1',
@@ -239,9 +238,9 @@ describe('EmployerCompanySettings', () => {
     expect(within(requestRegion).getByText('Cần bổ sung giấy tờ')).toBeInTheDocument()
     expect(screen.getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Bổ sung giấy tờ ngay' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Bổ sung giấy tờ ngay' }))
     expect(await screen.findByText('Yêu cầu này cần bổ sung giấy tờ')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Chọn giấy tờ thay thế' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn giấy tờ thay thế' }))
 
     const dialog = screen.getByRole('dialog', { name: 'Xác nhận thay đổi thông tin pháp lý' })
     expect(within(dialog).getByText('Giấy tờ trước chưa đạt yêu cầu')).toBeInTheDocument()

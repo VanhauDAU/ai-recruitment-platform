@@ -479,20 +479,71 @@
   line-height: 1.5;
 }
 
-.company-comparison-documents .ant-list-item { gap: 12px; }
-
-.verification-document-list .ant-list-item {
-  border: 1px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
-  margin-bottom: 6px;
-  padding: 12px;
+.company-comparison-document {
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 0;
 }
 
-.verification-document-list .ant-list-item:hover,
-.verification-document-list .ant-list-item.is-selected {
+.company-comparison-document:last-child {
+  border-bottom: 0;
+}
+
+.company-comparison-document__main {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.company-comparison-document__icon {
+  color: #64748b;
+  font-size: 18px;
+  margin-top: 3px;
+}
+
+.verification-document-item {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 4px;
+}
+
+.verification-document-item:hover,
+.verification-document-item.is-selected {
   background: var(--admin-primary-soft);
   border-color: color-mix(in srgb, var(--admin-primary) 25%, white);
+}
+
+.verification-document-item__select {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px;
+  text-align: left;
+}
+
+.verification-document-item__title {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  font-weight: 600;
+  gap: 8px;
+}
+
+.verification-document-item__description {
+  color: #64748b;
 }
 
 .verification-preview .ant-card-body {
@@ -776,13 +827,13 @@
     text-transform: uppercase;
   }
 
-  .company-comparison-documents .ant-list-item {
+  .company-comparison-document {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .company-comparison-documents .ant-list-item-action {
-    margin-left: 0;
+  .company-comparison-document > .ant-space {
+    width: 100%;
   }
 
   .verification-document-frame {

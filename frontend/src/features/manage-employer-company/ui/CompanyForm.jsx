@@ -452,7 +452,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
             </Button>
           </>
         )}
-        destroyOnClose={false}
+        destroyOnHidden={false}
       >
         <Alert
           className="mb-4"
@@ -506,7 +506,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         title="Giấy tờ chứng minh Tên thương mại"
         onCancel={() => setTradeProofModalOpen(false)}
         footer={<><Button onClick={() => setTradeProofModalOpen(false)}>Hủy</Button><Button type="primary" onClick={saveTradeProof}>Lưu</Button></>}
-        destroyOnClose
+        destroyOnHidden
       >
         <Radio.Group value={tradeProofSource} onChange={(event) => setTradeProofSource(event.target.value)} className="company-trade-proof-modal__sources">
           <Radio value="file">Giấy tờ</Radio>

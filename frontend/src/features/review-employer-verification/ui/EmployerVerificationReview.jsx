@@ -14,7 +14,6 @@ import {
   Empty,
   Form,
   Input,
-  List,
   Modal,
   Skeleton,
   Space,
@@ -551,18 +550,37 @@ export default function EmployerVerificationReview({
 
       <section className="verification-workbench">
         <Card size="small" title="Bộ giấy tờ" className="account-detail-card verification-document-list">
-          <List
-            dataSource={currentDocuments}
-            locale={{ emptyText: 'Chưa có giấy tờ hiện hành' }}
-            renderItem={(document) => {
+          <div className="verification-document-items">
+            {currentDocuments.length === 0 && (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có giấy tờ hiện hành" />
+            )}
+            {currentDocuments.map((document) => {
               const active = selectedDocument?.public_id === document.public_id
               return (
-                <List.Item
-                  className={active ? 'is-selected' : ''}
-                  onClick={() => setSelectedDocumentId(document.public_id)}
-                  actions={canReviewVerification ? [
+                <div
+                  className={`verification-document-item${active ? ' is-selected' : ''}`}
+                  key={document.public_id}
+                >
+                  <button
+                    className="verification-document-item__select"
+                    type="button"
+                    onClick={() => setSelectedDocumentId(document.public_id)}
+                  >
+                    <span className="verification-document-item__title">
+                      <span>{document.doc_type_label}</span>
+                      <StatusTag status={document.status} document />
+                    </span>
+                    <span className="verification-document-item__description">
+                      {`${document.file_name} · v${document.version} · ${formatDate(document.created_at)}`}
+                      {document.duplicate_company_count > 0 && (
+                        <Tag className="ml-2" color="red" icon={<WarningOutlined />}>
+                          Trùng hash công ty khác
+                        </Tag>
+                      )}
+                    </span>
+                  </button>
+                  {canReviewVerification && (
                     <Button
-                      key="review"
                       type="link"
                       onClick={(event) => {
                         event.stopPropagation()
@@ -570,31 +588,12 @@ export default function EmployerVerificationReview({
                       }}
                     >
                       Xử lý
-                    </Button>,
-                  ] : []}
-                >
-                  <List.Item.Meta
-                    title={(
-                      <Space wrap>
-                        <span>{document.doc_type_label}</span>
-                        <StatusTag status={document.status} document />
-                      </Space>
-                    )}
-                    description={(
-                      <span>
-                        {`${document.file_name} · v${document.version} · ${formatDate(document.created_at)}`}
-                        {document.duplicate_company_count > 0 && (
-                          <Tag className="ml-2" color="red" icon={<WarningOutlined />}>
-                            Trùng hash công ty khác
-                          </Tag>
-                        )}
-                      </span>
-                    )}
-                  />
-                </List.Item>
+                    </Button>
+                  )}
+                </div>
               )
-            }}
-          />
+            })}
+          </div>
         </Card>
         <Card
           size="small"

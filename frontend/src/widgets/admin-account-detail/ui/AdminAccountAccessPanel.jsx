@@ -96,10 +96,10 @@ function AssignmentCard({ membership }) {
           {role.is_system_managed ? 'Mặc định hệ thống' : 'Tùy chỉnh'}
         </Descriptions.Item>
         {role.description && (
-          <Descriptions.Item label="Mô tả chức danh" span={2}>{role.description}</Descriptions.Item>
+          <Descriptions.Item label="Mô tả chức danh" span={{ xs: 1, lg: 2 }}>{role.description}</Descriptions.Item>
         )}
         {department.description && (
-          <Descriptions.Item label="Mô tả phòng ban" span={2}>{department.description}</Descriptions.Item>
+          <Descriptions.Item label="Mô tả phòng ban" span={{ xs: 1, lg: 2 }}>{department.description}</Descriptions.Item>
         )}
         <Descriptions.Item label="Gán lúc">{formatAdminDate(membership.assigned_at)}</Descriptions.Item>
         <Descriptions.Item label="Người cấp">

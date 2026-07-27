@@ -4,7 +4,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Input, Modal, Skeleton, Switch, message } from 'antd'
+import { Alert, Button, Input, Modal, Skeleton, Switch } from 'antd'
 import { useState } from 'react'
 import {
   campaignKeys,
@@ -12,6 +12,7 @@ import {
   getCampaignPauseImpact,
 } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 
 export default function CampaignLifecycleActions({
   campaign,

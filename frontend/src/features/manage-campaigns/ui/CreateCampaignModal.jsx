@@ -1,8 +1,9 @@
 import { RocketOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Form, Input, Modal, message } from 'antd'
+import { Form, Input, Modal } from 'antd'
 import { campaignKeys, createCampaign } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 
 export default function CreateCampaignModal({
   open,

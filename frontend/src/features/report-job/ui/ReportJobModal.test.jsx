@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { App } from 'antd'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ReportJobModal from './ReportJobModal'
@@ -50,10 +49,12 @@ describe('ReportJobModal', () => {
     const onClose = vi.fn()
     renderModal({ onClose })
 
-    await userEvent.click(screen.getByLabelText('Lý do báo cáo'))
-    await userEvent.click(screen.getByText('Lừa đảo, thu phí ứng viên'))
-    await userEvent.type(screen.getByLabelText('Mô tả chi tiết'), '  Yêu cầu đóng phí.  ')
-    await userEvent.click(screen.getByRole('button', { name: 'Gửi báo cáo' }))
+    fireEvent.mouseDown(screen.getByLabelText('Lý do báo cáo'))
+    fireEvent.click(screen.getByText('Lừa đảo, thu phí ứng viên'))
+    fireEvent.change(screen.getByLabelText('Mô tả chi tiết'), {
+      target: { value: '  Yêu cầu đóng phí.  ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi báo cáo' }))
 
     await waitFor(() => expect(submitJobReport).toHaveBeenCalledWith('job_1', {
       reason: 'scam',
@@ -65,8 +66,8 @@ describe('ReportJobModal', () => {
   it('requires detail when the reason is other', async () => {
     renderModal()
 
-    await userEvent.click(screen.getByLabelText('Lý do báo cáo'))
-    await userEvent.click(screen.getByText('Lý do khác'))
+    fireEvent.mouseDown(screen.getByLabelText('Lý do báo cáo'))
+    fireEvent.click(screen.getByText('Lý do khác'))
     fireEvent.click(screen.getByRole('button', { name: 'Gửi báo cáo' }))
 
     expect(await screen.findByText('Mô tả cụ thể khi chọn “Lý do khác”.')).toBeInTheDocument()
