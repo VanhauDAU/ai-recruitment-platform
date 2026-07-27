@@ -9,7 +9,12 @@ from rest_framework.views import APIView
 from common.media_storage import delete_local_media_url, save_image_upload
 
 from ...models import AuthEmailJob, User
-from ...services import queue_verification_email, two_factor, verify_request_captcha
+from ...services import (
+    queue_verification_email,
+    record_admin_self_action,
+    two_factor,
+    verify_request_captcha,
+)
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.tokens import issue_tokens
 from ...tasks import queue_auth_email
@@ -102,14 +107,6 @@ class LoginView(APIView):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.user
-        if user.is_admin_role and not user.two_factor_enabled:
-            return Response(
-                {
-                    'detail': 'Tài khoản quản trị bắt buộc bật MFA trước khi đăng nhập workspace.',
-                    'code': 'admin_mfa_required',
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         methods = two_factor.enabled_methods(user)
         if user.two_factor_enabled:
             challenge = two_factor.start_login_challenge(user, serializer.portal)
@@ -156,6 +153,9 @@ class MeView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        record_admin_self_action(
+            request.user, 'self_profile_update', {'fields': sorted(serializer.validated_data)}
+        )
         return Response(
             SessionUserSerializer(request.user, context=self.get_serializer_context()).data
         )

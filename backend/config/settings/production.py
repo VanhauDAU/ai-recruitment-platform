@@ -12,6 +12,19 @@ from .base import _DEFAULT_SECRET_KEY
 
 _errors: list[str] = []
 
+# Production defaults to the enforced workflow. Operators may still use an
+# explicit false value for a controlled rollback.
+REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
+    'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
+    default=True,
+    cast=bool,
+)
+REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
+    'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS',
+    default=True,
+    cast=bool,
+)
+
 if not IS_PRODUCTION:
     _errors.append('config.settings.production yêu cầu ENVIRONMENT=production.')
 

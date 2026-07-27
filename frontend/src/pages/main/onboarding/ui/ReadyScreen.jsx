@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { legacyAsset } from '@/shared/config/assets'
 
 const MASCOT_IMAGE = legacyAsset('cv-template/toppy-list-mau-cv.png')

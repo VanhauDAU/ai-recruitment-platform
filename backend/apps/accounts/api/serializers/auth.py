@@ -8,6 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from common.media_storage import media_url_from_value
 
 from ...models import User
+from ...selectors import admin_access_snapshot
 from ...services.access import is_account_accessible
 
 # Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
@@ -97,6 +98,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
     two_factor_email_enabled = serializers.SerializerMethodField()
     two_factor_totp_enabled = serializers.SerializerMethodField()
     two_factor_backup_codes_enabled = serializers.SerializerMethodField()
+    admin_access = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -117,6 +119,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             'employer_onboarding_required',
             'employer_onboarding_step',
             'employer_verification_completed',
+            'admin_access',
         ]
         read_only_fields = fields
 
@@ -177,6 +180,9 @@ class SessionUserSerializer(serializers.ModelSerializer):
         from apps.employers.selectors import build_employer_onboarding_steps
 
         return build_employer_onboarding_steps(recruiter)['verification_completed']
+
+    def get_admin_access(self, obj):
+        return admin_access_snapshot(obj)
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -281,6 +287,11 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     token = serializers.CharField(write_only=True)
     password = password_field()
+    # Cổng admin không có endpoint quên mật khẩu công khai. Giá trị này chỉ có
+    # trong link reset được một superuser gửi từ khu vực quản trị.
+    portal = serializers.ChoiceField(
+        choices=list(PORTAL_ROLE_BY_NAME), required=False, write_only=True
+    )
 
 
 class PasswordChangeSerializer(serializers.Serializer):

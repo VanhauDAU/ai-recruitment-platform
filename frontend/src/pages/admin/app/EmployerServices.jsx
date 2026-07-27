@@ -12,7 +12,6 @@ import {
   Table,
   Tabs,
   Tag,
-  Typography,
 } from 'antd'
 import {
   createAdminServiceCategory,
@@ -25,6 +24,7 @@ import {
   updateAdminServicePackage,
 } from '@/entities/service-package'
 import { message } from '@/shared/lib/toast'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 const CATEGORY_DEFAULTS = { order: 0, is_active: true }
 const PACKAGE_DEFAULTS = { currency: 'VND', cta_type: 'contact', order: 0, is_active: true, is_highlight: false }
@@ -134,13 +134,13 @@ export default function AdminEmployerServices() {
   ]
 
   return (
-    <div>
-      <Typography.Title level={2}>Dịch vụ nhà tuyển dụng</Typography.Title>
-      <Typography.Paragraph type="secondary">Quản lý nhóm dịch vụ, giá, quyền lợi và CTA hiển thị trên trang báo giá công khai.</Typography.Paragraph>
-      <Tabs items={[
-        { key: 'categories', label: 'Danh mục', children: <><div className="mb-4 flex justify-end"><Button type="primary" onClick={() => openEditor('category')}>Thêm danh mục</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={categories} columns={categoryColumns} pagination={false} scroll={{ x: 1000 }} /></div></> },
-        { key: 'packages', label: 'Gói dịch vụ', children: <><div className="mb-4 flex justify-end"><Button type="primary" disabled={!categories.length} onClick={() => openEditor('package')}>Thêm gói dịch vụ</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={packages} columns={packageColumns} pagination={false} scroll={{ x: 1100 }} /></div></> },
-      ]} />
+    <div className="space-y-5">
+      <AdminPanel>
+        <Tabs items={[
+          { key: 'categories', label: `Danh mục (${categories.length})`, children: <><div className="mb-4 flex justify-end"><Button type="primary" onClick={() => openEditor('category')}>Thêm danh mục</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={categories} columns={categoryColumns} pagination={false} scroll={{ x: 1000 }} /></div></> },
+          { key: 'packages', label: `Gói dịch vụ (${packages.length})`, children: <><div className="mb-4 flex justify-end"><Button type="primary" disabled={!categories.length} onClick={() => openEditor('package')}>Thêm gói dịch vụ</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={packages} columns={packageColumns} pagination={false} scroll={{ x: 1100 }} /></div></> },
+        ]} />
+      </AdminPanel>
 
       <Modal title={editor?.type === 'category' ? `${editor?.row ? 'Sửa' : 'Thêm'} danh mục` : `${editor?.row ? 'Sửa' : 'Thêm'} gói dịch vụ`} open={Boolean(editor)} onCancel={closeEditor} onOk={save} confirmLoading={saving} width={editor?.type === 'package' ? 860 : 680} destroyOnHidden>
         {editor?.type === 'category' ? (

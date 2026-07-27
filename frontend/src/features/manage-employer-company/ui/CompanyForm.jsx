@@ -5,8 +5,6 @@ import { useMemo, useRef, useState } from 'react'
 import {
   createEmployerCompany,
   createEmployerCompanyUpdateRequest,
-  deleteEmployerCompanyImage,
-  deleteEmployerCompanyLogo,
   employerProfileKeys,
   getEmployerCompanyDocuments,
   saveEmployerCompanyTradeNameWebsite,
@@ -18,8 +16,6 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import RichTextEditor from '@/shared/ui/RichTextEditor'
 import { buildCompanyChanges, companyToForm, DEFAULT_COMPANY_FORM, validateCompanyImage } from '../model/company-form'
-
-const TAX_LOOKUP_URL = 'https://tracuunnt.gdt.gov.vn/tcnnt/mstdn.jsp'
 
 function EditorField(props) {
   const { status } = Form.Item.useStatus()
@@ -51,12 +47,15 @@ function isWebsiteUrl(value) {
   }
 }
 
-export default function CompanyForm({ catalogs, industries, disabled, company = null, canManageMedia = true, onCompleted, onCancel }) {
+export default function CompanyForm({ catalogs, industries, disabled, company = null, pendingRequest = null, canManageMedia = true, onCompleted, onCancel }) {
   const isEdit = Boolean(company)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const [logoFile, setLogoFile] = useState(null)
   const [galleryFiles, setGalleryFiles] = useState([])
+  const [galleryDeletionIds, setGalleryDeletionIds] = useState(
+    () => pendingRequest?.changes?.gallery_deletions || [],
+  )
   const [pendingTradeProof, setPendingTradeProof] = useState(null)
   const [isTradeProofModalOpen, setTradeProofModalOpen] = useState(false)
   const [tradeProofSource, setTradeProofSource] = useState('file')
@@ -65,9 +64,14 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   const [businessProofFile, setBusinessProofFile] = useState(null)
   const [authorizationFile, setAuthorizationFile] = useState(null)
   const [identityFile, setIdentityFile] = useState(null)
+  const [isSensitiveModalOpen, setSensitiveModalOpen] = useState(false)
+  const [pendingSubmitValues, setPendingSubmitValues] = useState(null)
   const websiteBackup = useRef(company?.website_url || '')
   const tradeNameBackup = useRef(company?.trade_name || '')
-  const initialValues = useMemo(() => company ? companyToForm(company) : DEFAULT_COMPANY_FORM, [company])
+  const initialValues = useMemo(
+    () => company ? companyToForm(company, pendingRequest?.changes) : DEFAULT_COMPANY_FORM,
+    [company, pendingRequest?.changes],
+  )
   const businessType = Form.useWatch('business_type', form) || initialValues.business_type
   const selectedIndustries = Form.useWatch('industries', form) || []
   const hasNoWebsite = Form.useWatch('has_no_website', form) ?? initialValues.has_no_website
@@ -75,8 +79,14 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   const sameTradeName = Form.useWatch('trade_name_same_as_registered', form) ?? initialValues.trade_name_same_as_registered
   const watchedName = Form.useWatch('company_name', form) ?? initialValues.company_name
   const watchedTax = Form.useWatch('tax_code', form) ?? initialValues.tax_code
-  const proofType = Form.useWatch('proof_type', form) || 'business_registration'
+  const proofType = Form.useWatch('proof_type', form) || pendingRequest?.proof_type || 'business_registration'
   const isSensitive = isEdit && (watchedName !== company.company_name || watchedTax !== company.tax_code)
+  const pendingLogoUrl = pendingRequest?.media_previews?.logo_url || ''
+  const pendingGalleryUrls = pendingRequest?.media_previews?.gallery_additions || []
+  const visibleCompanyImages = (company?.images || []).filter(
+    (image) => !galleryDeletionIds.includes(image.id),
+  )
+  const galleryItemCount = visibleCompanyImages.length + pendingGalleryUrls.length + galleryFiles.length
   const industryOptions = industries.map((item) => ({ value: item.id, label: item.name }))
   const selectedIndustryOptions = industryOptions.filter((item) => selectedIndustries.includes(item.value))
   const documentsQuery = useQuery({
@@ -86,10 +96,30 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   })
   const savedTradeProof = useMemo(() => (documentsQuery.data || []).find((item) => item.doc_type === 'trade_name_proof') || null, [documentsQuery.data])
   const currentTradeProof = pendingTradeProof || savedTradeProof
+  const documentsRequiringReplacement = useMemo(
+    () => (pendingRequest?.documents || []).filter((document) => (
+      document.is_current && ['changes_requested', 'rejected'].includes(document.status)
+    )),
+    [pendingRequest?.documents],
+  )
+  const replacementProofTypes = useMemo(
+    () => new Set(documentsRequiringReplacement.map((document) => document.doc_type)),
+    [documentsRequiringReplacement],
+  )
+  const retainedProofTypes = useMemo(
+    () => new Set((pendingRequest?.documents || [])
+      .filter((document) => (
+        document.is_current && !['changes_requested', 'rejected'].includes(document.status)
+      ))
+      .map((document) => document.doc_type)),
+    [pendingRequest?.documents],
+  )
 
   const saveMutation = useMutation({
     mutationFn: save,
     onSuccess: async ({ partialFailures = [] }) => {
+      setSensitiveModalOpen(false)
+      setPendingSubmitValues(null)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: employerProfileKeys.company }),
         queryClient.invalidateQueries({ queryKey: ['employer', 'profile'] }),
@@ -121,6 +151,9 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     let updateRequest = null
     if (isEdit) {
       const changes = buildCompanyChanges(normalized, company)
+      if (logoFile) changes.logo_pending = true
+      if (galleryFiles.length) changes.gallery_pending = true
+      if (galleryDeletionIds.length) changes.gallery_deletions = galleryDeletionIds
       if (Object.keys(changes).length) {
         updateRequest = await createEmployerCompanyUpdateRequest({
           changes,
@@ -136,17 +169,16 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     }
 
     const uploads = []
-    if (logoFile) uploads.push(uploadEmployerCompanyLogo(logoFile))
-    else if (isEdit && hasNoLogo && company.logo_url) uploads.push(deleteEmployerCompanyLogo())
-    for (const file of galleryFiles) uploads.push(uploadEmployerCompanyImage(file))
+    if (logoFile) uploads.push(uploadEmployerCompanyLogo(logoFile, { updateRequest: updateRequest?.public_id }))
+    for (const file of galleryFiles) uploads.push(uploadEmployerCompanyImage(file, { updateRequest: updateRequest?.public_id }))
     if (pendingTradeProof?.source_type === 'file') uploads.push(uploadEmployerCompanyDocument('trade_name_proof', pendingTradeProof.file, { updateRequest: updateRequest?.public_id }))
     if (pendingTradeProof?.source_type === 'website') uploads.push(saveEmployerCompanyTradeNameWebsite(pendingTradeProof.file_url, { updateRequest: updateRequest?.public_id }))
     if (isSensitive && updateRequest) {
       if (sensitiveProofType === 'business_registration') {
-        uploads.push(uploadEmployerCompanyDocument('business_registration', businessProofFile, { updateRequest: updateRequest.public_id }))
+        if (businessProofFile) uploads.push(uploadEmployerCompanyDocument('business_registration', businessProofFile, { updateRequest: updateRequest.public_id }))
       } else {
-        uploads.push(uploadEmployerCompanyDocument('authorization_letter', authorizationFile, { updateRequest: updateRequest.public_id }))
-        uploads.push(uploadEmployerCompanyDocument('identity_document', identityFile, { updateRequest: updateRequest.public_id }))
+        if (authorizationFile) uploads.push(uploadEmployerCompanyDocument('authorization_letter', authorizationFile, { updateRequest: updateRequest.public_id }))
+        if (identityFile) uploads.push(uploadEmployerCompanyDocument('identity_document', identityFile, { updateRequest: updateRequest.public_id }))
       }
     }
     const results = await Promise.allSettled(uploads)
@@ -154,7 +186,10 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   function addGalleryFiles(files) {
-    const available = Math.max(0, 10 - (company?.images?.length || 0) - galleryFiles.length)
+    const available = Math.max(
+      0,
+      10 - (company?.images?.length || 0) + galleryDeletionIds.length - galleryFiles.length,
+    )
     const valid = []
     for (const file of files.slice(0, available)) {
       const error = validateCompanyImage(file)
@@ -188,9 +223,47 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
 
   function validateSensitiveProof() {
     if (!isSensitive) return Promise.resolve()
-    if (proofType === 'business_registration' && !businessProofFile) return Promise.reject(new Error('Chọn giấy đăng ký doanh nghiệp.'))
-    if (proofType === 'authorization_and_id' && (!authorizationFile || !identityFile)) return Promise.reject(new Error('Chọn đủ giấy ủy quyền và giấy tờ định danh.'))
+    const retainsSameProof = proofType === pendingRequest?.proof_type
+    if (
+      proofType === 'business_registration'
+      && !businessProofFile
+      && !(retainsSameProof && retainedProofTypes.has('business_registration'))
+    ) return Promise.reject(new Error('Chọn giấy đăng ký doanh nghiệp.'))
+    if (
+      proofType === 'authorization_and_id'
+      && (
+        (!authorizationFile && !(retainsSameProof && retainedProofTypes.has('authorization_letter')))
+        || (!identityFile && !(retainsSameProof && retainedProofTypes.has('identity_document')))
+      )
+    ) return Promise.reject(new Error('Chọn đủ giấy ủy quyền và giấy tờ định danh.'))
     return Promise.resolve()
+  }
+
+  function submitCompanyForm(values) {
+    if (isSensitive) {
+      setPendingSubmitValues(values)
+      setSensitiveModalOpen(true)
+      return
+    }
+    saveMutation.mutate(values)
+  }
+
+  function openRequestedProofUpload() {
+    if (replacementProofTypes.has('trade_name_proof')) {
+      openTradeProofModal()
+      return
+    }
+    setPendingSubmitValues(form.getFieldsValue(true))
+    setSensitiveModalOpen(true)
+  }
+
+  async function confirmSensitiveSubmit() {
+    try {
+      const proofValues = await form.validateFields(['update_reason', 'proof_type'])
+      saveMutation.mutate({ ...pendingSubmitValues, ...proofValues })
+    } catch {
+      // Ant Design renders field-level validation feedback in the modal.
+    }
   }
 
   function openTradeProofModal() {
@@ -225,14 +298,12 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     setTradeProofModalOpen(false)
   }
 
-  async function removeExistingImage(imageId) {
-    try {
-      await deleteEmployerCompanyImage(imageId)
-      message.success('Đã xóa ảnh công ty.')
-      await onCompleted?.()
-    } catch (error) {
-      message.error(getApiErrorMessage(error, 'Không thể xóa ảnh.'))
-    }
+  function stageExistingImageDeletion(imageId) {
+    setGalleryDeletionIds((current) => (
+      current.includes(imageId)
+        ? current.filter((id) => id !== imageId)
+        : [...current, imageId]
+    ))
   }
 
   const entityLabel = businessType === 'household' ? 'hộ kinh doanh' : 'công ty'
@@ -240,14 +311,39 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     <Form
       form={form}
       layout="vertical"
-      initialValues={{ ...initialValues, proof_type: 'business_registration' }}
+      initialValues={{
+        ...initialValues,
+        update_reason: pendingRequest?.reason || '',
+        proof_type: pendingRequest?.proof_type || 'business_registration',
+      }}
       disabled={disabled || saveMutation.isPending}
-      onFinish={(values) => saveMutation.mutate(values)}
+      onFinish={submitCompanyForm}
       onFinishFailed={({ errorFields }) => errorFields[0] && form.scrollToField(errorFields[0].name, { behavior: 'smooth', block: 'center' })}
       requiredMark={false}
       className="company-form"
     >
       {isEdit && <header className="company-form-intro"><h2>Cập nhật thông tin công ty</h2><p>Thông tin này sẽ hiển thị với ứng viên trên tin tuyển dụng của bạn.</p></header>}
+      {documentsRequiringReplacement.length > 0 && (
+        <Alert
+          className="company-form-document-request"
+          type="warning"
+          showIcon
+          title="Yêu cầu này cần bổ sung giấy tờ"
+          description={(
+            <div className="company-form-document-request__content">
+              {documentsRequiringReplacement.map((document) => (
+                <p key={document.public_id || document.id}>
+                  <strong>{document.doc_type_label || document.doc_type}:</strong>{' '}
+                  {document.review_note || 'Vui lòng tải lên bản mới.'}
+                </p>
+              ))}
+              <Button type="primary" aria-label="Chọn giấy tờ thay thế" icon={<UploadOutlined />} onClick={openRequestedProofUpload}>
+                Chọn giấy tờ thay thế
+              </Button>
+            </div>
+          )}
+        />
+      )}
       <section className="company-logo-section">
         <div className="company-logo-control">
           <Upload disabled={mediaDisabled} showUploadList={false} accept=".jpg,.jpeg,.png,.webp" beforeUpload={(file) => {
@@ -257,8 +353,8 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
               return false
             }}>
             <button type="button" className="company-logo-upload" aria-label="Chọn logo" title="JPG, PNG hoặc WebP tối đa 5 MB" disabled={mediaDisabled}>
-              {(logoFile || company?.logo_url) && !hasNoLogo
-                ? <img className="company-logo-preview" src={logoFile ? URL.createObjectURL(logoFile) : company.logo_url} alt={`Logo ${entityLabel}`} />
+              {(logoFile || pendingLogoUrl || company?.logo_url) && !hasNoLogo
+                ? <img className="company-logo-preview" src={logoFile ? URL.createObjectURL(logoFile) : pendingLogoUrl || company.logo_url} alt={`Logo ${entityLabel}`} />
                 : <span className="company-logo-placeholder"><BankOutlined /><span className="company-logo-placeholder__camera"><CameraOutlined /></span></span>}
             </button>
           </Upload>
@@ -279,7 +375,6 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           type="info"
           showIcon
           title={businessType === 'household' ? 'Nhập thông tin đúng với đăng ký thuế của người đại diện hộ kinh doanh.' : 'Nhập đúng tên và mã số thuế trên Giấy chứng nhận đăng ký doanh nghiệp.'}
-          description={<a href={TAX_LOOKUP_URL} target="_blank" rel="noreferrer" className="company-setting-link">Tra cứu thông tin tại Cục Thuế</a>}
         />
         <Row gutter={[16, 0]}>
           <Col xs={24} md={12}><Form.Item name="tax_code" label={<RequiredLabel>{businessType === 'household' ? 'Mã số thuế người đại diện' : 'Mã số thuế'}</RequiredLabel>} rules={[{ required: true, message: 'Nhập mã số thuế.' }, { pattern: /^\d{10}(-\d{3})?$/, message: 'Nhập 10 chữ số hoặc dạng 10 chữ số-3 chữ số.' }]}><Input size="large" placeholder="0101234567" /></Form.Item></Col>
@@ -317,7 +412,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         <Row gutter={[16, 0]}>
           <Col xs={24} md={12}><Form.Item name="email" label={<RequiredLabel>Email công ty</RequiredLabel>} rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ.' }]}><Input size="large" /></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item name="phone" label={<RequiredLabel>Số điện thoại</RequiredLabel>} rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^\+?[0-9 .()-]{8,20}$/, message: 'Số điện thoại không hợp lệ.' }]}><Input size="large" /></Form.Item></Col>
-          <Col span={24}><Form.Item name="address" label={<RequiredLabel>Địa chỉ</RequiredLabel>} rules={[{ required: true, whitespace: true, message: 'Nhập địa chỉ.' }]}><Input size="large" /></Form.Item></Col>
+          <Col span={24}><Form.Item name="address" label={<RequiredLabel>Địa chỉ liên hệ/văn phòng</RequiredLabel>} rules={[{ required: true, whitespace: true, message: 'Nhập địa chỉ liên hệ hoặc văn phòng.' }]}><Input size="large" /></Form.Item></Col>
           <Col span={24}><Form.Item name="website_url" label={<RequiredLabel>Website</RequiredLabel>} rules={[{ required: !hasNoWebsite, message: 'Nhập website hoặc chọn không có website.' }, { type: 'url', warningOnly: hasNoWebsite, message: 'URL website không hợp lệ.' }]}><Input size="large" disabled={disabled || saveMutation.isPending || hasNoWebsite} placeholder="https://congty.vn" /></Form.Item></Col>
           <Col span={24}><Form.Item name="has_no_website" valuePropName="checked"><Checkbox onChange={changeNoWebsite}>Tôi không có website</Checkbox></Form.Item></Col>
         </Row>
@@ -333,26 +428,12 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         <h2 className="company-form-section__title">Hình ảnh công ty</h2>
         <p className="company-form-section__description">Tối đa 10 ảnh JPG, PNG hoặc WebP; khuyến nghị 1200×800 px, tỉ lệ 3:2.</p>
         <div className="company-gallery">
-          {(company?.images || []).map((image) => <div key={image.id} className="company-gallery__item"><Image src={image.image_url} alt="Ảnh công ty" />{canManageMedia && <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Xóa ảnh" onClick={() => removeExistingImage(image.id)} />}</div>)}
+          {visibleCompanyImages.map((image) => <div key={image.id} className="company-gallery__item"><Image src={image.image_url} alt="Ảnh công ty" />{canManageMedia && <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Xóa ảnh" onClick={() => stageExistingImageDeletion(image.id)} />}</div>)}
+          {pendingGalleryUrls.map((imageUrl, index) => <div key={imageUrl} className="company-gallery__item company-gallery__item--pending"><Image src={imageUrl} alt={`Ảnh công ty đang chờ duyệt ${index + 1}`} /><span className="company-gallery__pending-label">Chờ duyệt</span></div>)}
           {galleryFiles.map((file, index) => <div key={`${file.name}-${index}`} className="company-gallery__item"><Image src={URL.createObjectURL(file)} alt={file.name} /><Button danger shape="circle" icon={<DeleteOutlined />} aria-label={`Xóa ${file.name}`} onClick={() => setGalleryFiles((files) => files.filter((_, itemIndex) => itemIndex !== index))} /><span title={file.name}>{file.name}</span><small>{(file.size / 1024 / 1024).toFixed(2)} MB</small></div>)}
-          {canManageMedia && (company?.images?.length || 0) + galleryFiles.length < 10 && <Upload disabled={mediaDisabled} multiple showUploadList={false} accept=".jpg,.jpeg,.png,.webp" beforeUpload={(file) => addGalleryFiles([file])}><button type="button" disabled={mediaDisabled} className="company-gallery__add"><PlusOutlined /><span>Thêm ảnh</span></button></Upload>}
+          {canManageMedia && galleryItemCount < 10 && <Upload disabled={mediaDisabled} multiple showUploadList={false} accept=".jpg,.jpeg,.png,.webp" beforeUpload={(file) => addGalleryFiles([file])}><button type="button" disabled={mediaDisabled} className="company-gallery__add"><PlusOutlined /><span>Thêm ảnh</span></button></Upload>}
         </div>
       </section>
-
-      {isSensitive && (
-        <section className="company-form-section company-sensitive-section">
-          <Alert type="warning" showIcon title="Bạn đang thay đổi tên đăng ký hoặc mã số thuế" description="Vui lòng nêu lý do và tải hồ sơ chứng minh. Yêu cầu chỉ có hiệu lực sau khi quản trị viên duyệt." />
-          <Form.Item name="update_reason" label={<RequiredLabel>Lý do thay đổi</RequiredLabel>} rules={[{ required: true, whitespace: true, message: 'Nhập lý do thay đổi.' }]}><Input.TextArea rows={3} /></Form.Item>
-          <Form.Item name="proof_type" label={<RequiredLabel>Loại hồ sơ chứng minh</RequiredLabel>} rules={[{ validator: validateSensitiveProof }]}>
-            <Radio.Group className="grid gap-3">
-              <Radio value="business_registration">Giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương</Radio>
-              {proofType === 'business_registration' && <div className="company-proof-upload"><Upload {...uploadProps(setBusinessProofFile)}><Button icon={<UploadOutlined />}>Chọn giấy đăng ký doanh nghiệp</Button></Upload></div>}
-              <Radio value="authorization_and_id">Giấy ủy quyền và giấy tờ định danh</Radio>
-              {proofType === 'authorization_and_id' && <div className="company-proof-upload company-proof-upload--double"><Upload {...uploadProps(setAuthorizationFile)}><Button icon={<UploadOutlined />}>Chọn giấy ủy quyền</Button></Upload><Upload {...uploadProps(setIdentityFile)}><Button icon={<UploadOutlined />}>Chọn CCCD / Hộ chiếu</Button></Upload></div>}
-            </Radio.Group>
-          </Form.Item>
-        </section>
-      )}
 
       <div className="company-form-actions">
         {onCancel && <Button size="large" onClick={onCancel}>Hủy</Button>}
@@ -360,11 +441,72 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       </div>
 
       <Modal
+        open={isSensitiveModalOpen}
+        title="Xác nhận thay đổi thông tin pháp lý"
+        onCancel={() => setSensitiveModalOpen(false)}
+        footer={(
+          <>
+            <Button onClick={() => setSensitiveModalOpen(false)}>Hủy</Button>
+            <Button type="primary" loading={saveMutation.isPending} onClick={confirmSensitiveSubmit}>
+              Gửi yêu cầu duyệt
+            </Button>
+          </>
+        )}
+        destroyOnHidden={false}
+      >
+        <Alert
+          className="mb-4"
+          type="warning"
+          showIcon
+          title="Bạn đang thay đổi tên đăng ký hoặc mã số thuế"
+          description="Nhập lý do và cung cấp hồ sơ chứng minh. Dữ liệu hiện tại chỉ thay đổi sau khi quản trị viên phê duyệt."
+        />
+        {documentsRequiringReplacement.length > 0 && (
+          <Alert
+            className="mb-4"
+            type="error"
+            showIcon
+            title="Giấy tờ trước chưa đạt yêu cầu"
+            description={documentsRequiringReplacement.map((document) => (
+              <div key={document.public_id || document.id}>
+                <strong>{document.doc_type_label || document.doc_type}:</strong>{' '}
+                {document.review_note || 'Vui lòng chọn tệp mới để gửi lại.'}
+              </div>
+            ))}
+          />
+        )}
+        <Form.Item name="update_reason" label={<RequiredLabel>Lý do thay đổi</RequiredLabel>} rules={[{ required: true, whitespace: true, message: 'Nhập lý do thay đổi.' }]}>
+          <Input.TextArea rows={3} />
+        </Form.Item>
+        <Form.Item name="proof_type" label={<RequiredLabel>Loại hồ sơ chứng minh</RequiredLabel>} rules={[{ validator: validateSensitiveProof }]}>
+          <Radio.Group className="grid gap-3">
+            <Radio value="business_registration">Giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương</Radio>
+            {proofType === 'business_registration' && (
+              <div className="company-proof-upload">
+                <Upload {...uploadProps(setBusinessProofFile)}><Button aria-label="Chọn giấy đăng ký doanh nghiệp" icon={<UploadOutlined />}>Chọn giấy đăng ký doanh nghiệp</Button></Upload>
+                {!businessProofFile && retainedProofTypes.has('business_registration') && <small>Đang giữ giấy tờ đã nộp ở lần trước.</small>}
+                {replacementProofTypes.has('business_registration') && !businessProofFile && <small className="company-proof-upload__required">Cần chọn tệp mới theo yêu cầu của quản trị viên.</small>}
+              </div>
+            )}
+            <Radio value="authorization_and_id">Giấy ủy quyền và giấy tờ định danh</Radio>
+            {proofType === 'authorization_and_id' && (
+              <div className="company-proof-upload company-proof-upload--double">
+                <Upload {...uploadProps(setAuthorizationFile)}><Button aria-label="Chọn giấy ủy quyền" icon={<UploadOutlined />}>Chọn giấy ủy quyền</Button></Upload>
+                <Upload {...uploadProps(setIdentityFile)}><Button aria-label="Chọn CCCD hoặc Hộ chiếu" icon={<UploadOutlined />}>Chọn CCCD / Hộ chiếu</Button></Upload>
+                {!authorizationFile && !identityFile && retainedProofTypes.has('authorization_letter') && retainedProofTypes.has('identity_document') && <small>Đang giữ bộ giấy tờ đã nộp ở lần trước.</small>}
+                {(replacementProofTypes.has('authorization_letter') || replacementProofTypes.has('identity_document')) && <small className="company-proof-upload__required">Chọn tệp mới cho từng giấy tờ được yêu cầu bổ sung.</small>}
+              </div>
+            )}
+          </Radio.Group>
+        </Form.Item>
+      </Modal>
+
+      <Modal
         open={isTradeProofModalOpen}
         title="Giấy tờ chứng minh Tên thương mại"
         onCancel={() => setTradeProofModalOpen(false)}
         footer={<><Button onClick={() => setTradeProofModalOpen(false)}>Hủy</Button><Button type="primary" onClick={saveTradeProof}>Lưu</Button></>}
-        destroyOnClose
+        destroyOnHidden
       >
         <Radio.Group value={tradeProofSource} onChange={(event) => setTradeProofSource(event.target.value)} className="company-trade-proof-modal__sources">
           <Radio value="file">Giấy tờ</Radio>

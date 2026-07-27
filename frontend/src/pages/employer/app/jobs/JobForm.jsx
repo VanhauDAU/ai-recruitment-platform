@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Skeleton, message } from 'antd'
+import { Alert, Skeleton } from 'antd'
 import { useMemo } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { createCampaign, getCampaignOptions, campaignKeys } from '@/entities/campaign'
 import { useSession } from '@/entities/session'
 import {
@@ -16,6 +16,7 @@ import {
 import { PostJobForm } from '@/features/post-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 export default function JobForm() {
   const { publicId } = useParams()

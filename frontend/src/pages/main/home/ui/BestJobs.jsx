@@ -1,7 +1,7 @@
 import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Dropdown } from 'antd'
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import ArrowButton from '@/shared/ui/ArrowButton'
 import BestJobsResults from './BestJobsResults'
 import { BEST_JOBS_DIMENSIONS } from '../lib/best-jobs-config'

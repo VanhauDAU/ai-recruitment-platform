@@ -5,14 +5,25 @@ from .company import Company, CompanyImage, CompanyIndustry, Industry
 from .membership import RecruiterProfile
 from .otp import PhoneOtp
 from .recruitment_need import RecruitmentNeed
-from .verification import CompanyDocument, CompanyUpdateRequest
+from .verification import (
+    CompanyDocument,
+    CompanyTaxLookupEvidence,
+    CompanyUpdateRequest,
+    EmployerVerificationCase,
+    EmployerVerificationEvent,
+    EmployerVerificationNotification,
+)
 
 __all__ = [
     'Company',
     'CompanyDocument',
+    'CompanyTaxLookupEvidence',
     'CompanyImage',
     'CompanyIndustry',
     'CompanyUpdateRequest',
+    'EmployerVerificationCase',
+    'EmployerVerificationEvent',
+    'EmployerVerificationNotification',
     'CampaignActivity',
     'Industry',
     'PhoneOtp',

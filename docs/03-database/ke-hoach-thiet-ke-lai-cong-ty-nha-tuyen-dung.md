@@ -113,14 +113,52 @@ Bảng `industries` giữ nguyên.
 
 | Trường | Ghi chú |
 |---|---|
-| `public_id`, `company` FK, `requested_by` FK users | "Ngày yêu cầu gần nhất" = `MAX(created_at)` theo company |
+| `public_id`, `company` FK, `requested_by` FK users | "Ngày yêu cầu gần nhất" lấy từ `updated_at`; cùng một yêu cầu pending được cập nhật nhiều lần |
 | `changes` | JSONB — snapshot các trường đề xuất `{field: new_value}` |
 | `is_sensitive` | bool — `True` khi đổi `tax_code` hoặc `company_name` |
 | `reason` | text — bắt buộc khi `is_sensitive` |
 | `proof_type` | choices, null: `business_registration` / `authorization_and_id` (giấy ủy quyền + giấy tờ định danh) — bắt buộc khi `is_sensitive`; file đính kèm nằm ở `company_documents.update_request` |
 | `status` | `pending/approved/rejected` + `reviewed_by`, `reviewed_at`, `review_note` |
+| `revision`, `lock_version` | tăng khi nhà tuyển dụng gửi lại hoặc admin duyệt giấy tờ; ngăn admin áp dụng nhầm một bản đã cũ |
 
-Khi admin approve: service apply `changes` vào `companies` trong 1 transaction, ghi `reviewed_*`. Mỗi company chỉ có tối đa 1 request `pending` (partial unique).
+Mọi trường sau lần tạo công ty đầu tiên, kể cả website, mô tả, ngành nghề và
+hình ảnh, đều chỉ được ghi vào `changes`; dữ liệu chính thức trong `companies`
+không đổi trước khi duyệt. Ảnh mới được lưu tạm bằng storage key trong request,
+ảnh cũ chỉ bị xóa sau commit. Khi admin approve, service apply toàn bộ snapshot
+trong một transaction và ghi `reviewed_*`; khi reject, file tạm được dọn. Mỗi
+company chỉ có tối đa một request `pending` (partial unique).
+
+POST tiếp theo khi đang pending là **upsert cùng record**, tăng `revision` và
+giữ snapshot mới nhất để lần mở form sau tiếp tục từ dữ liệu đã gửi. Không tạo
+nhiều request pending; giấy tờ thay thế được version hóa, chỉ bản `is_current`
+được duyệt. Đổi `tax_code` hoặc `company_name` bắt buộc lý do và một trong hai
+bộ hồ sơ: giấy ĐKDN/tương đương, hoặc giấy ủy quyền + giấy tờ định danh. Admin
+phải duyệt đủ các giấy tờ hiện hành trước khi được áp dụng yêu cầu nhạy cảm.
+
+### 2.6.1 Nguyên tắc duyệt văn bản xử lý dữ liệu cá nhân
+
+Văn bản DOC/DOCX/PDF do nhà tuyển dụng tải lên được **duyệt thủ công**. Hệ
+thống chỉ tự động kiểm tra kỹ thuật (định dạng, dung lượng, mã băm, phiên bản,
+virus nếu có) và tự chuyển trạng thái tổng khi tài liệu cuối cùng đã được người
+có thẩm quyền duyệt. Không dùng OCR/AI để tự kết luận hiệu lực pháp lý.
+
+Lý do: Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15 yêu cầu bên xử lý dữ liệu chỉ
+tiếp nhận, xử lý dữ liệu sau thỏa thuận/hợp đồng với bên kiểm soát; Luật Giao
+dịch điện tử 20/2023/QH15 cho phép giao kết điện tử và không phủ nhận giá trị
+chỉ vì tương tác tự động. Vì vậy, **xác nhận thỏa thuận chuẩn do chính hệ thống
+phát hành** có thể ghi nhận tự động nếu hệ thống lưu được danh tính, phiên bản
+nội dung/mã băm, thời điểm và bằng chứng toàn vẹn; còn tài liệu tự do do doanh
+nghiệp tải lên vẫn cần người duyệt.
+
+Nguồn pháp lý chính thức:
+
+- [Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15](https://vanban.chinhphu.vn/?classid=1&docid=214590&pageid=27160&typegroupid=3)
+- [Nghị định 356/2025/NĐ-CP](https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=187276)
+- [Luật Giao dịch điện tử 20/2023/QH15](https://vbpl.vn/TW/pages/vbpq-toanvan.aspx?ItemID=165913)
+
+Trước khi go-live phải thay các URL/mẫu văn bản đang trỏ đến TopCV bằng tài
+liệu pháp lý của chính nền tảng, được pháp chế phê duyệt; đồng thời lưu lịch sử
+chấp nhận theo phiên bản/mã băm thay vì chỉ `dpa_accepted_at`.
 
 ### 2.7 `phone_otps` — xác thực SĐT qua OTP
 

@@ -199,10 +199,15 @@ URL bắt đầu bằng `/` được điều hướng nội bộ, URL đầy đ�
 
 | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|
-| `admin_roles_enabled` | Bật phân quyền chi tiết | boolean | false |  |
-| `admin_allow_staff_creation` | Cho phép tạo tài khoản quản trị phụ | boolean | false |  |
-| `admin_default_role` | Vai trò mặc định | select | "moderator" |  |
-| `admin_action_log_enabled` | Ghi log thao tác admin | boolean | false |  |
+| `admin_roles_enabled` | Deprecated — RBAC luôn bật, code không đọc cờ này | boolean | false |  |
+| `admin_allow_staff_creation` | Dành cho luồng mời admin ở G2, G1 chưa đọc | boolean | false |  |
+| `admin_default_role` | Deprecated — role hiện thuộc phòng ban | select | "moderator" |  |
+| `admin_action_log_enabled` | Deprecated — audit RBAC luôn ghi, không thể tắt | boolean | false |  |
+
+Các key deprecated không phải security switch. Nguồn quyền là registry
+`AdminPermission → AdminRole → AdminMembership`; `site_setting.*` chỉ dành cho
+superuser ở G1. G2 sẽ thay cấu hình audit bằng retention/detail policy, không
+cho phép tắt việc ghi log.
 
 ### Cài đặt AI (`ai`)
 

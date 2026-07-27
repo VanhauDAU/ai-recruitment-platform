@@ -1,0 +1,434 @@
+.account-detail-hero {
+  align-items: center;
+  background:
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--admin-primary) 12%, transparent), transparent 30%),
+    #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  box-shadow: var(--admin-shadow);
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 22px;
+}
+
+.account-detail-hero__identity {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+
+.account-detail-tabs {
+  min-width: 0;
+  padding: 0 20px 20px;
+}
+
+.account-detail-tabs > .ant-tabs > .ant-tabs-nav {
+  margin-bottom: 20px;
+}
+
+.account-detail-tabs .ant-tabs-content,
+.account-detail-tabs .ant-tabs-tabpane {
+  min-width: 0;
+}
+
+.account-detail-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.account-detail-counts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-detail-counts div {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  min-height: 82px;
+  padding: 13px;
+}
+
+.account-detail-counts span,
+.account-detail-counts strong {
+  display: block;
+}
+
+.account-detail-counts span {
+  color: #64748b;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.account-detail-counts strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+/* ---- Tab hồ sơ ------------------------------------------------------ */
+
+.account-profile__card {
+  border-color: var(--admin-border);
+}
+
+.account-profile__card-title {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.account-profile__card-title .ant-tag {
+  margin: 0;
+}
+
+/* Cột nhãn cố định để nhãn dài không bị bóp thành 3 dòng, còn cột giá trị
+ * được phép xuống dòng thay vì kéo giãn bảng. */
+.account-profile__grid .ant-descriptions-item-label {
+  color: #475569;
+  font-weight: 600;
+  width: 190px;
+}
+
+.account-profile__grid .ant-descriptions-item-content {
+  color: #0f172a;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* URL dài phải xuống dòng chứ không được nowrap: trong bảng `table-layout: auto`
+ * một ô nowrap sẽ kéo giãn cả bảng và làm card tràn ngang trên mobile. */
+.account-profile__link {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-profile__industries {
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #f8fafc;
+  margin-top: 14px;
+  padding: 10px 12px;
+}
+
+.account-profile__richtext {
+  margin-top: 16px;
+}
+
+.account-profile__richtext h4 {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.account-profile__richtext-body {
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 340px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 12px 14px;
+}
+
+.account-profile__richtext-body > :first-child { margin-top: 0; }
+.account-profile__richtext-body > :last-child { margin-bottom: 0; }
+
+.account-profile__richtext-body p { margin: 0 0 8px; }
+/* Preflight của Tailwind bỏ marker của ul/ol nên phải trả lại trong khối rich-text. */
+.account-profile__richtext-body ul,
+.account-profile__richtext-body ol { margin: 0 0 8px; padding-left: 22px; }
+.account-profile__richtext-body ul { list-style: disc; }
+.account-profile__richtext-body ol { list-style: decimal; }
+.account-profile__richtext-body li { margin-bottom: 4px; }
+
+.account-profile__richtext-body img {
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+.account-profile__richtext-body table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.account-profile__richtext-body td,
+.account-profile__richtext-body th {
+  border: 1px solid var(--admin-border);
+  padding: 6px 8px;
+}
+
+.account-company-visual {
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.account-company-visual__cover {
+  background: #f1f5f9;
+  height: clamp(150px, 24vw, 260px);
+}
+
+.account-company-visual__cover .ant-image,
+.account-company-visual__cover .ant-image-img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.account-company-visual__placeholder {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  font-size: 32px;
+  gap: 8px;
+  height: 100%;
+  justify-content: center;
+}
+
+.account-company-visual__placeholder span {
+  font-size: 13px;
+}
+
+.account-company-visual__identity {
+  align-items: center;
+  background: #fff;
+  display: flex;
+  gap: 14px;
+  padding: 14px 18px;
+}
+
+.account-company-visual__identity .ant-typography {
+  margin: 0;
+}
+
+.account-company-visual__logo {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  color: #94a3b8;
+  display: flex;
+  flex: 0 0 72px;
+  font-size: 28px;
+  height: 72px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.account-company-visual__logo .ant-image,
+.account-company-visual__logo .ant-image-img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.account-company-section,
+.account-profile__richtext {
+  margin-top: 20px;
+}
+
+.account-company-section > h4,
+.account-company-section__heading h4 {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.account-company-section__heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.account-company-section__heading .ant-tag {
+  margin: 0 0 8px;
+}
+
+.account-company-gallery {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.account-company-gallery figure {
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.account-company-gallery .ant-image {
+  aspect-ratio: 3 / 2;
+  display: block;
+  width: 100%;
+}
+
+.account-company-gallery .ant-image-img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.account-company-gallery figcaption {
+  color: #475569;
+  font-size: 12px;
+  overflow: hidden;
+  padding: 7px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Tab quyền truy cập -------------------------------------------- */
+
+.account-access-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.account-access-summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.account-access-summary > div {
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-width: 0;
+  padding: 14px;
+}
+
+.account-access-summary .anticon {
+  color: var(--admin-primary);
+  font-size: 18px;
+  grid-row: span 2;
+  margin-right: 10px;
+  margin-top: 2px;
+}
+
+.account-access-summary span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.account-access-summary strong {
+  color: #0f172a;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.account-access-card {
+  border-color: var(--admin-border);
+}
+
+.account-access-section-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.account-access-section-heading .ant-typography {
+  margin: 0;
+}
+
+.account-access-section-heading > .ant-tag {
+  margin: 2px 0 0;
+}
+
+.account-access-permission-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-access-permission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-access-permission-list li {
+  border-bottom: 1px solid #eef2f7;
+  display: grid;
+  gap: 5px;
+  padding: 11px 0;
+}
+
+.account-access-permission-list li:first-child { padding-top: 0; }
+.account-access-permission-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.account-access-permission-list .ant-typography code { justify-self: start; }
+
+@media (max-width: 768px) {
+  .account-profile__grid .ant-descriptions-item-label { width: 40%; }
+  .account-profile__richtext-body { max-height: 260px; }
+
+  .account-detail-hero,
+  .account-detail-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .account-detail-hero .ant-btn,
+  .account-detail-toolbar .ant-btn {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .account-detail-tabs {
+    padding: 0 14px 14px;
+  }
+
+  .account-detail-tabs > .ant-tabs > .ant-tabs-nav {
+    overflow-x: auto;
+  }
+
+  .account-detail-counts {
+    grid-template-columns: 1fr;
+  }
+
+  .account-company-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-access-summary,
+  .account-access-permission-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-company-visual__identity {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .account-company-visual__logo {
+    flex-basis: 58px;
+    height: 58px;
+  }
+}

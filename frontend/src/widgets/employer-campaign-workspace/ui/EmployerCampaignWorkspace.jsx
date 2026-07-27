@@ -4,9 +4,9 @@ import {
   HistoryOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Modal, Skeleton, Tag, message } from 'antd'
+import { Alert, Button, Modal, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import {
   CAMPAIGN_STATUS_COLORS,
   CAMPAIGN_STATUS_LABELS,
@@ -20,6 +20,7 @@ import {
   CampaignLifecycleActions,
 } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
 import CampaignJobsPanel from './CampaignJobsPanel'

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, Select, Table, Tag } from 'antd'
 import {
   consultationLeadKeys,
   getAdminConsultationLeads,
   updateAdminConsultationLead,
 } from '@/entities/consultation-lead'
 import { message } from '@/shared/lib/toast'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 const PAGE_SIZE = 20
 
@@ -62,10 +63,41 @@ export default function AdminConsultationLeads() {
   ]
 
   return (
-    <div>
-      <Typography.Title level={2}>Yêu cầu tư vấn</Typography.Title>
-      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><Typography.Paragraph type="secondary" className="!mb-0">Theo dõi lead gửi từ các trang marketing nhà tuyển dụng.</Typography.Paragraph><Space><span>Trạng thái</span><Select value={status} onChange={(nextStatus) => { setStatus(nextStatus); setPage(1) }} className="w-40" options={[{ value: 'new', label: 'Mới' }, { value: 'contacted', label: 'Đã liên hệ' }, { value: '', label: 'Tất cả' }]} /></Space></div>
-      <div className="overflow-x-auto"><Table rowKey="id" loading={leadsQuery.isFetching} dataSource={data} columns={columns} scroll={{ x: 1500 }} pagination={{ current: page, pageSize: PAGE_SIZE, total, showSizeChanger: false, onChange: setPage }} /></div>
+    <div className="space-y-5">
+      <AdminPanel
+        title="Danh sách khách hàng"
+        description={`${total.toLocaleString('vi-VN')} yêu cầu phù hợp với bộ lọc hiện tại`}
+        extra={(
+          <Select
+            aria-label="Lọc trạng thái lead"
+            value={status}
+            onChange={(nextStatus) => { setStatus(nextStatus); setPage(1) }}
+            className="w-full sm:w-44"
+            options={[
+              { value: 'new', label: 'Mới' },
+              { value: 'contacted', label: 'Đã liên hệ' },
+              { value: '', label: 'Tất cả' },
+            ]}
+          />
+        )}
+      >
+        <div className="overflow-x-auto">
+          <Table
+            rowKey="id"
+            loading={leadsQuery.isFetching}
+            dataSource={data}
+            columns={columns}
+            scroll={{ x: 1500 }}
+            pagination={{
+              current: page,
+              pageSize: PAGE_SIZE,
+              total,
+              showSizeChanger: false,
+              onChange: setPage,
+            }}
+          />
+        </div>
+      </AdminPanel>
     </div>
   )
 }

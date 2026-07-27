@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router'
 import { completeOAuth, getAuthDestination, getSafeReturnUrl, withReturnUrl } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import PageLoading from '@/shared/ui/PageLoading'

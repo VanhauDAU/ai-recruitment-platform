@@ -60,6 +60,11 @@ export const SALARY_RANGES = [
   { key: 'o50', label: 'Trên 50 triệu', gte: 50_000_000 },
 ]
 
+export const SALARY_CURRENCY_OPTIONS = [
+  { value: 'VND', label: 'VND (₫)' },
+  { value: 'USD', label: 'USD ($)' },
+]
+
 // Số theo định dạng Việt Nam (dấu chấm ngăn cách hàng nghìn): 3516 -> "3.516".
 export const formatNumber = (n) => (n ?? 0).toLocaleString('vi-VN')
 
@@ -71,15 +76,22 @@ export const companyInitial = (name = '') => stripCompanyPrefix(name).charAt(0) 
 
 export function formatSalary(job) {
   if (job.salary_type === 'negotiable' || (!job.salary_min && !job.salary_max)) return 'Thỏa thuận'
+  const currency = job.currency || 'VND'
   const fmt = (n) => {
+    if (currency !== 'VND') return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(Number(n))
     const millions = Number(n) / 1_000_000
     return Number.isInteger(millions) ? `${millions}` : `${millions.toFixed(1).replace('.', ',')}`
   }
-  if (job.salary_type === 'fixed') return `${fmt(job.salary_min || job.salary_max)} triệu`
-  if (job.salary_type === 'from' || (job.salary_min && !job.salary_max)) return `Từ ${fmt(job.salary_min)} triệu`
-  if (job.salary_type === 'up_to' || (!job.salary_min && job.salary_max)) return `Đến ${fmt(job.salary_max)} triệu`
-  return `${fmt(job.salary_min)} - ${fmt(job.salary_max)} triệu`
+  const suffix = currency === 'VND' ? 'triệu' : currency
+  if (job.salary_type === 'fixed') return `${fmt(job.salary_min || job.salary_max)} ${suffix}`
+  if (job.salary_type === 'from' || (job.salary_min && !job.salary_max)) return `Từ ${fmt(job.salary_min)} ${suffix}`
+  if (job.salary_type === 'up_to' || (!job.salary_min && job.salary_max)) return `Đến ${fmt(job.salary_max)} ${suffix}`
+  return `${fmt(job.salary_min)} - ${fmt(job.salary_max)} ${suffix}`
 }
+
+export const getSalaryDisplayNote = (job) => (
+  job.income_display_type === 'income_at_kpi' ? 'Khi đạt 100% KPI' : null
+)
 
 export function formatEducation(level) {
   if (!level) return null

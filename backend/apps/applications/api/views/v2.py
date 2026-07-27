@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate, IsEmployer
+from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...models import Application
 from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
@@ -75,6 +76,7 @@ class RecruiterApplicationSnapshotView(APIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, public_id):
+        ensure_recruiter_candidate_data_access(request.user)
         try:
             application = recruiter_application_snapshot_queryset(request.user).get(
                 public_id=public_id

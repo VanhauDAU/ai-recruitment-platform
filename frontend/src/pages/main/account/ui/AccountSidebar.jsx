@@ -1,7 +1,7 @@
 import { CaretRightOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { message } from '@/shared/lib/toast'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router'
 import { CANDIDATE_MENU, candidateMenuItemLabel, findGroupKeyByPath } from '@/entities/account'
 import { useSession } from '@/entities/session'
 

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCandidate
 
 from ...selectors import recommend_jobs_from_saved
+from ...selectors.verification_badge import prime_badge_cache
 from ..serializers import (
     PublicJobListSerializer,
     SavedJobRecommendationResponseSerializer,
@@ -19,9 +20,15 @@ class SavedJobRecommendationQuerySerializer(serializers.Serializer):
 
 
 def _serialize_results(payload, request):
+    # Xem chú thích ở `public._serialize_recommendation_results`.
+    context = {'request': request}
+    prime_badge_cache(
+        context,
+        {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
+    )
     results = []
     for item in payload['results']:
-        job = PublicJobListSerializer(item['job'], context={'request': request}).data
+        job = PublicJobListSerializer(item['job'], context=context).data
         job.update(
             {
                 'similarity_score': item['similarity_score'],

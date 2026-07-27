@@ -11,6 +11,7 @@
 | [03-database](03-database/)     | [cv-builder-architecture-foundation.md](03-database/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |
 | [03-database](03-database/)     | [ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md](03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md) | Trạng thái và roadmap hoàn thiện CV Builder |
 | [03-database](03-database/)     | [ke-hoach-chien-dich-va-vong-doi-tin.md](03-database/ke-hoach-chien-dich-va-vong-doi-tin.md) | Ownership recruiter, chiến dịch, duyệt tin, quota và pipeline ứng viên |
+| [03-database](03-database/)     | [ke-hoach-database-phan-quyen-admin.md](03-database/ke-hoach-database-phan-quyen-admin.md) | RBAC admin theo phòng ban, role, membership và audit |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
@@ -19,6 +20,7 @@
 | [05-huong-dan](05-huong-dan/)   | [social-login.md](05-huong-dan/social-login.md)                 | Cấu hình social login OAuth (lấy key Google/Facebook/LinkedIn)          |
 | [05-huong-dan](05-huong-dan/)   | [quy-trinh-pull-request.md](05-huong-dan/quy-trinh-pull-request.md) | Quy trình Pull Request, review, branch protection và Definition of Done |
 | [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Hướng dẫn deploy, Docker, môi trường production                         |
+| [06-deployment](06-deployment/) | [admin-rbac-g1-runbook.md](06-deployment/admin-rbac-g1-runbook.md) | Hai release G1.1/G1.2 và readiness gate cho RBAC admin |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 

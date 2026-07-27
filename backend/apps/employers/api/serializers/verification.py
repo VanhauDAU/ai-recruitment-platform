@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import EmailValidator, URLValidator
 from rest_framework import serializers
 
+from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry
@@ -11,6 +12,8 @@ from ...services import SENSITIVE_FIELDS, UPDATABLE_COMPANY_FIELDS
 
 
 class CompanyDocumentSerializer(serializers.ModelSerializer):
+    doc_type_label = serializers.CharField(source='get_doc_type_display', read_only=True)
+    status_label = serializers.CharField(source='get_status_display', read_only=True)
     file_url = serializers.SerializerMethodField()
     source_type = serializers.SerializerMethodField()
     update_request = serializers.CharField(source='update_request.public_id', read_only=True)
@@ -19,16 +22,24 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
         model = CompanyDocument
         fields = [
             'id',
+            'public_id',
             'doc_type',
+            'doc_type_label',
             'source_type',
             'file_url',
             'file_name',
+            'mime_type',
+            'file_size',
+            'version',
+            'is_current',
             'status',
+            'status_label',
             'review_note',
+            'reviewed_at',
             'update_request',
             'created_at',
         ]
-        read_only_fields = ['id', 'file_url', 'file_name', 'status', 'review_note', 'created_at']
+        read_only_fields = fields
 
     def get_file_url(self, obj):
         if obj.file_url.startswith(('http://', 'https://')):
@@ -52,6 +63,7 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
 
 class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
     documents = CompanyDocumentSerializer(many=True, read_only=True)
+    media_previews = serializers.SerializerMethodField()
 
     class Meta:
         model = CompanyUpdateRequest
@@ -64,26 +76,64 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'status',
             'review_note',
             'documents',
+            'media_previews',
             'created_at',
+            'updated_at',
+            'revision',
+            'lock_version',
         ]
-        read_only_fields = ['public_id', 'is_sensitive', 'status', 'review_note', 'created_at']
+        read_only_fields = [
+            'public_id',
+            'is_sensitive',
+            'status',
+            'review_note',
+            'created_at',
+            'updated_at',
+            'revision',
+            'lock_version',
+        ]
+
+    def get_media_previews(self, obj):
+        changes = obj.changes or {}
+        request = self.context.get('request')
+        previews = {
+            field: media_url_from_value(changes[field], request=request)
+            for field in ('logo_url', 'cover_image_url')
+            if changes.get(field)
+        }
+        previews['gallery_additions'] = [
+            media_url_from_value(value, request=request)
+            for value in changes.get('gallery_additions', [])
+            if value
+        ]
+        return previews
 
     def validate_changes(self, value):
         if not isinstance(value, dict) or not value:
             raise serializers.ValidationError('Chưa có thay đổi nào.')
-        allowed = UPDATABLE_COMPANY_FIELDS | {'industries', 'primary_industry'}
+        allowed = UPDATABLE_COMPANY_FIELDS | {
+            'industries',
+            'primary_industry',
+            'gallery_deletions',
+            'logo_pending',
+            'cover_pending',
+            'gallery_pending',
+        }
         invalid = set(value) - allowed
         if invalid:
             raise serializers.ValidationError(
                 f'Trường không được phép cập nhật: {", ".join(sorted(invalid))}'
             )
+        for marker in ('logo_pending', 'cover_pending', 'gallery_pending'):
+            if marker in value and value[marker] is not True:
+                raise serializers.ValidationError({marker: 'Trạng thái tải ảnh không hợp lệ.'})
         return value
 
     def validate(self, attrs):
         # Đổi MST/tên công ty phải kèm lý do + loại giấy tờ chứng minh.
         sensitive = bool(SENSITIVE_FIELDS & set(attrs.get('changes', {})))
         if sensitive:
-            if not attrs.get('reason'):
+            if not attrs.get('reason', '').strip():
                 raise serializers.ValidationError(
                     {'reason': 'Nhập lý do khi thay đổi Mã số thuế hoặc Tên công ty.'}
                 )
@@ -94,6 +144,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                     }
                 )
         attrs['changes'] = self._validate_company_changes(attrs['changes'])
+        attrs['reason'] = attrs.get('reason', '').strip()
         attrs['is_sensitive'] = sensitive
         return attrs
 
@@ -207,6 +258,22 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             if primary_id not in found_ids:
                 raise serializers.ValidationError(
                     {'primary_industry': 'Lĩnh vực chính phải nằm trong các lĩnh vực đã chọn.'}
+                )
+
+        if 'gallery_deletions' in cleaned:
+            deletion_ids = cleaned['gallery_deletions']
+            if not isinstance(deletion_ids, list) or any(
+                not isinstance(image_id, int) for image_id in deletion_ids
+            ):
+                raise serializers.ValidationError(
+                    {'gallery_deletions': 'Danh sách ảnh cần xóa không hợp lệ.'}
+                )
+            existing_ids = set(
+                company.images.filter(id__in=deletion_ids).values_list('id', flat=True)
+            )
+            if len(existing_ids) != len(set(deletion_ids)):
+                raise serializers.ValidationError(
+                    {'gallery_deletions': 'Có ảnh không thuộc công ty hiện tại.'}
                 )
 
         website = cleaned.get('website_url', getattr(company, 'website_url', ''))

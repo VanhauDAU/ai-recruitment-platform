@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DownOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Empty, Skeleton } from 'antd'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { BLOG_ROOT, getBlogCategories, getBlogPosts } from '@/entities/blog'
 import { setDocumentTitle } from '@/shared/config/document-title'
+import { setDocumentMetaDescription } from '@/shared/config/document-meta'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import { BlogCardRow } from './ui/BlogCard'
 import BlogInlineBanner from './ui/BlogInlineBanner'
@@ -56,7 +57,8 @@ export default function BlogCategory() {
   }, [categorySlug])
 
   useEffect(() => {
-    setDocumentTitle(activeCategory ? `${activeCategory.name} — ${pageTitle}` : pageTitle)
+    setDocumentTitle(activeCategory?.seo_title || (activeCategory ? `${activeCategory.name} — ${pageTitle}` : pageTitle))
+    return setDocumentMetaDescription(activeCategory?.description || '')
   }, [activeCategory, pageTitle])
 
   async function loadMore() {

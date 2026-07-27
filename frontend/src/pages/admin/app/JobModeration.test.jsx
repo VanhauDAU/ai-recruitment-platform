@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminJobModeration from './JobModeration'
 
@@ -14,11 +15,65 @@ vi.mock('@/entities/job', () => ({
   reviewAdminJob,
 }))
 
-function renderPage() {
+vi.mock('@/features/review-job-reports', () => ({
+  JobReportQueue: () => <div>Mock report queue</div>,
+}))
+
+vi.mock('antd', async (importOriginal) => {
+  const antd = await importOriginal()
+  return {
+    ...antd,
+    // This suite verifies moderation state and payloads. Browser smoke tests
+    // cover Ant Design's table layout and modal portal, so keep unit rendering
+    // deterministic on resource-constrained CI runners.
+    Table: ({ columns, dataSource = [] }) => (
+      <table>
+        <thead>
+          <tr>{columns.map((column) => <th key={column.key || column.dataIndex}>{column.title}</th>)}</tr>
+        </thead>
+        <tbody>
+          {dataSource.map((row, rowIndex) => (
+            <tr key={row.public_id}>
+              {columns.map((column) => {
+                const value = column.dataIndex ? row[column.dataIndex] : undefined
+                return (
+                  <td key={column.key || column.dataIndex}>
+                    {column.render ? column.render(value, row, rowIndex) : value}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    Modal: ({
+      open,
+      title,
+      children,
+      onCancel,
+      onOk,
+      okText = 'OK',
+      cancelText = 'Cancel',
+      confirmLoading = false,
+    }) => open ? (
+      <div role="dialog" aria-modal="true">
+        <div>{title}</div>
+        {children}
+        <button type="button" onClick={onCancel}>{cancelText}</button>
+        <button type="button" disabled={confirmLoading} onClick={onOk}>{okText}</button>
+      </div>
+    ) : null,
+  }
+})
+
+function renderPage(initialEntry = '/admin/app/job-moderation') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <AdminJobModeration />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <AdminJobModeration />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -53,7 +108,7 @@ describe('AdminJobModeration', () => {
     await waitFor(() => expect(reviewAdminJob).toHaveBeenCalledWith('job_pending', {
       action: 'approve',
     }))
-  })
+  }, 15_000)
 
   it('requires and submits an employer-visible rejection reason', async () => {
     reviewAdminJob.mockResolvedValue({ public_id: 'job_pending', status: 'rejected' })
@@ -70,5 +125,16 @@ describe('AdminJobModeration', () => {
       action: 'reject',
       reason: 'Vui lòng bổ sung quyền lợi.',
     }))
+  }, 15_000)
+
+  it('opens the report queue from a deep-linked tab', async () => {
+    renderPage('/admin/app/job-moderation?tab=reports')
+
+    expect(screen.getByRole('tab', { name: 'Báo cáo vi phạm' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByText('Mock report queue')).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Báo cáo chờ xử lý' })).toBeVisible()
   })
 })

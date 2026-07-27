@@ -5,7 +5,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Empty, Input, Select, Table, Tag } from 'antd'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   RECRUITER_APPLICATION_STATUS_LABELS,
   RECRUITER_APPLICATION_STATUSES,

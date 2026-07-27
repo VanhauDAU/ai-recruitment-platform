@@ -1,5 +1,17 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-07-26 — Vá reset mật khẩu Admin
+
+- Luồng “Gửi đặt lại mật khẩu” từ Quản lý tài khoản nhận diện đúng `role=admin`:
+  email dùng nhãn **Quản trị**, URL `/admin/app/reset-password` và binding
+  `portal=admin`; không còn rơi vào template/link Ứng viên.
+- API validate/confirm chỉ chấp nhận reset Admin khi token có binding `portal=admin`
+  và tài khoản còn `active`. Tài khoản `inactive`/`banned` bị từ chối ở lúc gửi
+  lẫn lúc dùng link, tránh mở lại tài khoản bị khóa qua email cũ.
+- Frontend có màn reset Admin riêng, hiển thị ngữ cảnh quản trị và quay về trang
+  đăng nhập Admin khi link hết hiệu lực. Nút gửi reset ở chi tiết tài khoản bị
+  vô hiệu hóa kèm giải thích khi tài khoản không hoạt động.
+
 > Quy ước: mỗi khi hoàn thành một công việc (xong code + test), đổi icon trạng thái ngay trong lần commit đó — không để dồn việc cập nhật lại sau. Tiêu đề trong bảng giữ **ngắn gọn 1 dòng**; ghi chú kỹ thuật chi tiết đặt trong khối `<details>` ở mục "Ghi chú chi tiết" cuối mỗi giai đoạn. Cập nhật dòng "Cập nhật lần cuối" ở cuối file.
 
 Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối chiếu với PRD mục 11.
@@ -16,10 +28,10 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 3 — Tối ưu tìm kiếm / matching | 0/2 | ⬜ |
 | 4 — CV nâng cao | 0/2 | ⬜ |
 | 5 — Tuyển dụng nâng cao | 1/3 | 🟡 |
-| 6 — Thương mại & quản trị | 13/16 | 🟡 |
+| 6 — Thương mại & quản trị | 14/16 | 🟡 |
 | 7 — Phỏng vấn AI | 0/4 | ⬜ |
 | 8 — Deployment | 0/2 | ⬜ |
-| **Tổng** | **63/88** | |
+| **Tổng** | **64/88 + 1 phần** | |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -658,7 +670,7 @@ frontend unit tests và 22 smoke desktop/mobile.
 | --- | --- | --- |
 | 6.1 | Bảng `subscription_plans` | ⬜ |
 | 6.2 | Bảng `user_subscriptions` (quota AI) | ⬜ |
-| 6.3 | Bảng `audit_logs` | ⬜ |
+| 6.3 | RBAC admin theo phòng ban + audit log phân quyền | ✅ |
 | 6.4 | App `sitecontent`: `SiteSetting` + `LinkGroup`/`LinkItem` + admin + API public `/api/site/` | ✅ |
 | 6.5 | `sitecontent.Banner` (carousel trang chủ cấu hình từ admin) + API `/api/site/banners/` | ✅ |
 | 6.6 | `SiteSetting` schema-driven: 11 value_type, 15 nhóm, seed 96 keys, cache 1h | ✅ |
@@ -674,6 +686,24 @@ frontend unit tests và 22 smoke desktop/mobile.
 | 6.16 | Employer verify + dashboard quản trị: checklist bảo mật, KPI/activity/pipeline, recent job/application và shell responsive | ✅ |
 
 ### Ghi chú chi tiết — Giai đoạn 6
+
+<details>
+<summary><b>6.3</b> — RBAC admin G1–G2 và audit log phân quyền</summary>
+
+Thêm registry permission code-owned và năm bảng `AdminPermission`,
+`Department`, `AdminRole`, `AdminMembership`, `AdminAccessAuditLog`; quyền hiệu
+dụng là hợp các membership còn hiệu lực, superuser bypass. Audit luôn ghi cùng
+transaction và chỉ dùng public ID. `/auth/me` trả snapshot phòng ban/chức danh;
+frontend dùng một config route để lọc sidebar, guard và điều hướng. Backend G1C
+siết site settings (superuser-only), dịch vụ/lead, catalogue CV (gồm lifecycle
+field guard) và job moderation. G2 thêm `is_system_managed`, seed không ghi đè
+bản ghi tuỳ chỉnh, API `/api/admin/` và trang `/admin/app/access-control` ba tab.
+Mọi ghi/impact/dữ liệu nhân sự là superuser-only; action nguy hiểm dùng token
+ký ràng buộc revision/operation/resource/payload, row locking, audit và cache
+invalidation. Delegation có scope, audit viewer, dashboard/blog và luồng mời
+admin thuộc G3, không nằm trong 6.3 core.
+
+</details>
 
 <details>
 <summary><b>6.4</b> — App <code>sitecontent</code></summary>
@@ -773,10 +803,42 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-24 (CANDIDATE-PERSONALIZATION — tối ưu menu
-desktop và hoàn thiện cài đặt email, đổi mật khẩu, feed việc làm phù hợp có
-consent/giải thích/phân trang. Chi tiết tại mục 1.24e–h và
-`docs/07-algorithms/candidate-job-recommendations.md`.)
+Cập nhật lần cuối: 2026-07-26 (ADMIN-RBAC-G2 — hoàn tất core quản trị phòng
+ban/chức danh/nhân viên qua API và UI; superuser-only cho mọi ghi/dữ liệu nhân
+sự, impact token + row locking + audit/cache, seed/restore system-managed.
+Delegation scope, audit viewer, dashboard/blog và invite admin thuộc G3.)
+
+Cập nhật 2026-07-26a (ADMIN-RBAC-G2 — migration `accounts.0014` backfill
+`is_system_managed`; ma trận seed chuyển vào constants và giữ độc lập ownership
+department/role; API `/api/admin/` có impact preview + token ký 10 phút, kiểm
+revision sau `select_for_update`, audit/cache trong transaction; UI
+`/admin/app/access-control` ba tab với picker runtime/deprecated, badge MFA và
+409 buộc xem lại; command `create_admin_user`; backend concurrency/regression,
+frontend unit/architecture/build được bổ sung.)
+
+Cập nhật 2026-07-26b (ACCOUNT-MANAGEMENT-G3 — migration `accounts.0016` thêm
+provisioning scope/lời mời Admin và seed permission `account.*`, `accounts.0017`
+thêm index truy vấn thiết bị/phiên; backend có
+whitelist fail-closed, token mời versioned 72 giờ, accept transaction + row
+locking, MFA email/mã dự phòng, impact token cho trạng thái/scope/phiên,
+audit/cache và query budget. Frontend mở `/admin/app/accounts` năm tab với bộ
+lọc nâng cao, drawer + chi tiết hồ sơ/bảo mật/audit, form mời chỉ dùng
+`available-roles`, luồng accept public và tab Cấp tài khoản superuser. Có seed
+Docker demo, backend concurrency/API test, frontend unit/architecture/build và
+E2E smoke responsive.)
+
+Xác minh bàn giao G3: backend **443/443** test với coverage **84,85%** trên
+PostgreSQL Docker; frontend **441/441** unit test, dependency-cruiser **0**
+violation, production bundle **286,8/320 KiB JS** và **33,8/35 KiB CSS** gzip;
+Playwright smoke **87/87** trên desktop/tablet/mobile. Migration drift, Ruff,
+format và import-linter đều sạch.
+
+Xác minh bàn giao G2: `./scripts/check_all.sh` xanh toàn bộ; backend **417/417**
+test với coverage **85,54%**, frontend **416/416** test với coverage
+statements/branches/functions/lines lần lượt **40,45% / 36,48% / 36,06% /
+42,97%**, import-linter **0** contract vỡ, dependency-cruiser **0** violation,
+production bundle **290,0/320 KiB JS** và **33,5/35 KiB CSS** gzip, Playwright
+smoke **81/81** trên desktop/tablet/mobile.
 
 Cập nhật 2026-07-22f (CAMP-SIMPLIFY — chốt "chiến dịch chỉ cần tên": form chỉnh sửa (`CampaignForm.jsx`) rút còn đúng ô Tên (bỏ mô tả/vị trí/cấp bậc/headcount/ngân sách/ngày/tuyển liên tục), modal thu gọn 760→480; trang chi tiết bỏ thẻ "Thông tin chiến dịch" (các field kế hoạch trống), bỏ query danh mục không dùng; giữ phần phân tích (KPI, phễu, biểu đồ 7 ngày, gauge tiến độ, nguồn CV, tính năng sắp ra mắt). PATCH campaign chỉ gửi { name }. Verify: oxlint sạch, 3 test campaign pass (cập nhật matcher getAllByText cho KPI trùng), vite build xanh.)
 

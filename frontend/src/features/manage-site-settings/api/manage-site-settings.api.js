@@ -1,4 +1,11 @@
 import api from '@/shared/api/client'
+import { invalidateRequestCache } from '@/shared/api/request-deduplication'
+
+async function patchAdminSettings(payload) {
+  const { data } = await api.patch('/site/admin/settings/', payload)
+  invalidateRequestCache('site-settings')
+  return data
+}
 
 export async function getAdminSettings() {
   const { data } = await api.get('/site/admin/settings/')
@@ -12,10 +19,8 @@ export async function updateAdminSettings(values, files = {}) {
     Object.entries(files).forEach(([key, file]) => {
       formData.append(`files[${key}]`, file)
     })
-    const { data } = await api.patch('/site/admin/settings/', formData)
-    return data
+    return patchAdminSettings(formData)
   }
 
-  const { data } = await api.patch('/site/admin/settings/', { values })
-  return data
+  return patchAdminSettings({ values })
 }

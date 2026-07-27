@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tag, Typography, message } from 'antd'
+import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tabs, Tag } from 'antd'
+import { useSearchParams } from 'react-router'
 import { getAdminJobModeration, jobKeys, reviewAdminJob } from '@/entities/job'
+import { JobReportQueue } from '@/features/review-job-reports'
+import { message } from '@/shared/lib/toast'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Chờ duyệt' },
@@ -24,7 +28,7 @@ function formatDateTime(value) {
   return value ? new Date(value).toLocaleString('vi-VN') : '—'
 }
 
-export default function AdminJobModeration() {
+function JobModerationQueue() {
   const [status, setStatus] = useState('pending')
   const [rejectingJob, setRejectingJob] = useState(null)
   const [form] = Form.useForm()
@@ -114,23 +118,32 @@ export default function AdminJobModeration() {
   ]
 
   return (
-    <section>
-      <Typography.Title level={2}>Duyệt tin tuyển dụng</Typography.Title>
-      <Typography.Paragraph type="secondary">
-        Tin chỉ hiển thị với ứng viên sau khi được duyệt. Khi từ chối, lý do sẽ hiện cho người tạo tin.
-      </Typography.Paragraph>
-      <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <Alert className="max-w-2xl" showIcon type="info" message="Mọi tin gửi mới đều cần duyệt" />
-        <Select className="w-full sm:w-40" value={status} options={STATUS_OPTIONS} onChange={setStatus} />
-      </div>
-      <Table
-        rowKey="public_id"
-        loading={jobsQuery.isLoading}
-        dataSource={jobsQuery.data || []}
-        columns={columns}
-        scroll={{ x: 1500 }}
-        pagination={{ pageSize: 20, showSizeChanger: false }}
-      />
+    <section className="space-y-5">
+      <AdminPanel
+        title="Hàng chờ kiểm duyệt"
+        description="Lọc theo trạng thái để tập trung vào các tin cần xử lý."
+        extra={(
+          <Select
+            aria-label="Lọc trạng thái tin"
+            className="w-full sm:w-44"
+            value={status}
+            options={STATUS_OPTIONS}
+            onChange={setStatus}
+          />
+        )}
+      >
+        <Alert className="mb-5 max-w-2xl" showIcon type="info" title="Mọi tin gửi mới đều cần duyệt" />
+        <div className="overflow-x-auto">
+          <Table
+            rowKey="public_id"
+            loading={jobsQuery.isLoading}
+            dataSource={jobsQuery.data || []}
+            columns={columns}
+            scroll={{ x: 1500 }}
+            pagination={{ pageSize: 20, showSizeChanger: false }}
+          />
+        </div>
+      </AdminPanel>
       <Modal
         destroyOnHidden
         open={Boolean(rejectingJob)}
@@ -148,6 +161,41 @@ export default function AdminJobModeration() {
           </Form.Item>
         </Form>
       </Modal>
+    </section>
+  )
+}
+
+export default function AdminJobModeration() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') === 'reports' ? 'reports' : 'jobs'
+
+  function changeTab(tab) {
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'reports') next.set('tab', 'reports')
+    else next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }
+
+  return (
+    <section className="space-y-4">
+      <Tabs
+        activeKey={activeTab}
+        items={[
+          { key: 'jobs', label: 'Tin chờ duyệt' },
+          { key: 'reports', label: 'Báo cáo vi phạm' },
+        ]}
+        onChange={changeTab}
+      />
+      {activeTab === 'reports'
+        ? (
+          <AdminPanel
+            title="Báo cáo chờ xử lý"
+            description="Các báo cáo do ứng viên gửi đang chờ xem xét bằng chứng và đưa ra kết luận."
+          >
+            <JobReportQueue />
+          </AdminPanel>
+        )
+        : <JobModerationQueue />}
     </section>
   )
 }

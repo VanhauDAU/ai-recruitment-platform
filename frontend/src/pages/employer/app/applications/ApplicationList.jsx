@@ -10,9 +10,8 @@ import {
   Skeleton,
   Table,
   Timeline,
-  message,
 } from 'antd'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import {
   applicationKeys,
   getApplicationHistory,
@@ -23,6 +22,7 @@ import {
   updateApplicationStatus,
 } from '@/entities/application'
 import { CvDocumentPreview } from '@/entities/cv'
+import { message } from '@/shared/lib/toast'
 
 function documentFromVersion(version) {
   if (!version) return null
@@ -179,7 +179,7 @@ export default function EmployerApplicationList() {
       />
       <Drawer
         title={selected?.candidate_name || 'Hồ sơ ứng viên'}
-        width="min(860px, 100vw)"
+        size="min(860px, 100vw)"
         open={Boolean(selected)}
         onClose={closeApplicationDetail}
       >

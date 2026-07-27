@@ -1,6 +1,6 @@
 import { InboxOutlined } from '@ant-design/icons'
 import { Select, Spin, Upload } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { useCvSource } from '../model/use-cv-source'
 

@@ -11,7 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Form, Input, Modal, Result, Skeleton } from 'antd'
 import { useState } from 'react'
 import { message } from '@/shared/lib/toast'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   checkEmployerPhoneAvailability,
   getEmployerProfile,
@@ -284,7 +284,7 @@ export default function EmployerPhoneVerification() {
         okText="Xác nhận và gửi mã"
         cancelText="Hủy"
         confirmLoading={sendMutation.isPending}
-        destroyOnClose
+        destroyOnHidden
       >
         <p className="mb-4 text-sm leading-6 text-slate-500">
           Vì lý do bảo mật, vui lòng nhập mật khẩu đăng nhập của bạn để tiếp tục gửi mã xác thực tới số{' '}

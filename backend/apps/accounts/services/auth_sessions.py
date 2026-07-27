@@ -1,15 +1,18 @@
 """Vòng đời phiên đăng nhập theo thiết bị (AuthSession).
 
-Bảng `AuthSession` là nguồn enforcement cho phiên thiết bị: mỗi lần phát token
-cho một thiết bị tạo một phiên, `id` được nhúng vào JWT dưới claim `sid`.
-Refresh xoay vòng cập nhật `refresh_jti`; access token bị từ chối ngay khi phiên
-revoked, idle/absolute-expired hoặc tài khoản không còn được phép truy cập.
+Bảng `AuthSession` là nguồn enforcement cho phiên thiết bị. Một thiết bị được
+nhận diện trong phạm vi một tài khoản/cổng bằng IP và User-Agent; đăng nhập lại
+từ cùng dấu hiệu sẽ cập nhật phiên có sẵn thay vì thêm dòng mới. `id` được nhúng
+vào JWT dưới claim ``sid``. Refresh xoay vòng cập nhật ``refresh_jti``; access
+token bị từ chối ngay khi phiên revoked, idle/absolute-expired hoặc tài khoản
+không còn được phép truy cập.
 """
 
 from datetime import timedelta
 from ipaddress import ip_address, ip_network
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -99,20 +102,66 @@ def _ensure_outstanding(token):
 
 
 def start_session(user, refresh, request, *, auth_method='password'):
-    """Tạo phiên mới cho refresh vừa phát và gắn claim `sid` vào token.
+    """Khởi tạo hoặc cập nhật phiên của cùng thiết bị rồi gắn claim ``sid``.
 
-    Gọi TRƯỚC khi lấy `refresh.access_token`/`str(refresh)` để access + refresh
-    đều mang `sid`."""
-    session = AuthSession.objects.create(
-        user=user,
-        portal=user.role,
-        refresh_jti=refresh[api_settings.JTI_CLAIM],
-        auth_method=auth_method,
-        device_label=parse_device_label(_user_agent(request)),
-        user_agent=_user_agent(request)[:400],
-        ip_address=_client_ip(request),
-        expires_at=timezone.now() + api_settings.REFRESH_TOKEN_LIFETIME,
-    )
+    Không gộp chỉ theo IP: nhiều người hoặc thiết bị có thể cùng Wi-Fi/NAT. Khi
+    thiếu IP/User-Agent (ví dụ tác vụ hệ thống/test), luôn tạo phiên độc lập để
+    không suy đoán sai danh tính thiết bị.
+    """
+    client_ip = _client_ip(request)
+    user_agent = _user_agent(request)[:400]
+    now = timezone.now()
+    new_jti = refresh[api_settings.JTI_CLAIM]
+
+    with transaction.atomic():
+        matches = []
+        if client_ip and user_agent:
+            matches = list(
+                AuthSession.objects.select_for_update()
+                .filter(
+                    user=user,
+                    portal=user.role,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    revoked_at__isnull=True,
+                    expires_at__gt=now,
+                )
+                .order_by('-last_seen_at')
+            )
+
+        if matches:
+            session = matches[0]
+            # Các bản ghi cũ từ trước khi có cơ chế gộp không còn là phiên hợp lệ.
+            for duplicate in matches[1:]:
+                revoke_session(duplicate)
+            _blacklist_jti(session.refresh_jti)
+            session.refresh_jti = new_jti
+            session.auth_method = auth_method
+            session.device_label = parse_device_label(user_agent)
+            session.last_seen_at = now
+            session.reauthenticated_at = now
+            session.expires_at = now + api_settings.REFRESH_TOKEN_LIFETIME
+            session.save(
+                update_fields=[
+                    'refresh_jti',
+                    'auth_method',
+                    'device_label',
+                    'last_seen_at',
+                    'reauthenticated_at',
+                    'expires_at',
+                ]
+            )
+        else:
+            session = AuthSession.objects.create(
+                user=user,
+                portal=user.role,
+                refresh_jti=new_jti,
+                auth_method=auth_method,
+                device_label=parse_device_label(user_agent),
+                user_agent=user_agent,
+                ip_address=client_ip,
+                expires_at=now + api_settings.REFRESH_TOKEN_LIFETIME,
+            )
     refresh[SID_CLAIM] = str(session.id)
     return session
 

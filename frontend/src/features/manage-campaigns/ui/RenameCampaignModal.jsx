@@ -1,8 +1,9 @@
 import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Modal, message } from 'antd'
+import { Modal } from 'antd'
 import { campaignKeys, updateCampaign } from '@/entities/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { message } from '@/shared/lib/toast'
 import CampaignNameForm from './CampaignNameForm'
 
 export default function RenameCampaignModal({ campaign, onClose }) {

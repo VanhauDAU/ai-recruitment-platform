@@ -66,6 +66,7 @@ class AccountTokenRefreshView(TokenRefreshView):
 
     def post(self, request, *args, **kwargs):
         portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
+        is_session_probe = request.headers.get('X-Session-Probe') == '1'
         if portal not in VALID_PORTALS:
             return Response(
                 {'portal': 'Cổng đăng nhập không hợp lệ.'}, status=status.HTTP_400_BAD_REQUEST
@@ -73,8 +74,10 @@ class AccountTokenRefreshView(TokenRefreshView):
         refresh = refresh_from_request(request, portal=portal)
         if not refresh:
             response = Response(
-                {'detail': 'Không tìm thấy phiên làm mới.'},
-                status=status.HTTP_401_UNAUTHORIZED,
+                None if is_session_probe else {'detail': 'Không tìm thấy phiên làm mới.'},
+                status=(
+                    status.HTTP_204_NO_CONTENT if is_session_probe else status.HTTP_401_UNAUTHORIZED
+                ),
             )
             return clear_refresh_cookie(response, portal=portal)
 
@@ -83,8 +86,14 @@ class AccountTokenRefreshView(TokenRefreshView):
             serializer.is_valid(raise_exception=True)
         except (InvalidToken, TokenError):
             response = Response(
-                {'detail': 'Phiên làm mới không hợp lệ hoặc đã hết hạn.'},
-                status=status.HTTP_401_UNAUTHORIZED,
+                (
+                    None
+                    if is_session_probe
+                    else {'detail': 'Phiên làm mới không hợp lệ hoặc đã hết hạn.'}
+                ),
+                status=(
+                    status.HTTP_204_NO_CONTENT if is_session_probe else status.HTTP_401_UNAUTHORIZED
+                ),
             )
             return clear_refresh_cookie(response, portal=portal)
 

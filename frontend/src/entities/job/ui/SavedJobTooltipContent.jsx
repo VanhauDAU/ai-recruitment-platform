@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 // Nội dung hướng dẫn dùng chung cho tooltip của các trái tim đã lưu.
 export default function SavedJobTooltipContent() {

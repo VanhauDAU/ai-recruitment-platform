@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import HasAdminPermission
 
 from ...models import ConsultationLead, ServicePackage
 from ...selectors import (
@@ -57,14 +57,24 @@ class ConsultationLeadCreateView(generics.CreateAPIView):
 
 class AdminServiceCategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminServiceCategorySerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['service_catalog.view'],
+        'POST': ['service_catalog.manage'],
+    }
     pagination_class = None
     queryset = admin_service_categories_queryset()
 
 
 class AdminServiceCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminServiceCategorySerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['service_catalog.view'],
+        'PUT': ['service_catalog.manage'],
+        'PATCH': ['service_catalog.manage'],
+        'DELETE': ['service_catalog.manage'],
+    }
     queryset = admin_service_categories_queryset()
 
     def destroy(self, request, *args, **kwargs):
@@ -81,14 +91,24 @@ class AdminServiceCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class AdminServicePackageListCreateView(generics.ListCreateAPIView):
     serializer_class = AdminServicePackageSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['service_catalog.view'],
+        'POST': ['service_catalog.manage'],
+    }
     pagination_class = None
     queryset = ServicePackage.objects.select_related('category').all()
 
 
 class AdminServicePackageDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminServicePackageSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['service_catalog.view'],
+        'PUT': ['service_catalog.manage'],
+        'PATCH': ['service_catalog.manage'],
+        'DELETE': ['service_catalog.manage'],
+    }
     queryset = ServicePackage.objects.select_related('category').all()
 
 
@@ -96,7 +116,8 @@ class AdminConsultationLeadListView(generics.ListAPIView):
     """Danh sách lead tư vấn cho admin, mới nhất trước. Lọc theo ?status=new|contacted."""
 
     serializer_class = AdminConsultationLeadSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['consultation_lead.view']}
 
     def get_queryset(self):
         return admin_leads_queryset(self.request.query_params.get('status'))
@@ -104,5 +125,10 @@ class AdminConsultationLeadListView(generics.ListAPIView):
 
 class AdminConsultationLeadDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = AdminConsultationLeadSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {
+        'GET': ['consultation_lead.view'],
+        'PUT': ['consultation_lead.manage'],
+        'PATCH': ['consultation_lead.manage'],
+    }
     queryset = ConsultationLead.objects.all()

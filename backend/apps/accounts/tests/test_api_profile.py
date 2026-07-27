@@ -87,8 +87,10 @@ class ProfileUpdateTests(APITestCase):
                 'employer_onboarding_required',
                 'employer_onboarding_step',
                 'employer_verification_completed',
+                'admin_access',
             },
         )
+        self.assertIsNone(response.data['admin_access'])
         self.assertIs(response.data['job_preferences_configured'], False)
         self.assertIs(response.data['has_usable_password'], True)
         self.assertIs(response.data['employer_verification_completed'], False)
@@ -350,6 +352,22 @@ class SessionManagementTests(APITestCase):
             self.client.get(reverse('auth-me')).status_code, status.HTTP_401_UNAUTHORIZED
         )
 
+    def test_history_scope_also_returns_revoked_sessions(self):
+        current = issue_tokens(self.user)
+        issue_tokens(self.user)
+        self._auth(current)
+        listed = self.client.get(reverse('auth-sessions')).data
+        other_row = next(s for s in listed if not s['current'])
+        self.client.delete(reverse('auth-session-revoke', args=[other_row['id']]))
+
+        # Mặc định vẫn chỉ trả phiên còn hiệu lực (hợp đồng cũ không đổi).
+        self.assertEqual(len(self.client.get(reverse('auth-sessions')).data), 1)
+
+        history = self.client.get(reverse('auth-sessions'), {'scope': 'history'}).data
+        self.assertEqual(len(history), 2)
+        self.assertIsNotNone(next(row for row in history if not row['current'])['revoked_at'])
+        self.assertIsNone(next(row for row in history if row['current'])['revoked_at'])
+
     def test_revoke_others_keeps_current_device(self):
         current = issue_tokens(self.user)
         issue_tokens(self.user)
@@ -395,6 +413,40 @@ class SessionManagementTests(APITestCase):
         self.assertNotEqual(session.refresh_jti, old_jti)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + rotated.data['access'])
         self.assertTrue(self.client.get(reverse('auth-sessions')).data[0]['current'])
+
+    def test_relogin_from_same_device_and_ip_reuses_the_session(self):
+        request = APIRequestFactory().post(
+            '/',
+            REMOTE_ADDR='203.0.113.10',
+            HTTP_USER_AGENT='Mozilla/5.0 Chrome/138.0 macOS',
+        )
+        first = issue_tokens(self.user, request)
+        first_session = AuthSession.objects.get(user=self.user)
+
+        second = issue_tokens(self.user, request)
+
+        self.assertEqual(AuthSession.objects.filter(user=self.user).count(), 1)
+        session = AuthSession.objects.get(user=self.user)
+        self.assertEqual(session.id, first_session.id)
+        self.assertNotEqual(session.refresh_jti, first_session.refresh_jti)
+
+        set_refresh_cookie(self.client, 'main', first['refresh'])
+        self.assertEqual(refresh_session(self.client).status_code, status.HTTP_401_UNAUTHORIZED)
+        set_refresh_cookie(self.client, 'main', second['refresh'])
+        self.assertEqual(refresh_session(self.client).status_code, status.HTTP_200_OK)
+
+    def test_different_devices_on_the_same_ip_remain_separate_sessions(self):
+        chrome = APIRequestFactory().post(
+            '/', REMOTE_ADDR='203.0.113.10', HTTP_USER_AGENT='Mozilla/5.0 Chrome/138.0 macOS'
+        )
+        safari = APIRequestFactory().post(
+            '/', REMOTE_ADDR='203.0.113.10', HTTP_USER_AGENT='Mozilla/5.0 Safari/18.0 macOS'
+        )
+
+        issue_tokens(self.user, chrome)
+        issue_tokens(self.user, safari)
+
+        self.assertEqual(AuthSession.objects.filter(user=self.user).count(), 2)
 
     def test_access_token_without_sid_is_rejected(self):
         access = AccessToken.for_user(self.user)
@@ -516,6 +568,50 @@ class ChangeEmailTests(APITestCase):
         warning = [msg for msg in mail.outbox if 'pending@example.com' in msg.to]
         self.assertEqual(len(warning), 1)
         self.assertIn('thay đổi', warning[0].subject.lower())
+
+
+class RefreshSessionProbeTests(APITestCase):
+    def test_probe_header_is_allowed_by_cors_preflight(self):
+        response = self.client.options(
+            reverse('auth-refresh'),
+            HTTP_ORIGIN='http://localhost:5173',
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD='POST',
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS='x-auth-portal,x-session-probe',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        allowed_headers = response['Access-Control-Allow-Headers'].lower()
+        self.assertIn('x-auth-portal', allowed_headers)
+        self.assertIn('x-session-probe', allowed_headers)
+
+    def test_guest_probe_returns_no_content_instead_of_unauthorized(self):
+        response = self.client.post(
+            reverse('auth-refresh'),
+            {'portal': 'main'},
+            format='json',
+            HTTP_X_SESSION_PROBE='1',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.content, b'')
+
+    def test_regular_refresh_without_cookie_remains_unauthorized(self):
+        response = refresh_session(self.client)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_invalid_cookie_probe_clears_cookie_without_console_error_status(self):
+        set_refresh_cookie(self.client, 'main', 'not-a-token')
+
+        response = self.client.post(
+            reverse('auth-refresh'),
+            {'portal': 'main'},
+            format='json',
+            HTTP_X_SESSION_PROBE='1',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.cookies[cookie_name('main')].value, '')
 
 
 class LogoutEndpointTests(APITestCase):

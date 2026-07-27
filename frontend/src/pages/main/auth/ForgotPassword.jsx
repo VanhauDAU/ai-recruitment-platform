@@ -2,7 +2,7 @@ import { ArrowLeftOutlined, MailOutlined } from '@ant-design/icons'
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { AuthFormStyles, AuthLogo, requestPasswordReset } from '@/features/auth'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 

@@ -31,8 +31,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/verify/confirm/` | Xác nhận email bằng `token` trong link (public) |
 | POST | `/api/auth/change-email/` | Đổi email → reset xác thực + gửi lại link |
 | POST | `/api/auth/password-reset/` | Gửi email chứa link đặt lại mật khẩu (public, cần `captcha_token`). **Luôn trả 200 kèm cùng một `detail`** dù email có tồn tại hay không — chống dò danh sách email. Cooldown 60s/tài khoản (im lặng), throttle 5/phút theo IP |
-| GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn. Dùng để hiện ngay màn "hết hạn" thay vì bắt user gõ xong mật khẩu mới báo lỗi |
-| POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
+| GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn/tài khoản đã khóa. Link Admin phải thêm `portal=admin` và chỉ được phát từ khu vực quản trị. |
+| POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Với Admin, body bắt buộc có `portal: "admin"`; tài khoản không active bị từ chối. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
 | POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu đặt lần đầu chỉ với `password`. Có thể gửi `logout_all_sessions` để thu hồi các phiên khác; response xoay token của phiên hiện tại. Phiên OAuth không còn đủ mới trả `403 {code: "reauth_required"}` để client xóa phiên cũ và đưa người dùng đăng nhập lại. |
 | POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`; DB lưu storage key) |
 | GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
@@ -55,11 +55,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
 | POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
-| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới, không phụ thuộc trạng thái xác thực SĐT; người tạo là owner, hiệu lực ngay, trạng thái `unverified`. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
+| POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới, không phụ thuộc trạng thái xác thực SĐT hoặc MFA; người tạo là owner, hiệu lực ngay, trạng thái `unverified`. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
 | GET | `/api/employer/company/catalogs/` | Source-of-truth cho `business_types`, `company_sizes`, `markets`, `target_customers` của form công ty |
 | POST | `/api/employer/company/join/` | Liên kết ngay với công ty có sẵn, không phụ thuộc trạng thái xác thực SĐT hay admin duyệt: multipart chỉ cần `company`; membership có hiệu lực ngay. API vẫn nhận tùy chọn `proof_type` (`business_registration` hoặc `authorization_and_id`) và file giấy tờ khi cần bổ sung hồ sơ. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
-| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; JPG/PNG/WebP, tối đa 5 MB, multipart `file`). Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ |
+| POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; không yêu cầu MFA; JPG/PNG/WebP, tối đa 5 MB, multipart `file`). Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ |
 | DELETE | `/api/employer/company/logo/` \| `cover/` | Xóa logo/cover (owner); xóa logo đồng thời đặt `has_no_logo=true` |
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
 | GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; mặc định POST multipart `doc_type` + `file`, có thể kèm `update_request` public id để gắn hồ sơ chứng minh vào request pending. Riêng `trade_name_proof` nhận thêm `source_type=website` + `website_url` (HTTP/HTTPS), không kèm file; response trả `source_type` để UI mở đúng link. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra MIME + chữ ký, tối đa 5 MB |
@@ -92,6 +92,141 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 `locale` trên catalogue/position preview và `language` khi tạo CV phải thuộc
 registry active. API tiếp tục nhận/trả locale code để giữ tương thích; FK
 `locale_ref` là chi tiết migration nội bộ, không làm đổi public payload.
+
+### Contract phân quyền admin G1
+
+`GET /api/auth/me/` trả thêm `admin_access` với admin và `null` với
+candidate/employer:
+
+```json
+{
+  "is_superuser": false,
+  "permissions": ["job_moderation.approve", "job_moderation.view"],
+  "primary_department": {
+    "code": "job-moderation",
+    "name": "Kiểm duyệt tin tuyển dụng"
+  },
+  "memberships": [
+    {
+      "department": {
+        "code": "job-moderation",
+        "name": "Kiểm duyệt tin tuyển dụng"
+      },
+      "role": {"code": "staff", "name": "Nhân viên", "rank": 10}
+    }
+  ]
+}
+```
+
+`primary_department` có thể `null`. Permission luôn sort theo code. Khi thiếu
+quyền, endpoint RBAC trả:
+
+```json
+{
+  "code": "admin_permission_denied",
+  "message": "Bạn không có quyền thực hiện hành động này."
+}
+```
+
+| Bề mặt admin | Trạng thái G1 |
+| --- | --- |
+| Site locale/settings/upload | `HasAdminPermission`, luôn `require_superuser` |
+| Service category/package | `service_catalog.view/manage` |
+| Consultation lead | `consultation_lead.view/manage` |
+| CV catalogue | `cv_template.view/create/edit/publish/archive/delete` theo action |
+| Job moderation | `.view` ở cửa vào, `.approve/.reject` sau khi serializer hợp lệ |
+| `/api/dashboard/` | Vẫn `IsAdmin`, chuyển ở G2 |
+| Blog admin upload | Vẫn legacy `CanEditBlog` + Django Groups, chuyển ở G2 |
+
+Các field lifecycle CV được bảo vệ riêng để quyền `.edit` không thể phát hành
+qua PATCH: `CvTemplate.status/lifecycle_status/current_published_version`,
+`is_active` của localization/category/color/background/blueprint và
+`CvSampleContent.status/published_at`. Staff tạo template ở `inactive`; các tài
+nguyên `is_active` mặc định `false`; sample/version tiếp tục ở `draft`. Chuyển
+ẩn → hiện cần `.publish`, hiện → ẩn cần `.archive`; gửi lại giá trị không đổi
+không bị chặn.
+
+### API quản lý tài khoản G3
+
+Base quản trị: `/api/admin/`; public accept: `/api/auth/admin-invitations/`.
+
+| Method | Endpoint | Mô tả |
+| --- | --- | --- |
+| GET | `/accounts/`, `/accounts/summary/`, `/accounts/{id}/` | Danh sách, KPI và chi tiết theo permission đọc |
+| PATCH | `/accounts/{id}/` | Sửa họ tên/SĐT; Admin active vẫn superuser-only |
+| GET | `/accounts/{id}/sessions/`, `/activity/` | Phiên và audit liên quan |
+| POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận khóa, mở khóa hoặc cấm |
+| POST | `/accounts/{id}/revoke-sessions-impact/`, `/revoke-sessions/` | Preview/xác nhận thu hồi phiên |
+| POST | `/accounts/{id}/send-password-reset/`, `/resend-verification/` | Xếp lịch email bảo mật. Admin nhận template/link cổng Admin; không gửi reset cho tài khoản `inactive`/`banned`. |
+| GET/POST | `/account-invitations/` | Danh sách theo scope người mời / tạo lời mời |
+| GET | `/account-invitations/available-roles/` | Chức danh backend đã lọc theo whitelist |
+| PATCH | `/account-invitations/{id}/` | Đổi chức danh trước khi accept |
+| POST | `/account-invitations/{id}/resend/`, `/revoke/` | Làm token cũ mất hiệu lực / thu hồi |
+| GET/POST | `/provisioning-scopes/` | Đọc/tạo whitelist; ghi superuser-only |
+| POST | `/provisioning-scopes/{id}/status-impact/`, `/activate/`, `/deactivate/` | Impact token và xác nhận trạng thái scope |
+| GET | `/api/auth/admin-invitations/validate/?token=...` | Kiểm tra link mời công khai |
+| POST | `/api/auth/admin-invitations/accept/` | Đặt mật khẩu, bật MFA email, trả mã dự phòng một lần |
+
+Filter tài khoản gồm `q`, `role`, `status`, `email_verified`, `mfa`,
+`has_active_session`, `department`, `admin_role`, `company`, khoảng ngày tạo,
+khoảng lần đăng nhập và `ordering`. Lời mời hỗ trợ `q`, `status`, `department`,
+`role`; superuser có thêm `invited_by`.
+
+Các POST xác nhận impact bắt buộc gửi lại `impact_token` từ preview. Token stale
+trả `409 admin_resource_changed`. Role ngoài whitelist và thao tác vượt scope
+trả `403 admin_permission_denied`; validation field thông thường trả `400`.
+
+### API quản trị phân quyền G2
+
+Base path: `/api/admin/`. Cột “SU” nghĩa là endpoint bắt buộc
+`is_superuser=True`, kể cả khi tài khoản có permission tương ứng.
+
+| Method | Endpoint | Permission | SU |
+| --- | --- | --- | :---: |
+| GET | `/departments/`, `/departments/{public_id}/` | `admin_access.view` | |
+| POST/PATCH | `/departments/`, `/departments/{public_id}/` | `admin_access.manage_department` | ✓ |
+| POST | `/departments/{id}/status-impact/`, `activate/`, `deactivate/` | `admin_access.manage_department` | ✓ |
+| GET/POST | `/departments/{id}/restore-system-default/` | `admin_access.manage_department` | ✓ |
+| GET | `/roles/?department={code}`, `/roles/{public_id}/` | `admin_access.view` | |
+| POST/PATCH | `/roles/`, `/roles/{public_id}/` | `admin_access.manage_role` | ✓ |
+| POST | `/roles/{id}/status-impact/`, `activate/`, `deactivate/` | `admin_access.manage_role` | ✓ |
+| POST/PUT | `/roles/{id}/permissions-impact/`, `/roles/{id}/permissions/` | `admin_access.manage_role` | ✓ |
+| GET/POST | `/roles/{id}/restore-system-default/` | `admin_access.manage_role` | ✓ |
+| GET | `/permissions/?role={role_public_id}` | `admin_access.view` | |
+| GET | `/memberships/?department=&user=&include_revoked=` | `admin_access.view` | ✓ |
+| POST | `/memberships/assignment-impact/`, `/memberships/` | `admin_access.manage_staff` | ✓ |
+| GET/POST | `/memberships/{id}/revoke-impact/`, `revoke/` | `admin_access.manage_staff` | ✓ |
+| GET | `/staff/?q={email}` | `admin_access.view` | ✓ |
+
+Mỗi nhân viên chỉ có **một membership đang hiệu lực**. `POST /memberships/`
+thay chức danh hiện tại trong cùng transaction: membership cũ được thu hồi, quyền
+hiệu dụng được cache-bust và audit ghi lại cả trước/sau. Preview assignment trả
+`permissions_gained`, `permissions_lost` và `replaced_membership`; client không
+tự tính diff. Không còn endpoint hay payload `set-primary` / `is_primary`.
+
+Action xác nhận nhận `impact_token` từ preview tương ứng. Token chỉ dùng đúng
+operation/resource/payload đã xem và hết hạn sau 600 giây. Operation hợp lệ:
+
+```text
+department.status.change · department.restore
+role.status.change · role.permissions.update · role.restore
+membership.assign · membership.revoke
+```
+
+Thiếu quyền trả `403 admin_permission_denied`. Preview stale, đổi payload, dùng
+token sai resource/operation hoặc có audit mới xen giữa trả:
+
+```json
+{
+  "code": "admin_resource_changed",
+  "message": "Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục."
+}
+```
+
+Permission picker chỉ đọc `/permissions/?role=...`; JSON generated là contract
+build-time. Permission deprecated đang được role giữ vẫn xuất hiện với
+`is_active=false`, `is_granted_to_role=true` và không được gửi trong
+`permission_codes` active.
 
 ### CV catalogue admin (admin-only)
 
@@ -159,7 +294,7 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, tạo snapshot CV bất biến và trả `candidate_status` cùng timeline đã lọc. |
 | GET | `/api/v2/recruiter/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; filter theo tin, pipeline, chiến dịch hoặc tên/email ứng viên. |
 | PATCH | `/api/v2/recruiter/applications/{public_id}/` | Cập nhật pipeline, `employer_note` và `employer_rating` 1–5. Ghi chú/điểm là nội bộ. |
-| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV đã nộp (lần mở đầu đánh dấu `viewed`) và audit lịch sử pipeline, owner-only. |
+| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV đã nộp (lần mở đầu đánh dấu `viewed`) và audit lịch sử pipeline, owner-only; không yêu cầu MFA. |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
 | GET | `/api/site/link-groups/?placement=footer_seo` | Cụm link SEO đang bật kèm items đã resolve, public |
 | GET | `/api/site/link-groups/?placement=footer_nav` | Các cột menu điều hướng footer, public |

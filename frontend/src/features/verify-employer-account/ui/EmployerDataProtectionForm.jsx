@@ -12,6 +12,7 @@ import { useState } from 'react'
 import {
   acceptEmployerDpa,
   employerProfileKeys,
+  getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
@@ -19,12 +20,17 @@ import {
 import { useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import { CandidateAgreementDocumentLink } from './CandidateAgreementDocumentLink'
 
 const CANDIDATE_DPA_GUIDE_URL = 'https://tuyendung.topcv.vn/help/tong-quan/thoa-thuan-xu-ly-du-lieu-ca-nhan-ung-vien/'
 const PLATFORM_DPA_URL = 'https://tuyendung.topcv.vn/data-processing-agreement'
 const DPA_TEMPLATE_URL = '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx'
 const ACCEPTED_FILE_TYPES = '.doc,.docx,.pdf'
 const CANDIDATE_AGREEMENT_DOCUMENT_NAME = 'Thỏa thuận xử lý DLCN'
+const OFFICE_EXTENSION_BY_TYPE = {
+  'application/msword': '.doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+}
 
 function StatusTag({ completed, completedLabel, pendingLabel, completedColor = 'green' }) {
   return <Tag color={completed ? completedColor : 'default'} className="!m-0 !rounded-full !border-0 !px-3">{completed ? completedLabel : pendingLabel}</Tag>
@@ -39,21 +45,6 @@ function UploadNotice() {
   )
 }
 
-function documentUrl(document) {
-  const fileUrl = document?.file_url || ''
-  if (!/\.(doc|docx)(?:$|[?#])/i.test(fileUrl)) return fileUrl
-
-  try {
-    const url = new URL(fileUrl, window.location.origin)
-    const isPublicExternalHttps = url.protocol === 'https:' && url.hostname !== window.location.hostname
-    return isPublicExternalHttps
-      ? `https://docs.google.com/gview?url=${encodeURIComponent(fileUrl)}&embedded=true`
-      : fileUrl
-  } catch {
-    return fileUrl
-  }
-}
-
 function formatAgreementAcceptedAt(value) {
   if (!value || Number.isNaN(new Date(value).getTime())) return null
   const parts = new Intl.DateTimeFormat('vi-VN', {
@@ -61,6 +52,18 @@ function formatAgreementAcceptedAt(value) {
     day: '2-digit', month: '2-digit', year: 'numeric', hour12: false,
   }).formatToParts(new Date(value)).reduce((result, part) => ({ ...result, [part.type]: part.value }), {})
   return `${parts.hour}:${parts.minute}:${parts.second} ${parts.day}/${parts.month}/${parts.year}`
+}
+
+function browserCanPreview(contentType) {
+  return contentType === 'application/pdf'
+    || contentType.startsWith('image/')
+    || contentType.startsWith('text/')
+}
+
+function documentDownloadName(document, contentType) {
+  const name = document?.file_name || CANDIDATE_AGREEMENT_DOCUMENT_NAME
+  if (/\.[a-z0-9]+$/i.test(name)) return name
+  return `${name}${OFFICE_EXTENSION_BY_TYPE[contentType] || ''}`
 }
 
 function CandidateAgreementTemplate() {
@@ -72,7 +75,7 @@ function CandidateAgreementTemplate() {
   )
 }
 
-function CandidateAgreementUploadForm({ currentDocument, files, onFilesChange, accepted, onAcceptedChange, onCancel, submitting, canSave, onSave, siteName }) {
+function CandidateAgreementUploadForm({ currentDocument, files, onFilesChange, accepted, onAcceptedChange, onCancel, submitting, canSave, onSave, onOpenDocument, openingDocument, siteName }) {
   return (
     <>
       <div className="mt-4 min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
@@ -80,7 +83,18 @@ function CandidateAgreementUploadForm({ currentDocument, files, onFilesChange, a
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-slate-800">Văn bản Thỏa thuận <span className="text-red-500">*</span></h3>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Văn bản thể hiện việc Ứng viên đồng ý cho phép Nhà tuyển dụng thu thập, lưu trữ và sử dụng dữ liệu cá nhân của Ứng viên để phục vụ mục đích tuyển dụng.</p>
-            {currentDocument && <a aria-label={`Tệp hiện tại: ${CANDIDATE_AGREEMENT_DOCUMENT_NAME}`} href={documentUrl(currentDocument)} target="_blank" rel="noreferrer" className="group mt-4 flex items-center gap-2 rounded-lg bg-slate-50 px-4 py-3 text-sm font-medium !text-slate-700 transition-colors hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)]"><FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" />Tệp hiện tại: {CANDIDATE_AGREEMENT_DOCUMENT_NAME}</a>}
+            {currentDocument && (
+              <CandidateAgreementDocumentLink
+                ariaLabel={`Tệp hiện tại: ${CANDIDATE_AGREEMENT_DOCUMENT_NAME}`}
+                className="group mt-4 flex items-center gap-2 rounded-lg bg-slate-50 px-4 py-3 text-sm font-medium !text-slate-700 transition-colors hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)]"
+                document={currentDocument}
+                onOpenDocument={onOpenDocument}
+                openingDocument={openingDocument}
+              >
+                <FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" />
+                Tệp hiện tại: {CANDIDATE_AGREEMENT_DOCUMENT_NAME}
+              </CandidateAgreementDocumentLink>
+            )}
             <Upload.Dragger
               accept={ACCEPTED_FILE_TYPES}
               beforeUpload={() => false}
@@ -148,6 +162,30 @@ export default function EmployerDataProtectionForm() {
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể tải văn bản lên.')),
   })
+  const documentPreviewMutation = useMutation({
+    mutationFn: async ({ document, previewWindow }) => ({
+      document,
+      previewWindow,
+      content: await getEmployerCompanyDocumentContent(document),
+    }),
+    onSuccess: ({ content, document, previewWindow }) => {
+      const previewUrl = URL.createObjectURL(content)
+      if (browserCanPreview(content.type)) {
+        previewWindow.location.replace(previewUrl)
+      } else {
+        previewWindow.close()
+        const downloadLink = window.document.createElement('a')
+        downloadLink.href = previewUrl
+        downloadLink.download = documentDownloadName(document, content.type)
+        downloadLink.click()
+      }
+      window.setTimeout(() => URL.revokeObjectURL(previewUrl), 60_000)
+    },
+    onError: (error, { previewWindow }) => {
+      previewWindow.close()
+      message.error(getApiErrorMessage(error, 'Không thể mở tệp đã nộp. Vui lòng thử lại.'))
+    },
+  })
   const acceptMutation = useMutation({
     mutationFn: acceptEmployerDpa,
     onSuccess: async () => {
@@ -157,6 +195,16 @@ export default function EmployerDataProtectionForm() {
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ghi nhận thỏa thuận.')),
   })
+
+  function openPrivateDocument(document) {
+    const previewWindow = window.open('', '_blank')
+    if (!previewWindow) {
+      message.error('Trình duyệt đã chặn cửa sổ xem tệp. Hãy cho phép pop-up rồi thử lại.')
+      return
+    }
+    previewWindow.opener = null
+    documentPreviewMutation.mutate({ document, previewWindow })
+  }
 
   if (profileQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
 
@@ -168,6 +216,7 @@ export default function EmployerDataProtectionForm() {
   const canSaveCandidateAgreement = Boolean(selectedFile && candidateAgreementAccepted)
   const candidateAgreementDocument = documents[0]
   const candidateAgreementSubmitted = Boolean(verification.candidate_dpa_submitted || candidateAgreementDocument)
+  const candidateAgreementApproved = Boolean(verification.candidate_dpa_approved)
   const showCandidateAgreementForm = !candidateAgreementSubmitted || editingCandidateAgreement
   const agreementAcceptedAt = formatAgreementAcceptedAt(profileQuery.data?.dpa_accepted_at)
 
@@ -179,7 +228,11 @@ export default function EmployerDataProtectionForm() {
             <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa Ứng viên - Nhà tuyển dụng</h2>
           </div>
           <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
-            <StatusTag completed={candidateAgreementSubmitted} completedColor="gold" completedLabel="Hệ thống đang xử lý" pendingLabel="Chưa cập nhật" />
+            <StatusTag
+              completed={candidateAgreementApproved}
+              completedLabel="Đã duyệt"
+              pendingLabel={candidateAgreementSubmitted ? 'Hệ thống đang xử lý' : 'Chưa cập nhật'}
+            />
             {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label="Chỉnh sửa văn bản" icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700">Chỉnh sửa</Button>}
           </div>
         </div>
@@ -195,15 +248,24 @@ export default function EmployerDataProtectionForm() {
             onAcceptedChange={setCandidateAgreementAccepted}
             onCancel={candidateAgreementSubmitted ? () => { setFiles([]); setCandidateAgreementAccepted(false); setEditingCandidateAgreement(false) } : null}
             onFilesChange={setFiles}
+            onOpenDocument={openPrivateDocument}
             onSave={() => documentMutation.mutate(selectedFile)}
+            openingDocument={documentPreviewMutation.isPending}
             siteName={siteName}
             submitting={documentMutation.isPending}
           />
         ) : candidateAgreementDocument ? (
           <div className="mt-4 grid min-w-0 items-center gap-6 rounded-lg border border-slate-200 p-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:p-6">
-            <a aria-label={CANDIDATE_AGREEMENT_DOCUMENT_NAME} href={documentUrl(candidateAgreementDocument)} target="_blank" rel="noreferrer" className="group flex min-w-0 items-center gap-2 rounded-lg bg-slate-50 px-4 py-3 text-sm !text-slate-700 transition-colors hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)]">
-              <FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" /><span className="truncate">{CANDIDATE_AGREEMENT_DOCUMENT_NAME}</span>
-            </a>
+            <CandidateAgreementDocumentLink
+              ariaLabel={CANDIDATE_AGREEMENT_DOCUMENT_NAME}
+              className="group flex min-w-0 items-center gap-2 rounded-lg bg-slate-50 px-4 py-3 text-sm !text-slate-700 transition-colors hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)]"
+              document={candidateAgreementDocument}
+              onOpenDocument={openPrivateDocument}
+              openingDocument={documentPreviewMutation.isPending}
+            >
+              <FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" />
+              <span className="truncate">{CANDIDATE_AGREEMENT_DOCUMENT_NAME}</span>
+            </CandidateAgreementDocumentLink>
             <CandidateAgreementTemplate />
           </div>
         ) : <p className="mt-4 text-sm text-slate-500">Hệ thống đang đồng bộ văn bản của bạn.</p>}

@@ -11,7 +11,7 @@ const ALLOWED_TAGS = [
 // `id` không nằm trong danh sách: heading id cho mục lục được gắn ở bước xử lý
 // riêng sau khi đã sanitize. `style` được lọc thêm bằng allowlist ở hook bên dưới
 // vì lớp sanitize CSS mặc định của DOMPurify không đủ chặt trên mọi môi trường.
-const ALLOWED_ATTR = ['href', 'src', 'alt', 'colspan', 'target', 'style']
+const ALLOWED_ATTR = ['href', 'src', 'alt', 'colspan', 'target', 'style', 'data-width', 'data-align']
 const ALLOWED_STYLES = new Set([
   'background-color', 'color', 'font-family', 'font-size', 'font-style', 'font-weight',
   'line-height', 'list-style-type', 'margin-left', 'text-align', 'text-decoration',
@@ -43,6 +43,12 @@ function ensureHook() {
       const style = safeStyle(node.getAttribute('style') || '')
       if (style) node.setAttribute('style', style)
       else node.removeAttribute('style')
+    }
+    if (node.tagName === 'IMG') {
+      const width = node.getAttribute('data-width')
+      const alignment = node.getAttribute('data-align')
+      if (width && !['25%', '50%', '75%', '100%'].includes(width)) node.removeAttribute('data-width')
+      if (alignment && !['left', 'center', 'right'].includes(alignment)) node.removeAttribute('data-align')
     }
   })
   hookRegistered = true

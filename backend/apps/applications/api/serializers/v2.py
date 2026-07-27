@@ -1,12 +1,11 @@
 """V2 application contracts for candidate submission and recruiter snapshot reads."""
 
-from django.db.models import Q
-from django.utils import timezone
 from rest_framework import serializers
 
 from apps.cvs.api.serializers.v2 import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.jobs.models import Job
+from apps.jobs.selectors.listing import publicly_available_job_filter
 from apps.locations.models import Location
 from common.media_storage import media_url_from_value
 
@@ -67,9 +66,8 @@ class CandidateApplicationV2CreateSerializer(serializers.Serializer):
         candidate = self.context['request'].user
         try:
             job = Job.objects.get(
-                Q(public_id=attrs['job_public_id']),
-                Q(status=Job.Status.ACTIVE),
-                Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()),
+                publicly_available_job_filter(),
+                public_id=attrs['job_public_id'],
             )
         except Job.DoesNotExist as error:
             raise serializers.ValidationError(

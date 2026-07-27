@@ -1,7 +1,7 @@
 import { CopyOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Table, Tag, message } from 'antd'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Button, Empty, Table, Tag } from 'antd'
+import { Link, useSearchParams } from 'react-router'
 import {
   closeEmployerJob,
   duplicateEmployerJob,
@@ -9,6 +9,7 @@ import {
   jobKeys,
 } from '@/entities/job'
 import { employerAppPath } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 const STATUS = {
   draft: ['Nháp', 'default'],

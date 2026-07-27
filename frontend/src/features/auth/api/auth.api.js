@@ -60,13 +60,19 @@ export async function requestPasswordReset({ email, captcha_token, portal = getC
 }
 
 // Kiểm tra link còn hiệu lực trước khi hiện form (không tiêu token).
-export async function validatePasswordResetToken(token) {
-  const { data } = await api.get('/auth/password-reset/validate/', { params: { token } })
+export async function validatePasswordResetToken(token, { portal } = {}) {
+  const { data } = await api.get('/auth/password-reset/validate/', {
+    params: { token, ...(portal && { portal }) },
+  })
   return data
 }
 
-export async function confirmPasswordReset({ token, password }) {
-  const { data } = await api.post('/auth/password-reset/confirm/', { token, password })
+export async function confirmPasswordReset({ token, password, portal }) {
+  const { data } = await api.post('/auth/password-reset/confirm/', {
+    token,
+    password,
+    ...(portal && { portal }),
+  })
   return data
 }
 

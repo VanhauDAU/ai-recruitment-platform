@@ -6,6 +6,158 @@ from common.public_id import generate_public_id
 from .company import Company
 
 
+class EmployerVerificationCase(models.Model):
+    """Account-scoped proof that one recruiter may represent one company."""
+
+    class VerificationMethod(models.TextChoices):
+        BUSINESS_REGISTRATION = 'business_registration', 'Giấy đăng ký doanh nghiệp'
+        AUTHORIZATION_AND_ID = 'authorization_and_id', 'Giấy ủy quyền + giấy tờ định danh'
+
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Chưa nộp'
+        PENDING = 'pending', 'Chờ duyệt'
+        IN_REVIEW = 'in_review', 'Đang xử lý'
+        CHANGES_REQUESTED = 'changes_requested', 'Cần bổ sung'
+        REJECTED = 'rejected', 'Bị từ chối'
+        APPROVED = 'approved', 'Đã xác thực'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    recruiter = models.OneToOneField(
+        'employers.RecruiterProfile',
+        on_delete=models.CASCADE,
+        related_name='verification_case',
+    )
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='recruiter_verification_cases',
+    )
+    verification_method = models.CharField(
+        max_length=30,
+        choices=VerificationMethod.choices,
+        blank=True,
+    )
+    status = models.CharField(max_length=24, choices=Status.choices, default=Status.DRAFT)
+    revision = models.PositiveIntegerField(default=1)
+    lock_version = models.PositiveIntegerField(default=0)
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    review_started_at = models.DateTimeField(null=True, blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decision_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-submitted_at', '-updated_at']
+        indexes = [
+            models.Index(
+                fields=['status', '-submitted_at'],
+                name='emp_verify_status_time_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('evc')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.recruiter_id}:{self.status}'
+
+
+class EmployerVerificationEvent(models.Model):
+    """Append-only event timeline for an employer verification case."""
+
+    class EventType(models.TextChoices):
+        SUBMITTED = 'submitted', 'Đã nộp'
+        REVIEW_STARTED = 'review_started', 'Bắt đầu xử lý'
+        DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
+        CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu bổ sung'
+        RESUBMITTED = 'resubmitted', 'Đã nộp lại'
+        APPROVED = 'approved', 'Đã duyệt'
+        REJECTED = 'rejected', 'Đã từ chối'
+        SENSITIVE_VIEWED = 'sensitive_viewed', 'Đã xem dữ liệu nhạy cảm'
+        TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', 'Đã tra cứu lại mã số thuế'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    verification_case = models.ForeignKey(
+        EmployerVerificationCase,
+        on_delete=models.CASCADE,
+        related_name='events',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        indexes = [
+            models.Index(
+                fields=['verification_case', '-created_at'],
+                name='emp_verify_event_time_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('eve')
+        super().save(*args, **kwargs)
+
+
+class EmployerVerificationNotification(models.Model):
+    """Transactional outbox for recruiter-facing verification results."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Chờ gửi'
+        SENDING = 'sending', 'Đang gửi'
+        SENT = 'sent', 'Đã gửi'
+        FAILED = 'failed', 'Gửi thất bại'
+
+    verification_case = models.ForeignKey(
+        EmployerVerificationCase,
+        on_delete=models.CASCADE,
+        related_name='notification_jobs',
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='+',
+    )
+    event_type = models.CharField(max_length=32)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    context = models.JSONField(default=dict, blank=True)
+    last_error = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['status', 'created_at'],
+                name='emp_verify_notice_queue_idx',
+            ),
+        ]
+
+
 class CompanyUpdateRequest(models.Model):
     """Yêu cầu cập nhật thông tin công ty — công ty tạo mới có hiệu lực ngay,
     nhưng sửa về sau phải chờ admin duyệt. Đổi MST/tên công ty (`is_sensitive`)
@@ -34,6 +186,8 @@ class CompanyUpdateRequest(models.Model):
     reason = models.TextField(blank=True)
     proof_type = models.CharField(max_length=30, choices=ProofType.choices, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    revision = models.PositiveIntegerField(default=1)
+    lock_version = models.PositiveIntegerField(default=0)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
@@ -60,6 +214,90 @@ class CompanyUpdateRequest(models.Model):
         return f'{self.company_id}:{self.status}'
 
 
+class CompanyTaxLookupEvidence(models.Model):
+    """Immutable VietQR lookup evidence for one submitted workflow revision."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Đang tra cứu'
+        FOUND = 'found', 'Đã tìm thấy'
+        NOT_FOUND = 'not_found', 'Không tìm thấy'
+        UNAVAILABLE = 'unavailable', 'Nguồn không khả dụng'
+        INVALID_RESPONSE = 'invalid_response', 'Phản hồi không hợp lệ'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    provider = models.CharField(max_length=30, default='vietqr', editable=False)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='tax_lookup_evidences',
+    )
+    verification_case = models.ForeignKey(
+        EmployerVerificationCase,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='tax_lookup_evidences',
+    )
+    update_request = models.ForeignKey(
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='tax_lookup_evidences',
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='+',
+    )
+    workflow_revision = models.PositiveIntegerField()
+    tax_code = models.CharField(max_length=100)
+    submitted_company_name = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=24, choices=Status.choices, default=Status.PENDING)
+    returned_tax_code = models.CharField(max_length=100, blank=True)
+    registered_name = models.CharField(max_length=255, blank=True)
+    international_name = models.CharField(max_length=255, blank=True)
+    short_name = models.CharField(max_length=255, blank=True)
+    provider_code = models.CharField(max_length=40, blank=True)
+    provider_description = models.CharField(max_length=500, blank=True)
+    response_hash = models.CharField(max_length=64, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(verification_case__isnull=False, update_request__isnull=True)
+                    | models.Q(verification_case__isnull=True, update_request__isnull=False)
+                ),
+                name='tax_lookup_evidence_exactly_one_workflow',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['company', 'tax_code', '-created_at'],
+                name='company_tax_lookup_time_idx',
+            ),
+            models.Index(
+                fields=['status', '-created_at'],
+                name='tax_lookup_status_time_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('tle')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.tax_code}:{self.status}:r{self.workflow_revision}'
+
+
 class CompanyDocument(models.Model):
     """Giấy tờ xác thực của công ty và văn bản DLCN của nhà tuyển dụng.
 
@@ -79,9 +317,11 @@ class CompanyDocument(models.Model):
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Chờ duyệt'
+        CHANGES_REQUESTED = 'changes_requested', 'Cần bổ sung'
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Từ chối'
 
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE, null=True, blank=True, related_name='documents'
     )
@@ -102,9 +342,28 @@ class CompanyDocument(models.Model):
         blank=True,
         related_name='documents',
     )
+    verification_case = models.ForeignKey(
+        EmployerVerificationCase,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='documents',
+    )
+    supersedes = models.OneToOneField(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='superseded_by',
+    )
+    version = models.PositiveIntegerField(default=1)
+    is_current = models.BooleanField(default=True)
     doc_type = models.CharField(max_length=30, choices=DocType.choices)
     file_url = models.TextField()
     file_name = models.CharField(max_length=255, blank=True)
+    mime_type = models.CharField(max_length=120, blank=True)
+    file_size = models.PositiveBigIntegerField(default=0)
+    sha256 = models.CharField(max_length=64, blank=True, db_index=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
@@ -112,6 +371,7 @@ class CompanyDocument(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [
@@ -120,8 +380,18 @@ class CompanyDocument(models.Model):
                 | models.Q(company__isnull=False),
                 name='company_document_requires_company_unless_dpa',
             ),
+            models.UniqueConstraint(
+                fields=['verification_case', 'doc_type'],
+                condition=models.Q(is_current=True, verification_case__isnull=False),
+                name='uniq_current_verification_doc_type',
+            ),
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('doc')
+        super().save(*args, **kwargs)
 
     def __str__(self):
         owner = self.company_id or f'recruiter-{self.recruiter_id}'
-        return f'{owner}:{self.doc_type}:{self.status}'
+        return f'{owner}:{self.doc_type}:v{self.version}:{self.status}'

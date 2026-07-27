@@ -6,6 +6,122 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-27
+
+#### Changed — Quyền truy cập nhà tuyển dụng
+
+- Bỏ yêu cầu MFA khi nhà tuyển dụng truy cập dữ liệu ứng viên, tạo hồ sơ công
+  ty hoặc quản lý ảnh công ty. Các endpoint vẫn yêu cầu phiên employer hợp lệ
+  và giữ nguyên ràng buộc phạm vi tin tuyển dụng, công ty và vai trò owner.
+- Khôi phục hành trình xác thực employer về năm bước chính; “Đăng tin tuyển
+  dụng đầu tiên” tiếp tục là bước thứ sáu tách riêng, không đưa các trạng thái
+  email, onboarding hoặc chờ admin duyệt thành bước bổ sung.
+- Sửa liên kết mở văn bản DLCN riêng tư: nội dung được tải qua API client đã
+  xác thực rồi mở bằng blob URL, tránh tab mới gọi trực tiếp backend và nhận
+  lỗi `401 Unauthorized`.
+
+### 2026-07-26
+
+#### Added — Account Management G3
+
+- Thêm migration `accounts.0016`, seed bảy permission `account.*`,
+  `AdminProvisioningScope` và `AdminInvitation`; mỗi lời mời dùng token ký có
+  version, hết hạn 72 giờ và chỉ chấp nhận một lần.
+- Thêm migration `accounts.0017` cho index phiên theo user/portal/IP/trạng thái
+  thu hồi, phục vụ danh sách thiết bị và impact thu hồi phiên.
+- Mở API quản lý Candidate/Employer/Admin, phiên, hoạt động, impact đổi trạng
+  thái/thu hồi phiên, lời mời Admin và whitelist cấp tài khoản. Các thao tác
+  ghi dùng transaction, row locking, audit và impact token; thu hồi scope đồng
+  thời thu hồi mọi lời mời pending liên quan.
+- Thêm `/admin/app/accounts` với năm tab, bộ lọc nâng cao, action icon/tooltip,
+  drawer xem nhanh, trang chi tiết hồ sơ–bảo mật–audit và luồng nhận lời mời có
+  MFA email cùng mã dự phòng chỉ hiển thị một lần.
+- Trang Phân quyền có tab “Cấp tài khoản” dành riêng cho superuser, hiển thị
+  whitelist nguồn–đích, số lời mời pending và impact preview trước khi thu hồi.
+- Thêm command local idempotent `seed_admin_account_demo` tạo superuser, nhân
+  sự được ủy quyền và Admin kiểm duyệt kèm mã dự phòng demo.
+
+#### Security — Account Management G3
+
+- Admin được ủy quyền phải đồng thời có một membership hiệu lực, permission
+  `account.admin.invite` và scope nguồn–đích active; backend chặn request giả
+  mạo role ngoài whitelist và mọi role chứa quyền quản trị nhạy cảm.
+- Người mời thường chỉ thấy và quản lý lời mời của chính mình. Sau kích hoạt,
+  mọi thay đổi trạng thái, chức danh hoặc bảo mật của Admin vẫn superuser-only.
+- Accept đồng thời được serialize bằng row lock; chỉ một transaction tạo đúng
+  một membership. Audit không ghi token, mật khẩu, MFA secret hay mã dự phòng.
+- Sửa reset mật khẩu Admin: email dùng đúng nhãn “Quản trị” và link cổng
+  `/admin/app/reset-password?portal=admin`; backend ràng buộc token với cổng
+  Admin, kiểm tra trạng thái ở lúc gửi/lúc dùng, và từ chối reset cho tài khoản
+  `inactive` hoặc `banned`.
+
+#### Changed — Gán chức danh nhân viên
+
+- Migration `accounts.0015` hợp nhất dữ liệu lịch sử về một membership active
+  cho mỗi nhân viên và thêm ràng buộc database tương ứng. Gán chức danh mới nay
+  là thao tác thay thế nguyên tử: thu hồi chức danh cũ, audit trước/sau và bust
+  cache quyền sau commit.
+- Bỏ endpoint, payload và UI “phòng ban chính”. Preview đổi chức danh hiển thị
+  rõ chức danh hiện tại cùng quyền được thêm/mất; trang Nhân viên chỉ còn một
+  dòng chức danh hiệu lực cho mỗi người.
+- Thêm regression cho thay thế membership và hai xác nhận đồng thời: chỉ một
+  transaction được commit, yêu cầu còn lại nhận stale impact token.
+- Bổ sung bộ lọc nhanh theo nội dung/trạng thái/MFA, action icon có tooltip và
+  drawer xem chi tiết nhân viên; bảng phòng ban/chức danh hiển thị thêm mã và
+  số liệu vận hành nhưng không lặp thao tác chỉnh sửa trong menu.
+
+#### Changed — Bảo mật tài khoản quản trị
+
+- Admin có thể bật hoặc tắt Email MFA, ứng dụng xác thực và mã dự phòng như
+  các tài khoản khác. Mọi thao tác tắt vẫn bắt buộc step-up bằng phương thức
+  MFA đang có và được ghi audit không chứa mã xác minh hay secret.
+
+#### Added — Quản trị phân quyền (RBAC G2)
+
+- Thêm migration `accounts.0014`, cờ `is_system_managed` cho department/role,
+  ma trận seed code-owned và command tạo admin thường không bypass RBAC.
+- Mở API `/api/admin/` cho phòng ban, chức danh, permission runtime, membership
+  và staff; có impact preview, restore mặc định, audit/cache và primary
+  deterministic.
+- Thêm trang `/admin/app/access-control` ba tab, PermissionPicker giữ grant
+  deprecated, badge MFA, trạng thái loading/empty/error và impact modal cho mọi
+  thao tác nguy hiểm.
+
+#### Security — RBAC admin G2
+
+- Mọi ghi, mọi impact preview và dữ liệu nhân sự là superuser-only; admin
+  `admin_access.view` chỉ được đọc cấu trúc tổ chức.
+- Impact token ký ràng buộc revision/operation/resource/payload, hết hạn 10
+  phút; xác nhận khoá row phụ thuộc và trả `409 admin_resource_changed` khi
+  preview stale.
+- Chặn gán người vào role không có permission active và chặn xoá sạch quyền của
+  role còn membership hoạt động; code trùng được map ổn định về 400.
+- Quality gate cuối: 417 backend test (85,54% coverage), 416 frontend test,
+  architecture/import contract sạch, build trong bundle budget và 81 smoke E2E.
+
+#### Added — RBAC admin G1.1
+
+- Thêm registry permission code-owned, phòng ban, chức danh, membership có lịch
+  sử thu hồi, primary deterministic, cache 60 giây và audit log luôn bật.
+- Thêm command đồng bộ/deprecate permission, seed hội tụ ma trận phòng ban,
+  export contract frontend, bootstrap MFA và readiness gate trước khi siết API.
+- `/api/auth/me/` trả `admin_access`; cổng admin có trang “Quyền của tôi”, badge
+  phòng ban, sidebar/route/login destination dùng chung một access policy.
+
+#### Security — RBAC admin G1.2
+
+- Siết site settings ở mức superuser; áp permission chi tiết cho catalogue dịch
+  vụ, lead tư vấn, catalogue CV và kiểm duyệt tin.
+- Chặn nhân viên CV đi vòng qua `PATCH is_active/status`; dữ liệu do staff tạo
+  mặc định ẩn/draft, gồm cả upload background đi qua service riêng.
+- Chuẩn hoá mọi lỗi thiếu quyền thành `403 admin_permission_denied`; frontend
+  revalidate session có cooldown khi nhận chùm 403.
+
+#### Documentation & Verification
+
+- Bổ sung thiết kế database RBAC, ma trận seed, runbook hai release, cảnh báo
+  endpoint dashboard/blog còn legacy và gate chống lệch registry backend/frontend.
+
 ### 2026-07-24
 
 #### Added — Cá nhân hóa tài khoản ứng viên

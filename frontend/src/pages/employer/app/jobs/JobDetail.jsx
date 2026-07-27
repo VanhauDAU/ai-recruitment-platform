@@ -6,10 +6,10 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, DatePicker, Modal, Select, Skeleton, Tabs, message } from 'antd'
+import { Alert, DatePicker, Modal, Select, Skeleton, Tabs } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router'
 import {
   applicationKeys,
   getRecruiterApplications,
@@ -21,6 +21,7 @@ import {
   jobKeys,
   reopenEmployerJob,
 } from '@/entities/job'
+import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobInformationPanel from './JobInformationPanel'

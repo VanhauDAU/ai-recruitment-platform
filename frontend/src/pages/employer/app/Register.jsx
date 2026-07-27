@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Form, Input } from 'antd'
 import { useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import {
   AuthFormStyles,
   AuthLogo,

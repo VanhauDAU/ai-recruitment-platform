@@ -25,11 +25,21 @@ from .public import (
     SavedJobListCreateView,
 )
 from .recommendations import SavedJobRecommendationView
+from .reports import (
+    AdminJobReportListView,
+    AdminJobReportResolveView,
+    AdminJobReportReverseView,
+    JobReportCreateView,
+)
 
 __all__ = [
     'BenefitListView',
     'AdminJobModerationListView',
+    'AdminJobReportListView',
+    'AdminJobReportResolveView',
+    'AdminJobReportReverseView',
     'AdminJobReviewView',
+    'JobReportCreateView',
     'CandidateJobRecommendationView',
     'CvJobRecommendationView',
     'EmployerJobCloseView',

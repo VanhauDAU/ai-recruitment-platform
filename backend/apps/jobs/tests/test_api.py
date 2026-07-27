@@ -111,6 +111,32 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
 
+    def test_locked_employer_hides_job_from_every_public_read_and_tracking_surface(self):
+        visible_detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        visible_list = self.client.get(reverse('job-list'))
+        visible_suggest = self.client.get(reverse('job-suggest'), {'q': 'Backend'})
+
+        self.user.status = User.Status.BANNED
+        self.user.is_active = False
+        self.user.save(update_fields=['status', 'is_active', 'updated_at'])
+
+        hidden_detail = self.client.get(reverse('job-detail', kwargs={'slug': self.job.slug}))
+        hidden_list = self.client.get(reverse('job-list'))
+        hidden_suggest = self.client.get(reverse('job-suggest'), {'q': 'Backend'})
+        hidden_tracking = self.client.post(
+            reverse('job-view-create', kwargs={'slug': self.job.slug})
+        )
+
+        self.assertEqual(visible_detail.status_code, 200)
+        self.assertEqual(visible_list.data['count'], 1)
+        self.assertEqual(visible_suggest.data['suggestions'], [self.job.title])
+        self.assertEqual(hidden_detail.status_code, 404)
+        self.assertEqual(hidden_list.data['count'], 0)
+        self.assertEqual(hidden_suggest.data['suggestions'], [])
+        self.assertEqual(hidden_tracking.status_code, 404)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.ACTIVE)
+
     def test_tracking_requires_analytics_consent_and_does_not_set_viewer_cookie(self):
         response = self.client.post(reverse('job-view-create', kwargs={'slug': self.job.slug}))
 
@@ -583,15 +609,31 @@ class EmployerJobSerializerTests(APITestCase):
         job.refresh_from_db()
         self.assertIsNone(job.campaign)
 
-    def test_range_salary_accepts_only_minimum_or_maximum(self):
-        for salary_min, salary_max in ((9000000, None), (None, 12000000)):
-            with self.subTest(salary_min=salary_min, salary_max=salary_max):
+    def test_range_salary_with_one_bound_is_normalized_and_saved(self):
+        cases = (
+            (Job.IncomeDisplayType.INCOME, 9000000, None, Job.SalaryType.FROM),
+            (Job.IncomeDisplayType.INCOME, None, 12000000, Job.SalaryType.UP_TO),
+            (Job.IncomeDisplayType.INCOME_AT_KPI, 9000000, None, Job.SalaryType.FROM),
+            (Job.IncomeDisplayType.INCOME_AT_KPI, None, 12000000, Job.SalaryType.UP_TO),
+        )
+        for income_display_type, salary_min, salary_max, expected_type in cases:
+            with self.subTest(
+                income_display_type=income_display_type,
+                salary_min=salary_min,
+                salary_max=salary_max,
+            ):
                 payload = self.payload()
                 payload['salary_min'] = salary_min
                 payload['salary_max'] = salary_max
+                payload['income_display_type'] = income_display_type
                 serializer = EmployerJobWriteSerializer(data=payload)
 
                 self.assertTrue(serializer.is_valid(), serializer.errors)
+                job = serializer.save(posted_by=self.user, company=self.company)
+                self.assertEqual(job.salary_type, expected_type)
+                self.assertEqual(job.salary_min, salary_min)
+                self.assertEqual(job.salary_max, salary_max)
+                self.assertEqual(job.income_display_type, income_display_type)
 
     def test_new_job_location_accepts_province_for_all_wards(self):
         payload = self.payload()

@@ -26,9 +26,10 @@ export default function JobQualityRating({ jobId }) {
   const storageKey = `job-quality-feedback:${jobId}`
   const [selected, setSelected] = useState(null)
   const [issues, setIssues] = useState([])
-  const [submitted, setSubmitted] = useState(() => Boolean(
+  const [hasSubmitted, setHasSubmitted] = useState(() => Boolean(
     jobId && window.localStorage.getItem(`job-quality-feedback:${jobId}`),
   ))
+  const [showThanks, setShowThanks] = useState(false)
   const needsReason = selected !== null && selected <= 3
   const canSubmit = selected !== null && (!needsReason || issues.length > 0)
 
@@ -46,11 +47,13 @@ export default function JobQualityRating({ jobId }) {
   function submitRating() {
     if (!canSubmit) return
     window.localStorage.setItem(storageKey, JSON.stringify({ rating: selected, issues, submittedAt: Date.now() }))
-    setSubmitted(true)
+    setHasSubmitted(true)
+    setShowThanks(true)
     message.success('Cảm ơn bạn đã gửi phản hồi về tin tuyển dụng này.')
   }
 
-  if (submitted) {
+  if (hasSubmitted) {
+    if (!showThanks) return null
     return (
       <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 text-center shadow-sm sm:p-6">
         <CheckCircleFilled className="text-3xl text-[var(--brand-primary)]" />

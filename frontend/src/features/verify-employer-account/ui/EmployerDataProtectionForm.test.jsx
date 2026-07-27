@@ -2,12 +2,13 @@ import { App } from 'antd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerDataProtectionForm from './EmployerDataProtectionForm'
 
 const {
   acceptEmployerDpa,
   employerProfileKeys,
+  getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
@@ -16,6 +17,7 @@ const {
   employerProfileKeys: {
     companyDocuments: ['employer', 'company', 'documents'],
   },
+  getEmployerCompanyDocumentContent: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerProfile: vi.fn(),
   uploadEmployerDataProcessingAgreement: vi.fn(),
@@ -25,6 +27,7 @@ const { message } = vi.hoisted(() => ({ message: { error: vi.fn(), success: vi.f
 vi.mock('@/entities/employer-profile', () => ({
   acceptEmployerDpa,
   employerProfileKeys,
+  getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
@@ -42,6 +45,21 @@ function renderForm() {
 }
 
 describe('EmployerDataProtectionForm', () => {
+  beforeEach(() => {
+    acceptEmployerDpa.mockReset()
+    getEmployerCompanyDocumentContent.mockReset()
+    getEmployerCompanyDocuments.mockReset()
+    getEmployerProfile.mockReset()
+    uploadEmployerDataProcessingAgreement.mockReset()
+    message.error.mockReset()
+    message.success.mockReset()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
   it('keeps both legal actions available before company information is updated', async () => {
     getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: false, candidate_dpa_submitted: false, dpa_accepted: false } })
     getEmployerCompanyDocuments.mockResolvedValue([])
@@ -106,5 +124,93 @@ describe('EmployerDataProtectionForm', () => {
 
     await user.click(screen.getByRole('button', { name: 'Hủy' }))
     expect(screen.queryByText('Chọn hoặc kéo file vào đây')).not.toBeInTheDocument()
+  })
+
+  it('opens a private submitted document through the authenticated API client', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: true, dpa_accepted: true },
+    })
+    const privateDocument = {
+      id: 19,
+      doc_type: 'data_processing_agreement',
+      file_url: 'http://localhost:8000/api/employer/company/documents/19/content/',
+    }
+    getEmployerCompanyDocuments.mockResolvedValue([privateDocument])
+    getEmployerCompanyDocumentContent.mockResolvedValue(
+      new Blob(['agreement'], { type: 'application/pdf' }),
+    )
+    const createObjectURL = vi.fn(() => 'blob:private-employer-document')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
+    const previewWindow = {
+      close: vi.fn(),
+      location: { replace: vi.fn() },
+      opener: null,
+    }
+    vi.spyOn(window, 'open').mockReturnValue(previewWindow)
+    const user = userEvent.setup()
+
+    renderForm()
+    await user.click(await screen.findByRole('button', { name: 'Thỏa thuận xử lý DLCN' }))
+
+    await waitFor(() => expect(getEmployerCompanyDocumentContent).toHaveBeenCalledWith(
+      privateDocument,
+    ))
+    expect(screen.queryByRole('link', { name: 'Thỏa thuận xử lý DLCN' })).not.toBeInTheDocument()
+    expect(window.open).toHaveBeenCalledWith('', '_blank')
+    expect(previewWindow.location.replace).toHaveBeenCalledWith(
+      'blob:private-employer-document',
+    )
+  })
+
+  it('downloads a private DOCX with its extension instead of leaving a blank tab', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: true, dpa_accepted: true },
+    })
+    const privateDocument = {
+      id: 19,
+      doc_type: 'data_processing_agreement',
+      file_name: 'Thỏa thuận xử lý DLCN',
+      file_url: 'http://localhost:8000/api/employer/company/documents/19/content/',
+    }
+    getEmployerCompanyDocuments.mockResolvedValue([privateDocument])
+    getEmployerCompanyDocumentContent.mockResolvedValue(new Blob(
+      ['agreement'],
+      { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+    ))
+    const createObjectURL = vi.fn(() => 'blob:private-employer-document')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
+    const previewWindow = {
+      close: vi.fn(),
+      location: { replace: vi.fn() },
+      opener: null,
+    }
+    vi.spyOn(window, 'open').mockReturnValue(previewWindow)
+    const downloadClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const user = userEvent.setup()
+
+    renderForm()
+    await user.click(await screen.findByRole('button', { name: 'Thỏa thuận xử lý DLCN' }))
+
+    await waitFor(() => expect(previewWindow.close).toHaveBeenCalled())
+    expect(previewWindow.location.replace).not.toHaveBeenCalled()
+    expect(downloadClick).toHaveBeenCalled()
+  })
+
+  it('shows an approved status after the candidate data agreement is reviewed', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: true, candidate_dpa_approved: true, dpa_accepted: true },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([{
+      id: 1,
+      doc_type: 'data_processing_agreement',
+      file_url: 'https://files.example.com/thoa-thuan.pdf',
+    }])
+
+    renderForm()
+
+    expect(await screen.findByText('Đã duyệt')).toBeVisible()
+    expect(screen.queryByText('Hệ thống đang xử lý')).not.toBeInTheDocument()
   })
 })

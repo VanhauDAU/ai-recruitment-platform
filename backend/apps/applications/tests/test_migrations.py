@@ -23,7 +23,6 @@ from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
 from apps.cvs.models import CvVersion, UserCv
-from apps.employers.models import Company
 from apps.jobs.models import Job
 
 BEFORE = [('applications', '0003_initial')]
@@ -58,6 +57,18 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
             'applications', 'Application'
         )
 
+    def _historical_company(self):
+        """Return Company from the same graph state as the legacy application.
+
+        Later employer migrations depend on newer application migrations and
+        are rolled back for these tests. Using the runtime Company model would
+        then try to write columns that do not exist in the historical schema.
+        """
+        executor = MigrationExecutor(connection)
+        return executor._create_project_state(  # noqa: SLF001 - migration-state test
+            with_applied_migrations=True
+        ).apps.get_model('employers', 'Company')
+
     def _snapshot_application(self):
         """Return the Application model matching the 0004–0006 test schema.
 
@@ -83,9 +94,17 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
             role='employer',
             full_name='Legacy Owner',
         )
-        company = Company.objects.create(company_name=f'Legacy Co {suffix}', created_by=owner)
+        company = self._historical_company().objects.create(
+            public_id=f'co-mig-{suffix}',
+            slug=f'legacy-co-{suffix}',
+            company_name=f'Legacy Co {suffix}',
+            created_by_id=owner.pk,
+        )
         job = Job.objects.create(
-            title=f'Legacy Job {suffix}', description='d', company=company, posted_by=owner
+            title=f'Legacy Job {suffix}',
+            description='d',
+            company_id=company.pk,
+            posted_by=owner,
         )
         cv = UserCv.objects.create(cv_type='builder', title=f'Legacy CV {suffix}', user=candidate)
         CvVersion.objects.create(

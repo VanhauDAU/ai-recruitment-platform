@@ -18,6 +18,12 @@ from .recommendations import (
     RecommendationPermissionDeniedSerializer,
     SavedJobRecommendationResponseSerializer,
 )
+from .reports import (
+    AdminJobReportResolveSerializer,
+    AdminJobReportReverseSerializer,
+    AdminJobReportSerializer,
+    JobReportCreateSerializer,
+)
 from .saved import SavedJobSerializer
 from .supporting import (
     JobApplicationContactSerializer,
@@ -55,6 +61,10 @@ __all__ = [
     'JobDetailSerializer',
     'JobLanguageRequirementSerializer',
     'JobLocationSerializer',
+    'AdminJobReportResolveSerializer',
+    'AdminJobReportReverseSerializer',
+    'AdminJobReportSerializer',
+    'JobReportCreateSerializer',
     'JobSerializer',
     'JobSkillSerializer',
     'JobWorkScheduleSerializer',

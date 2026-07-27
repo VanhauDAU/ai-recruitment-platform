@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { formatDocumentTitle, setDocumentTitle } from '@/shared/config/document-title'
 import { getCurrentPortal } from '@/shared/config/portals'

@@ -1,8 +1,8 @@
 import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Modal, Radio, Skeleton, Tag, message } from 'antd'
+import { Alert, Button, Modal, Radio, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   employerProfileKeys,
   getEmployerProfile,
@@ -14,6 +14,7 @@ import {
 import { useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_COMPANY_SETTINGS_URL } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 import { EmployerBusinessDocumentCard } from './EmployerBusinessDocumentCard'
 
 const UPLOAD_GUIDE_URL = 'https://drive.google.com/file/d/1yYXQMXUjW7_vF3dlpsQd0EBo8WinH9K-/view'

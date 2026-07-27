@@ -20,6 +20,7 @@ import {
 } from '@/entities/cv-template'
 import { getAdminLocales } from '@/entities/locale'
 import { message } from '@/shared/lib/toast'
+import { AdminPanel } from '@/widgets/admin-workspace'
 
 function statusTag(value) {
   const color = value === 'published' || value === true ? 'green' : value === 'draft' ? 'gold' : 'default'
@@ -156,10 +157,9 @@ export default function AdminCvCatalogue() {
   ]
 
   return (
-    <div>
-      <Typography.Title level={2}>Catalogue CV</Typography.Title>
-      <Typography.Paragraph type="secondary">Quản lý publishing, nội dung có cấu trúc và snapshot bằng cùng canonical pipeline với ứng viên.</Typography.Paragraph>
-      <Tabs items={[
+    <div className="space-y-5">
+      <AdminPanel>
+        <Tabs items={[
         { key: 'templates', label: 'Templates', children: <Table rowKey="public_id" loading={loading} dataSource={data.templates} columns={templateColumns} pagination={false} /> },
         { key: 'samples', label: 'Nội dung mẫu', children: <Table rowKey="public_id" loading={loading} dataSource={data.samples} columns={sampleColumns} pagination={false} /> },
         { key: 'blueprints', label: 'Blueprints', children: <Table rowKey="public_id" loading={loading} dataSource={data.blueprints} pagination={false} columns={[
@@ -170,15 +170,16 @@ export default function AdminCvCatalogue() {
         { key: 'locales', label: 'Locales', children: <Table rowKey="code" loading={loading} dataSource={data.locales} pagination={false} columns={[
           { title: 'Code', dataIndex: 'code' }, { title: 'Tên', dataIndex: 'label_vi' }, { title: 'Path', dataIndex: 'catalog_path' }, { title: 'Default', dataIndex: 'is_default', render: statusTag }, { title: 'Active', dataIndex: 'is_active', render: statusTag },
         ]} /> },
-        { key: 'taxonomy', label: 'Danh mục & màu', children: <Space align="start" className="w-full" size="large"><Table rowKey="public_id" dataSource={data.categories} pagination={false} columns={[{ title: 'Danh mục', dataIndex: 'name' }, { title: 'Loại', dataIndex: 'category_type' }]} /><Table rowKey="public_id" dataSource={data.colors} pagination={false} columns={[{ title: 'Màu', dataIndex: 'name' }, { title: 'Hex', dataIndex: 'hex_code' }]} /></Space> },
+        { key: 'taxonomy', label: 'Danh mục & màu', children: <div className="grid gap-5 xl:grid-cols-2"><Table rowKey="public_id" dataSource={data.categories} pagination={false} columns={[{ title: 'Danh mục', dataIndex: 'name' }, { title: 'Loại', dataIndex: 'category_type' }]} /><Table rowKey="public_id" dataSource={data.colors} pagination={false} columns={[{ title: 'Màu', dataIndex: 'name' }, { title: 'Hex', dataIndex: 'hex_code' }]} /></div> },
         { key: 'backgrounds', label: 'Hình nền', children: <div className="space-y-4"><Upload accept="image/jpeg,image/png,image/webp" showUploadList={false} beforeUpload={async (file) => { await act(() => createAdminCvBackground(file, file.name.replace(/\.[^.]+$/, '')), 'Đã thêm hình nền CV.'); return false }}><Button type="primary">Tải hình nền mới</Button></Upload><Table rowKey="public_id" loading={loading} dataSource={data.backgrounds} pagination={false} columns={[
-          { title: 'Ảnh', render: (_, row) => <img src={row.url} alt="" className="h-24 w-20 rounded object-cover" /> },
+          { title: 'Ảnh', render: (_, row) => <img src={row.url} alt={`Hình nền ${row.title}`} loading="lazy" className="h-24 w-20 rounded object-cover" /> },
           { title: 'Tên', dataIndex: 'title', render: (value, row) => <Input defaultValue={value} onBlur={(event) => { const title = event.target.value.trim(); if (title !== value) act(() => updateAdminCvBackground(row.public_id, { title }), 'Đã đổi tên hình nền.') }} /> },
           { title: 'Kích thước', render: (_, row) => `${row.width}×${row.height}` },
           { title: 'Đang dùng', dataIndex: 'is_active', render: (value, row) => <Switch checked={value} onChange={(is_active) => act(() => updateAdminCvBackground(row.public_id, { is_active }), 'Đã cập nhật trạng thái hình nền.')} /> },
           { title: 'Thao tác', render: (_, row) => <Button danger size="small" disabled={!row.is_active} onClick={() => act(() => archiveAdminCvBackground(row.public_id), 'Đã ẩn hình nền khỏi catalogue.')}>Ẩn</Button> },
         ]} /></div> },
-      ]} />
+        ]} />
+      </AdminPanel>
       <StructuredSampleEditor sample={editing} open={Boolean(editing)} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} />
     </div>
   )

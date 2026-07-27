@@ -71,7 +71,7 @@ def create_avatar_asset(*, actor, upload):
     return asset
 
 
-def create_background_asset(*, upload, title=''):
+def create_background_asset(*, upload, title='', is_active=True):
     if upload.size > MAX_AVATAR_BYTES:
         raise ValidationError({'file': 'Image must be 5 MB or smaller.'})
     try:
@@ -109,6 +109,7 @@ def create_background_asset(*, upload, title=''):
         width=image.width,
         height=image.height,
         checksum_sha256=checksum,
+        is_active=is_active,
     )
     asset.full_clean()
     asset.save()

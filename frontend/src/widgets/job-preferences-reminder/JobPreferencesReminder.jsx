@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { useSession } from '@/entities/session'
 
 export default function JobPreferencesReminder() {

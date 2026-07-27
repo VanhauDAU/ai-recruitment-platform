@@ -25,6 +25,32 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv(
 RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
 RECAPTCHA_SCORE_THRESHOLD = config('RECAPTCHA_SCORE_THRESHOLD', default=0.5, cast=float)
 
+VIETQR_TAX_LOOKUP_ENABLED = config('VIETQR_TAX_LOOKUP_ENABLED', default=True, cast=bool)
+VIETQR_TAX_LOOKUP_BASE_URL = config(
+    'VIETQR_TAX_LOOKUP_BASE_URL',
+    default='https://api.vietqr.io/v2/business',
+)
+VIETQR_TAX_LOOKUP_CONNECT_TIMEOUT = config(
+    'VIETQR_TAX_LOOKUP_CONNECT_TIMEOUT',
+    default=2,
+    cast=float,
+)
+VIETQR_TAX_LOOKUP_READ_TIMEOUT = config(
+    'VIETQR_TAX_LOOKUP_READ_TIMEOUT',
+    default=3,
+    cast=float,
+)
+VIETQR_TAX_LOOKUP_SUCCESS_TTL = config(
+    'VIETQR_TAX_LOOKUP_SUCCESS_TTL',
+    default=86400,
+    cast=int,
+)
+VIETQR_TAX_LOOKUP_NEGATIVE_TTL = config(
+    'VIETQR_TAX_LOOKUP_NEGATIVE_TTL',
+    default=900,
+    cast=int,
+)
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -314,7 +340,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Autosave and version operations use optimistic locking via If-Match.
 # Include it in the preflight allow-list so browsers can send those requests
 # from the Vite development origin.
-CORS_ALLOW_HEADERS = (*default_headers, 'if-match', 'x-auth-portal')
+CORS_ALLOW_HEADERS = (*default_headers, 'if-match', 'x-auth-portal', 'x-session-probe')
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
 
 # Consent is stored in a signed, HttpOnly first-party cookie.  The browser may
@@ -395,6 +421,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
     'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
+    'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
 }
 CELERY_TASK_ACKS_LATE = True
@@ -451,6 +478,9 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 # URL frontend để dựng link xác thực trong email.
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
+ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
+ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
+ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
     'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/account/verify'
 )
@@ -458,6 +488,16 @@ EMPLOYER_PASSWORD_RESET_PATH = config(
     'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/reset-password'
 )
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
+REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
+    'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
+    default=False,
+    cast=bool,
+)
+REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
+    'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS',
+    default=False,
+    cast=bool,
+)
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)

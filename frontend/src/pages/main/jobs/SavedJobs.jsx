@@ -5,7 +5,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import { Alert, Button } from 'antd'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router'
 import { useSession } from '@/entities/session'
 import {
   useSavedJobRecommendations,

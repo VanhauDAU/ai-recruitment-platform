@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useLocation, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router'
 import { CvSaveSuccessView } from '@/widgets/cv-save-success'
 import { setDocumentTitle } from '@/shared/config/document-title'
 

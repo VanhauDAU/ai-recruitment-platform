@@ -7,6 +7,7 @@ from .details import JobCategoryAssignment, JobLocation, JobWorkSchedule
 from .engagement import JobEngagementDaily
 from .history import JobStatusHistory
 from .languages import JobLanguageRequirement, Language
+from .report import JobReport, JobReportResolutionEvent
 from .saved import SavedJob
 from .skills import JobSkill
 
@@ -23,6 +24,8 @@ __all__ = [
     'JobCategoryAssignment',
     'JobLanguageRequirement',
     'JobLocation',
+    'JobReport',
+    'JobReportResolutionEvent',
     'JobSkill',
     'JobWorkSchedule',
     'Language',

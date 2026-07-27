@@ -13,7 +13,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Pagination, Skeleton, Tooltip } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   formatLocations,
   formatSalary,

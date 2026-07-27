@@ -18,6 +18,11 @@ from ...models import (
     JobSkill,
     JobWorkSchedule,
 )
+from ...selectors.verification_badge import (
+    BADGE_CACHE_KEY,
+    badge_criteria_payload,
+    prime_badge_cache,
+)
 from .supporting import (
     JobApplicationContactSerializer,
     JobApplicationEmailSerializer,
@@ -42,6 +47,22 @@ class JobListSkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobSkill
         fields = ['skill_name']
+
+
+class JobBadgeListSerializer(serializers.ListSerializer):
+    """Nạp sẵn cờ huy hiệu cho cả trang trước khi render từng tin.
+
+    Không có bước này, mỗi tin sẽ tự truy vấn điều kiện xác thực của cặp
+    (công ty, người đăng) và endpoint list vỡ ngân sách truy vấn.
+    """
+
+    def to_representation(self, data):
+        items = list(data)
+        prime_badge_cache(
+            self.child.context,
+            {(item.company_id, item.posted_by_id) for item in items},
+        )
+        return super().to_representation(items)
 
 
 class JobSerializer(serializers.ModelSerializer):
@@ -125,6 +146,7 @@ class JobSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+        list_serializer_class = JobBadgeListSerializer
         read_only_fields = [
             'public_id',
             'slug',
@@ -200,6 +222,12 @@ class JobSerializer(serializers.ModelSerializer):
         elif salary_type == Job.SalaryType.RANGE:
             if salary_min is None and salary_max is None:
                 salary_errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+            elif salary_min is not None and salary_max is None:
+                attrs['salary_type'] = Job.SalaryType.FROM
+                salary_type = Job.SalaryType.FROM
+            elif salary_min is None and salary_max is not None:
+                attrs['salary_type'] = Job.SalaryType.UP_TO
+                salary_type = Job.SalaryType.UP_TO
             elif salary_min is not None and salary_max is not None and salary_max < salary_min:
                 salary_errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
         elif salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM) and salary_min is None:
@@ -276,8 +304,19 @@ class JobSerializer(serializers.ModelSerializer):
     def get_company_logo_url(self, obj):
         return media_url_from_value(obj.company.logo_url, request=self.context.get('request'))
 
+    def _badge_payload(self, obj):
+        cache = self.__dict__.setdefault('_badge_payload_cache', {})
+        key = (obj.company_id, obj.posted_by_id)
+        if key not in cache:
+            cache[key] = badge_criteria_payload(obj)
+        return cache[key]
+
     def get_company_verified(self, obj):
-        return bool(obj.company.verified_at)
+        cached = self.context.get(BADGE_CACHE_KEY, {})
+        key = (obj.company_id, obj.posted_by_id)
+        if key in cached:
+            return cached[key]
+        return self._badge_payload(obj)['verified']
 
     def get_brand_slug(self, obj):
         company = obj.company
@@ -393,6 +432,7 @@ class JobDetailSerializer(JobSerializer):
     """
 
     category_name = serializers.SerializerMethodField()
+    company_verification = serializers.SerializerMethodField()
     company_size = serializers.CharField(source='company.company_size', read_only=True)
     company_address = serializers.CharField(source='company.address', read_only=True)
     company_description = serializers.SerializerMethodField()
@@ -410,7 +450,7 @@ class JobDetailSerializer(JobSerializer):
     work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
     language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta(JobSerializer.Meta):
         model = Job
         fields = [
             'public_id',
@@ -421,6 +461,7 @@ class JobDetailSerializer(JobSerializer):
             'company_cover_url',
             'brand_slug',
             'company_verified',
+            'company_verification',
             'category',
             'category_name',
             'locations_detail',
@@ -463,6 +504,9 @@ class JobDetailSerializer(JobSerializer):
             'benefit_groups',
         ]
         read_only_fields = fields
+
+    def get_company_verification(self, obj):
+        return badge_criteria_payload(obj)
 
     def get_category_name(self, obj):
         assignment = self._primary_assignment(obj)

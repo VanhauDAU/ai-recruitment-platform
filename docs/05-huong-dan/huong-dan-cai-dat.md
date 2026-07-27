@@ -63,12 +63,25 @@ python manage.py seed_job_categories
 python manage.py seed_sitecontent
 python manage.py seed_cv_catalog     # mẫu CV + nội dung mẫu — thiếu thì trang /mau-cv rỗng
 python manage.py seed_services       # nhóm/gói dịch vụ cho trang báo giá NTD
+python manage.py sync_admin_permissions
+python manage.py seed_admin_access
 
 # Seed dữ liệu demo cho trang chủ/danh sách việc làm (tuỳ chọn nhưng nên chạy khi dev UI)
 python manage.py seed_demo_jobs
 python manage.py seed_blog           # bài viết mẫu cho trang cẩm nang
 
 python manage.py createsuperuser
+# Tùy chọn, khuyến nghị: tạo sẵn MFA Email từ CLI tin cậy.
+python manage.py bootstrap_admin_mfa <email-admin> \
+  --mark-email-verified --actor-email <email-superuser>
+
+# Tài khoản nhân viên admin: không dùng createsuperuser vì sẽ bypass RBAC.
+# Command hỏi mật khẩu tương tác và tạo is_superuser=False, is_staff=False:
+python manage.py create_admin_user <email-nhan-vien> \
+  --actor-email <email-superuser>
+# Tùy chọn, khuyến nghị: bật MFA Email cho tài khoản nhân viên.
+python manage.py bootstrap_admin_mfa <email-nhan-vien> \
+  --mark-email-verified --actor-email <email-superuser>
 python manage.py runserver 8000
 ```
 

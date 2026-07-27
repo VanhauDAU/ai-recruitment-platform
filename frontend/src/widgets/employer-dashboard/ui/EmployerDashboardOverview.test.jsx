@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import EmployerDashboardOverview from './EmployerDashboardOverview'
 import { DashboardVerificationJourney } from './DashboardWelcomeSections'
@@ -14,7 +14,7 @@ vi.mock('@/entities/employer-dashboard', () => ({ getEmployerDashboard }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
 describe('EmployerDashboardOverview', () => {
-  it('opens the manual job form after all five verification steps are complete', () => {
+  it('shows five main verification steps and keeps the first-job action separate', () => {
     render(
       <MemoryRouter>
         <DashboardVerificationJourney
@@ -31,6 +31,7 @@ describe('EmployerDashboardOverview', () => {
       </MemoryRouter>,
     )
 
+    expect(within(screen.getByLabelText('Các bước xác thực')).getAllByRole('link')).toHaveLength(5)
     expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
   })
 

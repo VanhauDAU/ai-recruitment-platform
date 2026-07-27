@@ -10,6 +10,8 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
+from apps.accounts.models import AdminPermission, AdminRole, Department
+from apps.accounts.services import assign_membership
 from apps.employers.models import Company
 
 from ..models import Job, JobStatusHistory
@@ -23,8 +25,34 @@ class JobModerationApiTests(APITestCase):
             email='job-owner@example.com', password='Password@123', role=user_model.Role.EMPLOYER
         )
         self.admin = user_model.objects.create_user(
-            email='job-admin@example.com', password='Password@123', role=user_model.Role.ADMIN
+            email='job-admin@example.com',
+            password='Password@123',
+            role=user_model.Role.ADMIN,
         )
+        department = Department.objects.create(
+            code='job-moderation',
+            name='Kiểm duyệt tin',
+        )
+        role = AdminRole.objects.create(
+            department=department,
+            code='staff',
+            name='Nhân viên',
+        )
+        role.permissions.add(
+            *[
+                AdminPermission.objects.create(
+                    code=code,
+                    module='job_moderation',
+                    label=code,
+                )
+                for code in (
+                    'job_moderation.view',
+                    'job_moderation.approve',
+                    'job_moderation.reject',
+                )
+            ]
+        )
+        assign_membership(self.admin, role, actor=self.admin)
         company = Company.objects.create(company_name='Moderation Co', created_by=self.employer)
         self.job = Job.objects.create(
             posted_by=self.employer,

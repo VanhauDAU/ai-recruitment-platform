@@ -110,6 +110,22 @@ class RecruiterApplicationSnapshotV2Tests(APITestCase):
         self.assertEqual(response.data['cv']['content_json']['personal_info']['full_name'], '')
         self.assertNotIn('cv_data', response.data['cv'])
 
+    def test_job_poster_reads_candidate_snapshot_without_mfa(self):
+        self.owner.two_factor_enabled = False
+        self.owner.save(update_fields=['two_factor_enabled'])
+        tokens = issue_tokens(self.owner, auth_method='password')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot-v2',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['cv']['public_id'], self.snapshot.public_id)
+
     def test_submitted_snapshot_cannot_be_deleted_while_the_application_exists(self):
         with self.assertRaises(ProtectedError):
             self.snapshot.delete()

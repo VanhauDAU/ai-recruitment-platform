@@ -21,7 +21,7 @@ import {
   Tag,
 } from 'antd'
 import { useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   CAMPAIGN_ORDERING_OPTIONS,
   CAMPAIGN_SCOPE_OPTIONS,

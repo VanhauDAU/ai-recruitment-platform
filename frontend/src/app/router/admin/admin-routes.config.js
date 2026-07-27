@@ -1,0 +1,16 @@
+export const ADMIN_ROUTES = [
+  { segment: '/dashboard', lazyKey: 'AdminDashboardPage', title: 'Bảng điều khiển', navLabel: 'Tổng quan', iconKey: 'dashboard', navGroup: 'operations', permission: 'dashboard.view', showInNav: true },
+  { segment: '/cv-catalogue', lazyKey: 'AdminCvCataloguePage', title: 'Catalogue CV', navLabel: 'Catalogue CV', iconKey: 'cv', navGroup: 'operations', permission: 'cv_template.view', showInNav: true },
+  { segment: '/services', lazyKey: 'AdminEmployerServicesPage', title: 'Dịch vụ nhà tuyển dụng', navLabel: 'Dịch vụ NTD', iconKey: 'services', navGroup: 'operations', permission: 'service_catalog.view', showInNav: true },
+  { segment: '/consultation-leads', lazyKey: 'AdminConsultationLeadsPage', title: 'Khách hàng tư vấn', navLabel: 'Lead tư vấn', iconKey: 'leads', navGroup: 'operations', permission: 'consultation_lead.view', showInNav: true },
+  { segment: '/job-moderation', lazyKey: 'AdminJobModerationPage', title: 'Duyệt tin tuyển dụng', navLabel: 'Duyệt tin tuyển dụng', iconKey: 'moderation', navGroup: 'operations', permission: 'job_moderation.view', showInNav: true },
+  { segment: '/blog', lazyKey: 'AdminBlogManagementPage', title: 'Cẩm nang nghề nghiệp', navLabel: 'Bài viết', iconKey: 'blog', navGroup: 'operations', permission: 'blog.view', showInNav: true },
+  { segment: '/blog/new', lazyKey: 'AdminBlogNewPage', title: 'Tạo bài viết', permissionsAll: ['blog.view', 'blog.manage'], showInNav: false },
+  { segment: '/blog/:publicId/edit', lazyKey: 'AdminBlogEditPage', title: 'Biên tập bài viết', permission: 'blog.view', showInNav: false },
+  { segment: '/accounts', lazyKey: 'AdminAccountsPage', title: 'Quản lý tài khoản', navLabel: 'Tài khoản', iconKey: 'accounts', navGroup: 'system', permissionsAny: ['account.view', 'account.admin.view', 'account.admin.invite', 'employer_verification.view', 'company_update.view'], showInNav: true },
+  { segment: '/accounts/:publicId', lazyKey: 'AdminAccountDetailPage', title: 'Chi tiết tài khoản', permissionsAny: ['account.view', 'account.admin.view', 'account.admin.invite', 'employer_verification.view', 'company_update.view'], showInNav: false },
+  { segment: '/access-control', lazyKey: 'AdminAccessControlPage', title: 'Phân quyền quản trị', navLabel: 'Phân quyền', iconKey: 'shield', navGroup: 'system', permission: 'admin_access.view', showInNav: true },
+  { segment: '/settings', lazyKey: 'AdminSettingsPage', title: 'Cài đặt hệ thống', navLabel: 'Cài đặt hệ thống', iconKey: 'settings', navGroup: 'system', permission: 'site_setting.view', requireSuperuser: true, showInNav: true },
+  { segment: '/account', lazyKey: 'AdminAccountPage', title: 'Cài đặt tài khoản', navLabel: 'Tài khoản của tôi', iconKey: 'account', navGroup: 'system', permission: null, showInNav: true },
+  { segment: '/access-denied', lazyKey: 'AdminAccessDeniedPage', title: 'Không có quyền truy cập', permission: null, showInNav: false },
+]

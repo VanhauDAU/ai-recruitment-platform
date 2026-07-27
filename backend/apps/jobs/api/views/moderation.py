@@ -5,7 +5,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsAdmin
+from apps.accounts.permissions import HasAdminPermission, require_admin_permission
 
 from ...selectors import job_moderation_queryset
 from ...services import approve_job, reject_job
@@ -13,7 +13,8 @@ from ..serializers import AdminJobModerationSerializer, AdminJobReviewSerializer
 
 
 class AdminJobModerationListView(generics.ListAPIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['job_moderation.view']}
     serializer_class = AdminJobModerationSerializer
 
     def get_queryset(self):
@@ -21,13 +22,16 @@ class AdminJobModerationListView(generics.ListAPIView):
 
 
 class AdminJobReviewView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'POST': ['job_moderation.view']}
 
     def post(self, request, public_id):
         job = get_object_or_404(job_moderation_queryset(), public_id=public_id)
         serializer = AdminJobReviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if serializer.validated_data['action'] == 'approve':
+        decided = serializer.validated_data['action']
+        require_admin_permission(request.user, f'job_moderation.{decided}')
+        if decided == 'approve':
             job = approve_job(job=job, user=request.user)
         else:
             job = reject_job(

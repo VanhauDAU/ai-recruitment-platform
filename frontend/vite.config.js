@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { visualizer } from 'rollup-plugin-visualizer'
 
+const isCI = Boolean(process.env.CI)
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -47,7 +49,11 @@ export default defineConfig({
     exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'lcov', 'json-summary'],
+      // CI only consumes the machine-readable summary. Avoid generating and
+      // printing the full per-file HTML/LCOV report on every pull request.
+      reporter: isCI
+        ? ['text-summary', 'json-summary']
+        : ['text', 'html', 'lcov', 'json-summary'],
       // AR-P5: đo TOÀN BỘ src/ — allowlist cũ (11 đường dẫn) cho con số 84%
       // không đại diện. Threshold đặt bằng số đo thật tại 2026-07-21 và là
       // RATCHET: chỉ được tăng, không được giảm; PR làm tụt số phải bổ sung test.

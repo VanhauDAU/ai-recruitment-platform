@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import PurePosixPath
 from uuid import uuid4
 
@@ -14,7 +15,11 @@ from common.r2_storage import private_media_storage
 
 from ...models import Company, CompanyDocument, RecruiterProfile
 from ...selectors import has_explicit_company_link
-from ...services import get_or_create_recruiter
+from ...services import (
+    get_or_create_recruiter,
+    get_or_create_verification_case,
+    record_verification_upload,
+)
 from ..serializers import RecruiterProfileSerializer
 
 DOCUMENT_SIGNATURES = {
@@ -79,7 +84,19 @@ def _save_document_file(upload, directory, doc_type):
     return path
 
 
-def _save_document(request, company, doc_type, upload, update_request=None, recruiter=None):
+@transaction.atomic
+def _save_document(
+    request,
+    company,
+    doc_type,
+    upload,
+    update_request=None,
+    recruiter=None,
+    verification_method='',
+):
+    recruiter = recruiter or get_or_create_recruiter(request.user)
+    if company is None and recruiter.company_id:
+        company = recruiter.company
     if company is not None:
         directory = f'employers/{company.public_id}/documents'
     elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT and recruiter is not None:
@@ -87,6 +104,10 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
     else:
         raise ValidationError({'detail': 'Không xác định được chủ sở hữu của giấy tờ.'})
 
+    digest = hashlib.sha256()
+    for chunk in upload.chunks():
+        digest.update(chunk)
+    upload.seek(0)
     path = _save_document_file(
         upload,
         directory,
@@ -97,79 +118,72 @@ def _save_document(request, company, doc_type, upload, update_request=None, recr
         if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
         else upload.name
     )
+    verification_case = None
     existing = None
-    if recruiter is not None and doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
-        existing = CompanyDocument.objects.filter(
-            recruiter=recruiter,
-            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        ).first()
-    elif company is not None and update_request is None:
-        # The current verification document is a single replaceable record per
-        # company/type. Re-submission resets it to pending instead of leaving
-        # older approved or rejected files competing for review.
+    if update_request is not None:
         existing = (
-            CompanyDocument.objects.filter(
-                company=company,
+            CompanyDocument.objects.select_for_update()
+            .filter(
+                update_request=update_request,
                 doc_type=doc_type,
-                update_request__isnull=True,
+                is_current=True,
             )
-            .order_by('-created_at', '-id')
             .first()
         )
-    if existing is not None:
-        previous_path = existing.file_url
-        existing.file_url = path
-        existing.file_name = document_name
-        existing.uploaded_by = request.user
-        existing.status = CompanyDocument.Status.PENDING
-        existing.reviewed_by = None
-        existing.reviewed_at = None
-        existing.review_note = ''
-        existing.save(
-            update_fields=[
-                'file_url',
-                'file_name',
-                'uploaded_by',
-                'status',
-                'reviewed_by',
-                'reviewed_at',
-                'review_note',
-            ]
-        )
-        if previous_path and previous_path != path:
-            transaction.on_commit(
-                lambda previous_path=previous_path: _delete_private_document_files([previous_path])
+        if existing is not None:
+            existing.is_current = False
+            existing.save(update_fields=['is_current', 'updated_at'])
+    elif doc_type in VERIFICATION_DOCUMENT_TYPES | {
+        CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+    }:
+        verification_case = get_or_create_verification_case(recruiter)
+        existing = (
+            CompanyDocument.objects.select_for_update()
+            .filter(
+                verification_case=verification_case,
+                doc_type=doc_type,
+                is_current=True,
             )
-        return existing
+            .first()
+        )
+        if existing is not None:
+            existing.is_current = False
+            existing.save(update_fields=['is_current', 'updated_at'])
 
-    return CompanyDocument.objects.create(
+    document = CompanyDocument.objects.create(
         company=company,
         uploaded_by=request.user,
         update_request=update_request,
         recruiter=recruiter,
+        verification_case=verification_case,
+        supersedes=existing,
+        version=(existing.version + 1 if existing else 1),
         doc_type=doc_type,
         file_url=path,
         file_name=document_name,
+        mime_type=upload.content_type or '',
+        file_size=upload.size,
+        sha256=digest.hexdigest(),
     )
+    if verification_case is not None:
+        record_verification_upload(
+            recruiter=recruiter,
+            document=document,
+            verification_method=verification_method,
+        )
+    return document
 
 
-def remove_obsolete_verification_documents(company, verification_method):
-    """Keep only the current document set after a method switch succeeds."""
+def remove_obsolete_verification_documents(verification_case, verification_method):
+    """Keep old proof files as audit history when a recruiter switches method."""
     current_doc_types = VERIFICATION_METHOD_DOCUMENT_TYPES[verification_method]
-    obsolete_documents = list(
+    (
         CompanyDocument.objects.filter(
-            company=company,
+            verification_case=verification_case,
             doc_type__in=VERIFICATION_DOCUMENT_TYPES - current_doc_types,
             update_request__isnull=True,
-        )
-    )
-    if not obsolete_documents:
-        return
-
-    obsolete_paths = [document.file_url for document in obsolete_documents]
-    CompanyDocument.objects.filter(pk__in=[document.pk for document in obsolete_documents]).delete()
-    transaction.on_commit(
-        lambda obsolete_paths=obsolete_paths: _delete_private_document_files(obsolete_paths)
+            is_current=True,
+        ).update(is_current=False)
     )
 
 

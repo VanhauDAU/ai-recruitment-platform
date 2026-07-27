@@ -1,7 +1,7 @@
 import { CheckCircleFilled, CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,

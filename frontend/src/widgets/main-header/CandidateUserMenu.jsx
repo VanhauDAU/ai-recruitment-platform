@@ -4,7 +4,7 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
 import { message } from '@/shared/lib/toast'
 
@@ -34,7 +34,7 @@ function Section({ section, open, onToggle, onItem, user, activePathname }) {
       <div
         id={panelId}
         aria-hidden={!open}
-        inert={open ? undefined : ''}
+        inert={open ? undefined : true}
         className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
       >
         <div className="overflow-hidden">

@@ -2,6 +2,7 @@ import re
 import shutil
 import tempfile
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.core.files.base import ContentFile
@@ -10,6 +11,7 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import AuthEmailJob, User
@@ -23,7 +25,9 @@ from ..models import (
     Company,
     CompanyDocument,
     CompanyImage,
+    CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
+    EmployerVerificationCase,
     Industry,
     PhoneOtp,
     RecruiterProfile,
@@ -522,6 +526,18 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
 
+    def test_create_does_not_require_mfa(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+
+        response = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+
     def test_primary_industry_must_be_among_selected(self):
         other = Industry.objects.get(name='Bảo hiểm')
         payload = company_payload(self.industry, primary_industry=other.id)
@@ -748,16 +764,22 @@ class JoinCompanyTests(APITestCase):
             recruiter=self.recruiter,
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         )
-        self.assertEqual(documents.count(), 1)
-        document = documents.get()
+        self.assertEqual(documents.count(), 2)
+        previous = documents.get(pk=first.data['id'])
+        document = documents.get(pk=replacement.data['id'])
         self.assertIsNone(document.company)
         self.assertEqual(document.file_name, 'Thỏa thuận xử lý DLCN')
+        self.assertFalse(previous.is_current)
+        self.assertTrue(document.is_current)
+        self.assertEqual(document.version, 2)
+        self.assertEqual(document.supersedes, previous)
         self.assertTrue(
             self.client.get(reverse('employer-me')).data['onboarding']['candidate_dpa_submitted']
         )
         listed = self.client.get(reverse('employer-company-documents'))
         self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
-        self.assertEqual(len(listed.data), 1)
+        self.assertEqual(len(listed.data), 2)
+        self.assertEqual(listed.data[0]['id'], document.id)
 
     def test_current_recruiter_dpa_is_listed_before_legacy_company_dpa(self):
         self.recruiter.company = self.company
@@ -829,9 +851,13 @@ class JoinCompanyTests(APITestCase):
             file_name='company-registration.png',
         )
 
-        response = self.client.get(
-            reverse('employer-company-document-content', kwargs={'pk': document.pk})
-        )
+        with patch(
+            'apps.employers.api.views.verification.render_office_document_preview',
+            return_value=None,
+        ):
+            response = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(b''.join(response.streaming_content), PNG_BYTES)
@@ -843,6 +869,48 @@ class JoinCompanyTests(APITestCase):
             reverse('employer-company-document-content', kwargs={'pk': document.pk})
         )
         self.assertEqual(denied.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_private_dpa_keeps_its_docx_type_and_extension(self):
+        self._join()
+        stored_name = private_media_storage().save(
+            'employers/documents/candidate-dpa.docx',
+            ContentFile(DOCX_BYTES),
+        )
+        document = CompanyDocument.objects.create(
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            file_url=stored_name,
+            file_name='Thỏa thuận xử lý DLCN',
+            mime_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+        with patch(
+            'apps.employers.api.views.verification.render_office_document_preview',
+            return_value=None,
+        ):
+            response = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertIn('.docx', response['Content-Disposition'])
+
+        with patch(
+            'apps.employers.api.views.verification.render_office_document_preview',
+            return_value=b'%PDF-private-preview',
+        ):
+            preview = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(preview.status_code, status.HTTP_200_OK)
+        self.assertEqual(preview['Content-Type'], 'application/pdf')
+        self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
 
 class CompanyUpdateRequestTests(APITestCase):
@@ -867,16 +935,30 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('reason', response.data)
 
-    def test_only_one_pending_request_per_company(self):
-        payload = {'changes': {'address': 'TP.HCM'}}
+    def test_repeated_submit_updates_the_same_pending_request(self):
+        payload = {'changes': {'website_url': 'https://example.com/abc'}}
         first = self.client.post(
             reverse('employer-company-update-requests'), payload, format='json'
         )
         self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
         second = self.client.post(
-            reverse('employer-company-update-requests'), payload, format='json'
+            reverse('employer-company-update-requests'),
+            {'changes': {'website_url': 'https://example.com/def'}},
+            format='json',
         )
-        self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(second.status_code, status.HTTP_200_OK, second.data)
+        self.assertEqual(second.data['public_id'], first.data['public_id'])
+        self.assertEqual(second.data['revision'], 2)
+        self.assertEqual(
+            CompanyUpdateRequest.objects.filter(company=self.company).count(),
+            1,
+        )
+        self.assertEqual(
+            second.data['changes']['website_url'],
+            'https://example.com/def',
+        )
+        self.company.refresh_from_db()
+        self.assertNotEqual(self.company.website_url, 'https://example.com/def')
 
     def test_linked_member_can_create_update_request_without_mfa(self):
         member_user, member = make_employer('member-update@example.com')
@@ -912,6 +994,10 @@ class CompanyUpdateRequestTests(APITestCase):
         admin = User.objects.create_superuser(email='admin@example.com', password='Password@123')
         update_request = CompanyUpdateRequest.objects.get(company=self.company)
         self.assertTrue(update_request.is_sensitive)
+        evidence = update_request.tax_lookup_evidences.get(workflow_revision=1)
+        self.assertEqual(evidence.status, CompanyTaxLookupEvidence.Status.PENDING)
+        self.assertEqual(evidence.tax_code, self.company.tax_code)
+        self.assertEqual(evidence.submitted_company_name, 'Acme Global')
         CompanyDocument.objects.create(
             company=self.company,
             update_request=update_request,
@@ -919,12 +1005,42 @@ class CompanyUpdateRequestTests(APITestCase):
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url='employers/documents/update-proof.pdf',
             file_name='update-proof.pdf',
+            status=CompanyDocument.Status.APPROVED,
         )
         services.apply_update_request(update_request, admin, approve=True)
 
         self.company.refresh_from_db()
         self.assertEqual(self.company.company_name, 'Acme Global')
         self.assertEqual(self.company.address, 'TP.HCM')
+
+    def test_sensitive_update_cannot_be_approved_before_its_document(self):
+        self.client.post(
+            reverse('employer-company-update-requests'),
+            {
+                'changes': {'company_name': 'Acme Global'},
+                'reason': 'Đổi tên theo giấy phép mới',
+                'proof_type': 'business_registration',
+            },
+            format='json',
+        )
+        update_request = CompanyUpdateRequest.objects.get(company=self.company)
+        CompanyDocument.objects.create(
+            company=self.company,
+            update_request=update_request,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/documents/update-proof.pdf',
+        )
+        admin = User.objects.create_superuser(
+            email='approval-admin@example.com',
+            password='Password@123',
+        )
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'giấy tờ chứng minh đã được duyệt',
+        ):
+            services.apply_update_request(update_request, admin, approve=True)
 
     def test_sensitive_proof_is_bound_to_update_request(self):
         create_response = self.client.post(
@@ -1047,7 +1163,7 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertTrue(onboarding['business_doc_submitted'])
         self.assertTrue(onboarding['candidate_dpa_submitted'])
 
-    def test_replacing_a_business_document_resets_its_review_state(self):
+    def test_replacing_a_business_document_keeps_immutable_history(self):
         media_root = tempfile.mkdtemp()
         try:
             with self.settings(MEDIA_ROOT=media_root):
@@ -1080,21 +1196,28 @@ class CompanyUpdateRequestTests(APITestCase):
 
         self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
         self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
-        self.assertEqual(replacement.data['id'], first.data['id'])
+        self.assertNotEqual(replacement.data['id'], first.data['id'])
         document.refresh_from_db()
-        self.assertEqual(document.file_name, 'gpkd-moi.pdf')
-        self.assertEqual(document.status, CompanyDocument.Status.PENDING)
-        self.assertEqual(document.review_note, '')
+        current = CompanyDocument.objects.get(pk=replacement.data['id'])
+        self.assertEqual(document.file_name, 'gpkd-cu.pdf')
+        self.assertEqual(document.status, CompanyDocument.Status.REJECTED)
+        self.assertEqual(document.review_note, 'Tệp chưa rõ nét.')
+        self.assertFalse(document.is_current)
+        self.assertEqual(current.file_name, 'gpkd-moi.pdf')
+        self.assertEqual(current.status, CompanyDocument.Status.PENDING)
+        self.assertTrue(current.is_current)
+        self.assertEqual(current.version, 2)
+        self.assertEqual(current.supersedes, document)
         self.assertEqual(
             CompanyDocument.objects.filter(
                 company=self.company,
                 doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
                 update_request__isnull=True,
             ).count(),
-            1,
+            2,
         )
 
-    def test_switching_verification_method_removes_the_previous_documents(self):
+    def test_switching_verification_method_retains_previous_documents_as_history(self):
         media_root = tempfile.mkdtemp()
         try:
             with self.settings(MEDIA_ROOT=media_root):
@@ -1136,8 +1259,9 @@ class CompanyUpdateRequestTests(APITestCase):
                 remaining_documents = CompanyDocument.objects.filter(
                     company=self.company,
                     update_request__isnull=True,
+                    is_current=True,
                 )
-                self.assertFalse(private_media_storage().exists(old_path))
+                self.assertTrue(private_media_storage().exists(old_path))
         finally:
             shutil.rmtree(media_root, ignore_errors=True)
 
@@ -1150,6 +1274,13 @@ class CompanyUpdateRequestTests(APITestCase):
                 CompanyDocument.DocType.AUTHORIZATION_LETTER,
                 CompanyDocument.DocType.IDENTITY_DOCUMENT,
             },
+        )
+        self.assertTrue(
+            CompanyDocument.objects.filter(
+                company=self.company,
+                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                is_current=False,
+            ).exists()
         )
 
 
@@ -1181,6 +1312,17 @@ class CompanyImageUploadTests(APITestCase):
         self.assertNotIn('://', self.company.logo_url)
         self.assertFalse(self.company.has_no_logo)
 
+    def test_owner_can_upload_company_logo_without_mfa(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+        upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'), {'file': upload}, format='multipart'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
     def test_gallery_rejects_the_eleventh_image(self):
         CompanyImage.objects.bulk_create(
             [
@@ -1198,6 +1340,87 @@ class CompanyImageUploadTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.company.images.count(), 10)
+
+    def test_edit_logo_is_staged_until_the_update_request_is_approved(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={'logo_pending': True},
+        )
+        upload = SimpleUploadedFile('new-logo.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'),
+            {
+                'file': upload,
+                'update_request': update_request.public_id,
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.logo_url, '')
+        update_request.refresh_from_db()
+        self.assertIn('logo_url', update_request.changes)
+        self.assertNotIn('logo_pending', update_request.changes)
+
+        admin = User.objects.create_superuser(
+            email='media-reviewer@example.com',
+            password='Password@123',
+        )
+        services.apply_update_request(
+            update_request,
+            admin,
+            approve=True,
+            lock_version=update_request.lock_version,
+        )
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.logo_url, update_request.changes['logo_url'])
+
+    def test_pending_gallery_upload_is_returned_for_the_next_edit(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={'gallery_pending': True},
+        )
+        upload = SimpleUploadedFile('office.png', PNG_BYTES, content_type='image/png')
+
+        upload_response = self.client.post(
+            reverse('employer-company-image-upload'),
+            {
+                'file': upload,
+                'update_request': update_request.public_id,
+            },
+            format='multipart',
+        )
+        list_response = self.client.get(reverse('employer-company-update-requests'))
+
+        self.assertEqual(upload_response.status_code, status.HTTP_200_OK, upload_response.data)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK, list_response.data)
+        pending = next(
+            item for item in list_response.data if item['public_id'] == update_request.public_id
+        )
+        self.assertEqual(len(pending['changes']['gallery_additions']), 1)
+        self.assertEqual(len(pending['media_previews']['gallery_additions']), 1)
+        self.assertIn('/media/employers/', pending['media_previews']['gallery_additions'][0])
+
+    def test_direct_media_edit_is_blocked_after_verification_was_submitted(self):
+        EmployerVerificationCase.objects.create(
+            recruiter=self.recruiter,
+            company=self.company,
+            status=EmployerVerificationCase.Status.PENDING,
+        )
+        upload = SimpleUploadedFile('bypass.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'), {'file': upload}, format='multipart'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('update_request', response.data)
+        self.company.refresh_from_db()
+        self.assertEqual(self.company.logo_url, '')
 
     def test_member_cannot_upload_logo(self):
         member, member_recruiter = make_employer('member@example.com')

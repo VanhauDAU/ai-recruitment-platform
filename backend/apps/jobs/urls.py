@@ -2,6 +2,9 @@ from django.urls import path
 
 from .api.views import (
     AdminJobModerationListView,
+    AdminJobReportListView,
+    AdminJobReportResolveView,
+    AdminJobReportReverseView,
     AdminJobReviewView,
     BenefitListView,
     CandidateJobRecommendationView,
@@ -18,6 +21,7 @@ from .api.views import (
     JobDetailView,
     JobImpressionBatchCreateView,
     JobListView,
+    JobReportCreateView,
     JobStatsView,
     JobSuggestView,
     JobViewCreateView,
@@ -85,6 +89,18 @@ urlpatterns = [
         EmployerJobDuplicateView.as_view(),
         name='employer-job-duplicate',
     ),
+    path('admin/reports/', AdminJobReportListView.as_view(), name='admin-job-report-list'),
+    path(
+        'admin/reports/<str:public_id>/resolve/',
+        AdminJobReportResolveView.as_view(),
+        name='admin-job-report-resolve',
+    ),
+    path(
+        'admin/reports/<str:public_id>/reverse/',
+        AdminJobReportReverseView.as_view(),
+        name='admin-job-report-reverse',
+    ),
+    path('<str:public_id>/report/', JobReportCreateView.as_view(), name='job-report-create'),
     path('<slug:slug>/views/', JobViewCreateView.as_view(), name='job-view-create'),
     path('', JobListView.as_view(), name='job-list'),
     path('<slug:slug>/', JobDetailView.as_view(), name='job-detail'),

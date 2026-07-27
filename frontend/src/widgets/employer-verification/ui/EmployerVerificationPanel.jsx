@@ -1,7 +1,7 @@
 import { BarChartOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Skeleton } from 'antd'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router'
 import { getEmployerProfile, getEmployerRecruitmentNeed } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { EmployerVerificationChecklist } from '@/features/verify-employer-account'

@@ -2,7 +2,7 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icon
 import { Alert, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
@@ -56,7 +56,14 @@ export function AuthFormStyles() {
  * - `forgotPasswordLink`: null để ẩn (cổng admin).
  * - `onSuccess`: nếu truyền (vd. nhúng trong modal), gọi callback thay vì điều hướng.
  */
-export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL, appearance = 'default' }) {
+export default function LoginForm({
+  portal,
+  expectedRoles,
+  onSuccess,
+  forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL,
+  appearance = 'default',
+  destinationResolver = (user, returnUrl) => getAuthDestination({ user, returnUrl }),
+}) {
   // Cổng NTD/admin chạy subdomain riêng -> link tuyệt đối, không đi qua router.
   const ForgotLink = forgotPasswordLink?.startsWith('http') ? 'a' : Link
   const forgotLinkProps = forgotPasswordLink?.startsWith('http')
@@ -77,7 +84,7 @@ export default function LoginForm({ portal, expectedRoles, onSuccess, forgotPass
   const employerAppearance = appearance === 'employer'
 
   function navigateAfterLogin(user) {
-    navigate(getAuthDestination({ user, returnUrl }), { replace: true })
+    navigate(destinationResolver(user, returnUrl), { replace: true })
   }
 
   function clearPassword() {

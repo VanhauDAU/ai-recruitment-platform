@@ -19,6 +19,7 @@ from ...selectors.campaigns import (
     campaign_report,
     owned_campaign_queryset,
 )
+from ...services import recruiter_candidate_data_access_allowed
 from ...services.campaigns import (
     change_campaign_status,
     create_campaign,
@@ -49,12 +50,14 @@ class RecruitmentCampaignListCreateView(generics.ListCreateAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
-            attach_campaign_candidate_previews(page)
+            if recruiter_candidate_data_access_allowed(request.user):
+                attach_campaign_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
         campaigns = list(queryset)
-        attach_campaign_candidate_previews(campaigns)
+        if recruiter_candidate_data_access_allowed(request.user):
+            attach_campaign_candidate_previews(campaigns)
         serializer = self.get_serializer(campaigns, many=True)
         return Response(serializer.data)
 

@@ -6,9 +6,9 @@ import {
   PhoneOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { Button, Modal, Progress } from 'antd'
+import { Alert, Button, Modal, Progress, Tag } from 'antd'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import {
@@ -23,8 +23,8 @@ import { getEmployerVerificationProgress } from '../model/verification-progress'
 const STEP_DEFINITIONS = [
   { key: 'phone_verified', title: 'Xác thực số điện thoại', description: 'Tăng bảo mật và độ tin cậy khi liên hệ ứng viên.', icon: PhoneOutlined, to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', title: 'Cập nhật thông tin công ty', description: 'Tìm doanh nghiệp đã có hoặc tạo hồ sơ công ty mới.', icon: BankOutlined, to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_submitted', title: 'Cập nhật Giấy đăng ký doanh nghiệp', description: 'Tải giấy tờ pháp lý sau khi đã liên kết đúng công ty.', icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
-  { key: 'candidate_dpa_submitted', title: 'Cập nhật Thỏa thuận xử lý DLCN với ứng viên', description: 'Đăng tải văn bản cho phép thu thập và sử dụng dữ liệu ứng viên.', icon: FileProtectOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'business_doc_submitted', title: 'Nộp giấy tờ chứng minh quyền đại diện', description: 'Tải GPKD hoặc bộ giấy ủy quyền và định danh.', icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'candidate_dpa_submitted', title: 'Nộp văn bản xử lý dữ liệu ứng viên', description: 'Đăng tải văn bản cho phép thu thập và sử dụng dữ liệu ứng viên.', icon: FileProtectOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
   { key: 'dpa_accepted', title: 'Đồng ý Thỏa thuận xử lý DLCN với nền tảng', description: 'Xác nhận vai trò và trách nhiệm bảo vệ dữ liệu trên hệ thống.', icon: SafetyCertificateOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 
@@ -34,6 +34,7 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   const navigate = useNavigate()
   const [passwordPromptOpen, setPasswordPromptOpen] = useState(false)
   const verification = profile?.onboarding || {}
+  const verificationCase = profile?.verification_case || {}
   const progress = getEmployerVerificationProgress(verification)
   const hotline = settingText(settings.hotline, '1900 1234')
   const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
@@ -62,6 +63,29 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
         <strong className="text-sm text-emerald-600">Hoàn thành {progress.percent}%</strong>
       </div>
       <Progress percent={progress.percent} showInfo={false} strokeColor="#00b14f" railColor="#e8edf2" className="!mb-6" />
+
+      {verificationCase.status !== 'draft' && (
+        <Alert
+          className="!mb-5"
+          showIcon
+          type={{
+            approved: 'success',
+            rejected: 'error',
+            changes_requested: 'warning',
+          }[verificationCase.status] || 'info'}
+          title={(
+            <span>
+              {verificationCase.status_label}
+              <Tag className="ml-2">{`Hồ sơ lần ${verificationCase.revision || 1}`}</Tag>
+            </span>
+          )}
+          description={verificationCase.decision_reason || (
+            verificationCase.status === 'pending' || verificationCase.status === 'in_review'
+              ? 'Hồ sơ đang được kiểm tra. Bạn vẫn có thể dùng dashboard và chỉnh sửa tin nháp.'
+              : 'Hoàn thiện các bước còn thiếu để gửi hồ sơ xác thực.'
+          )}
+        />
+      )}
 
       <div className="divide-y divide-slate-100">
         {STEP_DEFINITIONS.map((step) => {

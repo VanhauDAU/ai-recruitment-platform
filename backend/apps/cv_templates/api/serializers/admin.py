@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.accounts.permissions import require_admin_permission
 from apps.cvs.models import CvAsset
 from apps.jobs.models import JobCategory
 
@@ -12,6 +13,58 @@ from ...models import (
     CvTemplateLocalization,
     CvTemplateVersion,
 )
+
+PROTECTED_LIFECYCLE_FIELDS = {
+    'CvTemplate': ('status', 'lifecycle_status', 'current_published_version'),
+    'CvTemplateLocalization': ('is_active',),
+    'CvCategory': ('is_active',),
+    'CvColor': ('is_active',),
+    'CvAsset': ('is_active',),
+    'CvContentBlueprint': ('is_active',),
+    'CvSampleContent': ('status', 'published_at'),
+}
+
+
+def _is_published_state(field, value):
+    if field == 'is_active':
+        return value is True
+    if field == 'status':
+        return value in {'active', 'published'}
+    if field == 'lifecycle_status':
+        return value == 'published'
+    return value is not None
+
+
+class LifecycleFieldGuardMixin:
+    """Protect public lifecycle transitions independently from edit access."""
+
+    def _lifecycle_fields(self):
+        return PROTECTED_LIFECYCLE_FIELDS.get(self.Meta.model.__name__, ())
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if request is None:
+            return super().validate(attrs)
+
+        for field in self._lifecycle_fields():
+            if field not in attrs:
+                continue
+            after = attrs[field]
+            if self.instance is None:
+                if _is_published_state(field, after):
+                    require_admin_permission(request.user, 'cv_template.publish')
+                continue
+
+            before = getattr(self.instance, field)
+            if before == after:
+                continue
+            required = (
+                'cv_template.publish'
+                if _is_published_state(field, after)
+                else 'cv_template.archive'
+            )
+            require_admin_permission(request.user, required)
+        return super().validate(attrs)
 
 
 class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
@@ -27,14 +80,17 @@ class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
         ]
 
 
-class CvTemplateLocalizationAdminSerializer(serializers.ModelSerializer):
+class CvTemplateLocalizationAdminSerializer(
+    LifecycleFieldGuardMixin,
+    serializers.ModelSerializer,
+):
     class Meta:
         model = CvTemplateLocalization
         fields = '__all__'
         read_only_fields = ['locale_ref']
 
 
-class CvTemplateAdminSerializer(serializers.ModelSerializer):
+class CvTemplateAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     versions = CvTemplateVersionAdminSerializer(many=True, read_only=True)
     localizations = CvTemplateLocalizationAdminSerializer(many=True, read_only=True)
     current_published_version_id = serializers.IntegerField(read_only=True)
@@ -59,21 +115,21 @@ class CvTemplateAdminSerializer(serializers.ModelSerializer):
         read_only_fields = ['public_id', 'lifecycle_status', 'current_published_version_id']
 
 
-class CvCategoryAdminSerializer(serializers.ModelSerializer):
+class CvCategoryAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     class Meta:
         model = CvCategory
         fields = '__all__'
         read_only_fields = ['public_id', 'created_at', 'updated_at']
 
 
-class CvColorAdminSerializer(serializers.ModelSerializer):
+class CvColorAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     class Meta:
         model = CvColor
         fields = '__all__'
         read_only_fields = ['public_id', 'created_at', 'updated_at']
 
 
-class CvBackgroundAdminSerializer(serializers.ModelSerializer):
+class CvBackgroundAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     file = serializers.FileField(write_only=True, required=False)
     url = serializers.SerializerMethodField()
 
@@ -111,7 +167,7 @@ class CvBackgroundAdminSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(path) if request else path
 
 
-class CvSampleContentAdminSerializer(serializers.ModelSerializer):
+class CvSampleContentAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     job_category_public_id = serializers.SlugRelatedField(
         source='job_category',
         slug_field='public_id',
@@ -146,10 +202,10 @@ class CvSampleContentAdminSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'content_json': 'content_json.locale must match locale.'}
             )
-        return attrs
+        return super().validate(attrs)
 
 
-class CvContentBlueprintAdminSerializer(serializers.ModelSerializer):
+class CvContentBlueprintAdminSerializer(LifecycleFieldGuardMixin, serializers.ModelSerializer):
     class Meta:
         model = CvContentBlueprint
         fields = [

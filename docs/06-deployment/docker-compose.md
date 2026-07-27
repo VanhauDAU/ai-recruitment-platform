@@ -14,6 +14,14 @@ docker compose up
 - Swagger UI: http://localhost:8000/api/docs/
 - `DB_HOST`/`REDIS_URL` được compose override trỏ vào service `db`/`redis` —
   không cần sửa `.env`.
+- **Postgres của compose ở host cổng `5433`** (trong mạng compose vẫn là
+  `db:5432`). Tránh trùng Postgres cài trực tiếp trên máy đang giữ 5432: cả hai
+  đều là DB `ai_career_coach` / `postgres:postgres` nên nếu dùng chung cổng thì
+  DBeaver, `psql` và backend chạy ngoài Docker luôn nối vào Postgres local mà
+  không báo lỗi gì. Kết nối DBeaver vào DB trong Docker:
+  `localhost:5433/ai_career_coach`, user `postgres`, password `postgres`.
+- Muốn backend chạy ngoài Docker dùng DB trong Docker thì đặt `DB_PORT=5433`
+  trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (postgres 16), `redis`, `backend` (runserver + auto migrate),
   `worker` (celery), `beat` (celery beat), `frontend` (vite).
 - **Queue Celery**: settings route task sang 3 queue (`default`, `auth-email`,
@@ -65,6 +73,28 @@ docker compose exec backend sh -c "\
 
 `seed_locations` gọi `provinces.open-api.vn` nên cần internet ở lần chạy đầu.
 Mọi lệnh seed đều chạy lại được.
+
+### Demo Account Management G3
+
+Sau khi backend đã migrate, tạo bộ tài khoản quản trị demo bằng lệnh idempotent:
+
+```bash
+docker compose exec backend python manage.py seed_admin_account_demo
+```
+
+Lệnh chỉ chạy mặc định khi `DEBUG=True`, đặt lại mật khẩu và mã dự phòng demo
+mỗi lần chạy để môi trường local luôn đăng nhập được:
+
+| Persona | Email | Mật khẩu | Mã dự phòng |
+| --- | --- | --- | --- |
+| Superuser | `admin-root@demo.local` | `AdminDemo123!` | `91000001` … `91000005` |
+| Nhân sự cấp tài khoản | `hr-provisioner@demo.local` | `AdminDemo123!` | `92000001` … `92000005` |
+| Nhân viên kiểm duyệt | `moderator-admin@demo.local` | `AdminDemo123!` | `93000001` … `93000005` |
+
+Persona Nhân sự có `account.admin.invite` và được whitelist cấp ba chức danh
+thường: kiểm duyệt, nội dung và chăm sóc khách hàng. Persona này không thể cấp
+chức danh chứa quyền cấp phát hoặc quản trị đặc quyền. Không dùng các thông tin
+demo trên staging/production.
 
 ## Vận hành
 

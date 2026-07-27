@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import User
+from ..models import AdminAccessAuditLog, User
 from ..services import two_factor
 from ..services.refresh_cookies import cookie_name
 
@@ -291,3 +291,108 @@ class TwoFactorAuthenticationTests(APITestCase):
             },
         )
         self.assertEqual(replay.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def _enrolled_admin(self, email='admin-totp@example.com'):
+        """Admin đã bật email MFA — đúng trạng thái sau `bootstrap_admin_mfa`."""
+        admin = User.objects.create_user(
+            email=email,
+            password='Password@123',
+            role=User.Role.ADMIN,
+            email_verified=True,
+            two_factor_enabled=True,
+            two_factor_email_enabled=True,
+        )
+        self.client.force_authenticate(user=admin)
+        return admin
+
+    def test_admin_can_enroll_totp_with_its_own_authenticator_issuer(self):
+        admin = self._enrolled_admin()
+
+        setup = self.client.post(reverse('auth-employer-totp-setup'))
+        self.assertEqual(setup.status_code, status.HTTP_200_OK, setup.data)
+        # Nhãn phải tách khỏi cổng NTD để hai tài khoản không trùng tên trong app.
+        self.assertIn('ProCV%20Qu%E1%BA%A3n%20tr%E1%BB%8B', setup.data['otpauth_url'])
+
+        secret = setup.data['manual_key']
+        code = two_factor._totp_code(secret, int(time() // two_factor.TOTP_PERIOD_SECONDS))
+        confirmed = self.client.post(reverse('auth-employer-totp-confirm'), {'code': code})
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK, confirmed.data)
+        self.assertTrue(confirmed.data['two_factor_totp_enabled'])
+        admin.refresh_from_db()
+        self.assertNotEqual(admin.two_factor_totp_secret, secret)
+
+    def test_admin_can_read_methods_and_regenerate_backup_codes(self):
+        self._enrolled_admin(email='admin-backup@example.com')
+
+        methods = self.client.get(reverse('auth-employer-two-factor-methods'))
+        self.assertEqual(methods.status_code, status.HTTP_200_OK, methods.data)
+        self.assertTrue(methods.data['email'])
+
+        sent = self.client.post(reverse('auth-employer-backup-codes-send'))
+        self.assertEqual(sent.status_code, status.HTTP_200_OK, sent.data)
+        code = cache.get(
+            two_factor._code_key(
+                User.objects.get(email='admin-backup@example.com').pk, two_factor.PURPOSE_BACKUP
+            )
+        )
+        generated = self.client.post(
+            reverse('auth-employer-backup-codes'), {'method': 'email', 'code': code}
+        )
+        self.assertEqual(generated.status_code, status.HTTP_200_OK, generated.data)
+        self.assertEqual(len(generated.data['backup_codes']), two_factor.BACKUP_CODE_COUNT)
+
+    def test_admin_can_disable_email_mfa_after_email_step_up(self):
+        admin = self._enrolled_admin(email='admin-email-disable@example.com')
+
+        sent = self.client.post(reverse('auth-two-factor-disable-send'))
+        self.assertEqual(sent.status_code, status.HTTP_200_OK, sent.data)
+        code = cache.get(two_factor._code_key(admin.pk, two_factor.PURPOSE_DISABLE))
+        disabled = self.client.post(reverse('auth-two-factor-disable-confirm'), {'code': code})
+
+        self.assertEqual(disabled.status_code, status.HTTP_200_OK, disabled.data)
+        self.assertFalse(disabled.data['two_factor_enabled'])
+        admin.refresh_from_db()
+        self.assertFalse(admin.two_factor_email_enabled)
+        audit = AdminAccessAuditLog.objects.get(
+            actor=admin, action='self_mfa_disable', target_public_id=admin.public_id
+        )
+        self.assertEqual(audit.payload, {'method': 'email'})
+
+    def test_admin_can_disable_individual_mfa_methods_after_step_up(self):
+        admin = self._enrolled_admin(email='admin-method-disable@example.com')
+        setup = self.client.post(reverse('auth-employer-totp-setup'))
+        secret = setup.data['manual_key']
+        totp_code = two_factor._totp_code(secret, int(time() // two_factor.TOTP_PERIOD_SECONDS))
+        confirmed = self.client.post(reverse('auth-employer-totp-confirm'), {'code': totp_code})
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK, confirmed.data)
+
+        sent = self.client.post(
+            reverse('auth-employer-two-factor-method-disable-send'), {'target': 'email'}
+        )
+        self.assertEqual(sent.status_code, status.HTTP_200_OK, sent.data)
+        email_code = cache.get(two_factor._code_key(admin.pk, two_factor.PURPOSE_DISABLE))
+        email_disabled = self.client.post(
+            reverse('auth-employer-two-factor-method-disable'),
+            {'target': 'email', 'method': 'email', 'code': email_code},
+        )
+        self.assertEqual(email_disabled.status_code, status.HTTP_200_OK, email_disabled.data)
+        self.assertFalse(email_disabled.data['two_factor_email_enabled'])
+        self.assertTrue(email_disabled.data['two_factor_totp_enabled'])
+
+        totp_disabled = self.client.post(reverse('auth-employer-totp-disable'), {'code': totp_code})
+        self.assertEqual(totp_disabled.status_code, status.HTTP_200_OK, totp_disabled.data)
+        self.assertFalse(totp_disabled.data['two_factor_enabled'])
+
+    def test_candidate_still_has_no_access_to_totp_or_backup_codes(self):
+        self.client.force_authenticate(user=self.user)
+
+        for url in (
+            reverse('auth-employer-two-factor-methods'),
+            reverse('auth-employer-totp-setup'),
+            reverse('auth-employer-backup-codes-send'),
+        ):
+            with self.subTest(url=url):
+                response = (
+                    self.client.get(url) if url.endswith('methods/') else self.client.post(url, {})
+                )
+                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data)

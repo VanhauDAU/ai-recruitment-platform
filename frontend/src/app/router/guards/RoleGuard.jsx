@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router'
 import { useSession } from '@/entities/session'
 
 // Chỉ quyết định role/portal sau khi AuthGuard đã xác nhận session.

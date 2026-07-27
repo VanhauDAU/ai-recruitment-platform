@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router'
 import { withReturnUrl } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import PageLoading from '@/shared/ui/PageLoading'

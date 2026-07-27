@@ -15,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Progress } from 'antd'
 import { useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 import {
@@ -30,8 +30,8 @@ import {
 const VERIFICATION_STEPS = [
   { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
   { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_submitted', label: 'Cập nhật Giấy đăng ký doanh nghiệp', to: EMPLOYER_BUSINESS_LICENSE_URL },
-  { key: 'candidate_dpa_submitted', label: 'Cập nhật Thỏa thuận xử lý DLCN với ứng viên', to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'business_doc_submitted', label: 'Nộp giấy tờ đại diện', to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'candidate_dpa_submitted', label: 'Nộp văn bản xử lý dữ liệu ứng viên', to: EMPLOYER_DATA_PROTECTION_URL },
   { key: 'dpa_accepted', label: 'Đồng ý Thỏa thuận xử lý DLCN với hệ thống', to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 

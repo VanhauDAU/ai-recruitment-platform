@@ -25,6 +25,7 @@ from ...selectors.recommendations import (
     recommend_jobs_for_cv,
 )
 from ...selectors.stats import build_job_stats
+from ...selectors.verification_badge import prime_badge_cache
 from ...services.engagement import (
     record_consented_job_impressions,
     record_consented_job_view,
@@ -173,9 +174,16 @@ class JobSuggestView(APIView):
 
 
 def _serialize_recommendation_results(payload, request):
+    # Context dùng chung cho cả trang: nạp cờ huy hiệu một lần thay vì để mỗi
+    # tin tự truy vấn lại điều kiện xác thực của công ty.
+    context = {'request': request}
+    prime_badge_cache(
+        context,
+        {(item['job'].company_id, item['job'].posted_by_id) for item in payload['results']},
+    )
     results = []
     for item in payload['results']:
-        serialized = PublicJobListSerializer(item['job'], context={'request': request}).data
+        serialized = PublicJobListSerializer(item['job'], context=context).data
         serialized.update(
             {
                 'match_score': item['match_score'],

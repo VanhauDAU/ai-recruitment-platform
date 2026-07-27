@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
 import dayjs from 'dayjs'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
 
 const STATUS = {
