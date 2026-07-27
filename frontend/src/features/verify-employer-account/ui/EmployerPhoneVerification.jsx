@@ -284,7 +284,7 @@ export default function EmployerPhoneVerification() {
         okText="Xác nhận và gửi mã"
         cancelText="Hủy"
         confirmLoading={sendMutation.isPending}
-        destroyOnClose
+        destroyOnHidden
       >
         <p className="mb-4 text-sm leading-6 text-slate-500">
           Vì lý do bảo mật, vui lòng nhập mật khẩu đăng nhập của bạn để tiếp tục gửi mã xác thực tới số{' '}

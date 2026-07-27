@@ -124,7 +124,7 @@ export default function BlogEditorSidebar({
 
       {post && allowedActions.some((action) => ['return', 'restore', 'discard_draft', 'archive'].includes(action)) && (
         <Card className="border-slate-200 shadow-sm" title="Thao tác khác">
-          <Space direction="vertical" className="w-full" style={{ width: '100%' }}>
+          <Space orientation="vertical" className="w-full" style={{ width: '100%' }}>
             {allowedActions.includes('return') && <Button block onClick={() => onAction('return')}>Trả về chỉnh sửa</Button>}
             {allowedActions.includes('restore') && <Button block onClick={() => onAction('restore')}>Khôi phục về nháp</Button>}
             {allowedActions.includes('discard_draft') && <Button block danger icon={<DeleteOutlined />} onClick={() => onAction('discard-draft')}>Hủy bản nháp</Button>}

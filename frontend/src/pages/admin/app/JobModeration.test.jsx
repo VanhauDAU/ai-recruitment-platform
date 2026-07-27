@@ -19,6 +19,54 @@ vi.mock('@/features/review-job-reports', () => ({
   JobReportQueue: () => <div>Mock report queue</div>,
 }))
 
+vi.mock('antd', async (importOriginal) => {
+  const antd = await importOriginal()
+  return {
+    ...antd,
+    // This suite verifies moderation state and payloads. Browser smoke tests
+    // cover Ant Design's table layout and modal portal, so keep unit rendering
+    // deterministic on resource-constrained CI runners.
+    Table: ({ columns, dataSource = [] }) => (
+      <table>
+        <thead>
+          <tr>{columns.map((column) => <th key={column.key || column.dataIndex}>{column.title}</th>)}</tr>
+        </thead>
+        <tbody>
+          {dataSource.map((row, rowIndex) => (
+            <tr key={row.public_id}>
+              {columns.map((column) => {
+                const value = column.dataIndex ? row[column.dataIndex] : undefined
+                return (
+                  <td key={column.key || column.dataIndex}>
+                    {column.render ? column.render(value, row, rowIndex) : value}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    Modal: ({
+      open,
+      title,
+      children,
+      onCancel,
+      onOk,
+      okText = 'OK',
+      cancelText = 'Cancel',
+      confirmLoading = false,
+    }) => open ? (
+      <div role="dialog" aria-modal="true">
+        <div>{title}</div>
+        {children}
+        <button type="button" onClick={onCancel}>{cancelText}</button>
+        <button type="button" disabled={confirmLoading} onClick={onOk}>{okText}</button>
+      </div>
+    ) : null,
+  }
+})
+
 function renderPage(initialEntry = '/admin/app/job-moderation') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(

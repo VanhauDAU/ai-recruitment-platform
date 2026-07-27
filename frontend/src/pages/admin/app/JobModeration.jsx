@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tabs, Tag, message } from 'antd'
+import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tabs, Tag } from 'antd'
 import { useSearchParams } from 'react-router'
 import { getAdminJobModeration, jobKeys, reviewAdminJob } from '@/entities/job'
 import { JobReportQueue } from '@/features/review-job-reports'
+import { message } from '@/shared/lib/toast'
 import { AdminPanel } from '@/widgets/admin-workspace'
 
 const STATUS_OPTIONS = [

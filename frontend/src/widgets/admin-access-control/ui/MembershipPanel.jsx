@@ -234,7 +234,7 @@ export default function MembershipPanel({
         title="Chi tiết nhân viên"
         open={Boolean(selectedMember)}
         onClose={() => setSelectedMember(null)}
-        width={480}
+        size={480}
       >
         {selectedMember && (
           <div className="space-y-5">

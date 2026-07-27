@@ -1,6 +1,6 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Form, InputNumber, Select, message } from 'antd'
+import { Button, Form, InputNumber, Select } from 'antd'
 import { useState } from 'react'
 import {
   EDUCATION_LEVEL_LABELS,
@@ -8,6 +8,7 @@ import {
   getSkills,
   jobKeys,
 } from '@/entities/job'
+import { message } from '@/shared/lib/toast'
 
 const toOptions = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }))
 const PROFICIENCY_OPTIONS = [
@@ -60,7 +61,7 @@ function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreate
       searchValue={searchValue}
       onSearch={setSearchValue}
       onChange={onChange}
-      dropdownRender={(menu) => (
+      popupRender={(menu) => (
         <>
           {menu}
           {normalizedSearch && !hasExactMatch && !searchQuery.isFetching && (

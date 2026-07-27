@@ -133,8 +133,8 @@ export default function AccountOverview({
             <span>{vi(queueTotal)} việc đang chờ</span>
           </p>
           <div className="account-queues__grid">
-            {queues.map((item) => (
-              <QueueCard key={item.key} {...item} onClick={() => onOpenQueue(item.key)} />
+            {queues.map(({ key, ...item }) => (
+              <QueueCard key={key} {...item} onClick={() => onOpenQueue(key)} />
             ))}
           </div>
         </div>

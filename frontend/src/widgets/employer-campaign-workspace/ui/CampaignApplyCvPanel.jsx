@@ -5,7 +5,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Alert, Empty, Input, Select, Skeleton, Table, Tag, message } from 'antd'
+import { Alert, Empty, Input, Select, Skeleton, Table, Tag } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import {
@@ -19,6 +19,7 @@ import { campaignKeys, getCampaignReport } from '@/entities/campaign'
 import { getEmployerJobs, jobKeys } from '@/entities/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
+import { message } from '@/shared/lib/toast'
 
 const STATUS_COLORS = {
   submitted: 'blue',

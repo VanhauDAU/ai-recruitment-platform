@@ -34,7 +34,7 @@ function Section({ section, open, onToggle, onItem, user, activePathname }) {
       <div
         id={panelId}
         aria-hidden={!open}
-        inert={open ? undefined : ''}
+        inert={open ? undefined : true}
         className={`grid transition-[grid-template-rows] duration-200 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
       >
         <div className="overflow-hidden">

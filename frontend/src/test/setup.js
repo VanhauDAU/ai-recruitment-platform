@@ -57,7 +57,21 @@ if (typeof globalThis.ResizeObserver !== 'function') {
 // jsdom's virtual console. Ignoring the unsupported second argument preserves
 // jsdom's real computed-style behavior while removing that test-only overhead.
 const getComputedStyle = window.getComputedStyle.bind(window)
-window.getComputedStyle = (element) => getComputedStyle(element)
+window.getComputedStyle = (element) => {
+  const styles = getComputedStyle(element)
+  const getPropertyValue = styles.getPropertyValue.bind(styles)
+  styles.getPropertyValue = (property) => {
+    const value = getPropertyValue(property)
+    if (
+      /^(padding-(top|bottom)|border-(top|bottom)-width)$/.test(property)
+      && !Number.isFinite(Number.parseFloat(value))
+    ) {
+      return '0px'
+    }
+    return value
+  }
+  return styles
+}
 
 // jsdom also logs on every canvas context request before returning null.
 // Returning that same unsupported value directly keeps canvas fallbacks

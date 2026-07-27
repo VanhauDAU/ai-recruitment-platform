@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App } from 'antd'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ChangePasswordForm from './ChangePasswordForm'
@@ -66,7 +65,6 @@ describe('ChangePasswordForm', () => {
   })
 
   it('shows the candidate email read-only and accepts the backend password policy without requiring a special character', async () => {
-    const user = userEvent.setup()
     const onSuccess = vi.fn()
     const result = {
       detail: 'Cập nhật mật khẩu thành công.',
@@ -79,12 +77,23 @@ describe('ChangePasswordForm', () => {
 
     expect(screen.getByLabelText('Email đăng nhập')).toHaveValue('candidate@example.com')
     expect(screen.getByLabelText('Email đăng nhập')).toHaveAttribute('readonly')
-    await user.type(screen.getByLabelText('Mật khẩu hiện tại'), 'CurrentPassword1')
-    await user.type(screen.getByLabelText('Mật khẩu mới'), 'CareerFlow872')
-    expect(screen.getByText('Đạt yêu cầu cơ bản')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Mật khẩu hiện tại'), {
+      target: { value: 'CurrentPassword1' },
+    })
+    const passwordInput = screen.getByLabelText('Mật khẩu mới')
+    fireEvent.focus(passwordInput)
+    await waitFor(() => {
+      expect(screen.getByText('Chưa đạt yêu cầu')).toBeInTheDocument()
+    })
+    fireEvent.change(passwordInput, { target: { value: 'CareerFlow872' } })
+    await waitFor(() => {
+      expect(screen.getByText('Đạt yêu cầu cơ bản')).toBeInTheDocument()
+    })
     expect(screen.queryByText('Mật khẩu mạnh')).not.toBeInTheDocument()
-    await user.type(screen.getByLabelText('Nhập lại mật khẩu mới'), 'CareerFlow872')
-    await user.click(screen.getByRole('button', { name: 'Cập nhật' }))
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), {
+      target: { value: 'CareerFlow872' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cập nhật' }))
 
     await waitFor(() => expect(mocks.changeCurrentPassword).toHaveBeenCalled())
     expect(mocks.changeCurrentPassword.mock.calls[0][0]).toEqual({
@@ -113,7 +122,6 @@ describe('ChangePasswordForm', () => {
   })
 
   it('keeps the employer success redirect when the caller provides it', async () => {
-    const user = userEvent.setup()
     mocks.changeCurrentPassword.mockResolvedValue({
       detail: 'Đã đổi mật khẩu.',
       user: mocks.user,
@@ -121,32 +129,42 @@ describe('ChangePasswordForm', () => {
 
     renderForm({ successRedirect: '/employer-phone' })
 
-    await user.type(screen.getByLabelText('Mật khẩu hiện tại'), 'CurrentPassword1')
-    await user.type(screen.getByLabelText('Mật khẩu mới'), 'Updated1')
-    await user.type(screen.getByLabelText('Nhập lại mật khẩu mới'), 'Updated1')
-    await user.click(screen.getByRole('button', { name: 'Cập nhật' }))
+    fireEvent.change(screen.getByLabelText('Mật khẩu hiện tại'), {
+      target: { value: 'CurrentPassword1' },
+    })
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), {
+      target: { value: 'Updated1' },
+    })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), {
+      target: { value: 'Updated1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cập nhật' }))
 
     expect(await screen.findByText('Đích xác thực employer')).toBeInTheDocument()
   })
 
   it('shows backend-only password validation errors on the password field', async () => {
-    const user = userEvent.setup()
     mocks.changeCurrentPassword.mockRejectedValue({
       response: { data: { password: ['Mật khẩu này quá phổ biến.'] } },
     })
 
     renderForm()
 
-    await user.type(screen.getByLabelText('Mật khẩu hiện tại'), 'CurrentPassword1')
-    await user.type(screen.getByLabelText('Mật khẩu mới'), 'Password1')
-    await user.type(screen.getByLabelText('Nhập lại mật khẩu mới'), 'Password1')
-    await user.click(screen.getByRole('button', { name: 'Cập nhật' }))
+    fireEvent.change(screen.getByLabelText('Mật khẩu hiện tại'), {
+      target: { value: 'CurrentPassword1' },
+    })
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), {
+      target: { value: 'Password1' },
+    })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), {
+      target: { value: 'Password1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cập nhật' }))
 
     expect(await screen.findByText('Mật khẩu này quá phổ biến.')).toBeInTheDocument()
   })
 
   it('offers a safe reauthentication action when an OAuth session is too old', async () => {
-    const user = userEvent.setup()
     mocks.user = {
       email: 'candidate@example.com',
       has_usable_password: false,
@@ -163,13 +181,17 @@ describe('ChangePasswordForm', () => {
 
     renderForm({ showEmail: true, reauthPath: '/login' })
 
-    await user.type(screen.getByLabelText('Mật khẩu mới'), 'CareerFlow872')
-    await user.type(screen.getByLabelText('Nhập lại mật khẩu mới'), 'CareerFlow872')
-    await user.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), {
+      target: { value: 'CareerFlow872' },
+    })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), {
+      target: { value: 'CareerFlow872' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
 
     expect(await screen.findByText('Cần đăng nhập lại để tạo mật khẩu')).toBeInTheDocument()
     expect(screen.queryByText('reauth_required')).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Đăng nhập lại' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập lại' }))
     expect(mocks.clearCurrentSession).toHaveBeenCalledOnce()
     expect(await screen.findByText('Đăng nhập lại an toàn')).toBeInTheDocument()
   })
