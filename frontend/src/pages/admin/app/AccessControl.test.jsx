@@ -46,6 +46,129 @@ vi.mock('@/entities/admin-access', async (importOriginal) => ({
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('@/shared/lib/toast', () => ({ message }))
+vi.mock('antd', async (importOriginal) => {
+  const antd = await importOriginal()
+  const { forwardRef } = await import('react')
+  const Alert = ({ title, description, action }) => (
+    <div>
+      <div>{title}</div>
+      <div>{description}</div>
+      <div>{action}</div>
+    </div>
+  )
+  const Button = forwardRef(({
+    children,
+    icon,
+    loading,
+    disabled,
+    htmlType = 'button',
+    danger: _danger,
+    type: _type,
+    size: _size,
+    ...props
+  }, ref) => (
+    <button ref={ref} type={htmlType} disabled={loading || disabled} {...props}>
+      {icon}
+      {children}
+    </button>
+  ))
+  const Card = ({ title, extra, children, loading, size: _size, ...props }) => (
+    <section {...props}>
+      {title}
+      {extra}
+      {loading ? 'Đang tải' : children}
+    </section>
+  )
+  const Checkbox = ({
+    children,
+    checked,
+    onChange,
+    indeterminate: _indeterminate,
+    ...props
+  }) => (
+    <label>
+      <input type="checkbox" checked={checked} onChange={onChange} {...props} />
+      {children}
+    </label>
+  )
+  const Descriptions = ({ children }) => <dl>{children}</dl>
+  Descriptions.Item = ({ label, children }) => (
+    <>
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </>
+  )
+  const Input = forwardRef(({
+    prefix,
+    allowClear: _allowClear,
+    size: _size,
+    ...props
+  }, ref) => (
+    <label>
+      {prefix}
+      <input ref={ref} {...props} />
+    </label>
+  ))
+  Input.TextArea = forwardRef(({
+    showCount: _showCount,
+    autoSize: _autoSize,
+    ...props
+  }, ref) => <textarea ref={ref} {...props} />)
+  const Space = ({ children }) => <div>{children}</div>
+  const Tag = ({ children }) => <span>{children}</span>
+  const Badge = ({ count }) => <span>{count}</span>
+  const Skeleton = () => <div>Đang tải</div>
+  const Empty = ({ description }) => <div>{description}</div>
+  Empty.PRESENTED_IMAGE_SIMPLE = null
+  const Typography = {
+    Text: ({ children }) => <span>{children}</span>,
+    Paragraph: ({ children }) => <p>{children}</p>,
+    Title: ({ children }) => <h2>{children}</h2>,
+  }
+  return {
+    ...antd,
+    Alert,
+    Badge,
+    Button,
+    Card,
+    Checkbox,
+    Descriptions,
+    Empty,
+    Input,
+    Skeleton,
+    Space,
+    Tag,
+    Typography,
+    // These tests exercise our access-control workflow, not rc-dialog's portal
+    // and animation internals. Keeping the real modal made three interactions
+    // spend minutes in jsdom while E2E already covers the browser integration.
+    Modal: ({
+      open,
+      title,
+      children,
+      onCancel,
+      onOk,
+      okText = 'OK',
+      cancelText = 'Cancel',
+      confirmLoading = false,
+      okButtonProps = {},
+    }) => open ? (
+      <div role="dialog" aria-modal="true">
+        <div>{title}</div>
+        {children}
+        <button type="button" aria-label="Close" onClick={onCancel}>Close</button>
+        <button type="button" onClick={onCancel}>{cancelText}</button>
+        <button
+          type="button"
+          disabled={confirmLoading || okButtonProps.disabled}
+          onClick={onOk}
+        >
+          {okText}
+        </button>
+      </div>
+    ) : null,
+  }
+})
 
 const department = {
   public_id: 'dept_content',
@@ -214,7 +337,7 @@ describe('AccessControl', () => {
     expect(screen.getByText('1 nhân viên bị ảnh hưởng')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Lưu thay đổi quyền' })).toBeDisabled()
     expect(api.getRolePermissionsImpact).toHaveBeenCalledWith(role.public_id, [])
-  }, 90_000)
+  })
 
   it('reloads impact after a 409 and requires a second review', async () => {
     const first = {
@@ -251,7 +374,7 @@ describe('AccessControl', () => {
     await waitFor(() => {
       expect(screen.getByText('2')).toBeInTheDocument()
     })
-  }, 90_000)
+  })
 
   it('requests a new impact token after the permission payload changes', async () => {
     api.getRolePermissionsImpact.mockResolvedValue({
@@ -286,7 +409,7 @@ describe('AccessControl', () => {
       role.public_id,
       ['cv_template.view'],
     )
-  }, 90_000)
+  })
 
   it('opens the employee detail drawer from the personnel table', async () => {
     renderPage(true)

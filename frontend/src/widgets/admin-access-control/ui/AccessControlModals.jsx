@@ -21,9 +21,9 @@ export default function AccessControlModals({
 }) {
   return (
     <>
-      <Modal
+      {department.editor && <Modal
         title={department.editor?.row ? 'Chỉnh sửa phòng ban' : 'Tạo phòng ban'}
-        open={Boolean(department.editor)}
+        open
         onCancel={department.onClose}
         onOk={department.onSave}
         okText={department.editor?.row ? 'Lưu thay đổi' : 'Tạo phòng ban'}
@@ -39,11 +39,11 @@ export default function AccessControlModals({
             <Input.TextArea rows={4} showCount maxLength={500} placeholder="Phạm vi công việc hoặc mục đích của phòng ban" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal>}
 
-      <Modal
+      {role.editor && <Modal
         title={role.editor?.row ? 'Chỉnh sửa chức danh' : 'Tạo chức danh'}
-        open={Boolean(role.editor)}
+        open
         onCancel={role.onClose}
         onOk={role.onSave}
         okText={role.editor?.row ? 'Lưu thay đổi' : 'Tạo chức danh'}
@@ -71,9 +71,9 @@ export default function AccessControlModals({
             <Input.TextArea rows={3} showCount maxLength={500} placeholder="Trách nhiệm chính của chức danh" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal>}
 
-      <Modal
+      {permission.editor && <Modal
         title={(
           <div>
             <div>Sửa quyền</div>
@@ -84,7 +84,7 @@ export default function AccessControlModals({
             </Typography.Text>
           </div>
         )}
-        open={Boolean(permission.editor)}
+        open
         onCancel={permission.onClose}
         onOk={permission.onPreview}
         okText="Tiếp tục xem tác động"
@@ -101,11 +101,11 @@ export default function AccessControlModals({
           loading={permission.query.isLoading}
           error={permission.query.error}
         />
-      </Modal>
+      </Modal>}
 
-      <Modal
+      {assignment.open && <Modal
         title={assignment.member ? 'Đổi chức danh' : 'Gán chức danh'}
-        open={assignment.open}
+        open
         onCancel={assignment.onClose}
         onOk={assignment.onPreview}
         okText="Xem thay đổi"
@@ -162,11 +162,11 @@ export default function AccessControlModals({
             />
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal>}
 
-      <Modal
+      {impact.value && <Modal
         title={impact.value ? IMPACT_COPY[impact.value.kind]?.title : ''}
-        open={Boolean(impact.value)}
+        open
         onCancel={impact.onClose}
         onOk={impact.onApply}
         okText={impact.value ? IMPACT_COPY[impact.value.kind]?.ok : 'Xác nhận'}
@@ -197,7 +197,7 @@ export default function AccessControlModals({
           />
         )}
         <ImpactDetails preview={impact.value?.preview} stale={impact.value?.stale} />
-      </Modal>
+      </Modal>}
     </>
   )
 }
