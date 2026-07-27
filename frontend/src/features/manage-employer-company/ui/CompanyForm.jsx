@@ -17,8 +17,6 @@ import { message } from '@/shared/lib/toast'
 import RichTextEditor from '@/shared/ui/RichTextEditor'
 import { buildCompanyChanges, companyToForm, DEFAULT_COMPANY_FORM, validateCompanyImage } from '../model/company-form'
 
-const TAX_LOOKUP_URL = 'https://tracuunnt.gdt.gov.vn/tcnnt/mstdn.jsp'
-
 function EditorField(props) {
   const { status } = Form.Item.useStatus()
   return <RichTextEditor {...props} error={status === 'error'} />
@@ -377,7 +375,6 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           type="info"
           showIcon
           title={businessType === 'household' ? 'Nhập thông tin đúng với đăng ký thuế của người đại diện hộ kinh doanh.' : 'Nhập đúng tên và mã số thuế trên Giấy chứng nhận đăng ký doanh nghiệp.'}
-          description={<a href={TAX_LOOKUP_URL} target="_blank" rel="noreferrer" className="company-setting-link">Tra cứu thông tin tại Cục Thuế</a>}
         />
         <Row gutter={[16, 0]}>
           <Col xs={24} md={12}><Form.Item name="tax_code" label={<RequiredLabel>{businessType === 'household' ? 'Mã số thuế người đại diện' : 'Mã số thuế'}</RequiredLabel>} rules={[{ required: true, message: 'Nhập mã số thuế.' }, { pattern: /^\d{10}(-\d{3})?$/, message: 'Nhập 10 chữ số hoặc dạng 10 chữ số-3 chữ số.' }]}><Input size="large" placeholder="0101234567" /></Form.Item></Col>
@@ -415,7 +412,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         <Row gutter={[16, 0]}>
           <Col xs={24} md={12}><Form.Item name="email" label={<RequiredLabel>Email công ty</RequiredLabel>} rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ.' }]}><Input size="large" /></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item name="phone" label={<RequiredLabel>Số điện thoại</RequiredLabel>} rules={[{ required: true, message: 'Nhập số điện thoại.' }, { pattern: /^\+?[0-9 .()-]{8,20}$/, message: 'Số điện thoại không hợp lệ.' }]}><Input size="large" /></Form.Item></Col>
-          <Col span={24}><Form.Item name="address" label={<RequiredLabel>Địa chỉ</RequiredLabel>} rules={[{ required: true, whitespace: true, message: 'Nhập địa chỉ.' }]}><Input size="large" /></Form.Item></Col>
+          <Col span={24}><Form.Item name="address" label={<RequiredLabel>Địa chỉ liên hệ/văn phòng</RequiredLabel>} rules={[{ required: true, whitespace: true, message: 'Nhập địa chỉ liên hệ hoặc văn phòng.' }]}><Input size="large" /></Form.Item></Col>
           <Col span={24}><Form.Item name="website_url" label={<RequiredLabel>Website</RequiredLabel>} rules={[{ required: !hasNoWebsite, message: 'Nhập website hoặc chọn không có website.' }, { type: 'url', warningOnly: hasNoWebsite, message: 'URL website không hợp lệ.' }]}><Input size="large" disabled={disabled || saveMutation.isPending || hasNoWebsite} placeholder="https://congty.vn" /></Form.Item></Col>
           <Col span={24}><Form.Item name="has_no_website" valuePropName="checked"><Checkbox onChange={changeNoWebsite}>Tôi không có website</Checkbox></Form.Item></Col>
         </Row>

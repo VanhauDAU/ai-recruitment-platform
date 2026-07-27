@@ -1,7 +1,7 @@
 import { CopyOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Table, Tag, message } from 'antd'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router'
 import {
   closeEmployerJob,
   duplicateEmployerJob,

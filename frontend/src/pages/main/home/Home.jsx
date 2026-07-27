@@ -1,7 +1,7 @@
 import { FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Input, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { formatNumber, getJobCategories, getJobs } from '@/entities/job'
 import { getBanners, useSiteSettings } from '@/entities/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'

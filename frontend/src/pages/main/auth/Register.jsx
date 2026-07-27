@@ -2,7 +2,7 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutl
 import { Alert, Checkbox, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import {
   AuthLogo,

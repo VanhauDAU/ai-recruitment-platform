@@ -11,7 +11,7 @@ import {
   YoutubeFilled,
 } from '@ant-design/icons'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { DEFAULT_SITE_SETTINGS, getLinkGroups, settingText, useSiteSettings } from '@/entities/site-settings'
 import { CookieSettingsButton } from '@/features/cookie-consent'
 

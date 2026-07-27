@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, DatePicker, Modal, Select, Skeleton, Tabs, message } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router'
 import {
   applicationKeys,
   getRecruiterApplications,

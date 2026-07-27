@@ -2,7 +2,7 @@ import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Modal, Radio, Skeleton, Tag, message } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   employerProfileKeys,
   getEmployerProfile,

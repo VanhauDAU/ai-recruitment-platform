@@ -1,14 +1,91 @@
+import re
+import unicodedata
+
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
 
 from ...models import (
     CompanyDocument,
+    CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     EmployerVerificationEvent,
 )
 from ...services import verification_checks
+
+
+def _normalized_legal_text(value):
+    value = unicodedata.normalize('NFKC', str(value or '')).upper()
+    return ' '.join(re.sub(r'[^\w]+', ' ', value, flags=re.UNICODE).split())
+
+
+def _masked_tax_code(value):
+    value = str(value or '')
+    return f'***{value[-4:]}' if len(value) > 4 else ('****' if value else '')
+
+
+def _latest_revision_evidence(obj):
+    return next(
+        (
+            evidence
+            for evidence in obj.tax_lookup_evidences.all()
+            if evidence.workflow_revision == obj.revision
+        ),
+        None,
+    )
+
+
+class AdminTaxLookupEvidenceSerializer(serializers.ModelSerializer):
+    status_label = serializers.CharField(source='get_status_display', read_only=True)
+    comparison = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CompanyTaxLookupEvidence
+        fields = [
+            'public_id',
+            'provider',
+            'status',
+            'status_label',
+            'workflow_revision',
+            'tax_code',
+            'submitted_company_name',
+            'returned_tax_code',
+            'registered_name',
+            'international_name',
+            'short_name',
+            'provider_code',
+            'provider_description',
+            'response_hash',
+            'comparison',
+            'started_at',
+            'completed_at',
+            'created_at',
+        ]
+        read_only_fields = fields
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context.get('can_view_sensitive', False):
+            data['tax_code'] = _masked_tax_code(data['tax_code'])
+            data['returned_tax_code'] = _masked_tax_code(data['returned_tax_code'])
+        return data
+
+    def get_comparison(self, obj):
+        if obj.status != CompanyTaxLookupEvidence.Status.FOUND:
+            return {
+                'tax_code': 'unavailable',
+                'company_name': 'unavailable',
+            }
+        return {
+            'tax_code': ('match' if obj.tax_code == obj.returned_tax_code else 'mismatch'),
+            'company_name': (
+                'match'
+                if _normalized_legal_text(obj.submitted_company_name)
+                == _normalized_legal_text(obj.registered_name)
+                else 'mismatch'
+            ),
+        }
 
 
 class AdminVerificationDocumentSerializer(serializers.ModelSerializer):
@@ -145,6 +222,7 @@ class AdminVerificationCaseDetailSerializer(AdminVerificationCaseListSerializer)
     documents = AdminVerificationDocumentSerializer(many=True, read_only=True)
     events = AdminVerificationEventSerializer(many=True, read_only=True)
     reviewer_email = serializers.EmailField(source='reviewer.email', read_only=True)
+    tax_lookup_evidence = serializers.SerializerMethodField()
 
     class Meta(AdminVerificationCaseListSerializer.Meta):
         fields = [
@@ -155,6 +233,7 @@ class AdminVerificationCaseDetailSerializer(AdminVerificationCaseListSerializer)
             'events',
             'reviewer_email',
             'decision_reason',
+            'tax_lookup_evidence',
         ]
 
     def get_checks(self, obj):
@@ -178,6 +257,12 @@ class AdminVerificationCaseDetailSerializer(AdminVerificationCaseListSerializer)
             'registration_completed_at': recruiter.registration_completed_at,
             'dpa_accepted_at': recruiter.dpa_accepted_at,
         }
+
+    def get_tax_lookup_evidence(self, obj):
+        evidence = _latest_revision_evidence(obj)
+        if evidence is None:
+            return None
+        return AdminTaxLookupEvidenceSerializer(evidence, context=self.context).data
 
 
 class AdminVerificationDocumentReviewSerializer(serializers.Serializer):
@@ -238,6 +323,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
     industry_labels = serializers.SerializerMethodField()
     media_previews = serializers.SerializerMethodField()
     documents = AdminVerificationDocumentSerializer(many=True, read_only=True)
+    tax_lookup_evidence = serializers.SerializerMethodField()
 
     class Meta:
         model = CompanyUpdateRequest
@@ -260,6 +346,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'reviewed_at',
             'review_note',
             'documents',
+            'tax_lookup_evidence',
             'revision',
             'lock_version',
             'created_at',
@@ -324,6 +411,12 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             if value
         ]
         return previews
+
+    def get_tax_lookup_evidence(self, obj):
+        evidence = _latest_revision_evidence(obj)
+        if evidence is None:
+            return None
+        return AdminTaxLookupEvidenceSerializer(evidence, context=self.context).data
 
 
 class AdminCompanyUpdateReviewSerializer(serializers.Serializer):

@@ -1,7 +1,7 @@
 import { CheckCircleFilled, CloseCircleFilled, MailOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Alert, Button, Form, Input, Modal, Spin } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { changeEmail, confirmVerification, sendVerificationEmail } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useSiteSetting, useSiteSettings } from '@/entities/site-settings'

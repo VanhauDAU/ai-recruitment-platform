@@ -1,5 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import EmployerVerificationChecklist from './EmployerVerificationChecklist'
 
@@ -27,6 +27,9 @@ describe('EmployerVerificationChecklist', () => {
 
     expect(stepRow).not.toBeNull()
     expect(within(stepRow).getByText('Hoàn tất')).toBeInTheDocument()
-    expect(screen.getByText('Hoàn thành 10%')).toBeInTheDocument()
+    expect(screen.getByText('Hoàn thành 20%')).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(5)
+    expect(screen.queryByText('Xác minh email')).not.toBeInTheDocument()
+    expect(screen.queryByText('Admin duyệt tài khoản')).not.toBeInTheDocument()
   })
 })

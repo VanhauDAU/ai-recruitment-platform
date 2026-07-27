@@ -1,7 +1,7 @@
 import { ArrowRightOutlined, CheckCircleFilled } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import {

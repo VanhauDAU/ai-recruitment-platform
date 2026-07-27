@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, CheckCircleFilled } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   EMPLOYER_COMPANY_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,

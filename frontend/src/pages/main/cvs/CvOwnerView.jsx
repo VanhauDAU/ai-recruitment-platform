@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 import { CvPdfExportControl } from '@/features/export-cv-pdf'
 import { OwnerCvVersionPage } from '@/features/view-cv-version'
 

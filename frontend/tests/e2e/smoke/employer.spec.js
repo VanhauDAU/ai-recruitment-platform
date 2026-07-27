@@ -136,6 +136,12 @@ test('employer auth: registration has employer fields and consent-gated Google s
 })
 
 async function setEmployerSession(page, overrides = {}) {
+  await page.route('http://localhost:8000/api/auth/refresh/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ access: 'e2e-access' }),
+    })
+  })
   await page.route('http://localhost:8000/api/auth/me/', async (route) => {
     const currentOverrides = typeof overrides === 'function' ? overrides() : overrides
     await route.fulfill({
@@ -478,11 +484,12 @@ test('employer workspace: completed verification redirects away from the checkli
   await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toHaveCount(0)
+  await expect(page.getByLabel('Các bước xác thực').getByRole('link')).toHaveCount(5)
   await expect(page.getByLabel('Đăng tin tuyển dụng đầu tiên')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer jobs: an incomplete account is redirected to the five-step verification checklist', async ({ page }) => {
+test('employer workspace: an incomplete account cannot access recruitment operations', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -507,6 +514,11 @@ test('employer jobs: an incomplete account is redirected to the five-step verifi
   })
 
   await page.goto('/tuyendung/app/jobs')
+
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
+
+  await page.goto('/tuyendung/app/campaigns')
 
   await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
@@ -1074,6 +1086,7 @@ test('employer company settings: recent catalogue and full create form are respo
   await page.getByRole('tab', { name: /Tạo công ty mới/ }).click()
   await expect(page.getByRole('button', { name: 'Chọn logo' })).toBeVisible()
   await expect(page.getByLabel('Mã số thuế')).toBeVisible()
+  await expect(page.getByRole('link', { name: /Tra cứu.*thuế/i })).toHaveCount(0)
   await expect(page.getByText('Năm thành lập')).toHaveCount(0)
   await expect(page.getByRole('toolbar', { name: 'Công cụ định dạng văn bản' })).toHaveCount(2)
   await expect(page.getByRole('button', { name: /Lưu và liên kết công ty/ })).toBeVisible()

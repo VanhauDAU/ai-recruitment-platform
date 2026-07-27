@@ -1,6 +1,6 @@
 import { LogoutOutlined } from '@ant-design/icons'
 import { Button, ConfigProvider } from 'antd'
-import { Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 

@@ -1,5 +1,5 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { withQueryClient } from '@/test/render-with-query-client'
 import { notifyPermissionDenied } from '@/shared/api/token-store'
@@ -14,7 +14,7 @@ const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 const { message } = vi.hoisted(() => ({ message: { warning: vi.fn() } }))
 
 vi.mock('../api/session.api', () => ({ getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices }))
-vi.mock('react-router-dom', async (importOriginal) => ({
+vi.mock('react-router', async (importOriginal) => ({
   ...await importOriginal(),
   useNavigate: () => navigate,
 }))

@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployerWithMFA
+from apps.accounts.permissions import IsEmployer
 from common.media_storage import delete_local_media_url, save_image_upload, validate_image_upload
 
 from ...models import Company, CompanyImage, CompanyUpdateRequest
@@ -51,7 +51,7 @@ def _get_update_request(request, company):
 class CompanyImageUploadView(APIView):
     """Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`)."""
 
-    permission_classes = [IsEmployerWithMFA]
+    permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
     kind = ''  # 'logo' | 'cover' | 'gallery'
 
@@ -229,7 +229,7 @@ class CompanyGalleryUploadView(CompanyImageUploadView):
 
 class CompanyGalleryDeleteView(generics.DestroyAPIView):
     serializer_class = CompanyImageSerializer
-    permission_classes = [IsEmployerWithMFA]
+    permission_classes = [IsEmployer]
 
     def get_queryset(self):
         return CompanyImage.objects.filter(company=_require_owner(self.request.user).company)

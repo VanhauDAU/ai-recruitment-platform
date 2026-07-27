@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons'
 import { Select, Tooltip } from 'antd'
 import { useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_BUSINESS_LICENSE_URL,

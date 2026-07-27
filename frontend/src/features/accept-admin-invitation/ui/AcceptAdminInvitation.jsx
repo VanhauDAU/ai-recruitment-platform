@@ -6,7 +6,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Button, Form, Input, Result, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router'
 import {
   acceptAdminInvitation,
   adminAccountKeys,

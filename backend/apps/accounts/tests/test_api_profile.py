@@ -570,6 +570,50 @@ class ChangeEmailTests(APITestCase):
         self.assertIn('thay đổi', warning[0].subject.lower())
 
 
+class RefreshSessionProbeTests(APITestCase):
+    def test_probe_header_is_allowed_by_cors_preflight(self):
+        response = self.client.options(
+            reverse('auth-refresh'),
+            HTTP_ORIGIN='http://localhost:5173',
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD='POST',
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS='x-auth-portal,x-session-probe',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        allowed_headers = response['Access-Control-Allow-Headers'].lower()
+        self.assertIn('x-auth-portal', allowed_headers)
+        self.assertIn('x-session-probe', allowed_headers)
+
+    def test_guest_probe_returns_no_content_instead_of_unauthorized(self):
+        response = self.client.post(
+            reverse('auth-refresh'),
+            {'portal': 'main'},
+            format='json',
+            HTTP_X_SESSION_PROBE='1',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.content, b'')
+
+    def test_regular_refresh_without_cookie_remains_unauthorized(self):
+        response = refresh_session(self.client)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_invalid_cookie_probe_clears_cookie_without_console_error_status(self):
+        set_refresh_cookie(self.client, 'main', 'not-a-token')
+
+        response = self.client.post(
+            reverse('auth-refresh'),
+            {'portal': 'main'},
+            format='json',
+            HTTP_X_SESSION_PROBE='1',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.cookies[cookie_name('main')].value, '')
+
+
 class LogoutEndpointTests(APITestCase):
     def test_logout_blacklists_the_provided_refresh_token(self):
         user = User.objects.create_user(email='logout@example.com', password='Password@123')

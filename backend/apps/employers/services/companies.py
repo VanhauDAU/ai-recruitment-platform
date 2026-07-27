@@ -190,6 +190,14 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
         payload={
             'decision': update_request.status,
             'company_public_id': update_request.company.public_id,
+            'tax_lookup_evidence_public_id': (
+                update_request.tax_lookup_evidences.filter(
+                    workflow_revision=update_request.revision,
+                )
+                .order_by('-created_at', '-id')
+                .values_list('public_id', flat=True)
+                .first()
+            ),
         },
     )
     return update_request

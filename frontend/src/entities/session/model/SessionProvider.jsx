@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser, logoutAllDevices, logoutCurrentPortal } from '../api/session.api'
 import SessionContext from './session-context'

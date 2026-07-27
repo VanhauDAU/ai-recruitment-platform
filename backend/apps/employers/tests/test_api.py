@@ -2,6 +2,7 @@ import re
 import shutil
 import tempfile
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.core.files.base import ContentFile
@@ -24,6 +25,7 @@ from ..models import (
     Company,
     CompanyDocument,
     CompanyImage,
+    CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     Industry,
@@ -524,6 +526,18 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
 
+    def test_create_does_not_require_mfa(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+
+        response = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+
     def test_primary_industry_must_be_among_selected(self):
         other = Industry.objects.get(name='Bảo hiểm')
         payload = company_payload(self.industry, primary_industry=other.id)
@@ -837,9 +851,13 @@ class JoinCompanyTests(APITestCase):
             file_name='company-registration.png',
         )
 
-        response = self.client.get(
-            reverse('employer-company-document-content', kwargs={'pk': document.pk})
-        )
+        with patch(
+            'apps.employers.api.views.verification.render_office_document_preview',
+            return_value=None,
+        ):
+            response = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(b''.join(response.streaming_content), PNG_BYTES)
@@ -851,6 +869,48 @@ class JoinCompanyTests(APITestCase):
             reverse('employer-company-document-content', kwargs={'pk': document.pk})
         )
         self.assertEqual(denied.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_private_dpa_keeps_its_docx_type_and_extension(self):
+        self._join()
+        stored_name = private_media_storage().save(
+            'employers/documents/candidate-dpa.docx',
+            ContentFile(DOCX_BYTES),
+        )
+        document = CompanyDocument.objects.create(
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            file_url=stored_name,
+            file_name='Thỏa thuận xử lý DLCN',
+            mime_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+        with patch(
+            'apps.employers.api.views.verification.render_office_document_preview',
+            return_value=None,
+        ):
+            response = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertIn('.docx', response['Content-Disposition'])
+
+        with patch(
+            'apps.employers.api.views.verification.render_office_document_preview',
+            return_value=b'%PDF-private-preview',
+        ):
+            preview = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(preview.status_code, status.HTTP_200_OK)
+        self.assertEqual(preview['Content-Type'], 'application/pdf')
+        self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
 
 class CompanyUpdateRequestTests(APITestCase):
@@ -934,6 +994,10 @@ class CompanyUpdateRequestTests(APITestCase):
         admin = User.objects.create_superuser(email='admin@example.com', password='Password@123')
         update_request = CompanyUpdateRequest.objects.get(company=self.company)
         self.assertTrue(update_request.is_sensitive)
+        evidence = update_request.tax_lookup_evidences.get(workflow_revision=1)
+        self.assertEqual(evidence.status, CompanyTaxLookupEvidence.Status.PENDING)
+        self.assertEqual(evidence.tax_code, self.company.tax_code)
+        self.assertEqual(evidence.submitted_company_name, 'Acme Global')
         CompanyDocument.objects.create(
             company=self.company,
             update_request=update_request,
@@ -1247,6 +1311,17 @@ class CompanyImageUploadTests(APITestCase):
         self.assertTrue(self.company.logo_url.startswith('employers/'))
         self.assertNotIn('://', self.company.logo_url)
         self.assertFalse(self.company.has_no_logo)
+
+    def test_owner_can_upload_company_logo_without_mfa(self):
+        self.user.two_factor_enabled = False
+        self.user.save(update_fields=['two_factor_enabled'])
+        upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'), {'file': upload}, format='multipart'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
 
     def test_gallery_rejects_the_eleventh_image(self):
         CompanyImage.objects.bulk_create(

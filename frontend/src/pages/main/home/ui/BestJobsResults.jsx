@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import {
   formatLocations,
   formatSalary,

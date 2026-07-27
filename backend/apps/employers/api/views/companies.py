@@ -3,7 +3,7 @@ from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 
-from apps.accounts.permissions import IsEmployer, IsEmployerWithMFA
+from apps.accounts.permissions import IsEmployer
 
 from ...models import RecruiterProfile
 from ...selectors import has_explicit_company_link, search_companies
@@ -26,7 +26,7 @@ class CreateCompanyView(generics.CreateAPIView):
     """Tạo hồ sơ công ty mới (thẻ 2) — có hiệu lực ngay, người tạo là owner."""
 
     serializer_class = CompanySerializer
-    permission_classes = [IsEmployerWithMFA]
+    permission_classes = [IsEmployer]
 
     @transaction.atomic
     def perform_create(self, serializer):

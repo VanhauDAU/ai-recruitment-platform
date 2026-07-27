@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { BrandLogo, DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 import { employerAppPath, employerMarketingPath, MAIN_PORTAL_URL } from '@/shared/config/portals'
 

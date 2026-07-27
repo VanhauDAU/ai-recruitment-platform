@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router'
 import { getAuthDestination } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import PageLoading from '@/shared/ui/PageLoading'

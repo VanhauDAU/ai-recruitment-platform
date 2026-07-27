@@ -2,7 +2,7 @@ import { DownOutlined, FileTextOutlined, MessageOutlined } from '@ant-design/ico
 import { useQuery } from '@tanstack/react-query'
 import { Empty, Skeleton, Tag, Timeline, Tooltip } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   CANDIDATE_APPLICATION_FILTERS,
   CANDIDATE_APPLICATION_STATUS_LABELS,

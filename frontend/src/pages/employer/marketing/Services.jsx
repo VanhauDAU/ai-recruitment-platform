@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { ConsultationModal } from '@/features/request-consultation'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 

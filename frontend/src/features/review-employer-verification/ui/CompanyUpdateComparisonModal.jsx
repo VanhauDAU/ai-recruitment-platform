@@ -1,6 +1,7 @@
 import { FileSearchOutlined } from '@ant-design/icons'
 import { Alert, Button, Descriptions, Image, List, Modal, Space, Tag, Typography } from 'antd'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
 
 const FIELD_LABELS = {
   business_type: 'Loại hình',
@@ -129,11 +130,13 @@ export default function CompanyUpdateComparisonModal({
   canApply,
   documentLoading,
   requestLoading,
+  taxLookupLoading,
   onClose,
   onOpenDocument,
   onReviewDocument,
   onRejectRequest,
   onApproveRequest,
+  onRefreshTaxLookup,
 }) {
   if (!updateRequest) return null
   const changes = Object.entries(updateRequest.changes || {})
@@ -185,6 +188,16 @@ export default function CompanyUpdateComparisonModal({
             type="warning"
             title="Thay đổi thông tin pháp lý cần đối chiếu giấy tờ"
             description={`${updateRequest.reason || 'Không có lý do'} · ${updateRequest.proof_type_label || 'Chưa chọn loại giấy tờ'}`}
+          />
+        )}
+
+        {updateRequest.is_sensitive && (
+          <TaxLookupEvidenceCard
+            compact
+            evidence={updateRequest.tax_lookup_evidence}
+            canRefresh={canReview}
+            refreshing={taxLookupLoading}
+            onRefresh={onRefreshTaxLookup}
           />
         )}
 

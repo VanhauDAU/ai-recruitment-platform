@@ -45,7 +45,7 @@ import {
   Tag,
 } from 'antd'
 import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   adminBlogKeys,
   createAdminBlogCategory,

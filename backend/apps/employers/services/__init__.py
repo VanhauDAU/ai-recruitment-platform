@@ -27,6 +27,13 @@ from .recruitment_needs import (
     InitialRecruitmentNeedAlreadyExists,
     create_initial_recruitment_need,
 )
+from .tax_lookup import (
+    latest_tax_lookup_evidence,
+    lookup_company_tax,
+    queue_company_tax_lookup,
+    refresh_company_update_tax_lookup,
+    refresh_verification_tax_lookup,
+)
 from .verification import (
     confirm_verification_decision,
     get_or_create_verification_case,
@@ -58,6 +65,11 @@ __all__ = [
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',
     'recruiter_posting_readiness',
+    'latest_tax_lookup_evidence',
+    'lookup_company_tax',
+    'queue_company_tax_lookup',
+    'refresh_company_update_tax_lookup',
+    'refresh_verification_tax_lookup',
     'record_verification_upload',
     'review_company_update_document',
     'recruiter_is_approved',

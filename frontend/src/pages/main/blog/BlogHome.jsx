@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Empty, Skeleton } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { getBlogCategories, getBlogHome } from '@/entities/blog'
 import { setDocumentTitle } from '@/shared/config/document-title'

@@ -4,7 +4,7 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { CANDIDATE_MENU, candidateMenuItemLabel } from '@/entities/account'
 import { message } from '@/shared/lib/toast'
 

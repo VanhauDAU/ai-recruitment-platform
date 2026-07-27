@@ -3,7 +3,20 @@ import { mockPublicApi } from './helpers'
 
 test('public smoke: home and jobs routes load', async ({ page }) => {
   await mockPublicApi(page)
+  let currentUserRequestCount = 0
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/api/auth/me/') {
+      currentUserRequestCount += 1
+    }
+  })
+  const sessionProbeResponse = page.waitForResponse((response) => (
+    new URL(response.url()).pathname === '/api/auth/refresh/'
+    && response.request().headers()['x-session-probe'] === '1'
+  ))
   await page.goto('/')
+  const sessionProbe = await sessionProbeResponse
+  expect(sessionProbe.status()).toBe(204)
+  expect(currentUserRequestCount).toBe(0)
   await expect(page.locator('body')).not.toBeEmpty()
 
   await page.goto('/viec-lam')

@@ -1,7 +1,7 @@
 import { CheckCircleFilled, CloseCircleFilled, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { Alert, Form, Input, Spin } from 'antd'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath, EMPLOYER_LOGIN_URL, MAIN_LOGIN_URL } from '@/shared/config/portals'
 import { confirmPasswordReset, validatePasswordResetToken } from '../api/auth.api'

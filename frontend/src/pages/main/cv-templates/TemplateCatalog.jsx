@@ -1,6 +1,6 @@
 import { Empty, Result, Skeleton, Spin } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import {
   CvTemplateCard,
   getCvCategories,

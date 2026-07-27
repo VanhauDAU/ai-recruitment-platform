@@ -1,7 +1,7 @@
 import { BarChartOutlined, CheckCircleFilled, RobotOutlined, TeamOutlined } from '@ant-design/icons'
 import { ConfigProvider } from 'antd'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 
 function HiringFunnelVisual() {

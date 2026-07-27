@@ -12,6 +12,13 @@ export async function mockPublicApi(page) {
   }]
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
+    if (
+      path === '/api/auth/refresh/'
+      && route.request().headers()['x-session-probe'] === '1'
+    ) {
+      await route.fulfill({ status: 204, body: '' })
+      return
+    }
     if (path === '/api/auth/me/' || path === '/api/auth/refresh/') {
       await route.fulfill({
         status: 401,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer, Result, Skeleton, Tag } from 'antd'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router'
 import { BLOG_ROOT, BlogPostContent, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { setDocumentTitle } from '@/shared/config/document-title'

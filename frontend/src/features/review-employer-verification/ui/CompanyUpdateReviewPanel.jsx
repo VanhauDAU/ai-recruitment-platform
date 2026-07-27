@@ -6,6 +6,7 @@ import {
   adminEmployerVerificationKeys,
   getAdminCompanyUpdateDocumentContent,
   getAdminCompanyUpdateRequests,
+  refreshAdminCompanyUpdateTaxLookup,
   reviewAdminCompanyUpdateDocument,
   reviewAdminCompanyUpdateRequest,
 } from '@/entities/admin-employer-verification'
@@ -105,6 +106,14 @@ export default function CompanyUpdateReviewPanel({
     },
     onError: (error) => message.error(getApiErrorMessage(error)),
   })
+  const taxLookupMutation = useMutation({
+    mutationFn: () => refreshAdminCompanyUpdateTaxLookup(updateRequest.public_id),
+    onSuccess: async () => {
+      message.success('Đã tạo yêu cầu tra cứu lại mã số thuế.')
+      await refresh()
+    },
+    onError: (error) => message.error(getApiErrorMessage(error)),
+  })
 
   async function openDocument(document) {
     if (document.source_url) {
@@ -187,11 +196,13 @@ export default function CompanyUpdateReviewPanel({
         canApply={canApply}
         documentLoading={documentMutation.isPending}
         requestLoading={requestMutation.isPending}
+        taxLookupLoading={taxLookupMutation.isPending}
         onClose={() => setDetailsOpen(false)}
         onOpenDocument={openDocument}
         onReviewDocument={reviewDocument}
         onRejectRequest={() => setReasonState({ kind: 'request', decision: 'rejected', title: 'Từ chối yêu cầu sửa công ty' })}
         onApproveRequest={() => requestMutation.mutate({ decision: 'approved' })}
+        onRefreshTaxLookup={() => taxLookupMutation.mutate()}
       />
       <ReviewReasonModal
         state={reasonState}

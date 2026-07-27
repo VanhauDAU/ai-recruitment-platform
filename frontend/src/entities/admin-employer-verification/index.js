@@ -9,6 +9,8 @@ export {
   getAdminCompanyUpdateDocumentContent,
   getAdminCompanyUpdateRequests,
   reviewAdminEmployerDocument,
+  refreshAdminEmployerTaxLookup,
+  refreshAdminCompanyUpdateTaxLookup,
   reviewAdminCompanyUpdateDocument,
   reviewAdminCompanyUpdateRequest,
   startAdminEmployerVerificationReview,

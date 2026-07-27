@@ -6,7 +6,7 @@ from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquer
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from ..models import CompanyDocument, EmployerVerificationCase
+from ..models import CompanyDocument, CompanyTaxLookupEvidence, EmployerVerificationCase
 
 
 def admin_verification_cases_queryset(*, params=None):
@@ -51,6 +51,10 @@ def admin_verification_cases_queryset(*, params=None):
                 to_attr='current_documents_for_checks',
             ),
             'events__actor',
+            Prefetch(
+                'tax_lookup_evidences',
+                queryset=CompanyTaxLookupEvidence.objects.order_by('-created_at', '-id'),
+            ),
             Prefetch(
                 'recruiter__recruitment_needs',
                 to_attr='verification_recruitment_needs',

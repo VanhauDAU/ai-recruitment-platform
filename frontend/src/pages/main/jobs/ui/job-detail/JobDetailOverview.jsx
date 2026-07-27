@@ -9,7 +9,7 @@ import {
   WalletOutlined,
 } from '@ant-design/icons'
 import { Skeleton } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   EXPERIENCE_YEARS_LABELS,
   formatDeadline,

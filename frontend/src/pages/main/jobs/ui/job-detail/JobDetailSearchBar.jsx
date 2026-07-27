@@ -1,7 +1,7 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { getJobCategories } from '@/entities/job'
 import { LocationFilter } from '@/entities/location'
 import CategoryPicker from '../CategoryPicker'

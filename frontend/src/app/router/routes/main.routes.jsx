@@ -1,4 +1,4 @@
-import { Navigate, Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router'
 import { ACCOUNT_DEFAULT_PATH, ACCOUNT_LAYOUT_ITEMS, ACCOUNT_ROOT } from '@/entities/account'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'

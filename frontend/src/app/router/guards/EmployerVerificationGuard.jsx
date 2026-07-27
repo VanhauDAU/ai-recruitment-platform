@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Spin } from 'antd'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router'
 import {
   employerProfileKeys,
   getEmployerProfile,

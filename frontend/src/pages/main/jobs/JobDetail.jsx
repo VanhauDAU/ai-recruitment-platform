@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Button, Result } from 'antd'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/apply-for-job'
 import { ReportJobModal } from '@/features/report-job'

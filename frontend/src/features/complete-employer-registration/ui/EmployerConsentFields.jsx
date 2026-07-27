@@ -1,5 +1,5 @@
 import { Checkbox, Form } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { employerMarketingPath } from '@/shared/config/portals'
 

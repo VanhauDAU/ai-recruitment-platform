@@ -29,6 +29,7 @@ import {
   downloadAdminEmployerDocument,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
+  refreshAdminEmployerTaxLookup,
   reviewAdminEmployerDocument,
   startAdminEmployerVerificationReview,
   verificationStatusMeta,
@@ -41,6 +42,8 @@ import {
 } from '../model/document-preview'
 import { buildVerificationTimeline } from '../model/event-timeline'
 import CompanyUpdateReviewPanel from './CompanyUpdateReviewPanel'
+import DocumentImageViewer from './DocumentImageViewer'
+import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
 import VerificationJourney from './VerificationJourney'
 import './employer-verification-review.css'
 
@@ -218,17 +221,12 @@ function DocumentPreview({ verificationCase, document, canViewSensitive }) {
     return (
       <div className="verification-preview-shell">
         {actions}
-        <div className="verification-image-canvas">
-          <img
-            src={objectUrl}
-            alt={`Bản xem trước ${document.doc_type_label}: ${document.file_name}`}
-            className="verification-document-image"
-            onError={() => setImageError(true)}
-          />
-        </div>
-        <Typography.Text type="secondary" className="verification-preview-meta">
-          {`${contentType} · Ảnh tự co giãn theo khung, mở bản gốc để phóng to.`}
-        </Typography.Text>
+        <DocumentImageViewer
+          src={objectUrl}
+          alt={`Bản xem trước ${document.doc_type_label}: ${document.file_name}`}
+          contentType={contentType}
+          onError={() => setImageError(true)}
+        />
       </div>
     )
   }
@@ -408,6 +406,14 @@ export default function EmployerVerificationReview({
     },
     onError: (error) => message.error(getApiErrorMessage(error)),
   })
+  const taxLookupMutation = useMutation({
+    mutationFn: () => refreshAdminEmployerTaxLookup(casePublicId),
+    onSuccess: async () => {
+      message.success('Đã tạo yêu cầu tra cứu lại mã số thuế.')
+      await refresh()
+    },
+    onError: (error) => message.error(getApiErrorMessage(error)),
+  })
   const documentMutation = useMutation({
     mutationFn: ({ documentId, payload }) => reviewAdminEmployerDocument(
       casePublicId,
@@ -519,6 +525,13 @@ export default function EmployerVerificationReview({
           </Descriptions.Item>
         </Descriptions>
       </Card>
+
+      <TaxLookupEvidenceCard
+        evidence={verificationCase.tax_lookup_evidence}
+        canRefresh={canReviewVerification}
+        refreshing={taxLookupMutation.isPending}
+        onRefresh={() => taxLookupMutation.mutate()}
+      />
 
       <Card
         size="small"

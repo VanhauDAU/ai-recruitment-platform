@@ -1,7 +1,7 @@
 import { ArrowRightOutlined, BgColorsOutlined, CrownFilled, EditOutlined, FilePdfOutlined, RobotOutlined, StarFilled } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { CvTemplatePreview, getCvTemplates, TemplateColorSwatches, templateColors, templatePreviewForColor } from '@/entities/cv-template'
 
 const FEATURES = [

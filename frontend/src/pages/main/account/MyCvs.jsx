@@ -1,6 +1,6 @@
 import { CloudUploadOutlined, InboxOutlined, UploadOutlined } from '@ant-design/icons'
 import { useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { importCvFile } from '@/entities/cv'
 import { useSiteSettings } from '@/entities/site-settings'
 import { message } from '@/shared/lib/toast'

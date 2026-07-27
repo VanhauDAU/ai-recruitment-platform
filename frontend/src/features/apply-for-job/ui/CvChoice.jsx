@@ -1,5 +1,5 @@
 import { EyeOutlined, InfoCircleFilled } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 function formatCvDate(value) {
   if (!value) return 'Chưa có thời gian cập nhật'

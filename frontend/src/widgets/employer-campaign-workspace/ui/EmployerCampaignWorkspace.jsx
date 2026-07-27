@@ -6,7 +6,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Modal, Skeleton, Tag, message } from 'antd'
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import {
   CAMPAIGN_STATUS_COLORS,
   CAMPAIGN_STATUS_LABELS,

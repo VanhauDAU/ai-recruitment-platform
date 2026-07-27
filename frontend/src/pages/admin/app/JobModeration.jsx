@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Form, Input, Modal, Select, Space, Table, Tabs, Tag, message } from 'antd'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import { getAdminJobModeration, jobKeys, reviewAdminJob } from '@/entities/job'
 import { JobReportQueue } from '@/features/review-job-reports'
 import { AdminPanel } from '@/widgets/admin-workspace'

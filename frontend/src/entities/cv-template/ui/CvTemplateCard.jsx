@@ -1,6 +1,6 @@
 import { CrownFilled } from '@ant-design/icons'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { templateColors, templatePreviewForColor } from '../model/template-colors'
 import CvTemplatePreview from './CvTemplatePreview'
 import TemplateColorSwatches from './TemplateColorSwatches'

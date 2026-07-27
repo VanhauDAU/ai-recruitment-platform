@@ -12,7 +12,7 @@ import {
   Timeline,
   message,
 } from 'antd'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import {
   applicationKeys,
   getApplicationHistory,

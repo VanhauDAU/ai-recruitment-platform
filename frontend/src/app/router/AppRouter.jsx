@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router'
 import PageLoading from '@/shared/ui/PageLoading'
 import { IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '@/shared/config/portals'
 import { adminRoutes, employerRoutes, mainRoutes } from './routes'

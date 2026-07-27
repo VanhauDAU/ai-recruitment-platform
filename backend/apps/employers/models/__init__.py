@@ -7,6 +7,7 @@ from .otp import PhoneOtp
 from .recruitment_need import RecruitmentNeed
 from .verification import (
     CompanyDocument,
+    CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     EmployerVerificationEvent,
@@ -16,6 +17,7 @@ from .verification import (
 __all__ = [
     'Company',
     'CompanyDocument',
+    'CompanyTaxLookupEvidence',
     'CompanyImage',
     'CompanyIndustry',
     'CompanyUpdateRequest',

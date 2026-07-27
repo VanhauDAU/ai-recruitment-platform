@@ -17,7 +17,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'

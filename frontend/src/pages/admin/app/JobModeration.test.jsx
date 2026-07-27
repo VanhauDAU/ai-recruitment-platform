@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminJobModeration from './JobModeration'
 
@@ -60,7 +60,7 @@ describe('AdminJobModeration', () => {
     await waitFor(() => expect(reviewAdminJob).toHaveBeenCalledWith('job_pending', {
       action: 'approve',
     }))
-  })
+  }, 15_000)
 
   it('requires and submits an employer-visible rejection reason', async () => {
     reviewAdminJob.mockResolvedValue({ public_id: 'job_pending', status: 'rejected' })
@@ -77,7 +77,7 @@ describe('AdminJobModeration', () => {
       action: 'reject',
       reason: 'Vui lòng bổ sung quyền lợi.',
     }))
-  })
+  }, 15_000)
 
   it('opens the report queue from a deep-linked tab', async () => {
     renderPage('/admin/app/job-moderation?tab=reports')

@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit
 
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import FileResponse, Http404
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -20,11 +20,18 @@ from apps.accounts.services import (
 from common.pagination import StandardPagination
 from common.r2_storage import private_media_storage
 
-from ...models import CompanyUpdateRequest, EmployerVerificationEvent, Industry
+from ...models import (
+    CompanyTaxLookupEvidence,
+    CompanyUpdateRequest,
+    EmployerVerificationEvent,
+    Industry,
+)
 from ...selectors import admin_verification_cases_queryset, admin_verification_summary
 from ...services import (
     apply_update_request,
     confirm_verification_decision,
+    refresh_company_update_tax_lookup,
+    refresh_verification_tax_lookup,
     render_office_document_preview,
     review_company_update_document,
     review_verification_document,
@@ -121,6 +128,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         'review_document': ['employer_verification.review'],
         'decision_impact': ['employer_verification.review'],
         'decision': ['employer_verification.review'],
+        'refresh_tax_lookup': ['employer_verification.review'],
         'document_content': [
             'employer_verification.view',
             'account.sensitive.view',
@@ -227,6 +235,23 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             ).data
         )
 
+    @action(detail=True, methods=['post'], url_path='refresh-tax-lookup')
+    def refresh_tax_lookup(self, request, public_id=None):
+        try:
+            case, _ = refresh_verification_tax_lookup(
+                self.get_object(),
+                actor=request.user,
+            )
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
+        current = admin_verification_cases_queryset().get(pk=case.pk)
+        return Response(
+            AdminVerificationCaseDetailSerializer(
+                current,
+                context=self.get_serializer_context(),
+            ).data
+        )
+
     @action(
         detail=True,
         methods=['get'],
@@ -300,6 +325,7 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
         'retrieve': ['company_update.view'],
         'review_document': ['company_update.review'],
         'review': ['company_update.review'],
+        'refresh_tax_lookup': ['company_update.review'],
         'document_content': [
             'company_update.view',
             'account.sensitive.view',
@@ -315,6 +341,10 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
             'documents__uploaded_by',
             'documents__reviewed_by',
             'company__company_industries__industry',
+            Prefetch(
+                'tax_lookup_evidences',
+                queryset=CompanyTaxLookupEvidence.objects.order_by('-created_at', '-id'),
+            ),
         )
         params = self.request.query_params
         if params.get('status'):
@@ -382,6 +412,18 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
+        current = self.get_queryset().get(pk=update_request.pk)
+        return Response(self.get_serializer(current).data)
+
+    @action(detail=True, methods=['post'], url_path='refresh-tax-lookup')
+    def refresh_tax_lookup(self, request, public_id=None):
+        try:
+            update_request, _ = refresh_company_update_tax_lookup(
+                self.get_object(),
+                actor=request.user,
+            )
+        except ValueError as error:
+            raise ValidationError({'detail': str(error)}) from error
         current = self.get_queryset().get(pk=update_request.pk)
         return Response(self.get_serializer(current).data)
 

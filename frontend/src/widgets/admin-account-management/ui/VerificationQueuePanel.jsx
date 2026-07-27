@@ -2,7 +2,7 @@ import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, DatePicker, Input, Select, Table, Tag, Typography } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import {
   adminEmployerVerificationKeys,
   getAdminEmployerVerifications,

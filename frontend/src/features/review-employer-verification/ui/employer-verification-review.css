@@ -523,8 +523,38 @@
   min-height: 40px;
 }
 
-.verification-image-canvas {
+.verification-image-viewer {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.verification-image-toolbar {
   align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.verification-image-toolbar .ant-btn {
+  min-height: 40px;
+}
+
+.verification-image-zoom-value {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 76px;
+  padding: 8px 10px;
+}
+
+.verification-image-canvas {
   background:
     linear-gradient(45deg, #f8fafc 25%, transparent 25%),
     linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
@@ -534,19 +564,58 @@
   background-size: 16px 16px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  display: flex;
-  justify-content: center;
+  max-height: min(760px, 70vh);
   min-height: 460px;
   overflow: auto;
   padding: 16px;
+  scrollbar-gutter: stable both-edges;
+}
+
+.verification-image-canvas:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--admin-primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.verification-image-stage {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+  min-height: 100%;
+  min-width: 100%;
+}
+
+.verification-image-stage.is-fit {
+  align-items: center;
 }
 
 .verification-document-image {
   display: block;
   height: auto;
-  max-height: 720px;
+  user-select: none;
+}
+
+.verification-image-stage.is-fit .verification-document-image {
+  max-height: min(720px, 66vh);
   max-width: 100%;
   object-fit: contain;
+}
+
+.verification-image-stage.is-zoomed .verification-document-image {
+  max-height: none;
+  max-width: none;
+  width: calc(100% * var(--document-zoom));
+}
+
+.verification-image-viewer:fullscreen {
+  background: #f8fafc;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+.verification-image-viewer:fullscreen .verification-image-canvas {
+  height: 100%;
+  max-height: none;
+  min-height: 0;
 }
 
 .verification-preview-meta {
@@ -728,6 +797,21 @@
 
   .verification-preview-actions .ant-btn {
     min-height: 44px;
+  }
+
+  .verification-image-toolbar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .verification-image-toolbar .ant-btn {
+    min-height: 44px;
+  }
+
+  .verification-image-zoom-value {
+    align-items: center;
+    min-height: 44px;
+    min-width: 0;
   }
 
   .verification-image-canvas {

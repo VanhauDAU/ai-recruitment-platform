@@ -1,5 +1,5 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import ThemeToggle from '@/shared/ui/ThemeToggle'
 import { useConsentedColorScheme } from '@/entities/consent'

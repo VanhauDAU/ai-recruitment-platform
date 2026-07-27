@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router'
 import { EmailVerificationBanner, LoginPromptProvider } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
 import { FloatingActions } from '@/widgets/floating-actions'

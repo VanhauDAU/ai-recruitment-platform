@@ -6,6 +6,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-27
+
+#### Changed — Quyền truy cập nhà tuyển dụng
+
+- Bỏ yêu cầu MFA khi nhà tuyển dụng truy cập dữ liệu ứng viên, tạo hồ sơ công
+  ty hoặc quản lý ảnh công ty. Các endpoint vẫn yêu cầu phiên employer hợp lệ
+  và giữ nguyên ràng buộc phạm vi tin tuyển dụng, công ty và vai trò owner.
+- Khôi phục hành trình xác thực employer về năm bước chính; “Đăng tin tuyển
+  dụng đầu tiên” tiếp tục là bước thứ sáu tách riêng, không đưa các trạng thái
+  email, onboarding hoặc chờ admin duyệt thành bước bổ sung.
+- Sửa liên kết mở văn bản DLCN riêng tư: nội dung được tải qua API client đã
+  xác thực rồi mở bằng blob URL, tránh tab mới gọi trực tiếp backend và nhận
+  lỗi `401 Unauthorized`.
+
 ### 2026-07-26
 
 #### Added — Account Management G3

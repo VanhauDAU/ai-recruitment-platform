@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { ConsultationForm } from '@/features/request-consultation'
 import { useSiteSetting } from '@/entities/site-settings'
 import { employerMarketingPath } from '@/shared/config/portals'
