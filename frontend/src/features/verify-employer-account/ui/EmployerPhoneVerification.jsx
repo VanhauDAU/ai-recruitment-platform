@@ -11,7 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Form, Input, Modal, Result, Skeleton } from 'antd'
 import { useState } from 'react'
 import { message } from '@/shared/lib/toast'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   checkEmployerPhoneAvailability,
   getEmployerProfile,

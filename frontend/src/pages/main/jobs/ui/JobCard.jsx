@@ -1,7 +1,7 @@
 import { CheckCircleFilled, HeartFilled, HeartOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,

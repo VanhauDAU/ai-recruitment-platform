@@ -86,7 +86,8 @@ test('admin blog: list is responsive and article slug is server-owned', async ({
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     let body = {}
-    if (path === '/api/auth/me/') body = adminUser
+    if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
+    else if (path === '/api/auth/me/') body = adminUser
     else if (path === '/api/blog/admin/posts/summary/') {
       body = {
         all: 2,

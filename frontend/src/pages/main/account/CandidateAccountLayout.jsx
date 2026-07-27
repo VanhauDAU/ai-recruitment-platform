@@ -1,7 +1,7 @@
 import { MenuOutlined } from '@ant-design/icons'
 import { Drawer } from 'antd'
 import { useEffect, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router'
 import { findActiveAccountItem } from '@/entities/account'
 import { setDocumentTitle } from '@/shared/config/document-title'
 import AccountSidebar from './ui/AccountSidebar'

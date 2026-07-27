@@ -1,4 +1,4 @@
-import { Navigate, Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router'
 import { adminPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'

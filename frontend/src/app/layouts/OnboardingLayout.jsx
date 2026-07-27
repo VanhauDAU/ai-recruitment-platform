@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router'
 import { BrandLogo } from '@/entities/site-settings'
 import { legacyAsset } from '@/shared/config/assets'
 

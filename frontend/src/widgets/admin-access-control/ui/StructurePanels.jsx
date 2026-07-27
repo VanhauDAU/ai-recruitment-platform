@@ -44,14 +44,13 @@ function OverflowActions({ label, onImpact, restoreAction, isActive }) {
 
   return (
     <Dropdown menu={{ items }} trigger={['click']}>
-      <Tooltip title="Thao tác khác">
-        <Button
-          type="text"
-          className="min-h-11 min-w-11"
-          icon={<MoreOutlined />}
-          aria-label={`Thao tác khác cho ${label}`}
-        />
-      </Tooltip>
+      <Button
+        type="text"
+        className="min-h-11 min-w-11"
+        icon={<MoreOutlined />}
+        title="Thao tác khác"
+        aria-label={`Thao tác khác cho ${label}`}
+      />
     </Dropdown>
   )
 }

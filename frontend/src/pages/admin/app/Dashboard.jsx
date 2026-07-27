@@ -9,7 +9,7 @@ import {
   SolutionOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { Link, useOutletContext } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router'
 import {
   AdminPanel,
   AdminStatCard,

@@ -27,8 +27,10 @@ async function mockCandidatePersonalizationApi(page) {
       emailNotifications = { ...emailNotifications, ...request.postDataJSON() }
     }
 
-    const body = path === '/api/auth/me/'
-      ? {
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? {
           public_id: 'candidate_1',
           role: 'candidate',
           email: 'candidate@example.com',
@@ -186,8 +188,10 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   await page.route('http://localhost:8000/api/**', async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
-    const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
       : path === '/api/site/settings/'
@@ -308,8 +312,10 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
   }
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
-    const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/v2/cvs/cv_1/'
         ? { public_id: 'cv_1', published_version_public_id: 'cvv_2', latest_version_public_id: 'cvv_2' }
         : path === '/api/v2/cvs/cv_1/versions/'
@@ -349,8 +355,10 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   await page.route('http://localhost:8000/api/**', async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname
-    const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
       : path === '/api/v2/cvs/' && request.method() === 'GET'
@@ -410,8 +418,10 @@ test('candidate smoke: job application submits the selected immutable CV version
         status: 'submitted',
       }]
     }
-    const body = path === '/api/auth/me/'
-      ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
       : path === '/api/privacy/consent/'
         ? (request.method() === 'POST'
           ? { necessary: true, preferences: false, analytics: false, marketing: false }
@@ -538,8 +548,10 @@ test('candidate smoke: verified badge and job report modal work on desktop and m
     if (path === '/api/jobs/job_report_1/report/' && request.method() === 'POST') {
       reportPayload = request.postDataJSON()
     }
-    const body = path === '/api/auth/me/'
-      ? {
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? {
           public_id: 'candidate_1',
           role: 'candidate',
           email: 'candidate@example.com',

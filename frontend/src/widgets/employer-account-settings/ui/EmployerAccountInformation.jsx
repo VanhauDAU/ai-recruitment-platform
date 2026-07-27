@@ -2,7 +2,7 @@ import { CameraOutlined, DownloadOutlined, LinkOutlined } from '@ant-design/icon
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Form, Input, Select } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { updateProfile, uploadAvatar } from '@/features/edit-profile'

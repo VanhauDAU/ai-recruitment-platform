@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router'
 import { saveHistory } from '@/features/search-jobs'
 import { SALARY_RANGES } from '@/entities/job'
 import {

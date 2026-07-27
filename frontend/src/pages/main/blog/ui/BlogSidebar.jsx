@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowRightOutlined, SearchOutlined } from '@ant-design/icons'
 import { AutoComplete, Button, Select } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { getJobSuggestions } from '@/entities/job'
 import { getProvinces } from '@/entities/location'

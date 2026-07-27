@@ -15,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Progress } from 'antd'
 import { useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 import {

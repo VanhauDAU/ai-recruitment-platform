@@ -136,6 +136,12 @@ test('employer auth: registration has employer fields and consent-gated Google s
 })
 
 async function setEmployerSession(page, overrides = {}) {
+  await page.route('http://localhost:8000/api/auth/refresh/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ access: 'e2e-access' }),
+    })
+  })
   await page.route('http://localhost:8000/api/auth/me/', async (route) => {
     const currentOverrides = typeof overrides === 'function' ? overrides() : overrides
     await route.fulfill({

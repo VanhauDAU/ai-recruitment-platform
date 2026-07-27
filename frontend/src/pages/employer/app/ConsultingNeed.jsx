@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate } from 'react-router'
 import { useState } from 'react'
 import { EmployerConsultingNeedPanel } from '@/widgets/employer-consulting-need'
 import { useSession } from '@/entities/session'

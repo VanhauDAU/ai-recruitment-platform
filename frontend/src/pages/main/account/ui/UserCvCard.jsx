@@ -11,7 +11,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Dropdown, Input, Modal, Spin } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { CvDocumentPreview, getCvOwnerView } from '@/entities/cv'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { useCvCardActions } from '../model/use-cv-card-actions'

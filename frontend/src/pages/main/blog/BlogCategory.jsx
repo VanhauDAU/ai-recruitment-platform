@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DownOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Empty, Skeleton } from 'antd'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { BLOG_ROOT, getBlogCategories, getBlogPosts } from '@/entities/blog'
 import { setDocumentTitle } from '@/shared/config/document-title'

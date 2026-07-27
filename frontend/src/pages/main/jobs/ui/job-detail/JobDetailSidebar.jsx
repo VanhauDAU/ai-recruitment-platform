@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, BankOutlined, CheckCircleFilled, ClockCircleOutlined, EnvironmentOutlined, GlobalOutlined, ReadOutlined, SolutionOutlined, TagsOutlined, TeamOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,

@@ -1,4 +1,4 @@
-import { BrowserRouter, useLocation } from 'react-router-dom'
+import { BrowserRouter, useLocation } from 'react-router'
 import { useEffect } from 'react'
 import AppProviders from './app/providers/AppProviders'
 import AppRouter from './app/router/AppRouter'

@@ -6,7 +6,7 @@ import {
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import { useSession } from '@/entities/session'
 import AdminActivityPanel from './AdminActivityPanel'
 import AdminMyAccessPanel from './AdminMyAccessPanel'

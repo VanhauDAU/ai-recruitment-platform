@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 const COOKIE_ROWS = [
   ['procv_consent', 'Cookie ký số, HttpOnly', 'Ghi nhớ lựa chọn đồng ý cookie', 'Thiết yếu', '180 ngày'],

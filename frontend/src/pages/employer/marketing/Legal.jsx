@@ -1,5 +1,5 @@
 import { FileProtectOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 
 const termsSections = [

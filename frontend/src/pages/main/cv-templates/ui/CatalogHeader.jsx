@@ -1,5 +1,5 @@
 import { RightOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { legacyAsset } from '@/shared/config/assets'
 
 const HERO_IMAGE = legacyAsset('cv-template/toppy-list-mau-cv.png')

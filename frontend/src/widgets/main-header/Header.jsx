@@ -1,7 +1,7 @@
 import { MenuOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'

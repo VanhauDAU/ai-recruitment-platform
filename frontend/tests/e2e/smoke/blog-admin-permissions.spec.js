@@ -72,7 +72,8 @@ async function mockBlogApi(page, permissions, allowedActions, editorialState = '
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     let body = {}
-    if (path === '/api/auth/me/') body = user
+    if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
+    else if (path === '/api/auth/me/') body = user
     else if (path === '/api/blog/admin/posts/summary/') {
       body = {
         all: 1,

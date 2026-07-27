@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import { Badge, Modal, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'

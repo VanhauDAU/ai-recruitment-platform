@@ -1,6 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
 
 const BENEFITS = [

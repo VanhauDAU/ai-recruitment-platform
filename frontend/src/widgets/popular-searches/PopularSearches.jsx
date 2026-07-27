@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { getLinkGroups, useSiteSettings } from '@/entities/site-settings'
 
 // Render Link nếu có url thật, ngược lại là span dạng link (tính năng sắp ra mắt).

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { getJobStats, jobKeys } from '@/entities/job'
 import { logoUrlFor } from '../lib/logo-url'
 import FeaturedEmployers from './FeaturedEmployers'

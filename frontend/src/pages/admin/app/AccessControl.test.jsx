@@ -208,7 +208,7 @@ describe('AccessControl', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Chức danh' }))
     fireEvent.click(await screen.findByRole('button', { name: /Quyền/ }))
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Xem catalogue CV' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục xem tác động' }))
 
     expect(await screen.findByText(/Không thể xoá toàn bộ quyền/)).toBeInTheDocument()
     expect(screen.getByText('1 nhân viên bị ảnh hưởng')).toBeInTheDocument()
@@ -272,14 +272,14 @@ describe('AccessControl', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Quyền/ }))
     const checkbox = await screen.findByRole('checkbox', { name: 'Xem catalogue CV' })
     fireEvent.click(checkbox)
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục xem tác động' }))
     await waitFor(() => expect(api.getRolePermissionsImpact).toHaveBeenCalledTimes(1))
     expect(api.getRolePermissionsImpact).toHaveBeenLastCalledWith(role.public_id, [])
 
     const dialogs = await screen.findAllByRole('dialog')
     fireEvent.click(within(dialogs.at(-1)).getByRole('button', { name: 'Close' }))
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Xem catalogue CV' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục xem tác động' }))
 
     await waitFor(() => expect(api.getRolePermissionsImpact).toHaveBeenCalledTimes(2))
     expect(api.getRolePermissionsImpact).toHaveBeenLastCalledWith(

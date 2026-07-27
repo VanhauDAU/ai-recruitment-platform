@@ -1,4 +1,4 @@
-import { Navigate, Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'

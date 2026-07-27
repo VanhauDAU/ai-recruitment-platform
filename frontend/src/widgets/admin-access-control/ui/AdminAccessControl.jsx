@@ -211,9 +211,11 @@ export default function AdminAccessControl() {
     const activeCodes = permissionCodes.filter((code) => (
       permissionQuery.data?.some((item) => item.code === code && item.is_active)
     ))
+    const target = permissionEditor
+    setPermissionEditor(null)
     loadImpact({
       kind: 'rolePermissions',
-      target: permissionEditor,
+      target,
       payload: { permission_codes: activeCodes.sort() },
     })
   }
@@ -221,6 +223,11 @@ export default function AdminAccessControl() {
   const previewAssignment = async () => {
     const values = await assignmentForm.validateFields()
     loadImpact({ kind: 'assignment', payload: values })
+  }
+
+  const closeImpact = () => {
+    if (danger?.kind === 'rolePermissions') setPermissionEditor(danger.target)
+    setDanger(null)
   }
 
   const openAssignment = (member = null) => {
@@ -314,7 +321,7 @@ export default function AdminAccessControl() {
         }}
         impact={{
           value: danger,
-          onClose: () => setDanger(null),
+          onClose: closeImpact,
           onApply: applyDangerousAction,
           onReload: () => loadImpact(danger),
         }}

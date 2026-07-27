@@ -8,7 +8,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Select, Skeleton } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   campaignKeys,
   getCampaignJobPerformance,

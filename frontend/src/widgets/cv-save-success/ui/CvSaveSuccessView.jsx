@@ -11,7 +11,7 @@ import {
 import { Alert, Button, Skeleton } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { toBlob } from 'html-to-image'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { CvDocumentPreview, getCv, getCvVersion } from '@/entities/cv'
 import { formatLocations, formatSalary, getCvJobRecommendations, jobDetailPath } from '@/entities/job'
 import { CvDownloadButton } from '@/features/export-cv-pdf'

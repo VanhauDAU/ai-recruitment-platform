@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { companyInitial, formatLocations, formatSalary, getJobs, JOB_LOGO_TINTS, jobDetailPath, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
 

@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons'
 import { Alert, Button, Modal, Progress, Tag } from 'antd'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import {

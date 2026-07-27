@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { AuthLogo, LoginForm, SocialLoginButtons } from '@/features/auth'
 import { EMPLOYER_FORGOT_PASSWORD_URL, employerAppPath, MAIN_LOGIN_URL } from '@/shared/config/portals'
 

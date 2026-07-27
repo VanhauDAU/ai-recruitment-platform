@@ -63,8 +63,10 @@ test('admin account management: filters, table actions and quick detail are resp
   }
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
-    const body = path === '/api/auth/me/'
-      ? adminUser
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? adminUser
       : path === '/api/admin/accounts/summary/'
         ? {
             total: 1,
@@ -288,7 +290,8 @@ test('admin employer detail: company media and compact verification comparison r
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     let body = {}
-    if (path === '/api/auth/me/') body = adminUser
+    if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
+    else if (path === '/api/auth/me/') body = adminUser
     else if (path === '/api/admin/accounts/usr_employer/') body = employer
     else if (path === '/api/admin/accounts/usr_employer/profile/') body = accountProfile
     else if (path === '/api/admin/employer-verifications/evc_1/documents/doc_business/content/') {
@@ -422,8 +425,10 @@ test('admin detail: complete effective permissions render in access tab', async 
   }
   await page.route('http://localhost:8000/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname
-    const body = path === '/api/auth/me/'
-      ? currentAdmin
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? currentAdmin
       : path === '/api/admin/accounts/usr_moderator/'
         ? managedAdmin
         : path === '/api/privacy/consent/'
@@ -518,7 +523,8 @@ test('admin access control: wide permission picker supports search and dependent
     const url = new URL(route.request().url())
     const path = url.pathname
     let body = {}
-    if (path === '/api/auth/me/') body = currentAdmin
+    if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
+    else if (path === '/api/auth/me/') body = currentAdmin
     else if (path === '/api/admin/departments/') body = [department]
     else if (path === '/api/admin/roles/') body = [role]
     else if (path === '/api/admin/permissions/') body = permissions
@@ -664,8 +670,10 @@ test('admin job reports: deep link, filter and resolve workflow are permission-g
     const currentReport = { ...report, status }
     const matchesFilter = !url.searchParams.get('status')
       || url.searchParams.get('status') === status
-    const body = path === '/api/auth/me/'
-      ? adminUser
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? adminUser
       : path === '/api/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
         : path === '/api/jobs/admin/reports/'

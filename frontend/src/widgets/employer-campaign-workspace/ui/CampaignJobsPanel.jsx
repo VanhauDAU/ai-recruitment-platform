@@ -9,7 +9,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Empty, Modal, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   campaignKeys,
   getCampaignJobPerformance,

@@ -142,7 +142,9 @@ def submit_post(*, post, actor):
     post = Post.objects.select_for_update().select_related('category').get(pk=post.pk)
     source = getattr(post, 'working_copy', None) if post.status == Post.Status.PUBLISHED else post
     if source is None or source.status not in {Post.Status.DRAFT, Post.Status.PENDING}:
-        raise ValidationError({'detail': 'Chỉ bài nháp hoặc bài đang chờ duyệt mới có thể gửi duyệt.'})
+        raise ValidationError(
+            {'detail': 'Chỉ bài nháp hoặc bài đang chờ duyệt mới có thể gửi duyệt.'}
+        )
     _validate_publishable(source, category=source.category)
     before = _state(post)
     resubmitting = source.status == Post.Status.PENDING

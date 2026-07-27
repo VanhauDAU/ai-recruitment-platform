@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { jobDetailPath } from '@/entities/job'
 import useDropdownPosition from '../model/use-dropdown-position'
 import useSearchSuggestions from '../model/use-search-suggestions'

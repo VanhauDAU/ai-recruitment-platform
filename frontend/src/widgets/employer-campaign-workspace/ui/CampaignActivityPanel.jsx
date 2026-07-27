@@ -6,7 +6,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Empty, Pagination, Select, Skeleton, Timeline } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import {
   campaignKeys,
   getCampaignActivities,

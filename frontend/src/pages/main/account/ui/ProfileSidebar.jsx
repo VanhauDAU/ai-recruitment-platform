@@ -4,7 +4,7 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Switch } from 'antd'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { useSession } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 

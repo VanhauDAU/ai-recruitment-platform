@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 const GRADIENTS = {
   green: 'from-emerald-600 via-emerald-500 to-teal-400',

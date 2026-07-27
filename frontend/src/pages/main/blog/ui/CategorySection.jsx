@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import BlogCard, { BlogCardHero, BlogCardRow } from './BlogCard'
 import { SectionHeading } from './FeaturedPosts'
 import { blogCategoryPath } from '@/entities/blog'

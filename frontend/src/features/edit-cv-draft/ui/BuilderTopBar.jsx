@@ -1,6 +1,6 @@
 import { DownloadOutlined, EyeOutlined, FileTextOutlined, MoreOutlined, RedoOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
 import { Button, Dropdown } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import InlineText from './canvas/InlineText'
 import EditorSaveState from './EditorSaveState'
 

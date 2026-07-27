@@ -204,7 +204,9 @@ class BlogAdminApiTests(APITestCase):
         self.assertEqual(resubmitted_pending.status_code, 200, resubmitted_pending.data)
         self.assertEqual(resubmitted_pending.data['editorial_state'], 'pending')
         self.assertEqual(edited.status_code, 200, edited.data)
-        self.assertEqual(edited.data['editable_version']['summary'], 'Người duyệt đã chỉnh nội dung')
+        self.assertEqual(
+            edited.data['editable_version']['summary'], 'Người duyệt đã chỉnh nội dung'
+        )
         self.assertEqual(restored.status_code, 200, restored.data)
         self.assertEqual(restored.data['editorial_state'], 'draft')
         self.assertEqual(content_upload.status_code, 400, content_upload.data)

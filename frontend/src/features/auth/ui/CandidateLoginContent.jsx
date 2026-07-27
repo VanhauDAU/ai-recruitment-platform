@@ -1,5 +1,5 @@
 import { PhoneOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import AuthLogo from './AuthLogo'
 import LoginForm from './LoginForm'
 import SocialLoginButtons from './SocialLoginButtons'

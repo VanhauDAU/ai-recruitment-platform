@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { DEFAULT_SITE_SETTINGS } from '../model/site-settings-context'
 import { settingText, useSiteSettings } from '../model/use-site-settings'
 

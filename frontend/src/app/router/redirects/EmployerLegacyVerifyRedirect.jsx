@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
 
 export default function EmployerLegacyVerifyRedirect() {

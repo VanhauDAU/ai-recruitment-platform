@@ -1,6 +1,6 @@
 import { Alert, Skeleton } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { CopyOutlined, EditOutlined } from '@ant-design/icons'
 import { CvDocumentPreview } from '@/entities/cv'
 import { message } from '@/shared/lib/toast'

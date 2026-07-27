@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router'
 import { SharedCvVersionPage } from '@/features/view-cv-version'
 
 export default function CvSharedView() {

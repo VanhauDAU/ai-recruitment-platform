@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router'
 import {
   canAccessAdminRoute,
   useAdminAccess,

@@ -2,7 +2,7 @@ import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icon
 import { Alert, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { MAIN_FORGOT_PASSWORD_URL } from '@/shared/config/portals'
