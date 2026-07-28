@@ -127,9 +127,9 @@ describe('admin company directory', () => {
     )
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
-    expect(screen.getAllByText('Chờ duyệt')).toHaveLength(2)
-    expect(screen.getByText('Chưa có hồ sơ: 1')).toBeInTheDocument()
-    expect(screen.getByText('Đã xác thực: 1')).toBeInTheDocument()
+    expect(screen.getAllByText('Chờ duyệt')).toHaveLength(3)
+    expect(screen.getByText('Chưa có hồ sơ · 1')).toBeInTheDocument()
+    expect(screen.getByText('Đã xác thực · 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Công ty Alpha chưa cập nhật logo')).toHaveTextContent('A')
     expect(screen.getByRole('columnheader', { name: 'Xác thực NTD' })).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Lọc owner' })).not.toBeInTheDocument()
@@ -175,7 +175,7 @@ describe('admin company directory', () => {
 
     await screen.findByText('Công ty Alpha')
     const initialCalls = getAdminCompanies.mock.calls.length
-    await user.type(screen.getByRole('searchbox', { name: 'Tìm công ty' }), ' beta')
+    await user.type(screen.getByRole('textbox', { name: 'Tìm công ty' }), ' beta')
 
     expect(getAdminCompanies).toHaveBeenCalledTimes(initialCalls)
     await waitFor(

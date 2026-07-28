@@ -5,14 +5,13 @@ import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
 import AdminCompanyUpdateQueue from './AdminCompanyUpdateQueue'
+import '../admin-company-directory.css'
 
 const DIRECTORY_QUERY_KEYS = [
   'q',
   'verification_status',
-  'owner_state',
-  'industry',
-  'created_from',
-  'created_to',
+  'recruiter_verification_status',
+  'member_role',
   'ordering',
   'page',
 ]
@@ -58,7 +57,7 @@ export default function AdminCompanyWorkspace() {
     ...(canViewDirectory ? [{
       key: 'directory',
       label: 'Danh sách công ty',
-      children: <AdminCompanyDirectory />,
+      children: <AdminCompanyDirectory onOpenUpdates={canViewUpdates ? () => changeTab('updates') : undefined} />,
     }] : []),
     ...(canViewUpdates ? [{
       key: 'updates',
@@ -69,12 +68,14 @@ export default function AdminCompanyWorkspace() {
 
   return (
     <section className="admin-company-workspace">
-      <Tabs
-        activeKey={activeTab}
-        items={items}
-        onChange={changeTab}
-        destroyOnHidden={false}
-      />
+      <section className="admin-panel company-management-panel">
+        <Tabs
+          activeKey={activeTab}
+          items={items}
+          onChange={changeTab}
+          destroyOnHidden={false}
+        />
+      </section>
     </section>
   )
 }
