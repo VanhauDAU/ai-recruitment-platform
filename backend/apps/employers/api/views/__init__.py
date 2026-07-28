@@ -34,6 +34,7 @@ from .recruitment_need import (
 from .verification import (
     CompanyDocumentContentView,
     CompanyDocumentListCreateView,
+    CompanyDocumentUploadPreviewView,
     CompanyUpdateRequestListCreateView,
 )
 
@@ -44,6 +45,7 @@ __all__ = [
     'CompanyCatalogView',
     'CompanyDocumentListCreateView',
     'CompanyDocumentContentView',
+    'CompanyDocumentUploadPreviewView',
     'CompanyGalleryDeleteView',
     'CompanyGalleryUploadView',
     'CompanyLogoUploadView',

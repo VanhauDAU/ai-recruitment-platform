@@ -116,7 +116,12 @@ def admin_verification_cases_queryset(*, params=None):
             | Q(company__tax_code__icontains=query)
         )
     if params.get('status'):
-        queryset = queryset.filter(status=params['status'])
+        if params['status'] == EmployerVerificationCase.Status.PENDING:
+            queryset = queryset.filter(
+                Q(status=EmployerVerificationCase.Status.PENDING) | Q(pending_document_count__gt=0)
+            )
+        else:
+            queryset = queryset.filter(status=params['status'])
     if params.get('company'):
         queryset = queryset.filter(company__public_id=params['company'])
     if params.get('document_type'):
@@ -144,7 +149,26 @@ def admin_verification_cases_queryset(*, params=None):
     ):
         if params.get(key):
             queryset = queryset.filter(**{lookup: params[key]})
-    return queryset.distinct().order_by('-submitted_at', '-updated_at', '-id')
+    ordering = params.get('ordering', '-submitted_at')
+    allowed = {
+        'recruiter__user__full_name',
+        '-recruiter__user__full_name',
+        'company__company_name',
+        '-company__company_name',
+        'status',
+        '-status',
+        'current_document_count',
+        '-current_document_count',
+        'recruiter__phone_verified_at',
+        '-recruiter__phone_verified_at',
+        'submitted_at',
+        '-submitted_at',
+    }
+    return queryset.distinct().order_by(
+        ordering if ordering in allowed else '-submitted_at',
+        '-updated_at',
+        '-id',
+    )
 
 
 def admin_verification_summary():
@@ -154,12 +178,18 @@ def admin_verification_summary():
         EmployerVerificationCase.Status.IN_REVIEW,
     ]
     base = EmployerVerificationCase.objects.all()
+    pending_filter = Q(status__in=pending_states) | Q(
+        documents__is_current=True,
+        documents__status=CompanyDocument.Status.PENDING,
+    )
     return {
-        'pending': base.filter(status__in=pending_states).count(),
+        'pending': base.filter(pending_filter).distinct().count(),
         'overdue': base.filter(
-            status__in=pending_states,
+            pending_filter,
             submitted_at__lt=now - timedelta(hours=72),
-        ).count(),
+        )
+        .distinct()
+        .count(),
         'changes_requested': base.filter(
             status=EmployerVerificationCase.Status.CHANGES_REQUESTED
         ).count(),

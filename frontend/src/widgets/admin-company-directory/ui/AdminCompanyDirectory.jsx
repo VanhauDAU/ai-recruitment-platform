@@ -16,10 +16,11 @@ import {
   Tag,
   Tooltip,
 } from 'antd'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminCompanyKeys,
   getAdminCompanies,
+  getAdminCompanySummary,
   recruiterVerificationMeta,
 } from '@/entities/admin-company'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -88,6 +89,7 @@ function VerificationSummary({ summary = {} }) {
 
 export default function AdminCompanyDirectory() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(queryValue(searchParams, 'page', '1')) || 1
   const ordering = queryValue(searchParams, 'ordering', DEFAULT_ORDERING)
@@ -109,7 +111,16 @@ export default function AdminCompanyDirectory() {
     queryKey: adminCompanyKeys.list(params),
     queryFn: ({ signal }) => getAdminCompanies(params, { signal }),
   })
+  const summaryQuery = useQuery({
+    queryKey: adminCompanyKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
+  })
   const companies = companiesQuery.data || EMPTY_PAGE
+  const summary = summaryQuery.data || {
+    total: 0,
+    verification: {},
+    pending_update_requests: 0,
+  }
 
   useEffect(() => {
     setSearchInput(query)
@@ -157,7 +168,18 @@ export default function AdminCompanyDirectory() {
         <button
           type="button"
           className="company-directory__company-button"
-          onClick={() => navigate(adminPath(`/companies/${company.public_id}`))}
+          onClick={() => navigate(
+            adminPath(`/companies/${company.public_id}`),
+            {
+              state: {
+                origin: {
+                  pathname: location.pathname,
+                  search: location.search,
+                  label: 'Danh sách công ty',
+                },
+              },
+            },
+          )}
         >
           <CompanyLogo company={company} />
           <span className="min-w-0">
@@ -244,14 +266,6 @@ export default function AdminCompanyDirectory() {
     },
   ]
 
-  const verifiedCount = companies.results.filter(
-    (company) => company.verification_status === 'verified',
-  ).length
-  const pendingUpdateCount = companies.results.reduce(
-    (total, company) => total + company.pending_update_count,
-    0,
-  )
-
   return (
     <div className="company-directory space-y-5">
       <header className="admin-page-header">
@@ -264,18 +278,24 @@ export default function AdminCompanyDirectory() {
         </div>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3" aria-label="Tóm tắt công ty">
-        <CompanyStatCard icon={<BankOutlined />} label="Tổng kết quả" value={companies.count} />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Tóm tắt công ty">
+        <CompanyStatCard icon={<BankOutlined />} label="Tổng công ty" value={summary.total} />
         <CompanyStatCard
           icon={<SafetyCertificateOutlined />}
-          label="Đã xác thực trong trang"
-          value={verifiedCount}
+          label="Pháp nhân đã xác thực"
+          value={summary.verification?.verified}
           tone="green"
         />
         <CompanyStatCard
           icon={<FileSyncOutlined />}
-          label="Yêu cầu cập nhật trong trang"
-          value={pendingUpdateCount}
+          label="Pháp nhân chờ duyệt"
+          value={summary.verification?.pending}
+          tone="amber"
+        />
+        <CompanyStatCard
+          icon={<FileSyncOutlined />}
+          label="Yêu cầu cập nhật đang chờ"
+          value={summary.pending_update_requests}
           tone="amber"
         />
       </section>
@@ -353,7 +373,18 @@ export default function AdminCompanyDirectory() {
             )
           }}
           onRow={(company) => ({
-            onDoubleClick: () => navigate(adminPath(`/companies/${company.public_id}`)),
+            onDoubleClick: () => navigate(
+              adminPath(`/companies/${company.public_id}`),
+              {
+                state: {
+                  origin: {
+                    pathname: location.pathname,
+                    search: location.search,
+                    label: 'Danh sách công ty',
+                  },
+                },
+              },
+            ),
           })}
         />
       </CompanyPanel>

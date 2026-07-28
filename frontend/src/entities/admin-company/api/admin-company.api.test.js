@@ -4,6 +4,7 @@ import {
   getAdminCompanies,
   getAdminCompany,
   getAdminCompanyRecruiters,
+  getAdminCompanySummary,
 } from './admin-company.api'
 
 vi.mock('@/shared/api/client', () => ({
@@ -36,5 +37,13 @@ describe('admin company api', () => {
       '/admin/companies/co_123/recruiters/',
       { params: { role: 'owner' }, signal: undefined },
     )
+  })
+
+  it('requests the page-independent company summary', async () => {
+    client.get.mockResolvedValue({ data: {} })
+    await getAdminCompanySummary({ signal: 'signal' })
+    expect(client.get).toHaveBeenCalledWith('/admin/companies/summary/', {
+      signal: 'signal',
+    })
   })
 })

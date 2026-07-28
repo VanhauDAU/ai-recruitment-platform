@@ -20,6 +20,7 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
 test('admin account management: filters, table actions and quick detail are responsive', async ({ page }, testInfo) => {
   const pageErrors = []
   const isMobile = testInfo.project.name === 'mobile-chromium'
+  const usesNavigationDrawer = page.viewportSize().width < 1024
   page.on('pageerror', (error) => pageErrors.push(error.message))
   const adminUser = {
     public_id: 'usr_root',
@@ -62,20 +63,36 @@ test('admin account management: filters, table actions and quick detail are resp
     invitation: null,
   }
   await page.route('http://localhost:8000/api/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const requestUrl = new URL(route.request().url())
+    const path = requestUrl.pathname
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? adminUser
       : path === '/api/admin/accounts/summary/'
-        ? {
-            total: 1,
-            active: 1,
-            restricted: 0,
-            unverified: 0,
-            pending_admin: 0,
-            employer_verification_pending: 2,
-          }
+        ? requestUrl.searchParams.get('scope') === 'recruiters'
+          ? {
+              scope: 'recruiters',
+              totals: { total: 1, active: 1, restricted: 0, unverified: 0 },
+              linked_company: 1,
+              companyless: 0,
+              onboarding_incomplete: 0,
+              verification: {
+                approved: 0,
+                pending: 2,
+                overdue: 1,
+                changes_requested: 0,
+              },
+            }
+          : {
+              scope: 'users',
+              totals: { total: 1, active: 1, restricted: 0, unverified: 0 },
+              by_role: {
+                candidate: { total: 1, active: 1, restricted: 0, unverified: 0 },
+                admin: { total: 0, active: 0, restricted: 0, unverified: 0 },
+              },
+              queues: { pending_admin_invitations: 0 },
+            }
         : path === '/api/admin/accounts/'
           ? { count: 1, next: null, previous: null, results: [candidate] }
           : path === '/api/admin/employer-verifications/'
@@ -91,6 +108,17 @@ test('admin account management: filters, table actions and quick detail are resp
   await page.goto('/admin/app/accounts')
   await expect(page).toHaveURL('/admin/app/accounts')
   await expect.poll(() => pageErrors).toEqual([])
+  if (usesNavigationDrawer) {
+    await page.getByRole('button', { name: 'Mở điều hướng' }).click()
+  }
+  const adminNavigation = page.getByRole('navigation', { name: 'Điều hướng quản trị' })
+  await expect(adminNavigation.getByRole('button', { name: 'Trang chủ' })).not
+    .toHaveAttribute('aria-expanded')
+  await expect(adminNavigation.getByRole('button', { name: 'Tài khoản cá nhân' })).not
+    .toHaveAttribute('aria-expanded')
+  if (usesNavigationDrawer) {
+    await page.keyboard.press('Escape')
+  }
   // The account workspace is one of the largest lazy chunks; leave headroom
   // when the full smoke suite compiles several portals in parallel.
   await expect(page.getByRole('region', { name: 'Tổng quan tài khoản' })).toBeVisible({
@@ -189,11 +217,9 @@ test('admin employer detail: company media and compact verification comparison r
       returned_tax_code: '0101234567',
       submitted_company_name: 'FPT Software',
       registered_name: 'FPT SOFTWARE',
-      registered_address: 'Trường dữ liệu cũ không được hiển thị',
       comparison: {
         tax_code: 'match',
         company_name: 'match',
-        registered_address: 'mismatch',
       },
       completed_at: '2026-07-26T08:05:00Z',
     },
@@ -305,6 +331,7 @@ test('admin employer detail: company media and compact verification comparison r
 
   await page.goto('/admin/app/accounts/usr_employer?tab=company')
 
+  await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=company$/)
   await expect(page.getByRole('tab', { name: 'Công ty' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('img', { name: 'Logo FPT Software' })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Ảnh bìa FPT Software' })).toBeVisible()
@@ -318,6 +345,7 @@ test('admin employer detail: company media and compact verification comparison r
 
   await page.goto('/admin/app/accounts/usr_employer?tab=verification')
 
+  await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=verification$/)
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('heading', { name: 'Theo dõi hành trình xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)

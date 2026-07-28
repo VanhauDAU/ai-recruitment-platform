@@ -92,6 +92,20 @@
   gap: 12px;
   min-height: 116px;
   padding: 16px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.account-stat:hover {
+  border-color: color-mix(in srgb, var(--admin-primary) 38%, white);
+  transform: translateY(-1px);
+}
+
+.account-stat:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--admin-primary) 55%, white);
+  outline-offset: 1px;
 }
 
 .account-stat__icon {
@@ -136,7 +150,7 @@
   min-width: 0;
 }
 
-.account-stat p,
+.account-stat__label,
 .account-stat__detail {
   color: #64748b;
   display: block;
@@ -145,7 +159,7 @@
   margin: 0;
 }
 
-.account-stat p {
+.account-stat__label {
   font-weight: 700;
   letter-spacing: 0.04em;
   margin-bottom: auto;

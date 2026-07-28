@@ -31,7 +31,7 @@ describe('admin navigation tree', () => {
 
     expect(labels).toContain('Tin chờ duyệt')
     expect(labels).toContain('Báo cáo vi phạm')
-    expect(labels).toContain('Thông tin cá nhân')
+    expect(labels).toContain('Tài khoản cá nhân')
     expect(labels).not.toContain('Tất cả công ty')
     expect(tree.map((item) => item.label)).not.toContain('Doanh nghiệp')
   })
@@ -50,13 +50,13 @@ describe('admin navigation tree', () => {
 
     expect(flattenAdminNavigation(regular).map((leaf) => leaf.key)).toContain('audit-log')
     const report = flattenAdminNavigation(superuser).find(
-      (leaf) => leaf.key === 'operations-report',
+      (leaf) => leaf.key === 'employer-invitations',
     )
     expect(report.status).toBe('comingSoon')
     expect(report.href).toBeNull()
   })
 
-  it('supports direct second-level destinations without creating a fake group', () => {
+  it('keeps dashboard as a direct top-level home destination', () => {
     const tree = buildAdminNavigation(
       ADMIN_NAVIGATION,
       ADMIN_ROUTES,
@@ -67,8 +67,9 @@ describe('admin navigation tree', () => {
     )
 
     expect(dashboard.href).toBe('/admin/app/dashboard')
-    expect(dashboard.breadcrumb).toEqual(['Tổng quan', 'Bảng điều khiển'])
-    expect(dashboard.ancestors).toEqual(['overview'])
+    expect(dashboard.label).toBe('Trang chủ')
+    expect(dashboard.breadcrumb).toEqual(['Trang chủ'])
+    expect(dashboard.ancestors).toEqual([])
   })
 
   it('selects the most specific route and query leaf', () => {

@@ -11,6 +11,7 @@ const {
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
+  previewEmployerDataProcessingAgreement,
   uploadEmployerDataProcessingAgreement,
 } = vi.hoisted(() => ({
   acceptEmployerDpa: vi.fn(),
@@ -20,6 +21,7 @@ const {
   getEmployerCompanyDocumentContent: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
   getEmployerProfile: vi.fn(),
+  previewEmployerDataProcessingAgreement: vi.fn(),
   uploadEmployerDataProcessingAgreement: vi.fn(),
 }))
 const { message } = vi.hoisted(() => ({ message: { error: vi.fn(), success: vi.fn() } }))
@@ -30,6 +32,7 @@ vi.mock('@/entities/employer-profile', () => ({
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
   getEmployerProfile,
+  previewEmployerDataProcessingAgreement,
   uploadEmployerDataProcessingAgreement,
 }))
 vi.mock('@/entities/site-settings', () => ({ useSiteSettings: () => ({ siteName: 'TopCV' }) }))
@@ -44,12 +47,25 @@ function renderForm() {
   )
 }
 
+function stubObjectUrl(previewUrl) {
+  const NativeURL = URL
+  class MockURL extends NativeURL {}
+  MockURL.createObjectURL = vi.fn(() => previewUrl)
+  MockURL.revokeObjectURL = vi.fn()
+  vi.stubGlobal('URL', MockURL)
+  return {
+    createObjectURL: MockURL.createObjectURL,
+    revokeObjectURL: MockURL.revokeObjectURL,
+  }
+}
+
 describe('EmployerDataProtectionForm', () => {
   beforeEach(() => {
     acceptEmployerDpa.mockReset()
     getEmployerCompanyDocumentContent.mockReset()
     getEmployerCompanyDocuments.mockReset()
     getEmployerProfile.mockReset()
+    previewEmployerDataProcessingAgreement.mockReset()
     uploadEmployerDataProcessingAgreement.mockReset()
     message.error.mockReset()
     message.success.mockReset()
@@ -116,14 +132,86 @@ describe('EmployerDataProtectionForm', () => {
     expect(screen.queryByRole('button', { name: 'Lưu' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Chỉnh sửa văn bản' }))
-    expect(screen.getByText('Chọn hoặc kéo file vào đây')).toBeVisible()
+    expect(screen.getByText('Chọn hoặc kéo tệp vào đây')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Hủy' })).toBeVisible()
     expect(screen.getByRole('link', { name: /Tệp hiện tại: Thỏa thuận xử lý DLCN/ })).toHaveAttribute('href', 'https://docs.google.com/gview?url=https%3A%2F%2Ffiles.example.com%2Fthoa-thuan.docx&embedded=true')
     await user.upload(container.querySelector('input[type="file"]'), new File(['replacement'], 'thoa-thuan-moi.pdf', { type: 'application/pdf' }))
     expect(screen.getByText('Tệp mới: thoa-thuan-moi.pdf')).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Hủy' }))
-    expect(screen.queryByText('Chọn hoặc kéo file vào đây')).not.toBeInTheDocument()
+    expect(screen.queryByText('Chọn hoặc kéo tệp vào đây')).not.toBeInTheDocument()
+  })
+
+  it('previews a selected PDF locally before it is uploaded', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: false, dpa_accepted: false },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([])
+    const { createObjectURL } = stubObjectUrl('http://localhost/selected-pdf')
+    const user = userEvent.setup()
+    const { container } = renderForm()
+    const file = new File(['%PDF-preview'], 'thoa-thuan.pdf', {
+      type: 'application/pdf',
+    })
+
+    await screen.findByText('Chọn hoặc kéo tệp vào đây')
+    await user.upload(container.querySelector('input[type="file"]'), file)
+    await user.click(screen.getByRole('button', { name: 'Xem trước tệp thoa-thuan.pdf' }))
+
+    const preview = await screen.findByTitle('Xem trước thoa-thuan.pdf')
+    expect(preview).toHaveAttribute('src', 'http://localhost/selected-pdf')
+    expect(createObjectURL).toHaveBeenCalledWith(file)
+    expect(previewEmployerDataProcessingAgreement).not.toHaveBeenCalled()
+  })
+
+  it('converts a selected Word agreement to PDF for preview before upload', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: false, dpa_accepted: false },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([])
+    const convertedPreview = new Blob(['%PDF-preview'], { type: 'application/pdf' })
+    previewEmployerDataProcessingAgreement.mockResolvedValue(convertedPreview)
+    const { createObjectURL } = stubObjectUrl('http://localhost/selected-word-preview')
+    const user = userEvent.setup()
+    const { container } = renderForm()
+    const file = new File(['PK\u0003\u0004document'], 'thoa-thuan.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+
+    await screen.findByText('Chọn hoặc kéo tệp vào đây')
+    await user.upload(container.querySelector('input[type="file"]'), file)
+    await user.click(screen.getByRole('button', { name: 'Xem trước tệp thoa-thuan.docx' }))
+
+    await waitFor(() => expect(previewEmployerDataProcessingAgreement).toHaveBeenCalled())
+    expect(previewEmployerDataProcessingAgreement.mock.calls[0][0]).toBe(file)
+    expect(await screen.findByTitle('Xem trước thoa-thuan.docx')).toHaveAttribute(
+      'src',
+      'http://localhost/selected-word-preview',
+    )
+    expect(createObjectURL).toHaveBeenCalledWith(convertedPreview)
+  })
+
+  it('rejects an agreement larger than 5MB before submission', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: false, dpa_accepted: false },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([])
+    const user = userEvent.setup()
+    const { container } = renderForm()
+    const oversizedFile = new File(
+      [new Uint8Array((5 * 1024 * 1024) + 1)],
+      'thoa-thuan-lon.pdf',
+      { type: 'application/pdf' },
+    )
+
+    await screen.findByText('Chọn hoặc kéo tệp vào đây')
+    await user.upload(container.querySelector('input[type="file"]'), oversizedFile)
+
+    expect(message.error).toHaveBeenCalledWith(
+      'Tệp "thoa-thuan-lon.pdf" vượt quá dung lượng tối đa 5MB.',
+    )
+    expect(screen.queryByText('Tệp mới: thoa-thuan-lon.pdf')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
   })
 
   it('opens a private submitted document through the authenticated API client', async () => {
@@ -211,6 +299,68 @@ describe('EmployerDataProtectionForm', () => {
     renderForm()
 
     expect(await screen.findByText('Đã duyệt')).toBeVisible()
+    expect(screen.queryByText('Hệ thống đang xử lý')).not.toBeInTheDocument()
+  })
+
+  it('shows a rejected agreement reason and resubmits it as a targeted replacement', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: {
+        candidate_dpa_submitted: false,
+        candidate_dpa_approved: false,
+        dpa_accepted: true,
+      },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([{
+      id: 1,
+      public_id: 'doc_dpa_rejected',
+      doc_type: 'data_processing_agreement',
+      file_url: 'https://files.example.com/thoa-thuan.pdf',
+      status: 'rejected',
+      review_note: 'Thiếu chữ ký của người đại diện.',
+      is_current: true,
+    }])
+    uploadEmployerDataProcessingAgreement.mockResolvedValue({
+      id: 2,
+      status: 'pending',
+    })
+    const user = userEvent.setup()
+    const { container } = renderForm()
+
+    expect((await screen.findAllByText('Từ chối')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Thiếu chữ ký của người đại diện.')).toBeVisible()
+    expect(screen.queryByText('Hệ thống đang xử lý')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Chỉnh sửa văn bản' }))
+    const replacement = new File(['replacement'], 'thoa-thuan-moi.pdf', {
+      type: 'application/pdf',
+    })
+    await user.upload(container.querySelector('input[type="file"]'), replacement)
+    await user.click(screen.getByRole('checkbox', { name: /Tôi cam đoan văn bản này/i }))
+    await user.click(screen.getByRole('button', { name: 'Lưu' }))
+
+    await waitFor(() => expect(uploadEmployerDataProcessingAgreement).toHaveBeenCalledWith(
+      replacement,
+      { replaceDocument: 'doc_dpa_rejected' },
+    ))
+  })
+
+  it('shows the admin guidance when changes are requested', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { candidate_dpa_submitted: true, candidate_dpa_approved: false },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([{
+      id: 1,
+      public_id: 'doc_dpa_changes',
+      doc_type: 'data_processing_agreement',
+      status: 'changes_requested',
+      review_note: 'Vui lòng bổ sung ngày ký.',
+      is_current: true,
+    }])
+
+    renderForm()
+
+    expect((await screen.findAllByText('Cần bổ sung')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Vui lòng bổ sung ngày ký.')).toBeVisible()
     expect(screen.queryByText('Hệ thống đang xử lý')).not.toBeInTheDocument()
   })
 })

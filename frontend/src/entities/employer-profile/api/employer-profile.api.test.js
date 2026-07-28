@@ -14,7 +14,9 @@ import {
   sendEmployerPhoneOtp,
   saveEmployerRecruitmentNeed,
   saveEmployerCompanyTradeNameWebsite,
+  previewEmployerDataProcessingAgreement,
   uploadEmployerBusinessDocument,
+  uploadEmployerCompanyDocument,
   uploadEmployerDataProcessingAgreement,
   verifyEmployerPhoneOtp,
 } from './employer-profile.api'
@@ -82,6 +84,48 @@ describe('employer profile API', () => {
     expect(formData.get('doc_type')).toBe('business_registration')
     expect(formData.get('verification_method')).toBe('business_registration')
     expect(formData.get('file')).toBe(file)
+  })
+
+  it('marks additional identity images as part of the current document set', async () => {
+    post.mockResolvedValue({ data: { id: 2, status: 'pending' } })
+    const file = new File(['back'], 'cccd-mat-sau.png', { type: 'image/png' })
+
+    await uploadEmployerCompanyDocument('identity_document', file, { append: true })
+
+    const [url, formData] = post.mock.calls[0]
+    expect(url).toBe('/employer/company/documents/')
+    expect(formData.get('doc_type')).toBe('identity_document')
+    expect(formData.get('append')).toBe('true')
+    expect(formData.get('file')).toBe(file)
+  })
+
+  it('targets one current document when uploading a replacement', async () => {
+    post.mockResolvedValue({ data: { id: 3, status: 'pending' } })
+    const file = new File(['clear'], 'cccd-mat-sau-moi.png', { type: 'image/png' })
+
+    await uploadEmployerCompanyDocument('identity_document', file, {
+      replaceDocument: 'doc_rejected',
+    })
+
+    const [, formData] = post.mock.calls[0]
+    expect(formData.get('doc_type')).toBe('identity_document')
+    expect(formData.get('replaces')).toBe('doc_rejected')
+    expect(formData.get('append')).toBeNull()
+  })
+
+  it('requests a temporary PDF preview for a selected Word agreement', async () => {
+    const preview = new Blob(['preview'], { type: 'application/pdf' })
+    post.mockResolvedValue({ data: preview })
+    const file = new File(['agreement'], 'thoa-thuan.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+
+    await expect(previewEmployerDataProcessingAgreement(file)).resolves.toBe(preview)
+
+    const [url, formData, options] = post.mock.calls[0]
+    expect(url).toBe('/employer/company/documents/preview/')
+    expect(formData.get('file')).toBe(file)
+    expect(options).toEqual({ responseType: 'blob' })
   })
 
   it('saves a trade-name proof website as multipart data', async () => {

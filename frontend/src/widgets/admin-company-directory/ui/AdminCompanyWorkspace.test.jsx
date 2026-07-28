@@ -7,6 +7,7 @@ import AdminCompanyWorkspace from './AdminCompanyWorkspace'
 const { companyApi, updateApi, useSession } = vi.hoisted(() => ({
   companyApi: {
     getAdminCompanies: vi.fn(),
+    getAdminCompanySummary: vi.fn(),
   },
   updateApi: {
     getAdminCompanyUpdateRequests: vi.fn(),
@@ -51,6 +52,11 @@ describe('AdminCompanyWorkspace', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     companyApi.getAdminCompanies.mockResolvedValue({ count: 0, results: [] })
+    companyApi.getAdminCompanySummary.mockResolvedValue({
+      total: 0,
+      verification: {},
+      pending_update_requests: 0,
+    })
     updateApi.getAdminCompanyUpdateRequests.mockResolvedValue({ count: 0, results: [] })
   })
 
@@ -80,7 +86,12 @@ describe('AdminCompanyWorkspace', () => {
       'true',
     )
     await waitFor(() => expect(updateApi.getAdminCompanyUpdateRequests).toHaveBeenCalledWith(
-      { page: 1, status: 'pending', company: 'co_alpha' },
+      {
+        page: 1,
+        status: 'pending',
+        company: 'co_alpha',
+        ordering: '-updated_at',
+      },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
     expect(companyApi.getAdminCompanies).not.toHaveBeenCalled()

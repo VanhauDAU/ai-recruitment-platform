@@ -4,6 +4,7 @@ from .admin_companies import (
     admin_companies_queryset,
     admin_company_detail_queryset,
     admin_company_recruiters_queryset,
+    admin_company_summary,
 )
 from .admin_verification import (
     admin_verification_cases_queryset,
@@ -30,6 +31,7 @@ __all__ = [
     'admin_companies_queryset',
     'admin_company_detail_queryset',
     'admin_company_recruiters_queryset',
+    'admin_company_summary',
     'admin_verification_cases_queryset',
     'admin_verification_summary',
     'attach_campaign_candidate_previews',

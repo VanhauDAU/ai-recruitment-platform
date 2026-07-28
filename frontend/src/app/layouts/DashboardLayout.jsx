@@ -5,6 +5,7 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
 } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
@@ -12,6 +13,14 @@ import {
   canAccessAdminRoute,
   useAdminAccess,
 } from '@/entities/admin-access'
+import {
+  adminAccountKeys,
+  getAdminAccountSummary,
+} from '@/entities/admin-account'
+import {
+  adminCompanyKeys,
+  getAdminCompanySummary,
+} from '@/entities/admin-company'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
@@ -41,6 +50,31 @@ function AdminBrand({ collapsed = false }) {
   )
 }
 
+function hasBadgeKey(nodes, badgeKeys) {
+  return nodes.some((node) => (
+    badgeKeys.includes(node.badgeKey)
+    || (node.children && hasBadgeKey(node.children, badgeKeys))
+  ))
+}
+
+function attachBadgeCounts(nodes, counts) {
+  return nodes.map((node) => {
+    const children = node.children
+      ? attachBadgeCounts(node.children, counts)
+      : undefined
+    const ownCount = Number(node.badgeKey ? counts[node.badgeKey] || 0 : 0)
+    const childrenCount = children?.reduce(
+      (total, child) => total + Number(child.badgeCount || 0),
+      0,
+    ) || 0
+    return {
+      ...node,
+      badgeCount: ownCount + childrenCount,
+      ...(children ? { children } : {}),
+    }
+  })
+}
+
 export default function DashboardLayout() {
   const { user, logout } = useSession()
   const adminAccess = useAdminAccess(user)
@@ -68,6 +102,46 @@ export default function DashboardLayout() {
     () => buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, adminAccess),
     [adminAccess],
   )
+  const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
+  const recruitersSummaryParams = useMemo(() => ({ scope: 'recruiters' }), [])
+  const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations', 'user_restricted'])
+  const needsRecruitersSummary = hasBadgeKey(
+    navigation,
+    ['recruiter_verification', 'recruiter_restricted'],
+  )
+  const needsCompaniesSummary = hasBadgeKey(
+    navigation,
+    ['company_pending', 'company_updates'],
+  )
+  const usersSummary = useQuery({
+    queryKey: adminAccountKeys.summary(usersSummaryParams),
+    queryFn: ({ signal }) => getAdminAccountSummary(usersSummaryParams, { signal }),
+    enabled: user?.role === 'admin' && needsUsersSummary,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const recruitersSummary = useQuery({
+    queryKey: adminAccountKeys.summary(recruitersSummaryParams),
+    queryFn: ({ signal }) => getAdminAccountSummary(recruitersSummaryParams, { signal }),
+    enabled: user?.role === 'admin' && needsRecruitersSummary,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const companiesSummary = useQuery({
+    queryKey: adminCompanyKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
+    enabled: user?.role === 'admin' && needsCompaniesSummary,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
+    admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
+    user_restricted: usersSummary.data?.totals?.restricted,
+    recruiter_verification: recruitersSummary.data?.verification?.pending,
+    recruiter_restricted: recruitersSummary.data?.totals?.restricted,
+    company_pending: companiesSummary.data?.verification?.pending,
+    company_updates: companiesSummary.data?.pending_update_requests,
+  }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])
   const hasNoDepartment = (
     user?.role === 'admin'
     && !adminAccess.isSuperuser
@@ -115,7 +189,7 @@ export default function DashboardLayout() {
         >
           <AdminBrand collapsed={sidebarCollapsed} />
           <AdminNavigation
-            navigation={navigation}
+            navigation={navigationWithBadges}
             pathname={pathname}
             search={search}
             navigate={navigate}
@@ -134,7 +208,7 @@ export default function DashboardLayout() {
               onMouseLeave={() => setSidebarPeek(false)}
             >
               <AdminNavigation
-                navigation={navigation}
+                navigation={navigationWithBadges}
                 pathname={pathname}
                 search={search}
                 navigate={navigate}
@@ -160,7 +234,7 @@ export default function DashboardLayout() {
           <div className="admin-sider min-h-full">
             <AdminBrand />
             <AdminNavigation
-              navigation={navigation}
+              navigation={navigationWithBadges}
               pathname={pathname}
               search={search}
               navigate={navigate}

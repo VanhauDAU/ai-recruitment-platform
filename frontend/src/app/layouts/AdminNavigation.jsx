@@ -40,8 +40,28 @@ function ComingSoon() {
   return <Tag className="admin-nav__coming-soon">Sắp ra mắt</Tag>
 }
 
+function NavigationCount({ count }) {
+  const value = Number(count || 0)
+  if (value <= 0) return null
+  const label = value > 99 ? '99+' : String(value).padStart(2, '0')
+  return (
+    <span
+      className="admin-nav__count"
+      aria-label={`${value.toLocaleString('vi-VN')} mục đang chờ`}
+    >
+      {label}
+    </span>
+  )
+}
+
 function hasChildren(item) {
   return Boolean(item.children?.length)
+}
+
+function isLevelOneActive(activeLeaf, levelOne) {
+  return hasChildren(levelOne)
+    ? activeLeaf?.ancestors[0] === levelOne.key
+    : activeLeaf?.key === levelOne.key
 }
 
 function LeafButton({ leaf, active, onSelect, showBreadcrumb = false }) {
@@ -63,6 +83,7 @@ function LeafButton({ leaf, active, onSelect, showBreadcrumb = false }) {
           </span>
         )}
       </span>
+      <NavigationCount count={leaf.badgeCount} />
       {leaf.status === 'comingSoon' && <ComingSoon />}
     </button>
   )
@@ -99,7 +120,7 @@ function MobileNavigation({
 }) {
   const [trail, setTrail] = useState([])
   const currentLevelOne = navigation.find((item) => item.key === trail[0])
-  const currentLevelTwo = currentLevelOne?.children.find((item) => item.key === trail[1])
+  const currentLevelTwo = currentLevelOne?.children?.find((item) => item.key === trail[1])
 
   useEffect(() => {
     setTrail([])
@@ -157,6 +178,7 @@ function MobileNavigation({
             }}
           >
             <strong>{levelTwo.label}</strong>
+            <NavigationCount count={levelTwo.badgeCount} />
             {levelTwo.status === 'comingSoon' && <ComingSoon />}
             {hasChildren(levelTwo) && <RightOutlined />}
           </button>
@@ -168,20 +190,36 @@ function MobileNavigation({
   return (
     <div className="admin-nav__mobile-level">
       <p className="admin-nav__section-label">Không gian quản trị</p>
-      {navigation.map((levelOne) => (
-        <button
-          type="button"
-          key={levelOne.key}
-          className={`admin-nav__level-one ${
-            activeLeaf?.ancestors[0] === levelOne.key ? 'admin-nav__level-one--active' : ''
-          }`}
-          onClick={() => setTrail([levelOne.key])}
-        >
-          <span className="admin-nav__level-one-icon">{ICONS[levelOne.iconKey]}</span>
-          <span className="flex-1 text-left">{levelOne.label}</span>
-          <RightOutlined />
-        </button>
-      ))}
+      {navigation.map((levelOne) => {
+        const grouped = hasChildren(levelOne)
+        const active = isLevelOneActive(activeLeaf, levelOne)
+        const disabled = levelOne.status === 'comingSoon' || (!grouped && !levelOne.href)
+        return (
+          <button
+            type="button"
+            key={levelOne.key}
+            aria-label={levelOne.label}
+            className={`admin-nav__level-one ${
+              active ? 'admin-nav__level-one--active' : ''
+            }`}
+            disabled={disabled}
+            aria-current={active && !grouped ? 'page' : undefined}
+            onClick={() => {
+              if (disabled) return
+              if (grouped) {
+                setTrail([levelOne.key])
+              } else {
+                onSelect(levelOne)
+              }
+            }}
+          >
+            <span className="admin-nav__level-one-icon">{ICONS[levelOne.iconKey]}</span>
+            <span className="flex-1 text-left">{levelOne.label}</span>
+            <NavigationCount count={levelOne.badgeCount} />
+            {grouped && <RightOutlined />}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -200,16 +238,18 @@ export default function AdminNavigation({
     () => findActiveAdminNavigation(navigation, pathname, search),
     [navigation, pathname, search],
   )
-  const [openLevelOne, setOpenLevelOne] = useState(
-    activeLeaf?.ancestors[0] || navigation[0]?.key || '',
-  )
+  const [openLevelOne, setOpenLevelOne] = useState(() => (
+    activeLeaf
+      ? activeLeaf.ancestors[0] || ''
+      : navigation.find(hasChildren)?.key || ''
+  ))
   const [openLevelTwo, setOpenLevelTwo] = useState('')
   const [flyoutTop, setFlyoutTop] = useState(82)
   const [query, setQuery] = useState('')
 
   useEffect(() => {
     if (activeLeaf) {
-      setOpenLevelOne(activeLeaf.ancestors[0])
+      setOpenLevelOne(activeLeaf.ancestors[0] || '')
     }
   }, [activeLeaf])
 
@@ -233,20 +273,28 @@ export default function AdminNavigation({
   if (collapsed && !mobile) {
     return (
       <nav className="admin-sider__navigation admin-nav admin-nav--collapsed" aria-label="Điều hướng quản trị">
-        {navigation.map((levelOne) => (
-          <Tooltip key={levelOne.key} placement="right" title={levelOne.label}>
-            <button
-              type="button"
-              className={`admin-nav__collapsed-button ${
-                activeLeaf?.ancestors[0] === levelOne.key ? 'admin-nav__collapsed-button--active' : ''
-              }`}
-              aria-label={levelOne.label}
-              onClick={() => onRequestExpand?.(levelOne.key)}
-            >
-              {ICONS[levelOne.iconKey] || <AppstoreOutlined />}
-            </button>
-          </Tooltip>
-        ))}
+        {navigation.map((levelOne) => {
+          const grouped = hasChildren(levelOne)
+          const active = isLevelOneActive(activeLeaf, levelOne)
+          return (
+            <Tooltip key={levelOne.key} placement="right" title={levelOne.label}>
+              <button
+                type="button"
+                className={`admin-nav__collapsed-button ${
+                  active ? 'admin-nav__collapsed-button--active' : ''
+                }`}
+                aria-label={levelOne.label}
+                aria-current={active && !grouped ? 'page' : undefined}
+                onClick={() => (
+                  grouped ? onRequestExpand?.(levelOne.key) : selectLeaf(levelOne)
+                )}
+              >
+                {ICONS[levelOne.iconKey] || <AppstoreOutlined />}
+                <NavigationCount count={levelOne.badgeCount} />
+              </button>
+            </Tooltip>
+          )
+        })}
       </nav>
     )
   }
@@ -265,7 +313,7 @@ export default function AdminNavigation({
   }
 
   const currentLevelOne = navigation.find((item) => item.key === openLevelOne)
-  const currentLevelTwo = currentLevelOne?.children.find((item) => item.key === openLevelTwo)
+  const currentLevelTwo = currentLevelOne?.children?.find((item) => item.key === openLevelTwo)
 
   return (
     <nav className="admin-sider__navigation admin-nav" aria-label="Điều hướng quản trị">
@@ -291,15 +339,28 @@ export default function AdminNavigation({
         <>
           <div className="admin-nav__primary">
             {navigation.map((levelOne) => {
-              const isOpen = openLevelOne === levelOne.key
-              const isActive = activeLeaf?.ancestors[0] === levelOne.key
+              const grouped = hasChildren(levelOne)
+              const isOpen = grouped && openLevelOne === levelOne.key
+              const isActive = isLevelOneActive(activeLeaf, levelOne)
+              const disabled = (
+                levelOne.status === 'comingSoon'
+                || (!grouped && !levelOne.href)
+              )
               return (
                 <div key={levelOne.key} className="admin-nav__group">
                   <button
                     type="button"
+                    aria-label={levelOne.label}
                     className={`admin-nav__level-one ${isActive ? 'admin-nav__level-one--active' : ''}`}
-                    aria-expanded={isOpen}
+                    disabled={disabled}
+                    aria-current={isActive && !grouped ? 'page' : undefined}
+                    aria-expanded={grouped ? isOpen : undefined}
                     onClick={() => {
+                      if (disabled) return
+                      if (!grouped) {
+                        selectLeaf(levelOne)
+                        return
+                      }
                       setOpenLevelOne(isOpen ? '' : levelOne.key)
                       setOpenLevelTwo('')
                     }}
@@ -308,9 +369,12 @@ export default function AdminNavigation({
                       {ICONS[levelOne.iconKey] || <AppstoreOutlined />}
                     </span>
                     <span className="flex-1 text-left">{levelOne.label}</span>
-                    <RightOutlined className={isOpen ? 'admin-nav__chevron--open' : ''} />
+                    {!isOpen && <NavigationCount count={levelOne.badgeCount} />}
+                    {grouped && (
+                      <RightOutlined className={isOpen ? 'admin-nav__chevron--open' : ''} />
+                    )}
                   </button>
-                  {isOpen && (
+                  {grouped && isOpen && (
                     <div className="admin-nav__secondary">
                       {levelOne.children.map((levelTwo) => {
                         const grouped = hasChildren(levelTwo)
@@ -344,6 +408,9 @@ export default function AdminNavigation({
                             }}
                           >
                             <strong>{levelTwo.label}</strong>
+                            {(!grouped || openLevelTwo !== levelTwo.key) && (
+                              <NavigationCount count={levelTwo.badgeCount} />
+                            )}
                             {levelTwo.status === 'comingSoon' && <ComingSoon />}
                             {grouped && <RightOutlined />}
                           </button>

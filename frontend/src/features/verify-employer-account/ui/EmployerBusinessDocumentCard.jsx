@@ -1,14 +1,22 @@
 import {
   DownloadOutlined,
   FileTextOutlined,
-  UploadOutlined,
   WarningFilled,
 } from '@ant-design/icons'
-import { Button, Upload } from 'antd'
+import { Alert, Button, Tag } from 'antd'
+import { useState } from 'react'
+import EmployerDocumentUploadBox from './EmployerDocumentUploadBox'
 
 const AUTHORIZATION_TEMPLATE_URL = 'https://docs.google.com/document/d/1_cQDRuVuibU7XP1YPcsjpSYB8jokcqyR/edit?usp=sharing&ouid=111388583364027655585&rtpof=true&sd=true'
 const ACCEPTED_FILE_TYPES = '.jpeg,.jpg,.png,.pdf'
 const UPLOAD_HINT = 'Dung lượng tối đa 5MB, định dạng: jpeg, jpg, png, pdf'
+const MAX_FILES_PER_DOCUMENT_TYPE = 10
+const DOCUMENT_STATUS = {
+  pending: { color: 'gold', label: 'Đang xử lý' },
+  changes_requested: { color: 'orange', label: 'Cần bổ sung' },
+  approved: { color: 'green', label: 'Đã duyệt' },
+  rejected: { color: 'red', label: 'Từ chối' },
+}
 const SAMPLE_IMAGES = {
   business: { src: '/images/employer/business-registration-sample.jpg', alt: 'Minh họa giấy chứng nhận đăng ký doanh nghiệp' },
   authorization: { src: '/images/employer/authorization-sample.jpg', alt: 'Minh họa giấy ủy quyền' },
@@ -19,30 +27,6 @@ function Illustration({ variant }) {
   const image = SAMPLE_IMAGES[variant]
 
   return <img src={image.src} alt={image.alt} className="h-[128px] max-w-[176px] rounded border border-slate-200 bg-white object-contain shadow-sm" loading="lazy" />
-}
-
-function UploadBox({ label, files, onFilesChange, disabled }) {
-  return (
-    <div className="min-w-0">
-      <h3 className="mb-2 text-sm font-semibold text-slate-800">{label} <span className="text-red-500">*</span></h3>
-      <Upload.Dragger
-        accept={ACCEPTED_FILE_TYPES}
-        beforeUpload={() => false}
-        disabled={disabled}
-        fileList={files}
-        maxCount={1}
-        multiple={false}
-        showUploadList={false}
-        onChange={({ fileList }) => onFilesChange(fileList.slice(-1))}
-        className="!rounded-lg !border-dashed !border-slate-300 !bg-white !px-4 !py-2 hover:!border-emerald-500"
-      >
-        <p className="mb-1 text-sm font-medium text-slate-600">Chọn hoặc kéo file vào đây</p>
-        <p className="mb-2 text-xs text-slate-500">{UPLOAD_HINT}</p>
-        <Button type="text" icon={<UploadOutlined />} className="!h-8 !border !border-emerald-100 !bg-emerald-50 !text-emerald-600">Chọn file</Button>
-      </Upload.Dragger>
-      {files[0] && <p className="mt-2 truncate text-xs text-emerald-700">Đã chọn: {files[0].name}</p>}
-    </div>
-  )
 }
 
 function UploadNotice({ documentName }) {
@@ -66,33 +50,176 @@ export function EmployerBusinessDocumentCard({
   showTemplate = false,
   disabled,
   savedDocument,
+  savedDocuments,
   submittedFileLabel,
   onViewDocument,
   viewingDocument,
+  editing = false,
+  replacementFiles = {},
+  onReplacementFilesChange,
+  allowNewFiles = false,
 }) {
-  const displayedFileName = submittedFileLabel || savedDocument?.file_name || label
+  const [expandedReplacements, setExpandedReplacements] = useState({})
+  const [addingFiles, setAddingFiles] = useState(false)
+  const submittedDocuments = savedDocuments?.length
+    ? savedDocuments
+    : savedDocument
+      ? [savedDocument]
+      : []
+  const supportsMultipleFiles = variant === 'identity'
 
   return (
     <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
         <div>
-          {savedDocument ? (
+          {submittedDocuments.length > 0 ? (
             <>
               <h3 className="mb-2 text-sm font-semibold text-slate-800">{label} <span className="text-red-500">*</span></h3>
-              <button
-                type="button"
-                aria-label={`Xem tệp đã nộp: ${displayedFileName}`}
-                disabled={viewingDocument}
-                onClick={() => onViewDocument(savedDocument)}
-                className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1 text-sm font-medium text-slate-700 transition hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:bg-emerald-100 disabled:cursor-wait disabled:opacity-60"
-              >
-                <FileTextOutlined className="text-emerald-600" />
-                <span className="truncate">{viewingDocument ? 'Đang mở tệp...' : displayedFileName}</span>
-              </button>
+              <div className="grid gap-1">
+                {submittedDocuments.map((document, index) => {
+                  const documentKey = document.public_id || document.id
+                  const displayedFileName = submittedFileLabel
+                    ? `${submittedFileLabel}${submittedDocuments.length > 1 ? ` ${index + 1}` : ''}`
+                    : document.file_name || `${label} ${index + 1}`
+                  const statusMeta = DOCUMENT_STATUS[document.status] || DOCUMENT_STATUS.pending
+                  const needsCorrection = ['rejected', 'changes_requested'].includes(document.status)
+                  const replacementSelected = Boolean(
+                    replacementFiles[documentKey]?.files?.length
+                    || replacementFiles[documentKey]?.length,
+                  )
+                  const replacementExpanded = Boolean(
+                    needsCorrection
+                    || replacementSelected
+                    || expandedReplacements[documentKey],
+                  )
+                  return (
+                    <div key={documentKey} className="rounded-lg border border-slate-200 p-3">
+                      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          aria-label={`Xem tệp đã nộp: ${displayedFileName}`}
+                          disabled={viewingDocument}
+                          onClick={() => onViewDocument(document)}
+                          className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1 text-sm font-medium text-slate-700 transition hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:bg-emerald-100 disabled:cursor-wait disabled:opacity-60"
+                        >
+                          <FileTextOutlined className="shrink-0 text-emerald-600" />
+                          <span className="truncate">
+                            {viewingDocument ? 'Đang mở tệp...' : displayedFileName}
+                          </span>
+                        </button>
+                        <Tag color={statusMeta.color} className="!m-0 !rounded-full !border-0">
+                          {statusMeta.label}
+                        </Tag>
+                      </div>
+                      {needsCorrection && (
+                        <Alert
+                          className="mt-2"
+                          type={document.status === 'rejected' ? 'error' : 'warning'}
+                          showIcon
+                          title={document.review_note || 'Quản trị viên chưa cung cấp lý do.'}
+                        />
+                      )}
+                      {editing && (
+                        <div className="mt-3">
+                          {!replacementExpanded ? (
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2">
+                              <span className="text-xs text-slate-500">File này sẽ được giữ nguyên.</span>
+                              <Button
+                                size="small"
+                                onClick={() => setExpandedReplacements((current) => ({
+                                  ...current,
+                                  [documentKey]: true,
+                                }))}
+                              >
+                                Thay tệp
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              {!needsCorrection && !replacementSelected && (
+                                <Button
+                                  type="link"
+                                  size="small"
+                                  className="!mb-1 !px-0"
+                                  onClick={() => setExpandedReplacements((current) => ({
+                                    ...current,
+                                    [documentKey]: false,
+                                  }))}
+                                >
+                                  Giữ nguyên file này
+                                </Button>
+                              )}
+                              <EmployerDocumentUploadBox
+                                accept={ACCEPTED_FILE_TYPES}
+                                disabled={disabled}
+                                files={
+                                  replacementFiles[documentKey]?.files
+                                  || replacementFiles[documentKey]
+                                  || []
+                                }
+                                label={`Tệp thay thế cho ${displayedFileName}`}
+                                maxCount={1}
+                                onFilesChange={(nextFiles) => onReplacementFilesChange(
+                                  document,
+                                  nextFiles,
+                                )}
+                                uploadHint={UPLOAD_HINT}
+                              />
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {editing && allowNewFiles && submittedDocuments.length < MAX_FILES_PER_DOCUMENT_TYPE && (
+                <div className="mt-4">
+                  {!addingFiles && !(files || []).length ? (
+                    <Button onClick={() => setAddingFiles(true)}>
+                      Thêm ảnh giấy tờ định danh
+                    </Button>
+                  ) : (
+                    <>
+                      {!(files || []).length && (
+                        <Button
+                          type="link"
+                          size="small"
+                          className="!mb-1 !px-0"
+                          onClick={() => setAddingFiles(false)}
+                        >
+                          Không thêm file
+                        </Button>
+                      )}
+                      <EmployerDocumentUploadBox
+                        accept={ACCEPTED_FILE_TYPES}
+                        label={`Thêm ${label}`}
+                        files={files}
+                        onFilesChange={onFilesChange}
+                        disabled={disabled}
+                        maxCount={MAX_FILES_PER_DOCUMENT_TYPE - submittedDocuments.length}
+                        multiple
+                        uploadHint={`${UPLOAD_HINT}; tối đa ${MAX_FILES_PER_DOCUMENT_TYPE} tệp`}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <>
-              <UploadBox label={label} files={files} onFilesChange={onFilesChange} disabled={disabled} />
+              <EmployerDocumentUploadBox
+                accept={ACCEPTED_FILE_TYPES}
+                label={label}
+                files={files}
+                onFilesChange={onFilesChange}
+                disabled={disabled}
+                maxCount={MAX_FILES_PER_DOCUMENT_TYPE}
+                multiple={supportsMultipleFiles}
+                uploadHint={`${UPLOAD_HINT}${supportsMultipleFiles
+                  ? `; tối đa ${MAX_FILES_PER_DOCUMENT_TYPE} tệp`
+                  : ''}`}
+              />
               <UploadNotice documentName={noticeDocument} />
             </>
           )}

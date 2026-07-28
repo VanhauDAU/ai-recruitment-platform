@@ -1,21 +1,9 @@
 export const ADMIN_NAVIGATION = [
   {
-    key: 'overview',
-    label: 'Tổng quan',
+    key: 'dashboard',
+    label: 'Trang chủ',
     iconKey: 'dashboard',
-    children: [
-      {
-        key: 'dashboard',
-        label: 'Bảng điều khiển',
-        routeRef: 'dashboard',
-      },
-      {
-        key: 'operations-report',
-        label: 'Báo cáo vận hành',
-        status: 'comingSoon',
-        access: { superuser: true },
-      },
-    ],
+    routeRef: 'dashboard',
   },
   {
     key: 'companies-employers',
@@ -35,6 +23,7 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'company-pending',
             label: 'Chờ xác thực',
+            badgeKey: 'company_pending',
             routeRef: 'companies',
             query: { verification_status: 'pending' },
             access: { allOf: ['company.view'] },
@@ -42,6 +31,7 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'company-updates',
             label: 'Yêu cầu cập nhật',
+            badgeKey: 'company_updates',
             routeRef: 'companies',
             query: { tab: 'updates' },
             access: { allOf: ['company_update.view'] },
@@ -61,9 +51,18 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'employer-verification',
             label: 'Chờ xác thực hồ sơ',
+            badgeKey: 'recruiter_verification',
             routeRef: 'recruiters',
             query: { tab: 'verification' },
             access: { allOf: ['employer_verification.view'] },
+          },
+          {
+            key: 'employer-restricted',
+            label: 'NTD bị hạn chế',
+            badgeKey: 'recruiter_restricted',
+            routeRef: 'recruiters',
+            query: { status: 'inactive,banned' },
+            access: { anyOf: ['account.employer.view', 'account.view'] },
           },
           {
             key: 'employer-invitations',
@@ -86,9 +85,9 @@ export const ADMIN_NAVIGATION = [
         children: [
           {
             key: 'all-accounts',
-            label: 'Tất cả tài khoản',
+            label: 'Tất cả người dùng',
             routeRef: 'accounts',
-            access: { anyOf: ['account.view', 'account.admin.view'] },
+            access: { allOf: ['account.view', 'account.admin.view'] },
           },
           {
             key: 'candidate-accounts',
@@ -104,6 +103,14 @@ export const ADMIN_NAVIGATION = [
             query: { tab: 'admin' },
             access: { allOf: ['account.admin.view'] },
           },
+          {
+            key: 'admin-invitations',
+            label: 'Lời mời quản trị',
+            badgeKey: 'admin_invitations',
+            routeRef: 'accounts',
+            query: { tab: 'invitations' },
+            access: { allOf: ['account.admin.invite'] },
+          },
         ],
       },
       {
@@ -112,10 +119,11 @@ export const ADMIN_NAVIGATION = [
         children: [
           {
             key: 'blocked-accounts',
-            label: 'Tài khoản bị khóa',
+            label: 'Người dùng bị hạn chế',
+            badgeKey: 'user_restricted',
             routeRef: 'accounts',
-            query: { tab: 'all', status: 'banned' },
-            access: { allOf: ['account.view'] },
+            query: { status: 'inactive,banned' },
+            access: { anyOf: ['account.view', 'account.admin.view'] },
           },
           {
             key: 'account-activity',
@@ -242,17 +250,6 @@ export const ADMIN_NAVIGATION = [
     key: 'personal',
     label: 'Tài khoản cá nhân',
     iconKey: 'account',
-    children: [
-      {
-        key: 'personal-profile',
-        label: 'Hồ sơ',
-        children: [
-          { key: 'my-profile', label: 'Thông tin cá nhân', routeRef: 'account' },
-          { key: 'my-security', label: 'Bảo mật', routeRef: 'account', query: { tab: 'security' } },
-          { key: 'my-access', label: 'Quyền truy cập', routeRef: 'account', query: { tab: 'access' } },
-          { key: 'my-activity', label: 'Hoạt động', routeRef: 'account', query: { tab: 'activity' } },
-        ],
-      },
-    ],
+    routeRef: 'account',
   },
 ]

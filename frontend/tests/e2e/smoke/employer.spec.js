@@ -326,6 +326,26 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   expect((await authorizationHeading.boundingBox()).y).toBeGreaterThan((await authorizationRadio.boundingBox()).y)
   await expect(page.getByRole('img', { name: 'Minh họa giấy ủy quyền' })).toHaveAttribute('src', '/images/employer/authorization-sample.jpg')
   await expect(page.getByRole('img', { name: 'Minh họa căn cước công dân hoặc hộ chiếu' })).toHaveAttribute('src', '/images/employer/identity-sample.jpg')
+  const [authorizationInput, identityInput] = await page.locator('input[type="file"]').all()
+  await expect(authorizationInput).not.toHaveAttribute('multiple', '')
+  await expect(identityInput).toHaveAttribute('multiple', '')
+  await identityInput.setInputFiles([
+    {
+      name: 'cccd-mat-truoc.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('identity-front'),
+    },
+    {
+      name: 'cccd-mat-sau.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('identity-back'),
+    },
+  ])
+  await expect(page.getByRole('button', { name: 'Xem trước tệp cccd-mat-truoc.png' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xem trước tệp cccd-mat-sau.png' })).toBeVisible()
+  await page.getByRole('button', { name: 'Xem trước tệp cccd-mat-truoc.png' }).click()
+  await expect(page.getByRole('dialog')).toContainText('cccd-mat-truoc.png')
+  await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: 'Lưu' })).toBeDisabled()
   await expectNoHorizontalOverflow(page)
 
@@ -334,10 +354,13 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
   const dpaFileInput = page.locator('input[type="file"]')
   await dpaFileInput.setInputFiles({
-    name: 'thoa-thuan.docx',
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    buffer: Buffer.from('candidate agreement'),
+    name: 'thoa-thuan.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-candidate-agreement'),
   })
+  await page.getByRole('button', { name: 'Xem trước tệp thoa-thuan.pdf' }).click()
+  await expect(page.getByRole('dialog')).toContainText('thoa-thuan.pdf')
+  await page.keyboard.press('Escape')
   await page.getByRole('checkbox', { name: /Tôi cam đoan văn bản này/i }).check()
   await expect(page.getByRole('button', { name: 'Lưu' })).toBeEnabled()
   await page.getByRole('checkbox', { name: /Xác nhận đồng ý với các điều khoản/i }).check()

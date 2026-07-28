@@ -4,6 +4,7 @@ from pathlib import PurePosixPath
 from urllib.parse import urlsplit
 
 from django.db.models import Prefetch, Q
+from django.db.models.expressions import RawSQL
 from django.http import FileResponse, Http404
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -376,7 +377,31 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
                 | Q(company__tax_code__icontains=query)
                 | Q(requested_by__email__icontains=query)
             )
-        return queryset.order_by('-updated_at', '-id')
+        ordering = params.get('ordering', '-updated_at')
+        if ordering in {'change_count', '-change_count'}:
+            queryset = queryset.annotate(
+                change_count=RawSQL(
+                    '(SELECT COUNT(*) FROM '
+                    'jsonb_object_keys(employers_companyupdaterequest.changes))',
+                    (),
+                )
+            )
+        allowed = {
+            'company__company_name',
+            '-company__company_name',
+            'requested_by__email',
+            '-requested_by__email',
+            'change_count',
+            '-change_count',
+            'is_sensitive',
+            '-is_sensitive',
+            'updated_at',
+            '-updated_at',
+        }
+        return queryset.order_by(
+            ordering if ordering in allowed else '-updated_at',
+            '-id',
+        )
 
     def get_serializer_context(self):
         return {

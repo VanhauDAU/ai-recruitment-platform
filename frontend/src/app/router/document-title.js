@@ -124,6 +124,15 @@ function adminTitle(pathname) {
   if (pathname.startsWith(accountDetailPrefix) && accountPublicId && !accountPublicId.includes('/')) {
     return 'Chi tiết tài khoản'
   }
+  const recruiterDetailPrefix = `${adminPath('/recruiters/')}`
+  const recruiterPublicId = pathname.slice(recruiterDetailPrefix.length)
+  if (
+    pathname.startsWith(recruiterDetailPrefix)
+    && recruiterPublicId
+    && !recruiterPublicId.includes('/')
+  ) {
+    return 'Chi tiết nhà tuyển dụng'
+  }
 
   return 'Trang không tồn tại'
 }

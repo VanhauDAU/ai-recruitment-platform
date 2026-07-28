@@ -20,8 +20,8 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminAccountKeys,
   formatAdminDate,
@@ -392,10 +392,11 @@ function EmployerRecruitment({ publicId }) {
   )
 }
 
-export default function AdminAccountDetail({ publicId }) {
+export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [editState, setEditState] = useState(null)
@@ -423,6 +424,18 @@ export default function AdminAccountDetail({ publicId }) {
   const canReviewCompanyUpdates = isSuperuser || has('company_update.review')
   const canViewSensitiveDocument = canReveal
   const activeTab = searchParams.get('tab') || 'overview'
+  const fallbackPath = adminPath(routeScope === 'recruiters' ? '/recruiters' : '/accounts')
+  const origin = location.state?.origin
+  const safeOrigin = (
+    origin?.pathname?.startsWith(adminPath('/'))
+    && !origin.pathname.includes(`/${publicId}`)
+  ) ? origin : null
+  const backTarget = safeOrigin
+    ? `${safeOrigin.pathname}${safeOrigin.search || ''}`
+    : fallbackPath
+  const backLabel = safeOrigin?.label || (
+    routeScope === 'recruiters' ? 'Danh sách nhà tuyển dụng' : 'Danh sách người dùng'
+  )
 
   const profilePanel = account && (
     <AccountProfilePanel
@@ -480,7 +493,7 @@ export default function AdminAccountDetail({ publicId }) {
           children: <EmployerRecruitment publicId={publicId} />,
         },
         { key: 'security', label: 'Bảo mật', children: security },
-        { key: 'activity', label: 'Hoạt động', children: activity },
+        { key: 'activity', label: 'Nhật ký hoạt động', children: activity },
       ]
     }
     return [
@@ -494,6 +507,45 @@ export default function AdminAccountDetail({ publicId }) {
       { key: 'activity', label: 'Hoạt động', children: activity },
     ]
   })()
+  const currentTabs = account ? tabs.map((item) => (
+    item.key === 'overview' ? { ...item, children: <Overview account={account} /> } : item
+  )) : tabs
+  const validActiveTab = resolveActiveAdminAccountTab(currentTabs, activeTab)
+  const canonicalScope = account?.role === 'employer' ? 'recruiters' : 'accounts'
+  const currentScope = routeScope === 'recruiters' ? 'recruiters' : 'accounts'
+  const hasCanonicalMismatch = Boolean(account && canonicalScope !== currentScope)
+
+  useEffect(() => {
+    if (!account) return
+    if (canonicalScope === currentScope) return
+    navigate(
+      `${adminPath(`/${canonicalScope}/${publicId}`)}${location.search}`,
+      { replace: true, state: location.state },
+    )
+  }, [
+    account,
+    canonicalScope,
+    currentScope,
+    location.search,
+    location.state,
+    navigate,
+    publicId,
+  ])
+
+  useEffect(() => {
+    if (!account || hasCanonicalMismatch || activeTab === validActiveTab) return
+    const next = new URLSearchParams(searchParams)
+    if (validActiveTab === 'overview') next.delete('tab')
+    else next.set('tab', validActiveTab)
+    setSearchParams(next, { replace: true })
+  }, [
+    account,
+    activeTab,
+    hasCanonicalMismatch,
+    searchParams,
+    setSearchParams,
+    validActiveTab,
+  ])
 
   if (query.isLoading) return <Card><Skeleton active paragraph={{ rows: 12 }} /></Card>
   if (query.isError || !account) {
@@ -503,20 +555,15 @@ export default function AdminAccountDetail({ publicId }) {
         type="error"
         title="Không thể tải tài khoản"
         description={getApiErrorMessage(query.error)}
-        action={<Button onClick={() => navigate(adminPath('/accounts'))}>Quay lại</Button>}
+        action={<Button onClick={() => navigate(backTarget)}>{backLabel}</Button>}
       />
     )
   }
 
-  const currentTabs = tabs.map((item) => (
-    item.key === 'overview' ? { ...item, children: <Overview account={account} /> } : item
-  ))
-  const validActiveTab = resolveActiveAdminAccountTab(currentTabs, activeTab)
-
   return (
     <div className="space-y-5">
-      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(adminPath('/accounts'))}>
-        Quay lại danh sách
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(backTarget)}>
+        {backLabel}
       </Button>
       <section className="account-detail-hero">
         <div className="account-detail-hero__identity">
@@ -560,7 +607,12 @@ export default function AdminAccountDetail({ publicId }) {
         <Tabs
           activeKey={validActiveTab}
           items={currentTabs}
-          onChange={(tab) => setSearchParams({ tab })}
+          onChange={(tab) => {
+            const next = new URLSearchParams(searchParams)
+            if (tab === 'overview') next.delete('tab')
+            else next.set('tab', tab)
+            setSearchParams(next)
+          }}
           tabBarGutter={22}
         />
       </section>

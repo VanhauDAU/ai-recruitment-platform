@@ -35,13 +35,18 @@ vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
 vi.mock('@/entities/session', () => ({ useSession }))
 
 const SUMMARY = {
-  total: 200,
-  active: 150,
-  restricted: 20,
-  unverified: 50,
-  pending_admin: 2,
-  employer_verification_pending: 4,
-  employer_verification_overdue: 1,
+  scope: 'users',
+  totals: {
+    total: 200,
+    active: 150,
+    restricted: 20,
+    unverified: 50,
+  },
+  by_role: {
+    candidate: { total: 180, active: 140, restricted: 15, unverified: 45 },
+    admin: { total: 20, active: 10, restricted: 5, unverified: 5 },
+  },
+  queues: { pending_admin_invitations: 2 },
 }
 
 function renderWidget({
@@ -73,7 +78,9 @@ function renderWidget({
   )
 }
 
-const statCard = (label) => screen.getByText(label, { selector: '.account-stat p' }).closest('.account-stat')
+const statCard = (label) => screen
+  .getByText(label, { selector: '.account-stat__label' })
+  .closest('.account-stat')
 // Thẻ tồn tại ngay từ lần render đầu với giá trị 0, nên phải chờ số liệu thật.
 const waitForSummary = () => waitFor(
   () => expect(statCard('Tổng tài khoản')).toHaveTextContent('200'),
@@ -93,10 +100,14 @@ describe('AdminAccountManagement overview', () => {
     renderWidget()
 
     await waitForSummary()
+    expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'users' }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    )
     expect(within(statCard('Đang hoạt động')).getByText('150')).toBeInTheDocument()
-    expect(statCard('Đang hoạt động')).toHaveTextContent('75% tài khoản đăng nhập được')
-    expect(statCard('Bị hạn chế')).toHaveTextContent('10% đang tạm khóa hoặc bị cấm')
-    expect(statCard('Email chưa xác minh')).toHaveTextContent('25% chưa hoàn tất xác thực')
+    expect(statCard('Đang hoạt động')).toHaveTextContent('75% tài khoản')
+    expect(statCard('Bị hạn chế')).toHaveTextContent('Tạm khóa hoặc đã cấm')
+    expect(statCard('Email chưa xác minh')).toHaveTextContent('Chưa hoàn tất xác thực email')
   })
 
   it('keeps employer verification out of the general account workspace', async () => {
@@ -118,8 +129,8 @@ describe('AdminAccountManagement overview', () => {
       'aria-selected',
       'true',
     )
-    expect(screen.getByRole('tab', { name: 'Danh sách NTD' })).toBeInTheDocument()
-    expect(screen.queryByLabelText('Tổng quan tài khoản')).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Danh sách NTD/ })).toBeInTheDocument()
+    expect(screen.getByLabelText('Tổng quan nhà tuyển dụng')).toBeInTheDocument()
   })
 
   it('uses the dedicated employer account permission for recruiter browsing', async () => {
@@ -129,12 +140,12 @@ describe('AdminAccountManagement overview', () => {
       scope: 'recruiters',
     })
 
-    expect(await screen.findByRole('tab', { name: 'Danh sách NTD' })).toHaveAttribute(
+    expect(await screen.findByRole('tab', { name: /Danh sách NTD/ })).toHaveAttribute(
       'aria-selected',
       'true',
     )
     await waitFor(() => expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'employer' }),
+      expect.objectContaining({ scope: 'recruiters' }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
     expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()

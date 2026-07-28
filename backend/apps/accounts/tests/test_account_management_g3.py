@@ -34,6 +34,7 @@ from apps.accounts.services import (
 from apps.employers.models import (
     CampaignActivity,
     Company,
+    EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentCampaign,
 )
@@ -189,6 +190,108 @@ class AccountManagementG3ApiTests(TestCase):
             ).status_code,
             404,
         )
+
+    def test_explicit_account_scopes_separate_users_and_recruiters(self):
+        candidate = User.objects.create_user(
+            'scoped-candidate@example.com',
+            self.password,
+            role=User.Role.CANDIDATE,
+            status=User.Status.ACTIVE,
+        )
+        employer = User.objects.create_user(
+            'scoped-employer@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+        )
+        self.authenticate(self.superuser)
+
+        users = self.client.get(reverse('admin-account-list'), {'scope': 'users'})
+        recruiters = self.client.get(
+            reverse('admin-account-list'),
+            {'scope': 'recruiters'},
+        )
+
+        self.assertEqual(users.status_code, 200, users.data)
+        self.assertIn(candidate.public_id, [item['public_id'] for item in users.data['results']])
+        self.assertNotIn(employer.public_id, [item['public_id'] for item in users.data['results']])
+        self.assertEqual(recruiters.status_code, 200, recruiters.data)
+        self.assertEqual(
+            [item['public_id'] for item in recruiters.data['results']],
+            [employer.public_id],
+        )
+
+    def test_account_scope_rejects_incompatible_role_and_invalid_status(self):
+        self.authenticate(self.superuser)
+
+        incompatible = self.client.get(
+            reverse('admin-account-list'),
+            {'scope': 'users', 'role': User.Role.EMPLOYER},
+        )
+        invalid_status = self.client.get(
+            reverse('admin-account-list'),
+            {'scope': 'users', 'status': 'active,unknown'},
+        )
+
+        self.assertEqual(incompatible.status_code, 400)
+        self.assertEqual(invalid_status.status_code, 400)
+
+    def test_scoped_summaries_use_full_scope_and_live_pending_invitations(self):
+        User.objects.create_user(
+            'summary-candidate@example.com',
+            self.password,
+            role=User.Role.CANDIDATE,
+            status=User.Status.BANNED,
+            email_verified=False,
+        )
+        linked_user = User.objects.create_user(
+            'summary-linked@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+        )
+        missing_user = User.objects.create_user(
+            'summary-missing@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.INACTIVE,
+        )
+        company = Company.objects.create(
+            company_name='Summary company',
+            created_by=linked_user,
+        )
+        recruiter = RecruiterProfile.objects.create(
+            user=linked_user,
+            company=company,
+        )
+        RecruiterProfile.objects.create(user=missing_user)
+        EmployerVerificationCase.objects.create(
+            recruiter=recruiter,
+            company=company,
+            status=EmployerVerificationCase.Status.APPROVED,
+        )
+        invitation = self.invite(email='summary-invited@example.com')
+        self.assertEqual(invitation.status_code, 201)
+        self.authenticate(self.superuser)
+
+        users = self.client.get(
+            reverse('admin-account-summary'),
+            {'scope': 'users'},
+        )
+        recruiters = self.client.get(
+            reverse('admin-account-summary'),
+            {'scope': 'recruiters'},
+        )
+
+        self.assertEqual(users.status_code, 200, users.data)
+        self.assertEqual(users.data['by_role']['candidate']['total'], 1)
+        self.assertEqual(users.data['by_role']['candidate']['restricted'], 1)
+        self.assertEqual(users.data['queues']['pending_admin_invitations'], 1)
+        self.assertEqual(recruiters.status_code, 200, recruiters.data)
+        self.assertEqual(recruiters.data['totals']['total'], 2)
+        self.assertEqual(recruiters.data['linked_company'], 1)
+        self.assertEqual(recruiters.data['companyless'], 1)
+        self.assertEqual(recruiters.data['verification']['approved'], 1)
 
     def test_locking_employer_pauses_only_their_active_campaigns(self):
         employer = User.objects.create_user(
@@ -451,7 +554,7 @@ class AccountManagementG3ApiTests(TestCase):
         self.authenticate(self.superuser)
         url = reverse('admin-account-list')
         with CaptureQueriesContext(connection) as baseline:
-            response = self.client.get(url)
+            response = self.client.get(url, {'scope': 'users'})
             self.assertEqual(response.status_code, 200)
             list(response.data['results'])
         for index in range(12):
@@ -462,7 +565,7 @@ class AccountManagementG3ApiTests(TestCase):
                 status=User.Status.ACTIVE,
             )
         with CaptureQueriesContext(connection) as expanded:
-            response = self.client.get(url)
+            response = self.client.get(url, {'scope': 'users'})
             self.assertEqual(response.status_code, 200)
             list(response.data['results'])
         self.assertLessEqual(len(expanded), len(baseline) + 1)

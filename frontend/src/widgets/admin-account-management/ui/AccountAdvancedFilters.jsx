@@ -24,14 +24,18 @@ export default function AccountAdvancedFilters({
   filters,
   departments,
   roles,
-  hideAdminFields = false,
+  recruiterOnly = false,
   onChange,
   onDone,
 }) {
   const patch = (name, value) => onChange({ ...filters, [name]: value })
-  const advancedKeys = hideAdminFields
+  const advancedKeys = recruiterOnly
     ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
-    : ADVANCED_KEYS
+    : ADVANCED_KEYS.filter((key) => ![
+      'company',
+      'company_state',
+      'verification_status',
+    ].includes(key))
   const activeCount = advancedKeys.filter((key) => isFilled(filters[key])).length
 
   return (
@@ -63,18 +67,49 @@ export default function AccountAdvancedFilters({
               options={BOOLEAN_OPTIONS}
             />
           </Field>
-          <Field label="Mã công ty" hint="Áp dụng cho tài khoản nhà tuyển dụng">
-            <Input
-              allowClear
-              placeholder="Ví dụ: cmp_..."
-              value={filters.company}
-              onChange={(event) => patch('company', event.target.value)}
-            />
-          </Field>
+          {recruiterOnly && (
+            <>
+              <Field label="Mã công ty">
+                <Input
+                  allowClear
+                  placeholder="Ví dụ: co_..."
+                  value={filters.company}
+                  onChange={(event) => patch('company', event.target.value)}
+                />
+              </Field>
+              <Field label="Liên kết công ty">
+                <Select
+                  value={filters.company_state}
+                  onChange={(value) => patch('company_state', value)}
+                  options={[
+                    { value: '', label: 'Mọi trạng thái liên kết' },
+                    { value: 'linked', label: 'Đã liên kết công ty' },
+                    { value: 'missing', label: 'Chưa liên kết công ty' },
+                  ]}
+                />
+              </Field>
+              <Field label="Xác thực đại diện">
+                <Select
+                  value={filters.verification_status}
+                  onChange={(value) => patch('verification_status', value)}
+                  options={[
+                    { value: '', label: 'Mọi trạng thái xác thực' },
+                    { value: 'none', label: 'Chưa có hồ sơ' },
+                    { value: 'draft', label: 'Chưa nộp' },
+                    { value: 'pending', label: 'Chờ duyệt' },
+                    { value: 'in_review', label: 'Đang xử lý' },
+                    { value: 'changes_requested', label: 'Cần bổ sung' },
+                    { value: 'approved', label: 'Đã xác thực' },
+                    { value: 'rejected', label: 'Bị từ chối' },
+                  ]}
+                />
+              </Field>
+            </>
+          )}
         </div>
       </section>
 
-      {!hideAdminFields && (
+      {!recruiterOnly && (
         <section>
           <h4>Phân quyền quản trị</h4>
           <div className="account-filter-grid">

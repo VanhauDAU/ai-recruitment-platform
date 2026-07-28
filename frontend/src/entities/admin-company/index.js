@@ -2,6 +2,7 @@ export {
   getAdminCompanies,
   getAdminCompany,
   getAdminCompanyRecruiters,
+  getAdminCompanySummary,
 } from './api/admin-company.api'
 export { adminCompanyKeys } from './api/admin-company.keys'
 export {

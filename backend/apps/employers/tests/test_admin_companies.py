@@ -6,7 +6,13 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import AdminPermission, AdminRole, Department, User
 from apps.accounts.services import assign_membership
 
-from ..models import Company, EmployerVerificationCase, Industry, RecruiterProfile
+from ..models import (
+    Company,
+    CompanyUpdateRequest,
+    EmployerVerificationCase,
+    Industry,
+    RecruiterProfile,
+)
 from ..selectors import admin_companies_queryset
 
 
@@ -244,6 +250,64 @@ class AdminCompanyApiTests(APITestCase):
                 [self.owner_user.email, self.member_user.email],
                 reverse=True,
             ),
+        )
+
+    def test_summary_uses_all_companies_instead_of_the_current_page(self):
+        for index in range(22):
+            creator = self._employer(
+                f'summary-owner-{index}@example.com',
+                f'Owner {index}',
+            )
+            Company.objects.create(
+                company_name=f'Công ty summary {index}',
+                verification_status=(
+                    Company.VerificationStatus.VERIFIED
+                    if index < 3
+                    else Company.VerificationStatus.UNVERIFIED
+                ),
+                created_by=creator,
+            )
+        self.client.force_authenticate(self.superuser)
+
+        response = self.client.get(reverse('admin-company-summary'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['total'], 23)
+        self.assertEqual(response.data['verification']['verified'], 3)
+        self.assertEqual(response.data['verification']['pending'], 1)
+        self.assertEqual(response.data['companies_without_single_owner'], 22)
+
+    def test_company_update_queue_orders_by_number_of_changed_fields(self):
+        small = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.owner_user,
+            changes={'trade_name': 'Alpha mới'},
+        )
+        other_owner = self._employer('update-owner@example.com', 'Owner cập nhật')
+        other_company = Company.objects.create(
+            company_name='Công ty cập nhật',
+            created_by=other_owner,
+        )
+        large = CompanyUpdateRequest.objects.create(
+            company=other_company,
+            requested_by=other_owner,
+            changes={
+                'company_name': 'Tên mới',
+                'trade_name': 'Tên thương mại mới',
+                'address': 'Địa chỉ mới',
+            },
+        )
+        self.client.force_authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-company-update-request-list'),
+            {'ordering': '-change_count'},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(
+            [item['public_id'] for item in response.data['results']],
+            [large.public_id, small.public_id],
         )
 
 

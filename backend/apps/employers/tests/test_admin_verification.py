@@ -241,6 +241,50 @@ class EmployerAccountVerificationTests(APITestCase):
             ).exists()
         )
 
+    def test_approving_one_document_keeps_another_rejection_visible(self):
+        rejected_document = self.first_case.documents.get(
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
+        )
+        rejected_document.status = CompanyDocument.Status.REJECTED
+        rejected_document.review_note = 'Văn bản DLCN thiếu chữ ký.'
+        rejected_document.save(update_fields=['status', 'review_note'])
+        self.first_case.status = EmployerVerificationCase.Status.REJECTED
+        self.first_case.decision_reason = rejected_document.review_note
+        self.first_case.save(update_fields=['status', 'decision_reason'])
+        approved_document = self.first_case.documents.get(
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-employer-verification-review-document',
+                kwargs={
+                    'public_id': self.first_case.public_id,
+                    'document_public_id': approved_document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.APPROVED,
+                'reason': 'Nội dung cũ không được giữ khi duyệt.',
+                'lock_version': self.first_case.lock_version,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        approved_document.refresh_from_db()
+        self.first_case.refresh_from_db()
+        self.assertEqual(approved_document.review_note, '')
+        self.assertEqual(
+            self.first_case.status,
+            EmployerVerificationCase.Status.REJECTED,
+        )
+        self.assertEqual(
+            self.first_case.decision_reason,
+            'Văn bản DLCN thiếu chữ ký.',
+        )
+
     def test_admin_can_approve_one_of_multiple_unverified_companies_with_same_tax_code(self):
         duplicate_company = Company.objects.create(
             company_name='Công ty trùng MST chưa xác thực',
@@ -421,6 +465,54 @@ class EmployerAccountVerificationTests(APITestCase):
             [item['public_id'] for item in response.data['results']],
             [self.first_case.public_id],
         )
+
+    def test_pending_queue_includes_a_rejected_case_with_a_resubmitted_document(self):
+        business_document = self.first_case.documents.get(
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION
+        )
+        business_document.is_current = False
+        business_document.status = CompanyDocument.Status.REJECTED
+        business_document.save(update_fields=['is_current', 'status', 'updated_at'])
+        replacement = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.first,
+            uploaded_by=self.first_user,
+            verification_case=self.first_case,
+            supersedes=business_document,
+            version=business_document.version + 1,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/replacement-business.pdf',
+            file_name='replacement-business.pdf',
+            mime_type='application/pdf',
+            file_size=1024,
+            sha256='f' * 64,
+            status=CompanyDocument.Status.PENDING,
+        )
+        dpa = self.first_case.documents.get(
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
+        )
+        dpa.status = CompanyDocument.Status.REJECTED
+        dpa.review_note = 'Văn bản dữ liệu cá nhân chưa đạt.'
+        dpa.save(update_fields=['status', 'review_note', 'updated_at'])
+        self.first_case.status = EmployerVerificationCase.Status.REJECTED
+        self.first_case.decision_reason = dpa.review_note
+        self.first_case.save(update_fields=['status', 'decision_reason', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(
+            reverse('admin-employer-verification-list'),
+            {'status': EmployerVerificationCase.Status.PENDING},
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        result = next(
+            item
+            for item in response.data['results']
+            if item['public_id'] == self.first_case.public_id
+        )
+        self.assertEqual(result['status'], EmployerVerificationCase.Status.REJECTED)
+        self.assertEqual(result['pending_document_count'], 1)
+        self.assertTrue(replacement.is_current)
 
     def test_view_only_reviewer_cannot_open_sensitive_document(self):
         reviewer = User.objects.create_user(

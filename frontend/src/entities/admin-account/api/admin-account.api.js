@@ -9,8 +9,8 @@ export function getAdminAccounts(params = {}, { signal } = {}) {
   return data(client.get('/admin/accounts/', { params, signal }))
 }
 
-export function getAdminAccountSummary({ signal } = {}) {
-  return data(client.get('/admin/accounts/summary/', { signal }))
+export function getAdminAccountSummary(params = {}, { signal } = {}) {
+  return data(client.get('/admin/accounts/summary/', { params, signal }))
 }
 
 export function getAdminAccount(publicId, { signal } = {}) {

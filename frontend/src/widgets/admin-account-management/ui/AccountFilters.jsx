@@ -30,7 +30,11 @@ export default function AccountFilters({
 
   const advancedKeys = recruiterOnly
     ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
-    : ADVANCED_KEYS
+    : ADVANCED_KEYS.filter((key) => ![
+      'company',
+      'company_state',
+      'verification_status',
+    ].includes(key))
   const advancedCount = advancedKeys.filter((key) => isFilled(filters[key])).length
   const chips = [
     ['q', 'Từ khóa', filters.q.trim()],
@@ -42,7 +46,22 @@ export default function AccountFilters({
       ['department', 'Phòng ban', departments.find((item) => item.public_id === filters.department)?.name],
       ['admin_role', 'Chức danh', roles.find((item) => item.public_id === filters.admin_role)?.name],
     ] : []),
-    ['company', 'Mã công ty', filters.company.trim()],
+    ...(recruiterOnly ? [
+      ['company', 'Mã công ty', filters.company.trim()],
+      ['company_state', 'Liên kết công ty', {
+        linked: 'Đã liên kết',
+        missing: 'Chưa liên kết',
+      }[filters.company_state]],
+      ['verification_status', 'Xác thực NTD', {
+        none: 'Chưa có hồ sơ',
+        draft: 'Chưa nộp',
+        pending: 'Chờ duyệt',
+        in_review: 'Đang xử lý',
+        changes_requested: 'Cần bổ sung',
+        approved: 'Đã xác thực',
+        rejected: 'Bị từ chối',
+      }[filters.verification_status]],
+    ] : []),
     ['created_range', 'Ngày tạo', filters.created_range?.length === 2 && rangeText(filters.created_range)],
     ['last_login_range', 'Đăng nhập', filters.last_login_range?.length === 2 && rangeText(filters.last_login_range)],
   ].filter(([, , value]) => Boolean(value))
@@ -52,7 +71,7 @@ export default function AccountFilters({
       filters={filters}
       departments={departments}
       roles={roles}
-      hideAdminFields={recruiterOnly}
+      recruiterOnly={recruiterOnly}
       onChange={onChange}
       onDone={() => setAdvancedOpen(false)}
     />

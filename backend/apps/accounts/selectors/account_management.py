@@ -33,6 +33,10 @@ SENSITIVE_PROVISIONING_CODES = frozenset(
     }
 )
 
+ACCOUNT_SCOPE_USERS = 'users'
+ACCOUNT_SCOPE_RECRUITERS = 'recruiters'
+ACCOUNT_SCOPES = frozenset({ACCOUNT_SCOPE_USERS, ACCOUNT_SCOPE_RECRUITERS})
+
 
 def _account_visibility(actor):
     if actor.is_superuser:
@@ -109,6 +113,12 @@ def accounts_queryset(actor, *, params=None):
         )
         .distinct()
     )
+    scope = params.get('scope', '').strip()
+    if scope == ACCOUNT_SCOPE_USERS:
+        queryset = queryset.filter(role__in=[User.Role.CANDIDATE, User.Role.ADMIN])
+    elif scope == ACCOUNT_SCOPE_RECRUITERS:
+        queryset = queryset.filter(role=User.Role.EMPLOYER)
+
     query = params.get('q', '').strip()
     if query:
         queryset = queryset.filter(
@@ -116,9 +126,11 @@ def accounts_queryset(actor, *, params=None):
             | Q(full_name__icontains=query)
             | Q(public_id__icontains=query)
         )
-    for field in ('role', 'status'):
-        if params.get(field):
-            queryset = queryset.filter(**{field: params[field]})
+    if params.get('role'):
+        queryset = queryset.filter(role=params['role'])
+    if params.get('status'):
+        statuses = [value.strip() for value in params['status'].split(',') if value.strip()]
+        queryset = queryset.filter(status__in=statuses)
     for key, field in (
         ('email_verified', 'email_verified'),
         ('mfa', 'two_factor_enabled'),
@@ -147,6 +159,18 @@ def accounts_queryset(actor, *, params=None):
         )
     if params.get('company'):
         queryset = queryset.filter(recruiter_profile__company__public_id=params['company'])
+    company_state = params.get('company_state', '').lower()
+    if company_state == 'linked':
+        queryset = queryset.filter(recruiter_profile__company__isnull=False)
+    elif company_state == 'missing':
+        queryset = queryset.filter(
+            Q(recruiter_profile__isnull=True) | Q(recruiter_profile__company__isnull=True)
+        )
+    verification_status = params.get('verification_status', '')
+    if verification_status == 'none':
+        queryset = queryset.filter(recruiter_profile__verification_case__isnull=True)
+    elif verification_status in EmployerVerificationCase.Status.values:
+        queryset = queryset.filter(recruiter_profile__verification_case__status=verification_status)
     for key, lookup in (
         ('created_from', 'date_joined__date__gte'),
         ('created_to', 'date_joined__date__lte'),
@@ -165,13 +189,30 @@ def accounts_queryset(actor, *, params=None):
         '-email',
         'full_name',
         '-full_name',
+        'role',
+        '-role',
+        'status',
+        '-status',
+        'email_verified',
+        '-email_verified',
+        'two_factor_enabled',
+        '-two_factor_enabled',
+        'last_session_seen_at',
+        '-last_session_seen_at',
+        'recruiter_profile__company__company_name',
+        '-recruiter_profile__company__company_name',
+        'recruiter_profile__company_role',
+        '-recruiter_profile__company_role',
+        'recruiter_profile__onboarding_completed_at',
+        '-recruiter_profile__onboarding_completed_at',
+        'recruiter_profile__verification_case__status',
+        '-recruiter_profile__verification_case__status',
     }
     return queryset.order_by(ordering if ordering in allowed else '-date_joined', '-id')
 
 
-def account_summary(actor):
-    base = User.objects.filter(is_deleted=False).filter(_account_visibility(actor)).distinct()
-    summary = base.aggregate(
+def _status_summary(queryset):
+    return queryset.aggregate(
         total=Count('id', distinct=True),
         active=Count('id', filter=Q(status=User.Status.ACTIVE), distinct=True),
         restricted=Count(
@@ -180,12 +221,74 @@ def account_summary(actor):
             distinct=True,
         ),
         unverified=Count('id', filter=Q(email_verified=False), distinct=True),
-        pending_admin=Count(
-            'id',
-            filter=Q(role=User.Role.ADMIN, status=User.Status.PENDING),
-            distinct=True,
-        ),
     )
+
+
+def account_summary(actor, *, scope=''):
+    base = User.objects.filter(is_deleted=False).filter(_account_visibility(actor)).distinct()
+    if scope == ACCOUNT_SCOPE_USERS:
+        users = base.filter(role__in=[User.Role.CANDIDATE, User.Role.ADMIN])
+        pending_invitations = invitation_queryset(
+            actor,
+            params={'status': AdminInvitation.Status.PENDING},
+        ).filter(expires_at__gt=timezone.now())
+        return {
+            'scope': ACCOUNT_SCOPE_USERS,
+            'totals': _status_summary(users),
+            'by_role': {
+                User.Role.CANDIDATE: _status_summary(users.filter(role=User.Role.CANDIDATE)),
+                User.Role.ADMIN: _status_summary(users.filter(role=User.Role.ADMIN)),
+            },
+            'queues': {
+                'pending_admin_invitations': pending_invitations.count(),
+            },
+        }
+    if scope == ACCOUNT_SCOPE_RECRUITERS:
+        recruiters = base.filter(role=User.Role.EMPLOYER)
+        verification_base = EmployerVerificationCase.objects.filter(recruiter__user__in=recruiters)
+        pending_states = [
+            EmployerVerificationCase.Status.PENDING,
+            EmployerVerificationCase.Status.IN_REVIEW,
+        ]
+        pending_verification_filter = Q(status__in=pending_states) | Q(
+            documents__is_current=True,
+            documents__status=CompanyDocument.Status.PENDING,
+        )
+        return {
+            'scope': ACCOUNT_SCOPE_RECRUITERS,
+            'totals': _status_summary(recruiters),
+            'linked_company': recruiters.filter(recruiter_profile__company__isnull=False).count(),
+            'companyless': recruiters.filter(
+                Q(recruiter_profile__isnull=True) | Q(recruiter_profile__company__isnull=True)
+            ).count(),
+            'onboarding_incomplete': recruiters.filter(
+                Q(recruiter_profile__isnull=True)
+                | Q(recruiter_profile__onboarding_completed_at__isnull=True)
+            ).count(),
+            'verification': {
+                'approved': verification_base.filter(
+                    status=EmployerVerificationCase.Status.APPROVED
+                ).count(),
+                'pending': verification_base.filter(pending_verification_filter).distinct().count(),
+                'overdue': verification_base.filter(
+                    pending_verification_filter,
+                    submitted_at__lt=timezone.now() - timedelta(hours=72),
+                )
+                .distinct()
+                .count(),
+                'changes_requested': verification_base.filter(
+                    status=EmployerVerificationCase.Status.CHANGES_REQUESTED
+                ).count(),
+            },
+        }
+
+    summary = {
+        **_status_summary(base),
+        'pending_admin': base.filter(
+            role=User.Role.ADMIN,
+            status=User.Status.PENDING,
+        ).count(),
+    }
     verification_base = EmployerVerificationCase.objects.filter(recruiter__user__in=base)
     pending_states = [
         EmployerVerificationCase.Status.PENDING,
@@ -243,7 +346,25 @@ def invitation_queryset(actor, *, params=None):
             | Q(invited_by__email__icontains=query)
             | Q(invited_by__full_name__icontains=query)
         )
-    return queryset.order_by('-created_at', '-id')
+    ordering = params.get('ordering', '-created_at')
+    allowed = {
+        'user__full_name',
+        '-user__full_name',
+        'target_role__name',
+        '-target_role__name',
+        'invited_by__full_name',
+        '-invited_by__full_name',
+        'status',
+        '-status',
+        'expires_at',
+        '-expires_at',
+        'created_at',
+        '-created_at',
+    }
+    return queryset.order_by(
+        ordering if ordering in allowed else '-created_at',
+        '-id',
+    )
 
 
 def available_invitation_roles(actor):

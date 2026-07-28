@@ -4,7 +4,7 @@ export const ADMIN_ROUTES = [
     segment: '/dashboard',
     lazyKey: 'AdminDashboardPage',
     title: 'Bảng điều khiển',
-    navLabel: 'Tổng quan',
+    navLabel: 'Trang chủ',
     iconKey: 'dashboard',
     permission: 'dashboard.view',
     showInNav: true,
@@ -120,6 +120,19 @@ export const ADMIN_ROUTES = [
       'employer_verification.view',
     ],
     showInNav: true,
+  },
+  {
+    id: 'recruiterDetail',
+    segment: '/recruiters/:publicId',
+    lazyKey: 'AdminRecruiterDetailPage',
+    title: 'Chi tiết nhà tuyển dụng',
+    permissionsAny: [
+      'account.employer.view',
+      'account.view',
+      'employer_verification.view',
+      'company_update.view',
+    ],
+    showInNav: false,
   },
   {
     id: 'accountDetail',

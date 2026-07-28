@@ -6,6 +6,17 @@ import { useSession } from '@/entities/session'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
 import AdminCompanyUpdateQueue from './AdminCompanyUpdateQueue'
 
+const DIRECTORY_QUERY_KEYS = [
+  'q',
+  'verification_status',
+  'owner_state',
+  'industry',
+  'created_from',
+  'created_to',
+  'ordering',
+  'page',
+]
+
 export default function AdminCompanyWorkspace() {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
@@ -32,8 +43,12 @@ export default function AdminCompanyWorkspace() {
     if (tab === 'directory') {
       next.delete('tab')
       next.delete('company')
+      next.delete('update_q')
+      next.delete('update_page')
+      next.delete('update_ordering')
     } else {
       next.set('tab', tab)
+      DIRECTORY_QUERY_KEYS.forEach((key) => next.delete(key))
     }
     next.delete('page')
     setSearchParams(next)

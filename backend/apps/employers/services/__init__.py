@@ -17,7 +17,7 @@ from .companies import (
     set_company_industries,
     verify_company,
 )
-from .document_preview import render_office_document_preview
+from .document_preview import render_office_document_preview, render_office_upload_preview
 from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import (
     ensure_recruiter_candidate_data_access,
@@ -60,6 +60,7 @@ __all__ = [
     'create_campaign',
     'create_initial_recruitment_need',
     'render_office_document_preview',
+    'render_office_upload_preview',
     'ensure_recruiter_candidate_data_access',
     'confirm_verification_decision',
     'record_campaign_activity',

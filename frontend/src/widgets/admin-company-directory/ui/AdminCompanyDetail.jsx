@@ -1,6 +1,7 @@
 import {
   ArrowLeftOutlined,
   BankOutlined,
+  EyeOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -18,7 +19,7 @@ import {
   Tabs,
   Tag,
 } from 'antd'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminCompanyKeys,
   getAdminCompany,
@@ -169,6 +170,8 @@ function Overview({ company }) {
 }
 
 function RecruiterRoster({ company, enabled }) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('recruiter_page') || 1)
   const role = searchParams.get('role') || ''
@@ -221,7 +224,22 @@ function RecruiterRoster({ company, enabled }) {
       width: 260,
       sorter: true,
       render: (_, recruiter) => (
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="company-directory__company-button"
+          onClick={() => navigate(
+            adminPath(`/recruiters/${recruiter.account.public_id}`),
+            {
+              state: {
+                origin: {
+                  pathname: location.pathname,
+                  search: location.search,
+                  label: company.company_name,
+                },
+              },
+            },
+          )}
+        >
           <Avatar
             aria-label={`Ảnh đại diện ${recruiter.account.full_name || recruiter.account.email}`}
             size={38}
@@ -239,7 +257,7 @@ function RecruiterRoster({ company, enabled }) {
               {recruiter.account.email}
             </div>
           </div>
-        </div>
+        </button>
       ),
     },
     {
@@ -309,6 +327,32 @@ function RecruiterRoster({ company, enabled }) {
       width: 170,
       sorter: true,
       render: formatDate,
+    },
+    {
+      title: '',
+      key: 'actions',
+      fixed: 'right',
+      width: 92,
+      render: (_, recruiter) => (
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => navigate(
+            adminPath(`/recruiters/${recruiter.account.public_id}`),
+            {
+              state: {
+                origin: {
+                  pathname: location.pathname,
+                  search: location.search,
+                  label: company.company_name,
+                },
+              },
+            },
+          )}
+        >
+          Chi tiết
+        </Button>
+      ),
     },
   ]
 
@@ -444,12 +488,19 @@ function Verification({ company }) {
 
 export default function AdminCompanyDetail({ publicId }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const canViewRecruiters = isSuperuser || has('company_recruiter.view')
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedTab = searchParams.get('tab') || 'overview'
   const activeTab = TAB_KEYS.has(requestedTab) ? requestedTab : 'overview'
+  const origin = location.state?.origin
+  const safeOrigin = origin?.pathname?.startsWith(adminPath('/')) ? origin : null
+  const backTarget = safeOrigin
+    ? `${safeOrigin.pathname}${safeOrigin.search || ''}`
+    : adminPath('/companies')
+  const backLabel = safeOrigin?.label || 'Danh sách công ty'
   const companyQuery = useQuery({
     queryKey: adminCompanyKeys.detail(publicId),
     queryFn: ({ signal }) => getAdminCompany(publicId, { signal }),
@@ -522,8 +573,8 @@ export default function AdminCompanyDetail({ publicId }) {
 
   return (
     <div className="company-directory company-directory--detail space-y-5">
-      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(adminPath('/companies'))}>
-        Danh sách công ty
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(backTarget)}>
+        {backLabel}
       </Button>
 
       <header className="company-directory__hero">

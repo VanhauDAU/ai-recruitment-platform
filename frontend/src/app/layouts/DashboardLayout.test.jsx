@@ -1,12 +1,29 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, theme as antdTheme } from 'antd'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardLayout from './DashboardLayout'
 
-const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
+const {
+  getAdminAccountSummary,
+  getAdminCompanySummary,
+  useSession,
+} = vi.hoisted(() => ({
+  getAdminAccountSummary: vi.fn(),
+  getAdminCompanySummary: vi.fn(),
+  useSession: vi.fn(),
+}))
 vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/admin-account', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getAdminAccountSummary,
+}))
+vi.mock('@/entities/admin-company', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getAdminCompanySummary,
+}))
 vi.mock('@/entities/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
 }))
@@ -16,8 +33,36 @@ function ThemeProbe() {
   return <span data-testid="admin-primary-token">{token.colorPrimary}</span>
 }
 
+function renderDashboard(ui) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>,
+  )
+}
+
 describe('DashboardLayout admin access', () => {
-  beforeEach(() => useSession.mockReset())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getAdminAccountSummary.mockImplementation(({ scope }) => Promise.resolve(
+      scope === 'recruiters'
+        ? {
+          totals: { restricted: 2 },
+          verification: { pending: 3 },
+        }
+        : {
+          totals: { restricted: 4 },
+          queues: { pending_admin_invitations: 5 },
+        },
+    ))
+    getAdminCompanySummary.mockResolvedValue({
+      verification: { pending: 6 },
+      pending_update_requests: 7,
+    })
+  })
 
   it('filters navigation with the shared permission policy', async () => {
     const user = userEvent.setup()
@@ -40,7 +85,7 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    render(
+    renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/job-moderation']}>
         <DashboardLayout />
       </MemoryRouter>,
@@ -67,11 +112,19 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    render(
+    renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
+
+    const homeButton = screen.getByRole('button', { name: 'Trang chủ' })
+    const personalAccountButton = screen.getByRole('button', { name: 'Tài khoản cá nhân' })
+    expect(homeButton).toHaveAttribute('aria-current', 'page')
+    expect(homeButton).not.toHaveAttribute('aria-expanded')
+    expect(personalAccountButton).not.toHaveAttribute('aria-expanded')
+    expect(screen.queryByText('Bảng điều khiển')).not.toBeInTheDocument()
+    expect(screen.queryByText('Thông tin cá nhân')).not.toBeInTheDocument()
 
     expect(screen.getByText('Nội dung & dịch vụ')).toBeInTheDocument()
     expect(screen.queryByText('Danh mục')).not.toBeInTheDocument()
@@ -93,7 +146,7 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    render(
+    renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
@@ -129,7 +182,7 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    const { container } = render(
+    const { container } = renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
@@ -154,7 +207,7 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    render(
+    renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
@@ -170,6 +223,39 @@ describe('DashboardLayout admin access', () => {
     expect(contentSection).toHaveAttribute('aria-expanded', 'false')
   })
 
+  it('shows highlighted two-digit queue counts in submenu items', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'superuser@example.com',
+        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+      },
+      logout: vi.fn(),
+    })
+    renderDashboard(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
+    expect(
+      await within(businessMenu).findByLabelText('18 mục đang chờ'),
+    ).toHaveTextContent('18')
+    await user.click(businessMenu)
+    expect(within(businessMenu).queryByLabelText('18 mục đang chờ')).not.toBeInTheDocument()
+
+    const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
+    expect(within(recruiterMenu).getByLabelText('5 mục đang chờ')).toHaveTextContent('05')
+    await user.click(recruiterMenu)
+    expect(within(recruiterMenu).queryByLabelText('5 mục đang chờ')).not.toBeInTheDocument()
+
+    const badge = await screen.findByLabelText('3 mục đang chờ')
+    expect(badge).toHaveTextContent('03')
+    expect(badge).toHaveClass('admin-nav__count')
+  })
+
   it('shows the active third-level item in the workspace header', () => {
     useSession.mockReturnValue({
       user: {
@@ -179,7 +265,7 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    render(
+    renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/companies?tab=updates']}>
         <DashboardLayout />
       </MemoryRouter>,
@@ -202,7 +288,7 @@ describe('DashboardLayout admin access', () => {
       },
       logout: vi.fn(),
     })
-    render(
+    renderDashboard(
       <MemoryRouter>
         <DashboardLayout />
       </MemoryRouter>,
@@ -226,7 +312,7 @@ describe('DashboardLayout admin access', () => {
       logout,
     })
 
-    render(
+    renderDashboard(
       <MemoryRouter>
         <DashboardLayout />
       </MemoryRouter>,
@@ -252,7 +338,7 @@ describe('DashboardLayout admin access', () => {
       logout: vi.fn(),
     })
 
-    render(
+    renderDashboard(
       <ConfigProvider theme={{ token: { colorPrimary: '#7c3aed' } }}>
         <MemoryRouter>
           <Routes>

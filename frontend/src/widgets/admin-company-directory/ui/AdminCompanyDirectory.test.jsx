@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -10,11 +10,13 @@ const {
   getAdminCompanies,
   getAdminCompany,
   getAdminCompanyRecruiters,
+  getAdminCompanySummary,
   useSession,
 } = vi.hoisted(() => ({
   getAdminCompanies: vi.fn(),
   getAdminCompany: vi.fn(),
   getAdminCompanyRecruiters: vi.fn(),
+  getAdminCompanySummary: vi.fn(),
   useSession: vi.fn(),
 }))
 
@@ -23,6 +25,7 @@ vi.mock('@/entities/admin-company', async (importOriginal) => ({
   getAdminCompanies,
   getAdminCompany,
   getAdminCompanyRecruiters,
+  getAdminCompanySummary,
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
@@ -87,6 +90,10 @@ function renderWithApp(element, initialEntry) {
             path="/admin/app/companies/:publicId"
             element={<><AdminCompanyDetail publicId="co_alpha" /><LocationProbe /></>}
           />
+          <Route
+            path="/admin/app/recruiters/:publicId"
+            element={<LocationProbe />}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -105,6 +112,12 @@ describe('admin company directory', () => {
     getAdminCompanies.mockResolvedValue({ count: 1, results: [company] })
     getAdminCompany.mockResolvedValue(company)
     getAdminCompanyRecruiters.mockResolvedValue({ count: 0, results: [] })
+    getAdminCompanySummary.mockResolvedValue({
+      total: 1,
+      verification: { pending: 1, verified: 0 },
+      pending_update_requests: 1,
+      companies_without_single_owner: 0,
+    })
   })
 
   it('keeps company and recruiter verification status visually separate', async () => {
@@ -124,6 +137,22 @@ describe('admin company directory', () => {
       expect.objectContaining({ verification_status: 'pending' }),
       expect.any(Object),
     )
+  })
+
+  it('uses server summary instead of the current company page', async () => {
+    getAdminCompanySummary.mockResolvedValue({
+      total: 47,
+      verification: { pending: 8, verified: 31 },
+      pending_update_requests: 6,
+      companies_without_single_owner: 2,
+    })
+    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+
+    expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('47')
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('31')
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('8')
+    expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('6')
   })
 
   it('opens the read-only company detail', async () => {
@@ -159,7 +188,6 @@ describe('admin company directory', () => {
   })
 
   it('loads owner/member roster only after opening the recruiter tab', async () => {
-    const user = userEvent.setup()
     getAdminCompanyRecruiters.mockResolvedValue({
       count: 1,
       results: [{
@@ -187,11 +215,16 @@ describe('admin company directory', () => {
       '/admin/app/companies/co_alpha',
     )
 
-    await user.click(await screen.findByRole('tab', { name: /Nhà tuyển dụng/ }))
+    fireEvent.click(await screen.findByRole('tab', { name: /Nhà tuyển dụng/ }))
 
     expect(await screen.findByText('HR Manager')).toBeInTheDocument()
     expect(screen.getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
     expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
-  })
+
+    fireEvent.click(screen.getByRole('button', { name: /Chi tiết/ }))
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/admin/app/recruiters/usr_owner',
+    )
+  }, 15_000)
 })

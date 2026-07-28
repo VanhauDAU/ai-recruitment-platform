@@ -4,6 +4,7 @@ import {
   changeAccountStatus,
   createAdminInvitation,
   getAdminAccounts,
+  getAdminAccountSummary,
   getAvailableAdminInvitationRoles,
   getProvisioningScopeImpact,
   resendAdminInvitation,
@@ -42,6 +43,14 @@ describe('admin account management API', () => {
     await getAdminAccounts(params, { signal: 'signal' })
     expect(get).toHaveBeenCalledWith('/admin/accounts/', {
       params,
+      signal: 'signal',
+    })
+  })
+
+  it('requests the explicit account summary scope', async () => {
+    await getAdminAccountSummary({ scope: 'users' }, { signal: 'signal' })
+    expect(get).toHaveBeenCalledWith('/admin/accounts/summary/', {
+      params: { scope: 'users' },
       signal: 'signal',
     })
   })
