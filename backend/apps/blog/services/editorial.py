@@ -33,6 +33,9 @@ class BlogResourceChanged(APIException):
                 'current_revision': current_revision,
             }
         )
+        # APIException chuyển mọi scalar trong detail thành ErrorDetail (chuỗi).
+        # Giữ revision là số để client có một contract nhất quán.
+        self.detail['current_revision'] = current_revision
 
 
 def _state(post):
@@ -80,6 +83,10 @@ def _copy_from_post(post, actor):
         post=post,
         defaults={
             **{field: getattr(post, field) for field in EDITABLE_FIELDS},
+            # Working copy tiếp tục cùng chuỗi optimistic-lock của bài gốc.
+            # Nếu quay về revision mặc định 1, lần autosave đầu của một bài đã
+            # publish nhiều lần sẽ bị nhận nhầm là xung đột.
+            'edit_revision': post.edit_revision,
             'created_by': actor,
             'updated_by': actor,
         },
@@ -94,6 +101,17 @@ def _copy_from_post(post, actor):
             to_status='published_with_draft',
         )
     return copy
+
+
+def _next_post_revision(post, working_copy=None):
+    """Giữ revision tăng đơn điệu khi working copy bị nhập hoặc bị xóa."""
+    return (
+        max(
+            post.edit_revision,
+            getattr(working_copy, 'edit_revision', post.edit_revision),
+        )
+        + 1
+    )
 
 
 @transaction.atomic
@@ -192,7 +210,7 @@ def publish_post(*, post, actor):
         for field in EDITABLE_FIELDS:
             setattr(post, field, getattr(copy, field))
         post.status = Post.Status.PUBLISHED
-        post.edit_revision += 1
+        post.edit_revision = _next_post_revision(post, copy)
         post.save(update_fields=[*EDITABLE_FIELDS, 'status', 'edit_revision', 'updated_at'])
         post.tags.set(copy.tags.all())
         copy.delete()
@@ -212,10 +230,10 @@ def archive_post(*, post, actor, note):
     post = Post.objects.select_for_update().get(pk=post.pk)
     before = _state(post)
     copy = getattr(post, 'working_copy', None)
+    post.edit_revision = _next_post_revision(post, copy)
     if copy:
         copy.delete()
     post.status = Post.Status.ARCHIVED
-    post.edit_revision += 1
     post.save(update_fields=['status', 'edit_revision', 'updated_at'])
     _history(
         post,
@@ -255,7 +273,10 @@ def discard_draft(*, post, actor):
         if copy.status != PostWorkingCopy.Status.DRAFT:
             raise ValidationError({'detail': 'Không thể hủy bản sửa đang chờ duyệt.'})
         before = _state(post)
+        post.edit_revision = _next_post_revision(post, copy)
         copy.delete()
+        # Chỉ đổi lock token; nội dung public và mốc cập nhật public không đổi.
+        post.save(update_fields=['edit_revision'])
         _history(
             post,
             actor=actor,
