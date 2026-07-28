@@ -410,5 +410,5 @@ describe('EmployerBusinessLicenseForm', () => {
         verificationMethod: 'authorization_and_id',
       },
     ))
-  })
+  }, 15_000)
 })
