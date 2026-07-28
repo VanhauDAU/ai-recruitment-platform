@@ -1,3 +1,17 @@
+from .announcements import (
+    ActiveAnnouncementFeedSerializer,
+    ActiveAnnouncementQuerySerializer,
+    ActiveAnnouncementSerializer,
+    AdminAnnouncementDetailSerializer,
+    AdminAnnouncementListSerializer,
+    AnnouncementActionSerializer,
+    AnnouncementCreateSerializer,
+    AnnouncementDuplicateSerializer,
+    AnnouncementRenameSerializer,
+    AnnouncementRevisionCreateSerializer,
+    AnnouncementRevisionReadSerializer,
+    AnnouncementRevisionWriteSerializer,
+)
 from .settings import (
     AdminLocaleSerializer,
     AdminSiteSettingSerializer,
@@ -9,8 +23,20 @@ from .settings import (
 )
 
 __all__ = [
+    'ActiveAnnouncementFeedSerializer',
+    'ActiveAnnouncementQuerySerializer',
+    'ActiveAnnouncementSerializer',
     'AdminLocaleSerializer',
+    'AdminAnnouncementDetailSerializer',
+    'AdminAnnouncementListSerializer',
     'AdminSiteSettingSerializer',
+    'AnnouncementActionSerializer',
+    'AnnouncementCreateSerializer',
+    'AnnouncementDuplicateSerializer',
+    'AnnouncementRenameSerializer',
+    'AnnouncementRevisionCreateSerializer',
+    'AnnouncementRevisionReadSerializer',
+    'AnnouncementRevisionWriteSerializer',
     'BannerSerializer',
     'FeedbackSerializer',
     'LinkGroupSerializer',
