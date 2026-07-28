@@ -293,7 +293,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   await expect(page.getByText('Sales', { exact: true }).last()).toBeVisible()
   await expect(page.getByText('Nhân viên kinh doanh', { exact: true })).toBeVisible()
   await page.getByText('Tạo thẻ mới “Nghề Sales”').click()
-  await expect(page.locator('.ant-select-selection-item-content').filter({ hasText: /^Nghề Sales$/ })).toBeVisible()
+  await expect(page.getByText('Đã tạo thẻ “Nghề Sales”.')).toBeVisible()
 
   await page.goto('/admin/app/blog')
   await page.getByRole('tab', { name: 'Thẻ' }).click()
