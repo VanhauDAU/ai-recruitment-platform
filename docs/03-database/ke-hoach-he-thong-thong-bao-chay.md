@@ -1,6 +1,6 @@
 # Hệ thống thông báo chạy đa cổng
 
-Trạng thái: **đặc tả đã chốt, chưa triển khai runtime**
+Trạng thái: **AN-P1 backend foundation đã triển khai; runtime UI bắt đầu ở AN-P2**
 Epic theo dõi: `AN-P0` đến `AN-P6` trong
 [`docs/TIEN-DO-DU-AN.md`](../TIEN-DO-DU-AN.md).
 
@@ -193,6 +193,10 @@ Namespace giữ tiền tố sitecontent hiện hành:
 - `POST /api/site/admin/announcements/{public_id}/{publish|pause|resume|archive|duplicate}/`
 - `GET /api/site/admin/announcements/{public_id}/metrics/`
 
+AN-P1 cung cấp active feed và toàn bộ API quản trị revision/lifecycle. Functional
+state, event batch và metrics API được giữ ngoài URLconf đến AN-P4; không tạo
+endpoint giả trả dữ liệu chưa được xử lý.
+
 Public feed trả `200` với `items: []` khi không có dữ liệu. Dismiss/snooze dùng
 `PUT` để idempotent. Event batch trả `202`; tracking best-effort không chặn CTA.
 Chi tiết field được khóa trong
@@ -254,6 +258,12 @@ không tái sử dụng feed qua logout/login.
 Rollback application code không xóa permission, revision, audit hay metric.
 Không reverse schema trên production chỉ để tắt giao diện; ưu tiên kill switch
 và rollback code tương thích schema additive.
+
+Migration AN-P1 là `accounts/0019_announcement_permissions.py` và
+`sitecontent/0016_announcement_announcementrevision_and_more.py`. Reverse đã
+được test trên test database; permission/grant cố ý được giữ lại khi rollback
+để không làm mất lịch sử phân quyền. Schema announcement có thể reverse trong
+môi trường kiểm thử nhưng production rollback chỉ lùi application code.
 
 ## 12. Definition of Done
 

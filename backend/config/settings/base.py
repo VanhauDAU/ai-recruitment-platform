@@ -317,6 +317,13 @@ SPECTACULAR_SETTINGS = {
         # CvSkill.Level và JobSkill.MinLevel cùng tập beginner/intermediate/advanced -> 1 enum chung
         'SkillLevelEnum': 'apps.jobs.models.JobSkill.MinLevel',
         'LocationLevelEnum': 'apps.locations.models.Location.Level',
+        'AnnouncementLifecycleStateEnum': ('apps.sitecontent.models.Announcement.LifecycleState'),
+        'AnnouncementKindEnum': 'apps.sitecontent.models.AnnouncementRevision.Kind',
+        'AnnouncementSurfaceEnum': 'apps.sitecontent.models.AnnouncementRevision.Surface',
+        'AnnouncementAudienceEnum': 'apps.sitecontent.models.AnnouncementRevision.Audience',
+        'AnnouncementIconEnum': 'apps.sitecontent.models.AnnouncementRevision.Icon',
+        'AnnouncementAnimationEnum': 'apps.sitecontent.models.AnnouncementRevision.Animation',
+        'AnnouncementDismissModeEnum': ('apps.sitecontent.models.AnnouncementRevision.DismissMode'),
     },
     'TAGS': [
         {'name': 'auth', 'description': 'Đăng ký, đăng nhập, JWT, tài khoản hiện tại'},

@@ -374,24 +374,24 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 
 ## Thông báo chạy đa cổng
 
-> Trạng thái AN-P0: contract đã chốt; endpoint được triển khai ở AN-P1. Nguồn
-> thiết kế canonical:
+> Trạng thái AN-P1: backend foundation và OpenAPI đã triển khai. Runtime UI thuộc
+> AN-P2; dismiss/event/metrics thuộc AN-P4. Nguồn thiết kế canonical:
 > [kế hoạch hệ thống thông báo chạy](../03-database/ke-hoach-he-thong-thong-bao-chay.md).
 
 | Method | Endpoint | Quyền | Mục đích |
 | --- | --- | --- | --- |
 | `GET` | `/api/site/announcements/active/` | Theo surface/session | Feed runtime đã target và xếp priority |
-| `PUT` | `/api/site/announcements/{public_id}/state/` | Authenticated | Dismiss/snooze idempotent |
-| `POST` | `/api/site/announcements/events/` | AllowAny + consent/throttle | Batch impression/click/dismiss |
+| `PUT` | `/api/site/announcements/{public_id}/state/` | AN-P4 | Dismiss/snooze idempotent — chưa mở route |
+| `POST` | `/api/site/announcements/events/` | AN-P4 | Batch analytics consent-aware — chưa mở route |
 | `GET/POST` | `/api/site/admin/announcements/` | `announcement.view/manage` | List/create |
-| `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | `announcement.view/manage` | Detail/update draft |
+| `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | `announcement.view/manage` | Detail/lịch sử và đổi tên vận hành |
 | `POST` | `/api/site/admin/announcements/{public_id}/revisions/` | `announcement.manage` | Tạo revision mới |
 | `POST` | `/api/site/admin/announcements/{public_id}/publish/` | `announcement.publish` | Publish ngay hoặc schedule |
 | `POST` | `/api/site/admin/announcements/{public_id}/pause/` | `announcement.publish` | Pause |
 | `POST` | `/api/site/admin/announcements/{public_id}/resume/` | `announcement.publish` | Resume |
 | `POST` | `/api/site/admin/announcements/{public_id}/archive/` | `announcement.publish` | Archive |
 | `POST` | `/api/site/admin/announcements/{public_id}/duplicate/` | `announcement.manage` | Tạo draft độc lập |
-| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | `announcement.view` | Daily metrics theo surface |
+| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | AN-P4 | Daily metrics — chưa mở route |
 
 Public feed yêu cầu `surface`, chấp nhận `path` và `locale`. Role/auth state lấy
 từ request. Surface/path/locale sai trả `400`; không có item trả `200` với mảng
@@ -400,4 +400,6 @@ rỗng. Feed personalized dùng `Cache-Control: private, no-store`.
 Admin mutation lỗi validation trả `400`; thiếu quyền trả
 `403 admin_permission_denied`; resource không tồn tại trả `404`; revision stale
 trả `409 announcement_revision_stale`. Publish/pause/resume/archive là service
-transactional và ghi audit.
+transactional, khóa hàng bằng `select_for_update()` và ghi audit. Mọi mutation
+sau create gửi `revision_token`; publish gửi thêm số `revision`. Revision đã
+publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo revision mới.

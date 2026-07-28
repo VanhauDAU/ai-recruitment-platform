@@ -4,12 +4,14 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.models import SiteSetting
 from common.email import send_html_email as send_email
 
 
 def site_setting(key, default=''):
-    return get_string_setting(key, default)
+    setting = SiteSetting.objects.filter(key=key).only('value').first()
+    value = setting.value if setting else None
+    return value if isinstance(value, str) and value.strip() else default
 
 
 def from_email():

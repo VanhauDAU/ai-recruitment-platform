@@ -1,6 +1,15 @@
 from django.urls import path
 
 from .api.views import (
+    ActiveAnnouncementListView,
+    AdminAnnouncementArchiveView,
+    AdminAnnouncementDetailView,
+    AdminAnnouncementDuplicateView,
+    AdminAnnouncementListCreateView,
+    AdminAnnouncementPauseView,
+    AdminAnnouncementPublishView,
+    AdminAnnouncementResumeView,
+    AdminAnnouncementRevisionCreateView,
     AdminLocaleDetailView,
     AdminLocaleListCreateView,
     AdminSettingUploadView,
@@ -13,6 +22,51 @@ from .api.views import (
 )
 
 urlpatterns = [
+    path(
+        'announcements/active/',
+        ActiveAnnouncementListView.as_view(),
+        name='site-announcements-active',
+    ),
+    path(
+        'admin/announcements/',
+        AdminAnnouncementListCreateView.as_view(),
+        name='site-admin-announcements',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/',
+        AdminAnnouncementDetailView.as_view(),
+        name='site-admin-announcement-detail',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/revisions/',
+        AdminAnnouncementRevisionCreateView.as_view(),
+        name='site-admin-announcement-revisions',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/publish/',
+        AdminAnnouncementPublishView.as_view(),
+        name='site-admin-announcement-publish',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/pause/',
+        AdminAnnouncementPauseView.as_view(),
+        name='site-admin-announcement-pause',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/resume/',
+        AdminAnnouncementResumeView.as_view(),
+        name='site-admin-announcement-resume',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/archive/',
+        AdminAnnouncementArchiveView.as_view(),
+        name='site-admin-announcement-archive',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/duplicate/',
+        AdminAnnouncementDuplicateView.as_view(),
+        name='site-admin-announcement-duplicate',
+    ),
     path('settings/', SiteSettingListView.as_view(), name='site-settings'),
     path('locales/', LocaleListView.as_view(), name='site-locales'),
     path('admin/locales/', AdminLocaleListCreateView.as_view(), name='site-admin-locales'),

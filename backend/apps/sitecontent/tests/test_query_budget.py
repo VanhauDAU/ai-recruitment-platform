@@ -3,12 +3,21 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.accounts.models import User
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 
 from ..models import LinkGroup, LinkItem
+from ..services import (
+    create_announcement,
+    create_announcement_revision,
+    publish_announcement,
+)
+from .announcement_helpers import revision_payload
 
 LINK_GROUP_LIST_QUERY_BUDGET = 4
+ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET = 1
+ADMIN_ANNOUNCEMENT_LIST_QUERY_BUDGET = 2
 
 
 class LinkGroupQueryBudgetTests(APITestCase):
@@ -74,3 +83,69 @@ class LinkGroupQueryBudgetTests(APITestCase):
         self.assertEqual(len(groups['locations-1']['items']), 2)
         self.assertEqual(len(groups['categories-0']['items']), 1)
         self.assertEqual(len(groups['categories-1']['items']), 2)
+
+
+class AnnouncementQueryBudgetTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email='announcement-query-admin@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            is_superuser=True,
+        )
+        for index in range(8):
+            announcement = create_announcement(
+                actor=self.admin,
+                internal_name=f'Thông báo {index}',
+                revision_data=revision_payload(priority=index),
+            )
+            publish_announcement(
+                announcement=announcement,
+                actor=self.admin,
+                revision_number=1,
+                expected_revision_token=1,
+            )
+
+    def test_public_feed_query_count_is_flat(self):
+        with self.assertNumQueries(ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET):
+            response = self.client.get(
+                reverse('site-announcements-active'),
+                {'surface': 'candidate', 'path': '/'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['items']), 8)
+
+    def test_admin_list_query_count_is_flat(self):
+        self.client.force_authenticate(self.admin)
+        with self.assertNumQueries(ADMIN_ANNOUNCEMENT_LIST_QUERY_BUDGET):
+            response = self.client.get(reverse('site-admin-announcements'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 8)
+
+    def test_admin_detail_query_count_is_flat_across_revision_history(self):
+        announcement = create_announcement(
+            actor=self.admin,
+            internal_name='Lịch sử revision',
+            revision_data=revision_payload(),
+        )
+        for number in range(2, 7):
+            announcement, _ = create_announcement_revision(
+                announcement=announcement,
+                actor=self.admin,
+                revision_data=revision_payload(message_vi=f'Revision {number}'),
+                expected_revision_token=number - 1,
+            )
+        self.client.force_authenticate(self.admin)
+
+        with self.assertNumQueries(2):
+            response = self.client.get(
+                reverse(
+                    'site-admin-announcement-detail',
+                    kwargs={'public_id': announcement.public_id},
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['revisions']), 6)

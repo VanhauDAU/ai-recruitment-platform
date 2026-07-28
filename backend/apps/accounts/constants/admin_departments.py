@@ -13,6 +13,8 @@ ADMIN_DEPARTMENTS = (
                 'rank': 10,
                 'permissions': (
                     'dashboard.view',
+                    'announcement.view',
+                    'announcement.manage',
                     'cv_template.view',
                     'cv_template.create',
                     'cv_template.edit',
@@ -27,6 +29,9 @@ ADMIN_DEPARTMENTS = (
                 'rank': 100,
                 'permissions': (
                     'dashboard.view',
+                    'announcement.view',
+                    'announcement.manage',
+                    'announcement.publish',
                     'cv_template.view',
                     'cv_template.create',
                     'cv_template.edit',
