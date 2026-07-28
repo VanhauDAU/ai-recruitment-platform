@@ -4,11 +4,19 @@ function isHtmlResponse(value) {
   return normalized.startsWith('<!doctype html') || normalized.startsWith('<html') || normalized.includes('<body')
 }
 
+// Khoá máy-đọc trong payload lỗi (vd SimpleJWT trả {detail, code}) — không ghép
+// vào chuỗi hiển thị, nếu không người dùng thấy "... no_active_account".
+const MACHINE_READABLE_KEYS = new Set(['code', 'codes', 'error_code', 'error'])
+
 function flattenMessages(value) {
   if (!value || isHtmlResponse(value)) return []
   if (typeof value === 'string') return [value]
   if (Array.isArray(value)) return value.flatMap(flattenMessages)
-  if (typeof value === 'object') return Object.values(value).flatMap(flattenMessages)
+  if (typeof value === 'object') {
+    return Object.entries(value)
+      .filter(([key]) => !MACHINE_READABLE_KEYS.has(key))
+      .flatMap(([, item]) => flattenMessages(item))
+  }
   return []
 }
 
@@ -34,6 +42,7 @@ function explicitApiMessage(data) {
   ) {
     return data.detail.message
   }
+  if (typeof data.detail === 'string') return data.detail
   return ''
 }
 

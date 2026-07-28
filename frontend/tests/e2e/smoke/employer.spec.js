@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => {
@@ -74,6 +74,7 @@ test('employer smoke: login loads and dashboard stays role-protected', async ({ 
   await mockPublicApi(page)
   await page.goto('/tuyendung/app/login')
   await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
+  await expectAnimatedLoginButton(page)
   await expectNoHorizontalOverflow(page)
 
   await page.goto('/tuyendung/app/dashboard')

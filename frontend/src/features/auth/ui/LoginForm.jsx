@@ -1,6 +1,6 @@
-import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
+import { LockOutlined, MailOutlined } from '@ant-design/icons'
 import { Alert, Form, Input } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { getApiErrorMessage, getOAuthErrorMessage } from '@/shared/api/error-mapper'
@@ -11,43 +11,10 @@ import { login, resendTwoFactorLogin, verifyTwoFactorLogin } from '../api/auth.a
 import TwoFactorCodeModal from '@/shared/ui/TwoFactorCodeModal'
 import { getReturnUrl } from '../model/return-url'
 import { getAuthDestination } from '../model/password-login-destination'
+import AuthFormStyles from './AuthFormStyles'
+import LoginSubmitButton from './LoginSubmitButton'
 
-// Style animation/nút dùng chung cho các trang auth (login + register các cổng).
-export function AuthFormStyles() {
-  return (
-    <style>{`
-      @keyframes fadeSlideUp {
-        from { opacity: 0; transform: translateY(18px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
-      }
-      .login-card { animation: fadeSlideUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
-      .login-field { animation: fadeSlideUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
-      .login-field:nth-child(1) { animation-delay: 0.05s; }
-      .login-field:nth-child(2) { animation-delay: 0.1s; }
-      .login-field:nth-child(3) { animation-delay: 0.15s; }
-      .login-field:nth-child(4) { animation-delay: 0.2s; }
-      .social-btn { transition: all 0.18s ease; }
-      .social-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-      .submit-btn {
-        position: relative; overflow: hidden;
-        background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
-        transition: all 0.2s ease;
-      }
-      .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,177,79,0.35); }
-      .submit-btn:active { transform: translateY(0); }
-      .submit-btn::after {
-        content: ''; position: absolute; inset: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
-        pointer-events: none;
-      }
-      .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); }
-    `}</style>
-  )
-}
+export { AuthFormStyles }
 
 /**
  * Form đăng nhập dùng chung cho 3 cổng (main / tuyendung / admin).
@@ -81,6 +48,7 @@ export default function LoginForm({
   const [warning, setWarning] = useState(() => location.state?.authWarning || '')
   const [loading, setLoading] = useState(false)
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null)
+  const submitLockedRef = useRef(false)
   const [form] = Form.useForm()
   const returnUrl = getReturnUrl(searchParams)
   const employerAppearance = appearance === 'employer'
@@ -104,11 +72,15 @@ export default function LoginForm({
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function onFinish(values) {
+    // React state có thể chưa render kịp giữa hai click/Enter liên tiếp. Ref này
+    // khóa đồng bộ trong cùng event loop để chỉ phát đúng một request đăng nhập.
+    if (submitLockedRef.current) return
     if (!executeRecaptcha) {
       clearPassword()
       setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
       return
     }
+    submitLockedRef.current = true
     setError('')
     setLoading(true)
     try {
@@ -137,6 +109,7 @@ export default function LoginForm({
         setError(getApiErrorMessage(err, 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.'))
       }
     } finally {
+      submitLockedRef.current = false
       setLoading(false)
     }
   }
@@ -198,6 +171,7 @@ export default function LoginForm({
           >
             <Input
               size="large"
+              disabled={loading}
               autoComplete="email"
               prefix={<MailOutlined className="text-[var(--brand-primary)]" />}
               placeholder="ten@congty.com"
@@ -234,6 +208,7 @@ export default function LoginForm({
           >
             <Input.Password
               size="large"
+              disabled={loading}
               autoComplete="current-password"
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
               placeholder="Nhập mật khẩu của bạn"
@@ -243,28 +218,7 @@ export default function LoginForm({
         </div>
 
         <div className="login-field pt-1">
-          <button
-            type="submit"
-            disabled={loading}
-            className={`submit-btn w-full flex items-center justify-center gap-2.5 px-6 py-3.5 text-base font-bold text-white cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${employerAppearance ? 'rounded-lg' : 'rounded-full'}`}
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="4"/>
-                  <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                Đang đăng nhập...
-              </>
-            ) : (
-              <>
-                Đăng nhập
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
-                  <ArrowRightOutlined className="text-xs" />
-                </span>
-              </>
-            )}
-          </button>
+          <LoginSubmitButton loading={loading} employerAppearance={employerAppearance} />
         </div>
       </Form>
 

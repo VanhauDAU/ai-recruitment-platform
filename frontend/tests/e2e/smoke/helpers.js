@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test'
+
 export async function mockPublicApi(page) {
   const servicePackages = [{
     key: 'featured-jobs', name_vi: 'Tin tuyển dụng nổi bật', name_en: 'Featured job postings',
@@ -54,4 +56,21 @@ export async function mockPublicApi(page) {
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
+}
+
+export async function expectAnimatedLoginButton(page) {
+  const button = page.getByTestId('login-submit')
+  const track = button.locator('.submit-btn__track')
+
+  await expect(button).toBeVisible()
+  await expect(button).toHaveAccessibleName('Đăng nhập')
+  await expect(button.locator('.submit-btn__label')).toHaveCount(2)
+
+  // Thiết bị cảm ứng không có hover; desktop kiểm tra thêm trạng thái chuyển động.
+  if (page.viewportSize().width >= 1024) {
+    await button.hover()
+    await expect.poll(
+      () => track.evaluate((element) => getComputedStyle(element).transform),
+    ).not.toBe('none')
+  }
 }
