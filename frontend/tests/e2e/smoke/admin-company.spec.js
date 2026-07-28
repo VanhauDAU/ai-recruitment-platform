@@ -1,0 +1,146 @@
+import { expect, test } from '@playwright/test'
+
+const adminUser = {
+  public_id: 'usr_root',
+  email: 'root@example.com',
+  full_name: 'System Admin',
+  role: 'admin',
+  status: 'active',
+  admin_access: {
+    is_superuser: true,
+    permissions: [],
+    memberships: [],
+  },
+}
+
+const company = {
+  public_id: 'co_alpha',
+  company_name: 'Công ty Alpha',
+  trade_name: 'Alpha',
+  logo_url: '',
+  business_type: 'enterprise',
+  business_type_label: 'Doanh nghiệp',
+  tax_code: '0101234567',
+  verification_status: 'pending',
+  verification_status_label: 'Chờ duyệt',
+  owners: [{
+    public_id: 'rec_owner',
+    user_public_id: 'usr_owner',
+    full_name: 'Owner chính',
+    email: 'owner@alpha.example',
+  }],
+  recruiter_count: 2,
+  owner_count: 1,
+  member_count: 1,
+  pending_update_count: 1,
+  recruiter_verification_summary: {
+    none: 1,
+    draft: 0,
+    pending: 0,
+    changes_requested: 0,
+    approved: 1,
+    rejected: 0,
+  },
+  website_url: 'https://alpha.example',
+  email: 'contact@alpha.example',
+  phone: '0901234567',
+  address: 'Hà Nội',
+  company_size: '25-99',
+  company_size_label: '25 - 99 nhân viên',
+  description: 'Công ty công nghệ',
+  industries: [{ id: 1, name: 'Công nghệ', slug: 'cong-nghe', is_primary: true }],
+  created_by: {
+    public_id: 'usr_owner',
+    full_name: 'Owner chính',
+    email: 'owner@alpha.example',
+  },
+  images: [],
+  created_at: '2026-07-01T00:00:00Z',
+  updated_at: '2026-07-02T00:00:00Z',
+}
+
+test('admin company directory: three-level navigation, detail and owner roster', async ({
+  page,
+}, testInfo) => {
+  const usesDrawer = testInfo.project.name !== 'desktop-chromium'
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? adminUser
+        : path === '/api/admin/companies/'
+          ? { count: 1, next: null, previous: null, results: [company] }
+          : path === '/api/admin/companies/co_alpha/'
+            ? company
+            : path === '/api/admin/companies/co_alpha/recruiters/'
+              ? {
+                  count: 1,
+                  next: null,
+                  previous: null,
+                  results: [{
+                    public_id: 'rec_owner',
+                    account: {
+                      public_id: 'usr_owner',
+                      full_name: 'Owner chính',
+                      email: 'owner@alpha.example',
+                      status: 'active',
+                      email_verified: true,
+                      is_deleted: false,
+                    },
+                    company_role: 'owner',
+                    company_role_label: 'Người tạo công ty',
+                    position_title: 'HR Manager',
+                    contact_phone: '0901111111',
+                    phone_verified: true,
+                    onboarding_completed: true,
+                    verification: {
+                      public_id: 'evc_owner',
+                      status: 'approved',
+                      status_label: 'Đã xác thực',
+                    },
+                    created_at: '2026-07-01T00:00:00Z',
+                  }],
+                }
+              : path === '/api/privacy/consent/'
+                ? {
+                    consent: {
+                      necessary: true,
+                      preferences: false,
+                      analytics: false,
+                      marketing: false,
+                    },
+                  }
+                : {}
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    })
+  })
+
+  await page.goto('/admin/app/companies')
+  await expect(page.getByRole('heading', { name: 'Danh sách công ty' })).toBeVisible()
+
+  if (usesDrawer) {
+    await page.getByRole('button', { name: 'Mở điều hướng' }).click()
+    const drawer = page.getByRole('dialog')
+    await drawer.getByRole('button', { name: /Công ty & NTD/ }).click()
+    await drawer.getByRole('button', { name: /^Công ty Pháp nhân/ }).click()
+  } else {
+    await page.getByRole('button', { name: /^Công ty Pháp nhân/ }).click()
+  }
+  const companyListLeaf = page.getByRole('button', { name: 'Danh sách công ty' })
+  await expect(companyListLeaf).toBeVisible()
+  await companyListLeaf.click()
+
+  await page.getByRole('button', { name: /Công ty Alpha/ }).click()
+  await expect(page).toHaveURL('/admin/app/companies/co_alpha')
+  await expect(page.getByRole('heading', { name: 'Công ty Alpha' })).toBeVisible()
+  await page.getByRole('tab', { name: /Nhà tuyển dụng/ }).click()
+  await expect(page.getByText('HR Manager')).toBeVisible()
+  await expect(page.getByText('Đã xác thực', { exact: true })).toBeVisible()
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
+})

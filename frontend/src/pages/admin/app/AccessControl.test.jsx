@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AccessControl from './AccessControl'
 
@@ -252,7 +253,9 @@ function renderPage(superuser = true) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <AccessControl />
+      <MemoryRouter>
+        <AccessControl />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }

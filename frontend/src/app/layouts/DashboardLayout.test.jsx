@@ -19,7 +19,8 @@ function ThemeProbe() {
 describe('DashboardLayout admin access', () => {
   beforeEach(() => useSession.mockReset())
 
-  it('filters navigation with the shared permission policy', () => {
+  it('filters navigation with the shared permission policy', async () => {
+    const user = userEvent.setup()
     useSession.mockReturnValue({
       user: {
         role: 'admin',
@@ -45,9 +46,10 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
-    expect(screen.getByText('Tài khoản của tôi')).toBeInTheDocument()
-    expect(screen.queryByText('Cài đặt hệ thống')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Việc làm/ }))
+    expect(screen.getByText('Kiểm duyệt tin')).toBeInTheDocument()
+    expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
+    expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
     expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()
   })
 
@@ -71,13 +73,14 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Nội dung & kiểm duyệt')).toBeInTheDocument()
-    expect(screen.queryByText('Catalogue CV')).not.toBeInTheDocument()
+    expect(screen.getByText('Nội dung & kinh doanh')).toBeInTheDocument()
+    expect(screen.queryByText('Chuyên mục')).not.toBeInTheDocument()
 
-    await user.click(screen.getByText('Nội dung & kiểm duyệt'))
+    await user.click(screen.getByText('Nội dung & kinh doanh'))
+    await user.click(screen.getByText('Blog'))
 
-    expect(await screen.findByText('Catalogue CV')).toBeInTheDocument()
-    expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
+    expect(await screen.findByText('Chuyên mục')).toBeInTheDocument()
+    expect(screen.getByText('Bài viết')).toBeInTheDocument()
   })
 
   it('keeps only one navigation section expanded at a time', async () => {
@@ -96,14 +99,14 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    const contentSection = screen.getByText('Nội dung & kiểm duyệt').closest('li')
-    const accountSection = screen.getByText('Quản trị tài khoản').closest('li')
-    await user.click(screen.getByText('Nội dung & kiểm duyệt'))
-    expect(contentSection).toHaveClass('ant-menu-submenu-open')
+    const contentSection = screen.getByRole('button', { name: /Nội dung & kinh doanh/ })
+    const accountSection = screen.getByRole('button', { name: /Công ty & NTD/ })
+    await user.click(contentSection)
+    expect(contentSection).toHaveAttribute('aria-expanded', 'true')
 
-    await user.click(screen.getByText('Quản trị tài khoản'))
-    expect(accountSection).toHaveClass('ant-menu-submenu-open')
-    expect(contentSection).not.toHaveClass('ant-menu-submenu-open')
+    await user.click(accountSection)
+    expect(accountSection).toHaveAttribute('aria-expanded', 'true')
+    expect(contentSection).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('shows a useful empty state for an unassigned admin', () => {
