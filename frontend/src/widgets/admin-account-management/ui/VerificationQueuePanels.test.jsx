@@ -46,10 +46,10 @@ describe('admin employer review queues', () => {
 
     expect(screen.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Trạng thái xác thực NTD' })).toBeInTheDocument()
-    expect(screen.getByText('Chờ duyệt', { selector: '.ant-select-content' })).toBeInTheDocument()
+    expect(screen.getByText('Cần xử lý', { selector: '.ant-select-content' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Yêu cầu sửa thông tin công ty' })).not.toBeInTheDocument()
     await waitFor(() => expect(apiMocks.getAdminEmployerVerifications).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'pending' }),
+      expect.objectContaining({ status: 'actionable' }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
   })

@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 
 const STATUS_OPTIONS = [
+  { value: 'actionable', label: 'Cần xử lý' },
   { value: 'all', label: 'Tất cả trạng thái' },
   { value: 'pending', label: 'Chờ duyệt' },
   { value: 'in_review', label: 'Đang xử lý' },
@@ -47,7 +48,7 @@ function verificationFiltersFromQuery(searchParams) {
   const submittedTo = searchParams.get(VERIFICATION_QUERY_KEYS.submitted_to)
   return {
     q: searchParams.get(VERIFICATION_QUERY_KEYS.q) || '',
-    status: searchParams.get(VERIFICATION_QUERY_KEYS.status) || 'pending',
+    status: searchParams.get(VERIFICATION_QUERY_KEYS.status) || 'actionable',
     document_type: searchParams.get(VERIFICATION_QUERY_KEYS.document_type) || '',
     phone_verified: searchParams.get(VERIFICATION_QUERY_KEYS.phone_verified) || '',
     age: searchParams.get(VERIFICATION_QUERY_KEYS.age) || '',
@@ -115,7 +116,7 @@ export default function VerificationQueuePanel() {
       const queryKey = VERIFICATION_QUERY_KEYS[key]
       const defaultValue = key === 'ordering'
         ? '-submitted_at'
-        : key === 'status' ? 'pending' : ''
+        : key === 'status' ? 'actionable' : ''
       if (value === defaultValue || value === '' || value == null || (key === 'page' && value === 1)) {
         next.delete(queryKey)
       } else {

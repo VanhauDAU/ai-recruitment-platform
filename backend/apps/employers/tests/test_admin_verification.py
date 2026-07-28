@@ -514,6 +514,27 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(result['pending_document_count'], 1)
         self.assertTrue(replacement.is_current)
 
+    def test_actionable_queue_matches_summary_for_an_in_review_case(self):
+        self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
+        self.first_case.save(update_fields=['status', 'updated_at'])
+        self.second_case.status = EmployerVerificationCase.Status.APPROVED
+        self.second_case.save(update_fields=['status', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+
+        queue = self.client.get(
+            reverse('admin-employer-verification-list'),
+            {'status': 'actionable'},
+        )
+        summary = self.client.get(reverse('admin-employer-verification-summary'))
+
+        self.assertEqual(queue.status_code, 200, queue.data)
+        self.assertEqual(summary.status_code, 200, summary.data)
+        self.assertEqual(queue.data['count'], summary.data['pending'])
+        self.assertEqual(
+            [item['public_id'] for item in queue.data['results']],
+            [self.first_case.public_id],
+        )
+
     def test_view_only_reviewer_cannot_open_sensitive_document(self):
         reviewer = User.objects.create_user(
             email='view-only-reviewer@example.com',

@@ -19,6 +19,7 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
 
 test('admin account management: filters, table actions and quick detail are responsive', async ({ page }, testInfo) => {
   const pageErrors = []
+  let verificationQueueStatus = null
   const isMobile = testInfo.project.name === 'mobile-chromium'
   const usesNavigationDrawer = page.viewportSize().width < 1024
   page.on('pageerror', (error) => pageErrors.push(error.message))
@@ -96,7 +97,40 @@ test('admin account management: filters, table actions and quick detail are resp
         : path === '/api/admin/accounts/'
           ? { count: 1, next: null, previous: null, results: [candidate] }
           : path === '/api/admin/employer-verifications/'
-            ? { count: 0, next: null, previous: null, results: [] }
+            ? (() => {
+                verificationQueueStatus = requestUrl.searchParams.get('status')
+                return {
+                  count: 2,
+                  next: null,
+                  previous: null,
+                  results: [
+                    {
+                      public_id: 'evc_pending',
+                      user_public_id: 'usr_pending',
+                      full_name: 'NTD chờ duyệt',
+                      email: 'pending@example.com',
+                      company: { name: 'Công ty Pending', tax_code: '0101234567' },
+                      status: 'pending',
+                      pending_document_count: 1,
+                      missing_steps: ['business_documents_approved'],
+                      phone_verified: true,
+                      submitted_at: '2026-07-28T08:00:00Z',
+                    },
+                    {
+                      public_id: 'evc_review',
+                      user_public_id: 'usr_review',
+                      full_name: 'NTD đang xử lý',
+                      email: 'review@example.com',
+                      company: { name: 'Công ty Review', tax_code: '0107654321' },
+                      status: 'in_review',
+                      pending_document_count: 0,
+                      missing_steps: [],
+                      phone_verified: true,
+                      submitted_at: '2026-07-28T09:00:00Z',
+                    },
+                  ],
+                }
+              })()
           : path === '/api/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
           : path === '/api/admin/departments/' || path === '/api/admin/roles/'
@@ -147,7 +181,11 @@ test('admin account management: filters, table actions and quick detail are resp
   const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
   await expect(verificationTab).toContainText('2')
   await expect(verificationTab).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByText('Cần xử lý', { exact: true }).filter({ visible: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
+  await expect(page.getByText('NTD chờ duyệt')).toBeVisible()
+  await expect(page.getByText('NTD đang xử lý')).toBeVisible()
+  expect(verificationQueueStatus).toBe('actionable')
   await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
     .locator('.account-management-tab-content')
     .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
@@ -198,6 +236,7 @@ test('admin employer detail: company media and compact verification comparison r
     reviewer_email: null,
     phone_verified: true,
     lock_version: 0,
+    recruiter: { company_role: 'member' },
     checks: {
       email_verified: true,
       registration_completed: true,
@@ -223,19 +262,47 @@ test('admin employer detail: company media and compact verification comparison r
       },
       completed_at: '2026-07-26T08:05:00Z',
     },
-    documents: [{
-      public_id: 'doc_business',
-      doc_type: 'business_registration',
-      doc_type_label: 'Giấy đăng ký doanh nghiệp',
-      file_name: 'dang-ky-doanh-nghiep.svg',
-      mime_type: 'image/svg+xml',
-      version: 1,
-      is_current: true,
-      status: 'pending',
-      status_label: 'Chờ duyệt',
-      created_at: '2026-07-26T08:00:00Z',
-      duplicate_company_count: 0,
-    }],
+    documents: [
+      {
+        public_id: 'doc_business',
+        doc_type: 'business_registration',
+        doc_type_label: 'Giấy đăng ký doanh nghiệp',
+        file_name: 'dang-ky-doanh-nghiep.svg',
+        mime_type: 'image/svg+xml',
+        version: 1,
+        is_current: true,
+        status: 'pending',
+        status_label: 'Chờ duyệt',
+        created_at: '2026-07-26T08:00:00Z',
+        duplicate_company_count: 0,
+      },
+      {
+        public_id: 'doc_auth',
+        doc_type: 'authorization_letter',
+        doc_type_label: 'Giấy ủy quyền',
+        file_name: 'uy-quyen.pdf',
+        mime_type: 'application/pdf',
+        version: 1,
+        is_current: true,
+        status: 'approved',
+        status_label: 'Đã duyệt',
+        created_at: '2026-07-26T08:00:00Z',
+        duplicate_company_count: 0,
+      },
+      {
+        public_id: 'doc_dpa',
+        doc_type: 'data_processing_agreement',
+        doc_type_label: 'Thỏa thuận xử lý dữ liệu cá nhân',
+        file_name: 'dpa.pdf',
+        mime_type: 'application/pdf',
+        version: 1,
+        is_current: true,
+        status: 'approved',
+        status_label: 'Đã duyệt',
+        created_at: '2026-07-26T08:00:00Z',
+        duplicate_company_count: 0,
+      },
+    ],
     events: [],
   }
   const mediaImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='100%25' height='100%25' fill='%230ea5e9'/%3E%3C/svg%3E"
@@ -348,6 +415,13 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=verification$/)
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('heading', { name: 'Theo dõi hành trình xác thực' })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toHaveCount(0)
+  await expect(page.getByText('Quyền đại diện', { exact: true })).toBeVisible()
+  await expect(page.getByText('Pháp lý doanh nghiệp', { exact: true })).toBeVisible()
+  await expect(page.getByText('Bảo vệ dữ liệu', { exact: true })).toBeVisible()
+  await expect(page.getByText(/là thành viên của công ty/)).toBeVisible()
+  await page.getByRole('button', { name: 'Xem 9 bước' }).click()
+  await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Phóng to giấy tờ' })).toBeVisible()
   await expect(page.locator('.verification-image-zoom-value')).toHaveText('Vừa khung')

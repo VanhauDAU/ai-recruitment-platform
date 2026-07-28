@@ -195,7 +195,7 @@ export default function AccountTable({
       width: 180,
       sorter: true,
       sortOrder: sortOrder(ordering, 'last_session_seen_at'),
-      render: formatAdminDate,
+      render: (value) => formatAdminDate(value),
     },
     {
       title: 'Ngày tạo',
@@ -204,7 +204,7 @@ export default function AccountTable({
       width: 155,
       sorter: true,
       sortOrder: sortOrder(ordering, 'date_joined'),
-      render: formatAdminDate,
+      render: (value) => formatAdminDate(value),
     },
     actionColumn,
   ]
@@ -304,7 +304,7 @@ export default function AccountTable({
       width: 180,
       sorter: true,
       sortOrder: sortOrder(ordering, 'last_session_seen_at'),
-      render: formatAdminDate,
+      render: (value) => formatAdminDate(value),
     },
     {
       title: 'Ngày tham gia',
@@ -313,7 +313,7 @@ export default function AccountTable({
       width: 155,
       sorter: true,
       sortOrder: sortOrder(ordering, 'date_joined'),
-      render: formatAdminDate,
+      render: (value) => formatAdminDate(value),
     },
     actionColumn,
   ]

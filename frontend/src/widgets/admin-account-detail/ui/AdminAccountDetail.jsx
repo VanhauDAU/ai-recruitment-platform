@@ -174,7 +174,7 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
             { title: 'Cổng', dataIndex: 'portal' },
             { title: 'Phương thức', dataIndex: 'auth_method' },
             { title: 'IP', dataIndex: 'ip_address', render: (value) => value || '—' },
-            { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: formatAdminDate },
+            { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: (value) => formatAdminDate(value) },
             {
               title: 'Trạng thái',
               key: 'status',
@@ -211,7 +211,7 @@ function ActivityPanel({ publicId }) {
         onChange: setPage,
       }}
       columns={[
-        { title: 'Thời gian', dataIndex: 'created_at', render: formatAdminDate },
+        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => formatAdminDate(value) },
         {
           title: 'Hành động',
           dataIndex: 'action',
@@ -312,7 +312,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'Phát hành', dataIndex: 'lifecycle_status_label' },
         { title: 'Hiển thị', dataIndex: 'visibility_label' },
         { title: 'Mặc định', dataIndex: 'is_default', render: (value) => value ? 'Có' : 'Không' },
-        { title: 'Cập nhật', dataIndex: 'updated_at', render: formatAdminDate },
+        { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
       ]}
       />,
     },
@@ -325,7 +325,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'CV đã nộp', dataIndex: 'submitted_cv_title' },
         { title: 'Trạng thái', dataIndex: 'status_label' },
         { title: 'Nguồn', dataIndex: 'source_label' },
-        { title: 'Ngày ứng tuyển', dataIndex: 'applied_at', render: formatAdminDate },
+        { title: 'Ngày ứng tuyển', dataIndex: 'applied_at', render: (value) => formatAdminDate(value) },
       ]}
       />,
     },
@@ -336,7 +336,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'Mục đích', dataIndex: 'consent_type_label' },
         { title: 'Quyết định', dataIndex: 'decision_label' },
         { title: 'Phiên bản chính sách', dataIndex: 'policy_version' },
-        { title: 'Quyết định lúc', dataIndex: 'decided_at', render: formatAdminDate },
+        { title: 'Quyết định lúc', dataIndex: 'decided_at', render: (value) => formatAdminDate(value) },
       ]}
       />,
     },
@@ -370,7 +370,7 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Trạng thái', dataIndex: 'status_label' },
             { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
             { title: 'Hạn nộp', dataIndex: 'deadline' },
-            { title: 'Cập nhật', dataIndex: 'updated_at', render: formatAdminDate },
+            { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
           ]}
           />,
         },
@@ -383,7 +383,7 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Trạng thái', dataIndex: 'status_label' },
             { title: 'Tin tuyển dụng', dataIndex: 'job_count' },
             { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
-            { title: 'Cập nhật', dataIndex: 'updated_at', render: formatAdminDate },
+            { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
           ]}
           />,
         },

@@ -6,6 +6,22 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-29
+
+#### Fixed — Hàng chờ và chi tiết xác thực nhà tuyển dụng
+
+- Đồng nhất badge “Chờ xác thực NTD” với bộ lọc mặc định “Cần xử lý”: hàng chờ
+  nay gồm hồ sơ `pending`, `in_review` và hồ sơ có giấy tờ hiện hành chờ duyệt,
+  nên không còn badge có số nhưng bảng rỗng.
+- Sửa cảnh báo Ant Design `columns.render return cell props is deprecated` ở
+  bảng tài khoản. Formatter ngày nay chỉ nhận giá trị ô, không nhận nhầm cả
+  record làm fallback khi ngày trống.
+- Thu gọn hành trình 9 bước theo mặc định, cho phép mở chi tiết khi cần; nhóm
+  bộ giấy tờ theo quyền đại diện, pháp lý doanh nghiệp và bảo vệ dữ liệu.
+- Làm rõ đối chiếu mã số thuế là bằng chứng bổ trợ về pháp nhân công ty trong
+  hồ sơ xác thực quyền đại diện, không phải dấu hiệu NTD đã tạo hoặc chỉnh sửa
+  công ty; yêu cầu cập nhật công ty tiếp tục là workflow độc lập.
+
 ### 2026-07-27
 
 #### Changed — Quyền truy cập nhà tuyển dụng

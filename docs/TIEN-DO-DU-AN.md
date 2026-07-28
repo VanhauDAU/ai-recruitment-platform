@@ -1,5 +1,14 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-07-29 — UX xác thực nhà tuyển dụng quản trị
+
+- ✅ Đồng nhất badge hàng chờ với danh sách “Cần xử lý”, bao gồm hồ sơ đang
+  duyệt và giấy tờ nộp lại; không còn trạng thái badge `1` nhưng bảng rỗng.
+- ✅ Sửa warning cell render của Ant Design khi ngày trống.
+- ✅ Trang chi tiết mặc định thu gọn hành trình 9 bước, nhóm giấy tờ theo nghiệp
+  vụ và giải thích đúng phạm vi đối chiếu MST cho cả owner/member.
+- ✅ Bổ sung regression frontend/backend và cập nhật tài liệu luồng.
+
 ## Cập nhật 2026-07-26 — Vá reset mật khẩu Admin
 
 - Luồng “Gửi đặt lại mật khẩu” từ Quản lý tài khoản nhận diện đúng `role=admin`:
@@ -807,6 +816,9 @@ Cập nhật lần cuối: 2026-07-26 (ADMIN-RBAC-G2 — hoàn tất core quản
 ban/chức danh/nhân viên qua API và UI; superuser-only cho mọi ghi/dữ liệu nhân
 sự, impact token + row locking + audit/cache, seed/restore system-managed.
 Delegation scope, audit viewer, dashboard/blog và invite admin thuộc G3.)
+
+Cập nhật 2026-07-29 (ADMIN-EMPLOYER-VERIFY — đồng nhất badge/hàng chờ,
+thu gọn hành trình 9 bước, nhóm giấy tờ và làm rõ phạm vi đối chiếu MST.)
 
 Cập nhật 2026-07-26a (ADMIN-RBAC-G2 — migration `accounts.0014` backfill
 `is_system_managed`; ma trận seed chuyển vào constants và giữ độc lập ownership
