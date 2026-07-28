@@ -2,6 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.employers.selectors import build_employer_initial_onboarding
 from apps.employers.services import verification_checks
 
 from ...constants import ADMIN_PERMISSION_CODES
@@ -105,13 +106,20 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             company = recruiter.company
             verification = getattr(recruiter, 'verification_case', None)
             checks = verification_checks(verification) if verification else {}
+            initial_onboarding = build_employer_initial_onboarding(
+                recruiter,
+                has_recruitment_need=getattr(obj, '_has_recruitment_need', False),
+            )
             tax_code = company.tax_code if company else ''
             return {
                 'kind': 'employer',
                 'position_title': recruiter.position_title,
                 'company_role': recruiter.company_role,
                 'company_role_label': recruiter.get_company_role_display(),
-                'onboarding_completed': bool(recruiter.onboarding_completed_at),
+                'initial_onboarding': initial_onboarding,
+                # Compatibility for admin clients that have not moved to the
+                # explicit initial_onboarding object yet.
+                'onboarding_completed': initial_onboarding['completed'],
                 'phone_verified': bool(recruiter.phone_verified_at),
                 'verification': (
                     {

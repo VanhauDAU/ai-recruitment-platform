@@ -5,6 +5,7 @@ import { useState } from 'react'
 import {
   adminAccountKeys,
   getAdminAccountProfile,
+  InitialOnboardingStatus,
 } from '@/entities/admin-account'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { displayProfileValue } from '../model/profile-value'
@@ -36,7 +37,6 @@ const PROFILE_LABELS = {
   github_url: 'GitHub',
   linkedin_url: 'LinkedIn',
   registration_completed_at: 'Hoàn tất đăng ký lúc',
-  onboarding_completed_at: 'Hoàn tất onboarding lúc',
   terms_accepted_at: 'Chấp nhận điều khoản lúc',
   terms_policy_version: 'Phiên bản điều khoản',
   dpa_accepted_at: 'Chấp nhận DPA lúc',
@@ -116,6 +116,12 @@ export default function AccountProfilePanel({
   return (
     <div className="space-y-5">
       {toolbar}
+
+      {account.role === 'employer' && roleProfile?.initial_onboarding && (
+        <Card className="account-profile__card" title="Thiết lập ban đầu">
+          <InitialOnboardingStatus onboarding={roleProfile.initial_onboarding} />
+        </Card>
+      )}
 
       <Card
         className="account-profile__card"

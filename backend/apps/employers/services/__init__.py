@@ -18,7 +18,7 @@ from .companies import (
     verify_company,
 )
 from .document_preview import render_office_document_preview, render_office_upload_preview
-from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
+from .onboarding import accept_recruiter_dpa, phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import (
     ensure_recruiter_candidate_data_access,
     get_or_create_recruiter,
@@ -41,6 +41,8 @@ from .verification import (
     confirm_verification_decision,
     get_or_create_verification_case,
     reconcile_completed_verification_cases,
+    reconcile_recruiter_verification,
+    reconcile_verification_case,
     record_verification_upload,
     recruiter_is_approved,
     recruiter_requires_approved_verification,
@@ -55,6 +57,7 @@ __all__ = [
     'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'UPDATABLE_COMPANY_FIELDS',
+    'accept_recruiter_dpa',
     'apply_update_request',
     'change_campaign_status',
     'create_campaign',
@@ -69,6 +72,8 @@ __all__ = [
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',
+    'reconcile_recruiter_verification',
+    'reconcile_verification_case',
     'recruiter_posting_readiness',
     'latest_tax_lookup_evidence',
     'lookup_company_tax',

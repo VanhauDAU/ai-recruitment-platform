@@ -18,7 +18,7 @@ export default function EmployerRegistrationFields({ provinces = [], locationsLo
           { min: 2, message: 'Họ và tên cần ít nhất 2 ký tự' },
         ]}
       >
-        <Input prefix={<UserOutlined className="text-emerald-600" />} placeholder="Nguyễn Minh Anh" className={fieldClassName} />
+        <Input autoFocus prefix={<UserOutlined className="text-emerald-600" />} placeholder="Nguyễn Minh Anh" className={fieldClassName} />
       </Form.Item>
 
       <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}>

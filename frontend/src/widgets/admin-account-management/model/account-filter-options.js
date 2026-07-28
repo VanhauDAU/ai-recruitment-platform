@@ -26,7 +26,10 @@ export const ORDERING_OPTIONS = [
   { value: 'two_factor_enabled', label: 'Trạng thái MFA' },
   { value: 'recruiter_profile__company__company_name', label: 'Công ty A–Z' },
   { value: 'recruiter_profile__company_role', label: 'Vai trò trong công ty' },
-  { value: 'recruiter_profile__onboarding_completed_at', label: 'Onboarding' },
+  {
+    value: 'recruiter_initial_onboarding_completed',
+    label: 'Thiết lập ban đầu',
+  },
   { value: 'recruiter_profile__verification_case__status', label: 'Xác thực NTD' },
 ]
 

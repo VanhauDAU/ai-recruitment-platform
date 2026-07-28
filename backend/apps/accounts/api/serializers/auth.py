@@ -54,7 +54,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         Mô hình tách cổng — một email có thể có tài khoản ứng viên và NTD riêng.
         """
-        if User.objects.filter(email__iexact=attrs['email'], role=attrs['role']).exists():
+        if User.objects.email_claimed_for_role(attrs['email'], attrs['role']):
             raise serializers.ValidationError(
                 {'email': 'Email này đã được sử dụng cho một tài khoản cùng loại.'}
             )
@@ -160,11 +160,16 @@ class SessionUserSerializer(serializers.ModelSerializer):
             recruiter = obj.recruiter_profile
         except ObjectDoesNotExist:
             return 'registration'
-        if recruiter.registration_completed_at is None:
+        # Keep routing and the administrator read model on the same canonical
+        # three-step definition.
+        from apps.employers.selectors import build_employer_initial_onboarding
+
+        onboarding = build_employer_initial_onboarding(recruiter)
+        if not onboarding['steps']['registration_completed']:
             return 'registration'
-        if not obj.email_verified:
+        if not onboarding['steps']['email_verified']:
             return 'email_verification'
-        if not recruiter.recruitment_needs.exists():
+        if not onboarding['steps']['consulting_need_completed']:
             return 'consulting_need'
         return 'complete'
 
@@ -260,8 +265,9 @@ class ChangeEmailSerializer(serializers.Serializer):
         user = self.context['request'].user
         if value.lower() == user.email.lower():
             raise serializers.ValidationError('Email mới trùng với email hiện tại.')
-        # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng).
-        if User.objects.filter(email__iexact=value, role=user.role).exclude(pk=user.pk).exists():
+        # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng), nhưng
+        # phải tính cả email đã được một danh tính OAuth cùng cổng sở hữu.
+        if User.objects.email_claimed_for_role(value, user.role, exclude_user_id=user.pk):
             raise serializers.ValidationError(
                 'Email này đã được sử dụng cho một tài khoản cùng loại.'
             )

@@ -7,6 +7,7 @@ from apps.applications.models import Application
 from apps.candidates.models import CandidateConsent
 from apps.cvs.models import UserCv
 from apps.employers.models import RecruitmentCampaign, RecruitmentNeed
+from apps.employers.selectors import build_employer_initial_onboarding
 from apps.jobs.models import Job
 from common.media_storage import media_url_from_value
 
@@ -108,6 +109,7 @@ class AdminAccountProfileSerializer(serializers.Serializer):
             (item.industry.name for item in industry_assignments if item.is_primary),
             None,
         )
+        initial_onboarding = build_employer_initial_onboarding(recruiter)
         return {
             'position_title': recruiter.position_title,
             'gender': recruiter.gender,
@@ -129,7 +131,7 @@ class AdminAccountProfileSerializer(serializers.Serializer):
             'marketing_opt_in': recruiter.marketing_opt_in,
             'marketing_decided_at': recruiter.marketing_decided_at,
             'dpa_accepted_at': recruiter.dpa_accepted_at,
-            'onboarding_completed_at': recruiter.onboarding_completed_at,
+            'initial_onboarding': initial_onboarding,
             'company': (
                 {
                     'public_id': company.public_id,

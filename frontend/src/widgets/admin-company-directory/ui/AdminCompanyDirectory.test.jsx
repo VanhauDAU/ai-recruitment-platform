@@ -206,6 +206,10 @@ describe('admin company directory', () => {
         position_title: 'HR Manager',
         phone_verified: true,
         onboarding_completed: true,
+        initial_onboarding: {
+          completed: true,
+          missing_steps: [],
+        },
         verification: { status: 'approved' },
         created_at: '2026-07-01T00:00:00Z',
       }],
@@ -220,6 +224,8 @@ describe('admin company directory', () => {
     expect(await screen.findByText('HR Manager')).toBeInTheDocument()
     expect(screen.getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
     expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
+    expect(screen.getByText('Đã đủ hồ sơ, email và nhu cầu')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
 
     fireEvent.click(screen.getByRole('button', { name: /Chi tiết/ }))

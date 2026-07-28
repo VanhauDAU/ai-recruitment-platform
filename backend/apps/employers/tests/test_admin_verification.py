@@ -31,6 +31,7 @@ from ..services import (
     ensure_recruiter_candidate_data_access,
     get_or_create_verification_case,
     reconcile_completed_verification_cases,
+    reconcile_recruiter_verification,
     recruiter_is_approved,
     recruiter_posting_readiness,
     verification_decision_impact,
@@ -446,6 +447,82 @@ class EmployerAccountVerificationTests(APITestCase):
                 verification_case=self.first_case,
                 event_type=EmployerVerificationEvent.EventType.APPROVED,
                 payload__source='reconciliation',
+            ).exists()
+        )
+
+    @patch('apps.employers.tasks.tax_lookup.lookup_company_tax_evidence.delay')
+    def test_admin_can_refresh_verification_tax_lookup(self, delay):
+        self.client.force_authenticate(self.admin)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse(
+                    'admin-employer-verification-refresh-tax-lookup',
+                    kwargs={'public_id': self.first_case.public_id},
+                ),
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['tax_lookup_evidence']['status'], 'pending')
+        evidence = CompanyTaxLookupEvidence.objects.get(verification_case=self.first_case)
+        self.assertEqual(evidence.workflow_revision, self.first_case.revision)
+        delay.assert_called_once_with(evidence.pk)
+
+    def test_phone_completed_after_document_review_reconciles_case_once(self):
+        self.first.phone_verified_at = None
+        self.first.verified_phone = ''
+        self.first.save(update_fields=['phone_verified_at', 'verified_phone', 'updated_at'])
+        self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
+        self.first_case.save(update_fields=['status', 'updated_at'])
+
+        _, reconciled = reconcile_recruiter_verification(
+            self.first,
+            source='phone_verified',
+        )
+        self.assertFalse(reconciled)
+
+        self.first.phone_verified_at = timezone.now()
+        self.first.verified_phone = '0901234567'
+        self.first.save(update_fields=['phone_verified_at', 'verified_phone', 'updated_at'])
+        case, reconciled = reconcile_recruiter_verification(
+            self.first,
+            source='phone_verified',
+        )
+        _, reconciled_again = reconcile_recruiter_verification(
+            self.first,
+            source='phone_verified',
+        )
+
+        self.assertTrue(reconciled)
+        self.assertFalse(reconciled_again)
+        self.assertEqual(case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(
+            EmployerVerificationEvent.objects.filter(
+                verification_case=self.first_case,
+                event_type=EmployerVerificationEvent.EventType.APPROVED,
+                payload__source='phone_verified',
+            ).count(),
+            1,
+        )
+
+    def test_accepting_dpa_last_approves_a_fully_reviewed_case(self):
+        self.first.dpa_accepted_at = None
+        self.first.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
+        self.first_case.save(update_fields=['status', 'updated_at'])
+        self.client.force_authenticate(self.first_user)
+
+        response = self.client.post(reverse('employer-dpa-accept'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.first_case.refresh_from_db()
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertTrue(
+            EmployerVerificationEvent.objects.filter(
+                verification_case=self.first_case,
+                event_type=EmployerVerificationEvent.EventType.APPROVED,
+                payload__source='dpa_accepted',
             ).exists()
         )
 

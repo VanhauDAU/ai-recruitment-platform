@@ -30,7 +30,7 @@ from .admin_access import (
     role_status_impact,
     roles_queryset,
 )
-from .users import accessible_users_queryset, get_accessible_user
+from .users import accessible_users_queryset, get_accessible_user, linked_oauth_provider
 
 __all__ = [
     'accessible_users_queryset',
@@ -50,6 +50,7 @@ __all__ = [
     'effective_permission_codes',
     'get_accessible_user',
     'invitation_queryset',
+    'linked_oauth_provider',
     'membership_assignment_impact',
     'membership_revoke_impact',
     'memberships_queryset',

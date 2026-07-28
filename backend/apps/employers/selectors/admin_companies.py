@@ -1,6 +1,16 @@
 """Read models for the administrator company directory."""
 
-from django.db.models import Count, Prefetch, Q
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    Exists,
+    OuterRef,
+    Prefetch,
+    Q,
+    Value,
+    When,
+)
 
 from ..models import (
     Company,
@@ -8,6 +18,7 @@ from ..models import (
     CompanyUpdateRequest,
     EmployerVerificationCase,
     RecruiterProfile,
+    RecruitmentNeed,
 )
 
 
@@ -190,6 +201,23 @@ def admin_company_recruiters_queryset(company, *, params=None):
     queryset = (
         RecruiterProfile.objects.filter(company=company)
         .select_related('user', 'verification_case', 'work_location')
+        .annotate(
+            _has_recruitment_need=Exists(
+                RecruitmentNeed.objects.filter(recruiter_id=OuterRef('pk'))
+            )
+        )
+        .annotate(
+            initial_onboarding_completed=Case(
+                When(
+                    registration_completed_at__isnull=False,
+                    user__email_verified=True,
+                    _has_recruitment_need=True,
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
         .order_by('created_at', 'id')
     )
     query = params.get('q', '').strip()
@@ -221,8 +249,8 @@ def admin_company_recruiters_queryset(company, *, params=None):
         '-company_role',
         'position_title',
         '-position_title',
-        'onboarding_completed_at',
-        '-onboarding_completed_at',
+        'initial_onboarding_completed',
+        '-initial_onboarding_completed',
         'verification_case__status',
         '-verification_case__status',
         'user__status',
@@ -232,6 +260,10 @@ def admin_company_recruiters_queryset(company, *, params=None):
         'user__full_name',
         '-user__full_name',
     }
+    ordering = {
+        'onboarding_completed_at': 'initial_onboarding_completed',
+        '-onboarding_completed_at': '-initial_onboarding_completed',
+    }.get(ordering, ordering)
     return queryset.order_by(
         ordering if ordering in allowed_ordering else 'created_at',
         'id',

@@ -21,6 +21,9 @@ import {
 } from 'antd'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
+  InitialOnboardingStatus,
+} from '@/entities/admin-account'
+import {
   adminCompanyKeys,
   getAdminCompany,
   getAdminCompanyRecruiters,
@@ -45,10 +48,6 @@ function formatDate(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
-}
-
-function yesNo(value) {
-  return value ? 'Đã hoàn tất' : 'Chưa hoàn tất'
 }
 
 function personInitials(name = '') {
@@ -298,18 +297,16 @@ function RecruiterRoster({ company, enabled }) {
       ),
     },
     {
-      title: 'Onboarding',
+      title: 'Thiết lập ban đầu',
       dataIndex: 'onboarding_completed',
-      key: 'onboarding_completed_at',
-      width: 150,
+      key: 'initial_onboarding_completed',
+      width: 230,
       sorter: true,
       render: (value, recruiter) => (
-        <Space direction="vertical" size={2}>
-          <span>{yesNo(value)}</span>
-          <span className="text-xs text-slate-500">
-            SĐT: {recruiter.phone_verified ? 'đã xác thực' : 'chưa xác thực'}
-          </span>
-        </Space>
+        <InitialOnboardingStatus
+          onboarding={recruiter.initial_onboarding}
+          completed={value}
+        />
       ),
     },
     {

@@ -188,12 +188,7 @@ export default function AdminJobModeration() {
       />
       {activeTab === 'reports'
         ? (
-          <AdminPanel
-            title="Báo cáo chờ xử lý"
-            description="Các báo cáo do ứng viên gửi đang chờ xem xét bằng chứng và đưa ra kết luận."
-          >
-            <JobReportQueue />
-          </AdminPanel>
+          <JobReportQueue />
         )
         : <JobModerationQueue />}
     </section>

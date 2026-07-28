@@ -2,7 +2,18 @@
 
 from datetime import timedelta
 
-from django.db.models import Count, Max, Prefetch, Q
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    Exists,
+    Max,
+    OuterRef,
+    Prefetch,
+    Q,
+    Value,
+    When,
+)
 from django.utils import timezone
 
 from apps.employers.models import (
@@ -38,6 +49,27 @@ ACCOUNT_SCOPE_RECRUITERS = 'recruiters'
 ACCOUNT_SCOPES = frozenset({ACCOUNT_SCOPE_USERS, ACCOUNT_SCOPE_RECRUITERS})
 
 
+def _with_recruiter_initial_onboarding(queryset):
+    """Annotate the three-step employer setup state without per-row queries."""
+    return queryset.annotate(
+        _has_recruitment_need=Exists(
+            RecruitmentNeed.objects.filter(recruiter__user_id=OuterRef('pk'))
+        ),
+    ).annotate(
+        recruiter_initial_onboarding_completed=Case(
+            When(
+                role=User.Role.EMPLOYER,
+                recruiter_profile__registration_completed_at__isnull=False,
+                email_verified=True,
+                _has_recruitment_need=True,
+                then=Value(True),
+            ),
+            default=Value(False),
+            output_field=BooleanField(),
+        )
+    )
+
+
 def _account_visibility(actor):
     if actor.is_superuser:
         return Q()
@@ -61,8 +93,9 @@ def _account_visibility(actor):
 def accounts_queryset(actor, *, params=None):
     params = params or {}
     queryset = (
-        User.objects.filter(is_deleted=False)
-        .filter(_account_visibility(actor))
+        _with_recruiter_initial_onboarding(
+            User.objects.filter(is_deleted=False).filter(_account_visibility(actor))
+        )
         .select_related(
             'candidate_profile',
             'candidate_profile__job_preference',
@@ -203,11 +236,17 @@ def accounts_queryset(actor, *, params=None):
         '-recruiter_profile__company__company_name',
         'recruiter_profile__company_role',
         '-recruiter_profile__company_role',
-        'recruiter_profile__onboarding_completed_at',
-        '-recruiter_profile__onboarding_completed_at',
+        'recruiter_initial_onboarding_completed',
+        '-recruiter_initial_onboarding_completed',
         'recruiter_profile__verification_case__status',
         '-recruiter_profile__verification_case__status',
     }
+    # Accept the old ordering key during the admin-client rollout, but never
+    # read the legacy timestamp as a source of truth.
+    ordering = {
+        'recruiter_profile__onboarding_completed_at': ('recruiter_initial_onboarding_completed'),
+        '-recruiter_profile__onboarding_completed_at': ('-recruiter_initial_onboarding_completed'),
+    }.get(ordering, ordering)
     return queryset.order_by(ordering if ordering in allowed else '-date_joined', '-id')
 
 
@@ -244,7 +283,7 @@ def account_summary(actor, *, scope=''):
             },
         }
     if scope == ACCOUNT_SCOPE_RECRUITERS:
-        recruiters = base.filter(role=User.Role.EMPLOYER)
+        recruiters = _with_recruiter_initial_onboarding(base.filter(role=User.Role.EMPLOYER))
         verification_base = EmployerVerificationCase.objects.filter(recruiter__user__in=recruiters)
         pending_states = [
             EmployerVerificationCase.Status.PENDING,
@@ -262,8 +301,7 @@ def account_summary(actor, *, scope=''):
                 Q(recruiter_profile__isnull=True) | Q(recruiter_profile__company__isnull=True)
             ).count(),
             'onboarding_incomplete': recruiters.filter(
-                Q(recruiter_profile__isnull=True)
-                | Q(recruiter_profile__onboarding_completed_at__isnull=True)
+                recruiter_initial_onboarding_completed=False
             ).count(),
             'verification': {
                 'approved': verification_base.filter(

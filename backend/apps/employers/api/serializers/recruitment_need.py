@@ -4,6 +4,7 @@ from rest_framework import serializers
 from apps.jobs.models import JobCategory
 
 from ...models import RecruitmentNeed
+from ...services import reconcile_recruiter_verification
 
 MIN_BUDGET = 1_000_000
 
@@ -90,4 +91,6 @@ class RecruitmentNeedSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         recruiter = self.context['recruiter']
         validated_data['completed_at'] = timezone.now()
-        return RecruitmentNeed.objects.create(recruiter=recruiter, **validated_data)
+        need = RecruitmentNeed.objects.create(recruiter=recruiter, **validated_data)
+        reconcile_recruiter_verification(recruiter, source='recruitment_need_completed')
+        return need

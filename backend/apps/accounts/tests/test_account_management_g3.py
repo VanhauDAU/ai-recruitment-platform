@@ -9,6 +9,7 @@ from django.db import close_old_connections, connection
 from django.test import TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.admin_invitation_tokens import create_admin_invitation_token
@@ -37,7 +38,9 @@ from apps.employers.models import (
     EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentCampaign,
+    RecruitmentNeed,
 )
+from apps.jobs.models import JobCategory
 
 
 class AccountManagementG3ApiTests(TestCase):
@@ -249,6 +252,7 @@ class AccountManagementG3ApiTests(TestCase):
             self.password,
             role=User.Role.EMPLOYER,
             status=User.Status.ACTIVE,
+            email_verified=True,
         )
         missing_user = User.objects.create_user(
             'summary-missing@example.com',
@@ -263,12 +267,24 @@ class AccountManagementG3ApiTests(TestCase):
         recruiter = RecruiterProfile.objects.create(
             user=linked_user,
             company=company,
+            registration_completed_at=timezone.now(),
         )
         RecruiterProfile.objects.create(user=missing_user)
         EmployerVerificationCase.objects.create(
             recruiter=recruiter,
             company=company,
             status=EmployerVerificationCase.Status.APPROVED,
+        )
+        category = JobCategory.objects.create(
+            name='Nhu cầu cho thống kê tài khoản',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=recruiter,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=timezone.now(),
         )
         invitation = self.invite(email='summary-invited@example.com')
         self.assertEqual(invitation.status_code, 201)
@@ -291,7 +307,64 @@ class AccountManagementG3ApiTests(TestCase):
         self.assertEqual(recruiters.data['totals']['total'], 2)
         self.assertEqual(recruiters.data['linked_company'], 1)
         self.assertEqual(recruiters.data['companyless'], 1)
+        self.assertEqual(recruiters.data['onboarding_incomplete'], 1)
         self.assertEqual(recruiters.data['verification']['approved'], 1)
+
+    def test_recruiter_list_derives_initial_setup_and_supports_ordering(self):
+        complete_user = User.objects.create_user(
+            'complete-setup@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+            email_verified=True,
+        )
+        incomplete_user = User.objects.create_user(
+            'incomplete-setup@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+            email_verified=True,
+        )
+        complete = RecruiterProfile.objects.create(
+            user=complete_user,
+            registration_completed_at=timezone.now(),
+        )
+        RecruiterProfile.objects.create(
+            user=incomplete_user,
+            registration_completed_at=timezone.now(),
+        )
+        category = JobCategory.objects.create(
+            name='Nhu cầu hoàn tất thiết lập',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=complete,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=timezone.now(),
+        )
+        self.authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-account-list'),
+            {
+                'scope': 'recruiters',
+                'ordering': '-recruiter_initial_onboarding_completed',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        results = response.data['results']
+        self.assertEqual(results[0]['public_id'], complete_user.public_id)
+        self.assertTrue(results[0]['context']['initial_onboarding']['completed'])
+        incomplete = next(
+            item for item in results if item['public_id'] == incomplete_user.public_id
+        )
+        self.assertEqual(
+            incomplete['context']['initial_onboarding']['missing_steps'],
+            ['consulting_need_completed'],
+        )
 
     def test_locking_employer_pauses_only_their_active_campaigns(self):
         employer = User.objects.create_user(

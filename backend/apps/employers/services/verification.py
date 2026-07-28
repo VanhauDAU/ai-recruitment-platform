@@ -427,6 +427,65 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     return document, case
 
 
+@transaction.atomic
+def reconcile_verification_case(case, *, source='reconciliation'):
+    """Approve one ready case after any prerequisite mutation.
+
+    Document review is not guaranteed to be the final verification action. For
+    example, an administrator may approve every document before the recruiter
+    verifies their phone. Locking and re-checking the case here makes every
+    caller safe to retry and prevents duplicate approval events.
+    """
+    # Lock only the case row. PostgreSQL rejects FOR UPDATE when select_related
+    # introduces the nullable company/reviewer side through an outer join.
+    case = EmployerVerificationCase.objects.select_for_update().get(pk=case.pk)
+    if case.status == EmployerVerificationCase.Status.APPROVED:
+        return case, False
+
+    can_approve, _ = verification_can_be_approved(case)
+    if not can_approve:
+        return case, False
+    now = timezone.now()
+    if case.company_id:
+        try:
+            ensure_company_tax_code_can_be_verified(case.company)
+            mark_company_verified(case.company, verified_at=now)
+        except CompanyTaxCodeConflict:
+            return case, False
+
+    case.status = EmployerVerificationCase.Status.APPROVED
+    case.decision_reason = ''
+    case.decided_at = now
+    case.lock_version += 1
+    case.save(
+        update_fields=[
+            'status',
+            'decision_reason',
+            'decided_at',
+            'lock_version',
+            'updated_at',
+        ]
+    )
+    EmployerVerificationEvent.objects.create(
+        verification_case=case,
+        event_type=EmployerVerificationEvent.EventType.APPROVED,
+        payload={'reason': '', 'revision': case.revision, 'source': source},
+    )
+    _queue_verification_notification(
+        case,
+        event_type=EmployerVerificationCase.Status.APPROVED,
+    )
+    return case, True
+
+
+def reconcile_recruiter_verification(recruiter, *, source):
+    """Re-check the recruiter's existing case after a prerequisite changes."""
+    case = EmployerVerificationCase.objects.filter(recruiter=recruiter).first()
+    if case is None:
+        return None, False
+    return reconcile_verification_case(case, source=source)
+
+
 def reconcile_completed_verification_cases():
     """Approve previously reviewed cases that now satisfy every requirement."""
     reconciled_cases = []
@@ -435,42 +494,11 @@ def reconcile_completed_verification_cases():
     ).values_list('pk', flat=True)
 
     for case_id in case_ids.iterator():
-        with transaction.atomic():
-            case = EmployerVerificationCase.objects.select_for_update().get(pk=case_id)
-            can_approve, _ = verification_can_be_approved(case)
-            if not can_approve:
-                continue
-            if case.company_id:
-                try:
-                    ensure_company_tax_code_can_be_verified(case.company)
-                except CompanyTaxCodeConflict:
-                    continue
-
-            now = timezone.now()
-            case.status = EmployerVerificationCase.Status.APPROVED
-            case.decision_reason = ''
-            case.decided_at = now
-            case.lock_version += 1
-            case.save(
-                update_fields=[
-                    'status',
-                    'decision_reason',
-                    'decided_at',
-                    'lock_version',
-                    'updated_at',
-                ]
-            )
-            if case.company_id:
-                mark_company_verified(case.company, verified_at=now)
-            EmployerVerificationEvent.objects.create(
-                verification_case=case,
-                event_type=EmployerVerificationEvent.EventType.APPROVED,
-                payload={'reason': '', 'revision': case.revision, 'source': 'reconciliation'},
-            )
-            _queue_verification_notification(
-                case,
-                event_type=EmployerVerificationCase.Status.APPROVED,
-            )
+        case, reconciled = reconcile_verification_case(
+            EmployerVerificationCase(pk=case_id),
+            source='reconciliation',
+        )
+        if reconciled:
             reconciled_cases.append(case)
 
     return reconciled_cases
@@ -582,6 +610,8 @@ __all__ = [
     'confirm_verification_decision',
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',
+    'reconcile_recruiter_verification',
+    'reconcile_verification_case',
     'record_verification_upload',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',

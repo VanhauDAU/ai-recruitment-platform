@@ -16,7 +16,12 @@ describe('AccountTable', () => {
             status: 'active',
             date_joined: null,
             last_activity_at: null,
-            context: {},
+            context: {
+              initial_onboarding: {
+                completed: false,
+                missing_steps: ['consulting_need_completed'],
+              },
+            },
           }],
         }}
         loading={false}
@@ -36,5 +41,8 @@ describe('AccountTable', () => {
     )
 
     expect(screen.getAllByText('Chưa có')).toHaveLength(2)
+    expect(screen.getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
+    expect(screen.getByText('Thiếu: Nhu cầu tuyển dụng')).toBeInTheDocument()
+    expect(screen.getByText('Trang NTD: Nhu cầu tư vấn')).toBeInTheDocument()
   })
 })

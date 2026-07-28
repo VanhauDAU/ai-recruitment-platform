@@ -3,6 +3,7 @@ from rest_framework import serializers
 from common.media_storage import media_url_from_value
 
 from ...models import Company, RecruiterProfile
+from ...selectors import build_employer_initial_onboarding
 
 
 def _masked_tax_code(value):
@@ -151,8 +152,9 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
     company_role_label = serializers.CharField(source='get_company_role_display', read_only=True)
     contact_phone = serializers.SerializerMethodField()
     phone_verified = serializers.BooleanField(source='phone_verified_at', read_only=True)
+    initial_onboarding = serializers.SerializerMethodField()
     onboarding_completed = serializers.BooleanField(
-        source='onboarding_completed_at',
+        source='initial_onboarding_completed',
         read_only=True,
     )
     verification = serializers.SerializerMethodField()
@@ -168,6 +170,7 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
             'contact_phone',
             'phone_verified',
             'registration_completed_at',
+            'initial_onboarding',
             'onboarding_completed',
             'verification',
             'created_at',
@@ -193,6 +196,12 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
         if self.context.get('can_view_account_sensitive'):
             return value
         return f'***{value[-3:]}' if value else ''
+
+    def get_initial_onboarding(self, obj):
+        return build_employer_initial_onboarding(
+            obj,
+            has_recruitment_need=getattr(obj, '_has_recruitment_need', False),
+        )
 
     def get_verification(self, obj):
         case = getattr(obj, 'verification_case', None)

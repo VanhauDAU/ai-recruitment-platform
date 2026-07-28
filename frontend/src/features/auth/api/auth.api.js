@@ -104,6 +104,14 @@ export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
   return `${api.defaults.baseURL}/auth/oauth/${provider}/start/?${params}`
 }
 
+// Xác thực lại với provider cho một thao tác bảo mật (vd. đặt mật khẩu lần đầu
+// cho tài khoản OAuth) rồi quay về đúng trang đang đứng. Dùng lại luồng đăng
+// nhập full-page redirect: `start_session` làm mới mốc `reauthenticated_at`.
+export function startOAuthReauth(provider, { portal = getCurrentPortal(), next } = {}) {
+  const returnPath = next || `${window.location.pathname}${window.location.search}`
+  window.location.assign(oauthStartUrl(provider, { portal, next: returnPath }))
+}
+
 // Đổi one_time_code lấy access + user; refresh được đặt bằng HttpOnly cookie.
 export async function completeOAuth(code, portal) {
   const { data } = await api.post('/auth/oauth/complete/', { code })

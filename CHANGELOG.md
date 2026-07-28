@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-29
 
+#### Fixed — Đặt mật khẩu lần đầu cho tài khoản mạng xã hội
+
+- Thay cảnh báo “Cần đăng nhập lại để tạo mật khẩu” (chỉ hiện sau khi người dùng
+  điền xong form rồi bấm lưu, và xoá phiên để đá về `/login`) bằng luồng xác
+  thực lại tại chỗ: banner hiện ngay khi mở trang, nút “Xác thực với
+  &lt;Provider&gt;” mở OAuth với `next` là trang hiện tại nên người dùng quay về
+  đúng chỗ đang làm, không mất phiên.
+- Thêm `GET /api/auth/password/` trả `{has_usable_password, requires_reauth,
+  reauth_provider, reauth_max_age_seconds}` để client biết trước điều kiện của
+  phiên. `POST` trả kèm `reauth_provider` trong lỗi 403 `reauth_required`.
+- Nút “Tạo mật khẩu” bị vô hiệu hoá khi phiên chưa đủ điều kiện; tài khoản không
+  liên kết provider nào được hướng sang luồng “Quên mật khẩu” thay vì kẹt.
+- Giữ nguyên cửa sổ bảo mật `AUTH_REAUTH_MAX_AGE_SECONDS` (mặc định 5 phút) —
+  đây là bằng chứng duy nhất thay cho mật khẩu hiện tại, không nới lỏng.
+
 #### Fixed — Hàng chờ và chi tiết xác thực nhà tuyển dụng
 
 - Đồng nhất badge “Chờ xác thực NTD” với bộ lọc mặc định “Cần xử lý”: hàng chờ

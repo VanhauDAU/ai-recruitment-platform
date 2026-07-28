@@ -2,19 +2,22 @@
 
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from threading import Barrier
 
+from django.conf import settings
 from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import close_old_connections
 from django.test import TransactionTestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from ..models import AuthSession, User
+from ..models import AuthSession, SocialAccount, User
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
 from .helpers import PNG_BYTES, TEST_MEDIA_ROOT, refresh_session, set_refresh_cookie
@@ -311,6 +314,130 @@ class PasswordChangeTests(APITestCase):
         self.assertEqual(current_ok.status_code, status.HTTP_200_OK)
 
 
+class PasswordSetupRequirementsTests(APITestCase):
+    """GET trả điều kiện để client cảnh báo TRƯỚC khi người dùng điền form."""
+
+    def _authenticate(self, user, portal, *, auth_method='password'):
+        tokens = issue_tokens(user, auth_method=auth_method)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+        set_refresh_cookie(self.client, portal, tokens['refresh'])
+
+    def test_account_with_password_never_needs_reauthentication(self):
+        user = User.objects.create_user(
+            email='local-requirements@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self._authenticate(user, 'employer')
+
+        response = self.client.get(reverse('auth-password-change'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(response.data['has_usable_password'])
+        self.assertFalse(response.data['requires_reauth'])
+        self.assertIsNone(response.data['reauth_provider'])
+
+    def test_fresh_oauth_session_can_set_the_first_password(self):
+        user = User.objects.create_user(
+            email='fresh-oauth@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        SocialAccount.objects.create(
+            user=user, provider=User.Provider.GOOGLE, provider_user_id='google-fresh'
+        )
+        self._authenticate(user, 'employer', auth_method='oauth')
+
+        response = self.client.get(reverse('auth-password-change'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertFalse(response.data['has_usable_password'])
+        self.assertFalse(response.data['requires_reauth'])
+
+    def test_stale_oauth_session_reports_the_provider_to_reauthenticate_with(self):
+        user = User.objects.create_user(
+            email='stale-oauth@example.com',
+            password=None,
+            role=User.Role.CANDIDATE,
+        )
+        SocialAccount.objects.create(
+            user=user, provider=User.Provider.FACEBOOK, provider_user_id='fb-stale'
+        )
+        self._authenticate(user, 'main', auth_method='oauth')
+        AuthSession.objects.filter(user=user).update(
+            reauthenticated_at=timezone.now()
+            - timedelta(seconds=settings.AUTH_REAUTH_MAX_AGE_SECONDS + 60)
+        )
+
+        requirements = self.client.get(reverse('auth-password-change'))
+        rejected = self.client.post(
+            reverse('auth-password-change'),
+            {'password': 'NewPassword@123'},
+            format='json',
+        )
+
+        self.assertEqual(requirements.status_code, status.HTTP_200_OK, requirements.data)
+        self.assertTrue(requirements.data['requires_reauth'])
+        self.assertEqual(requirements.data['reauth_provider'], 'facebook')
+        self.assertEqual(
+            requirements.data['reauth_max_age_seconds'], settings.AUTH_REAUTH_MAX_AGE_SECONDS
+        )
+        # Cùng một luật ở cả hai method: cảnh báo sớm khớp với quyết định lúc lưu.
+        self.assertEqual(rejected.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(rejected.data['code'], 'reauth_required')
+        self.assertEqual(rejected.data['reauth_provider'], 'facebook')
+        user.refresh_from_db()
+        self.assertFalse(user.has_usable_password())
+
+    def test_reauthenticating_with_the_provider_unblocks_the_first_password(self):
+        user = User.objects.create_user(
+            email='reauth-oauth@example.com',
+            password=None,
+            role=User.Role.CANDIDATE,
+        )
+        SocialAccount.objects.create(
+            user=user, provider=User.Provider.GOOGLE, provider_user_id='google-reauth'
+        )
+        self._authenticate(user, 'main', auth_method='oauth')
+        AuthSession.objects.filter(user=user).update(
+            reauthenticated_at=timezone.now()
+            - timedelta(seconds=settings.AUTH_REAUTH_MAX_AGE_SECONDS + 60)
+        )
+        self.assertTrue(self.client.get(reverse('auth-password-change')).data['requires_reauth'])
+
+        # Đăng nhập OAuth lại trên cùng thiết bị: `start_session` làm mới mốc.
+        self._authenticate(user, 'main', auth_method='oauth')
+
+        requirements = self.client.get(reverse('auth-password-change'))
+        accepted = self.client.post(
+            reverse('auth-password-change'),
+            {'password': 'NewPassword@123'},
+            format='json',
+        )
+
+        self.assertFalse(requirements.data['requires_reauth'])
+        self.assertEqual(accepted.status_code, status.HTTP_200_OK, accepted.data)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('NewPassword@123'))
+
+    def test_access_token_without_the_refresh_cookie_is_not_a_current_session(self):
+        user = User.objects.create_user(
+            email='no-cookie-requirements@example.com',
+            password=None,
+            role=User.Role.CANDIDATE,
+        )
+        SocialAccount.objects.create(
+            user=user, provider=User.Provider.GOOGLE, provider_user_id='google-no-cookie'
+        )
+        tokens = issue_tokens(user, auth_method='oauth')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(reverse('auth-password-change'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(response.data['requires_reauth'])
+
+
 class SessionManagementTests(APITestCase):
     def setUp(self):
         cache.clear()
@@ -569,6 +696,35 @@ class ChangeEmailTests(APITestCase):
         self.assertEqual(len(warning), 1)
         self.assertIn('thay đổi', warning[0].subject.lower())
 
+    def test_change_email_rejects_address_owned_by_another_oauth_account(self):
+        oauth_user = User.objects.create_user(
+            email='oauth-current@example.com',
+            password=None,
+            role=User.Role.CANDIDATE,
+        )
+        SocialAccount.objects.create(
+            user=oauth_user,
+            provider=User.Provider.GOOGLE,
+            provider_user_id='google-reserved-email',
+            email='oauth-original@example.com',
+        )
+        user = self._user()
+        self.client.force_authenticate(user=user)
+
+        response = self.client.post(
+            reverse('auth-change-email'),
+            {
+                'email': 'OAUTH-ORIGINAL@example.com',
+                'current_password': 'Password@123',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+        user.refresh_from_db()
+        self.assertEqual(user.email, 'pending@example.com')
+
 
 class RefreshSessionProbeTests(APITestCase):
     def test_probe_header_is_allowed_by_cors_preflight(self):
@@ -683,6 +839,31 @@ class RegisterEmailAvailabilityTests(APITestCase):
         self.assertEqual(taken.data, {'available': False})
         self.assertEqual(available.status_code, status.HTTP_200_OK)
         self.assertEqual(available.data, {'available': True})
+
+    def test_oauth_identity_email_is_unavailable_in_the_same_portal(self):
+        oauth_user = User.objects.create_user(
+            email='oauth-current@example.com',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        SocialAccount.objects.create(
+            user=oauth_user,
+            provider=User.Provider.GOOGLE,
+            provider_user_id='google-employer-reserved-email',
+            email='oauth-original@example.com',
+        )
+
+        employer = self.client.post(
+            self.url,
+            {'email': 'OAUTH-ORIGINAL@example.com', 'role': User.Role.EMPLOYER},
+        )
+        candidate = self.client.post(
+            self.url,
+            {'email': 'oauth-original@example.com', 'role': User.Role.CANDIDATE},
+        )
+
+        self.assertEqual(employer.data, {'available': False})
+        self.assertEqual(candidate.data, {'available': True})
 
     def test_rejects_invalid_email_before_querying(self):
         response = self.client.post(self.url, {'email': 'not-an-email'})

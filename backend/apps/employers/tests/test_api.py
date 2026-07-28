@@ -5,6 +5,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.core import mail
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -14,7 +15,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AuthEmailJob, User
+from apps.accounts.models import AuthEmailJob, SocialAccount, User
 from apps.accounts.services.tokens import issue_tokens
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
@@ -92,6 +93,7 @@ def company_payload(industry, **overrides):
 )
 class EmployerRegistrationTests(APITestCase):
     def setUp(self):
+        cache.clear()
         self.location = Location.objects.create(
             code='01',
             level=Location.Level.PROVINCE,
@@ -156,6 +158,28 @@ class EmployerRegistrationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('terms_accepted', response.data)
         self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
+
+    def test_registration_rejects_email_reserved_by_existing_oauth_employer(self):
+        oauth_user = User.objects.create_user(
+            email='oauth-current@acme.vn',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        SocialAccount.objects.create(
+            user=oauth_user,
+            provider=User.Provider.GOOGLE,
+            provider_user_id='google-employer-existing',
+            email=self.payload['email'],
+        )
+
+        response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+        self.assertEqual(
+            User.objects.filter(role=User.Role.EMPLOYER).count(),
+            1,
+        )
 
     def test_registration_rejects_weak_password_and_allows_duplicate_contact_phone(self):
         weak = self.client.post(
@@ -433,6 +457,79 @@ class PhoneOtpTests(APITestCase):
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.verified_phone, '0912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
+
+    def test_verifying_phone_last_approves_a_fully_reviewed_case(self):
+        now = timezone.now()
+        self.user.email_verified = True
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+        company = Company.objects.create(
+            company_name='Công ty hoàn tất điện thoại sau cùng',
+            tax_code='0109876543',
+            created_by=self.user,
+        )
+        self.recruiter.company = company
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.registration_completed_at = now
+        self.recruiter.dpa_accepted_at = now
+        self.recruiter.save(
+            update_fields=[
+                'company',
+                'company_role',
+                'registration_completed_at',
+                'dpa_accepted_at',
+                'updated_at',
+            ]
+        )
+        category = JobCategory.objects.create(
+            name='Kiểm thử reconcile điện thoại',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=self.recruiter,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            is_continuous=True,
+            headcount=1,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=now,
+        )
+        verification_case = EmployerVerificationCase.objects.create(
+            recruiter=self.recruiter,
+            company=company,
+            verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION,
+            status=EmployerVerificationCase.Status.IN_REVIEW,
+            submitted_at=now,
+            review_started_at=now,
+        )
+        for index, doc_type in enumerate(
+            (
+                CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            ),
+            start=1,
+        ):
+            CompanyDocument.objects.create(
+                company=company,
+                recruiter=self.recruiter,
+                uploaded_by=self.user,
+                verification_case=verification_case,
+                doc_type=doc_type,
+                file_url=f'employers/reconcile/{doc_type}.pdf',
+                file_name=f'{doc_type}.pdf',
+                mime_type='application/pdf',
+                file_size=1024,
+                sha256=f'{index:064x}',
+                status=CompanyDocument.Status.APPROVED,
+                reviewed_at=now,
+            )
+
+        self._send_otp()
+        code = re.search(r'\b(\d{6})\b', mail.outbox[0].body).group(1)
+        response = self.client.post(reverse('employer-phone-verify'), {'code': code})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        verification_case.refresh_from_db()
+        self.assertEqual(verification_case.status, EmployerVerificationCase.Status.APPROVED)
 
     def test_otp_email_is_deferred_until_commit(self):
         """Mã chỉ được gửi sau khi hàng PhoneOtp thực sự commit, không sớm hơn."""

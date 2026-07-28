@@ -19,6 +19,7 @@ from ..services.tax_lookup import (
     TaxLookupResult,
     lookup_company_tax,
     queue_company_tax_lookup,
+    refresh_verification_tax_lookup,
 )
 from ..tasks.tax_lookup import lookup_company_tax_evidence
 
@@ -166,6 +167,22 @@ class CompanyTaxLookupTests(TestCase):
             evidence.provider_description,
             'Không thể xếp lịch tra cứu VietQR.',
         )
+
+    @patch('apps.employers.tasks.tax_lookup.lookup_company_tax_evidence.delay')
+    def test_refresh_verification_tax_lookup_locks_only_the_case_row(self, delay):
+        case = get_or_create_verification_case(self.recruiter)
+        initial_lock_version = case.lock_version
+
+        with self.captureOnCommitCallbacks(execute=True):
+            refreshed_case, evidence = refresh_verification_tax_lookup(
+                case,
+                actor=self.user,
+            )
+
+        self.assertEqual(refreshed_case.lock_version, initial_lock_version + 1)
+        self.assertEqual(evidence.status, CompanyTaxLookupEvidence.Status.PENDING)
+        self.assertEqual(evidence.verification_case, case)
+        delay.assert_called_once_with(evidence.pk)
 
     def test_verification_submission_creates_one_evidence_per_revision(self):
         case = get_or_create_verification_case(self.recruiter)

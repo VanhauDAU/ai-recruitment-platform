@@ -122,6 +122,24 @@ nghĩa là luồng redirect đang hoạt động, chỉ thiếu credential.
   candidate, `/tuyendung/app/forgot-password` cho employer) để đặt mật khẩu lần
   đầu — backend chấp nhận cả tài khoản `has_usable_password() == False`.
 
+## Đặt mật khẩu lần đầu từ trang tài khoản (xác thực lại OAuth)
+
+Tài khoản social chưa có mật khẩu thì form đổi mật khẩu không có ô "mật khẩu hiện
+tại" để chứng minh chủ sở hữu. Bằng chứng thay thế là **một lần đăng nhập OAuth
+vừa diễn ra trên chính phiên đó**, nên access token bị đánh cắp không tự đặt được
+mật khẩu để chiếm tài khoản.
+
+- Cửa sổ hợp lệ: `AUTH_REAUTH_MAX_AGE_SECONDS` (mặc định 300s). Mốc so sánh là
+  `AuthSession.reauthenticated_at`, chỉ được làm mới khi **đăng nhập mới**
+  (`start_session`); refresh token xoay vòng không làm mới mốc này.
+- `GET /api/auth/password/` trả điều kiện của phiên hiện tại để frontend cảnh báo
+  **trước** khi người dùng điền form. `POST` cùng URL vẫn enforce đúng luật đó.
+- Nút "Xác thực với &lt;Provider&gt;" gọi `startOAuthReauth(provider)` — dùng lại
+  luồng `/auth/oauth/<provider>/start/` với `next` là đường dẫn trang hiện tại,
+  nên người dùng quay về đúng trang đổi mật khẩu thay vì bị đá về `/login`.
+- Cả hai cổng dùng chung `features/change-password`; page truyền `onReauth` vì
+  cổng sở hữu URL OAuth và đường quay lại.
+
 ## Lên production
 
 - Đổi mọi `localhost:8000` (redirect URI khai báo với provider) thành domain backend thật.

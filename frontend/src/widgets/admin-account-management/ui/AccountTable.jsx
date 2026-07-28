@@ -8,6 +8,7 @@ import { Avatar, Button, Dropdown, Space, Table, Tag, Tooltip, Typography } from
 import {
   accountSubtitle,
   formatAdminDate,
+  InitialOnboardingStatus,
 } from '@/entities/admin-account'
 import { AccountRoleTag, AccountStatusTag } from './AccountStatusTag'
 
@@ -223,7 +224,7 @@ export default function AccountTable({
             {row.context?.company?.name || 'Chưa liên kết công ty'}
           </Typography.Text>
           <Typography.Text type="secondary" className="!block !text-xs">
-            {row.context?.company?.public_id || 'Cần hoàn thiện onboarding'}
+            {row.context?.company?.public_id || 'Chưa liên kết công ty'}
           </Typography.Text>
         </div>
       ),
@@ -255,19 +256,16 @@ export default function AccountTable({
       render: (status) => <AccountStatusTag status={status} />,
     },
     {
-      title: 'Onboarding',
-      key: 'recruiter_profile__onboarding_completed_at',
-      width: 170,
+      title: 'Thiết lập ban đầu',
+      key: 'recruiter_initial_onboarding_completed',
+      width: 230,
       sorter: true,
-      sortOrder: sortOrder(ordering, 'recruiter_profile__onboarding_completed_at'),
+      sortOrder: sortOrder(ordering, 'recruiter_initial_onboarding_completed'),
       render: (_, row) => (
-        <div className="account-security-stack">
-          <span className={row.context?.onboarding_completed ? 'is-positive' : 'is-warning'}>
-            {row.context?.onboarding_completed ? 'Đã hoàn tất' : 'Chưa hoàn tất'}
-          </span>
-          <span>{row.email_verified ? 'Email đã xác minh' : 'Email chưa xác minh'}</span>
-          <span>{row.context?.phone_verified ? 'SĐT đã xác minh' : 'SĐT chưa xác minh'}</span>
-        </div>
+        <InitialOnboardingStatus
+          onboarding={row.context?.initial_onboarding}
+          completed={row.context?.onboarding_completed}
+        />
       ),
     },
     {

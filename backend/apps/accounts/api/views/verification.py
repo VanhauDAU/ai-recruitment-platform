@@ -65,16 +65,29 @@ class VerificationConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        user_id = ev.consume_token(request.data.get('token'))
-        if user_id is None:
+        token_identity = ev.consume_token(request.data.get('token'))
+        if not isinstance(token_identity, dict):
             return Response(
                 {'detail': 'Liên kết xác thực không hợp lệ hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        user = User.objects.filter(pk=user_id, is_deleted=False).first()
+        user = User.objects.filter(
+            pk=token_identity.get('user_id'),
+            is_deleted=False,
+        ).first()
         if user is None:
             return Response(
                 {'detail': 'Không tìm thấy tài khoản.'}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if User.objects.normalize_email(user.email) != token_identity.get('email'):
+            return Response(
+                {
+                    'detail': (
+                        'Địa chỉ email đã thay đổi sau khi liên kết này được gửi. '
+                        'Vui lòng yêu cầu một email xác thực mới.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
         if not user.email_verified:
             user.email_verified = True

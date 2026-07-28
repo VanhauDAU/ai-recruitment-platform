@@ -1,14 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { changeCurrentPassword } from './change-password.api'
+import { changeCurrentPassword, getPasswordSetupRequirements } from './change-password.api'
 
-const { post } = vi.hoisted(() => ({ post: vi.fn() }))
+const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
 
-vi.mock('@/shared/api/client', () => ({ default: { post } }))
+vi.mock('@/shared/api/client', () => ({ default: { get, post } }))
 
 describe('change password API', () => {
   beforeEach(() => {
+    get.mockReset()
     post.mockReset()
     localStorage.clear()
+  })
+
+  it('reads the reauthentication requirement of the current session before showing the form', async () => {
+    get.mockResolvedValue({
+      data: { requires_reauth: true, reauth_provider: 'google', reauth_max_age_seconds: 300 },
+    })
+
+    await expect(getPasswordSetupRequirements()).resolves.toMatchObject({ requires_reauth: true })
+    expect(get).toHaveBeenCalledWith('/auth/password/')
   })
 
   it('relies on the HttpOnly refresh cookie instead of exposing refresh in the payload', async () => {

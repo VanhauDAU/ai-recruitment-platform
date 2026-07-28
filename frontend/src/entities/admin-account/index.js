@@ -35,3 +35,4 @@ export {
   formatAdminDate,
   INVITATION_STATUS_LABELS,
 } from './model/presentation'
+export { default as InitialOnboardingStatus } from './ui/InitialOnboardingStatus'
