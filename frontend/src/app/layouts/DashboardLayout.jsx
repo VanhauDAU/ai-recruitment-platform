@@ -104,10 +104,10 @@ export default function DashboardLayout() {
   )
   const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
   const recruitersSummaryParams = useMemo(() => ({ scope: 'recruiters' }), [])
-  const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations', 'user_restricted'])
+  const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations'])
   const needsRecruitersSummary = hasBadgeKey(
     navigation,
-    ['recruiter_verification', 'recruiter_restricted'],
+    ['recruiter_verification'],
   )
   const needsCompaniesSummary = hasBadgeKey(
     navigation,
@@ -136,9 +136,7 @@ export default function DashboardLayout() {
   })
   const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
     admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
-    user_restricted: usersSummary.data?.totals?.restricted,
     recruiter_verification: recruitersSummary.data?.verification?.pending,
-    recruiter_restricted: recruitersSummary.data?.totals?.restricted,
     company_pending: companiesSummary.data?.verification?.pending,
     company_updates: companiesSummary.data?.pending_update_requests,
   }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])

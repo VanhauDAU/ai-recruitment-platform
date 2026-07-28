@@ -239,21 +239,35 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
+    const usersMenu = screen.getByRole('button', { name: /Người dùng/ })
+    expect(
+      await within(usersMenu).findByLabelText('5 mục đang chờ'),
+    ).toHaveTextContent('05')
+
     const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
     expect(
-      await within(businessMenu).findByLabelText('18 mục đang chờ'),
-    ).toHaveTextContent('18')
+      await within(businessMenu).findByLabelText('16 mục đang chờ'),
+    ).toHaveTextContent('16')
     await user.click(businessMenu)
-    expect(within(businessMenu).queryByLabelText('18 mục đang chờ')).not.toBeInTheDocument()
+    expect(within(businessMenu).queryByLabelText('16 mục đang chờ')).not.toBeInTheDocument()
 
     const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
-    expect(within(recruiterMenu).getByLabelText('5 mục đang chờ')).toHaveTextContent('05')
+    expect(within(recruiterMenu).getByLabelText('3 mục đang chờ')).toHaveTextContent('03')
     await user.click(recruiterMenu)
-    expect(within(recruiterMenu).queryByLabelText('5 mục đang chờ')).not.toBeInTheDocument()
+    expect(within(recruiterMenu).queryByLabelText('3 mục đang chờ')).not.toBeInTheDocument()
 
     const badge = await screen.findByLabelText('3 mục đang chờ')
     expect(badge).toHaveTextContent('03')
     expect(badge).toHaveClass('admin-nav__count')
+
+    const restrictedRecruiters = screen.getByRole('button', { name: 'NTD bị hạn chế' })
+    expect(restrictedRecruiters.querySelector('.admin-nav__count')).toBeNull()
+
+    await user.click(usersMenu)
+    expect(within(usersMenu).queryByLabelText('5 mục đang chờ')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Kiểm soát/ }))
+    const restrictedUsers = screen.getByRole('button', { name: 'Người dùng bị hạn chế' })
+    expect(restrictedUsers.querySelector('.admin-nav__count')).toBeNull()
   })
 
   it('shows the active third-level item in the workspace header', () => {

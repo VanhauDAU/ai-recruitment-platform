@@ -136,6 +136,20 @@ describe('admin navigation tree', () => {
     expect(tree.map((item) => item.key)).not.toContain('users')
   })
 
+  it('does not turn persistent restricted-account totals into alert badges', () => {
+    const tree = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access([], true),
+    )
+    const leaves = flattenAdminNavigation(tree)
+
+    expect(leaves.find((leaf) => leaf.key === 'employer-restricted')?.badgeKey)
+      .toBeUndefined()
+    expect(leaves.find((leaf) => leaf.key === 'blocked-accounts')?.badgeKey)
+      .toBeUndefined()
+  })
+
   it('maps each system setting leaf to one exact settings group', () => {
     const settingLeaves = flattenAdminNavigation(ADMIN_NAVIGATION)
       .filter((item) => item.key.startsWith('settings-'))

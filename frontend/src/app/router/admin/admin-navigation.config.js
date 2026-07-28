@@ -59,7 +59,6 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'employer-restricted',
             label: 'NTD bị hạn chế',
-            badgeKey: 'recruiter_restricted',
             routeRef: 'recruiters',
             query: { status: 'inactive,banned' },
             access: { anyOf: ['account.employer.view', 'account.view'] },
@@ -120,7 +119,6 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'blocked-accounts',
             label: 'Người dùng bị hạn chế',
-            badgeKey: 'user_restricted',
             routeRef: 'accounts',
             query: { status: 'inactive,banned' },
             access: { anyOf: ['account.view', 'account.admin.view'] },
