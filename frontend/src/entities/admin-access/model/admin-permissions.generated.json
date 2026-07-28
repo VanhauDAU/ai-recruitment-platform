@@ -107,6 +107,31 @@
     "requires": []
   },
   {
+    "code": "announcement.manage",
+    "module": "announcement",
+    "label": "Quản lý thông báo",
+    "description": "Tạo thông báo và revision nội dung trước khi phát hành.",
+    "requires": [
+      "announcement.view"
+    ]
+  },
+  {
+    "code": "announcement.publish",
+    "module": "announcement",
+    "label": "Phát hành thông báo",
+    "description": "Phát hành, lên lịch, tạm dừng, tiếp tục hoặc lưu trữ thông báo.",
+    "requires": [
+      "announcement.view"
+    ]
+  },
+  {
+    "code": "announcement.view",
+    "module": "announcement",
+    "label": "Xem thông báo",
+    "description": "Xem danh sách, nội dung, lịch sử revision và hiệu quả thông báo.",
+    "requires": []
+  },
+  {
     "code": "audit_log.view",
     "module": "audit_log",
     "label": "Xem lịch sử phân quyền",

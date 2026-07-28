@@ -90,6 +90,24 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem và xuất lịch sử thay đổi quyền quản trị.',
     },
     {
+        'code': 'announcement.manage',
+        'module': 'announcement',
+        'label': 'Quản lý thông báo',
+        'description': 'Tạo thông báo và revision nội dung trước khi phát hành.',
+    },
+    {
+        'code': 'announcement.publish',
+        'module': 'announcement',
+        'label': 'Phát hành thông báo',
+        'description': 'Phát hành, lên lịch, tạm dừng, tiếp tục hoặc lưu trữ thông báo.',
+    },
+    {
+        'code': 'announcement.view',
+        'module': 'announcement',
+        'label': 'Xem thông báo',
+        'description': 'Xem danh sách, nội dung, lịch sử revision và hiệu quả thông báo.',
+    },
+    {
         'code': 'blog.manage',
         'module': 'blog',
         'label': 'Quản lý bài viết',
@@ -266,6 +284,8 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'admin_access.manage_department': ('admin_access.view',),
     'admin_access.manage_role': ('admin_access.view',),
     'admin_access.manage_staff': ('admin_access.view',),
+    'announcement.manage': ('announcement.view',),
+    'announcement.publish': ('announcement.view',),
     'blog.manage': ('blog.view',),
     'blog.publish': ('blog.view',),
     'company.sensitive.view': ('company.view',),
