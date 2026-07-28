@@ -81,6 +81,7 @@
 }
 
 .admin-sider__peek {
+  animation: admin-sidebar-peek-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   background:
     radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--admin-primary) 18%, transparent), transparent 28%),
     var(--admin-sidebar);
@@ -180,6 +181,7 @@
 }
 
 .admin-nav__secondary {
+  animation: admin-nav-accordion-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   border-left: 1px solid rgba(148, 163, 184, 0.2);
   margin: 3px 0 8px 22px;
   padding: 3px 0 3px 8px;
@@ -191,6 +193,10 @@
   justify-content: space-between;
   min-height: 38px;
   padding: 7px 10px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .admin-nav__level-two:hover,
@@ -213,6 +219,11 @@
   box-shadow: inset 2px 0 var(--admin-primary);
 }
 
+.admin-nav__level-two:not(:disabled):hover,
+.admin-nav__level-two:not(:disabled):focus-visible {
+  transform: translateX(2px);
+}
+
 .admin-nav__level-two strong {
   display: block;
   font-size: 13px;
@@ -226,6 +237,7 @@
 }
 
 .admin-nav__flyout {
+  animation: admin-nav-flyout-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   background: #ffffff;
   border: 1px solid var(--admin-border);
   border-radius: 0 12px 12px 0;
@@ -250,6 +262,10 @@
   gap: 10px;
   min-height: 40px;
   padding: 7px 9px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .admin-nav__leaf:not(:disabled):hover,
@@ -264,17 +280,27 @@
   cursor: not-allowed;
 }
 
+.admin-nav__leaf:not(:disabled):hover,
+.admin-nav__leaf:not(:disabled):focus-visible {
+  transform: translateX(2px);
+}
+
 .admin-nav__leaf-marker {
   background: #cbd5e1;
   border-radius: 999px;
   flex: 0 0 auto;
   height: 7px;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
   width: 7px;
 }
 
 .admin-nav__leaf--active .admin-nav__leaf-marker {
   background: var(--admin-primary);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--admin-primary) 14%, transparent);
+  transform: scale(1.08);
 }
 
 .admin-nav__leaf-label {
@@ -328,9 +354,18 @@
   color: #cbd5e1;
 }
 
+.admin-nav__search-results {
+  animation: admin-nav-results-in 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .admin-nav__search-results .admin-nav__leaf:not(:disabled):hover,
 .admin-nav__search-results .admin-nav__leaf--active {
-  color: #ffffff;
+  color: #0f5132;
+}
+
+.admin-nav__search-results .admin-nav__leaf:not(:disabled):hover .admin-nav__breadcrumb,
+.admin-nav__search-results .admin-nav__leaf--active .admin-nav__breadcrumb {
+  color: #64748b;
 }
 
 .admin-nav--collapsed {
@@ -354,6 +389,10 @@
   height: 46px;
   justify-content: center;
   position: relative;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
   width: 52px;
 }
 
@@ -375,11 +414,17 @@
   color: #ffffff;
 }
 
+.admin-nav__collapsed-button:hover,
+.admin-nav__collapsed-button:focus-visible {
+  transform: translateY(-1px) scale(1.02);
+}
+
 .admin-nav--mobile {
   overflow: visible;
 }
 
 .admin-nav__mobile-level {
+  animation: admin-nav-mobile-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -411,6 +456,66 @@
 .admin-nav--mobile .admin-nav__leaf--active {
   background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-sidebar));
   color: #ffffff;
+}
+
+@keyframes admin-sidebar-peek-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes admin-nav-accordion-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-nav-flyout-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes admin-nav-results-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-nav-mobile-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .admin-sider__notice {
@@ -786,6 +891,8 @@
   .admin-shell *::before,
   .admin-shell *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
