@@ -56,7 +56,7 @@ export const ADMIN_NAVIGATION = [
             key: 'employer-list',
             label: 'Tất cả NTD',
             routeRef: 'recruiters',
-            access: { allOf: ['account.view'] },
+            access: { anyOf: ['account.employer.view', 'account.view'] },
           },
           {
             key: 'employer-verification',

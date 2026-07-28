@@ -115,6 +115,7 @@ export const ADMIN_ROUTES = [
     navLabel: 'Nhà tuyển dụng',
     iconKey: 'accounts',
     permissionsAny: [
+      'account.employer.view',
       'account.view',
       'employer_verification.view',
     ],
@@ -127,6 +128,7 @@ export const ADMIN_ROUTES = [
     title: 'Chi tiết tài khoản',
     permissionsAny: [
       'account.view',
+      'account.employer.view',
       'account.admin.view',
       'account.admin.invite',
       'employer_verification.view',

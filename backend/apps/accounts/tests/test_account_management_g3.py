@@ -141,6 +141,55 @@ class AccountManagementG3ApiTests(TestCase):
             self.department.code,
         )
 
+    def test_employer_view_permission_does_not_expose_candidates(self):
+        employer_permission, _ = AdminPermission.objects.get_or_create(
+            code='account.employer.view',
+            defaults={
+                'module': 'account',
+                'label': 'Xem tài khoản nhà tuyển dụng',
+            },
+        )
+        employer_role = AdminRole.objects.create(
+            department=self.department,
+            code='employer-reader',
+            name='Tra cứu NTD',
+        )
+        employer_role.permissions.add(employer_permission)
+        assign_membership(self.provisioner, employer_role, actor=self.superuser)
+        candidate = User.objects.create_user(
+            'candidate-scope@example.com',
+            self.password,
+            role=User.Role.CANDIDATE,
+            status=User.Status.ACTIVE,
+        )
+        employer = User.objects.create_user(
+            'employer-scope@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+        )
+        self.authenticate(self.provisioner)
+
+        response = self.client.get(reverse('admin-account-list'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(
+            [item['public_id'] for item in response.json()['results']],
+            [employer.public_id],
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse('admin-account-detail', kwargs={'public_id': employer.public_id})
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse('admin-account-detail', kwargs={'public_id': candidate.public_id})
+            ).status_code,
+            404,
+        )
+
     def test_locking_employer_pauses_only_their_active_campaigns(self):
         employer = User.objects.create_user(
             'campaign-owner@example.com',

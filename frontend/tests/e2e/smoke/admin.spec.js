@@ -492,6 +492,7 @@ test('admin access control: wide permission picker supports search and dependent
       module: 'company_update',
       label: 'Xem yêu cầu sửa công ty',
       description: 'Xem hàng chờ và đối chiếu nội dung đề xuất.',
+      requires: [],
       is_active: true,
       is_granted_to_role: false,
     },
@@ -500,6 +501,7 @@ test('admin access control: wide permission picker supports search and dependent
       module: 'company_update',
       label: 'Duyệt sửa thông tin công ty',
       description: 'Duyệt và áp dụng thay đổi công ty.',
+      requires: ['company_update.view'],
       is_active: true,
       is_granted_to_role: false,
     },
@@ -508,6 +510,7 @@ test('admin access control: wide permission picker supports search and dependent
       module: 'cv_template',
       label: 'Xem catalogue CV',
       description: 'Xem catalogue CV.',
+      requires: [],
       is_active: true,
       is_granted_to_role: false,
     },
@@ -535,7 +538,7 @@ test('admin access control: wide permission picker supports search and dependent
   const dialog = page.getByRole('dialog', { name: /Sửa quyền/ })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByText(`${department.name} · ${role.name}`)).toBeVisible()
-  await expect(dialog.getByText('Quyền duyệt sửa công ty đã được tách riêng')).toBeVisible()
+  await expect(dialog.getByText('Quyền nền được đồng bộ tự động')).toBeVisible()
   const viewport = page.viewportSize()
   await expect.poll(async () => {
     const box = await dialog.boundingBox()

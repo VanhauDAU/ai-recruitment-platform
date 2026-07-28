@@ -122,6 +122,24 @@ describe('AdminAccountManagement overview', () => {
     expect(screen.queryByLabelText('Tổng quan tài khoản')).not.toBeInTheDocument()
   })
 
+  it('uses the dedicated employer account permission for recruiter browsing', async () => {
+    renderWidget({
+      isSuperuser: false,
+      permissions: ['account.employer.view'],
+      scope: 'recruiters',
+    })
+
+    expect(await screen.findByRole('tab', { name: 'Danh sách NTD' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await waitFor(() => expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'employer' }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ))
+    expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()
+  })
+
   it('does not mix company-update requests into account tabs', async () => {
     renderWidget()
 

@@ -390,6 +390,7 @@ class AdminAccessG2ApiTests(TestCase):
         self.assertFalse(role.permissions.exists())
 
     def test_permission_picker_keeps_granted_deprecated_permission(self):
+        management.call_command('sync_admin_permissions')
         deprecated = AdminPermission.objects.create(
             code='cv_template.legacy',
             module='cv_template',
@@ -406,6 +407,10 @@ class AdminAccessG2ApiTests(TestCase):
         legacy = next(item for item in response.json() if item['code'] == deprecated.code)
         self.assertFalse(legacy['is_active'])
         self.assertTrue(legacy['is_granted_to_role'])
+        company_recruiter = next(
+            item for item in response.json() if item['code'] == 'company_recruiter.view'
+        )
+        self.assertEqual(company_recruiter['requires'], ['company.view'])
 
     def test_assignment_preview_mfa_and_confirm(self):
         self.authenticate(self.superuser)
@@ -895,10 +900,12 @@ class AdminAccessRuleTests(TestCase):
             name='Staff',
             is_system_managed=True,
         )
-        permission = AdminPermission.objects.create(
+        permission, _ = AdminPermission.objects.get_or_create(
             code='dashboard.view',
-            module='dashboard',
-            label='Dashboard',
+            defaults={
+                'module': 'dashboard',
+                'label': 'Dashboard',
+            },
         )
         role.permissions.add(permission)
         before = AdminAccessAuditLog.objects.count()

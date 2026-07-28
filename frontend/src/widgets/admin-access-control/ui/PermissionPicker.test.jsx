@@ -42,6 +42,25 @@ const permissions = [
     description: 'Duyệt và áp dụng thay đổi.',
     is_active: true,
     is_granted_to_role: false,
+    requires: ['company_update.view'],
+  },
+  {
+    code: 'company.view',
+    module: 'company',
+    label: 'Xem công ty',
+    description: 'Xem hồ sơ công ty.',
+    is_active: true,
+    is_granted_to_role: false,
+    requires: [],
+  },
+  {
+    code: 'company_recruiter.view',
+    module: 'company',
+    label: 'Xem nhà tuyển dụng của công ty',
+    description: 'Xem owner và member.',
+    is_active: true,
+    is_granted_to_role: false,
+    requires: ['company.view'],
   },
 ]
 
@@ -109,5 +128,31 @@ describe('PermissionPicker', () => {
       'company_update.review',
       'company_update.view',
     ])
+  })
+
+  it('adds and removes company permission dependencies from the server contract', async () => {
+    const onChange = vi.fn()
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <PermissionPicker permissions={permissions} value={[]} onChange={onChange} />,
+    )
+
+    await user.click(screen.getByRole('checkbox', {
+      name: 'Xem nhà tuyển dụng của công ty',
+    }))
+    expect(onChange).toHaveBeenLastCalledWith([
+      'company.view',
+      'company_recruiter.view',
+    ])
+
+    rerender(
+      <PermissionPicker
+        permissions={permissions}
+        value={['company.view', 'company_recruiter.view']}
+        onChange={onChange}
+      />,
+    )
+    await user.click(screen.getByRole('checkbox', { name: 'Xem công ty' }))
+    expect(onChange).toHaveBeenLastCalledWith([])
   })
 })

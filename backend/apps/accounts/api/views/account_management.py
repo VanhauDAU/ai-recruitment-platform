@@ -117,6 +117,7 @@ class AdminAccountViewSet(
     required_admin_permissions = {
         'list': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -124,6 +125,7 @@ class AdminAccountViewSet(
         ],
         'retrieve': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -131,6 +133,7 @@ class AdminAccountViewSet(
         ],
         'summary': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -140,6 +143,7 @@ class AdminAccountViewSet(
         'partial_update': ['account.profile.manage'],
         'profile': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.profile.manage',
             'employer_verification.view',
@@ -148,11 +152,29 @@ class AdminAccountViewSet(
         'cvs': ['account.view'],
         'applications': ['account.view'],
         'consents': ['account.view'],
-        'recruitment_needs': ['account.view', 'employer_verification.view'],
-        'jobs': ['account.view', 'employer_verification.view'],
-        'campaigns': ['account.view', 'employer_verification.view'],
-        'sessions': ['account.view', 'account.admin.view', 'account.admin.invite'],
-        'activity': ['account.view', 'account.admin.view', 'account.admin.invite'],
+        'recruitment_needs': [
+            'account.view',
+            'account.employer.view',
+            'employer_verification.view',
+        ],
+        'jobs': ['account.view', 'account.employer.view', 'employer_verification.view'],
+        'campaigns': [
+            'account.view',
+            'account.employer.view',
+            'employer_verification.view',
+        ],
+        'sessions': [
+            'account.view',
+            'account.employer.view',
+            'account.admin.view',
+            'account.admin.invite',
+        ],
+        'activity': [
+            'account.view',
+            'account.employer.view',
+            'account.admin.view',
+            'account.admin.invite',
+        ],
         'status_impact': ['account.status.manage', 'account.admin.manage'],
         'change_status': ['account.status.manage', 'account.admin.manage'],
         'revoke_sessions_impact': ['account.security.manage', 'account.admin.manage'],

@@ -24,6 +24,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem danh sách và chi tiết tài khoản quản trị nội bộ.',
     },
     {
+        'code': 'account.employer.view',
+        'module': 'account',
+        'label': 'Xem tài khoản nhà tuyển dụng',
+        'description': 'Xem danh sách và chi tiết tài khoản nhà tuyển dụng, không mở dữ liệu ứng viên.',
+    },
+    {
         'code': 'account.profile.manage',
         'module': 'account',
         'label': 'Sửa thông tin tài khoản',
@@ -248,3 +254,48 @@ ADMIN_PERMISSIONS = (
 )
 
 ADMIN_PERMISSION_CODES = frozenset(item['code'] for item in ADMIN_PERMISSIONS)
+
+# Quan hệ quyền nền được sở hữu ở backend để API, seed và UI không thể tạo một
+# chức danh có quyền thao tác nhưng thiếu quyền đọc tài nguyên tương ứng.
+ADMIN_PERMISSION_DEPENDENCIES = {
+    'account.admin.manage': ('account.admin.view',),
+    'account.profile.manage': ('account.view',),
+    'account.security.manage': ('account.view',),
+    'account.sensitive.view': ('account.view',),
+    'account.status.manage': ('account.view',),
+    'admin_access.manage_department': ('admin_access.view',),
+    'admin_access.manage_role': ('admin_access.view',),
+    'admin_access.manage_staff': ('admin_access.view',),
+    'blog.manage': ('blog.view',),
+    'blog.publish': ('blog.view',),
+    'company.sensitive.view': ('company.view',),
+    'company_recruiter.view': ('company.view',),
+    'company_update.review': ('company_update.view',),
+    'consultation_lead.manage': ('consultation_lead.view',),
+    'cv_template.archive': ('cv_template.view',),
+    'cv_template.create': ('cv_template.view',),
+    'cv_template.delete': ('cv_template.view',),
+    'cv_template.edit': ('cv_template.view',),
+    'cv_template.publish': ('cv_template.view',),
+    'employer_verification.review': ('employer_verification.view',),
+    'job_moderation.approve': ('job_moderation.view',),
+    'job_moderation.reject': ('job_moderation.view',),
+    'job_moderation.resolve_report': ('job_moderation.view',),
+    'service_catalog.manage': ('service_catalog.view',),
+    'site_setting.manage': ('site_setting.view',),
+}
+
+
+def expand_admin_permission_codes(codes):
+    """Bổ sung đệ quy mọi quyền nền cần thiết cho một tập quyền."""
+
+    expanded = set(codes)
+    pending = list(expanded)
+    while pending:
+        code = pending.pop()
+        for required_code in ADMIN_PERMISSION_DEPENDENCIES.get(code, ()):
+            if required_code in expanded:
+                continue
+            expanded.add(required_code)
+            pending.append(required_code)
+    return expanded

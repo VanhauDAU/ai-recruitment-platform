@@ -82,10 +82,10 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     recruiterScope
     && (isSuperuser || has('employer_verification.view'))
   )
-  const canBrowseAccounts = (
-    isSuperuser
-    || has('account.view')
-    || has('account.admin.view')
+  const canBrowseAccounts = isSuperuser || (
+    recruiterScope
+      ? has('account.employer.view') || has('account.view')
+      : has('account.view') || has('account.admin.view')
   )
   const canReadAccounts = (
     canBrowseAccounts

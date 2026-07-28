@@ -12,6 +12,7 @@ from ..admin_access_rules import (
 )
 from ..constants import (
     ADMIN_PERMISSIONS,
+    expand_admin_permission_codes,
     system_department_definition,
     system_role_definition,
 )
@@ -326,7 +327,7 @@ def set_role_permissions(
     mark_customized=False,
     actor_identifier='',
 ):
-    desired_codes = set(desired_active_codes)
+    desired_codes = expand_admin_permission_codes(desired_active_codes)
     with transaction.atomic():
         role = AdminRole.objects.select_for_update().get(pk=role.pk)
         desired_permissions = {

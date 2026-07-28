@@ -41,6 +41,8 @@ def _account_visibility(actor):
     visible = Q(pk__in=[])
     if 'account.view' in permissions:
         visible |= Q(role__in=[User.Role.CANDIDATE, User.Role.EMPLOYER])
+    if 'account.employer.view' in permissions:
+        visible |= Q(role=User.Role.EMPLOYER)
     if 'employer_verification.view' in permissions:
         visible |= Q(role=User.Role.EMPLOYER)
     if 'company_update.view' in permissions:

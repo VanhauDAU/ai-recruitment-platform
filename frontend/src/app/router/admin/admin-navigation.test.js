@@ -122,6 +122,19 @@ describe('admin navigation tree', () => {
       .toBe('/admin/app/recruiters?tab=verification')
   })
 
+  it('lets recruiter readers see NTD without exposing the general user area', () => {
+    const tree = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access(['account.employer.view']),
+    )
+    const leaves = flattenAdminNavigation(tree)
+
+    expect(leaves.map((leaf) => leaf.key)).toContain('employer-list')
+    expect(leaves.map((leaf) => leaf.key)).not.toContain('all-accounts')
+    expect(tree.map((item) => item.key)).not.toContain('users')
+  })
+
   it('maps each system setting leaf to one exact settings group', () => {
     const settingLeaves = flattenAdminNavigation(ADMIN_NAVIGATION)
       .filter((item) => item.key.startsWith('settings-'))

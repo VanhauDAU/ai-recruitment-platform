@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
-from ...constants import system_department_definition, system_role_definition
+from ...constants import (
+    ADMIN_PERMISSION_DEPENDENCIES,
+    expand_admin_permission_codes,
+    system_department_definition,
+    system_role_definition,
+)
 from ...models import (
     AdminAccessAuditLog,
     AdminMembership,
@@ -187,6 +192,7 @@ class AdminMembershipCreateSerializer(serializers.Serializer):
 
 class AdminPermissionSerializer(serializers.ModelSerializer):
     is_granted_to_role = serializers.SerializerMethodField()
+    requires = serializers.SerializerMethodField()
 
     class Meta:
         model = AdminPermission
@@ -195,12 +201,16 @@ class AdminPermissionSerializer(serializers.ModelSerializer):
             'module',
             'label',
             'description',
+            'requires',
             'is_active',
             'is_granted_to_role',
         ]
 
     def get_is_granted_to_role(self, obj):
         return bool(getattr(obj, 'is_granted_to_role', False))
+
+    def get_requires(self, obj):
+        return list(ADMIN_PERMISSION_DEPENDENCIES.get(obj.code, ()))
 
 
 class AdminStaffSerializer(serializers.ModelSerializer):
@@ -264,7 +274,7 @@ class PermissionCodesSerializer(serializers.Serializer):
     )
 
     def validate_permission_codes(self, value):
-        codes = sorted(set(value))
+        codes = sorted(expand_admin_permission_codes(value))
         permissions = {
             permission.code: permission
             for permission in AdminPermission.objects.filter(code__in=codes)
