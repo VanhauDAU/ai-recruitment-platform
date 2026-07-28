@@ -114,6 +114,24 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem thông tin lead tư vấn doanh nghiệp.',
     },
     {
+        'code': 'company.sensitive.view',
+        'module': 'company',
+        'label': 'Xem dữ liệu công ty nhạy cảm',
+        'description': 'Xem đầy đủ mã số thuế, email và số điện thoại của công ty.',
+    },
+    {
+        'code': 'company.view',
+        'module': 'company',
+        'label': 'Xem công ty',
+        'description': 'Xem danh sách và hồ sơ pháp lý của công ty tuyển dụng.',
+    },
+    {
+        'code': 'company_recruiter.view',
+        'module': 'company',
+        'label': 'Xem nhà tuyển dụng của công ty',
+        'description': 'Xem owner, member và trạng thái xác thực của nhà tuyển dụng thuộc công ty.',
+    },
+    {
         'code': 'company_update.review',
         'module': 'company_update',
         'label': 'Duyệt sửa thông tin công ty',
