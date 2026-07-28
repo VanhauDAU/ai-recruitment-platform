@@ -483,3 +483,37 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
 - Login/register/recovery employer dùng `EmployerAuthLayout` và route helper
   `employerAppPath`; không hardcode host, token key hoặc điều hướng sang cổng
   candidate.
+
+## Ownership map — Dải thông báo đa cổng
+
+```text
+app/layouts
+  → widgets/announcement-strip
+    → entities/announcement + entities/session|employer-profile
+      → shared/api, shared/ui
+
+pages/admin/app/Announcements
+  → widgets/admin-announcement-management
+    → features/manage-announcement
+      → entities/announcement
+        → shared/api, shared/ui
+```
+
+- `entities/announcement` sở hữu HTTP contract, query keys, locale fallback và
+  presentation enum. Entity không biết layout hoặc system reminder.
+- `widgets/announcement-strip` sở hữu composition giữa feed từ backend với
+  email verification, compliance employer và job-preference reminder; pure
+  priority resolver nằm trong widget vì đây là logic ghép nhiều domain.
+- `features/manage-announcement` chỉ sở hữu mutation create/revision/publish/
+  pause/resume/archive/duplicate. Feature không import feature khác.
+- `widgets/admin-announcement-management` sở hữu bảng, editor, preview,
+  conflict simulator và metrics. Page admin chỉ compose widget; route/lazy
+  registry vẫn thuộc `app`.
+- Bốn surface canonical là `candidate`, `employer_marketing`,
+  `employer_workspace`, `admin_workspace`. Layout truyền surface và path; không
+  hardcode role hoặc tự lọc quyền admin ở component.
+- Strip phải fail-safe: lỗi remote feed không được làm mất cảnh báo hệ thống,
+  header hoặc main content. Chiều cao được đo và công bố bằng CSS custom
+  property; không thêm hằng số viewport theo từng layout.
+- Mọi import liên-slice đi qua public `index.js`; các adapter hệ thống chỉ được
+  compose trong widget, không chuyển session/profile logic xuống `shared`.
