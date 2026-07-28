@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -435,13 +436,17 @@ class AdminAccountViewSet(
         )
         return Response({'revoked_session_count': revoked})
 
+    @extend_schema(request=ReasonSerializer)
     @action(detail=True, methods=['post'], url_path='send-password-reset')
     def send_password_reset(self, request, public_id=None):
+        serializer = ReasonSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         _call(
             queue_account_security_email,
             user=self.get_object(),
             kind=AuthEmailJob.Kind.PASSWORD_RESET,
             actor=request.user,
+            **serializer.validated_data,
         )
         return Response({'detail': 'Đã xếp lịch gửi email đặt lại mật khẩu.'})
 

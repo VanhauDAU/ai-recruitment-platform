@@ -659,6 +659,7 @@ class AccountManagementG3ApiTests(TestCase):
                 'admin-account-send-password-reset',
                 kwargs={'public_id': locked_admin.public_id},
             ),
+            {'reason': 'Admin báo quên mật khẩu qua quy trình hỗ trợ nội bộ'},
             format='json',
         )
 
@@ -670,6 +671,41 @@ class AccountManagementG3ApiTests(TestCase):
                 kind=AuthEmailJob.Kind.PASSWORD_RESET,
             ).exists()
         )
+
+    def test_password_reset_email_requires_and_audits_a_reason(self):
+        managed_admin = User.objects.create_user(
+            'managed-admin@example.com',
+            self.password,
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+            is_active=True,
+        )
+        assign_membership(managed_admin, self.target_role, actor=self.superuser)
+        self.authenticate(self.superuser)
+        url = reverse(
+            'admin-account-send-password-reset',
+            kwargs={'public_id': managed_admin.public_id},
+        )
+
+        missing_reason = self.client.post(url, {}, format='json')
+        self.assertEqual(missing_reason.status_code, 400)
+        self.assertIn('reason', missing_reason.json())
+
+        reason = 'Đã xác minh danh tính admin qua quy trình hỗ trợ nội bộ'
+        response = self.client.post(url, {'reason': reason}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            AuthEmailJob.objects.filter(
+                user=managed_admin,
+                kind=AuthEmailJob.Kind.PASSWORD_RESET,
+            ).exists()
+        )
+        audit = AdminAccessAuditLog.objects.filter(
+            action='send_account_password_reset',
+            target_public_id=managed_admin.public_id,
+        ).latest('created_at')
+        self.assertEqual(audit.payload['reason'], reason)
 
     def test_audit_does_not_contain_the_invitation_token(self):
         response = self.invite()

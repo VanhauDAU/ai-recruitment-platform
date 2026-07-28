@@ -52,10 +52,31 @@ bằng `createsuperuser`, sau đó bật/xác minh MFA theo runbook RBAC G1.
    preview; xác nhận audit có actor/reason/result nhưng không có token, mật
    khẩu, MFA secret hoặc mã dự phòng.
 
-## 5. Quan sát và rollback
+## 5. Khôi phục mật khẩu Admin
+
+- Không bật endpoint hoặc liên kết **Quên mật khẩu** công khai trên trang đăng
+  nhập Admin. Trang `/admin/app/reset-password` chỉ nhận token do workflow quản
+  trị phát hành.
+- Admin mất mật khẩu phải liên hệ superuser/bộ phận kỹ thuật qua kênh nội bộ đã
+  xác minh. Superuser mở hồ sơ tài khoản, chọn **Gửi đặt lại mật khẩu**, nhập lý
+  do hỗ trợ và kiểm tra đúng email trước khi xác nhận.
+- Chỉ gửi link cho tài khoản đang hoạt động. Không mở khóa tài khoản bị cấm chỉ
+  để reset mật khẩu; việc mở khóa là một quyết định riêng có reason/audit.
+- Sau khi người nhận dùng link, token phải hết hiệu lực và toàn bộ refresh
+  session cũ bị thu hồi. Không gửi mật khẩu qua email hoặc tự đăng nhập người
+  dùng sau khi reset.
+- Duy trì tối thiểu hai superuser độc lập, bật TOTP và cất mã dự phòng ở kho bí
+  mật ngoại tuyến. Nếu superuser cuối cùng mất quyền truy cập, dùng quy trình
+  break-glass do hai người phê duyệt trên backend; không sửa password hash trực
+  tiếp trong database. Sau khôi phục phải thu hồi mọi phiên, kiểm tra MFA và ghi
+  ticket vận hành liên kết với audit.
+
+## 6. Quan sát và rollback
 
 - Theo dõi outbox `AuthEmailJob` loại `admin_invitation`, log worker và tỷ lệ
   `failed`; không in `context` chứa token (context chỉ có public id + version).
+- Theo dõi action `send_account_password_reset`; mọi bản ghi phải có `reason`
+  và `target_public_id`, tuyệt đối không chứa token hoặc URL reset đầy đủ.
 - Theo dõi 403 `admin_permission_denied`, 409 `admin_resource_changed` và số
   lời mời pending/expired.
 - Rollback code không tự xóa permission/scope/invitation để giữ audit. Migration

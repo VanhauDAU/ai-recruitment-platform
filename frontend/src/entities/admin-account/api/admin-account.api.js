@@ -74,8 +74,8 @@ export function revokeAccountSessions(publicId, reason, impactToken) {
   }))
 }
 
-export function sendAdminAccountPasswordReset(publicId) {
-  return data(client.post(`/admin/accounts/${publicId}/send-password-reset/`))
+export function sendAdminAccountPasswordReset(publicId, payload) {
+  return data(client.post(`/admin/accounts/${publicId}/send-password-reset/`, payload))
 }
 
 export function resendAdminAccountVerification(publicId) {

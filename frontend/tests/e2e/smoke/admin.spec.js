@@ -6,6 +6,8 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
   await mockPublicApi(page)
   await page.goto('/admin/app/login')
   await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible()
+  await expect(page.getByText(/quên mật khẩu\? liên hệ kỹ thuật/i)).toBeVisible()
+  await expect(page.getByRole('link', { name: /quên mật khẩu/i })).toHaveCount(0)
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

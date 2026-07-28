@@ -759,10 +759,15 @@ def confirm_revoke_account_sessions(user, *, reason, impact_token, actor):
         return len(sessions)
 
 
-def queue_account_security_email(user, *, kind, actor):
+def queue_account_security_email(user, *, kind, actor, reason=None):
     from ..tasks import queue_auth_email
     from .password_reset import is_reset_eligible
 
+    audit_reason = (
+        _ensure_reason(reason)
+        if kind == AuthEmailJob.Kind.PASSWORD_RESET
+        else (reason or '').strip()
+    )
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
         ensure_account_write_allowed(actor, user, 'account.security.manage')
@@ -783,6 +788,9 @@ def queue_account_security_email(user, *, kind, actor):
             ),
             target_type='user',
             target_public_id=user.public_id,
-            payload={'user_public_id': user.public_id},
+            payload={
+                'user_public_id': user.public_id,
+                **({'reason': audit_reason} if audit_reason else {}),
+            },
         )
         return job

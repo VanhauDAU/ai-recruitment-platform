@@ -67,6 +67,7 @@ function PasswordStrengthGuide({ value }) {
  * hiện tại để đối chiếu). Page sở hữu URL OAuth và đường quay lại của cổng.
  */
 export default function ChangePasswordForm({
+  defaultLogoutAllSessions = false,
   successRedirect,
   onReauth,
   onSuccess,
@@ -171,7 +172,7 @@ export default function ChangePasswordForm({
         wrapperCol={{ xs: { span: 24 }, sm: { flex: '1' } }}
         colon={false}
         onFinish={submit}
-        initialValues={{ logout_all_sessions: false }}
+        initialValues={{ logout_all_sessions: defaultLogoutAllSessions }}
         className="p-0 [&_.ant-form-item]:!mb-3 [&_.ant-form-item-label>label]:!text-sm [&_.ant-form-item-label>label]:!text-slate-600"
       >
         {showEmail && (

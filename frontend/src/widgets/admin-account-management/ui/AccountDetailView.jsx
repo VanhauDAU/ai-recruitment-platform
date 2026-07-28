@@ -1,7 +1,6 @@
 import {
   ArrowLeftOutlined,
   EditOutlined,
-  KeyOutlined,
   LockOutlined,
   MailOutlined,
   ReloadOutlined,
@@ -41,11 +40,11 @@ import {
   getAdminAccountSessions,
   resendAdminAccountVerification,
   revokeAccountSessions,
-  sendAdminAccountPasswordReset,
   updateAdminAccount,
 } from '@/entities/admin-account'
 import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
+import { SendAccountPasswordResetButton } from '@/features/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -414,14 +413,11 @@ export default function AccountDetailView({ publicId }) {
     }
   }
 
-  const sendEmail = async (kind) => {
+  const sendVerificationEmail = async () => {
     setSaving(true)
     try {
-      if (kind === 'password') await sendAdminAccountPasswordReset(publicId)
-      else await resendAdminAccountVerification(publicId)
-      message.success(kind === 'password'
-        ? 'Đã xếp lịch gửi email đặt lại mật khẩu.'
-        : 'Đã xếp lịch gửi email xác minh.')
+      await resendAdminAccountVerification(publicId)
+      message.success('Đã xếp lịch gửi email xác minh.')
     } catch (error) {
       message.error(getApiErrorMessage(error))
     } finally {
@@ -466,18 +462,15 @@ export default function AccountDetailView({ publicId }) {
               ? 'Gửi liên kết đặt lại mật khẩu theo đúng cổng tài khoản'
               : 'Chỉ có thể gửi liên kết cho tài khoản đang hoạt động'}>
               <span>
-                <Button
-                  icon={<KeyOutlined />}
-                  loading={saving}
+                <SendAccountPasswordResetButton
+                  publicId={publicId}
+                  accountEmail={account.email}
                   disabled={!canResetPassword}
-                  onClick={() => sendEmail('password')}
-                >
-                  Gửi đặt lại mật khẩu
-                </Button>
+                />
               </span>
             </Tooltip>
             {!account.email_verified && (
-              <Button icon={<MailOutlined />} loading={saving} onClick={() => sendEmail('verification')}>
+              <Button icon={<MailOutlined />} loading={saving} onClick={sendVerificationEmail}>
                 Gửi lại xác minh
               </Button>
             )}

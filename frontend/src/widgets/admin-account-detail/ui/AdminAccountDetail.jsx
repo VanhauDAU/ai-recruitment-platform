@@ -1,7 +1,6 @@
 import {
   ArrowLeftOutlined,
   EditOutlined,
-  KeyOutlined,
   MailOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
@@ -31,7 +30,6 @@ import {
   getAdminAccountResource,
   getAdminAccountSessions,
   resendAdminAccountVerification,
-  sendAdminAccountPasswordReset,
   updateAdminAccountProfile,
 } from '@/entities/admin-account'
 import { useAdminAccess } from '@/entities/admin-access'
@@ -39,6 +37,7 @@ import { useSession } from '@/entities/session'
 import { AdminAccountProfileModal } from '@/features/edit-admin-account-profile'
 import { AdminAccountSecurityActions } from '@/features/manage-admin-account-security'
 import { EmployerVerificationReview } from '@/features/review-employer-verification'
+import { SendAccountPasswordResetButton } from '@/features/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -103,12 +102,11 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
     queryFn: ({ signal }) => getAdminAccountSessions(publicId, { signal }),
   })
   const [sending, setSending] = useState(false)
-  const send = async (kind) => {
+  const sendVerification = async () => {
     setSending(true)
     try {
-      if (kind === 'password') await sendAdminAccountPasswordReset(publicId)
-      else await resendAdminAccountVerification(publicId)
-      message.success('Đã xếp lịch gửi email bảo mật.')
+      await resendAdminAccountVerification(publicId)
+      message.success('Đã xếp lịch gửi email xác minh.')
     } catch (error) {
       message.error(getApiErrorMessage(error))
     } finally {
@@ -144,11 +142,12 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
         </Descriptions>
         {canManage && (
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button loading={sending} icon={<KeyOutlined />} onClick={() => send('password')}>
-              Gửi đặt lại mật khẩu
-            </Button>
+            <SendAccountPasswordResetButton
+              publicId={publicId}
+              accountEmail={account.email}
+            />
             {!account.email_verified && (
-              <Button loading={sending} icon={<MailOutlined />} onClick={() => send('verify')}>
+              <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
                 Gửi lại xác minh email
               </Button>
             )}

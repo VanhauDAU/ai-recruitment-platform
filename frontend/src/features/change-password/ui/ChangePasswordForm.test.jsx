@@ -170,6 +170,37 @@ describe('ChangePasswordForm', () => {
     expect(await screen.findByText('Mật khẩu này quá phổ biến.')).toBeInTheDocument()
   })
 
+  it('defaults to revoking other sessions when the admin caller requests it', async () => {
+    mocks.changeCurrentPassword.mockResolvedValue({
+      detail: 'Đã đổi mật khẩu.',
+      user: mocks.user,
+    })
+
+    renderForm({ defaultLogoutAllSessions: true })
+
+    expect(screen.getByRole('checkbox', {
+      name: 'Đăng xuất khỏi các thiết bị khác',
+    })).toBeChecked()
+    fireEvent.change(screen.getByLabelText('Mật khẩu hiện tại'), {
+      target: { value: 'CurrentPassword1' },
+    })
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), {
+      target: { value: 'Updated1' },
+    })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), {
+      target: { value: 'Updated1' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cập nhật' }))
+
+    await waitFor(() => {
+      expect(mocks.changeCurrentPassword.mock.calls[0][0]).toEqual({
+        current_password: 'CurrentPassword1',
+        password: 'Updated1',
+        logout_all_sessions: true,
+      })
+    })
+  })
+
   it('warns before the user fills the form when the OAuth session is no longer fresh', async () => {
     mocks.user = { email: 'candidate@example.com', has_usable_password: false }
     mocks.getPasswordSetupRequirements.mockResolvedValue({

@@ -54,6 +54,7 @@ export function AuthFormStyles() {
  * - `portal`: gửi kèm payload để backend chặn sai role trước khi phát token.
  * - `expectedRoles`: fallback check phía client — sai role thì logout + báo lỗi.
  * - `forgotPasswordLink`: null để ẩn (cổng admin).
+ * - `passwordHelp`: hướng dẫn thay thế ở hàng nhãn mật khẩu khi không có link.
  * - `onSuccess`: nếu truyền (vd. nhúng trong modal), gọi callback thay vì điều hướng.
  */
 export default function LoginForm({
@@ -61,6 +62,7 @@ export default function LoginForm({
   expectedRoles,
   onSuccess,
   forgotPasswordLink = MAIN_FORGOT_PASSWORD_URL,
+  passwordHelp = null,
   appearance = 'default',
   destinationResolver = (user, returnUrl) => getAuthDestination({ user, returnUrl }),
 }) {
@@ -222,6 +224,7 @@ export default function LoginForm({
                 Quên mật khẩu?
               </ForgotLink>
             )}
+            {!forgotPasswordLink && passwordHelp}
           </div>
           <Form.Item
             name="password"
