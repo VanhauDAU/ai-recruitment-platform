@@ -473,12 +473,18 @@ export default function EmployerVerificationReview({
   }
 
   const caseMeta = verificationStatusMeta(verificationCase.status)
+  const pendingDocumentCount = currentDocuments.filter(
+    (document) => document.status === 'pending',
+  ).length
   return (
     <div className="verification-review-layout">
       <Card size="small" className="account-detail-card verification-overview-card">
         <div className="verification-case-heading">
           <div>
             <Space wrap>
+              {pendingDocumentCount > 0 && (
+                <Tag color="gold">{`${pendingDocumentCount} file chờ duyệt`}</Tag>
+              )}
               <Tag color={caseMeta.color}>{caseMeta.label}</Tag>
               <Typography.Text code>{verificationCase.public_id}</Typography.Text>
             </Space>

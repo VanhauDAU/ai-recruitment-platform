@@ -20,47 +20,73 @@ MAX_PREVIEW_BYTES = 25 * 1024 * 1024
 logger = logging.getLogger(__name__)
 
 
+def _render_source_to_pdf(source_path: Path) -> bytes | None:
+    try:
+        subprocess.run(
+            [
+                'soffice',
+                (f'-env:UserInstallation={(source_path.parent / "libreoffice-profile").as_uri()}'),
+                '--headless',
+                '--nologo',
+                '--nodefault',
+                '--nolockcheck',
+                '--nofirststartwizard',
+                '--norestore',
+                '--safe-mode',
+                '--convert-to',
+                'pdf',
+                '--outdir',
+                str(source_path.parent),
+                str(source_path),
+            ],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=PREVIEW_TIMEOUT_SECONDS,
+        )
+        preview_path = source_path.with_suffix('.pdf')
+        if not preview_path.is_file() or preview_path.stat().st_size > MAX_PREVIEW_BYTES:
+            return None
+        return preview_path.read_bytes()
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        logger.warning('Employer verification office preview conversion failed.')
+        return None
+
+
 def render_office_document_preview(file_url: str, content_type: str) -> bytes | None:
     """Render a supported private Office document to PDF without exposing its URL."""
     suffix = OFFICE_DOCUMENT_SUFFIXES.get(content_type)
     if not suffix:
         return None
 
-    try:
-        with tempfile.TemporaryDirectory(prefix='employer-document-preview-') as directory:
-            workdir = Path(directory)
-            source_path = workdir / f'source{suffix}'
+    with tempfile.TemporaryDirectory(prefix='employer-document-preview-') as directory:
+        source_path = Path(directory) / f'source{suffix}'
+        try:
             with (
                 private_media_storage().open(file_url, 'rb') as source,
                 source_path.open('wb') as target,
             ):
                 shutil.copyfileobj(source, target)
+        except OSError:
+            logger.warning('Employer verification office preview source could not be read.')
+            return None
+        return _render_source_to_pdf(source_path)
 
-            subprocess.run(
-                [
-                    'soffice',
-                    '--headless',
-                    '--nologo',
-                    '--nodefault',
-                    '--nolockcheck',
-                    '--nofirststartwizard',
-                    '--norestore',
-                    '--safe-mode',
-                    '--convert-to',
-                    'pdf',
-                    '--outdir',
-                    str(workdir),
-                    str(source_path),
-                ],
-                check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                timeout=PREVIEW_TIMEOUT_SECONDS,
-            )
-            preview_path = source_path.with_suffix('.pdf')
-            if not preview_path.is_file() or preview_path.stat().st_size > MAX_PREVIEW_BYTES:
-                return None
-            return preview_path.read_bytes()
-    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
-        logger.warning('Employer verification office preview conversion failed.')
+
+def render_office_upload_preview(upload, content_type: str) -> bytes | None:
+    """Render an unpersisted Office upload to PDF for the recruiter's local preview."""
+    suffix = OFFICE_DOCUMENT_SUFFIXES.get(content_type)
+    if not suffix:
         return None
+
+    with tempfile.TemporaryDirectory(prefix='employer-upload-preview-') as directory:
+        source_path = Path(directory) / f'source{suffix}'
+        try:
+            with source_path.open('wb') as target:
+                for chunk in upload.chunks():
+                    target.write(chunk)
+            upload.seek(0)
+        except OSError:
+            logger.warning('Employer verification upload preview could not be staged.')
+            return None
+        return _render_source_to_pdf(source_path)

@@ -110,6 +110,9 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                 'kind': 'employer',
                 'position_title': recruiter.position_title,
                 'company_role': recruiter.company_role,
+                'company_role_label': recruiter.get_company_role_display(),
+                'onboarding_completed': bool(recruiter.onboarding_completed_at),
+                'phone_verified': bool(recruiter.phone_verified_at),
                 'verification': (
                     {
                         'public_id': verification.public_id,

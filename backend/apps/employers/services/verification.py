@@ -98,7 +98,9 @@ def verification_checks(case):
     documents = getattr(case, 'current_documents_for_checks', None)
     if documents is None:
         documents = case.documents.filter(is_current=True)
-    current_documents = {document.doc_type: document for document in documents}
+    current_documents = {}
+    for document in documents:
+        current_documents.setdefault(document.doc_type, []).append(document)
     recruitment_needs = getattr(recruiter, 'verification_recruitment_needs', None)
     consulting_need_completed = (
         bool(recruitment_needs)
@@ -117,16 +119,21 @@ def verification_checks(case):
         'representative_documents_submitted': business_required.issubset(current_documents),
         'business_documents_approved': all(
             current_documents.get(doc_type)
-            and current_documents[doc_type].status == CompanyDocument.Status.APPROVED
+            and all(
+                document.status == CompanyDocument.Status.APPROVED
+                for document in current_documents[doc_type]
+            )
             for doc_type in business_required
         ),
         'candidate_dpa_submitted': (
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT in current_documents
         ),
         'candidate_dpa_approved': (
-            current_documents.get(CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT) is not None
-            and current_documents[CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT].status
-            == CompanyDocument.Status.APPROVED
+            bool(current_documents.get(CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT))
+            and all(
+                document.status == CompanyDocument.Status.APPROVED
+                for document in current_documents[CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT]
+            )
         ),
         'dpa_accepted': recruiter.dpa_accepted_at is not None,
         'case_approved': case.status == EmployerVerificationCase.Status.APPROVED,
@@ -161,6 +168,28 @@ def recruiter_requires_approved_verification():
     return bool(getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False))
 
 
+def _current_document_issue(case):
+    current_documents = case.documents.filter(is_current=True)
+    rejected = (
+        current_documents.filter(status=CompanyDocument.Status.REJECTED)
+        .order_by('-reviewed_at', '-updated_at', '-id')
+        .first()
+    )
+    if rejected is not None:
+        return EmployerVerificationCase.Status.REJECTED, rejected.review_note
+    changes_requested = (
+        current_documents.filter(status=CompanyDocument.Status.CHANGES_REQUESTED)
+        .order_by('-reviewed_at', '-updated_at', '-id')
+        .first()
+    )
+    if changes_requested is not None:
+        return (
+            EmployerVerificationCase.Status.CHANGES_REQUESTED,
+            changes_requested.review_note,
+        )
+    return None, ''
+
+
 @transaction.atomic
 def record_verification_upload(
     *,
@@ -184,12 +213,16 @@ def record_verification_upload(
         EmployerVerificationCase.Status.REJECTED,
     }
     case.company = recruiter.company
-    case.status = EmployerVerificationCase.Status.PENDING
+    issue_status, issue_reason = _current_document_issue(case)
+    case.status = issue_status or EmployerVerificationCase.Status.PENDING
     case.submitted_at = timezone.now()
-    case.review_started_at = None
-    case.decided_at = None
-    case.decision_reason = ''
-    case.reviewer = None
+    if issue_status is None:
+        case.review_started_at = None
+        case.decided_at = None
+        case.decision_reason = ''
+        case.reviewer = None
+    else:
+        case.decision_reason = issue_reason
     case.lock_version += 1
     if resubmission:
         case.revision += 1
@@ -290,10 +323,11 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
         raise ValidationError('Kết quả xử lý giấy tờ không hợp lệ.')
     if decision != CompanyDocument.Status.APPROVED and not reason.strip():
         raise ValidationError('Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.')
+    normalized_reason = '' if decision == CompanyDocument.Status.APPROVED else reason.strip()
     document.status = decision
     document.reviewed_by = actor
     document.reviewed_at = timezone.now()
-    document.review_note = reason.strip()
+    document.review_note = normalized_reason
     document.save(
         update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at']
     )
@@ -303,20 +337,32 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     automatically_approved = False
     if decision == CompanyDocument.Status.CHANGES_REQUESTED:
         case.status = EmployerVerificationCase.Status.CHANGES_REQUESTED
-        case.decision_reason = reason.strip()
+        case.decision_reason = normalized_reason
+        case.decided_at = None
     elif decision == CompanyDocument.Status.REJECTED:
         case.status = EmployerVerificationCase.Status.REJECTED
-        case.decision_reason = reason.strip()
+        case.decision_reason = normalized_reason
         case.decided_at = timezone.now()
     else:
+        issue_status, issue_reason = _current_document_issue(case)
         can_approve, _ = verification_can_be_approved(case)
-        if can_approve and case.status != EmployerVerificationCase.Status.APPROVED:
+        if issue_status is not None:
+            case.status = issue_status
+            case.decision_reason = issue_reason
+            case.decided_at = (
+                case.decided_at
+                if issue_status == EmployerVerificationCase.Status.REJECTED
+                else None
+            )
+        elif can_approve and case.status != EmployerVerificationCase.Status.APPROVED:
             case.status = EmployerVerificationCase.Status.APPROVED
             case.decision_reason = ''
             case.decided_at = timezone.now()
             automatically_approved = True
-        elif case.status == EmployerVerificationCase.Status.PENDING:
+        elif case.status != EmployerVerificationCase.Status.APPROVED:
             case.status = EmployerVerificationCase.Status.IN_REVIEW
+            case.decision_reason = ''
+            case.decided_at = None
     case.save(
         update_fields=[
             'status',
@@ -336,7 +382,7 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
             'document_public_id': document.public_id,
             'doc_type': document.doc_type,
             'decision': decision,
-            'reason': reason.strip(),
+            'reason': normalized_reason,
         },
     )
     if automatically_approved:

@@ -233,6 +233,33 @@ app/router + app/layouts
   permission được lọc từ leaf lên ancestor. Trạng thái pháp lý của công ty và
   trạng thái xác thực đại diện của từng NTD là hai contract độc lập.
 
+## Ownership map — Người dùng và nhà tuyển dụng quản trị
+
+```text
+app/router + app/layouts
+  → pages/admin/app/Accounts + Recruiters + AccountDetail + RecruiterDetail
+    → widgets/admin-account-management + widgets/admin-account-detail
+      → entities/admin-account + entities/admin-employer-verification
+        → shared/api
+```
+
+- `entities/admin-account` sở hữu DTO, API và query key. Mọi truy vấn danh sách
+  từ frontend phải truyền `scope=users` hoặc `scope=recruiters`; query key phải
+  chứa scope cùng toàn bộ filter, ordering và pagination.
+- `widgets/admin-account-management` sở hữu hai cấu hình workspace riêng.
+  `users` chỉ gồm ứng viên và quản trị viên; `recruiters` chỉ gồm tài khoản nhà
+  tuyển dụng. Page chỉ chọn scope và compose widget.
+- URL là nguồn chuẩn cho tab, filter, ordering và page. Lời mời quản trị dùng
+  namespace `invite_*`, hàng chờ xác thực NTD dùng `verify_*`; tham số không
+  tương thích phải được bỏ khi chuyển tab.
+- `/admin/app/accounts/:publicId` là route canonical của ứng viên/admin;
+  `/admin/app/recruiters/:publicId` là route canonical của NTD. Route chi tiết
+  phải chuyển bằng `replace` khi role không khớp và giữ `pathname + search` của
+  nguồn điều hướng nội bộ để nút quay lại khôi phục đúng workspace.
+- Summary tài khoản, NTD và công ty là aggregate phía server theo permission,
+  không được suy ra từ `results` của một trang phân trang. Trạng thái pháp lý
+  công ty, xác thực đại diện NTD và vai trò owner/member là ba contract riêng.
+
 ## Ownership map — CV Builder
 
 ```text

@@ -13,7 +13,12 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 from rest_framework.views import APIView
 
-from apps.accounts.constants import ADMIN_PERMISSION_CODES
+from apps.accounts.constants import (
+    ADMIN_PERMISSION_CODES,
+    ADMIN_PERMISSION_DEPENDENCIES,
+    expand_admin_permission_codes,
+    system_role_definition,
+)
 from apps.accounts.models import (
     AdminAccessAuditLog,
     AdminMembership,
@@ -246,6 +251,49 @@ class AdminAccessTests(TestCase):
         self.assertEqual(
             [item['code'] for item in payload],
             sorted(ADMIN_PERMISSION_CODES),
+        )
+        recruiter_permission = next(
+            item for item in payload if item['code'] == 'company_recruiter.view'
+        )
+        self.assertEqual(recruiter_permission['requires'], ['company.view'])
+
+    def test_permission_dependencies_are_valid_acyclic_and_expanded(self):
+        for code, required_codes in ADMIN_PERMISSION_DEPENDENCIES.items():
+            self.assertIn(code, ADMIN_PERMISSION_CODES)
+            self.assertTrue(set(required_codes).issubset(ADMIN_PERMISSION_CODES))
+            self.assertNotIn(code, expand_admin_permission_codes(required_codes))
+
+        self.assertEqual(
+            expand_admin_permission_codes({'company.sensitive.view', 'company_recruiter.view'}),
+            {'company.view', 'company.sensitive.view', 'company_recruiter.view'},
+        )
+
+    def test_employer_operations_roles_match_read_and_review_responsibilities(self):
+        staff = system_role_definition('employer-operations', 'staff')
+        manager = system_role_definition('employer-operations', 'manager')
+
+        self.assertIn('account.employer.view', staff['permissions'])
+        self.assertNotIn('account.view', staff['permissions'])
+        self.assertIn('company_update.review', manager['permissions'])
+        self.assertIn('employer_verification.review', manager['permissions'])
+
+    def test_role_permission_service_adds_required_view_permission(self):
+        approve = AdminPermission.objects.create(
+            code='job_moderation.approve',
+            module='job_moderation',
+            label='Duyệt tin',
+        )
+        self.role.permissions.clear()
+
+        set_role_permissions(
+            self.role,
+            {approve.code},
+            actor=self.other_admin,
+        )
+
+        self.assertEqual(
+            set(self.role.permissions.values_list('code', flat=True)),
+            {'job_moderation.approve', 'job_moderation.view'},
         )
 
     def test_bootstrap_admin_mfa_is_atomic_and_secret_free(self):

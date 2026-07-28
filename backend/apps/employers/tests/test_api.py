@@ -970,6 +970,36 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(preview['Content-Type'], 'application/pdf')
         self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
+    @patch(
+        'apps.employers.api.views.verification.render_office_upload_preview',
+        return_value=b'%PDF-selected-preview',
+    )
+    def test_selected_word_agreement_can_be_previewed_without_persisting_it(self, render_preview):
+        upload = SimpleUploadedFile(
+            'thoa-thuan.docx',
+            DOCX_BYTES,
+            content_type='application/octet-stream',
+        )
+
+        response = self.client.post(
+            reverse('employer-company-document-upload-preview'),
+            {'file': upload},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.content, b'%PDF-selected-preview')
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        render_preview.assert_called_once()
+        preview_upload, preview_content_type = render_preview.call_args.args
+        self.assertEqual(preview_upload.name, 'thoa-thuan.docx')
+        self.assertEqual(
+            preview_content_type,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertFalse(CompanyDocument.objects.filter(recruiter=self.recruiter).exists())
+
 
 class CompanyUpdateRequestTests(APITestCase):
     def setUp(self):
@@ -1343,6 +1373,194 @@ class CompanyUpdateRequestTests(APITestCase):
                 is_current=False,
             ).exists()
         )
+
+    def test_identity_document_accepts_multiple_current_images_but_authorization_does_not(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                authorization = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'file': SimpleUploadedFile(
+                            'uy-quyen.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_front = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'verification_method': 'authorization_and_id',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-truoc.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_back = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'append': 'true',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-sau.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                invalid_authorization_append = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'append': 'true',
+                        'file': SimpleUploadedFile(
+                            'uy-quyen-trang-2.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(authorization.status_code, status.HTTP_201_CREATED, authorization.data)
+        self.assertEqual(identity_front.status_code, status.HTTP_201_CREATED, identity_front.data)
+        self.assertEqual(identity_back.status_code, status.HTTP_201_CREATED, identity_back.data)
+        self.assertEqual(
+            invalid_authorization_append.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            invalid_authorization_append.data,
+        )
+        current_identity_documents = CompanyDocument.objects.filter(
+            verification_case=self.recruiter.verification_case,
+            doc_type=CompanyDocument.DocType.IDENTITY_DOCUMENT,
+            is_current=True,
+        ).order_by('version')
+        self.assertEqual(current_identity_documents.count(), 2)
+        self.assertEqual(
+            list(current_identity_documents.values_list('file_name', flat=True)),
+            ['cccd-mat-truoc.png', 'cccd-mat-sau.png'],
+        )
+        self.assertTrue(
+            services.verification_checks(self.recruiter.verification_case)[
+                'representative_documents_submitted'
+            ]
+        )
+        current_identity_documents.update(status=CompanyDocument.Status.APPROVED)
+        CompanyDocument.objects.filter(pk=authorization.data['id']).update(
+            status=CompanyDocument.Status.APPROVED
+        )
+        self.assertTrue(
+            services.verification_checks(self.recruiter.verification_case)[
+                'business_documents_approved'
+            ]
+        )
+
+    def test_replacing_one_rejected_identity_keeps_other_current_files(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                authorization = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'file': SimpleUploadedFile(
+                            'uy-quyen.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_front = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'verification_method': 'authorization_and_id',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-truoc.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_back = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'append': 'true',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-sau.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                front = CompanyDocument.objects.get(pk=identity_front.data['id'])
+                back = CompanyDocument.objects.get(pk=identity_back.data['id'])
+                front.status = CompanyDocument.Status.APPROVED
+                front.save(update_fields=['status'])
+                back.status = CompanyDocument.Status.REJECTED
+                back.review_note = 'Mặt sau bị mờ.'
+                back.save(update_fields=['status', 'review_note'])
+                case = back.verification_case
+                case.status = EmployerVerificationCase.Status.REJECTED
+                case.decision_reason = back.review_note
+                case.save(update_fields=['status', 'decision_reason'])
+
+                replacement = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'replaces': back.public_id,
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-sau-moi.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(authorization.status_code, status.HTTP_201_CREATED, authorization.data)
+        self.assertEqual(identity_front.status_code, status.HTTP_201_CREATED, identity_front.data)
+        self.assertEqual(identity_back.status_code, status.HTTP_201_CREATED, identity_back.data)
+        self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
+        front.refresh_from_db()
+        back.refresh_from_db()
+        replacement_document = CompanyDocument.objects.get(pk=replacement.data['id'])
+        case.refresh_from_db()
+        self.assertTrue(front.is_current)
+        self.assertEqual(front.status, CompanyDocument.Status.APPROVED)
+        self.assertFalse(back.is_current)
+        self.assertTrue(replacement_document.is_current)
+        self.assertEqual(replacement_document.supersedes, back)
+        self.assertEqual(replacement_document.status, CompanyDocument.Status.PENDING)
+        self.assertEqual(case.status, EmployerVerificationCase.Status.PENDING)
+        self.assertEqual(case.decision_reason, '')
+
+    def test_replacement_must_target_a_current_document_of_the_same_type(self):
+        other_type = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            verification_case=services.get_or_create_verification_case(self.recruiter),
+            doc_type=CompanyDocument.DocType.AUTHORIZATION_LETTER,
+            file_url='employers/test/authorization.pdf',
+            file_name='authorization.pdf',
+        )
+
+        response = self.client.post(
+            reverse('employer-company-documents'),
+            {
+                'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                'replaces': other_type.public_id,
+                'file': SimpleUploadedFile('cccd.png', PNG_BYTES, content_type='image/png'),
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('replaces', response.data)
+        other_type.refresh_from_db()
+        self.assertTrue(other_type.is_current)
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])

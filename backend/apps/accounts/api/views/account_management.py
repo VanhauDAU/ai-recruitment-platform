@@ -12,7 +12,7 @@ from common.pagination import StandardPagination
 from ...admin_access_rules import InvalidImpactToken, StaleImpactToken
 from ...admin_invitation_tokens import InvalidAdminInvitationToken
 from ...exceptions import AdminPermissionDenied, AdminResourceChanged
-from ...models import AuthEmailJob
+from ...models import AuthEmailJob, User
 from ...permissions import HasAdminPermission, require_admin_permission
 from ...selectors import (
     account_activity_queryset,
@@ -107,6 +107,27 @@ def _can_view_sensitive(user):
     return True
 
 
+def _validated_account_params(query_params):
+    params = query_params.copy()
+    scope = params.get('scope', '').strip()
+    if scope and scope not in {'users', 'recruiters'}:
+        raise ValidationError({'scope': 'Phạm vi tài khoản không hợp lệ.'})
+    role = params.get('role', '').strip()
+    if role and role not in User.Role.values:
+        raise ValidationError({'role': 'Vai trò tài khoản không hợp lệ.'})
+    if scope == 'users' and role == User.Role.EMPLOYER:
+        raise ValidationError({'role': 'Nhà tuyển dụng không thuộc phạm vi người dùng.'})
+    if scope == 'recruiters' and role and role != User.Role.EMPLOYER:
+        raise ValidationError({'role': 'Phạm vi nhà tuyển dụng chỉ chấp nhận role employer.'})
+    statuses = [value.strip() for value in params.get('status', '').split(',') if value.strip()]
+    if any(value not in User.Status.values for value in statuses):
+        raise ValidationError({'status': 'Trạng thái tài khoản không hợp lệ.'})
+    company_state = params.get('company_state', '').strip()
+    if company_state and company_state not in {'linked', 'missing'}:
+        raise ValidationError({'company_state': 'Trạng thái liên kết công ty không hợp lệ.'})
+    return params
+
+
 class AdminAccountViewSet(
     viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin
 ):
@@ -117,6 +138,7 @@ class AdminAccountViewSet(
     required_admin_permissions = {
         'list': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -124,6 +146,7 @@ class AdminAccountViewSet(
         ],
         'retrieve': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -131,6 +154,7 @@ class AdminAccountViewSet(
         ],
         'summary': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -140,6 +164,7 @@ class AdminAccountViewSet(
         'partial_update': ['account.profile.manage'],
         'profile': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.profile.manage',
             'employer_verification.view',
@@ -148,11 +173,29 @@ class AdminAccountViewSet(
         'cvs': ['account.view'],
         'applications': ['account.view'],
         'consents': ['account.view'],
-        'recruitment_needs': ['account.view', 'employer_verification.view'],
-        'jobs': ['account.view', 'employer_verification.view'],
-        'campaigns': ['account.view', 'employer_verification.view'],
-        'sessions': ['account.view', 'account.admin.view', 'account.admin.invite'],
-        'activity': ['account.view', 'account.admin.view', 'account.admin.invite'],
+        'recruitment_needs': [
+            'account.view',
+            'account.employer.view',
+            'employer_verification.view',
+        ],
+        'jobs': ['account.view', 'account.employer.view', 'employer_verification.view'],
+        'campaigns': [
+            'account.view',
+            'account.employer.view',
+            'employer_verification.view',
+        ],
+        'sessions': [
+            'account.view',
+            'account.employer.view',
+            'account.admin.view',
+            'account.admin.invite',
+        ],
+        'activity': [
+            'account.view',
+            'account.employer.view',
+            'account.admin.view',
+            'account.admin.invite',
+        ],
         'status_impact': ['account.status.manage', 'account.admin.manage'],
         'change_status': ['account.status.manage', 'account.admin.manage'],
         'revoke_sessions_impact': ['account.security.manage', 'account.admin.manage'],
@@ -162,7 +205,9 @@ class AdminAccountViewSet(
     }
 
     def get_queryset(self):
-        params = self.request.query_params if self.action == 'list' else {}
+        params = (
+            _validated_account_params(self.request.query_params) if self.action == 'list' else {}
+        )
         queryset = accounts_queryset(self.request.user, params=params)
         if self.action == 'profile':
             queryset = queryset.select_related(
@@ -194,7 +239,8 @@ class AdminAccountViewSet(
 
     @action(detail=False, methods=['get'])
     def summary(self, request):
-        return Response(account_summary(request.user))
+        params = _validated_account_params(request.query_params)
+        return Response(account_summary(request.user, scope=params.get('scope', '')))
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()

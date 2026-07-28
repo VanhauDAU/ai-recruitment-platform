@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Modal, Radio, Skeleton, Tag } from 'antd'
+import { Button, Modal, Radio, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import {
@@ -15,54 +15,23 @@ import { useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_COMPANY_SETTINGS_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import {
+  currentDocumentSet,
+  documentStatus,
+  filesFromUploadList,
+  replaceCachedDocuments,
+  savedDocumentsFromResponse,
+  uploadDocumentSet,
+} from '../model/business-document-set'
 import { EmployerBusinessDocumentCard } from './EmployerBusinessDocumentCard'
 
 const UPLOAD_GUIDE_URL = 'https://drive.google.com/file/d/1yYXQMXUjW7_vF3dlpsQd0EBo8WinH9K-/view'
 
 const DOCUMENT_STATUS = {
-  pending: { color: 'gold', label: 'Chờ duyệt' },
+  pending: { color: 'gold', label: 'Đang xử lý' },
+  changes_requested: { color: 'orange', label: 'Có file cần bổ sung' },
   approved: { color: 'green', label: 'Đã duyệt' },
-  rejected: { color: 'red', label: 'Từ chối' },
-}
-
-function savedDocumentsFromResponse(response) {
-  return (Array.isArray(response) ? response : [response]).filter(Boolean)
-}
-
-function replaceCachedDocuments(cachedDocuments, savedDocuments, selectedMethod) {
-  const savedIds = new Set(savedDocuments.map((document) => document.id))
-  const savedTypes = new Set(selectedMethod
-    ? ['business_registration', 'authorization_letter', 'identity_document']
-    : savedDocuments.map((document) => document.doc_type))
-  const currentDocuments = Array.isArray(cachedDocuments) ? cachedDocuments : []
-
-  return [
-    ...savedDocuments,
-    ...currentDocuments.filter(
-      (document) => document.update_request || (
-        !savedIds.has(document.id) && !savedTypes.has(document.doc_type)
-      ),
-    ),
-  ]
-}
-
-function currentDocumentSet(documents) {
-  const verificationDocuments = documents.filter((document) => !document.update_request)
-  const business = verificationDocuments.find((document) => document.doc_type === 'business_registration')
-  if (business) return { method: 'business_registration', documents: [business] }
-
-  const authorization = verificationDocuments.find((document) => document.doc_type === 'authorization_letter')
-  const identity = verificationDocuments.find((document) => document.doc_type === 'identity_document')
-  return authorization && identity
-    ? { method: 'authorization_and_id', documents: [authorization, identity] }
-    : { method: null, documents: [] }
-}
-
-function documentStatus(documents) {
-  if (!documents.length) return null
-  if (documents.some((document) => document.status === 'pending')) return 'pending'
-  if (documents.some((document) => document.status === 'rejected')) return 'rejected'
-  return 'approved'
+  rejected: { color: 'red', label: 'Có file bị từ chối' },
 }
 
 export default function EmployerBusinessLicenseForm() {
@@ -70,6 +39,7 @@ export default function EmployerBusinessLicenseForm() {
   const [businessFiles, setBusinessFiles] = useState([])
   const [authorizationFiles, setAuthorizationFiles] = useState([])
   const [identityFiles, setIdentityFiles] = useState([])
+  const [replacementFiles, setReplacementFiles] = useState({})
   const [submissionConfirmed, setSubmissionConfirmed] = useState(false)
   const [editingDocuments, setEditingDocuments] = useState(false)
   const queryClient = useQueryClient()
@@ -88,29 +58,82 @@ export default function EmployerBusinessLicenseForm() {
   }
 
   const documentMutation = useMutation({
-    mutationFn: async ({ selectedMethod, businessFile, authorizationFile, identityFile }) => {
+    mutationFn: async ({
+      selectedMethod,
+      businessFile,
+      authorizationFiles,
+      identityFiles,
+      replacements,
+      preserveExisting,
+    }) => {
+      if (preserveExisting || replacements.length) {
+        const replacementDocuments = []
+        for (const { document, file } of replacements) {
+          const savedDocument = document.doc_type === 'business_registration'
+            ? await uploadEmployerBusinessDocument(file, {
+                replaceDocument: document.public_id,
+              })
+            : await uploadEmployerCompanyDocument(document.doc_type, file, {
+                replaceDocument: document.public_id,
+                verificationMethod: selectedMethod,
+              })
+          replacementDocuments.push(savedDocument)
+        }
+        for (const file of identityFiles) {
+          replacementDocuments.push(await uploadEmployerCompanyDocument(
+            'identity_document',
+            file,
+            { append: true },
+          ))
+        }
+        return replacementDocuments
+      }
       if (selectedMethod === 'business_registration') {
         return uploadEmployerBusinessDocument(businessFile)
       }
-      const authorizationDocument = await uploadEmployerCompanyDocument(
+      const authorizationDocuments = await uploadDocumentSet(
         'authorization_letter',
-        authorizationFile,
+        authorizationFiles,
       )
-      const identityDocument = await uploadEmployerCompanyDocument(
+      const identityDocuments = await uploadDocumentSet(
         'identity_document',
-        identityFile,
-        { verificationMethod: 'authorization_and_id' },
+        identityFiles,
+        'authorization_and_id',
       )
-      return [authorizationDocument, identityDocument]
+      return [...authorizationDocuments, ...identityDocuments]
     },
-    onSuccess: async (response, { selectedMethod }) => {
-      const savedDocuments = savedDocumentsFromResponse(response)
-      queryClient.setQueryData(employerProfileKeys.companyDocuments, (cachedDocuments) => (
-        replaceCachedDocuments(cachedDocuments, savedDocuments, selectedMethod)
-      ))
+    onSuccess: async (response, {
+      selectedMethod,
+      replacements,
+      preserveExisting,
+    }) => {
+      const uploadedDocuments = savedDocumentsFromResponse(response)
+      queryClient.setQueryData(employerProfileKeys.companyDocuments, (cachedDocuments) => {
+        if (!preserveExisting) {
+          return replaceCachedDocuments(cachedDocuments, uploadedDocuments, selectedMethod)
+        }
+        const replacedIds = new Set(replacements.flatMap(({ document }) => (
+          [document.id, document.public_id].filter(Boolean)
+        )))
+        const uploadedIds = new Set(uploadedDocuments.flatMap((document) => (
+          [document.id, document.public_id].filter(Boolean)
+        )))
+        return [
+          ...uploadedDocuments,
+          ...(Array.isArray(cachedDocuments) ? cachedDocuments : []).filter(
+            (document) => (
+              !replacedIds.has(document.id)
+              && !replacedIds.has(document.public_id)
+              && !uploadedIds.has(document.id)
+              && !uploadedIds.has(document.public_id)
+            ),
+          ),
+        ]
+      })
       setBusinessFiles([])
       setAuthorizationFiles([])
       setIdentityFiles([])
+      setReplacementFiles({})
       setEditingDocuments(false)
       setSubmissionConfirmed(true)
       await refreshDashboard()
@@ -144,16 +167,24 @@ export default function EmployerBusinessLicenseForm() {
   const savedDocuments = currentDocumentSet(documents)
   const savedStatus = documentStatus(savedDocuments.documents)
   const savedStatusMeta = savedStatus ? DOCUMENT_STATUS[savedStatus] : null
-  const rejectedDocument = savedDocuments.documents.find(
-    (document) => document.status === 'rejected' && document.review_note,
-  )
   const showDocumentForm = !savedStatus || editingDocuments
   const businessFile = businessFiles[0]?.originFileObj || businessFiles[0]
-  const authorizationFile = authorizationFiles[0]?.originFileObj || authorizationFiles[0]
-  const identityFile = identityFiles[0]?.originFileObj || identityFiles[0]
-  const hasRequiredFiles = method === 'business_registration'
-    ? Boolean(businessFile)
-    : Boolean(authorizationFile && identityFile)
+  const selectedAuthorizationFiles = filesFromUploadList(authorizationFiles)
+  const selectedIdentityFiles = filesFromUploadList(identityFiles)
+  const preservingCurrentMethod = Boolean(
+    editingDocuments && savedDocuments.method && savedDocuments.method === method,
+  )
+  const replacements = Object.values(replacementFiles).flatMap((selection) => {
+    const file = selection.files?.[0]
+    return file
+      ? [{ document: selection.document, file: file.originFileObj || file }]
+      : []
+  })
+  const hasRequiredFiles = preservingCurrentMethod
+    ? Boolean(replacements.length || selectedIdentityFiles.length)
+    : method === 'business_registration'
+      ? Boolean(businessFile)
+      : Boolean(selectedAuthorizationFiles.length && selectedIdentityFiles.length)
   const canSave = companyLinked && hasRequiredFiles && !documentMutation.isPending
   const saveHint = !companyLinked
     ? 'Cần cập nhật thông tin công ty trước khi lưu'
@@ -165,6 +196,7 @@ export default function EmployerBusinessLicenseForm() {
 
   function startEditing() {
     setMethod(savedDocuments.method || 'business_registration')
+    setReplacementFiles({})
     setEditingDocuments(true)
   }
 
@@ -172,7 +204,27 @@ export default function EmployerBusinessLicenseForm() {
     setBusinessFiles([])
     setAuthorizationFiles([])
     setIdentityFiles([])
+    setReplacementFiles({})
     setEditingDocuments(false)
+  }
+
+  function updateReplacementFiles(document, nextFiles) {
+    const key = document.public_id || document.id
+    setReplacementFiles((current) => ({
+      ...current,
+      [key]: { document, files: nextFiles },
+    }))
+  }
+
+  function saveDocuments() {
+    documentMutation.mutate({
+      selectedMethod: method,
+      businessFile,
+      authorizationFiles: selectedAuthorizationFiles,
+      identityFiles: selectedIdentityFiles,
+      replacements,
+      preserveExisting: preservingCurrentMethod,
+    })
   }
 
   function openDocumentInNewTab(document) {
@@ -229,7 +281,7 @@ export default function EmployerBusinessLicenseForm() {
               label="Giấy ủy quyền"
               variant="authorization"
               showTemplate
-              savedDocument={savedDocuments.documents.find((document) => document.doc_type === 'authorization_letter')}
+              savedDocuments={savedDocuments.documents.filter((document) => document.doc_type === 'authorization_letter')}
               submittedFileLabel="Giấy ủy quyền"
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
@@ -237,35 +289,76 @@ export default function EmployerBusinessLicenseForm() {
             <EmployerBusinessDocumentCard
               label="Giấy tờ định danh (CCCD/ Hộ chiếu)"
               variant="identity"
-              savedDocument={savedDocuments.documents.find((document) => document.doc_type === 'identity_document')}
+              savedDocuments={savedDocuments.documents.filter((document) => document.doc_type === 'identity_document')}
               submittedFileLabel="Giấy tờ định danh"
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
             />
           </div>
         )}
-
-        {savedStatus === 'rejected' && (
-          <Alert
-            className="mt-4"
-            type="error"
-            showIcon
-            message="Giấy tờ bị từ chối"
-            description={rejectedDocument?.review_note || 'Quản trị viên chưa cung cấp lý do.'}
-          />
-        )}
       </Radio.Group>
       }
 
       {showDocumentForm && <Radio.Group value={method} onChange={(event) => setMethod(event.target.value)} className="!mt-6 !grid !gap-0">
         <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác</Radio>
-        {method === 'business_registration' && <div className="mb-4"><EmployerBusinessDocumentCard label="Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác" files={businessFiles} onFilesChange={setBusinessFiles} variant="business" noticeDocument="Giấy đăng ký doanh nghiệp" disabled={documentMutation.isPending} /></div>}
+        {method === 'business_registration' && (
+          <div className="mb-4">
+            <EmployerBusinessDocumentCard
+              label="Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác"
+              files={businessFiles}
+              onFilesChange={setBusinessFiles}
+              variant="business"
+              noticeDocument="Giấy đăng ký doanh nghiệp"
+              disabled={documentMutation.isPending}
+              savedDocument={preservingCurrentMethod ? savedDocuments.documents[0] : null}
+              submittedFileLabel="Giấy đăng ký doanh nghiệp"
+              onViewDocument={openDocumentInNewTab}
+              viewingDocument={documentPreviewMutation.isPending}
+              editing={preservingCurrentMethod}
+              replacementFiles={replacementFiles}
+              onReplacementFilesChange={updateReplacementFiles}
+            />
+          </div>
+        )}
 
         <Radio value="authorization_and_id" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy ủy quyền và Giấy tờ định danh</Radio>
         {method === 'authorization_and_id' && (
           <div className="mb-4 mt-1 grid gap-5">
-            <EmployerBusinessDocumentCard label="Giấy ủy quyền" files={authorizationFiles} onFilesChange={setAuthorizationFiles} variant="authorization" noticeDocument="Giấy ủy quyền" showTemplate disabled={documentMutation.isPending} />
-            <EmployerBusinessDocumentCard label="Giấy tờ định danh (CCCD/ Hộ chiếu)" files={identityFiles} onFilesChange={setIdentityFiles} variant="identity" disabled={documentMutation.isPending} />
+            <EmployerBusinessDocumentCard
+              label="Giấy ủy quyền"
+              files={authorizationFiles}
+              onFilesChange={setAuthorizationFiles}
+              variant="authorization"
+              noticeDocument="Giấy ủy quyền"
+              showTemplate
+              disabled={documentMutation.isPending}
+              savedDocuments={preservingCurrentMethod
+                ? savedDocuments.documents.filter((document) => document.doc_type === 'authorization_letter')
+                : []}
+              submittedFileLabel="Giấy ủy quyền"
+              onViewDocument={openDocumentInNewTab}
+              viewingDocument={documentPreviewMutation.isPending}
+              editing={preservingCurrentMethod}
+              replacementFiles={replacementFiles}
+              onReplacementFilesChange={updateReplacementFiles}
+            />
+            <EmployerBusinessDocumentCard
+              label="Giấy tờ định danh (CCCD/ Hộ chiếu)"
+              files={identityFiles}
+              onFilesChange={setIdentityFiles}
+              variant="identity"
+              disabled={documentMutation.isPending}
+              savedDocuments={preservingCurrentMethod
+                ? savedDocuments.documents.filter((document) => document.doc_type === 'identity_document')
+                : []}
+              submittedFileLabel="Giấy tờ định danh"
+              onViewDocument={openDocumentInNewTab}
+              viewingDocument={documentPreviewMutation.isPending}
+              editing={preservingCurrentMethod}
+              replacementFiles={replacementFiles}
+              onReplacementFilesChange={updateReplacementFiles}
+              allowNewFiles={preservingCurrentMethod}
+            />
           </div>
         )}
       </Radio.Group>
@@ -280,12 +373,7 @@ export default function EmployerBusinessLicenseForm() {
           loading={documentMutation.isPending}
           title={saveHint}
           className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto"
-          onClick={() => documentMutation.mutate({
-            selectedMethod: method,
-            businessFile,
-            authorizationFile,
-            identityFile,
-          })}
+          onClick={saveDocuments}
         >
           Lưu
         </Button>
@@ -302,7 +390,7 @@ export default function EmployerBusinessLicenseForm() {
         onCancel={() => setSubmissionConfirmed(false)}
       >
         <p className="text-sm leading-6 text-slate-600">
-          {siteName} đã nhận được Giấy đăng ký doanh nghiệp của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ lễ, tết theo quy định).
+          {siteName} đã nhận được bộ giấy tờ xác thực của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ lễ, tết theo quy định).
         </p>
       </Modal>
     </div>

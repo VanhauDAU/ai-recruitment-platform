@@ -163,6 +163,24 @@ def admin_companies_queryset(*, params=None):
     )
 
 
+def admin_company_summary():
+    queryset = _base_companies_queryset()
+    verification = {
+        status: queryset.filter(verification_status=status).count()
+        for status in Company.VerificationStatus.values
+    }
+    pending_update_requests = CompanyUpdateRequest.objects.filter(
+        status=CompanyUpdateRequest.Status.PENDING
+    ).count()
+    companies_without_single_owner = queryset.exclude(owner_count=1).count()
+    return {
+        'total': queryset.count(),
+        'verification': verification,
+        'pending_update_requests': pending_update_requests,
+        'companies_without_single_owner': companies_without_single_owner,
+    }
+
+
 def admin_company_detail_queryset():
     return _base_companies_queryset().prefetch_related('images').order_by('-id')
 

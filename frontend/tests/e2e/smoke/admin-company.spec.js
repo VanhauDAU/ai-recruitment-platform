@@ -47,7 +47,7 @@ const company = {
   address: 'Hà Nội',
   company_size: '25-99',
   company_size_label: '25 - 99 nhân viên',
-  description: 'Công ty công nghệ',
+  description: '<p>Công ty <strong>công nghệ</strong></p><script>window.bad = true</script>',
   industries: [{ id: 1, name: 'Công nghệ', slug: 'cong-nghe', is_primary: true }],
   created_by: {
     public_id: 'usr_owner',
@@ -84,6 +84,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
                       public_id: 'usr_owner',
                       full_name: 'Owner chính',
                       email: 'owner@alpha.example',
+                      avatar_url: '',
                       status: 'active',
                       email_verified: true,
                       is_deleted: false,
@@ -102,6 +103,8 @@ test('admin company directory: three-level navigation, detail and owner roster',
                     created_at: '2026-07-01T00:00:00Z',
                   }],
                 }
+              : path === '/api/admin/company-update-requests/'
+                ? { count: 0, next: null, previous: null, results: [] }
               : path === '/api/privacy/consent/'
                 ? {
                     consent: {
@@ -120,25 +123,43 @@ test('admin company directory: three-level navigation, detail and owner roster',
 
   await page.goto('/admin/app/companies')
   await expect(page.getByRole('heading', { name: 'Danh sách công ty' })).toBeVisible()
+  await expect(page.getByLabel('Công ty Alpha chưa cập nhật logo')).toBeVisible()
 
   if (usesDrawer) {
     await page.getByRole('button', { name: 'Mở điều hướng' }).click()
     const drawer = page.getByRole('dialog')
-    await drawer.getByRole('button', { name: /Công ty & NTD/ }).click()
-    await drawer.getByRole('button', { name: /^Công ty Pháp nhân/ }).click()
+    await drawer.getByRole('button', { name: 'Doanh nghiệp' }).click()
+    await expect(drawer.getByRole('button', { name: 'Thành viên' })).toHaveCount(0)
+    await drawer.getByRole('button', { name: 'Công ty' }).click()
   } else {
-    await page.getByRole('button', { name: /^Công ty Pháp nhân/ }).click()
+    await expect(page.getByRole('navigation', { name: 'Điều hướng quản trị' })
+      .getByRole('button', { name: 'Thành viên' })).toHaveCount(0)
+    await page.getByRole('navigation', { name: 'Điều hướng quản trị' })
+      .getByRole('button', { name: 'Công ty' })
+      .click()
   }
-  const companyListLeaf = page.getByRole('button', { name: 'Danh sách công ty' })
+  const companyListLeaf = page.getByRole('button', { name: 'Tất cả công ty' })
   await expect(companyListLeaf).toBeVisible()
   await companyListLeaf.click()
 
   await page.getByRole('button', { name: /Công ty Alpha/ }).click()
   await expect(page).toHaveURL('/admin/app/companies/co_alpha')
   await expect(page.getByRole('heading', { name: 'Công ty Alpha' })).toBeVisible()
+  await expect(page.locator('.company-directory__rich-text strong')).toHaveText('công nghệ')
+  await expect(page.locator('.company-directory__rich-text script')).toHaveCount(0)
   await page.getByRole('tab', { name: /Nhà tuyển dụng/ }).click()
   await expect(page.getByText('HR Manager')).toBeVisible()
+  await expect(page.getByLabel('Ảnh đại diện Owner chính')).toBeVisible()
   await expect(page.getByText('Đã xác thực', { exact: true })).toBeVisible()
+
+  await page.goto('/admin/app/companies?tab=updates&company=co_alpha')
+  await expect(page.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(page.getByRole('heading', {
+    name: 'Yêu cầu cập nhật thông tin công ty',
+  })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

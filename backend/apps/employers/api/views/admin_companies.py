@@ -10,6 +10,7 @@ from ...selectors import (
     admin_companies_queryset,
     admin_company_detail_queryset,
     admin_company_recruiters_queryset,
+    admin_company_summary,
 )
 from ..serializers import (
     AdminCompanyDetailSerializer,
@@ -32,6 +33,7 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'public_id'
     required_admin_permissions = {
         'list': ['company.view'],
+        'summary': ['company.view'],
         'retrieve': ['company.view'],
         'recruiters': ['company.view', 'company_recruiter.view'],
     }
@@ -79,3 +81,7 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
         if page is not None:
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        return Response(admin_company_summary())

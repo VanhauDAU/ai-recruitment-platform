@@ -30,14 +30,26 @@ export async function acceptEmployerDpa() {
   return data
 }
 
-export async function uploadEmployerBusinessDocument(file) {
+export async function uploadEmployerBusinessDocument(file, options = {}) {
   return uploadEmployerCompanyDocument('business_registration', file, {
+    ...options,
     verificationMethod: 'business_registration',
   })
 }
 
-export async function uploadEmployerDataProcessingAgreement(file) {
-  return uploadEmployerCompanyDocument('data_processing_agreement', file)
+export async function uploadEmployerDataProcessingAgreement(file, options = {}) {
+  return uploadEmployerCompanyDocument('data_processing_agreement', file, options)
+}
+
+export async function previewEmployerDataProcessingAgreement(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post(
+    '/employer/company/documents/preview/',
+    formData,
+    { responseType: 'blob' },
+  )
+  return data
 }
 
 export async function uploadEmployerCompanyDocument(docType, file, options = {}) {
@@ -46,6 +58,8 @@ export async function uploadEmployerCompanyDocument(docType, file, options = {})
   formData.append('file', file)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
   if (options.verificationMethod) formData.append('verification_method', options.verificationMethod)
+  if (options.append) formData.append('append', 'true')
+  if (options.replaceDocument) formData.append('replaces', options.replaceDocument)
   const { data } = await api.post('/employer/company/documents/', formData)
   return data
 }

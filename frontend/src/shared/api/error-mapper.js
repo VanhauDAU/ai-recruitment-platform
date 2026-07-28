@@ -41,7 +41,13 @@ export function getApiErrorMessage(error, fallback = 'Có lỗi xảy ra, vui l�
   const { response } = error || {}
 
   if (!response) {
-    return 'Không kết nối được máy chủ. Vui lòng kiểm tra backend đang chạy và thử lại.'
+    const isNetworkError = Boolean(
+      error?.isAxiosError
+      || ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error?.code),
+    )
+    return isNetworkError
+      ? 'Không kết nối được máy chủ. Vui lòng kiểm tra backend đang chạy và thử lại.'
+      : fallback
   }
 
   if (response.status >= 500 || isHtmlResponse(response.data)) {

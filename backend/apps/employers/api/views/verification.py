@@ -2,11 +2,12 @@ import mimetypes
 from io import BytesIO
 from pathlib import PurePosixPath
 
+from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
@@ -22,6 +23,7 @@ from ...services import (
     get_or_create_recruiter,
     queue_company_tax_lookup,
     render_office_document_preview,
+    render_office_upload_preview,
 )
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 from .memberships import (
@@ -104,6 +106,8 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     choices=VERIFICATION_METHOD_DOCUMENT_TYPES,
                     required=False,
                 ),
+                'append': serializers.BooleanField(required=False),
+                'replaces': serializers.CharField(required=False),
             },
         ),
         responses={201: CompanyDocumentSerializer},
@@ -153,6 +157,27 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     'verification_method': 'Không dùng phương thức xác thực cho giấy tờ yêu cầu cập nhật.'
                 }
             )
+        try:
+            append_to_current_set = serializers.BooleanField().run_validation(
+                request.data.get('append', False)
+            )
+        except serializers.ValidationError as error:
+            raise ValidationError({'append': 'Giá trị append không hợp lệ.'}) from error
+        if append_to_current_set and (
+            update_request is not None or doc_type != CompanyDocument.DocType.IDENTITY_DOCUMENT
+        ):
+            raise ValidationError(
+                {'append': ('Chỉ được thêm nhiều tệp cho giấy tờ định danh của hồ sơ xác thực.')}
+            )
+        replace_document_public_id = (request.data.get('replaces') or '').strip()
+        if append_to_current_set and replace_document_public_id:
+            raise ValidationError(
+                {'replaces': 'Không thể vừa thêm tệp mới vừa thay thế một tệp hiện hành.'}
+            )
+        if replace_document_public_id and update_request is not None:
+            raise ValidationError(
+                {'replaces': 'Yêu cầu cập nhật công ty chưa hỗ trợ thay thế tệp theo mã.'}
+            )
         if source_type == 'website':
             website_url = (request.data.get('website_url') or '').strip()
             try:
@@ -188,7 +213,14 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     file_name='Website chứng minh tên thương mại',
                 )
         elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
-            document = _save_document(request, None, doc_type, upload, recruiter=recruiter)
+            document = _save_document(
+                request,
+                None,
+                doc_type,
+                upload,
+                recruiter=recruiter,
+                replace_document_public_id=replace_document_public_id,
+            )
         else:
             company = _require_company(request.user).company
             with transaction.atomic():
@@ -200,6 +232,8 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     update_request=update_request,
                     recruiter=recruiter,
                     verification_method=verification_method or '',
+                    append_to_current_set=append_to_current_set,
+                    replace_document_public_id=replace_document_public_id,
                 )
                 if verification_method:
                     remove_obsolete_verification_documents(
@@ -208,6 +242,60 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     )
         serializer = self.get_serializer(document)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CompanyDocumentUploadPreviewView(generics.GenericAPIView):
+    """Convert an unpersisted Word agreement to PDF for local pre-submit preview."""
+
+    permission_classes = [IsEmployer]
+    parser_classes = [parsers.MultiPartParser]
+
+    @extend_schema(
+        summary='Xem trước tệp Word thỏa thuận trước khi tải lên',
+        request=inline_serializer(
+            'CompanyDocumentUploadPreviewRequest',
+            fields={'file': serializers.FileField()},
+        ),
+        responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
+        tags=['employer-verification'],
+    )
+    def post(self, request):
+        upload = request.FILES.get('file')
+        if upload is None:
+            raise ValidationError({'file': 'Vui lòng chọn tệp cần xem trước.'})
+        max_size = getattr(settings, 'IMAGE_UPLOAD_MAX_SIZE', 5 * 1024 * 1024)
+        if upload.size > max_size:
+            raise ValidationError({'file': 'Văn bản phải nhỏ hơn 5 MB.'})
+
+        content_type = (upload.content_type or '').partition(';')[0].strip().lower()
+        signatures = {
+            'application/msword': b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': (
+                b'PK\x03\x04'
+            ),
+        }
+        if content_type not in signatures:
+            content_type = {
+                '.doc': 'application/msword',
+                '.docx': (
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ),
+            }.get(PurePosixPath(upload.name).suffix.lower(), content_type)
+        signature = signatures.get(content_type)
+        header = upload.read(16)
+        upload.seek(0)
+        if signature is None or not header.startswith(signature):
+            raise ValidationError({'file': 'Chỉ hỗ trợ xem trước tệp DOC hoặc DOCX hợp lệ.'})
+
+        preview = render_office_upload_preview(upload, content_type)
+        if preview is None:
+            raise ValidationError(
+                {'file': 'Không thể tạo bản xem trước. Hãy kiểm tra lại nội dung tệp Word.'}
+            )
+        response = HttpResponse(preview, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="document-preview.pdf"'
+        response['Cache-Control'] = 'private, no-store'
+        return response
 
 
 @extend_schema(

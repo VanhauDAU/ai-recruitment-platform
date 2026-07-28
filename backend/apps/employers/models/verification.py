@@ -382,8 +382,11 @@ class CompanyDocument(models.Model):
             ),
             models.UniqueConstraint(
                 fields=['verification_case', 'doc_type'],
-                condition=models.Q(is_current=True, verification_case__isnull=False),
-                name='uniq_current_verification_doc_type',
+                condition=(
+                    models.Q(is_current=True, verification_case__isnull=False)
+                    & ~models.Q(doc_type='identity_document')
+                ),
+                name='uniq_current_single_verification_doc_type',
             ),
         ]
 

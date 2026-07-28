@@ -7,6 +7,7 @@ from .api.views import (
     CompanyCoverUploadView,
     CompanyDocumentContentView,
     CompanyDocumentListCreateView,
+    CompanyDocumentUploadPreviewView,
     CompanyGalleryDeleteView,
     CompanyGalleryUploadView,
     CompanyLogoUploadView,
@@ -114,6 +115,11 @@ urlpatterns = [
         'company/documents/',
         CompanyDocumentListCreateView.as_view(),
         name='employer-company-documents',
+    ),
+    path(
+        'company/documents/preview/',
+        CompanyDocumentUploadPreviewView.as_view(),
+        name='employer-company-document-upload-preview',
     ),
     path(
         'company/documents/<int:pk>/content/',

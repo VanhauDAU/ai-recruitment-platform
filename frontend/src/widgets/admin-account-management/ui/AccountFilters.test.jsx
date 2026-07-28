@@ -22,7 +22,7 @@ const baseFilters = {
   last_login_range: [],
 }
 
-function setup(filters = {}) {
+function setup(filters = {}, props = {}) {
   const onChange = vi.fn()
   const onClear = vi.fn()
   const { container } = render(
@@ -35,6 +35,7 @@ function setup(filters = {}) {
         loading={false}
         onChange={onChange}
         onClear={onClear}
+        {...props}
       />
     </App>,
   )
@@ -90,7 +91,10 @@ describe('AccountFilters', () => {
 
   it('counts only advanced conditions on the filter badge', () => {
     // status nằm ở thanh lọc nhanh nên badge chỉ đếm mfa + company.
-    setup({ status: 'active', mfa: 'true', company: 'cmp_1' })
+    setup(
+      { status: 'active', mfa: 'true', company: 'cmp_1' },
+      { recruiterOnly: true },
+    )
 
     expect(screen.getByTitle('2')).toBeInTheDocument()
   })

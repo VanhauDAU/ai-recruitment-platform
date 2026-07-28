@@ -3,7 +3,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from apps.accounts.constants import ADMIN_PERMISSIONS
+from apps.accounts.constants import ADMIN_PERMISSION_DEPENDENCIES, ADMIN_PERMISSIONS
 
 
 class Command(BaseCommand):
@@ -19,10 +19,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         output = Path(options['output']).resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
-        payload = [
-            {key: item[key] for key in ('code', 'module', 'label', 'description')}
-            for item in sorted(ADMIN_PERMISSIONS, key=lambda item: item['code'])
-        ]
+        payload = []
+        for item in sorted(ADMIN_PERMISSIONS, key=lambda item: item['code']):
+            exported = {key: item[key] for key in ('code', 'module', 'label', 'description')}
+            exported['requires'] = list(ADMIN_PERMISSION_DEPENDENCIES.get(item['code'], ()))
+            payload.append(exported)
         output.write_text(
             f'{json.dumps(payload, ensure_ascii=False, indent=2)}\n',
             encoding='utf-8',

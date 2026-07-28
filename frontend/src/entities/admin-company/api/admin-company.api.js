@@ -9,6 +9,10 @@ export function getAdminCompanies(params = {}, { signal } = {}) {
   return data(client.get('/admin/companies/', { params, signal }))
 }
 
+export function getAdminCompanySummary({ signal } = {}) {
+  return data(client.get('/admin/companies/summary/', { signal }))
+}
+
 export function getAdminCompany(publicId, { signal } = {}) {
   return data(client.get(`/admin/companies/${publicId}/`, { signal }))
 }

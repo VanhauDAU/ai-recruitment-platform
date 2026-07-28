@@ -20,6 +20,7 @@ test('admin smoke: login loads and dashboard stays role-protected', async ({ pag
 test('admin account management: filters, table actions and quick detail are responsive', async ({ page }, testInfo) => {
   const pageErrors = []
   const isMobile = testInfo.project.name === 'mobile-chromium'
+  const usesNavigationDrawer = page.viewportSize().width < 1024
   page.on('pageerror', (error) => pageErrors.push(error.message))
   const adminUser = {
     public_id: 'usr_root',
@@ -62,27 +63,40 @@ test('admin account management: filters, table actions and quick detail are resp
     invitation: null,
   }
   await page.route('http://localhost:8000/api/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const requestUrl = new URL(route.request().url())
+    const path = requestUrl.pathname
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? adminUser
       : path === '/api/admin/accounts/summary/'
-        ? {
-            total: 1,
-            active: 1,
-            restricted: 0,
-            unverified: 0,
-            pending_admin: 0,
-            employer_verification_pending: 2,
-            company_update_pending: 3,
-          }
+        ? requestUrl.searchParams.get('scope') === 'recruiters'
+          ? {
+              scope: 'recruiters',
+              totals: { total: 1, active: 1, restricted: 0, unverified: 0 },
+              linked_company: 1,
+              companyless: 0,
+              onboarding_incomplete: 0,
+              verification: {
+                approved: 0,
+                pending: 2,
+                overdue: 1,
+                changes_requested: 0,
+              },
+            }
+          : {
+              scope: 'users',
+              totals: { total: 1, active: 1, restricted: 0, unverified: 0 },
+              by_role: {
+                candidate: { total: 1, active: 1, restricted: 0, unverified: 0 },
+                admin: { total: 0, active: 0, restricted: 0, unverified: 0 },
+              },
+              queues: { pending_admin_invitations: 0 },
+            }
         : path === '/api/admin/accounts/'
           ? { count: 1, next: null, previous: null, results: [candidate] }
           : path === '/api/admin/employer-verifications/'
             ? { count: 0, next: null, previous: null, results: [] }
-            : path === '/api/admin/company-update-requests/'
-              ? { count: 0, next: null, previous: null, results: [] }
           : path === '/api/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
           : path === '/api/admin/departments/' || path === '/api/admin/roles/'
@@ -94,6 +108,17 @@ test('admin account management: filters, table actions and quick detail are resp
   await page.goto('/admin/app/accounts')
   await expect(page).toHaveURL('/admin/app/accounts')
   await expect.poll(() => pageErrors).toEqual([])
+  if (usesNavigationDrawer) {
+    await page.getByRole('button', { name: 'Mở điều hướng' }).click()
+  }
+  const adminNavigation = page.getByRole('navigation', { name: 'Điều hướng quản trị' })
+  await expect(adminNavigation.getByRole('button', { name: 'Trang chủ' })).not
+    .toHaveAttribute('aria-expanded')
+  await expect(adminNavigation.getByRole('button', { name: 'Tài khoản cá nhân' })).not
+    .toHaveAttribute('aria-expanded')
+  if (usesNavigationDrawer) {
+    await page.keyboard.press('Escape')
+  }
   // The account workspace is one of the largest lazy chunks; leave headroom
   // when the full smoke suite compiles several portals in parallel.
   await expect(page.getByRole('region', { name: 'Tổng quan tài khoản' })).toBeVisible({
@@ -101,24 +126,7 @@ test('admin account management: filters, table actions and quick detail are resp
   })
   await expect(page.getByPlaceholder('Tìm theo tên, email hoặc mã tài khoản')).toBeVisible()
   await expect(page.getByText('Nguyễn Minh Anh')).toBeVisible()
-  const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
-  const companyUpdatesTab = page.getByRole('tab', { name: /Sửa thông tin công ty/ })
-  await expect(verificationTab).toContainText('2')
-  await expect(companyUpdatesTab).toContainText('3')
-  if (isMobile) await verificationTab.evaluate((element) => element.click())
-  else await verificationTab.click()
-  await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Yêu cầu sửa thông tin công ty' })).toBeHidden()
-  await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
-    .locator('.account-management-tab-content')
-    .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
-  if (isMobile) await companyUpdatesTab.evaluate((element) => element.click())
-  else await companyUpdatesTab.click()
-  await expect(page.getByRole('heading', { name: 'Yêu cầu sửa thông tin công ty' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeHidden()
-  const allTab = page.getByRole('tab', { name: 'Tất cả' })
-  if (isMobile) await allTab.evaluate((element) => element.click())
-  else await allTab.click()
+  await expect(page.getByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveCount(0)
   await page.getByRole('button', { name: 'Xem nhanh' }).click()
   const quickDrawer = page.getByLabel('Thông tin tài khoản')
   await expect(quickDrawer).toBeVisible()
@@ -130,6 +138,19 @@ test('admin account management: filters, table actions and quick detail are resp
   }).toBeLessThanOrEqual(viewport.width)
   await page.keyboard.press('Escape')
   await expect(quickDrawer).toBeHidden()
+
+  await page.goto('/admin/app/recruiters?tab=verification')
+  await expect(page.getByRole('heading', {
+    name: 'Nhà tuyển dụng',
+    exact: true,
+  })).toBeVisible()
+  const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
+  await expect(verificationTab).toContainText('2')
+  await expect(verificationTab).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
+  await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
+    .locator('.account-management-tab-content')
+    .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),
@@ -196,11 +217,9 @@ test('admin employer detail: company media and compact verification comparison r
       returned_tax_code: '0101234567',
       submitted_company_name: 'FPT Software',
       registered_name: 'FPT SOFTWARE',
-      registered_address: 'Trường dữ liệu cũ không được hiển thị',
       comparison: {
         tax_code: 'match',
         company_name: 'match',
-        registered_address: 'mismatch',
       },
       completed_at: '2026-07-26T08:05:00Z',
     },
@@ -312,6 +331,7 @@ test('admin employer detail: company media and compact verification comparison r
 
   await page.goto('/admin/app/accounts/usr_employer?tab=company')
 
+  await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=company$/)
   await expect(page.getByRole('tab', { name: 'Công ty' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('img', { name: 'Logo FPT Software' })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Ảnh bìa FPT Software' })).toBeVisible()
@@ -325,6 +345,7 @@ test('admin employer detail: company media and compact verification comparison r
 
   await page.goto('/admin/app/accounts/usr_employer?tab=verification')
 
+  await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=verification$/)
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('heading', { name: 'Theo dõi hành trình xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
@@ -499,6 +520,7 @@ test('admin access control: wide permission picker supports search and dependent
       module: 'company_update',
       label: 'Xem yêu cầu sửa công ty',
       description: 'Xem hàng chờ và đối chiếu nội dung đề xuất.',
+      requires: [],
       is_active: true,
       is_granted_to_role: false,
     },
@@ -507,6 +529,7 @@ test('admin access control: wide permission picker supports search and dependent
       module: 'company_update',
       label: 'Duyệt sửa thông tin công ty',
       description: 'Duyệt và áp dụng thay đổi công ty.',
+      requires: ['company_update.view'],
       is_active: true,
       is_granted_to_role: false,
     },
@@ -515,6 +538,7 @@ test('admin access control: wide permission picker supports search and dependent
       module: 'cv_template',
       label: 'Xem catalogue CV',
       description: 'Xem catalogue CV.',
+      requires: [],
       is_active: true,
       is_granted_to_role: false,
     },
@@ -542,7 +566,7 @@ test('admin access control: wide permission picker supports search and dependent
   const dialog = page.getByRole('dialog', { name: /Sửa quyền/ })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByText(`${department.name} · ${role.name}`)).toBeVisible()
-  await expect(dialog.getByText('Quyền duyệt sửa công ty đã được tách riêng')).toBeVisible()
+  await expect(dialog.getByText('Quyền nền được đồng bộ tự động')).toBeVisible()
   const viewport = page.viewportSize()
   await expect.poll(async () => {
     const box = await dialog.boundingBox()

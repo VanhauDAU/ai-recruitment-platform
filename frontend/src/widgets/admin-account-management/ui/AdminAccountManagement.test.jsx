@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminAccountManagement from './AdminAccountManagement'
@@ -16,7 +15,6 @@ const { accountApi, accessApi, verificationApi, useSession } = vi.hoisted(() => 
     getAdminRoles: vi.fn(),
   },
   verificationApi: {
-    getAdminCompanyUpdateRequests: vi.fn(),
     getAdminEmployerVerifications: vi.fn(),
   },
   useSession: vi.fn(),
@@ -37,17 +35,26 @@ vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
 vi.mock('@/entities/session', () => ({ useSession }))
 
 const SUMMARY = {
-  total: 200,
-  active: 150,
-  restricted: 20,
-  unverified: 50,
-  pending_admin: 2,
-  employer_verification_pending: 4,
-  employer_verification_overdue: 1,
-  company_update_pending: 0,
+  scope: 'users',
+  totals: {
+    total: 200,
+    active: 150,
+    restricted: 20,
+    unverified: 50,
+  },
+  by_role: {
+    candidate: { total: 180, active: 140, restricted: 15, unverified: 45 },
+    admin: { total: 20, active: 10, restricted: 5, unverified: 5 },
+  },
+  queues: { pending_admin_invitations: 2 },
 }
 
-function renderWidget({ isSuperuser = true, permissions = [] } = {}) {
+function renderWidget({
+  isSuperuser = true,
+  permissions = [],
+  scope = 'accounts',
+  initialEntry = '/',
+} = {}) {
   useSession.mockReturnValue({
     user: {
       role: 'admin',
@@ -64,16 +71,16 @@ function renderWidget({ isSuperuser = true, permissions = [] } = {}) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <AdminAccountManagement />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <AdminAccountManagement scope={scope} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
-// Nhãn thẻ hàng chờ trùng với nhãn tab tương ứng nên phải khoanh theo selector.
-const statCard = (label) => screen.getByText(label, { selector: '.account-stat p' }).closest('.account-stat')
-const queueCard = (label) => screen.getByText(label, { selector: '.account-queue__label' }).closest('.account-queue')
+const statCard = (label) => screen
+  .getByText(label, { selector: '.account-stat__label' })
+  .closest('.account-stat')
 // Thẻ tồn tại ngay từ lần render đầu với giá trị 0, nên phải chờ số liệu thật.
 const waitForSummary = () => waitFor(
   () => expect(statCard('Tổng tài khoản')).toHaveTextContent('200'),
@@ -87,50 +94,67 @@ describe('AdminAccountManagement overview', () => {
     accessApi.getAdminDepartments.mockResolvedValue([])
     accessApi.getAdminRoles.mockResolvedValue([])
     verificationApi.getAdminEmployerVerifications.mockResolvedValue({ count: 0, results: [] })
-    verificationApi.getAdminCompanyUpdateRequests.mockResolvedValue({ count: 0, results: [] })
   })
 
   it('shows each account stat with its share of the total', async () => {
     renderWidget()
 
     await waitForSummary()
+    expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'users' }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    )
     expect(within(statCard('Đang hoạt động')).getByText('150')).toBeInTheDocument()
-    expect(statCard('Đang hoạt động')).toHaveTextContent('75% tài khoản đăng nhập được')
-    expect(statCard('Bị hạn chế')).toHaveTextContent('10% đang tạm khóa hoặc bị cấm')
-    expect(statCard('Email chưa xác minh')).toHaveTextContent('25% chưa hoàn tất xác thực')
+    expect(statCard('Đang hoạt động')).toHaveTextContent('75% tài khoản')
+    expect(statCard('Bị hạn chế')).toHaveTextContent('Tạm khóa hoặc đã cấm')
+    expect(statCard('Email chưa xác minh')).toHaveTextContent('Chưa hoàn tất xác thực email')
   })
 
-  it('warns about overdue cases and mutes an empty queue', async () => {
+  it('keeps employer verification out of the general account workspace', async () => {
     renderWidget()
 
     await waitForSummary()
-    expect(queueCard('Hồ sơ NTD chờ duyệt')).toHaveTextContent('1 hồ sơ đã chờ quá 72 giờ')
-    expect(queueCard('Hồ sơ NTD chờ duyệt')).toHaveClass('account-queue--red')
-    // Hàng chờ rỗng phải về tông trung tính dù cấu hình là amber.
-    expect(queueCard('Sửa thông tin công ty')).toHaveClass('account-queue--slate')
-    expect(screen.getByText('6 việc đang chờ')).toBeInTheDocument()
-  })
-
-  it('opens the matching tab when a queue card is clicked', async () => {
-    renderWidget()
-
-    await waitForSummary()
-    await userEvent.click(queueCard('Hồ sơ NTD chờ duyệt'))
-
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveAttribute('aria-selected', 'true')
-    })
-  })
-
-  it('shows only the company-update queue for its dedicated view permission', async () => {
-    renderWidget({ isSuperuser: false, permissions: ['company_update.view'] })
-
-    await waitForSummary()
-    expect(screen.getByRole('tab', { name: /Sửa thông tin công ty/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByText('Hồ sơ NTD chờ duyệt')).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: 'Tất cả' })).not.toBeInTheDocument()
-    await waitFor(() => expect(verificationApi.getAdminCompanyUpdateRequests).toHaveBeenCalled())
-    expect(verificationApi.getAdminEmployerVerifications).not.toHaveBeenCalled()
-    expect(accountApi.getAdminAccounts).not.toHaveBeenCalled()
+    expect(screen.queryByRole('tab', { name: 'Nhà tuyển dụng' })).not.toBeInTheDocument()
+  })
+
+  it('provides a focused recruiter workspace', async () => {
+    renderWidget({
+      scope: 'recruiters',
+      initialEntry: '/?tab=verification',
+    })
+
+    expect(await screen.findByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByRole('tab', { name: /Danh sách NTD/ })).toBeInTheDocument()
+    expect(screen.getByLabelText('Tổng quan nhà tuyển dụng')).toBeInTheDocument()
+  })
+
+  it('uses the dedicated employer account permission for recruiter browsing', async () => {
+    renderWidget({
+      isSuperuser: false,
+      permissions: ['account.employer.view'],
+      scope: 'recruiters',
+    })
+
+    expect(await screen.findByRole('tab', { name: /Danh sách NTD/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    await waitFor(() => expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'recruiters' }),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ))
+    expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()
+  })
+
+  it('does not mix company-update requests into account tabs', async () => {
+    renderWidget()
+
+    await waitForSummary()
+    expect(screen.queryByRole('tab', { name: /Sửa thông tin công ty/ })).not.toBeInTheDocument()
   })
 })

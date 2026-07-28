@@ -24,11 +24,19 @@ export default function AccountAdvancedFilters({
   filters,
   departments,
   roles,
+  recruiterOnly = false,
   onChange,
   onDone,
 }) {
   const patch = (name, value) => onChange({ ...filters, [name]: value })
-  const activeCount = ADVANCED_KEYS.filter((key) => isFilled(filters[key])).length
+  const advancedKeys = recruiterOnly
+    ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
+    : ADVANCED_KEYS.filter((key) => ![
+      'company',
+      'company_state',
+      'verification_status',
+    ].includes(key))
+  const activeCount = advancedKeys.filter((key) => isFilled(filters[key])).length
 
   return (
     <div className="account-filter-popover">
@@ -59,50 +67,83 @@ export default function AccountAdvancedFilters({
               options={BOOLEAN_OPTIONS}
             />
           </Field>
-          <Field label="Mã công ty" hint="Áp dụng cho tài khoản nhà tuyển dụng">
-            <Input
-              allowClear
-              placeholder="Ví dụ: cmp_..."
-              value={filters.company}
-              onChange={(event) => patch('company', event.target.value)}
-            />
-          </Field>
+          {recruiterOnly && (
+            <>
+              <Field label="Mã công ty">
+                <Input
+                  allowClear
+                  placeholder="Ví dụ: co_..."
+                  value={filters.company}
+                  onChange={(event) => patch('company', event.target.value)}
+                />
+              </Field>
+              <Field label="Liên kết công ty">
+                <Select
+                  value={filters.company_state}
+                  onChange={(value) => patch('company_state', value)}
+                  options={[
+                    { value: '', label: 'Mọi trạng thái liên kết' },
+                    { value: 'linked', label: 'Đã liên kết công ty' },
+                    { value: 'missing', label: 'Chưa liên kết công ty' },
+                  ]}
+                />
+              </Field>
+              <Field label="Xác thực đại diện">
+                <Select
+                  value={filters.verification_status}
+                  onChange={(value) => patch('verification_status', value)}
+                  options={[
+                    { value: '', label: 'Mọi trạng thái xác thực' },
+                    { value: 'none', label: 'Chưa có hồ sơ' },
+                    { value: 'draft', label: 'Chưa nộp' },
+                    { value: 'pending', label: 'Chờ duyệt' },
+                    { value: 'in_review', label: 'Đang xử lý' },
+                    { value: 'changes_requested', label: 'Cần bổ sung' },
+                    { value: 'approved', label: 'Đã xác thực' },
+                    { value: 'rejected', label: 'Bị từ chối' },
+                  ]}
+                />
+              </Field>
+            </>
+          )}
         </div>
       </section>
 
-      <section>
-        <h4>Phân quyền quản trị</h4>
-        <div className="account-filter-grid">
-          <Field label="Phòng ban Admin">
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Chọn phòng ban"
-              value={filters.department || undefined}
-              onChange={(value) => patch('department', value || '')}
-              options={departments.map((item) => ({
-                value: item.public_id,
-                label: item.name,
-              }))}
-            />
-          </Field>
-          <Field label="Chức danh Admin">
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Chọn chức danh"
-              value={filters.admin_role || undefined}
-              onChange={(value) => patch('admin_role', value || '')}
-              options={roles.map((item) => ({
-                value: item.public_id,
-                label: `${item.department.name} · ${item.name}`,
-              }))}
-            />
-          </Field>
-        </div>
-      </section>
+      {!recruiterOnly && (
+        <section>
+          <h4>Phân quyền quản trị</h4>
+          <div className="account-filter-grid">
+            <Field label="Phòng ban Admin">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Chọn phòng ban"
+                value={filters.department || undefined}
+                onChange={(value) => patch('department', value || '')}
+                options={departments.map((item) => ({
+                  value: item.public_id,
+                  label: item.name,
+                }))}
+              />
+            </Field>
+            <Field label="Chức danh Admin">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Chọn chức danh"
+                value={filters.admin_role || undefined}
+                onChange={(value) => patch('admin_role', value || '')}
+                options={roles.map((item) => ({
+                  value: item.public_id,
+                  label: `${item.department.name} · ${item.name}`,
+                }))}
+              />
+            </Field>
+          </div>
+        </section>
+      )}
 
       <section>
         <h4>Mốc thời gian</h4>

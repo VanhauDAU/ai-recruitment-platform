@@ -2,6 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 
 describe('getApiErrorMessage', () => {
+  it('does not report a frontend programming error as a server connection failure', () => {
+    expect(getApiErrorMessage(
+      new ReferenceError('uploadEmployerCompanyDocument is not defined'),
+      'Không thể lưu giấy tờ. Vui lòng thử lại.',
+    )).toBe('Không thể lưu giấy tờ. Vui lòng thử lại.')
+  })
+
+  it('keeps the connection message for Axios network errors', () => {
+    expect(getApiErrorMessage({
+      isAxiosError: true,
+      code: 'ERR_NETWORK',
+    })).toBe('Không kết nối được máy chủ. Vui lòng kiểm tra backend đang chạy và thử lại.')
+  })
+
   it('translates the default SimpleJWT credentials error', () => {
     const error = {
       response: {
