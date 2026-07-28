@@ -73,32 +73,6 @@ export const ADMIN_NAVIGATION = [
           },
         ],
       },
-      {
-        key: 'memberships',
-        label: 'Thành viên',
-        children: [
-          {
-            key: 'company-owners',
-            label: 'Owner công ty',
-            routeRef: 'companies',
-            query: { member_role: 'owner' },
-            access: { allOf: ['company.view', 'company_recruiter.view'] },
-          },
-          {
-            key: 'company-members',
-            label: 'Member công ty',
-            routeRef: 'companies',
-            query: { member_role: 'member' },
-            access: { allOf: ['company.view', 'company_recruiter.view'] },
-          },
-          {
-            key: 'membership-management',
-            label: 'Quản lý thành viên',
-            status: 'comingSoon',
-            access: { superuser: true },
-          },
-        ],
-      },
     ],
   },
   {

@@ -59,7 +59,7 @@ const company = {
   address: 'Hà Nội',
   company_size: '25-99',
   company_size_label: '25 - 99 nhân viên',
-  description: 'Công ty công nghệ',
+  description: '<p>Công ty <strong>công nghệ</strong></p><script>window.bad = true</script>',
   industries: [{ id: 1, name: 'Công nghệ', slug: 'cong-nghe', is_primary: true }],
   created_by: {
     public_id: 'usr_owner',
@@ -117,6 +117,7 @@ describe('admin company directory', () => {
     expect(screen.getAllByText('Chờ duyệt')).toHaveLength(2)
     expect(screen.getByText('Chưa có hồ sơ: 1')).toBeInTheDocument()
     expect(screen.getByText('Đã xác thực: 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Công ty Alpha chưa cập nhật logo')).toHaveTextContent('A')
     expect(screen.getByRole('columnheader', { name: 'Xác thực NTD' })).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Lọc owner' })).not.toBeInTheDocument()
     expect(getAdminCompanies).toHaveBeenCalledWith(
@@ -127,12 +128,34 @@ describe('admin company directory', () => {
 
   it('opens the read-only company detail', async () => {
     const user = userEvent.setup()
-    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+    const { container } = renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
 
     await user.click(await screen.findByRole('button', { name: /Công ty Alpha/ }))
 
     expect(await screen.findByText('Hồ sơ pháp lý')).toBeInTheDocument()
+    expect(screen.getByText('Thông tin doanh nghiệp')).toBeInTheDocument()
+    expect(screen.getByText('công nghệ')).toBeInTheDocument()
+    expect(container.querySelector('.company-directory__rich-text script')).toBeNull()
+    expect(screen.queryByText(/<p>|<strong>|<script>/)).not.toBeInTheDocument()
     expect(screen.getByTestId('location')).toHaveTextContent('/admin/app/companies/co_alpha')
+  })
+
+  it('debounces company search before requesting new results', async () => {
+    const user = userEvent.setup()
+    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+
+    await screen.findByText('Công ty Alpha')
+    const initialCalls = getAdminCompanies.mock.calls.length
+    await user.type(screen.getByRole('searchbox', { name: 'Tìm công ty' }), ' beta')
+
+    expect(getAdminCompanies).toHaveBeenCalledTimes(initialCalls)
+    await waitFor(
+      () => expect(getAdminCompanies).toHaveBeenLastCalledWith(
+        expect.objectContaining({ q: 'beta' }),
+        expect.any(Object),
+      ),
+      { timeout: 1200 },
+    )
   })
 
   it('loads owner/member roster only after opening the recruiter tab', async () => {
@@ -145,6 +168,7 @@ describe('admin company directory', () => {
           public_id: 'usr_owner',
           full_name: 'Owner chính',
           email: 'owner@example.com',
+          avatar_url: '',
           status: 'active',
           email_verified: true,
           is_deleted: false,
@@ -166,6 +190,7 @@ describe('admin company directory', () => {
     await user.click(await screen.findByRole('tab', { name: /Nhà tuyển dụng/ }))
 
     expect(await screen.findByText('HR Manager')).toBeInTheDocument()
+    expect(screen.getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
     expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
   })

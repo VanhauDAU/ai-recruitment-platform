@@ -4,9 +4,9 @@ import {
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import {
   Alert,
-  Avatar,
   Button,
   Empty,
   Input,
@@ -24,6 +24,7 @@ import {
 } from '@/entities/admin-company'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
+import CompanyLogo from './CompanyLogo'
 import { CompanyPanel, CompanyStatCard } from './CompanyPanel'
 import { CompanyStatusTag } from './CompanyStatusTags'
 import '../admin-company-directory.css'
@@ -90,8 +91,10 @@ export default function AdminCompanyDirectory() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(queryValue(searchParams, 'page', '1')) || 1
   const ordering = queryValue(searchParams, 'ordering', DEFAULT_ORDERING)
+  const query = queryValue(searchParams, 'q')
+  const [searchInput, setSearchInput] = useState(query)
   const filters = {
-    q: queryValue(searchParams, 'q'),
+    q: query,
     verification_status: queryValue(searchParams, 'verification_status'),
     recruiter_verification_status: queryValue(
       searchParams,
@@ -108,6 +111,25 @@ export default function AdminCompanyDirectory() {
   })
   const companies = companiesQuery.data || EMPTY_PAGE
 
+  useEffect(() => {
+    setSearchInput(query)
+  }, [query])
+
+  useEffect(() => {
+    const normalizedQuery = searchInput.trim()
+    if (normalizedQuery === query) return undefined
+
+    const timeoutId = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams)
+      if (normalizedQuery) next.set('q', normalizedQuery)
+      else next.delete('q')
+      next.delete('page')
+      setSearchParams(next, { replace: true })
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [query, searchInput, searchParams, setSearchParams])
+
   const updateParams = (changes, { resetPage = true } = {}) => {
     const next = new URLSearchParams(searchParams)
     Object.entries(changes).forEach(([key, value]) => {
@@ -118,7 +140,10 @@ export default function AdminCompanyDirectory() {
     setSearchParams(next)
   }
 
-  const clearFilters = () => setSearchParams(new URLSearchParams())
+  const clearFilters = () => {
+    setSearchInput('')
+    setSearchParams(new URLSearchParams())
+  }
 
   const columns = [
     {
@@ -134,12 +159,7 @@ export default function AdminCompanyDirectory() {
           className="company-directory__company-button"
           onClick={() => navigate(adminPath(`/companies/${company.public_id}`))}
         >
-          <Avatar
-            shape="square"
-            size={42}
-            src={company.logo_url || undefined}
-            icon={<BankOutlined />}
-          />
+          <CompanyLogo company={company} />
           <span className="min-w-0">
             <span className="block truncate font-semibold text-slate-900">{name}</span>
             <span className="mt-0.5 block truncate text-xs text-slate-500">
@@ -269,8 +289,8 @@ export default function AdminCompanyDirectory() {
             allowClear
             aria-label="Tìm công ty"
             placeholder="Tên, mã công ty, mã số thuế hoặc email"
-            value={filters.q}
-            onChange={(event) => updateParams({ q: event.target.value })}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
           />
           <Select
             aria-label="Lọc trạng thái công ty"

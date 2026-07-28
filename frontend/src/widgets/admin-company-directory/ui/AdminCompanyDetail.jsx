@@ -29,6 +29,8 @@ import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
+import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import CompanyLogo from './CompanyLogo'
 import { CompanyPanel } from './CompanyPanel'
 import { CompanyStatusTag, RecruiterStatusTag } from './CompanyStatusTags'
 import '../admin-company-directory.css'
@@ -48,50 +50,119 @@ function yesNo(value) {
   return value ? 'Đã hoàn tất' : 'Chưa hoàn tất'
 }
 
+function personInitials(name = '') {
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (!words.length) return 'NT'
+  if (words.length === 1) return words[0].slice(0, 2).toLocaleUpperCase('vi-VN')
+  return `${words[0][0]}${words.at(-1)[0]}`.toLocaleUpperCase('vi-VN')
+}
+
+function CompanyDescription({ description }) {
+  const sanitizedDescription = sanitizeHtml(description)
+  if (!sanitizedDescription) {
+    return <span className="text-slate-400">Chưa cập nhật mô tả doanh nghiệp</span>
+  }
+  return (
+    <div
+      className="company-directory__rich-text"
+      dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+    />
+  )
+}
+
 function Overview({ company }) {
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
-      <CompanyPanel title="Hồ sơ pháp lý">
-        <Descriptions column={{ xs: 1, md: 2 }} size="middle">
-          <Descriptions.Item label="Tên đăng ký">{company.company_name}</Descriptions.Item>
-          <Descriptions.Item label="Tên giao dịch">{company.trade_name || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Mã số thuế">{company.tax_code || 'Không có quyền xem'}</Descriptions.Item>
-          <Descriptions.Item label="Loại hình">{company.business_type_label}</Descriptions.Item>
-          <Descriptions.Item label="Quy mô">{company.company_size_label || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Năm thành lập">{company.founded_year || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Địa chỉ" span={2}>{company.address || '—'}</Descriptions.Item>
-          <Descriptions.Item label="Lĩnh vực" span={2}>
-            <Space size={[4, 4]} wrap>
-              {company.industries?.length
-                ? company.industries.map((industry) => (
-                  <Tag key={industry.id} color={industry.is_primary ? 'green' : 'default'}>
-                    {industry.name}{industry.is_primary ? ' · chính' : ''}
-                  </Tag>
-                ))
-                : '—'}
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="Mô tả" span={2}>{company.description || '—'}</Descriptions.Item>
-        </Descriptions>
+    <div className="space-y-5">
+      <CompanyPanel title="Thông tin doanh nghiệp">
+        <div className="company-directory__brand-overview">
+          <CompanyLogo company={company} size={58} />
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-bold text-slate-900">
+              {company.trade_name || company.company_name}
+            </h3>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <CompanyStatusTag status={company.verification_status} />
+              {company.business_type_label && <Tag>{company.business_type_label}</Tag>}
+              {company.company_size_label && <Tag>{company.company_size_label}</Tag>}
+            </div>
+          </div>
+        </div>
+        <div className="company-directory__description">
+          <p className="company-directory__section-label">Giới thiệu</p>
+          <CompanyDescription description={company.description} />
+        </div>
       </CompanyPanel>
 
-      <div className="space-y-5">
-        <CompanyPanel title="Liên hệ">
-          <Descriptions column={1} size="small">
-            <Descriptions.Item label="Website">{company.website_url || '—'}</Descriptions.Item>
-            <Descriptions.Item label="Email">{company.email || 'Không có quyền xem'}</Descriptions.Item>
-            <Descriptions.Item label="Điện thoại">{company.phone || '—'}</Descriptions.Item>
-          </Descriptions>
-        </CompanyPanel>
-        <CompanyPanel title="Nguồn tạo">
-          <Descriptions column={1} size="small">
-            <Descriptions.Item label="Người tạo">
-              {company.created_by.full_name || company.created_by.email}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+        <CompanyPanel title="Hồ sơ pháp lý">
+          <Descriptions column={{ xs: 1, md: 2 }} size="middle">
+            <Descriptions.Item label="Tên đăng ký">{company.company_name}</Descriptions.Item>
+            <Descriptions.Item label="Tên giao dịch">{company.trade_name || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Mã số thuế">
+              {company.tax_code || 'Không có quyền xem'}
             </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo">{formatDate(company.created_at)}</Descriptions.Item>
-            <Descriptions.Item label="Cập nhật">{formatDate(company.updated_at)}</Descriptions.Item>
+            <Descriptions.Item label="Loại hình">{company.business_type_label || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Quy mô">{company.company_size_label || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Năm thành lập">{company.founded_year || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Địa chỉ" span={2}>{company.address || '—'}</Descriptions.Item>
+            <Descriptions.Item label="Lĩnh vực" span={2}>
+              <Space size={[4, 4]} wrap>
+                {company.industries?.length
+                  ? company.industries.map((industry) => (
+                    <Tag key={industry.id} color={industry.is_primary ? 'green' : 'default'}>
+                      {industry.name}{industry.is_primary ? ' · chính' : ''}
+                    </Tag>
+                  ))
+                  : '—'}
+              </Space>
+            </Descriptions.Item>
           </Descriptions>
         </CompanyPanel>
+
+        <div className="space-y-5">
+          <CompanyPanel title="Tổ chức nhà tuyển dụng">
+            <div className="company-directory__overview-metrics">
+              <div>
+                <strong>{company.recruiter_count}</strong>
+                <span>Tổng NTD</span>
+              </div>
+              <div>
+                <strong>{company.owner_count}</strong>
+                <span>Owner</span>
+              </div>
+              <div>
+                <strong>{company.member_count}</strong>
+                <span>Member</span>
+              </div>
+            </div>
+            {company.owner_count !== 1 && (
+              <Alert
+                className="mt-4"
+                showIcon
+                type="warning"
+                title={company.owner_count
+                  ? `Dữ liệu bất thường: ${company.owner_count} owner`
+                  : 'Công ty chưa có owner'}
+              />
+            )}
+          </CompanyPanel>
+          <CompanyPanel title="Liên hệ">
+            <Descriptions column={1} size="small">
+              <Descriptions.Item label="Website">{company.website_url || '—'}</Descriptions.Item>
+              <Descriptions.Item label="Email">{company.email || 'Không có quyền xem'}</Descriptions.Item>
+              <Descriptions.Item label="Điện thoại">{company.phone || '—'}</Descriptions.Item>
+            </Descriptions>
+          </CompanyPanel>
+          <CompanyPanel title="Nguồn tạo">
+            <Descriptions column={1} size="small">
+              <Descriptions.Item label="Người tạo">
+                {company.created_by?.full_name || company.created_by?.email || '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày tạo">{formatDate(company.created_at)}</Descriptions.Item>
+              <Descriptions.Item label="Cập nhật">{formatDate(company.updated_at)}</Descriptions.Item>
+            </Descriptions>
+          </CompanyPanel>
+        </div>
       </div>
     </div>
   )
@@ -150,11 +221,24 @@ function RecruiterRoster({ company, enabled }) {
       width: 260,
       sorter: true,
       render: (_, recruiter) => (
-        <div>
-          <div className="font-semibold text-slate-900">
-            {recruiter.account.full_name || recruiter.account.email}
+        <div className="flex items-center gap-3">
+          <Avatar
+            aria-label={`Ảnh đại diện ${recruiter.account.full_name || recruiter.account.email}`}
+            size={38}
+            src={recruiter.account.avatar_url || undefined}
+          >
+            {!recruiter.account.avatar_url && personInitials(
+              recruiter.account.full_name || recruiter.account.email,
+            )}
+          </Avatar>
+          <div className="min-w-0">
+            <div className="truncate font-semibold text-slate-900">
+              {recruiter.account.full_name || recruiter.account.email}
+            </div>
+            <div className="mt-1 truncate text-xs text-slate-500">
+              {recruiter.account.email}
+            </div>
           </div>
-          <div className="mt-1 text-xs text-slate-500">{recruiter.account.email}</div>
         </div>
       ),
     },
@@ -443,12 +527,7 @@ export default function AdminCompanyDetail({ publicId }) {
       </Button>
 
       <header className="company-directory__hero">
-        <Avatar
-          shape="square"
-          size={72}
-          src={company.logo_url || undefined}
-          icon={<BankOutlined />}
-        />
+        <CompanyLogo company={company} size={72} />
         <div className="min-w-0 flex-1">
           <p className="admin-page-header__eyebrow">Hồ sơ công ty</p>
           <h1 className="admin-page-header__title">{company.company_name}</h1>

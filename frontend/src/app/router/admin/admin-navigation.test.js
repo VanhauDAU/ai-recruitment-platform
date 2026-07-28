@@ -153,10 +153,23 @@ describe('admin navigation tree', () => {
       ADMIN_ROUTES,
       access(['company.view', 'company_recruiter.view']),
     )
-    const results = searchAdminNavigation(tree, 'owner')
+    const results = searchAdminNavigation(tree, 'xác thực')
 
-    expect(results.map((leaf) => leaf.key)).toContain('company-owners')
+    expect(results.map((leaf) => leaf.key)).toContain('company-pending')
     expect(results[0].breadcrumb).toHaveLength(3)
     expect(searchAdminNavigation(tree, 'phân quyền')).toEqual([])
+  })
+
+  it('does not duplicate owner/member filters as a navigation group', () => {
+    const tree = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access([], true),
+    )
+    const keys = flattenAdminNavigation(tree).map((leaf) => leaf.key)
+
+    expect(keys).not.toContain('company-owners')
+    expect(keys).not.toContain('company-members')
+    expect(keys).not.toContain('membership-management')
   })
 })

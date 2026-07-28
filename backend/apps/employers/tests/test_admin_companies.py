@@ -184,6 +184,32 @@ class AdminCompanyApiTests(APITestCase):
         self.assertEqual(response.data['results'][0]['public_id'], self.member.public_id)
         self.assertEqual(response.data['results'][0]['verification']['status'], 'none')
 
+    def test_directory_resolves_company_logo_and_recruiter_avatar_urls(self):
+        self.company.logo_url = 'employers/logos/alpha.png'
+        self.company.save(update_fields=['logo_url'])
+        self.owner_user.avatar_url = 'users/avatars/owner.png'
+        self.owner_user.save(update_fields=['avatar_url'])
+        self.client.force_authenticate(self.superuser)
+
+        company_response = self.client.get(
+            reverse('admin-company-detail', kwargs={'public_id': self.company.public_id})
+        )
+        roster_response = self.client.get(
+            reverse(
+                'admin-company-recruiters',
+                kwargs={'public_id': self.company.public_id},
+            ),
+            {'role': RecruiterProfile.CompanyRole.OWNER},
+        )
+
+        self.assertEqual(company_response.status_code, 200, company_response.data)
+        self.assertIn('/media/employers/logos/alpha.png', company_response.data['logo_url'])
+        self.assertEqual(roster_response.status_code, 200, roster_response.data)
+        self.assertIn(
+            '/media/users/avatars/owner.png',
+            roster_response.data['results'][0]['account']['avatar_url'],
+        )
+
     def test_list_and_roster_apply_whitelisted_server_ordering(self):
         other_creator = self._employer('other-owner@example.com', 'Owner khác')
         other_company = Company.objects.create(

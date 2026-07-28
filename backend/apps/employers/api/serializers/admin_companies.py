@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from common.media_storage import media_url_from_value
+
 from ...models import Company, RecruiterProfile
 
 
@@ -10,6 +12,7 @@ def _masked_tax_code(value):
 
 
 class AdminCompanyListSerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
     business_type_label = serializers.CharField(source='get_business_type_display', read_only=True)
     verification_status_label = serializers.CharField(
         source='get_verification_status_display',
@@ -49,6 +52,9 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
         if self.context.get('can_view_sensitive'):
             return obj.tax_code or ''
         return _masked_tax_code(obj.tax_code)
+
+    def get_logo_url(self, obj):
+        return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
     def get_owners(self, obj):
         return [
@@ -173,6 +179,10 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
             'public_id': obj.user.public_id,
             'full_name': obj.user.full_name,
             'email': obj.user.email,
+            'avatar_url': media_url_from_value(
+                obj.user.avatar_url,
+                request=self.context.get('request'),
+            ),
             'status': obj.user.status,
             'email_verified': obj.user.email_verified,
             'is_deleted': obj.user.is_deleted,
