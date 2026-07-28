@@ -2,7 +2,7 @@ import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Input, Table, Tag, Typography } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   adminEmployerVerificationKeys,
   getAdminCompanyUpdateRequests,
@@ -20,14 +20,16 @@ function formatDate(value) {
 
 export default function CompanyUpdateQueuePanel() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [page, setPage] = useState(1)
   const [queryText, setQueryText] = useState('')
   const search = useDeferredValue(queryText.trim())
   const params = useMemo(() => ({
     page,
     status: 'pending',
+    ...(searchParams.get('company') ? { company: searchParams.get('company') } : {}),
     ...(search ? { q: search } : {}),
-  }), [page, search])
+  }), [page, search, searchParams])
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.companyUpdates(params),
     queryFn: ({ signal }) => getAdminCompanyUpdateRequests(params, { signal }),

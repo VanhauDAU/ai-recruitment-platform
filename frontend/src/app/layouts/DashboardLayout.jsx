@@ -16,6 +16,8 @@ import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
+import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
+import { buildAdminNavigation } from '../router/admin/admin-navigation'
 import AdminNavigation from './AdminNavigation'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import './admin-dashboard.css'
@@ -40,30 +42,40 @@ export default function DashboardLayout() {
   const { user, logout } = useSession()
   const adminAccess = useAdminAccess(user)
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarPeek, setSidebarPeek] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const items = useMemo(() => user?.role === 'admin'
+  const availableRoutes = useMemo(() => user?.role === 'admin'
     ? ADMIN_ROUTES
       .filter(
-        (route) => route.showInNav && canAccessAdminRoute(route, adminAccess),
+        (route) => canAccessAdminRoute(route, adminAccess),
       )
       .map((route) => ({
         ...route,
         path: adminPath(route.segment),
       }))
     : [], [adminAccess, user?.role])
+  const items = useMemo(
+    () => availableRoutes.filter((route) => route.showInNav),
+    [availableRoutes],
+  )
+  const navigation = useMemo(
+    () => buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, adminAccess),
+    [adminAccess],
+  )
   const hasNoDepartment = (
     user?.role === 'admin'
     && !adminAccess.isSuperuser
     && adminAccess.memberships.length === 0
   )
-  const currentRoute = items.find((item) => (
-    item.path === pathname || pathname.startsWith(`${item.path}/`)
-  ))
-  const navigationPath = currentRoute?.path || pathname
-
+  const currentRoute = [...availableRoutes]
+    .sort((left, right) => right.path.length - left.path.length)
+    .find((item) => {
+      const staticPath = item.path.replace(/:[^/]+/g, '')
+      return pathname === item.path || pathname.startsWith(staticPath)
+    })
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
     setMobileNavOpen(false)
@@ -91,19 +103,46 @@ export default function DashboardLayout() {
           collapsedWidth={80}
           collapsed={sidebarCollapsed}
           trigger={null}
+          onMouseEnter={() => sidebarCollapsed && setSidebarPeek(true)}
+          onFocusCapture={() => sidebarCollapsed && setSidebarPeek(true)}
         >
-          <AdminBrand collapsed={sidebarCollapsed} />
-          <AdminNavigation
-            items={items}
-            pathname={navigationPath}
-            navigate={navigate}
-            collapsed={sidebarCollapsed}
-          />
-          {hasNoDepartment && !sidebarCollapsed && (
-            <p className="admin-sider__notice">
-              Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
-              (superuser) để được cấp quyền.
-            </p>
+          {sidebarCollapsed && sidebarPeek ? (
+            <div
+              className="admin-sider__peek"
+              onMouseLeave={() => setSidebarPeek(false)}
+            >
+              <AdminBrand />
+              <AdminNavigation
+                navigation={navigation}
+                pathname={pathname}
+                search={search}
+                navigate={navigate}
+              />
+              {hasNoDepartment && (
+                <p className="admin-sider__notice">
+                  Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
+                  để được cấp quyền.
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <AdminBrand collapsed={sidebarCollapsed} />
+              <AdminNavigation
+                navigation={navigation}
+                pathname={pathname}
+                search={search}
+                navigate={navigate}
+                collapsed={sidebarCollapsed}
+                onRequestExpand={() => setSidebarPeek(true)}
+              />
+              {hasNoDepartment && !sidebarCollapsed && (
+                <p className="admin-sider__notice">
+                  Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
+                  (superuser) để được cấp quyền.
+                </p>
+              )}
+            </>
           )}
         </Sider>
 
@@ -118,9 +157,11 @@ export default function DashboardLayout() {
           <div className="admin-sider min-h-full">
             <AdminBrand />
             <AdminNavigation
-              items={items}
-              pathname={navigationPath}
+              navigation={navigation}
+              pathname={pathname}
+              search={search}
               navigate={navigate}
+              mobile
               onNavigate={() => setMobileNavOpen(false)}
             />
             {hasNoDepartment && <p className="admin-sider__notice">Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống để được cấp quyền.</p>}
