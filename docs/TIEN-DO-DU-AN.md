@@ -56,6 +56,23 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 8 — Deployment | 0/2 | ⬜ |
 | **Tổng** | **64/88 + 1 phần** | |
 
+## Epic thông báo chạy đa cổng (AN, 2026-07-29)
+
+Thiết kế canonical:
+[hệ thống thông báo chạy đa cổng](./03-database/ke-hoach-he-thong-thong-bao-chay.md).
+Mỗi phase dùng một nhánh `feature/announcement-*` tuần tự từ `dev`; phase sau
+chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| AN-P0 | Chốt PRD, ERD, lifecycle, priority, API/DTO, ownership, failure mode và rollout | ✅ |
+| AN-P1 | Backend foundation: model/revision, permission, selector/service, public/admin API và OpenAPI | ⬜ |
+| AN-P2 | Runtime strip đa portal, system reminder, animation, accessibility và fail-safe | ⬜ |
+| AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ⬜ |
+| AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ⬜ |
+| AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | ⬜ |
+| AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
+
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
 | Phase | Nội dung | Trạng thái |
@@ -826,7 +843,12 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29b (AUTH-OAUTH-REAUTH — `GET /api/auth/password/`
+Cập nhật lần cuối: 2026-07-29c (AN-P0 — chốt đặc tả dải thông báo đa cổng:
+PRD, ERD, lifecycle revision, targeting, priority, API/DTO, permission, failure
+mode, consent, FSD ownership và rollout/rollback. Markdown link gate pass trên
+46 tài liệu tracked; AN-P1 chưa bắt đầu và chưa có endpoint/runtime mới.)
+
+Cập nhật 2026-07-29b (AUTH-OAUTH-REAUTH — `GET /api/auth/password/`
 trả điều kiện phiên; banner xác thực lại tại chỗ với `next` quay về đúng trang,
 thay cho việc xoá phiên và đá về `/login`.)
 
