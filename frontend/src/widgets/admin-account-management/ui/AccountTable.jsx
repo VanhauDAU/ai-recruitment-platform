@@ -31,6 +31,7 @@ export default function AccountTable({
   canEdit,
   canManageSecurity,
   onSecurity,
+  resultLabel = 'tài khoản',
 }) {
   const columns = [
     {
@@ -200,7 +201,7 @@ export default function AccountTable({
           total: data.count,
           pageSize: 20,
           showSizeChanger: false,
-          showTotal: (total) => `${total.toLocaleString('vi-VN')} tài khoản`,
+          showTotal: (total) => `${total.toLocaleString('vi-VN')} ${resultLabel}`,
           onChange: onPageChange,
         }}
       />

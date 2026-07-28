@@ -19,6 +19,7 @@ export default function AccountFilters({
   roles,
   total,
   loading,
+  recruiterOnly = false,
   onChange,
   onClear,
 }) {
@@ -27,15 +28,20 @@ export default function AccountFilters({
   const isCompact = !Grid.useBreakpoint().md
   const patch = (name, value) => onChange({ ...filters, [name]: value })
 
-  const advancedCount = ADVANCED_KEYS.filter((key) => isFilled(filters[key])).length
+  const advancedKeys = recruiterOnly
+    ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
+    : ADVANCED_KEYS
+  const advancedCount = advancedKeys.filter((key) => isFilled(filters[key])).length
   const chips = [
     ['q', 'Từ khóa', filters.q.trim()],
     ['status', 'Trạng thái', labelOf(STATUS_OPTIONS, filters.status)],
     ['email_verified', 'Xác minh email', labelOf(BOOLEAN_OPTIONS, filters.email_verified)],
     ['mfa', 'Bật MFA', labelOf(BOOLEAN_OPTIONS, filters.mfa)],
     ['has_active_session', 'Phiên hoạt động', labelOf(BOOLEAN_OPTIONS, filters.has_active_session)],
-    ['department', 'Phòng ban', departments.find((item) => item.public_id === filters.department)?.name],
-    ['admin_role', 'Chức danh', roles.find((item) => item.public_id === filters.admin_role)?.name],
+    ...(!recruiterOnly ? [
+      ['department', 'Phòng ban', departments.find((item) => item.public_id === filters.department)?.name],
+      ['admin_role', 'Chức danh', roles.find((item) => item.public_id === filters.admin_role)?.name],
+    ] : []),
     ['company', 'Mã công ty', filters.company.trim()],
     ['created_range', 'Ngày tạo', filters.created_range?.length === 2 && rangeText(filters.created_range)],
     ['last_login_range', 'Đăng nhập', filters.last_login_range?.length === 2 && rangeText(filters.last_login_range)],
@@ -46,6 +52,7 @@ export default function AccountFilters({
       filters={filters}
       departments={departments}
       roles={roles}
+      hideAdminFields={recruiterOnly}
       onChange={onChange}
       onDone={() => setAdvancedOpen(false)}
     />
@@ -125,7 +132,7 @@ export default function AccountFilters({
           {loading ? 'Đang tải danh sách…' : (
             <>
               <strong>{Number(total || 0).toLocaleString('vi-VN')}</strong>
-              {' tài khoản'}
+              {recruiterOnly ? ' nhà tuyển dụng' : ' tài khoản'}
               {chips.length > 0 ? ' khớp bộ lọc' : ' trong phạm vi được xem'}
             </>
           )}

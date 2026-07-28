@@ -98,17 +98,7 @@ test('admin account management: filters, table actions and quick detail are resp
   })
   await expect(page.getByPlaceholder('Tìm theo tên, email hoặc mã tài khoản')).toBeVisible()
   await expect(page.getByText('Nguyễn Minh Anh')).toBeVisible()
-  const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
-  await expect(verificationTab).toContainText('2')
-  if (isMobile) await verificationTab.evaluate((element) => element.click())
-  else await verificationTab.click()
-  await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
-  await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
-    .locator('.account-management-tab-content')
-    .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
-  const allTab = page.getByRole('tab', { name: 'Tất cả' })
-  if (isMobile) await allTab.evaluate((element) => element.click())
-  else await allTab.click()
+  await expect(page.getByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveCount(0)
   await page.getByRole('button', { name: 'Xem nhanh' }).click()
   const quickDrawer = page.getByLabel('Thông tin tài khoản')
   await expect(quickDrawer).toBeVisible()
@@ -120,6 +110,19 @@ test('admin account management: filters, table actions and quick detail are resp
   }).toBeLessThanOrEqual(viewport.width)
   await page.keyboard.press('Escape')
   await expect(quickDrawer).toBeHidden()
+
+  await page.goto('/admin/app/recruiters?tab=verification')
+  await expect(page.getByRole('heading', {
+    name: 'Nhà tuyển dụng',
+    exact: true,
+  })).toBeVisible()
+  const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
+  await expect(verificationTab).toContainText('2')
+  await expect(verificationTab).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
+  await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
+    .locator('.account-management-tab-content')
+    .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

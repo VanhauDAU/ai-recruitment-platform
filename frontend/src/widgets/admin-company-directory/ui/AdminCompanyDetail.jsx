@@ -1,7 +1,6 @@
 import {
   ArrowLeftOutlined,
   BankOutlined,
-  ExclamationCircleOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
@@ -349,7 +348,7 @@ function Verification({ company }) {
           })}
           <Link
             className="inline-flex pt-2 font-semibold text-emerald-700"
-            to={`${adminPath('/accounts')}?tab=verification&company=${company.public_id}`}
+            to={`${adminPath('/recruiters')}?tab=verification&company=${company.public_id}`}
           >
             Mở hàng chờ xác thực NTD
           </Link>
@@ -388,7 +387,6 @@ export default function AdminCompanyDetail({ publicId }) {
   }
 
   const company = companyQuery.data
-  const ownerWarning = company.owner_count !== 1
   const setTab = (tab) => {
     const next = new URLSearchParams(searchParams)
     if (tab === 'overview') next.delete('tab')
@@ -416,14 +414,11 @@ export default function AdminCompanyDetail({ publicId }) {
       label: `Yêu cầu cập nhật (${company.pending_update_count})`,
       children: (
         <CompanyPanel title="Yêu cầu cập nhật thông tin">
-          <p className="mb-4 text-sm leading-6 text-slate-600">
-            Các thao tác duyệt vẫn được thực hiện trong workflow hiện có.
-          </p>
           <Link
-            className="font-semibold text-emerald-700"
+            className="inline-flex font-semibold text-emerald-700"
             to={`${adminPath('/companies')}?tab=updates&company=${company.public_id}`}
           >
-            Mở danh sách yêu cầu của công ty
+            Xem yêu cầu cập nhật của công ty
           </Link>
         </CompanyPanel>
       ),
@@ -460,11 +455,6 @@ export default function AdminCompanyDetail({ publicId }) {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <CompanyStatusTag status={company.verification_status} />
             <Tag icon={<TeamOutlined />}>{company.recruiter_count} NTD</Tag>
-            {ownerWarning && (
-              <Tag color="orange" icon={<ExclamationCircleOutlined />}>
-                {company.owner_count === 0 ? 'Chưa có owner' : `${company.owner_count} owner`}
-              </Tag>
-            )}
             {company.verification_status === 'verified' && (
               <Tag color="green" icon={<SafetyCertificateOutlined />}>Pháp nhân đã xác thực</Tag>
             )}

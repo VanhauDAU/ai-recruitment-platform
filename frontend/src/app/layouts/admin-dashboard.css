@@ -88,10 +88,10 @@
   box-shadow: 18px 0 40px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: calc(100dvh - 82px);
   left: 0;
   position: fixed;
-  top: 0;
+  top: 82px;
   width: 280px;
   z-index: 60;
 }
@@ -200,6 +200,19 @@
   color: #ffffff;
 }
 
+.admin-nav__level-two:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.admin-nav__level-two--direct {
+  justify-content: flex-start;
+}
+
+.admin-nav__level-two--direct.admin-nav__level-two--active {
+  box-shadow: inset 2px 0 var(--admin-primary);
+}
+
 .admin-nav__level-two strong {
   display: block;
   font-size: 13px;
@@ -215,37 +228,16 @@
 .admin-nav__flyout {
   background: #ffffff;
   border: 1px solid var(--admin-border);
-  border-radius: 0 16px 16px 0;
+  border-radius: 0 12px 12px 0;
   box-shadow: 18px 18px 45px rgba(15, 23, 42, 0.18);
   color: var(--admin-text);
   left: 280px;
-  max-height: calc(100dvh - 106px);
+  max-height: calc(100dvh - var(--admin-nav-flyout-top, 82px) - 12px);
   overflow-y: auto;
   position: fixed;
-  top: 82px;
+  top: var(--admin-nav-flyout-top, 82px);
   width: 290px;
   z-index: 55;
-}
-
-.admin-nav__flyout-header {
-  background: linear-gradient(145deg, #f8fafc, #ffffff);
-  border-bottom: 1px solid var(--admin-border);
-  padding: 14px 16px;
-}
-
-.admin-nav__flyout-header p {
-  color: var(--admin-primary-hover);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin: 0 0 5px;
-  text-transform: uppercase;
-}
-
-.admin-nav__flyout-header h2 {
-  color: var(--admin-text);
-  font-size: 16px;
-  margin: 0;
 }
 
 .admin-nav__flyout-items {

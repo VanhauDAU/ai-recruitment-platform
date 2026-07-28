@@ -73,13 +73,14 @@ function queryParams(tab, filters, search, page) {
   )
 }
 
-export default function AdminAccountManagement() {
+export default function AdminAccountManagement({ scope = 'accounts' }) {
+  const recruiterScope = scope === 'recruiters'
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
-  const canInvite = isSuperuser || has('account.admin.invite')
+  const canInvite = !recruiterScope && (isSuperuser || has('account.admin.invite'))
   const canViewEmployerVerifications = (
-    isSuperuser
-    || has('employer_verification.view')
+    recruiterScope
+    && (isSuperuser || has('employer_verification.view'))
   )
   const canBrowseAccounts = (
     isSuperuser
@@ -96,12 +97,15 @@ export default function AdminAccountManagement() {
   const [editForm] = Form.useForm()
   const [activeTab, setActiveTab] = useState(() => {
     const requested = searchParams.get('tab')
-    if (['all', 'candidate', 'employer', 'admin'].includes(requested) && canBrowseAccounts) {
+    const accountTabs = recruiterScope
+      ? ['employer']
+      : ['all', 'candidate', 'admin']
+    if (accountTabs.includes(requested) && canBrowseAccounts) {
       return requested
     }
     if (requested === 'verification' && canViewEmployerVerifications) return requested
     if (requested === 'invitations' && canInvite) return requested
-    if (canBrowseAccounts) return 'all'
+    if (canBrowseAccounts) return recruiterScope ? 'employer' : 'all'
     if (canViewEmployerVerifications) return 'verification'
     return 'invitations'
   })
@@ -135,12 +139,12 @@ export default function AdminAccountManagement() {
   const departmentsQuery = useQuery({
     queryKey: adminAccessKeys.departments,
     queryFn: ({ signal }) => getAdminDepartments({ signal }),
-    enabled: canBrowseAccounts || canInvite,
+    enabled: !recruiterScope && (canBrowseAccounts || canInvite),
   })
   const rolesQuery = useQuery({
     queryKey: adminAccessKeys.roles(''),
     queryFn: ({ signal }) => getAdminRoles('', { signal }),
-    enabled: canBrowseAccounts || canInvite,
+    enabled: !recruiterScope && (canBrowseAccounts || canInvite),
   })
 
   const departments = departmentsQuery.data || []
@@ -149,13 +153,20 @@ export default function AdminAccountManagement() {
   const accounts = accountsQuery.data || EMPTY_PAGE
 
   useEffect(() => {
-    const requested = searchParams.get('tab') || 'all'
+    const defaultTab = recruiterScope ? 'employer' : 'all'
+    const requested = searchParams.get('tab') || defaultTab
+    const accountTabs = recruiterScope
+      ? ['employer']
+      : ['all', 'candidate', 'admin']
     const allowed = (
-      (['all', 'candidate', 'employer', 'admin'].includes(requested) && canBrowseAccounts)
+      (accountTabs.includes(requested) && canBrowseAccounts)
       || (requested === 'verification' && canViewEmployerVerifications)
       || (requested === 'invitations' && canInvite)
     )
     if (allowed) setActiveTab(requested)
+    else if (canBrowseAccounts) setActiveTab(defaultTab)
+    else if (canViewEmployerVerifications) setActiveTab('verification')
+    else if (canInvite) setActiveTab('invitations')
     setFilters((current) => ({
       ...current,
       q: searchParams.get('q') || '',
@@ -168,12 +179,14 @@ export default function AdminAccountManagement() {
     canBrowseAccounts,
     canInvite,
     canViewEmployerVerifications,
+    recruiterScope,
     searchParams,
   ])
 
   const syncQuery = (tab, nextFilters, nextPage) => {
     const next = new URLSearchParams(searchParams)
-    if (tab === 'all') next.delete('tab')
+    const defaultTab = recruiterScope ? 'employer' : 'all'
+    if (tab === defaultTab) next.delete('tab')
     else next.set('tab', tab)
     const queryFilters = {
       q: nextFilters.q.trim(),
@@ -255,6 +268,7 @@ export default function AdminAccountManagement() {
         roles={roles}
         total={accounts.count}
         loading={accountsQuery.isLoading}
+        recruiterOnly={recruiterScope}
         onChange={changeFilters}
         onClear={() => changeFilters(DEFAULT_FILTERS)}
       />
@@ -278,16 +292,20 @@ export default function AdminAccountManagement() {
         onSecurity={(account) => openDetail(account, 'security')}
         canEdit={canEdit}
         canManageSecurity={canManageSecurity}
+        resultLabel={recruiterScope ? 'nhà tuyển dụng' : 'tài khoản'}
       />
     </div>
   )
 
   const tabs = [
     ...(canBrowseAccounts ? [
-      { key: 'all', label: 'Tất cả', children: accountList },
-      { key: 'candidate', label: 'Ứng viên', children: accountList },
-      { key: 'employer', label: 'Nhà tuyển dụng', children: accountList },
-      { key: 'admin', label: 'Admin', children: accountList },
+      ...(recruiterScope
+        ? [{ key: 'employer', label: 'Danh sách NTD', children: accountList }]
+        : [
+          { key: 'all', label: 'Tất cả', children: accountList },
+          { key: 'candidate', label: 'Ứng viên', children: accountList },
+          { key: 'admin', label: 'Quản trị viên', children: accountList },
+        ]),
     ] : []),
     ...(canViewEmployerVerifications ? [{
       key: 'verification',
@@ -315,7 +333,7 @@ export default function AdminAccountManagement() {
 
   return (
     <div className="min-w-0 space-y-5">
-      {canReadAccounts && (
+      {!recruiterScope && canReadAccounts && (
         <AccountOverview
           summary={summary}
           canViewEmployerVerifications={canViewEmployerVerifications}

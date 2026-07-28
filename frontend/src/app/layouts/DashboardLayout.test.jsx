@@ -83,6 +83,67 @@ describe('DashboardLayout admin access', () => {
     expect(screen.getByText('Bài viết')).toBeInTheDocument()
   })
 
+  it('opens flyouts beside the selected group without duplicating its heading', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'superuser@example.com',
+        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+      },
+      logout: vi.fn(),
+    })
+    render(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByText('Nội dung & dịch vụ'))
+    const guideButton = screen.getByRole('button', { name: /^Cẩm nang/ })
+    vi.spyOn(guideButton, 'getBoundingClientRect').mockReturnValue({
+      top: 240,
+      bottom: 278,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 38,
+      x: 0,
+      y: 240,
+      toJSON: () => ({}),
+    })
+    await user.click(guideButton)
+
+    const flyout = screen.getByRole('complementary', { name: 'Cẩm nang' })
+    expect(flyout).toHaveStyle({ '--admin-nav-flyout-top': '240px' })
+    expect(screen.getAllByText('Cẩm nang')).toHaveLength(1)
+  })
+
+  it('keeps the auto-expand panel below the admin header brand area', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'superuser@example.com',
+        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+      },
+      logout: vi.fn(),
+    })
+    const { container } = render(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Thu gọn thanh điều hướng' }))
+    await user.hover(container.querySelector('.admin-sider'))
+
+    const peek = container.querySelector('.admin-sider__peek')
+    expect(peek).toBeInTheDocument()
+    expect(peek.querySelector('.admin-sider__brand')).toBeNull()
+    expect(screen.getAllByText('Logo')).toHaveLength(1)
+  })
+
   it('keeps only one navigation section expanded at a time', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({

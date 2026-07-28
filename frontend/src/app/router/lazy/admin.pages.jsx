@@ -15,6 +15,7 @@ export const AdminBlogNewPage = lazy(() => import('@/pages/admin/app/BlogNew'))
 export const AdminBlogEditPage = lazy(() => import('@/pages/admin/app/BlogEdit'))
 export const AdminAccessControlPage = lazy(() => import('@/pages/admin/app/AccessControl'))
 export const AdminAccountsPage = lazy(() => import('@/pages/admin/app/Accounts'))
+export const AdminRecruitersPage = lazy(() => import('@/pages/admin/app/Recruiters'))
 export const AdminAccountDetailPage = lazy(() => import('@/pages/admin/app/AccountDetail'))
 export const AdminInvitationAcceptPage = lazy(() => import('@/pages/admin/app/InvitationAccept'))
 export const AdminPasswordResetPage = lazy(() => import('@/pages/admin/app/AdminPasswordReset'))
@@ -35,6 +36,7 @@ export const ADMIN_PAGE_BY_KEY = {
   AdminBlogEditPage,
   AdminAccessControlPage,
   AdminAccountsPage,
+  AdminRecruitersPage,
   AdminAccountDetailPage,
   AdminAccountPage,
   AdminAccessDeniedPage,

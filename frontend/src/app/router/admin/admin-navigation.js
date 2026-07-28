@@ -48,17 +48,26 @@ export function buildAdminNavigation(navigation, routes, adminAccess) {
 
 export function flattenAdminNavigation(navigation) {
   const leaves = []
-  navigation.forEach((levelOne) => {
-    levelOne.children.forEach((levelTwo) => {
-      levelTwo.children.forEach((leaf) => {
-        leaves.push({
-          ...leaf,
-          breadcrumb: [levelOne.label, levelTwo.label, leaf.label],
-          ancestors: [levelOne.key, levelTwo.key],
-        })
+
+  const visit = (nodes, breadcrumb = [], ancestors = []) => {
+    nodes.forEach((node) => {
+      if (node.children?.length) {
+        visit(
+          node.children,
+          [...breadcrumb, node.label],
+          [...ancestors, node.key],
+        )
+        return
+      }
+      leaves.push({
+        ...node,
+        breadcrumb: [...breadcrumb, node.label],
+        ancestors,
       })
     })
-  })
+  }
+
+  visit(navigation)
   return leaves
 }
 

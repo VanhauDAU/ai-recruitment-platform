@@ -1,8 +1,7 @@
 import {
   BankOutlined,
-  ExclamationCircleOutlined,
+  FileSyncOutlined,
   SafetyCertificateOutlined,
-  TeamOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -77,9 +76,9 @@ function VerificationSummary({ summary = {} }) {
       {entries.map(([status, count]) => {
         const meta = recruiterVerificationMeta(status)
         return (
-          <Tooltip key={status} title={meta.label}>
-            <Tag color={meta.color}>{count}</Tag>
-          </Tooltip>
+          <Tag key={status} color={meta.color}>
+            {meta.label}: {count}
+          </Tag>
         )
       })}
     </Space>
@@ -98,7 +97,6 @@ export default function AdminCompanyDirectory() {
       searchParams,
       'recruiter_verification_status',
     ),
-    has_owner: queryValue(searchParams, 'has_owner'),
     member_role: queryValue(searchParams, 'member_role'),
   }
   const params = Object.fromEntries(
@@ -177,19 +175,10 @@ export default function AdminCompanyDirectory() {
       sorter: true,
       sortOrder: sorterOrder(ordering, 'owner_count'),
       render: (count, company) => count ? (
-        <div>
-          <div className="font-medium text-slate-800">
-            {company.owners.map((owner) => owner.full_name || owner.email).join(', ')}
-          </div>
-          {count > 1 && (
-            <Tag className="mt-1" color="orange" icon={<ExclamationCircleOutlined />}>
-              {count} owner
-            </Tag>
-          )}
+        <div className="font-medium text-slate-800">
+          {company.owners.map((owner) => owner.full_name || owner.email).join(', ')}
         </div>
-      ) : (
-        <Tag color="red" icon={<ExclamationCircleOutlined />}>Chưa có owner</Tag>
-      ),
+      ) : '—',
     },
     {
       title: 'NTD',
@@ -209,7 +198,7 @@ export default function AdminCompanyDirectory() {
       title: 'Xác thực NTD',
       dataIndex: 'recruiter_verification_summary',
       key: 'approved_recruiter_count',
-      width: 210,
+      width: 260,
       sorter: true,
       sortOrder: sorterOrder(ordering, 'approved_recruiter_count'),
       render: (summary) => <VerificationSummary summary={summary} />,
@@ -238,9 +227,10 @@ export default function AdminCompanyDirectory() {
   const verifiedCount = companies.results.filter(
     (company) => company.verification_status === 'verified',
   ).length
-  const warningCount = companies.results.filter(
-    (company) => company.owner_count !== 1,
-  ).length
+  const pendingUpdateCount = companies.results.reduce(
+    (total, company) => total + company.pending_update_count,
+    0,
+  )
 
   return (
     <div className="company-directory space-y-5">
@@ -263,9 +253,9 @@ export default function AdminCompanyDirectory() {
           tone="green"
         />
         <CompanyStatCard
-          icon={<TeamOutlined />}
-          label="Cảnh báo owner trong trang"
-          value={warningCount}
+          icon={<FileSyncOutlined />}
+          label="Yêu cầu cập nhật trong trang"
+          value={pendingUpdateCount}
           tone="amber"
         />
       </section>
@@ -295,22 +285,12 @@ export default function AdminCompanyDirectory() {
             onChange={(value) => updateParams({ recruiter_verification_status: value })}
           />
           <Select
-            aria-label="Lọc owner"
-            value={filters.has_owner}
-            options={[
-              { value: '', label: 'Mọi cấu trúc owner' },
-              { value: 'true', label: 'Có owner' },
-              { value: 'false', label: 'Chưa có owner' },
-            ]}
-            onChange={(value) => updateParams({ has_owner: value })}
-          />
-          <Select
             aria-label="Lọc vai trò thành viên"
             value={filters.member_role}
             options={[
-              { value: '', label: 'Owner và member' },
-              { value: 'owner', label: 'Có owner' },
-              { value: 'member', label: 'Có member' },
+              { value: '', label: 'Mọi vai trò NTD' },
+              { value: 'owner', label: 'Owner' },
+              { value: 'member', label: 'Member' },
             ]}
             onChange={(value) => updateParams({ member_role: value })}
           />

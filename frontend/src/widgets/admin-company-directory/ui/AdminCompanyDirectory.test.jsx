@@ -115,7 +115,10 @@ describe('admin company directory', () => {
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getAllByText('Chờ duyệt')).toHaveLength(2)
+    expect(screen.getByText('Chưa có hồ sơ: 1')).toBeInTheDocument()
+    expect(screen.getByText('Đã xác thực: 1')).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Xác thực NTD' })).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Lọc owner' })).not.toBeInTheDocument()
     expect(getAdminCompanies).toHaveBeenCalledWith(
       expect.objectContaining({ verification_status: 'pending' }),
       expect.any(Object),

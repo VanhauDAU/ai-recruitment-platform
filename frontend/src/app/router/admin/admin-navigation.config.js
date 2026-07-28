@@ -5,21 +5,15 @@ export const ADMIN_NAVIGATION = [
     iconKey: 'dashboard',
     children: [
       {
-        key: 'operations',
-        label: 'Điều hành',
-        children: [{ key: 'dashboard', label: 'Bảng điều khiển', routeRef: 'dashboard' }],
+        key: 'dashboard',
+        label: 'Bảng điều khiển',
+        routeRef: 'dashboard',
       },
       {
-        key: 'reports',
-        label: 'Báo cáo',
-        children: [
-          {
-            key: 'operations-report',
-            label: 'Báo cáo vận hành',
-            status: 'comingSoon',
-            access: { superuser: true },
-          },
-        ],
+        key: 'operations-report',
+        label: 'Báo cáo vận hành',
+        status: 'comingSoon',
+        access: { superuser: true },
       },
     ],
   },
@@ -61,14 +55,13 @@ export const ADMIN_NAVIGATION = [
           {
             key: 'employer-list',
             label: 'Tất cả NTD',
-            routeRef: 'accounts',
-            query: { tab: 'employer' },
+            routeRef: 'recruiters',
             access: { allOf: ['account.view'] },
           },
           {
             key: 'employer-verification',
             label: 'Chờ xác thực hồ sơ',
-            routeRef: 'accounts',
+            routeRef: 'recruiters',
             query: { tab: 'verification' },
             access: { allOf: ['employer_verification.view'] },
           },
@@ -220,11 +213,9 @@ export const ADMIN_NAVIGATION = [
         ],
       },
       {
-        key: 'leads',
-        label: 'Khách hàng tiềm năng',
-        children: [
-          { key: 'consultation-leads', label: 'Yêu cầu tư vấn', routeRef: 'consultationLeads' },
-        ],
+        key: 'consultation-leads',
+        label: 'Yêu cầu tư vấn',
+        routeRef: 'consultationLeads',
       },
     ],
   },
@@ -266,16 +257,10 @@ export const ADMIN_NAVIGATION = [
         ],
       },
       {
-        key: 'monitoring',
-        label: 'Giám sát',
-        children: [
-          {
-            key: 'audit-log',
-            label: 'Nhật ký kiểm toán',
-            status: 'comingSoon',
-            access: { allOf: ['audit_log.view'] },
-          },
-        ],
+        key: 'audit-log',
+        label: 'Nhật ký kiểm toán',
+        status: 'comingSoon',
+        access: { allOf: ['audit_log.view'] },
       },
     ],
   },

@@ -40,6 +40,10 @@ function ComingSoon() {
   return <Tag className="admin-nav__coming-soon">Sắp ra mắt</Tag>
 }
 
+function hasChildren(item) {
+  return Boolean(item.children?.length)
+}
+
 function LeafButton({ leaf, active, onSelect, showBreadcrumb = false }) {
   const disabled = leaf.status === 'comingSoon' || !leaf.href
   return (
@@ -139,11 +143,22 @@ function MobileNavigation({
           <button
             type="button"
             key={levelTwo.key}
-            className="admin-nav__level-two"
-            onClick={() => setTrail([currentLevelOne.key, levelTwo.key])}
+            className={`admin-nav__level-two ${
+              activeLeaf?.key === levelTwo.key ? 'admin-nav__level-two--active' : ''
+            }`}
+            disabled={levelTwo.status === 'comingSoon' || (!hasChildren(levelTwo) && !levelTwo.href)}
+            aria-current={activeLeaf?.key === levelTwo.key ? 'page' : undefined}
+            onClick={() => {
+              if (hasChildren(levelTwo)) {
+                setTrail([currentLevelOne.key, levelTwo.key])
+              } else {
+                onSelect(levelTwo)
+              }
+            }}
           >
             <strong>{levelTwo.label}</strong>
-            <RightOutlined />
+            {levelTwo.status === 'comingSoon' && <ComingSoon />}
+            {hasChildren(levelTwo) && <RightOutlined />}
           </button>
         ))}
       </div>
@@ -189,6 +204,7 @@ export default function AdminNavigation({
     activeLeaf?.ancestors[0] || navigation[0]?.key || '',
   )
   const [openLevelTwo, setOpenLevelTwo] = useState('')
+  const [flyoutTop, setFlyoutTop] = useState(82)
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -297,23 +313,39 @@ export default function AdminNavigation({
                   {isOpen && (
                     <div className="admin-nav__secondary">
                       {levelOne.children.map((levelTwo) => {
-                        const isLevelTwoActive = (
-                          activeLeaf?.ancestors[1] === levelTwo.key
+                        const grouped = hasChildren(levelTwo)
+                        const isLevelTwoActive = grouped
+                          ? activeLeaf?.ancestors[1] === levelTwo.key
+                          : activeLeaf?.key === levelTwo.key
+                        const disabled = (
+                          levelTwo.status === 'comingSoon'
+                          || (!grouped && !levelTwo.href)
                         )
                         return (
                           <button
                             type="button"
                             key={levelTwo.key}
-                            className={`admin-nav__level-two ${
+                            className={`admin-nav__level-two ${!grouped ? 'admin-nav__level-two--direct' : ''} ${
                               isLevelTwoActive ? 'admin-nav__level-two--active' : ''
                             }`}
-                            aria-expanded={openLevelTwo === levelTwo.key}
-                            onClick={() => setOpenLevelTwo(
-                              openLevelTwo === levelTwo.key ? '' : levelTwo.key,
-                            )}
+                            disabled={disabled}
+                            aria-current={isLevelTwoActive && !grouped ? 'page' : undefined}
+                            aria-expanded={grouped ? openLevelTwo === levelTwo.key : undefined}
+                            onClick={(event) => {
+                              if (disabled) return
+                              if (!grouped) {
+                                selectLeaf(levelTwo)
+                                return
+                              }
+                              setFlyoutTop(Math.max(82, event.currentTarget.getBoundingClientRect().top))
+                              setOpenLevelTwo(
+                                openLevelTwo === levelTwo.key ? '' : levelTwo.key,
+                              )
+                            }}
                           >
                             <strong>{levelTwo.label}</strong>
-                            <RightOutlined />
+                            {levelTwo.status === 'comingSoon' && <ComingSoon />}
+                            {grouped && <RightOutlined />}
                           </button>
                         )
                       })}
@@ -328,11 +360,8 @@ export default function AdminNavigation({
             <aside
               className="admin-nav__flyout"
               aria-label={currentLevelTwo.label}
+              style={{ '--admin-nav-flyout-top': `${flyoutTop}px` }}
             >
-              <div className="admin-nav__flyout-header">
-                <p>{currentLevelOne.label}</p>
-                <h2>{currentLevelTwo.label}</h2>
-              </div>
               <div className="admin-nav__flyout-items">
                 {currentLevelTwo.children.map((leaf) => (
                   <LeafButton

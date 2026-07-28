@@ -113,12 +113,26 @@ export default function DashboardLayout() {
           onMouseEnter={() => sidebarCollapsed && setSidebarPeek(true)}
           onFocusCapture={() => sidebarCollapsed && setSidebarPeek(true)}
         >
-          {sidebarCollapsed && sidebarPeek ? (
+          <AdminBrand collapsed={sidebarCollapsed} />
+          <AdminNavigation
+            navigation={navigation}
+            pathname={pathname}
+            search={search}
+            navigate={navigate}
+            collapsed={sidebarCollapsed}
+            onRequestExpand={() => setSidebarPeek(true)}
+          />
+          {hasNoDepartment && !sidebarCollapsed && (
+            <p className="admin-sider__notice">
+              Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
+              (superuser) để được cấp quyền.
+            </p>
+          )}
+          {sidebarCollapsed && sidebarPeek && (
             <div
               className="admin-sider__peek"
               onMouseLeave={() => setSidebarPeek(false)}
             >
-              <AdminBrand />
               <AdminNavigation
                 navigation={navigation}
                 pathname={pathname}
@@ -132,24 +146,6 @@ export default function DashboardLayout() {
                 </p>
               )}
             </div>
-          ) : (
-            <>
-              <AdminBrand collapsed={sidebarCollapsed} />
-              <AdminNavigation
-                navigation={navigation}
-                pathname={pathname}
-                search={search}
-                navigate={navigate}
-                collapsed={sidebarCollapsed}
-                onRequestExpand={() => setSidebarPeek(true)}
-              />
-              {hasNoDepartment && !sidebarCollapsed && (
-                <p className="admin-sider__notice">
-                  Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
-                  (superuser) để được cấp quyền.
-                </p>
-              )}
-            </>
           )}
         </Sider>
 

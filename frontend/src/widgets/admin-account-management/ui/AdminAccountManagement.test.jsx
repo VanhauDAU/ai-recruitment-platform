@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminAccountManagement from './AdminAccountManagement'
@@ -45,7 +44,12 @@ const SUMMARY = {
   employer_verification_overdue: 1,
 }
 
-function renderWidget({ isSuperuser = true, permissions = [] } = {}) {
+function renderWidget({
+  isSuperuser = true,
+  permissions = [],
+  scope = 'accounts',
+  initialEntry = '/',
+} = {}) {
   useSession.mockReturnValue({
     user: {
       role: 'admin',
@@ -62,16 +66,14 @@ function renderWidget({ isSuperuser = true, permissions = [] } = {}) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <AdminAccountManagement />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <AdminAccountManagement scope={scope} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
-// Nhãn thẻ hàng chờ trùng với nhãn tab tương ứng nên phải khoanh theo selector.
 const statCard = (label) => screen.getByText(label, { selector: '.account-stat p' }).closest('.account-stat')
-const queueCard = (label) => screen.getByText(label, { selector: '.account-queue__label' }).closest('.account-queue')
 // Thẻ tồn tại ngay từ lần render đầu với giá trị 0, nên phải chờ số liệu thật.
 const waitForSummary = () => waitFor(
   () => expect(statCard('Tổng tài khoản')).toHaveTextContent('200'),
@@ -97,24 +99,27 @@ describe('AdminAccountManagement overview', () => {
     expect(statCard('Email chưa xác minh')).toHaveTextContent('25% chưa hoàn tất xác thực')
   })
 
-  it('warns about overdue employer verification cases', async () => {
+  it('keeps employer verification out of the general account workspace', async () => {
     renderWidget()
 
     await waitForSummary()
-    expect(queueCard('Hồ sơ NTD chờ duyệt')).toHaveTextContent('1 hồ sơ đã chờ quá 72 giờ')
-    expect(queueCard('Hồ sơ NTD chờ duyệt')).toHaveClass('account-queue--red')
-    expect(screen.getByText('6 việc đang chờ')).toBeInTheDocument()
+    expect(screen.queryByText('Hồ sơ NTD chờ duyệt')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Nhà tuyển dụng' })).not.toBeInTheDocument()
   })
 
-  it('opens the matching tab when a queue card is clicked', async () => {
-    renderWidget()
-
-    await waitForSummary()
-    await userEvent.click(queueCard('Hồ sơ NTD chờ duyệt'))
-
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveAttribute('aria-selected', 'true')
+  it('provides a focused recruiter workspace', async () => {
+    renderWidget({
+      scope: 'recruiters',
+      initialEntry: '/?tab=verification',
     })
+
+    expect(await screen.findByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByRole('tab', { name: 'Danh sách NTD' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Tổng quan tài khoản')).not.toBeInTheDocument()
   })
 
   it('does not mix company-update requests into account tabs', async () => {

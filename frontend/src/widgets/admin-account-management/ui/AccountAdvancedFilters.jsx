@@ -24,11 +24,15 @@ export default function AccountAdvancedFilters({
   filters,
   departments,
   roles,
+  hideAdminFields = false,
   onChange,
   onDone,
 }) {
   const patch = (name, value) => onChange({ ...filters, [name]: value })
-  const activeCount = ADVANCED_KEYS.filter((key) => isFilled(filters[key])).length
+  const advancedKeys = hideAdminFields
+    ? ADVANCED_KEYS.filter((key) => !['department', 'admin_role'].includes(key))
+    : ADVANCED_KEYS
+  const activeCount = advancedKeys.filter((key) => isFilled(filters[key])).length
 
   return (
     <div className="account-filter-popover">
@@ -70,39 +74,41 @@ export default function AccountAdvancedFilters({
         </div>
       </section>
 
-      <section>
-        <h4>Phân quyền quản trị</h4>
-        <div className="account-filter-grid">
-          <Field label="Phòng ban Admin">
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Chọn phòng ban"
-              value={filters.department || undefined}
-              onChange={(value) => patch('department', value || '')}
-              options={departments.map((item) => ({
-                value: item.public_id,
-                label: item.name,
-              }))}
-            />
-          </Field>
-          <Field label="Chức danh Admin">
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Chọn chức danh"
-              value={filters.admin_role || undefined}
-              onChange={(value) => patch('admin_role', value || '')}
-              options={roles.map((item) => ({
-                value: item.public_id,
-                label: `${item.department.name} · ${item.name}`,
-              }))}
-            />
-          </Field>
-        </div>
-      </section>
+      {!hideAdminFields && (
+        <section>
+          <h4>Phân quyền quản trị</h4>
+          <div className="account-filter-grid">
+            <Field label="Phòng ban Admin">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Chọn phòng ban"
+                value={filters.department || undefined}
+                onChange={(value) => patch('department', value || '')}
+                options={departments.map((item) => ({
+                  value: item.public_id,
+                  label: item.name,
+                }))}
+              />
+            </Field>
+            <Field label="Chức danh Admin">
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Chọn chức danh"
+                value={filters.admin_role || undefined}
+                onChange={(value) => patch('admin_role', value || '')}
+                options={roles.map((item) => ({
+                  value: item.public_id,
+                  label: `${item.department.name} · ${item.name}`,
+                }))}
+              />
+            </Field>
+          </div>
+        </section>
+      )}
 
       <section>
         <h4>Mốc thời gian</h4>

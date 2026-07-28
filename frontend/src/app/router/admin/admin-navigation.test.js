@@ -56,6 +56,21 @@ describe('admin navigation tree', () => {
     expect(report.href).toBeNull()
   })
 
+  it('supports direct second-level destinations without creating a fake group', () => {
+    const tree = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access(['dashboard.view']),
+    )
+    const dashboard = flattenAdminNavigation(tree).find(
+      (leaf) => leaf.key === 'dashboard',
+    )
+
+    expect(dashboard.href).toBe('/admin/app/dashboard')
+    expect(dashboard.breadcrumb).toEqual(['Tổng quan', 'Bảng điều khiển'])
+    expect(dashboard.ancestors).toEqual(['overview'])
+  })
+
   it('selects the most specific route and query leaf', () => {
     const tree = buildAdminNavigation(
       ADMIN_NAVIGATION,
@@ -91,6 +106,20 @@ describe('admin navigation tree', () => {
       '/admin/app/companies',
       '?tab=updates&company=co_123',
     )?.key).toBe('company-updates')
+  })
+
+  it('routes recruiter administration to its dedicated workspace', () => {
+    const tree = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access(['account.view', 'employer_verification.view']),
+    )
+    const leaves = flattenAdminNavigation(tree)
+
+    expect(leaves.find((leaf) => leaf.key === 'employer-list')?.href)
+      .toBe('/admin/app/recruiters')
+    expect(leaves.find((leaf) => leaf.key === 'employer-verification')?.href)
+      .toBe('/admin/app/recruiters?tab=verification')
   })
 
   it('maps each system setting leaf to one exact settings group', () => {

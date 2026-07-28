@@ -1,7 +1,7 @@
 .company-directory__filters {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(240px, 2fr) repeat(4, minmax(170px, 1fr)) auto;
+  grid-template-columns: minmax(240px, 2fr) repeat(3, minmax(170px, 1fr)) auto;
   margin-bottom: 20px;
 }
 

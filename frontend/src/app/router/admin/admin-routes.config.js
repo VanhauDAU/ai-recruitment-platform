@@ -104,6 +104,18 @@ export const ADMIN_ROUTES = [
       'account.view',
       'account.admin.view',
       'account.admin.invite',
+    ],
+    showInNav: true,
+  },
+  {
+    id: 'recruiters',
+    segment: '/recruiters',
+    lazyKey: 'AdminRecruitersPage',
+    title: 'Nhà tuyển dụng',
+    navLabel: 'Nhà tuyển dụng',
+    iconKey: 'accounts',
+    permissionsAny: [
+      'account.view',
       'employer_verification.view',
     ],
     showInNav: true,
