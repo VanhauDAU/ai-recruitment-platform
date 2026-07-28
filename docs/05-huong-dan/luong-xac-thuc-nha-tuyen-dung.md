@@ -159,6 +159,43 @@ là điều kiện bắt buộc để tới được trang. Sáu mốc theo th�
 5. đồng ý thỏa thuận xử lý DLCN với ProCV;
 6. đăng tin tuyển dụng đầu tiên.
 
+## Luồng quản trị hồ sơ xác thực nhà tuyển dụng
+
+Hàng chờ tại `/admin/app/recruiters?tab=verification` mặc định dùng trạng thái
+**Cần xử lý**. Số badge và danh sách dùng cùng một định nghĩa:
+
+- hồ sơ đang chờ duyệt (`pending`);
+- hồ sơ quản trị viên đã nhận xử lý (`in_review`);
+- hồ sơ ở trạng thái khác nhưng có ít nhất một giấy tờ hiện hành vừa nộp lại và
+  đang chờ duyệt.
+
+Vì vậy thao tác **Nhận xử lý** không làm hồ sơ biến mất khỏi hàng chờ. Các bộ
+lọc “Chờ duyệt”, “Đang xử lý”, “Cần bổ sung”, “Bị từ chối” và “Đã xác thực”
+vẫn dùng để thu hẹp theo trạng thái nghiệp vụ khi cần.
+
+Ở trang chi tiết, hành trình 9 bước mặc định chỉ hiển thị phần tóm tắt và thanh
+tiến độ; quản trị viên chủ động mở danh sách bước khi cần audit. Giấy tờ hiện
+hành được chia thành ba nhóm:
+
+1. **Quyền đại diện** — giấy ủy quyền và CCCD/hộ chiếu;
+2. **Pháp lý doanh nghiệp** — giấy đăng ký doanh nghiệp và chứng minh tên
+   thương mại;
+3. **Bảo vệ dữ liệu** — thỏa thuận xử lý dữ liệu cá nhân với ứng viên.
+
+### Ý nghĩa của đối chiếu mã số thuế
+
+Khi một giấy tờ thuộc hồ sơ xác thực quyền đại diện được nộp và công ty đã có mã
+số thuế, hệ thống tự động lấy bằng chứng đối chiếu tên pháp lý/MST theo phiên hồ
+sơ. Quy tắc này áp dụng cả với **Thành viên** đã chọn công ty có sẵn. Kết quả
+đối chiếu chỉ trả lời “pháp nhân công ty trong hồ sơ này có khớp nguồn tham
+khảo hay không”; nó không khẳng định người nộp đã tạo, sở hữu hoặc chỉnh sửa hồ
+sơ công ty.
+
+Quyền đại diện của thành viên vẫn phải dựa trên giấy ủy quyền và giấy tờ định
+danh. Mọi thay đổi tên pháp lý, MST hoặc thông tin công ty đi qua **Yêu cầu cập
+nhật công ty** riêng và không được suy ra từ thẻ đối chiếu MST. Nguồn đối chiếu
+chỉ mang tính bổ trợ; quyết định cuối cùng dựa trên giấy tờ pháp lý và audit.
+
 Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
 chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi
 tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên thương mại/MST

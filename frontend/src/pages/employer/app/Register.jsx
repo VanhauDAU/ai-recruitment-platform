@@ -19,6 +19,7 @@ import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_COMPLETE_PROFILE_URL, employerAppPath } from '@/shared/config/portals'
+import { shouldSubmitRegistrationOnEnter } from './registration-keyboard'
 
 const REGISTRATION_FIELDS = new Set([
   'email', 'password', 'full_name', 'gender', 'contact_phone',
@@ -106,7 +107,7 @@ export default function EmployerRegister() {
 
   function mapApiErrors(err) {
     const data = err.response?.data
-    if (!data || typeof data !== 'object') return false
+    if (!data || typeof data !== 'object') return { hasErrors: false, step: null }
     const fields = Object.entries(data)
       .filter(([name]) => REGISTRATION_FIELDS.has(name))
       .map(([name, messages]) => ({
@@ -114,7 +115,12 @@ export default function EmployerRegister() {
         errors: Array.isArray(messages) ? messages.map(String) : [String(messages)],
       }))
     if (fields.length) form.setFields(fields)
-    return fields.length > 0
+    return {
+      hasErrors: fields.length > 0,
+      step: fields.some(({ name }) => (
+        ['terms_accepted', 'email', 'password'].includes(name)
+      )) ? 1 : fields.length ? 2 : null,
+    }
   }
 
   async function goToEmployerDetails() {
@@ -132,13 +138,27 @@ export default function EmployerRegister() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  async function onFinish(values) {
+  function submitOnEnter(event) {
+    if (!shouldSubmitRegistrationOnEnter(event)) return
+    event.preventDefault()
+    form.submit()
+  }
+
+  async function onFinish(submittedValues) {
     if (step === 1) {
       await goToEmployerDetails()
       return
     }
+    // Ant Design only includes currently mounted Form.Item values in
+    // onFinish. Step 1 is unmounted here, so explicitly include preserved
+    // values such as email, password and terms acceptance.
+    const values = {
+      ...form.getFieldsValue(true),
+      ...submittedValues,
+    }
     if (!executeRecaptcha) {
       clearPasswords()
+      setStep(1)
       setError('Captcha chưa sẵn sàng, vui lòng thử lại.')
       return
     }
@@ -161,11 +181,11 @@ export default function EmployerRegister() {
       sessionStorage.removeItem('employer_registration_consent')
       navigate(`${EMPLOYER_ACCOUNT_VERIFY_URL}?registered=1`, { replace: true })
     } catch (err) {
-      clearPasswords()
-      const hasFieldErrors = mapApiErrors(err)
+      const apiErrors = mapApiErrors(err)
+      if (apiErrors.step) setStep(apiErrors.step)
       if (err.response?.status === 429) {
         setError('Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút.')
-      } else if (!hasFieldErrors) {
+      } else if (!apiErrors.hasErrors) {
         setError(getApiErrorMessage(err, 'Đăng ký thất bại. Vui lòng thử lại.'))
       }
     } finally {
@@ -200,6 +220,7 @@ export default function EmployerRegister() {
         form={form}
         layout="vertical"
         initialValues={{ marketing_opt_in: false }}
+        onKeyDown={submitOnEnter}
         onFinish={onFinish}
         requiredMark="optional"
         scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
@@ -242,7 +263,7 @@ export default function EmployerRegister() {
                   },
                 ]}
               >
-                <Input autoComplete="email" prefix={<MailOutlined className="text-emerald-600" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
+                <Input autoFocus autoComplete="email" prefix={<MailOutlined className="text-emerald-600" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
               <p className="-mt-3 mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900 md:col-span-2">
                 <InfoCircleOutlined className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
@@ -276,7 +297,7 @@ export default function EmployerRegister() {
               {passwordFocused && <div className="md:col-span-2"><PasswordRequirements password={password} mode="employer" /></div>}
             </div>
 
-            <button type="button" onClick={goToEmployerDetails} className="submit-btn mt-6 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white">
+            <button type="submit" className="submit-btn mt-6 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white">
               <span>Tiếp tục</span><ArrowRightOutlined />
             </button>
           </section>

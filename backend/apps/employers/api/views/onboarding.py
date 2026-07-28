@@ -1,4 +1,3 @@
-from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound, ValidationError
@@ -12,6 +11,7 @@ from ...models import (
 )
 from ...selectors import has_explicit_company_link
 from ...services import (
+    accept_recruiter_dpa,
     get_or_create_recruiter,
     phone_taken_by_other,
     send_phone_otp,
@@ -132,8 +132,5 @@ class AcceptDpaView(APIView):
         tags=['employer'],
     )
     def post(self, request):
-        recruiter = get_or_create_recruiter(request.user)
-        if recruiter.dpa_accepted_at is None:
-            recruiter.dpa_accepted_at = timezone.now()
-            recruiter.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        recruiter = accept_recruiter_dpa(request.user)
         return Response(RecruiterProfileSerializer(recruiter, context={'request': request}).data)

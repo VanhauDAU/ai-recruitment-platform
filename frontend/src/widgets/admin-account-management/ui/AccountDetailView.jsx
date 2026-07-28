@@ -171,7 +171,7 @@ function SessionsPanel({ publicId }) {
         { title: 'Cổng', dataIndex: 'portal', render: humanize },
         { title: 'Phương thức', dataIndex: 'auth_method', render: humanize },
         { title: 'IP', dataIndex: 'ip_address', render: (value) => value || '—' },
-        { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: formatAdminDate },
+        { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: (value) => formatAdminDate(value) },
         {
           title: 'Trạng thái',
           key: 'status',
@@ -206,7 +206,7 @@ function ActivityPanel({ publicId }) {
         onChange: setPage,
       }}
       columns={[
-        { title: 'Thời gian', dataIndex: 'created_at', width: 165, render: formatAdminDate },
+        { title: 'Thời gian', dataIndex: 'created_at', width: 165, render: (value) => formatAdminDate(value) },
         { title: 'Hành động', dataIndex: 'action', width: 220, render: humanize },
         { title: 'Người thực hiện', dataIndex: 'actor_email', width: 220, render: (value, row) => value || row.actor_identifier || 'Hệ thống' },
         {

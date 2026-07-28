@@ -24,14 +24,43 @@ export function CompanyStatCard({
   label,
   value,
   tone = 'primary',
+  hint,
+  active = false,
+  onClick,
 }) {
-  return (
-    <article className={`admin-stat-card admin-stat-card--${tone}`}>
+  const className = [
+    'admin-stat-card',
+    `admin-stat-card--${tone}`,
+    onClick ? 'admin-stat-card--interactive' : '',
+    active ? 'admin-stat-card--active' : '',
+  ].filter(Boolean).join(' ')
+  const content = (
+    <>
       <span className="admin-stat-card__icon" aria-hidden="true">{icon}</span>
       <span className="min-w-0">
         <span className="admin-stat-card__label">{label}</span>
-        <strong className="admin-stat-card__value">{value}</strong>
+        <strong className="admin-stat-card__value">{value ?? 0}</strong>
+        {hint && <span className="admin-stat-card__hint">{hint}</span>}
       </span>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        aria-label={`${label}: ${value ?? 0}${hint ? `. ${hint}` : ''}`}
+        className={className}
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <article className={className}>
+      {content}
     </article>
   )
 }

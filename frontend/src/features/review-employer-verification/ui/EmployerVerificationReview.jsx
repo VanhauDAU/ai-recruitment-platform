@@ -39,6 +39,7 @@ import {
   documentPreviewKind,
   resolveDocumentMimeType,
 } from '../model/document-preview'
+import { groupVerificationDocuments } from '../model/document-groups'
 import { buildVerificationTimeline } from '../model/event-timeline'
 import CompanyUpdateReviewPanel from './CompanyUpdateReviewPanel'
 import DocumentImageViewer from './DocumentImageViewer'
@@ -368,6 +369,10 @@ export default function EmployerVerificationReview({
     () => (verificationCase?.documents || []).filter((item) => item.is_current),
     [verificationCase],
   )
+  const documentGroups = useMemo(
+    () => groupVerificationDocuments(currentDocuments),
+    [currentDocuments],
+  )
   const timelineEvents = useMemo(
     () => buildVerificationTimeline(
       verificationCase?.events || [],
@@ -546,6 +551,7 @@ export default function EmployerVerificationReview({
 
       <TaxLookupEvidenceCard
         evidence={verificationCase.tax_lookup_evidence}
+        recruiterCompanyRole={verificationCase.recruiter?.company_role}
         canRefresh={canReviewVerification}
         refreshing={taxLookupMutation.isPending}
         onRefresh={() => taxLookupMutation.mutate()}
@@ -568,50 +574,65 @@ export default function EmployerVerificationReview({
       )}
 
       <section className="verification-workbench">
-        <Card size="small" title="Bộ giấy tờ" className="account-detail-card verification-document-list">
+        <Card
+          size="small"
+          title={`Bộ giấy tờ (${currentDocuments.length})`}
+          className="account-detail-card verification-document-list"
+        >
           <div className="verification-document-items">
             {currentDocuments.length === 0 && (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có giấy tờ hiện hành" />
             )}
-            {currentDocuments.map((document) => {
-              const active = selectedDocument?.public_id === document.public_id
-              return (
-                <div
-                  className={`verification-document-item${active ? ' is-selected' : ''}`}
-                  key={document.public_id}
-                >
-                  <button
-                    className="verification-document-item__select"
-                    type="button"
-                    onClick={() => setSelectedDocumentId(document.public_id)}
-                  >
-                    <span className="verification-document-item__title">
-                      <span>{document.doc_type_label}</span>
-                      <StatusTag status={document.status} document />
-                    </span>
-                    <span className="verification-document-item__description">
-                      {`${document.file_name} · v${document.version} · ${formatDate(document.created_at)}`}
-                      {document.duplicate_company_count > 0 && (
-                        <Tag className="ml-2" color="red" icon={<WarningOutlined />}>
-                          Trùng hash công ty khác
-                        </Tag>
-                      )}
-                    </span>
-                  </button>
-                  {canReviewVerification && (
-                    <Button
-                      type="link"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setDocumentDecision(document)
-                      }}
+            {documentGroups.map((group) => (
+              <section className="verification-document-group" key={group.key}>
+                <header className="verification-document-group__header">
+                  <span>
+                    <strong>{group.title}</strong>
+                    <small>{group.description}</small>
+                  </span>
+                  <Tag>{group.documents.length}</Tag>
+                </header>
+                {group.documents.map((document) => {
+                  const active = selectedDocument?.public_id === document.public_id
+                  return (
+                    <div
+                      className={`verification-document-item${active ? ' is-selected' : ''}`}
+                      key={document.public_id}
                     >
-                      Xử lý
-                    </Button>
-                  )}
-                </div>
-              )
-            })}
+                      <button
+                        className="verification-document-item__select"
+                        type="button"
+                        onClick={() => setSelectedDocumentId(document.public_id)}
+                      >
+                        <span className="verification-document-item__title">
+                          <span>{document.doc_type_label}</span>
+                          <StatusTag status={document.status} document />
+                        </span>
+                        <span className="verification-document-item__description">
+                          {`${document.file_name} · v${document.version} · ${formatDate(document.created_at)}`}
+                          {document.duplicate_company_count > 0 && (
+                            <Tag className="ml-2" color="red" icon={<WarningOutlined />}>
+                              Trùng hash công ty khác
+                            </Tag>
+                          )}
+                        </span>
+                      </button>
+                      {canReviewVerification && (
+                        <Button
+                          type="link"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setDocumentDecision(document)
+                          }}
+                        >
+                          Xử lý
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+              </section>
+            ))}
           </div>
         </Card>
         <Card

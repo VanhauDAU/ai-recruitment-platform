@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from apps.accounts.models import User
 
 from .profiles import get_or_create_recruiter
+from .verification import reconcile_recruiter_verification
 
 
 @transaction.atomic
@@ -36,6 +37,7 @@ def complete_registration_profile(user, validated_data):
     recruiter.marketing_opt_in = validated_data.get('marketing_opt_in', False)
     recruiter.marketing_decided_at = now
     recruiter.save()
+    reconcile_recruiter_verification(recruiter, source='registration_completed')
     return recruiter
 
 

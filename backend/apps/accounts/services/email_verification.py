@@ -25,7 +25,14 @@ def _cooldown_key(user_id):
 
 def issue_token(user):
     token = secrets.token_urlsafe(32)
-    cache.set(_token_key(token), user.pk, settings.EMAIL_VERIFICATION_TTL)
+    cache.set(
+        _token_key(token),
+        {
+            'user_id': user.pk,
+            'email': User.objects.normalize_email(user.email),
+        },
+        settings.EMAIL_VERIFICATION_TTL,
+    )
     return token
 
 

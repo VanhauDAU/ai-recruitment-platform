@@ -54,6 +54,25 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
+    def email_claimed_for_role(self, email, role, *, exclude_user_id=None):
+        """Whether an email identity is already owned inside a portal.
+
+        A verified OAuth address remains an identity of its linked account even
+        when that account later changes its password-login email. Ignoring
+        ``SocialAccount.email`` would allow a second same-role account to claim
+        the OAuth address and make password/OAuth login resolve to two users.
+        """
+        email = self.normalize_email(email)
+        users = self.filter(email__iexact=email, role=role)
+        social_accounts = SocialAccount.objects.filter(
+            email__iexact=email,
+            user__role=role,
+        )
+        if exclude_user_id is not None:
+            users = users.exclude(pk=exclude_user_id)
+            social_accounts = social_accounts.exclude(user_id=exclude_user_id)
+        return users.exists() or social_accounts.exists()
+
 
 class User(AbstractUser):
     class Role(models.TextChoices):

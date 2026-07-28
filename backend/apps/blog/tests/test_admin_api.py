@@ -399,6 +399,136 @@ class BlogAdminApiTests(APITestCase):
         self.assertEqual(public_after.data['title'], 'Tiêu đề mới nhất sau khi gửi duyệt')
         self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
 
+    def test_first_published_autosave_inherits_the_current_post_revision(self):
+        post = Post.objects.create(
+            title='Bài đã xuất bản nhiều lần',
+            category=self.category,
+            author=self.editor,
+            summary='Sapo đang hiển thị',
+            content='<p>Nội dung đang hiển thị</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
+            edit_revision=7,
+        )
+        self.client.force_authenticate(self.editor)
+        detail_url = reverse('blog-admin-post-detail', args=[post.public_id])
+        draft_url = reverse('blog-admin-post-draft', args=[post.public_id])
+
+        detail = self.client.get(detail_url)
+        self.assertEqual(detail.data['editable_version']['edit_revision'], 7)
+
+        saved = self.client.patch(
+            draft_url,
+            {'summary': 'Sapo của bản sửa mới', 'base_revision': 7},
+            format='json',
+        )
+        self.assertEqual(saved.status_code, 200, saved.data)
+        self.assertEqual(saved.data['editorial_state'], 'published_with_draft')
+        self.assertEqual(saved.data['editable_version']['edit_revision'], 8)
+        self.assertEqual(PostWorkingCopy.objects.get(post=post).edit_revision, 8)
+
+        stale = self.client.patch(
+            draft_url,
+            {'summary': 'Dữ liệu từ tab cũ', 'base_revision': 7},
+            format='json',
+        )
+        self.assertEqual(stale.status_code, 409, stale.data)
+        self.assertEqual(stale.data['code'], 'blog_resource_changed')
+        self.assertEqual(stale.data['current_revision'], 8)
+
+    def test_published_revision_stays_monotonic_when_working_copy_is_removed(self):
+        post = Post.objects.create(
+            title='Bài kiểm tra vòng đời revision',
+            category=self.category,
+            author=self.editor,
+            summary='Sapo đang hiển thị',
+            content='<p>Nội dung đang hiển thị</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
+            edit_revision=5,
+        )
+        draft_url = reverse('blog-admin-post-draft', args=[post.public_id])
+        self.client.force_authenticate(self.editor)
+        saved = self.client.patch(
+            draft_url,
+            {'summary': 'Bản sửa chờ xuất bản', 'base_revision': 5},
+            format='json',
+        )
+        self.assertEqual(saved.status_code, 200, saved.data)
+        self.assertEqual(saved.data['editable_version']['edit_revision'], 6)
+
+        submitted = self.client.post(
+            reverse('blog-admin-post-submit', args=[post.public_id]),
+            {},
+            format='json',
+        )
+        self.assertEqual(submitted.status_code, 200, submitted.data)
+        self.assertEqual(submitted.data['editable_version']['edit_revision'], 7)
+
+        self.client.force_authenticate(self.publisher)
+        published = self.client.post(
+            reverse('blog-admin-post-publish', args=[post.public_id]),
+            {},
+            format='json',
+        )
+        self.assertEqual(published.status_code, 200, published.data)
+        self.assertEqual(published.data['editable_version']['edit_revision'], 8)
+        self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
+
+        self.client.force_authenticate(self.editor)
+        stale_after_publish = self.client.patch(
+            draft_url,
+            {'summary': 'Bản cũ trước khi xuất bản', 'base_revision': 6},
+            format='json',
+        )
+        self.assertEqual(stale_after_publish.status_code, 409, stale_after_publish.data)
+        self.assertEqual(stale_after_publish.data['current_revision'], 8)
+        self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
+
+        fresh = self.client.patch(
+            draft_url,
+            {'summary': 'Bản sửa sẽ bị hủy', 'base_revision': 8},
+            format='json',
+        )
+        self.assertEqual(fresh.status_code, 200, fresh.data)
+        self.assertEqual(fresh.data['editable_version']['edit_revision'], 9)
+
+        discarded = self.client.post(
+            reverse('blog-admin-post-discard-draft', args=[post.public_id]),
+            {},
+            format='json',
+        )
+        self.assertEqual(discarded.status_code, 200, discarded.data)
+        self.assertEqual(discarded.data['editable_version']['edit_revision'], 10)
+        self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
+
+        stale_after_discard = self.client.patch(
+            draft_url,
+            {'summary': 'Khôi phục nhầm bản vừa hủy', 'base_revision': 9},
+            format='json',
+        )
+        self.assertEqual(stale_after_discard.status_code, 409, stale_after_discard.data)
+        self.assertEqual(stale_after_discard.data['current_revision'], 10)
+        self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
+
+        fresh_before_archive = self.client.patch(
+            draft_url,
+            {'summary': 'Bản sửa trước khi lưu trữ', 'base_revision': 10},
+            format='json',
+        )
+        self.assertEqual(fresh_before_archive.status_code, 200, fresh_before_archive.data)
+        self.assertEqual(fresh_before_archive.data['editable_version']['edit_revision'], 11)
+
+        self.client.force_authenticate(self.publisher)
+        archived = self.client.post(
+            reverse('blog-admin-post-archive', args=[post.public_id]),
+            {'note': 'Lưu trữ để kiểm tra revision'},
+            format='json',
+        )
+        self.assertEqual(archived.status_code, 200, archived.data)
+        self.assertEqual(archived.data['editable_version']['edit_revision'], 12)
+        self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
+
     def test_archive_requires_a_reason_hides_public_post_and_can_restore_to_draft(self):
         post = Post.objects.create(
             title='Bài đang hiển thị cần được ẩn',

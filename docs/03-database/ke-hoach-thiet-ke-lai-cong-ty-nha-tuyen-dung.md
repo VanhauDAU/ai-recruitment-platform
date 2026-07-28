@@ -97,10 +97,15 @@ Bảng `industries` giữ nguyên.
 | `verified_phone` | char, blank, **unique khi có giá trị** (partial unique) — "SĐT đã có NTD khác xác thực" chính là vi phạm ràng buộc này |
 | `phone_verified_at` | null |
 | `dpa_accepted_at` | null — chấp nhận thỏa thuận xử lý DLCN |
-| `onboarding_completed_at` | null — cache mốc hoàn thành |
+| `onboarding_completed_at` | Trường tương thích cũ, không còn là nguồn dữ liệu; sẽ xóa sau giai đoạn chuyển đổi |
 | `created_at`, `updated_at` | không có `status` riêng — trạng thái tài khoản đã có ở `users.status` |
 
-**Các bước onboarding suy ra từ dữ liệu, không cần bảng riêng:**
+**Thiết lập ban đầu** để vào workspace được suy ra trực tiếp, không dùng cờ cache:
+1. Hoàn thiện hồ sơ đăng ký → `registration_completed_at IS NOT NULL`
+2. Xác minh email → `users.email_verified = true`
+3. Khai báo nhu cầu tuyển dụng → tồn tại `recruitment_needs`
+
+**Các bước xác thực nhà tuyển dụng** là workflow riêng:
 1. Xác thực SĐT → `phone_verified_at`
 2. Cập nhật thông tin công ty → `company_id IS NOT NULL`
 3. Giấy ĐKDN → tồn tại `company_documents(doc_type=business_registration, status != rejected)`

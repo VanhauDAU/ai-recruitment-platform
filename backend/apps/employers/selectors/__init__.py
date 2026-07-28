@@ -23,11 +23,15 @@ from .campaigns import (
 )
 from .companies import search_companies
 from .company_status import has_explicit_company_link, is_registration_placeholder_company
-from .onboarding import build_employer_onboarding_steps
+from .onboarding import (
+    build_employer_initial_onboarding,
+    build_employer_onboarding_steps,
+)
 from .recruitment_needs import first_recruitment_need
 
 __all__ = [
     'build_employer_onboarding_steps',
+    'build_employer_initial_onboarding',
     'admin_companies_queryset',
     'admin_company_detail_queryset',
     'admin_company_recruiters_queryset',

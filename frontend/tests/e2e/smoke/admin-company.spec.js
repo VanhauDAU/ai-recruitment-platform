@@ -122,7 +122,11 @@ test('admin company directory: three-level navigation, detail and owner roster',
   })
 
   await page.goto('/admin/app/companies')
-  await expect(page.getByRole('heading', { name: 'Danh sách công ty' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Quản lý công ty' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Danh sách công ty' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
   await expect(page.getByLabel('Công ty Alpha chưa cập nhật logo')).toBeVisible()
 
   if (usesDrawer) {
@@ -157,9 +161,8 @@ test('admin company directory: three-level navigation, detail and owner roster',
     'aria-selected',
     'true',
   )
-  await expect(page.getByRole('heading', {
-    name: 'Yêu cầu cập nhật thông tin công ty',
-  })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Tìm yêu cầu cập nhật' })).toBeVisible()
+  await expect(page.getByText('Ưu tiên yêu cầu có thay đổi pháp lý')).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

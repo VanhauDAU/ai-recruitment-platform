@@ -366,6 +366,12 @@ widgets/main-header/CandidateUserMenu
 - `features/change-password` dùng chung hai portal và không chứa redirect/copy
   riêng của employer. Page portal truyền `successRedirect` khi cần; candidate
   giữ nguyên route và có thể hiển thị email read-only.
+- Tài khoản OAuth chưa có mật khẩu phải xác thực lại với provider trước khi đặt
+  mật khẩu lần đầu. Feature đọc `GET /api/auth/password/` để cảnh báo và khoá
+  nút lưu **trước** khi người dùng điền form; 403 `reauth_required` chỉ là
+  fallback khi phiên hết hạn giữa chừng. URL OAuth và đường quay lại thuộc về
+  page (prop `onReauth`) vì feature không import feature khác — `features/auth`
+  sở hữu `startOAuthReauth`, dùng lại full-page redirect của luồng đăng nhập.
 - `entities/job` sở hữu contract/keys của feed recommendation. Trang matching
   chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
   tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục

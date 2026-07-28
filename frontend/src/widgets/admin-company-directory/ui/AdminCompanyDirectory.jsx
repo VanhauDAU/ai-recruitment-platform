@@ -1,93 +1,32 @@
 import {
   BankOutlined,
+  CheckCircleOutlined,
   FileSyncOutlined,
-  SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import {
-  Alert,
-  Button,
-  Empty,
-  Input,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Tooltip,
-} from 'antd'
+import { Alert, Button } from 'antd'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminCompanyKeys,
   getAdminCompanies,
   getAdminCompanySummary,
-  recruiterVerificationMeta,
 } from '@/entities/admin-company'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
-import CompanyLogo from './CompanyLogo'
-import { CompanyPanel, CompanyStatCard } from './CompanyPanel'
-import { CompanyStatusTag } from './CompanyStatusTags'
+import CompanyDirectoryFilters from './CompanyDirectoryFilters'
+import CompanyDirectoryTable from './CompanyDirectoryTable'
+import { CompanyStatCard } from './CompanyPanel'
 import '../admin-company-directory.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const DEFAULT_ORDERING = '-updated_at'
 
-const COMPANY_STATUS_OPTIONS = [
-  { value: '', label: 'Tất cả trạng thái công ty' },
-  { value: 'unverified', label: 'Chưa xác thực' },
-  { value: 'pending', label: 'Chờ duyệt' },
-  { value: 'verified', label: 'Đã xác thực' },
-  { value: 'rejected', label: 'Bị từ chối' },
-]
-
-const RECRUITER_STATUS_OPTIONS = [
-  { value: '', label: 'Mọi trạng thái NTD' },
-  { value: 'none', label: 'Chưa có hồ sơ' },
-  { value: 'draft', label: 'Chưa nộp' },
-  { value: 'pending', label: 'Chờ duyệt' },
-  { value: 'in_review', label: 'Đang xử lý' },
-  { value: 'changes_requested', label: 'Cần bổ sung' },
-  { value: 'approved', label: 'Đã xác thực' },
-  { value: 'rejected', label: 'Bị từ chối' },
-]
-
-function formatDate(value) {
-  if (!value) return '—'
-  return new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
-
 function queryValue(searchParams, key, fallback = '') {
   return searchParams.get(key) || fallback
 }
 
-function sorterOrder(ordering, field) {
-  if (ordering === field) return 'ascend'
-  if (ordering === `-${field}`) return 'descend'
-  return null
-}
-
-function VerificationSummary({ summary = {} }) {
-  const entries = Object.entries(summary).filter(([, count]) => count > 0)
-  if (!entries.length) return <span className="text-slate-400">Chưa có NTD</span>
-  return (
-    <Space size={[4, 4]} wrap>
-      {entries.map(([status, count]) => {
-        const meta = recruiterVerificationMeta(status)
-        return (
-          <Tag key={status} color={meta.color}>
-            {meta.label}: {count}
-          </Tag>
-        )
-      })}
-    </Space>
-  )
-}
-
-export default function AdminCompanyDirectory() {
+export default function AdminCompanyDirectory({ onOpenUpdates }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -121,6 +60,11 @@ export default function AdminCompanyDirectory() {
     verification: {},
     pending_update_requests: 0,
   }
+  const activeFilterCount = [
+    filters.verification_status,
+    filters.recruiter_verification_status,
+    filters.member_role,
+  ].filter(Boolean).length + (query ? 1 : 0)
 
   useEffect(() => {
     setSearchInput(query)
@@ -156,186 +100,69 @@ export default function AdminCompanyDirectory() {
     setSearchParams(new URLSearchParams())
   }
 
-  const columns = [
+  const openCompany = (company) => navigate(
+    adminPath(`/companies/${company.public_id}`),
     {
-      title: 'Công ty',
-      dataIndex: 'company_name',
-      key: 'company_name',
-      width: 280,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'company_name'),
-      render: (name, company) => (
-        <button
-          type="button"
-          className="company-directory__company-button"
-          onClick={() => navigate(
-            adminPath(`/companies/${company.public_id}`),
-            {
-              state: {
-                origin: {
-                  pathname: location.pathname,
-                  search: location.search,
-                  label: 'Danh sách công ty',
-                },
-              },
-            },
-          )}
-        >
-          <CompanyLogo company={company} />
-          <span className="min-w-0">
-            <span className="block truncate font-semibold text-slate-900">{name}</span>
-            <span className="mt-0.5 block truncate text-xs text-slate-500">
-              {company.trade_name || company.public_id}
-            </span>
-          </span>
-        </button>
-      ),
+      state: {
+        origin: {
+          pathname: location.pathname,
+          search: location.search,
+          label: 'Danh sách công ty',
+        },
+      },
     },
-    {
-      title: 'Loại hình',
-      dataIndex: 'business_type_label',
-      key: 'business_type',
-      width: 140,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'business_type'),
-      render: (value) => value || '—',
-    },
-    {
-      title: 'Trạng thái công ty',
-      dataIndex: 'verification_status',
-      key: 'verification_status',
-      width: 170,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'verification_status'),
-      render: (status) => <CompanyStatusTag status={status} />,
-    },
-    {
-      title: 'Owner',
-      dataIndex: 'owner_count',
-      key: 'owner_count',
-      width: 210,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'owner_count'),
-      render: (count, company) => count ? (
-        <div className="font-medium text-slate-800">
-          {company.owners.map((owner) => owner.full_name || owner.email).join(', ')}
-        </div>
-      ) : '—',
-    },
-    {
-      title: 'NTD',
-      dataIndex: 'recruiter_count',
-      key: 'recruiter_count',
-      width: 100,
-      align: 'center',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'recruiter_count'),
-      render: (value, company) => (
-        <Tooltip title={`${company.owner_count} owner · ${company.member_count} member`}>
-          <strong>{value}</strong>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Xác thực NTD',
-      dataIndex: 'recruiter_verification_summary',
-      key: 'approved_recruiter_count',
-      width: 260,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'approved_recruiter_count'),
-      render: (summary) => <VerificationSummary summary={summary} />,
-    },
-    {
-      title: 'Yêu cầu sửa',
-      dataIndex: 'pending_update_count',
-      key: 'pending_update_count',
-      width: 125,
-      align: 'center',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'pending_update_count'),
-      render: (value) => value ? <Tag color="gold">{value} chờ duyệt</Tag> : '—',
-    },
-    {
-      title: 'Cập nhật',
-      dataIndex: 'updated_at',
-      key: 'updated_at',
-      width: 170,
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'updated_at'),
-      render: formatDate,
-    },
-  ]
+  )
 
   return (
-    <div className="company-directory space-y-5">
-      <header className="admin-page-header">
-        <div>
-          <p className="admin-page-header__eyebrow">Công ty & NTD</p>
-          <h1 className="admin-page-header__title">Danh sách công ty</h1>
-          <p className="admin-page-header__description">
-            Theo dõi pháp nhân, owner/member và trạng thái xác thực của từng nhà tuyển dụng.
-          </p>
-        </div>
-      </header>
-
+    <div className="company-directory company-management-tab-content space-y-5">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Tóm tắt công ty">
-        <CompanyStatCard icon={<BankOutlined />} label="Tổng công ty" value={summary.total} />
         <CompanyStatCard
-          icon={<SafetyCertificateOutlined />}
-          label="Pháp nhân đã xác thực"
+          icon={<BankOutlined />}
+          label="Tổng công ty"
+          value={summary.total}
+          hint="Xem toàn bộ"
+          active={activeFilterCount === 0}
+          onClick={clearFilters}
+        />
+        <CompanyStatCard
+          icon={<CheckCircleOutlined />}
+          label="Đã xác thực"
           value={summary.verification?.verified}
           tone="green"
+          hint="Lọc danh sách"
+          active={filters.verification_status === 'verified'}
+          onClick={() => updateParams({ verification_status: 'verified' })}
         />
         <CompanyStatCard
           icon={<FileSyncOutlined />}
-          label="Pháp nhân chờ duyệt"
+          label="Chờ duyệt pháp nhân"
           value={summary.verification?.pending}
           tone="amber"
+          hint="Cần theo dõi"
+          active={filters.verification_status === 'pending'}
+          onClick={() => updateParams({ verification_status: 'pending' })}
         />
         <CompanyStatCard
           icon={<FileSyncOutlined />}
-          label="Yêu cầu cập nhật đang chờ"
+          label="Yêu cầu cập nhật"
           value={summary.pending_update_requests}
           tone="amber"
+          hint={onOpenUpdates ? 'Mở hàng đợi xử lý' : 'Đang chờ xử lý'}
+          onClick={onOpenUpdates}
         />
       </section>
 
-      <CompanyPanel
-        title="Tra cứu công ty"
-        description="Trạng thái công ty và xác thực đại diện NTD được lọc độc lập."
-      >
-        <div className="company-directory__filters">
-          <Input.Search
-            allowClear
-            aria-label="Tìm công ty"
-            placeholder="Tên, mã công ty, mã số thuế hoặc email"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-          />
-          <Select
-            aria-label="Lọc trạng thái công ty"
-            value={filters.verification_status}
-            options={COMPANY_STATUS_OPTIONS}
-            onChange={(value) => updateParams({ verification_status: value })}
-          />
-          <Select
-            aria-label="Lọc xác thực NTD"
-            value={filters.recruiter_verification_status}
-            options={RECRUITER_STATUS_OPTIONS}
-            onChange={(value) => updateParams({ recruiter_verification_status: value })}
-          />
-          <Select
-            aria-label="Lọc vai trò thành viên"
-            value={filters.member_role}
-            options={[
-              { value: '', label: 'Mọi vai trò NTD' },
-              { value: 'owner', label: 'Owner' },
-              { value: 'member', label: 'Member' },
-            ]}
-            onChange={(value) => updateParams({ member_role: value })}
-          />
-          <Button onClick={clearFilters}>Xóa bộ lọc</Button>
-        </div>
+      <div>
+        <CompanyDirectoryFilters
+          filters={filters}
+          loading={companiesQuery.isLoading}
+          ordering={ordering}
+          searchInput={searchInput}
+          total={companies.count}
+          onClear={clearFilters}
+          onPatch={updateParams}
+          onSearchChange={(event) => setSearchInput(event.target.value)}
+        />
 
         {companiesQuery.isError && (
           <Alert
@@ -348,20 +175,12 @@ export default function AdminCompanyDirectory() {
           />
         )}
 
-        <Table
-          rowKey="public_id"
+        <CompanyDirectoryTable
+          companies={companies}
           loading={companiesQuery.isLoading}
-          dataSource={companies.results}
-          columns={columns}
-          locale={{ emptyText: <Empty description="Không tìm thấy công ty phù hợp" /> }}
-          scroll={{ x: 1450 }}
-          pagination={{
-            current: page,
-            pageSize: 20,
-            total: companies.count,
-            showSizeChanger: false,
-            showTotal: (total) => `${total} công ty`,
-          }}
+          ordering={ordering}
+          page={page}
+          onOpen={openCompany}
           onChange={(pagination, _, sorter) => {
             const field = sorter.columnKey || sorter.field
             const nextOrdering = sorter.order
@@ -372,22 +191,8 @@ export default function AdminCompanyDirectory() {
               { resetPage: false },
             )
           }}
-          onRow={(company) => ({
-            onDoubleClick: () => navigate(
-              adminPath(`/companies/${company.public_id}`),
-              {
-                state: {
-                  origin: {
-                    pathname: location.pathname,
-                    search: location.search,
-                    label: 'Danh sách công ty',
-                  },
-                },
-              },
-            ),
-          })}
         />
-      </CompanyPanel>
+      </div>
     </div>
   )
 }

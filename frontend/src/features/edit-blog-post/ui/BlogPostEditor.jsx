@@ -19,6 +19,7 @@ import {
 import { getJobCategories } from '@/entities/job'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { isBlogRevisionConflict } from '../model/blog-save-error'
 import { getEditorCompletion } from '../model/editor-completion'
 import { getActionCopy, toFormValues } from '../model/editor-options'
 import BlogEditorBody from './BlogEditorBody'
@@ -73,7 +74,11 @@ export default function BlogPostEditor({ publicId }) {
       setSaveState('saved')
     },
     onError: (error) => {
-      if (error.response?.status === 409) setConflict(true)
+      if (isBlogRevisionConflict(error)) {
+        setConflict(true)
+      } else {
+        message.error('Không thể autosave bài viết. Hãy thử lưu lại.')
+      }
       setSaveState('error')
     },
   })

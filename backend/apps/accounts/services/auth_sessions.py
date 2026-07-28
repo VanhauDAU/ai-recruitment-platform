@@ -14,12 +14,14 @@ from ipaddress import ip_address, ip_network
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import datetime_from_epoch
 
 from ..models import AuthSession
+from .refresh_cookies import refresh_from_request
 
 SID_CLAIM = 'sid'
 
@@ -219,6 +221,37 @@ def active_session_for_access(*, sid, user):
         AuthSession.objects.filter(pk=session.pk, revoked_at__isnull=True).update(last_seen_at=now)
         session.last_seen_at = now
     return session
+
+
+def current_session(request, user):
+    """Phiên thiết bị đang giữ ĐỒNG THỜI access token (`sid`) và refresh cookie.
+
+    Thao tác nhạy cảm không được tin mỗi access token: kẻ chiếm được token vẫn
+    thiếu cookie `HttpOnly`. Trả ``None`` khi thiếu một trong hai, khi hai bên
+    trỏ về phiên/tài khoản khác nhau, hoặc khi phiên đã bị thu hồi/hết hạn.
+    """
+    sid = request.auth.get(SID_CLAIM) if request.auth else None
+    refresh_string = refresh_from_request(request, user=user)
+    if not sid or not refresh_string:
+        return None
+    try:
+        refresh = RefreshToken(refresh_string)
+    except TokenError:
+        return None
+    if refresh.get(SID_CLAIM) != sid:
+        return None
+    if str(refresh.get(api_settings.USER_ID_CLAIM)) != str(user.pk):
+        return None
+    return active_sessions(user).filter(id=sid, refresh_jti=refresh[api_settings.JTI_CLAIM]).first()
+
+
+def requires_oauth_reauthentication(user, session):
+    """Đặt mật khẩu LẦN ĐẦU không có `current_password` để chứng minh chủ sở hữu.
+
+    Bằng chứng thay thế là một lần đăng nhập OAuth vừa diễn ra trên chính phiên
+    này, nên token bị đánh cắp không tự đặt được mật khẩu để chiếm tài khoản.
+    """
+    return not user.has_usable_password() and not is_recent_oauth_reauthentication(session)
 
 
 def is_recent_oauth_reauthentication(session):

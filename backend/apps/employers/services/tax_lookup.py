@@ -242,7 +242,9 @@ def latest_tax_lookup_evidence(workflow):
 
 @transaction.atomic
 def refresh_verification_tax_lookup(case, *, actor):
-    case = type(case).objects.select_for_update().select_related('company').get(pk=case.pk)
+    # Lock only the case row. ``company`` is nullable on verification cases, so
+    # select_related would add a LEFT OUTER JOIN that PostgreSQL cannot lock.
+    case = type(case).objects.select_for_update().get(pk=case.pk)
     if case.company_id is None or not case.company.tax_code:
         raise ValueError('company_tax_code_is_required')
     case.lock_version += 1

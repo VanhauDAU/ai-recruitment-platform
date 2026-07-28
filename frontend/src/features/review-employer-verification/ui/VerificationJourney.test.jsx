@@ -1,10 +1,12 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { VERIFICATION_CHECK_LABELS } from '@/entities/admin-employer-verification'
 import VerificationJourney from './VerificationJourney'
 
 describe('VerificationJourney', () => {
-  it('counts only the nine public verification steps', () => {
+  it('counts only the nine public verification steps and keeps details compact by default', async () => {
+    const user = userEvent.setup()
     const checks = Object.fromEntries(
       Object.keys(VERIFICATION_CHECK_LABELS).map((key) => [key, true]),
     )
@@ -24,11 +26,14 @@ describe('VerificationJourney', () => {
     expect(progress).toHaveAttribute('aria-valuenow', '9')
     expect(progress).toHaveAttribute('aria-valuemax', '9')
     expect(screen.getByText('Hồ sơ đã hoàn tất toàn bộ điều kiện')).toBeInTheDocument()
+    expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+    await user.click(screen.getByRole('button', { name: 'Xem 9 bước' }))
     expect(screen.getAllByRole('listitem')).toHaveLength(9)
     expect(screen.queryByText('11/9')).not.toBeInTheDocument()
   })
 
-  it('highlights the first missing condition as the next step', () => {
+  it('highlights the first missing condition as the next step', async () => {
+    const user = userEvent.setup()
     const { container } = render(
       <VerificationJourney
         checks={{
@@ -38,6 +43,7 @@ describe('VerificationJourney', () => {
       />,
     )
 
+    await user.click(screen.getByRole('button', { name: 'Xem 9 bước' }))
     const currentStep = container.querySelector('[aria-current="step"]')
 
     expect(currentStep).not.toBeNull()

@@ -58,7 +58,9 @@ def queue_welcome_email(user, context=None):
 
 def _send(job):
     if job.kind == AuthEmailJob.Kind.VERIFICATION:
-        if not job.user.email_verified:
+        queued_email = job.context.get('email')
+        email_is_current = not queued_email or (job.user.email.lower() == queued_email.lower())
+        if not job.user.email_verified and email_is_current:
             email_verification.send_verification_email(job.user)
         return
     if job.kind == AuthEmailJob.Kind.WELCOME:

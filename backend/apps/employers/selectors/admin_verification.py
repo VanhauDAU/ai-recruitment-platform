@@ -116,7 +116,17 @@ def admin_verification_cases_queryset(*, params=None):
             | Q(company__tax_code__icontains=query)
         )
     if params.get('status'):
-        if params['status'] == EmployerVerificationCase.Status.PENDING:
+        if params['status'] == 'actionable':
+            queryset = queryset.filter(
+                Q(
+                    status__in=[
+                        EmployerVerificationCase.Status.PENDING,
+                        EmployerVerificationCase.Status.IN_REVIEW,
+                    ]
+                )
+                | Q(pending_document_count__gt=0)
+            )
+        elif params['status'] == EmployerVerificationCase.Status.PENDING:
             queryset = queryset.filter(
                 Q(status=EmployerVerificationCase.Status.PENDING) | Q(pending_document_count__gt=0)
             )

@@ -2,13 +2,17 @@ import {
   AuditOutlined,
   BankOutlined,
   CheckOutlined,
+  DownOutlined,
   FileProtectOutlined,
   IdcardOutlined,
   MailOutlined,
   PhoneOutlined,
   SafetyCertificateOutlined,
   SolutionOutlined,
+  UpOutlined,
 } from '@ant-design/icons'
+import { Button } from 'antd'
+import { useState } from 'react'
 import { VERIFICATION_CHECK_LABELS } from '@/entities/admin-employer-verification'
 
 const CHECK_DETAILS = {
@@ -68,6 +72,7 @@ function completionCopy(completedCount, totalCount) {
 }
 
 export default function VerificationJourney({ checks = {} }) {
+  const [expanded, setExpanded] = useState(false)
   const steps = Object.entries(VERIFICATION_CHECK_LABELS)
   const totalCount = steps.length
   const completedCount = steps.filter(([key]) => Boolean(checks[key])).length
@@ -104,45 +109,64 @@ export default function VerificationJourney({ checks = {} }) {
           <p>{copy.description}</p>
         </div>
 
-        <span className="verification-journey__status">
-          {complete && <CheckOutlined aria-hidden="true" />}
-          {copy.status}
-        </span>
+        <div className="verification-journey__actions">
+          <span className="verification-journey__status">
+            {complete && <CheckOutlined aria-hidden="true" />}
+            {copy.status}
+          </span>
+          <Button
+            type="text"
+            size="small"
+            icon={expanded ? <UpOutlined /> : <DownOutlined />}
+            aria-label={expanded ? 'Thu gọn hành trình xác thực' : `Xem ${totalCount} bước`}
+            aria-expanded={expanded}
+            aria-controls="verification-journey-steps"
+            onClick={() => setExpanded((current) => !current)}
+          >
+            {expanded ? 'Thu gọn' : `Xem ${totalCount} bước`}
+          </Button>
+        </div>
       </header>
 
       <div className="verification-journey__track" aria-hidden="true">
         <span style={{ width: `${progressPercent}%` }} />
       </div>
 
-      <ol className="verification-checklist" aria-label="Chi tiết 9 bước xác thực">
-        {steps.map(([key, label], index) => {
-          const done = Boolean(checks[key])
-          const current = !done && index === firstPendingIndex
-          const Icon = CHECK_DETAILS[key]?.icon || SafetyCertificateOutlined
-          const stepStatus = done ? 'Đã hoàn tất' : current ? 'Cần xử lý tiếp' : 'Đang chờ'
+      {expanded && (
+        <ol
+          id="verification-journey-steps"
+          className="verification-checklist"
+          aria-label="Chi tiết 9 bước xác thực"
+        >
+          {steps.map(([key, label], index) => {
+            const done = Boolean(checks[key])
+            const current = !done && index === firstPendingIndex
+            const Icon = CHECK_DETAILS[key]?.icon || SafetyCertificateOutlined
+            const stepStatus = done ? 'Đã hoàn tất' : current ? 'Cần xử lý tiếp' : 'Đang chờ'
 
-          return (
-            <li
-              key={key}
-              className={`${done ? 'is-complete' : 'is-pending'} ${current ? 'is-current' : ''}`}
-              style={{ '--step-index': index }}
-              aria-current={current ? 'step' : undefined}
-            >
-              <span className="verification-checklist__marker" aria-hidden="true">
-                {done ? <CheckOutlined /> : <Icon />}
-              </span>
-              <div className="verification-checklist__content">
-                <span className="verification-checklist__meta">
-                  {`Bước ${String(index + 1).padStart(2, '0')}`}
+            return (
+              <li
+                key={key}
+                className={`${done ? 'is-complete' : 'is-pending'} ${current ? 'is-current' : ''}`}
+                style={{ '--step-index': index }}
+                aria-current={current ? 'step' : undefined}
+              >
+                <span className="verification-checklist__marker" aria-hidden="true">
+                  {done ? <CheckOutlined /> : <Icon />}
                 </span>
-                <strong>{label}</strong>
-                <small>{CHECK_DETAILS[key]?.description}</small>
-              </div>
-              <span className="verification-checklist__status">{stepStatus}</span>
-            </li>
-          )
-        })}
-      </ol>
+                <div className="verification-checklist__content">
+                  <span className="verification-checklist__meta">
+                    {`Bước ${String(index + 1).padStart(2, '0')}`}
+                  </span>
+                  <strong>{label}</strong>
+                  <small>{CHECK_DETAILS[key]?.description}</small>
+                </div>
+                <span className="verification-checklist__status">{stepStatus}</span>
+              </li>
+            )
+          })}
+        </ol>
+      )}
     </section>
   )
 }

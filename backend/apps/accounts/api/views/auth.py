@@ -70,10 +70,10 @@ class RegisterEmailAvailabilityView(APIView):
     def post(self, request):
         serializer = RegisterEmailAvailabilitySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        exists = User.objects.filter(
-            email__iexact=serializer.validated_data['email'],
-            role=serializer.validated_data['role'],
-        ).exists()
+        exists = User.objects.email_claimed_for_role(
+            serializer.validated_data['email'],
+            serializer.validated_data['role'],
+        )
         return Response({'available': not exists})
 
 

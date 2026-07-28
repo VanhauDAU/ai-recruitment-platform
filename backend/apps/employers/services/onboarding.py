@@ -13,6 +13,7 @@ from rest_framework.exceptions import ValidationError
 from ..models import PhoneOtp, RecruiterProfile
 from ..tasks import send_phone_otp_email
 from .profiles import get_or_create_recruiter
+from .verification import reconcile_recruiter_verification
 
 OTP_TTL = timedelta(minutes=10)
 OTP_COOLDOWN = timedelta(seconds=60)
@@ -110,4 +111,16 @@ def verify_phone_otp(user, code):
     if user.phone != otp.phone:
         user.phone = otp.phone
         user.save(update_fields=['phone', 'updated_at'])
+    reconcile_recruiter_verification(recruiter, source='phone_verified')
+    return recruiter
+
+
+@transaction.atomic
+def accept_recruiter_dpa(user):
+    """Persist platform DPA acceptance and reconcile a ready verification case."""
+    recruiter = get_or_create_recruiter(user)
+    if recruiter.dpa_accepted_at is None:
+        recruiter.dpa_accepted_at = timezone.now()
+        recruiter.save(update_fields=['dpa_accepted_at', 'updated_at'])
+    reconcile_recruiter_verification(recruiter, source='dpa_accepted')
     return recruiter

@@ -1,5 +1,28 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-07-29 — Xác thực lại OAuth khi đặt mật khẩu lần đầu
+
+- ✅ Backend: `GET /api/auth/password/` trả điều kiện của phiên hiện tại; tách
+  `current_session` + `requires_oauth_reauthentication` thành service dùng chung
+  để GET và POST không thể lệch luật.
+- ✅ Frontend: banner cảnh báo ngay khi mở trang kèm nút xác thực lại với đúng
+  provider, quay về đúng trang đang đứng thay vì xoá phiên và đá về `/login`.
+- ✅ Áp dụng cho cả cổng ứng viên và nhà tuyển dụng (dùng chung
+  `features/change-password`, page truyền `onReauth`).
+- ✅ Bổ sung regression backend (5 case) + frontend (4 case) và cập nhật tài
+  liệu API, hướng dẫn social login, ARCHITECTURE, CHANGELOG.
+- ⬜ Còn lại: `POST /api/auth/change-email/` vẫn dùng thông báo re-auth kiểu cũ,
+  chưa có nút xác thực lại tại chỗ.
+
+## Cập nhật 2026-07-29 — UX xác thực nhà tuyển dụng quản trị
+
+- ✅ Đồng nhất badge hàng chờ với danh sách “Cần xử lý”, bao gồm hồ sơ đang
+  duyệt và giấy tờ nộp lại; không còn trạng thái badge `1` nhưng bảng rỗng.
+- ✅ Sửa warning cell render của Ant Design khi ngày trống.
+- ✅ Trang chi tiết mặc định thu gọn hành trình 9 bước, nhóm giấy tờ theo nghiệp
+  vụ và giải thích đúng phạm vi đối chiếu MST cho cả owner/member.
+- ✅ Bổ sung regression frontend/backend và cập nhật tài liệu luồng.
+
 ## Cập nhật 2026-07-26 — Vá reset mật khẩu Admin
 
 - Luồng “Gửi đặt lại mật khẩu” từ Quản lý tài khoản nhận diện đúng `role=admin`:
@@ -803,10 +826,12 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-26 (ADMIN-RBAC-G2 — hoàn tất core quản trị phòng
-ban/chức danh/nhân viên qua API và UI; superuser-only cho mọi ghi/dữ liệu nhân
-sự, impact token + row locking + audit/cache, seed/restore system-managed.
-Delegation scope, audit viewer, dashboard/blog và invite admin thuộc G3.)
+Cập nhật lần cuối: 2026-07-29b (AUTH-OAUTH-REAUTH — `GET /api/auth/password/`
+trả điều kiện phiên; banner xác thực lại tại chỗ với `next` quay về đúng trang,
+thay cho việc xoá phiên và đá về `/login`.)
+
+Cập nhật 2026-07-29 (ADMIN-EMPLOYER-VERIFY — đồng nhất badge/hàng chờ,
+thu gọn hành trình 9 bước, nhóm giấy tờ và làm rõ phạm vi đối chiếu MST.)
 
 Cập nhật 2026-07-26a (ADMIN-RBAC-G2 — migration `accounts.0014` backfill
 `is_system_managed`; ma trận seed chuyển vào constants và giữ độc lập ownership

@@ -127,9 +127,9 @@ describe('admin company directory', () => {
     )
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
-    expect(screen.getAllByText('Chờ duyệt')).toHaveLength(2)
-    expect(screen.getByText('Chưa có hồ sơ: 1')).toBeInTheDocument()
-    expect(screen.getByText('Đã xác thực: 1')).toBeInTheDocument()
+    expect(screen.getAllByText('Chờ duyệt')).toHaveLength(3)
+    expect(screen.getByText('Chưa có hồ sơ · 1')).toBeInTheDocument()
+    expect(screen.getByText('Đã xác thực · 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Công ty Alpha chưa cập nhật logo')).toHaveTextContent('A')
     expect(screen.getByRole('columnheader', { name: 'Xác thực NTD' })).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Lọc owner' })).not.toBeInTheDocument()
@@ -175,7 +175,7 @@ describe('admin company directory', () => {
 
     await screen.findByText('Công ty Alpha')
     const initialCalls = getAdminCompanies.mock.calls.length
-    await user.type(screen.getByRole('searchbox', { name: 'Tìm công ty' }), ' beta')
+    await user.type(screen.getByRole('textbox', { name: 'Tìm công ty' }), ' beta')
 
     expect(getAdminCompanies).toHaveBeenCalledTimes(initialCalls)
     await waitFor(
@@ -206,6 +206,10 @@ describe('admin company directory', () => {
         position_title: 'HR Manager',
         phone_verified: true,
         onboarding_completed: true,
+        initial_onboarding: {
+          completed: true,
+          missing_steps: [],
+        },
         verification: { status: 'approved' },
         created_at: '2026-07-01T00:00:00Z',
       }],
@@ -220,6 +224,8 @@ describe('admin company directory', () => {
     expect(await screen.findByText('HR Manager')).toBeInTheDocument()
     expect(screen.getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
     expect(screen.getByText('Đã xác thực')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
+    expect(screen.getByText('Đã đủ hồ sơ, email và nhu cầu')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
 
     fireEvent.click(screen.getByRole('button', { name: /Chi tiết/ }))
