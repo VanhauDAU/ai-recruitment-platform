@@ -166,6 +166,18 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
   `tests/e2e/smoke/employer.spec.js`, gồm kiểm tra hiển thị và không tràn ngang ở
   cả ba Playwright project.
 
+## Bảng dữ liệu quản trị
+
+- Mọi cột dữ liệu của bảng quản trị phải có sorter và icon tăng/giảm rõ ràng.
+  Cột chọn dòng, kéo sắp thứ tự và thao tác là ngoại lệ vì không đại diện cho
+  một giá trị dữ liệu có thể sắp xếp.
+- Bảng có phân trang phải sort phía server bằng field được backend whitelist;
+  không sort riêng các bản ghi của trang hiện tại. Frontend giữ sorter ở trạng
+  thái controlled, đưa trang về trang 1 khi đổi sort và giữ thứ tự mặc định ổn
+  định khi người dùng bỏ chọn sorter.
+- Khi thêm bảng hoặc cột mới, bổ sung regression kiểm tra icon sorter, query
+  ordering tăng/giảm và thứ tự kết quả.
+
 ## Cấu trúc hiện tại
 
 ```text

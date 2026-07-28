@@ -71,9 +71,10 @@ class Company(models.Model):
     business_type = models.CharField(
         max_length=20, choices=BusinessType.choices, default=BusinessType.ENTERPRISE
     )
-    # Với hộ kinh doanh là MST người đại diện. Unique (nhiều NULL được phép)
-    # là chốt chặn chống tạo trùng công ty; chuỗi rỗng chuẩn hoá về NULL ở save().
-    tax_code = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    # Với hộ kinh doanh là MST người đại diện. Hồ sơ chưa xác thực được phép
+    # trùng MST; chỉ công ty đã xác thực mới giữ quyền duy nhất với MST đó.
+    # Chuỗi rỗng được chuẩn hoá về NULL ở save().
+    tax_code = models.CharField(max_length=100, null=True, blank=True)
     company_name = models.CharField(max_length=255)
     trade_name = models.CharField(max_length=255, blank=True)
     trade_name_same_as_registered = models.BooleanField(default=False)
@@ -113,12 +114,22 @@ class Company(models.Model):
 
     class Meta:
         verbose_name_plural = 'companies'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tax_code'],
+                condition=models.Q(verification_status='verified'),
+                name='uniq_verified_company_tax_code',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('co')
         if not self.slug:
-            self.slug = slugify(self.company_name)
+            base_slug = slugify(self.company_name) or 'company'
+            self.slug = base_slug
+            if Company.objects.filter(slug=base_slug).exclude(pk=self.pk).exists():
+                self.slug = f'{base_slug}-{self.public_id.lower()}'
         self.tax_code = self.tax_code or None
         super().save(*args, **kwargs)
 

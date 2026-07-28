@@ -1,7 +1,7 @@
 import { EyeOutlined, SwapOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Card, Form, Input, Modal, Skeleton, Space, Tag, Typography } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   adminEmployerVerificationKeys,
   getAdminCompanyUpdateDocumentContent,
@@ -51,6 +51,7 @@ export default function CompanyUpdateReviewPanel({
   const queryClient = useQueryClient()
   const [reasonState, setReasonState] = useState(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [requestConflict, setRequestConflict] = useState('')
   const params = { company: companyPublicId, status: 'pending' }
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.companyUpdates(params),
@@ -58,6 +59,10 @@ export default function CompanyUpdateReviewPanel({
     enabled: Boolean(companyPublicId),
   })
   const updateRequest = query.data?.results?.[0]
+
+  useEffect(() => {
+    setRequestConflict('')
+  }, [updateRequest?.public_id, updateRequest?.lock_version])
 
   const refresh = async () => {
     await queryClient.invalidateQueries({
@@ -99,12 +104,22 @@ export default function CompanyUpdateReviewPanel({
       },
     ),
     onSuccess: async (_, variables) => {
+      setRequestConflict('')
       message.success(variables.decision === 'approved' ? 'Đã áp dụng thay đổi công ty.' : 'Đã từ chối yêu cầu cập nhật.')
       setReasonState(null)
       setDetailsOpen(false)
       await refresh()
     },
-    onError: (error) => message.error(getApiErrorMessage(error)),
+    onError: (error) => {
+      const errorMessage = getApiErrorMessage(error)
+      if (
+        error.response?.status === 409
+        && error.response?.data?.code === 'company_tax_code_conflict'
+      ) {
+        setRequestConflict(errorMessage)
+      }
+      message.error(errorMessage)
+    },
   })
   const taxLookupMutation = useMutation({
     mutationFn: () => refreshAdminCompanyUpdateTaxLookup(updateRequest.public_id),
@@ -194,6 +209,7 @@ export default function CompanyUpdateReviewPanel({
         canReview={canReview}
         canViewSensitive={canViewSensitive}
         canApply={canApply}
+        requestConflict={requestConflict}
         documentLoading={documentMutation.isPending}
         requestLoading={requestMutation.isPending}
         taxLookupLoading={taxLookupMutation.isPending}

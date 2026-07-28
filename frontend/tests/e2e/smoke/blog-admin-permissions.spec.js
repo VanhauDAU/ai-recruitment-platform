@@ -13,6 +13,13 @@ const category = {
 
 function createPost(allowedActions, editorialState = 'draft') {
   const pending = editorialState.includes('pending')
+  const stateLabels = {
+    archived: 'Đã gỡ',
+    draft: 'Nháp',
+    pending: 'Chờ duyệt',
+    published: 'Đã xuất bản',
+    published_with_pending: 'Đã đăng · bản sửa chờ duyệt',
+  }
   const post = {
     public_id: 'ps_other',
     title: 'Bài viết của đồng nghiệp khác',
@@ -21,7 +28,7 @@ function createPost(allowedActions, editorialState = 'draft') {
     category,
     author: { public_id: 'usr_other', name: 'Đồng nghiệp', email: 'other@example.com' },
     editorial_state: editorialState,
-    editorial_state_label: pending ? 'Chờ duyệt' : 'Nháp',
+    editorial_state_label: stateLabels[editorialState],
     completeness: { score: 80, missing_fields: [] },
     allowed_actions: allowedActions,
     view_count: 12,
@@ -43,7 +50,7 @@ function createPost(allowedActions, editorialState = 'draft') {
         related_job_category: null,
         seo_title: '',
         seo_description: '',
-        status: pending ? 'pending' : 'draft',
+        status: editorialState,
         submitted_at: pending ? '2026-07-27T09:00:00Z' : null,
         edit_revision: 1,
         updated_at: post.updated_at,
@@ -55,8 +62,9 @@ function createPost(allowedActions, editorialState = 'draft') {
   }
 }
 
-async function mockBlogApi(page, permissions, allowedActions, editorialState = 'draft') {
+async function mockBlogApi(page, permissions, allowedActions, editorialState = 'draft', { isSuperuser = false } = {}) {
   const { post, detail } = createPost(allowedActions, editorialState)
+  let currentEditorialState = editorialState
   const user = {
     public_id: 'usr_current',
     email: 'current@example.com',
@@ -64,7 +72,7 @@ async function mockBlogApi(page, permissions, allowedActions, editorialState = '
     role: 'admin',
     status: 'active',
     admin_access: {
-      is_superuser: false,
+      is_superuser: isSuperuser,
       permissions,
       memberships: [],
     },
@@ -77,15 +85,29 @@ async function mockBlogApi(page, permissions, allowedActions, editorialState = '
     else if (path === '/api/blog/admin/posts/summary/') {
       body = {
         all: 1,
-        draft: editorialState === 'draft' ? 1 : 0,
-        pending: editorialState === 'pending' ? 1 : 0,
+        draft: currentEditorialState === 'draft' ? 1 : 0,
+        pending: currentEditorialState === 'pending' ? 1 : 0,
         published: 0,
         published_with_draft: 0,
-        published_with_pending: editorialState === 'published_with_pending' ? 1 : 0,
-        archived: 0,
+        published_with_pending: currentEditorialState === 'published_with_pending' ? 1 : 0,
+        archived: currentEditorialState === 'archived' ? 1 : 0,
       }
     } else if (path === '/api/blog/admin/posts/') {
       body = { count: 1, next: null, previous: null, results: [post] }
+    } else if (path === '/api/blog/admin/posts/ps_other/restore/') {
+      currentEditorialState = 'draft'
+      Object.assign(post, {
+        editorial_state: 'draft',
+        editorial_state_label: 'Nháp',
+        allowed_actions: ['edit', 'submit', 'discard_draft'],
+      })
+      Object.assign(detail, post)
+      Object.assign(detail.editable_version, {
+        status: 'draft',
+        submitted_at: null,
+        edit_revision: detail.editable_version.edit_revision + 1,
+      })
+      body = detail
     } else if (path === '/api/blog/admin/posts/ps_other/') body = detail
     else if (path === '/api/blog/admin/categories/') body = [category]
     else if (path === '/api/blog/admin/tags/' || path === '/api/jobs/categories/') body = []
@@ -126,10 +148,39 @@ test('admin blog: view-only permission sees another employee article in read-onl
 
   await page.goto('/admin/app/blog')
   await expect(page.getByText('Bài viết của đồng nghiệp khác').filter({ visible: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Không có quyền đổi trạng thái bài/ }).filter({ visible: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Đổi trạng thái bài/ })).toHaveCount(0)
 
   await page.goto('/admin/app/blog/ps_other/edit')
   await expect(page.getByText('Chỉ xem nội dung')).toBeVisible()
   await expect(page.getByLabel('Tiêu đề bài viết')).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Lưu ngay' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Khôi phục về nháp' })).toHaveCount(0)
 })
+
+for (const access of [
+  { name: 'superuser', permissions: [], isSuperuser: true },
+  { name: 'blog manager', permissions: ['blog.view', 'blog.manage'] },
+  { name: 'blog publisher', permissions: ['blog.view', 'blog.publish'] },
+]) {
+  test(`admin blog: ${access.name} can restore an archived article from read-only mode`, async ({ page }) => {
+    await mockBlogApi(
+      page,
+      access.permissions,
+      ['view', 'restore'],
+      'archived',
+      { isSuperuser: access.isSuperuser },
+    )
+
+    await page.goto('/admin/app/blog/ps_other/edit')
+    await expect(page.getByText('Chỉ xem nội dung')).toBeVisible()
+    await expect(page.getByLabel('Tiêu đề bài viết')).toBeDisabled()
+    const restoreButton = page.getByRole('button', { name: 'Khôi phục về nháp' })
+    await expect(restoreButton).toBeEnabled()
+    await restoreButton.click()
+    const dialog = page.getByRole('dialog', { name: 'Khôi phục về nháp' })
+    await expect(dialog).toContainText('Bài cần được gửi duyệt lại trước khi hiển thị.')
+    await dialog.getByRole('button', { name: 'Khôi phục', exact: true }).click()
+    await expect(page.getByText('Khôi phục thành công.')).toBeVisible()
+    await expect(page.getByLabel('Tiêu đề bài viết')).toBeEnabled()
+  })
+}

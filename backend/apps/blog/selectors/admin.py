@@ -1,8 +1,56 @@
-from django.db.models import Count
+from django.db.models import Case, CharField, Count, F, IntegerField, TextField, Value, When
+from django.db.models.functions import Coalesce, Length, NullIf, Trim
 
 from common.db.search import search_q
 
 from ..models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
+
+
+def _working_copy_text(field):
+    return Case(
+        When(working_copy__isnull=False, then=F(f'working_copy__{field}')),
+        default=F(field),
+        output_field=TextField(),
+    )
+
+
+def _with_completeness_sort(queryset):
+    text_fields = (
+        'title',
+        'summary',
+        'content',
+        'thumbnail_url',
+        'seo_title',
+        'seo_description',
+    )
+    length_annotations = {
+        f'_completion_{field}_length': Length(Trim(_working_copy_text(field)))
+        for field in text_fields
+    }
+    queryset = queryset.annotate(
+        **length_annotations,
+        _completion_related_job_id=Case(
+            When(
+                working_copy__isnull=False,
+                then=F('working_copy__related_job_category_id'),
+            ),
+            default=F('related_job_category_id'),
+            output_field=IntegerField(),
+        ),
+    )
+    score = Value(0, output_field=IntegerField())
+    for field in text_fields:
+        score += Case(
+            When(**{f'_completion_{field}_length__gt': 0}, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    score += Case(
+        When(_completion_related_job_id__isnull=False, then=Value(1)),
+        default=Value(0),
+        output_field=IntegerField(),
+    )
+    return queryset.annotate(_completeness_sort=score)
 
 
 def admin_posts_queryset(*, actor, can_publish, params=None):
@@ -39,16 +87,56 @@ def admin_posts_queryset(*, actor, can_publish, params=None):
         else:
             queryset = queryset.filter(status=state)
 
-    ordering = params.get('ordering')
-    allowed_ordering = {
-        'updated_at',
-        '-updated_at',
-        'published_at',
-        '-published_at',
-        'view_count',
-        '-view_count',
+    ordering = params.get('ordering') or '-updated_at'
+    descending = ordering.startswith('-')
+    ordering_key = ordering.removeprefix('-')
+    ordering_fields = {
+        'title': 'title',
+        'category': 'category__name',
+        'view_count': 'view_count',
+        'published_at': 'published_at',
+        'updated_at': 'updated_at',
     }
-    return queryset.order_by(ordering if ordering in allowed_ordering else '-updated_at')
+    if ordering_key == 'author':
+        queryset = queryset.annotate(
+            _author_sort=Coalesce(
+                NullIf('author__full_name', Value('')),
+                'author__email',
+                Value(''),
+                output_field=CharField(),
+            )
+        )
+        ordering_fields['author'] = '_author_sort'
+    elif ordering_key == 'editorial_state':
+        queryset = queryset.annotate(
+            _editorial_state_sort=Case(
+                When(
+                    status=Post.Status.PUBLISHED,
+                    working_copy__status='pending',
+                    then=Value(4),
+                ),
+                When(
+                    status=Post.Status.PUBLISHED,
+                    working_copy__status='draft',
+                    then=Value(3),
+                ),
+                When(status=Post.Status.PUBLISHED, then=Value(2)),
+                When(status=Post.Status.PENDING, then=Value(1)),
+                When(status=Post.Status.ARCHIVED, then=Value(5)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        ordering_fields['editorial_state'] = '_editorial_state_sort'
+    elif ordering_key == 'completeness':
+        queryset = _with_completeness_sort(queryset)
+        ordering_fields['completeness'] = '_completeness_sort'
+
+    field = ordering_fields.get(ordering_key)
+    if not field:
+        return queryset.order_by('-updated_at', '-id')
+    prefix = '-' if descending else ''
+    return queryset.order_by(f'{prefix}{field}', f'{prefix}id')
 
 
 def admin_post_detail_queryset(*, actor, can_publish):

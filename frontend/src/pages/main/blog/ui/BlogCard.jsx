@@ -93,11 +93,17 @@ export function BlogCardRow({ post, large = false, fill = false }) {
   )
 }
 
-// Hero card: ảnh đầy + overlay gradient + text đè lên dưới — dùng cho ô trái khối nổi bật
-export function BlogCardHero({ post }) {
+// Hero card: ảnh đầy + overlay gradient + text đè lên dưới — dùng cho khối nổi bật.
+export function BlogCardHero({ post, size = 'default' }) {
+  const heightClass = size === 'compact'
+    ? 'min-h-[320px] sm:min-h-[380px]'
+    : size === 'wide'
+      ? 'min-h-[340px] sm:min-h-[400px] lg:min-h-[430px]'
+      : 'min-h-[360px] sm:min-h-[420px]'
+
   return (
     <Link to={blogPostPath(post.slug)} target="_blank" rel="noopener" className="group block h-full">
-      <article className="relative flex h-full min-h-[360px] flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-slate-300/60 sm:min-h-[420px]">
+      <article className={`relative flex h-full flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-slate-300/60 ${heightClass}`}>
         {/* Full-bleed thumbnail */}
         <PostThumb post={post} className="absolute inset-0 h-full w-full" />
 

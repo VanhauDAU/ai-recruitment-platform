@@ -14,11 +14,15 @@ from apps.accounts.services import (
 )
 
 from ..models import (
-    Company,
     CompanyDocument,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
+)
+from .companies import (
+    CompanyTaxCodeConflict,
+    ensure_company_tax_code_can_be_verified,
+    mark_company_verified,
 )
 from .tax_lookup import queue_company_tax_lookup
 
@@ -337,11 +341,7 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     )
     if automatically_approved:
         if case.company_id:
-            Company.objects.filter(pk=case.company_id).update(
-                verification_status=Company.VerificationStatus.VERIFIED,
-                verified_at=timezone.now(),
-                rejected_reason='',
-            )
+            mark_company_verified(case.company)
         EmployerVerificationEvent.objects.create(
             verification_case=case,
             actor=actor,
@@ -394,6 +394,11 @@ def reconcile_completed_verification_cases():
             can_approve, _ = verification_can_be_approved(case)
             if not can_approve:
                 continue
+            if case.company_id:
+                try:
+                    ensure_company_tax_code_can_be_verified(case.company)
+                except CompanyTaxCodeConflict:
+                    continue
 
             now = timezone.now()
             case.status = EmployerVerificationCase.Status.APPROVED
@@ -410,11 +415,7 @@ def reconcile_completed_verification_cases():
                 ]
             )
             if case.company_id:
-                Company.objects.filter(pk=case.company_id).update(
-                    verification_status=Company.VerificationStatus.VERIFIED,
-                    verified_at=now,
-                    rejected_reason='',
-                )
+                mark_company_verified(case.company, verified_at=now)
             EmployerVerificationEvent.objects.create(
                 verification_case=case,
                 event_type=EmployerVerificationEvent.EventType.APPROVED,
@@ -442,6 +443,8 @@ def verification_decision_impact(case, *, decision, reason):
     if decision == EmployerVerificationCase.Status.APPROVED and not can_approve:
         missing = [key for key, value in checks.items() if not value and key != 'case_approved']
         raise ValidationError({'missing_requirements': missing})
+    if decision == EmployerVerificationCase.Status.APPROVED and case.company_id:
+        ensure_company_tax_code_can_be_verified(case.company)
     payload = {'decision': decision, 'reason': reason.strip()}
     return {
         'decision': decision,
@@ -489,11 +492,7 @@ def confirm_verification_decision(case, *, actor, decision, reason, impact_token
         ]
     )
     if decision == EmployerVerificationCase.Status.APPROVED and case.company_id:
-        Company.objects.filter(pk=case.company_id).update(
-            verification_status=Company.VerificationStatus.VERIFIED,
-            verified_at=timezone.now(),
-            rejected_reason='',
-        )
+        mark_company_verified(case.company)
     event_type = {
         EmployerVerificationCase.Status.APPROVED: EmployerVerificationEvent.EventType.APPROVED,
         EmployerVerificationCase.Status.CHANGES_REQUESTED: (

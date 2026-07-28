@@ -28,6 +28,7 @@ from ...models import (
 )
 from ...selectors import admin_verification_cases_queryset, admin_verification_summary
 from ...services import (
+    CompanyTaxCodeConflict,
     apply_update_request,
     confirm_verification_decision,
     refresh_company_update_tax_lookup,
@@ -38,6 +39,7 @@ from ...services import (
     start_verification_review,
     verification_decision_impact,
 )
+from ..exceptions import CompanyTaxCodeConflictResponse
 from ..serializers.admin_verification import (
     AdminCompanyUpdateRequestSerializer,
     AdminCompanyUpdateReviewSerializer,
@@ -187,6 +189,11 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
+        except CompanyTaxCodeConflict as error:
+            raise CompanyTaxCodeConflictResponse(
+                error.tax_code,
+                claim_status=error.claim_status,
+            ) from error
         current = admin_verification_cases_queryset().get(pk=case.pk)
         return Response(
             AdminVerificationCaseDetailSerializer(
@@ -200,13 +207,18 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = AdminVerificationDecisionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
-        return Response(
-            verification_decision_impact(
+        try:
+            impact = verification_decision_impact(
                 self.get_object(),
                 decision=values['decision'],
                 reason=values.get('reason', ''),
             )
-        )
+        except CompanyTaxCodeConflict as error:
+            raise CompanyTaxCodeConflictResponse(
+                error.tax_code,
+                claim_status=error.claim_status,
+            ) from error
+        return Response(impact)
 
     @action(detail=True, methods=['post'])
     def decision(self, request, public_id=None):
@@ -227,6 +239,11 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
             raise AdminResourceChanged() from error
         except InvalidImpactToken as error:
             raise ValidationError({'impact_token': str(error)}) from error
+        except CompanyTaxCodeConflict as error:
+            raise CompanyTaxCodeConflictResponse(
+                error.tax_code,
+                claim_status=error.claim_status,
+            ) from error
         current = admin_verification_cases_queryset().get(pk=case.pk)
         return Response(
             AdminVerificationCaseDetailSerializer(
@@ -412,6 +429,11 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
+        except CompanyTaxCodeConflict as error:
+            raise CompanyTaxCodeConflictResponse(
+                error.tax_code,
+                claim_status=error.claim_status,
+            ) from error
         current = self.get_queryset().get(pk=update_request.pk)
         return Response(self.get_serializer(current).data)
 

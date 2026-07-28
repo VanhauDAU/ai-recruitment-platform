@@ -17,4 +17,18 @@ describe('getApiErrorMessage', () => {
     const error = { response: { status: 502, data: '<html><body>Bad Gateway</body></html>' } }
     expect(getApiErrorMessage(error)).toBe('Hệ thống đang gặp lỗi. Vui lòng thử lại sau ít phút.')
   })
+
+  it('shows a structured business error without exposing its machine code', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          code: 'company_tax_code_conflict',
+          message: 'Mã số thuế đã thuộc một công ty được xác thực.',
+        },
+      },
+    }
+
+    expect(getApiErrorMessage(error)).toBe('Mã số thuế đã thuộc một công ty được xác thực.')
+  })
 })

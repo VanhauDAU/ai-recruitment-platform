@@ -555,7 +555,7 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_duplicate_tax_code_rejected(self):
+    def test_duplicate_tax_code_and_company_name_are_accepted_for_admin_review(self):
         self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
@@ -566,7 +566,33 @@ class CompanyCreateTests(APITestCase):
             company_payload(self.industry, company_name='Acme Fake'),
             format='json',
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        duplicate = Company.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(duplicate.tax_code, '0101234567')
+        self.assertEqual(duplicate.verification_status, Company.VerificationStatus.UNVERIFIED)
+
+        user3, _ = make_employer('hr3@example.com')
+        authenticate_employer(self.client, user3)
+        same_name_response = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry),
+            format='json',
+        )
+        self.assertEqual(
+            same_name_response.status_code,
+            status.HTTP_201_CREATED,
+            same_name_response.data,
+        )
+        self.assertEqual(
+            Company.objects.filter(
+                tax_code='0101234567',
+                company_name='Acme Corp',
+            ).count(),
+            2,
+        )
+        original = Company.objects.get(created_by=self.user)
+        same_name = Company.objects.get(public_id=same_name_response.data['public_id'])
+        self.assertNotEqual(original.slug, same_name.slug)
 
     def test_tax_code_is_normalized_and_rich_text_is_sanitized(self):
         payload = company_payload(
@@ -674,6 +700,38 @@ class JoinCompanyTests(APITestCase):
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.company, self.company)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.MEMBER)
+
+    def test_joining_verified_company_does_not_inherit_other_recruiter_documents(self):
+        self.company.verification_status = Company.VerificationStatus.VERIFIED
+        self.company.verified_at = timezone.now()
+        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
+        for doc_type in (
+            CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        ):
+            CompanyDocument.objects.create(
+                company=self.company,
+                uploaded_by=self.company.created_by,
+                doc_type=doc_type,
+                file_url=f'employers/owner/{doc_type}.pdf',
+                file_name=f'{doc_type}.pdf',
+                status=CompanyDocument.Status.APPROVED,
+            )
+
+        join_response = self._join()
+        profile_response = self.client.get(reverse('employer-me'))
+        documents_response = self.client.get(reverse('employer-company-documents'))
+
+        self.assertEqual(join_response.status_code, status.HTTP_200_OK, join_response.data)
+        self.assertEqual(profile_response.status_code, status.HTTP_200_OK, profile_response.data)
+        onboarding = profile_response.data['onboarding']
+        self.assertTrue(onboarding['company_linked'])
+        self.assertFalse(onboarding['business_doc_submitted'])
+        self.assertFalse(onboarding['candidate_dpa_submitted'])
+        self.assertFalse(onboarding['dpa_accepted'])
+        self.assertFalse(onboarding['verification_completed'])
+        self.assertEqual(documents_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(documents_response.data, [])
 
     def test_join_does_not_require_verified_phone(self):
         self.recruiter.verified_phone = ''
@@ -1108,13 +1166,16 @@ class CompanyUpdateRequestTests(APITestCase):
             budget_source=RecruitmentNeed.BudgetSource.COMPANY,
             completed_at=now,
         )
+        verification_case = services.get_or_create_verification_case(self.recruiter)
         for doc_type in (
             CompanyDocument.DocType.BUSINESS_REGISTRATION,
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         ):
             CompanyDocument.objects.create(
                 company=self.company,
+                recruiter=self.recruiter,
                 uploaded_by=self.user,
+                verification_case=verification_case,
                 doc_type=doc_type,
                 file_url=f'employers/documents/{doc_type}.pdf',
                 file_name=f'{doc_type}.pdf',
