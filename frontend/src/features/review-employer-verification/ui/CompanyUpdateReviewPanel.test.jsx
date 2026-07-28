@@ -154,4 +154,68 @@ describe('CompanyUpdateReviewPanel', () => {
     expect(within(dialog).getAllByText('Khớp')).toHaveLength(2)
     expect(within(dialog).getByRole('button', { name: 'Đã yêu cầu bổ sung' })).toBeDisabled()
   })
+
+  it('keeps a tax-code conflict visible and prevents repeated approval attempts', async () => {
+    api.getAdminCompanyUpdateRequests.mockResolvedValue({
+      count: 1,
+      results: [{
+        public_id: 'cur_tax_conflict',
+        company: { public_id: 'co_1', name: 'FPT Software', tax_code: '0101234567' },
+        requested_by_email: 'hr@example.com',
+        status: 'pending',
+        revision: 3,
+        lock_version: 28,
+        created_at: '2026-07-26T10:00:00Z',
+        updated_at: '2026-07-28T09:53:42Z',
+        changes: { tax_code: '0402189757' },
+        current_values: { tax_code: '0101234567' },
+        industry_labels: {},
+        is_sensitive: true,
+        reason: 'Đổi mã số thuế theo giấy đăng ký mới',
+        proof_type: 'business_registration',
+        proof_type_label: 'Giấy đăng ký doanh nghiệp',
+        documents: [{
+          public_id: 'doc_business',
+          doc_type: 'business_registration',
+          doc_type_label: 'Giấy đăng ký doanh nghiệp',
+          version: 1,
+          is_current: true,
+          status: 'approved',
+          status_label: 'Đã duyệt',
+          review_note: '',
+        }],
+      }],
+    })
+    api.reviewAdminCompanyUpdateRequest.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          code: 'company_tax_code_conflict',
+          message: (
+            'Mã số thuế 0402189757 đã thuộc một công ty được xác thực. '
+            + 'Không thể duyệt và áp dụng yêu cầu này.'
+          ),
+        },
+      },
+    })
+
+    renderPanel({ canReview: true })
+    await userEvent.click(await screen.findByRole('button', { name: /Xem chi tiết và đối chiếu/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Đối chiếu yêu cầu sửa thông tin công ty' })
+    const approveButton = within(dialog).getByRole('button', { name: 'Duyệt và áp dụng' })
+
+    await userEvent.click(approveButton)
+
+    expect(await within(dialog).findByText('Không thể duyệt và áp dụng')).toBeInTheDocument()
+    expect(within(dialog).getByText(/đã thuộc một công ty được xác thực/)).toBeInTheDocument()
+    expect(approveButton).toBeDisabled()
+    expect(api.reviewAdminCompanyUpdateRequest).toHaveBeenCalledWith(
+      'cur_tax_conflict',
+      {
+        decision: 'approved',
+        note: '',
+        lock_version: 28,
+      },
+    )
+  })
 })

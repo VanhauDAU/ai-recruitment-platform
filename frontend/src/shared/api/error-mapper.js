@@ -24,6 +24,19 @@ function translateApiErrorMessage(message) {
   return API_ERROR_MESSAGES[normalized] || message
 }
 
+function explicitApiMessage(data) {
+  if (!data || typeof data !== 'object') return ''
+  if (typeof data.message === 'string') return data.message
+  if (
+    data.detail
+    && typeof data.detail === 'object'
+    && typeof data.detail.message === 'string'
+  ) {
+    return data.detail.message
+  }
+  return ''
+}
+
 export function getApiErrorMessage(error, fallback = 'Có lỗi xảy ra, vui lòng thử lại.') {
   const { response } = error || {}
 
@@ -34,6 +47,9 @@ export function getApiErrorMessage(error, fallback = 'Có lỗi xảy ra, vui l�
   if (response.status >= 500 || isHtmlResponse(response.data)) {
     return 'Hệ thống đang gặp lỗi. Vui lòng thử lại sau ít phút.'
   }
+
+  const explicitMessage = explicitApiMessage(response.data)
+  if (explicitMessage) return translateApiErrorMessage(explicitMessage)
 
   const messages = flattenMessages(response.data)
   return messages.length ? messages.map(translateApiErrorMessage).join(' ') : fallback

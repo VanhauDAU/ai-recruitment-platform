@@ -225,15 +225,6 @@ class CompanySerializer(serializers.ModelSerializer):
                 {'has_no_logo': 'Tải logo hoặc chọn "Tôi không có logo".'}
             )
 
-        tax_code = attrs.get('tax_code')
-        if tax_code:
-            duplicate = Company.objects.filter(tax_code=tax_code)
-            if instance:
-                duplicate = duplicate.exclude(pk=instance.pk)
-            if duplicate.exists():
-                raise serializers.ValidationError(
-                    {'tax_code': 'Mã số thuế này đã tồn tại trong hệ thống.'}
-                )
         return attrs
 
     def create(self, validated_data):

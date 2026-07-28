@@ -126,7 +126,8 @@ export default function BlogEditorSidebar({
         <Card className="border-slate-200 shadow-sm" title="Thao tác khác">
           <Space orientation="vertical" className="w-full" style={{ width: '100%' }}>
             {allowedActions.includes('return') && <Button block onClick={() => onAction('return')}>Trả về chỉnh sửa</Button>}
-            {allowedActions.includes('restore') && <Button block onClick={() => onAction('restore')}>Khôi phục về nháp</Button>}
+            {/* Bài đã gỡ làm form chỉ đọc; action workflow này phải thoát disabled context của Form. */}
+            {allowedActions.includes('restore') && <Button block disabled={false} onClick={() => onAction('restore')}>Khôi phục về nháp</Button>}
             {allowedActions.includes('discard_draft') && <Button block danger icon={<DeleteOutlined />} onClick={() => onAction('discard-draft')}>Hủy bản nháp</Button>}
             {allowedActions.includes('archive') && <Button block danger onClick={() => onAction('archive')}>Gỡ bài viết</Button>}
           </Space>

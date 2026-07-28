@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('admin blog: list is responsive and article slug is server-owned', async ({ page }, testInfo) => {
+test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', async ({ page }) => {
   const adminTags = [
     { public_id: 'ptag_sales', name: 'Sales', slug: 'sales', is_active: true, post_count: 2, working_copy_count: 0, usage_count: 2 },
     { public_id: 'ptag_business', name: 'Nhân viên kinh doanh', slug: 'nhan-vien-kinh-doanh', is_active: true, post_count: 1, working_copy_count: 0, usage_count: 1 },
@@ -82,9 +82,11 @@ test('admin blog: list is responsive and article slug is server-owned', async ({
     history: [],
     created_at: post.updated_at,
   }
+  const postOrderings = []
 
   await page.route('http://localhost:8000/api/**', async (route) => {
-    const path = new URL(route.request().url()).pathname
+    const url = new URL(route.request().url())
+    const path = url.pathname
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
     else if (path === '/api/auth/me/') body = adminUser
@@ -99,7 +101,32 @@ test('admin blog: list is responsive and article slug is server-owned', async ({
         archived: [post, publishedPost].filter((item) => item.editorial_state === 'archived').length,
       }
     } else if (path === '/api/blog/admin/posts/') {
-      body = { count: 2, next: null, previous: null, results: [post, publishedPost] }
+      const ordering = url.searchParams.get('ordering') || '-updated_at'
+      const descending = ordering.startsWith('-')
+      const field = ordering.replace(/^-/, '')
+      const stateOrder = {
+        draft: 0,
+        pending: 1,
+        published: 2,
+        published_with_draft: 3,
+        published_with_pending: 4,
+        archived: 5,
+      }
+      const value = (item) => ({
+        title: item.title,
+        category: item.category?.name || '',
+        author: item.author?.name || '',
+        editorial_state: stateOrder[item.editorial_state],
+        completeness: item.completeness.score,
+        view_count: item.view_count,
+        updated_at: item.updated_at,
+      })[field]
+      const results = [post, publishedPost].toSorted((left, right) => {
+        const comparison = String(value(left)).localeCompare(String(value(right)), 'vi', { numeric: true })
+        return descending ? -comparison : comparison
+      })
+      postOrderings.push(ordering)
+      body = { count: 2, next: null, previous: null, results }
     } else if (['/api/blog/admin/posts/ps_sales/archive/', '/api/blog/admin/posts/ps_interview/archive/'].includes(path)) {
       const payload = route.request().postDataJSON()
       expect(payload.note).toBe('Nội dung cần rà soát lại')
@@ -171,7 +198,29 @@ test('admin blog: list is responsive and article slug is server-owned', async ({
   await page.goto('/admin/app/blog')
   await expect(page.getByRole('heading', { name: 'Cẩm nang nghề nghiệp' })).toBeVisible()
   await expect(page.getByText('Nhân viên Sales là gì?').filter({ visible: true })).toBeVisible()
-  await expect(page.getByText('/blog/nhan-vien-sales-la-gi')).toHaveCount(1)
+  await expect(page.getByText('/blog/nhan-vien-sales-la-gi').filter({ visible: true })).toHaveCount(1)
+  const adminTitleLink = page.getByRole('link', { name: 'Mở bài “Nhân viên Sales là gì?” trong trang admin', exact: true }).filter({ visible: true })
+  await expect(adminTitleLink).toHaveAttribute('href', '/admin/app/blog/ps_sales/edit')
+  await expect(adminTitleLink).not.toHaveAttribute('target', '_blank')
+  await expect(page.getByRole('link', { name: 'Mở URL /blog/nhan-vien-sales-la-gi ở trang public' })).toHaveCount(0)
+  const publicUrlLink = page.getByRole('link', { name: 'Mở URL /blog/kinh-nghiem-phong-van ở trang public' }).filter({ visible: true })
+  await expect(publicUrlLink).toHaveAttribute('href', '/blog/kinh-nghiem-phong-van')
+  await expect(publicUrlLink).toHaveAttribute('target', '_blank')
+  await expect(publicUrlLink).toHaveCSS('color', 'oklch(0.554 0.046 257.417)')
+  if (page.viewportSize().width >= 768) {
+    for (const heading of ['Bài viết', 'Danh mục', 'Tác giả', 'Trạng thái', 'Hoàn thiện', 'Lượt xem', 'Cập nhật']) {
+      await expect(page.getByRole('columnheader', { name: new RegExp(heading) }).filter({ visible: true }).locator('.ant-table-column-sorter')).toBeVisible()
+    }
+    const viewCountHeader = page.getByRole('columnheader', { name: /Lượt xem/ }).filter({ visible: true })
+    await viewCountHeader.locator('.ant-table-column-sorter').click()
+    await expect.poll(() => postOrderings.at(-1)).toBe('view_count')
+    await expect(page.locator('.ant-table-tbody > tr').filter({ visible: true }).first()).toContainText('Nhân viên Sales là gì?')
+    await viewCountHeader.locator('.ant-table-column-sorter').click()
+    await expect.poll(() => postOrderings.at(-1)).toBe('-view_count')
+    await expect(page.locator('.ant-table-tbody > tr').filter({ visible: true }).first()).toContainText('Kinh nghiệm phỏng vấn giúp bạn tự tin hơn')
+  }
+  await expect(page.getByRole('button', { name: /Kéo bài/ })).toHaveCount(0)
+  await expect(page.getByTestId('post-status-drop-tray')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Đổi trạng thái bài “Kinh nghiệm phỏng vấn/ }).filter({ visible: true })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
@@ -182,40 +231,8 @@ test('admin blog: list is responsive and article slug is server-owned', async ({
   await page.getByRole('checkbox', { name: 'Chọn bài “Kinh nghiệm phỏng vấn giúp bạn tự tin hơn”' }).filter({ visible: true }).check()
   await expect(page.getByText('Đã chọn 2 bài viết')).toBeVisible()
 
-  if (testInfo.project.name === 'mobile-chromium') {
-    await page.getByRole('button', { name: 'Đổi trạng thái 2 bài' }).click()
-    await page.getByRole('menuitem', { name: 'Ẩn bài viết' }).click()
-  } else {
-    const publishedDragHandle = page.getByRole('button', { name: 'Kéo bài “Kinh nghiệm phỏng vấn giúp bạn tự tin hơn” để đổi trạng thái' }).filter({ visible: true })
-    const dragHandleBox = await publishedDragHandle.boundingBox()
-    await page.mouse.move(dragHandleBox.x + dragHandleBox.width / 2, dragHandleBox.y + dragHandleBox.height / 2)
-    await page.mouse.down()
-    const dragPointer = {
-      x: dragHandleBox.x + dragHandleBox.width / 2 + 10,
-      y: dragHandleBox.y + dragHandleBox.height / 2 + 10,
-    }
-    await page.mouse.move(dragPointer.x, dragPointer.y, { steps: 4 })
-    const dragOverlay = page.getByTestId('post-status-drag-overlay')
-    await expect(dragOverlay).toBeVisible()
-    await expect(dragOverlay).toContainText('2 bài viết đã chọn')
-    const overlayZIndex = await dragOverlay.evaluate((element) => Number(getComputedStyle(element.parentElement).zIndex))
-    const dropTrayZIndex = await page.getByTestId('post-status-drop-tray').evaluate((element) => Number(getComputedStyle(element).zIndex))
-    expect(overlayZIndex).toBeGreaterThan(dropTrayZIndex)
-    await expect.poll(async () => {
-      const overlayBox = await dragOverlay.boundingBox()
-      return {
-        x: Math.round(overlayBox.x + overlayBox.width / 2 - dragPointer.x),
-        y: Math.round(overlayBox.y + overlayBox.height / 2 - dragPointer.y),
-      }
-    }).toEqual({ x: 0, y: 0 })
-    const archiveDropZone = page.getByTestId('post-status-drop-archive')
-    await expect(archiveDropZone).toBeVisible()
-    const archiveDropBox = await archiveDropZone.boundingBox()
-    await page.mouse.move(archiveDropBox.x + archiveDropBox.width / 2, archiveDropBox.y + archiveDropBox.height / 2, { steps: 10 })
-    await expect(archiveDropZone).toContainText('Thả chuột để chọn')
-    await expect(dragOverlay).toContainText('Đã nhận: Ẩn bài viết')
-    await page.mouse.up()
-  }
+  await page.getByRole('button', { name: 'Đổi trạng thái 2 bài' }).click()
+  await page.getByRole('menuitem', { name: 'Ẩn bài viết' }).click()
   const archiveDialog = page.getByRole('dialog', { name: 'Ẩn bài viết?' })
   await expect(archiveDialog).toBeVisible()
   await expect(archiveDialog).toContainText('2 bài viết đã chọn')

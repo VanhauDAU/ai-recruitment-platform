@@ -128,6 +128,7 @@ export default function CompanyUpdateComparisonModal({
   canReview,
   canViewSensitive,
   canApply,
+  requestConflict,
   documentLoading,
   requestLoading,
   taxLookupLoading,
@@ -162,9 +163,15 @@ export default function CompanyUpdateComparisonModal({
           <Button
             key="approve"
             type="primary"
-            disabled={!canApply}
-            title={canApply ? undefined : 'Duyệt đủ giấy tờ chứng minh trước khi áp dụng.'}
-            loading={requestLoading}
+            disabled={!canApply || Boolean(requestConflict)}
+            title={
+              requestConflict
+                ? 'Yêu cầu đang có xung đột mã số thuế.'
+                : canApply
+                  ? undefined
+                  : 'Duyệt đủ giấy tờ chứng minh trước khi áp dụng.'
+            }
+            loading={requestLoading && !requestConflict}
             onClick={onApproveRequest}
           >
             Duyệt và áp dụng
@@ -173,6 +180,15 @@ export default function CompanyUpdateComparisonModal({
       ]}
     >
       <div className="company-comparison-layout">
+        {requestConflict && (
+          <Alert
+            showIcon
+            type="error"
+            title="Không thể duyệt và áp dụng"
+            description={requestConflict}
+          />
+        )}
+
         <Descriptions bordered size="small" column={{ xs: 1, md: 3 }}>
           <Descriptions.Item label="Công ty">{updateRequest.company?.name || 'Chưa có'}</Descriptions.Item>
           <Descriptions.Item label="Người gửi">{updateRequest.requested_by_email}</Descriptions.Item>

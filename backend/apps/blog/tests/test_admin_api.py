@@ -137,6 +137,65 @@ class BlogAdminApiTests(APITestCase):
         )
         self.assertTrue(all(response.status_code == 403 for response in denied_requests))
 
+    def test_list_supports_ordering_for_every_data_column(self):
+        later_category = PostCategory.objects.create(name='Xu hướng nghề nghiệp')
+        self.editor.full_name = 'An'
+        self.editor.save(update_fields=['full_name'])
+        self.publisher.full_name = 'Bình'
+        self.publisher.save(update_fields=['full_name'])
+        first = Post.objects.create(
+            title='A — Bài ít hoàn thiện',
+            category=self.category,
+            author=self.editor,
+            summary='',
+            content='',
+            view_count=10,
+        )
+        second = Post.objects.create(
+            title='Z — Bài hoàn thiện hơn',
+            category=later_category,
+            author=self.publisher,
+            summary='Sapo đầy đủ',
+            content='<p>Nội dung đầy đủ</p>',
+            thumbnail_url='blog/thumbnail.webp',
+            seo_title='SEO title',
+            seo_description='SEO description',
+            status=Post.Status.PENDING,
+            submitted_at=timezone.now(),
+            view_count=90,
+        )
+        self.client.force_authenticate(self.publisher)
+
+        for ordering in (
+            'title',
+            'category',
+            'author',
+            'editorial_state',
+            'completeness',
+            'view_count',
+            'updated_at',
+        ):
+            ascending = self.client.get(
+                reverse('blog-admin-post-list'),
+                {'ordering': ordering},
+            )
+            descending = self.client.get(
+                reverse('blog-admin-post-list'),
+                {'ordering': f'-{ordering}'},
+            )
+            self.assertEqual(ascending.status_code, 200, ascending.data)
+            self.assertEqual(descending.status_code, 200, descending.data)
+            self.assertEqual(
+                [item['public_id'] for item in ascending.data['results']],
+                [first.public_id, second.public_id],
+                ordering,
+            )
+            self.assertEqual(
+                [item['public_id'] for item in descending.data['results']],
+                [second.public_id, first.public_id],
+                ordering,
+            )
+
     def test_publish_permission_can_edit_and_moderate_posts_but_cannot_create(self):
         pending = Post.objects.create(
             title='Bài đang chờ duyệt',

@@ -9,7 +9,10 @@ from .campaigns import (
 from .companies import (
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
+    CompanyTaxCodeConflict,
     apply_update_request,
+    ensure_company_tax_code_can_be_verified,
+    mark_company_verified,
     review_company_update_document,
     set_company_industries,
     verify_company,
@@ -48,6 +51,7 @@ from .verification import (
 )
 
 __all__ = [
+    'CompanyTaxCodeConflict',
     'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'UPDATABLE_COMPANY_FIELDS',
@@ -71,6 +75,8 @@ __all__ = [
     'refresh_company_update_tax_lookup',
     'refresh_verification_tax_lookup',
     'record_verification_upload',
+    'ensure_company_tax_code_can_be_verified',
+    'mark_company_verified',
     'review_company_update_document',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',

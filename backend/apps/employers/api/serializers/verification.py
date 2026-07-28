@@ -194,13 +194,6 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {'tax_code': 'Mã số thuế phải gồm 10 chữ số hoặc có dạng 10 chữ số-3 chữ số.'}
                 )
-            duplicate = Company.objects.filter(tax_code=tax_code)
-            if company:
-                duplicate = duplicate.exclude(pk=company.pk)
-            if duplicate.exists():
-                raise serializers.ValidationError(
-                    {'tax_code': 'Mã số thuế này đã tồn tại trong hệ thống.'}
-                )
             cleaned['tax_code'] = tax_code
 
         for field, required, label in (

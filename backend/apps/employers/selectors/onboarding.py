@@ -19,10 +19,23 @@ def build_employer_onboarding_steps(recruiter):
     """Derive every onboarding/checklist state from its canonical record."""
     company_linked = has_explicit_company_link(recruiter)
     case = getattr(recruiter, 'verification_case', None)
-    case_documents = (
-        CompanyDocument.objects.filter(verification_case=case, is_current=True)
-        if case is not None
-        else CompanyDocument.objects.none()
+    # Verification evidence is account-scoped. A recruiter joining an existing
+    # company must never inherit documents uploaded by another recruiter.
+    owned_documents = Q(
+        verification_case__isnull=True,
+        update_request__isnull=True,
+        recruiter=recruiter,
+    ) | Q(
+        verification_case__isnull=True,
+        update_request__isnull=True,
+        recruiter__isnull=True,
+        uploaded_by=recruiter.user,
+    )
+    if case is not None:
+        owned_documents |= Q(verification_case=case)
+    case_documents = CompanyDocument.objects.filter(
+        owned_documents,
+        is_current=True,
     )
     business_types = {
         CompanyDocument.DocType.AUTHORIZATION_LETTER,
@@ -38,16 +51,6 @@ def build_employer_onboarding_steps(recruiter):
         .exclude(status=CompanyDocument.Status.APPROVED)
         .exists()
     )
-    candidate_dpa = Q(
-        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        recruiter=recruiter,
-    )
-    if company_linked:
-        # Hỗ trợ văn bản DLCN cũ được lưu trước khi contract tách theo recruiter.
-        candidate_dpa |= Q(
-            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-            company=recruiter.company,
-        )
     has_candidate_dpa = (
         case_documents.filter(
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
@@ -62,23 +65,6 @@ def build_employer_onboarding_steps(recruiter):
         status=CompanyDocument.Status.APPROVED,
     ).exists()
     case_approved = case is not None and case.status == EmployerVerificationCase.Status.APPROVED
-    if not getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
-        # Compatibility while rollout is still in read-only/backlog mode.
-        legacy_business = (
-            company_linked
-            and recruiter.company.documents.filter(
-                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            )
-            .exclude(status=CompanyDocument.Status.REJECTED)
-            .exists()
-        )
-        legacy_dpa = (
-            CompanyDocument.objects.filter(candidate_dpa)
-            .exclude(status=CompanyDocument.Status.REJECTED)
-            .exists()
-        )
-        has_business_doc = has_business_doc or legacy_business
-        has_candidate_dpa = has_candidate_dpa or legacy_dpa
     steps = {
         'email_verified': recruiter.user.email_verified,
         'registration_completed': recruiter.registration_completed_at is not None,

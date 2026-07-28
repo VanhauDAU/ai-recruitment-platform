@@ -523,6 +523,19 @@ export default function EmployerVerificationReview({
             {verificationCase.phone_verified ? 'Đã xác minh' : 'Chưa xác minh'}
           </Descriptions.Item>
         </Descriptions>
+        {verificationCase.company?.duplicate_tax_code_company_count > 0 && (
+          <Alert
+            className="mt-4"
+            showIcon
+            type={verificationCase.company.verified_duplicate_tax_code_company_count > 0
+              ? 'error'
+              : 'warning'}
+            title={`MST trùng với ${verificationCase.company.duplicate_tax_code_company_count} hồ sơ công ty khác`}
+            description={verificationCase.company.verified_duplicate_tax_code_company_count > 0
+              ? 'Đã có công ty được xác thực dùng MST này. Không thể duyệt thêm hồ sơ hiện tại.'
+              : 'Các công ty trùng MST đều chưa xác thực. Admin vẫn có thể duyệt hồ sơ hiện tại; hệ thống không liên kết, gộp hoặc sửa hồ sơ còn lại.'}
+          />
+        )}
       </Card>
 
       <TaxLookupEvidenceCard
@@ -668,7 +681,10 @@ export default function EmployerVerificationReview({
               payload,
             })
           } catch (error) {
-            if (error?.response?.status === 409) {
+            if (
+              error?.response?.status === 409
+              && error.response?.data?.code !== 'company_tax_code_conflict'
+            ) {
               message.warning('Hồ sơ đã thay đổi. Vui lòng tải lại trước khi xử lý.')
               await refresh()
             } else {
