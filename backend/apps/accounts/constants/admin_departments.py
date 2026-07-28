@@ -85,6 +85,8 @@ ADMIN_DEPARTMENTS = (
                 'rank': 10,
                 'permissions': (
                     'dashboard.view',
+                    'company.view',
+                    'company_recruiter.view',
                     'service_catalog.view',
                     'consultation_lead.view',
                     'consultation_lead.manage',
@@ -97,6 +99,9 @@ ADMIN_DEPARTMENTS = (
                 'rank': 100,
                 'permissions': (
                     'dashboard.view',
+                    'company.view',
+                    'company.sensitive.view',
+                    'company_recruiter.view',
                     'service_catalog.view',
                     'service_catalog.manage',
                     'consultation_lead.view',

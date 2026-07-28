@@ -1,5 +1,10 @@
 """Public serializers grouped by employers use case."""
 
+from .admin_companies import (
+    AdminCompanyDetailSerializer,
+    AdminCompanyListSerializer,
+    AdminCompanyRecruiterSerializer,
+)
 from .admin_verification import (
     AdminVerificationCaseDetailSerializer,
     AdminVerificationCaseListSerializer,
@@ -25,6 +30,9 @@ from .verification import CompanyDocumentSerializer, CompanyUpdateRequestSeriali
 
 __all__ = [
     'CompanyDocumentSerializer',
+    'AdminCompanyDetailSerializer',
+    'AdminCompanyListSerializer',
+    'AdminCompanyRecruiterSerializer',
     'AdminVerificationCaseDetailSerializer',
     'AdminVerificationCaseListSerializer',
     'AdminVerificationDecisionSerializer',

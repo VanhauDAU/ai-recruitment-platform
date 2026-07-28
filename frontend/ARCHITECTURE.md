@@ -216,6 +216,23 @@ app/router
   `blog.view`; action ghi và phát hành tiếp tục được backend khóa bằng
   `blog.manage`/`blog.publish`.
 
+## Ownership map — Danh bạ công ty quản trị
+
+```text
+app/router + app/layouts
+  → pages/admin/app/Companies + CompanyDetail
+    → widgets/admin-company-directory
+      → entities/admin-company
+        → shared/api
+```
+
+- `entities/admin-company` sở hữu HTTP contract chỉ đọc cho danh sách, chi tiết
+  và roster NTD. `widgets/admin-company-directory` sở hữu bộ lọc, bảng và cách
+  trình bày riêng của portal quản trị; page chỉ lấy route params rồi compose.
+- Sidebar quản trị dùng cây `ADMIN_NAVIGATION` tham chiếu route bằng `routeRef`;
+  permission được lọc từ leaf lên ancestor. Trạng thái pháp lý của công ty và
+  trạng thái xác thực đại diện của từng NTD là hai contract độc lập.
+
 ## Ownership map — CV Builder
 
 ```text

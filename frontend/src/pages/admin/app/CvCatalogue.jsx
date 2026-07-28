@@ -1,5 +1,6 @@
 import { Button, Input, Modal, Space, Switch, Table, Tabs, Tag, Typography, Upload } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import {
   activateAdminCvBlueprint,
   archiveAdminCvBackground,
@@ -100,6 +101,10 @@ function StructuredSampleEditor({ sample, open, onClose, onSaved }) {
 }
 
 export default function AdminCvCatalogue() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const allowedTabs = ['templates', 'samples', 'blueprints', 'locales', 'taxonomy', 'backgrounds']
+  const requestedTab = searchParams.get('tab') || 'templates'
+  const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : 'templates'
   const [data, setData] = useState({ templates: [], samples: [], blueprints: [], locales: [], categories: [], colors: [], backgrounds: [] })
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
@@ -159,7 +164,12 @@ export default function AdminCvCatalogue() {
   return (
     <div className="space-y-5">
       <AdminPanel>
-        <Tabs items={[
+        <Tabs activeKey={activeTab} onChange={(tab) => {
+          const next = new URLSearchParams(searchParams)
+          if (tab === 'templates') next.delete('tab')
+          else next.set('tab', tab)
+          setSearchParams(next)
+        }} items={[
         { key: 'templates', label: 'Templates', children: <Table rowKey="public_id" loading={loading} dataSource={data.templates} columns={templateColumns} pagination={false} /> },
         { key: 'samples', label: 'Nội dung mẫu', children: <Table rowKey="public_id" loading={loading} dataSource={data.samples} columns={sampleColumns} pagination={false} /> },
         { key: 'blueprints', label: 'Blueprints', children: <Table rowKey="public_id" loading={loading} dataSource={data.blueprints} pagination={false} columns={[

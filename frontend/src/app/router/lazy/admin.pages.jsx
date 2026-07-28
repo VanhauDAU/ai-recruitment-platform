@@ -3,6 +3,8 @@ import { lazy } from 'react'
 
 export const AdminLoginPage = lazy(() => import('@/pages/admin/app/Login'))
 export const AdminDashboardPage = lazy(() => import('@/pages/admin/app/Dashboard'))
+export const AdminCompaniesPage = lazy(() => import('@/pages/admin/app/Companies'))
+export const AdminCompanyDetailPage = lazy(() => import('@/pages/admin/app/CompanyDetail'))
 export const AdminSettingsPage = lazy(() => import('@/pages/admin/app/Settings'))
 export const AdminCvCataloguePage = lazy(() => import('@/pages/admin/app/CvCatalogue'))
 export const AdminEmployerServicesPage = lazy(() => import('@/pages/admin/app/EmployerServices'))
@@ -21,6 +23,8 @@ export const AdminAccessDeniedPage = lazy(() => import('@/pages/admin/app/Access
 
 export const ADMIN_PAGE_BY_KEY = {
   AdminDashboardPage,
+  AdminCompaniesPage,
+  AdminCompanyDetailPage,
   AdminSettingsPage,
   AdminCvCataloguePage,
   AdminEmployerServicesPage,

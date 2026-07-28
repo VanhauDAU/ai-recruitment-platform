@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Badge, Form, Tabs } from 'antd'
-import { useDeferredValue, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   adminAccountKeys,
   getAdminAccounts,
@@ -97,16 +97,30 @@ export default function AdminAccountManagement() {
     || canViewCompanyUpdates
   )
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const [editForm] = Form.useForm()
   const [activeTab, setActiveTab] = useState(() => {
+    const requested = searchParams.get('tab')
+    if (['all', 'candidate', 'employer', 'admin'].includes(requested) && canBrowseAccounts) {
+      return requested
+    }
+    if (requested === 'verification' && canViewEmployerVerifications) return requested
+    if (requested === 'company-updates' && canViewCompanyUpdates) return requested
+    if (requested === 'invitations' && canInvite) return requested
     if (canBrowseAccounts) return 'all'
     if (canViewEmployerVerifications) return 'verification'
     if (canViewCompanyUpdates) return 'company-updates'
     return 'invitations'
   })
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
-  const [page, setPage] = useState(1)
+  const [filters, setFilters] = useState(() => ({
+    ...DEFAULT_FILTERS,
+    q: searchParams.get('q') || '',
+    status: searchParams.get('status') || '',
+    company: searchParams.get('company') || '',
+    ordering: searchParams.get('ordering') || DEFAULT_FILTERS.ordering,
+  }))
+  const [page, setPage] = useState(() => Number(searchParams.get('page') || 1))
   const [selectedAccount, setSelectedAccount] = useState(null)
   const [editingAccount, setEditingAccount] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -142,14 +156,64 @@ export default function AdminAccountManagement() {
   const summary = summaryQuery.data || {}
   const accounts = accountsQuery.data || EMPTY_PAGE
 
+  useEffect(() => {
+    const requested = searchParams.get('tab') || 'all'
+    const allowed = (
+      (['all', 'candidate', 'employer', 'admin'].includes(requested) && canBrowseAccounts)
+      || (requested === 'verification' && canViewEmployerVerifications)
+      || (requested === 'company-updates' && canViewCompanyUpdates)
+      || (requested === 'invitations' && canInvite)
+    )
+    if (allowed) setActiveTab(requested)
+    setFilters((current) => ({
+      ...current,
+      q: searchParams.get('q') || '',
+      status: searchParams.get('status') || '',
+      company: searchParams.get('company') || '',
+      ordering: searchParams.get('ordering') || DEFAULT_FILTERS.ordering,
+    }))
+    setPage(Number(searchParams.get('page') || 1))
+  }, [
+    canBrowseAccounts,
+    canInvite,
+    canViewCompanyUpdates,
+    canViewEmployerVerifications,
+    searchParams,
+  ])
+
+  const syncQuery = (tab, nextFilters, nextPage) => {
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'all') next.delete('tab')
+    else next.set('tab', tab)
+    const queryFilters = {
+      q: nextFilters.q.trim(),
+      status: nextFilters.status,
+      company: nextFilters.company.trim(),
+      ordering: nextFilters.ordering === DEFAULT_FILTERS.ordering ? '' : nextFilters.ordering,
+      page: nextPage > 1 ? nextPage : '',
+    }
+    Object.entries(queryFilters).forEach(([key, value]) => {
+      if (value === '' || value == null) next.delete(key)
+      else next.set(key, String(value))
+    })
+    setSearchParams(next)
+  }
+
   const changeTab = (key) => {
     setActiveTab(key)
     setPage(1)
+    syncQuery(key, filters, 1)
   }
 
   const changeFilters = (next) => {
     setFilters(next)
     setPage(1)
+    syncQuery(activeTab, next, 1)
+  }
+
+  const changePage = (nextPage) => {
+    setPage(nextPage)
+    syncQuery(activeTab, filters, nextPage)
   }
 
   const openDetail = (account, tab = '') => {
@@ -217,7 +281,7 @@ export default function AdminAccountManagement() {
         data={accounts}
         loading={accountsQuery.isLoading}
         page={page}
-        onPageChange={setPage}
+        onPageChange={changePage}
         onQuickView={setSelectedAccount}
         onOpenDetail={openDetail}
         onEdit={openEdit}

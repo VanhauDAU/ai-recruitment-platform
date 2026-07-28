@@ -5,6 +5,8 @@ import { DepartmentPanel, RolePanel } from './StructurePanels'
 
 export default function AccessControlTabs({
   isSuperuser,
+  activeKey,
+  onChange,
   department,
   role,
   membership,
@@ -63,5 +65,12 @@ export default function AccessControlTabs({
     }] : []),
   ]
 
-  return <Tabs items={items} destroyOnHidden={false} />
+  return (
+    <Tabs
+      activeKey={activeKey}
+      items={items}
+      destroyOnHidden={false}
+      onChange={onChange}
+    />
+  )
 }

@@ -3,6 +3,8 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { adminPermissionCatalog } from '@/entities/admin-access'
 import { ADMIN_PAGE_BY_KEY } from '../lazy/admin.pages'
+import { ADMIN_NAVIGATION } from './admin-navigation.config'
+import { flattenAdminNavigation } from './admin-navigation'
 import { ADMIN_ROUTES } from './admin-routes.config'
 
 describe('ADMIN_ROUTES contract', () => {
@@ -23,6 +25,17 @@ describe('ADMIN_ROUTES contract', () => {
     expect(ADMIN_ROUTES.map((route) => route.lazyKey).sort()).toEqual(
       Object.keys(ADMIN_PAGE_BY_KEY).sort(),
     )
+  })
+
+  it('keeps stable unique route ids and valid navigation references', () => {
+    const routeIds = ADMIN_ROUTES.map((route) => route.id)
+    expect(new Set(routeIds).size).toBe(routeIds.length)
+    const referencedIds = flattenAdminNavigation(ADMIN_NAVIGATION)
+      .map((item) => item.routeRef)
+      .filter(Boolean)
+    referencedIds.forEach((routeRef) => {
+      expect(routeIds).toContain(routeRef)
+    })
   })
 
   it('keeps site settings explicitly superuser-only', () => {

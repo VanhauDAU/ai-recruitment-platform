@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
+import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { message } from '@/shared/lib/toast'
@@ -8,12 +9,13 @@ import { AdminPanel } from '@/widgets/admin-workspace'
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
 export default function AdminSettings() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { retry: refreshSiteSettings } = useSiteSettings()
   const [groups, setGroups] = useState(null)
   const [values, setValues] = useState({})
   const [initial, setInitial] = useState({})
   const [pendingImageFiles, setPendingImageFiles] = useState({})
-  const [activeGroup, setActiveGroup] = useState('general')
+  const [activeGroup, setActiveGroup] = useState(() => searchParams.get('group') || 'general')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -28,6 +30,13 @@ export default function AdminSettings() {
       })
       .catch(() => message.error('Không tải được cấu hình.'))
   }, [])
+
+  useEffect(() => {
+    const requested = searchParams.get('group') || 'general'
+    if (groups?.some((group) => group.key === requested)) {
+      setActiveGroup(requested)
+    }
+  }, [groups, searchParams])
 
   const dirtyKeys = useMemo(
     () => Array.from(new Set([
@@ -99,6 +108,13 @@ export default function AdminSettings() {
   }
 
   const handleTabChange = (key) => {
+    const commitGroup = () => {
+      setActiveGroup(key)
+      const next = new URLSearchParams(searchParams)
+      if (key === 'general') next.delete('group')
+      else next.set('group', key)
+      setSearchParams(next)
+    }
     const current = groups.find((g) => g.key === activeGroup)
     if (current && dirtyInGroup(current)) {
       Modal.confirm({
@@ -106,10 +122,10 @@ export default function AdminSettings() {
         content: 'Nhóm hiện tại có thay đổi chưa lưu. Chuyển tab sẽ giữ nguyên thay đổi (chưa mất), tiếp tục?',
         okText: 'Chuyển tab',
         cancelText: 'Ở lại',
-        onOk: () => setActiveGroup(key),
+        onOk: commitGroup,
       })
     } else {
-      setActiveGroup(key)
+      commitGroup()
     }
   }
 

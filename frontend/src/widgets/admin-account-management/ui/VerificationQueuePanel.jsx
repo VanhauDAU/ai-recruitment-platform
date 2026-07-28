@@ -2,7 +2,7 @@ import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, DatePicker, Input, Select, Table, Tag, Typography } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import {
   adminEmployerVerificationKeys,
   getAdminEmployerVerifications,
@@ -38,6 +38,7 @@ function formatDate(value) {
 
 export default function VerificationQueuePanel() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({
     q: '',
@@ -56,6 +57,7 @@ export default function VerificationQueuePanel() {
       document_type: filters.document_type,
       phone_verified: filters.phone_verified,
       age: filters.age,
+      company: searchParams.get('company') || '',
     }
     if (filters.submitted_range?.length === 2) {
       result.submitted_from = filters.submitted_range[0].format('YYYY-MM-DD')
@@ -64,7 +66,7 @@ export default function VerificationQueuePanel() {
     return Object.fromEntries(
       Object.entries(result).filter(([, value]) => value !== ''),
     )
-  }, [filters, page, search])
+  }, [filters, page, search, searchParams])
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.list(params),
     queryFn: ({ signal }) => getAdminEmployerVerifications(params, { signal }),

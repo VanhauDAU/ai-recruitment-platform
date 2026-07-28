@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import {
   Button,
   Form,
@@ -34,6 +35,8 @@ function lines(value) {
 }
 
 export default function AdminEmployerServices() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') === 'packages' ? 'packages' : 'categories'
   const [form] = Form.useForm()
   const [categories, setCategories] = useState([])
   const [packages, setPackages] = useState([])
@@ -136,7 +139,12 @@ export default function AdminEmployerServices() {
   return (
     <div className="space-y-5">
       <AdminPanel>
-        <Tabs items={[
+        <Tabs activeKey={activeTab} onChange={(tab) => {
+          const next = new URLSearchParams(searchParams)
+          if (tab === 'categories') next.delete('tab')
+          else next.set('tab', tab)
+          setSearchParams(next)
+        }} items={[
           { key: 'categories', label: `Danh mục (${categories.length})`, children: <><div className="mb-4 flex justify-end"><Button type="primary" onClick={() => openEditor('category')}>Thêm danh mục</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={categories} columns={categoryColumns} pagination={false} scroll={{ x: 1000 }} /></div></> },
           { key: 'packages', label: `Gói dịch vụ (${packages.length})`, children: <><div className="mb-4 flex justify-end"><Button type="primary" disabled={!categories.length} onClick={() => openEditor('package')}>Thêm gói dịch vụ</Button></div><div className="overflow-x-auto"><Table rowKey="id" loading={loading} dataSource={packages} columns={packageColumns} pagination={false} scroll={{ x: 1100 }} /></div></> },
         ]} />
