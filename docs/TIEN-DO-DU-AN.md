@@ -849,9 +849,10 @@ thêm schema additive announcement/revision/user-state/daily-metric; ba permissi
 priority deterministic và locale fallback; admin API tạo revision bất biến,
 publish/pause/resume/archive/duplicate với row lock, revision token `409` và
 audit. Migration forward/reverse test pass; public/list/detail query budget lần
-lượt 1/2/2; toàn backend 594 test pass, coverage 85,97%; accounts + sitecontent
-213 test pass; frontend permission contract 2 test, lint và architecture pass.
-OpenAPI đã sinh/validate; runtime UI chưa được gắn và thuộc AN-P2.)
+lượt 1/2/2; toàn backend 595 test pass, coverage 86,01%; accounts + sitecontent
+213 test pass; frontend permission contract 2 test, lint, architecture, build
+và bundle budget pass. OpenAPI đã sinh/validate; runtime UI chưa được gắn và
+thuộc AN-P2.)
 
 Cập nhật 2026-07-29b (AUTH-OAUTH-REAUTH — `GET /api/auth/password/`
 trả điều kiện phiên; banner xác thực lại tại chỗ với `next` quay về đúng trang,
