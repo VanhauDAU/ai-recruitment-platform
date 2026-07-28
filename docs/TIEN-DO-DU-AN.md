@@ -66,7 +66,7 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | AN-P0 | Chốt PRD, ERD, lifecycle, priority, API/DTO, ownership, failure mode và rollout | ✅ |
-| AN-P1 | Backend foundation: model/revision, permission, selector/service, public/admin API và OpenAPI | ⬜ |
+| AN-P1 | Backend foundation: model/revision, permission, selector/service, public/admin API và OpenAPI | ✅ |
 | AN-P2 | Runtime strip đa portal, system reminder, animation, accessibility và fail-safe | ⬜ |
 | AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ⬜ |
 | AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ⬜ |
@@ -843,10 +843,15 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29c (AN-P0 — chốt đặc tả dải thông báo đa cổng:
-PRD, ERD, lifecycle revision, targeting, priority, API/DTO, permission, failure
-mode, consent, FSD ownership và rollout/rollback. Markdown link gate pass trên
-46 tài liệu tracked; AN-P1 chưa bắt đầu và chưa có endpoint/runtime mới.)
+Cập nhật lần cuối: 2026-07-29d (AN-P1 — backend foundation dải thông báo:
+thêm schema additive announcement/revision/user-state/daily-metric; ba permission
+`announcement.view/manage/publish`; active feed target theo surface/session/path,
+priority deterministic và locale fallback; admin API tạo revision bất biến,
+publish/pause/resume/archive/duplicate với row lock, revision token `409` và
+audit. Migration forward/reverse test pass; public/list/detail query budget lần
+lượt 1/2/2; toàn backend 594 test pass, coverage 85,97%; accounts + sitecontent
+213 test pass; frontend permission contract 2 test, lint và architecture pass.
+OpenAPI đã sinh/validate; runtime UI chưa được gắn và thuộc AN-P2.)
 
 Cập nhật 2026-07-29b (AUTH-OAUTH-REAUTH — `GET /api/auth/password/`
 trả điều kiện phiên; banner xác thực lại tại chỗ với `next` quay về đúng trang,
