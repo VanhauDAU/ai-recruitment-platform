@@ -102,6 +102,8 @@ test('admin company directory: three-level navigation, detail and owner roster',
                     created_at: '2026-07-01T00:00:00Z',
                   }],
                 }
+              : path === '/api/admin/company-update-requests/'
+                ? { count: 0, next: null, previous: null, results: [] }
               : path === '/api/privacy/consent/'
                 ? {
                     consent: {
@@ -124,12 +126,14 @@ test('admin company directory: three-level navigation, detail and owner roster',
   if (usesDrawer) {
     await page.getByRole('button', { name: 'Mở điều hướng' }).click()
     const drawer = page.getByRole('dialog')
-    await drawer.getByRole('button', { name: /Công ty & NTD/ }).click()
-    await drawer.getByRole('button', { name: /^Công ty Pháp nhân/ }).click()
+    await drawer.getByRole('button', { name: 'Doanh nghiệp' }).click()
+    await drawer.getByRole('button', { name: 'Công ty' }).click()
   } else {
-    await page.getByRole('button', { name: /^Công ty Pháp nhân/ }).click()
+    await page.getByRole('navigation', { name: 'Điều hướng quản trị' })
+      .getByRole('button', { name: 'Công ty' })
+      .click()
   }
-  const companyListLeaf = page.getByRole('button', { name: 'Danh sách công ty' })
+  const companyListLeaf = page.getByRole('button', { name: 'Tất cả công ty' })
   await expect(companyListLeaf).toBeVisible()
   await companyListLeaf.click()
 
@@ -139,6 +143,15 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await page.getByRole('tab', { name: /Nhà tuyển dụng/ }).click()
   await expect(page.getByText('HR Manager')).toBeVisible()
   await expect(page.getByText('Đã xác thực', { exact: true })).toBeVisible()
+
+  await page.goto('/admin/app/companies?tab=updates&company=co_alpha')
+  await expect(page.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(page.getByRole('heading', {
+    name: 'Yêu cầu cập nhật thông tin công ty',
+  })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

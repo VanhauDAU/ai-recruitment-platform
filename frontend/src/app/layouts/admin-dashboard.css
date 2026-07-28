@@ -189,8 +189,8 @@
   border-radius: 9px;
   gap: 8px;
   justify-content: space-between;
-  min-height: 50px;
-  padding: 8px 10px;
+  min-height: 38px;
+  padding: 7px 10px;
 }
 
 .admin-nav__level-two:hover,
@@ -200,21 +200,10 @@
   color: #ffffff;
 }
 
-.admin-nav__level-two strong,
-.admin-nav__level-two small {
-  display: block;
-}
-
 .admin-nav__level-two strong {
+  display: block;
   font-size: 13px;
   line-height: 1.35;
-}
-
-.admin-nav__level-two small {
-  color: #8190a5;
-  font-size: 11px;
-  line-height: 1.35;
-  margin-top: 2px;
 }
 
 .admin-nav__level-two > .anticon {
@@ -231,18 +220,17 @@
   color: var(--admin-text);
   left: 280px;
   max-height: calc(100dvh - 106px);
-  min-height: 220px;
   overflow-y: auto;
   position: fixed;
   top: 82px;
-  width: 330px;
+  width: 290px;
   z-index: 55;
 }
 
 .admin-nav__flyout-header {
   background: linear-gradient(145deg, #f8fafc, #ffffff);
   border-bottom: 1px solid var(--admin-border);
-  padding: 22px;
+  padding: 14px 16px;
 }
 
 .admin-nav__flyout-header p {
@@ -256,28 +244,20 @@
 
 .admin-nav__flyout-header h2 {
   color: var(--admin-text);
-  font-size: 20px;
+  font-size: 16px;
   margin: 0;
 }
 
-.admin-nav__flyout-header span {
-  color: var(--admin-text-muted);
-  display: block;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-top: 5px;
-}
-
 .admin-nav__flyout-items {
-  padding: 10px;
+  padding: 8px;
 }
 
 .admin-nav__leaf {
   border-radius: 10px;
   color: #334155;
   gap: 10px;
-  min-height: 46px;
-  padding: 9px 10px;
+  min-height: 40px;
+  padding: 7px 9px;
 }
 
 .admin-nav__leaf:not(:disabled):hover,
@@ -385,18 +365,12 @@
 .admin-nav__mobile-heading {
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 8px 10px;
 }
 
 .admin-nav__mobile-heading strong {
   color: #ffffff;
   font-size: 18px;
-}
-
-.admin-nav__mobile-heading span {
-  color: #94a3b8;
-  font-size: 12px;
-  margin-top: 3px;
 }
 
 .admin-nav--mobile .admin-nav__leaf {

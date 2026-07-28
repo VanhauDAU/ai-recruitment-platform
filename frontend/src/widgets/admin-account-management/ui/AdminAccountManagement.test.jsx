@@ -16,7 +16,6 @@ const { accountApi, accessApi, verificationApi, useSession } = vi.hoisted(() => 
     getAdminRoles: vi.fn(),
   },
   verificationApi: {
-    getAdminCompanyUpdateRequests: vi.fn(),
     getAdminEmployerVerifications: vi.fn(),
   },
   useSession: vi.fn(),
@@ -44,7 +43,6 @@ const SUMMARY = {
   pending_admin: 2,
   employer_verification_pending: 4,
   employer_verification_overdue: 1,
-  company_update_pending: 0,
 }
 
 function renderWidget({ isSuperuser = true, permissions = [] } = {}) {
@@ -87,7 +85,6 @@ describe('AdminAccountManagement overview', () => {
     accessApi.getAdminDepartments.mockResolvedValue([])
     accessApi.getAdminRoles.mockResolvedValue([])
     verificationApi.getAdminEmployerVerifications.mockResolvedValue({ count: 0, results: [] })
-    verificationApi.getAdminCompanyUpdateRequests.mockResolvedValue({ count: 0, results: [] })
   })
 
   it('shows each account stat with its share of the total', async () => {
@@ -100,14 +97,12 @@ describe('AdminAccountManagement overview', () => {
     expect(statCard('Email chưa xác minh')).toHaveTextContent('25% chưa hoàn tất xác thực')
   })
 
-  it('warns about overdue cases and mutes an empty queue', async () => {
+  it('warns about overdue employer verification cases', async () => {
     renderWidget()
 
     await waitForSummary()
     expect(queueCard('Hồ sơ NTD chờ duyệt')).toHaveTextContent('1 hồ sơ đã chờ quá 72 giờ')
     expect(queueCard('Hồ sơ NTD chờ duyệt')).toHaveClass('account-queue--red')
-    // Hàng chờ rỗng phải về tông trung tính dù cấu hình là amber.
-    expect(queueCard('Sửa thông tin công ty')).toHaveClass('account-queue--slate')
     expect(screen.getByText('6 việc đang chờ')).toBeInTheDocument()
   })
 
@@ -122,15 +117,10 @@ describe('AdminAccountManagement overview', () => {
     })
   })
 
-  it('shows only the company-update queue for its dedicated view permission', async () => {
-    renderWidget({ isSuperuser: false, permissions: ['company_update.view'] })
+  it('does not mix company-update requests into account tabs', async () => {
+    renderWidget()
 
     await waitForSummary()
-    expect(screen.getByRole('tab', { name: /Sửa thông tin công ty/ })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.queryByRole('tab', { name: /Chờ xác thực NTD/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: 'Tất cả' })).not.toBeInTheDocument()
-    await waitFor(() => expect(verificationApi.getAdminCompanyUpdateRequests).toHaveBeenCalled())
-    expect(verificationApi.getAdminEmployerVerifications).not.toHaveBeenCalled()
-    expect(accountApi.getAdminAccounts).not.toHaveBeenCalled()
+    expect(screen.queryByRole('tab', { name: /Sửa thông tin công ty/ })).not.toBeInTheDocument()
   })
 })

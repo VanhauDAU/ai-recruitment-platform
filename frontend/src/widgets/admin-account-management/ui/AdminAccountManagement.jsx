@@ -23,7 +23,6 @@ import AccountFilters from './AccountFilters'
 import AccountOverview from './AccountOverview'
 import AccountQuickDrawer from './AccountQuickDrawer'
 import AccountTable from './AccountTable'
-import CompanyUpdateQueuePanel from './CompanyUpdateQueuePanel'
 import InvitationPanel from './InvitationPanel'
 import VerificationQueuePanel from './VerificationQueuePanel'
 import '../admin-account-management.css'
@@ -82,10 +81,6 @@ export default function AdminAccountManagement() {
     isSuperuser
     || has('employer_verification.view')
   )
-  const canViewCompanyUpdates = (
-    isSuperuser
-    || has('company_update.view')
-  )
   const canBrowseAccounts = (
     isSuperuser
     || has('account.view')
@@ -94,7 +89,6 @@ export default function AdminAccountManagement() {
   const canReadAccounts = (
     canBrowseAccounts
     || canViewEmployerVerifications
-    || canViewCompanyUpdates
   )
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -106,11 +100,9 @@ export default function AdminAccountManagement() {
       return requested
     }
     if (requested === 'verification' && canViewEmployerVerifications) return requested
-    if (requested === 'company-updates' && canViewCompanyUpdates) return requested
     if (requested === 'invitations' && canInvite) return requested
     if (canBrowseAccounts) return 'all'
     if (canViewEmployerVerifications) return 'verification'
-    if (canViewCompanyUpdates) return 'company-updates'
     return 'invitations'
   })
   const [filters, setFilters] = useState(() => ({
@@ -137,7 +129,7 @@ export default function AdminAccountManagement() {
   const accountsQuery = useQuery({
     queryKey: adminAccountKeys.list(params),
     queryFn: ({ signal }) => getAdminAccounts(params, { signal }),
-    enabled: !['invitations', 'verification', 'company-updates'].includes(activeTab)
+    enabled: !['invitations', 'verification'].includes(activeTab)
       && canBrowseAccounts,
   })
   const departmentsQuery = useQuery({
@@ -161,7 +153,6 @@ export default function AdminAccountManagement() {
     const allowed = (
       (['all', 'candidate', 'employer', 'admin'].includes(requested) && canBrowseAccounts)
       || (requested === 'verification' && canViewEmployerVerifications)
-      || (requested === 'company-updates' && canViewCompanyUpdates)
       || (requested === 'invitations' && canInvite)
     )
     if (allowed) setActiveTab(requested)
@@ -176,7 +167,6 @@ export default function AdminAccountManagement() {
   }, [
     canBrowseAccounts,
     canInvite,
-    canViewCompanyUpdates,
     canViewEmployerVerifications,
     searchParams,
   ])
@@ -308,15 +298,6 @@ export default function AdminAccountManagement() {
         </div>
       ),
     }] : []),
-    ...(canViewCompanyUpdates ? [{
-      key: 'company-updates',
-      label: <QueueTabLabel count={summary.company_update_pending}>Sửa thông tin công ty</QueueTabLabel>,
-      children: (
-        <div className="account-management-tab-content">
-          <CompanyUpdateQueuePanel />
-        </div>
-      ),
-    }] : []),
     ...(canInvite ? [{
       key: 'invitations',
       label: 'Lời mời Admin',
@@ -338,7 +319,6 @@ export default function AdminAccountManagement() {
         <AccountOverview
           summary={summary}
           canViewEmployerVerifications={canViewEmployerVerifications}
-          canViewCompanyUpdates={canViewCompanyUpdates}
           canInvite={canInvite}
           onOpenQueue={changeTab}
         />

@@ -29,11 +29,11 @@ describe('admin navigation tree', () => {
     )
     const labels = flattenAdminNavigation(tree).map((leaf) => leaf.label)
 
-    expect(labels).toContain('Kiểm duyệt tin')
+    expect(labels).toContain('Tin chờ duyệt')
     expect(labels).toContain('Báo cáo vi phạm')
     expect(labels).toContain('Thông tin cá nhân')
-    expect(labels).not.toContain('Danh sách công ty')
-    expect(tree.map((item) => item.label)).not.toContain('Công ty & NTD')
+    expect(labels).not.toContain('Tất cả công ty')
+    expect(tree.map((item) => item.label)).not.toContain('Doanh nghiệp')
   })
 
   it('keeps future items disabled and superuser-only', () => {
@@ -75,6 +75,49 @@ describe('admin navigation tree', () => {
     )?.key).toBe('company-list')
   })
 
+  it('routes company update requests inside the company workspace', () => {
+    const tree = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access(['company_update.view']),
+    )
+    const leaf = flattenAdminNavigation(tree).find(
+      (item) => item.key === 'company-updates',
+    )
+
+    expect(leaf.href).toBe('/admin/app/companies?tab=updates')
+    expect(findActiveAdminNavigation(
+      tree,
+      '/admin/app/companies',
+      '?tab=updates&company=co_123',
+    )?.key).toBe('company-updates')
+  })
+
+  it('maps each system setting leaf to one exact settings group', () => {
+    const settingLeaves = flattenAdminNavigation(ADMIN_NAVIGATION)
+      .filter((item) => item.key.startsWith('settings-'))
+    const groups = settingLeaves.map((item) => item.query?.group || 'general')
+
+    expect(groups).toEqual([
+      'general',
+      'homepage',
+      'seo',
+      'candidate',
+      'employer',
+      'jobs',
+      'cv',
+      'email',
+      'payment',
+      'security',
+      'upload',
+      'footer',
+      'contact',
+      'admin_roles',
+      'ai',
+      'blog',
+    ])
+  })
+
   it('searches only the already-authorized tree and keeps breadcrumbs', () => {
     const tree = buildAdminNavigation(
       ADMIN_NAVIGATION,
@@ -83,7 +126,7 @@ describe('admin navigation tree', () => {
     )
     const results = searchAdminNavigation(tree, 'owner')
 
-    expect(results.map((leaf) => leaf.key)).toContain('membership-directory')
+    expect(results.map((leaf) => leaf.key)).toContain('company-owners')
     expect(results[0].breadcrumb).toHaveLength(3)
     expect(searchAdminNavigation(tree, 'phân quyền')).toEqual([])
   })

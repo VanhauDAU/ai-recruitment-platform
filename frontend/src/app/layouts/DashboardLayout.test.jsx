@@ -46,8 +46,8 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByRole('button', { name: /^Việc làm/ }))
-    expect(screen.getByText('Kiểm duyệt tin')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Tin tuyển dụng/ }))
+    expect(screen.getByText('Tin chờ duyệt')).toBeInTheDocument()
     expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
     expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
     expect(screen.getByText('Kiểm duyệt tin · Nhân viên')).toBeInTheDocument()
@@ -73,13 +73,13 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Nội dung & kinh doanh')).toBeInTheDocument()
-    expect(screen.queryByText('Chuyên mục')).not.toBeInTheDocument()
+    expect(screen.getByText('Nội dung & dịch vụ')).toBeInTheDocument()
+    expect(screen.queryByText('Danh mục')).not.toBeInTheDocument()
 
-    await user.click(screen.getByText('Nội dung & kinh doanh'))
-    await user.click(screen.getByText('Blog'))
+    await user.click(screen.getByText('Nội dung & dịch vụ'))
+    await user.click(screen.getByText('Cẩm nang'))
 
-    expect(await screen.findByText('Chuyên mục')).toBeInTheDocument()
+    expect(await screen.findByText('Danh mục')).toBeInTheDocument()
     expect(screen.getByText('Bài viết')).toBeInTheDocument()
   })
 
@@ -99,14 +99,32 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    const contentSection = screen.getByRole('button', { name: /Nội dung & kinh doanh/ })
-    const accountSection = screen.getByRole('button', { name: /Công ty & NTD/ })
+    const contentSection = screen.getByRole('button', { name: /Nội dung & dịch vụ/ })
+    const accountSection = screen.getByRole('button', { name: /Doanh nghiệp/ })
     await user.click(contentSection)
     expect(contentSection).toHaveAttribute('aria-expanded', 'true')
 
     await user.click(accountSection)
     expect(accountSection).toHaveAttribute('aria-expanded', 'true')
     expect(contentSection).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('shows the active third-level item in the workspace header', () => {
+    useSession.mockReturnValue({
+      user: {
+        role: 'admin',
+        email: 'superuser@example.com',
+        admin_access: { is_superuser: true, permissions: [], memberships: [] },
+      },
+      logout: vi.fn(),
+    })
+    render(
+      <MemoryRouter initialEntries={['/admin/app/companies?tab=updates']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Đang ở: Yêu cầu cập nhật')).toBeInTheDocument()
   })
 
   it('shows a useful empty state for an unassigned admin', () => {

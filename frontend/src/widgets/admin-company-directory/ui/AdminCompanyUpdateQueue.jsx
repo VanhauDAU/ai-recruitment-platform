@@ -18,7 +18,7 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
-export default function CompanyUpdateQueuePanel() {
+export default function AdminCompanyUpdateQueue() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [page, setPage] = useState(1)
@@ -53,13 +53,13 @@ export default function CompanyUpdateQueuePanel() {
       </div>
 
       <Typography.Title level={5} className="!mb-2 !mt-0">
-        Yêu cầu sửa thông tin công ty
+        Yêu cầu cập nhật thông tin công ty
       </Typography.Title>
       {query.isError && (
         <Alert
           showIcon
           type="error"
-          title="Không thể tải yêu cầu sửa công ty"
+          title="Không thể tải yêu cầu cập nhật công ty"
           description={getApiErrorMessage(query.error)}
         />
       )}
@@ -98,7 +98,11 @@ export default function CompanyUpdateQueuePanel() {
             {
               title: 'Mức độ',
               dataIndex: 'is_sensitive',
-              render: (value) => <Tag color={value ? 'red' : 'blue'}>{value ? 'Pháp lý' : 'Thông thường'}</Tag>,
+              render: (value) => (
+                <Tag color={value ? 'red' : 'blue'}>
+                  {value ? 'Pháp lý' : 'Thông thường'}
+                </Tag>
+              ),
             },
             { title: 'Gửi gần nhất', dataIndex: 'updated_at', render: formatDate },
             {
@@ -110,7 +114,9 @@ export default function CompanyUpdateQueuePanel() {
                 <Button
                   type="link"
                   icon={<EyeOutlined />}
-                  onClick={() => navigate(`${adminPath(`/accounts/${row.requested_by_public_id}`)}?tab=verification`)}
+                  onClick={() => navigate(
+                    `${adminPath(`/accounts/${row.requested_by_public_id}`)}?tab=verification`,
+                  )}
                 >
                   Xử lý
                 </Button>

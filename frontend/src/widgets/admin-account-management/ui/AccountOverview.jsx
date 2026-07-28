@@ -1,5 +1,4 @@
 import {
-  BankOutlined,
   CheckCircleOutlined,
   LockOutlined,
   MailOutlined,
@@ -46,7 +45,6 @@ function QueueCard({ icon, label, value, detail, tone, onClick }) {
 export default function AccountOverview({
   summary,
   canViewEmployerVerifications,
-  canViewCompanyUpdates,
   canInvite,
   onOpenQueue,
 }) {
@@ -68,14 +66,6 @@ export default function AccountOverview({
           : 'Không có hồ sơ quá hạn',
       },
     ] : []),
-    ...(canViewCompanyUpdates ? [{
-      key: 'company-updates',
-      icon: <BankOutlined />,
-      label: 'Sửa thông tin công ty',
-      value: summary.company_update_pending,
-      tone: 'amber',
-      detail: 'Chờ duyệt trước khi áp dụng',
-    }] : []),
     ...(canInvite ? [{
       key: 'invitations',
       icon: <UserAddOutlined />,

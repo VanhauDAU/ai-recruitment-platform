@@ -16,7 +16,7 @@ export const ADMIN_ROUTES = [
     title: 'Danh sách công ty',
     navLabel: 'Công ty',
     iconKey: 'companies',
-    permission: 'company.view',
+    permissionsAny: ['company.view', 'company_update.view'],
     showInNav: true,
   },
   {
@@ -105,7 +105,6 @@ export const ADMIN_ROUTES = [
       'account.admin.view',
       'account.admin.invite',
       'employer_verification.view',
-      'company_update.view',
     ],
     showInNav: true,
   },

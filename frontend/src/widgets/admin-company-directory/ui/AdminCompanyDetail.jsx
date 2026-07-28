@@ -421,7 +421,7 @@ export default function AdminCompanyDetail({ publicId }) {
           </p>
           <Link
             className="font-semibold text-emerald-700"
-            to={`${adminPath('/accounts')}?tab=company-updates&company=${company.public_id}`}
+            to={`${adminPath('/companies')}?tab=updates&company=${company.public_id}`}
           >
             Mở danh sách yêu cầu của công ty
           </Link>

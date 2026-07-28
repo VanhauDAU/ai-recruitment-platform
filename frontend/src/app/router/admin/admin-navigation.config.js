@@ -7,15 +7,11 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'operations',
         label: 'Điều hành',
-        description: 'Tình hình vận hành hệ thống',
-        children: [
-          { key: 'dashboard', label: 'Bảng điều khiển', routeRef: 'dashboard' },
-        ],
+        children: [{ key: 'dashboard', label: 'Bảng điều khiển', routeRef: 'dashboard' }],
       },
       {
         key: 'reports',
         label: 'Báo cáo',
-        description: 'Báo cáo tổng hợp theo kỳ',
         children: [
           {
             key: 'operations-report',
@@ -29,26 +25,31 @@ export const ADMIN_NAVIGATION = [
   },
   {
     key: 'companies-employers',
-    label: 'Công ty & NTD',
+    label: 'Doanh nghiệp',
     iconKey: 'companies',
     children: [
       {
         key: 'companies',
         label: 'Công ty',
-        description: 'Pháp nhân và trạng thái xác thực',
         children: [
-          { key: 'company-list', label: 'Danh sách công ty', routeRef: 'companies' },
+          {
+            key: 'company-list',
+            label: 'Tất cả công ty',
+            routeRef: 'companies',
+            access: { allOf: ['company.view'] },
+          },
           {
             key: 'company-pending',
-            label: 'Công ty chờ xác thực',
+            label: 'Chờ xác thực',
             routeRef: 'companies',
             query: { verification_status: 'pending' },
+            access: { allOf: ['company.view'] },
           },
           {
             key: 'company-updates',
-            label: 'Yêu cầu cập nhật thông tin',
-            routeRef: 'accounts',
-            query: { tab: 'company-updates' },
+            label: 'Yêu cầu cập nhật',
+            routeRef: 'companies',
+            query: { tab: 'updates' },
             access: { allOf: ['company_update.view'] },
           },
         ],
@@ -56,18 +57,17 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'employers',
         label: 'Nhà tuyển dụng',
-        description: 'Tài khoản và hồ sơ đại diện',
         children: [
           {
             key: 'employer-list',
-            label: 'Danh sách NTD',
+            label: 'Tất cả NTD',
             routeRef: 'accounts',
             query: { tab: 'employer' },
             access: { allOf: ['account.view'] },
           },
           {
             key: 'employer-verification',
-            label: 'Hồ sơ chờ xác thực',
+            label: 'Chờ xác thực hồ sơ',
             routeRef: 'accounts',
             query: { tab: 'verification' },
             access: { allOf: ['employer_verification.view'] },
@@ -83,13 +83,19 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'memberships',
         label: 'Thành viên',
-        description: 'Owner và member trong từng công ty',
         children: [
           {
-            key: 'membership-directory',
-            label: 'Tra cứu owner/member',
+            key: 'company-owners',
+            label: 'Owner công ty',
             routeRef: 'companies',
             query: { member_role: 'owner' },
+            access: { allOf: ['company.view', 'company_recruiter.view'] },
+          },
+          {
+            key: 'company-members',
+            label: 'Member công ty',
+            routeRef: 'companies',
+            query: { member_role: 'member' },
             access: { allOf: ['company.view', 'company_recruiter.view'] },
           },
           {
@@ -110,7 +116,6 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'user-accounts',
         label: 'Tài khoản',
-        description: 'Ứng viên, NTD và nhân viên quản trị',
         children: [
           {
             key: 'all-accounts',
@@ -127,7 +132,7 @@ export const ADMIN_NAVIGATION = [
           },
           {
             key: 'admin-accounts',
-            label: 'Nhân viên quản trị',
+            label: 'Quản trị viên',
             routeRef: 'accounts',
             query: { tab: 'admin' },
             access: { allOf: ['account.admin.view'] },
@@ -137,7 +142,6 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'user-control',
         label: 'Kiểm soát',
-        description: 'Trạng thái và hoạt động tài khoản',
         children: [
           {
             key: 'blocked-accounts',
@@ -163,12 +167,11 @@ export const ADMIN_NAVIGATION = [
     children: [
       {
         key: 'jobs',
-        label: 'Việc làm',
-        description: 'Kiểm duyệt và báo cáo vi phạm',
+        label: 'Tin tuyển dụng',
         children: [
           {
             key: 'job-moderation',
-            label: 'Kiểm duyệt tin',
+            label: 'Tin chờ duyệt',
             routeRef: 'jobModeration',
           },
           {
@@ -182,38 +185,35 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'cv-library',
         label: 'Thư viện CV',
-        description: 'Catalogue và dữ liệu nền CV',
         children: [
           { key: 'cv-templates', label: 'Mẫu CV', routeRef: 'cvCatalogue' },
-          { key: 'cv-samples', label: 'CV mẫu', routeRef: 'cvCatalogue', query: { tab: 'samples' } },
+          { key: 'cv-samples', label: 'Nội dung mẫu', routeRef: 'cvCatalogue', query: { tab: 'samples' } },
           { key: 'cv-blueprints', label: 'Blueprint', routeRef: 'cvCatalogue', query: { tab: 'blueprints' } },
           { key: 'cv-locales', label: 'Ngôn ngữ', routeRef: 'cvCatalogue', query: { tab: 'locales' } },
-          { key: 'cv-taxonomy', label: 'Phân loại', routeRef: 'cvCatalogue', query: { tab: 'taxonomy' } },
-          { key: 'cv-backgrounds', label: 'Background', routeRef: 'cvCatalogue', query: { tab: 'backgrounds' } },
+          { key: 'cv-taxonomy', label: 'Danh mục & màu', routeRef: 'cvCatalogue', query: { tab: 'taxonomy' } },
+          { key: 'cv-backgrounds', label: 'Hình nền', routeRef: 'cvCatalogue', query: { tab: 'backgrounds' } },
         ],
       },
     ],
   },
   {
     key: 'content-business',
-    label: 'Nội dung & kinh doanh',
+    label: 'Nội dung & dịch vụ',
     iconKey: 'blog',
     children: [
       {
         key: 'blog',
-        label: 'Blog',
-        description: 'Cẩm nang nghề nghiệp',
+        label: 'Cẩm nang',
         children: [
           { key: 'blog-posts', label: 'Bài viết', routeRef: 'blog' },
-          { key: 'blog-categories', label: 'Chuyên mục', routeRef: 'blog', query: { tab: 'categories' } },
-          { key: 'blog-tags', label: 'Tags', routeRef: 'blog', query: { tab: 'tags' } },
+          { key: 'blog-categories', label: 'Danh mục', routeRef: 'blog', query: { tab: 'categories' } },
+          { key: 'blog-tags', label: 'Thẻ', routeRef: 'blog', query: { tab: 'tags' } },
           { key: 'blog-pins', label: 'Bài ghim', routeRef: 'blog', query: { tab: 'pins' } },
         ],
       },
       {
         key: 'services',
         label: 'Dịch vụ',
-        description: 'Catalogue dịch vụ nhà tuyển dụng',
         children: [
           { key: 'service-categories', label: 'Danh mục', routeRef: 'services' },
           { key: 'service-packages', label: 'Gói dịch vụ', routeRef: 'services', query: { tab: 'packages' } },
@@ -222,7 +222,6 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'leads',
         label: 'Khách hàng tiềm năng',
-        description: 'Nhu cầu tư vấn doanh nghiệp',
         children: [
           { key: 'consultation-leads', label: 'Yêu cầu tư vấn', routeRef: 'consultationLeads' },
         ],
@@ -237,32 +236,38 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'access-control',
         label: 'Phân quyền',
-        description: 'Cơ cấu và quyền quản trị',
         children: [
           { key: 'departments', label: 'Phòng ban', routeRef: 'accessControl' },
-          { key: 'roles', label: 'Vai trò', routeRef: 'accessControl', query: { tab: 'roles' } },
+          { key: 'roles', label: 'Chức danh', routeRef: 'accessControl', query: { tab: 'roles' } },
           { key: 'staff', label: 'Nhân viên', routeRef: 'accessControl', query: { tab: 'staff' } },
-          { key: 'provisioning', label: 'Cấp quyền', routeRef: 'accessControl', query: { tab: 'provisioning' } },
+          { key: 'provisioning', label: 'Cấp tài khoản', routeRef: 'accessControl', query: { tab: 'provisioning' } },
         ],
       },
       {
         key: 'settings',
         label: 'Cấu hình',
-        description: 'Thiết lập toàn hệ thống',
         children: [
           { key: 'settings-general', label: 'Chung', routeRef: 'settings' },
+          { key: 'settings-homepage', label: 'Trang chủ', routeRef: 'settings', query: { group: 'homepage' } },
+          { key: 'settings-seo', label: 'SEO', routeRef: 'settings', query: { group: 'seo' } },
           { key: 'settings-candidate', label: 'Ứng viên', routeRef: 'settings', query: { group: 'candidate' } },
           { key: 'settings-employer', label: 'Nhà tuyển dụng', routeRef: 'settings', query: { group: 'employer' } },
-          { key: 'settings-recruitment', label: 'Tuyển dụng & CV', routeRef: 'settings', query: { group: 'jobs' } },
-          { key: 'settings-commerce', label: 'Email & thanh toán', routeRef: 'settings', query: { group: 'email' } },
+          { key: 'settings-jobs', label: 'Tin tuyển dụng', routeRef: 'settings', query: { group: 'jobs' } },
+          { key: 'settings-cv', label: 'CV', routeRef: 'settings', query: { group: 'cv' } },
+          { key: 'settings-email', label: 'Email', routeRef: 'settings', query: { group: 'email' } },
+          { key: 'settings-payment', label: 'Thanh toán', routeRef: 'settings', query: { group: 'payment' } },
           { key: 'settings-security', label: 'Bảo mật', routeRef: 'settings', query: { group: 'security' } },
-          { key: 'settings-content', label: 'SEO & nội dung', routeRef: 'settings', query: { group: 'seo' } },
+          { key: 'settings-upload', label: 'Tải tệp', routeRef: 'settings', query: { group: 'upload' } },
+          { key: 'settings-footer', label: 'Chân trang', routeRef: 'settings', query: { group: 'footer' } },
+          { key: 'settings-contact', label: 'Liên hệ', routeRef: 'settings', query: { group: 'contact' } },
+          { key: 'settings-admin', label: 'Quản trị', routeRef: 'settings', query: { group: 'admin_roles' } },
+          { key: 'settings-ai', label: 'AI', routeRef: 'settings', query: { group: 'ai' } },
+          { key: 'settings-blog', label: 'Cẩm nang', routeRef: 'settings', query: { group: 'blog' } },
         ],
       },
       {
         key: 'monitoring',
         label: 'Giám sát',
-        description: 'Theo dõi hoạt động quản trị',
         children: [
           {
             key: 'audit-log',
@@ -282,7 +287,6 @@ export const ADMIN_NAVIGATION = [
       {
         key: 'personal-profile',
         label: 'Hồ sơ',
-        description: 'Thiết lập tài khoản đang đăng nhập',
         children: [
           { key: 'my-profile', label: 'Thông tin cá nhân', routeRef: 'account' },
           { key: 'my-security', label: 'Bảo mật', routeRef: 'account', query: { tab: 'security' } },

@@ -113,7 +113,6 @@ function MobileNavigation({
         </button>
         <div className="admin-nav__mobile-heading">
           <strong>{currentLevelTwo.label}</strong>
-          <span>{currentLevelTwo.description}</span>
         </div>
         {currentLevelTwo.children.map((leaf) => (
           <LeafButton
@@ -135,7 +134,6 @@ function MobileNavigation({
         </button>
         <div className="admin-nav__mobile-heading">
           <strong>{currentLevelOne.label}</strong>
-          <span>Chọn nhóm chức năng</span>
         </div>
         {currentLevelOne.children.map((levelTwo) => (
           <button
@@ -144,10 +142,7 @@ function MobileNavigation({
             className="admin-nav__level-two"
             onClick={() => setTrail([currentLevelOne.key, levelTwo.key])}
           >
-            <span>
-              <strong>{levelTwo.label}</strong>
-              <small>{levelTwo.description}</small>
-            </span>
+            <strong>{levelTwo.label}</strong>
             <RightOutlined />
           </button>
         ))}
@@ -317,10 +312,7 @@ export default function AdminNavigation({
                               openLevelTwo === levelTwo.key ? '' : levelTwo.key,
                             )}
                           >
-                            <span>
-                              <strong>{levelTwo.label}</strong>
-                              <small>{levelTwo.description}</small>
-                            </span>
+                            <strong>{levelTwo.label}</strong>
                             <RightOutlined />
                           </button>
                         )
@@ -340,7 +332,6 @@ export default function AdminNavigation({
               <div className="admin-nav__flyout-header">
                 <p>{currentLevelOne.label}</p>
                 <h2>{currentLevelTwo.label}</h2>
-                <span>{currentLevelTwo.description}</span>
               </div>
               <div className="admin-nav__flyout-items">
                 {currentLevelTwo.children.map((leaf) => (

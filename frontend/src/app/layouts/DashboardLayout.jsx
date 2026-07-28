@@ -17,7 +17,10 @@ import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
 import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
-import { buildAdminNavigation } from '../router/admin/admin-navigation'
+import {
+  buildAdminNavigation,
+  findActiveAdminNavigation,
+} from '../router/admin/admin-navigation'
 import AdminNavigation from './AdminNavigation'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import './admin-dashboard.css'
@@ -76,6 +79,10 @@ export default function DashboardLayout() {
       const staticPath = item.path.replace(/:[^/]+/g, '')
       return pathname === item.path || pathname.startsWith(staticPath)
     })
+  const activeLeaf = findActiveAdminNavigation(navigation, pathname, search)
+  const currentTitle = currentRoute?.segment.includes(':')
+    ? currentRoute.title
+    : activeLeaf?.label || currentRoute?.title
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
     setMobileNavOpen(false)
@@ -186,7 +193,7 @@ export default function DashboardLayout() {
               <div className="admin-topbar__location min-w-0">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Không gian làm việc</p>
                 <p className="truncate text-sm font-semibold text-slate-800">
-                  {`Đang ở: ${currentRoute?.title || 'Quản trị hệ thống'}`}
+                  {`Đang ở: ${currentTitle || 'Quản trị hệ thống'}`}
                 </p>
               </div>
             </div>

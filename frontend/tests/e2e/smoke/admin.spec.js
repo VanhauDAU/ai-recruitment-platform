@@ -75,14 +75,11 @@ test('admin account management: filters, table actions and quick detail are resp
             unverified: 0,
             pending_admin: 0,
             employer_verification_pending: 2,
-            company_update_pending: 3,
           }
         : path === '/api/admin/accounts/'
           ? { count: 1, next: null, previous: null, results: [candidate] }
           : path === '/api/admin/employer-verifications/'
             ? { count: 0, next: null, previous: null, results: [] }
-            : path === '/api/admin/company-update-requests/'
-              ? { count: 0, next: null, previous: null, results: [] }
           : path === '/api/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
           : path === '/api/admin/departments/' || path === '/api/admin/roles/'
@@ -102,20 +99,13 @@ test('admin account management: filters, table actions and quick detail are resp
   await expect(page.getByPlaceholder('Tìm theo tên, email hoặc mã tài khoản')).toBeVisible()
   await expect(page.getByText('Nguyễn Minh Anh')).toBeVisible()
   const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
-  const companyUpdatesTab = page.getByRole('tab', { name: /Sửa thông tin công ty/ })
   await expect(verificationTab).toContainText('2')
-  await expect(companyUpdatesTab).toContainText('3')
   if (isMobile) await verificationTab.evaluate((element) => element.click())
   else await verificationTab.click()
   await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Yêu cầu sửa thông tin công ty' })).toBeHidden()
   await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
     .locator('.account-management-tab-content')
     .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
-  if (isMobile) await companyUpdatesTab.evaluate((element) => element.click())
-  else await companyUpdatesTab.click()
-  await expect(page.getByRole('heading', { name: 'Yêu cầu sửa thông tin công ty' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Hồ sơ xác thực nhà tuyển dụng' })).toBeHidden()
   const allTab = page.getByRole('tab', { name: 'Tất cả' })
   if (isMobile) await allTab.evaluate((element) => element.click())
   else await allTab.click()
