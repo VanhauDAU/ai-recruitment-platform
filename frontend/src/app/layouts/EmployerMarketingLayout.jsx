@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { MenuOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Button, Drawer } from 'antd'
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import '@/shared/config/i18n'
 import { EmailVerificationBanner } from '@/features/auth'
 import { FloatingConsultButton } from '@/features/request-consultation'
 import { LanguageSwitcher } from '@/features/switch-language'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo, settingText, useSiteSettings } from '@/entities/site-settings'
 import { EmployerFooter } from '@/widgets/employer-footer'
+import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '@/shared/config/portals'
 
 const NAV_ITEMS = [
@@ -44,9 +46,10 @@ function NavLinks({ className, onNavigate }) {
 }
 
 export default function EmployerMarketingLayout() {
-  const { t } = useTranslation('employer')
+  const { i18n, t } = useTranslation('employer')
   const { isAuthenticated, user } = useSession()
   const { settings } = useSiteSettings()
+  const { pathname } = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -114,7 +117,18 @@ export default function EmployerMarketingLayout() {
         </div>
       </Drawer>
 
-      <EmailVerificationBanner verificationPath={employerAppPath('/xac-thuc-email')} />
+      <AnnouncementStrip
+        surface={ANNOUNCEMENT_SURFACES.EMPLOYER_MARKETING}
+        path={pathname}
+        locale={i18n.resolvedLanguage || i18n.language || 'vi'}
+        verificationPath={employerAppPath('/xac-thuc-email')}
+        stickyOffset="4rem"
+        legacy={(
+          <EmailVerificationBanner
+            verificationPath={employerAppPath('/xac-thuc-email')}
+          />
+        )}
+      />
 
       <main>
         <Outlet />

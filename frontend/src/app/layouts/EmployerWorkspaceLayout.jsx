@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
@@ -26,6 +27,7 @@ import {
   getCampaign,
 } from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
+import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
@@ -142,13 +144,6 @@ export default function EmployerWorkspaceLayout() {
 
   return (
     <Layout data-testid="employer-workspace" className="!flex !h-dvh !min-h-dvh !flex-col !overflow-hidden !bg-[#edf1f5]">
-      {showComplianceNotice && (
-        <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
-          <span className="hidden sm:inline">[QUAN TRỌNG] Hoàn thiện Thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên. </span>
-          <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">Cập nhật ngay</Link>
-        </div>
-      )}
-
       <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between !bg-[#1e2f40] !px-3 !leading-none sm:!px-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Button
@@ -184,6 +179,20 @@ export default function EmployerWorkspaceLayout() {
           </Dropdown>
         </div>
       </Header>
+
+      <AnnouncementStrip
+        surface={ANNOUNCEMENT_SURFACES.EMPLOYER_WORKSPACE}
+        path={pathname}
+        verificationPath={employerAppPath('/xac-thuc-email')}
+        employerProfile={profile}
+        employerProfileReady={profileQuery.isSuccess}
+        legacy={showComplianceNotice ? (
+          <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
+            <span className="hidden sm:inline">[QUAN TRỌNG] Hoàn thiện Thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên. </span>
+            <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">Cập nhật ngay</Link>
+          </div>
+        ) : null}
+      />
 
       <Layout className="!relative !min-h-0 !min-w-0 !flex-1 !overflow-hidden !bg-[#edf1f5]">
         {isMobileViewport && !sidebarCollapsed && (
@@ -315,9 +324,8 @@ export default function EmployerWorkspaceLayout() {
               </Link>
             )}
           </div>
-          {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}
           <Content
-            className={`min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 sm:p-5 sm:pt-0 xl:p-6 xl:pt-0 ${showComplianceNotice ? '[--workspace-viewport:calc(100dvh_-_136px)]' : '[--workspace-viewport:calc(100dvh_-_104px)]'}`}
+            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 [--workspace-viewport:100%] sm:p-5 sm:pt-0 xl:p-6 xl:pt-0"
           >
             <div className="mx-auto w-full max-w-[1320px]">
               <Outlet />
