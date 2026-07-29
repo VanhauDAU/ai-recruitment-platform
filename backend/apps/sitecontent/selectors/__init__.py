@@ -10,6 +10,7 @@ from .announcements import (
     normalize_request_path,
     path_prefix_matches,
     presentation_status,
+    remote_announcements_enabled,
     revision_targets_request,
 )
 from .links import resolve_link_group_items, resolved_link_groups
@@ -31,6 +32,7 @@ __all__ = [
     'normalize_request_path',
     'path_prefix_matches',
     'presentation_status',
+    'remote_announcements_enabled',
     'resolve_link_group_items',
     'resolved_link_groups',
     'revision_targets_request',

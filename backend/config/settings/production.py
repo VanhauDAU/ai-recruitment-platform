@@ -37,6 +37,20 @@ if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):
 if not RECAPTCHA_SECRET_KEY:
     _errors.append('RECAPTCHA_SECRET_KEY là bắt buộc ở production.')
 
+_announcement_surfaces = {
+    'candidate',
+    'employer_marketing',
+    'employer_workspace',
+    'admin_workspace',
+}
+_invalid_announcement_surfaces = set(ANNOUNCEMENT_REMOTE_ENABLED_SURFACES) - _announcement_surfaces
+if _invalid_announcement_surfaces:
+    _errors.append(
+        'ANNOUNCEMENT_REMOTE_ENABLED_SURFACES chứa surface không hợp lệ: '
+        + ', '.join(sorted(_invalid_announcement_surfaces))
+        + '.',
+    )
+
 jwt_signing_key = config('JWT_SIGNING_KEY', default='')
 if not jwt_signing_key:
     _errors.append('JWT_SIGNING_KEY là bắt buộc khi ENVIRONMENT=production.')

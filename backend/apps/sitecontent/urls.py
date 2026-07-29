@@ -16,6 +16,7 @@ from .api.views import (
     AdminSettingUploadView,
     AdminSiteSettingView,
     AnnouncementEventBatchView,
+    AnnouncementRuntimeEventView,
     AnnouncementStateView,
     BannerListView,
     FeedbackCreateView,
@@ -34,6 +35,11 @@ urlpatterns = [
         'announcements/events/',
         AnnouncementEventBatchView.as_view(),
         name='site-announcement-events',
+    ),
+    path(
+        'announcements/runtime-events/',
+        AnnouncementRuntimeEventView.as_view(),
+        name='site-announcement-runtime-events',
     ),
     path(
         'announcements/<str:public_id>/state/',

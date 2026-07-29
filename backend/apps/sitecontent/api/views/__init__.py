@@ -10,6 +10,7 @@ from .announcements import (
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
     AnnouncementEventBatchView,
+    AnnouncementRuntimeEventView,
     AnnouncementStateView,
 )
 from .settings import (
@@ -27,6 +28,7 @@ from .settings import (
 __all__ = [
     'ActiveAnnouncementListView',
     'AnnouncementEventBatchView',
+    'AnnouncementRuntimeEventView',
     'AnnouncementStateView',
     'AdminAnnouncementArchiveView',
     'AdminAnnouncementDetailView',

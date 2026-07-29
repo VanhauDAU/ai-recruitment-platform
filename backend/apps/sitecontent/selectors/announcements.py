@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from django.conf import settings
 from django.db.models import (
     BigIntegerField,
     Case,
@@ -39,6 +40,11 @@ PRIORITY_TIER_BY_KIND = {
     AnnouncementRevision.Kind.EVENT: 6,
     AnnouncementRevision.Kind.FEATURE: 6,
 }
+
+
+def remote_announcements_enabled(surface):
+    enabled_surfaces = set(settings.ANNOUNCEMENT_REMOTE_ENABLED_SURFACES)
+    return surface in enabled_surfaces
 
 
 def normalize_request_path(path):
