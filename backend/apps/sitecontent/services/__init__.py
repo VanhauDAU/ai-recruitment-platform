@@ -2,6 +2,7 @@
 
 from .announcements import (
     StaleAnnouncementRevision,
+    StaleAnnouncementState,
     archive_announcement,
     create_announcement,
     create_announcement_revision,
@@ -10,13 +11,17 @@ from .announcements import (
     normalize_revision_data,
     pause_announcement,
     publish_announcement,
+    record_consented_announcement_events,
     rename_announcement,
     resume_announcement,
+    set_announcement_user_state,
+    set_announcement_viewer_cookie,
     validate_cta_url,
 )
 
 __all__ = [
     'StaleAnnouncementRevision',
+    'StaleAnnouncementState',
     'archive_announcement',
     'create_announcement',
     'create_announcement_revision',
@@ -25,7 +30,10 @@ __all__ = [
     'normalize_revision_data',
     'pause_announcement',
     'publish_announcement',
+    'record_consented_announcement_events',
     'rename_announcement',
     'resume_announcement',
+    'set_announcement_user_state',
+    'set_announcement_viewer_cookie',
     'validate_cta_url',
 ]

@@ -4,10 +4,13 @@ from .announcements import (
     AdminAnnouncementDetailView,
     AdminAnnouncementDuplicateView,
     AdminAnnouncementListCreateView,
+    AdminAnnouncementMetricView,
     AdminAnnouncementPauseView,
     AdminAnnouncementPublishView,
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
+    AnnouncementEventBatchView,
+    AnnouncementStateView,
 )
 from .settings import (
     AdminLocaleDetailView,
@@ -23,10 +26,13 @@ from .settings import (
 
 __all__ = [
     'ActiveAnnouncementListView',
+    'AnnouncementEventBatchView',
+    'AnnouncementStateView',
     'AdminAnnouncementArchiveView',
     'AdminAnnouncementDetailView',
     'AdminAnnouncementDuplicateView',
     'AdminAnnouncementListCreateView',
+    'AdminAnnouncementMetricView',
     'AdminAnnouncementPauseView',
     'AdminAnnouncementPublishView',
     'AdminAnnouncementResumeView',

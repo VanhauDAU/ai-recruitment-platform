@@ -1,11 +1,32 @@
 from datetime import UTC, datetime
 
-from django.db.models import Max, Prefetch, Q
+from django.db.models import (
+    BigIntegerField,
+    Case,
+    Exists,
+    ExpressionWrapper,
+    F,
+    FloatField,
+    Max,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
 
 from apps.accounts.models import AdminAccessAuditLog
 
-from ..models import Announcement, AnnouncementRevision
+from ..models import (
+    Announcement,
+    AnnouncementDailyMetric,
+    AnnouncementRevision,
+    AnnouncementUserState,
+)
 
 PRIORITY_TIER_BY_KIND = {
     AnnouncementRevision.Kind.CRITICAL: 1,
@@ -85,14 +106,20 @@ def presentation_status(announcement, *, now=None):
 
 def active_announcements_for_request(*, surface, path, user, now=None):
     now = now or timezone.now()
-    queryset = (
-        Announcement.objects.filter(
-            lifecycle_state=Announcement.LifecycleState.PUBLISHED,
-            active_revision__isnull=False,
-        )
-        .select_related('active_revision')
-        .order_by('id')
+    queryset = Announcement.objects.filter(
+        lifecycle_state=Announcement.LifecycleState.PUBLISHED,
+        active_revision__isnull=False,
     )
+    if user and user.is_authenticated:
+        hidden_state = AnnouncementUserState.objects.filter(
+            user=user,
+            announcement_id=OuterRef('pk'),
+            dismissal_version=OuterRef('dismissal_version'),
+        ).filter(Q(dismissed_at__isnull=False) | Q(snoozed_until__gt=now))
+        queryset = queryset.annotate(
+            is_hidden_for_user=Exists(hidden_state),
+        ).filter(is_hidden_for_user=False)
+    queryset = queryset.select_related('active_revision').order_by('id')
 
     targeted = []
     transition_candidates = []
@@ -135,11 +162,59 @@ def active_announcements_for_request(*, surface, path, user, now=None):
 
 def admin_announcements_queryset(params=None):
     params = params or {}
-    queryset = Announcement.objects.select_related(
-        'active_revision',
-        'created_by',
-        'published_by',
-    ).annotate(latest_revision_number=Max('revisions__number'))
+    latest_revision_number = (
+        AnnouncementRevision.objects.filter(announcement_id=OuterRef('pk'))
+        .order_by('-number')
+        .values('number')[:1]
+    )
+
+    def metric_total(field):
+        return (
+            AnnouncementDailyMetric.objects.filter(
+                announcement_revision__announcement_id=OuterRef('pk')
+            )
+            .values('announcement_revision__announcement_id')
+            .annotate(total=Sum(field))
+            .values('total')[:1]
+        )
+
+    queryset = (
+        Announcement.objects.select_related(
+            'active_revision',
+            'created_by',
+            'published_by',
+        )
+        .annotate(
+            latest_revision_number=Subquery(latest_revision_number),
+            metric_impressions=Coalesce(
+                Subquery(metric_total('impressions'), output_field=BigIntegerField()),
+                Value(0),
+                output_field=BigIntegerField(),
+            ),
+            metric_clicks=Coalesce(
+                Subquery(metric_total('clicks'), output_field=BigIntegerField()),
+                Value(0),
+                output_field=BigIntegerField(),
+            ),
+            metric_dismisses=Coalesce(
+                Subquery(metric_total('dismisses'), output_field=BigIntegerField()),
+                Value(0),
+                output_field=BigIntegerField(),
+            ),
+        )
+        .annotate(
+            metric_ctr=Case(
+                When(metric_impressions=0, then=Value(0.0)),
+                default=ExpressionWrapper(
+                    Cast(F('metric_clicks'), FloatField())
+                    * Value(100.0)
+                    / Cast(F('metric_impressions'), FloatField()),
+                    output_field=FloatField(),
+                ),
+                output_field=FloatField(),
+            )
+        )
+    )
     if query := (params.get('q') or '').strip():
         queryset = queryset.filter(
             Q(internal_name__icontains=query) | Q(public_id__icontains=query)
@@ -164,6 +239,10 @@ def admin_announcements_queryset(params=None):
         'published_at': 'published_at',
         'created_at': 'created_at',
         'updated_at': 'updated_at',
+        'impressions': 'metric_impressions',
+        'clicks': 'metric_clicks',
+        'ctr': 'metric_ctr',
+        'dismisses': 'metric_dismisses',
     }
     field = ordering_fields.get(ordering_key)
     if not field:
@@ -197,3 +276,23 @@ def announcement_audit_events(public_id):
         .select_related('actor')
         .order_by('-created_at', '-id')
     )
+
+
+def announcement_metrics(*, announcement, date_from, date_to):
+    rows = (
+        AnnouncementDailyMetric.objects.filter(
+            announcement_revision__announcement=announcement,
+            date__gte=date_from,
+            date__lte=date_to,
+        )
+        .values('date', 'surface')
+        .annotate(
+            impressions=Sum('impressions'),
+            unique_impressions=Sum('unique_impressions'),
+            clicks=Sum('clicks'),
+            unique_clicks=Sum('unique_clicks'),
+            dismisses=Sum('dismisses'),
+        )
+        .order_by('date', 'surface')
+    )
+    return list(rows)

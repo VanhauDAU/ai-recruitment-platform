@@ -276,6 +276,7 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         'job_view': '120/hour',
         'job_impression': '240/hour',
+        'announcement_event': '240/hour',
         'cv_import': '10/hour',
     },
 }

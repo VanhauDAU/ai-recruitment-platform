@@ -265,6 +265,93 @@ class AnnouncementActionSerializer(serializers.Serializer):
     revision = serializers.IntegerField(min_value=1, required=False)
 
 
+class AnnouncementStateWriteSerializer(serializers.Serializer):
+    revision = serializers.IntegerField(min_value=1)
+    dismissal_version = serializers.IntegerField(min_value=1)
+    action = serializers.ChoiceField(choices=('dismiss', 'snooze'))
+
+
+class AnnouncementUserStateSerializer(serializers.Serializer):
+    public_id = serializers.CharField()
+    revision = serializers.IntegerField()
+    dismissal_version = serializers.IntegerField()
+    dismissed_at = serializers.DateTimeField(allow_null=True)
+    snoozed_until = serializers.DateTimeField(allow_null=True)
+
+
+class AnnouncementEventSerializer(serializers.Serializer):
+    public_id = serializers.CharField(max_length=50)
+    revision = serializers.IntegerField(min_value=1)
+    surface = serializers.ChoiceField(choices=AnnouncementRevision.Surface.choices)
+    event = serializers.ChoiceField(choices=('impression', 'click', 'dismiss'))
+
+
+class AnnouncementEventBatchSerializer(serializers.Serializer):
+    events = AnnouncementEventSerializer(many=True, allow_empty=False)
+
+    def validate_events(self, value):
+        if len(value) > 50:
+            raise serializers.ValidationError('Mỗi batch nhận tối đa 50 event.')
+        unique = {}
+        for event in value:
+            key = (
+                event['public_id'],
+                event['revision'],
+                event['surface'],
+                event['event'],
+            )
+            unique[key] = event
+        return list(unique.values())
+
+
+class AnnouncementMetricQuerySerializer(serializers.Serializer):
+    date_from = serializers.DateField(required=False)
+    date_to = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        date_from = attrs.get('date_from')
+        date_to = attrs.get('date_to')
+        if date_from and date_to:
+            if date_from > date_to:
+                raise serializers.ValidationError(
+                    {'date_to': 'Ngày kết thúc phải từ ngày bắt đầu trở đi.'}
+                )
+            if (date_to - date_from).days > 92:
+                raise serializers.ValidationError({'date_to': 'Khoảng báo cáo tối đa là 93 ngày.'})
+        return attrs
+
+
+class AnnouncementDailyMetricSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    surface = serializers.ChoiceField(choices=AnnouncementRevision.Surface.choices)
+    impressions = serializers.IntegerField()
+    unique_impressions = serializers.IntegerField()
+    clicks = serializers.IntegerField()
+    unique_clicks = serializers.IntegerField()
+    dismisses = serializers.IntegerField()
+    ctr = serializers.FloatField()
+    dismiss_rate = serializers.FloatField()
+
+
+class AnnouncementMetricSummarySerializer(serializers.Serializer):
+    impressions = serializers.IntegerField()
+    unique_impressions = serializers.IntegerField()
+    clicks = serializers.IntegerField()
+    unique_clicks = serializers.IntegerField()
+    dismisses = serializers.IntegerField()
+    ctr = serializers.FloatField()
+    dismiss_rate = serializers.FloatField()
+
+
+class AnnouncementMetricReportSerializer(serializers.Serializer):
+    public_id = serializers.CharField()
+    date_from = serializers.DateField()
+    date_to = serializers.DateField()
+    consent_notice = serializers.CharField()
+    summary = AnnouncementMetricSummarySerializer()
+    daily = AnnouncementDailyMetricSerializer(many=True)
+
+
 class AnnouncementDuplicateSerializer(serializers.Serializer):
     revision_token = serializers.IntegerField(min_value=1)
     internal_name = serializers.CharField(max_length=200)
@@ -355,16 +442,17 @@ class AdminAnnouncementListSerializer(serializers.ModelSerializer):
         return _user_summary(obj.published_by)
 
     def get_impressions(self, obj) -> int:
-        return 0
+        return getattr(obj, 'metric_impressions', 0)
 
     def get_clicks(self, obj) -> int:
-        return 0
+        return getattr(obj, 'metric_clicks', 0)
 
     def get_ctr(self, obj) -> float:
-        return 0.0
+        impressions = self.get_impressions(obj)
+        return round(self.get_clicks(obj) * 100 / impressions, 2) if impressions else 0.0
 
     def get_dismisses(self, obj) -> int:
-        return 0
+        return getattr(obj, 'metric_dismisses', 0)
 
 
 class AnnouncementRevisionReadSerializer(serializers.ModelSerializer):
