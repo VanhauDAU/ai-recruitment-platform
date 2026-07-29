@@ -1,15 +1,5 @@
-import {
-  CloseOutlined,
-  LeftOutlined,
-  RightOutlined,
-} from '@ant-design/icons'
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { CloseOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ANNOUNCEMENT_ANIMATIONS,
   ANNOUNCEMENT_DISMISS_MODES,
@@ -219,7 +209,12 @@ function AnnouncementStripRuntime({
     <section
       ref={rootRef}
       className={`announcement-strip announcement-strip--${active.kind}`}
-      style={{ '--announcement-strip-sticky-top': stickyOffset }}
+      style={{
+        '--announcement-motion-period': `${active.displaySeconds}s`,
+        '--announcement-motion-play-state': paused ? 'paused' : 'running',
+        '--announcement-strip-sticky-top': stickyOffset,
+      }}
+      data-announcement-count={visibleQueue.length}
       data-announcement-surface={surface}
       data-announcement-source={active.source}
       data-announcement-remote-enabled={feed?.remoteEnabled ? 'true' : 'false'}
@@ -232,7 +227,11 @@ function AnnouncementStripRuntime({
       <div className="announcement-strip__inner">
         <div
           key={`${active.id}:${activeIndex}`}
-          className={`announcement-strip__content announcement-strip__item--${animation}`}
+          className={[
+            'announcement-strip__content',
+            `announcement-strip__item--${animation}`,
+            visibleQueue.length === 1 ? 'announcement-strip__item--single' : '',
+          ].filter(Boolean).join(' ')}
           role={active.kind === ANNOUNCEMENT_KINDS.CRITICAL ? 'alert' : undefined}
           aria-live={active.kind === ANNOUNCEMENT_KINDS.CRITICAL ? 'assertive' : undefined}
           aria-atomic="true"

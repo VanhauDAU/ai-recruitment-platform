@@ -57,6 +57,10 @@ describe('AnnouncementEditor', () => {
 
     expect(screen.getByText('Hệ thống sẽ bảo trì lúc 22 giờ.')).toBeInTheDocument()
     expect(screen.queryByText('Nội dung thông báo sẽ xuất hiện tại đây.')).not.toBeInTheDocument()
+    const previewStrip = screen.getByLabelText('Xem trước thông báo')
+      .querySelector('.announcement-preview__strip')
+    expect(previewStrip).toHaveClass('is-motion-slide')
+    expect(previewStrip).toHaveStyle('--announcement-preview-motion-period: 6s')
   })
 
   it('connects both discoverable route selectors to the form store', () => {

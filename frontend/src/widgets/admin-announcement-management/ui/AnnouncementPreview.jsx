@@ -28,6 +28,8 @@ export default function AnnouncementPreview({ values = {} }) {
   const badge = localized(values, 'badge', locale)
   const ctaLabel = localized(values, 'cta_label', locale)
   const safeUrl = normalizeAnnouncementUrl(values.cta_url)
+  const animation = values.animation || 'slide'
+  const displaySeconds = values.display_seconds || 6
 
   return (
     <section className="announcement-preview" aria-label="Xem trước thông báo">
@@ -58,7 +60,12 @@ export default function AnnouncementPreview({ values = {} }) {
           <span />
         </div>
         <div
-          className={`announcement-preview__strip ${KIND_CLASS[values.kind] || ''}`}
+          className={[
+            'announcement-preview__strip',
+            KIND_CLASS[values.kind] || '',
+            `is-motion-${animation}`,
+          ].filter(Boolean).join(' ')}
+          style={{ '--announcement-preview-motion-period': `${displaySeconds}s` }}
         >
           <span className="announcement-preview__icon" aria-hidden="true">
             {values.kind === ANNOUNCEMENT_KINDS.CRITICAL ? '!' : '✦'}
@@ -83,9 +90,9 @@ export default function AnnouncementPreview({ values = {} }) {
       <p className="announcement-preview__caption">
         {KIND_LABELS[values.kind] || 'Thông tin'} ·
         {' '}
-        {values.animation || 'slide'} ·
+        {animation} ·
         {' '}
-        {values.display_seconds || 6} giây
+        {displaySeconds} giây
       </p>
     </section>
   )

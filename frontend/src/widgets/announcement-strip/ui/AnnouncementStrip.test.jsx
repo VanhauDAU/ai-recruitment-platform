@@ -166,6 +166,18 @@ describe('AnnouncementStrip runtime', () => {
     renderStrip()
 
     expect(await screen.findByText('Thông báo cho khách.')).toBeInTheDocument()
+    const strip = screen.getByRole('region', { name: 'Thông báo hệ thống' })
+    expect(strip).toHaveAttribute('data-announcement-count', '1')
+    expect(strip).toHaveStyle('--announcement-motion-period: 6s')
+    expect(strip).toHaveStyle('--announcement-motion-play-state: running')
+    expect(strip.querySelector('.announcement-strip__content')).toHaveClass(
+      'announcement-strip__item--single',
+      'announcement-strip__item--slide',
+    )
+    fireEvent.mouseEnter(strip)
+    expect(strip).toHaveStyle('--announcement-motion-play-state: paused')
+    fireEvent.mouseLeave(strip)
+    expect(strip).toHaveStyle('--announcement-motion-play-state: running')
   })
 
   it('allows a critical remote item to supersede email verification', async () => {

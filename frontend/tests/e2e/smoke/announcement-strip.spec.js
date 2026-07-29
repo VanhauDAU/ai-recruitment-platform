@@ -72,6 +72,20 @@ async function expectHealthyStrip(page, message, header) {
   )
   if (page.viewportSize().width < 768) expect(messageStyle.lineClamp).toBe('2')
   else expect(messageStyle.whiteSpace).toBe('nowrap')
+
+  const motionStyle = await strip.locator('.announcement-strip__content').evaluate(
+    (element) => {
+      const style = getComputedStyle(element)
+      return {
+        animationDuration: style.animationDuration,
+        animationIterationCount: style.animationIterationCount,
+        animationName: style.animationName,
+      }
+    },
+  )
+  expect(motionStyle.animationName).toContain('announcement-single-slide')
+  expect(motionStyle.animationDuration).toBe('6s')
+  expect(motionStyle.animationIterationCount).toBe('infinite')
 }
 
 test('announcement strip: candidate and employer marketing headers stay responsive', async ({ page }) => {
