@@ -127,6 +127,9 @@ Rules:
 
 Response `200` trả state canonical gồm `dismissed_at` hoặc `snoozed_until`.
 Gửi lại cùng action là idempotent. Guest không gọi endpoint này.
+Endpoint yêu cầu authenticated session. Revision hoặc dismissal version cũ trả
+`409 announcement_state_stale`; `locked` hoặc action không khớp cấu hình trả
+`400` và không tạo user state.
 
 ### Event batch
 
@@ -147,6 +150,20 @@ Gửi lại cùng action là idempotent. Guest không gọi endpoint này.
 
 Response `202 {"accepted": true}` không cam kết event được cộng khi thiếu
 analytics consent hoặc Redis đang lỗi. Client không retry vô hạn.
+Batch nhận 1–50 event, loại trùng trong cùng payload và throttle độc lập
+240 request/giờ. Backend chỉ nhận revision đã publish và surface thuộc revision;
+không lưu path, IP hoặc user-agent. CTA không chờ response tracking.
+
+### Admin metrics
+
+`GET /api/site/admin/announcements/{public_id}/metrics/?date_from=2026-07-01&date_to=2026-07-29`
+
+- yêu cầu `announcement.view`;
+- mặc định 30 ngày, tối đa 93 ngày, ngày báo cáo theo `Asia/Ho_Chi_Minh`;
+- `summary` trả `impressions`, `unique_impressions`, `clicks`,
+  `unique_clicks`, `dismisses`, `ctr`, `dismiss_rate`;
+- `daily[]` aggregate theo ngày và surface trên toàn bộ revision;
+- `consent_notice` bắt buộc để tránh diễn giải số liệu như toàn bộ traffic.
 
 ### Admin list/detail
 

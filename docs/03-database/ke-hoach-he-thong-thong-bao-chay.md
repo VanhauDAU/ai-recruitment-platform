@@ -238,11 +238,19 @@ không tái sử dụng feed qua logout/login.
 - Chỉ record impression/click/dismiss metric khi analytics consent đang bật.
 - Functional dismiss state không phụ thuộc analytics consent.
 - Không lưu raw path, IP hoặc user-agent trong daily metric.
-- Redis dedupe TTL kết thúc sau ngày đo; daily aggregates giữ theo policy vận
-  hành chung. User state được xóa theo vòng đời tài khoản hoặc khi announcement
+- Redis dedupe TTL kết thúc năm phút sau ngày đo theo `Asia/Ho_Chi_Minh`;
+  không lưu viewer ID vào PostgreSQL. Daily aggregate không chứa PII được giữ
+  25 tháng để so sánh năm liền trước, sau đó retention job vận hành có thể xóa
+  theo tháng. User state được xóa theo vòng đời tài khoản hoặc khi announcement
   bị hard-delete theo policy tương lai; v1 chỉ archive, không hard-delete.
 - Admin report phải ghi rõ metric phụ thuộc consent và không đại diện toàn bộ
   người xem.
+
+AN-P4 dùng signed consent cookie làm nguồn chuẩn và dùng viewer cookie
+first-party hiện có, chỉ hash trong Redis key. Event batch tối đa 50 phần tử,
+throttle riêng 240 request/giờ. Redis error, duplicate và invalid event đều
+phát operational metric PII-free; Redis lỗi fail-closed, không tăng aggregate.
+Functional dismiss/snooze không phụ thuộc Analytics consent.
 
 ## 11. Rollout và rollback
 

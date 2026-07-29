@@ -489,7 +489,7 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
 ```text
 app/layouts
   → widgets/announcement-strip
-    → entities/announcement + entities/session|employer-profile
+    → entities/announcement + entities/session|employer-profile|consent
       → shared/api, shared/ui
 
 pages/admin/app/Announcements
@@ -499,16 +499,19 @@ pages/admin/app/Announcements
         → shared/api, shared/ui
 ```
 
-- `entities/announcement` sở hữu HTTP contract, query keys, locale fallback và
-  presentation enum. Entity không biết layout hoặc system reminder.
+- `entities/announcement` sở hữu HTTP contract active/state/event/admin-metrics,
+  query keys, locale fallback và presentation enum. Entity không biết layout
+  hoặc system reminder.
 - `widgets/announcement-strip` sở hữu composition giữa feed từ backend với
   email verification, compliance employer và job-preference reminder; pure
-  priority resolver nằm trong widget vì đây là logic ghép nhiều domain.
+  priority resolver nằm trong widget vì đây là logic ghép nhiều domain. Widget
+  cũng sở hữu batch impression/click/dismiss best-effort và local state guest;
+  signed cookie phía server vẫn là nguồn consent analytics chuẩn.
 - `features/manage-announcement` chỉ sở hữu mutation create/revision/publish/
   pause/resume/archive/duplicate. Feature không import feature khác.
 - `widgets/admin-announcement-management` sở hữu bảng, editor, preview,
-  conflict simulator và metrics. Page admin chỉ compose widget; route/lazy
-  registry vẫn thuộc `app`.
+  conflict simulator và dashboard metrics 7/30/90 ngày lấy aggregate phía
+  server. Page admin chỉ compose widget; route/lazy registry vẫn thuộc `app`.
 - Workspace `/admin/app/announcements` dùng URL làm nguồn chuẩn cho filter,
   ordering và page. Mọi cột dữ liệu sort phía server; action column là ngoại
   lệ. Quyền route là `announcement.view`; `manage` và `publish` chỉ điều khiển
