@@ -27,43 +27,107 @@
   padding: 24px;
 }
 
+.admin-company-workspace .admin-stat-card {
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid var(--admin-border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: row;
+  gap: 14px;
+  min-height: 100px;
+  padding: 16px 20px;
+  position: relative;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  width: 100%;
+}
+
 .admin-company-workspace .admin-stat-card--interactive {
   appearance: none;
   color: inherit;
   cursor: pointer;
   font: inherit;
   text-align: left;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-  width: 100%;
 }
 
 .admin-company-workspace .admin-stat-card--interactive:hover {
-  border-color: color-mix(in srgb, var(--admin-primary) 34%, var(--admin-border));
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.09);
-  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--admin-primary, #00b14f) 40%, var(--admin-border, #e2e8f0));
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
 }
 
 .admin-company-workspace .admin-stat-card--active {
-  border-color: color-mix(in srgb, var(--admin-primary) 48%, var(--admin-border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-primary-soft) 64%, transparent);
+  border-color: var(--admin-primary, #00b14f) !important;
+  box-shadow: 0 0 0 1px var(--admin-primary, #00b14f);
+}
+
+.admin-company-workspace .admin-stat-card__icon {
+  align-items: center;
+  border-radius: 12px;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 22px;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.admin-company-workspace .admin-stat-card--default .admin-stat-card__icon {
+  background: transparent;
+  color: #334155;
+  font-size: 24px;
 }
 
 .admin-company-workspace .admin-stat-card--green .admin-stat-card__icon {
-  background: #dcfce7;
-  color: #15803d;
+  background: #e6f7ed;
+  color: #10b981;
 }
 
 .admin-company-workspace .admin-stat-card--amber .admin-stat-card__icon {
   background: #fef3c7;
-  color: #b45309;
+  color: #d97706;
 }
 
-.admin-stat-card__hint {
-  color: var(--admin-primary);
+.admin-company-workspace .admin-stat-card__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 3px;
+  justify-content: center;
+  min-width: 0;
+}
+
+.admin-company-workspace .admin-stat-card__header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-company-workspace .admin-stat-card__label {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.admin-company-workspace .admin-stat-card__value {
+  color: #0f172a;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.admin-company-workspace .admin-stat-card__hint {
+  color: var(--admin-primary, #00b14f);
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
-  margin-top: 3px;
+  line-height: 1.3;
+  margin-top: 2px;
 }
 
 .company-filters {

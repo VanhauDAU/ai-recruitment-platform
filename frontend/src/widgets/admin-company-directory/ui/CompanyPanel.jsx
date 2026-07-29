@@ -23,7 +23,7 @@ export function CompanyStatCard({
   icon,
   label,
   value,
-  tone = 'primary',
+  tone = 'default',
   hint,
   active = false,
   onClick,
@@ -37,11 +37,13 @@ export function CompanyStatCard({
   const content = (
     <>
       <span className="admin-stat-card__icon" aria-hidden="true">{icon}</span>
-      <span className="min-w-0">
-        <span className="admin-stat-card__label">{label}</span>
-        <strong className="admin-stat-card__value">{value ?? 0}</strong>
+      <div className="admin-stat-card__content">
+        <div className="admin-stat-card__header">
+          <span className="admin-stat-card__label">{label}</span>
+          <strong className="admin-stat-card__value">{value ?? 0}</strong>
+        </div>
         {hint && <span className="admin-stat-card__hint">{hint}</span>}
-      </span>
+      </div>
     </>
   )
 
