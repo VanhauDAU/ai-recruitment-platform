@@ -8,6 +8,26 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-29
 
+#### Added — Announcement AN-P5 rollout hardening
+
+- Thêm kill switch runtime fail-closed theo từng surface bằng
+  `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES`. Feed bị tắt trả
+  `remote_enabled=false`, danh sách rỗng và không query dữ liệu; label xác thực,
+  bảo mật và tuân thủ do hệ thống sở hữu vẫn tiếp tục hiển thị.
+- Thêm telemetry PII-free cho latency/feed/contract/render error, throttle cho
+  runtime event và error boundary trả banner legacy khi strip gặp lỗi. Client
+  chỉ nhận contract remote khi backend xác nhận `remote_enabled=true`.
+- Thêm command read-only `announcement_rollout_preflight`, kiểm tra integrity,
+  critical end time, live/scheduled surface và nhóm rotation xung đột trước khi
+  mở rollout.
+- Bổ sung runbook staging theo thứ tự Admin → NTD marketing → workspace NTD →
+  ứng viên, ngưỡng monitoring, failure injection, kill-switch rehearsal và
+  rollback không reverse schema hay xóa dữ liệu.
+- Quality gate code cuối: 615 backend test (86,12% coverage), 666 frontend test,
+  architecture/import contract sạch, OpenAPI validate, bundle 293,6 KiB JS /
+  34,2 KiB CSS gzip và 153 smoke E2E trên desktop/tablet/mobile. Rollout staging
+  thực tế vẫn cần evidence vận hành theo runbook trước khi chốt AN-P5 hoàn tất.
+
 #### Fixed — Đặt mật khẩu lần đầu cho tài khoản mạng xã hội
 
 - Thay cảnh báo “Cần đăng nhập lại để tạo mật khẩu” (chỉ hiện sau khi người dùng
