@@ -13,6 +13,7 @@ import {
   SettingOutlined,
   SolutionOutlined,
   TeamOutlined,
+  NotificationOutlined,
 } from '@ant-design/icons'
 import { Input, Tag, Tooltip } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
@@ -25,6 +26,7 @@ const ICONS = {
   access: <KeyOutlined />,
   account: <IdcardOutlined />,
   accounts: <TeamOutlined />,
+  announcements: <NotificationOutlined />,
   blog: <FileTextOutlined />,
   companies: <BankOutlined />,
   cv: <FileTextOutlined />,

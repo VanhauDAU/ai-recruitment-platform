@@ -197,6 +197,12 @@ export const ADMIN_NAVIGATION = [
         label: 'Yêu cầu tư vấn',
         routeRef: 'consultationLeads',
       },
+      {
+        key: 'announcements',
+        label: 'Thông báo đa cổng',
+        routeRef: 'announcements',
+        access: { allOf: ['announcement.view'] },
+      },
     ],
   },
   {
