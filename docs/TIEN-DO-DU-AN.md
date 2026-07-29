@@ -843,7 +843,16 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29f (AN-P3 — workspace quản trị thông báo:
+Cập nhật lần cuối: 2026-07-29g (AN-P3 CI follow-up — GitHub E2E sau merge
+phát hiện mobile CV delete bị flaky do hai Ant Design portal còn chuyển động,
+khiến sticky header chặn pointer hoặc confirmation button bị thay node trong lúc
+Playwright chờ vị trí ổn định. Smoke chuyển hai action menu/modal sang keyboard
+activation theo đúng role accessible, không dùng `force` hoặc tăng timeout để
+che lỗi. Verify: tái hiện 5/5 fail trước sửa; sau sửa mobile concurrent 5/5 pass
+và desktop/tablet/mobile lặp ba lần 9/9 pass. AN-P4 bị giữ lại cho tới khi fix
+branch merge và CI xanh.)
+
+Cập nhật 2026-07-29f (AN-P3 — workspace quản trị thông báo:
 thêm route `/admin/app/announcements` theo `announcement.view`, danh sách
 server-side có URL filter/sort/pagination, editor 5 bước, preview desktop/mobile
 và Việt/Anh, priority simulator, lifecycle publish/schedule/pause/resume/archive,
