@@ -59,6 +59,16 @@
     ]
   },
   {
+    "code": "account.resource_hold.release",
+    "module": "account",
+    "label": "Gỡ giữ tài nguyên tài khoản",
+    "description": "Gỡ policy hold sau khi hoàn tất rà soát tài nguyên của tài khoản bị cấm hoặc khóa cũ.",
+    "requires": [
+      "account.view",
+      "account.status.manage"
+    ]
+  },
+  {
     "code": "account.security.manage",
     "module": "account",
     "label": "Hỗ trợ bảo mật tài khoản",
@@ -74,6 +84,16 @@
     "description": "Xem dữ liệu cá nhân, consent, CV và giấy tờ riêng tư có ghi audit.",
     "requires": [
       "account.view"
+    ]
+  },
+  {
+    "code": "account.status.ban",
+    "module": "account",
+    "label": "Cấm tài khoản",
+    "description": "Cấm tài khoản và giữ tài nguyên liên quan để rà soát trước khi khôi phục.",
+    "requires": [
+      "account.view",
+      "account.status.manage"
     ]
   },
   {

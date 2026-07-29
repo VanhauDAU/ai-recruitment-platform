@@ -108,6 +108,9 @@ function SecurityPanel({
   canEmailRecovery,
   canManage,
   canMfaRecovery,
+  canReleaseResourceHolds,
+  canStatus,
+  canBan,
   isSuperuser,
 }) {
   const [recoveryProgress, setRecoveryProgress] = useState({
@@ -232,7 +235,7 @@ function SecurityPanel({
             {account.active_session_count}
           </Descriptions.Item>
         </Descriptions>
-        {(canManage || canEmailRecovery || canMfaRecovery) && (
+        {(canManage || canEmailRecovery || canMfaRecovery || canStatus) && (
           <div className="mt-4 border-t border-slate-100 pt-4">
             <div className="mb-3">
               <Typography.Text strong>Thao tác bảo mật độc lập</Typography.Text>
@@ -270,10 +273,13 @@ function SecurityPanel({
               {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
                   thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
                   bị cấm sẽ không còn đường mở lại từ giao diện. */}
-              {canManage && (
+              {(canManage || canStatus) && (
                 <AdminAccountSecurityActions
                   account={account}
-                  allowStatus={account.role !== 'admin' || isSuperuser}
+                  allowStatus={canStatus && (account.role !== 'admin' || isSuperuser)}
+                  allowBan={canBan}
+                  allowResourceRelease={canReleaseResourceHolds}
+                  allowSessions={canManage}
                 />
               )}
             </div>
@@ -486,6 +492,13 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Tiêu đề', dataIndex: 'title' },
             { title: 'Chiến dịch', dataIndex: 'campaign_name', render: (value) => value || 'Không thuộc chiến dịch' },
             { title: 'Trạng thái', dataIndex: 'status_label' },
+            {
+              title: 'Policy hold',
+              dataIndex: 'policy_hold_label',
+              render: (value, row) => row.policy_hold
+                ? <Tag color="orange">{value}</Tag>
+                : <Tag>Không giữ</Tag>,
+            },
             { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
             { title: 'Hạn nộp', dataIndex: 'deadline' },
             { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
@@ -499,6 +512,13 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Tên chiến dịch', dataIndex: 'name' },
             { title: 'Chuyên môn', dataIndex: 'position_category_name' },
             { title: 'Trạng thái', dataIndex: 'status_label' },
+            {
+              title: 'Policy hold',
+              dataIndex: 'policy_hold_label',
+              render: (value, row) => row.policy_hold
+                ? <Tag color="orange">{value}</Tag>
+                : <Tag>Không giữ</Tag>,
+            },
             { title: 'Tin tuyển dụng', dataIndex: 'job_count' },
             { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
             { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
@@ -536,6 +556,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const canEdit = isSuperuser || has('account.profile.manage')
   const canReveal = isSuperuser || has('account.sensitive.view')
   const canSecurity = isSuperuser || has('account.security.manage') || has('account.admin.manage')
+  const canStatus = isSuperuser || has('account.status.manage') || has('account.admin.manage')
+  const canBan = Boolean(isSuperuser)
+  const canReleaseResourceHolds = Boolean(isSuperuser)
   const recoveryAccess = {
     hasPermission: has,
     isSuperuser,
@@ -591,6 +614,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
       canEmailRecovery={canEmailRecovery}
       canManage={canSecurity}
       canMfaRecovery={canMfaRecovery}
+      canStatus={canStatus}
+      canBan={canBan}
+      canReleaseResourceHolds={canReleaseResourceHolds}
       isSuperuser={isSuperuser}
     />
   )

@@ -210,6 +210,7 @@ class AuthEmailJob(models.Model):
         ADMIN_INVITATION = 'admin_invitation', 'Admin invitation'
         EMAIL_CHANGED_NOTICE = 'email_changed_notice', 'Email changed security notice'
         MFA_RESET_NOTICE = 'mfa_reset_notice', 'MFA reset security notice'
+        ACCOUNT_STATUS_NOTICE = 'account_status_notice', 'Account status security notice'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'

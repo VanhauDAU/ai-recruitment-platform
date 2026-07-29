@@ -61,6 +61,17 @@ export function changeAccountStatus(publicId, payload, impactToken) {
   }))
 }
 
+export function getAccountResourceHoldImpact(publicId, payload) {
+  return data(client.post(`/admin/accounts/${publicId}/resource-hold-impact/`, payload))
+}
+
+export function releaseAccountResourceHolds(publicId, payload, impactToken) {
+  return data(client.post(`/admin/accounts/${publicId}/release-resource-holds/`, {
+    ...payload,
+    impact_token: impactToken,
+  }))
+}
+
 export function getAccountEmailImpact(publicId, payload) {
   return data(client.post(`/admin/accounts/${publicId}/email-impact/`, payload))
 }

@@ -12,11 +12,12 @@ from apps.cvs.models import UserCv
 from apps.privacy.services import load_consent
 from common.metrics import record_metric
 
-from ...models import SavedJob
+from ...models import Job, SavedJob
 from ...selectors.listing import (
     active_job_detail_queryset,
     active_job_tracking_queryset,
     build_job_list_queryset,
+    publicly_available_job_filter,
     suggest_job_search_terms,
 )
 from ...selectors.recommendations import (
@@ -373,7 +374,10 @@ class SavedJobListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return (
-            SavedJob.objects.filter(candidate=self.request.user)
+            SavedJob.objects.filter(
+                candidate=self.request.user,
+                job_id__in=Job.objects.filter(publicly_available_job_filter()).values('pk'),
+            )
             .select_related('job__company')
             .prefetch_related(
                 'job__category_assignments__category',

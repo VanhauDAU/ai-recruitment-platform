@@ -80,6 +80,16 @@ class VerificationConfirmView(APIView):
             return Response(
                 {'detail': 'Không tìm thấy tài khoản.'}, status=status.HTTP_400_BAD_REQUEST
             )
+        if not user.is_active or user.status != User.Status.ACTIVE:
+            return Response(
+                {
+                    'detail': (
+                        'Tài khoản đang bị hạn chế. Liên kết đã bị vô hiệu hóa; '
+                        'vui lòng liên hệ bộ phận hỗ trợ.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if User.objects.normalize_email(user.email) != token_identity.get('email'):
             return Response(
                 {

@@ -18,7 +18,17 @@ step "Docs: liên kết Markdown nội bộ"
 python3 "$ROOT/scripts/check_markdown_links.py"
 
 # ---- Chọn cách chạy lệnh backend ----
-if [ -x backend/venv/bin/python ]; then
+# Khi compose backend đang chạy, Django/pytest phải dùng đúng DB_HOST=db thay vì
+# vô tình nối vào PostgreSQL host. Tooling tĩnh vẫn dùng venv local vì image
+# runtime production có thể không chứa ruff/import-linter.
+if [ -x backend/venv/bin/python ] \
+  && docker compose version >/dev/null 2>&1 \
+  && docker compose ps --status running --services 2>/dev/null | grep -qx backend; then
+  run_be() { docker compose exec -T backend python "$@"; }
+  run_ruff() { (cd backend && ./venv/bin/ruff "$@"); }
+  run_lint_imports() { (cd backend && ./venv/bin/lint-imports "$@"); }
+  run_pytest() { docker compose exec -T backend pytest "$@"; }
+elif [ -x backend/venv/bin/python ]; then
   run_be() { (cd backend && ./venv/bin/python "$@"); }
   run_ruff() { (cd backend && ./venv/bin/ruff "$@"); }
   run_lint_imports() { (cd backend && ./venv/bin/lint-imports "$@"); }

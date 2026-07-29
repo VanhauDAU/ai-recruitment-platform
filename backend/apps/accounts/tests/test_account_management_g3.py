@@ -366,7 +366,7 @@ class AccountManagementG3ApiTests(TestCase):
             ['consulting_need_completed'],
         )
 
-    def test_locking_employer_pauses_only_their_active_campaigns(self):
+    def test_banning_employer_holds_only_nonterminal_campaigns(self):
         employer = User.objects.create_user(
             'campaign-owner@example.com',
             self.password,
@@ -390,26 +390,38 @@ class AccountManagementG3ApiTests(TestCase):
             employer,
             status=User.Status.BANNED,
             reason='Vi phạm chính sách.',
+            enforcement_evidence='Ticket SEC-123 đã được bộ phận an toàn xác minh.',
+            violation_category='policy',
         )
 
         confirm_account_status(
             employer,
             status=User.Status.BANNED,
             reason='Vi phạm chính sách.',
+            enforcement_evidence='Ticket SEC-123 đã được bộ phận an toàn xác minh.',
+            violation_category='policy',
             impact_token=impact['impact_token'],
             actor=self.superuser,
         )
 
         active_campaign.refresh_from_db()
         completed_campaign.refresh_from_db()
-        self.assertEqual(active_campaign.status, RecruitmentCampaign.Status.PAUSED)
+        self.assertEqual(active_campaign.status, RecruitmentCampaign.Status.ACTIVE)
+        self.assertEqual(
+            active_campaign.policy_hold,
+            RecruitmentCampaign.PolicyHold.BAN_REVIEW,
+        )
         self.assertEqual(completed_campaign.status, RecruitmentCampaign.Status.COMPLETED)
+        self.assertEqual(
+            completed_campaign.policy_hold,
+            RecruitmentCampaign.PolicyHold.NONE,
+        )
         self.assertTrue(
             CampaignActivity.objects.filter(
                 campaign=active_campaign,
-                event_type=CampaignActivity.EventType.CAMPAIGN_PAUSED,
+                event_type=CampaignActivity.EventType.ACCOUNT_POLICY_HELD,
                 actor=self.superuser,
-                metadata={'reason': 'employer_account_locked'},
+                metadata__reason='account_status_policy_hold',
             ).exists()
         )
 

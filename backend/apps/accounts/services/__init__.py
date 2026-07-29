@@ -2,7 +2,7 @@
 
 from importlib import import_module
 
-from .access import is_account_accessible
+from .access import is_account_accessible, lock_account_for_write
 from .admin_access import (
     assign_membership,
     confirm_department_status_change,
@@ -42,6 +42,10 @@ from .impact_tokens import (
 _LAZY_EXPORTS = {
     'accept_admin_invitation': ('.account_management', 'accept_admin_invitation'),
     'confirm_account_status': ('.account_management', 'confirm_account_status'),
+    'confirm_release_account_resource_holds': (
+        '.account_management',
+        'confirm_release_account_resource_holds',
+    ),
     'confirm_account_email': ('.account_management', 'confirm_account_email'),
     'confirm_provisioning_scope_status': (
         '.account_management',
@@ -60,6 +64,10 @@ _LAZY_EXPORTS = {
     'ensure_account_write_allowed': (
         '.account_management',
         'ensure_account_write_allowed',
+    ),
+    'ensure_account_status_change_allowed': (
+        '.account_management',
+        'ensure_account_status_change_allowed',
     ),
     'ensure_account_recovery_allowed': (
         '.account_management',
@@ -99,6 +107,7 @@ __all__ = [
     'assign_membership',
     'accept_admin_invitation',
     'confirm_account_status',
+    'confirm_release_account_resource_holds',
     'confirm_account_email',
     'confirm_department_status_change',
     'confirm_membership_assignment',
@@ -115,9 +124,11 @@ __all__ = [
     'create_role',
     'create_provisioning_scope',
     'ensure_account_write_allowed',
+    'ensure_account_status_change_allowed',
     'ensure_account_recovery_allowed',
     'InvalidImpactToken',
     'is_account_accessible',
+    'lock_account_for_write',
     'queue_verification_email',
     'queue_account_security_email',
     'record_admin_action',

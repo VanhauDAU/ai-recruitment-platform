@@ -8,6 +8,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-29
 
+#### Added — Account status enforcement theo vai trò
+
+- Thay thao tác đổi trạng thái chung bằng state machine rõ: tạm khóa, cấm,
+  bắt đầu khôi phục, gỡ giữ tài nguyên và mở lại; cấm/khôi phục tài khoản bị
+  cấm vẫn superuser-only ở P0.
+- Thêm `AccountStatusTransition` cùng `temporary_lock`/`ban_review`/
+  `legacy_lock` cho campaign và job. Workflow không còn đổi campaign active
+  thành paused, nhờ đó không làm sai trạng thái nghiệp vụ và chỉ khôi phục đúng
+  lớp hold của thao tác.
+- Public job selector fail-closed theo job, campaign, poster và campaign owner,
+  bao gồm cả danh sách việc làm ứng viên đã lưu; mutation job/campaign/
+  application khóa account trước resource để đóng race với admin enforcement.
+- Candidate bị hạn chế vẫn giữ CV/application snapshot; employer chỉ được
+  chuyển hồ sơ sang `rejected`, không được đẩy pipeline tiến thêm.
+- UI admin có modal rộng, thông tin đối chiếu user, dấu bắt buộc, preview tác
+  động theo vai trò và hướng dẫn quy trình khôi phục nhiều bước. 409 tự tải lại
+  preview nhưng không tự confirm.
+- Thêm transactional notice không chứa evidence, permission không grant mặc
+  định, command đối soát read-only/`--apply`, tài liệu thiết kế và runbook
+  rollout/rollback.
+- Quality gate toàn repo: 633 backend test pass, coverage 86.25%; 699 frontend
+  unit/integration test pass; production build và bundle budget đạt; 159 E2E
+  smoke test pass trên desktop/tablet/mobile. Reconciliation staging local có
+  0 mismatch và hai permission nhạy cảm có 0 role grant.
+
 #### Fixed — Animation dải thông báo
 
 - `slide` và `fade` của một thông báo nay lặp nhẹ theo khoảng 4–15 giây đã cấu

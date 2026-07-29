@@ -156,7 +156,8 @@ Base quản trị: `/api/admin/`; public accept: `/api/auth/admin-invitations/`.
 | GET | `/accounts/`, `/accounts/summary/`, `/accounts/{id}/` | Danh sách, KPI và chi tiết theo permission đọc |
 | PATCH | `/accounts/{id}/` | Sửa họ tên/SĐT; Admin active vẫn superuser-only |
 | GET | `/accounts/{id}/sessions/`, `/activity/` | Phiên và audit liên quan |
-| POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận khóa, mở khóa hoặc cấm |
+| POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận state machine tạm khóa, cấm, bắt đầu khôi phục hoặc mở lại; payload cấm cần `violation_category` và `enforcement_evidence` |
+| POST | `/accounts/{id}/resource-hold-impact/`, `/release-resource-holds/` | Superuser preview/xác nhận gỡ `ban_review`/`legacy_lock`; account vẫn inactive |
 | POST | `/accounts/{id}/revoke-sessions-impact/`, `/revoke-sessions/` | Preview/xác nhận thu hồi phiên |
 | POST | `/accounts/{id}/send-password-reset/`, `/resend-verification/` | Xếp lịch email bảo mật. Admin nhận template/link cổng Admin; không gửi reset cho tài khoản `inactive`/`banned`. |
 | GET/POST | `/account-invitations/` | Danh sách theo scope người mời / tạo lời mời |
@@ -176,6 +177,29 @@ khoảng lần đăng nhập và `ordering`. Lời mời hỗ trợ `q`, `status
 Các POST xác nhận impact bắt buộc gửi lại `impact_token` từ preview. Token stale
 trả `409 admin_resource_changed`. Role ngoài whitelist và thao tác vượt scope
 trả `403 admin_permission_denied`; validation field thông thường trả `400`.
+
+Contract trạng thái tài khoản:
+
+- `status-impact` nhận `status`, `reason`, `enforcement_evidence` và
+  `violation_category`. Evidence và nhóm vi phạm bắt buộc khi đích là
+  `banned`; evidence cũng bắt buộc khi bắt đầu khôi phục từ `banned`.
+- Transition hợp lệ: `active → inactive|banned`,
+  `inactive → active|banned`, `banned → inactive`. Không có
+  `banned → active`.
+- Response preview trả `transition_kind`, `active_session_count`, `effects`,
+  `requires_manual_resource_review`, `blocked_reasons`, `can_apply` và
+  `impact_token`. Client chỉ được bật confirm khi `can_apply=true`.
+- `change-status` nhận lại chính payload preview cộng `impact_token`. Confirm
+  trả `ManagedAccountDetail`; backend khóa account/session/campaign/job trước
+  khi xác nhận snapshot.
+- `resource-hold-impact` và `release-resource-holds` nhận `reason`,
+  `enforcement_evidence` (20–500 ký tự); chỉ superuser, chỉ áp dụng cho employer
+  `inactive` có `ban_review`/`legacy_lock`. Thao tác không đổi status nghiệp vụ
+  và không tự mở account.
+- Thiếu permission trả `403`; account `PENDING` hoặc transition sai trả `400`;
+  soft-deleted fail-closed thành `404`; input/snapshot/global audit revision
+  đổi giữa preview và confirm trả `409`. Client phải tải preview mới nhưng
+  không tự gửi confirm lại.
 
 ### API quản trị phân quyền G2
 

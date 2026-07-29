@@ -1,5 +1,30 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-07-29 — Account status enforcement
+
+- ✅ Schema + backfill fail-closed: transition evidence, policy hold campaign/
+  job và hai permission mới không grant mặc định.
+- ✅ State machine tạm khóa/cấm/khôi phục nhiều bước; không cho
+  `BANNED → ACTIVE`, không ghi đè business status.
+- ✅ Revoke credential/session, transactional outbox, audit action riêng và
+  preview bind role-aware resource snapshot.
+- ✅ Canonical public selector (kể cả danh sách việc làm đã lưu) + write guard
+  transaction cho job/campaign/application; recruiter khác cùng công ty không
+  bị ảnh hưởng.
+- ✅ Candidate restriction giữ CV/application snapshot và chỉ cho employer
+  chuyển hồ sơ sang từ chối.
+- ✅ UI action rõ nghĩa, modal 820px, đối chiếu user, required mark, impact theo
+  vai trò, stale re-preview không auto-confirm.
+- ✅ Docs thiết kế, rollout/rollback runbook, changelog, permission catalog và
+  command `reconcile_account_status_holds`.
+- ✅ Full gate `./scripts/check_all.sh`: 633 backend test (coverage 86.25%),
+  699 frontend test, lint/architecture/build/bundle budget và 159 E2E smoke
+  desktop/tablet/mobile đều xanh.
+- ✅ Đối soát DB local sau migrate: 6/6 nhóm mismatch bằng 0; hai permission
+  nhạy cảm chưa được grant cho role nào.
+- 🟡 Còn bước vận hành ngoài code: rehearsal trên staging từ production
+  snapshot, kiểm tra email worker/metrics và phê duyệt rollout theo runbook.
+
 ## Cập nhật 2026-07-29 — Xác thực lại OAuth khi đặt mật khẩu lần đầu
 
 - ✅ Backend: `GET /api/auth/password/` trả điều kiện của phiên hiện tại; tách

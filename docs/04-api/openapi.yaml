@@ -354,9 +354,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
           description: ''
-  /api/admin/accounts/{public_id}/change-status/:
+  /api/admin/accounts/{public_id}/change-email/:
     post:
-      operationId: admin_accounts_change_status_create
+      operationId: admin_accounts_change_email_create
       parameters:
       - in: path
         name: public_id
@@ -385,6 +385,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
+          description: ''
+  /api/admin/accounts/{public_id}/change-status/:
+    post:
+      operationId: admin_accounts_change_status_create
+      summary: Xác nhận thay đổi trạng thái tài khoản
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountStatusChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccountStatusChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountStatusChangeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAccountDetail'
           description: ''
   /api/admin/accounts/{public_id}/consents/:
     get:
@@ -426,6 +459,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
           description: ''
+  /api/admin/accounts/{public_id}/email-impact/:
+    post:
+      operationId: admin_accounts_email_impact_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAccount'
+          description: ''
   /api/admin/accounts/{public_id}/jobs/:
     get:
       operationId: admin_accounts_jobs_retrieve
@@ -437,6 +502,38 @@ paths:
         required: true
       tags:
       - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAccount'
+          description: ''
+  /api/admin/accounts/{public_id}/mfa-impact/:
+    post:
+      operationId: admin_accounts_mfa_impact_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -516,6 +613,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
           description: ''
+  /api/admin/accounts/{public_id}/release-resource-holds/:
+    post:
+      operationId: admin_accounts_release_resource_holds_create
+      summary: Xác nhận gỡ policy hold sau rà soát
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountResourceHoldChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccountResourceHoldChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountResourceHoldChangeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAccountDetail'
+          description: ''
   /api/admin/accounts/{public_id}/resend-verification/:
     post:
       operationId: admin_accounts_resend_verification_create
@@ -547,6 +677,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ManagedAccount'
+          description: ''
+  /api/admin/accounts/{public_id}/reset-mfa/:
+    post:
+      operationId: admin_accounts_reset_mfa_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManagedAccountRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedAccount'
+          description: ''
+  /api/admin/accounts/{public_id}/resource-hold-impact/:
+    post:
+      operationId: admin_accounts_resource_hold_impact_create
+      summary: Preview tác động gỡ policy hold của tài khoản
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountResourceHoldImpactRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccountResourceHoldImpactRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountResourceHoldImpactRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResourceHoldImpactResponse'
           description: ''
   /api/admin/accounts/{public_id}/revoke-sessions/:
     post:
@@ -667,6 +862,7 @@ paths:
   /api/admin/accounts/{public_id}/status-impact/:
     post:
       operationId: admin_accounts_status_impact_create
+      summary: Preview tác động thay đổi trạng thái tài khoản
       parameters:
       - in: path
         name: public_id
@@ -679,13 +875,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
+              $ref: '#/components/schemas/AccountStatusImpactRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
+              $ref: '#/components/schemas/AccountStatusImpactRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ManagedAccountRequest'
+              $ref: '#/components/schemas/AccountStatusImpactRequest'
         required: true
       security:
       - jwtAuth: []
@@ -694,7 +890,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManagedAccount'
+                $ref: '#/components/schemas/AccountStatusImpactResponse'
           description: ''
   /api/admin/accounts/summary/:
     get:
@@ -9645,6 +9841,164 @@ paths:
           description: No response body
 components:
   schemas:
+    AccountResourceHoldChangeRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        enforcement_evidence:
+          type: string
+          minLength: 20
+          maxLength: 500
+        impact_token:
+          type: string
+          minLength: 1
+      required:
+      - enforcement_evidence
+      - impact_token
+      - reason
+    AccountResourceHoldImpactRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        enforcement_evidence:
+          type: string
+          minLength: 20
+          maxLength: 500
+      required:
+      - enforcement_evidence
+      - reason
+    AccountResourceHoldImpactResponse:
+      type: object
+      properties:
+        operation:
+          type: string
+        target:
+          type: object
+          additionalProperties: {}
+        campaign_count:
+          type: integer
+        job_count:
+          type: integer
+        business_statuses_will_remain_unchanged:
+          type: boolean
+        account_will_remain_inactive:
+          type: boolean
+        can_apply:
+          type: boolean
+        impact_token:
+          type: string
+      required:
+      - account_will_remain_inactive
+      - business_statuses_will_remain_unchanged
+      - campaign_count
+      - can_apply
+      - impact_token
+      - job_count
+      - operation
+      - target
+    AccountStatusChangeRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusC7cEnum'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        enforcement_evidence:
+          type: string
+          default: ''
+          maxLength: 500
+          minLength: 20
+        violation_category:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/ViolationCategoryEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        impact_token:
+          type: string
+          minLength: 1
+      required:
+      - impact_token
+      - reason
+      - status
+    AccountStatusImpactRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusC7cEnum'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+        enforcement_evidence:
+          type: string
+          default: ''
+          maxLength: 500
+          minLength: 20
+        violation_category:
+          default: ''
+          oneOf:
+          - $ref: '#/components/schemas/ViolationCategoryEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+      required:
+      - reason
+      - status
+    AccountStatusImpactResponse:
+      type: object
+      properties:
+        operation:
+          type: string
+        target:
+          type: object
+          additionalProperties: {}
+        before:
+          type: object
+          additionalProperties: {}
+        after:
+          type: object
+          additionalProperties: {}
+        transition_kind:
+          type: string
+        active_session_count:
+          type: integer
+        sessions_will_be_revoked:
+          type: boolean
+        effects:
+          type: object
+          additionalProperties: {}
+        requires_manual_resource_review:
+          type: boolean
+        restoration_policy:
+          type: string
+        blocked_reasons:
+          type: array
+          items:
+            type: string
+        can_apply:
+          type: boolean
+        impact_token:
+          type: string
+      required:
+      - active_session_count
+      - after
+      - before
+      - blocked_reasons
+      - can_apply
+      - effects
+      - impact_token
+      - operation
+      - requires_manual_resource_review
+      - restoration_policy
+      - sessions_will_be_revoked
+      - target
+      - transition_kind
     AccountTokenRefresh:
       type: object
       properties:
@@ -12541,6 +12895,12 @@ components:
           type: string
           format: email
           readOnly: true
+        candidate_account_status:
+          type: string
+          readOnly: true
+        candidate_account_restricted:
+          type: string
+          readOnly: true
         cv:
           type: string
           nullable: true
@@ -12617,6 +12977,8 @@ components:
       required:
       - accepted_at
       - applied_at
+      - candidate_account_restricted
+      - candidate_account_status
       - candidate_email
       - candidate_name
       - cv_title
@@ -12901,6 +13263,8 @@ components:
       - job_status_changed
       - application_received
       - application_status_changed
+      - account_policy_held
+      - account_policy_released
       type: string
       description: |-
         * `legacy_synced` - Đồng bộ dữ liệu hiện có
@@ -12914,6 +13278,8 @@ components:
         * `job_status_changed` - Đổi trạng thái tin
         * `application_received` - Nhận CV ứng tuyển
         * `application_status_changed` - Đổi trạng thái ứng viên
+        * `account_policy_held` - Giữ do trạng thái tài khoản
+        * `account_policy_released` - Gỡ giữ do trạng thái tài khoản
     CandidateApplicationV2:
       type: object
       properties:
@@ -18168,6 +18534,9 @@ components:
         section_counts:
           type: string
           readOnly: true
+        status_enforcement:
+          type: string
+          readOnly: true
       required:
       - active_session_count
       - admin_access
@@ -18180,6 +18549,7 @@ components:
       - profile
       - public_id
       - section_counts
+      - status_enforcement
       - updated_at
     ManagedAccountRequest:
       type: object
@@ -21889,6 +22259,16 @@ components:
         * `pending` - Chờ duyệt
         * `approved` - Đã duyệt
         * `rejected` - Từ chối
+    StatusC7cEnum:
+      enum:
+      - active
+      - inactive
+      - banned
+      type: string
+      description: |-
+        * `active` - active
+        * `inactive` - inactive
+        * `banned` - banned
     StatusF6cEnum:
       enum:
       - draft
@@ -22181,6 +22561,20 @@ components:
         * `draft` - Draft
         * `published` - Published
         * `retired` - Retired
+    ViolationCategoryEnum:
+      enum:
+      - security
+      - fraud
+      - policy
+      - legal
+      - other
+      type: string
+      description: |-
+        * `security` - security
+        * `fraud` - fraud
+        * `policy` - policy
+        * `legal` - legal
+        * `other` - other
     VisibilityEnum:
       enum:
       - private

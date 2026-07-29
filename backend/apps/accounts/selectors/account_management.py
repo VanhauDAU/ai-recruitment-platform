@@ -16,12 +16,15 @@ from django.db.models import (
 )
 from django.utils import timezone
 
+from apps.applications.models import Application
 from apps.employers.models import (
     CompanyDocument,
     CompanyUpdateRequest,
     EmployerVerificationCase,
+    RecruitmentCampaign,
     RecruitmentNeed,
 )
+from apps.jobs.models import Job
 
 from ..admin_access_rules import create_impact_token
 from ..models import (
@@ -489,13 +492,161 @@ def provisioning_scope_status_impact(scope, *, is_active):
     }
 
 
-def account_status_impact(user, *, status, reason):
+def _group_counts(queryset, *fields):
+    return [
+        {
+            **{field: row[field] for field in fields},
+            'count': row['count'],
+        }
+        for row in queryset.values(*fields).annotate(count=Count('id')).order_by(*fields)
+    ]
+
+
+def account_status_resource_snapshot(user):
+    """Return a deterministic, role-aware snapshot bound into impact tokens."""
+    snapshot = {
+        'user': {
+            'status': user.status,
+            'is_active': bool(user.is_active),
+            'is_deleted': bool(user.is_deleted),
+            'auth_revision': user.auth_revision,
+            'updated_at': user.updated_at.isoformat() if user.updated_at else None,
+        },
+        'active_session_count': AuthSession.objects.filter(
+            user=user,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).count(),
+        'role': user.role,
+    }
+    if user.role == User.Role.EMPLOYER:
+        campaigns = RecruitmentCampaign.objects.filter(owner__user=user)
+        jobs = Job.objects.filter(posted_by=user)
+        company_id = (
+            user.recruiter_profile.company_id if hasattr(user, 'recruiter_profile') else None
+        )
+        snapshot['employer'] = {
+            'campaigns': _group_counts(campaigns, 'status', 'policy_hold'),
+            'jobs': _group_counts(jobs, 'status', 'policy_hold'),
+            'open_application_count': Application.objects.filter(job__posted_by=user)
+            .exclude(status__in=[Application.Status.REJECTED, Application.Status.ACCEPTED])
+            .count(),
+            'affected_candidate_count': Application.objects.filter(job__posted_by=user)
+            .values('candidate_id')
+            .distinct()
+            .count(),
+            'company_id': company_id,
+            'other_active_recruiter_count': (
+                User.objects.filter(
+                    recruiter_profile__company_id=company_id,
+                    role=User.Role.EMPLOYER,
+                    status=User.Status.ACTIVE,
+                    is_active=True,
+                    is_deleted=False,
+                )
+                .exclude(pk=user.pk)
+                .count()
+                if company_id
+                else 0
+            ),
+        }
+    elif user.role == User.Role.CANDIDATE:
+        applications = Application.objects.filter(candidate=user)
+        snapshot['candidate'] = {
+            'applications': _group_counts(applications, 'status'),
+            'application_count': applications.count(),
+            'cv_count': user.cvs.filter(is_deleted=False).count(),
+        }
+    return snapshot
+
+
+def _allowed_account_status_transition(before, after):
+    return after in {
+        User.Status.ACTIVE: {User.Status.INACTIVE, User.Status.BANNED},
+        User.Status.INACTIVE: {User.Status.ACTIVE, User.Status.BANNED},
+        User.Status.BANNED: {User.Status.INACTIVE},
+    }.get(before, set())
+
+
+def _status_transition_kind(before, after):
+    if after == User.Status.BANNED:
+        return 'ban'
+    if after == User.Status.INACTIVE and before == User.Status.BANNED:
+        return 'begin_reactivation'
+    if after == User.Status.INACTIVE:
+        return 'suspend'
+    return 'reactivate'
+
+
+def _resource_review_required(snapshot):
+    employer = snapshot.get('employer') or {}
+    return any(
+        row['policy_hold'] in {'ban_review', 'legacy_lock'} and row['count']
+        for group in ('campaigns', 'jobs')
+        for row in employer.get(group, [])
+    )
+
+
+def account_status_impact(
+    user,
+    *,
+    status,
+    reason,
+    enforcement_evidence='',
+    violation_category='',
+):
+    reason = reason.strip()
+    enforcement_evidence = enforcement_evidence.strip()
+    snapshot = account_status_resource_snapshot(user)
+    transition_allowed = _allowed_account_status_transition(user.status, status)
+    review_required = (
+        user.role == User.Role.EMPLOYER
+        and status == User.Status.ACTIVE
+        and _resource_review_required(snapshot)
+    )
+    payload = {
+        'status': status,
+        'reason': reason,
+        'enforcement_evidence': enforcement_evidence,
+        'violation_category': violation_category,
+        'snapshot': snapshot,
+    }
+    employer = snapshot.get('employer')
+    candidate = snapshot.get('candidate')
+    effects = {
+        'sessions_will_be_revoked': status != User.Status.ACTIVE,
+        'credentials_will_be_invalidated': status != User.Status.ACTIVE,
+        'business_statuses_will_remain_unchanged': True,
+        'company_other_recruiters_affected': False,
+    }
+    if employer:
+        effects.update(
+            campaigns=employer['campaigns'],
+            jobs=employer['jobs'],
+            open_application_count=employer['open_application_count'],
+            affected_candidate_count=employer['affected_candidate_count'],
+            resource_hold=(
+                'ban_review'
+                if status == User.Status.BANNED
+                else 'temporary_lock'
+                if status == User.Status.INACTIVE and user.status != User.Status.BANNED
+                else 'clear_temporary_lock'
+                if status == User.Status.ACTIVE
+                else 'unchanged'
+            ),
+        )
+    if candidate:
+        effects.update(
+            applications=candidate['applications'],
+            cv_count=candidate['cv_count'],
+            candidate_data_will_be_retained=True,
+            employer_pipeline_updates_limited_to_rejected=status != User.Status.ACTIVE,
+        )
     active_sessions = AuthSession.objects.filter(
         user=user,
         revoked_at__isnull=True,
         expires_at__gt=timezone.now(),
     ).count()
-    payload = {'status': status, 'reason': reason.strip()}
     return {
         'operation': 'account.status.change',
         'target': {
@@ -506,12 +657,69 @@ def account_status_impact(user, *, status, reason):
         },
         'before': {'status': user.status},
         'after': {'status': status},
+        'transition_kind': _status_transition_kind(user.status, status),
         'active_session_count': active_sessions,
         'sessions_will_be_revoked': status != User.Status.ACTIVE,
-        'can_apply': user.status != status,
+        'effects': effects,
+        'requires_manual_resource_review': review_required,
+        'restoration_policy': (
+            'Chuyển tài khoản cấm sang tạm khóa, rà soát và gỡ giữ tài nguyên, sau đó mới mở lại.'
+            if user.status == User.Status.BANNED
+            else 'Policy hold tạm thời được gỡ khi mở lại; trạng thái nghiệp vụ gốc được giữ nguyên.'
+        ),
+        'blocked_reasons': (
+            ['Cần gỡ giữ tài nguyên bị cấm/khóa cũ trước khi mở lại.'] if review_required else []
+        ),
+        'can_apply': transition_allowed and not review_required,
         'impact_token': create_impact_token(
             revision=current_rbac_revision(),
             operation='account.status.change',
+            resource_key=f'account:{user.public_id}',
+            normalized_payload=payload,
+        ),
+    }
+
+
+def account_resource_hold_impact(
+    user,
+    *,
+    reason,
+    enforcement_evidence,
+):
+    snapshot = account_status_resource_snapshot(user)
+    employer = snapshot.get('employer') or {}
+    releasable = {'ban_review', 'legacy_lock'}
+    campaign_count = sum(
+        row['count'] for row in employer.get('campaigns', []) if row['policy_hold'] in releasable
+    )
+    job_count = sum(
+        row['count'] for row in employer.get('jobs', []) if row['policy_hold'] in releasable
+    )
+    payload = {
+        'reason': reason.strip(),
+        'enforcement_evidence': enforcement_evidence.strip(),
+        'snapshot': snapshot,
+    }
+    return {
+        'operation': 'account.resource_hold.release',
+        'target': {
+            'public_id': user.public_id,
+            'email': user.email,
+            'full_name': user.full_name,
+            'role': user.role,
+        },
+        'campaign_count': campaign_count,
+        'job_count': job_count,
+        'business_statuses_will_remain_unchanged': True,
+        'account_will_remain_inactive': True,
+        'can_apply': bool(
+            user.role == User.Role.EMPLOYER
+            and user.status == User.Status.INACTIVE
+            and (campaign_count or job_count)
+        ),
+        'impact_token': create_impact_token(
+            revision=current_rbac_revision(),
+            operation='account.resource_hold.release',
             resource_key=f'account:{user.public_id}',
             normalized_payload=payload,
         ),

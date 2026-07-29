@@ -54,10 +54,22 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem dữ liệu cá nhân, consent, CV và giấy tờ riêng tư có ghi audit.',
     },
     {
+        'code': 'account.resource_hold.release',
+        'module': 'account',
+        'label': 'Gỡ giữ tài nguyên tài khoản',
+        'description': 'Gỡ policy hold sau khi hoàn tất rà soát tài nguyên của tài khoản bị cấm hoặc khóa cũ.',
+    },
+    {
         'code': 'account.security.manage',
         'module': 'account',
         'label': 'Hỗ trợ bảo mật tài khoản',
         'description': 'Gửi xác minh, đặt lại mật khẩu và thu hồi phiên tài khoản.',
+    },
+    {
+        'code': 'account.status.ban',
+        'module': 'account',
+        'label': 'Cấm tài khoản',
+        'description': 'Cấm tài khoản và giữ tài nguyên liên quan để rà soát trước khi khôi phục.',
     },
     {
         'code': 'account.status.manage',
@@ -292,8 +304,10 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'account.email.manage': ('account.view', 'account.security.manage'),
     'account.mfa.reset': ('account.view', 'account.security.manage'),
     'account.profile.manage': ('account.view',),
+    'account.resource_hold.release': ('account.view', 'account.status.manage'),
     'account.security.manage': ('account.view',),
     'account.sensitive.view': ('account.view',),
+    'account.status.ban': ('account.view', 'account.status.manage'),
     'account.status.manage': ('account.view',),
     'admin_access.manage_department': ('admin_access.view',),
     'admin_access.manage_role': ('admin_access.view',),

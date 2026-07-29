@@ -6,6 +6,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
+from apps.accounts.services import is_account_accessible, lock_account_for_write
 from apps.cvs.services import create_application_snapshot
 from apps.employers.models import CampaignActivity
 from apps.employers.services import record_campaign_activity
@@ -104,7 +105,7 @@ def create_application_record(
     """Persist one candidate application and its immutable selected CV snapshot."""
     # Serialise submissions of one candidate, then repeat the validation made
     # by the serializer to protect the five-minute limit from concurrent POSTs.
-    candidate.__class__.objects.select_for_update().get(pk=candidate.pk)
+    candidate = lock_account_for_write(candidate)
     error = reapplication_error(candidate, job)
     if error:
         raise InvalidReapplication(error)
@@ -149,6 +150,7 @@ def create_application_record(
 @transaction.atomic
 def create_application(serializer, candidate):
     """Compatibility adapter for the legacy application serializer."""
+    candidate = lock_account_for_write(candidate)
     cv = serializer.validated_data['cv']
     snapshot = create_application_snapshot(cv, candidate)
     application = serializer.save(
@@ -184,10 +186,27 @@ def create_application(serializer, candidate):
 @transaction.atomic
 def update_application_status(serializer, *, changed_by=None):
     """Persist one valid status transition and its timestamp exactly once."""
-    application = Application.objects.select_for_update().get(pk=serializer.instance.pk)
+    if changed_by is not None:
+        lock_account_for_write(changed_by)
+    application = (
+        Application.objects.select_for_update()
+        .select_related('candidate', 'job')
+        .get(pk=serializer.instance.pk)
+    )
     serializer.instance = application
     current_status = application.status
     next_status = serializer.validated_data.get('status', current_status)
+    candidate = application.candidate.__class__.objects.select_for_update().get(
+        pk=application.candidate_id
+    )
+    if (
+        next_status != current_status
+        and next_status != Application.Status.REJECTED
+        and not is_account_accessible(candidate)
+    ):
+        raise InvalidApplicationStatusTransition(
+            'Ứng viên đang bị hạn chế tài khoản. Chỉ được chuyển hồ sơ sang trạng thái từ chối.'
+        )
 
     if (
         next_status != current_status
@@ -230,7 +249,19 @@ def update_application_status(serializer, *, changed_by=None):
 
 @transaction.atomic
 def mark_application_viewed(application, *, changed_by):
-    application = Application.objects.select_for_update().get(pk=application.pk)
+    lock_account_for_write(changed_by)
+    application = (
+        Application.objects.select_for_update()
+        .select_related('candidate', 'job')
+        .get(pk=application.pk)
+    )
+    candidate = application.candidate.__class__.objects.select_for_update().get(
+        pk=application.candidate_id
+    )
+    if not is_account_accessible(candidate):
+        raise InvalidApplicationStatusTransition(
+            'Ứng viên đang bị hạn chế tài khoản. Không thể đánh dấu hồ sơ đã xem.'
+        )
     if application.status != Application.Status.SUBMITTED:
         return application
     application.status = Application.Status.VIEWED

@@ -137,6 +137,15 @@ def _send(job):
             occurred_at=job.context.get('occurred_at', ''),
         )
         return True
+    if job.kind == AuthEmailJob.Kind.ACCOUNT_STATUS_NOTICE:
+        email_verification.send_account_status_notice(
+            job.user,
+            recipient=job.context.get('recipient', ''),
+            before_status=job.context.get('before_status', ''),
+            after_status=job.context.get('after_status', ''),
+            occurred_at=job.context.get('occurred_at', ''),
+        )
+        return True
     raise ValueError(f'Unsupported authentication email kind: {job.kind}')
 
 

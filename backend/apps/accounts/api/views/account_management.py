@@ -19,6 +19,7 @@ from ...selectors import (
     account_activity_queryset,
     account_email_change_impact,
     account_mfa_reset_impact,
+    account_resource_hold_impact,
     account_revoke_sessions_impact,
     account_sessions_queryset,
     account_status_impact,
@@ -34,11 +35,13 @@ from ...services import (
     confirm_account_email,
     confirm_account_status,
     confirm_provisioning_scope_status,
+    confirm_release_account_resource_holds,
     confirm_reset_account_mfa,
     confirm_revoke_account_sessions,
     create_admin_invitation,
     create_provisioning_scope,
     ensure_account_recovery_allowed,
+    ensure_account_status_change_allowed,
     ensure_account_write_allowed,
     queue_account_security_email,
     resend_admin_invitation,
@@ -54,7 +57,11 @@ from ..serializers.account_management import (
     AccountEmailImpactSerializer,
     AccountMfaResetImpactSerializer,
     AccountMfaResetSerializer,
+    AccountResourceHoldChangeSerializer,
+    AccountResourceHoldImpactResponseSerializer,
+    AccountResourceHoldImpactSerializer,
     AccountStatusChangeSerializer,
+    AccountStatusImpactResponseSerializer,
     AccountStatusImpactSerializer,
     AdminInvitationAcceptSerializer,
     AdminInvitationCreateSerializer,
@@ -208,6 +215,8 @@ class AdminAccountViewSet(
         ],
         'status_impact': ['account.status.manage', 'account.admin.manage'],
         'change_status': ['account.status.manage', 'account.admin.manage'],
+        'resource_hold_impact': ['account.resource_hold.release'],
+        'release_resource_holds': ['account.resource_hold.release'],
         'revoke_sessions_impact': ['account.security.manage', 'account.admin.manage'],
         'revoke_sessions': ['account.security.manage', 'account.admin.manage'],
         'send_password_reset': ['account.security.manage', 'account.admin.manage'],
@@ -399,25 +408,79 @@ class AdminAccountViewSet(
         serializer = AccountActivitySerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @extend_schema(
+        request=AccountStatusImpactSerializer,
+        responses={200: AccountStatusImpactResponseSerializer},
+        summary='Preview tác động thay đổi trạng thái tài khoản',
+    )
     @action(detail=True, methods=['post'], url_path='status-impact')
     def status_impact(self, request, public_id=None):
-        serializer = AccountStatusImpactSerializer(data=request.data)
+        user = self.get_object()
+        serializer = AccountStatusImpactSerializer(
+            data=request.data,
+            context={'target': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        _call(
+            ensure_account_status_change_allowed,
+            actor=request.user,
+            user=user,
+            status=serializer.validated_data['status'],
+        )
+        return Response(account_status_impact(user, **serializer.validated_data))
+
+    @extend_schema(
+        request=AccountStatusChangeSerializer,
+        responses={200: ManagedAccountDetailSerializer},
+        summary='Xác nhận thay đổi trạng thái tài khoản',
+    )
+    @action(detail=True, methods=['post'], url_path='change-status')
+    def change_status(self, request, public_id=None):
+        target = self.get_object()
+        serializer = AccountStatusChangeSerializer(
+            data=request.data,
+            context={'target': target},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = _confirmed_call(
+            confirm_account_status,
+            user=target,
+            actor=request.user,
+            **serializer.validated_data,
+        )
+        return Response(_serialize_account(user, request.user, detail=True))
+
+    @extend_schema(
+        request=AccountResourceHoldImpactSerializer,
+        responses={200: AccountResourceHoldImpactResponseSerializer},
+        summary='Preview tác động gỡ policy hold của tài khoản',
+    )
+    @action(detail=True, methods=['post'], url_path='resource-hold-impact')
+    def resource_hold_impact(self, request, public_id=None):
+        serializer = AccountResourceHoldImpactSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self.get_object()
         _call(
             ensure_account_write_allowed,
             actor=request.user,
             user=user,
-            permission='account.status.manage',
+            permission='account.resource_hold.release',
         )
-        return Response(account_status_impact(user, **serializer.validated_data))
+        if not request.user.is_superuser:
+            raise AdminPermissionDenied('Gỡ policy hold chỉ dành cho superuser.')
+        return Response(account_resource_hold_impact(user, **serializer.validated_data))
 
-    @action(detail=True, methods=['post'], url_path='change-status')
-    def change_status(self, request, public_id=None):
-        serializer = AccountStatusChangeSerializer(data=request.data)
+    @extend_schema(
+        request=AccountResourceHoldChangeSerializer,
+        responses={200: ManagedAccountDetailSerializer},
+        summary='Xác nhận gỡ policy hold sau rà soát',
+    )
+    @action(detail=True, methods=['post'], url_path='release-resource-holds')
+    def release_resource_holds(self, request, public_id=None):
+        serializer = AccountResourceHoldChangeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = _confirmed_call(
-            confirm_account_status,
+            confirm_release_account_resource_holds,
             user=self.get_object(),
             actor=request.user,
             **serializer.validated_data,

@@ -10,6 +10,10 @@
 - Migration `accounts.0020`: thêm `auth_revision` cho tài khoản/phiên, hai
   permission khôi phục danh tính, trạng thái outbox `cancelled` và hai loại
   thông báo bảo mật. Migration không gán quyền mới cho role nào.
+- Bộ migration trạng thái `accounts.0021`, `employers.0029`, `jobs.0032` thêm
+  transition evidence và policy hold không ghi đè trạng thái nghiệp vụ. Quy
+  trình triển khai/rollback riêng tại
+  [account status enforcement runbook](./account-status-enforcement-runbook.md).
 - Route UI: `/admin/app/accounts`, `/admin/app/accounts/:publicId`,
   `/admin/app/invitation?token=...`.
 - Không có xóa/anonymize/bulk write trong release này.

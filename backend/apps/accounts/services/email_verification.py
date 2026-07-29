@@ -190,3 +190,40 @@ def send_mfa_reset_notice(
       {escape(support_email or 'bộ phận hỗ trợ')}.</p>
     </div>"""
     send_html_email(subject=subject, text=text, html=html, to=recipient)
+
+
+def send_account_status_notice(
+    user,
+    *,
+    recipient=None,
+    before_status='',
+    after_status='',
+    occurred_at='',
+):
+    """Notify the owner without exposing internal reason or evidence."""
+    recipient = recipient or user.email
+    site_name = site_setting('site_name', 'ProCV')
+    support_email = site_setting('support_email', '')
+    portal_label = _portal_label(user)
+    status_label = {
+        User.Status.ACTIVE: 'được mở lại',
+        User.Status.INACTIVE: 'bị tạm khóa',
+        User.Status.BANNED: 'bị cấm',
+    }.get(after_status, 'được cập nhật')
+    subject = f'Trạng thái tài khoản {portal_label} {site_name} vừa thay đổi'
+    text = (
+        f'Xin chào,\n\nTài khoản {recipient} tại {site_name} vừa {status_label} bởi quản trị viên.'
+        f' Thời điểm thao tác: {occurred_at or "không xác định"}.\n\n'
+        f'Nếu cần hỗ trợ, vui lòng liên hệ {support_email or "bộ phận hỗ trợ"}.'
+    )
+    html = f"""<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#111">
+      <h2>Trạng thái tài khoản vừa thay đổi</h2>
+      <p>Tài khoản <strong>{escape(recipient)}</strong> tại {escape(site_name)}
+      vừa <strong>{escape(status_label)}</strong> bởi quản trị viên.</p>
+      <p>Trạng thái trước: {escape(before_status or 'không xác định')} ·
+      trạng thái mới: {escape(after_status or 'không xác định')}.</p>
+      <p>Thời điểm thao tác: {escape(occurred_at or 'không xác định')}.</p>
+      <p style="background:#f4f6f8;border-radius:8px;padding:14px 16px">
+      Nếu cần hỗ trợ, vui lòng liên hệ {escape(support_email or 'bộ phận hỗ trợ')}.</p>
+    </div>"""
+    send_html_email(subject=subject, text=text, html=html, to=recipient)

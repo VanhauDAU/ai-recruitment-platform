@@ -4,6 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.accounts.services import is_account_accessible, lock_account_for_write
+
 from ..models import Job, JobStatusHistory
 from .posting import _record_status
 
@@ -11,9 +13,18 @@ from .posting import _record_status
 @transaction.atomic
 def approve_job(*, job, user):
     """Make one pending job public after an administrator approves it."""
-    job = Job.objects.select_for_update().get(pk=job.pk)
+    lock_account_for_write(job.posted_by)
+    job = Job.objects.select_for_update().select_related('posted_by').get(pk=job.pk)
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể duyệt tin đang chờ duyệt.')
+    if (
+        job.policy_hold
+        or not is_account_accessible(job.posted_by)
+        or (job.campaign_id and job.campaign.policy_hold)
+    ):
+        raise ValidationError(
+            'Không thể duyệt tin khi tài khoản hoặc chiến dịch đang bị policy hold.'
+        )
 
     now = timezone.now()
     job.status = Job.Status.ACTIVE

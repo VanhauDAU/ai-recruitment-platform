@@ -184,6 +184,12 @@ class Job(models.Model):
         CLOSED = 'closed', 'Đã đóng'
         REJECTED = 'rejected', 'Từ chối'
 
+    class PolicyHold(models.TextChoices):
+        NONE = '', 'Không giữ'
+        TEMPORARY_LOCK = 'temporary_lock', 'Tạm giữ do khóa tài khoản'
+        BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
+        LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
+
     class Tier(models.TextChoices):
         """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
 
@@ -274,6 +280,20 @@ class Job(models.Model):
         default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh'
     )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
+    policy_hold = models.CharField(
+        max_length=24,
+        choices=PolicyHold.choices,
+        default=PolicyHold.NONE,
+        blank=True,
+    )
+    policy_held_at = models.DateTimeField(null=True, blank=True)
+    policy_hold_transition = models.ForeignKey(
+        'accounts.AccountStatusTransition',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='held_jobs',
+    )
     view_count = models.IntegerField(default=0)
     impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
@@ -289,6 +309,7 @@ class Job(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['status']),
+            models.Index(fields=['policy_hold', 'status'], name='jobs_hold_status_idx'),
             models.Index(fields=['posted_by'], name='jobs_job_posted_by_idx'),
             models.Index(fields=['work_type']),
             models.Index(fields=['employment_type']),

@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
+from apps.accounts.services import lock_account_for_write
 from apps.employers.models import CampaignActivity, RecruiterProfile
 from apps.employers.services import (
     record_campaign_activity,
@@ -32,6 +33,7 @@ VERIFIED_LEVEL_THREE_JOB_QUOTA = 100
 
 
 def _locked_recruiter(user):
+    user = lock_account_for_write(user)
     recruiter = RecruiterProfile.objects.select_for_update().filter(user=user).first()
     if recruiter is None or recruiter.company_id is None:
         raise ValidationError('Cập nhật thông tin công ty trước khi đăng tin.')
@@ -307,6 +309,8 @@ def create_pending_job(serializer, user):
 @transaction.atomic
 def update_employer_job(serializer, user):
     """Persist an employer's existing job through the domain mutation boundary."""
+    _locked_recruiter(user)
+    serializer.instance = _locked_job(serializer.instance)
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
     previous_campaign = serializer.instance.campaign
@@ -317,6 +321,7 @@ def update_employer_job(serializer, user):
 
 @transaction.atomic
 def close_job(job, user):
+    _locked_recruiter(user)
     job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể đóng tin đang tuyển của bạn.')
@@ -329,6 +334,7 @@ def close_job(job, user):
 
 @transaction.atomic
 def reopen_job(job, user, deadline):
+    _locked_recruiter(user)
     job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.CLOSED:
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
@@ -355,6 +361,7 @@ def reopen_job(job, user, deadline):
 
 @transaction.atomic
 def extend_job_deadline(job, user, deadline):
+    _locked_recruiter(user)
     job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
@@ -376,6 +383,8 @@ def extend_job_deadline(job, user, deadline):
 
 @transaction.atomic
 def duplicate_job(job, user):
+    _locked_recruiter(user)
+    job = _locked_job(job)
     if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền sao chép tin này.')
     duplicate = copy(job)
@@ -389,6 +398,9 @@ def duplicate_job(job, user):
     duplicate.closed_at = None
     duplicate.approved_at = None
     duplicate.rejected_reason = ''
+    duplicate.policy_hold = Job.PolicyHold.NONE
+    duplicate.policy_held_at = None
+    duplicate.policy_hold_transition = None
     duplicate.view_count = 0
     duplicate.impression_count = 0
     duplicate.application_count = 0
