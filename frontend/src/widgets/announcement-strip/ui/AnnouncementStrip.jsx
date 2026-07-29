@@ -19,7 +19,9 @@ import {
   announcementKeys,
   getActiveAnnouncements,
 } from '@/entities/announcement'
+import { useConsent } from '@/entities/consent'
 import { useSession } from '@/entities/session'
+import { flushAnnouncementEvents } from '../model/announcement-events'
 import { isAnnouncementSurfaceEnabled } from '../model/announcement-rollout'
 import {
   readLocalDismissal,
@@ -27,28 +29,11 @@ import {
 } from '../model/local-dismissal'
 import { resolveAnnouncementQueue } from '../model/priority-resolver'
 import { buildSystemAnnouncements } from '../model/system-announcements'
+import { useAnnouncementTracking } from '../model/use-announcement-tracking'
+import { useReducedMotion } from '../model/use-reduced-motion'
 import AnnouncementCta from './AnnouncementCta'
 import AnnouncementIcon from './AnnouncementIcon'
 import './announcement-strip.css'
-
-const MAX_TIMEOUT_MS = 2_147_000_000
-
-function visibleIds(items) {
-  return items.map((item) => item.id).join('|')
-}
-
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false)
-  useEffect(() => {
-    const media = window.matchMedia?.('(prefers-reduced-motion: reduce)')
-    if (!media) return undefined
-    const update = () => setReduced(media.matches)
-    update()
-    media.addEventListener?.('change', update)
-    return () => media.removeEventListener?.('change', update)
-  }, [])
-  return reduced
-}
 
 function AnnouncementStripRuntime({
   employerProfile,
@@ -69,6 +54,8 @@ function AnnouncementStripRuntime({
   const [dismissalClock, setDismissalClock] = useState(Date.now())
   const [manualAnnouncement, setManualAnnouncement] = useState('')
   const reducedMotion = useReducedMotion()
+  const { consent, status: consentStatus } = useConsent()
+  const analyticsEnabled = consentStatus === 'ready' && consent.analytics
   const audienceKey = announcementAudienceKey(user)
   const { data: feed, refetch: refetchFeed } = useQuery({
     queryKey: announcementKeys.active({
@@ -106,7 +93,7 @@ function AnnouncementStripRuntime({
     ]),
     [feed?.items, systemItems],
   )
-  const queueSignature = visibleIds(queue)
+  const queueSignature = queue.map((item) => item.id).join('|')
 
   useEffect(() => {
     setDismissals((current) => {
@@ -123,6 +110,12 @@ function AnnouncementStripRuntime({
   )
   const active = visibleQueue[activeIndex % Math.max(visibleQueue.length, 1)]
   const paused = hovered || focused || pageHidden || reducedMotion
+  const { persistDismissal, trackCta } = useAnnouncementTracking({
+    active,
+    analyticsEnabled,
+    surface,
+    user,
+  })
 
   useEffect(() => {
     setActiveIndex(0)
@@ -135,7 +128,7 @@ function AnnouncementStripRuntime({
     if (!upcoming) return undefined
     const timer = window.setTimeout(
       () => setDismissalClock(Date.now()),
-      Math.min(upcoming - Date.now() + 50, MAX_TIMEOUT_MS),
+      Math.min(upcoming - Date.now() + 50, 2_147_000_000),
     )
     return () => window.clearTimeout(timer)
   }, [dismissals, dismissalClock])
@@ -157,7 +150,7 @@ function AnnouncementStripRuntime({
     if (!Number.isFinite(transitionAt)) return undefined
     const timer = window.setTimeout(
       () => refetchFeed(),
-      Math.min(Math.max(transitionAt - Date.now() + 250, 250), MAX_TIMEOUT_MS),
+      Math.min(Math.max(transitionAt - Date.now() + 250, 250), 2_147_000_000),
     )
     return () => window.clearTimeout(timer)
   }, [feed?.nextTransitionAt, refetchFeed])
@@ -166,6 +159,7 @@ function AnnouncementStripRuntime({
     const update = () => {
       const hidden = document.visibilityState === 'hidden'
       setPageHidden(hidden)
+      if (hidden) flushAnnouncementEvents()
       if (!hidden) refetchFeed()
     }
     document.addEventListener('visibilitychange', update)
@@ -215,6 +209,7 @@ function AnnouncementStripRuntime({
     storeLocalDismissal(active, hiddenUntil)
     setDismissals((current) => ({ ...current, [active.id]: hiddenUntil }))
     setDismissalClock(Date.now())
+    persistDismissal()
   }
 
   function handleBlur(event) {
@@ -255,7 +250,10 @@ function AnnouncementStripRuntime({
           </span>
           {active.badge && <span className="announcement-strip__badge">{active.badge}</span>}
           <span className="announcement-strip__message">{active.message}</span>
-          <AnnouncementCta cta={active.cta} />
+          <AnnouncementCta
+            cta={active.cta}
+            onActivate={trackCta}
+          />
         </div>
         <div className="announcement-strip__controls">
           {visibleQueue.length > 1 && (

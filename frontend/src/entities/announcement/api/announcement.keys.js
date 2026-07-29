@@ -13,6 +13,12 @@ export const announcementKeys = {
   adminList: (params) => [...announcementKeys.adminLists(), params],
   adminDetails: () => [...announcementKeys.admin(), 'detail'],
   adminDetail: (publicId) => [...announcementKeys.adminDetails(), publicId],
+  adminMetrics: (publicId, params) => [
+    ...announcementKeys.admin(),
+    'metrics',
+    publicId,
+    params,
+  ],
 }
 
 export function announcementAudienceKey(user) {

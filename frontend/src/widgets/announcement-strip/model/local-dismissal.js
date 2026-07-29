@@ -4,7 +4,9 @@ function storageKey(item) {
 
 export function readLocalDismissal(item) {
   try {
-    const value = window.sessionStorage.getItem(storageKey(item))
+    const key = storageKey(item)
+    const value = window.localStorage.getItem(key)
+      ?? window.sessionStorage.getItem(key)
     if (value === 'closed') return Number.POSITIVE_INFINITY
     const timestamp = Number(value)
     return Number.isFinite(timestamp) && timestamp > Date.now() ? timestamp : 0
@@ -15,7 +17,7 @@ export function readLocalDismissal(item) {
 
 export function storeLocalDismissal(item, hiddenUntil) {
   try {
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       storageKey(item),
       hiddenUntil === Number.POSITIVE_INFINITY ? 'closed' : String(hiddenUntil),
     )

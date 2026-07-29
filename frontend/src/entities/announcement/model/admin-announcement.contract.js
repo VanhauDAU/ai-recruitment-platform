@@ -165,6 +165,31 @@ export function normalizeAdminAnnouncementPage(value = {}) {
   }
 }
 
+function normalizeMetric(value = {}) {
+  return {
+    date: value.date || null,
+    surface: text(value.surface),
+    impressions: number(value.impressions),
+    unique_impressions: number(value.unique_impressions),
+    clicks: number(value.clicks),
+    unique_clicks: number(value.unique_clicks),
+    dismisses: number(value.dismisses),
+    ctr: number(value.ctr),
+    dismiss_rate: number(value.dismiss_rate),
+  }
+}
+
+export function normalizeAdminAnnouncementMetrics(value = {}) {
+  return {
+    public_id: text(value.public_id),
+    date_from: value.date_from || null,
+    date_to: value.date_to || null,
+    consent_notice: text(value.consent_notice),
+    summary: normalizeMetric(value.summary),
+    daily: list(value.daily).map(normalizeMetric),
+  }
+}
+
 export function latestAnnouncementRevision(detail) {
   return detail?.revisions?.[0] || { ...DEFAULT_ADMIN_ANNOUNCEMENT_REVISION }
 }

@@ -2,12 +2,17 @@ export {
   announcementAudienceKey,
   announcementKeys,
 } from './api/announcement.keys'
-export { getActiveAnnouncements } from './api/announcement.api'
+export {
+  getActiveAnnouncements,
+  sendAnnouncementEvents,
+  setAnnouncementState,
+} from './api/announcement.api'
 export {
   createAdminAnnouncement,
   createAdminAnnouncementRevision,
   duplicateAdminAnnouncement,
   getAdminAnnouncement,
+  getAdminAnnouncementMetrics,
   getAdminAnnouncements,
   renameAdminAnnouncement,
   runAdminAnnouncementAction,
@@ -21,6 +26,7 @@ export {
   DEFAULT_ADMIN_ANNOUNCEMENT_REVISION,
   latestAnnouncementRevision,
   normalizeAdminAnnouncementDetail,
+  normalizeAdminAnnouncementMetrics,
   normalizeAdminAnnouncementListItem,
   normalizeAdminAnnouncementPage,
 } from './model/admin-announcement.contract'
