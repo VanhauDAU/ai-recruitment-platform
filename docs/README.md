@@ -24,5 +24,6 @@
 | [06-deployment](06-deployment/) | [admin-rbac-g1-runbook.md](06-deployment/admin-rbac-g1-runbook.md) | Hai release G1.1/G1.2 và readiness gate cho RBAC admin |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
+| [08-frontend](08-frontend/)     | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime strip đa cổng, priority, accessibility, rollout và rollback     |
 
 Nội dung chi tiết sẽ được bổ sung dần theo từng bước triển khai.
