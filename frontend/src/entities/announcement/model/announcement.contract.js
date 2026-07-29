@@ -83,12 +83,14 @@ export function normalizeAnnouncement(value) {
 }
 
 export function normalizeAnnouncementFeed(value) {
-  const items = Array.isArray(value?.items)
+  const remoteEnabled = value?.remote_enabled === true
+  const items = remoteEnabled && Array.isArray(value?.items)
     ? value.items.map(normalizeAnnouncement).filter(Boolean)
     : []
-  const transition = text(value?.next_transition_at)
+  const transition = remoteEnabled ? text(value?.next_transition_at) : ''
   return {
     items,
     nextTransitionAt: Number.isNaN(Date.parse(transition)) ? null : transition,
+    remoteEnabled,
   }
 }

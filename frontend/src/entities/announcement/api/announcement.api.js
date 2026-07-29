@@ -10,7 +10,21 @@ export async function getActiveAnnouncements(params, { signal } = {}) {
     },
     signal,
   })
-  return normalizeAnnouncementFeed(data)
+  const feed = normalizeAnnouncementFeed(data)
+  if (
+    feed.remoteEnabled
+    && Array.isArray(data?.items)
+    && feed.items.length !== data.items.length
+  ) {
+    void reportAnnouncementRuntimeEvent({
+      surface: params.surface,
+      event: 'contract_error',
+      reason: 'contract',
+    }).catch(() => {
+      // Contract telemetry is best-effort and never changes feed handling.
+    })
+  }
+  return feed
 }
 
 export async function setAnnouncementState(publicId, payload) {
@@ -21,4 +35,8 @@ export async function setAnnouncementState(publicId, payload) {
 export async function sendAnnouncementEvents(events) {
   if (!events.length) return
   await api.post('/site/announcements/events/', { events })
+}
+
+export async function reportAnnouncementRuntimeEvent(payload) {
+  await api.post('/site/announcements/runtime-events/', payload)
 }
