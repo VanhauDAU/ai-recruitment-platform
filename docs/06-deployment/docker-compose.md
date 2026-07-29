@@ -43,6 +43,7 @@ cp backend/.env.example backend/.env
 # 2. Biến build frontend (compose interpolation) — file .env ở root repo
 echo 'VITE_API_BASE_URL=https://<domain>/api' >> .env
 echo 'VITE_RECAPTCHA_SITE_KEY=<site-key>' >> .env
+echo 'VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=none' >> .env
 
 # 3. Chạy
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build

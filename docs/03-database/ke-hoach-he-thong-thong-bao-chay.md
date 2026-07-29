@@ -1,6 +1,6 @@
 # Hệ thống thông báo chạy đa cổng
 
-Trạng thái: **AN-P1 backend foundation đã triển khai; runtime UI bắt đầu ở AN-P2**
+Trạng thái: **AN-P2 runtime strip đã triển khai trên nhánh tính năng, chờ merge**
 Epic theo dõi: `AN-P0` đến `AN-P6` trong
 [`docs/TIEN-DO-DU-AN.md`](../TIEN-DO-DU-AN.md).
 
@@ -247,7 +247,7 @@ không tái sử dụng feed qua logout/login.
 ## 11. Rollout và rollback
 
 1. Deploy migration/permission/API additive; chưa có active announcement.
-2. Deploy unified strip sau cờ `announcement_strip_v2_surfaces`; surface chưa
+2. Deploy unified strip sau cờ `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES`; surface chưa
    bật tiếp tục dùng banner hiện hành.
 3. Bật admin → employer marketing → employer workspace → candidate.
 4. `announcement_remote_enabled_surfaces` là kill switch lâu dài; tắt remote

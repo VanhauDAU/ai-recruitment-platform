@@ -21,9 +21,11 @@ import {
   adminCompanyKeys,
   getAdminCompanySummary,
 } from '@/entities/admin-company'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
+import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
 import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
 import {
@@ -309,6 +311,11 @@ export default function DashboardLayout() {
               </Popconfirm>
             </div>
           </Header>
+          <AnnouncementStrip
+            surface={ANNOUNCEMENT_SURFACES.ADMIN_WORKSPACE}
+            path={pathname}
+            stickyOffset="var(--admin-topbar-height)"
+          />
           <Content>
             <main id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
               <Outlet context={{ availableRoutes: items, adminAccess }} />

@@ -1,4 +1,5 @@
 .admin-shell {
+  --admin-topbar-height: 76px;
   --admin-primary: var(--brand-primary, #00b14f);
   --admin-primary-hover: var(--brand-primary-hover, #008f40);
   --admin-primary-soft: var(--brand-primary-soft, #e6f8ee);
@@ -536,7 +537,7 @@
   border-bottom: 1px solid var(--admin-border);
   display: flex;
   gap: 12px;
-  height: 76px !important;
+  height: var(--admin-topbar-height) !important;
   justify-content: space-between;
   line-height: normal !important;
   padding: 0 20px !important;
@@ -851,8 +852,12 @@
 }
 
 @media (max-width: 767px) {
+  .admin-shell {
+    --admin-topbar-height: 68px;
+  }
+
   .admin-topbar {
-    height: 68px !important;
+    height: var(--admin-topbar-height) !important;
     padding: 0 12px !important;
   }
 

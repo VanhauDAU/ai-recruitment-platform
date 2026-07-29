@@ -129,6 +129,7 @@ npm run dev   # http://localhost:5173
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api
 VITE_RECAPTCHA_SITE_KEY=
+VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=
 ```
 
 Khi đã cài `node_modules` từ trước, chỉ cần chạy:
