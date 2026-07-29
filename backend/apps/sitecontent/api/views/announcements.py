@@ -13,6 +13,7 @@ from ...selectors import (
     active_announcements_for_request,
     admin_announcement_detail_queryset,
     admin_announcements_queryset,
+    announcement_audit_events,
 )
 from ...services import (
     StaleAnnouncementRevision,
@@ -71,7 +72,13 @@ def _announcement(request, public_id):
 def _detail_response(request, announcement, *, response_status=status.HTTP_200_OK):
     refreshed = _announcement(request, announcement.public_id)
     return Response(
-        AdminAnnouncementDetailSerializer(refreshed, context={'request': request}).data,
+        AdminAnnouncementDetailSerializer(
+            refreshed,
+            context={
+                'request': request,
+                'audit_events': announcement_audit_events(refreshed.public_id),
+            },
+        ).data,
         status=response_status,
     )
 
@@ -175,7 +182,10 @@ class AdminAnnouncementDetailView(APIView):
         return Response(
             AdminAnnouncementDetailSerializer(
                 announcement,
-                context={'request': request},
+                context={
+                    'request': request,
+                    'audit_events': announcement_audit_events(announcement.public_id),
+                },
             ).data
         )
 

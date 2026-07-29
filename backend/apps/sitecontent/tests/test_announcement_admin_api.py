@@ -36,6 +36,7 @@ class AdminAnnouncementApiTests(APITestCase):
         self.assertEqual(created.data['revision_token'], 1)
         self.assertEqual(created.data['revisions'][0]['number'], 1)
         self.assertFalse(created.data['revisions'][0]['is_active'])
+        self.assertEqual(created.data['audit_events'][0]['action'], 'announcement_create')
 
         revision = self.client.post(
             reverse('site-admin-announcement-revisions', kwargs={'public_id': public_id}),
@@ -59,6 +60,14 @@ class AdminAnnouncementApiTests(APITestCase):
         self.assertEqual(published.data['active_revision_number'], 2)
         self.assertEqual(published.data['revisions'][0]['message_vi'], 'Nội dung revision 2')
         self.assertTrue(published.data['revisions'][0]['is_active'])
+        self.assertEqual(
+            [event['action'] for event in published.data['audit_events']],
+            [
+                'announcement_publish',
+                'announcement_create_revision',
+                'announcement_create',
+            ],
+        )
 
         paused = self.client.post(
             reverse('site-admin-announcement-pause', kwargs={'public_id': public_id}),
@@ -86,6 +95,17 @@ class AdminAnnouncementApiTests(APITestCase):
                     flat=True,
                 )
             ),
+            [
+                'announcement_archive',
+                'announcement_resume',
+                'announcement_pause',
+                'announcement_publish',
+                'announcement_create_revision',
+                'announcement_create',
+            ],
+        )
+        self.assertEqual(
+            [event['action'] for event in archived.data['audit_events']],
             [
                 'announcement_archive',
                 'announcement_resume',

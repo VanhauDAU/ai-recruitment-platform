@@ -5,6 +5,7 @@ from .announcements import (
     active_announcements_for_request,
     admin_announcement_detail_queryset,
     admin_announcements_queryset,
+    announcement_audit_events,
     normalize_request_path,
     path_prefix_matches,
     presentation_status,
@@ -17,6 +18,7 @@ from .settings import get_string_setting
 __all__ = [
     'PRIORITY_TIER_BY_KIND',
     'active_announcements_for_request',
+    'announcement_audit_events',
     'active_locale_codes',
     'active_locales',
     'admin_announcement_detail_queryset',

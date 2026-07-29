@@ -8,6 +8,11 @@ export const announcementKeys = {
     locale,
     audienceKey,
   ],
+  admin: () => [...announcementKeys.all, 'admin'],
+  adminLists: () => [...announcementKeys.admin(), 'list'],
+  adminList: (params) => [...announcementKeys.adminLists(), params],
+  adminDetails: () => [...announcementKeys.admin(), 'detail'],
+  adminDetail: (publicId) => [...announcementKeys.adminDetails(), publicId],
 }
 
 export function announcementAudienceKey(user) {

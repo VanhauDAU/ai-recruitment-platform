@@ -94,6 +94,16 @@ export const ADMIN_ROUTES = [
     showInNav: false,
   },
   {
+    id: 'announcements',
+    segment: '/announcements',
+    lazyKey: 'AdminAnnouncementsPage',
+    title: 'Trung tâm thông báo',
+    navLabel: 'Thông báo',
+    iconKey: 'announcements',
+    permission: 'announcement.view',
+    showInNav: true,
+  },
+  {
     id: 'accounts',
     segment: '/accounts',
     lazyKey: 'AdminAccountsPage',

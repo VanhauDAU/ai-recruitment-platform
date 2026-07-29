@@ -18,6 +18,9 @@ from .announcement_helpers import revision_payload
 LINK_GROUP_LIST_QUERY_BUDGET = 4
 ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET = 1
 ADMIN_ANNOUNCEMENT_LIST_QUERY_BUDGET = 2
+# Detail cần một query bổ sung, phẳng theo số audit event, để trả read-only
+# revision history và audit history trong cùng workspace AN-P3.
+ADMIN_ANNOUNCEMENT_DETAIL_QUERY_BUDGET = 3
 
 
 class LinkGroupQueryBudgetTests(APITestCase):
@@ -139,7 +142,7 @@ class AnnouncementQueryBudgetTests(APITestCase):
             )
         self.client.force_authenticate(self.admin)
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(ADMIN_ANNOUNCEMENT_DETAIL_QUERY_BUDGET):
             response = self.client.get(
                 reverse(
                     'site-admin-announcement-detail',
@@ -149,3 +152,4 @@ class AnnouncementQueryBudgetTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['revisions']), 6)
+        self.assertEqual(len(response.data['audit_events']), 6)

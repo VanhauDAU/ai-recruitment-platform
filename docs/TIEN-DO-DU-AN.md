@@ -68,7 +68,7 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 | AN-P0 | Chốt PRD, ERD, lifecycle, priority, API/DTO, ownership, failure mode và rollout | ✅ |
 | AN-P1 | Backend foundation: model/revision, permission, selector/service, public/admin API và OpenAPI | ✅ |
 | AN-P2 | Runtime strip đa portal, system reminder, animation, accessibility và fail-safe | ✅ |
-| AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ⬜ |
+| AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ✅ |
 | AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ⬜ |
 | AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | ⬜ |
 | AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
@@ -843,7 +843,25 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29e (AN-P2 — runtime strip đa cổng: thêm
+Cập nhật lần cuối: 2026-07-29f (AN-P3 — workspace quản trị thông báo:
+thêm route `/admin/app/announcements` theo `announcement.view`, danh sách
+server-side có URL filter/sort/pagination, editor 5 bước, preview desktop/mobile
+và Việt/Anh, priority simulator, lifecycle publish/schedule/pause/resume/archive,
+duplicate/rename, immutable revision và audit history. Mutation được khóa chống
+submit lặp; revision token stale trả `409` và buộc tải lại, không tự ghi đè.
+Detail read-model bổ sung audit bằng một query phẳng; query budget detail tăng
+có chủ đích từ 2 lên 3. Không có migration hoặc permission mới; OpenAPI thêm
+`AnnouncementAuditEvent`. Verify: toàn backend 595 test pass, coverage 86,02%;
+Ruff/format, 2 import contract, Django check, migration drift và OpenAPI validate
+pass. Toàn frontend 182 file/654 test pass; coverage 43,83% statements /
+41,09% branches / 39,33% functions / 46,15% lines; architecture 897 module /
+1.808 dependency không vi phạm; build + bundle budget 293,6 KiB JS /
+34,2 KiB CSS pass; full smoke 150/150 pass trên desktop/tablet/mobile, trong đó
+6/6 scenario AN-P3 cover create, publish, stale conflict và view-only.
+AN-P3 không thay đổi schema; rollback application code/OpenAPI không làm mất
+announcement, revision, permission hoặc audit.)
+
+Cập nhật 2026-07-29e (AN-P2 — runtime strip đa cổng: thêm
 `entities/announcement` sở hữu active-feed contract/query key theo session,
 normalize DTO/URL/enum fail-closed; `widgets/announcement-strip` hợp nhất remote
 feed với xác thực email, DPA và nhu cầu công việc bằng pure priority resolver

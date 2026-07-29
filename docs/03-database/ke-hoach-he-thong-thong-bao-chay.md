@@ -1,6 +1,6 @@
 # Hệ thống thông báo chạy đa cổng
 
-Trạng thái: **AN-P2 runtime strip đã triển khai trên nhánh tính năng, chờ merge**
+Trạng thái: **AN-P3 workspace quản trị đã triển khai trên nhánh tính năng, chờ merge**
 Epic theo dõi: `AN-P0` đến `AN-P6` trong
 [`docs/TIEN-DO-DU-AN.md`](../TIEN-DO-DU-AN.md).
 

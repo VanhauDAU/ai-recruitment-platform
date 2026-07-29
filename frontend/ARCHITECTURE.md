@@ -509,6 +509,14 @@ pages/admin/app/Announcements
 - `widgets/admin-announcement-management` sở hữu bảng, editor, preview,
   conflict simulator và metrics. Page admin chỉ compose widget; route/lazy
   registry vẫn thuộc `app`.
+- Workspace `/admin/app/announcements` dùng URL làm nguồn chuẩn cho filter,
+  ordering và page. Mọi cột dữ liệu sort phía server; action column là ngoại
+  lệ. Quyền route là `announcement.view`; `manage` và `publish` chỉ điều khiển
+  mutation tương ứng, backend vẫn fail-closed khi gọi API trực tiếp.
+- Editor giữ form qua năm bước nhưng chỉ submit DTO thật; sửa live tạo immutable
+  revision mới. Detail read-model trả revision và audit history chỉ đọc. Lỗi
+  `409 announcement_revision_stale` buộc tải lại token hiện hành, không retry
+  hoặc ghi đè ngầm.
 - Bốn surface canonical là `candidate`, `employer_marketing`,
   `employer_workspace`, `admin_workspace`. Layout truyền surface và path; không
   hardcode role hoặc tự lọc quyền admin ở component.

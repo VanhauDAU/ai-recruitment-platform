@@ -200,4 +200,22 @@ describe('admin navigation tree', () => {
     expect(keys).not.toContain('company-members')
     expect(keys).not.toContain('membership-management')
   })
+
+  it('shows the announcement workspace only with announcement.view', () => {
+    const denied = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access(['announcement.manage']),
+    )
+    const allowed = buildAdminNavigation(
+      ADMIN_NAVIGATION,
+      ADMIN_ROUTES,
+      access(['announcement.view']),
+    )
+
+    expect(flattenAdminNavigation(denied).map((leaf) => leaf.key))
+      .not.toContain('announcements')
+    expect(flattenAdminNavigation(allowed).find((leaf) => leaf.key === 'announcements')?.href)
+      .toBe('/admin/app/announcements')
+  })
 })

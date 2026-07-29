@@ -410,10 +410,31 @@ class AnnouncementRevisionReadSerializer(serializers.ModelSerializer):
         return obj.announcement.active_revision_id == obj.id
 
 
+class AnnouncementAuditEventSerializer(serializers.Serializer):
+    public_id = serializers.CharField()
+    action = serializers.CharField()
+    source = serializers.CharField()
+    actor = serializers.SerializerMethodField()
+    payload = serializers.JSONField()
+    created_at = serializers.DateTimeField()
+
+    @extend_schema_field(AnnouncementActorSerializer(allow_null=True))
+    def get_actor(self, obj) -> dict | None:
+        return _user_summary(obj.actor)
+
+
 class AdminAnnouncementDetailSerializer(AdminAnnouncementListSerializer):
     revision_token = serializers.IntegerField()
     dismissal_version = serializers.IntegerField()
     revisions = AnnouncementRevisionReadSerializer(many=True, read_only=True)
+    audit_events = serializers.SerializerMethodField()
+
+    @extend_schema_field(AnnouncementAuditEventSerializer(many=True))
+    def get_audit_events(self, obj) -> list[dict]:
+        return AnnouncementAuditEventSerializer(
+            self.context.get('audit_events', []),
+            many=True,
+        ).data
 
     class Meta(AdminAnnouncementListSerializer.Meta):
         fields = [
@@ -423,4 +444,5 @@ class AdminAnnouncementDetailSerializer(AdminAnnouncementListSerializer):
             'paused_at',
             'archived_at',
             'revisions',
+            'audit_events',
         ]
