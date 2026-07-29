@@ -258,3 +258,35 @@ class AnnouncementRuntimeEventApiTests(APITestCase):
             reason='render',
             surface='candidate',
         )
+
+    def test_runtime_event_throttle_fails_open_when_cache_is_unavailable(self):
+        with (
+            self.assertLogs('product.metrics', level='INFO') as metric_logs,
+            patch(
+                'rest_framework.throttling.ScopedRateThrottle.allow_request',
+                side_effect=ConnectionError('redis unavailable'),
+            ),
+        ):
+            response = self.client.post(
+                reverse('site-announcement-runtime-events'),
+                {
+                    'surface': 'candidate',
+                    'event': 'feed_error',
+                    'reason': 'network',
+                },
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertTrue(
+            any(
+                record.metric_name == 'announcement_throttle'
+                and record.metric_tags
+                == {
+                    'event': 'fail_open',
+                    'reason': 'cache_error',
+                    'scope': 'announcement_runtime',
+                }
+                for record in metric_logs.records
+            )
+        )

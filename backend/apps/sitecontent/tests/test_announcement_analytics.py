@@ -227,6 +227,35 @@ class AnnouncementAnalyticsApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertFalse(AnnouncementDailyMetric.objects.exists())
 
+    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=None)
+    def test_redis_failure_in_throttle_fails_open_for_best_effort_events(self, _claim):
+        self.grant_analytics_consent()
+
+        with (
+            self.assertLogs('product.metrics', level='INFO') as metric_logs,
+            patch(
+                'rest_framework.throttling.ScopedRateThrottle.allow_request',
+                side_effect=ConnectionError('redis unavailable'),
+            ),
+        ):
+            response = self.client.post(self.url, self.events, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data, {'accepted': True})
+        self.assertFalse(AnnouncementDailyMetric.objects.exists())
+        self.assertTrue(
+            any(
+                record.metric_name == 'announcement_throttle'
+                and record.metric_tags
+                == {
+                    'event': 'fail_open',
+                    'reason': 'cache_error',
+                    'scope': 'announcement_event',
+                }
+                for record in metric_logs.records
+            )
+        )
+
     @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=True)
     def test_invalid_revision_or_surface_is_ignored(self, claim):
         self.grant_analytics_consent()
