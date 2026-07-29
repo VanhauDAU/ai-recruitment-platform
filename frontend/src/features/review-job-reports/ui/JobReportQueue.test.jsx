@@ -102,6 +102,7 @@ describe('JobReportQueue', () => {
   it('resolves a pending report when the admin has permission', async () => {
     renderQueue()
 
+    expect(screen.getByRole('heading', { name: 'Báo cáo vi phạm' })).toBeVisible()
     expect(await screen.findByText('Backend Engineer')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận vi phạm' }))
     fireEvent.change(screen.getByLabelText('Ghi chú xử lý'), {

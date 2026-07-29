@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -380,7 +380,7 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(screen.getByText('Mặt sau bị mờ.')).toBeVisible()
     expect(screen.getAllByText('Đã duyệt')).toHaveLength(2)
 
-    await user.click(screen.getByRole('button', { name: 'Chỉnh sửa giấy tờ' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Chỉnh sửa giấy tờ' }))
     expect(screen.queryByRole('heading', {
       name: 'Tệp thay thế cho Giấy ủy quyền *',
     })).not.toBeInTheDocument()
@@ -400,7 +400,7 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(saveButton).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Xem tệp đã nộp: Giấy ủy quyền' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Xem tệp đã nộp: Giấy tờ định danh 2' })).toBeVisible()
-    await user.click(saveButton)
+    fireEvent.click(saveButton)
 
     await waitFor(() => expect(uploadEmployerCompanyDocument).toHaveBeenCalledWith(
       'identity_document',
@@ -410,5 +410,5 @@ describe('EmployerBusinessLicenseForm', () => {
         verificationMethod: 'authorization_and_id',
       },
     ))
-  })
+  }, 15_000)
 })

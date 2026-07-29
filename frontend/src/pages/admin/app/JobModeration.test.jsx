@@ -135,6 +135,5 @@ describe('AdminJobModeration', () => {
       'true',
     )
     expect(screen.getByText('Mock report queue')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Báo cáo chờ xử lý' })).toBeVisible()
   })
 })
