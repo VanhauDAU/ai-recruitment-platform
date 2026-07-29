@@ -1,5 +1,7 @@
 from datetime import timedelta
+from unittest.mock import patch
 
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -173,3 +175,86 @@ class ActiveAnnouncementApiTests(APITestCase):
 
         self.assertEqual(invalid_surface.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(invalid_path.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @override_settings(
+        ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=('employer_marketing',),
+    )
+    @patch('apps.sitecontent.api.views.announcements.record_metric')
+    def test_runtime_kill_switch_is_per_surface_and_fail_closed(self, record_metric):
+        self.publish(
+            internal_name='Candidate disabled',
+            surfaces=[AnnouncementRevision.Surface.CANDIDATE],
+        )
+        marketing = self.publish(
+            internal_name='Employer marketing enabled',
+            surfaces=[AnnouncementRevision.Surface.EMPLOYER_MARKETING],
+        )
+
+        disabled = self.client.get(
+            self.url,
+            {'surface': 'candidate', 'path': '/'},
+        )
+        enabled = self.client.get(
+            self.url,
+            {'surface': 'employer_marketing', 'path': '/tuyendung'},
+        )
+
+        self.assertFalse(disabled.data['remote_enabled'])
+        self.assertEqual(disabled.data['items'], [])
+        self.assertTrue(enabled.data['remote_enabled'])
+        self.assertEqual(enabled.data['items'][0]['public_id'], marketing.public_id)
+        self.assertTrue(
+            any(
+                call.args[0] == 'announcement_feed_latency_ms'
+                and call.kwargs == {'surface': 'candidate', 'status': 'disabled'}
+                for call in record_metric.call_args_list
+            )
+        )
+
+    @patch('apps.sitecontent.api.views.announcements.record_metric')
+    @patch(
+        'apps.sitecontent.api.views.announcements.active_announcements_for_request',
+        side_effect=RuntimeError('injected feed failure'),
+    )
+    def test_feed_failure_records_operational_metric_and_propagates(
+        self,
+        _active_feed,
+        record_metric,
+    ):
+        with self.assertRaises(RuntimeError):
+            self.client.get(
+                self.url,
+                {'surface': 'candidate', 'path': '/'},
+            )
+
+        self.assertTrue(
+            any(
+                call.args[0] == 'announcement_feed_latency_ms'
+                and call.kwargs == {'surface': 'candidate', 'status': 'error'}
+                for call in record_metric.call_args_list
+            )
+        )
+
+
+class AnnouncementRuntimeEventApiTests(APITestCase):
+    @patch('apps.sitecontent.api.views.announcements.record_metric')
+    def test_runtime_event_is_pii_free_and_best_effort(self, record_metric):
+        response = self.client.post(
+            reverse('site-announcement-runtime-events'),
+            {
+                'surface': 'candidate',
+                'event': 'render_error',
+                'reason': 'render',
+                'message': 'must not be logged',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data, {'accepted': True})
+        record_metric.assert_called_once_with(
+            'announcement_runtime',
+            event='render_error',
+            reason='render',
+            surface='candidate',
+        )

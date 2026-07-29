@@ -57,6 +57,7 @@ describe('announcement runtime contract', () => {
 
   it('keeps Vietnamese fallback fields and ignores invalid transition dates', () => {
     expect(normalizeAnnouncementFeed({
+      remote_enabled: true,
       items: [{
         public_id: 'ann_vi',
         message: '',
@@ -65,6 +66,7 @@ describe('announcement runtime contract', () => {
       }],
       next_transition_at: 'not-a-date',
     })).toMatchObject({
+      remoteEnabled: true,
       items: [{
         id: 'ann_vi',
         message: 'Nội dung tiếng Việt',
@@ -72,5 +74,26 @@ describe('announcement runtime contract', () => {
       }],
       nextTransitionAt: null,
     })
+  })
+
+  it('drops remote items when the runtime kill switch is absent or disabled', () => {
+    const payload = {
+      items: [{
+        public_id: 'ann_disabled',
+        message: 'Không được hiển thị.',
+        dismiss: { mode: 'locked', version: 1 },
+      }],
+      next_transition_at: '2099-01-01T00:00:00Z',
+    }
+
+    expect(normalizeAnnouncementFeed(payload)).toEqual({
+      items: [],
+      nextTransitionAt: null,
+      remoteEnabled: false,
+    })
+    expect(normalizeAnnouncementFeed({
+      ...payload,
+      remote_enabled: false,
+    }).items).toEqual([])
   })
 })

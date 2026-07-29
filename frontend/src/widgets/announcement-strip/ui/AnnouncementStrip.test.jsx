@@ -7,12 +7,14 @@ import AnnouncementStrip from './AnnouncementStrip'
 const {
   getActiveAnnouncements,
   queueAnnouncementEvent,
+  reportAnnouncementRuntimeEvent,
   setAnnouncementState,
   useConsent,
   useSession,
 } = vi.hoisted(() => ({
   getActiveAnnouncements: vi.fn(),
   queueAnnouncementEvent: vi.fn(),
+  reportAnnouncementRuntimeEvent: vi.fn(),
   setAnnouncementState: vi.fn(),
   useConsent: vi.fn(),
   useSession: vi.fn(),
@@ -27,6 +29,7 @@ vi.mock('../model/announcement-events', () => ({
 vi.mock('@/entities/announcement', async (importOriginal) => ({
   ...(await importOriginal()),
   getActiveAnnouncements,
+  reportAnnouncementRuntimeEvent,
   setAnnouncementState,
 }))
 
@@ -87,7 +90,9 @@ describe('AnnouncementStrip runtime', () => {
     getActiveAnnouncements.mockResolvedValue({
       items: [],
       nextTransitionAt: null,
+      remoteEnabled: true,
     })
+    reportAnnouncementRuntimeEvent.mockResolvedValue(undefined)
     setAnnouncementState.mockResolvedValue({})
     useConsent.mockReturnValue({
       consent: { analytics: false },
@@ -123,7 +128,33 @@ describe('AnnouncementStrip runtime', () => {
       'href',
       '/tai-khoan/xac-thuc-email',
     )
-    await waitFor(() => expect(getActiveAnnouncements).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(reportAnnouncementRuntimeEvent).toHaveBeenCalledWith({
+      surface: 'candidate',
+      event: 'feed_error',
+      reason: 'network',
+    }))
+  })
+
+  it('keeps the email security label when the backend kill switch is disabled', async () => {
+    useSession.mockReturnValue({
+      loading: false,
+      user: {
+        public_id: 'usr_unverified',
+        role: 'candidate',
+        email_verified: false,
+        job_preferences_configured: false,
+      },
+    })
+    getActiveAnnouncements.mockResolvedValue({
+      items: [],
+      nextTransitionAt: null,
+      remoteEnabled: false,
+    })
+    renderStrip()
+
+    const strip = await screen.findByRole('region', { name: 'Thông báo hệ thống' })
+    expect(strip).toHaveTextContent('Tài khoản của bạn chưa được xác thực email.')
+    expect(strip).toHaveAttribute('data-announcement-remote-enabled', 'false')
   })
 
   it('renders the remote feed after an anonymous session probe completes', async () => {
