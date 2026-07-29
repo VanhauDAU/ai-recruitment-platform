@@ -38,9 +38,9 @@ const STEPS = [
 ]
 
 const STEP_FIELDS = [
-  ['internal_name', 'message_vi'],
-  ['kind', 'icon', 'cta_label_vi', 'cta_url', 'dismiss_mode'],
-  ['surfaces', 'auth_audiences'],
+  ['internal_name', 'message_vi', 'message_en', 'badge_vi', 'badge_en'],
+  ['kind', 'icon', 'cta_mode', 'cta_label_vi', 'cta_label_en', 'cta_url', 'dismiss_mode'],
+  ['surfaces', 'auth_audiences', 'roles', 'include_path_prefixes', 'exclude_path_prefixes'],
   ['starts_at', 'ends_at', 'priority', 'animation', 'display_seconds'],
   [],
 ]
@@ -68,6 +68,9 @@ export default function AnnouncementEditor({
   const dismissMode = Form.useWatch('dismiss_mode', form)
   const kind = Form.useWatch('kind', form)
   const priority = Form.useWatch('priority', form)
+  const ctaMode = Form.useWatch('cta_mode', form) || initialValues.cta_mode
+  const surfaces = Form.useWatch('surfaces', form) || initialValues.surfaces
+  const audiences = Form.useWatch('auth_audiences', form) || initialValues.auth_audiences
 
   const next = async () => {
     await form.validateFields(STEP_FIELDS[step])
@@ -115,10 +118,17 @@ export default function AnnouncementEditor({
         )}
 
         {step === 1 && (
-          <TypeStep dismissMode={dismissMode} kind={kind} />
+          <TypeStep
+            audiences={audiences}
+            ctaMode={ctaMode}
+            dismissMode={dismissMode}
+            form={form}
+            kind={kind}
+            surfaces={surfaces}
+          />
         )}
 
-        {step === 2 && <TargetStep />}
+        {step === 2 && <TargetStep surfaces={surfaces} />}
 
         {step === 3 && (
           <ScheduleStep form={form} priority={priority} />

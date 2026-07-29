@@ -158,6 +158,22 @@
   background: #fff;
 }
 
+.announcement-editor__cta-mode {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.announcement-editor__cta-mode .ant-radio-button-wrapper {
+  height: auto;
+  min-height: 42px;
+  padding: 9px 14px;
+  text-align: center;
+}
+
+.announcement-editor__cta-mode .ant-radio-button-wrapper .anticon {
+  margin-right: 7px;
+}
+
 .announcement-editor__priority {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 100px;
@@ -450,7 +466,8 @@
 
   .announcement-filters__controls,
   .announcement-editor__grid,
-  .announcement-editor__checkboxes {
+  .announcement-editor__checkboxes,
+  .announcement-editor__cta-mode {
     grid-template-columns: 1fr;
   }
 
