@@ -3,6 +3,8 @@ from datetime import UTC, datetime
 from django.db.models import Max, Prefetch, Q
 from django.utils import timezone
 
+from apps.accounts.models import AdminAccessAuditLog
+
 from ..models import Announcement, AnnouncementRevision
 
 PRIORITY_TIER_BY_KIND = {
@@ -183,4 +185,15 @@ def admin_announcement_detail_queryset():
         )
         .annotate(latest_revision_number=Max('revisions__number'))
         .prefetch_related(Prefetch('revisions', queryset=revisions))
+    )
+
+
+def announcement_audit_events(public_id):
+    return (
+        AdminAccessAuditLog.objects.filter(
+            target_type='announcement',
+            target_public_id=public_id,
+        )
+        .select_related('actor')
+        .order_by('-created_at', '-id')
     )

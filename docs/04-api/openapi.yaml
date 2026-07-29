@@ -9730,8 +9730,14 @@ components:
           items:
             $ref: '#/components/schemas/AnnouncementRevisionRead'
           readOnly: true
+        audit_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementAuditEvent'
+          readOnly: true
       required:
       - active_revision_number
+      - audit_events
       - clicks
       - created_at
       - creator
@@ -11840,6 +11846,31 @@ components:
       description: |-
         * `guest` - Khách
         * `authenticated` - Đã đăng nhập
+    AnnouncementAuditEvent:
+      type: object
+      properties:
+        public_id:
+          type: string
+        action:
+          type: string
+        source:
+          type: string
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementActor'
+          nullable: true
+          readOnly: true
+        payload: {}
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - action
+      - actor
+      - created_at
+      - payload
+      - public_id
+      - source
     AnnouncementCreateRequest:
       type: object
       properties:
