@@ -383,6 +383,7 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 | `GET` | `/api/site/announcements/active/` | Theo surface/session | Feed runtime đã target và xếp priority |
 | `PUT` | `/api/site/announcements/{public_id}/state/` | Authenticated | Dismiss/snooze idempotent theo revision và dismissal version |
 | `POST` | `/api/site/announcements/events/` | Consent + throttle | Batch analytics best-effort; luôn không chặn runtime/CTA |
+| `POST` | `/api/site/announcements/runtime-events/` | AllowAny + throttle | Operational event PII-free cho feed/contract/render failure |
 | `GET/POST` | `/api/site/admin/announcements/` | `announcement.view/manage` | List/create |
 | `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | `announcement.view/manage` | Detail/lịch sử và đổi tên vận hành |
 | `POST` | `/api/site/admin/announcements/{public_id}/revisions/` | `announcement.manage` | Tạo revision mới |
@@ -395,7 +396,9 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 
 Public feed yêu cầu `surface`, chấp nhận `path` và `locale`. Role/auth state lấy
 từ request. Surface/path/locale sai trả `400`; không có item trả `200` với mảng
-rỗng. Feed personalized dùng `Cache-Control: private, no-store`.
+rỗng. Response luôn có `remote_enabled`; false nghĩa kill switch đang tắt
+surface và backend không query feed. Feed personalized dùng
+`Cache-Control: private, no-store`.
 
 Admin mutation lỗi validation trả `400`; thiếu quyền trả
 `403 admin_permission_denied`; resource không tồn tại trả `404`; revision stale

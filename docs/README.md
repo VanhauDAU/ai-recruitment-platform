@@ -23,6 +23,7 @@
 | [05-huong-dan](05-huong-dan/)   | [quan-tri-thong-bao-da-cong.md](05-huong-dan/quan-tri-thong-bao-da-cong.md) | Vận hành editor, priority, revision, lifecycle và audit thông báo |
 | [06-deployment](06-deployment/) | [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Hướng dẫn deploy, Docker, môi trường production                         |
 | [06-deployment](06-deployment/) | [admin-rbac-g1-runbook.md](06-deployment/admin-rbac-g1-runbook.md) | Hai release G1.1/G1.2 và readiness gate cho RBAC admin |
+| [06-deployment](06-deployment/) | [announcement-rollout-runbook.md](06-deployment/announcement-rollout-runbook.md) | AN-P5: rollout tuần tự, kill switch, monitoring và rollback dải thông báo |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 | [08-frontend](08-frontend/)     | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime strip đa cổng, priority, accessibility, rollout và rollback     |

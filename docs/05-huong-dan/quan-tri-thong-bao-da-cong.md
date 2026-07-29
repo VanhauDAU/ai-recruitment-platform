@@ -136,7 +136,7 @@ hoặc trạng thái functional dismiss.
 
 ## 8. Rollback
 
-AN-P4 không thêm migration hoặc permission. Có thể revert application code và
+AN-P5 không thêm migration hoặc permission. Có thể revert application code và
 OpenAPI diff mà không xóa announcement, revision, user state, daily metric,
 permission hoặc audit. Runtime strip vẫn có
 thể tắt độc lập bằng:
@@ -146,3 +146,14 @@ VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=none
 ```
 
 Không archive hoặc xóa dữ liệu để rollback giao diện.
+
+Trước khi rollout một surface, vận hành chạy read-only preflight:
+
+```bash
+python manage.py announcement_rollout_preflight \
+  --require-live-surface candidate \
+  --json
+```
+
+Kill switch runtime, failure injection, monitoring threshold và rollout tuần
+tự phải theo [runbook AN-P5](../06-deployment/announcement-rollout-runbook.md).

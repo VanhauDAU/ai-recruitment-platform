@@ -6896,6 +6896,30 @@ paths:
       responses:
         '202':
           description: Batch được nhận theo cơ chế best-effort.
+  /api/site/announcements/runtime-events/:
+    post:
+      operationId: site_announcements_runtime_events_create
+      summary: Nhận operational event PII-free của runtime thông báo
+      tags:
+      - site-announcements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRuntimeEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRuntimeEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRuntimeEventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '202':
+          description: Event vận hành được nhận best-effort.
   /api/site/banners/:
     get:
       operationId: site_banners_list
@@ -9728,9 +9752,12 @@ components:
           type: string
           format: date-time
           nullable: true
+        remote_enabled:
+          type: boolean
       required:
       - items
       - next_transition_at
+      - remote_enabled
     AdminAnnouncementDetail:
       type: object
       properties:
@@ -10573,7 +10600,7 @@ components:
           default: ''
         reason:
           allOf:
-          - $ref: '#/components/schemas/ReasonEnum'
+          - $ref: '#/components/schemas/Reason346Enum'
           readOnly: true
         reason_label:
           type: string
@@ -12075,6 +12102,16 @@ components:
             $ref: '#/components/schemas/AnnouncementEventRequest'
       required:
       - events
+    AnnouncementEventEventEnum:
+      enum:
+      - impression
+      - click
+      - dismiss
+      type: string
+      description: |-
+        * `impression` - impression
+        * `click` - click
+        * `dismiss` - dismiss
     AnnouncementEventRequest:
       type: object
       properties:
@@ -12088,7 +12125,7 @@ components:
         surface:
           $ref: '#/components/schemas/AnnouncementSurfaceEnum'
         event:
-          $ref: '#/components/schemas/EventEnum'
+          $ref: '#/components/schemas/AnnouncementEventEventEnum'
       required:
       - event
       - public_id
@@ -12395,6 +12432,47 @@ components:
       - auth_audiences
       - message_vi
       - surfaces
+    AnnouncementRuntimeEventEnum:
+      enum:
+      - feed_error
+      - contract_error
+      - render_error
+      type: string
+      description: |-
+        * `feed_error` - feed_error
+        * `contract_error` - contract_error
+        * `render_error` - render_error
+    AnnouncementRuntimeEventRequest:
+      type: object
+      properties:
+        surface:
+          $ref: '#/components/schemas/AnnouncementSurfaceEnum'
+        event:
+          $ref: '#/components/schemas/AnnouncementRuntimeEventEnum'
+        reason:
+          $ref: '#/components/schemas/AnnouncementRuntimeReasonEnum'
+      required:
+      - event
+      - reason
+      - surface
+    AnnouncementRuntimeReasonEnum:
+      enum:
+      - network
+      - timeout
+      - http_4xx
+      - http_5xx
+      - contract
+      - render
+      - unknown
+      type: string
+      description: |-
+        * `network` - network
+        * `timeout` - timeout
+        * `http_4xx` - http_4xx
+        * `http_5xx` - http_5xx
+        * `contract` - contract
+        * `render` - render
+        * `unknown` - unknown
     AnnouncementStateWriteRequest:
       type: object
       properties:
@@ -16522,16 +16600,6 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
-    EventEnum:
-      enum:
-      - impression
-      - click
-      - dismiss
-      type: string
-      description: |-
-        * `impression` - impression
-        * `click` - click
-        * `dismiss` - dismiss
     ExperienceLevelEnum:
       enum:
       - no_experience
@@ -17362,7 +17430,7 @@ components:
       type: object
       properties:
         reason:
-          $ref: '#/components/schemas/ReasonEnum'
+          $ref: '#/components/schemas/Reason346Enum'
         detail:
           type: string
           maxLength: 1000
@@ -20342,7 +20410,7 @@ components:
       required:
       - name_vi
       - slug
-    ReasonEnum:
+    Reason346Enum:
       enum:
       - fake_company
       - scam
