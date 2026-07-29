@@ -1,13 +1,15 @@
 """Query budgets for public site-content collections."""
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 
-from ..models import LinkGroup, LinkItem
+from ..models import AnnouncementUserState, LinkGroup, LinkItem
+from ..selectors import admin_announcements_queryset
 from ..services import (
     create_announcement,
     create_announcement_revision,
@@ -21,6 +23,7 @@ ADMIN_ANNOUNCEMENT_LIST_QUERY_BUDGET = 2
 # Detail cần một query bổ sung, phẳng theo số audit event, để trả read-only
 # revision history và audit history trong cùng workspace AN-P3.
 ADMIN_ANNOUNCEMENT_DETAIL_QUERY_BUDGET = 3
+ADMIN_ANNOUNCEMENT_METRIC_QUERY_BUDGET = 2
 
 
 class LinkGroupQueryBudgetTests(APITestCase):
@@ -119,6 +122,30 @@ class AnnouncementQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['items']), 8)
 
+    def test_personalized_feed_keeps_one_query_with_dismiss_state(self):
+        user = User.objects.create_user(
+            email='announcement-query-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        first = next(iter(admin_announcements_queryset()))
+        AnnouncementUserState.objects.create(
+            user=user,
+            announcement=first,
+            dismissal_version=first.dismissal_version,
+            dismissed_at=timezone.now(),
+        )
+        self.client.force_authenticate(user)
+
+        with self.assertNumQueries(ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET):
+            response = self.client.get(
+                reverse('site-announcements-active'),
+                {'surface': 'candidate', 'path': '/'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['items']), 7)
+
     def test_admin_list_query_count_is_flat(self):
         self.client.force_authenticate(self.admin)
         with self.assertNumQueries(ADMIN_ANNOUNCEMENT_LIST_QUERY_BUDGET):
@@ -153,3 +180,17 @@ class AnnouncementQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['revisions']), 6)
         self.assertEqual(len(response.data['audit_events']), 6)
+
+    def test_admin_metrics_query_count_is_flat_across_daily_rows(self):
+        announcement = next(iter(admin_announcements_queryset()))
+        self.client.force_authenticate(self.admin)
+
+        with self.assertNumQueries(ADMIN_ANNOUNCEMENT_METRIC_QUERY_BUDGET):
+            response = self.client.get(
+                reverse(
+                    'site-admin-announcement-metrics',
+                    kwargs={'public_id': announcement.public_id},
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)

@@ -5,6 +5,7 @@ import {
   ANNOUNCEMENT_SURFACES,
   latestAnnouncementRevision,
   normalizeAdminAnnouncementDetail,
+  normalizeAdminAnnouncementMetrics,
   normalizeAdminAnnouncementPage,
 } from '..'
 
@@ -53,6 +54,32 @@ describe('admin announcement contract', () => {
     expect(detail.audit_events[0]).toMatchObject({
       action: 'announcement_publish',
       actor: { name: 'Admin' },
+    })
+  })
+
+  it('normalizes the server-wide metric report independently from pagination', () => {
+    const metrics = normalizeAdminAnnouncementMetrics({
+      public_id: 'ann_1',
+      consent_notice: 'Chỉ gồm Analytics consent.',
+      summary: {
+        impressions: '20',
+        clicks: 5,
+        ctr: '25',
+        dismiss_rate: '10',
+      },
+      daily: [{ date: '2026-07-29', surface: 'candidate', impressions: '20' }],
+    })
+
+    expect(metrics.summary).toMatchObject({
+      impressions: 20,
+      clicks: 5,
+      ctr: 25,
+      dismiss_rate: 10,
+    })
+    expect(metrics.daily[0]).toMatchObject({
+      date: '2026-07-29',
+      surface: 'candidate',
+      impressions: 20,
     })
   })
 })

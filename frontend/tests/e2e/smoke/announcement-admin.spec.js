@@ -118,6 +118,35 @@ async function routeAdminApi(page, permissions) {
       })
       status = 201
       body = detail
+    } else if (
+      path === `/api/site/admin/announcements/${detail.public_id}/metrics/`
+    ) {
+      body = {
+        public_id: detail.public_id,
+        date_from: '2026-07-01',
+        date_to: '2026-07-29',
+        consent_notice: 'Số liệu chỉ gồm người dùng đã bật Analytics.',
+        summary: {
+          impressions: 125,
+          unique_impressions: 110,
+          clicks: 25,
+          unique_clicks: 20,
+          dismisses: 5,
+          ctr: 20,
+          dismiss_rate: 4,
+        },
+        daily: [{
+          date: '2026-07-29',
+          surface: 'candidate',
+          impressions: 125,
+          unique_impressions: 110,
+          clicks: 25,
+          unique_clicks: 20,
+          dismisses: 5,
+          ctr: 20,
+          dismiss_rate: 4,
+        }],
+      }
     } else if (path === `/api/site/admin/announcements/${detail.public_id}/`) {
       body = detail
     } else if (path.endsWith('/publish/')) {
@@ -204,6 +233,11 @@ test('announcement admin: create, publish and stale conflict stay responsive', a
   await expect(page.getByRole('region', { name: 'Mô phỏng ưu tiên' })).toBeVisible()
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click()
   await expect(page.getByRole('tab', { name: 'Revision (1)' })).toBeVisible()
+  await page.getByRole('tab', { name: 'Hiệu quả' }).click()
+  await expect(page.getByRole('region', { name: 'Hiệu quả thông báo' }))
+    .toContainText('Số liệu chỉ gồm người dùng đã bật Analytics.')
+  await expect(page.getByRole('region', { name: 'Hiệu quả thông báo' }))
+    .toContainText('125')
   await page.getByRole('tab', { name: 'Audit (1)' }).click()
   await expect(
     page.getByRole('tabpanel', { name: 'Audit (1)' })
