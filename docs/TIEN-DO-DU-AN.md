@@ -70,7 +70,7 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 | AN-P2 | Runtime strip đa portal, system reminder, animation, accessibility và fail-safe | ✅ |
 | AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ✅ |
 | AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ✅ |
-| AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | 🟡 Code sẵn sàng; chờ staging evidence |
+| AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | 🟡 Rehearsal cô lập đạt; chờ merge fix + staging thật/soak |
 | AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
@@ -843,7 +843,23 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29i (AN-P5 — rollout hardening: backend có kill
+Cập nhật lần cuối: 2026-07-29j (AN-P5 — staging rehearsal: dựng Compose project
+cô lập và mở tuần tự Admin → NTD marketing → workspace NTD → ứng viên. Preflight
+đủ bốn surface trả `status=ok`, không warning/error; smoke desktop/tablet/mobile
+không overlap hoặc tràn ngang trên các route kiểm tra. Priority thực tế xác
+nhận critical vượt DPA, xác thực email vượt nhắc nhu cầu công việc và nhắc nhu
+cầu vượt remote info. Kill switch candidate trả false/empty nhưng system label
+vẫn hiển thị. Failure injection Redis phát hiện throttle trả 500 trước service;
+nhánh `fix/announcement-redis-resilience` chuyển riêng telemetry throttle sang
+fail-open có metric PII-free, chạy lại khi Redis dừng đạt 202. Verify bản vá:
+55 sitecontent test, 13 analytics test, ruff/format/import-linter/Django check
+và migration check sạch. Full repository gate sau commit đạt 617 backend test,
+coverage 86,13%, 666 frontend test, bundle budget và 153 smoke E2E. Evidence:
+`06-deployment/announcement-staging-evidence-2026-07-29.md`. AN-P5 giữ 🟡 cho
+tới khi merge fix, deploy staging hạ tầng thật và soak tối thiểu 30 phút mỗi
+surface; AN-P6 vẫn bị khóa cho tới một release ổn định.)
+
+Cập nhật 2026-07-29i (AN-P5 — rollout hardening: backend có kill
 switch fail-closed theo từng surface; response active feed công khai
 `remote_enabled`, surface tắt trả danh sách rỗng và không query database.
 Frontend chỉ nhận remote item khi cờ này là `true`, retry có giới hạn, báo

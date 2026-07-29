@@ -61,6 +61,22 @@ from ..serializers import (
 )
 
 
+class FailOpenAnnouncementThrottle(ScopedRateThrottle):
+    """Keep best-effort announcement telemetry available when Redis is down."""
+
+    def allow_request(self, request, view):
+        try:
+            return super().allow_request(request, view)
+        except Exception:
+            record_metric(
+                'announcement_throttle',
+                event='fail_open',
+                reason='cache_error',
+                scope=getattr(view, 'throttle_scope', 'unknown'),
+            )
+            return True
+
+
 def _validation_detail(error):
     return getattr(error, 'message_dict', {'detail': error.messages})
 
@@ -215,7 +231,7 @@ class AnnouncementStateView(APIView):
 )
 class AnnouncementEventBatchView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [FailOpenAnnouncementThrottle]
     throttle_scope = 'announcement_event'
 
     def post(self, request):
@@ -268,7 +284,7 @@ class AnnouncementEventBatchView(APIView):
 )
 class AnnouncementRuntimeEventView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [FailOpenAnnouncementThrottle]
     throttle_scope = 'announcement_runtime'
 
     def post(self, request):

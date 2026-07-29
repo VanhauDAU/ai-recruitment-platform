@@ -18,6 +18,7 @@ ALLOWED_METRICS = {
     'announcement_event_batch_size',
     'announcement_feed_latency_ms',
     'announcement_runtime',
+    'announcement_throttle',
 }
 
 
@@ -36,6 +37,7 @@ def record_metric(name, value=1, **tags):
             'failure_code',
             'event',
             'reason',
+            'scope',
             'surface',
         }
     }
