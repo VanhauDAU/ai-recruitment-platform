@@ -24,10 +24,22 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem danh sách và chi tiết tài khoản quản trị nội bộ.',
     },
     {
+        'code': 'account.email.manage',
+        'module': 'account',
+        'label': 'Khôi phục email đăng nhập',
+        'description': 'Đổi email đăng nhập sau khi hoàn tất quy trình xác minh danh tính thủ công.',
+    },
+    {
         'code': 'account.employer.view',
         'module': 'account',
         'label': 'Xem tài khoản nhà tuyển dụng',
         'description': 'Xem danh sách và chi tiết tài khoản nhà tuyển dụng, không mở dữ liệu ứng viên.',
+    },
+    {
+        'code': 'account.mfa.reset',
+        'module': 'account',
+        'label': 'Đặt lại xác thực đa yếu tố',
+        'description': 'Xóa các phương thức xác thực đa yếu tố sau khi xác minh danh tính thủ công.',
     },
     {
         'code': 'account.profile.manage',
@@ -277,6 +289,8 @@ ADMIN_PERMISSION_CODES = frozenset(item['code'] for item in ADMIN_PERMISSIONS)
 # chức danh có quyền thao tác nhưng thiếu quyền đọc tài nguyên tương ứng.
 ADMIN_PERMISSION_DEPENDENCIES = {
     'account.admin.manage': ('account.admin.view',),
+    'account.email.manage': ('account.view', 'account.security.manage'),
+    'account.mfa.reset': ('account.view', 'account.security.manage'),
     'account.profile.manage': ('account.view',),
     'account.security.manage': ('account.view',),
     'account.sensitive.view': ('account.view',),

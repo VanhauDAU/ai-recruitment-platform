@@ -5,6 +5,7 @@ from .base import *
 ENVIRONMENT = 'test'
 IS_PRODUCTION = False
 DEBUG = False
+DJANGO_ADMIN_ENABLED = False
 R2_ENABLED = False
 R2_PUBLIC_BASE_URL = ''
 MEDIA_PUBLIC_BASE_URL = ''

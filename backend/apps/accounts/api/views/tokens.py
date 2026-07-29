@@ -37,12 +37,16 @@ class AccountTokenRefreshSerializer(TokenRefreshSerializer):
         expected_portal = self.context.get('portal')
         if expected_portal and portal_for_user(user) != expected_portal:
             raise InvalidToken({'detail': 'Refresh token không thuộc cổng này.'})
+        auth_revision = refresh.get(auth_sessions.AUTH_REVISION_CLAIM, 1)
+        if auth_revision != user.auth_revision:
+            raise InvalidToken({'detail': 'Phiên đăng nhập đã bị thu hồi.'})
         old_jti = refresh.get(api_settings.JTI_CLAIM)
         with transaction.atomic():
             session = auth_sessions.locked_refresh_session(
                 sid=refresh.get(auth_sessions.SID_CLAIM),
                 user_id=user.pk,
                 refresh_jti=old_jti,
+                auth_revision=auth_revision,
             )
             if session is None:
                 raise InvalidToken({'detail': 'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.'})

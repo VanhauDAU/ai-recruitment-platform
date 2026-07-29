@@ -1012,6 +1012,18 @@ lọc nâng cao, drawer + chi tiết hồ sơ/bảo mật/audit, form mời ch�
 Docker demo, backend concurrency/API test, frontend unit/architecture/build và
 E2E smoke responsive.)
 
+Cập nhật 2026-07-29b (ACCOUNT-IDENTITY-RECOVERY-P0 — migration
+`accounts.0020` thêm `auth_revision` cho User/AuthSession, outbox cancelled +
+notice và hai permission không grant mặc định. JWT/refresh/password reset/MFA
+challenge/OAuth one-time code đều bind revision; worker fail-closed với identity
+snapshot stale. Admin có hai luồng preview/confirm độc lập: đổi email buộc
+password unusable, revoke session/OAuth và gửi cảnh báo; reset MFA xóa email
+OTP/TOTP/backup code nhưng giữ password/OAuth/email/status. Frontend thêm feature
+`recover-account-identity`, gate từng quyền, 409 tự re-preview không tự confirm.
+Production cấm tuyệt đối `/admin/` bằng `DJANGO_ADMIN_ENABLED=False`; break-glass
+qua `createsuperuser` + `bootstrap_admin_mfa` có quyền máy chủ. P0 superuser-only,
+PENDING/soft-deleted fail-closed; runbook yêu cầu email → MFA → password reset.)
+
 Xác minh bàn giao G3: backend **443/443** test với coverage **84,85%** trên
 PostgreSQL Docker; frontend **441/441** unit test, dependency-cruiser **0**
 violation, production bundle **286,8/320 KiB JS** và **33,8/35 KiB CSS** gzip;

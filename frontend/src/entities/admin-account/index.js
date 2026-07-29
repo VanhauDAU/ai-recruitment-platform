@@ -1,9 +1,12 @@
 export { adminAccountKeys } from './api/admin-account.keys'
 export {
   acceptAdminInvitation,
+  changeAccountEmail,
   changeAccountStatus,
   createAdminInvitation,
   createProvisioningScope,
+  getAccountEmailImpact,
+  getAccountMfaResetImpact,
   getAccountSessionsImpact,
   getAccountStatusImpact,
   getAdminAccount,
@@ -19,6 +22,7 @@ export {
   getProvisioningScopes,
   resendAdminAccountVerification,
   resendAdminInvitation,
+  resetAccountMfa,
   revokeAccountSessions,
   revokeAdminInvitation,
   sendAdminAccountPasswordReset,
@@ -35,4 +39,5 @@ export {
   formatAdminDate,
   INVITATION_STATUS_LABELS,
 } from './model/presentation'
+export { default as AccountVerificationSummary } from './ui/AccountVerificationSummary'
 export { default as InitialOnboardingStatus } from './ui/InitialOnboardingStatus'

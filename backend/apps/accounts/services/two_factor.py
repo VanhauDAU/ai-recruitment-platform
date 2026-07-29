@@ -104,6 +104,18 @@ def discard_pending_totp_secret(user):
     cache.delete(_totp_setup_key(user.pk))
 
 
+def invalidate_user_artifacts(user):
+    """Invalidate every user-addressable MFA artifact.
+
+    Login challenge keys are random and cannot be enumerated; their embedded
+    auth revision makes them fail closed after a recovery bump.
+    """
+
+    for purpose in (PURPOSE_SETUP, PURPOSE_LOGIN, PURPOSE_DISABLE, PURPOSE_BACKUP):
+        _clear_code(user.pk, purpose)
+    discard_pending_totp_secret(user)
+
+
 def _totp_code(secret, counter):
     padded_secret = secret.upper() + '=' * (-len(secret) % 8)
     digest = hmac.new(
@@ -219,7 +231,11 @@ def start_login_challenge(user, portal):
     challenge = secrets.token_urlsafe(32)
     cache.set(
         _challenge_key(challenge),
-        {'user_id': user.pk, 'portal': portal or ''},
+        {
+            'user_id': user.pk,
+            'portal': portal or '',
+            'auth_revision': user.auth_revision,
+        },
         settings.TWO_FACTOR_CODE_TTL,
     )
     return challenge
@@ -249,11 +265,12 @@ def _employer_action_label(purpose, target=None):
     return 'Xác thực 2 yếu tố'
 
 
-def send_two_factor_email(user, purpose, *, target=None):
+def send_two_factor_email(user, purpose, *, target=None, recipient=None):
     """Gửi mã đã được phát trước đó; job cũ không thể gửi mã hết hạn."""
     code = cache.get(_code_key(user.pk, purpose))
     if not code:
         return
+    recipient = recipient or user.email
     site_name = site_setting('site_name', 'ProCV')
     minutes = max(1, settings.TWO_FACTOR_CODE_TTL // 60)
     portal_label = (
@@ -294,7 +311,7 @@ def send_two_factor_email(user, purpose, *, target=None):
             </div>
           </div>
         </div>"""
-        send_html_email(subject=subject, text=text, html=html, to=user.email)
+        send_html_email(subject=subject, text=text, html=html, to=recipient)
         return
 
     text = (
@@ -308,4 +325,4 @@ def send_two_factor_email(user, purpose, *, target=None):
       <p style="margin:24px 0;text-align:center;font-size:30px;font-weight:700;letter-spacing:8px;color:#00b14f">{code}</p>
       <p>Mã có hiệu lực trong <strong>{minutes} phút</strong>. Không chia sẻ mã này với bất kỳ ai.</p>
     </div>"""
-    send_html_email(subject=subject, text=text, html=html, to=user.email)
+    send_html_email(subject=subject, text=text, html=html, to=recipient)

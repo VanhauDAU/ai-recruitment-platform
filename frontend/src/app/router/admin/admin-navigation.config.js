@@ -176,7 +176,7 @@ export const ADMIN_NAVIGATION = [
     children: [
       {
         key: 'blog',
-        label: 'Cẩm nang',
+        label: 'Cẩm nang nghề nghiệp',
         children: [
           { key: 'blog-posts', label: 'Bài viết', routeRef: 'blog' },
           { key: 'blog-categories', label: 'Danh mục', routeRef: 'blog', query: { tab: 'categories' } },

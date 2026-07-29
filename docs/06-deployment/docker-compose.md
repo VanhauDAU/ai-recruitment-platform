@@ -37,7 +37,7 @@ docker compose up
 cp backend/.env.example backend/.env
 # Điền: ENVIRONMENT=production, SECRET_KEY, JWT_SIGNING_KEY, DB_PASSWORD,
 # ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS, EMAIL_*, R2_*, RECAPTCHA_SECRET_KEY,
-# TWO_FACTOR_TOTP_ENCRYPTION_KEY...
+# TWO_FACTOR_TOTP_ENCRYPTION_KEY và DJANGO_ADMIN_ENABLED=False...
 # Settings production FAIL-FAST: thiếu biến nào sẽ liệt kê đầy đủ khi start.
 
 # 2. Biến build frontend (compose interpolation) — file .env ở root repo
@@ -50,7 +50,9 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 - `nginx` (cổng 80/443) reverse proxy: `/` → frontend tĩnh, `/api` + `/admin` →
-  gunicorn, `/static` + `/media` serve trực tiếp từ volume.
+  gunicorn, `/static` + `/media` serve trực tiếp từ volume. Django không đăng
+  ký `/admin/` trong production nên đường dẫn này luôn trả 404; production
+  settings từ chối khởi động nếu `DJANGO_ADMIN_ENABLED=True`.
 - DB và Redis **không** expose ra ngoài host ở production.
 - Cấu hình nginx: `deploy/nginx/procv.conf`. TLS: thêm server block 443 +
   certbot khi trỏ domain.
@@ -103,6 +105,8 @@ demo trên staging/production.
 # Migrate thủ công / tạo superuser
 docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py bootstrap_admin_mfa <email> \
+  --mark-email-verified --no-input
 
 # Backup DB
 docker compose exec db pg_dump -U postgres ai_career_coach > backup-$(date +%F).sql
@@ -133,3 +137,6 @@ git checkout <commit> && docker compose -f docker-compose.yml -f docker-compose.
   Giai đoạn AI sẽ thêm build arg riêng.
 - `scripts/check_all.sh` tự fallback chạy backend qua compose khi máy không có
   `backend/venv`.
+- `createsuperuser` + `bootstrap_admin_mfa` là break-glass có quyền máy chủ,
+  không phải cách bật `/admin/` ở production. Mọi lần sử dụng phải có ticket và
+  nhật ký vận hành.

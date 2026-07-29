@@ -29,8 +29,9 @@ from ..models import (
     AuthSession,
     User,
 )
-from . import auth_sessions
+from . import auth_sessions, password_reset, two_factor
 from .admin_access import assign_membership, record_admin_action
+from .tokens import revoke_refresh_tokens
 
 INVITATION_TTL = timedelta(hours=72)
 SENSITIVE_PROVISIONING_CODES = frozenset(
@@ -91,6 +92,23 @@ def _ensure_reason(reason):
         raise ValidationError({'reason': 'Vui lòng nhập lý do thao tác.'})
     if len(cleaned) > 500:
         raise ValidationError({'reason': 'Lý do không được vượt quá 500 ký tự.'})
+    return cleaned
+
+
+def _ensure_verification_evidence(verification_evidence):
+    cleaned = (verification_evidence or '').strip()
+    if len(cleaned) < 20:
+        raise ValidationError(
+            {
+                'verification_evidence': (
+                    'Bằng chứng xác minh cần mô tả cụ thể và có ít nhất 20 ký tự.'
+                )
+            }
+        )
+    if len(cleaned) > 500:
+        raise ValidationError(
+            {'verification_evidence': 'Bằng chứng xác minh không được vượt quá 500 ký tự.'}
+        )
     return cleaned
 
 
@@ -653,6 +671,277 @@ def update_managed_account_profile(user, *, actor, changes):
 def _assert_revision(claims):
     if _current_revision() != claims['revision']:
         raise StaleImpactToken('Dữ liệu tài khoản đã thay đổi.')
+
+
+def ensure_account_recovery_allowed(actor, user, permission):
+    ensure_account_write_allowed(actor, user, permission)
+    if actor.pk == user.pk:
+        raise ValidationError('Bạn không thể tự khôi phục danh tính tài khoản của mình.')
+    if user.is_deleted:
+        raise ValidationError('Tài khoản đã bị xóa và không thuộc luồng khôi phục này.')
+    if user.status == User.Status.PENDING:
+        raise ValidationError('Tài khoản đang chờ kích hoạt phải được xử lý qua quy trình lời mời.')
+
+
+def _mfa_snapshot(user):
+    methods = two_factor.enabled_methods(user)
+    return {
+        'email': methods['email'],
+        'totp': methods['totp'],
+        'backup_codes_remaining': len(user.two_factor_backup_code_hashes or []),
+    }
+
+
+def _email_recovery_snapshot(user, providers):
+    return {
+        'email': User.objects.normalize_email(user.email),
+        'email_verified': bool(user.email_verified),
+        'has_usable_password': user.has_usable_password(),
+        'auth_revision': user.auth_revision,
+        'oauth_providers': sorted(set(providers)),
+        'mfa_methods': _mfa_snapshot(user),
+    }
+
+
+def _cancel_locked_jobs(jobs):
+    cancelled = 0
+    for job in jobs:
+        if job.status != AuthEmailJob.Status.PENDING:
+            continue
+        job.status = AuthEmailJob.Status.CANCELLED
+        job.save(update_fields=['status', 'updated_at'])
+        cancelled += 1
+    return cancelled
+
+
+def confirm_account_email(
+    user,
+    *,
+    email,
+    reason,
+    verification_evidence,
+    impact_token,
+    actor,
+):
+    from ..tasks import queue_auth_email
+    from .verification_delivery import queue_verification_email
+
+    email = User.objects.normalize_email(email)
+    reason = _ensure_reason(reason)
+    verification_evidence = _ensure_verification_evidence(verification_evidence)
+    ensure_account_recovery_allowed(actor, user, 'account.email.manage')
+    if User.objects.normalize_email(user.email) == email:
+        raise ValidationError({'email': 'Email mới trùng với email hiện tại.'})
+    if User.objects.email_claimed_for_role(
+        email,
+        user.role,
+        exclude_user_id=user.pk,
+    ):
+        raise ValidationError({'email': 'Email này đã thuộc một tài khoản cùng loại.'})
+
+    with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
+        ensure_account_recovery_allowed(actor, user, 'account.email.manage')
+        sessions = list(
+            AuthSession.objects.select_for_update().filter(
+                user=user,
+                revoked_at__isnull=True,
+            )
+        )
+        social_accounts = list(user.social_accounts.select_for_update().all())
+        jobs = list(
+            AuthEmailJob.objects.select_for_update().filter(
+                user=user,
+                status=AuthEmailJob.Status.PENDING,
+                kind__in={
+                    AuthEmailJob.Kind.VERIFICATION,
+                    AuthEmailJob.Kind.PASSWORD_RESET,
+                    AuthEmailJob.Kind.TWO_FACTOR,
+                },
+            )
+        )
+        providers = [item.provider for item in social_accounts]
+        before = _email_recovery_snapshot(user, providers)
+        claims = decode_impact_token(
+            impact_token,
+            operation='account.email.change',
+            resource_key=f'account:{user.public_id}',
+            normalized_payload={
+                'email': email,
+                'reason': reason,
+                'verification_evidence': verification_evidence,
+                'before': before,
+            },
+        )
+        if before['email'] == email:
+            raise ValidationError({'email': 'Email mới trùng với email hiện tại.'})
+        if User.objects.email_claimed_for_role(
+            email,
+            user.role,
+            exclude_user_id=user.pk,
+        ):
+            raise ValidationError({'email': 'Email này đã thuộc một tài khoản cùng loại.'})
+        _assert_revision(claims)
+
+        old_email = user.email
+        user.email = email
+        user.email_verified = False
+        user.set_unusable_password()
+        user.auth_revision += 1
+        try:
+            with transaction.atomic():
+                user.save(
+                    update_fields=[
+                        'email',
+                        'email_verified',
+                        'password',
+                        'auth_revision',
+                        'updated_at',
+                    ]
+                )
+        except IntegrityError as error:
+            raise ValidationError(
+                {'email': 'Email này đã thuộc một tài khoản cùng loại.'}
+            ) from error
+
+        if social_accounts:
+            user.social_accounts.filter(pk__in=[item.pk for item in social_accounts]).delete()
+        cancelled_job_count = _cancel_locked_jobs(jobs)
+        revoke_refresh_tokens(user)
+        transaction.on_commit(lambda: password_reset.invalidate_tokens(user))
+        transaction.on_commit(lambda: two_factor.invalidate_user_artifacts(user))
+
+        queue_auth_email(
+            AuthEmailJob.Kind.EMAIL_CHANGED_NOTICE,
+            user,
+            context={
+                'recipient': old_email,
+                'old_email': old_email,
+                'new_email': email,
+                'portal': user.role,
+                'admin_initiated': True,
+            },
+        )
+        queue_verification_email(user)
+        record_admin_action(
+            **_actor_kwargs(actor),
+            action='change_account_email',
+            target_type='user',
+            target_public_id=user.public_id,
+            payload={
+                'user_public_id': user.public_id,
+                'before_email': old_email,
+                'after_email': email,
+                'reason': reason,
+                'verification_evidence': verification_evidence,
+                'revoked_session_count': len(sessions),
+                'revoked_oauth_providers': sorted(set(providers)),
+                'cancelled_auth_email_job_count': cancelled_job_count,
+                'password_invalidated': True,
+                'auth_revision_after': user.auth_revision,
+            },
+        )
+        return user
+
+
+def confirm_reset_account_mfa(
+    user,
+    *,
+    reason,
+    verification_evidence,
+    impact_token,
+    actor,
+):
+    from ..tasks import queue_auth_email
+
+    reason = _ensure_reason(reason)
+    verification_evidence = _ensure_verification_evidence(verification_evidence)
+    ensure_account_recovery_allowed(actor, user, 'account.mfa.reset')
+
+    with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
+        ensure_account_recovery_allowed(actor, user, 'account.mfa.reset')
+        sessions = list(
+            AuthSession.objects.select_for_update().filter(
+                user=user,
+                revoked_at__isnull=True,
+            )
+        )
+        jobs = list(
+            AuthEmailJob.objects.select_for_update().filter(
+                user=user,
+                status=AuthEmailJob.Status.PENDING,
+                kind__in={
+                    AuthEmailJob.Kind.PASSWORD_RESET,
+                    AuthEmailJob.Kind.TWO_FACTOR,
+                },
+            )
+        )
+        methods_before = _mfa_snapshot(user)
+        claims = decode_impact_token(
+            impact_token,
+            operation='account.mfa.reset',
+            resource_key=f'account:{user.public_id}',
+            normalized_payload={
+                'reason': reason,
+                'verification_evidence': verification_evidence,
+                'auth_revision': user.auth_revision,
+                'methods': methods_before,
+            },
+        )
+        _assert_revision(claims)
+        if not (
+            methods_before['email']
+            or methods_before['totp']
+            or methods_before['backup_codes_remaining']
+        ):
+            raise ValidationError('Tài khoản không có phương thức MFA nào để đặt lại.')
+
+        user.two_factor_email_enabled = False
+        user.two_factor_totp_secret = ''
+        user.two_factor_backup_code_hashes = []
+        user.two_factor_enabled = False
+        user.auth_revision += 1
+        user.save(
+            update_fields=[
+                'two_factor_email_enabled',
+                'two_factor_totp_secret',
+                'two_factor_backup_code_hashes',
+                'two_factor_enabled',
+                'auth_revision',
+                'updated_at',
+            ]
+        )
+        cancelled_job_count = _cancel_locked_jobs(jobs)
+        revoke_refresh_tokens(user)
+        transaction.on_commit(lambda: password_reset.invalidate_tokens(user))
+        transaction.on_commit(lambda: two_factor.invalidate_user_artifacts(user))
+        queue_auth_email(
+            AuthEmailJob.Kind.MFA_RESET_NOTICE,
+            user,
+            context={
+                'recipient': user.email,
+                'portal': user.role,
+                'occurred_at': timezone.now().isoformat(),
+                'admin_initiated': True,
+            },
+        )
+        record_admin_action(
+            **_actor_kwargs(actor),
+            action='reset_account_mfa',
+            target_type='user',
+            target_public_id=user.public_id,
+            payload={
+                'user_public_id': user.public_id,
+                'methods_before': methods_before,
+                'reason': reason,
+                'verification_evidence': verification_evidence,
+                'revoked_session_count': len(sessions),
+                'cancelled_auth_email_job_count': cancelled_job_count,
+                'auth_revision_after': user.auth_revision,
+            },
+        )
+        return user
 
 
 def confirm_account_status(user, *, status, reason, impact_token, actor):

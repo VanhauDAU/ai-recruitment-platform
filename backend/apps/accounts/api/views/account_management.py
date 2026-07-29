@@ -17,6 +17,8 @@ from ...models import AuthEmailJob, User
 from ...permissions import HasAdminPermission, require_admin_permission
 from ...selectors import (
     account_activity_queryset,
+    account_email_change_impact,
+    account_mfa_reset_impact,
     account_revoke_sessions_impact,
     account_sessions_queryset,
     account_status_impact,
@@ -29,11 +31,14 @@ from ...selectors import (
 )
 from ...services import (
     accept_admin_invitation,
+    confirm_account_email,
     confirm_account_status,
     confirm_provisioning_scope_status,
+    confirm_reset_account_mfa,
     confirm_revoke_account_sessions,
     create_admin_invitation,
     create_provisioning_scope,
+    ensure_account_recovery_allowed,
     ensure_account_write_allowed,
     queue_account_security_email,
     resend_admin_invitation,
@@ -45,6 +50,10 @@ from ...services import (
 )
 from ..serializers.account_management import (
     AccountActivitySerializer,
+    AccountEmailChangeSerializer,
+    AccountEmailImpactSerializer,
+    AccountMfaResetImpactSerializer,
+    AccountMfaResetSerializer,
     AccountStatusChangeSerializer,
     AccountStatusImpactSerializer,
     AdminInvitationAcceptSerializer,
@@ -203,6 +212,10 @@ class AdminAccountViewSet(
         'revoke_sessions': ['account.security.manage', 'account.admin.manage'],
         'send_password_reset': ['account.security.manage', 'account.admin.manage'],
         'resend_verification': ['account.security.manage', 'account.admin.manage'],
+        'email_impact': ['account.email.manage'],
+        'change_email': ['account.email.manage'],
+        'mfa_impact': ['account.mfa.reset'],
+        'reset_mfa': ['account.mfa.reset'],
     }
 
     def get_queryset(self):
@@ -435,6 +448,63 @@ class AdminAccountViewSet(
             **serializer.validated_data,
         )
         return Response({'revoked_session_count': revoked})
+
+    @action(detail=True, methods=['post'], url_path='email-impact')
+    def email_impact(self, request, public_id=None):
+        user = self.get_object()
+        serializer = AccountEmailImpactSerializer(
+            data=request.data,
+            context={'target_user': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        _call(
+            ensure_account_recovery_allowed,
+            actor=request.user,
+            user=user,
+            permission='account.email.manage',
+        )
+        return Response(account_email_change_impact(user, **serializer.validated_data))
+
+    @action(detail=True, methods=['post'], url_path='change-email')
+    def change_email(self, request, public_id=None):
+        user = self.get_object()
+        serializer = AccountEmailChangeSerializer(
+            data=request.data,
+            context={'target_user': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = _confirmed_call(
+            confirm_account_email,
+            user=user,
+            actor=request.user,
+            **serializer.validated_data,
+        )
+        return Response(_serialize_account(user, request.user, detail=True))
+
+    @action(detail=True, methods=['post'], url_path='mfa-impact')
+    def mfa_impact(self, request, public_id=None):
+        user = self.get_object()
+        serializer = AccountMfaResetImpactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        _call(
+            ensure_account_recovery_allowed,
+            actor=request.user,
+            user=user,
+            permission='account.mfa.reset',
+        )
+        return Response(account_mfa_reset_impact(user, **serializer.validated_data))
+
+    @action(detail=True, methods=['post'], url_path='reset-mfa')
+    def reset_mfa(self, request, public_id=None):
+        serializer = AccountMfaResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = _confirmed_call(
+            confirm_reset_account_mfa,
+            user=self.get_object(),
+            actor=request.user,
+            **serializer.validated_data,
+        )
+        return Response(_serialize_account(user, request.user, detail=True))
 
     @extend_schema(request=ReasonSerializer)
     @action(detail=True, methods=['post'], url_path='send-password-reset')

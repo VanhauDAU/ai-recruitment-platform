@@ -28,12 +28,19 @@ _RESET_SENT_DETAIL = (
 def _reset_token_user(token, portal=None, *, consume=False):
     """Resolve a reset token without allowing an admin token on another portal."""
 
-    user_id = pr.consume_token(token) if consume else pr.peek_token(token)
-    user = User.objects.filter(pk=user_id, is_deleted=False).first() if user_id else None
+    identity = pr.consume_token(token) if consume else pr.peek_token(token)
+    if not isinstance(identity, dict):
+        return None
+    user = User.objects.filter(
+        pk=identity.get('user_id'),
+        is_deleted=False,
+    ).first()
     expected_role = PORTAL_ROLE_BY_NAME.get(portal) if portal else None
     if (
         user is None
         or not pr.is_reset_eligible(user)
+        or User.objects.normalize_email(user.email) != identity.get('email')
+        or user.auth_revision != identity.get('auth_revision')
         or (expected_role is not None and user.role != expected_role)
         # Admin reset links are issued only by the authenticated admin-account
         # workflow and always carry this explicit portal binding.
@@ -74,7 +81,14 @@ class PasswordResetRequestView(APIView):
         # Token được sinh trong worker (lúc gửi thật), xem tasks._send.
         if user and pr.cooldown_remaining(user) == 0:
             pr.start_cooldown(user)
-            queue_auth_email(AuthEmailJob.Kind.PASSWORD_RESET, user)
+            queue_auth_email(
+                AuthEmailJob.Kind.PASSWORD_RESET,
+                user,
+                context={
+                    'email': user.email,
+                    'auth_revision': user.auth_revision,
+                },
+            )
 
         return Response({'detail': _RESET_SENT_DETAIL})
 

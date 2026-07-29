@@ -17,9 +17,10 @@ from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from ..models import AuthSession, SocialAccount, User
+from ..models import AuthEmailJob, AuthSession, SocialAccount, User
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
+from ..tasks import deliver_auth_email_job
 from .helpers import PNG_BYTES, TEST_MEDIA_ROOT, refresh_session, set_refresh_cookie
 
 
@@ -691,7 +692,13 @@ class ChangeEmailTests(APITestCase):
         user.refresh_from_db()
         self.assertEqual(user.email, 'new@example.com')
         self.assertFalse(user.email_verified)
-        # Mail cảnh báo (gửi đồng bộ) phải tới đúng địa chỉ CŨ.
+        notice = AuthEmailJob.objects.get(
+            user=user,
+            kind=AuthEmailJob.Kind.EMAIL_CHANGED_NOTICE,
+        )
+        self.assertEqual(notice.context['recipient'], 'pending@example.com')
+        deliver_auth_email_job.run(notice.pk)
+        # Mail cảnh báo từ outbox phải tới đúng địa chỉ CŨ.
         warning = [msg for msg in mail.outbox if 'pending@example.com' in msg.to]
         self.assertEqual(len(warning), 1)
         self.assertIn('thay đổi', warning[0].subject.lower())

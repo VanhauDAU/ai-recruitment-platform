@@ -40,6 +40,8 @@ export const AUDIT_ACTION_LABELS = {
   set_provisioning_scope_active: 'Đổi trạng thái quy tắc mời Admin',
   update_account_profile: 'Cập nhật hồ sơ tài khoản',
   change_account_status: 'Đổi trạng thái tài khoản',
+  change_account_email: 'Khôi phục email đăng nhập',
+  reset_account_mfa: 'Đặt lại xác thực đa yếu tố',
   revoke_account_sessions: 'Thu hồi phiên tài khoản',
   send_account_password_reset: 'Gửi đặt lại mật khẩu',
   resend_account_verification: 'Gửi lại xác minh email',

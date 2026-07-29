@@ -42,6 +42,7 @@ from .impact_tokens import (
 _LAZY_EXPORTS = {
     'accept_admin_invitation': ('.account_management', 'accept_admin_invitation'),
     'confirm_account_status': ('.account_management', 'confirm_account_status'),
+    'confirm_account_email': ('.account_management', 'confirm_account_email'),
     'confirm_provisioning_scope_status': (
         '.account_management',
         'confirm_provisioning_scope_status',
@@ -50,11 +51,19 @@ _LAZY_EXPORTS = {
         '.account_management',
         'confirm_revoke_account_sessions',
     ),
+    'confirm_reset_account_mfa': (
+        '.account_management',
+        'confirm_reset_account_mfa',
+    ),
     'create_admin_invitation': ('.account_management', 'create_admin_invitation'),
     'create_provisioning_scope': ('.account_management', 'create_provisioning_scope'),
     'ensure_account_write_allowed': (
         '.account_management',
         'ensure_account_write_allowed',
+    ),
+    'ensure_account_recovery_allowed': (
+        '.account_management',
+        'ensure_account_recovery_allowed',
     ),
     'queue_account_security_email': (
         '.account_management',
@@ -90,6 +99,7 @@ __all__ = [
     'assign_membership',
     'accept_admin_invitation',
     'confirm_account_status',
+    'confirm_account_email',
     'confirm_department_status_change',
     'confirm_membership_assignment',
     'confirm_membership_revoke',
@@ -99,11 +109,13 @@ __all__ = [
     'confirm_role_status_change',
     'confirm_provisioning_scope_status',
     'confirm_revoke_account_sessions',
+    'confirm_reset_account_mfa',
     'create_admin_invitation',
     'create_department',
     'create_role',
     'create_provisioning_scope',
     'ensure_account_write_allowed',
+    'ensure_account_recovery_allowed',
     'InvalidImpactToken',
     'is_account_accessible',
     'queue_verification_email',

@@ -2,6 +2,8 @@
 
 from .account_management import (
     account_activity_queryset,
+    account_email_change_impact,
+    account_mfa_reset_impact,
     account_revoke_sessions_impact,
     account_sessions_queryset,
     account_status_impact,
@@ -35,6 +37,8 @@ from .users import accessible_users_queryset, get_accessible_user, linked_oauth_
 __all__ = [
     'accessible_users_queryset',
     'account_activity_queryset',
+    'account_email_change_impact',
+    'account_mfa_reset_impact',
     'account_revoke_sessions_impact',
     'account_sessions_queryset',
     'account_status_impact',

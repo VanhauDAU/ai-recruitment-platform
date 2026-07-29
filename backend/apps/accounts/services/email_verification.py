@@ -112,26 +112,81 @@ def send_verification_email(user):
     return token
 
 
-def send_email_changed_notice(user, old_email):
+def _portal_label(user):
+    if user.role == User.Role.ADMIN:
+        return 'Quản trị'
+    if user.role == User.Role.EMPLOYER:
+        return 'Nhà tuyển dụng'
+    return 'Ứng viên'
+
+
+def send_email_changed_notice(
+    user,
+    old_email,
+    *,
+    new_email=None,
+    admin_initiated=False,
+    recipient=None,
+):
     """Cảnh báo địa chỉ email CŨ rằng email đăng nhập vừa bị đổi.
 
     Giúp chủ tài khoản thật phát hiện nếu ai đó chiếm phiên và đổi email để cướp
     tài khoản (OWASP: thông báo out-of-band cho thay đổi nhạy cảm)."""
     site_name = site_setting('site_name', 'ProCV')
     support_email = site_setting('support_email', '')
-    portal_label = 'Nhà tuyển dụng' if user.role == User.Role.EMPLOYER else 'Ứng viên'
+    portal_label = _portal_label(user)
+    new_email = new_email or user.email
+    recipient = recipient or old_email
+    admin_note = (
+        ' Thay đổi được thực hiện bởi quản trị viên theo yêu cầu hỗ trợ đã xác minh.'
+        if admin_initiated
+        else ''
+    )
     subject = f'Email đăng nhập tài khoản {portal_label} {site_name} vừa được thay đổi'
     text = (
         f'Xin chào,\n\nEmail đăng nhập của tài khoản {portal_label} tại {site_name} vừa được '
-        f'đổi từ {old_email} sang {user.email}.\n\nNếu bạn KHÔNG thực hiện thay đổi này, tài khoản '
+        f'đổi từ {old_email} sang {new_email}.{admin_note}\n\nNếu bạn KHÔNG yêu cầu thay đổi này, tài khoản '
         f'của bạn có thể đã bị xâm phạm — hãy liên hệ ngay {support_email or "bộ phận hỗ trợ"}.'
     )
     html = f"""<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
       <h2 style="color:#dc2626">Email đăng nhập vừa được thay đổi</h2>
       <p>Email đăng nhập của tài khoản <strong>{escape(portal_label)}</strong> tại {escape(site_name)} vừa được đổi từ
-      <strong>{escape(old_email)}</strong> sang <strong>{escape(user.email)}</strong>.</p>
-      <p style="background:#fef2f2;border-radius:8px;padding:14px 16px;color:#991b1b">Nếu bạn <strong>không</strong> thực hiện
+      <strong>{escape(old_email)}</strong> sang <strong>{escape(new_email)}</strong>.</p>
+      {'<p>Thay đổi được thực hiện bởi quản trị viên theo yêu cầu hỗ trợ đã xác minh.</p>' if admin_initiated else ''}
+      <p style="background:#fef2f2;border-radius:8px;padding:14px 16px;color:#991b1b">Nếu bạn <strong>không</strong> yêu cầu
       thay đổi này, tài khoản của bạn có thể đã bị xâm phạm. Vui lòng liên hệ ngay
       {escape(support_email or 'bộ phận hỗ trợ')} để được trợ giúp.</p>
     </div>"""
-    send_html_email(subject=subject, text=text, html=html, to=old_email)
+    send_html_email(subject=subject, text=text, html=html, to=recipient)
+
+
+def send_mfa_reset_notice(
+    user,
+    *,
+    recipient=None,
+    admin_initiated=True,
+    occurred_at=None,
+):
+    recipient = recipient or user.email
+    site_name = site_setting('site_name', 'ProCV')
+    support_email = site_setting('support_email', '')
+    portal_label = _portal_label(user)
+    admin_note = ' bởi quản trị viên theo yêu cầu hỗ trợ đã xác minh' if admin_initiated else ''
+    time_note = f' Thời điểm thao tác: {occurred_at}.' if occurred_at else ''
+    subject = f'Xác thực đa yếu tố tài khoản {portal_label} {site_name} vừa được đặt lại'
+    text = (
+        f'Xin chào,\n\nCác phương thức xác thực đa yếu tố của tài khoản {recipient} '
+        f'tại {site_name} vừa được đặt lại{admin_note}. Mọi phiên đăng nhập cũ đã bị '
+        f'thu hồi.{time_note}\n\nNếu bạn không yêu cầu thao tác này, hãy liên hệ ngay '
+        f'{support_email or "bộ phận hỗ trợ"}.'
+    )
+    html = f"""<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
+      <h2 style="color:#dc2626">Xác thực đa yếu tố vừa được đặt lại</h2>
+      <p>Các phương thức xác thực đa yếu tố của tài khoản <strong>{escape(recipient)}</strong>
+      tại {escape(site_name)} vừa được đặt lại{escape(admin_note)}. Mọi phiên đăng nhập cũ đã bị thu hồi.
+      {escape(time_note)}</p>
+      <p style="background:#fef2f2;border-radius:8px;padding:14px 16px;color:#991b1b">
+      Nếu bạn không yêu cầu thao tác này, vui lòng liên hệ ngay
+      {escape(support_email or 'bộ phận hỗ trợ')}.</p>
+    </div>"""
+    send_html_email(subject=subject, text=text, html=html, to=recipient)

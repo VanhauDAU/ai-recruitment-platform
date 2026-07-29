@@ -23,11 +23,31 @@
     "requires": []
   },
   {
+    "code": "account.email.manage",
+    "module": "account",
+    "label": "Khôi phục email đăng nhập",
+    "description": "Đổi email đăng nhập sau khi hoàn tất quy trình xác minh danh tính thủ công.",
+    "requires": [
+      "account.view",
+      "account.security.manage"
+    ]
+  },
+  {
     "code": "account.employer.view",
     "module": "account",
     "label": "Xem tài khoản nhà tuyển dụng",
     "description": "Xem danh sách và chi tiết tài khoản nhà tuyển dụng, không mở dữ liệu ứng viên.",
     "requires": []
+  },
+  {
+    "code": "account.mfa.reset",
+    "module": "account",
+    "label": "Đặt lại xác thực đa yếu tố",
+    "description": "Xóa các phương thức xác thực đa yếu tố sau khi xác minh danh tính thủ công.",
+    "requires": [
+      "account.view",
+      "account.security.manage"
+    ]
   },
   {
     "code": "account.profile.manage",

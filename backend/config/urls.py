@@ -15,7 +15,6 @@ def health_check(request):
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('api/health/', health_check, name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/admin/', include('apps.accounts.urls_admin')),
@@ -34,6 +33,9 @@ urlpatterns = [
     path('api/blog/', include('apps.blog.urls')),
     path('api/privacy/', include('apps.privacy.urls')),
 ]
+
+if settings.DJANGO_ADMIN_ENABLED:
+    urlpatterns += [path('admin/', admin.site.urls)]
 
 if settings.API_DOCS_ENABLED:
     urlpatterns += [

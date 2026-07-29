@@ -593,6 +593,13 @@ def _challenge_user(challenge):
     user = User.objects.filter(
         pk=data['user_id'], is_deleted=False, status=User.Status.ACTIVE
     ).first()
+    if (
+        user is None
+        or not isinstance(data.get('auth_revision'), int)
+        or data['auth_revision'] != user.auth_revision
+    ):
+        two_factor.consume_login_challenge(challenge)
+        return None, None
     return user, data
 
 

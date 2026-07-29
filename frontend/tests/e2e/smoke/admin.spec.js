@@ -198,6 +198,239 @@ test('admin account management: filters, table actions and quick detail are resp
   )
 })
 
+test('superuser recovers email, resets MFA, then sends password reset', async ({ page }) => {
+  const calls = []
+  const adminUser = {
+    public_id: 'usr_root',
+    email: 'root@example.com',
+    full_name: 'System Admin',
+    role: 'admin',
+    status: 'active',
+    admin_access: { is_superuser: true, permissions: [], memberships: [] },
+  }
+  let account = {
+    public_id: 'usr_recovery',
+    email: 'old-identity@example.com',
+    full_name: 'Nguyễn Cần Hỗ Trợ',
+    phone: '0901234567',
+    avatar_url: '',
+    role: 'candidate',
+    status: 'active',
+    email_verified: true,
+    two_factor_enabled: true,
+    mfa_methods: { email: true, totp: true, backup_codes_remaining: 2 },
+    has_usable_password: true,
+    active_session_count: 2,
+    last_activity_at: '2026-07-29T08:00:00Z',
+    last_login: '2026-07-29T08:00:00Z',
+    date_joined: '2026-07-01T08:00:00Z',
+    updated_at: '2026-07-29T08:00:00Z',
+    context: { kind: 'candidate' },
+    profile: { headline: 'Frontend Developer' },
+    section_counts: {
+      active_sessions: 2,
+      activity: 0,
+      cvs: 0,
+      applications: 0,
+      consents: 0,
+    },
+    admin_access: null,
+    invitation: null,
+  }
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const payload = request.postDataJSON() || {}
+    let body = {}
+    if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
+    else if (path === '/api/auth/me/') body = adminUser
+    else if (path === '/api/privacy/consent/') {
+      body = {
+        consent: {
+          necessary: true,
+          preferences: false,
+          analytics: false,
+          marketing: false,
+        },
+      }
+    } else if (
+      path === '/api/admin/accounts/usr_recovery/'
+      && request.method() === 'GET'
+    ) body = account
+    else if (path === '/api/admin/accounts/usr_recovery/sessions/') body = []
+    else if (path === '/api/admin/accounts/usr_recovery/email-impact/') {
+      calls.push({ path, payload })
+      body = {
+        operation: 'account.email.change',
+        target: {
+          public_id: account.public_id,
+          email: account.email,
+          role: account.role,
+          status: account.status,
+        },
+        before: {
+          email: account.email,
+          email_verified: true,
+          has_usable_password: true,
+        },
+        after: {
+          email: payload.email,
+          email_verified: false,
+          has_usable_password: false,
+        },
+        active_session_count: 2,
+        oauth_providers_to_revoke: ['google'],
+        mfa_methods: account.mfa_methods,
+        password_reset_required: true,
+        password_reset_available: true,
+        email_verification_required: true,
+        can_apply: true,
+        impact_token: 'email-impact-token',
+      }
+    } else if (path === '/api/admin/accounts/usr_recovery/change-email/') {
+      calls.push({ path, payload })
+      account = {
+        ...account,
+        email: payload.email,
+        email_verified: false,
+        has_usable_password: false,
+        active_session_count: 0,
+        section_counts: { ...account.section_counts, active_sessions: 0 },
+      }
+      body = account
+    } else if (path === '/api/admin/accounts/usr_recovery/mfa-impact/') {
+      calls.push({ path, payload })
+      body = {
+        operation: 'account.mfa.reset',
+        target: {
+          public_id: account.public_id,
+          email: account.email,
+          role: account.role,
+          status: account.status,
+        },
+        methods_to_disable: account.mfa_methods,
+        active_session_count: 0,
+        password_will_remain_unchanged: true,
+        can_apply: true,
+        impact_token: 'mfa-impact-token',
+      }
+    } else if (path === '/api/admin/accounts/usr_recovery/reset-mfa/') {
+      calls.push({ path, payload })
+      account = {
+        ...account,
+        two_factor_enabled: false,
+        mfa_methods: { email: false, totp: false, backup_codes_remaining: 0 },
+      }
+      body = account
+    } else if (path === '/api/admin/accounts/usr_recovery/send-password-reset/') {
+      calls.push({ path, payload })
+      body = { detail: 'queued' }
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    })
+  })
+
+  await page.goto('/admin/app/accounts/usr_recovery?tab=security')
+  await expect(page.getByRole('heading', { name: 'Nguyễn Cần Hỗ Trợ' })).toBeVisible()
+  await expect(page.getByText('Khôi phục quyền truy cập'))
+    .toBeVisible()
+  await expect(page.getByText(/không có mật khẩu tạm/i)).toBeVisible()
+
+  await page.getByRole('button', { name: 'Đổi email đăng nhập' }).click()
+  const emailDialog = page.getByRole('dialog', { name: 'Khôi phục email đăng nhập' })
+  await expect(emailDialog.getByText('Nguyễn Cần Hỗ Trợ')).toBeVisible()
+  await expect(emailDialog.getByText('0901234567')).toBeVisible()
+  await expect(emailDialog.getByText('usr_recovery')).toBeVisible()
+  await expect(emailDialog.getByText(/Không đọc sẵn dữ liệu/)).toBeVisible()
+  await expect(emailDialog.locator('label.ant-form-item-required')).toHaveText([
+    'Email đăng nhập mới',
+    'Lý do khôi phục',
+    'Bằng chứng xác minh',
+  ])
+  const viewport = page.viewportSize()
+  await expect.poll(async () => {
+    const box = await emailDialog.boundingBox()
+    return box.width
+  }).toBeGreaterThan(Math.min(700, viewport.width * 0.85))
+  const emailDialogBox = await emailDialog.boundingBox()
+  expect(emailDialogBox.width).toBeLessThanOrEqual(viewport.width - 24)
+  await emailDialog.getByLabel('Email đăng nhập mới').fill('NEW-IDENTITY@Example.com')
+  await emailDialog.getByLabel('Lý do khôi phục').fill(
+    'Người dùng mất quyền truy cập danh tính cũ',
+  )
+  await emailDialog.getByLabel('Bằng chứng xác minh').fill(
+    'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
+  )
+  await emailDialog.getByRole('button', { name: 'Xem tác động' }).click()
+  await expect(emailDialog.getByText('old-identity@example.com').last()).toBeVisible()
+  await expect(emailDialog.getByText('new-identity@example.com')).toBeVisible()
+  await expect(emailDialog.getByText(/cần reset ở bước kế tiếp/)).toBeVisible()
+  await emailDialog.getByRole('button', { name: 'Xác nhận thực hiện' }).click()
+  await expect(emailDialog).toBeHidden()
+  await expect(page.getByText('new-identity@example.com')).toBeVisible()
+  await expect(page.getByText('Tiếp theo: đặt lại MFA')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }))
+    .toHaveCount(0)
+  await expect(page.getByText('Chưa mở')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Đặt lại MFA' }).click()
+  const mfaDialog = page.getByRole('dialog', {
+    name: 'Đặt lại xác thực đa yếu tố',
+  })
+  await expect(mfaDialog.getByText('Nguyễn Cần Hỗ Trợ')).toBeVisible()
+  await expect(mfaDialog.getByText('new-identity@example.com')).toBeVisible()
+  await expect(mfaDialog.locator('label.ant-form-item-required')).toHaveText([
+    'Lý do khôi phục',
+    'Bằng chứng xác minh',
+  ])
+  await mfaDialog.getByLabel('Lý do khôi phục').fill(
+    'Người dùng mất toàn bộ phương thức xác minh',
+  )
+  await mfaDialog.getByLabel('Bằng chứng xác minh').fill(
+    'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
+  )
+  await mfaDialog.getByRole('button', { name: 'Xem tác động' }).click()
+  await expect(mfaDialog.getByText('Giữ nguyên, không bị thay đổi')).toBeVisible()
+  await mfaDialog.getByRole('button', { name: 'Xác nhận thực hiện' }).click()
+  await expect(mfaDialog).toBeHidden()
+  await expect(page.getByText('Chưa bật', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('0', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Tiếp theo: gửi link đặt lại mật khẩu'))
+    .toBeVisible()
+  await expect(page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }))
+    .toBeEnabled()
+
+  await page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }).click()
+  const resetDialog = page.getByRole('dialog', {
+    name: 'Gửi liên kết đặt lại mật khẩu',
+  })
+  await expect(resetDialog.getByText('Nguyễn Cần Hỗ Trợ')).toBeVisible()
+  await expect(resetDialog.getByText('0901234567')).toBeVisible()
+  await expect(resetDialog.getByText('usr_recovery')).toBeVisible()
+  await expect(resetDialog.locator('label.ant-form-item-required'))
+    .toHaveText(['Lý do gửi liên kết'])
+  await resetDialog.getByLabel('Lý do gửi liên kết').fill(
+    'Đã hoàn tất đổi email và reset MFA theo runbook',
+  )
+  await resetDialog.getByRole('button', { name: 'Xác nhận gửi' }).click()
+  await expect(resetDialog).toBeHidden()
+  await expect(page.getByText('Đã gửi link — đang chờ người dùng'))
+    .toBeVisible()
+
+  expect(calls.map((call) => call.path)).toEqual([
+    '/api/admin/accounts/usr_recovery/email-impact/',
+    '/api/admin/accounts/usr_recovery/change-email/',
+    '/api/admin/accounts/usr_recovery/mfa-impact/',
+    '/api/admin/accounts/usr_recovery/reset-mfa/',
+    '/api/admin/accounts/usr_recovery/send-password-reset/',
+  ])
+  expect(calls[0].payload.email).toBe('new-identity@example.com')
+  expect(calls[1].payload.impact_token).toBe('email-impact-token')
+  expect(calls[3].payload.impact_token).toBe('mfa-impact-token')
+})
+
 test('admin employer detail: company media and compact verification comparison render', async ({ page }) => {
   const adminUser = {
     public_id: 'usr_root',

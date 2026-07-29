@@ -105,9 +105,17 @@ class OAuthCompleteView(APIView):
     throttle_scope = 'oauth'
 
     def post(self, request):
-        user_id = oauth.pop_one_time_code(request.data.get('code'))
-        user = User.objects.filter(pk=user_id, is_active=True).first() if user_id else None
-        if user is None:
+        identity = oauth.pop_one_time_code(request.data.get('code'))
+        user = (
+            User.objects.filter(pk=identity.get('user_id'), is_active=True).first()
+            if isinstance(identity, dict)
+            else None
+        )
+        if (
+            user is None
+            or identity.get('auth_revision') != user.auth_revision
+            or identity.get('email') != User.objects.normalize_email(user.email)
+        ):
             return Response(
                 {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'},
                 status=status.HTTP_400_BAD_REQUEST,

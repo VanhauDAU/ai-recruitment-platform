@@ -14,7 +14,20 @@ class AccountJWTAuthentication(JWTAuthentication):
         user = super().get_user(validated_token)
         if not is_account_accessible(user):
             raise AuthenticationFailed('Tài khoản không còn khả dụng.', code='user_inactive')
-        if active_session_for_access(sid=validated_token.get('sid'), user=user) is None:
+        auth_revision = validated_token.get('auth_rev', 1)
+        if auth_revision != user.auth_revision:
+            raise AuthenticationFailed(
+                'Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại.',
+                code='session_revoked',
+            )
+        if (
+            active_session_for_access(
+                sid=validated_token.get('sid'),
+                user=user,
+                auth_revision=auth_revision,
+            )
+            is None
+        ):
             raise AuthenticationFailed(
                 'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.',
                 code='session_revoked',

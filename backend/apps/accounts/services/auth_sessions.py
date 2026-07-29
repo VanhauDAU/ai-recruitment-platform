@@ -24,6 +24,7 @@ from ..models import AuthSession
 from .refresh_cookies import refresh_from_request
 
 SID_CLAIM = 'sid'
+AUTH_REVISION_CLAIM = 'auth_rev'
 
 
 def _client_ip(request):
@@ -123,6 +124,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 .filter(
                     user=user,
                     portal=user.role,
+                    auth_revision=user.auth_revision,
                     ip_address=client_ip,
                     user_agent=user_agent,
                     revoked_at__isnull=True,
@@ -139,6 +141,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
             _blacklist_jti(session.refresh_jti)
             session.refresh_jti = new_jti
             session.auth_method = auth_method
+            session.auth_revision = user.auth_revision
             session.device_label = parse_device_label(user_agent)
             session.last_seen_at = now
             session.reauthenticated_at = now
@@ -147,6 +150,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 update_fields=[
                     'refresh_jti',
                     'auth_method',
+                    'auth_revision',
                     'device_label',
                     'last_seen_at',
                     'reauthenticated_at',
@@ -159,6 +163,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 portal=user.role,
                 refresh_jti=new_jti,
                 auth_method=auth_method,
+                auth_revision=user.auth_revision,
                 device_label=parse_device_label(user_agent),
                 user_agent=user_agent,
                 ip_address=client_ip,
@@ -179,7 +184,7 @@ def rotate_session(session, new_refresh_str):
     return session
 
 
-def locked_refresh_session(*, sid, user_id, refresh_jti):
+def locked_refresh_session(*, sid, user_id, refresh_jti, auth_revision):
     """Lock and return the exact live session represented by a refresh JWT."""
     if not sid:
         return None
@@ -189,6 +194,7 @@ def locked_refresh_session(*, sid, user_id, refresh_jti):
             id=sid,
             user_id=user_id,
             refresh_jti=refresh_jti,
+            auth_revision=auth_revision,
             revoked_at__isnull=True,
             expires_at__gt=timezone.now(),
         )
@@ -196,7 +202,7 @@ def locked_refresh_session(*, sid, user_id, refresh_jti):
     )
 
 
-def active_session_for_access(*, sid, user):
+def active_session_for_access(*, sid, user, auth_revision):
     """Enforce immediate access-token revocation and idle/absolute timeouts."""
     if not sid:
         return None
@@ -204,6 +210,7 @@ def active_session_for_access(*, sid, user):
         id=sid,
         user=user,
         portal=user.role,
+        auth_revision=auth_revision,
         revoked_at__isnull=True,
         expires_at__gt=timezone.now(),
     ).first()
@@ -242,7 +249,19 @@ def current_session(request, user):
         return None
     if str(refresh.get(api_settings.USER_ID_CLAIM)) != str(user.pk):
         return None
-    return active_sessions(user).filter(id=sid, refresh_jti=refresh[api_settings.JTI_CLAIM]).first()
+    access_revision = request.auth.get(AUTH_REVISION_CLAIM, 1) if request.auth else 1
+    refresh_revision = refresh.get(AUTH_REVISION_CLAIM, 1)
+    if access_revision != user.auth_revision or refresh_revision != user.auth_revision:
+        return None
+    return (
+        active_sessions(user)
+        .filter(
+            id=sid,
+            refresh_jti=refresh[api_settings.JTI_CLAIM],
+            auth_revision=user.auth_revision,
+        )
+        .first()
+    )
 
 
 def requires_oauth_reauthentication(user, session):

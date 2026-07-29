@@ -37,6 +37,12 @@ import { useSession } from '@/entities/session'
 import { AdminAccountProfileModal } from '@/features/edit-admin-account-profile'
 import { AdminAccountSecurityActions } from '@/features/manage-admin-account-security'
 import { EmployerVerificationReview } from '@/features/review-employer-verification'
+import {
+  canRecoverAccountIdentity,
+  ChangeAccountEmailButton,
+  IdentityRecoveryGuide,
+  ResetAccountMfaButton,
+} from '@/features/recover-account-identity'
 import { SendAccountPasswordResetButton } from '@/features/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
@@ -96,12 +102,50 @@ function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
   )
 }
 
-function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
+function SecurityPanel({
+  publicId,
+  account,
+  canEmailRecovery,
+  canManage,
+  canMfaRecovery,
+  isSuperuser,
+}) {
+  const [recoveryProgress, setRecoveryProgress] = useState({
+    emailCompleted: false,
+    mfaCompleted: false,
+    passwordResetSent: false,
+  })
   const sessions = useQuery({
     queryKey: adminAccountKeys.sessions(publicId),
     queryFn: ({ signal }) => getAdminAccountSessions(publicId, { signal }),
   })
   const [sending, setSending] = useState(false)
+  useEffect(() => {
+    setRecoveryProgress({
+      emailCompleted: false,
+      mfaCompleted: false,
+      passwordResetSent: false,
+    })
+  }, [publicId])
+
+  const hasMfa = Boolean(
+    account.mfa_methods.email
+    || account.mfa_methods.totp
+    || account.mfa_methods.backup_codes_remaining > 0,
+  )
+  const emailRecoveryStarted = recoveryProgress.emailCompleted || (
+    account.email_verified === false
+    && account.has_usable_password === false
+  )
+  const mfaRecoveryComplete = recoveryProgress.mfaCompleted || (
+    emailRecoveryStarted && !hasMfa
+  )
+  const passwordResetBlockedByMfa = emailRecoveryStarted && !mfaRecoveryComplete
+  const passwordResetDisabled = account.status !== 'active' || passwordResetBlockedByMfa
+  const passwordResetDisabledReason = passwordResetBlockedByMfa
+    ? 'Hoàn tất bước 2 — đặt lại MFA — trước khi gửi link đặt lại mật khẩu.'
+    : 'Phải mở lại tài khoản bằng workflow trạng thái trước khi gửi password reset.'
+
   const sendVerification = async () => {
     setSending(true)
     try {
@@ -115,6 +159,54 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
   }
   return (
     <div className="space-y-5">
+      {(canManage || canEmailRecovery || canMfaRecovery) && (
+        <IdentityRecoveryGuide
+          account={account}
+          emailCompleted={recoveryProgress.emailCompleted}
+          mfaCompleted={recoveryProgress.mfaCompleted}
+          passwordResetSent={recoveryProgress.passwordResetSent}
+          emailAction={canEmailRecovery ? (
+            <ChangeAccountEmailButton
+              account={account}
+              publicId={publicId}
+              disabled={account.status === 'pending'}
+              disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
+              onSuccess={() => setRecoveryProgress((current) => ({
+                ...current,
+                emailCompleted: true,
+                mfaCompleted: false,
+                passwordResetSent: false,
+              }))}
+            />
+          ) : null}
+          mfaAction={canMfaRecovery && emailRecoveryStarted && hasMfa ? (
+            <ResetAccountMfaButton
+              account={account}
+              publicId={publicId}
+              disabled={account.status === 'pending'}
+              disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
+              onSuccess={() => setRecoveryProgress((current) => ({
+                ...current,
+                mfaCompleted: true,
+                passwordResetSent: false,
+              }))}
+            />
+          ) : null}
+          passwordResetAction={canManage && emailRecoveryStarted && mfaRecoveryComplete ? (
+            <SendAccountPasswordResetButton
+              account={account}
+              publicId={publicId}
+              accountEmail={account.email}
+              disabled={passwordResetDisabled}
+              disabledReason={passwordResetDisabledReason}
+              onSuccess={() => setRecoveryProgress((current) => ({
+                ...current,
+                passwordResetSent: true,
+              }))}
+            />
+          ) : null}
+        />
+      )}
       <Card title="Xác thực & quyền truy cập">
         <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
           <Descriptions.Item label="Email">
@@ -140,24 +232,51 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
             {account.active_session_count}
           </Descriptions.Item>
         </Descriptions>
-        {canManage && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <SendAccountPasswordResetButton
-              publicId={publicId}
-              accountEmail={account.email}
-            />
-            {!account.email_verified && (
-              <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
-                Gửi lại xác minh email
-              </Button>
-            )}
-            {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
-                thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
-                bị cấm sẽ không còn đường mở lại từ giao diện. */}
-            <AdminAccountSecurityActions
-              account={account}
-              allowStatus={account.role !== 'admin' || isSuperuser}
-            />
+        {(canManage || canEmailRecovery || canMfaRecovery) && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="mb-3">
+              <Typography.Text strong>Thao tác bảo mật độc lập</Typography.Text>
+              <div>
+                <Typography.Text type="secondary" className="!text-xs">
+                  Dùng khi không thực hiện quy trình đổi email ở phía trên.
+                </Typography.Text>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {!emailRecoveryStarted && canMfaRecovery && (
+                <ResetAccountMfaButton
+                  account={account}
+                  publicId={publicId}
+                  disabled={account.status === 'pending' || !hasMfa}
+                  disabledReason={account.status === 'pending'
+                    ? 'Tài khoản đang chờ phải xử lý qua quy trình lời mời.'
+                    : 'Tài khoản chưa bật phương thức MFA nào.'}
+                />
+              )}
+              {!emailRecoveryStarted && canManage && (
+                <SendAccountPasswordResetButton
+                  account={account}
+                  publicId={publicId}
+                  accountEmail={account.email}
+                  disabled={account.status !== 'active'}
+                  disabledReason="Phải mở lại tài khoản trước khi gửi password reset."
+                />
+              )}
+              {canManage && !account.email_verified && (
+                <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
+                  Gửi lại xác minh email
+                </Button>
+              )}
+              {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
+                  thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
+                  bị cấm sẽ không còn đường mở lại từ giao diện. */}
+              {canManage && (
+                <AdminAccountSecurityActions
+                  account={account}
+                  allowStatus={account.role !== 'admin' || isSuperuser}
+                />
+              )}
+            </div>
           </div>
         )}
       </Card>
@@ -417,6 +536,19 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const canEdit = isSuperuser || has('account.profile.manage')
   const canReveal = isSuperuser || has('account.sensitive.view')
   const canSecurity = isSuperuser || has('account.security.manage') || has('account.admin.manage')
+  const recoveryAccess = {
+    hasPermission: has,
+    isSuperuser,
+    targetRole: account?.role,
+  }
+  const canEmailRecovery = Boolean(account) && canRecoverAccountIdentity({
+    ...recoveryAccess,
+    permission: 'account.email.manage',
+  })
+  const canMfaRecovery = Boolean(account) && canRecoverAccountIdentity({
+    ...recoveryAccess,
+    permission: 'account.mfa.reset',
+  })
   const canViewVerification = isSuperuser || has('employer_verification.view')
   const canReviewVerification = isSuperuser || has('employer_verification.review')
   const canViewCompanyUpdates = isSuperuser || has('company_update.view')
@@ -456,7 +588,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     <SecurityPanel
       publicId={publicId}
       account={account}
+      canEmailRecovery={canEmailRecovery}
       canManage={canSecurity}
+      canMfaRecovery={canMfaRecovery}
       isSuperuser={isSuperuser}
     />
   )

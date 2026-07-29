@@ -1,13 +1,19 @@
 import { KeyOutlined } from '@ant-design/icons'
-import { Alert, Button, Form, Input, Modal, Typography } from 'antd'
+import { Alert, Button, Form, Input, Modal, Tooltip, Typography } from 'antd'
 import { useState } from 'react'
-import { sendAdminAccountPasswordReset } from '@/entities/admin-account'
+import {
+  AccountVerificationSummary,
+  sendAdminAccountPasswordReset,
+} from '@/entities/admin-account'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 
 export default function SendAccountPasswordResetButton({
+  account,
   accountEmail,
   disabled = false,
+  disabledReason = '',
+  onSuccess,
   publicId,
 }) {
   const [form] = Form.useForm()
@@ -29,10 +35,11 @@ export default function SendAccountPasswordResetButton({
     }
     setSending(true)
     try {
-      await sendAdminAccountPasswordReset(publicId, {
+      const result = await sendAdminAccountPasswordReset(publicId, {
         reason: values.reason.trim(),
       })
       message.success('Đã xếp lịch gửi email đặt lại mật khẩu.')
+      onSuccess?.(result)
       setOpen(false)
       form.resetFields()
     } catch (error) {
@@ -47,25 +54,38 @@ export default function SendAccountPasswordResetButton({
 
   return (
     <>
-      <Button
-        icon={<KeyOutlined />}
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        Gửi đặt lại mật khẩu
-      </Button>
+      <Tooltip title={disabled ? disabledReason : 'Gửi link để người dùng tự đặt mật khẩu mới'}>
+        <span>
+          <Button
+            icon={<KeyOutlined />}
+            disabled={disabled}
+            onClick={() => setOpen(true)}
+          >
+            Gửi đặt lại mật khẩu
+          </Button>
+        </span>
+      </Tooltip>
       <Modal
         open={open}
+        width={720}
         title="Gửi liên kết đặt lại mật khẩu"
         okText="Xác nhận gửi"
         cancelText="Hủy"
         confirmLoading={sending}
         okButtonProps={{ danger: true }}
+        styles={{
+          body: {
+            maxHeight: 'calc(100vh - 220px)',
+            overflowY: 'auto',
+            paddingRight: 4,
+          },
+        }}
         onCancel={close}
         onOk={submit}
         destroyOnHidden
       >
         <div className="space-y-4">
+          <AccountVerificationSummary account={account} />
           <Alert
             showIcon
             type="warning"
@@ -73,14 +93,14 @@ export default function SendAccountPasswordResetButton({
             description={(
               <>
                 Hệ thống sẽ gửi liên kết có thời hạn và chỉ dùng một lần
-                {accountEmail ? (
-                  <> đến <Typography.Text strong>{accountEmail}</Typography.Text></>
+                {account?.email || accountEmail ? (
+                  <> đến <Typography.Text strong>{account?.email || accountEmail}</Typography.Text></>
                 ) : null}
                 . Mật khẩu hiện tại chưa bị thay đổi ở bước này.
               </>
             )}
           />
-          <Form form={form} layout="vertical" requiredMark={false}>
+          <Form form={form} layout="vertical" requiredMark>
             <Form.Item
               name="reason"
               label="Lý do gửi liên kết"
@@ -90,10 +110,12 @@ export default function SendAccountPasswordResetButton({
               ]}
             >
               <Input.TextArea
-                rows={3}
+                autoFocus
+                size="large"
+                rows={4}
                 maxLength={500}
                 showCount
-                placeholder="Ví dụ: Đã xác minh danh tính, admin không nhớ mật khẩu hiện tại"
+                placeholder="Ghi rõ kênh xác minh và các thông tin đã đối chiếu với hồ sơ phía trên."
               />
             </Form.Item>
           </Form>

@@ -44,6 +44,11 @@ import {
 } from '@/entities/admin-account'
 import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
+import {
+  canRecoverAccountIdentity,
+  ChangeAccountEmailButton,
+  ResetAccountMfaButton,
+} from '@/features/recover-account-identity'
 import { SendAccountPasswordResetButton } from '@/features/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
@@ -345,7 +350,25 @@ export default function AccountDetailView({ publicId }) {
   const canEdit = isSuperuser || (account.role !== 'admin' && has('account.profile.manage'))
   const canStatus = isSuperuser || (account.role !== 'admin' && has('account.status.manage'))
   const canSecurity = isSuperuser || (account.role !== 'admin' && has('account.security.manage'))
+  const recoveryAccess = {
+    hasPermission: has,
+    isSuperuser,
+    targetRole: account.role,
+  }
+  const canEmailRecovery = canRecoverAccountIdentity({
+    ...recoveryAccess,
+    permission: 'account.email.manage',
+  })
+  const canMfaRecovery = canRecoverAccountIdentity({
+    ...recoveryAccess,
+    permission: 'account.mfa.reset',
+  })
+  const canShowSecurityActions = canSecurity || canEmailRecovery || canMfaRecovery
   const canResetPassword = canSecurity && account.status === 'active'
+  const hasMfa = account.mfa_methods.email
+    || account.mfa_methods.totp
+    || account.mfa_methods.backup_codes_remaining > 0
+  const recoveryDisabled = account.status === 'pending'
 
   const openEdit = () => {
     editForm.setFieldsValue({ full_name: account.full_name, phone: account.phone })
@@ -455,28 +478,51 @@ export default function AccountDetailView({ publicId }) {
   const security = (
     <div className="space-y-5">
       <AccessSection account={account} />
-      {canSecurity && (
+      {canShowSecurityActions && (
         <Card title="Hành động bảo mật" className="account-detail-card">
           <div className="account-security-actions">
-            <Tooltip title={canResetPassword
-              ? 'Gửi liên kết đặt lại mật khẩu theo đúng cổng tài khoản'
-              : 'Chỉ có thể gửi liên kết cho tài khoản đang hoạt động'}>
-              <span>
-                <SendAccountPasswordResetButton
-                  publicId={publicId}
-                  accountEmail={account.email}
-                  disabled={!canResetPassword}
-                />
-              </span>
-            </Tooltip>
-            {!account.email_verified && (
+            {canEmailRecovery && (
+              <ChangeAccountEmailButton
+                account={account}
+                publicId={publicId}
+                disabled={recoveryDisabled}
+                disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
+              />
+            )}
+            {canMfaRecovery && (
+              <ResetAccountMfaButton
+                account={account}
+                publicId={publicId}
+                disabled={recoveryDisabled || !hasMfa}
+                disabledReason={recoveryDisabled
+                  ? 'Tài khoản đang chờ phải xử lý qua quy trình lời mời.'
+                  : 'Tài khoản chưa bật phương thức MFA nào.'}
+              />
+            )}
+            {canSecurity && (
+              <Tooltip title={canResetPassword
+                ? 'Gửi liên kết đặt lại mật khẩu theo đúng cổng tài khoản'
+                : 'Chỉ có thể gửi liên kết cho tài khoản đang hoạt động'}>
+                <span>
+                  <SendAccountPasswordResetButton
+                    account={account}
+                    publicId={publicId}
+                    accountEmail={account.email}
+                    disabled={!canResetPassword}
+                  />
+                </span>
+              </Tooltip>
+            )}
+            {canSecurity && !account.email_verified && (
               <Button icon={<MailOutlined />} loading={saving} onClick={sendVerificationEmail}>
                 Gửi lại xác minh
               </Button>
             )}
-            <Button danger icon={<StopOutlined />} onClick={() => setImpact({ kind: 'sessions' })}>
-              Thu hồi mọi phiên
-            </Button>
+            {canSecurity && (
+              <Button danger icon={<StopOutlined />} onClick={() => setImpact({ kind: 'sessions' })}>
+                Thu hồi mọi phiên
+              </Button>
+            )}
           </div>
         </Card>
       )}

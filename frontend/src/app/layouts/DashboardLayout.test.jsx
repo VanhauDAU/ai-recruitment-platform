@@ -130,7 +130,7 @@ describe('DashboardLayout admin access', () => {
     expect(screen.queryByText('Danh mục')).not.toBeInTheDocument()
 
     await user.click(screen.getByText('Nội dung & dịch vụ'))
-    await user.click(screen.getByText('Cẩm nang'))
+    await user.click(screen.getByText('Cẩm nang nghề nghiệp'))
 
     expect(await screen.findByText('Danh mục')).toBeInTheDocument()
     expect(screen.getByText('Bài viết')).toBeInTheDocument()
@@ -167,9 +167,9 @@ describe('DashboardLayout admin access', () => {
     })
     await user.click(guideButton)
 
-    const flyout = screen.getByRole('complementary', { name: 'Cẩm nang' })
+    const flyout = screen.getByRole('complementary', { name: 'Cẩm nang nghề nghiệp' })
     expect(flyout).toHaveStyle({ '--admin-nav-flyout-top': '240px' })
-    expect(screen.getAllByText('Cẩm nang')).toHaveLength(1)
+    expect(screen.getAllByText('Cẩm nang nghề nghiệp')).toHaveLength(1)
   })
 
   it('keeps the auto-expand panel below the admin header brand area', async () => {

@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/entities/admin-account', () => ({
+  AccountVerificationSummary: ({ account }) => account
+    ? <div>{`Đối chiếu: ${account.full_name} · ${account.email} · ${account.public_id}`}</div>
+    : null,
   sendAdminAccountPasswordReset: mocks.sendAdminAccountPasswordReset,
 }))
 vi.mock('@/shared/lib/toast', () => ({ message: mocks.message }))
@@ -24,11 +27,18 @@ describe('SendAccountPasswordResetButton', () => {
   })
 
   it('requires an audit reason before sending the recovery email', async () => {
+    const onSuccess = vi.fn()
     render(
       <App>
         <SendAccountPasswordResetButton
+          account={{
+            public_id: 'admin-1',
+            full_name: 'Quản trị viên An',
+            email: 'admin@example.com',
+          }}
           publicId="admin-1"
           accountEmail="admin@example.com"
+          onSuccess={onSuccess}
         />
       </App>,
     )
@@ -36,6 +46,9 @@ describe('SendAccountPasswordResetButton', () => {
     fireEvent.click(screen.getByRole('button', { name: /Gửi đặt lại mật khẩu/i }))
     expect(await screen.findByText('Đây là thao tác bảo mật nhạy cảm'))
       .toBeInTheDocument()
+    expect(screen.getByText(
+      'Đối chiếu: Quản trị viên An · admin@example.com · admin-1',
+    )).toBeInTheDocument()
     expect(screen.getByText('admin@example.com')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận gửi' }))
@@ -55,5 +68,8 @@ describe('SendAccountPasswordResetButton', () => {
     })
     expect(mocks.message.success)
       .toHaveBeenCalledWith('Đã xếp lịch gửi email đặt lại mật khẩu.')
+    expect(onSuccess).toHaveBeenCalledWith({
+      detail: 'Đã xếp lịch gửi email đặt lại mật khẩu.',
+    })
   })
 })

@@ -30,6 +30,8 @@ if not IS_PRODUCTION:
 
 if DEBUG:
     _errors.append('DEBUG phải là False khi ENVIRONMENT=production.')
+if DJANGO_ADMIN_ENABLED:
+    _errors.append('DJANGO_ADMIN_ENABLED phải là False khi ENVIRONMENT=production.')
 if SECRET_KEY == _DEFAULT_SECRET_KEY:
     _errors.append('SECRET_KEY production phải được cấu hình qua biến môi trường.')
 if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):

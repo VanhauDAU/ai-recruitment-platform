@@ -302,6 +302,47 @@ class RevokeSessionsSerializer(ReasonSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
+class AccountRecoverySerializer(ReasonSerializer):
+    verification_evidence = serializers.CharField(
+        min_length=20,
+        max_length=500,
+        trim_whitespace=True,
+        error_messages={
+            'min_length': 'Bằng chứng xác minh cần có ít nhất 20 ký tự.',
+            'max_length': 'Bằng chứng xác minh không được vượt quá 500 ký tự.',
+        },
+    )
+
+
+class AccountEmailImpactSerializer(AccountRecoverySerializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        value = User.objects.normalize_email(value)
+        user = self.context['target_user']
+        if value == User.objects.normalize_email(user.email):
+            raise serializers.ValidationError('Email mới trùng với email hiện tại.')
+        if User.objects.email_claimed_for_role(
+            value,
+            user.role,
+            exclude_user_id=user.pk,
+        ):
+            raise serializers.ValidationError('Email này đã thuộc một tài khoản cùng loại.')
+        return value
+
+
+class AccountEmailChangeSerializer(AccountEmailImpactSerializer):
+    impact_token = serializers.CharField(trim_whitespace=True)
+
+
+class AccountMfaResetImpactSerializer(AccountRecoverySerializer):
+    pass
+
+
+class AccountMfaResetSerializer(AccountMfaResetImpactSerializer):
+    impact_token = serializers.CharField(trim_whitespace=True)
+
+
 class ManagedSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuthSession

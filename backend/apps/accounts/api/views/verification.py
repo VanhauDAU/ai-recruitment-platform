@@ -1,15 +1,16 @@
 """Xác thực email: gửi/xác nhận link, đổi email — workflow ở services/."""
 
+from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from ...models import User
+from ...models import AuthEmailJob, User
 from ...services import email_verification as ev
 from ...services import queue_verification_email
-from ...tasks import queue_welcome_email
+from ...tasks import queue_auth_email, queue_welcome_email
 from ..serializers import ChangeEmailSerializer, SessionUserSerializer
 
 
@@ -118,12 +119,29 @@ class ChangeEmailView(APIView):
         serializer = ChangeEmailSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
 
-        old_email = user.email
-        user.email = serializer.validated_data['email']
-        user.email_verified = False
-        user.save(update_fields=['email', 'email_verified', 'updated_at'])
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=user.pk)
+            if user.email_verified:
+                return Response(
+                    {'detail': 'Tài khoản đã xác thực email; không thể đổi email tại đây.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            old_email = user.email
+            user.email = serializer.validated_data['email']
+            user.email_verified = False
+            user.save(update_fields=['email', 'email_verified', 'updated_at'])
 
-        # Cảnh báo địa chỉ cũ để chủ tài khoản thật phát hiện nếu bị chiếm phiên.
-        ev.send_email_changed_notice(user, old_email)
-        queue_verification_email(user)
+            # Cảnh báo địa chỉ cũ để chủ tài khoản thật phát hiện nếu bị chiếm phiên.
+            queue_auth_email(
+                AuthEmailJob.Kind.EMAIL_CHANGED_NOTICE,
+                user,
+                context={
+                    'recipient': old_email,
+                    'old_email': old_email,
+                    'new_email': user.email,
+                    'portal': user.role,
+                    'admin_initiated': False,
+                },
+            )
+            queue_verification_email(user)
         return Response(SessionUserSerializer(user).data)

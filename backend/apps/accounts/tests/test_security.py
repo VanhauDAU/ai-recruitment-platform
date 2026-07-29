@@ -333,7 +333,14 @@ class AuthSecurityAndEmailTests(APITestCase):
         user = User.objects.create_user(email='reset@example.com', password='Password@123')
         token = password_reset.issue_token(user)
 
-        self.assertEqual(password_reset.consume_token(token), user.pk)
+        self.assertEqual(
+            password_reset.consume_token(token),
+            {
+                'user_id': user.pk,
+                'email': user.email,
+                'auth_revision': 1,
+            },
+        )
         self.assertIsNone(password_reset.consume_token(token))
 
     def test_employer_password_reset_does_not_revoke_same_email_candidate_session(self):
@@ -458,16 +465,16 @@ class AuthSecurityAndEmailTests(APITestCase):
         )
         self.assertEqual(blocked.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_email_outbox_job_is_marked_sent_after_delivery(self):
+    def test_email_outbox_job_without_identity_snapshot_is_cancelled(self):
         user = User.objects.create_user(email='queue@example.com', password='Password@123')
         job = AuthEmailJob.objects.create(user=user, kind=AuthEmailJob.Kind.VERIFICATION)
 
         deliver_auth_email_job.run(job.pk)
 
         job.refresh_from_db()
-        self.assertEqual(job.status, AuthEmailJob.Status.SENT)
+        self.assertEqual(job.status, AuthEmailJob.Status.CANCELLED)
         self.assertEqual(job.attempts, 1)
-        self.assertIsNotNone(job.sent_at)
+        self.assertIsNone(job.sent_at)
 
     def test_verification_confirmation_queues_one_welcome_email(self):
         user = User.objects.create_user(email='new@example.com', password='Password@123')
@@ -507,7 +514,7 @@ class AuthSecurityAndEmailTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 0)
         job.refresh_from_db()
-        self.assertEqual(job.status, AuthEmailJob.Status.SENT)
+        self.assertEqual(job.status, AuthEmailJob.Status.CANCELLED)
 
     def test_employer_verification_queues_one_employer_welcome_email(self):
         user = User.objects.create_user(
