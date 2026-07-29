@@ -28,6 +28,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   34,2 KiB CSS gzip và 153 smoke E2E trên desktop/tablet/mobile. Rollout staging
   thực tế vẫn cần evidence vận hành theo runbook trước khi chốt AN-P5 hoàn tất.
 
+#### Fixed — Announcement analytics khi Redis gián đoạn
+
+- Failure injection trên staging cô lập phát hiện rate-limit truy cập Redis
+  trước service analytics và trả HTTP 500, dù tracking được thiết kế
+  best-effort.
+- Hai endpoint telemetry announcement nay fail-open riêng ở lớp throttle khi
+  cache lỗi, phát metric PII-free `announcement_throttle`; giới hạn vẫn hoạt
+  động bình thường khi cache khỏe và analytics dedupe vẫn không tăng aggregate
+  khi Redis lỗi.
+- Chạy lại với Redis dừng đạt HTTP 202, sau đó Redis được khôi phục healthy và
+  active feed tiếp tục trả 200. Bằng chứng bốn surface, priority và kill switch
+  nằm tại
+  [rehearsal staging 2026-07-29](docs/06-deployment/announcement-staging-evidence-2026-07-29.md).
+
 #### Fixed — Đặt mật khẩu lần đầu cho tài khoản mạng xã hội
 
 - Thay cảnh báo “Cần đăng nhập lại để tạo mật khẩu” (chỉ hiện sau khi người dùng

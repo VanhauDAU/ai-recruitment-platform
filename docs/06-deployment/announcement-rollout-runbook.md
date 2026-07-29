@@ -150,7 +150,8 @@ Nguồn quan sát:
 - HTTP access log: feed 5xx/latency, admin 403/409, event 429;
 - product metrics PII-free:
   `announcement_feed_latency_ms`, `announcement_runtime`,
-  `announcement_analytics`, `announcement_event_batch_size`;
+  `announcement_analytics`, `announcement_event_batch_size`,
+  `announcement_throttle`;
 - browser/E2E: `pageerror`, console error, overflow và layout overlap.
 
 Dừng mở surface mới và rollback surface vừa bật nếu:
@@ -166,6 +167,11 @@ Dừng mở surface mới và rollback surface vừa bật nếu:
 
 Metric runtime chỉ nhận enum `surface/event/reason`, throttle 60 request/giờ và
 không nhận path, error message, stack, IP, user-agent hoặc identifier.
+Hai endpoint telemetry announcement fail-open riêng ở lớp throttle khi cache
+không khả dụng để không biến tracking best-effort thành lỗi UX. Mỗi lần
+fail-open phát
+`announcement_throttle{event=fail_open,reason=cache_error,scope=...}`;
+analytics dedupe vẫn fail-closed và không tăng aggregate khi Redis lỗi.
 
 ## 8. Rollback
 
@@ -206,3 +212,6 @@ Kill-switch rehearsal:
 Người xác nhận:
 Quyết định go/no-go:
 ```
+
+Bằng chứng rehearsal gần nhất:
+[staging cô lập ngày 2026-07-29](./announcement-staging-evidence-2026-07-29.md).
