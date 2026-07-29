@@ -523,6 +523,12 @@ pages/admin/app/Announcements
   revision mới. Detail read-model trả revision và audit history chỉ đọc. Lỗi
   `409 announcement_revision_stale` buộc tải lại token hiện hành, không retry
   hoặc ghi đè ngầm.
+- Catalog CTA/prefix là metadata trình bày riêng của editor và nằm tại
+  `widgets/admin-announcement-management/model/route-catalog.js`; không import
+  ngược router từ `app`. Route có thể dùng cho thông báo được đăng ký một lần
+  với label, surface và access `public|authenticated`; test catalog giữ URL/
+  prefix an toàn. Catalog chỉ sinh lựa chọn cho revision mới, không tự viết lại
+  URL của revision đã publish.
 - Bốn surface canonical là `candidate`, `employer_marketing`,
   `employer_workspace`, `admin_workspace`. Layout truyền surface và path; không
   hardcode role hoặc tự lọc quyền admin ở component.

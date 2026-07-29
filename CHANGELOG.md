@@ -8,6 +8,29 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-29
 
+#### Changed — Trải nghiệm soạn thông báo đa cổng
+
+- Thay ô nhập URL CTA nội bộ bằng danh mục có tìm kiếm, nhóm theo bốn portal và
+  tự sinh URL đúng cho local hoặc subdomain triển khai. Nơi hiển thị và trang
+  CTA độc lập nên thông báo ở cổng Ứng viên có thể dẫn sang Marketing NTD.
+- Gắn nhãn **Công khai** hoặc **Cần đăng nhập** cho trang CTA; cảnh báo trực
+  tiếp khi thông báo dành cho guest nhưng CTA đi vào workspace được bảo vệ.
+- Thay textarea route include/exclude bằng multi-select có tìm kiếm, lọc theo
+  surface và vẫn cho nhập prefix nâng cao với validation tương thích backend.
+- Catalog có test contract cho URL/prefix/access. Route mới được đăng ký một
+  lần để xuất hiện ở mọi editor sau lần triển khai; revision đã publish không
+  bị tự viết lại URL.
+- Verify: 683 frontend test pass; lint/architecture/build và bundle budget
+  293,6/320 KiB JS, 34,2/35 KiB CSS pass; smoke quản trị thông báo 6/6 trên
+  desktop/tablet/mobile.
+
+#### Fixed — Preview bản nháp thông báo
+
+- Bước Xem trước nay đọc toàn bộ form store, không còn nhận object rỗng và hiện
+  placeholder sau khi quản trị viên đã soạn nội dung ở bước đầu.
+- Route selector chuyển tiếp đầy đủ `value`, `onChange` và `id` của Ant Form,
+  tránh trạng thái nhìn như đã chọn nhưng payload không lưu prefix.
+
 #### Added — Announcement AN-P5 rollout hardening
 
 - Thêm kill switch runtime fail-closed theo từng surface bằng
