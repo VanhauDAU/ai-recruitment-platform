@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-07-29
 
+#### Fixed — Animation dải thông báo
+
+- `slide` và `fade` của một thông báo nay lặp nhẹ theo khoảng 4–15 giây đã cấu
+  hình; trước đây hiệu ứng chỉ chạy 280–320 ms lúc component vừa mount nên
+  người dùng gần như luôn thấy nội dung đứng yên.
+- Nhóm có nhiều thông báo vẫn chuyển item theo thời lượng riêng; `static` không
+  chuyển động. Animation dừng khi hover/focus/tab bị ẩn và tự tắt khi thiết bị
+  yêu cầu reduced motion.
+- Preview quản trị chạy đúng loại và thời lượng animation của bản nháp. Verify:
+  683 frontend test, lint/architecture/build/bundle budget và 12/12 smoke
+  runtime trên desktop/tablet/mobile đều pass.
+
 #### Changed — Trải nghiệm soạn thông báo đa cổng
 
 - Thay ô nhập URL CTA nội bộ bằng danh mục có tìm kiếm, nhóm theo bốn portal và

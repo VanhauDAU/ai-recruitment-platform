@@ -79,13 +79,20 @@ trang 1; bỏ sorter sẽ trở lại `-updated_at`. Không suy ra tổng số h
 - Critical bắt buộc có thời gian kết thúc.
 - Priority từ 0–1000 chỉ so sánh trong cùng tier.
 - Animation gồm `slide`, `fade`, `static`; thời lượng 4–15 giây.
+- Với một thông báo, `slide` hoặc `fade` lặp nhẹ theo thời lượng đã chọn. Với
+  nhiều thông báo cùng hàng đợi, thời lượng là khoảng chờ trước khi chuyển sang
+  item tiếp theo. `static` luôn đứng yên.
+- Runtime tự dừng chuyển động khi người dùng hover/focus, tab bị ẩn hoặc hệ điều
+  hành bật reduced motion; đây là hành vi accessibility, không phải lỗi cấu
+  hình.
 
 ### Bước 5 — Preview và simulator
 
 Preview luôn dùng toàn bộ bản nháp đang giữ trong form, kể cả nội dung đã nhập
-ở bước trước, và hỗ trợ desktop/mobile cùng Việt/Anh. Simulator hiển thị tier
-hiện tại, surface đích, thông báo cùng/higher tier đang có và cảnh báo thứ tự
-hệ thống:
+ở bước trước, và hỗ trợ desktop/mobile cùng Việt/Anh. Preview cũng chạy đúng
+`slide`/`fade` và thời lượng đang chọn; `static` không chạy. Simulator hiển thị
+tier hiện tại, surface đích, thông báo cùng/higher tier đang có và cảnh báo thứ
+tự hệ thống:
 
 1. Critical.
 2. Xác thực email/bảo mật.

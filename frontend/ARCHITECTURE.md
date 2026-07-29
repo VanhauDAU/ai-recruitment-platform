@@ -535,5 +535,8 @@ pages/admin/app/Announcements
 - Strip phải fail-safe: lỗi remote feed không được làm mất cảnh báo hệ thống,
   header hoặc main content. Chiều cao được đo và công bố bằng CSS custom
   property; không thêm hằng số viewport theo từng layout.
+- Motion thuộc widget: một item `slide|fade` lặp theo `display_seconds`, nhiều
+  item chuyển queue theo cùng contract; hover/focus/tab ẩn phải pause,
+  `prefers-reduced-motion` và `static` phải tắt animation mà không thay DOM.
 - Mọi import liên-slice đi qua public `index.js`; các adapter hệ thống chỉ được
   compose trong widget, không chuyển session/profile logic xuống `shared`.

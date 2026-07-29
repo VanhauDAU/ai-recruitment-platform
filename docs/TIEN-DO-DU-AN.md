@@ -843,7 +843,18 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29k (AN-P3/AN-P5 UX hardening — editor thay URL CTA
+Cập nhật lần cuối: 2026-07-29l (AN-P2/AN-P3 animation follow-up — sửa `slide`
+và `fade` chỉ chạy 280–320 ms lúc mount khiến một thông báo trông như đứng
+yên. Runtime nay lặp animation nhẹ theo `display_seconds` khi queue có một
+item; queue nhiều item vẫn luân phiên như cũ. Hover/focus/tab ẩn pause chuyển
+động; `static` và reduced motion không animate. Preview quản trị chạy đúng
+animation và thời lượng bản nháp. Verify: 683 frontend test; lint,
+architecture, build và bundle budget 293,6 KiB JS / 34,2 KiB CSS pass; smoke
+runtime 12/12 trên desktop/tablet/mobile xác nhận animation name, 6 giây và
+infinite iteration. Không đổi API, migration, permission hoặc trạng thái
+AN-P5/AN-P6.)
+
+Cập nhật 2026-07-29k (AN-P3/AN-P5 UX hardening — editor thay URL CTA
 nội bộ và textarea prefix bằng danh mục route có tìm kiếm. CTA được chọn độc
 lập với surface hiển thị, nhóm theo bốn portal, tự sinh URL local/subdomain và
 gắn nhãn Công khai/Cần đăng nhập; guest nhận cảnh báo nếu CTA đi vào route có
