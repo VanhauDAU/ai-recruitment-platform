@@ -113,6 +113,55 @@ test('announcement strip: candidate and employer marketing headers stay responsi
   expect(pageErrors).toEqual([])
 })
 
+test('announcement strip: equal-tier dismiss reveals the next item without a blank rail', async ({ page }) => {
+  const pageErrors = []
+  page.on('pageerror', (error) => pageErrors.push(error.message))
+  await enableAnnouncementRollout(page)
+  await mockPublicApi(page)
+  await page.route('http://localhost:8000/api/site/announcements/active/**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        remote_enabled: true,
+        items: [
+          {
+            ...feed('candidate').items[0],
+            public_id: 'ann_equal_a',
+            message: 'Thông báo cùng hạng thứ nhất.',
+            dismiss: { mode: 'snooze', snooze_seconds: 3600, version: 1 },
+          },
+          {
+            ...feed('candidate').items[0],
+            public_id: 'ann_equal_b',
+            message: 'Thông báo cùng hạng thứ hai.',
+            dismiss: { mode: 'snooze', snooze_seconds: 3600, version: 1 },
+          },
+        ],
+        next_transition_at: null,
+      }),
+    })
+  })
+
+  await page.goto('/chinh-sach-cookie')
+  const strip = page.getByRole('region', { name: 'Thông báo hệ thống' })
+  await expect(strip).toHaveAttribute('data-announcement-count', '2')
+  await expect(strip).toContainText('Thông báo cùng hạng thứ nhất.')
+
+  await page.getByRole('button', { name: 'Tạm ẩn thông báo' }).click()
+  await expect(strip).toHaveAttribute('data-announcement-count', '1')
+  await expect(strip).toContainText('Thông báo cùng hạng thứ hai.')
+  await expect.poll(() => strip.locator('.announcement-strip__content').evaluate(
+    (element) => ({
+      opacity: getComputedStyle(element).opacity,
+      playState: getComputedStyle(element).animationPlayState,
+    }),
+  )).toEqual({ opacity: '1', playState: 'paused' })
+
+  await page.getByRole('button', { name: 'Tạm ẩn thông báo' }).click()
+  await expect(strip).not.toBeVisible()
+  expect(pageErrors).toEqual([])
+})
+
 test('announcement strip: employer workspace keeps its measured 100dvh shell', async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))

@@ -86,9 +86,7 @@ function AnnouncementStripRuntime({
     })
   }, [queue])
 
-  const visibleQueue = queue.filter(
-    (item) => (dismissals[item.id] || 0) <= dismissalClock,
-  )
+  const visibleQueue = queue.filter((item) => (dismissals[item.id] || 0) <= dismissalClock)
   const active = visibleQueue[activeIndex % Math.max(visibleQueue.length, 1)]
   const paused = hovered || focused || pageHidden || reducedMotion
   const { persistDismissal, trackCta } = useAnnouncementTracking({
@@ -184,12 +182,16 @@ function AnnouncementStripRuntime({
 
   function dismissActive() {
     if (!dismissible) return
+    const remainingQueue = visibleQueue.filter((item) => item.id !== active.id)
+    const nextIndex = remainingQueue.length ? activeIndex % remainingQueue.length : 0
     const hiddenUntil = active.dismiss.mode === ANNOUNCEMENT_DISMISS_MODES.SNOOZE
       ? Date.now() + active.dismiss.snoozeSeconds * 1000
       : Number.POSITIVE_INFINITY
     storeLocalDismissal(active, hiddenUntil)
     setDismissals((current) => ({ ...current, [active.id]: hiddenUntil }))
     setDismissalClock(Date.now())
+    setActiveIndex(nextIndex)
+    setManualAnnouncement(remainingQueue[nextIndex]?.message || '')
     persistDismissal()
   }
 

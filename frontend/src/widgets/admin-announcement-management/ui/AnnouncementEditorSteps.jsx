@@ -151,7 +151,13 @@ export function ScheduleStep({ form, priority }) {
       <Form.Item name="ends_at" label="Kết thúc (Asia/Ho_Chi_Minh)">
         <DatePicker showTime className="w-full" format="DD/MM/YYYY HH:mm" />
       </Form.Item>
-      <Form.Item label="Priority trong cùng hạng">
+      <Form.Item
+        label="Thứ tự trong cùng hạng"
+        extra={(
+          'Số lớn chạy trước. Tất cả thông báo thuộc hạng cao nhất vẫn luân phiên, '
+          + 'không hiển thị đồng thời.'
+        )}
+      >
         <div className="announcement-editor__priority">
           <Slider
             min={0}

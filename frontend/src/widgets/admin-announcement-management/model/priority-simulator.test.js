@@ -44,7 +44,8 @@ describe('announcement priority simulator', () => {
 
     expect(result.conflicts.map((item) => item.public_id)).toEqual(['ann_same'])
     expect(result.messages).toContain(
-      'Có thông báo cùng hạng và cùng priority; hệ thống sẽ dùng thời gian và mã để giữ thứ tự ổn định.',
+      'Có thông báo cùng hạng và cùng priority; tất cả sẽ luân phiên, '
+      + 'hệ thống dùng thời gian và mã để giữ thứ tự ổn định.',
     )
   })
 })
