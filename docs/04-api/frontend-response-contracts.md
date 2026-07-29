@@ -98,7 +98,8 @@ AN-P1 được merge. Public feed không phản chiếu model/revision nội b�
       "ends_at": "2026-08-05T03:00:00Z"
     }
   ],
-  "next_transition_at": "2026-08-05T03:00:00Z"
+  "next_transition_at": "2026-08-05T03:00:00Z",
+  "remote_enabled": true
 }
 ```
 
@@ -110,6 +111,8 @@ Rules:
   tiếng Việt.
 - `cta` là `null` khi không cấu hình; client không tự suy ra external từ text.
 - `next_transition_at` là boundary sớm nhất có thể đổi feed, hoặc `null`.
+- `remote_enabled` là kill switch authoritative theo surface. Frontend bỏ mọi
+  remote item nếu field thiếu hoặc false; system label resolve độc lập.
 - `internal_name`, creator, publisher, target rule và raw translations không
   xuất hiện trong public DTO.
 
@@ -153,6 +156,23 @@ analytics consent hoặc Redis đang lỗi. Client không retry vô hạn.
 Batch nhận 1–50 event, loại trùng trong cùng payload và throttle độc lập
 240 request/giờ. Backend chỉ nhận revision đã publish và surface thuộc revision;
 không lưu path, IP hoặc user-agent. CTA không chờ response tracking.
+
+### Runtime operational event
+
+`POST /api/site/announcements/runtime-events/`
+
+```json
+{
+  "surface": "candidate",
+  "event": "feed_error",
+  "reason": "http_5xx"
+}
+```
+
+Endpoint AllowAny, throttle 60 request/giờ và chỉ nhận enum. Event:
+`feed_error`, `contract_error`, `render_error`; reason: `network`, `timeout`,
+`http_4xx`, `http_5xx`, `contract`, `render`, `unknown`. Không gửi path, error
+message, stack, user/cookie identifier hoặc payload API.
 
 ### Admin metrics
 

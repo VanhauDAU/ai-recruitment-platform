@@ -132,6 +132,15 @@ VITE_RECAPTCHA_SITE_KEY=
 VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=
 ```
 
+Backend remote feed mặc định tắt. Bật theo surface trong `backend/.env`:
+
+```dotenv
+ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=admin_workspace
+```
+
+Danh sách và thứ tự production xem
+[runbook AN-P5](../06-deployment/announcement-rollout-runbook.md).
+
 Khi đã cài `node_modules` từ trước, chỉ cần chạy:
 
 ```bash

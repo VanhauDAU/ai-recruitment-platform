@@ -8,6 +8,21 @@ from ...models import Announcement, AnnouncementRevision
 from ...selectors import PRIORITY_TIER_BY_KIND, presentation_status
 from ...services import normalize_revision_data
 
+ANNOUNCEMENT_RUNTIME_EVENTS = (
+    ('feed_error', 'feed_error'),
+    ('contract_error', 'contract_error'),
+    ('render_error', 'render_error'),
+)
+ANNOUNCEMENT_RUNTIME_REASONS = (
+    ('network', 'network'),
+    ('timeout', 'timeout'),
+    ('http_4xx', 'http_4xx'),
+    ('http_5xx', 'http_5xx'),
+    ('contract', 'contract'),
+    ('render', 'render'),
+    ('unknown', 'unknown'),
+)
+
 
 def _user_summary(user) -> dict | None:
     if not user:
@@ -134,6 +149,7 @@ class ActiveAnnouncementSerializer(serializers.Serializer):
 class ActiveAnnouncementFeedSerializer(serializers.Serializer):
     items = ActiveAnnouncementSerializer(many=True)
     next_transition_at = serializers.DateTimeField(allow_null=True)
+    remote_enabled = serializers.BooleanField()
 
 
 class AnnouncementRevisionWriteSerializer(serializers.Serializer):
@@ -302,6 +318,12 @@ class AnnouncementEventBatchSerializer(serializers.Serializer):
             )
             unique[key] = event
         return list(unique.values())
+
+
+class AnnouncementRuntimeEventSerializer(serializers.Serializer):
+    surface = serializers.ChoiceField(choices=AnnouncementRevision.Surface.choices)
+    event = serializers.ChoiceField(choices=ANNOUNCEMENT_RUNTIME_EVENTS)
+    reason = serializers.ChoiceField(choices=ANNOUNCEMENT_RUNTIME_REASONS)
 
 
 class AnnouncementMetricQuerySerializer(serializers.Serializer):

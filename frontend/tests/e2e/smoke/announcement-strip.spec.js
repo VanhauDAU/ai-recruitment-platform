@@ -10,6 +10,7 @@ const FEEDS = {
 
 function feed(surface) {
   return {
+    remote_enabled: true,
     items: [{
       public_id: `ann_${surface}`,
       revision: 1,
@@ -216,5 +217,34 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
     page.locator('.admin-topbar'),
   )
   await expect(page.getByRole('region', { name: 'Tóm tắt quyền truy cập' })).toBeVisible()
+  expect(pageErrors).toEqual([])
+})
+
+test('announcement strip: remote kill switch fails closed without breaking public headers', async ({ page }) => {
+  const pageErrors = []
+  page.on('pageerror', (error) => pageErrors.push(error.message))
+  await enableAnnouncementRollout(page)
+  await mockPublicApi(page)
+  await page.route('http://localhost:8000/api/site/announcements/active/**', async (route) => {
+    const surface = new URL(route.request().url()).searchParams.get('surface')
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...feed(surface),
+        remote_enabled: false,
+      }),
+    })
+  })
+
+  await page.goto('/chinh-sach-cookie')
+  await expect(page.locator('header').first()).toBeVisible()
+  await expect(page.getByText(FEEDS.candidate)).not.toBeVisible()
+
+  await page.goto('/tuyendung')
+  await expect(page.locator('header').first()).toBeVisible()
+  await expect(page.getByText(FEEDS.employer_marketing)).not.toBeVisible()
+  await expect.poll(() => page.evaluate(() => (
+    document.documentElement.scrollWidth - document.documentElement.clientWidth
+  ))).toBeLessThanOrEqual(1)
   expect(pageErrors).toEqual([])
 })

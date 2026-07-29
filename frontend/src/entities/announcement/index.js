@@ -4,6 +4,7 @@ export {
 } from './api/announcement.keys'
 export {
   getActiveAnnouncements,
+  reportAnnouncementRuntimeEvent,
   sendAnnouncementEvents,
   setAnnouncementState,
 } from './api/announcement.api'

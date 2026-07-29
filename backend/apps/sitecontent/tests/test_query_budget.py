@@ -1,5 +1,6 @@
 """Query budgets for public site-content collections."""
 
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -121,6 +122,18 @@ class AnnouncementQueryBudgetTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['items']), 8)
+
+    @override_settings(ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=())
+    def test_disabled_remote_feed_short_circuits_without_database_queries(self):
+        with self.assertNumQueries(0):
+            response = self.client.get(
+                reverse('site-announcements-active'),
+                {'surface': 'candidate', 'path': '/'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data['remote_enabled'])
+        self.assertEqual(response.data['items'], [])
 
     def test_personalized_feed_keeps_one_query_with_dismiss_state(self):
         user = User.objects.create_user(

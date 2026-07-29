@@ -277,6 +277,7 @@ REST_FRAMEWORK = {
         'job_view': '120/hour',
         'job_impression': '240/hour',
         'announcement_event': '240/hour',
+        'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
     },
 }
@@ -325,6 +326,12 @@ SPECTACULAR_SETTINGS = {
         'AnnouncementIconEnum': 'apps.sitecontent.models.AnnouncementRevision.Icon',
         'AnnouncementAnimationEnum': 'apps.sitecontent.models.AnnouncementRevision.Animation',
         'AnnouncementDismissModeEnum': ('apps.sitecontent.models.AnnouncementRevision.DismissMode'),
+        'AnnouncementRuntimeEventEnum': (
+            'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_EVENTS'
+        ),
+        'AnnouncementRuntimeReasonEnum': (
+            'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_REASONS'
+        ),
     },
     'TAGS': [
         {'name': 'auth', 'description': 'Đăng ký, đăng nhập, JWT, tài khoản hiện tại'},
@@ -359,6 +366,19 @@ CONSENT_COOKIE_NAME = config('CONSENT_COOKIE_NAME', default='procv_consent')
 CONSENT_COOKIE_MAX_AGE = 180 * 24 * 60 * 60
 CONSENT_COOKIE_SECURE = IS_PRODUCTION
 CONSENT_COOKIE_SAMESITE = 'Lax'
+
+# Remote announcement delivery is a runtime, per-surface kill switch. Keep the
+# default fail-closed; the frontend rollout flag remains a separate build-time
+# compatibility gate. Operators enable surfaces progressively after smoke tests.
+ANNOUNCEMENT_REMOTE_ENABLED_SURFACES = tuple(
+    surface.strip().lower()
+    for surface in config(
+        'ANNOUNCEMENT_REMOTE_ENABLED_SURFACES',
+        default='',
+        cast=Csv(),
+    )
+    if surface.strip()
+)
 
 JOB_VIEW_DEDUP_TTL_SECONDS = config('JOB_VIEW_DEDUP_TTL_SECONDS', default=24 * 60 * 60, cast=int)
 JOB_VIEWER_COOKIE_NAME = config('JOB_VIEWER_COOKIE_NAME', default='procv_viewer_id')

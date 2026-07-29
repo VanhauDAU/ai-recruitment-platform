@@ -16,6 +16,8 @@ ALLOWED_METRICS = {
     'campaign_job_performance_duration_ms',
     'announcement_analytics',
     'announcement_event_batch_size',
+    'announcement_feed_latency_ms',
+    'announcement_runtime',
 }
 
 

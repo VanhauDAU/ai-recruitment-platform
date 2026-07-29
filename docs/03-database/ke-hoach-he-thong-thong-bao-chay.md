@@ -258,14 +258,21 @@ Functional dismiss/snooze không phụ thuộc Analytics consent.
 2. Deploy unified strip sau cờ `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES`; surface chưa
    bật tiếp tục dùng banner hiện hành.
 3. Bật admin → employer marketing → employer workspace → candidate.
-4. `announcement_remote_enabled_surfaces` là kill switch lâu dài; tắt remote
-   feed không tắt system security/compliance message.
+4. `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES` là kill switch runtime lâu dài;
+   backend trả `remote_enabled=false`, `items=[]` và không query feed khi
+   surface tắt. Frontend fail-closed nếu field thiếu/false; system
+   security/compliance message và banner legacy error fallback vẫn hoạt động.
 5. Giữ compatibility một release. Cleanup legacy ở PR riêng sau khi full gate
    và staging ổn định.
 
 Rollback application code không xóa permission, revision, audit hay metric.
 Không reverse schema trên production chỉ để tắt giao diện; ưu tiên kill switch
 và rollback code tương thích schema additive.
+
+AN-P5 thêm operational event PII-free `feed_error`, `contract_error`,
+`render_error` với enum surface/reason và throttle riêng 60/giờ. Không nhận
+path, message, stack hoặc identifier. Quy trình rollout và ngưỡng dừng nằm tại
+[runbook AN-P5](../06-deployment/announcement-rollout-runbook.md).
 
 Migration AN-P1 là `accounts/0019_announcement_permissions.py` và
 `sitecontent/0016_announcement_announcementrevision_and_more.py`. Reverse đã

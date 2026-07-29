@@ -1,4 +1,5 @@
 from datetime import timedelta
+from time import monotonic
 from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -23,6 +24,7 @@ from ...selectors import (
     admin_announcements_queryset,
     announcement_audit_events,
     announcement_metrics,
+    remote_announcements_enabled,
 )
 from ...services import (
     StaleAnnouncementRevision,
@@ -53,6 +55,7 @@ from ..serializers import (
     AnnouncementMetricReportSerializer,
     AnnouncementRenameSerializer,
     AnnouncementRevisionCreateSerializer,
+    AnnouncementRuntimeEventSerializer,
     AnnouncementStateWriteSerializer,
     AnnouncementUserStateSerializer,
 )
@@ -114,10 +117,31 @@ class ActiveAnnouncementListView(APIView):
         query = ActiveAnnouncementQuerySerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
         params = query.validated_data
-        announcements, next_transition_at = active_announcements_for_request(
-            surface=params['surface'],
-            path=params['path'],
-            user=request.user,
+        surface = params['surface']
+        remote_enabled = remote_announcements_enabled(surface)
+        started_at = monotonic()
+        try:
+            if remote_enabled:
+                announcements, next_transition_at = active_announcements_for_request(
+                    surface=surface,
+                    path=params['path'],
+                    user=request.user,
+                )
+            else:
+                announcements, next_transition_at = [], None
+        except Exception:
+            record_metric(
+                'announcement_feed_latency_ms',
+                round((monotonic() - started_at) * 1000, 2),
+                surface=surface,
+                status='error',
+            )
+            raise
+        record_metric(
+            'announcement_feed_latency_ms',
+            round((monotonic() - started_at) * 1000, 2),
+            surface=surface,
+            status='served' if remote_enabled else 'disabled',
         )
         response = Response(
             {
@@ -127,6 +151,7 @@ class ActiveAnnouncementListView(APIView):
                     context={'locale': params['locale']},
                 ).data,
                 'next_transition_at': next_transition_at,
+                'remote_enabled': remote_enabled,
             }
         )
         response['Cache-Control'] = 'private, no-store'
@@ -233,6 +258,30 @@ class AnnouncementEventBatchView(APIView):
             result = record_consented_announcement_events(request, valid_events)
             set_announcement_viewer_cookie(response, result.get('viewer_id'))
         return response
+
+
+@extend_schema(
+    summary='Nhận operational event PII-free của runtime thông báo',
+    request=AnnouncementRuntimeEventSerializer,
+    responses={202: OpenApiResponse(description='Event vận hành được nhận best-effort.')},
+    tags=['site-announcements'],
+)
+class AnnouncementRuntimeEventView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'announcement_runtime'
+
+    def post(self, request):
+        serializer = AnnouncementRuntimeEventSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        event = serializer.validated_data
+        record_metric(
+            'announcement_runtime',
+            event=event['event'],
+            reason=event['reason'],
+            surface=event['surface'],
+        )
+        return Response({'accepted': True}, status=status.HTTP_202_ACCEPTED)
 
 
 @extend_schema_view(

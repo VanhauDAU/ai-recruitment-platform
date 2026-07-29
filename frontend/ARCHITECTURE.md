@@ -506,7 +506,10 @@ pages/admin/app/Announcements
   email verification, compliance employer và job-preference reminder; pure
   priority resolver nằm trong widget vì đây là logic ghép nhiều domain. Widget
   cũng sở hữu batch impression/click/dismiss best-effort và local state guest;
-  signed cookie phía server vẫn là nguồn consent analytics chuẩn.
+  signed cookie phía server vẫn là nguồn consent analytics chuẩn. Runtime feed
+  chỉ nhận remote item khi backend trả `remote_enabled=true`; health hook chỉ
+  gửi enum PII-free và error boundary trong cùng widget trả banner legacy, nên
+  app/layout không sở hữu recovery logic domain.
 - `features/manage-announcement` chỉ sở hữu mutation create/revision/publish/
   pause/resume/archive/duplicate. Feature không import feature khác.
 - `widgets/admin-announcement-management` sở hữu bảng, editor, preview,

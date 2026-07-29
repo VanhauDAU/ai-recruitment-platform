@@ -97,8 +97,14 @@ Flag mặc định fail-closed. Khi surface tắt:
 
 `window.__ANNOUNCEMENT_ROLLOUT_SURFACES__` là bootstrap override dùng cho smoke
 test hoặc host injection trước khi bundle chạy; nếu không có, frontend dùng
-biến build-time. Kill switch chỉ tắt remote feed nhưng giữ system security label
-thuộc AN-P5, không được mô phỏng bằng cách tắt toàn bộ rollout.
+biến build-time.
+
+AN-P5 dùng `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES` phía backend làm kill switch
+runtime theo surface. Active feed trả `remote_enabled`; contract frontend chỉ
+normalize remote item khi field đúng `true`. False hoặc field thiếu đều bỏ
+remote item nhưng vẫn dựng system label. Component error boundary trả đúng
+banner `legacy` nếu runtime render lỗi. Feed/network và render failure gửi enum
+PII-free best-effort, không gửi stack/message/path.
 
 Docker local và production đều chuyển tiếp build arg này. Không sửa trực tiếp
 `frontend/.env` đã có của người phát triển; dùng `.env` ở môi trường deploy.
@@ -127,6 +133,8 @@ snooze 7 ngày.
 ## 6. Refetch và failure handling
 
 - Query retry tối đa một lần theo policy ứng dụng.
+- Retry feed dùng delay 250 ms; lỗi cuối được báo operational best-effort và
+  không làm hỏng header.
 - `next_transition_at` đặt timer refetch ngay sau boundary.
 - Tab trở lại visible refetch ngay; khi tab visible có fallback 60 giây.
 - Impression/click/dismiss remote được gom batch ngắn, loại trùng trong batch và

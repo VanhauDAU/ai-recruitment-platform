@@ -14,6 +14,7 @@ from .announcements import (
     AnnouncementRevisionCreateSerializer,
     AnnouncementRevisionReadSerializer,
     AnnouncementRevisionWriteSerializer,
+    AnnouncementRuntimeEventSerializer,
     AnnouncementStateWriteSerializer,
     AnnouncementUserStateSerializer,
 )
@@ -45,6 +46,7 @@ __all__ = [
     'AnnouncementRevisionCreateSerializer',
     'AnnouncementRevisionReadSerializer',
     'AnnouncementRevisionWriteSerializer',
+    'AnnouncementRuntimeEventSerializer',
     'AnnouncementStateWriteSerializer',
     'AnnouncementUserStateSerializer',
     'BannerSerializer',

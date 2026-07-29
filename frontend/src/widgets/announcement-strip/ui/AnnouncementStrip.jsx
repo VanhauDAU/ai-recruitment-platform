@@ -3,7 +3,6 @@ import {
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
 import {
   useEffect,
   useLayoutEffect,
@@ -16,8 +15,6 @@ import {
   ANNOUNCEMENT_DISMISS_MODES,
   ANNOUNCEMENT_KINDS,
   announcementAudienceKey,
-  announcementKeys,
-  getActiveAnnouncements,
 } from '@/entities/announcement'
 import { useConsent } from '@/entities/consent'
 import { useSession } from '@/entities/session'
@@ -30,9 +27,11 @@ import {
 import { resolveAnnouncementQueue } from '../model/priority-resolver'
 import { buildSystemAnnouncements } from '../model/system-announcements'
 import { useAnnouncementTracking } from '../model/use-announcement-tracking'
+import { useAnnouncementFeed } from '../model/use-announcement-feed'
 import { useReducedMotion } from '../model/use-reduced-motion'
 import AnnouncementCta from './AnnouncementCta'
 import AnnouncementIcon from './AnnouncementIcon'
+import AnnouncementStripBoundary from './AnnouncementStripBoundary'
 import './announcement-strip.css'
 
 function AnnouncementStripRuntime({
@@ -57,19 +56,11 @@ function AnnouncementStripRuntime({
   const { consent, status: consentStatus } = useConsent()
   const analyticsEnabled = consentStatus === 'ready' && consent.analytics
   const audienceKey = announcementAudienceKey(user)
-  const { data: feed, refetch: refetchFeed } = useQuery({
-    queryKey: announcementKeys.active({
-      audienceKey,
-      locale,
-      path,
-      surface,
-    }),
-    queryFn: ({ signal }) => getActiveAnnouncements({
-      locale,
-      path,
-      surface,
-    }, { signal }),
-    retry: 1,
+  const { feed, refetchFeed } = useAnnouncementFeed({
+    audienceKey,
+    locale,
+    path,
+    surface,
   })
   const systemItems = useMemo(() => buildSystemAnnouncements({
     employerProfile,
@@ -231,6 +222,7 @@ function AnnouncementStripRuntime({
       style={{ '--announcement-strip-sticky-top': stickyOffset }}
       data-announcement-surface={surface}
       data-announcement-source={active.source}
+      data-announcement-remote-enabled={feed?.remoteEnabled ? 'true' : 'false'}
       aria-label="Thông báo hệ thống"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -314,5 +306,12 @@ export default function AnnouncementStrip({
 }) {
   const rolloutEnabled = enabled ?? isAnnouncementSurfaceEnabled(surface)
   if (!rolloutEnabled) return legacy
-  return <AnnouncementStripSessionGate {...props} surface={surface} />
+  return (
+    <AnnouncementStripBoundary
+      fallback={legacy}
+      surface={surface}
+    >
+      <AnnouncementStripSessionGate {...props} surface={surface} />
+    </AnnouncementStripBoundary>
+  )
 }
