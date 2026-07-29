@@ -30,6 +30,7 @@ import {
 } from '../model/announcement-options'
 import AnnouncementPreview from './AnnouncementPreview'
 import { AuditHistory, RevisionHistory } from './AnnouncementHistory'
+import AnnouncementMetrics from './AnnouncementMetrics'
 
 function formatDate(value) {
   if (!value) return 'Không giới hạn'
@@ -196,6 +197,11 @@ export default function AnnouncementDetailDrawer({
                 key: 'overview',
                 label: 'Tổng quan & preview',
                 children: <DetailOverview detail={detail} />,
+              },
+              {
+                key: 'metrics',
+                label: 'Hiệu quả',
+                children: <AnnouncementMetrics publicId={detail.public_id} />,
               },
               {
                 key: 'revisions',

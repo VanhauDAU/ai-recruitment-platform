@@ -119,6 +119,42 @@ export default function AnnouncementTable({
       render: (__, item) => item.priority ?? '—',
     },
     {
+      title: 'Hiển thị',
+      key: 'impressions',
+      width: 110,
+      align: 'right',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'impressions'),
+      render: (_, item) => item.impressions.toLocaleString('vi-VN'),
+    },
+    {
+      title: 'Click',
+      key: 'clicks',
+      width: 90,
+      align: 'right',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'clicks'),
+      render: (_, item) => item.clicks.toLocaleString('vi-VN'),
+    },
+    {
+      title: 'CTR',
+      key: 'ctr',
+      width: 90,
+      align: 'right',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'ctr'),
+      render: (_, item) => `${item.ctr.toLocaleString('vi-VN')}%`,
+    },
+    {
+      title: 'Dismiss',
+      key: 'dismisses',
+      width: 100,
+      align: 'right',
+      sorter: true,
+      sortOrder: sorterOrder(ordering, 'dismisses'),
+      render: (_, item) => item.dismisses.toLocaleString('vi-VN'),
+    },
+    {
       title: 'Cập nhật',
       key: 'updated_at',
       width: 185,
@@ -156,7 +192,7 @@ export default function AnnouncementTable({
       dataSource={data.results}
       columns={columns}
       className="announcement-table"
-      scroll={{ x: 1340 }}
+      scroll={{ x: 1730 }}
       locale={{
         emptyText: (
           <Empty
