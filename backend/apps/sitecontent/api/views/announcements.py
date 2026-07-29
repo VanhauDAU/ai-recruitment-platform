@@ -1,30 +1,43 @@
+from datetime import timedelta
+from zoneinfo import ZoneInfo
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminPermission
+from apps.privacy.services import load_consent
+from common.metrics import record_metric
 from common.pagination import StandardPagination
 
+from ...models import Announcement, AnnouncementRevision
 from ...selectors import (
     active_announcements_for_request,
     admin_announcement_detail_queryset,
     admin_announcements_queryset,
     announcement_audit_events,
+    announcement_metrics,
 )
 from ...services import (
     StaleAnnouncementRevision,
+    StaleAnnouncementState,
     archive_announcement,
     create_announcement,
     create_announcement_revision,
     duplicate_announcement,
     pause_announcement,
     publish_announcement,
+    record_consented_announcement_events,
     rename_announcement,
     resume_announcement,
+    set_announcement_user_state,
+    set_announcement_viewer_cookie,
 )
 from ..serializers import (
     ActiveAnnouncementFeedSerializer,
@@ -35,8 +48,13 @@ from ..serializers import (
     AnnouncementActionSerializer,
     AnnouncementCreateSerializer,
     AnnouncementDuplicateSerializer,
+    AnnouncementEventBatchSerializer,
+    AnnouncementMetricQuerySerializer,
+    AnnouncementMetricReportSerializer,
     AnnouncementRenameSerializer,
     AnnouncementRevisionCreateSerializer,
+    AnnouncementStateWriteSerializer,
+    AnnouncementUserStateSerializer,
 )
 
 
@@ -112,6 +130,108 @@ class ActiveAnnouncementListView(APIView):
             }
         )
         response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+@extend_schema(
+    summary='Lưu trạng thái dismiss hoặc snooze của người dùng',
+    request=AnnouncementStateWriteSerializer,
+    responses={200: AnnouncementUserStateSerializer, 409: OpenApiResponse()},
+    tags=['site-announcements'],
+)
+class AnnouncementStateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request, public_id):
+        announcement = get_object_or_404(
+            Announcement.objects.select_related('active_revision'),
+            public_id=public_id,
+        )
+        serializer = AnnouncementStateWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            state = set_announcement_user_state(
+                announcement=announcement,
+                user=request.user,
+                revision_number=serializer.validated_data['revision'],
+                dismissal_version=serializer.validated_data['dismissal_version'],
+                action=serializer.validated_data['action'],
+            )
+        except StaleAnnouncementState as error:
+            return Response(
+                {
+                    'code': 'announcement_state_stale',
+                    'detail': 'Thông báo đã thay đổi. Hãy tải lại feed trước khi thao tác.',
+                    'current_revision': error.current_revision,
+                    'current_dismissal_version': error.current_dismissal_version,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+        except DjangoValidationError as error:
+            raise ValidationError(_validation_detail(error)) from error
+        return Response(
+            AnnouncementUserStateSerializer(
+                {
+                    'public_id': announcement.public_id,
+                    'revision': announcement.active_revision.number,
+                    'dismissal_version': state.dismissal_version,
+                    'dismissed_at': state.dismissed_at,
+                    'snoozed_until': state.snoozed_until,
+                }
+            ).data
+        )
+
+
+@extend_schema(
+    summary='Nhận batch analytics thông báo theo consent',
+    request=AnnouncementEventBatchSerializer,
+    responses={202: OpenApiResponse(description='Batch được nhận theo cơ chế best-effort.')},
+    tags=['site-announcements'],
+)
+class AnnouncementEventBatchView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'announcement_event'
+
+    def post(self, request):
+        serializer = AnnouncementEventBatchSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        events = serializer.validated_data['events']
+        record_metric('announcement_event_batch_size', len(events), reason='received')
+        consent = load_consent(request)
+        if not consent or not consent['analytics']:
+            record_metric(
+                'announcement_analytics',
+                event='batch',
+                reason='consent_required',
+            )
+            return Response({'accepted': True}, status=status.HTTP_202_ACCEPTED)
+
+        public_ids = {event['public_id'] for event in events}
+        revisions = AnnouncementRevision.objects.filter(
+            announcement__public_id__in=public_ids,
+            published_at__isnull=False,
+        ).select_related('announcement')
+        revisions_by_key = {
+            (revision.announcement.public_id, revision.number): revision for revision in revisions
+        }
+        valid_events = []
+        for event in events:
+            revision = revisions_by_key.get((event['public_id'], event['revision']))
+            if revision is None or event['surface'] not in revision.surfaces:
+                record_metric(
+                    'announcement_analytics',
+                    event=event['event'],
+                    reason='invalid_event',
+                    surface=event['surface'],
+                )
+                continue
+            valid_events.append({**event, 'revision_object': revision})
+
+        response = Response({'accepted': True}, status=status.HTTP_202_ACCEPTED)
+        if valid_events:
+            result = record_consented_announcement_events(request, valid_events)
+            set_announcement_viewer_cookie(response, result.get('viewer_id'))
         return response
 
 
@@ -321,3 +441,64 @@ class AdminAnnouncementDuplicateView(APIView):
         if isinstance(result, Response):
             return result
         return _detail_response(request, result, response_status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    summary='Admin: daily metrics thông báo theo toàn bộ revision',
+    parameters=[AnnouncementMetricQuerySerializer],
+    responses={200: AnnouncementMetricReportSerializer},
+    tags=['site-announcements-admin'],
+)
+class AdminAnnouncementMetricView(APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['announcement.view']}
+
+    def get(self, request, public_id):
+        announcement = get_object_or_404(Announcement, public_id=public_id)
+        query = AnnouncementMetricQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        today = timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+        date_to = query.validated_data.get('date_to', today)
+        date_from = query.validated_data.get('date_from', date_to - timedelta(days=29))
+        if date_from > date_to:
+            raise ValidationError({'date_to': 'Ngày kết thúc phải từ ngày bắt đầu trở đi.'})
+        if (date_to - date_from).days > 92:
+            raise ValidationError({'date_to': 'Khoảng báo cáo tối đa là 93 ngày.'})
+
+        daily = announcement_metrics(
+            announcement=announcement,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        summary = {
+            field: sum(row[field] for row in daily)
+            for field in (
+                'impressions',
+                'unique_impressions',
+                'clicks',
+                'unique_clicks',
+                'dismisses',
+            )
+        }
+
+        def rates(item):
+            impressions = item['impressions']
+            return {
+                **item,
+                'ctr': round(item['clicks'] * 100 / impressions, 2) if impressions else 0.0,
+                'dismiss_rate': (
+                    round(item['dismisses'] * 100 / impressions, 2) if impressions else 0.0
+                ),
+            }
+
+        payload = {
+            'public_id': announcement.public_id,
+            'date_from': date_from,
+            'date_to': date_to,
+            'consent_notice': (
+                'Số liệu chỉ gồm người dùng đã bật Analytics và không đại diện toàn bộ lượt xem.'
+            ),
+            'summary': rates(summary),
+            'daily': [rates(row) for row in daily],
+        }
+        return Response(AnnouncementMetricReportSerializer(payload).data)

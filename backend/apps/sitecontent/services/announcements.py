@@ -1,20 +1,41 @@
+from datetime import timedelta
+from hashlib import sha256
 from urllib.parse import urlsplit
+from uuid import uuid4
+from zoneinfo import ZoneInfo
 
+from django.conf import settings
+from django.core import signing
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import F, Max
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.services import record_admin_action
+from apps.privacy.constants import VIEWER_SIGNING_SALT
+from common.metrics import record_metric
 
-from ..models import Announcement, AnnouncementRevision
+from ..models import (
+    Announcement,
+    AnnouncementDailyMetric,
+    AnnouncementRevision,
+    AnnouncementUserState,
+)
 
 
 class StaleAnnouncementRevision(Exception):
     def __init__(self, current_revision_token):
         self.current_revision_token = current_revision_token
         super().__init__('Announcement revision token is stale.')
+
+
+class StaleAnnouncementState(Exception):
+    def __init__(self, *, current_revision, current_dismissal_version):
+        self.current_revision = current_revision
+        self.current_dismissal_version = current_dismissal_version
+        super().__init__('Announcement state contract is stale.')
 
 
 REVISION_COPY_FIELDS = (
@@ -391,3 +412,158 @@ def duplicate_announcement(
         payload={'source_public_id': announcement.public_id},
     )
     return duplicate
+
+
+@transaction.atomic
+def set_announcement_user_state(
+    *,
+    announcement,
+    user,
+    revision_number,
+    dismissal_version,
+    action,
+):
+    announcement = _lock_announcement(announcement)
+    active_revision = announcement.active_revision
+    if (
+        announcement.lifecycle_state != Announcement.LifecycleState.PUBLISHED
+        or active_revision is None
+    ):
+        raise ValidationError({'detail': 'Thông báo không còn hoạt động.'})
+    if (
+        active_revision.number != revision_number
+        or announcement.dismissal_version != dismissal_version
+    ):
+        raise StaleAnnouncementState(
+            current_revision=active_revision.number,
+            current_dismissal_version=announcement.dismissal_version,
+        )
+    if active_revision.dismiss_mode == AnnouncementRevision.DismissMode.LOCKED:
+        raise ValidationError({'action': 'Thông báo này không thể đóng hoặc tạm ẩn.'})
+    expected_action = (
+        'snooze'
+        if active_revision.dismiss_mode == AnnouncementRevision.DismissMode.SNOOZE
+        else 'dismiss'
+    )
+    if action != expected_action:
+        raise ValidationError({'action': f'Thông báo này chỉ hỗ trợ action {expected_action}.'})
+
+    state, _ = AnnouncementUserState.objects.select_for_update().get_or_create(
+        user=user,
+        announcement=announcement,
+        dismissal_version=dismissal_version,
+    )
+    now = timezone.now()
+    if action == 'dismiss':
+        if state.dismissed_at is None:
+            state.dismissed_at = now
+            state.snoozed_until = None
+            state.save(update_fields=['dismissed_at', 'snoozed_until', 'updated_at'])
+    elif state.snoozed_until is None or state.snoozed_until <= now:
+        state.dismissed_at = None
+        state.snoozed_until = now + timedelta(seconds=active_revision.snooze_seconds)
+        state.save(update_fields=['dismissed_at', 'snoozed_until', 'updated_at'])
+    return state
+
+
+def _viewer_id_from_request(request):
+    raw_value = request.COOKIES.get(settings.JOB_VIEWER_COOKIE_NAME)
+    if raw_value:
+        try:
+            value = signing.loads(raw_value, salt=VIEWER_SIGNING_SALT)
+            if isinstance(value, str) and value:
+                return value, False
+        except signing.BadSignature:
+            pass
+    return str(uuid4()), True
+
+
+def set_announcement_viewer_cookie(response, viewer_id):
+    if not viewer_id:
+        return
+    response.set_cookie(
+        settings.JOB_VIEWER_COOKIE_NAME,
+        signing.dumps(viewer_id, salt=VIEWER_SIGNING_SALT, compress=True),
+        max_age=settings.JOB_VIEWER_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=settings.JOB_VIEWER_COOKIE_SECURE,
+        samesite=settings.JOB_VIEWER_COOKIE_SAMESITE,
+        path='/',
+    )
+
+
+def _tracking_date():
+    return timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+
+
+def _dedupe_ttl_seconds():
+    local_now = timezone.localtime(timezone.now(), timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
+    next_day = (local_now + timedelta(days=1)).replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    return max(int((next_day - local_now).total_seconds()) + 300, 300)
+
+
+def _claim_unique_event(key):
+    try:
+        return cache.add(key, '1', timeout=_dedupe_ttl_seconds())
+    except Exception:
+        return None
+
+
+@transaction.atomic
+def _increment_announcement_metric(*, revision, surface, event):
+    metric, _ = AnnouncementDailyMetric.objects.get_or_create(
+        announcement_revision=revision,
+        date=_tracking_date(),
+        surface=surface,
+    )
+    fields = {
+        'impression': ('impressions', 'unique_impressions'),
+        'click': ('clicks', 'unique_clicks'),
+        'dismiss': ('dismisses',),
+    }[event]
+    AnnouncementDailyMetric.objects.filter(pk=metric.pk).update(
+        **{field: F(field) + 1 for field in fields}
+    )
+
+
+def record_consented_announcement_events(request, events):
+    viewer_id, viewer_created = _viewer_id_from_request(request)
+    viewer_hash = sha256(viewer_id.encode()).hexdigest()
+    user_id = request.user.pk if request.user.is_authenticated else None
+    tracking_date = _tracking_date().isoformat()
+    results = []
+    for event in events:
+        revision = event['revision_object']
+        identity = f'user:{user_id}' if user_id else f'viewer:{viewer_hash}'
+        dedupe_key = (
+            f'announcement-event:{revision.pk}:{event["surface"]}:'
+            f'{event["event"]}:{tracking_date}:{identity}'
+        )
+        claimed = _claim_unique_event(dedupe_key)
+        reason = 'counted'
+        if claimed is None:
+            reason = 'redis_error'
+        elif not claimed:
+            reason = 'duplicate'
+        else:
+            _increment_announcement_metric(
+                revision=revision,
+                surface=event['surface'],
+                event=event['event'],
+            )
+        record_metric(
+            'announcement_analytics',
+            event=event['event'],
+            reason=reason,
+            surface=event['surface'],
+        )
+        results.append(reason)
+    return {
+        'results': results,
+        'viewer_id': viewer_id if viewer_created else None,
+    }

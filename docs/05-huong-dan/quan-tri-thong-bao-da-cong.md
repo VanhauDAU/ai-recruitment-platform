@@ -107,7 +107,24 @@ Drawer chi tiết có hai lịch sử chỉ đọc:
 Audit được trả trong detail read-model cho người có `announcement.view`; không
 cần mở quyền xem audit toàn hệ thống.
 
-## 6. Trạng thái lỗi và phục hồi
+## 6. Hiệu quả và phạm vi số liệu
+
+Tab **Hiệu quả** đọc aggregate phía server trên toàn bộ revision, không cộng
+các dòng đang thấy trong trang danh sách. Quản trị viên có thể chọn 7, 30 hoặc
+90 ngày và xem:
+
+- lượt hiển thị và lượt click;
+- CTR;
+- số và tỷ lệ dismiss;
+- chi tiết theo ngày và surface.
+
+Ngày báo cáo dùng `Asia/Ho_Chi_Minh`. Số liệu chỉ bao gồm người dùng đã bật
+Analytics, có Redis dedupe theo viewer–revision–event–ngày, nên không đại diện
+toàn bộ người đã thấy strip. Redis lỗi làm rơi event để tránh đếm trùng và
+không ảnh hưởng CTA/runtime. Không dùng dashboard này để suy ra traffic tổng
+hoặc trạng thái functional dismiss.
+
+## 7. Trạng thái lỗi và phục hồi
 
 - Lỗi list/detail: hiển thị thông báo và nút retry; không làm hỏng admin shell.
 - Submit lặp: mutation bị khóa trong lúc pending.
@@ -117,10 +134,11 @@ cần mở quyền xem audit toàn hệ thống.
 - Remote runtime feed lỗi không liên quan tới workspace và không làm mất các
   label bảo mật cục bộ.
 
-## 7. Rollback
+## 8. Rollback
 
-AN-P3 không thêm migration. Có thể revert application code và OpenAPI diff mà
-không xóa announcement, revision, permission hoặc audit. Runtime strip vẫn có
+AN-P4 không thêm migration hoặc permission. Có thể revert application code và
+OpenAPI diff mà không xóa announcement, revision, user state, daily metric,
+permission hoặc audit. Runtime strip vẫn có
 thể tắt độc lập bằng:
 
 ```env

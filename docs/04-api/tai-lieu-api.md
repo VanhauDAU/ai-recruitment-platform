@@ -381,8 +381,8 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 | Method | Endpoint | Quyền | Mục đích |
 | --- | --- | --- | --- |
 | `GET` | `/api/site/announcements/active/` | Theo surface/session | Feed runtime đã target và xếp priority |
-| `PUT` | `/api/site/announcements/{public_id}/state/` | AN-P4 | Dismiss/snooze idempotent — chưa mở route |
-| `POST` | `/api/site/announcements/events/` | AN-P4 | Batch analytics consent-aware — chưa mở route |
+| `PUT` | `/api/site/announcements/{public_id}/state/` | Authenticated | Dismiss/snooze idempotent theo revision và dismissal version |
+| `POST` | `/api/site/announcements/events/` | Consent + throttle | Batch analytics best-effort; luôn không chặn runtime/CTA |
 | `GET/POST` | `/api/site/admin/announcements/` | `announcement.view/manage` | List/create |
 | `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | `announcement.view/manage` | Detail/lịch sử và đổi tên vận hành |
 | `POST` | `/api/site/admin/announcements/{public_id}/revisions/` | `announcement.manage` | Tạo revision mới |
@@ -391,7 +391,7 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 | `POST` | `/api/site/admin/announcements/{public_id}/resume/` | `announcement.publish` | Resume |
 | `POST` | `/api/site/admin/announcements/{public_id}/archive/` | `announcement.publish` | Archive |
 | `POST` | `/api/site/admin/announcements/{public_id}/duplicate/` | `announcement.manage` | Tạo draft độc lập |
-| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | AN-P4 | Daily metrics — chưa mở route |
+| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | `announcement.view` | Summary và daily metrics toàn bộ revision, mặc định 30 ngày |
 
 Public feed yêu cầu `surface`, chấp nhận `path` và `locale`. Role/auth state lấy
 từ request. Surface/path/locale sai trả `400`; không có item trả `200` với mảng

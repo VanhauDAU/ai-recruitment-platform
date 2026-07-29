@@ -16,8 +16,8 @@ describe('AnnouncementTable', () => {
     )
 
     const headers = screen.getAllByRole('columnheader')
-    expect(headers).toHaveLength(7)
-    expect(headers.slice(0, 6).every(
+    expect(headers).toHaveLength(11)
+    expect(headers.slice(0, 10).every(
       (header) => header.classList.contains('ant-table-column-has-sorters'),
     )).toBe(true)
     expect(screen.getByRole('columnheader', { name: 'Thao tác' }))

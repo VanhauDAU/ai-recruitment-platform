@@ -69,7 +69,7 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 | AN-P1 | Backend foundation: model/revision, permission, selector/service, public/admin API và OpenAPI | ✅ |
 | AN-P2 | Runtime strip đa portal, system reminder, animation, accessibility và fail-safe | ✅ |
 | AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ✅ |
-| AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ⬜ |
+| AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ✅ |
 | AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | ⬜ |
 | AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
 
@@ -843,7 +843,26 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29g (AN-P3 CI follow-up — GitHub E2E sau merge
+Cập nhật lần cuối: 2026-07-29h (AN-P4 — dismiss/snooze và analytics:
+authenticated state dùng `PUT` idempotent, row lock, revision +
+dismissal-version stale trả `409`; feed loại state dismiss/snooze bằng
+`Exists` trong cùng một query. Guest state chuyển sang `localStorage` và giữ
+fallback P2 `sessionStorage`. Event impression/click/dismiss được gom batch,
+throttle 240/giờ, chỉ ghi khi signed Analytics consent hợp lệ và Redis claim
+viewer–revision–surface–event–ngày thành công; Redis lỗi/duplicate/invalid event
+fail-closed và phát operational metric PII-free, CTA không chờ tracking.
+Admin list trả aggregate thật và sort server-side; tab Hiệu quả đọc summary +
+daily metrics toàn bộ revision trong 7/30/90 ngày, kèm cảnh báo phạm vi consent.
+Không có migration hoặc permission mới; OpenAPI thêm state/event/metrics.
+Verify: backend 609/609 pass, coverage 86,09%, concurrency/query budget/throttle/
+Redis failure pass; frontend 185 file/661 test pass, coverage 43,95% statements /
+41,25% branches / 39,42% functions / 46,28% lines; architecture 904 module /
+1.822 dependency sạch; build + bundle budget 293,6 KiB JS / 34,2 KiB CSS pass;
+full smoke 150/150 và focused admin metrics 6/6 pass trên
+desktop/tablet/mobile. Rollback code không xóa user state/daily aggregate và
+không làm mất system security label.)
+
+Cập nhật 2026-07-29g (AN-P3 CI follow-up — GitHub E2E sau merge
 phát hiện mobile CV delete bị flaky do hai Ant Design portal còn chuyển động,
 khiến sticky header chặn pointer hoặc confirmation button bị thay node trong lúc
 Playwright chờ vị trí ổn định. Smoke chuyển hai action menu/modal sang keyboard

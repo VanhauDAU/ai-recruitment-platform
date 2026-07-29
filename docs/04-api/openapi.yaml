@@ -6424,6 +6424,37 @@ paths:
           description: ''
         '409':
           description: No response body
+  /api/site/admin/announcements/{public_id}/metrics/:
+    get:
+      operationId: site_admin_announcements_metrics_retrieve
+      summary: 'Admin: daily metrics thông báo theo toàn bộ revision'
+      parameters:
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - site-announcements-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementMetricReport'
+          description: ''
   /api/site/admin/announcements/{public_id}/pause/:
     post:
       operationId: site_admin_announcements_pause_create
@@ -6759,6 +6790,41 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/site/announcements/{public_id}/state/:
+    put:
+      operationId: site_announcements_state_update
+      summary: Lưu trạng thái dismiss hoặc snooze của người dùng
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - site-announcements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementStateWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnouncementStateWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnouncementStateWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementUserState'
+          description: ''
+        '409':
+          description: No response body
   /api/site/announcements/active/:
     get:
       operationId: site_announcements_active_retrieve
@@ -6806,6 +6872,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActiveAnnouncementFeed'
           description: ''
+  /api/site/announcements/events/:
+    post:
+      operationId: site_announcements_events_create
+      summary: Nhận batch analytics thông báo theo consent
+      tags:
+      - site-announcements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementEventBatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnouncementEventBatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnouncementEventBatchRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '202':
+          description: Batch được nhận theo cơ chế best-effort.
   /api/site/banners/:
     get:
       operationId: site_banners_list
@@ -9550,6 +9640,14 @@ components:
           minLength: 1
       required:
       - refresh
+    ActionEnum:
+      enum:
+      - dismiss
+      - snooze
+      type: string
+      description: |-
+        * `dismiss` - dismiss
+        * `snooze` - snooze
     ActiveAnnouncement:
       type: object
       properties:
@@ -11896,6 +11994,40 @@ components:
       - external
       - label
       - url
+    AnnouncementDailyMetric:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        surface:
+          $ref: '#/components/schemas/AnnouncementSurfaceEnum'
+        impressions:
+          type: integer
+        unique_impressions:
+          type: integer
+        clicks:
+          type: integer
+        unique_clicks:
+          type: integer
+        dismisses:
+          type: integer
+        ctr:
+          type: number
+          format: double
+        dismiss_rate:
+          type: number
+          format: double
+      required:
+      - clicks
+      - ctr
+      - date
+      - dismiss_rate
+      - dismisses
+      - impressions
+      - surface
+      - unique_clicks
+      - unique_impressions
     AnnouncementDismiss:
       type: object
       properties:
@@ -11934,6 +12066,34 @@ components:
       required:
       - internal_name
       - revision_token
+    AnnouncementEventBatchRequest:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementEventRequest'
+      required:
+      - events
+    AnnouncementEventRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        revision:
+          type: integer
+          minimum: 1
+        surface:
+          $ref: '#/components/schemas/AnnouncementSurfaceEnum'
+        event:
+          $ref: '#/components/schemas/EventEnum'
+      required:
+      - event
+      - public_id
+      - revision
+      - surface
     AnnouncementIconEnum:
       enum:
       - alert-triangle
@@ -11990,6 +12150,59 @@ components:
         * `published` - Đã phát hành
         * `paused` - Đang tạm dừng
         * `archived` - Đã lưu trữ
+    AnnouncementMetricReport:
+      type: object
+      properties:
+        public_id:
+          type: string
+        date_from:
+          type: string
+          format: date
+        date_to:
+          type: string
+          format: date
+        consent_notice:
+          type: string
+        summary:
+          $ref: '#/components/schemas/AnnouncementMetricSummary'
+        daily:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementDailyMetric'
+      required:
+      - consent_notice
+      - daily
+      - date_from
+      - date_to
+      - public_id
+      - summary
+    AnnouncementMetricSummary:
+      type: object
+      properties:
+        impressions:
+          type: integer
+        unique_impressions:
+          type: integer
+        clicks:
+          type: integer
+        unique_clicks:
+          type: integer
+        dismisses:
+          type: integer
+        ctr:
+          type: number
+          format: double
+        dismiss_rate:
+          type: number
+          format: double
+      required:
+      - clicks
+      - ctr
+      - dismiss_rate
+      - dismisses
+      - impressions
+      - unique_clicks
+      - unique_impressions
     AnnouncementRevisionCreateRequest:
       type: object
       properties:
@@ -12182,6 +12395,21 @@ components:
       - auth_audiences
       - message_vi
       - surfaces
+    AnnouncementStateWriteRequest:
+      type: object
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+        dismissal_version:
+          type: integer
+          minimum: 1
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+      required:
+      - action
+      - dismissal_version
+      - revision
     AnnouncementSurfaceEnum:
       enum:
       - candidate
@@ -12194,6 +12422,29 @@ components:
         * `employer_marketing` - Trang nhà tuyển dụng
         * `employer_workspace` - Workspace nhà tuyển dụng
         * `admin_workspace` - Workspace quản trị
+    AnnouncementUserState:
+      type: object
+      properties:
+        public_id:
+          type: string
+        revision:
+          type: integer
+        dismissal_version:
+          type: integer
+        dismissed_at:
+          type: string
+          format: date-time
+          nullable: true
+        snoozed_until:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - dismissal_version
+      - dismissed_at
+      - public_id
+      - revision
+      - snoozed_until
     Application:
       type: object
       properties:
@@ -16271,6 +16522,16 @@ components:
         * `internship` - Internship
         * `freelance` - Freelance
         * `other` - Khác
+    EventEnum:
+      enum:
+      - impression
+      - click
+      - dismiss
+      type: string
+      description: |-
+        * `impression` - impression
+        * `click` - click
+        * `dismiss` - dismiss
     ExperienceLevelEnum:
       enum:
       - no_experience

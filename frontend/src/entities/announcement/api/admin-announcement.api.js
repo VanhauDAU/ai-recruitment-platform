@@ -1,6 +1,7 @@
 import api from '@/shared/api/client'
 import {
   normalizeAdminAnnouncementDetail,
+  normalizeAdminAnnouncementMetrics,
   normalizeAdminAnnouncementPage,
 } from '../model/admin-announcement.contract'
 
@@ -48,4 +49,11 @@ export async function duplicateAdminAnnouncement(publicId, payload) {
     api.post(`/site/admin/announcements/${publicId}/duplicate/`, payload),
   )
   return normalizeAdminAnnouncementDetail(result)
+}
+
+export async function getAdminAnnouncementMetrics(publicId, params = {}, { signal } = {}) {
+  const result = await data(
+    api.get(`/site/admin/announcements/${publicId}/metrics/`, { params, signal }),
+  )
+  return normalizeAdminAnnouncementMetrics(result)
 }

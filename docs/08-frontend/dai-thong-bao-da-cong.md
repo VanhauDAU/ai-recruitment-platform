@@ -118,16 +118,21 @@ Docker local và production đều chuyển tiếp build arg này. Không sửa 
   tab mới với `noopener noreferrer`.
 - Nội dung chỉ render text node; icon lấy từ map code-owned, không nhận HTML.
 
-P2 lưu close/snooze trong `sessionStorage` để UI không nhấp nháy lại trong cùng
-phiên. Reminder nhu cầu công việc snooze 7 ngày. AN-P4 sẽ thay state authenticated
-bằng API idempotent và giữ guest state cục bộ theo contract privacy.
+AN-P4 lưu close/snooze của guest trong `localStorage` theo
+`public_id:dismissal_version`, đồng thời đọc fallback `sessionStorage` của P2
+trong compatibility window. Authenticated remote item gọi state API idempotent;
+UI vẫn đóng ngay bằng state cục bộ nếu API lỗi. Reminder nhu cầu công việc
+snooze 7 ngày.
 
 ## 6. Refetch và failure handling
 
 - Query retry tối đa một lần theo policy ứng dụng.
 - `next_transition_at` đặt timer refetch ngay sau boundary.
 - Tab trở lại visible refetch ngay; khi tab visible có fallback 60 giây.
-- Tracking chưa chạy ở AN-P2, nên CTA không bị chặn bởi analytics/consent.
+- Impression/click/dismiss remote được gom batch ngắn, loại trùng trong batch và
+  chỉ gửi khi ConsentProvider đang `ready` với Analytics bật. Backend signed
+  cookie vẫn là nguồn chuẩn. Tracking best-effort, không retry vô hạn và CTA
+  không chờ request.
 - `ResizeObserver` không có thì chiều cao nội dung tự nhiên vẫn tham gia layout.
 - Mọi external URL không an toàn bị bỏ CTA, không bỏ cả thông báo.
 

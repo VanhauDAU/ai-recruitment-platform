@@ -4,15 +4,30 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AnnouncementStrip from './AnnouncementStrip'
 
-const { getActiveAnnouncements, useSession } = vi.hoisted(() => ({
+const {
+  getActiveAnnouncements,
+  queueAnnouncementEvent,
+  setAnnouncementState,
+  useConsent,
+  useSession,
+} = vi.hoisted(() => ({
   getActiveAnnouncements: vi.fn(),
+  queueAnnouncementEvent: vi.fn(),
+  setAnnouncementState: vi.fn(),
+  useConsent: vi.fn(),
   useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/consent', () => ({ useConsent }))
+vi.mock('../model/announcement-events', () => ({
+  flushAnnouncementEvents: vi.fn(),
+  queueAnnouncementEvent,
+}))
 vi.mock('@/entities/announcement', async (importOriginal) => ({
   ...(await importOriginal()),
   getActiveAnnouncements,
+  setAnnouncementState,
 }))
 
 function renderStrip(props = {}) {
@@ -59,6 +74,7 @@ describe('AnnouncementStrip runtime', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.sessionStorage.clear()
+    window.localStorage.clear()
     useSession.mockReturnValue({
       loading: false,
       user: {
@@ -71,6 +87,11 @@ describe('AnnouncementStrip runtime', () => {
     getActiveAnnouncements.mockResolvedValue({
       items: [],
       nextTransitionAt: null,
+    })
+    setAnnouncementState.mockResolvedValue({})
+    useConsent.mockReturnValue({
+      consent: { analytics: false },
+      status: 'ready',
     })
   })
 
@@ -163,10 +184,54 @@ describe('AnnouncementStrip runtime', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
 
     fireEvent.click(screen.getByRole('button', { name: 'Đóng thông báo' }))
+    expect(setAnnouncementState).toHaveBeenCalledWith('ann_remote', {
+      revision: 1,
+      dismissal_version: 2,
+      action: 'dismiss',
+    })
     await waitFor(() => expect(screen.queryByRole(
       'region',
       { name: 'Thông báo hệ thống' },
     )).not.toBeInTheDocument())
     expect(screen.getByTestId('strip-parent')).toBeInTheDocument()
+  })
+
+  it('tracks remote impression click and dismiss only with Analytics consent', async () => {
+    useConsent.mockReturnValue({
+      consent: { analytics: true },
+      status: 'ready',
+    })
+    getActiveAnnouncements.mockResolvedValue({
+      items: [remoteItem({
+        cta: {
+          label: 'Khám phá',
+          url: '/viec-lam',
+          external: false,
+        },
+        dismiss: { mode: 'close', version: 1, snoozeSeconds: null },
+      })],
+      nextTransitionAt: null,
+    })
+    renderStrip()
+
+    const cta = await screen.findByRole('link', { name: /Khám phá/ })
+    await waitFor(() => expect(queueAnnouncementEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'ann_remote' }),
+      'candidate',
+      'impression',
+    ))
+    fireEvent.click(cta)
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng thông báo' }))
+
+    expect(queueAnnouncementEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'ann_remote' }),
+      'candidate',
+      'click',
+    )
+    expect(queueAnnouncementEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'ann_remote' }),
+      'candidate',
+      'dismiss',
+    )
   })
 })
