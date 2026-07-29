@@ -45,8 +45,18 @@ trang 1; bỏ sorter sẽ trở lại `-updated_at`. Không suy ra tổng số h
 
 - Chọn loại để xác định priority tier.
 - Icon chỉ được chọn từ allowlist.
-- CTA tiếng Việt và URL phải cùng có hoặc cùng trống.
-- URL nội bộ bắt đầu bằng `/` và không được bắt đầu bằng `//`.
+- Chọn rõ **Không có CTA**, **Trang trong hệ thống** hoặc
+  **Website bên ngoài**. Khi chọn trang trong hệ thống, tìm theo tên trang thay
+  vì phải nhớ URL; danh mục được nhóm theo Ứng viên, Marketing NTD, Workspace
+  NTD và Workspace quản trị.
+- Nơi hiển thị thông báo và trang đích CTA là hai cấu hình độc lập. Ví dụ,
+  thông báo chỉ hiện tại `/viec-lam` của Ứng viên vẫn có thể dẫn sang trang
+  **Dịch vụ · Công khai** của Marketing NTD.
+- Trang có nhãn **Công khai** mở được khi chưa đăng nhập. Trang có nhãn
+  **Cần đăng nhập** sẽ đi qua guard của portal; editor cảnh báo nếu thông báo
+  cho phép khách xem nhưng CTA yêu cầu đăng nhập.
+- Danh mục tự tạo URL phù hợp cho local cùng host hoặc production dùng
+  subdomain. Chế độ nâng cao vẫn cho gõ path nội bộ bắt đầu bằng `/`.
 - URL ngoài chỉ dùng HTTPS và không chứa username/password.
 - Critical bắt buộc `locked`, người dùng không thể đóng.
 
@@ -54,21 +64,44 @@ trang 1; bỏ sorter sẽ trở lại `-updated_at`. Không suy ra tổng số h
 
 - Chọn ít nhất một surface và một trạng thái đăng nhập.
 - Role để trống nghĩa là mọi role phù hợp với surface.
-- Route prefix nhập mỗi dòng một path tuyệt đối.
-- Prefix exclude được áp dụng sau include.
+- Route include/exclude dùng bộ chọn có tìm kiếm theo tên trang và tự lọc theo
+  surface đã chọn. Có thể chọn nhiều hoặc gõ prefix tùy chỉnh rồi nhấn Enter.
+- Include để trống nghĩa là mọi route trong surface. Prefix exclude được áp
+  dụng sau include và luôn thắng khi cả hai cùng khớp.
+- Prefix `/viec-lam` khớp cả trang danh sách và các route con như
+  `/viec-lam/tai/ha-noi` hoặc `/viec-lam/<slug>`, nhưng không khớp một segment
+  khác chỉ vô tình có cùng phần đầu.
 
 ### Bước 4 — Lịch và ưu tiên
 
 - Giao diện nhập theo `Asia/Ho_Chi_Minh`; API lưu ISO UTC.
 - `ends_at` phải sau `starts_at`.
 - Critical bắt buộc có thời gian kết thúc.
-- Priority từ 0–1000 chỉ so sánh trong cùng tier.
+- Priority từ 0–1000 chỉ so sánh trong cùng tier: số lớn được xếp chạy trước,
+  không loại bỏ item có số thấp hơn. Runtime chỉ chọn tier cao nhất đang phù hợp
+  rồi luân phiên từng item trong tier đó; không xếp nhiều nội dung thành nhiều
+  dòng cùng lúc.
+- Hai bản ghi cùng tier chỉ cùng xuất hiện trong một hàng đợi nếu đồng thời khớp
+  surface, guest/authenticated, role, route include/exclude và lịch chạy của
+  request hiện tại.
 - Animation gồm `slide`, `fade`, `static`; thời lượng 4–15 giây.
+- Với một thông báo, `slide` hoặc `fade` lặp nhẹ theo thời lượng đã chọn. Với
+  nhiều thông báo cùng hàng đợi, thời lượng là khoảng chờ trước khi chuyển sang
+  item tiếp theo. `static` luôn đứng yên.
+- Nút đóng/tạm ẩn chỉ áp dụng cho item đang thấy. Nếu hàng đợi còn item, item kế
+  tiếp xuất hiện ngay và nền dải được giữ lại; dải chỉ biến mất khi hàng đợi
+  không còn item.
+- Runtime tự dừng chuyển động khi người dùng hover/focus, tab bị ẩn hoặc hệ điều
+  hành bật reduced motion; đây là hành vi accessibility, không phải lỗi cấu
+  hình.
 
 ### Bước 5 — Preview và simulator
 
-Preview hỗ trợ desktop/mobile và Việt/Anh. Simulator hiển thị tier hiện tại,
-surface đích, thông báo cùng/higher tier đang có và cảnh báo thứ tự hệ thống:
+Preview luôn dùng toàn bộ bản nháp đang giữ trong form, kể cả nội dung đã nhập
+ở bước trước, và hỗ trợ desktop/mobile cùng Việt/Anh. Preview cũng chạy đúng
+`slide`/`fade` và thời lượng đang chọn; `static` không chạy. Simulator hiển thị
+tier hiện tại, surface đích, thông báo cùng/higher tier đang có và cảnh báo thứ
+tự hệ thống:
 
 1. Critical.
 2. Xác thực email/bảo mật.
@@ -79,6 +112,25 @@ surface đích, thông báo cùng/higher tier đang có và cảnh báo thứ t�
 
 Preview không thay thế dữ liệu thật: target và priority cuối cùng vẫn được
 backend kiểm tra khi publish.
+
+### Bảo trì danh mục route khi phát triển thêm trang
+
+Danh mục CTA/prefix là metadata có kiểm soát, không tự quét JSX router vì hệ
+thống không thể suy ra chính xác tên thân thiện, surface và yêu cầu đăng nhập.
+Khi thêm một route có thể dùng trong thông báo, lập trình viên đăng ký route
+đúng một lần tại
+`frontend/src/widgets/admin-announcement-management/model/route-catalog.js`.
+Test catalog bắt buộc mọi CTA an toàn, prefix hợp lệ và access chỉ thuộc
+`public` hoặc `authenticated`.
+
+Quản trị viên không phải sửa từng thông báo để “đăng ký” route mới: route mới
+sẽ xuất hiện trong dropdown sau lần triển khai frontend tiếp theo. Nếu chưa có
+trong catalog, ô CTA và route tag vẫn chấp nhận path tùy chỉnh hợp lệ.
+
+Thông báo đã publish không tự đổi URL khi source code đổi route. Revision đã
+phát hành là bất biến để giữ audit và tránh tự điều hướng sai; khi bỏ/đổi một
+route đang được dùng, giữ redirect tương thích hoặc tạo revision thông báo mới
+rồi publish theo quy trình bình thường.
 
 ## 4. Revision và lifecycle
 

@@ -5,18 +5,17 @@ import {
   latestAnnouncementRevision,
   normalizeAnnouncementUrl,
 } from '@/entities/announcement'
+import {
+  inferAnnouncementCtaMode,
+  isValidAnnouncementPathPrefix,
+} from './route-catalog'
 
-function lines(value) {
-  if (Array.isArray(value)) return value.join('\n')
-  return value || ''
-}
-
-function splitLines(value) {
+function normalizePrefixes(value) {
+  const values = Array.isArray(value)
+    ? value
+    : String(value || '').split(/\r?\n/)
   return [...new Set(
-    String(value || '')
-      .split(/\r?\n/)
-      .map((item) => item.trim())
-      .filter(Boolean),
+    values.map((item) => item.trim()).filter(Boolean),
   )]
 }
 
@@ -34,8 +33,9 @@ export function announcementEditorValues(detail) {
   return {
     internal_name: detail?.internal_name || '',
     ...revision,
-    include_path_prefixes: lines(revision.include_path_prefixes),
-    exclude_path_prefixes: lines(revision.exclude_path_prefixes),
+    cta_mode: inferAnnouncementCtaMode(revision.cta_url),
+    include_path_prefixes: normalizePrefixes(revision.include_path_prefixes),
+    exclude_path_prefixes: normalizePrefixes(revision.exclude_path_prefixes),
   }
 }
 
@@ -53,8 +53,8 @@ export function announcementRevisionPayload(values) {
     surfaces: values.surfaces || [],
     auth_audiences: values.auth_audiences || [],
     roles: values.roles || [],
-    include_path_prefixes: splitLines(values.include_path_prefixes),
-    exclude_path_prefixes: splitLines(values.exclude_path_prefixes),
+    include_path_prefixes: normalizePrefixes(values.include_path_prefixes),
+    exclude_path_prefixes: normalizePrefixes(values.exclude_path_prefixes),
     starts_at: isoDate(values.starts_at),
     ends_at: isoDate(values.ends_at),
     priority: Number(values.priority),
@@ -79,6 +79,17 @@ export function announcementEditorIssues(values) {
       issues.push('Nhãn CTA tiếng Việt và URL phải được cấu hình cùng nhau.')
     } else if (!normalizeAnnouncementUrl(revision.cta_url)) {
       issues.push('URL nội bộ phải bắt đầu bằng /; URL ngoài phải là HTTPS an toàn.')
+    }
+  }
+  for (const [field, label] of [
+    ['include_path_prefixes', 'Route chỉ hiển thị'],
+    ['exclude_path_prefixes', 'Route loại trừ'],
+  ]) {
+    const invalidPrefix = revision[field].find(
+      (prefix) => !isValidAnnouncementPathPrefix(prefix),
+    )
+    if (invalidPrefix) {
+      issues.push(`${label} không hợp lệ: ${invalidPrefix}. Prefix phải bắt đầu bằng / và không có query/hash.`)
     }
   }
   if (

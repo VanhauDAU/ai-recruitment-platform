@@ -227,9 +227,30 @@ test('announcement admin: create, publish and stale conflict stay responsive', a
     .fill('Thông báo tạo từ E2E')
   await page.getByRole('textbox', { name: 'Nội dung tiếng Việt' })
     .fill('Nội dung mới được kiểm tra qua trình soạn thảo nhiều bước.')
-  for (let step = 0; step < 4; step += 1) {
-    await page.getByRole('button', { name: 'Tiếp tục' }).click()
-  }
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+
+  await page.getByText('Trang trong hệ thống', { exact: true }).click()
+  await page.getByRole('textbox', { name: 'Nhãn CTA tiếng Việt' })
+    .fill('Dành cho nhà tuyển dụng')
+  await page.getByRole('combobox', { name: 'Trang đích trong hệ thống' })
+    .fill('dịch vụ')
+  await page.getByText('Dịch vụ · Công khai — /tuyendung/dich-vu', { exact: true })
+    .click()
+  await expect(page.getByText('Marketing NTD · Công khai')).toBeVisible()
+  await expect(page.getByText(/CTA sẽ mở sang cổng khác/)).toBeVisible()
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+
+  await page.getByRole('combobox', { name: 'Chỉ hiển thị tại các nhóm trang' })
+    .click()
+  await page.getByText('Danh sách việc làm · Công khai — /viec-lam', { exact: true })
+    .click()
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+
+  await expect(page.getByRole('region', { name: 'Xem trước thông báo' }))
+    .toContainText('Nội dung mới được kiểm tra qua trình soạn thảo nhiều bước.')
+  await expect(page.getByRole('region', { name: 'Xem trước thông báo' }))
+    .not.toContainText('Nội dung thông báo sẽ xuất hiện tại đây.')
   await expect(page.getByRole('region', { name: 'Mô phỏng ưu tiên' })).toBeVisible()
   await page.getByRole('button', { name: 'Tạo bản nháp' }).click()
   await expect(page.getByRole('tab', { name: 'Revision (1)' })).toBeVisible()

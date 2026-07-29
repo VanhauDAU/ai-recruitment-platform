@@ -523,11 +523,23 @@ pages/admin/app/Announcements
   revision mới. Detail read-model trả revision và audit history chỉ đọc. Lỗi
   `409 announcement_revision_stale` buộc tải lại token hiện hành, không retry
   hoặc ghi đè ngầm.
+- Catalog CTA/prefix là metadata trình bày riêng của editor và nằm tại
+  `widgets/admin-announcement-management/model/route-catalog.js`; không import
+  ngược router từ `app`. Route có thể dùng cho thông báo được đăng ký một lần
+  với label, surface và access `public|authenticated`; test catalog giữ URL/
+  prefix an toàn. Catalog chỉ sinh lựa chọn cho revision mới, không tự viết lại
+  URL của revision đã publish.
 - Bốn surface canonical là `candidate`, `employer_marketing`,
   `employer_workspace`, `admin_workspace`. Layout truyền surface và path; không
   hardcode role hoặc tự lọc quyền admin ở component.
 - Strip phải fail-safe: lỗi remote feed không được làm mất cảnh báo hệ thống,
   header hoặc main content. Chiều cao được đo và công bố bằng CSS custom
   property; không thêm hằng số viewport theo từng layout.
+- Motion thuộc widget: một item `slide|fade` lặp theo `display_seconds`, nhiều
+  item chuyển queue theo cùng contract; hover/focus/tab ẩn phải pause,
+  `prefers-reduced-motion` và `static` phải tắt animation mà không thay DOM.
+- Dismiss/snooze chỉ loại active item và phải chuẩn hóa lại queue index trước
+  render kế tiếp. Strip chỉ unmount khi queue rỗng; focus-pause không được để
+  item kế tiếp ở opacity 0 trong một rail còn nền.
 - Mọi import liên-slice đi qua public `index.js`; các adapter hệ thống chỉ được
   compose trong widget, không chuyển session/profile logic xuống `shared`.

@@ -9,7 +9,6 @@ import {
   Select,
   Slider,
 } from 'antd'
-import { useMemo } from 'react'
 import {
   ANNOUNCEMENT_DISMISS_MODES,
   ANNOUNCEMENT_KINDS,
@@ -24,7 +23,9 @@ import {
   SURFACE_OPTIONS,
 } from '../model/announcement-options'
 import { simulateAnnouncementPriority } from '../model/priority-simulator'
+import AnnouncementCtaFields from './AnnouncementCtaFields'
 import AnnouncementPreview from './AnnouncementPreview'
+import AnnouncementRouteTargetFields from './AnnouncementRouteTargetFields'
 
 function OptionCheckboxes({ options, ...groupProps }) {
   return (
@@ -79,26 +80,19 @@ export function ContentStep({ detail }) {
   )
 }
 
-export function TypeStep({ dismissMode, kind }) {
+export function TypeStep({ audiences, ctaMode, dismissMode, form, kind, surfaces }) {
   return (
     <div className="announcement-editor__grid">
       <Form.Item name="kind" label="Loại thông tin" rules={[{ required: true }]}>
         <Select options={KIND_OPTIONS} />
       </Form.Item>
       <Form.Item name="icon" label="Biểu tượng"><Select options={ICON_OPTIONS} /></Form.Item>
-      <Form.Item name="cta_label_vi" label="Nhãn CTA tiếng Việt">
-        <Input maxLength={100} placeholder="Xem chi tiết" />
-      </Form.Item>
-      <Form.Item
-        name="cta_url"
-        label="URL CTA"
-        extra="Đường dẫn nội bộ bắt đầu bằng /; URL ngoài bắt buộc HTTPS."
-      >
-        <Input maxLength={1000} placeholder="/account/settings hoặc https://status.example.com" />
-      </Form.Item>
-      <Form.Item name="cta_label_en" label="Nhãn CTA tiếng Anh">
-        <Input maxLength={100} placeholder="Fallback về tiếng Việt khi để trống" />
-      </Form.Item>
+      <AnnouncementCtaFields
+        audiences={audiences}
+        ctaMode={ctaMode}
+        form={form}
+        surfaces={surfaces}
+      />
       <Form.Item name="dismiss_mode" label="Khả năng đóng">
         <Select options={DISMISS_OPTIONS} disabled={kind === ANNOUNCEMENT_KINDS.CRITICAL} />
       </Form.Item>
@@ -115,7 +109,7 @@ export function TypeStep({ dismissMode, kind }) {
   )
 }
 
-export function TargetStep() {
+export function TargetStep({ surfaces }) {
   return (
     <div className="announcement-editor__grid">
       <Form.Item
@@ -142,20 +136,7 @@ export function TargetStep() {
       >
         <OptionCheckboxes options={ROLE_OPTIONS} />
       </Form.Item>
-      <Form.Item
-        name="include_path_prefixes"
-        label="Chỉ hiển thị ở route prefix"
-        extra="Mỗi dòng một prefix tuyệt đối, ví dụ /viec-lam."
-      >
-        <Input.TextArea autoSize={{ minRows: 4, maxRows: 8 }} placeholder={'/viec-lam\n/tai-khoan'} />
-      </Form.Item>
-      <Form.Item
-        name="exclude_path_prefixes"
-        label="Loại trừ route prefix"
-        extra="Luôn được áp dụng sau danh sách include."
-      >
-        <Input.TextArea autoSize={{ minRows: 4, maxRows: 8 }} placeholder={'/admin/app/login\n/tuyendung/app/login'} />
-      </Form.Item>
+      <AnnouncementRouteTargetFields surfaces={surfaces} />
     </div>
   )
 }
@@ -170,7 +151,13 @@ export function ScheduleStep({ form, priority }) {
       <Form.Item name="ends_at" label="Kết thúc (Asia/Ho_Chi_Minh)">
         <DatePicker showTime className="w-full" format="DD/MM/YYYY HH:mm" />
       </Form.Item>
-      <Form.Item label="Priority trong cùng hạng">
+      <Form.Item
+        label="Thứ tự trong cùng hạng"
+        extra={(
+          'Số lớn chạy trước. Tất cả thông báo thuộc hạng cao nhất vẫn luân phiên, '
+          + 'không hiển thị đồng thời.'
+        )}
+      >
         <div className="announcement-editor__priority">
           <Slider
             min={0}
@@ -203,35 +190,38 @@ export function ScheduleStep({ form, priority }) {
 }
 
 export function PreviewStep({ form, announcements }) {
-  const watched = Form.useWatch([], form) || form.getFieldsValue(true)
-  const simulation = useMemo(
-    () => simulateAnnouncementPriority(watched, announcements),
-    [announcements, watched],
-  )
   return (
-    <div className="announcement-editor__preview-grid">
-      <AnnouncementPreview values={watched} />
-      <section className="announcement-simulator" aria-label="Mô phỏng ưu tiên">
-        <div className="announcement-simulator__tier">{simulation.tierLabel}</div>
-        <h3>Mô phỏng xung đột hiển thị</h3>
-        <p>Surface: {simulation.surfaces.join(', ') || 'Chưa chọn'}</p>
-        {simulation.messages.map((message) => (
-          <Alert key={message} type="info" showIcon title={message} />
-        ))}
-        {simulation.conflicts.length > 0 ? (
-          <div className="announcement-simulator__conflicts">
-            <strong>Thông báo có thể cạnh tranh</strong>
-            {simulation.conflicts.slice(0, 5).map((item) => (
-              <div key={item.public_id}>
-                <span>{item.internal_name}</span>
-                <span>Hạng {item.tier} · {item.priority ?? 0}</span>
-              </div>
-            ))}
+    <Form.Item noStyle shouldUpdate>
+      {() => {
+        const values = form.getFieldsValue(true)
+        const simulation = simulateAnnouncementPriority(values, announcements)
+        return (
+          <div className="announcement-editor__preview-grid">
+            <AnnouncementPreview values={values} />
+            <section className="announcement-simulator" aria-label="Mô phỏng ưu tiên">
+              <div className="announcement-simulator__tier">{simulation.tierLabel}</div>
+              <h3>Mô phỏng xung đột hiển thị</h3>
+              <p>Surface: {simulation.surfaces.join(', ') || 'Chưa chọn'}</p>
+              {simulation.messages.map((message) => (
+                <Alert key={message} type="info" showIcon title={message} />
+              ))}
+              {simulation.conflicts.length > 0 ? (
+                <div className="announcement-simulator__conflicts">
+                  <strong>Thông báo có thể cạnh tranh</strong>
+                  {simulation.conflicts.slice(0, 5).map((item) => (
+                    <div key={item.public_id}>
+                      <span>{item.internal_name}</span>
+                      <span>Hạng {item.tier} · {item.priority ?? 0}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Alert type="success" showIcon title="Không thấy xung đột cùng hoặc cao hơn." />
+              )}
+            </section>
           </div>
-        ) : (
-          <Alert type="success" showIcon title="Không thấy xung đột cùng hoặc cao hơn." />
-        )}
-      </section>
-    </div>
+        )
+      }}
+    </Form.Item>
   )
 }

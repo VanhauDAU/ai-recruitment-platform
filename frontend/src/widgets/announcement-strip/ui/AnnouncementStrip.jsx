@@ -1,15 +1,5 @@
-import {
-  CloseOutlined,
-  LeftOutlined,
-  RightOutlined,
-} from '@ant-design/icons'
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { CloseOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ANNOUNCEMENT_ANIMATIONS,
   ANNOUNCEMENT_DISMISS_MODES,
@@ -96,9 +86,7 @@ function AnnouncementStripRuntime({
     })
   }, [queue])
 
-  const visibleQueue = queue.filter(
-    (item) => (dismissals[item.id] || 0) <= dismissalClock,
-  )
+  const visibleQueue = queue.filter((item) => (dismissals[item.id] || 0) <= dismissalClock)
   const active = visibleQueue[activeIndex % Math.max(visibleQueue.length, 1)]
   const paused = hovered || focused || pageHidden || reducedMotion
   const { persistDismissal, trackCta } = useAnnouncementTracking({
@@ -194,12 +182,16 @@ function AnnouncementStripRuntime({
 
   function dismissActive() {
     if (!dismissible) return
+    const remainingQueue = visibleQueue.filter((item) => item.id !== active.id)
+    const nextIndex = remainingQueue.length ? activeIndex % remainingQueue.length : 0
     const hiddenUntil = active.dismiss.mode === ANNOUNCEMENT_DISMISS_MODES.SNOOZE
       ? Date.now() + active.dismiss.snoozeSeconds * 1000
       : Number.POSITIVE_INFINITY
     storeLocalDismissal(active, hiddenUntil)
     setDismissals((current) => ({ ...current, [active.id]: hiddenUntil }))
     setDismissalClock(Date.now())
+    setActiveIndex(nextIndex)
+    setManualAnnouncement(remainingQueue[nextIndex]?.message || '')
     persistDismissal()
   }
 
@@ -219,7 +211,12 @@ function AnnouncementStripRuntime({
     <section
       ref={rootRef}
       className={`announcement-strip announcement-strip--${active.kind}`}
-      style={{ '--announcement-strip-sticky-top': stickyOffset }}
+      style={{
+        '--announcement-motion-period': `${active.displaySeconds}s`,
+        '--announcement-motion-play-state': paused ? 'paused' : 'running',
+        '--announcement-strip-sticky-top': stickyOffset,
+      }}
+      data-announcement-count={visibleQueue.length}
       data-announcement-surface={surface}
       data-announcement-source={active.source}
       data-announcement-remote-enabled={feed?.remoteEnabled ? 'true' : 'false'}
@@ -232,7 +229,11 @@ function AnnouncementStripRuntime({
       <div className="announcement-strip__inner">
         <div
           key={`${active.id}:${activeIndex}`}
-          className={`announcement-strip__content announcement-strip__item--${animation}`}
+          className={[
+            'announcement-strip__content',
+            `announcement-strip__item--${animation}`,
+            visibleQueue.length === 1 ? 'announcement-strip__item--single' : '',
+          ].filter(Boolean).join(' ')}
           role={active.kind === ANNOUNCEMENT_KINDS.CRITICAL ? 'alert' : undefined}
           aria-live={active.kind === ANNOUNCEMENT_KINDS.CRITICAL ? 'assertive' : undefined}
           aria-atomic="true"

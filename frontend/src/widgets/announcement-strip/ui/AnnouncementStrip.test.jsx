@@ -166,6 +166,18 @@ describe('AnnouncementStrip runtime', () => {
     renderStrip()
 
     expect(await screen.findByText('Thông báo cho khách.')).toBeInTheDocument()
+    const strip = screen.getByRole('region', { name: 'Thông báo hệ thống' })
+    expect(strip).toHaveAttribute('data-announcement-count', '1')
+    expect(strip).toHaveStyle('--announcement-motion-period: 6s')
+    expect(strip).toHaveStyle('--announcement-motion-play-state: running')
+    expect(strip.querySelector('.announcement-strip__content')).toHaveClass(
+      'announcement-strip__item--single',
+      'announcement-strip__item--slide',
+    )
+    fireEvent.mouseEnter(strip)
+    expect(strip).toHaveStyle('--announcement-motion-play-state: paused')
+    fireEvent.mouseLeave(strip)
+    expect(strip).toHaveStyle('--announcement-motion-play-state: running')
   })
 
   it('allows a critical remote item to supersede email verification', async () => {
@@ -225,6 +237,43 @@ describe('AnnouncementStrip runtime', () => {
       { name: 'Thông báo hệ thống' },
     )).not.toBeInTheDocument())
     expect(screen.getByTestId('strip-parent')).toBeInTheDocument()
+  })
+
+  it('shows the next equal-tier item immediately before dismissing the strip', async () => {
+    getActiveAnnouncements.mockResolvedValue({
+      items: [
+        remoteItem({
+          id: 'ann_equal_a',
+          message: 'Thông báo cùng hạng thứ nhất.',
+          dismiss: { mode: 'snooze', version: 1, snoozeSeconds: 3600 },
+        }),
+        remoteItem({
+          id: 'ann_equal_b',
+          message: 'Thông báo cùng hạng thứ hai.',
+          dismiss: { mode: 'snooze', version: 1, snoozeSeconds: 3600 },
+        }),
+      ],
+      nextTransitionAt: null,
+    })
+    renderStrip()
+
+    expect(await screen.findByText('Thông báo cùng hạng thứ nhất.')).toBeInTheDocument()
+    const firstDismiss = screen.getByRole('button', { name: 'Tạm ẩn thông báo' })
+    fireEvent.focus(firstDismiss)
+    fireEvent.click(firstDismiss)
+
+    const strip = screen.getByRole('region', { name: 'Thông báo hệ thống' })
+    expect(strip.querySelector('.announcement-strip__message')).toHaveTextContent(
+      'Thông báo cùng hạng thứ hai.',
+    )
+    expect(strip).toHaveAttribute('data-announcement-count', '1')
+    expect(strip).toHaveStyle('--announcement-motion-play-state: paused')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tạm ẩn thông báo' }))
+    await waitFor(() => expect(screen.queryByRole(
+      'region',
+      { name: 'Thông báo hệ thống' },
+    )).not.toBeInTheDocument())
   })
 
   it('tracks remote impression click and dismiss only with Analytics consent', async () => {

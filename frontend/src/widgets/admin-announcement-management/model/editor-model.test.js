@@ -6,6 +6,7 @@ import {
   DEFAULT_ADMIN_ANNOUNCEMENT_REVISION,
 } from '@/entities/announcement'
 import {
+  announcementEditorValues,
   announcementEditorIssues,
   announcementRevisionPayload,
 } from './editor-model'
@@ -14,10 +15,10 @@ function values(overrides = {}) {
   return {
     internal_name: 'Thông báo test',
     ...DEFAULT_ADMIN_ANNOUNCEMENT_REVISION,
-    ...overrides,
-    message_vi: overrides.message_vi || 'Nội dung',
     include_path_prefixes: '/viec-lam\n/viec-lam',
     exclude_path_prefixes: '/dang-nhap',
+    message_vi: 'Nội dung',
+    ...overrides,
   }
 }
 
@@ -29,6 +30,20 @@ describe('announcement editor model', () => {
 
     expect(payload.include_path_prefixes).toEqual(['/viec-lam'])
     expect(payload.starts_at).toBe('2026-08-01T01:00:00.000Z')
+  })
+
+  it('keeps route prefixes selectable and infers an internal CTA', () => {
+    const editorValues = announcementEditorValues({
+      internal_name: 'Thông báo việc làm',
+      revisions: [{
+        ...DEFAULT_ADMIN_ANNOUNCEMENT_REVISION,
+        cta_url: '/viec-lam',
+        include_path_prefixes: ['/viec-lam'],
+      }],
+    })
+
+    expect(editorValues.cta_mode).toBe('internal')
+    expect(editorValues.include_path_prefixes).toEqual(['/viec-lam'])
   })
 
   it('rejects unsafe URLs and incomplete CTA configuration', () => {
@@ -50,5 +65,15 @@ describe('announcement editor model', () => {
 
     expect(issues).toContain('Thông báo critical bắt buộc có thời gian kết thúc.')
     expect(issues).toContain('Thông báo critical không thể dismiss.')
+  })
+
+  it('rejects malformed custom route prefixes', () => {
+    const issues = announcementEditorIssues(values({
+      include_path_prefixes: ['/viec-lam?sort=new'],
+    }))
+
+    expect(issues).toContain(
+      'Route chỉ hiển thị không hợp lệ: /viec-lam?sort=new. Prefix phải bắt đầu bằng / và không có query/hash.',
+    )
   })
 })

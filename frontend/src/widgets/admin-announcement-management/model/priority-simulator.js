@@ -28,7 +28,10 @@ export function simulateAnnouncementPriority(values, announcements = []) {
     messages.push('Critical sẽ vượt mọi label hệ thống và không cho phép người dùng đóng.')
   }
   if (conflicts.some((item) => item.tier === tier && Number(item.priority) === priority)) {
-    messages.push('Có thông báo cùng hạng và cùng priority; hệ thống sẽ dùng thời gian và mã để giữ thứ tự ổn định.')
+    messages.push(
+      'Có thông báo cùng hạng và cùng priority; tất cả sẽ luân phiên, '
+      + 'hệ thống dùng thời gian và mã để giữ thứ tự ổn định.',
+    )
   }
 
   return {
