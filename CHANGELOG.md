@@ -20,6 +20,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   683 frontend test, lint/architecture/build/bundle budget và 12/12 smoke
   runtime trên desktop/tablet/mobile đều pass.
 
+#### Fixed — Luân phiên và tạm ẩn thông báo cùng hạng
+
+- Khi tạm ẩn một item trong hàng đợi cùng hạng, runtime xác định lại index và
+  đưa item kế tiếp lên ngay. Focus còn ở nút đóng vẫn pause animation nhưng nội
+  dung mới luôn nhìn thấy; không còn trạng thái mất chữ nhưng nền dải còn lại.
+- Editor đổi nhãn thành **Thứ tự trong cùng hạng** và giải thích: số lớn chạy
+  trước, mọi item thuộc hạng cao nhất vẫn luân phiên từng cái chứ không hiển thị
+  đồng thời.
+- Regression mới đóng lần lượt hai item cùng hạng và kiểm tra count, nội dung,
+  opacity cùng focus-pause trên desktop/tablet/mobile. Verify: 684 frontend
+  test, lint/architecture/build/bundle budget và 15/15 smoke runtime pass.
+
 #### Changed — Trải nghiệm soạn thông báo đa cổng
 
 - Thay ô nhập URL CTA nội bộ bằng danh mục có tìm kiếm, nhóm theo bốn portal và

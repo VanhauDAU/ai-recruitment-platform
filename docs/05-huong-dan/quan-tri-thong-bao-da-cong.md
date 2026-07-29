@@ -77,11 +77,20 @@ trang 1; bỏ sorter sẽ trở lại `-updated_at`. Không suy ra tổng số h
 - Giao diện nhập theo `Asia/Ho_Chi_Minh`; API lưu ISO UTC.
 - `ends_at` phải sau `starts_at`.
 - Critical bắt buộc có thời gian kết thúc.
-- Priority từ 0–1000 chỉ so sánh trong cùng tier.
+- Priority từ 0–1000 chỉ so sánh trong cùng tier: số lớn được xếp chạy trước,
+  không loại bỏ item có số thấp hơn. Runtime chỉ chọn tier cao nhất đang phù hợp
+  rồi luân phiên từng item trong tier đó; không xếp nhiều nội dung thành nhiều
+  dòng cùng lúc.
+- Hai bản ghi cùng tier chỉ cùng xuất hiện trong một hàng đợi nếu đồng thời khớp
+  surface, guest/authenticated, role, route include/exclude và lịch chạy của
+  request hiện tại.
 - Animation gồm `slide`, `fade`, `static`; thời lượng 4–15 giây.
 - Với một thông báo, `slide` hoặc `fade` lặp nhẹ theo thời lượng đã chọn. Với
   nhiều thông báo cùng hàng đợi, thời lượng là khoảng chờ trước khi chuyển sang
   item tiếp theo. `static` luôn đứng yên.
+- Nút đóng/tạm ẩn chỉ áp dụng cho item đang thấy. Nếu hàng đợi còn item, item kế
+  tiếp xuất hiện ngay và nền dải được giữ lại; dải chỉ biến mất khi hàng đợi
+  không còn item.
 - Runtime tự dừng chuyển động khi người dùng hover/focus, tab bị ẩn hoặc hệ điều
   hành bật reduced motion; đây là hành vi accessibility, không phải lỗi cấu
   hình.

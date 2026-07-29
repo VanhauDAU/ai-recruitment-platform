@@ -538,5 +538,8 @@ pages/admin/app/Announcements
 - Motion thuộc widget: một item `slide|fade` lặp theo `display_seconds`, nhiều
   item chuyển queue theo cùng contract; hover/focus/tab ẩn phải pause,
   `prefers-reduced-motion` và `static` phải tắt animation mà không thay DOM.
+- Dismiss/snooze chỉ loại active item và phải chuẩn hóa lại queue index trước
+  render kế tiếp. Strip chỉ unmount khi queue rỗng; focus-pause không được để
+  item kế tiếp ở opacity 0 trong một rail còn nền.
 - Mọi import liên-slice đi qua public `index.js`; các adapter hệ thống chỉ được
   compose trong widget, không chuyển session/profile logic xuống `shared`.
