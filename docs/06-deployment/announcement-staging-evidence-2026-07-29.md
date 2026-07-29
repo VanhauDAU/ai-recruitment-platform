@@ -147,8 +147,9 @@ makemigrations --check --dry-run: no changes
 real Redis-down request: 202 {"accepted":true}
 ```
 
-Full gate của AN-P5 trước rehearsal: 615 backend test, coverage 86,12%; 666
-frontend test; architecture/OpenAPI/bundle gate sạch; 153 smoke E2E đạt.
+Full gate sau bản vá: 617 backend test, coverage 86,13%; 666 frontend test;
+architecture/import contract và Markdown link check sạch; bundle 293,6 KiB JS /
+34,2 KiB CSS gzip trong budget; 153 smoke E2E đạt.
 
 ## 7. Rủi ro còn lại và go/no-go
 

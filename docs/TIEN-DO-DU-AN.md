@@ -853,7 +853,8 @@ vẫn hiển thị. Failure injection Redis phát hiện throttle trả 500 trư
 nhánh `fix/announcement-redis-resilience` chuyển riêng telemetry throttle sang
 fail-open có metric PII-free, chạy lại khi Redis dừng đạt 202. Verify bản vá:
 55 sitecontent test, 13 analytics test, ruff/format/import-linter/Django check
-và migration check sạch. Evidence:
+và migration check sạch. Full repository gate sau commit đạt 617 backend test,
+coverage 86,13%, 666 frontend test, bundle budget và 153 smoke E2E. Evidence:
 `06-deployment/announcement-staging-evidence-2026-07-29.md`. AN-P5 giữ 🟡 cho
 tới khi merge fix, deploy staging hạ tầng thật và soak tối thiểu 30 phút mỗi
 surface; AN-P6 vẫn bị khóa cho tới một release ổn định.)

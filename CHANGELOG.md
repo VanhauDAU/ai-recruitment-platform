@@ -41,6 +41,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   active feed tiếp tục trả 200. Bằng chứng bốn surface, priority và kill switch
   nằm tại
   [rehearsal staging 2026-07-29](docs/06-deployment/announcement-staging-evidence-2026-07-29.md).
+- Full gate sau bản vá đạt 617 backend test với coverage 86,13%, 666 frontend
+  test, bundle budget và 153 smoke E2E desktop/tablet/mobile.
 
 #### Fixed — Đặt mật khẩu lần đầu cho tài khoản mạng xã hội
 
