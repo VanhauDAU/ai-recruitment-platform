@@ -7,8 +7,9 @@ from django.urls import reverse
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from common.throttling import ClientIPScopedRateThrottle
 
 from ... import oauth
 from ...models import User
@@ -28,7 +29,7 @@ class OAuthStartView(APIView):
 
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'oauth'
 
     def get(self, request, provider):
@@ -101,7 +102,7 @@ class OAuthCallbackView(APIView):
 )
 class OAuthCompleteView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'oauth'
 
     def post(self, request):

@@ -594,15 +594,41 @@ class SessionManagementTests(APITestCase):
         issue_tokens(self.user, request)
         self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '198.51.100.7')
 
-    @override_settings(TRUSTED_PROXY_IPS=['10.0.0.0/8'])
+    @override_settings(TRUSTED_PROXY_IPS=['10.0.0.0/8'], TRUSTED_PROXY_HOPS=1)
     def test_x_forwarded_for_is_used_from_configured_proxy(self):
         request = APIRequestFactory().get(
             '/',
-            HTTP_X_FORWARDED_FOR='203.0.113.9, 10.1.2.3',
+            HTTP_X_FORWARDED_FOR='198.51.100.7',
             REMOTE_ADDR='10.1.2.3',
         )
         issue_tokens(self.user, request)
-        self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '203.0.113.9')
+        self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '198.51.100.7')
+
+    @override_settings(TRUSTED_PROXY_IPS=['10.0.0.0/8'], TRUSTED_PROXY_HOPS=1)
+    def test_a_client_supplied_forwarded_for_prefix_cannot_forge_the_session_ip(self):
+        """nginx dùng ``$proxy_add_x_forwarded_for`` nên NỐI lời khai của client.
+
+        Với một hop proxy, chỉ phần tử ngoài cùng bên phải là do nginx ghi. Lấy
+        phần tử đầu chuỗi tức là để client tự chọn IP hiển thị trong danh sách
+        thiết bị và tự chọn bucket rate limit.
+        """
+        request = APIRequestFactory().get(
+            '/',
+            HTTP_X_FORWARDED_FOR='203.0.113.9, 198.51.100.7',
+            REMOTE_ADDR='10.1.2.3',
+        )
+        issue_tokens(self.user, request)
+        self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '198.51.100.7')
+
+    @override_settings(TRUSTED_PROXY_IPS=['10.0.0.0/8'], TRUSTED_PROXY_HOPS=2)
+    def test_two_configured_proxy_hops_skip_both_appended_addresses(self):
+        request = APIRequestFactory().get(
+            '/',
+            HTTP_X_FORWARDED_FOR='203.0.113.9, 198.51.100.7, 10.9.9.9',
+            REMOTE_ADDR='10.1.2.3',
+        )
+        issue_tokens(self.user, request)
+        self.assertEqual(AuthSession.objects.get(user=self.user).ip_address, '198.51.100.7')
 
 
 class ConcurrentRefreshTests(TransactionTestCase):

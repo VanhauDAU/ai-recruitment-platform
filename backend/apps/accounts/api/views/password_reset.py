@@ -3,8 +3,9 @@
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from common.throttling import ClientIPScopedRateThrottle
 
 from ...models import AuthEmailJob, User
 from ...services import password_reset as pr
@@ -58,13 +59,13 @@ def _reset_token_user(token, portal=None, *, consume=False):
 )
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'password_reset'
 
     def post(self, request):
+        verify_request_captcha(request, 'password_reset')
         serializer = PasswordResetRequestSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        verify_request_captcha(request, 'password_reset')
 
         # Đúng tài khoản của cổng: một email có thể có tài khoản ứng viên và NTD
         # riêng, mỗi bên mật khẩu riêng.
@@ -110,6 +111,8 @@ class PasswordResetValidateView(APIView):
     """Cho frontend biết nên hiện form đổi mật khẩu hay màn 'link đã hết hạn'."""
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'password_reset_validate'
 
     def get(self, request):
         user = _reset_token_user(
@@ -140,7 +143,7 @@ class PasswordResetValidateView(APIView):
 )
 class PasswordResetConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'password_reset_confirm'
 
     def post(self, request):

@@ -6,8 +6,9 @@ from django.conf import settings
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from common.throttling import ClientIPScopedRateThrottle
 
 from ...models import AuthEmailJob, User
 from ...services import record_admin_self_action, two_factor
@@ -129,7 +130,7 @@ def _verify_method_for_disable(user, method, code):
 )
 class TwoFactorSetupSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
@@ -153,7 +154,7 @@ class TwoFactorSetupSendView(APIView):
 )
 class TwoFactorSetupConfirmView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -194,7 +195,7 @@ class TwoFactorSetupConfirmView(APIView):
 )
 class TwoFactorDisableSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
@@ -220,7 +221,7 @@ class TwoFactorDisableSendView(APIView):
 )
 class TwoFactorDisableConfirmView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -304,7 +305,7 @@ class EmployerTwoFactorMethodsView(APIView):
 )
 class EmployerTotpSetupView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
@@ -333,7 +334,7 @@ class EmployerTotpSetupView(APIView):
 )
 class EmployerTotpConfirmView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -365,7 +366,7 @@ class EmployerTotpConfirmView(APIView):
 )
 class EmployerTotpDisableView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -415,7 +416,7 @@ class EmployerTwoFactorMethodDisableSendView(APIView):
     """Gửi email step-up để tắt một phương thức MFA."""
 
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
@@ -454,7 +455,7 @@ class EmployerTwoFactorMethodDisableView(APIView):
     """Tắt email, TOTP hoặc recovery codes sau step-up bằng phương thức đang bật."""
 
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -472,6 +473,9 @@ class EmployerTwoFactorMethodDisableView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not _verify_method_for_disable(request.user, method, serializer.validated_data['code']):
+            # TOTP và mã dự phòng không có mã lưu phía server nên không tự hết
+            # lượt như OTP email; đếm ở đây để không dò được 6 chữ số.
+            two_factor.register_failed_verification(request.user, two_factor.PURPOSE_DISABLE)
             return Response(
                 {'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -510,7 +514,7 @@ class EmployerTwoFactorMethodDisableView(APIView):
 )
 class EmployerBackupCodesGenerateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -566,7 +570,7 @@ class EmployerBackupCodesGenerateView(APIView):
 )
 class EmployerBackupCodesSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
@@ -620,7 +624,7 @@ def _challenge_user(challenge):
 )
 class TwoFactorLoginResendView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor'
 
     def post(self, request):
@@ -659,7 +663,7 @@ class TwoFactorLoginResendView(APIView):
 )
 class TwoFactorLoginVerifyView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'two_factor_verify'
 
     def post(self, request):
@@ -689,6 +693,10 @@ class TwoFactorLoginVerifyView(APIView):
             )
         )
         if not valid:
+            # Ngân sách đếm theo challenge nên đổi qua lại giữa email/TOTP/mã dự
+            # phòng không nhân thêm số lượt. Hết lượt thì challenge chết, muốn thử
+            # tiếp phải đăng nhập lại từ đầu.
+            two_factor.register_failed_login_attempt(challenge)
             return Response(
                 {'detail': 'Mã xác minh không đúng hoặc đã hết hạn.'},
                 status=status.HTTP_400_BAD_REQUEST,

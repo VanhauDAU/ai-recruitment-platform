@@ -1,5 +1,48 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-07-30 — Kiểm toán luồng xác thực nhà tuyển dụng
+
+Rà soát toàn bộ luồng auth NTD theo từng lớp; mỗi lỗi được chứng minh bằng test
+đỏ trước khi vá. Test kiểm toán:
+`backend/apps/accounts/tests/test_employer_auth_audit.py`,
+`frontend/src/shared/api/client.test.js`.
+
+- ✅ **Nghiêm trọng — throttle auth bị vô hiệu từ xa.** `NUM_PROXIES` không được
+  cấu hình nên DRF lấy nguyên chuỗi `X-Forwarded-For` làm khoá throttle, còn
+  nginx thì nối giá trị client gửi. Đổi header mỗi request là có bucket mới ⇒
+  mất sạch giới hạn của login/register/2FA/password-reset. Vá bằng
+  `common/client_ip.py` + `common/throttling.ClientIPScopedRateThrottle`, lấy IP
+  theo `TRUSTED_PROXY_HOPS` phần tử ngoài cùng bên phải.
+- ✅ **Nghiêm trọng — brute-force TOTP/mã dự phòng.** Chỉ OTP email có
+  `MAX_VERIFY_ATTEMPTS`; TOTP và backup code không đếm lần sai và challenge
+  không chết. Nay ngân sách tính theo challenge, áp cho mọi phương thức.
+- ✅ **Chống dò mật khẩu phân tán** (`services/login_guard.py`): backoff mũ theo
+  `(email, cổng)`, không khoá cứng để không mở đường DoS khoá tài khoản NTD.
+- ✅ **Dùng lại refresh token đã xoay vòng ⇒ thu hồi phiên**, kèm ân hạn
+  `AUTH_REFRESH_REUSE_GRACE_SECONDS` cho đua giữa hai tab và bắt buộc chữ ký hợp
+  lệ để không ai bịa `sid` thu hồi phiên người khác.
+- ✅ **Dò email NTD:** captcha chuyển lên trước `serializer.is_valid()` ở
+  `employer/register`, `auth/register`, `password-reset`; đăng nhập luôn băm mật
+  khẩu một lần kể cả khi email không tồn tại (timing oracle).
+- ✅ **Sửa nhận diện IP của phiên đăng nhập:** trước đây lấy phần tử ĐẦU của
+  `X-Forwarded-For` — chính là phần client tự khai — nên IP trong danh sách
+  thiết bị giả mạo được.
+- ✅ Đăng ký NTD trùng email do đua request trả 400 thay vì 500; thêm throttle
+  cho `verify/confirm`, `change-email`, `password-reset/validate`.
+- ✅ Frontend: refresh hỏng nay phát `notifySessionExpired` để `SessionProvider`
+  dọn state và đưa về login — trước đó guard vẫn giữ người dùng trong workspace
+  còn mọi request 401 âm thầm. Interceptor không còn ném `TypeError` với lỗi
+  không có `config` (request bị huỷ). `client.js` lần đầu có test.
+- ✅ `TRUSTED_PROXY_IPS` thành bắt buộc ở production: thiếu nó thì `REMOTE_ADDR`
+  luôn là IP nginx và cả hệ thống dùng chung một bucket throttle.
+- ✅ Gate đầy đủ: 666 backend test (coverage 86.32%), 711 frontend test,
+  lint/architecture/build/bundle budget và 159 E2E smoke đều xanh.
+- ⬜ Còn nợ: hành động bảo mật NTD tự thực hiện (đổi mật khẩu, bật/tắt MFA, thu
+  hồi phiên, sinh lại backup code) không để lại audit row vì
+  `record_admin_self_action` no-op với user không phải admin. Cần bảng audit
+  riêng cho sự kiện bảo mật tài khoản mọi role — quyết định thiết kế + migration,
+  tách khỏi lượt vá này.
+
 ## Cập nhật 2026-07-29 — Account status enforcement
 
 - ✅ Schema + backfill fail-closed: transition evidence, policy hold campaign/

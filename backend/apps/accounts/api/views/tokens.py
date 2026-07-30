@@ -30,7 +30,13 @@ class AccountTokenRefreshSerializer(TokenRefreshSerializer):
     }
 
     def validate(self, attrs):
-        refresh = RefreshToken(attrs['refresh'])
+        try:
+            refresh = RefreshToken(attrs['refresh'])
+        except TokenError:
+            # Chữ ký còn hợp lệ và chưa hết hạn mà vẫn bị từ chối nghĩa là token
+            # đã bị blacklist khi xoay vòng — tức có người phát lại bản cũ.
+            auth_sessions.revoke_reused_refresh(attrs['refresh'])
+            raise
         user = get_accessible_user(refresh.get(api_settings.USER_ID_CLAIM))
         if not user:
             raise InvalidToken({'detail': self.error_messages['user_inactive']})
@@ -48,14 +54,19 @@ class AccountTokenRefreshSerializer(TokenRefreshSerializer):
                 refresh_jti=old_jti,
                 auth_revision=auth_revision,
             )
-            if session is None:
-                raise InvalidToken({'detail': 'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.'})
-            # The row lock serializes concurrent rotation of one refresh token.
-            # The second request observes the old jti no longer attached to a
-            # live session and is rejected instead of creating a second branch.
-            data = super().validate(attrs)
-            if data.get('refresh'):
-                auth_sessions.rotate_session(session, data['refresh'])
+            if session is not None:
+                # The row lock serializes concurrent rotation of one refresh token.
+                # The second request observes the old jti no longer attached to a
+                # live session and is rejected instead of creating a second branch.
+                data = super().validate(attrs)
+                if data.get('refresh'):
+                    auth_sessions.rotate_session(session, data['refresh'])
+
+        if session is None:
+            # Thu hồi PHẢI nằm ngoài atomic ở trên, nếu không exception bên dưới
+            # sẽ rollback luôn chính việc thu hồi.
+            auth_sessions.revoke_reused_refresh(attrs['refresh'])
+            raise InvalidToken({'detail': 'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.'})
 
         if user.is_admin_role and data.get('access'):
             access = AccessToken(data['access'])

@@ -253,6 +253,13 @@ if R2_ENABLED:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Reverse proxy: khai báo ai được quyền nói thay client. Đặt trước
+# REST_FRAMEWORK vì throttle lấy danh tính client từ đây.
+TRUSTED_PROXY_IPS = config('TRUSTED_PROXY_IPS', default='', cast=Csv())
+# Số hop reverse proxy của mình đứng trước Django. Chỉ ngần này phần tử ngoài
+# cùng bên phải của X-Forwarded-For là do proxy ghi; phần còn lại client tự khai.
+TRUSTED_PROXY_HOPS = config('TRUSTED_PROXY_HOPS', default=1, cast=int)
+
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('apps.accounts.authentication.AccountJWTAuthentication',),
@@ -260,6 +267,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'common.pagination.StandardPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Phòng thủ lớp hai cho các throttle chưa dùng ClientIPScopedRateThrottle:
+    # mặc định của DRF (None) lấy nguyên chuỗi X-Forwarded-For làm khoá, tức là
+    # để client tự chọn bucket cho mình.
+    'NUM_PROXIES': TRUSTED_PROXY_HOPS,
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
         'two_factor': '5/min',
@@ -267,7 +278,12 @@ REST_FRAMEWORK = {
         'register': '5/min',
         'register_email_check': '12/min',
         'verify_email': '5/min',
+        # Bucket riêng cho các bước ĐỔI token lấy kết quả: gõ/mở link hỏng vài
+        # lần không được phép khoá luôn khả năng xin gửi lại mail, và ngược lại.
+        'verify_email_confirm': '20/min',
+        'change_email': '5/min',
         'password_reset': '5/min',
+        'password_reset_validate': '20/min',
         # Bucket riêng cho bước confirm: gõ sai mật khẩu mới vài lần không được
         # phép khoá luôn việc xin link (và ngược lại) — chung IP, chung quota.
         'password_reset_confirm': '10/min',
@@ -426,8 +442,17 @@ AUTH_SESSION_TOUCH_INTERVAL_SECONDS = config(
     cast=int,
 )
 AUTH_REAUTH_MAX_AGE_SECONDS = config('AUTH_REAUTH_MAX_AGE_SECONDS', default=5 * 60, cast=int)
-TRUSTED_PROXY_IPS = config('TRUSTED_PROXY_IPS', default='', cast=Csv())
+# Ân hạn cho refresh token vừa bị xoay vòng: trong ngần này giây, việc gặp lại
+# nó được coi là đua giữa hai tab / đăng nhập lại chứ không phải token bị trộm.
+AUTH_REFRESH_REUSE_GRACE_SECONDS = config('AUTH_REFRESH_REUSE_GRACE_SECONDS', default=30, cast=int)
 ADMIN_ACCESS_TOKEN_MINUTES = config('ADMIN_ACCESS_TOKEN_MINUTES', default=5, cast=int)
+
+# Chống dò mật khẩu theo từng tài khoản: sau ngần này lần sai, mỗi lần kế tiếp
+# phải chờ gấp đôi lần trước (không khoá cứng — xem services/login_guard.py).
+LOGIN_BACKOFF_FREE_ATTEMPTS = config('LOGIN_BACKOFF_FREE_ATTEMPTS', default=5, cast=int)
+LOGIN_BACKOFF_BASE_SECONDS = config('LOGIN_BACKOFF_BASE_SECONDS', default=2, cast=int)
+LOGIN_BACKOFF_MAX_SECONDS = config('LOGIN_BACKOFF_MAX_SECONDS', default=15 * 60, cast=int)
+LOGIN_BACKOFF_WINDOW_SECONDS = config('LOGIN_BACKOFF_WINDOW_SECONDS', default=15 * 60, cast=int)
 
 # Redis cache — lưu token xác thực email + cooldown gửi lại (tự hết hạn theo TTL)
 REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')

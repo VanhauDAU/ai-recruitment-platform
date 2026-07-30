@@ -65,6 +65,15 @@ if DATABASES['default']['PASSWORD'] in {'', 'postgres'}:
 if not CORS_ALLOWED_ORIGINS:
     _errors.append('CORS_ALLOWED_ORIGINS là bắt buộc ở production (origin frontend).')
 
+if not TRUSTED_PROXY_IPS:
+    # Production luôn chạy sau reverse proxy, nên REMOTE_ADDR là địa chỉ của
+    # proxy — giống hệt nhau với mọi người dùng. Không khai proxy tin cậy thì
+    # không cách nào biết IP client thật: rate limit đăng nhập gộp chung cả hệ
+    # thống vào một bucket và danh sách thiết bị hiện sai IP.
+    _errors.append(
+        'TRUSTED_PROXY_IPS là bắt buộc ở production (dải IP của reverse proxy).',
+    )
+
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     _errors.append('EMAIL_HOST_USER / EMAIL_HOST_PASSWORD là bắt buộc ở production.')
 

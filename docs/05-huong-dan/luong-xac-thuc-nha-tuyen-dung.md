@@ -362,6 +362,39 @@ Consent nằm trên `RecruiterProfile`: `terms_accepted_at`,
 `terms_policy_version`, `marketing_opt_in`, `marketing_decided_at`. Phiên bản
 hiện tại lấy từ `EMPLOYER_TERMS_POLICY_VERSION`.
 
+## Chống lạm dụng ở luồng đăng nhập
+
+Kết quả lượt kiểm toán 2026-07-30. Test tương ứng ở
+`backend/apps/accounts/tests/test_employer_auth_audit.py`.
+
+- **Danh tính IP cho rate limit** lấy từ `common/client_ip.py`, không lấy từ
+  `X-Forwarded-For` thô. nginx dùng `$proxy_add_x_forwarded_for` nên header này
+  chứa cả lời khai của client; chỉ `TRUSTED_PROXY_HOPS` phần tử ngoài cùng bên
+  **phải** là do proxy ghi. Mọi endpoint auth dùng
+  `common/throttling.ClientIPScopedRateThrottle`.
+- **`TRUSTED_PROXY_IPS` là bắt buộc ở production.** Không khai thì `REMOTE_ADDR`
+  luôn là địa chỉ nginx, tức toàn hệ thống dùng chung một bucket throttle.
+- **Chống dò mật khẩu theo tài khoản** (`services/login_guard.py`): sau
+  `LOGIN_BACKOFF_FREE_ATTEMPTS` lần sai, mỗi lần kế tiếp phải chờ gấp đôi lần
+  trước. Cố ý **không khoá cứng** — khoá cứng cho phép bất kỳ ai biết email của
+  một NTD là khoá được họ khỏi hệ thống. Bộ đếm tách theo cổng nên tài khoản ứng
+  viên cùng email không bị ảnh hưởng; đăng nhập đúng xoá sạch bộ đếm.
+- **Ngân sách nhập sai MFA tính theo challenge**, áp cho cả email OTP, TOTP và
+  mã dự phòng. Đổi qua lại giữa các phương thức không nhân thêm lượt; hết lượt
+  thì challenge chết và phải đăng nhập lại từ đầu.
+- **Refresh token dùng lại sau khi xoay vòng ⇒ thu hồi cả phiên.** Có ân hạn
+  `AUTH_REFRESH_REUSE_GRACE_SECONDS` để hai tab cùng refresh hoặc đăng nhập lại
+  từ cùng thiết bị không bị hiểu nhầm là bị trộm. Chữ ký bắt buộc hợp lệ, nếu
+  không kẻ tấn công bịa `sid` để thu hồi phiên người khác.
+- **Captcha chạy trước validate** ở `register` và `password-reset`: thông báo
+  "email đã được sử dụng" là oracle dò danh sách NTD nếu trả lời trước captcha.
+- **Đăng nhập luôn băm mật khẩu một lần**, kể cả khi email không tồn tại, để
+  thời gian phản hồi không tiết lộ tài khoản nào có thật.
+
+Còn nợ: hành động bảo mật NTD tự thực hiện (đổi mật khẩu, bật/tắt MFA, thu hồi
+phiên) chưa ghi audit log — `record_admin_self_action` no-op với user không phải
+admin. Cần bảng audit riêng, xem mục tồn đọng trong `TIEN-DO-DU-AN.md`.
+
 ## Kiểm thử bắt buộc
 
 1. Backend: transaction đăng ký không tạo company, email/link employer, token

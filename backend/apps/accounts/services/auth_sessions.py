@@ -9,45 +9,44 @@ không còn được phép truy cập.
 """
 
 from datetime import timedelta
-from ipaddress import ip_address, ip_network
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import TokenBackendError, TokenError
 from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import datetime_from_epoch
+
+from common.client_ip import client_ip as _client_ip
 
 from ..models import AuthSession
 from .refresh_cookies import refresh_from_request
 
 SID_CLAIM = 'sid'
 AUTH_REVISION_CLAIM = 'auth_rev'
+_RETIRED_JTI_PREFIX = 'auth_session:retired-jti:'
 
 
-def _client_ip(request):
-    if request is None:
-        return None
-    remote = request.META.get('REMOTE_ADDR') or None
-    forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    if forwarded and _is_trusted_proxy(remote):
-        # Chỉ proxy đã cấu hình mới được quyền khai báo địa chỉ client.
-        return forwarded.split(',')[0].strip() or None
-    return remote
+def _remember_retired_jti(jti):
+    """Đánh dấu một jti vừa bị thay thế một cách hợp lệ.
+
+    Không phải lần nào token cũ xuất hiện lại cũng là bị đánh cắp. Hai trường
+    hợp lành tính xảy ra thường xuyên: hai tab cùng refresh một lúc (bên thua
+    cầm đúng token vừa bị xoay), và đăng nhập lại từ cùng thiết bị (phiên được
+    gộp, token cũ bị vô hiệu ngay). Cả hai đều diễn ra trong vài mili giây, nên
+    một khoảng ân hạn ngắn tách được chúng khỏi việc dùng lại token bị trộm —
+    thứ luôn xảy ra rất lâu sau lần xoay vòng.
+    """
+    if jti:
+        cache.set(f'{_RETIRED_JTI_PREFIX}{jti}', 1, settings.AUTH_REFRESH_REUSE_GRACE_SECONDS)
 
 
-def _is_trusted_proxy(remote):
-    if not remote:
-        return False
-    try:
-        address = ip_address(remote)
-        return any(
-            address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS
-        )
-    except ValueError:
-        return False
+def _was_recently_retired(jti):
+    return bool(jti) and cache.get(f'{_RETIRED_JTI_PREFIX}{jti}') is not None
 
 
 def _user_agent(request):
@@ -138,6 +137,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
             # Các bản ghi cũ từ trước khi có cơ chế gộp không còn là phiên hợp lệ.
             for duplicate in matches[1:]:
                 revoke_session(duplicate)
+            _remember_retired_jti(session.refresh_jti)
             _blacklist_jti(session.refresh_jti)
             session.refresh_jti = new_jti
             session.auth_method = auth_method
@@ -178,6 +178,7 @@ def rotate_session(session, new_refresh_str):
     new_refresh = RefreshToken(new_refresh_str)
     _ensure_outstanding(new_refresh)
     new_jti = new_refresh[api_settings.JTI_CLAIM]
+    _remember_retired_jti(session.refresh_jti)
     session.refresh_jti = new_jti
     session.last_seen_at = timezone.now()
     session.save(update_fields=['refresh_jti', 'last_seen_at'])
@@ -304,6 +305,45 @@ def revoke_session(session):
         session.revoked_at = timezone.now()
         session.save(update_fields=['revoked_at'])
     _blacklist_jti(session.refresh_jti)
+
+
+def revoke_reused_refresh(raw_refresh):
+    """Thu hồi phiên khi một refresh token đã xoay vòng bị phát lại.
+
+    Rotation nghĩa là mỗi refresh token chỉ dùng được đúng một lần. Bản cũ xuất
+    hiện lần thứ hai nghĩa là có hai bên cùng giữ nó, và ta không thể biết bên
+    nào là chủ thật — nên giết cả phiên và bắt đăng nhập lại (khuyến nghị của
+    OAuth 2.1 cho refresh token rotation). Trước đây request chỉ bị từ chối, kẻ
+    trộm cookie cứ thế xoay vòng tiếp còn chủ tài khoản không hề hay biết.
+
+    Chữ ký BẮT BUỘC phải hợp lệ: nếu chấp nhận token không xác thực thì ai cũng
+    bịa được ``sid`` để thu hồi phiên người khác, biến chính lớp bảo vệ này
+    thành công cụ tấn công.
+    """
+    try:
+        payload = token_backend.decode(raw_refresh, verify=True)
+    except TokenBackendError:
+        return False
+
+    sid = payload.get(SID_CLAIM)
+    if not sid or _was_recently_retired(payload.get(api_settings.JTI_CLAIM)):
+        return False
+
+    with transaction.atomic():
+        session = (
+            AuthSession.objects.select_for_update()
+            .filter(
+                id=sid,
+                user_id=payload.get(api_settings.USER_ID_CLAIM),
+                auth_revision=payload.get(AUTH_REVISION_CLAIM, 1),
+                revoked_at__isnull=True,
+            )
+            .first()
+        )
+        if session is None:
+            return False
+        revoke_session(session)
+    return True
 
 
 def revoke_session_by_refresh_jti(jti):

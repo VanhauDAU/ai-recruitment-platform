@@ -4,8 +4,9 @@ from django.db import transaction
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from common.throttling import ClientIPScopedRateThrottle
 
 from ...models import AuthEmailJob, User
 from ...services import email_verification as ev
@@ -27,7 +28,7 @@ from ..serializers import ChangeEmailSerializer, SessionUserSerializer
 )
 class VerificationSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'verify_email'
 
     def post(self, request):
@@ -64,6 +65,8 @@ class VerificationSendView(APIView):
 )
 class VerificationConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'verify_email_confirm'
 
     def post(self, request):
         token_identity = ev.consume_token(request.data.get('token'))
@@ -115,6 +118,8 @@ class VerificationConfirmView(APIView):
 )
 class ChangeEmailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'change_email'
 
     def post(self, request):
         user = request.user

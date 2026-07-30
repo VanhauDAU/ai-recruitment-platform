@@ -159,6 +159,45 @@ class EmployerRegistrationTests(APITestCase):
         self.assertIn('terms_accepted', response.data)
         self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
 
+    def test_a_failed_captcha_hides_whether_the_email_already_belongs_to_an_employer(self):
+        """Captcha phải chặn TRƯỚC validator email, nếu không đây là oracle dò email.
+
+        Serializer chạy trước captcha thì kẻ tấn công gửi captcha_token rác vẫn
+        đọc được thông điệp "email đã được sử dụng" — dò sạch danh sách NTD mà
+        không tốn một lượt captcha nào.
+        """
+        User.objects.create_user(
+            email='hr@acme.vn', password='Password@123', role=User.Role.EMPLOYER
+        )
+
+        with (
+            override_settings(RECAPTCHA_SECRET_KEY='server-secret'),
+            patch('apps.accounts.services.captcha.requests.post') as verify,
+        ):
+            verify.return_value.json.return_value = {'success': False}
+            response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('captcha_token', response.data)
+        self.assertNotIn('email', response.data)
+
+    def test_a_duplicate_slipping_past_validation_is_a_400_not_a_500(self):
+        """Cửa sổ TOCTOU giữa validate_email và create_user phải trả lỗi tử tế.
+
+        Hai request song song cùng email đều qua được validator rồi mới đụng
+        ràng buộc uniq_users_email_role_lower ở DB.
+        """
+        User.objects.create_user(
+            email='hr@acme.vn', password='Password@123', role=User.Role.EMPLOYER
+        )
+
+        with patch.object(User.objects, 'email_claimed_for_role', return_value=False):
+            response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('email', response.data)
+        self.assertEqual(User.objects.filter(email='hr@acme.vn').count(), 1)
+
     def test_registration_rejects_email_reserved_by_existing_oauth_employer(self):
         oauth_user = User.objects.create_user(
             email='oauth-current@acme.vn',

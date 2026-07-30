@@ -1,7 +1,7 @@
 """Employer account registration and first-profile completion."""
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -41,19 +41,30 @@ def complete_registration_profile(user, validated_data):
     return recruiter
 
 
-@transaction.atomic
 def register_employer(validated_data):
     account_data = dict(validated_data)
     email = account_data.pop('email')
     password = account_data.pop('password')
     account_data.pop('captcha_token', None)
     account_data.pop('terms_accepted', None)
-
-    user = User.objects.create_user(
-        email=email,
-        password=password,
-        role=User.Role.EMPLOYER,
-    )
     account_data['terms_accepted'] = True
-    recruiter = complete_registration_profile(user, account_data)
+
+    # `except` phải nằm NGOÀI atomic: bên trong block đang hỏng, mọi truy vấn
+    # tiếp theo (kể cả việc dựng response lỗi) đều bị từ chối.
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                role=User.Role.EMPLOYER,
+            )
+            recruiter = complete_registration_profile(user, account_data)
+    except IntegrityError as error:
+        # Giữa lúc serializer kiểm tra email trống và lúc ghi vào DB có một cửa
+        # sổ: hai đơn đăng ký song song cùng email đều qua được validator rồi
+        # mới đụng uniq_users_email_role_lower. Đây vẫn là lỗi nhập liệu của
+        # người dùng, không phải sự cố hệ thống.
+        raise ValidationError(
+            {'email': 'Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.'}
+        ) from error
     return user, recruiter

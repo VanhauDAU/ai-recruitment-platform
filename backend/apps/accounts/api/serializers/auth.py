@@ -9,6 +9,7 @@ from common.media_storage import media_url_from_value
 
 from ...models import User
 from ...selectors import admin_access_snapshot
+from ...services import login_guard
 from ...services.access import is_account_accessible
 
 # Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
@@ -348,16 +349,23 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
         role = PORTAL_ROLE_BY_NAME[self.portal]
 
         email = User.objects.normalize_email(attrs.get(self.username_field) or '')
+        password = attrs.get('password') or ''
+        login_guard.ensure_not_throttled(email, self.portal)
+
         user = User.objects.filter(email__iexact=email, role=role).first()
-        if (
-            user is None
-            or not user.check_password(attrs.get('password') or '')
-            or not is_account_accessible(user)
-        ):
+        if user is None:
+            # Băm một lần cho tài khoản không tồn tại, đúng như
+            # ``ModelBackend.authenticate``: bỏ qua bước này thì thời gian phản
+            # hồi tự nó tiết lộ email nào đã có tài khoản ở cổng này.
+            User().set_password(password)
+
+        if user is None or not user.check_password(password) or not is_account_accessible(user):
+            login_guard.register_failure(email, self.portal)
             raise AuthenticationFailed(
                 self.error_messages['no_active_account'], 'no_active_account'
             )
 
+        login_guard.clear(email, self.portal)
         self.user = user
         return {}
 
