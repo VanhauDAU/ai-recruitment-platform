@@ -125,6 +125,13 @@ npm run build
 npm run test:e2e:smoke
 ```
 
+Dọn cache, coverage, build và test output local mà không xóa `.env`, virtualenv,
+dependencies hay media upload:
+
+```bash
+./scripts/clean_artifacts.sh
+```
+
 CI (GitHub Actions) tự chạy `backend-ci` và `frontend-ci` trên mọi pull request đụng
 tới `backend/` hoặc `frontend/`.
 
