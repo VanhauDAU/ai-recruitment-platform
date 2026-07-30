@@ -55,6 +55,7 @@ services:
     env_file: ./backend/.env
     environment:
       <<: *service-hosts
+      FRONTEND_SHELL_URL: http://frontend:5173/
     volumes:
       - ./backend:/app
       - backend_media:/app/media

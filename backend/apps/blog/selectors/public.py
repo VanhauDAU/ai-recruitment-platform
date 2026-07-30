@@ -51,6 +51,7 @@ def published_post_detail_queryset():
             'content',
             'summary',
             'published_at',
+            'updated_at',
             'seo_title',
             'seo_description',
             'category_id',

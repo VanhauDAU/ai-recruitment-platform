@@ -1,4 +1,4 @@
-"""Public write/use-case API for site content."""
+"""Public use-case API for site content."""
 
 from .announcements import (
     StaleAnnouncementRevision,
@@ -18,10 +18,12 @@ from .announcements import (
     set_announcement_viewer_cookie,
     validate_cta_url,
 )
+from .seo import SEO_SETTINGS_CACHE_KEY, resolved_seo_settings
 
 __all__ = [
     'StaleAnnouncementRevision',
     'StaleAnnouncementState',
+    'SEO_SETTINGS_CACHE_KEY',
     'archive_announcement',
     'create_announcement',
     'create_announcement_revision',
@@ -31,6 +33,7 @@ __all__ = [
     'pause_announcement',
     'publish_announcement',
     'record_consented_announcement_events',
+    'resolved_seo_settings',
     'rename_announcement',
     'resume_announcement',
     'set_announcement_user_state',

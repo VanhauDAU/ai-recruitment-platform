@@ -543,3 +543,37 @@ pages/admin/app/Announcements
   item kế tiếp ở opacity 0 trong một rail còn nền.
 - Mọi import liên-slice đi qua public `index.js`; các adapter hệ thống chỉ được
   compose trong widget, không chuyển session/profile logic xuống `shared`.
+
+## SEO shell và metadata khi điều hướng SPA
+
+```text
+backend public SEO route
+  → common/seo.py chèn head vào Vite index.html
+    → React DocumentMetadataManager
+      → page override qua shared/hooks/use-document-metadata
+```
+
+- Route public có nội dung tìm kiếm được phải có SEO shell phía backend; không
+  chỉ đặt `document.title` trong React. Shell giữ nguyên body SPA, chỉ thay
+  `title`, description, robots, canonical, Open Graph, Twitter và JSON-LD.
+- Owner backend của nội dung sở hữu metadata động và sitemap tương ứng:
+  `jobs`, `blog`, `cv_templates`; `sitecontent` sở hữu homepage, landing tĩnh,
+  `robots.txt` và sitemap index. HTML/JSON-LD dùng helper an toàn tại
+  `common/seo.py`, không tự nối chuỗi script ở từng app.
+- Reverse proxy chỉ chuyển các route public đã đăng ký qua SEO shell. Fallback
+  nginx của SPA luôn phát `X-Robots-Tag: noindex, nofollow`, vì đó là workspace,
+  auth, route chưa phân loại hoặc 404; route public mới phải được thêm đồng thời
+  vào backend URL, nginx và sitemap.
+- Frontend dùng `DocumentMetadataManager` làm nguồn metadata duy nhất khi chuyển
+  route không tải lại trang. Page có dữ liệu async đăng ký override bằng
+  `useDocumentMetadata`; không thêm `MutationObserver`, không deep-import app
+  từ page và không giữ JSON-LD của route trước.
+- URL `/jobs/:slug` và `/brand/:company/tuyen-dung/:slug` chỉ là compatibility
+  route; canonical V1 luôn là `/viec-lam/:slug`. Mọi link mới phải đi qua
+  `entities/job.jobDetailPath()`.
+- Workspace, auth, CV riêng tư và route không tồn tại luôn `noindex`. Nội dung
+  đã đóng/gỡ phải trả HTTP 404 thật từ SEO shell; React UI 404 không thay thế
+  status HTTP.
+- Khi thêm route indexable, regression tối thiểu phải khóa title, description,
+  canonical, robots, status 404 và sitemap; structured data domain phải được
+  test riêng (`JobPosting`, `Article`, `BreadcrumbList`, ...).

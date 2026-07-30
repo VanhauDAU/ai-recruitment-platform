@@ -21,6 +21,7 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
+      FRONTEND_SHELL_URL: http://frontend/
     volumes:
       - backend_media:/app/media
       - backend_static:/app/staticfiles

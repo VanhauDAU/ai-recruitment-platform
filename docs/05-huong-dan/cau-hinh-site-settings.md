@@ -7,6 +7,15 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 - **Trang quản trị chính**: React `/admin/settings` (role admin) — tabs 15 nhóm, lưu theo nhóm. Django admin là fallback.
 - **API**: xem `docs/04-api/tai-lieu-api.md` (mục `/api/site/`).
 - **Frontend đọc cấu hình**: hook `useSiteSettings()` / `useSiteSetting(key, fallback)` — chỉ nhận key có `is_public=true` qua `/api/site/settings/` (cache 1h, tự invalidate khi admin lưu).
+- **SEO server-side**: các route public việc làm, blog và mẫu CV đi qua Django
+  SEO shell. `seo_default_title`, `seo_default_description`, `seo_og_image`,
+  `seo_robots_index` và `seo_google_site_verification` được áp dụng cả trong
+  HTML crawler nhận trước khi chạy JavaScript lẫn khi React chuyển route.
+  `seo_default_keywords` chỉ giữ tương thích cấu hình cũ, không phát
+  `meta keywords` vì công cụ tìm kiếm hiện đại không sử dụng thẻ này.
+- **Robots và sitemap**: `/robots.txt` phản ánh kill switch
+  `seo_robots_index`; `/sitemap.xml` là sitemap index cho static, jobs, blog và
+  CV templates. Tắt index sẽ đồng thời phát `noindex` trên SEO shell.
 - **Kiểu `env`**: giá trị nhạy cảm (API key AI, mật khẩu SMTP, khoá thanh toán) KHÔNG lưu DB — chỉ khai báo `options.env_var`; UI hiển thị trạng thái "đã/chưa cấu hình qua .env". Muốn đổi giá trị: sửa file `.env` backend.
 - **Seed**: `python manage.py seed_sitecontent` — idempotent, **chỉ đồng bộ metadata, không bao giờ ghi đè `value`** admin đã chỉnh. Muốn về mặc định: xoá row rồi seed lại.
 

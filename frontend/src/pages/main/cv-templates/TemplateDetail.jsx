@@ -11,7 +11,7 @@ import {
   templateColors,
 } from '@/entities/cv-template'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
-import { setDocumentTitle } from '@/shared/config/document-title'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { useLocales } from '@/entities/locale'
 import { useLoginPrompt } from '@/features/auth'
 import { CvSourcePanel, UseTemplateModal } from '@/features/create-cv-from-template'
@@ -29,6 +29,7 @@ export default function TemplateDetail() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { locale, path: basePath } = catalogLocaleFromPath(pathname)
+  const localeLabel = LOCALE_LABELS[locale] || 'tiếng Việt'
   const { locales, loaded: localesLoaded } = useLocales()
   const { promptLogin } = useLoginPrompt()
   const [template, setTemplate] = useState(null)
@@ -52,7 +53,6 @@ export default function TemplateDetail() {
         setTemplate(detail)
         setRelated(recommendations)
         setSelectedColor(templateColors(detail)[0].hex_code)
-        setDocumentTitle(`Mẫu CV: ${detail.display_name}`)
       })
       .catch(() => !cancelled && setTemplate(null))
       .finally(() => !cancelled && setLoading(false))
@@ -60,6 +60,19 @@ export default function TemplateDetail() {
       cancelled = true
     }
   }, [slug, locale])
+
+  useDocumentMetadata(
+    template
+      ? {
+          title: template.seo_title || `Mẫu CV: ${template.display_name}`,
+          description: template.seo_description
+            || template.description
+            || `Xem trước và tạo CV ${localeLabel} với mẫu ${template.display_name} chuyên nghiệp.`,
+          canonicalPath: `${basePath}/chi-tiet/${slug}`,
+          imageUrl: template.preview_url || template.thumbnail_url,
+        }
+      : null,
+  )
 
   const colors = useMemo(() => templateColors(template), [template])
 
@@ -71,8 +84,6 @@ export default function TemplateDetail() {
       style_json: { ...preview.document.style_json, theme_color: selectedColor },
     }
   }, [preview, selectedColor])
-
-  const localeLabel = LOCALE_LABELS[locale] || 'tiếng Việt'
 
   if (localesLoaded && !locales.some((item) => item.code === locale)) {
     return <Result status="404" title="Ngôn ngữ CV không tồn tại hoặc đã ngừng hoạt động" />

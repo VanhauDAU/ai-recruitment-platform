@@ -4,8 +4,7 @@ import { Empty, Skeleton } from 'antd'
 import { Link, useParams } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { BLOG_ROOT, getBlogCategories, getBlogPosts } from '@/entities/blog'
-import { setDocumentTitle } from '@/shared/config/document-title'
-import { setDocumentMetaDescription } from '@/shared/config/document-meta'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import { BlogCardRow } from './ui/BlogCard'
 import BlogInlineBanner from './ui/BlogInlineBanner'
@@ -56,10 +55,15 @@ export default function BlogCategory() {
     return () => { cancelled = true }
   }, [categorySlug])
 
-  useEffect(() => {
-    setDocumentTitle(activeCategory?.seo_title || (activeCategory ? `${activeCategory.name} — ${pageTitle}` : pageTitle))
-    return setDocumentMetaDescription(activeCategory?.description || '')
-  }, [activeCategory, pageTitle])
+  useDocumentMetadata(
+    activeCategory
+      ? {
+          title: activeCategory.seo_title || `${activeCategory.name} — ${pageTitle}`,
+          description: activeCategory.description,
+          canonicalPath: `/blog/danh-muc/${activeCategory.slug}`,
+        }
+      : null,
+  )
 
   async function loadMore() {
     const nextPage = page + 1

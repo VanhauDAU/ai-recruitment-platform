@@ -6,9 +6,9 @@ describe('jobDetailPath', () => {
     expect(jobDetailPath({ slug: 'ke-toan-jb-1', brand_slug: null })).toBe('/viec-lam/ke-toan-jb-1')
   })
 
-  it('tin của công ty có trang thương hiệu → /brand/...', () => {
+  it('tin của công ty có trang thương hiệu vẫn dùng canonical /viec-lam', () => {
     expect(jobDetailPath({ slug: 'ke-toan-jb-1', brand_slug: 'fpt-software' }))
-      .toBe('/brand/fpt-software/tuyen-dung/ke-toan-jb-1')
+      .toBe('/viec-lam/ke-toan-jb-1')
   })
 
   it('dữ liệu thiếu brand_slug (endpoint stats) → URL thường', () => {

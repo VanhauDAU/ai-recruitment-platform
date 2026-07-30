@@ -3,8 +3,7 @@ import { Drawer, Result, Skeleton, Tag } from 'antd'
 import { Link, useParams } from 'react-router'
 import { BLOG_ROOT, BlogPostContent, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
-import { setDocumentTitle } from '@/shared/config/document-title'
-import { setDocumentMetaDescription } from '@/shared/config/document-meta'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogBenefits from './ui/BlogBenefits'
 import BlogRelatedJobs from './ui/BlogRelatedJobs'
@@ -41,13 +40,28 @@ export default function BlogDetail() {
     return () => { cancelled = true }
   }, [slug])
 
-  useEffect(() => {
-    if (!post?.title) return undefined
-    const previous = document.title
-    setDocumentTitle(post.seo_title || post.title)
-    const restoreDescription = setDocumentMetaDescription(post.seo_description || post.summary)
-    return () => { setDocumentTitle(previous); restoreDescription() }
-  }, [post])
+  useDocumentMetadata(
+    post
+      ? {
+          title: post.seo_title || post.title,
+          description: post.seo_description || post.summary || settings.seo_default_description,
+          canonicalPath: `/blog/${post.slug}`,
+          imageUrl: post.thumbnail_url,
+          pageType: 'article',
+          structuredData: {
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            headline: post.title,
+            description: post.seo_description || post.summary,
+            datePublished: post.published_at,
+            image: post.thumbnail_url
+              ? new URL(post.thumbnail_url, window.location.origin).href
+              : undefined,
+            mainEntityOfPage: new URL(`/blog/${post.slug}`, window.location.origin).href,
+          },
+        }
+      : null,
+  )
 
   const handleToc = useCallback((items) => setToc(items), [])
 

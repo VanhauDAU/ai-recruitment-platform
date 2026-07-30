@@ -508,6 +508,19 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
 ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
+# SEO shell fetches the built Vite document from the internal frontend service,
+# then injects route-specific head tags without rendering the React body.
+FRONTEND_SHELL_URL = config('FRONTEND_SHELL_URL', default=FRONTEND_URL).rstrip('/') + '/'
+FRONTEND_SHELL_TIMEOUT_SECONDS = config(
+    'FRONTEND_SHELL_TIMEOUT_SECONDS',
+    default=2,
+    cast=float,
+)
+FRONTEND_SHELL_CACHE_SECONDS = config(
+    'FRONTEND_SHELL_CACHE_SECONDS',
+    default=30,
+    cast=int,
+)
 ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
 ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
