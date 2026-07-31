@@ -84,6 +84,42 @@ def employer_application_queryset(employer):
     return Application.objects.filter(job__posted_by=employer)
 
 
+def admin_job_applications_queryset(job, *, params=None):
+    """Return read-only application records for one job moderation workspace."""
+    params = params or {}
+    queryset = (
+        Application.objects.filter(job=job)
+        .select_related('candidate', 'job', 'submitted_cv_version')
+        .prefetch_related('preferred_locations')
+    )
+
+    if query := (params.get('q') or '').strip():
+        queryset = queryset.filter(
+            Q(candidate__full_name__icontains=query)
+            | Q(candidate__email__icontains=query)
+            | Q(contact_name__icontains=query)
+            | Q(contact_email__icontains=query)
+            | Q(contact_phone__icontains=query)
+            | Q(submitted_cv_title__icontains=query)
+        )
+    if status_values := [value for value in (params.get('status') or '').split(',') if value]:
+        queryset = queryset.filter(status__in=status_values)
+    if source := params.get('source'):
+        queryset = queryset.filter(source=source)
+    if submitted_from := params.get('submitted_from'):
+        queryset = queryset.filter(applied_at__date__gte=submitted_from)
+    if submitted_to := params.get('submitted_to'):
+        queryset = queryset.filter(applied_at__date__lte=submitted_to)
+
+    ordering = {
+        'oldest': 'applied_at',
+        'name': 'candidate__full_name',
+        'status': 'status',
+        'newest': '-applied_at',
+    }.get(params.get('ordering'), '-applied_at')
+    return queryset.order_by(ordering, '-id')
+
+
 def recruiter_application_snapshot_queryset(recruiter):
     """Snapshots are private to the recruiter who posted the job."""
     return (

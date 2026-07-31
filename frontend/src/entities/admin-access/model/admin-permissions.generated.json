@@ -345,6 +345,15 @@
     ]
   },
   {
+    "code": "job_moderation.enforce_visibility",
+    "module": "job_moderation",
+    "label": "Tạm ẩn hoặc khôi phục tin tuyển dụng",
+    "description": "Áp dụng hoặc gỡ moderation hold mà không đổi trạng thái nghiệp vụ của tin.",
+    "requires": [
+      "job_moderation.view"
+    ]
+  },
+  {
     "code": "job_moderation.reject",
     "module": "job_moderation",
     "label": "Từ chối tin tuyển dụng",
@@ -365,9 +374,18 @@
   {
     "code": "job_moderation.view",
     "module": "job_moderation",
-    "label": "Xem tin chờ duyệt",
-    "description": "Xem danh sách tin tuyển dụng cần kiểm duyệt.",
+    "label": "Xem quản lý tin tuyển dụng",
+    "description": "Xem danh sách, chi tiết, lịch sử và hàng chờ kiểm duyệt tin tuyển dụng.",
     "requires": []
+  },
+  {
+    "code": "job_moderation.view_sensitive_contact",
+    "module": "job_moderation",
+    "label": "Xem liên hệ nhận hồ sơ",
+    "description": "Xem email và số điện thoại nội bộ nhận hồ sơ khi rà soát gian lận.",
+    "requires": [
+      "job_moderation.view"
+    ]
   },
   {
     "code": "service_catalog.manage",

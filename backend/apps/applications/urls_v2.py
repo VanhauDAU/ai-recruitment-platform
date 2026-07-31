@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .api.views.admin import AdminJobApplicationListView
 from .api.views.employer import (
     EmployerApplicationExportView,
     EmployerApplicationHistoryView,
@@ -9,6 +10,11 @@ from .api.views.employer import (
 from .api.views.v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
 urlpatterns = [
+    path(
+        'admin/jobs/<str:job_public_id>/applications/',
+        AdminJobApplicationListView.as_view(),
+        name='admin-job-application-list-v2',
+    ),
     path(
         'applications/',
         CandidateApplicationV2ListCreateView.as_view(),

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  getAdminJobApplicationPage,
   getApplicationHistory,
   getCandidateApplications,
   getRecruiterApplicationSnapshot,
@@ -70,6 +71,21 @@ describe('application V2 API', () => {
     expect(get).toHaveBeenNthCalledWith(4, '/v2/recruiter/applications/app_2/history/')
   })
 
+  it('loads a paginated admin application list scoped to one job', async () => {
+    const payload = { count: 2, results: [] }
+    get.mockResolvedValue({ data: payload })
+
+    await expect(getAdminJobApplicationPage(
+      'job_1',
+      { status: 'submitted', page: 2 },
+      { signal: 'admin-signal' },
+    )).resolves.toBe(payload)
+    expect(get).toHaveBeenCalledWith('/v2/admin/jobs/job_1/applications/', {
+      params: { status: 'submitted', page: 2 },
+      signal: 'admin-signal',
+    })
+  })
+
   it('builds stable cache keys for recruiter lists, snapshots and histories', () => {
     expect(applicationKeys.recruiterList({ status: 'viewed' })).toEqual([
       'applications',
@@ -82,5 +98,11 @@ describe('application V2 API', () => {
       'app_1',
     ])
     expect(applicationKeys.history('app_1')).toEqual(['applications', 'history', 'app_1'])
+    expect(applicationKeys.adminJobList('job_1', { page: 2 })).toEqual([
+      'applications',
+      'admin-job-list',
+      'job_1',
+      { page: 2 },
+    ])
   })
 })

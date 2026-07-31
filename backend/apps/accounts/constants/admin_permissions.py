@@ -252,6 +252,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Phê duyệt tin tuyển dụng đã gửi duyệt.',
     },
     {
+        'code': 'job_moderation.enforce_visibility',
+        'module': 'job_moderation',
+        'label': 'Tạm ẩn hoặc khôi phục tin tuyển dụng',
+        'description': 'Áp dụng hoặc gỡ moderation hold mà không đổi trạng thái nghiệp vụ của tin.',
+    },
+    {
         'code': 'job_moderation.reject',
         'module': 'job_moderation',
         'label': 'Từ chối tin tuyển dụng',
@@ -266,8 +272,14 @@ ADMIN_PERMISSIONS = (
     {
         'code': 'job_moderation.view',
         'module': 'job_moderation',
-        'label': 'Xem tin chờ duyệt',
-        'description': 'Xem danh sách tin tuyển dụng cần kiểm duyệt.',
+        'label': 'Xem quản lý tin tuyển dụng',
+        'description': 'Xem danh sách, chi tiết, lịch sử và hàng chờ kiểm duyệt tin tuyển dụng.',
+    },
+    {
+        'code': 'job_moderation.view_sensitive_contact',
+        'module': 'job_moderation',
+        'label': 'Xem liên hệ nhận hồ sơ',
+        'description': 'Xem email và số điện thoại nội bộ nhận hồ sơ khi rà soát gian lận.',
     },
     {
         'code': 'service_catalog.manage',
@@ -327,8 +339,10 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'cv_template.publish': ('cv_template.view',),
     'employer_verification.review': ('employer_verification.view',),
     'job_moderation.approve': ('job_moderation.view',),
+    'job_moderation.enforce_visibility': ('job_moderation.view',),
     'job_moderation.reject': ('job_moderation.view',),
     'job_moderation.resolve_report': ('job_moderation.view',),
+    'job_moderation.view_sensitive_contact': ('job_moderation.view',),
     'service_catalog.manage': ('service_catalog.view',),
     'site_setting.manage': ('site_setting.view',),
 }

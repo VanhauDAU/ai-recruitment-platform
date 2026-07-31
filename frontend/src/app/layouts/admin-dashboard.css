@@ -704,6 +704,26 @@
   padding: 18px;
 }
 
+.admin-stat-card--interactive {
+  width: 100%;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.admin-stat-card--interactive:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 8%);
+  transform: translateY(-1px);
+}
+
+.admin-stat-card--active {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 12%);
+}
+
 .admin-stat-card__icon {
   align-items: center;
   border-radius: 13px;
@@ -728,6 +748,11 @@
 .admin-stat-card__icon--amber {
   background: #fef3c7;
   color: #b45309;
+}
+
+.admin-stat-card__icon--red {
+  color: #dc2626;
+  background: #fef2f2;
 }
 
 .admin-stat-card__label,

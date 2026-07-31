@@ -2,7 +2,12 @@
 
 from .employer import employer_job_detail_queryset, employer_job_list_queryset
 from .listing import build_job_list_queryset
-from .moderation import job_moderation_queryset
+from .moderation import (
+    admin_job_detail_queryset,
+    admin_job_management_queryset,
+    admin_job_management_summary,
+    job_moderation_queryset,
+)
 from .reports import job_report_queryset
 from .saved_recommendations import recommend_jobs_from_saved
 from .stats import build_job_stats
@@ -14,6 +19,9 @@ __all__ = [
     'employer_job_detail_queryset',
     'employer_job_list_queryset',
     'badge_criteria_payload',
+    'admin_job_detail_queryset',
+    'admin_job_management_queryset',
+    'admin_job_management_summary',
     'job_badge_criteria',
     'job_moderation_queryset',
     'job_report_queryset',

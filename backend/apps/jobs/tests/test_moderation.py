@@ -14,7 +14,7 @@ from apps.accounts.models import AdminPermission, AdminRole, Department
 from apps.accounts.services import assign_membership
 from apps.employers.models import Company
 
-from ..models import Job, JobStatusHistory
+from ..models import Job, JobModerationEvent, JobStatusHistory
 from ..services import approve_job, reject_job
 
 
@@ -49,6 +49,8 @@ class JobModerationApiTests(APITestCase):
                     'job_moderation.view',
                     'job_moderation.approve',
                     'job_moderation.reject',
+                    'job_moderation.enforce_visibility',
+                    'job_moderation.view_sensitive_contact',
                 )
             ]
         )
@@ -65,6 +67,15 @@ class JobModerationApiTests(APITestCase):
 
     def review_url(self):
         return reverse('admin-job-review', kwargs={'public_id': self.job.public_id})
+
+    def detail_url(self):
+        return reverse(
+            'admin-job-moderation-detail',
+            kwargs={'public_id': self.job.public_id},
+        )
+
+    def decision_url(self):
+        return reverse('admin-job-decision', kwargs={'public_id': self.job.public_id})
 
     def test_admin_approves_pending_job_and_makes_it_public(self):
         self.client.force_authenticate(self.admin)
@@ -122,6 +133,105 @@ class JobModerationApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertEqual(self.job.status_history.count(), 1)
+
+    def test_management_list_summary_and_detail_return_operational_read_models(self):
+        self.client.force_authenticate(self.admin)
+
+        listing = self.client.get(
+            reverse('admin-job-moderation-list'),
+            {'q': 'Backend', 'status': 'pending', 'ordering': 'title'},
+        )
+        summary = self.client.get(reverse('admin-job-moderation-summary'))
+        detail = self.client.get(self.detail_url())
+
+        self.assertEqual(listing.status_code, status.HTTP_200_OK, listing.data)
+        self.assertEqual(listing.data['count'], 1)
+        self.assertEqual(listing.data['results'][0]['public_id'], self.job.public_id)
+        self.assertEqual(listing.data['results'][0]['pending_report_count'], 0)
+        self.assertEqual(summary.status_code, status.HTTP_200_OK, summary.data)
+        self.assertEqual(summary.data['total'], 1)
+        self.assertEqual(summary.data['pending'], 1)
+        self.assertEqual(detail.status_code, status.HTTP_200_OK, detail.data)
+        self.assertEqual(detail.data['public_id'], self.job.public_id)
+        self.assertIn('approve', detail.data['state_actions'])
+        self.assertTrue(detail.data['review_token'])
+        self.assertIn('moderation_events', detail.data)
+
+    def test_decision_endpoint_rejects_a_stale_preview(self):
+        self.client.force_authenticate(self.admin)
+        detail = self.client.get(self.detail_url())
+        token = detail.data['review_token']
+        self.job.title = 'Backend Engineer — revised'
+        self.job.save(update_fields=['title', 'updated_at'])
+
+        response = self.client.post(
+            self.decision_url(),
+            {'action': 'approve', 'review_token': token},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.PENDING)
+        self.assertFalse(self.job.moderation_events.exists())
+
+    def test_admin_can_hide_and_restore_an_active_job_without_changing_business_status(self):
+        now = timezone.now()
+        self.job.status = Job.Status.ACTIVE
+        self.job.approved_at = now
+        self.job.published_at = now
+        self.job.save(update_fields=['status', 'approved_at', 'published_at', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+        visible_before = self.client.get(reverse('job-list'))
+        token = self.client.get(self.detail_url()).data['review_token']
+
+        hidden = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'hide',
+                'review_token': token,
+                'reason_code': 'fraud_risk',
+                'hold': Job.ModerationHold.MANUAL_REVIEW,
+                'note': 'Cần xác minh lại nội dung trước khi tiếp tục hiển thị.',
+            },
+            format='json',
+        )
+
+        self.assertEqual(hidden.status_code, status.HTTP_200_OK, hidden.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.ACTIVE)
+        self.assertEqual(self.job.moderation_hold, Job.ModerationHold.MANUAL_REVIEW)
+        hidden_public_list = self.client.get(reverse('job-list'))
+        hidden_public_detail = self.client.get(
+            reverse('job-detail', kwargs={'slug': self.job.slug})
+        )
+        self.assertEqual(visible_before.data['count'], 1)
+        self.assertEqual(hidden_public_list.data['count'], 0)
+        self.assertEqual(hidden_public_detail.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertFalse(
+            Job.objects.filter(pk=self.job.pk, moderation_hold=Job.ModerationHold.NONE).exists()
+        )
+
+        restored = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'restore',
+                'review_token': hidden.data['review_token'],
+                'note': 'Đã xác minh nội dung hợp lệ.',
+            },
+            format='json',
+        )
+
+        self.assertEqual(restored.status_code, status.HTTP_200_OK, restored.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.ACTIVE)
+        self.assertEqual(self.job.moderation_hold, Job.ModerationHold.NONE)
+        restored_public_list = self.client.get(reverse('job-list'))
+        self.assertEqual(restored_public_list.data['count'], 1)
+        self.assertEqual(
+            list(self.job.moderation_events.values_list('action', flat=True)),
+            [JobModerationEvent.Action.RESTORE, JobModerationEvent.Action.HIDE],
+        )
 
 
 class JobModerationConcurrencyTests(TransactionTestCase):

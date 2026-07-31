@@ -50,7 +50,7 @@ describe('AdminAccountAccessPanel', () => {
     expect(screen.getByText('Kiểm duyệt tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('System Admin · root@example.com')).toBeInTheDocument()
     expect(screen.getByText('Duyệt tin tuyển dụng')).toBeInTheDocument()
-    expect(screen.getByText('Xem tin chờ duyệt')).toBeInTheDocument()
+    expect(screen.getByText('Xem quản lý tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByText('2 quyền')).toBeInTheDocument()
     expect(screen.getByText('Đã chấp nhận')).toBeInTheDocument()
   })

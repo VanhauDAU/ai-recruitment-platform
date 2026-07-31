@@ -24,6 +24,7 @@ def publicly_available_job_filter():
     return (
         Q(status=Job.Status.ACTIVE)
         & Q(policy_hold=Job.PolicyHold.NONE)
+        & Q(moderation_hold=Job.ModerationHold.NONE)
         & Q(
             posted_by__status='active',
             posted_by__is_active=True,

@@ -772,12 +772,12 @@ test('admin detail: complete effective permissions render in access tab', async 
 
   await expect(page.getByRole('tab', { name: 'Quyền truy cập' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('Nhân viên kiểm duyệt')).toBeVisible()
-  await expect(page.getByText('Kiểm duyệt tin tuyển dụng')).toBeVisible()
+  await expect(page.getByText('Kiểm duyệt tin tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Quyền hiệu lực' })).toBeVisible()
   await expect(page.getByText('Duyệt tin tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Từ chối tin tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Xử lý báo cáo tin tuyển dụng', { exact: true })).toBeVisible()
-  await expect(page.getByText('Xem tin chờ duyệt', { exact: true })).toBeVisible()
+  await expect(page.getByText('Xem quản lý tin tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('4 quyền')).toBeVisible()
   await expect(page.getByText('Đã chấp nhận')).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
@@ -958,6 +958,168 @@ test('admin password reset stays on the Admin portal', async ({ page }) => {
   await page.getByRole('button', { name: 'Đặt lại mật khẩu' }).click()
   await expect(page.getByRole('heading', { name: 'Đã đổi mật khẩu' })).toBeVisible()
   await expect(page.getByText(/xác minh MFA email/i)).toBeVisible()
+})
+
+test('admin job management: list, detail and revision-bound approval workflow', async ({ page }) => {
+  let decisionPayload
+  const adminUser = {
+    public_id: 'usr_moderator',
+    email: 'moderator@example.com',
+    full_name: 'Nguyễn Kiểm Duyệt',
+    role: 'admin',
+    status: 'active',
+    admin_access: {
+      is_superuser: false,
+      permissions: [
+        'job_moderation.view',
+        'job_moderation.approve',
+        'job_moderation.reject',
+        'job_moderation.enforce_visibility',
+        'job_moderation.view_sensitive_contact',
+      ],
+      memberships: [],
+    },
+  }
+  const baseJob = {
+    public_id: 'job_pending',
+    slug: 'backend-engineer',
+    title: 'Backend Engineer',
+    company_public_id: 'co_1',
+    company_name: 'Công ty Mẫu',
+    company_verification_status: 'verified',
+    employer_public_id: 'usr_employer',
+    employer_name: 'Nguyễn Nhà Tuyển Dụng',
+    employer_email: 'employer@example.com',
+    employer_account_status: 'active',
+    employer_email_verified: true,
+    employer_phone_verified: true,
+    company_role_label: 'Chủ sở hữu',
+    status: 'pending',
+    status_label: 'Chờ duyệt',
+    is_expired: false,
+    policy_hold: '',
+    policy_hold_label: 'Không giữ',
+    moderation_hold: '',
+    moderation_hold_label: 'Không giữ',
+    tier: 'standard',
+    tier_label: 'Tin thường',
+    deadline: '2026-08-30',
+    submitted_at: '2026-07-30T09:00:00Z',
+    updated_at: '2026-07-30T09:00:00Z',
+    view_count: 8,
+    application_count: 2,
+    pending_report_count: 0,
+    report_count: 0,
+    approved_job_count: 3,
+    rejected_reason: '',
+  }
+  const detailJob = {
+    ...baseJob,
+    description: '<p>Xây dựng nền tảng tuyển dụng.</p>',
+    requirements: '<p>Tối thiểu hai năm kinh nghiệm.</p>',
+    benefits: '<p>Bảo hiểm đầy đủ.</p>',
+    work_types: ['hybrid'],
+    employment_type: 'full_time',
+    experience_years: '2',
+    position_level: 'employee',
+    education_level: 'university',
+    gender_requirement: 'any',
+    number_of_vacancies: 2,
+    salary_type: 'range',
+    salary_min: '20000000.00',
+    salary_max: '30000000.00',
+    currency: 'VND',
+    category_assignments: [],
+    job_locations: [],
+    job_skills: [],
+    work_schedules: [],
+    job_benefits: [],
+    language_requirements: [],
+    application_contact: {
+      recipient_name: 'Phòng nhân sự',
+      phone: '0901234567',
+      emails: [{ id: 1, email: 'hr@example.com' }],
+    },
+    can_view_sensitive_contact: true,
+    status_history: [],
+    moderation_events: [],
+    reports: [],
+    review_token: 'signed-review-token',
+    state_actions: ['approve', 'reject'],
+    blocked_reasons: [],
+    employer_account_level: 3,
+    employer_verification_completed: true,
+  }
+
+  await page.route('http://localhost:8000/api/**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    if (
+      path === '/api/jobs/admin/moderation/job_pending/decisions/'
+      && request.method() === 'POST'
+    ) {
+      decisionPayload = request.postDataJSON()
+    }
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? adminUser
+        : path === '/api/privacy/consent/'
+          ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+          : path === '/api/jobs/admin/moderation/summary/'
+            ? { total: 1, pending: 1, overdue: 0, active: 0, expired: 0, held: 0, rejected: 0, pending_reports: 0, sla_hours: 24 }
+            : path === '/api/jobs/admin/moderation/'
+              ? { count: 1, next: null, previous: null, results: [baseJob] }
+              : path === '/api/jobs/admin/moderation/job_pending/'
+                ? detailJob
+                : path === '/api/jobs/admin/moderation/job_pending/decisions/'
+                  ? {
+                      ...detailJob,
+                      status: 'active',
+                      status_label: 'Đang tuyển',
+                      review_token: 'next-review-token',
+                      state_actions: ['hide'],
+                    }
+                  : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/admin/app/job-moderation')
+  await expect(page.getByText('Backend Engineer', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Xem chi tiết' }).click()
+  await expect(page).toHaveURL('/admin/app/job-moderation/job_pending')
+  await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | ProCV')
+  const contentSection = page.getByRole('button', { name: /Nội dung tuyển dụng/ })
+  const contactSection = page.getByRole('button', { name: /Thông tin nhận hồ sơ/ })
+
+  await expect(contentSection).toHaveAttribute('aria-expanded', 'true')
+  await expect(contactSection).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toBeVisible()
+  await expect(page.getByText('0901234567')).toHaveCount(0)
+
+  await contactSection.click()
+  await expect(page.getByText('0901234567')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Thu gọn tất cả' }).click()
+  await expect(contentSection).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Nội dung', exact: true }).click()
+  await expect(contentSection).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Duyệt tin' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Duyệt và công khai' }).click()
+
+  await expect.poll(() => decisionPayload).toEqual({
+    action: 'approve',
+    review_token: 'signed-review-token',
+  })
+  await expect(page.getByText('Đang tuyển', { exact: true }).first()).toBeVisible()
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
 })
 
 test('admin job reports: deep link, filter and resolve workflow are permission-gated', async ({ page }) => {
