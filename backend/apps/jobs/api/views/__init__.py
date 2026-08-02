@@ -11,7 +11,13 @@ from .employer import (
     EmployerJobReopenView,
     EmployerJobSubmitView,
 )
-from .moderation import AdminJobModerationListView, AdminJobReviewView
+from .moderation import (
+    AdminJobDecisionView,
+    AdminJobModerationDetailView,
+    AdminJobModerationListView,
+    AdminJobModerationSummaryView,
+    AdminJobReviewView,
+)
 from .public import (
     CandidateJobRecommendationView,
     CvJobRecommendationView,
@@ -35,6 +41,9 @@ from .reports import (
 __all__ = [
     'BenefitListView',
     'AdminJobModerationListView',
+    'AdminJobModerationDetailView',
+    'AdminJobModerationSummaryView',
+    'AdminJobDecisionView',
     'AdminJobReportListView',
     'AdminJobReportResolveView',
     'AdminJobReportReverseView',

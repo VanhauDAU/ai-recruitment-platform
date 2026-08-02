@@ -61,6 +61,7 @@ ADMIN_DEPARTMENTS = (
                     'job_moderation.approve',
                     'job_moderation.reject',
                     'job_moderation.resolve_report',
+                    'job_moderation.view_sensitive_contact',
                 ),
             },
             {
@@ -74,6 +75,8 @@ ADMIN_DEPARTMENTS = (
                     'job_moderation.approve',
                     'job_moderation.reject',
                     'job_moderation.resolve_report',
+                    'job_moderation.enforce_visibility',
+                    'job_moderation.view_sensitive_contact',
                 ),
             },
         ),

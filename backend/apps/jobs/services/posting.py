@@ -401,6 +401,8 @@ def duplicate_job(job, user):
     duplicate.policy_hold = Job.PolicyHold.NONE
     duplicate.policy_held_at = None
     duplicate.policy_hold_transition = None
+    duplicate.moderation_hold = Job.ModerationHold.NONE
+    duplicate.moderation_held_at = None
     duplicate.view_count = 0
     duplicate.impression_count = 0
     duplicate.application_count = 0

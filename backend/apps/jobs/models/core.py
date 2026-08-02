@@ -190,6 +190,11 @@ class Job(models.Model):
         BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
         LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
 
+    class ModerationHold(models.TextChoices):
+        NONE = '', 'Không giữ'
+        MANUAL_REVIEW = 'manual_review', 'Tạm ẩn để rà soát nội dung'
+        CONFIRMED_VIOLATION = 'confirmed_violation', 'Tạm ẩn do vi phạm đã xác nhận'
+
     class Tier(models.TextChoices):
         """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
 
@@ -294,6 +299,13 @@ class Job(models.Model):
         blank=True,
         related_name='held_jobs',
     )
+    moderation_hold = models.CharField(
+        max_length=24,
+        choices=ModerationHold.choices,
+        default=ModerationHold.NONE,
+        blank=True,
+    )
+    moderation_held_at = models.DateTimeField(null=True, blank=True)
     view_count = models.IntegerField(default=0)
     impression_count = models.PositiveIntegerField(default=0)
     application_count = models.IntegerField(default=0)
@@ -310,6 +322,10 @@ class Job(models.Model):
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['policy_hold', 'status'], name='jobs_hold_status_idx'),
+            models.Index(
+                fields=['moderation_hold', 'status'],
+                name='jobs_moderation_hold_idx',
+            ),
             models.Index(fields=['posted_by'], name='jobs_job_posted_by_idx'),
             models.Index(fields=['work_type']),
             models.Index(fields=['employment_type']),

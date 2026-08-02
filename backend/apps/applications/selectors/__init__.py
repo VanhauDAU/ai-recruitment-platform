@@ -1,6 +1,7 @@
 """Read models for the applications domain."""
 
 from .applications import (
+    admin_job_applications_queryset,
     candidate_applications_queryset,
     employer_application_queryset,
     employer_applications_queryset,
@@ -8,6 +9,7 @@ from .applications import (
 )
 
 __all__ = [
+    'admin_job_applications_queryset',
     'candidate_applications_queryset',
     'employer_application_queryset',
     'employer_applications_queryset',

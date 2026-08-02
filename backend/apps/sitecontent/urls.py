@@ -9,6 +9,7 @@ from .api.views import (
     AdminAnnouncementMetricView,
     AdminAnnouncementPauseView,
     AdminAnnouncementPublishView,
+    AdminAnnouncementResetDismissalsView,
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
     AdminLocaleDetailView,
@@ -80,6 +81,11 @@ urlpatterns = [
         'admin/announcements/<str:public_id>/archive/',
         AdminAnnouncementArchiveView.as_view(),
         name='site-admin-announcement-archive',
+    ),
+    path(
+        'admin/announcements/<str:public_id>/reset-dismissals/',
+        AdminAnnouncementResetDismissalsView.as_view(),
+        name='site-admin-announcement-reset-dismissals',
     ),
     path(
         'admin/announcements/<str:public_id>/duplicate/',

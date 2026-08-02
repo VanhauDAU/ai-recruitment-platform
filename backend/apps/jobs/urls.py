@@ -1,7 +1,10 @@
 from django.urls import path
 
 from .api.views import (
+    AdminJobDecisionView,
+    AdminJobModerationDetailView,
     AdminJobModerationListView,
+    AdminJobModerationSummaryView,
     AdminJobReportListView,
     AdminJobReportResolveView,
     AdminJobReportReverseView,
@@ -34,6 +37,21 @@ from .api.views import (
 urlpatterns = [
     path(
         'admin/moderation/', AdminJobModerationListView.as_view(), name='admin-job-moderation-list'
+    ),
+    path(
+        'admin/moderation/summary/',
+        AdminJobModerationSummaryView.as_view(),
+        name='admin-job-moderation-summary',
+    ),
+    path(
+        'admin/moderation/<str:public_id>/',
+        AdminJobModerationDetailView.as_view(),
+        name='admin-job-moderation-detail',
+    ),
+    path(
+        'admin/moderation/<str:public_id>/decisions/',
+        AdminJobDecisionView.as_view(),
+        name='admin-job-decision',
     ),
     path(
         'admin/moderation/<str:public_id>/review/',

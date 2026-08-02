@@ -119,20 +119,16 @@ function adminTitle(pathname) {
   const exact = EXACT_ADMIN_TITLES.get(pathname)
   if (exact) return exact
 
-  const accountDetailPrefix = `${adminPath('/accounts/')}`
-  const accountPublicId = pathname.slice(accountDetailPrefix.length)
-  if (pathname.startsWith(accountDetailPrefix) && accountPublicId && !accountPublicId.includes('/')) {
-    return 'Chi tiết tài khoản'
-  }
-  const recruiterDetailPrefix = `${adminPath('/recruiters/')}`
-  const recruiterPublicId = pathname.slice(recruiterDetailPrefix.length)
-  if (
-    pathname.startsWith(recruiterDetailPrefix)
-    && recruiterPublicId
-    && !recruiterPublicId.includes('/')
-  ) {
-    return 'Chi tiết nhà tuyển dụng'
-  }
+  const pathSegments = pathname.split('/').filter(Boolean)
+  const dynamicRoute = ADMIN_ROUTES.find((route) => {
+    if (!route.segment.includes(':')) return false
+    const routeSegments = adminPath(route.segment).split('/').filter(Boolean)
+    return routeSegments.length === pathSegments.length
+      && routeSegments.every((segment, index) => (
+        segment.startsWith(':') || segment === pathSegments[index]
+      ))
+  })
+  if (dynamicRoute) return dynamicRoute.title
 
   return 'Trang không tồn tại'
 }

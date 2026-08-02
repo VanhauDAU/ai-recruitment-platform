@@ -2,17 +2,17 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import AdminJobModeration from './JobModeration'
+import JobModeration from './JobModeration'
 
-const { getAdminJobModeration, reviewAdminJob } = vi.hoisted(() => ({
-  getAdminJobModeration: vi.fn(),
-  reviewAdminJob: vi.fn(),
+const { getAdminJobs, getAdminJobSummary } = vi.hoisted(() => ({
+  getAdminJobs: vi.fn(),
+  getAdminJobSummary: vi.fn(),
 }))
 
-vi.mock('@/entities/job', () => ({
-  getAdminJobModeration,
-  jobKeys: { adminModeration: (params) => ['jobs', 'admin-moderation', params] },
-  reviewAdminJob,
+vi.mock('@/entities/admin-job', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getAdminJobs,
+  getAdminJobSummary,
 }))
 
 vi.mock('@/features/review-job-reports', () => ({
@@ -23,13 +23,28 @@ vi.mock('antd', async (importOriginal) => {
   const antd = await importOriginal()
   return {
     ...antd,
-    // This suite verifies moderation state and payloads. Browser smoke tests
-    // cover Ant Design's table layout and modal portal, so keep unit rendering
-    // deterministic on resource-constrained CI runners.
-    Table: ({ columns, dataSource = [] }) => (
+    Table: ({ columns, dataSource = [], onChange }) => (
       <table>
         <thead>
-          <tr>{columns.map((column) => <th key={column.key || column.dataIndex}>{column.title}</th>)}</tr>
+          <tr>
+            {columns.map((column) => (
+              <th key={column.key || column.dataIndex}>
+                {column.sorter ? (
+                  <button
+                    aria-label={`Sắp xếp ${column.key}`}
+                    onClick={() => onChange(
+                      { current: 1 },
+                      {},
+                      { columnKey: column.key, order: 'descend' },
+                    )}
+                    type="button"
+                  >
+                    {column.title}
+                  </button>
+                ) : column.title}
+              </th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {dataSource.map((row, rowIndex) => (
@@ -47,23 +62,6 @@ vi.mock('antd', async (importOriginal) => {
         </tbody>
       </table>
     ),
-    Modal: ({
-      open,
-      title,
-      children,
-      onCancel,
-      onOk,
-      okText = 'OK',
-      cancelText = 'Cancel',
-      confirmLoading = false,
-    }) => open ? (
-      <div role="dialog" aria-modal="true">
-        <div>{title}</div>
-        {children}
-        <button type="button" onClick={onCancel}>{cancelText}</button>
-        <button type="button" disabled={confirmLoading} onClick={onOk}>{okText}</button>
-      </div>
-    ) : null,
   }
 })
 
@@ -72,62 +70,70 @@ function renderPage(initialEntry = '/admin/app/job-moderation') {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
-        <AdminJobModeration />
+        <JobModeration />
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
-describe('AdminJobModeration', () => {
+describe('JobModeration', () => {
   beforeEach(() => {
-    getAdminJobModeration.mockReset()
-    reviewAdminJob.mockReset()
-    getAdminJobModeration.mockResolvedValue([
-      {
+    vi.clearAllMocks()
+    getAdminJobs.mockResolvedValue({
+      count: 1,
+      results: [{
         public_id: 'job_pending',
         title: 'Backend Engineer',
         company_name: 'Acme',
+        company_verification_status: 'verified',
         employer_name: 'Nguyễn An',
-        description: 'Mô tả công việc',
-        deadline: '2026-08-30',
+        employer_email: 'an@example.com',
         status: 'pending',
         status_label: 'Chờ duyệt',
+        deadline: '2026-08-30',
         submitted_at: '2026-07-22T09:00:00Z',
-        rejected_reason: '',
-      },
-    ])
-    reviewAdminJob.mockResolvedValue({ public_id: 'job_pending', status: 'active' })
+        application_count: 0,
+        pending_report_count: 0,
+        approved_job_count: 2,
+      }],
+    })
+    getAdminJobSummary.mockResolvedValue({
+      total: 1,
+      pending: 1,
+      active: 0,
+      held: 0,
+      rejected: 0,
+      overdue: 0,
+      pending_reports: 0,
+      sla_hours: 24,
+    })
   })
 
-  it('lets an admin approve a pending job', async () => {
+  it('loads the pending queue without exposing direct approval actions in the table', async () => {
     renderPage()
 
     expect(await screen.findByText('Backend Engineer')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Duyệt' }))
+    expect(getAdminJobs).toHaveBeenCalledWith(
+      { ordering: 'submitted_at', page: 1, status: 'pending' },
+      expect.any(Object),
+    )
+    expect(screen.queryByRole('button', { name: 'Duyệt tin' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xem chi tiết' })).toBeVisible()
+  })
 
-    await waitFor(() => expect(reviewAdminJob).toHaveBeenCalledWith('job_pending', {
-      action: 'approve',
-    }))
-  }, 15_000)
-
-  it('requires and submits an employer-visible rejection reason', async () => {
-    reviewAdminJob.mockResolvedValue({ public_id: 'job_pending', status: 'rejected' })
-    renderPage()
-
+  it('sends table ordering to the server and resets to page one', async () => {
+    renderPage('/admin/app/job-moderation?job_page=3')
     await screen.findByText('Backend Engineer')
-    fireEvent.click(screen.getByRole('button', { name: 'Từ chối' }))
-    fireEvent.change(screen.getByLabelText('Lý do từ chối'), {
-      target: { value: 'Vui lòng bổ sung quyền lợi.' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Gửi lý do từ chối' }))
 
-    await waitFor(() => expect(reviewAdminJob).toHaveBeenCalledWith('job_pending', {
-      action: 'reject',
-      reason: 'Vui lòng bổ sung quyền lợi.',
-    }))
-  }, 15_000)
+    fireEvent.click(screen.getByRole('button', { name: 'Sắp xếp title' }))
 
-  it('opens the report queue from a deep-linked tab', async () => {
+    await waitFor(() => expect(getAdminJobs).toHaveBeenLastCalledWith(
+      { ordering: '-title', page: 1, status: 'pending' },
+      expect.any(Object),
+    ))
+  })
+
+  it('opens the report queue from the existing deep-linked tab', () => {
     renderPage('/admin/app/job-moderation?tab=reports')
 
     expect(screen.getByRole('tab', { name: 'Báo cáo vi phạm' })).toHaveAttribute(

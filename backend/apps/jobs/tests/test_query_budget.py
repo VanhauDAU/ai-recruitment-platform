@@ -24,6 +24,7 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 # Bốn query này chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
 BADGE_QUERY_BUDGET = 4
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
+ADMIN_JOB_LIST_QUERY_BUDGET = 2
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
 SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET
 
@@ -51,6 +52,42 @@ class JobListQueryBudgetTests(APITestCase):
     def test_job_list_query_count_is_flat_regardless_of_row_count(self):
         with self.assertNumQueries(JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('job-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 5)
+
+
+class AdminJobListQueryBudgetTests(APITestCase):
+    def setUp(self):
+        self.employer = User.objects.create_user(
+            email='admin-budget-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.admin = User.objects.create_user(
+            email='admin-budget@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            is_staff=True,
+            is_superuser=True,
+        )
+        company = Company.objects.create(
+            company_name='Admin Budget Co',
+            created_by=self.employer,
+        )
+        for index in range(5):
+            Job.objects.create(
+                posted_by=self.employer,
+                company=company,
+                title=f'Pending admin job {index}',
+                description='Description',
+                status=Job.Status.PENDING,
+            )
+        self.client.force_authenticate(self.admin)
+
+    def test_admin_job_list_query_count_is_flat(self):
+        with self.assertNumQueries(ADMIN_JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(reverse('admin-job-moderation-list'))
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
 

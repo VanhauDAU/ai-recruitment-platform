@@ -50,6 +50,15 @@ def require_admin_permission(user, *codes, match='all'):
     return True
 
 
+def has_admin_permission(user, *codes, match='all'):
+    if not user or not user.is_authenticated or not user.is_admin_role or not codes:
+        return False
+    available = effective_permission_codes(user)
+    if match == 'any':
+        return any(code in available for code in codes)
+    return all(code in available for code in codes)
+
+
 class HasAdminPermission(IsAdmin):
     """Fail-closed permission gate for administrator endpoints."""
 

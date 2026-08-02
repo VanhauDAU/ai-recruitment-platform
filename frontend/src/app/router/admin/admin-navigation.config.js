@@ -148,6 +148,18 @@ export const ADMIN_NAVIGATION = [
             routeRef: 'jobModeration',
           },
           {
+            key: 'all-jobs',
+            label: 'Tất cả tin',
+            routeRef: 'jobModeration',
+            query: { job_scope: 'all' },
+          },
+          {
+            key: 'held-jobs',
+            label: 'Tin đang tạm giữ',
+            routeRef: 'jobModeration',
+            query: { job_scope: 'held' },
+          },
+          {
             key: 'job-reports',
             label: 'Báo cáo vi phạm',
             routeRef: 'jobModeration',
