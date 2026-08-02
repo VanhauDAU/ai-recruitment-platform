@@ -813,6 +813,131 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
   await expectNoHorizontalOverflow(page)
 })
 
+test('employer applications: grouped CV workspace is clear across responsive layouts', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_applications',
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  const applications = [
+    {
+      public_id: 'app_befb3400ade3', candidate_name: 'Lê Văn Hậu',
+      candidate_email: 'levanhaum@gmail.com', job: 'jb_987ecf21d547',
+      job_title: 'Senior Frontend Developer', submitted_cv_title: 'CV Frontend 2026',
+      submitted_cv_version: 'cvv_frontend_2', submitted_cv_source: 'builder',
+      source: 'applied', status: 'submitted', employer_note: 'React tốt', employer_rating: 4,
+      cover_letter: 'Tôi mong muốn đồng hành cùng đội ngũ sản phẩm.',
+      applied_at: '2026-08-02T09:20:00+07:00',
+    },
+    {
+      public_id: 'app_previous', candidate_name: 'Lê Văn Hậu',
+      candidate_email: 'LEVANHAUM@gmail.com', job: 'jb_987ecf21d547',
+      job_title: 'Senior Frontend Developer', submitted_cv_title: 'CV Frontend bản đầu',
+      submitted_cv_version: 'cvv_frontend_1', submitted_cv_source: 'upload',
+      source: 'applied', status: 'considering', employer_note: '', employer_rating: null,
+      applied_at: '2026-07-28T08:00:00+07:00',
+    },
+  ]
+  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 2, next: null, previous: null, results: applications }),
+    })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/cv/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        application_public_id: 'app_befb3400ade3', job_public_id: 'jb_987ecf21d547',
+        status: 'viewed', submitted_at: '2026-08-02T09:20:00+07:00',
+        submitted_cv_title: 'CV Frontend 2026', submitted_cv_source: 'builder',
+        preferred_location_names: ['Đà Nẵng', 'Làm việc từ xa'], allow_ai_analysis: true,
+        contact_name: 'Lê Văn Hậu', contact_email: 'levanhaum@gmail.com', contact_phone: '0905123456',
+        cv: {
+          public_id: 'cvv_frontend_2', version_number: 2, schema_version: 1,
+          template_renderer_key: 'classic_single_column_v1', template_renderer_version: '1',
+          content_json: {
+            personal_info: {
+              full_name: 'Lê Văn Hậu', headline: 'Senior Frontend Developer',
+              email: 'levanhaum@gmail.com', phone: '0905123456', address: 'Đà Nẵng',
+            },
+            sections: [{
+              instance_id: 'summary_1', section_key: 'summary', title: 'Tóm tắt chuyên môn',
+              enabled: true, items: [{ item_id: 'summary_item_1', value: '6 năm xây dựng sản phẩm React.' }],
+            }],
+          },
+          layout_json: { regions: [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1'] }] },
+          style_json: { theme_color: '#059669', font_family: 'Roboto', font_scale: 1, line_height: 1.4 },
+          assets: [],
+        },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/v2/recruiter/applications/app_befb3400ade3/history/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { from_status: '', to_status: 'submitted', note: '', changed_by_name: '', created_at: '2026-08-02T09:20:00+07:00' },
+        { from_status: 'submitted', to_status: 'viewed', note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T09:30:00+07:00' },
+      ]),
+    })
+  })
+
+  await page.goto('/tuyendung/app/applications?job=jb_987ecf21d547&q=levanhaum%40gmail.com&application=app_befb3400ade3')
+
+  const candidateList = page.getByTestId('application-candidate-list')
+  const cvPreview = page.getByTestId('application-cv-preview')
+  const inspector = page.getByTestId('application-inspector')
+  const backToJobButton = page.getByRole('button', { name: 'Quay lại chi tiết tin tuyển dụng' })
+  await expect(backToJobButton).toBeVisible()
+  await expect(candidateList).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Thu gọn hồ sơ của Lê Văn Hậu' })).toBeVisible()
+  await expect(candidateList.getByText('2 CV', { exact: true })).toBeVisible()
+  await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
+  await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
+  await expect(cvPreview.getByLabel('Xem trước CV classic_single_column_v1 trang 1')).toBeVisible()
+  const viewportWidth = page.viewportSize().width
+  if (viewportWidth < 768) {
+    await expect(inspector).toBeHidden()
+    await page.getByRole('tab', { name: 'Thông tin liên quan' }).click()
+    await expect(inspector).toBeVisible()
+    await expect(cvPreview).toBeHidden()
+  }
+  await expect(inspector.getByText('levanhaum@gmail.com', { exact: true }).first()).toBeVisible()
+  await expect(inspector.getByText('Đà Nẵng, Làm việc từ xa')).toBeVisible()
+  await expect(inspector.getByText('Đã xem', { exact: true })).toBeVisible()
+
+  if (viewportWidth >= 1280) {
+    const [listBox, previewBox, inspectorBox] = await Promise.all([
+      candidateList.boundingBox(), cvPreview.boundingBox(), inspector.boundingBox(),
+    ])
+    expect(listBox.x).toBeLessThan(previewBox.x)
+    expect(previewBox.x).toBeLessThan(inspectorBox.x)
+    expect(Math.abs(listBox.y - previewBox.y)).toBeLessThanOrEqual(2)
+    expect(Math.abs(previewBox.y - inspectorBox.y)).toBeLessThanOrEqual(2)
+  } else if (viewportWidth >= 768) {
+    const [listBox, previewBox, inspectorBox] = await Promise.all([
+      candidateList.boundingBox(), cvPreview.boundingBox(), inspector.boundingBox(),
+    ])
+    expect(listBox.x).toBeLessThan(previewBox.x)
+    expect(inspectorBox.y).toBeGreaterThan(previewBox.y)
+  }
+  await expectNoHorizontalOverflow(page)
+  await backToJobButton.click()
+  await expect(page).toHaveURL('/tuyendung/app/jobs/jb_987ecf21d547')
+})
+
 test('employer campaigns: operational list shows compact campaign controls', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {

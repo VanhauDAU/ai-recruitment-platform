@@ -70,7 +70,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
 
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
-  const { pathname, key: locationKey } = useLocation()
+  const { pathname, search, key: locationKey } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -95,6 +95,10 @@ export default function EmployerWorkspaceLayout() {
   const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
   const isJobNew = pathname === employerAppPath('/jobs/new')
   const isJobForm = isJobNew || Boolean(jobEditMatch)
+  const isApplicationWorkspace = pathname === employerAppPath('/applications')
+  const applicationParams = new URLSearchParams(search)
+  const applicationJobId = applicationParams.get('job')
+  const applicationCampaignId = applicationParams.get('campaign')
 
   // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
   // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
@@ -106,6 +110,22 @@ export default function EmployerWorkspaceLayout() {
     }
     navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
   }
+  const goBackFromApplications = () => {
+    if (applicationJobId) {
+      navigate(`${employerAppPath('/jobs')}/${encodeURIComponent(applicationJobId)}`)
+      return
+    }
+    if (applicationCampaignId) {
+      navigate(`${employerAppPath('/campaigns')}/${encodeURIComponent(applicationCampaignId)}?active_tab=apply_cv`)
+      return
+    }
+    navigate(employerAppPath('/jobs'))
+  }
+  const applicationBackLabel = applicationJobId
+    ? 'Quay lại chi tiết tin tuyển dụng'
+    : applicationCampaignId
+      ? 'Quay lại chiến dịch tuyển dụng'
+      : 'Quay lại danh sách tin tuyển dụng'
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -283,11 +303,17 @@ export default function EmployerWorkspaceLayout() {
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
           <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-              {(isJobForm || isCampaignDetail) && (
+              {(isJobForm || isCampaignDetail || isApplicationWorkspace) && (
                 <Button
                   size="small"
                   icon={<ArrowLeftOutlined />}
-                  onClick={isCampaignDetail ? () => navigate(employerAppPath('/campaigns')) : goBackFromForm}
+                  aria-label={isApplicationWorkspace ? applicationBackLabel : 'Quay lại'}
+                  title={isApplicationWorkspace ? applicationBackLabel : undefined}
+                  onClick={isCampaignDetail
+                    ? () => navigate(employerAppPath('/campaigns'))
+                    : isApplicationWorkspace
+                      ? goBackFromApplications
+                      : goBackFromForm}
                   className="!inline-flex !items-center !gap-1.5 !rounded-lg !border !border-slate-300 !bg-white !px-3 !py-1 !text-xs !font-semibold !text-slate-700 shadow-2xs transition hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
                 >
                   Quay lại
