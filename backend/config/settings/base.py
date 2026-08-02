@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'apps.blog',
     'apps.privacy',
     'apps.services',
+    'apps.speech',
 ]
 
 MIDDLEWARE = [
@@ -296,6 +297,8 @@ REST_FRAMEWORK = {
         'announcement_event': '240/hour',
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
+        'speech_catalog': '120/hour',
+        'speech_session': '60/hour',
     },
 }
 
@@ -477,6 +480,7 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
+    'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
@@ -499,7 +503,45 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.cvs.tasks.purge_expired_cv_import_sources',
         'schedule': 86400.0,
     },
+    'reconcile-speech-artifacts': {
+        'task': 'apps.speech.tasks.assets.reconcile_speech_artifacts',
+        'schedule': 60.0,
+    },
+    'purge-obsolete-speech-artifacts': {
+        'task': 'apps.speech.tasks.assets.purge_obsolete_speech_artifacts',
+        'schedule': 86400.0,
+    },
 }
+
+# VieNeu-TTS chạy trong process riêng để không nhân model theo số Gunicorn/Celery
+# worker. Django chỉ cấp session ngắn hạn sau khi đã resolve nội dung public.
+SPEECH_TTS_BASE_URL = config('SPEECH_TTS_BASE_URL', default='http://127.0.0.1:8001').strip()
+SPEECH_TTS_INTERNAL_TOKEN = config(
+    'SPEECH_TTS_INTERNAL_TOKEN', default='dev-tts-internal-token-change-me'
+).strip()
+SPEECH_TTS_CONNECT_TIMEOUT_SECONDS = config(
+    'SPEECH_TTS_CONNECT_TIMEOUT_SECONDS', default=0.5, cast=float
+)
+SPEECH_TTS_READ_TIMEOUT_SECONDS = config('SPEECH_TTS_READ_TIMEOUT_SECONDS', default=2.0, cast=float)
+SPEECH_GENERATION_TIMEOUT_SECONDS = config(
+    'SPEECH_GENERATION_TIMEOUT_SECONDS', default=900.0, cast=float
+)
+SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS = config(
+    'SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS', default=2.0, cast=float
+)
+SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS = config(
+    'SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS', default=120.0, cast=float
+)
+SPEECH_ARTIFACT_RETENTION_DAYS = config('SPEECH_ARTIFACT_RETENTION_DAYS', default=30, cast=int)
+SPEECH_CAPABILITIES_CACHE_SECONDS = config(
+    'SPEECH_CAPABILITIES_CACHE_SECONDS', default=300, cast=int
+)
+SPEECH_MAX_TEXT_CHARS = config('SPEECH_MAX_TEXT_CHARS', default=30_000, cast=int)
+SPEECH_DEFAULT_VOICE_ID = config('SPEECH_DEFAULT_VOICE_ID', default='north-male-natural').strip()
+SPEECH_DEFAULT_STYLE = config('SPEECH_DEFAULT_STYLE', default='tu_nhien').strip()
+SPEECH_MODEL_REVISION = config(
+    'SPEECH_MODEL_REVISION', default='vieneu-3.2.3-v3-turbo-int8'
+).strip()
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
 # Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là

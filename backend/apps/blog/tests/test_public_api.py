@@ -1,9 +1,11 @@
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.blog.models import PinnedPost, Post, PostCategory, Tag
 from apps.blog.selectors import blog_home_sections
+from apps.speech.models import BlogSpeechAsset
 
 
 class BlogPublicApiTests(APITestCase):
@@ -77,15 +79,66 @@ class BlogPublicApiTests(APITestCase):
                 'category',
                 'tags',
                 'related_job_category',
+                'speech_default',
+                'speech_assets',
                 'published_at',
                 'seo_title',
                 'seo_description',
             },
         )
+        self.assertIsNone(res.data['speech_default'])
+        self.assertEqual(res.data['speech_assets'], [])
         self.published.refresh_from_db()
         self.assertEqual(self.published.view_count, 1)
         draft = self.client.get(reverse('blog-post-detail', args=[self.draft.slug]))
         self.assertEqual(draft.status_code, 404)
+
+    def test_detail_returns_only_the_ready_current_default_speech_asset(self):
+        BlogSpeechAsset.objects.create(
+            post=self.published,
+            post_revision=self.published.edit_revision + 1,
+            text_hash='b' * 64,
+            artifact_key='b' * 64,
+            config_hash='c' * 64,
+            model_revision=settings.SPEECH_MODEL_REVISION,
+            voice_id=settings.SPEECH_DEFAULT_VOICE_ID,
+            style=settings.SPEECH_DEFAULT_STYLE,
+            status=BlogSpeechAsset.Status.READY,
+            storage_key=f'speech/artifacts/v2/{"b" * 64}.mp3',
+            mime_type='audio/mpeg',
+            duration_ms=5_000,
+            size_bytes=50_000,
+        )
+        current = BlogSpeechAsset.objects.create(
+            post=self.published,
+            post_revision=self.published.edit_revision,
+            text_hash='a' * 64,
+            artifact_key='a' * 64,
+            config_hash='c' * 64,
+            model_revision=settings.SPEECH_MODEL_REVISION,
+            voice_id=settings.SPEECH_DEFAULT_VOICE_ID,
+            style=settings.SPEECH_DEFAULT_STYLE,
+            status=BlogSpeechAsset.Status.READY,
+            storage_key=f'speech/artifacts/v2/{"a" * 64}.mp3',
+            mime_type='audio/mpeg',
+            duration_ms=12_345,
+            size_bytes=123_456,
+        )
+
+        response = self.client.get(reverse('blog-post-detail', args=[self.published.slug]))
+
+        self.assertEqual(
+            response.data['speech_default'],
+            {
+                'status': 'ready',
+                'url': f'http://testserver/media/{current.storage_key}',
+                'voice_id': settings.SPEECH_DEFAULT_VOICE_ID,
+                'style': settings.SPEECH_DEFAULT_STYLE,
+                'mime_type': 'audio/mpeg',
+                'duration_ms': 12_345,
+            },
+        )
+        self.assertEqual(response.data['speech_assets'], [response.data['speech_default']])
 
     def test_pinned_only_published(self):
         res = self.client.get(reverse('blog-pinned-list'))

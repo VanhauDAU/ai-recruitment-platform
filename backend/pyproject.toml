@@ -45,7 +45,7 @@ type = "layers"
 containers = [
     "apps.accounts", "apps.applications", "apps.blog", "apps.candidates",
     "apps.cv_templates", "apps.cvs", "apps.dashboard", "apps.employers",
-    "apps.jobs", "apps.locations", "apps.privacy", "apps.services",
+    "apps.jobs", "apps.locations", "apps.privacy", "apps.services", "apps.speech",
     "apps.sitecontent", "apps.skills",
 ]
 layers = [

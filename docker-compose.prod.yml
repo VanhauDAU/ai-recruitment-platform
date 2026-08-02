@@ -46,6 +46,23 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.production
     volumes: []
 
+  tts:
+    restart: unless-stopped
+    environment:
+      TTS_ENVIRONMENT: production
+      TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN}
+      TTS_CACHE_DIR: /var/cache/procv-tts
+      TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-5}
+      TTS_CACHE_TTL_SECONDS: ${TTS_CACHE_TTL_SECONDS:-259200}
+      TTS_MAX_ACTIVE_SESSIONS: ${TTS_MAX_ACTIVE_SESSIONS:-1000}
+      TTS_MAX_CONCURRENT_STREAMS: ${TTS_MAX_CONCURRENT_STREAMS:-1}
+      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-4}
+      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-4}
+      OMP_WAIT_POLICY: PASSIVE
+      TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
+      HF_HOME: /var/cache/huggingface
+    ports: !reset []
+
   frontend:
     # Prod: build tĩnh + nginx thay cho vite dev server.
     image: !reset null
@@ -63,6 +80,12 @@ services:
     volumes: []
     environment: {}
     ports: []
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:80/']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   nginx:
     image: nginx:1.27-alpine
@@ -78,6 +101,20 @@ services:
     depends_on:
       - backend
       - frontend
+      - tts
+    init: true
+    pids_limit: ${NGINX_PIDS_LIMIT:-128}
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1/']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+        max-file: ${DOCKER_LOG_MAX_FILES:-3}
 
 volumes:
   backend_static:

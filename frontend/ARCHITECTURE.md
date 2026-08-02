@@ -200,13 +200,22 @@ phòng hờ.
 ```text
 app/router
   → pages/main/blog + pages/admin/app/Blog*
-    → features/edit-blog-post, manage-blog-content, manage-blog-tags
-      → entities/blog, job
+    → features/edit-blog-post, manage-blog-content, manage-blog-tags,
+      listen-to-blog-post
+      → entities/blog, job, speech
         → shared/api, shared/ui
 ```
 
 - `entities/blog` sở hữu public/admin HTTP contract, formatter và renderer HTML
   đã sanitize dùng chung giữa trang ứng viên với preview admin.
+- `entities/speech` sở hữu contract voice/session dùng lại được nhưng không
+  import blog. `features/listen-to-blog-post` phát mọi voice/style artifact đã
+  được tạo từ lượt nghe trước bằng native audio; chỉ tạo session streaming khi
+  tổ hợp đó chưa sẵn sàng. Catalogue chỉ tải khi mở bảng tùy chỉnh. Feature
+  tự giữ lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ
+  page; nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
+  control-plane resolve source/rate-limit; các listener cùng artifact identity
+  bám một live inference, và MP3 được encode từ chính live PCM đó.
 - `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
   preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
   `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;
