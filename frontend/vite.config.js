@@ -23,6 +23,14 @@ export default defineConfig({
   server: {
     // PORT do tool preview cấp khi 5173 bận; dev bình thường vẫn là 5173.
     port: Number(process.env.PORT) || 5173,
+    // Giữ stream cùng origin ở dev để Web Audio không cần CORS và frontend
+    // không biết địa chỉ private của model service.
+    proxy: {
+      '/tts': {
+        target: process.env.TTS_PROXY_TARGET || 'http://127.0.0.1:8001',
+        changeOrigin: false,
+      },
+    },
   },
   build: {
     // Bundle budget tooling uses the manifest to attribute every emitted chunk
