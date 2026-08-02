@@ -11,7 +11,7 @@ trình duyệt.
 | --- | --- |
 | `announcement.view` | Mở route, lọc/sắp xếp, xem preview, revision và audit |
 | `announcement.manage` | Tạo draft, tạo revision mới, đổi tên và nhân bản |
-| `announcement.publish` | Publish/schedule, pause, resume và archive |
+| `announcement.publish` | Publish/schedule, pause, resume, archive và hiện lại cho người đã đóng |
 
 `announcement.manage` và `announcement.publish` phụ thuộc
 `announcement.view`. Giao diện ẩn action không được cấp, nhưng backend vẫn là
@@ -147,14 +147,33 @@ Mọi mutation gửi `revision_token`. Nếu một tab hoặc quản trị viên
 hiện tại, hiển thị cảnh báo và yêu cầu tải bản mới nhất trước khi thao tác lại.
 Không tự ghi đè hoặc retry mutation cũ.
 
+### Hiện lại cho người đã đóng
+
+Khi người đọc bấm đóng hoặc tạm ẩn, trạng thái đó được lưu theo cặp
+`(thông báo, dismissal_version)` — ở server là `AnnouncementUserState`, ở trình
+duyệt khách là key `announcement-strip:{public_id}:v{version}` trong local
+storage. **Publish revision mới không đụng tới `dismissal_version`**, nên sửa
+nội dung xong người đã đóng vẫn không thấy gì. Đây là hành vi cố ý: sửa lỗi
+chính tả thì không nên làm phiền lại toàn bộ người đọc.
+
+Khi thay đổi thực sự đáng thông báo lại (đổi ngày bảo trì, đổi phạm vi ảnh
+hưởng), bấm **Hiện lại cho người đã đóng** trong drawer chi tiết. Action này
+tăng `dismissal_version` lên 1, làm mọi trạng thái đã đóng ở phiên bản cũ trở
+nên vô hiệu ở cả server lẫn trình duyệt. Chỉ áp dụng cho thông báo đang
+`published`; bản ghi trạng thái cũ được giữ lại làm lịch sử, không bị xóa.
+
+Giá trị hiện tại hiển thị ở drawer chi tiết dưới nhãn **Phiên bản hiển thị lại**.
+Nếu một thông báo "không hiển thị" dù đã publish và đúng lịch, hãy kiểm tra
+`dismissal_version` trước khi nghi ngờ target hoặc rollout.
+
 ## 5. Revision và audit history
 
 Drawer chi tiết có hai lịch sử chỉ đọc:
 
 - Revision: nội dung, loại, priority, surface, creator, thời gian và revision
   đang active.
-- Audit: create/rename/revision/publish/pause/resume/archive/duplicate, actor,
-  source, thời gian và metadata không nhạy cảm.
+- Audit: create/rename/revision/publish/pause/resume/archive/duplicate/
+  reset_dismissals, actor, source, thời gian và metadata không nhạy cảm.
 
 Audit được trả trong detail read-model cho người có `announcement.view`; không
 cần mở quyền xem audit toàn hệ thống.

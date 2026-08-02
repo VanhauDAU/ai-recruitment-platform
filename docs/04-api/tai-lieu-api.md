@@ -415,6 +415,7 @@ active hoặc không được gán cho template, API trả `400 theme_color`. M�
 | `POST` | `/api/site/admin/announcements/{public_id}/pause/` | `announcement.publish` | Pause |
 | `POST` | `/api/site/admin/announcements/{public_id}/resume/` | `announcement.publish` | Resume |
 | `POST` | `/api/site/admin/announcements/{public_id}/archive/` | `announcement.publish` | Archive |
+| `POST` | `/api/site/admin/announcements/{public_id}/reset-dismissals/` | `announcement.publish` | Tăng `dismissal_version` để hiện lại cho người đã đóng |
 | `POST` | `/api/site/admin/announcements/{public_id}/duplicate/` | `announcement.manage` | Tạo draft độc lập |
 | `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | `announcement.view` | Summary và daily metrics toàn bộ revision, mặc định 30 ngày |
 

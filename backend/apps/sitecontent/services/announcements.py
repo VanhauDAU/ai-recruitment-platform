@@ -356,6 +356,36 @@ def resume_announcement(*, announcement, actor, expected_revision_token):
 
 
 @transaction.atomic
+def reset_announcement_dismissals(*, announcement, actor, expected_revision_token):
+    """Show a published announcement again to readers who closed or snoozed it.
+
+    A dismissal is keyed by ``(announcement, dismissal_version)`` on the server
+    and by the same version in the browser's local storage, so editing the
+    wording alone never reaches someone who already dismissed it.  Advancing the
+    version is a deliberate act — a typo fix should not re-interrupt everyone —
+    which is why it is its own action instead of a side effect of publishing.
+    """
+    announcement = _lock_announcement(announcement)
+    _assert_revision_token(announcement, expected_revision_token)
+    if announcement.lifecycle_state != Announcement.LifecycleState.PUBLISHED:
+        raise ValidationError(
+            {'lifecycle_state': 'Chỉ thông báo đang phát hành mới hiện lại được.'}
+        )
+    # Existing state rows stay: they record what a reader dismissed and become
+    # inert once the active version moves past them.
+    announcement.dismissal_version += 1
+    announcement.revision_token += 1
+    announcement.save(update_fields=['dismissal_version', 'revision_token', 'updated_at'])
+    _record_action(
+        actor=actor,
+        action='announcement_reset_dismissals',
+        announcement=announcement,
+        payload={'dismissal_version': announcement.dismissal_version},
+    )
+    return announcement
+
+
+@transaction.atomic
 def archive_announcement(*, announcement, actor, expected_revision_token):
     return _transition(
         announcement=announcement,

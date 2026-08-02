@@ -5,6 +5,7 @@ from copy import deepcopy
 from django.core.exceptions import ValidationError
 
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
+from apps.cv_templates.section_registry import SECTION_REGISTRY
 
 from ..schemas import (
     empty_layout,
@@ -12,6 +13,15 @@ from ..schemas import (
     validate_cv_document,
     validate_template_layout_capabilities,
 )
+
+# Sections a renderer fills from `personal_info` and the editor refuses to
+# delete, so a document is only complete once they exist. `avatar` is backed by
+# personal info too but stays optional: a candidate opts into the photo.
+MARKER_SECTION_KEYS = {
+    contract.key: contract.display_name
+    for contract in SECTION_REGISTRY.values()
+    if contract.personal_info_backed and not contract.deletable
+}
 
 
 class CvCompositionError(ValidationError):
@@ -30,6 +40,60 @@ def published_template_version(template):
     ):
         raise CvCompositionError('The selected template does not have a published version.')
     return version
+
+
+def _unique_instance_id(content_json, section_key):
+    known = {
+        section.get('instance_id')
+        for section in content_json.get('sections', [])
+        if isinstance(section, dict)
+    }
+    number = 1
+    while f'{section_key}_{number}' in known:
+        number += 1
+    return f'{section_key}_{number}'
+
+
+def add_missing_marker_sections(template_version, content_json):
+    """Give a template the personal-info markers its layout maps but content lacks.
+
+    Most layouts draw the candidate's name and contact details from a header
+    block the renderer owns.  A header layout instead maps the ``nameplate`` and
+    ``contact`` sections into a region, so without those instances it would
+    render a CV with no name at all.  Starter content is renderer-neutral by
+    design and carries neither, so composition — the one place that knows both
+    the content and the template — materializes them.  The markers hold no
+    content of their own: every renderer reads them from ``personal_info``.
+    """
+    mapped_keys = {
+        section.section_definition.section_key
+        for section in template_version.sections.select_related('section_definition')
+    }
+    existing_keys = {
+        section.get('section_key')
+        for section in content_json.get('sections', [])
+        if isinstance(section, dict)
+    }
+    missing = [
+        section_key
+        for section_key in MARKER_SECTION_KEYS
+        if section_key in mapped_keys and section_key not in existing_keys
+    ]
+    if not missing:
+        return content_json
+    sections = content_json.setdefault('sections', [])
+    for position, section_key in enumerate(missing):
+        sections.insert(
+            position,
+            {
+                'instance_id': _unique_instance_id(content_json, section_key),
+                'section_key': section_key,
+                'title': MARKER_SECTION_KEYS[section_key],
+                'enabled': True,
+                'items': [],
+            },
+        )
+    return content_json
 
 
 def layout_for_content(template_version, content_json):
@@ -71,7 +135,7 @@ def layout_for_content(template_version, content_json):
 def compose_cv_document(*, template, content_json, theme_color=None, template_version=None):
     """Build and validate one renderer-neutral canonical CV document."""
     version = template_version or published_template_version(template)
-    content = deepcopy(content_json)
+    content = add_missing_marker_sections(version, deepcopy(content_json))
     layout = layout_for_content(version, content)
     style = deepcopy(version.default_style_json or empty_style())
     if theme_color:

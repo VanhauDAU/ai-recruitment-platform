@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import compose_cv_document
 from apps.cvs.services.pdf_renderer import render_cv_version_pdf
+from apps.sitecontent.selectors import default_locale_code
 from common.metrics import record_metric
 from common.pdf_raster import first_pdf_page_image
 from common.r2_storage import public_media_storage
@@ -43,8 +44,12 @@ def _source_content(locale):
 def snapshot_fingerprint(link):
     template = link.template
     version = template.current_published_version
-    localization = template.localizations.filter(is_active=True).order_by('locale').first()
-    locale = localization.locale if localization else 'vi-VN'
+    # A template is normally localized in every supported language, so picking
+    # the alphabetically first one would render the catalogue thumbnail in an
+    # arbitrary language. Prefer the locale most visitors browse the site in.
+    locales = sorted(template.localizations.filter(is_active=True).values_list('locale', flat=True))
+    default_locale = default_locale_code()
+    locale = default_locale if default_locale in locales or not locales else locales[0]
     _, source_revision = _source_content(locale)
     payload = {
         'template_version': version.pk if version else None,

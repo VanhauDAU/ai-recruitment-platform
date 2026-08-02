@@ -139,23 +139,36 @@ export default function AdminAnnouncementManagement() {
         pause: 'Đã tạm dừng thông báo.',
         resume: 'Đã tiếp tục thông báo.',
         archive: 'Đã lưu trữ thông báo.',
+        'reset-dismissals': 'Đã hiện lại thông báo cho người đã đóng.',
       }[type])
     } catch (error) {
       handleError(error)
     }
   }
 
+  const confirmations = {
+    archive: {
+      title: 'Lưu trữ thông báo?',
+      content: 'Thông báo đã lưu trữ là trạng thái cuối và không thể phát hành lại.',
+      okText: 'Lưu trữ',
+      okButtonProps: { danger: true },
+    },
+    'reset-dismissals': {
+      title: 'Hiện lại thông báo cho người đã đóng?',
+      content: 'Mọi người từng bấm đóng hoặc tạm ẩn sẽ thấy lại thông báo này. Chỉ dùng khi nội dung đã thay đổi đáng kể.',
+      okText: 'Hiện lại',
+    },
+  }
+
   const onAction = (type, extra = {}) => {
-    if (type !== 'archive') {
+    const confirmation = confirmations[type]
+    if (!confirmation) {
       executeLifecycle(type, extra)
       return
     }
     modal.confirm({
-      title: 'Lưu trữ thông báo?',
-      content: 'Thông báo đã lưu trữ là trạng thái cuối và không thể phát hành lại.',
-      okText: 'Lưu trữ',
       cancelText: 'Hủy',
-      okButtonProps: { danger: true },
+      ...confirmation,
       onOk: () => executeLifecycle(type, extra),
     })
   }

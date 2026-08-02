@@ -14,6 +14,7 @@ const AUDIT_LABELS = {
   announcement_pause: 'Tạm dừng',
   announcement_resume: 'Tiếp tục',
   announcement_archive: 'Lưu trữ',
+  announcement_reset_dismissals: 'Hiện lại cho người đã đóng',
   announcement_duplicate: 'Nhân bản thông báo',
   announcement_create_from_duplicate: 'Tạo từ bản sao',
 }

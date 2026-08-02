@@ -4,7 +4,9 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import AdminAccessAuditLog, User
 
-from ..models import Announcement, AnnouncementRevision
+from ..models import Announcement, AnnouncementRevision, AnnouncementUserState
+from ..selectors import active_announcements_for_request
+from ..services import set_announcement_user_state
 from .announcement_helpers import revision_payload
 
 
@@ -256,3 +258,91 @@ class AdminAnnouncementApiTests(APITestCase):
         self.assertEqual(publish.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(revision.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(duplicate.status_code, status.HTTP_201_CREATED)
+
+    def test_reset_dismissals_makes_an_edited_announcement_reach_readers_again(self):
+        """Editing wording alone never reaches someone who already closed it."""
+        created = self.create(internal_name='Thông báo bảo trì')
+        public_id = created.data['public_id']
+        published = self.client.post(
+            reverse('site-admin-announcement-publish', kwargs={'public_id': public_id}),
+            {'revision_token': created.data['revision_token'], 'revision': 1},
+            format='json',
+        )
+        self.assertEqual(published.data['dismissal_version'], 1)
+        announcement = Announcement.objects.get(public_id=public_id)
+        reader = User.objects.create_user(
+            email='announcement-reader@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        set_announcement_user_state(
+            announcement=announcement,
+            user=reader,
+            revision_number=1,
+            dismissal_version=1,
+            action='dismiss',
+        )
+
+        def visible_for_reader():
+            items, _ = active_announcements_for_request(
+                surface=AnnouncementRevision.Surface.CANDIDATE,
+                path='/',
+                user=reader,
+            )
+            return [item.public_id for item in items]
+
+        self.assertEqual(visible_for_reader(), [])
+
+        # A new revision is not enough: the dismissal is keyed by version.
+        self.client.post(
+            reverse('site-admin-announcement-revisions', kwargs={'public_id': public_id}),
+            {
+                'revision_token': published.data['revision_token'],
+                'revision': revision_payload(message_vi='Đổi lịch bảo trì sang 05/08'),
+            },
+            format='json',
+        )
+        announcement.refresh_from_db()
+        self.client.post(
+            reverse('site-admin-announcement-publish', kwargs={'public_id': public_id}),
+            {'revision_token': announcement.revision_token, 'revision': 2},
+            format='json',
+        )
+        announcement.refresh_from_db()
+        self.assertEqual(announcement.dismissal_version, 1)
+        self.assertEqual(visible_for_reader(), [])
+
+        reset = self.client.post(
+            reverse('site-admin-announcement-reset-dismissals', kwargs={'public_id': public_id}),
+            {'revision_token': announcement.revision_token},
+            format='json',
+        )
+
+        self.assertEqual(reset.status_code, status.HTTP_200_OK, reset.data)
+        self.assertEqual(reset.data['dismissal_version'], 2)
+        self.assertEqual(reset.data['audit_events'][0]['action'], 'announcement_reset_dismissals')
+        self.assertEqual(visible_for_reader(), [public_id])
+        # The old state row is retained as history, not deleted.
+        self.assertEqual(
+            AnnouncementUserState.objects.filter(user=reader, announcement=announcement).count(),
+            1,
+        )
+
+    def test_reset_dismissals_rejects_a_stale_token_and_an_unpublished_announcement(self):
+        created = self.create(internal_name='Thông báo nháp')
+        public_id = created.data['public_id']
+        url = reverse('site-admin-announcement-reset-dismissals', kwargs={'public_id': public_id})
+
+        draft = self.client.post(url, {'revision_token': 1}, format='json')
+
+        self.client.post(
+            reverse('site-admin-announcement-publish', kwargs={'public_id': public_id}),
+            {'revision_token': 1, 'revision': 1},
+            format='json',
+        )
+        stale = self.client.post(url, {'revision_token': 1}, format='json')
+
+        self.assertEqual(draft.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('lifecycle_state', draft.data)
+        self.assertEqual(stale.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(Announcement.objects.get(public_id=public_id).dismissal_version, 1)

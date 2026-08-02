@@ -91,6 +91,13 @@ export function useAnnouncementActions() {
       publicId,
       payload,
     }),
+    // Khóa trùng URL segment vì executeLifecycle gọi actions[type] và
+    // runAdminAnnouncementAction dùng chính chuỗi đó làm đường dẫn.
+    'reset-dismissals': (publicId, payload) => mutation.mutateAsync({
+      type: 'reset-dismissals',
+      publicId,
+      payload,
+    }),
     duplicate: (publicId, payload) => mutation.mutateAsync({
       type: 'duplicate',
       publicId,

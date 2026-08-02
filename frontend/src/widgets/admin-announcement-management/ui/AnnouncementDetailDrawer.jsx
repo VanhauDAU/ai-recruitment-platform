@@ -1,4 +1,5 @@
 import {
+  BellOutlined,
   CopyOutlined,
   EditOutlined,
   PauseCircleOutlined,
@@ -52,6 +53,10 @@ function DetailOverview({ detail }) {
           </Tag>
         </Descriptions.Item>
         <Descriptions.Item label="Revision token">{detail.revision_token}</Descriptions.Item>
+        {/* Người đã đóng thông báo chỉ thấy lại khi số này tăng. */}
+        <Descriptions.Item label="Phiên bản hiển thị lại">
+          {detail.dismissal_version}
+        </Descriptions.Item>
         <Descriptions.Item label="Loại">
           {KIND_LABELS[revision.kind] || revision.kind}
         </Descriptions.Item>
@@ -172,6 +177,15 @@ export default function AnnouncementDetailDrawer({
                   onClick={() => onAction('resume')}
                 >
                   Tiếp tục
+                </Button>
+              )}
+              {canPublish && isPublished && (
+                <Button
+                  icon={<BellOutlined />}
+                  loading={pendingType === 'reset-dismissals'}
+                  onClick={() => onAction('reset-dismissals')}
+                >
+                  Hiện lại cho người đã đóng
                 </Button>
               )}
               {canPublish && !isArchived && (

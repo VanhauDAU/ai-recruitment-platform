@@ -37,6 +37,7 @@ from ...services import (
     publish_announcement,
     record_consented_announcement_events,
     rename_announcement,
+    reset_announcement_dismissals,
     resume_announcement,
     set_announcement_user_state,
     set_announcement_viewer_cookie,
@@ -456,6 +457,11 @@ class AdminAnnouncementActionView(APIView):
                 actor=request.user,
                 expected_revision_token=validated['revision_token'],
             ),
+            'reset-dismissals': lambda: reset_announcement_dismissals(
+                announcement=announcement,
+                actor=request.user,
+                expected_revision_token=validated['revision_token'],
+            ),
         }
         if self.announcement_action == 'publish' and 'revision' not in validated:
             raise ValidationError({'revision': 'Chọn revision cần phát hành.'})
@@ -479,6 +485,10 @@ class AdminAnnouncementResumeView(AdminAnnouncementActionView):
 
 class AdminAnnouncementArchiveView(AdminAnnouncementActionView):
     announcement_action = 'archive'
+
+
+class AdminAnnouncementResetDismissalsView(AdminAnnouncementActionView):
+    announcement_action = 'reset-dismissals'
 
 
 @extend_schema(

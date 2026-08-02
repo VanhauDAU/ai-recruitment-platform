@@ -70,9 +70,15 @@ docker compose exec backend sh -c "\
   python manage.py seed_job_categories && \
   python manage.py seed_sitecontent && \
   python manage.py seed_cv_catalog && \
+  python manage.py seed_cv_templates && \
   python manage.py seed_services && \
   python manage.py seed_demo_jobs"
 ```
+
+`seed_cv_templates` dựng 10 mẫu CV (template + version đã publish + mapping
+section + localization 4 ngôn ngữ + danh mục + màu). Thêm `--snapshots` để xếp
+hàng render ảnh preview thật cho từng màu — cần worker Celery có WeasyPrint;
+không chạy thì catalogue dùng ảnh giữ chỗ theo màu chủ đạo.
 
 `seed_locations` gọi `provinces.open-api.vn` nên cần internet ở lần chạy đầu.
 Mọi lệnh seed đều chạy lại được.
