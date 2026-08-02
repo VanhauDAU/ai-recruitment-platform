@@ -14,6 +14,10 @@ from ..models import CampaignActivity, RecruitmentCampaign
 REPORT_TIME_ZONE = ZoneInfo('Asia/Ho_Chi_Minh')
 
 
+class CampaignJobPerformanceScopeNotFound(LookupError):
+    """Raised when a requested job does not belong to the campaign report."""
+
+
 def campaign_list_queryset(user, *, status=None, scope=None, q=None, ordering=None):
     today = timezone.localdate()
     latest_activity = CampaignActivity.objects.filter(campaign_id=OuterRef('pk')).order_by(
@@ -295,8 +299,8 @@ def _rate(numerator, denominator):
     return round((numerator / denominator) * 100, 2)
 
 
-def campaign_job_performance(campaign, *, days=7):
-    """Return period-aligned engagement metrics without using lifetime counters."""
+def campaign_job_performance(campaign, *, days=7, job_public_id=None):
+    """Return period-aligned campaign or single-job engagement metrics."""
     today = timezone.localdate(timezone=REPORT_TIME_ZONE)
     start = today - timedelta(days=days - 1)
     end_exclusive = today + timedelta(days=1)
@@ -317,7 +321,17 @@ def campaign_job_performance(campaign, *, days=7):
             'engagement_tracking_started_at',
         )
     )
+    selected_job = None
+    if job_public_id is not None:
+        selected_job = next(
+            (job for job in jobs if job['public_id'] == job_public_id),
+            None,
+        )
+        if selected_job is None:
+            raise CampaignJobPerformanceScopeNotFound(job_public_id)
+
     job_ids = [job['id'] for job in jobs]
+    scoped_job_ids = [selected_job['id']] if selected_job is not None else job_ids
     engagement_rows = JobEngagementDaily.objects.filter(
         job_id__in=job_ids,
         date__gte=start,
@@ -386,9 +400,14 @@ def campaign_job_performance(campaign, *, days=7):
             }
         )
 
+    scoped_job_results = (
+        [job for job in job_results if job['public_id'] == selected_job['public_id']]
+        if selected_job is not None
+        else job_results
+    )
     daily = []
     for date in dates:
-        eligible_job_ids = [job_id for job_id in job_ids if tracking_dates[job_id] <= date]
+        eligible_job_ids = [job_id for job_id in scoped_job_ids if tracking_dates[job_id] <= date]
         available = bool(eligible_job_ids)
         daily.append(
             {
@@ -421,12 +440,21 @@ def campaign_job_performance(campaign, *, days=7):
             }
         )
 
-    total_impressions = sum(job['impressions'] for job in job_results)
-    total_views = sum(job['views'] for job in job_results)
-    total_applications = sum(job['applications'] for job in job_results)
-    data_available_from = min(tracking_dates.values()) if tracking_dates else None
+    total_impressions = sum(job['impressions'] for job in scoped_job_results)
+    total_views = sum(job['views'] for job in scoped_job_results)
+    total_applications = sum(job['applications'] for job in scoped_job_results)
+    data_available_from = (
+        min(tracking_dates[job_id] for job_id in scoped_job_ids) if scoped_job_ids else None
+    )
     return {
         'campaign_public_id': campaign.public_id,
+        'scope': {
+            'type': 'job' if selected_job is not None else 'all_jobs',
+            'job_public_id': selected_job['public_id'] if selected_job is not None else None,
+            'job_title': selected_job['title'] if selected_job is not None else None,
+            'included_job_count': len(scoped_job_ids),
+            'total_job_count': len(job_ids),
+        },
         'range': {'days': days, 'start': start, 'end': today},
         'data_available_from': data_available_from,
         'summary': {

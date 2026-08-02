@@ -147,3 +147,4 @@ class CampaignActivitySerializer(serializers.ModelSerializer):
 
 class CampaignPerformanceQuerySerializer(serializers.Serializer):
     days = serializers.ChoiceField(choices=(7, 30, 90), default=7)
+    job = serializers.CharField(max_length=50, required=False, allow_blank=False)

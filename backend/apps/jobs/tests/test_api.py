@@ -1,9 +1,13 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
+from apps.applications.models import Application
+from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
@@ -399,6 +403,8 @@ class EmployerJobSerializerTests(APITestCase):
                 'campaign',
                 'campaign_name',
                 'application_count',
+                'candidate_count',
+                'candidate_previews',
                 'view_count',
                 'published_at',
                 'submitted_at',
@@ -417,6 +423,114 @@ class EmployerJobSerializerTests(APITestCase):
                 'job_skills',
                 'category_assignments',
             }.isdisjoint(item)
+        )
+        self.assertEqual(item['candidate_count'], 0)
+        self.assertEqual(item['candidate_previews'], [])
+
+    def test_employer_list_groups_candidate_previews_and_uses_latest_application(self):
+        job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Backend Engineer',
+            description='Build reliable APIs.',
+            application_count=3,
+        )
+        first_candidate = User.objects.create_user(
+            email='first-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+            full_name='Nguyễn Minh Anh',
+            avatar_url='users/avatars/minh-anh.png',
+        )
+        second_candidate = User.objects.create_user(
+            email='second-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+            full_name='Trần Hoàng Nam',
+        )
+        first_cv = UserCv.objects.create(
+            user=first_candidate,
+            cv_type=UserCv.CvType.BUILDER,
+            title='Backend CV v1',
+        )
+        first_version = CvVersion.objects.create(
+            cv=first_cv,
+            version_number=1,
+            content_hash='1' * 64,
+            created_by=first_candidate,
+        )
+        second_cv = UserCv.objects.create(
+            user=second_candidate,
+            cv_type=UserCv.CvType.BUILDER,
+            title='Platform CV',
+        )
+        second_version = CvVersion.objects.create(
+            cv=second_cv,
+            version_number=1,
+            content_hash='2' * 64,
+            created_by=second_candidate,
+        )
+        first_submission = Application.objects.create(
+            candidate=first_candidate,
+            job=job,
+            cv=first_cv,
+            submitted_cv_version=first_version,
+            submitted_cv_title='Backend CV v1',
+            status=Application.Status.VIEWED,
+        )
+        second_candidate_submission = Application.objects.create(
+            candidate=second_candidate,
+            job=job,
+            cv=second_cv,
+            submitted_cv_version=second_version,
+            submitted_cv_title='Platform CV',
+        )
+        latest_submission = Application.objects.create(
+            candidate=first_candidate,
+            job=job,
+            cv=first_cv,
+            submitted_cv_version=first_version,
+            submitted_cv_title='Backend CV v2',
+            status=Application.Status.SHORTLISTED,
+        )
+        now = timezone.now()
+        Application.objects.filter(pk=first_submission.pk).update(
+            applied_at=now - timedelta(days=2)
+        )
+        Application.objects.filter(pk=second_candidate_submission.pk).update(
+            applied_at=now - timedelta(days=1)
+        )
+        Application.objects.filter(pk=latest_submission.pk).update(applied_at=now)
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(reverse('employer-job-list-create'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        item = response.data['results'][0]
+        self.assertEqual(item['application_count'], 3)
+        self.assertEqual(item['candidate_count'], 2)
+        self.assertEqual(len(item['candidate_previews']), 2)
+        latest_preview, second_preview = item['candidate_previews']
+        self.assertEqual(
+            latest_preview,
+            {
+                'application_public_id': latest_submission.public_id,
+                'public_id': first_candidate.public_id,
+                'full_name': 'Nguyễn Minh Anh',
+                'avatar_url': 'http://testserver/media/users/avatars/minh-anh.png',
+                'cv_title': 'Backend CV v2',
+                'status': Application.Status.SHORTLISTED,
+                'applied_at': now,
+            },
+        )
+        self.assertEqual(
+            second_preview['application_public_id'], second_candidate_submission.public_id
+        )
+        self.assertEqual(second_preview['public_id'], second_candidate.public_id)
+        self.assertEqual(second_preview['avatar_url'], '')
+        self.assertNotIn(
+            first_submission.public_id,
+            [preview['application_public_id'] for preview in item['candidate_previews']],
         )
 
     def payload(self):

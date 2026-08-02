@@ -2,7 +2,6 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   EditOutlined,
-  HistoryOutlined,
   PlusOutlined,
   RocketOutlined,
 } from '@ant-design/icons'
@@ -99,20 +98,6 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
               Sửa chiến dịch
             </Button>
             <CampaignLifecycleActions campaign={campaign} block />
-          </div>
-        </div>
-
-        <div className="mt-5 flex min-w-0 items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-3 sm:items-center">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm">
-            <HistoryOutlined aria-hidden />
-          </span>
-          <div className="min-w-0 text-sm">
-            <span className="font-semibold text-slate-700">Hoạt động gần nhất</span>
-            <span className="mx-2 text-slate-300">•</span>
-            <span className="text-slate-600">{campaign.last_activity?.label || 'Chưa có hoạt động'}</span>
-            <span className="mt-0.5 block text-xs text-slate-400 sm:ml-2 sm:inline">
-              {formatDate(campaign.last_activity?.occurred_at, true)}
-            </span>
           </div>
         </div>
       </div>

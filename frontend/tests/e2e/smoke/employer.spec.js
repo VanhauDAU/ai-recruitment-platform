@@ -549,6 +549,125 @@ test('employer workspace: an incomplete account cannot access recruitment operat
   await expectNoHorizontalOverflow(page)
 })
 
+test('employer jobs: compact list keeps candidate previews and contextual actions usable', async ({ page }) => {
+  let lastJobsQuery = new URLSearchParams()
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_verified',
+        onboarding: { verification_completed: true },
+      }),
+    })
+  })
+  const avatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiI+PHJlY3QgZmlsbD0iIzBmNzY2ZSIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIi8+PC9zdmc+'
+  await page.route(/http:\/\/localhost:8000\/api\/jobs\/mine\/\?.*/, async (route) => {
+    lastJobsQuery = new URL(route.request().url()).searchParams
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        count: 2,
+        next: null,
+        previous: null,
+        results: [
+          {
+            public_id: 'jb_compact',
+            title: 'Kỹ sư Frontend React',
+            status: 'active',
+            is_expired: false,
+            campaign: 'camp_product',
+            campaign_name: 'Tuyển đội ngũ sản phẩm',
+            locations_detail: [{ id: 1, name: 'Đà Nẵng' }],
+            employment_type: 'full_time',
+            deadline: '2026-08-31',
+            application_count: 3,
+            candidate_count: 2,
+            candidate_previews: [
+              {
+                public_id: 'candidate_1',
+                application_public_id: 'app_latest',
+                full_name: 'Nguyễn Minh Anh',
+                avatar_url: avatar,
+                cv_title: 'Frontend CV 2026',
+              },
+              {
+                public_id: 'candidate_2',
+                application_public_id: 'app_second',
+                full_name: 'Trần Hải Nam',
+                avatar_url: '',
+                cv_title: 'React CV',
+              },
+            ],
+            view_count: 36,
+            updated_at: '2026-08-01T08:00:00Z',
+          },
+          {
+            public_id: 'jb_draft',
+            title: 'Backend Engineer',
+            status: 'draft',
+            is_expired: false,
+            locations_detail: [],
+            deadline: null,
+            application_count: 0,
+            candidate_count: 0,
+            candidate_previews: [],
+            view_count: 0,
+            updated_at: '2026-08-01T08:00:00Z',
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/jobs')
+
+  await expect(page.getByRole('link', { name: 'Đăng tin tuyển dụng' })).toHaveAttribute(
+    'href',
+    '/tuyendung/app/jobs/new',
+  )
+  const activeJob = page.getByTestId('job-list-item-jb_compact')
+  await expect(activeJob.getByRole('link', { name: 'Kỹ sư Frontend React' })).toBeVisible()
+  await expect(activeJob.getByText('Đang tuyển')).toBeVisible()
+  await expect(activeJob.getByText('Tuyển đội ngũ sản phẩm')).toBeVisible()
+  await expect(activeJob.getByText('2 ứng viên')).toBeVisible()
+  await expect(activeJob.getByText('3 CV')).toBeVisible()
+  const candidateAvatar = activeJob.getByRole('link', { name: 'Mở hồ sơ Nguyễn Minh Anh' })
+  await expect(candidateAvatar).toBeVisible()
+  await expect(candidateAvatar.locator('.ant-avatar')).toHaveClass(/ant-avatar-image/)
+  await expect(page.getByTestId('job-list-item-jb_draft').getByRole('link', { name: 'Hoàn thiện' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  const cardHeight = await activeJob.evaluate((element) => element.getBoundingClientRect().height)
+  expect(cardHeight).toBeLessThan(page.viewportSize().width >= 1024 ? 100 : 180)
+
+  if (page.viewportSize().width >= 1024) {
+    const hoverActions = activeJob.getByTestId('job-hover-actions')
+    await expect(hoverActions).toHaveCSS('opacity', '0')
+    await activeJob.hover()
+    await expect(hoverActions).toHaveCSS('opacity', '1')
+    await expect(hoverActions.getByRole('link', { name: 'Chỉnh sửa tin' })).toBeVisible()
+    await activeJob.getByRole('link', { name: 'Kỹ sư Frontend React' }).focus()
+    await expect(hoverActions).toHaveCSS('opacity', '1')
+  } else {
+    await expect(activeJob.getByTestId('job-mobile-actions')).toBeVisible()
+    await activeJob.getByRole('button', { name: 'Mở thao tác cho Kỹ sư Frontend React' }).click()
+    await expect(page.getByRole('menuitem', { name: /Chỉnh sửa tin/ })).toBeVisible()
+    await page.keyboard.press('Escape')
+  }
+
+  await page.getByRole('searchbox', { name: 'Tìm tin tuyển dụng' }).fill('Frontend')
+  await page.getByRole('searchbox', { name: 'Tìm tin tuyển dụng' }).press('Enter')
+  await expect(page).toHaveURL(/q=Frontend/)
+  await expect.poll(() => lastJobsQuery.get('q')).toBe('Frontend')
+})
+
 test('employer jobs: manual job form exposes the complete five-section workflow', async ({ page }) => {
   let savedDraft = null
   await mockPublicApi(page)
@@ -743,7 +862,8 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'jb_workspace', title: 'Kỹ sư Frontend React', status: 'active',
-        campaign_name: 'Tuyển đội ngũ sản phẩm', deadline: '2026-08-31', view_count: 36,
+        campaign: 'camp_product', campaign_name: 'Tuyển đội ngũ sản phẩm',
+        deadline: '2026-08-31', view_count: 36,
         application_count: 2, number_of_vacancies: 2, salary_type: 'range',
         salary_min: 18000000, salary_max: 30000000, employment_type: 'full_time',
         work_type: 'hybrid', work_types: ['hybrid', 'onsite'], experience_years: '2',
@@ -782,6 +902,8 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
 
   await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | ProCV cho Nhà tuyển dụng')
   await expect(page.getByRole('heading', { name: 'Kỹ sư Frontend React' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Mở chiến dịch Tuyển đội ngũ sản phẩm' }))
+    .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_product?active_tab=job')
   await expect(page.getByRole('button', { name: /Chỉnh sửa/ })).toBeVisible()
   await expect(page.getByTestId('job-metric-total-cvs')).toContainText('2')
   await expect(page.getByTestId('job-metric-applied-cvs')).toContainText('1')
@@ -1050,7 +1172,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
         public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'active',
         created_at: '2026-07-01T08:00:00+07:00',
         updated_at: '2026-07-20T10:00:00+07:00',
-        job_count: 1, candidate_count: 1, application_submission_count: 2,
+        job_count: 2, candidate_count: 1, application_submission_count: 2,
         application_pair_count: 1,
         unviewed_count: 1, accepted_count: 1,
         last_activity: {
@@ -1072,7 +1194,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
         unanswered_count: 1,
         accepted_count: 1,
         applications: { total: 2, new: 1 },
-        jobs: { total: 1, active: 1 },
+        jobs: { total: 2, active: 1, draft: 1 },
         funnel: { submitted: 1, considering: 1 },
         daily_applications: [
           { date: '2026-07-16', count: 0 },
@@ -1087,30 +1209,69 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
     })
   })
   let performanceDays = 7
+  let performanceJob = null
+  let performanceRequestCount = 0
   await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/camp_frontend\/job-performance\/(?:\?.*)?$/, async (route) => {
-    const days = Number(new URL(route.request().url()).searchParams.get('days') || 7)
+    const params = new URL(route.request().url()).searchParams
+    const days = Number(params.get('days') || 7)
+    const jobPublicId = params.get('job')
     performanceDays = days
+    performanceJob = jobPublicId
+    performanceRequestCount += 1
+    const jobs = [
+      {
+        public_id: 'jb_frontend', slug: 'ky-su-frontend', title: 'Kỹ sư Frontend', status: 'active',
+        deadline: '2026-08-31', is_expired: false, available: true,
+        impressions: 120, views: 40, applications: 3, view_rate: 33.33, application_rate: 7.5,
+      },
+      {
+        public_id: 'job_backend', slug: 'backend-engineer', title: 'Backend Engineer', status: 'draft',
+        deadline: '2026-09-15', is_expired: false, available: true,
+        impressions: 30, views: 10, applications: 1, view_rate: 33.33, application_rate: 10,
+      },
+    ]
+    const selectedJob = jobs.find((job) => job.public_id === jobPublicId)
+    const summary = selectedJob
+      ? {
+          impressions: selectedJob.impressions,
+          views: selectedJob.views,
+          applications: selectedJob.applications,
+          view_rate: selectedJob.view_rate,
+          application_rate: selectedJob.application_rate,
+        }
+      : { impressions: 150, views: 50, applications: 4, view_rate: 33.33, application_rate: 8 }
     const daily = Array.from({ length: days }, (_, index) => ({
       date: new Date(Date.UTC(2026, 6, 22 - (days - 1 - index))).toISOString().slice(0, 10),
       available: true,
-      impressions: index === days - 1 ? 120 : 0,
-      views: index === days - 1 ? 40 : 0,
-      applications: index === days - 1 ? 3 : 0,
+      impressions: index === days - 1 ? summary.impressions : 0,
+      views: index === days - 1 ? summary.views : 0,
+      applications: index === days - 1 ? summary.applications : 0,
     }))
+    jobs.forEach((job) => { job.data_available_from = daily[0].date })
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         campaign_public_id: 'camp_frontend',
         range: { days, start: daily[0].date, end: daily[daily.length - 1].date },
         data_available_from: daily[0].date,
-        summary: { impressions: 120, views: 40, applications: 3, view_rate: 33.33, application_rate: 7.5 },
+        scope: selectedJob
+          ? {
+              type: 'job',
+              job_public_id: selectedJob.public_id,
+              job_title: selectedJob.title,
+              included_job_count: 1,
+              total_job_count: 2,
+            }
+          : {
+              type: 'all_jobs',
+              job_public_id: null,
+              job_title: null,
+              included_job_count: 2,
+              total_job_count: 2,
+            },
+        summary,
         daily,
-        jobs: [{
-          public_id: 'jb_frontend', slug: 'ky-su-frontend', title: 'Kỹ sư Frontend', status: 'active',
-          deadline: '2026-08-31', is_expired: false, available: true,
-          data_available_from: daily[0].date, impressions: 120, views: 40, applications: 3,
-          view_rate: 33.33, application_rate: 7.5,
-        }],
+        jobs,
       }),
     })
   })
@@ -1215,7 +1376,9 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
 
   await chooseCampaignTab('Tin tuyển dụng')
   await expect(page).toHaveURL(/active_tab=job/)
-  await expect(page.getByText('Báo cáo Tin tuyển dụng:')).toBeVisible()
+  const reportHeader = page.getByText('Báo cáo Tin tuyển dụng:', { exact: true }).locator('..')
+  await expect(reportHeader).toContainText('Tất cả 2 tin trong chiến dịch')
+  await expect(page.getByText('Các chỉ số và biểu đồ đang tổng hợp toàn bộ 2 tin tuyển dụng.', { exact: true })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
   if (compactCampaignTabs) {
     await page.getByTestId('campaign-chart-hit-0').click({ force: true })
@@ -1232,12 +1395,45 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await expect(page.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' })).toHaveAttribute('href', '/viec-lam/ky-su-frontend')
   await expect(page.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' })).toHaveAttribute('target', '_blank')
   await expect(page.getByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' })).toBeVisible()
+  const performanceTable = page.getByTestId('campaign-performance-table')
+  await expect(performanceTable.getByRole('link', { name: 'Kỹ sư Frontend', exact: true })).toBeVisible()
+  await expect(performanceTable.getByRole('link', { name: 'Backend Engineer', exact: true })).toBeVisible()
+  const impressionsMetric = page.locator('article').filter({ hasText: 'Lượt hiển thị' })
+  const viewsMetric = page.locator('article').filter({ hasText: 'Lượt xem tin' })
+  const applicationsMetric = page.locator('article').filter({ hasText: 'Lượt ứng tuyển' })
+  await expect(impressionsMetric).toContainText('150')
+  await expectNoHorizontalOverflow(page)
+
+  await performanceTable.getByRole('button', { name: 'Xem báo cáo Backend Engineer' }).click()
+  await expect.poll(() => performanceJob).toBe('job_backend')
+  await expect(reportHeader).toContainText('Backend Engineer')
+  await expect(page.getByText('Các chỉ số và biểu đồ đang hiển thị riêng tin đã chọn.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xem báo cáo tổng hợp' })).toBeVisible()
+  await expect(impressionsMetric).toContainText('30')
+  await expect(viewsMetric).toContainText('10')
+  await expect(applicationsMetric).toContainText('1')
+
+  const requestsBeforeStatusFilter = performanceRequestCount
+  await page.getByRole('combobox', { name: 'Lọc bảng theo trạng thái' }).click()
+  await page.locator('.ant-select-dropdown:visible').getByText('Đang tuyển', { exact: true }).click()
+  await expect(performanceTable.getByRole('link', { name: 'Kỹ sư Frontend', exact: true })).toBeVisible()
+  await expect(performanceTable.getByRole('link', { name: 'Backend Engineer', exact: true })).toHaveCount(0)
+  expect(performanceRequestCount).toBe(requestsBeforeStatusFilter)
+  await expect(reportHeader).toContainText('Backend Engineer')
+  await expect(impressionsMetric).toContainText('30')
   await expectNoHorizontalOverflow(page)
 
   await page.getByRole('combobox', { name: 'Khoảng thời gian báo cáo' }).click()
   await page.getByText('30 ngày qua', { exact: true }).last().click()
   await expect.poll(() => performanceDays).toBe(30)
+  await expect.poll(() => performanceJob).toBe('job_backend')
   await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await page.getByRole('button', { name: 'Xem báo cáo tổng hợp' }).click()
+  await expect.poll(() => performanceJob).toBe(null)
+  await expect(reportHeader).toContainText('Tất cả 2 tin trong chiến dịch')
+  await expect(impressionsMetric).toContainText('150')
   await expectNoHorizontalOverflow(page)
 
   await chooseCampaignTab('Lịch sử hoạt động')

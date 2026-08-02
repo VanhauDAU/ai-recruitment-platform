@@ -83,6 +83,39 @@ describe('campaign API', () => {
       'pause-impact',
       'camp_1',
     ])
-    expect(campaignKeys.jobPerformance('camp_1', 7)).toEqual(['campaigns', 'job-performance', 'camp_1', 7])
+    expect(campaignKeys.jobPerformance('camp_1', 7)).toEqual([
+      'campaigns',
+      'job-performance',
+      'camp_1',
+      7,
+      'all',
+    ])
+    expect(campaignKeys.jobPerformance('camp_1', 7, 'job_1')).toEqual([
+      'campaigns',
+      'job-performance',
+      'camp_1',
+      7,
+      'job_1',
+    ])
+  })
+
+  it('adds a job scope only when requesting one job performance report', async () => {
+    get
+      .mockResolvedValueOnce({ data: { scope: { type: 'campaign' } } })
+      .mockResolvedValueOnce({ data: { scope: { type: 'job', job_public_id: 'job_1' } } })
+
+    await getCampaignJobPerformance('camp_1', 30)
+    await getCampaignJobPerformance('camp_1', 30, 'job_1')
+
+    expect(get).toHaveBeenNthCalledWith(
+      1,
+      '/employer/campaigns/camp_1/job-performance/',
+      { params: { days: 30 } },
+    )
+    expect(get).toHaveBeenNthCalledWith(
+      2,
+      '/employer/campaigns/camp_1/job-performance/',
+      { params: { days: 30, job: 'job_1' } },
+    )
   })
 })

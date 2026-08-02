@@ -6,5 +6,11 @@ export const campaignKeys = {
   report: (publicId) => ['campaigns', 'report', publicId],
   pauseImpact: (publicId) => ['campaigns', 'pause-impact', publicId],
   activities: (publicId, params = {}) => ['campaigns', 'activities', publicId, params],
-  jobPerformance: (publicId, days) => ['campaigns', 'job-performance', publicId, days],
+  jobPerformance: (publicId, days, jobPublicId = '') => [
+    'campaigns',
+    'job-performance',
+    publicId,
+    days,
+    jobPublicId || 'all',
+  ],
 }

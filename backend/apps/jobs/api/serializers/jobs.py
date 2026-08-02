@@ -716,6 +716,8 @@ class EmployerJobListSerializer(PublicJobListSerializer):
     campaign = serializers.CharField(source='campaign.public_id', read_only=True, allow_null=True)
     campaign_name = serializers.CharField(source='campaign.name', read_only=True, allow_null=True)
     is_expired = serializers.BooleanField(read_only=True)
+    candidate_count = serializers.IntegerField(read_only=True, default=0)
+    candidate_previews = serializers.SerializerMethodField()
 
     class Meta(PublicJobListSerializer.Meta):
         fields = [
@@ -730,6 +732,8 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'campaign',
             'campaign_name',
             'application_count',
+            'candidate_count',
+            'candidate_previews',
             'view_count',
             'published_at',
             'submitted_at',
@@ -738,4 +742,17 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             'created_at',
             'updated_at',
         ]
+        list_serializer_class = serializers.ListSerializer
         read_only_fields = fields
+
+    def get_candidate_previews(self, obj):
+        return [
+            {
+                **preview,
+                'avatar_url': media_url_from_value(
+                    preview['avatar_url'],
+                    request=self.context.get('request'),
+                ),
+            }
+            for preview in getattr(obj, 'candidate_previews', [])
+        ]

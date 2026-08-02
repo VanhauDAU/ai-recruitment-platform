@@ -95,9 +95,16 @@ export async function getJobSuggestions(q, searchBy = 'title') {
   return data.suggestions || []
 }
 
-export async function getEmployerJobs(params = {}) {
+export async function getEmployerJobPage(params = {}) {
   const { data } = await api.get('/jobs/mine/', { params })
-  return data.results || data
+  return Array.isArray(data)
+    ? { count: data.length, next: null, previous: null, results: data }
+    : data
+}
+
+export async function getEmployerJobs(params = {}) {
+  const page = await getEmployerJobPage(params)
+  return page.results || []
 }
 
 export async function getEmployerJob(publicId) {
@@ -147,6 +154,11 @@ export async function extendEmployerJob(publicId, deadline) {
 export async function duplicateEmployerJob(publicId) {
   const { data } = await api.post(`/jobs/mine/${publicId}/duplicate/`)
   return data
+}
+
+export async function deleteEmployerJob(publicId) {
+  await api.delete(`/jobs/mine/${publicId}/`)
+  return publicId
 }
 
 export async function getAdminJobModeration(params = {}) {

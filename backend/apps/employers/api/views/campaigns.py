@@ -1,5 +1,6 @@
 from time import perf_counter
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.response import Response
@@ -9,6 +10,7 @@ from apps.accounts.permissions import IsEmployer
 from common.metrics import record_metric
 
 from ...selectors.campaigns import (
+    CampaignJobPerformanceScopeNotFound,
     attach_campaign_candidate_previews,
     campaign_activity_queryset,
     campaign_detail_queryset,
@@ -146,10 +148,14 @@ class RecruitmentCampaignJobPerformanceView(APIView):
         campaign = get_object_or_404(owned_campaign_queryset(request.user), public_id=public_id)
         serializer = CampaignPerformanceQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
-        result = campaign_job_performance(
-            campaign,
-            days=serializer.validated_data['days'],
-        )
+        try:
+            result = campaign_job_performance(
+                campaign,
+                days=serializer.validated_data['days'],
+                job_public_id=serializer.validated_data.get('job'),
+            )
+        except CampaignJobPerformanceScopeNotFound as error:
+            raise Http404 from error
         record_metric(
             'campaign_job_performance_duration_ms',
             round((perf_counter() - started_at) * 1000, 2),

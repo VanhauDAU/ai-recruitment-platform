@@ -4,8 +4,13 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
+from apps.employers.services import recruiter_candidate_data_access_allowed
 
-from ...selectors import employer_job_detail_queryset, employer_job_list_queryset
+from ...selectors import (
+    attach_job_candidate_previews,
+    employer_job_detail_queryset,
+    employer_job_list_queryset,
+)
 from ...services import (
     close_job,
     duplicate_job,
@@ -41,6 +46,20 @@ class EmployerJobListCreateView(generics.ListCreateAPIView):
             campaign=self.request.query_params.get('campaign'),
             q=self.request.query_params.get('q'),
         )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            if recruiter_candidate_data_access_allowed(request.user):
+                attach_job_candidate_previews(page)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        jobs = list(queryset)
+        if recruiter_candidate_data_access_allowed(request.user):
+            attach_job_candidate_previews(jobs)
+        return Response(self.get_serializer(jobs, many=True).data)
 
     def create(self, request, *args, **kwargs):
         is_draft = request.query_params.get('as') == 'draft'
