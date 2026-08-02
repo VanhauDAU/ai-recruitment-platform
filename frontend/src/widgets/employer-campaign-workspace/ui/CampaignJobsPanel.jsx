@@ -55,7 +55,14 @@ function formatRate(value) {
 function JobStatus({ job, campaignPaused = false }) {
   if (job.is_expired) return <Tag color="orange">Hết hạn</Tag>
   if (campaignPaused && job.status === 'active') {
-    return <Tag color="orange">Đang ẩn theo chiến dịch</Tag>
+    return (
+      <Tooltip title="Tin đang được ẩn vì chiến dịch đã tạm dừng">
+        <Tag color="orange">
+          <span className="sr-only">Đang ẩn theo chiến dịch</span>
+          <span aria-hidden>Tạm ẩn</span>
+        </Tag>
+      </Tooltip>
+    )
   }
   const [label, color] = JOB_STATUS[job.status] || [job.status, 'default']
   return <Tag color={color}>{label}</Tag>
@@ -126,7 +133,7 @@ function AddJobButton({ publicId }) {
   return (
     <Link
       to={employerAppPath(`/jobs/new?campaign=${publicId}`)}
-      className="inline-flex h-9 shrink-0 items-center rounded px-3 text-sm font-semibold !text-white shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+      className="inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-semibold !text-white shadow-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
     >
       <PlusOutlined aria-hidden className="mr-2" /> Thêm tin tuyển dụng
@@ -223,7 +230,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
           ['Tỷ lệ xem', formatRate(performance.summary?.view_rate)],
           ['Tỷ lệ ứng tuyển', formatRate(performance.summary?.application_rate)],
         ].map(([label, value], index) => (
-          <article key={label} className={`border border-slate-200 bg-slate-50 p-3 ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}>
+          <article key={label} className={`rounded-xl border border-slate-100 bg-slate-50 p-3.5 ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}>
             <p className="text-xs text-slate-500">{label}</p>
             <strong className="mt-1 block text-lg text-slate-800">
               {typeof value === 'number' ? formatNumber(value) : value ?? '—'}
@@ -233,7 +240,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
       </div>
 
       <div className="grid gap-5 py-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <section className="min-w-0">
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:p-4">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2">
               <Select
@@ -244,24 +251,13 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
                 options={RANGE_OPTIONS}
                 className="w-36"
               />
-              <Select
-                aria-label="Lọc trạng thái tin"
-                value={status}
-                onChange={setStatus}
-                className="w-36"
-                options={[
-                  { value: '', label: 'Tất cả trạng thái' },
-                  ...Object.entries(JOB_STATUS).map(([value, [label]]) => ({ value, label })),
-                  { value: 'expired', label: 'Hết hạn' },
-                ]}
-              />
             </div>
             <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> Số liệu theo ngày</span>
           </div>
           <CampaignPerformanceChart data={performance.daily || []} />
         </section>
 
-        <aside className="self-start border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="self-start rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
           <p className="text-sm leading-6 text-slate-600">
             <strong className="text-slate-800">48 giờ</strong> là khoảng thời gian lý tưởng để phản hồi ứng viên. Hãy kiểm tra và trả lời ứng viên ngay!
           </p>
@@ -274,7 +270,24 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
         </aside>
       </div>
 
-      <div className="overflow-x-auto border border-slate-200" data-testid="campaign-performance-table">
+      <div className="mt-1 flex flex-col gap-3 rounded-t-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-slate-800">Hiệu quả theo từng tin</h3>
+          <p className="mt-0.5 text-xs text-slate-400">So sánh số liệu trong khoảng thời gian báo cáo.</p>
+        </div>
+        <Select
+          aria-label="Lọc trạng thái tin"
+          value={status}
+          onChange={setStatus}
+          className="w-full sm:w-40"
+          options={[
+            { value: '', label: 'Tất cả trạng thái' },
+            ...Object.entries(JOB_STATUS).map(([value, [label]]) => ({ value, label })),
+            { value: 'expired', label: 'Hết hạn' },
+          ]}
+        />
+      </div>
+      <div className="overflow-x-auto rounded-b-2xl border border-t-0 border-slate-200" data-testid="campaign-performance-table">
         <Table
           rowKey="public_id"
           dataSource={visibleJobs}

@@ -1015,13 +1015,70 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
       }),
     })
   })
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/camp_frontend\/activities\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        count: 2,
+        next: null,
+        previous: null,
+        results: [
+          {
+            id: 2,
+            group: 'application',
+            group_label: 'Ứng viên',
+            event_type: 'application_received',
+            event_label: 'Nhận CV ứng tuyển',
+            actor_name: null,
+            subject_public_id: 'app_frontend',
+            metadata: { candidate_name: 'Trần Minh', job_title: 'Kỹ sư Frontend' },
+            occurred_at: '2026-07-22T09:00:00+07:00',
+          },
+          {
+            id: 1,
+            group: 'job',
+            group_label: 'Tin tuyển dụng',
+            event_type: 'job_status_changed',
+            event_label: 'Đổi trạng thái tin',
+            actor_name: 'Nhà tuyển dụng',
+            subject_public_id: 'jb_frontend',
+            metadata: { title: 'Kỹ sư Frontend', from_status: 'pending', to_status: 'active' },
+            occurred_at: '2026-07-21T16:30:00+07:00',
+          },
+        ],
+      }),
+    })
+  })
 
-  await page.goto('/tuyendung/app/campaigns/camp_frontend?active_tab=apply_cv')
+  const compactCampaignTabs = page.viewportSize().width < 640
+  const chooseCampaignTab = async (label) => {
+    if (compactCampaignTabs) {
+      await page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }).click()
+      await page.locator('.ant-select-dropdown:visible').getByText(label, { exact: false }).click()
+      return
+    }
+    await page.getByRole('tab', { name: label }).click()
+  }
+
+  await page.goto('/tuyendung/app/campaigns/camp_frontend')
 
   await expect(page.getByRole('main').getByRole('heading', { name: 'Tuyển Frontend' })).toBeVisible()
-  await expect(page.getByText('Mã chiến dịch: camp_frontend')).toBeVisible()
+  await expect(page.getByTestId('campaign-hero')).toContainText('camp_frontend')
   await expect(page.getByRole('button', { name: 'Sửa chiến dịch' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'CV ứng tuyển' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('link', { name: 'Đăng thêm tin' })).toHaveAttribute('href', '/tuyendung/app/jobs/new?campaign=camp_frontend')
+  await expect(page.getByText('Ứng viên duy nhất', { exact: true })).toBeVisible()
+  await expect(page.getByText('Hồ sơ mới / chưa xem')).toBeVisible()
+  await expect(page.getByText('Phân bổ trạng thái hồ sơ')).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
+  if (compactCampaignTabs) {
+    await expect(page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' })).toBeVisible()
+  } else {
+    await expect(page.getByRole('tab', { name: 'Tổng quan' })).toHaveAttribute('aria-selected', 'true')
+  }
+  await expectNoHorizontalOverflow(page)
+
+  await chooseCampaignTab('CV ứng tuyển')
+  await expect(page).toHaveURL(/active_tab=apply_cv/)
   await expect(page.getByPlaceholder('Tìm ứng viên, CV hoặc tin...')).toBeVisible()
   await expect(page.getByText('Tìm thấy 1 hồ sơ ứng tuyển')).toBeVisible()
   await expect(page.getByText('Hồ sơ chưa xem 1')).toBeVisible()
@@ -1031,11 +1088,15 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await expect(page.getByRole('link', { name: 'Chi tiết' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.getByRole('tab', { name: 'Tin tuyển dụng' }).click()
+  await chooseCampaignTab('Tin tuyển dụng')
   await expect(page).toHaveURL(/active_tab=job/)
   await expect(page.getByText('Báo cáo Tin tuyển dụng:')).toBeVisible()
   await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
-  await page.getByTestId('campaign-chart-hit-0').hover({ force: true })
+  if (compactCampaignTabs) {
+    await page.getByTestId('campaign-chart-hit-0').click({ force: true })
+  } else {
+    await page.getByTestId('campaign-chart-hit-0').hover({ force: true })
+  }
   await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('16/07/2026 00:00')
   await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('Lượt hiển thị')
   await expect(page.getByTestId('campaign-performance-tooltip')).toContainText('Lượt xem')
@@ -1052,6 +1113,18 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await page.getByText('30 ngày qua', { exact: true }).last().click()
   await expect.poll(() => performanceDays).toBe(30)
   await expect(page.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+
+  await chooseCampaignTab('Lịch sử hoạt động')
+  await expect(page).toHaveURL(/active_tab=activity/)
+  await expect(page.getByRole('heading', { name: 'Lịch sử hoạt động' })).toBeVisible()
+  await expect(page.getByRole('combobox', { name: 'Lọc nhóm hoạt động' })).toBeVisible()
+  await expect(
+    page.getByTestId('activity-day-2026-07-22').getByText('Nhận CV ứng tuyển', { exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByTestId('activity-day-2026-07-22').getByText('Hệ thống', { exact: true }),
+  ).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 

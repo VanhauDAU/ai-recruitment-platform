@@ -22,10 +22,6 @@ import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
-import {
-  campaignKeys,
-  getCampaign,
-} from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import {
@@ -96,17 +92,10 @@ export default function EmployerWorkspaceLayout() {
   const isCampaignList = pathname === employerAppPath('/campaigns')
   const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
   const isCampaignDetail = Boolean(campaignDetailMatch)
-  const campaignPublicId = campaignDetailMatch?.[1]
   const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
   const isJobNew = pathname === employerAppPath('/jobs/new')
   const isJobForm = isJobNew || Boolean(jobEditMatch)
 
-  const campaignQuery = useQuery({
-    queryKey: campaignKeys.detail(campaignPublicId),
-    queryFn: () => getCampaign(campaignPublicId),
-    enabled: isCampaignDetail,
-  })
-  const campaignData = campaignQuery.data
   // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
   // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
   // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
@@ -305,9 +294,9 @@ export default function EmployerWorkspaceLayout() {
                 </Button>
               )}
               {isCampaignDetail ? (
-                <h1 className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base" title={campaignData?.name || 'Chiến dịch tuyển dụng'}>
-                  {campaignData?.name || 'Chiến dịch tuyển dụng'}
-                </h1>
+                <strong className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base">
+                  Chi tiết chiến dịch
+                </strong>
               ) : (
                 <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
               )}
