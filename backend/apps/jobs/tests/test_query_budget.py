@@ -6,10 +6,13 @@ field/relation mới làm tăng số query, cập nhật con số kèm giải th
 tăng không giải thích = regression.
 """
 
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
+from apps.applications.models import Application
+from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company
 from apps.skills.models import Skill
 
@@ -25,6 +28,7 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 BADGE_QUERY_BUDGET = 4
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
+EMPLOYER_JOB_LIST_QUERY_BUDGET = 4
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
 SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET
 
@@ -54,6 +58,68 @@ class JobListQueryBudgetTests(APITestCase):
             response = self.client.get(reverse('job-list'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
+
+
+@override_settings(REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=False)
+class EmployerJobListQueryBudgetTests(APITestCase):
+    def setUp(self):
+        self.employer = User.objects.create_user(
+            email='employer-list-budget@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.company = Company.objects.create(
+            company_name='Employer List Budget Co',
+            created_by=self.employer,
+        )
+        candidate = User.objects.create_user(
+            email='employer-list-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+            full_name='Ứng viên ngân sách',
+            avatar_url='users/avatars/query-budget.png',
+        )
+        cv = UserCv.objects.create(
+            user=candidate,
+            cv_type=UserCv.CvType.BUILDER,
+            title='Query budget CV',
+        )
+        version = CvVersion.objects.create(
+            cv=cv,
+            version_number=1,
+            content_hash='3' * 64,
+            created_by=candidate,
+        )
+        for index in range(5):
+            job = Job.objects.create(
+                posted_by=self.employer,
+                company=self.company,
+                title=f'Employer Job {index}',
+                description='Description',
+                status=Job.Status.ACTIVE,
+                application_count=2,
+            )
+            for submission in range(2):
+                Application.objects.create(
+                    candidate=candidate,
+                    job=job,
+                    cv=cv,
+                    submitted_cv_version=version,
+                    submitted_cv_title=f'Query budget CV {submission}',
+                )
+        self.client.force_authenticate(self.employer)
+
+    def test_employer_job_list_query_count_is_flat_with_candidate_previews(self):
+        # 1 COUNT + 1 SELECT jobs (candidate_count is a correlated subquery)
+        # + 1 locations prefetch + 1 batched candidate-preview query.
+        with self.assertNumQueries(EMPLOYER_JOB_LIST_QUERY_BUDGET):
+            response = self.client.get(reverse('employer-job-list-create'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(len(response.data['results']), 5)
+        self.assertTrue(
+            all(len(job['candidate_previews']) == 1 for job in response.data['results'])
+        )
 
 
 class AdminJobListQueryBudgetTests(APITestCase):

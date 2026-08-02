@@ -130,11 +130,12 @@ export default function CampaignApplyCvPanel({ publicId }) {
 
   return (
     <div>
-      <div className="border-b border-slate-200 px-4 py-4 lg:px-5">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-4 lg:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-          <span className="shrink-0 text-sm font-semibold text-slate-700">Bộ lọc:</span>
+          <span className="shrink-0 text-xs font-bold uppercase tracking-widest text-slate-500">Bộ lọc</span>
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(180px,1.35fr)_180px_190px_160px_180px]">
             <Input
+              className="!h-10 !rounded-xl !border-slate-200 !bg-white"
               value={keywordInput}
               allowClear
               prefix={<SearchOutlined className="text-slate-400" />}
@@ -154,6 +155,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 })),
               ]}
               onChange={updateFilter(setJob)}
+              className="[&_.ant-select-selector]:!rounded-xl"
             />
             <Select
               aria-label="Lọc phạm vi CV"
@@ -164,6 +166,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 { value: 'unanswered', label: 'Hồ sơ chưa phản hồi' },
               ]}
               onChange={updateFilter(setScope)}
+              className="[&_.ant-select-selector]:!rounded-xl"
             />
             <Select
               aria-label="Lọc trạng thái"
@@ -176,6 +179,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 })),
               ]}
               onChange={updateFilter(setStatus)}
+              className="[&_.ant-select-selector]:!rounded-xl"
             />
             <Select
               aria-label="Sắp xếp CV"
@@ -186,11 +190,12 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 { value: 'name', label: 'Tên ứng viên' },
               ]}
               onChange={updateFilter(setOrdering)}
+              className="[&_.ant-select-selector]:!rounded-xl"
             />
           </div>
           <button
             type="button"
-            className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 px-2 text-sm font-medium text-slate-500 hover:text-emerald-700"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-emerald-700"
             onClick={resetFilters}
           >
             <ReloadOutlined /> Đặt lại
@@ -205,14 +210,16 @@ export default function CampaignApplyCvPanel({ publicId }) {
           </span>
           <button
             type="button"
-            className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-600"
+            aria-pressed={scope === 'unread'}
+            className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unread' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
             onClick={() => updateFilter(setScope)('unread')}
           >
             Hồ sơ chưa xem <strong>{report.unviewed_count || 0}</strong>
           </button>
           <button
             type="button"
-            className="rounded-full bg-slate-100 px-3 py-1.5 text-slate-600"
+            aria-pressed={scope === 'unanswered'}
+            className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unanswered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
             onClick={() => updateFilter(setScope)('unanswered')}
           >
             Hồ sơ chưa phản hồi <strong>{report.unanswered_count || 0}</strong>
@@ -221,7 +228,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
         <button
           type="button"
           disabled={!pageData.count || exportMutation.isPending}
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded border border-emerald-600 bg-white px-4 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
           onClick={() => exportMutation.mutate()}
         >
           <DownloadOutlined /> Xuất danh sách CV

@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   closeEmployerJob,
+  deleteEmployerJob,
   duplicateEmployerJob,
   getCandidateJobRecommendations,
   getAdminJobModeration,
   extendEmployerJob,
   getCvJobRecommendations,
   getEmployerJob,
+  getEmployerJobPage,
   getEmployerJobs,
   getJobBenefits,
   getJobLanguages,
@@ -19,14 +21,20 @@ import {
   saveEmployerJob,
 } from './job.api'
 
-const { get, patch, post } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), post: vi.fn() }))
-vi.mock('@/shared/api/client', () => ({ default: { get, patch, post } }))
+const { get, patch, post, remove } = vi.hoisted(() => ({
+  get: vi.fn(),
+  patch: vi.fn(),
+  post: vi.fn(),
+  remove: vi.fn(),
+}))
+vi.mock('@/shared/api/client', () => ({ default: { delete: remove, get, patch, post } }))
 
 describe('CV job recommendations API', () => {
   beforeEach(() => {
     get.mockReset()
     patch.mockReset()
     post.mockReset()
+    remove.mockReset()
   })
 
   it('scopes matching to the saved CV public id', async () => {
@@ -97,6 +105,42 @@ describe('CV job recommendations API', () => {
     expect(post).toHaveBeenNthCalledWith(5, '/jobs/mine/job_1/reopen/', { deadline: '2026-08-01' })
     expect(post).toHaveBeenNthCalledWith(6, '/jobs/mine/job_1/extend/', { deadline: '2026-08-08' })
     expect(post).toHaveBeenNthCalledWith(7, '/jobs/mine/job_1/duplicate/')
+  })
+
+  it('preserves employer pagination metadata and normalizes a legacy list response', async () => {
+    const page = {
+      count: 42,
+      next: '/api/jobs/mine/?page=2',
+      previous: null,
+      results: [{ public_id: 'job_1', candidate_count: 3 }],
+    }
+    get
+      .mockResolvedValueOnce({ data: page })
+      .mockResolvedValueOnce({ data: [{ public_id: 'job_legacy' }] })
+
+    await expect(getEmployerJobPage({ page: 1, status: 'active' })).resolves.toEqual(page)
+    await expect(getEmployerJobPage({ q: 'frontend' })).resolves.toEqual({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [{ public_id: 'job_legacy' }],
+    })
+
+    expect(get).toHaveBeenNthCalledWith(1, '/jobs/mine/', {
+      params: { page: 1, status: 'active' },
+    })
+    expect(get).toHaveBeenNthCalledWith(2, '/jobs/mine/', {
+      params: { q: 'frontend' },
+    })
+  })
+
+  it('deletes only the requested employer draft and returns its public id', async () => {
+    remove.mockResolvedValue({ status: 204 })
+
+    await expect(deleteEmployerJob('job_draft')).resolves.toBe('job_draft')
+
+    expect(remove).toHaveBeenCalledOnce()
+    expect(remove).toHaveBeenCalledWith('/jobs/mine/job_draft/')
   })
 
   it('loads the normalized catalogues used by the complete manual form', async () => {

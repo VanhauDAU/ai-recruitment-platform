@@ -6,9 +6,9 @@ import {
   LineChartOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Alert, Button, Empty, Modal, Select, Skeleton, Table, Tag, Tooltip } from 'antd'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import {
   campaignKeys,
@@ -55,18 +55,41 @@ function formatRate(value) {
 function JobStatus({ job, campaignPaused = false }) {
   if (job.is_expired) return <Tag color="orange">Hết hạn</Tag>
   if (campaignPaused && job.status === 'active') {
-    return <Tag color="orange">Đang ẩn theo chiến dịch</Tag>
+    return (
+      <Tooltip title="Tin đang được ẩn vì chiến dịch đã tạm dừng">
+        <Tag color="orange">
+          <span className="sr-only">Đang ẩn theo chiến dịch</span>
+          <span aria-hidden>Tạm ẩn</span>
+        </Tag>
+      </Tooltip>
+    )
   }
   const [label, color] = JOB_STATUS[job.status] || [job.status, 'default']
   return <Tag color={color}>{label}</Tag>
 }
 
-function JobActions({ job, onShowRejectedReason, campaignPaused = false }) {
+function JobActions({
+  job,
+  onShowRejectedReason,
+  onViewReport,
+  reportSelected = false,
+  campaignPaused = false,
+}) {
   const canViewPublicJob = job.status === 'active' && Boolean(job.slug) && !campaignPaused
   const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:!text-emerald-700'
 
   return (
     <div className="flex items-center gap-2">
+      <button
+        type="button"
+        aria-label={`Xem báo cáo ${job.title || 'tin tuyển dụng'}`}
+        aria-pressed={reportSelected}
+        onClick={() => onViewReport(job)}
+        className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition ${reportSelected ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700'}`}
+      >
+        <LineChartOutlined />
+        {reportSelected ? 'Đang xem' : 'Xem báo cáo'}
+      </button>
       <Tooltip
         title={
           canViewPublicJob
@@ -126,7 +149,7 @@ function AddJobButton({ publicId }) {
   return (
     <Link
       to={employerAppPath(`/jobs/new?campaign=${publicId}`)}
-      className="inline-flex h-9 shrink-0 items-center rounded px-3 text-sm font-semibold !text-white shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+      className="inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-semibold !text-white shadow-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
     >
       <PlusOutlined aria-hidden className="mr-2" /> Thêm tin tuyển dụng
@@ -148,13 +171,16 @@ function PausedCampaignAlert({ campaign }) {
 }
 
 export default function CampaignJobsPanel({ publicId, campaign }) {
+  const reportSectionRef = useRef(null)
   const [days, setDays] = useState(7)
+  const [jobPublicId, setJobPublicId] = useState('')
   const [status, setStatus] = useState('')
   const [rejectedJob, setRejectedJob] = useState(null)
   const performanceQuery = useQuery({
-    queryKey: campaignKeys.jobPerformance(publicId, days),
-    queryFn: () => getCampaignJobPerformance(publicId, days),
+    queryKey: campaignKeys.jobPerformance(publicId, days, jobPublicId),
+    queryFn: () => getCampaignJobPerformance(publicId, days, jobPublicId),
     enabled: Boolean(publicId),
+    placeholderData: keepPreviousData,
   })
   const performance = performanceQuery.data
   const jobs = performance?.jobs || []
@@ -165,7 +191,13 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
       : status
         ? jobs.filter((job) => job.status === status)
         : jobs
-  const primaryJob = jobs[0]
+  const selectedJob = jobs.find((job) => job.public_id === jobPublicId)
+  const isReportUpdating = performanceQuery.isFetching && performanceQuery.isPlaceholderData
+  const isPeriodUpdating = isReportUpdating && performance?.range?.days !== days
+  const viewJobReport = (job) => {
+    setJobPublicId(job.public_id)
+    reportSectionRef.current?.scrollIntoView?.({ block: 'start' })
+  }
 
   if (performanceQuery.isLoading) {
     return (
@@ -185,7 +217,14 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
         <div className="py-16 text-center">
           <FileSearchOutlined className="text-4xl text-slate-300" />
           <p className="mt-3 font-semibold text-slate-700">Không thể tải báo cáo tin tuyển dụng</p>
-          <button type="button" className="mt-3 text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>Thử lại</button>
+          <div className="mt-3 flex flex-wrap justify-center gap-3">
+            {jobPublicId && (
+              <button type="button" className="text-sm font-semibold text-slate-600" onClick={() => setJobPublicId('')}>
+                Xem tất cả tin
+              </button>
+            )}
+            <button type="button" className="text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>Thử lại</button>
+          </div>
         </div>
       </div>
     )
@@ -202,20 +241,37 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
   }
 
   return (
-    <div className="px-4 py-5 lg:px-5">
+    <div ref={reportSectionRef} className="px-4 py-5 lg:px-5">
       <PausedCampaignAlert campaign={campaign} />
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 text-sm text-slate-700">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
-          <Link to={employerAppPath(`/jobs/${primaryJob.public_id}`)} className="truncate font-semibold !text-emerald-700 hover:underline">
-            {primaryJob.title || 'Tin nháp chưa đặt tên'}
-          </Link>
-          {jobs.length > 1 && <span className="text-slate-400">và {jobs.length - 1} tin khác</span>}
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
+            {selectedJob ? (
+              <Link to={employerAppPath(`/jobs/${selectedJob.public_id}`)} className="truncate font-semibold !text-emerald-700 hover:underline">
+                {selectedJob.title || 'Tin nháp chưa đặt tên'}
+              </Link>
+            ) : (
+              <span className="font-semibold text-emerald-700">Tất cả {jobs.length} tin trong chiến dịch</span>
+            )}
+          </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {selectedJob
+              ? 'Các chỉ số và biểu đồ đang hiển thị riêng tin đã chọn.'
+              : `Các chỉ số và biểu đồ đang tổng hợp toàn bộ ${jobs.length} tin tuyển dụng.`}
+          </p>
         </div>
-        <AddJobButton publicId={publicId} />
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedJob && (
+            <Button onClick={() => setJobPublicId('')}>
+              Xem báo cáo tổng hợp
+            </Button>
+          )}
+          <AddJobButton publicId={publicId} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 py-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 py-4 lg:grid-cols-5" aria-busy={isReportUpdating}>
         {[
           ['Lượt hiển thị', performance.summary?.impressions],
           ['Lượt xem tin', performance.summary?.views],
@@ -223,17 +279,19 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
           ['Tỷ lệ xem', formatRate(performance.summary?.view_rate)],
           ['Tỷ lệ ứng tuyển', formatRate(performance.summary?.application_rate)],
         ].map(([label, value], index) => (
-          <article key={label} className={`border border-slate-200 bg-slate-50 p-3 ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}>
+          <article key={label} className={`rounded-xl border border-slate-100 bg-slate-50 p-3.5 ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}>
             <p className="text-xs text-slate-500">{label}</p>
             <strong className="mt-1 block text-lg text-slate-800">
-              {typeof value === 'number' ? formatNumber(value) : value ?? '—'}
+              {isReportUpdating
+                ? <Skeleton.Input active size="small" className="!h-6 !w-16" />
+                : typeof value === 'number' ? formatNumber(value) : value ?? '—'}
             </strong>
           </article>
         ))}
       </div>
 
       <div className="grid gap-5 py-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <section className="min-w-0">
+        <section className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:p-4">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2">
               <Select
@@ -244,24 +302,17 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
                 options={RANGE_OPTIONS}
                 className="w-36"
               />
-              <Select
-                aria-label="Lọc trạng thái tin"
-                value={status}
-                onChange={setStatus}
-                className="w-36"
-                options={[
-                  { value: '', label: 'Tất cả trạng thái' },
-                  ...Object.entries(JOB_STATUS).map(([value, [label]]) => ({ value, label })),
-                  { value: 'expired', label: 'Hết hạn' },
-                ]}
-              />
             </div>
             <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> Số liệu theo ngày</span>
           </div>
-          <CampaignPerformanceChart data={performance.daily || []} />
+          <div aria-busy={isReportUpdating}>
+            {isReportUpdating
+              ? <Skeleton active title={false} paragraph={{ rows: 6 }} />
+              : <CampaignPerformanceChart data={performance.daily || []} />}
+          </div>
         </section>
 
-        <aside className="self-start border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="self-start rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
           <p className="text-sm leading-6 text-slate-600">
             <strong className="text-slate-800">48 giờ</strong> là khoảng thời gian lý tưởng để phản hồi ứng viên. Hãy kiểm tra và trả lời ứng viên ngay!
           </p>
@@ -274,21 +325,41 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
         </aside>
       </div>
 
-      <div className="overflow-x-auto border border-slate-200" data-testid="campaign-performance-table">
+      <div className="mt-1 flex flex-col gap-3 rounded-t-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-bold text-slate-800">Hiệu quả theo từng tin</h3>
+          <p className="mt-0.5 text-xs text-slate-400">So sánh tất cả tin trong khoảng thời gian báo cáo, độc lập với phạm vi biểu đồ.</p>
+        </div>
+        <Select
+          aria-label="Lọc bảng theo trạng thái"
+          value={status}
+          onChange={setStatus}
+          className="w-full sm:w-40"
+          options={[
+            { value: '', label: 'Tất cả trạng thái' },
+            ...Object.entries(JOB_STATUS).map(([value, [label]]) => ({ value, label })),
+            { value: 'expired', label: 'Hết hạn' },
+          ]}
+        />
+      </div>
+      <div className="overflow-x-auto rounded-b-2xl border border-t-0 border-slate-200" data-testid="campaign-performance-table">
         <Table
           rowKey="public_id"
           dataSource={visibleJobs}
+          loading={isPeriodUpdating}
           pagination={false}
           scroll={{ x: 1120 }}
           columns={[
             {
               title: 'Thao tác',
-              width: 140,
+              width: 250,
               render: (_, job) => (
                 <JobActions
                   job={job}
                   campaignPaused={campaign?.status === 'paused'}
                   onShowRejectedReason={setRejectedJob}
+                  onViewReport={viewJobReport}
+                  reportSelected={job.public_id === jobPublicId}
                 />
               ),
             },
@@ -336,7 +407,7 @@ export default function CampaignJobsPanel({ publicId, campaign }) {
       </div>
 
       <div className="mt-3 space-y-1 text-xs leading-5 text-slate-500">
-        <p><InfoCircleOutlined className="mr-1.5" />Dữ liệu bắt đầu từ {formatDate(performance.data_available_from)}; các ngày trước đó hiển thị “—”, không được coi là 0.</p>
+        <p><InfoCircleOutlined className="mr-1.5" />Dữ liệu của phạm vi đã chọn bắt đầu từ {formatDate(performance.data_available_from)}; các ngày trước đó hiển thị “—”, không được coi là 0.</p>
         <p>Chỉ bao gồm lượt hiển thị và lượt xem của người dùng đã đồng ý Analytics. Số lượt ứng tuyển tính mọi lần gửi CV, bao gồm ứng tuyển lại.</p>
         <p>Số liệu có thể có độ trễ ngắn và không cập nhật tức thời.</p>
       </div>

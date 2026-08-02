@@ -22,6 +22,7 @@ import JobFormPreview from './JobFormPreview'
 import JobFormProgress from './JobFormProgress'
 import JobFormSection from './JobFormSection'
 import JobGeneralFields from './JobGeneralFields'
+import PostingQuotaNotice from './PostingQuotaNotice'
 import './post-job-form.css'
 
 export default function PostJobForm({
@@ -148,21 +149,7 @@ export default function PostJobForm({
         <main className="min-w-0 space-y-3">
           {errorMessage && <Alert type="error" showIcon title="Chưa thể lưu tin tuyển dụng" description={errorMessage} />}
           {requiresNewCredit && postingContext && (
-    <Alert
-      type={postingContext.job_postable ? 'info' : 'warning'}
-      showIcon
-      closable={postingContext.job_postable}
-      title={postingContext.job_postable
-                ? (postingContext.verified_job_quota_eligible
-                  ? 'Quota đăng tin Cấp 3 đã được mở'
-                  : 'Bạn đang dùng quota đăng tin miễn phí')
-                : postingContext.block_reason}
-              description={postingContext.verified_job_quota_eligible
-                ? `Còn ${postingContext.publish_remain}/${postingContext.publish_limit} tin. Hồ sơ xác thực đã hoàn tất và tài khoản đạt Cấp 3.`
-                : postingContext.job_postable
-                  ? `Còn ${postingContext.publish_remain}/${postingContext.publish_limit} tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.`
-                  : `Bạn vẫn có thể lưu bản nháp. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.`}
-            />
+            <PostingQuotaNotice postingContext={postingContext} />
           )}
           {(benefitsQuery.isError || languagesQuery.isError || skillsQuery.isError) && (
             <Alert type="warning" showIcon title="Một số danh mục bổ sung chưa tải được" description="Tải lại trang để chọn đầy đủ quyền lợi, kỹ năng và ngoại ngữ." />

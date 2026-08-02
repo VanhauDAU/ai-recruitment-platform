@@ -1,10 +1,12 @@
 import {
   ArrowLeftOutlined,
+  ArrowRightOutlined,
   CalendarOutlined,
   EditOutlined,
   EyeOutlined,
   StopOutlined,
   SyncOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
 import dayjs from 'dayjs'
@@ -34,9 +36,24 @@ export default function JobDetailHeader({ job, publicId, closing, onClose, onDea
             <h1 className="min-w-0 break-words text-2xl font-black leading-tight text-slate-900 sm:text-[28px]">{job.title}</h1>
             <Tag color={status[1]} className="!m-0">{status[0]}</Tag>
           </div>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            {job.campaign_name || 'Không gắn chiến dịch'} <span className="mx-2 text-slate-300">•</span> #{publicId}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+            <span className="text-slate-500">Thuộc chiến dịch</span>
+            {job.campaign && job.campaign_name ? (
+              <Link
+                aria-label={`Mở chiến dịch ${job.campaign_name}`}
+                className="inline-flex min-w-0 items-center gap-1.5 font-semibold !text-emerald-700 hover:!text-emerald-600"
+                to={employerAppPath(`/campaigns/${job.campaign}?active_tab=job`)}
+              >
+                <ThunderboltOutlined aria-hidden className="shrink-0" />
+                <span className="max-w-72 truncate">{job.campaign_name}</span>
+                <ArrowRightOutlined aria-hidden className="shrink-0 text-[10px]" />
+              </Link>
+            ) : (
+              <span className="font-medium text-slate-700">Chưa thuộc chiến dịch</span>
+            )}
+            <span aria-hidden className="text-slate-300">•</span>
+            <span className="text-xs text-slate-400">Mã tin #{publicId}</span>
+          </div>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5"><CalendarOutlined /> Hạn nộp {deadline}</span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5"><EyeOutlined /> {job.view_count || 0} lượt xem</span>

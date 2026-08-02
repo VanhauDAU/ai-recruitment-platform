@@ -22,10 +22,6 @@ import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
-import {
-  campaignKeys,
-  getCampaign,
-} from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import {
@@ -74,7 +70,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
 
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
-  const { pathname, key: locationKey } = useLocation()
+  const { pathname, search, key: locationKey } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -96,17 +92,14 @@ export default function EmployerWorkspaceLayout() {
   const isCampaignList = pathname === employerAppPath('/campaigns')
   const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
   const isCampaignDetail = Boolean(campaignDetailMatch)
-  const campaignPublicId = campaignDetailMatch?.[1]
   const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
   const isJobNew = pathname === employerAppPath('/jobs/new')
   const isJobForm = isJobNew || Boolean(jobEditMatch)
+  const isApplicationWorkspace = pathname === employerAppPath('/applications')
+  const applicationParams = new URLSearchParams(search)
+  const applicationJobId = applicationParams.get('job')
+  const applicationCampaignId = applicationParams.get('campaign')
 
-  const campaignQuery = useQuery({
-    queryKey: campaignKeys.detail(campaignPublicId),
-    queryFn: () => getCampaign(campaignPublicId),
-    enabled: isCampaignDetail,
-  })
-  const campaignData = campaignQuery.data
   // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
   // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
   // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
@@ -117,6 +110,22 @@ export default function EmployerWorkspaceLayout() {
     }
     navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
   }
+  const goBackFromApplications = () => {
+    if (applicationJobId) {
+      navigate(`${employerAppPath('/jobs')}/${encodeURIComponent(applicationJobId)}`)
+      return
+    }
+    if (applicationCampaignId) {
+      navigate(`${employerAppPath('/campaigns')}/${encodeURIComponent(applicationCampaignId)}?active_tab=apply_cv`)
+      return
+    }
+    navigate(employerAppPath('/jobs'))
+  }
+  const applicationBackLabel = applicationJobId
+    ? 'Quay lại chi tiết tin tuyển dụng'
+    : applicationCampaignId
+      ? 'Quay lại chiến dịch tuyển dụng'
+      : 'Quay lại danh sách tin tuyển dụng'
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -294,20 +303,26 @@ export default function EmployerWorkspaceLayout() {
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
           <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-              {(isJobForm || isCampaignDetail) && (
+              {(isJobForm || isCampaignDetail || isApplicationWorkspace) && (
                 <Button
                   size="small"
                   icon={<ArrowLeftOutlined />}
-                  onClick={isCampaignDetail ? () => navigate(employerAppPath('/campaigns')) : goBackFromForm}
+                  aria-label={isApplicationWorkspace ? applicationBackLabel : 'Quay lại'}
+                  title={isApplicationWorkspace ? applicationBackLabel : undefined}
+                  onClick={isCampaignDetail
+                    ? () => navigate(employerAppPath('/campaigns'))
+                    : isApplicationWorkspace
+                      ? goBackFromApplications
+                      : goBackFromForm}
                   className="!inline-flex !items-center !gap-1.5 !rounded-lg !border !border-slate-300 !bg-white !px-3 !py-1 !text-xs !font-semibold !text-slate-700 shadow-2xs transition hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
                 >
                   Quay lại
                 </Button>
               )}
               {isCampaignDetail ? (
-                <h1 className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base" title={campaignData?.name || 'Chiến dịch tuyển dụng'}>
-                  {campaignData?.name || 'Chiến dịch tuyển dụng'}
-                </h1>
+                <strong className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base">
+                  Chi tiết chiến dịch
+                </strong>
               ) : (
                 <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
               )}

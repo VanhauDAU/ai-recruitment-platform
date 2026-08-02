@@ -331,11 +331,40 @@ class RecruitmentCampaignApiTests(TestCase):
             description='Build data products.',
             status=Job.Status.ACTIVE,
         )
+        second_job = Job.objects.create(
+            posted_by=self.owner,
+            company=self.company,
+            campaign=campaign,
+            title='Analytics Engineer',
+            description='Build analytics products.',
+            status=Job.Status.ACTIVE,
+        )
+        foreign_campaign = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile,
+            company=self.company,
+            name='Another performance campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        foreign_job = Job.objects.create(
+            posted_by=self.owner,
+            company=self.company,
+            campaign=foreign_campaign,
+            title='Foreign campaign job',
+            description='Must not be selectable from another campaign.',
+            status=Job.Status.ACTIVE,
+        )
+        report_date = timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh'))
         JobEngagementDaily.objects.create(
             job=job,
-            date=timezone.localdate(timezone=ZoneInfo('Asia/Ho_Chi_Minh')),
+            date=report_date,
             impression_count=100,
             view_count=20,
+        )
+        JobEngagementDaily.objects.create(
+            job=second_job,
+            date=report_date,
+            impression_count=50,
+            view_count=10,
         )
         candidate = get_user_model().objects.create_user(
             email='performance-candidate@example.com',
@@ -348,6 +377,14 @@ class RecruitmentCampaignApiTests(TestCase):
             Application.objects.create(
                 candidate=candidate,
                 job=job,
+                cv=cv,
+                submitted_cv_version=snapshot,
+                submitted_cv_title=cv.title,
+            )
+        for _ in range(2):
+            Application.objects.create(
+                candidate=candidate,
+                job=second_job,
                 cv=cv,
                 submitted_cv_version=snapshot,
                 submitted_cv_title=cv.title,
@@ -374,19 +411,74 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['range']['days'], 7)
         self.assertEqual(
+            response.data['scope'],
+            {
+                'type': 'all_jobs',
+                'job_public_id': None,
+                'job_title': None,
+                'included_job_count': 2,
+                'total_job_count': 2,
+            },
+        )
+        self.assertEqual(
             response.data['summary'],
             {
-                'impressions': 100,
-                'views': 20,
-                'applications': 5,
+                'impressions': 150,
+                'views': 30,
+                'applications': 7,
                 'view_rate': 20.0,
-                'application_rate': 25.0,
+                'application_rate': 23.33,
             },
         )
         self.assertEqual(len(response.data['daily']), 7)
         self.assertTrue(response.data['daily'][-1]['available'])
         self.assertFalse(response.data['daily'][0]['available'])
-        self.assertEqual(response.data['jobs'][0]['applications'], 5)
+        self.assertEqual(
+            {item['public_id']: item['applications'] for item in response.data['jobs']},
+            {job.public_id: 5, second_job.public_id: 2},
+        )
+        self.assertEqual(response.data['daily'][-1]['impressions'], 150)
+        self.assertEqual(response.data['daily'][-1]['views'], 30)
+        self.assertEqual(response.data['daily'][-1]['applications'], 7)
+
+        with self.assertNumQueries(4):
+            selected = self.client.get(url, {'days': 7, 'job': second_job.public_id})
+
+        self.assertEqual(selected.status_code, 200, selected.data)
+        self.assertEqual(
+            selected.data['scope'],
+            {
+                'type': 'job',
+                'job_public_id': second_job.public_id,
+                'job_title': second_job.title,
+                'included_job_count': 1,
+                'total_job_count': 2,
+            },
+        )
+        self.assertEqual(
+            selected.data['summary'],
+            {
+                'impressions': 50,
+                'views': 10,
+                'applications': 2,
+                'view_rate': 20.0,
+                'application_rate': 20.0,
+            },
+        )
+        self.assertEqual(len(selected.data['jobs']), 2)
+        self.assertEqual(selected.data['daily'][-1]['impressions'], 50)
+        self.assertEqual(selected.data['daily'][-1]['views'], 10)
+        self.assertEqual(selected.data['daily'][-1]['applications'], 2)
+        selected_job_result = next(
+            item for item in selected.data['jobs'] if item['public_id'] == second_job.public_id
+        )
+        self.assertEqual(
+            selected.data['data_available_from'],
+            selected_job_result['data_available_from'],
+        )
+
+        wrong_campaign_job = self.client.get(url, {'job': foreign_job.public_id})
+        self.assertEqual(wrong_campaign_job.status_code, 404)
 
         invalid_range = self.client.get(url, {'days': 14})
         self.assertEqual(invalid_range.status_code, 400)
