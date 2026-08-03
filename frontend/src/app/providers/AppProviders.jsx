@@ -5,7 +5,12 @@ import { SessionProvider } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
 import { ConsentProvider } from '@/entities/consent'
 import AppToast from '@/shared/ui/AppToast'
+import BrandLoader from '@/shared/ui/BrandLoader'
 import ToastSoundEffect from '@/shared/ui/ToastSoundEffect'
+
+// Mọi <Spin> trong app dùng chung linh vật ProCV; kích thước theo size của Spin
+// do `.procv-spin-dot` trong index.css quyết định.
+const spinConfig = { indicator: <BrandLoader className="procv-spin-dot" /> }
 
 function ThemedProviders({ children }) {
   const { settings } = useSiteSettings()
@@ -19,7 +24,7 @@ function ThemedProviders({ children }) {
   }), [primaryColor])
 
   return (
-    <ConfigProvider theme={theme}>
+    <ConfigProvider theme={theme} spin={spinConfig}>
       <AntApp>
         <ConsentProvider>
           <AppToast />

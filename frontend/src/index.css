@@ -17,6 +17,27 @@ body {
   }
 }
 
+/* Kích thước cho linh vật ProCV khi dùng làm indicator của antd Spin. Cần
+   !important vì antd chèn `.ant-spin .ant-spin-dot { width: 1em; height: 1em }`
+   bằng CSS-in-JS lúc runtime, không đảm bảo thứ tự so với file này. */
+.procv-spin-dot {
+  width: 40px !important;
+  height: 40px !important;
+  /* Preflight đặt `img { max-width: 100% }`, mà .ant-spin lại rộng 0 nên ảnh bị
+     co về 0; bỏ ràng buộc này để chiều rộng cố định bên trên có hiệu lực. */
+  max-width: none !important;
+}
+
+.ant-spin-sm .procv-spin-dot {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.ant-spin-lg .procv-spin-dot {
+  width: 60px !important;
+  height: 60px !important;
+}
+
 .cookie-consent-banner {
   background: linear-gradient(100deg, #142f47 0%, #1f3d56 48%, #0f766e 140%);
   border-top: 1px solid rgba(255, 255, 255, 0.14);
