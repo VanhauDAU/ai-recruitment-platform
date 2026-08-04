@@ -23,6 +23,7 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
   const playerRef = useRef(null)
   const requestRef = useRef(null)
   const mountedRef = useRef(true)
+  const [elapsed, setElapsed] = useState(0)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
 
@@ -35,10 +36,17 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
           setStatus('error')
           setError(nextError.message || 'Luồng âm thanh bị gián đoạn.')
         },
-        onFirstAudio: () => mountedRef.current && setStatus('playing'),
+        onFirstAudio: () => {
+          if (!mountedRef.current) return
+          setElapsed(0)
+          setStatus('playing')
+        },
         onRebuffering: (waiting) => {
           if (!mountedRef.current || !waiting) return
           setStatus((current) => (current === 'playing' ? 'buffering' : current))
+        },
+        onTimeUpdate: (seconds) => {
+          if (mountedRef.current) setElapsed(seconds)
         },
       })
     }
@@ -60,6 +68,7 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
     requestRef.current?.abort()
     requestRef.current = null
     playerRef.current?.reset()
+    setElapsed(0)
     setError('')
     setStatus('idle')
   }, [])
@@ -80,6 +89,7 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
     player.reset()
     const controller = new AbortController()
     requestRef.current = controller
+    setElapsed(0)
     setError('')
     setStatus('creating')
 
@@ -123,6 +133,7 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
   }, [])
 
   return {
+    elapsed,
     error,
     speak,
     speaking: ACTIVE_STATUSES.includes(status),

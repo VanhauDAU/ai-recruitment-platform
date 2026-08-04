@@ -23,7 +23,6 @@ describe('assistant script', () => {
     act(() => vi.runAllTimers())
     expect(result.current.typing).toBe(false)
     expect(result.current.emotion).toBe('happy')
-    expect(result.current.messages.at(-1)).toMatchObject({ from: 'assistant' })
+    expect(result.current.messages.at(-1)).toMatchObject({ from: 'assistant', progressive: true })
   })
 })
-

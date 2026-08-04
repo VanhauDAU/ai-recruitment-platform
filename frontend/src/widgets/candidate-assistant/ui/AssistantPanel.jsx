@@ -1,5 +1,5 @@
 import { AudioMutedOutlined, CloseOutlined, SendOutlined, SoundOutlined } from '@ant-design/icons'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
@@ -24,6 +24,16 @@ export default function AssistantPanel({ onClose }) {
   const [input, setInput] = useState('')
   const listRef = useRef(null)
   const inputRef = useRef(null)
+
+  const keepLatestMessageVisible = useCallback(() => {
+    const list = listRef.current
+    if (!list) return
+    if (typeof list.scrollTo === 'function') {
+      list.scrollTo({ top: list.scrollHeight, behavior: 'auto' })
+    } else {
+      list.scrollTop = list.scrollHeight
+    }
+  }, [])
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -106,6 +116,13 @@ export default function AssistantPanel({ onClose }) {
             {...item}
             actions={(item.actions || []).map((actionId) => ({ id: actionId, ...ASSISTANT_ACTIONS[actionId] })).filter((action) => action.label)}
             onAction={runAction}
+            onContentProgress={keepLatestMessageVisible}
+            speech={{
+              active: item.id === voice.activeMessageId,
+              elapsed: voice.elapsed,
+              enabled: voice.enabled,
+              status: voice.status,
+            }}
           />
         ))}
         {typing && (

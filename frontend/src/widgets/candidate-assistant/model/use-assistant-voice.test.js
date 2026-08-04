@@ -2,14 +2,20 @@ import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAssistantVoice } from './use-assistant-voice'
 
-const voice = vi.hoisted(() => ({
-  speak: vi.fn(),
-  speaking: false,
-  stop: vi.fn(),
-  unlock: vi.fn(),
-}))
+const { useSpeak, voice } = vi.hoisted(() => {
+  const voice = {
+    elapsed: 0,
+    error: '',
+    speak: vi.fn(),
+    speaking: false,
+    status: 'idle',
+    stop: vi.fn(),
+    unlock: vi.fn(),
+  }
+  return { useSpeak: vi.fn(() => voice), voice }
+})
 
-vi.mock('@/features/speak-text', () => ({ useSpeak: () => voice }))
+vi.mock('@/features/speak-text', () => ({ useSpeak }))
 
 const GREETING = { id: 'assistant-0', from: 'assistant', text: 'Xin chào, tôi là trợ lý ProCV.' }
 const QUESTION = { id: 'user-1', from: 'user', text: 'Tìm việc ở đâu?' }
@@ -31,6 +37,24 @@ describe('useAssistantVoice', () => {
 
     expect(voice.speak).toHaveBeenCalledTimes(1)
     expect(voice.speak).toHaveBeenCalledWith(REPLY.text)
+  })
+
+  it('đánh dấu đúng response đang cần đồng bộ với giọng đọc', () => {
+    const { rerender, result } = renderHook(({ messages }) => useAssistantVoice(messages), {
+      initialProps: { messages: [GREETING] },
+    })
+
+    rerender({ messages: [GREETING, QUESTION, REPLY] })
+
+    expect(result.current.activeMessageId).toBe(REPLY.id)
+    expect(result.current.elapsed).toBe(0)
+    expect(result.current.status).toBe('idle')
+  })
+
+  it('dùng giọng Mai Anh cho câu trả lời của trợ lý', () => {
+    renderHook(() => useAssistantVoice([GREETING]))
+
+    expect(useSpeak).toHaveBeenCalledWith({ voiceId: 'north-female-news' })
   })
 
   it('không đọc lời chào lúc mở panel', () => {

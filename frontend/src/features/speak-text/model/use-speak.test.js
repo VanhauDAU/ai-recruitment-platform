@@ -72,6 +72,17 @@ describe('useSpeak', () => {
     expect(result.current.speaking).toBe(true)
   })
 
+  it('reports elapsed playback time for synchronized UI', async () => {
+    const { result } = renderHook(() => useSpeak())
+
+    await act(async () => {
+      await result.current.speak('Tôi đang đọc câu trả lời này.')
+    })
+    act(() => player.callbacks.onTimeUpdate(1.25))
+
+    expect(result.current.elapsed).toBe(1.25)
+  })
+
   it('unlocks Web Audio synchronously before the first await', async () => {
     const { result } = renderHook(() => useSpeak())
     let pending

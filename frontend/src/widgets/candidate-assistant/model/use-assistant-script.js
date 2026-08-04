@@ -49,6 +49,7 @@ export function useAssistantScript() {
         from: 'assistant',
         text: response.reply,
         actions: response.actions,
+        progressive: true,
       }])
       setEmotion(response.emotion)
       setTyping(false)
@@ -60,4 +61,3 @@ export function useAssistantScript() {
 
   return { emotion, messages, sendMessage, typing }
 }
-

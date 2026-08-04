@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSpeak } from '@/features/speak-text'
 
 const VOICE_STORAGE_KEY = 'procv_assistant_voice_v1'
+const ASSISTANT_VOICE_ID = 'north-female-news'
 
 function storedVoiceEnabled() {
   try {
@@ -28,18 +29,34 @@ function storeVoiceEnabled(enabled) {
  * cũng là hành vi gây khó chịu.
  */
 export function useAssistantVoice(messages) {
-  const { speak, speaking, stop, unlock } = useSpeak()
+  const {
+    elapsed = 0,
+    error = '',
+    speak,
+    speaking,
+    status = 'idle',
+    stop,
+    unlock,
+  } = useSpeak({ voiceId: ASSISTANT_VOICE_ID })
   const [enabled, setEnabled] = useState(storedVoiceEnabled)
+  const [activeMessageId, setActiveMessageId] = useState(null)
   // Mốc khởi tạo là tin nhắn cuối lúc mount, tức lời chào đã coi như "đã đọc".
   const spokenIdRef = useRef(messages[messages.length - 1]?.id ?? null)
+  const latest = messages[messages.length - 1]
+  // Trả ID ngay trong render đầu có response mới để UI không chớp toàn bộ câu
+  // trước khi effect bắt đầu phiên đọc.
+  const pendingMessageId = latest?.from === 'assistant' && latest.id !== spokenIdRef.current
+    ? latest.id
+    : activeMessageId
 
   useEffect(() => {
-    const latest = messages[messages.length - 1]
     if (!latest || latest.id === spokenIdRef.current) return
     spokenIdRef.current = latest.id
-    if (latest.from !== 'assistant' || !enabled) return
+    if (latest.from !== 'assistant') return
+    setActiveMessageId(latest.id)
+    if (!enabled) return
     speak(latest.text)
-  }, [enabled, messages, speak])
+  }, [enabled, latest, speak])
 
   /** Mở Web Audio ngay trong cử chỉ gửi, trước khi câu trả lời kịp về. */
   const prepare = useCallback(() => {
@@ -54,5 +71,14 @@ export function useAssistantVoice(messages) {
     else stop()
   }, [enabled, stop, unlock])
 
-  return { enabled, prepare, speaking, toggle }
+  return {
+    activeMessageId: pendingMessageId,
+    elapsed,
+    enabled,
+    error,
+    prepare,
+    speaking,
+    status,
+    toggle,
+  }
 }

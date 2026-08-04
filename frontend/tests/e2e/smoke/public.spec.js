@@ -67,7 +67,27 @@ test('public smoke: candidate assistant opens, replies and stays responsive', as
   await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Làm sao để tạo CV đẹp?')
   await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
   await expect(panel.getByRole('status', { name: 'Trợ lý đang trả lời' })).toBeVisible()
-  await expect(panel.getByText(/Bạn có thể chọn mẫu CV/)).toBeVisible()
+  const progressiveReplies = panel.locator('.assistant-message__bubble--bot [aria-hidden="true"]')
+  await expect(progressiveReplies).toHaveCount(1)
+  const progressiveReply = progressiveReplies.last()
+  await expect(progressiveReply).toBeVisible()
+  await expect(progressiveReply.locator('.assistant-message__caret')).toBeVisible()
+  // Smoke cố ý trả 503 cho TTS: chữ vẫn phải tự đánh máy đến hết.
+  await expect(progressiveReply).toHaveText(/Bạn có thể chọn mẫu CV/, { timeout: 8000 })
+  await expect(progressiveReply.locator('.assistant-message__caret')).toBeHidden()
+
+  // Response kế tiếp cũng phải khởi tạo typewriter mới, không kế thừa trạng
+  // thái completed/error của câu đầu tiên.
+  await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Tôi muốn ứng tuyển')
+  await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
+  await expect(progressiveReplies).toHaveCount(2)
+  const secondReply = progressiveReplies.last()
+  await expect(secondReply.locator('.assistant-message__caret')).toBeVisible()
+  await expect(secondReply.locator('.assistant-message__caret')).toBeHidden({ timeout: 8000 })
+  const messagesPinnedToBottom = await panel.locator('.assistant-panel__messages').evaluate(
+    (element) => element.scrollHeight - element.scrollTop - element.clientHeight < 2,
+  )
+  expect(messagesPinnedToBottom).toBe(true)
 
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

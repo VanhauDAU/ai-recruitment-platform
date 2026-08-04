@@ -13,6 +13,16 @@
   30% { opacity: 1; transform: translateY(-3px); }
 }
 
+@keyframes assistantCaretBlink {
+  0%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0.2; }
+}
+
+@keyframes assistantActionsIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .assistant-panel {
   background: white;
   border: 1px solid rgb(241 245 249);
@@ -123,6 +133,8 @@
   background: rgb(241 245 249);
   border-bottom-left-radius: 0.125rem;
   color: rgb(51 65 85);
+  min-height: 2.5rem;
+  min-width: 2rem;
 }
 .assistant-message__bubble--user {
   background: var(--brand-primary);
@@ -134,6 +146,28 @@
   flex-wrap: wrap;
   gap: 0.375rem;
   margin-top: 0.5rem;
+}
+.assistant-message__actions--ready {
+  animation: assistantActionsIn 180ms ease-out both;
+}
+.assistant-message__caret {
+  animation: assistantCaretBlink 0.8s steps(1, end) infinite;
+  background: var(--brand-primary);
+  border-radius: 1px;
+  display: inline-block;
+  height: 1em;
+  margin-left: 2px;
+  transform: translateY(2px);
+  width: 2px;
+}
+.assistant-message__accessible-text {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 .assistant-message__action {
   background: white;
@@ -249,7 +283,9 @@
 @media (prefers-reduced-motion: reduce) {
   .assistant-panel,
   .assistant-message-in,
-  .assistant-chat-dot {
+  .assistant-chat-dot,
+  .assistant-message__actions--ready,
+  .assistant-message__caret {
     animation: none !important;
   }
 }
