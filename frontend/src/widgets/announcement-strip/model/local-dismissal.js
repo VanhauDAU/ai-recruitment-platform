@@ -1,8 +1,11 @@
+import { ANNOUNCEMENT_DISMISS_MODES } from '@/entities/announcement'
+
 function storageKey(item) {
   return `announcement-strip:${item.id}:v${item.dismiss?.version || 1}`
 }
 
 export function readLocalDismissal(item) {
+  if (item.dismiss?.mode === ANNOUNCEMENT_DISMISS_MODES.LOCKED) return 0
   try {
     const key = storageKey(item)
     const value = window.localStorage.getItem(key)
@@ -16,6 +19,7 @@ export function readLocalDismissal(item) {
 }
 
 export function storeLocalDismissal(item, hiddenUntil) {
+  if (item.dismiss?.mode === ANNOUNCEMENT_DISMISS_MODES.LOCKED) return
   try {
     window.localStorage.setItem(
       storageKey(item),

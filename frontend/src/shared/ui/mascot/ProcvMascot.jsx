@@ -3,7 +3,7 @@ import { MASCOT_ASSETS } from './mascot-assets'
 import './mascot.css'
 
 const EMOTIONS = new Set(['neutral', 'happy', 'thinking', 'success', 'error'])
-const POSES = new Set(['neutral', 'wave', 'thumbsUp', 'microphone'])
+const POSES = new Set(['neutral', 'wave', 'thumbsUp', 'microphone', 'checklist'])
 const SHADOWS = new Set(['floating', 'ground', 'none'])
 
 function Layer({ className = '', src, style }) {
@@ -44,7 +44,9 @@ export default function ProcvMascot({
       <Layer src={arms.right} />
       <Layer className={resolvedPose === 'wave' ? 'procv-mascot__arm-wave' : ''} src={arms.left} />
       {arms.prop && <Layer className="procv-mascot__held-prop" src={arms.prop} />}
-      {arms.front && <Layer className="procv-mascot__hand-front" src={arms.front} />}
+      {[].concat(arms.front ?? []).map((hand) => (
+        <Layer key={hand} className="procv-mascot__hand-front" src={hand} />
+      ))}
       <Layer src={MASCOT_ASSETS.head} />
       <Layer
         className={blink ? 'procv-mascot__eyes-base' : ''}
@@ -58,7 +60,10 @@ export default function ProcvMascot({
           style={{ animationDelay: blinkDelay }}
         />
       )}
-      <Layer src={MASCOT_ASSETS.mouths[resolvedEmotion]} />
+      <Layer
+        className={talking ? 'procv-mascot__mouth-base' : ''}
+        src={MASCOT_ASSETS.mouths[resolvedEmotion]}
+      />
       {talking && <Layer className="procv-mascot__mouth-talk" src={MASCOT_ASSETS.mouths.happy} />}
     </span>
   )

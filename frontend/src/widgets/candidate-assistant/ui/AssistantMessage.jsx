@@ -1,7 +1,7 @@
 import { useLayoutEffect } from 'react'
 import { ProcvMascot } from '@/shared/ui/mascot'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
-import { useProgressiveReply } from '../model/use-progressive-reply'
+import { useProgressiveReply } from '@/shared/hooks/use-progressive-reply'
 
 export default function AssistantMessage({
   actions = [],

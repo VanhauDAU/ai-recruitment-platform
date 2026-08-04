@@ -198,7 +198,9 @@ services:
     ports:
       - '5173:5173'
     environment:
-      VITE_API_BASE_URL: http://localhost:8000/api
+      # Cùng origin để điện thoại trong LAN không gọi nhầm localhost của nó.
+      VITE_API_BASE_URL: /api
+      API_PROXY_TARGET: http://backend:8000
       VITE_ANNOUNCEMENT_ROLLOUT_SURFACES: ${VITE_ANNOUNCEMENT_ROLLOUT_SURFACES:-}
       TTS_PROXY_TARGET: http://tts:8001
     init: true

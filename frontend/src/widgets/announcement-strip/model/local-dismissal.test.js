@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { readLocalDismissal, storeLocalDismissal } from './local-dismissal'
 
-const ITEM = { id: 'ann_guest', dismiss: { version: 2 } }
+const ITEM = { id: 'ann_guest', dismiss: { mode: 'close', version: 2 } }
+const LOCKED_ITEM = { id: 'ann_locked', dismiss: { mode: 'locked', version: 1 } }
 
 describe('guest announcement state', () => {
   beforeEach(() => {
@@ -24,5 +25,16 @@ describe('guest announcement state', () => {
     )
 
     expect(readLocalDismissal(ITEM)).toBe(hiddenUntil)
+  })
+
+  it('ignores and never persists dismissal state for a locked item', () => {
+    window.localStorage.setItem(
+      'announcement-strip:ann_locked:v1',
+      String(Date.now() + 60_000),
+    )
+
+    expect(readLocalDismissal(LOCKED_ITEM)).toBe(0)
+    storeLocalDismissal(LOCKED_ITEM, Number.POSITIVE_INFINITY)
+    expect(window.localStorage.getItem('announcement-strip:ann_locked:v1')).not.toBe('closed')
   })
 })

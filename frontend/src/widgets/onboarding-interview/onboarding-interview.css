@@ -1,0 +1,94 @@
+.onboarding-stage {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.onboarding-stage__bubble {
+  background: rgb(255 255 255 / 0.97);
+  border-radius: 1.25rem;
+  box-shadow: 0 18px 40px -24px rgb(6 46 30 / 0.9);
+  color: rgb(30 41 59);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  max-width: 30rem;
+  padding: 0.875rem 1.125rem;
+  position: relative;
+  text-align: center;
+}
+
+/* Đuôi bong bóng chỉ lên đầu robot ở mobile, chỉ sang trái ở desktop. */
+.onboarding-stage__bubble::before {
+  border: 9px solid transparent;
+  border-bottom-color: rgb(255 255 255 / 0.97);
+  content: '';
+  left: 50%;
+  position: absolute;
+  top: -18px;
+  transform: translateX(-50%);
+}
+
+.onboarding-stage__caret {
+  animation: onboardingCaret 1s steps(1, end) infinite;
+  background: currentColor;
+  display: inline-block;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  width: 2px;
+}
+
+.onboarding-stage__sr {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.onboarding-step {
+  animation: onboardingStepIn 0.28s ease-out both;
+}
+
+@keyframes onboardingCaret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes onboardingStepIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 1024px) {
+  .onboarding-stage {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .onboarding-stage__bubble {
+    margin-top: 1.5rem;
+    text-align: left;
+  }
+
+  .onboarding-stage__bubble::before {
+    border-bottom-color: transparent;
+    border-right-color: rgb(255 255 255 / 0.97);
+    left: -18px;
+    top: 1.25rem;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-step,
+  .onboarding-stage__caret {
+    animation: none !important;
+  }
+
+  .onboarding-stage__caret { opacity: 0; }
+}

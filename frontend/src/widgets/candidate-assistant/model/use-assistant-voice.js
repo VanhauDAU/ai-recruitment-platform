@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { PROCV_VOICE_ID } from '@/entities/speech'
 import { useSpeak } from '@/features/speak-text'
 
 const VOICE_STORAGE_KEY = 'procv_assistant_voice_v1'
-const ASSISTANT_VOICE_ID = 'north-female-news'
 
 function storedVoiceEnabled() {
   try {
@@ -37,7 +37,7 @@ export function useAssistantVoice(messages) {
     status = 'idle',
     stop,
     unlock,
-  } = useSpeak({ voiceId: ASSISTANT_VOICE_ID })
+  } = useSpeak({ voiceId: PROCV_VOICE_ID })
   const [enabled, setEnabled] = useState(storedVoiceEnabled)
   const [activeMessageId, setActiveMessageId] = useState(null)
   // Mốc khởi tạo là tin nhắn cuối lúc mount, tức lời chào đã coi như "đã đọc".

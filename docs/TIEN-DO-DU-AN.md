@@ -1,5 +1,44 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-08-05 — Robot phỏng vấn onboarding ứng viên (1.24f)
+
+Onboarding ứng viên đổi từ một form 8 trường sang **cuộc phỏng vấn 5 câu do
+mascot ProCV dẫn bằng giọng nói**. Tận dụng đúng hai thứ đã có sẵn trong repo mà
+onboarding chưa dùng: rig mascot (`shared/ui/mascot`) và TTS tiếng Việt
+(`features/speak-text`). **Backend không đổi một dòng** — payload
+`PUT /api/candidate/job-preferences/`, cờ `job_preferences_configured` và route
+giữ nguyên.
+
+- **`widgets/onboarding-interview` (mới).** Phải là widget vì ghép hai feature
+  (`speak-text` + `configure-job-preferences`) mà depcruise cấm feature import
+  feature. Gồm kịch bản tĩnh, state machine 5 bước, bản đồ trạng thái mascot và
+  provider giọng đọc.
+- **Provider giọng đọc mount ở `OnboardingLayout`, không ở page.** AudioContext
+  chỉ mở được trong cử chỉ người dùng (nút "Bắt đầu" ở `/onboard-user`), mà page
+  unmount là `useSpeak` destroy player — đặt trong page thì sang bước phỏng vấn
+  robot sẽ câm. Robot đọc ngay, không có nút "bật tiếng"; trường hợp vào thẳng
+  URL thì listener một lần resume audio ở thao tác đầu tiên bất kỳ.
+- **Pose `checklist` (mới)** nối bộ tay `arms/hold` + `props/robot-prop-checklist`
+  đang bỏ trống. `ProcvMascot` nay đỡ được **hai** bàn tay trước (`front` dạng
+  mảng); pose `microphone` một tay chạy y cũ.
+- **Sửa lỗi rig có sẵn:** khi `talking`, lớp miệng theo emotion không bị ẩn nên
+  hai khẩu hình chồng nhau (rõ nhất ở `success`). Nay dùng cặp animation nghịch
+  đảo như mắt chớp, kèm nhịp nói chia không đều cho tự nhiên hơn.
+- **Không cắt lời robot:** `PersonalizingScreen` và `ReadyScreen` chỉ chuyển
+  tiếp sau khi mascot báo đã nói dứt câu (có chốt chặn 9s/14s phòng audio treo).
+- **Tách model dùng chung khỏi `JobPreferencesForm`** (`job-preferences-fields`,
+  `use-job-preference-catalog`, `save-job-preferences`) để phỏng vấn và form
+  settings dùng chung một bộ validate/submit/map lỗi field; xoá nhánh
+  `variant="onboarding"` đã chết. Chuyển `use-progressive-reply` lên
+  `shared/hooks` cho cả trợ lý lẫn onboarding dùng.
+- **Sửa lỗi tự gây:** effect đồng bộ `preference` trong `useInterviewFlow` gây
+  vòng lặp render vô tận khi prop là object dựng mới mỗi render — bỏ hẳn effect
+  vì page đã chờ tải xong mới mount widget.
+
+Verify: `npm run lint`, `check:architecture`, 224 file/847 test unit, `build`,
+E2E smoke onboarding desktop + mobile xanh; đã xem lại bằng ảnh chụp thật cả
+desktop 1280 và mobile 393 cho toàn bộ 5 bước, màn lỗi và màn kết.
+
 ## Cập nhật 2026-07-30 — Kiểm toán luồng xác thực nhà tuyển dụng
 
 Rà soát toàn bộ luồng auth NTD theo từng lớp; mỗi lỗi được chứng minh bằng test
@@ -284,7 +323,8 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
-| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược 9s + nút đi ngay) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược + nút đi ngay; từ 1.24f đồng hồ chỉ chạy sau khi robot nói dứt câu) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24f | Robot phỏng vấn onboarding: tách form 8 trường thành 5 câu hỏi do mascot dẫn bằng giọng nói tiếng Việt (VieNeu-TTS), phụ đề chạy theo audio, mascot đổi emotion/pose theo ngữ cảnh (`microphone` khi nói, `checklist` mới khi chờ trả lời, `error`/`success`/`thinking`), câu chốt cá nhân hoá từ nhu cầu vừa lưu; payload `PUT` và cờ `job_preferences_configured` giữ nguyên | ✅ |
 | 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
 | 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
 | 1.24e | Tối ưu menu tài khoản desktop: click, single accordion, tự mở route active, cuộn trong viewport và giữ logout hiển thị | ✅ |

@@ -1,29 +1,45 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { InterviewMascot, SAVING_SPEECH } from '@/widgets/onboarding-interview'
 
 const HIGHLIGHTS = ['Trải nghiệm tìm việc cá nhân hoá', 'Gợi ý công việc phù hợp', 'Hỗ trợ bởi AI']
+const BAR_DURATION_MS = 3200
+/** Chốt chặn phòng khi audio treo: không để ứng viên kẹt lại màn này. */
+const SPEECH_TIMEOUT_MS = 9000
 
 // Màn chờ sau khi lưu nhu cầu: chạy thanh tiến trình ~3s rồi báo xong để
 // chuyển sang màn "đã sẵn sàng". Chỉ là hiệu ứng trải nghiệm, không gọi API.
+// Chỉ chuyển khi thanh chạy hết VÀ robot nói dứt câu, tránh cắt ngang giọng đọc.
 export default function PersonalizingScreen({ onDone }) {
   const [started, setStarted] = useState(false)
+  const [barDone, setBarDone] = useState(false)
+  const [spoken, setSpoken] = useState(false)
+  const markSpoken = useCallback(() => setSpoken(true), [])
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setStarted(true))
-    const timer = setTimeout(onDone, 3200)
+    const bar = setTimeout(() => setBarDone(true), BAR_DURATION_MS)
+    const fallback = setTimeout(markSpoken, SPEECH_TIMEOUT_MS)
     return () => {
       cancelAnimationFrame(raf)
-      clearTimeout(timer)
+      clearTimeout(bar)
+      clearTimeout(fallback)
     }
-    // onDone chỉ đổi phase ở cha, không cần chạy lại hiệu ứng.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [markSpoken])
+
+  useEffect(() => {
+    if (barDone && spoken) onDone()
+  }, [barDone, onDone, spoken])
 
   return (
     <section className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="w-full max-w-3xl rounded-3xl bg-gradient-to-b from-white/15 to-emerald-950/25 px-5 py-10 text-center shadow-2xl shadow-emerald-950/30 sm:px-12 sm:py-14">
-        <h1 className="mx-auto max-w-xl text-xl font-bold leading-snug text-white sm:text-[26px]">
-          Chờ chút nhé, ProCV AI đang cá nhân hoá trải nghiệm dành cho bạn
-        </h1>
+        <InterviewMascot
+          emotion="thinking"
+          onSpoken={markSpoken}
+          pose="checklist"
+          speech={SAVING_SPEECH}
+          speechId="personalizing"
+        />
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
           {HIGHLIGHTS.map((text) => (

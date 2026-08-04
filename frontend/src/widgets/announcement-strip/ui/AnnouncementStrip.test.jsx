@@ -157,6 +157,33 @@ describe('AnnouncementStrip runtime', () => {
     expect(strip).toHaveAttribute('data-announcement-remote-enabled', 'false')
   })
 
+  it('always shows the incomplete onboarding reminder despite an old local snooze', async () => {
+    useSession.mockReturnValue({
+      loading: false,
+      user: {
+        public_id: 'usr_incomplete_candidate',
+        role: 'candidate',
+        email_verified: true,
+        job_preferences_configured: false,
+      },
+    })
+    window.localStorage.setItem(
+      'announcement-strip:system-candidate-job-preferences:v1',
+      String(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    )
+
+    renderStrip()
+
+    expect(screen.getByText(
+      'Hãy chia sẻ nhu cầu công việc để nhận gợi ý việc làm tốt nhất.',
+    )).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Cập nhật nhu cầu/ })).toHaveAttribute(
+      'href',
+      '/onboard-user',
+    )
+    expect(screen.queryByRole('button', { name: 'Tạm ẩn thông báo' })).not.toBeInTheDocument()
+  })
+
   it('renders the remote feed after an anonymous session probe completes', async () => {
     useSession.mockReturnValue({ loading: false, user: null })
     getActiveAnnouncements.mockResolvedValue({

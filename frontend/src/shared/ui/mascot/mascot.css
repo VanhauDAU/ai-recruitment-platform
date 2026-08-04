@@ -38,9 +38,20 @@
   transform-origin: 64% 62%;
 }
 
+/*
+ * Miệng nói dùng cặp animation nghịch đảo như mắt chớp: lớp miệng theo emotion
+ * phải tắt đúng lúc lớp miệng mở bật lên, nếu không hai khẩu hình chồng nhau
+ * (rõ nhất ở `success`, miệng cười rộng thò ra ngoài miệng happy).
+ *
+ * Nhịp chia không đều để đọc ra như đang nói chứ không phải máy đếm nhịp.
+ */
 .procv-mascot__mouth-talk {
-  animation: procvMascotTalk 0.36s steps(1, end) infinite;
+  animation: procvMascotTalk 0.62s steps(1, end) infinite;
   opacity: 0;
+}
+
+.procv-mascot__mouth-base {
+  animation: procvMascotMouthBase 0.62s steps(1, end) infinite;
 }
 
 .procv-mascot-empty {
@@ -93,8 +104,19 @@
 }
 
 @keyframes procvMascotTalk {
-  0%, 49% { opacity: 0; }
-  50%, 100% { opacity: 1; }
+  0%, 16% { opacity: 0; }
+  17%, 40% { opacity: 1; }
+  41%, 52% { opacity: 0; }
+  53%, 87% { opacity: 1; }
+  88%, 100% { opacity: 0; }
+}
+
+@keyframes procvMascotMouthBase {
+  0%, 16% { opacity: 1; }
+  17%, 40% { opacity: 0; }
+  41%, 52% { opacity: 1; }
+  53%, 87% { opacity: 0; }
+  88%, 100% { opacity: 1; }
 }
 
 @media (min-width: 640px) {
@@ -115,5 +137,8 @@
     opacity: 0;
   }
 
-  .procv-mascot__eyes-base { opacity: 1; }
+  .procv-mascot__eyes-base,
+  .procv-mascot__mouth-base {
+    opacity: 1;
+  }
 }

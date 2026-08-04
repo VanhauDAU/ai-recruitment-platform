@@ -1,56 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AutoComplete, Button, Checkbox, Form, Input, InputNumber, Radio, Select, Switch } from 'antd'
 import { UnorderedListOutlined, UserOutlined } from '@ant-design/icons'
-import { updateCandidateJobPreferences } from '@/entities/candidate-preferences'
-import { getJobCategories } from '@/entities/job'
-import { getProvinces } from '@/entities/location'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import { EXPERIENCE_OPTIONS, toFormValues } from '../model/job-preferences-fields'
+import { jobPreferenceFieldErrors, saveJobPreferences } from '../model/save-job-preferences'
+import { useJobPreferenceCatalog } from '../model/use-job-preference-catalog'
 import JobSpecializationPicker from './JobSpecializationPicker'
-
-const EXPERIENCE_OPTIONS = [
-  ['no_experience', 'Chưa có kinh nghiệm'],
-  ['under_1', 'Dưới 1 năm'],
-  ['1', '1 năm'],
-  ['2', '2 năm'],
-  ['3', '3 năm'],
-  ['4', '4 năm'],
-  ['5', '5 năm'],
-  ['over_5', 'Trên 5 năm'],
-].map(([value, label]) => ({ value, label }))
 
 const DROPDOWN_CLASS_NAME = '!rounded-2xl !p-1 !shadow-lg [&_.ant-select-item-option]:!rounded-xl'
 
-const FIELD_LABELS = {
-  desired_specialization_ids: 'Vị trí chuyên môn',
-  desired_position_other: 'Vị trí chuyên môn khác',
-  desired_salary_vnd: 'Mức lương',
-  experience_level: 'Kinh nghiệm',
-  preferred_province_ids: 'Địa điểm làm việc',
-  willing_to_relocate: 'Khả năng thay đổi địa điểm làm việc',
-  ai_recommendation_consent: 'Đồng ý nhận gợi ý việc làm',
-  recruiter_visibility_consent: 'Cho phép nhà tuyển dụng tìm thấy và xem hồ sơ',
-}
-
-function toFormValues(preference) {
-  return {
-    desired_specialization_ids: preference?.desired_specializations?.map((item) => item.id) || [],
-    desired_position_other: preference?.desired_position_other || '',
-    desired_salary_vnd: preference?.desired_salary_vnd ?? null,
-    experience_level: preference?.experience_level || undefined,
-    preferred_province_ids: preference?.preferred_provinces?.map((item) => item.id) || [],
-    willing_to_relocate: preference?.willing_to_relocate ?? false,
-    ai_recommendation_consent: Boolean(preference?.ai_recommendation_consent),
-    recruiter_visibility_consent: Boolean(preference?.recruiter_visibility_consent),
-  }
-}
-
 export default function JobPreferencesForm({ preference, profile, onProfileSaved, onSaved, onSkip, submitLabel = 'Hoàn thành', variant = 'default', renderFooter }) {
   const [form] = Form.useForm()
-  const [catalogLoading, setCatalogLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [categories, setCategories] = useState([])
-  const [provinces, setProvinces] = useState([])
+  const {
+    categories,
+    loading: catalogLoading,
+    provinceOptions,
+    specializationSuggestions,
+  } = useJobPreferenceCatalog()
 
   const isAccountSettings = variant === 'settings'
 
@@ -70,68 +38,26 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
   }, [isAccountSettings, gender, desiredSpecializationIds, desiredSalaryVnd, experienceLevel, preferredProvinceIds])
 
   useEffect(() => {
-    let active = true
-    Promise.all([getJobCategories(), getProvinces()])
-      .then(([categoryData, provinceData]) => {
-        if (!active) return
-        setCategories(categoryData)
-        setProvinces(provinceData)
-      })
-      .catch(() => {
-        if (active) message.error('Không tải được danh mục. Vui lòng thử lại.')
-      })
-      .finally(() => {
-        if (active) setCatalogLoading(false)
-      })
-    return () => { active = false }
-  }, [])
-
-  useEffect(() => {
     form.setFieldsValue({ ...toFormValues(preference), gender: profile?.gender || undefined })
   }, [form, preference, profile])
-
-  const provinceOptions = useMemo(
-    () => provinces.map((province) => ({ value: province.id, label: province.name })),
-    [provinces],
-  )
-  const specializationSuggestions = useMemo(
-    () => categories
-      .filter((category) => category.category_type === 'specialization')
-      .map((category) => ({ value: category.name })),
-    [categories],
-  )
 
   async function handleSubmit(values) {
     setSaving(true)
     try {
       const { gender, ...preferenceValues } = values
       const [saved] = await Promise.all([
-        updateCandidateJobPreferences({
-          ...preferenceValues,
-          desired_position_other: (values.desired_position_other || '').trim(),
-          desired_salary_vnd: values.desired_salary_vnd ?? null,
-          ai_recommendation_consent: values.ai_recommendation_consent ?? Boolean(preference?.ai_recommendation_consent),
-          recruiter_visibility_consent: values.recruiter_visibility_consent ?? Boolean(preference?.recruiter_visibility_consent),
-        }),
+        saveJobPreferences(preferenceValues, preference),
         variant === 'settings' ? onProfileSaved?.({ gender }) : null,
       ])
       message.success('Đã lưu nhu cầu công việc của bạn.')
       onSaved?.(saved)
     } catch (error) {
-      const fieldErrors = error?.response?.data
-      if (fieldErrors && typeof fieldErrors === 'object' && !Array.isArray(fieldErrors)) {
-        const entries = Object.entries(fieldErrors).filter(([name]) => [
-          'desired_specialization_ids', 'desired_position_other', 'desired_salary_vnd',
-          'experience_level', 'preferred_province_ids', 'willing_to_relocate',
-          'ai_recommendation_consent', 'recruiter_visibility_consent',
-        ].includes(name))
-        if (entries.length) {
-          form.setFields(entries.map(([name, errors]) => ({ name, errors: [].concat(errors) })))
-          const [fieldName, errors] = entries[0]
-          const firstError = [].concat(errors)[0]
-          message.error(`Chưa thể cập nhật trường “${FIELD_LABELS[fieldName] || fieldName}”. ${firstError}`)
-          return
-        }
+      const fieldErrors = jobPreferenceFieldErrors(error)
+      if (fieldErrors.length) {
+        form.setFields(fieldErrors.map(({ name, errors }) => ({ name, errors })))
+        const [{ errors, label }] = fieldErrors
+        message.error(`Chưa thể cập nhật trường “${label}”. ${errors[0]}`)
+        return
       }
       message.error(getApiErrorMessage(error, 'Không thể cập nhật nhu cầu công việc. Vui lòng thử lại.'))
     } finally {
@@ -144,10 +70,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
     message.warning(firstError || 'Vui lòng hoàn thiện các thông tin bắt buộc trước khi cập nhật.')
   }
 
-  const isOnboarding = variant === 'onboarding'
-
-  const labelClassName = isOnboarding ? 'font-semibold text-slate-700' : 'font-semibold text-slate-800'
-  const fieldClassName = isOnboarding ? '!mb-3' : undefined
+  const labelClassName = 'font-semibold text-slate-800'
 
   const footerNode = renderFooter
     ? renderFooter({ saving, catalogLoading, onSkip, isValid })
@@ -179,22 +102,20 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
         name="desired_specialization_ids"
         label={<span className={labelClassName}>Vị trí chuyên môn (chọn tối đa 5 vị trí) <span className="text-red-500">*</span></span>}
         rules={[{ required: true, type: 'array', min: 1, message: 'Vui lòng chọn ít nhất một vị trí chuyên môn.' }, { type: 'array', max: 5, message: 'Chỉ được chọn tối đa 5 vị trí chuyên môn.' }]}
-        className={fieldClassName}
       >
         <JobSpecializationPicker categories={categories} disabled={catalogLoading} />
       </Form.Item>
 
-      <Form.Item name="desired_position_other" label={<span className={isOnboarding || isAccountSettings ? 'text-sm italic text-slate-600' : labelClassName}>{isOnboarding || isAccountSettings ? 'Nhập vị trí chuyên môn không có trong danh mục (nhập tối đa 5 vị trí)' : 'Vị trí chuyên môn khác'}</span>} className={fieldClassName}>
+      <Form.Item name="desired_position_other" label={<span className={isAccountSettings ? 'text-sm italic text-slate-600' : labelClassName}>{isAccountSettings ? 'Nhập vị trí chuyên môn không có trong danh mục (nhập tối đa 5 vị trí)' : 'Vị trí chuyên môn khác'}</span>}>
         <AutoComplete options={specializationSuggestions} classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }} filterOption={(input, option) => option.value.toLocaleLowerCase('vi-VN').includes(input.toLocaleLowerCase('vi-VN'))}>
           <Input maxLength={255} allowClear placeholder="Nhập tên vị trí chuyên môn" className="!h-10 !rounded-xl" />
         </AutoComplete>
       </Form.Item>
 
-      <div className={isOnboarding ? 'grid gap-x-4 sm:grid-cols-2' : undefined}>
+      <div>
         <Form.Item
           label={<span className={labelClassName}>{isAccountSettings ? 'Mức lương' : 'Mức lương mong muốn'} <span className="text-red-500">*</span></span>}
           required
-          className={fieldClassName}
         >
           <div className="relative">
             <Form.Item
@@ -232,7 +153,6 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
           name="experience_level"
           label={<span className={labelClassName}>Kinh nghiệm <span className="text-red-500">*</span></span>}
           rules={[{ required: true, message: 'Vui lòng chọn kinh nghiệm.' }]}
-          className={fieldClassName}
         >
           <Select options={EXPERIENCE_OPTIONS} classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }} placeholder="Chọn kinh nghiệm" className="!h-10 !w-full [&_.ant-select-selector]:!rounded-xl" />
         </Form.Item>
@@ -242,14 +162,13 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
         name="preferred_province_ids"
         label={<span className={labelClassName}>Địa điểm làm việc <span className="text-red-500">*</span></span>}
         rules={[{ required: true, type: 'array', min: 1, message: 'Vui lòng chọn ít nhất một tỉnh/thành.' }]}
-        className={fieldClassName}
       >
         <Select mode="multiple" allowClear showSearch optionFilterProp="label" loading={catalogLoading} options={provinceOptions} classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }} placeholder="Chọn tỉnh/thành" maxTagCount="responsive" className="!min-h-10 !w-full [&_.ant-select-selector]:!min-h-10 [&_.ant-select-selector]:!rounded-xl" />
       </Form.Item>
 
-      {isOnboarding || isAccountSettings ? (
+      {isAccountSettings ? (
         <Form.Item name="willing_to_relocate" valuePropName="checked" className="!mb-2">
-          <Checkbox>{isAccountSettings ? 'Tôi có thể thay đổi địa điểm làm việc' : 'Sẵn sàng thay đổi địa điểm làm việc nếu có cơ hội phù hợp'}</Checkbox>
+          <Checkbox>Tôi có thể thay đổi địa điểm làm việc</Checkbox>
         </Form.Item>
       ) : (
         <div className="mb-3 flex items-center gap-3">
@@ -260,7 +179,7 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
         </div>
       )}
 
-      <div className={isOnboarding || isAccountSettings ? 'space-y-2 text-sm text-slate-700' : 'space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700'}>
+      <div className={isAccountSettings ? 'space-y-2 text-sm text-slate-700' : 'space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700'}>
         <Form.Item name="ai_recommendation_consent" valuePropName="checked" className="!mb-0">
           <Checkbox>Đồng ý để hệ thống gợi ý việc làm dựa trên nhu cầu công việc và CV của tôi.</Checkbox>
         </Form.Item>
@@ -270,8 +189,6 @@ export default function JobPreferencesForm({ preference, profile, onProfileSaved
           </Checkbox>
         </Form.Item>
       </div>
-
-      {isOnboarding && <p className="mt-4 text-xs font-medium text-slate-500">(*) Thông tin bắt buộc</p>}
 
       {footerNode}
     </Form>

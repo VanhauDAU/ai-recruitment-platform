@@ -60,6 +60,12 @@ async function expectHealthyStrip(page, message, header) {
   expect(headerBox).not.toBeNull()
   expect(stripBox.y).toBeGreaterThanOrEqual(headerBox.y + headerBox.height - 1)
   expect(stripBox.x + stripBox.width).toBeLessThanOrEqual(page.viewportSize().width + 1)
+
+  // Đặt lớp sheen tại điểm ngoài cạnh phải — pha từng làm document rộng hơn
+  // viewport và khiến thanh cuộn ngang chớp lên giữa mỗi chu kỳ animation.
+  await page.addStyleTag({
+    content: '.announcement-strip::before { animation: none !important; transform: translateX(120%) !important; }',
+  })
   await expect.poll(() => page.evaluate(() => (
     document.documentElement.scrollWidth - document.documentElement.clientWidth
   ))).toBeLessThanOrEqual(1)

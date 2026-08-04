@@ -41,6 +41,16 @@ export const MASCOT_ASSETS = {
       prop: `${ROOT}/props/robot-prop-microphone.webp`,
       front: `${ROOT}/arms/grip/robot-hand-left-grip-front.webp`,
     },
+    // Ôm bảng bằng hai tay nên cần hai bàn tay trước, khác pose micro một tay.
+    checklist: {
+      left: `${ROOT}/arms/hold/robot-arm-left-hold.webp`,
+      right: `${ROOT}/arms/hold/robot-arm-right-hold.webp`,
+      prop: `${ROOT}/props/robot-prop-checklist.webp`,
+      front: [
+        `${ROOT}/arms/hold/robot-hand-left-hold-front.webp`,
+        `${ROOT}/arms/hold/robot-hand-right-hold-front.webp`,
+      ],
+    },
   },
 }
 

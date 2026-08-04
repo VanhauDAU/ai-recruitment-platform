@@ -279,18 +279,36 @@ app/layouts/MainLayout + pages/main
   → widgets/candidate-assistant
     → shared/ui/mascot
       → public/images/mascot
+
+app/layouts/OnboardingLayout + pages/main/onboarding
+  → widgets/onboarding-interview
+    → features/speak-text, features/configure-job-preferences
+    → shared/ui/mascot, shared/hooks/use-progressive-reply
 ```
 
 - `shared/ui/mascot` sở hữu rig trình bày không biết domain, scene empty-state và
   animation CSS. Mọi layer asset giữ canvas 500×500; thứ tự render là shadow,
-  body, tay phải, tay trái, đầu, mắt và miệng. Animation phải tắt khi người dùng
-  bật `prefers-reduced-motion`.
+  body, tay phải, tay trái, đạo cụ, bàn tay trước, đầu, mắt và miệng. Pose cầm
+  đạo cụ hai tay (`checklist`) khai `front` dạng mảng hai bàn tay. Mắt chớp và
+  miệng nói đều dùng cặp animation nghịch đảo để không bao giờ chồng hai khẩu
+  hình hoặc hai bộ mắt. Animation phải tắt khi người dùng bật
+  `prefers-reduced-motion`.
 - `widgets/candidate-assistant` sở hữu launcher, panel, kịch bản mẫu và quick
   action của portal ứng viên. Panel được lazy-load khi mở lần đầu; phase 1 không
   gọi API chatbot và phải hiển thị rõ đây là câu trả lời mẫu.
 - Widget chỉ mount trong nhánh thường của `MainLayout`, không mount trong CV
   editor. Vị trí launcher phải tránh banner cookie theo chiều cao thực tế và
   thanh ứng tuyển mobile ở trang chi tiết việc làm.
+- `widgets/onboarding-interview` sở hữu cuộc phỏng vấn onboarding: kịch bản
+  tĩnh, state machine năm bước, bản đồ trạng thái mascot và provider giọng đọc.
+  Phải là widget vì ghép hai feature (`speak-text` và `configure-job-preferences`)
+  mà feature không được import feature. `OnboardingVoiceProvider` mount ở
+  `OnboardingLayout` chứ không phải trong page: AudioContext chỉ mở được trong
+  cử chỉ người dùng ở `/onboard-user`, mà page unmount là player bị destroy.
+  Bước phỏng vấn giữ nguyên tên trường và payload `PUT` của form một trang.
+- `shared/hooks/use-progressive-reply` sở hữu đồng hồ hiện chữ theo tiến độ
+  audio, dùng chung cho trợ lý và onboarding; nằm ở `shared` vì hai widget khác
+  nhau đều cần và widget không được import widget.
 - WebP trong `public/images/mascot` được tái tạo bằng
   `npm run build:mascot-assets -- --src <folder>`; không commit PNG nguồn hoặc
   các ảnh `states/` có thể dựng lại bằng rig.
