@@ -1,4 +1,4 @@
-import { CloudUploadOutlined, InboxOutlined, UploadOutlined } from '@ant-design/icons'
+import { UploadOutlined } from '@ant-design/icons'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { importCvFile } from '@/entities/cv'
@@ -48,7 +48,6 @@ export default function MyCvs() {
       <CvListSection
         title={`CV đã tạo trên ${siteName}`}
         action={{ label: '+ Tạo CV', onClick: () => navigate('/mau-cv') }}
-        emptyIcon={<InboxOutlined className="text-3xl" />}
         emptyText="Chưa có CV nào được tạo."
         cvs={builderCvs}
         loading={loading}
@@ -58,7 +57,6 @@ export default function MyCvs() {
       <CvListSection
         title={`CV đã tải lên ${siteName}`}
         action={{ label: <><UploadOutlined /> Tải CV lên</>, onClick: handleUploadClick }}
-        emptyIcon={<CloudUploadOutlined className="text-3xl" />}
         emptyText="Chưa có CV nào được tải lên."
         cvs={uploadedCvs}
         loading={loading}

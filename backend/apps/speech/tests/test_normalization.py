@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase
 
-from apps.speech.services.normalization import blog_post_speech_script
+from apps.speech.services.normalization import blog_post_speech_script, plain_text_speech_script
 
 
 class BlogSpeechNormalizationTests(SimpleTestCase):
@@ -54,3 +54,28 @@ class BlogSpeechNormalizationTests(SimpleTestCase):
         self.assertTrue(result['truncated'])
         self.assertLessEqual(len(result['text']), 150)
         self.assertTrue(result['text'].endswith('.'))
+
+
+class PlainTextSpeechNormalizationTests(SimpleTestCase):
+    def test_keeps_each_line_as_its_own_block_and_expands_abbreviations(self):
+        result = plain_text_speech_script(
+            'Chào bạn\nTôi đã đọc CV của bạn',
+            max_chars=600,
+        )
+
+        self.assertEqual(result['text'], 'Chào bạn.\n\nTôi đã đọc xi vi của bạn.')
+        self.assertEqual(result['normalizer_version'], 'plain-speech-v1')
+        self.assertEqual(len(result['text_hash']), 64)
+        self.assertFalse(result['truncated'])
+
+    def test_markup_is_parsed_away_instead_of_being_read_aloud(self):
+        spoken = plain_text_speech_script('<b>Xin chào</b> bạn', max_chars=600)
+        only_markup = plain_text_speech_script(
+            '<script>alert(1)</script>',
+            max_chars=600,
+        )
+
+        self.assertEqual(spoken['text'], 'Xin chào bạn.')
+        # Nothing left to say beats announcing a skipped code block: this path
+        # narrates one short line, not an article.
+        self.assertEqual(only_markup['text'], '')

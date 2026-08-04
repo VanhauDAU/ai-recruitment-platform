@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import api from '@/shared/api/client'
-import { createBlogSpeechSession, getSpeechVoiceCatalog } from './speech.api'
+import {
+  createBlogSpeechSession,
+  createTextSpeechSession,
+  getSpeechVoiceCatalog,
+} from './speech.api'
 
 vi.mock('@/shared/api/client', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
 
@@ -48,5 +52,18 @@ describe('speech API', () => {
       { source_type: 'blog_post', source_public_id: 'ps_public' },
       { signal: undefined },
     )
+  })
+
+  it('creates an ad-hoc session for a caller-supplied line', async () => {
+    api.post.mockResolvedValue({ data: { stream_url: '/tts/v1/streams/token' } })
+
+    await createTextSpeechSession({ text: 'Xin chào, tôi là trợ lý ProCV.' })
+
+    expect(api.post).toHaveBeenCalledWith(
+      '/speech/sessions/',
+      { source_type: 'text', text: 'Xin chào, tôi là trợ lý ProCV.' },
+      { signal: undefined },
+    )
+    expect(api.post.mock.calls[0][1]).not.toHaveProperty('source_public_id')
   })
 })

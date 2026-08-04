@@ -3,6 +3,7 @@ import { EmailVerificationBanner, LoginPromptProvider } from '@/features/auth'
 import { SavedJobsProvider } from '@/features/saved-jobs'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
+import { CandidateAssistant } from '@/widgets/candidate-assistant'
 import { FloatingActions } from '@/widgets/floating-actions'
 import { Footer } from '@/widgets/main-footer'
 import { JobPreferencesReminder } from '@/widgets/job-preferences-reminder'
@@ -59,6 +60,7 @@ export default function MainLayout() {
           <PopularSearches />
           <Footer />
           <FloatingActions />
+          <CandidateAssistant />
         </div>
       </LoginPromptProvider>
     </SavedJobsProvider>

@@ -9,6 +9,7 @@ import {
   applicationKeys,
   getCandidateApplications,
 } from '@/entities/application'
+import { MascotEmpty } from '@/shared/ui/mascot'
 
 const STATUS_COLORS = {
   submitted: 'blue',
@@ -200,7 +201,9 @@ export default function AppliedJobs() {
         <p className="mt-1 text-sm text-slate-500">Theo dõi các mốc xử lý hồ sơ mà nhà tuyển dụng chia sẻ với bạn.</p>
       </div>
 
-      {!applications.length ? <Empty description="Bạn chưa ứng tuyển việc làm nào" /> : (
+      {!applications.length ? (
+        <MascotEmpty className="py-6" scene="cvHelper" description="Bạn chưa ứng tuyển việc làm nào" />
+      ) : (
         <>
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Lọc theo trạng thái hồ sơ">
             {filters.map(([value, label]) => (

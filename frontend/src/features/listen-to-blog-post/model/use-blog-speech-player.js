@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getSpeechVoiceCatalog } from '@/entities/speech'
+import { now, retryableStatus } from '@/shared/lib/speech/stream-retry'
 import { playLiveBlogSpeech } from './live-speech-stream'
 import {
   connectionAllowsPreload,
   findPreparedAsset,
-  now,
-  retryableStatus,
   storedSpeechRate,
   storedSpeechStyle,
   storedSpeechVoice,

@@ -208,14 +208,27 @@ app/router
 
 - `entities/blog` sở hữu public/admin HTTP contract, formatter và renderer HTML
   đã sanitize dùng chung giữa trang ứng viên với preview admin.
+- `shared/lib/speech` sở hữu hạ tầng phát audio không biết domain:
+  `PcmStreamPlayer` (Web Audio cho luồng chưa biết độ dài), `NativeAudioPlayer`
+  (asset MP3 đã có sẵn), `playSpeechStream` và chính sách chờ 429/503. Đặt ở
+  `shared` vì cả blog lẫn các bề mặt khác đều dùng, mà feature thì không được
+  import feature.
 - `entities/speech` sở hữu contract voice/session dùng lại được nhưng không
-  import blog. `features/listen-to-blog-post` phát mọi voice/style artifact đã
-  được tạo từ lượt nghe trước bằng native audio; chỉ tạo session streaming khi
-  tổ hợp đó chưa sẵn sàng. Catalogue chỉ tải khi mở bảng tùy chỉnh. Feature
-  tự giữ lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ
-  page; nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
+  import blog: `createBlogSpeechSession` cho bài viết đã đăng và
+  `createTextSpeechSession` cho một câu bất kỳ.
+- `features/listen-to-blog-post` phát mọi voice/style artifact đã được tạo từ
+  lượt nghe trước bằng native audio; chỉ tạo session streaming khi tổ hợp đó
+  chưa sẵn sàng. Catalogue chỉ tải khi mở bảng tùy chỉnh. Feature tự giữ
+  lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ page;
+  nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
   control-plane resolve source/rate-limit; các listener cùng artifact identity
   bám một live inference, và MP3 được encode từ chính live PCM đó.
+- `features/speak-text` sở hữu `useSpeak()` — `speak(text)` cho bề mặt bất kỳ
+  (trợ lý, thông báo). Câu nói KHÔNG sinh artifact lâu dài: quá ngắn và quá
+  nhiều để lưu, nên chỉ chạy live stream và ăn cache của engine khi lặp lại.
+  Backend giới hạn riêng bằng scope `speech_adhoc` và
+  `SPEECH_MAX_ADHOC_TEXT_CHARS`. Lần phát đầu phải nằm trong cử chỉ click/tap;
+  bề mặt tự nói thì gọi `unlock()` ở lần bấm đầu tiên.
 - `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
   preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
   `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;
@@ -258,6 +271,29 @@ app/router + app/layouts
 - `widgets/admin-account-management` sở hữu hai cấu hình workspace riêng.
   `users` chỉ gồm ứng viên và quản trị viên; `recruiters` chỉ gồm tài khoản nhà
   tuyển dụng. Page chỉ chọn scope và compose widget.
+
+## Ownership map — Mascot và trợ lý ứng viên
+
+```text
+app/layouts/MainLayout + pages/main
+  → widgets/candidate-assistant
+    → shared/ui/mascot
+      → public/images/mascot
+```
+
+- `shared/ui/mascot` sở hữu rig trình bày không biết domain, scene empty-state và
+  animation CSS. Mọi layer asset giữ canvas 500×500; thứ tự render là shadow,
+  body, tay phải, tay trái, đầu, mắt và miệng. Animation phải tắt khi người dùng
+  bật `prefers-reduced-motion`.
+- `widgets/candidate-assistant` sở hữu launcher, panel, kịch bản mẫu và quick
+  action của portal ứng viên. Panel được lazy-load khi mở lần đầu; phase 1 không
+  gọi API chatbot và phải hiển thị rõ đây là câu trả lời mẫu.
+- Widget chỉ mount trong nhánh thường của `MainLayout`, không mount trong CV
+  editor. Vị trí launcher phải tránh banner cookie theo chiều cao thực tế và
+  thanh ứng tuyển mobile ở trang chi tiết việc làm.
+- WebP trong `public/images/mascot` được tái tạo bằng
+  `npm run build:mascot-assets -- --src <folder>`; không commit PNG nguồn hoặc
+  các ảnh `states/` có thể dựng lại bằng rig.
 - URL là nguồn chuẩn cho tab, filter, ordering và page. Lời mời quản trị dùng
   namespace `invite_*`, hàng chờ xác thực NTD dùng `verify_*`; tham số không
   tương thích phải được bỏ khi chuyển tab.

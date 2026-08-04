@@ -5,6 +5,7 @@ from hashlib import sha256
 from html.parser import HTMLParser
 
 NORMALIZER_VERSION = 'blog-speech-v1'
+PLAIN_NORMALIZER_VERSION = 'plain-speech-v1'
 BLOCK_TAGS = {
     'blockquote',
     'div',
@@ -47,12 +48,14 @@ def _finish_sentence(value):
 
 
 class _BlogSpeechParser(HTMLParser):
-    def __init__(self):
+    def __init__(self, *, announce_skipped=True):
         super().__init__(convert_charrefs=True)
         self.blocks = []
         self.buffer = []
         self.skipped_depth = 0
-        self.skipped_announced = False
+        # An article reader needs to know a code block was left out. A caller
+        # sending one short line does not, and would only hear a stray sentence.
+        self.skipped_announced = not announce_skipped
 
     def handle_starttag(self, tag, attrs):
         tag = tag.lower()
@@ -129,13 +132,7 @@ def _truncate_blocks(blocks, max_chars):
     return selected, truncated
 
 
-def blog_post_speech_script(post, *, max_chars):
-    parser = _BlogSpeechParser()
-    parser.feed(post.content or '')
-    parser.close()
-
-    title = _finish_sentence(post.title)
-    blocks = [title, *parser.blocks]
+def _script(blocks, *, max_chars, normalizer_version):
     blocks = [
         _pronounce_abbreviations(EMOTION_CUE_PATTERN.sub('', block)) for block in blocks if block
     ]
@@ -145,6 +142,36 @@ def blog_post_speech_script(post, *, max_chars):
     return {
         'text': text,
         'text_hash': digest,
-        'normalizer_version': NORMALIZER_VERSION,
+        'normalizer_version': normalizer_version,
         'truncated': truncated,
     }
+
+
+def blog_post_speech_script(post, *, max_chars):
+    parser = _BlogSpeechParser()
+    parser.feed(post.content or '')
+    parser.close()
+
+    title = _finish_sentence(post.title)
+    return _script(
+        [title, *parser.blocks],
+        max_chars=max_chars,
+        normalizer_version=NORMALIZER_VERSION,
+    )
+
+
+def plain_text_speech_script(text, *, max_chars):
+    """Normalize one caller-supplied plain-text line into a narration script.
+
+    Callers post short UI-authored sentences rather than markup, so each source
+    line stays its own block to keep the natural pause between them. The markup
+    parser still runs over every line: a caller must not be able to make the
+    engine read angle brackets aloud, nor smuggle a script tag into the text.
+    """
+    blocks = []
+    for line in (text or '').splitlines():
+        parser = _BlogSpeechParser(announce_skipped=False)
+        parser.feed(line)
+        parser.close()
+        blocks.extend(parser.blocks)
+    return _script(blocks, max_chars=max_chars, normalizer_version=PLAIN_NORMALIZER_VERSION)

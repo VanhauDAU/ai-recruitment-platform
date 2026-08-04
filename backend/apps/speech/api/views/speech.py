@@ -5,7 +5,11 @@ from rest_framework.views import APIView
 
 from apps.speech.api.serializers import SpeechSessionRequestSerializer
 from apps.speech.selectors import published_blog_post_for_speech
-from apps.speech.services import create_blog_post_speech_session, get_speech_catalog
+from apps.speech.services import (
+    create_blog_post_speech_session,
+    create_text_speech_session,
+    get_speech_catalog,
+)
 from apps.speech.services.client import SpeechServiceRejected, SpeechServiceUnavailable
 from common.throttling import ClientIPScopedRateThrottle
 
@@ -42,6 +46,15 @@ class SpeechSessionView(APIView):
     throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'speech_session'
 
+    def get_throttles(self):
+        # Ad-hoc text is written by the caller, so it can never be de-duplicated
+        # across visitors the way a published article is. It gets its own,
+        # tighter bucket rather than competing with people reading the blog.
+        body = self.request.data
+        if isinstance(body, dict) and body.get('source_type') == 'text':
+            self.throttle_scope = 'speech_adhoc'
+        return super().get_throttles()
+
     @extend_schema(
         request=SpeechSessionRequestSerializer,
         responses={201: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT, 503: OpenApiTypes.OBJECT},
@@ -51,19 +64,29 @@ class SpeechSessionView(APIView):
         serializer = SpeechSessionRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        post = published_blog_post_for_speech(data['source_public_id'])
-        if post is None:
-            return Response(
-                {'code': 'speech_source_not_found', 'detail': 'Không tìm thấy bài viết.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+
+        post = None
+        if data['source_type'] == 'blog_post':
+            post = published_blog_post_for_speech(data['source_public_id'])
+            if post is None:
+                return Response(
+                    {'code': 'speech_source_not_found', 'detail': 'Không tìm thấy bài viết.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
         try:
-            session = create_blog_post_speech_session(
-                post=post,
-                voice_id=data['voice_id'],
-                style=data['style'],
-            )
+            if post is not None:
+                session = create_blog_post_speech_session(
+                    post=post,
+                    voice_id=data['voice_id'],
+                    style=data['style'],
+                )
+            else:
+                session = create_text_speech_session(
+                    text=data['text'],
+                    voice_id=data['voice_id'],
+                    style=data['style'],
+                )
         except SpeechServiceRejected:
             return Response(
                 {'code': 'speech_request_rejected', 'detail': 'Yêu cầu giọng đọc không hợp lệ.'},

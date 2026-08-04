@@ -1,0 +1,84 @@
+.home-search-stage {
+  margin-top: 1.75rem;
+  position: relative;
+}
+
+.home-hero-mascot {
+  display: none;
+}
+
+#section-header::before {
+  animation: homeHeaderGlowFromLeft 12s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
+#section-header::after {
+  animation: homeHeaderGlowFromRight 12s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
+@keyframes homeHeaderGlowFromLeft {
+  0%, 100% { transform: translate3d(-110%, 0, 0); }
+  18%, 42% { transform: translate3d(-4%, 0, 0); }
+  60% { transform: translate3d(4%, -2%, 0); }
+  82% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes homeHeaderGlowFromRight {
+  0%, 100% { transform: translate3d(110%, 0, 0); }
+  18%, 42% { transform: translate3d(4%, 0, 0); }
+  60% { transform: translate3d(-4%, 2%, 0); }
+  82% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes homeHeroMascotPatrol {
+  0%, 8% {
+    left: 2%;
+    transform: translateY(0) rotate(-2deg);
+  }
+  28% {
+    left: 28%;
+    transform: translateY(-10px) rotate(2deg);
+  }
+  48%, 56% {
+    left: calc(50% - 66px);
+    transform: translateY(-3px) rotate(0);
+  }
+  76% {
+    left: calc(72% - 66px);
+    transform: translateY(-12px) rotate(-2deg);
+  }
+  92%, 100% {
+    left: calc(98% - 132px);
+    transform: translateY(0) rotate(2deg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-hero-mascot {
+    animation: homeHeroMascotPatrol 15s ease-in-out infinite alternate;
+    bottom: calc(100% - 10px);
+    display: block;
+    height: 132px;
+    left: 2%;
+    pointer-events: none;
+    position: absolute;
+    width: 132px;
+    will-change: left, transform;
+    z-index: 20;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #section-header::before,
+  #section-header::after {
+    animation: none;
+    transform: none;
+  }
+
+  .home-hero-mascot {
+    animation: none;
+    left: calc(98% - 132px);
+    transform: none;
+  }
+}

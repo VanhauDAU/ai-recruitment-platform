@@ -31,6 +31,8 @@ export async function mockPublicApi(page) {
     }
     const body = path === '/api/jobs/'
       ? { count: 0, results: [] }
+      : path === '/api/site/banners/'
+        ? []
       : path === '/api/privacy/consent/'
         // Consent đã quyết định -> banner cookie không che các nút trong smoke test.
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }

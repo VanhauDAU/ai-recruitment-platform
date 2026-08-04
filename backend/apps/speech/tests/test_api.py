@@ -1,11 +1,14 @@
 from unittest.mock import patch
 
+from django.conf import settings
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.test import APIRequestFactory
 
 from apps.blog.models import Post, PostCategory
+from apps.speech.api.views.speech import SpeechSessionView
 from apps.speech.services.client import SpeechServiceUnavailable
 
 CATALOG = {
@@ -96,6 +99,73 @@ class SpeechApiTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         create_session.assert_called_once_with(post=self.post, voice_id='', style='')
+
+    @patch('apps.speech.api.views.speech.create_text_speech_session')
+    def test_speaks_caller_supplied_text_without_a_source_record(self, create_session):
+        create_session.return_value = {
+            'stream_url': '/tts/v1/streams/opaque-token-value-123456',
+            'voice_id': 'north-male-natural',
+            'style': 'tu_nhien',
+            'truncated': False,
+        }
+
+        response = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'text', 'text': 'Tôi tìm được ba việc phù hợp với bạn.'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        create_session.assert_called_once_with(
+            text='Tôi tìm được ba việc phù hợp với bạn.',
+            voice_id='',
+            style='',
+        )
+        self.assertEqual(response['Cache-Control'], 'no-store')
+
+    def test_rejects_blank_and_oversized_text(self):
+        blank = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'text', 'text': '   '},
+            content_type='application/json',
+        )
+        oversized = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'text', 'text': 'a' * 601},
+            content_type='application/json',
+        )
+
+        self.assertEqual(blank.status_code, 400)
+        self.assertEqual(oversized.status_code, 400)
+
+    def test_rejects_blog_source_without_a_post_id(self):
+        response = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'blog_post'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('source_public_id', response.data)
+
+    def test_ad_hoc_text_cannot_exhaust_the_article_playback_budget(self):
+        factory = APIRequestFactory()
+
+        def scope_for(payload):
+            view = SpeechSessionView()
+            view.request = view.initialize_request(factory.post('/', payload, format='json'))
+            view.get_throttles()
+            return view.throttle_scope
+
+        rates = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']
+        self.assertEqual(scope_for({'source_type': 'text', 'text': 'Xin chào.'}), 'speech_adhoc')
+        self.assertEqual(
+            scope_for({'source_type': 'blog_post', 'source_public_id': self.post.public_id}),
+            'speech_session',
+        )
+        # A missing rate is an ImproperlyConfigured 500 on the first request.
+        self.assertIn('speech_adhoc', rates)
+        self.assertIn('speech_session', rates)
 
     @patch(
         'apps.speech.api.views.speech.get_speech_catalog',

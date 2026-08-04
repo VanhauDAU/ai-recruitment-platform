@@ -1,9 +1,4 @@
-import {
-  CompassOutlined,
-  FileTextOutlined,
-  HeartFilled,
-  ReloadOutlined,
-} from '@ant-design/icons'
+import { CompassOutlined, FileTextOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button } from 'antd'
 import { Link, Navigate } from 'react-router'
 import { useSession } from '@/entities/session'
@@ -12,6 +7,7 @@ import {
   useSavedJobs,
 } from '@/features/saved-jobs'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { MascotEmpty } from '@/shared/ui/mascot'
 import JobCard from './ui/JobCard'
 import JobCardSkeleton from './ui/JobCardSkeleton'
 
@@ -46,20 +42,25 @@ function PromoAside() {
 function SavedJobsEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-11 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
-        <HeartFilled className="text-2xl text-emerald-200" />
-      </span>
-      <p className="mt-4 text-base font-bold text-gray-800">Bạn chưa lưu việc làm nào</p>
-      <p className="mt-1 max-w-md text-sm leading-6 text-gray-500">
-        Lưu những tin bạn quan tâm để xem lại nhanh và nhận gợi ý sát hơn với nhu cầu.
-      </p>
-      <Link
-        to="/viec-lam"
-        className="mt-5 inline-flex items-center gap-2 rounded-full !bg-[var(--brand-primary)] px-5 py-2.5 text-sm font-semibold !text-white transition hover:!bg-[var(--brand-primary-hover)]"
+      <MascotEmpty
+        scene="searchJob"
+        description={(
+          <>
+            <p className="text-base font-bold text-gray-800">Bạn chưa lưu việc làm nào</p>
+            <p className="mt-1 max-w-md text-sm leading-6 text-gray-500">
+              Lưu những tin bạn quan tâm để xem lại nhanh và nhận gợi ý sát hơn với nhu cầu.
+            </p>
+          </>
+        )}
       >
-        <CompassOutlined />
-        Khám phá việc làm
-      </Link>
+        <Link
+          to="/viec-lam"
+          className="inline-flex items-center gap-2 rounded-full !bg-[var(--brand-primary)] px-5 py-2.5 text-sm font-semibold !text-white transition hover:!bg-[var(--brand-primary-hover)]"
+        >
+          <CompassOutlined />
+          Khám phá việc làm
+        </Link>
+      </MascotEmpty>
     </div>
   )
 }

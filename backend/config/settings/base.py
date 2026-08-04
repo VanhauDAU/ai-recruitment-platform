@@ -299,6 +299,7 @@ REST_FRAMEWORK = {
         'cv_import': '10/hour',
         'speech_catalog': '120/hour',
         'speech_session': '60/hour',
+        'speech_adhoc': '90/hour',
     },
 }
 
@@ -537,6 +538,10 @@ SPEECH_CAPABILITIES_CACHE_SECONDS = config(
     'SPEECH_CAPABILITIES_CACHE_SECONDS', default=300, cast=int
 )
 SPEECH_MAX_TEXT_CHARS = config('SPEECH_MAX_TEXT_CHARS', default=30_000, cast=int)
+# Ad-hoc text arrives from the client instead of from published editorial
+# content, so it is capped at roughly one spoken paragraph. The synthesis pool
+# runs a single model worker; a long request would block every other listener.
+SPEECH_MAX_ADHOC_TEXT_CHARS = config('SPEECH_MAX_ADHOC_TEXT_CHARS', default=600, cast=int)
 SPEECH_DEFAULT_VOICE_ID = config('SPEECH_DEFAULT_VOICE_ID', default='north-male-natural').strip()
 SPEECH_DEFAULT_STYLE = config('SPEECH_DEFAULT_STYLE', default='tu_nhien').strip()
 SPEECH_MODEL_REVISION = config(
