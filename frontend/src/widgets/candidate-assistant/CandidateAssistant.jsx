@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 import { useConsent } from '@/entities/consent'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
 import AssistantLauncher from './ui/AssistantLauncher'
 
 const AssistantPanel = lazy(() => import('./ui/AssistantPanel'))
@@ -27,6 +28,7 @@ export default function CandidateAssistant() {
   const { pathname } = useLocation()
   const { isDecided, isEnabled } = useConsent()
   const isMobile = useMediaQuery('(max-width: 767px)')
+  const viewportBottomInset = useVisualViewportBottomInset()
   const [open, setOpen] = useState(false)
   const [greetingVisible, setGreetingVisible] = useState(false)
   const [cookieMetrics, setCookieMetrics] = useState({ height: 0, viewportHeight: 0 })
@@ -93,14 +95,14 @@ export default function CandidateAssistant() {
     '--assistant-panel-max-height': cookieVisible && cookieMetrics.height
       ? `${Math.max(220, cookieMetrics.viewportHeight - cookieMetrics.height - 164)}px`
       : '540px',
-    bottom,
+    bottom: `calc(${bottom} + ${viewportBottomInset}px + env(safe-area-inset-bottom, 0px))`,
     position: 'fixed',
     right: 'clamp(1rem, 2vw, 1.5rem)',
     zIndex: 40,
   }
 
   return (
-    <div style={rootStyle}>
+    <div data-testid="candidate-assistant" style={rootStyle}>
       <div style={{ position: 'relative' }}>
         {open && (
           <Suspense fallback={(
