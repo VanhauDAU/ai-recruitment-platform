@@ -1,0 +1,119 @@
+.procv-mascot {
+  display: inline-block;
+  flex: none;
+  pointer-events: none;
+  position: relative;
+  transform-origin: center;
+  user-select: none;
+}
+
+.procv-mascot__layer {
+  height: 100%;
+  inset: 0;
+  object-fit: contain;
+  position: absolute;
+  width: 100%;
+}
+
+.procv-mascot--float {
+  animation: procvMascotFloat 3.2s ease-in-out infinite alternate;
+}
+
+.procv-mascot__shadow--float {
+  animation: procvMascotShadow 3.2s ease-in-out infinite alternate;
+  transform-origin: center 82%;
+}
+
+.procv-mascot__eyes-blink {
+  animation: procvMascotBlink 4.5s linear infinite;
+  opacity: 0;
+}
+
+.procv-mascot__eyes-base {
+  animation: procvMascotEyesBase 4.5s linear infinite;
+}
+
+.procv-mascot__arm-wave {
+  animation: procvMascotWave 0.45s ease-in-out 4 alternate;
+  transform-origin: 64% 62%;
+}
+
+.procv-mascot__mouth-talk {
+  animation: procvMascotTalk 0.36s steps(1, end) infinite;
+  opacity: 0;
+}
+
+.procv-mascot-empty {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.procv-mascot-empty__image {
+  height: var(--procv-empty-size);
+  object-fit: contain;
+  width: var(--procv-empty-size);
+}
+
+.procv-mascot-empty__description {
+  color: rgb(107 114 128);
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.procv-mascot-empty__actions { margin-top: 1.25rem; }
+
+@keyframes procvMascotFloat {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+
+@keyframes procvMascotShadow {
+  from { opacity: 0.75; transform: scaleX(1); }
+  to { opacity: 0.5; transform: scaleX(0.88); }
+}
+
+@keyframes procvMascotBlink {
+  0%, 2% { opacity: 0; }
+  2.01%, 4% { opacity: 1; }
+  4.01%, 100% { opacity: 0; }
+}
+
+@keyframes procvMascotEyesBase {
+  0%, 2% { opacity: 1; }
+  2.01%, 4% { opacity: 0; }
+  4.01%, 100% { opacity: 1; }
+}
+
+@keyframes procvMascotWave {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(12deg); }
+}
+
+@keyframes procvMascotTalk {
+  0%, 49% { opacity: 0; }
+  50%, 100% { opacity: 1; }
+}
+
+@media (min-width: 640px) {
+  .procv-mascot-empty__image {
+    height: var(--procv-empty-size-large);
+    width: var(--procv-empty-size-large);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .procv-mascot,
+  .procv-mascot__layer {
+    animation: none !important;
+  }
+
+  .procv-mascot__eyes-blink,
+  .procv-mascot__mouth-talk {
+    opacity: 0;
+  }
+
+  .procv-mascot__eyes-base { opacity: 1; }
+}

@@ -11,9 +11,11 @@ import CvTemplateShowcase from './ui/CvTemplateShowcase'
 import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
 import FlashBadge from './ui/FlashBadge'
 import HotlineConsultation from './ui/HotlineConsultation'
+import HomeHeroMascot from './ui/HomeHeroMascot'
 import { LocationFilter } from '@/entities/location'
 import MarketStats from './ui/MarketStats'
 import { SearchDropdown, saveHistory } from '@/features/search-jobs'
+import './home-mascot.css'
 
 const SUGGESTED_JOBS = [
   'Lập trình viên React',
@@ -168,7 +170,8 @@ export default function Home() {
             Tiếp lợi thế, nối thành công cùng nền tảng nhân sự ứng dụng AI.
           </Typography.Paragraph>
 
-          <div className="mt-7 max-w-6xl mx-auto">
+          <div className="home-search-stage max-w-6xl mx-auto">
+            <HomeHeroMascot />
             <div
               ref={searchBoxRef}
               className="relative z-40 rounded-2xl border border-white/20 bg-white/95 p-2.5 shadow-2xl shadow-emerald-950/25 backdrop-blur"

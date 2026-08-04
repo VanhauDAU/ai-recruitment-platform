@@ -46,7 +46,7 @@ vi.mock('@/entities/speech', () => ({
   getSpeechVoiceCatalog: vi.fn(),
 }))
 
-vi.mock('../model/pcm-stream-player', () => ({
+vi.mock('@/shared/lib/speech/pcm-stream-player', () => ({
   PcmStreamPlayer: class {
     constructor(callbacks) {
       pcm.callbacks = callbacks
@@ -126,9 +126,12 @@ describe('BlogSpeechPlayer', () => {
   })
 
   it('does not contact TTS during initial article render', () => {
-    render(<BlogSpeechPlayer postPublicId="ps_article" />)
+    const { container } = render(<BlogSpeechPlayer postPublicId="ps_article" />)
 
     expect(screen.getByRole('button', { name: 'Phát bài viết ngay' })).toBeInTheDocument()
+    expect(container.querySelector('.blog-speech')).toHaveAttribute('data-status', 'idle')
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-emotion', 'happy')
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-pose', 'microphone')
     expect(getSpeechVoiceCatalog).not.toHaveBeenCalled()
     expect(createBlogSpeechSession).not.toHaveBeenCalled()
   })
@@ -156,7 +159,9 @@ describe('BlogSpeechPlayer', () => {
   })
 
   it('plays a prepared default asset directly without creating a TTS session', async () => {
-    render(<BlogSpeechPlayer defaultAsset={defaultAsset} postPublicId="ps_article" />)
+    const { container } = render(
+      <BlogSpeechPlayer defaultAsset={defaultAsset} postPublicId="ps_article" />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Phát bài viết ngay' }))
 
@@ -165,6 +170,9 @@ describe('BlogSpeechPlayer', () => {
     expect(nativeAudio.instances[0].src).toBe(defaultAsset.url)
     expect(nativeAudio.instances[0].preload).toBe('auto')
     expect(nativeAudio.instances[0].play).toHaveBeenCalledTimes(1)
+    expect(container.querySelector('.blog-speech')).toHaveAttribute('data-status', 'playing')
+    expect(container.querySelector('.procv-mascot')).toHaveAttribute('data-emotion', 'happy')
+    expect(container.querySelector('img[src*="robot-prop-microphone.webp"]')).toBeInTheDocument()
     expect(createBlogSpeechSession).not.toHaveBeenCalled()
     expect(pcm.play).not.toHaveBeenCalled()
   })

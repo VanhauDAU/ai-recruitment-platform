@@ -1,45 +1,8 @@
 export const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5]
-export const MAX_STREAM_ATTEMPTS = 3
-export const MAX_QUEUE_WAIT_MS = 8_000
 
 const VOICE_STORAGE_KEY = 'procv_blog_speech_voice_v1'
 const STYLE_STORAGE_KEY = 'procv_blog_speech_style_v1'
 const RATE_STORAGE_KEY = 'procv_blog_speech_rate_v1'
-
-const RETRY_STATUSES = new Set([429, 503])
-const DEFAULT_RETRY_MS = 1_000
-const MAX_RETRY_MS = 4_000
-
-export function now() {
-  return window.performance?.now?.() ?? Date.now()
-}
-
-export function retryDelayMs(error) {
-  const seconds = Number(error?.retryAfter || error?.response?.headers?.['retry-after']) || 0
-  return Math.min(MAX_RETRY_MS, Math.max(seconds * 1000, DEFAULT_RETRY_MS))
-}
-
-export function retryableStatus(error) {
-  return RETRY_STATUSES.has(error?.status ?? error?.response?.status)
-}
-
-export function sleep(ms, signal) {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException('Aborted', 'AbortError'))
-      return
-    }
-    const onAbort = () => {
-      window.clearTimeout(timer)
-      reject(new DOMException('Aborted', 'AbortError'))
-    }
-    const timer = window.setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort)
-      resolve()
-    }, ms)
-    signal?.addEventListener('abort', onAbort, { once: true })
-  })
-}
 
 export function normalizeDefaultAsset(asset) {
   if (asset?.status !== 'ready' || !asset?.url) return null

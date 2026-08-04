@@ -1,5 +1,6 @@
-import { Button, Empty, Pagination, Select } from 'antd'
+import { Button, Pagination, Select } from 'antd'
 import { SEARCH_BY_TABS } from '@/features/search-jobs'
+import { MascotEmpty } from '@/shared/ui/mascot'
 import { PAGE_SIZE } from '../lib/job-list-params'
 import JobCard from './JobCard'
 import JobCardSkeleton from './JobCardSkeleton'
@@ -75,7 +76,8 @@ export default function JobResults({
       ) : results.length === 0 ? (
         <div>
           <div className="rounded-xl border border-gray-200 bg-white px-6 py-16">
-            <Empty
+            <MascotEmpty
+              scene="emptyStateJobs"
               description={
                 <span className="text-gray-500">
                   Rất tiếc, chưa tìm thấy công việc phù hợp với tiêu chí của bạn.
@@ -89,7 +91,7 @@ export default function JobResults({
                   Xóa bộ lọc & từ khóa
                 </Button>
               )}
-            </Empty>
+            </MascotEmpty>
           </div>
           {emptyExtra}
         </div>

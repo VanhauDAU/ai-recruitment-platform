@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
-import { NativeAudioPlayer } from './native-audio-player'
-import { PcmStreamPlayer } from './pcm-stream-player'
+import { NativeAudioPlayer } from '@/shared/lib/speech/native-audio-player'
+import { PcmStreamPlayer } from '@/shared/lib/speech/pcm-stream-player'
 
 export function useSpeechEngines({
   activeConfigRef,

@@ -29,8 +29,18 @@ export async function mockPublicApi(page) {
       })
       return
     }
+    if (path === '/api/speech/sessions/') {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ detail: 'Speech unavailable in smoke test.' }),
+      })
+      return
+    }
     const body = path === '/api/jobs/'
       ? { count: 0, results: [] }
+      : path === '/api/site/banners/'
+        ? []
       : path === '/api/privacy/consent/'
         // Consent đã quyết định -> banner cookie không che các nút trong smoke test.
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }

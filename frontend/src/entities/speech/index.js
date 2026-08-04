@@ -1,2 +1,6 @@
-export { createBlogSpeechSession, getSpeechVoiceCatalog } from './api/speech.api'
+export {
+  createBlogSpeechSession,
+  createTextSpeechSession,
+  getSpeechVoiceCatalog,
+} from './api/speech.api'
 

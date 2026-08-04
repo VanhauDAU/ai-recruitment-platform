@@ -23,6 +23,7 @@ import {
 } from '@/entities/job'
 import { useSavedJob } from '@/features/saved-jobs'
 import { JobImpressionBoundary } from '@/features/track-job-engagement'
+import { MascotEmpty } from '@/shared/ui/mascot'
 
 const PAGE_SIZE = 10
 const SETTINGS_PATH = '/tai-khoan/cai-dat-goi-y-viec-lam'
@@ -258,10 +259,16 @@ export default function MatchingJobs() {
               {data.results.map((job) => <MatchingJobCard key={job.public_id} job={job} />)}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center">
-              <CompassOutlined className="text-3xl text-slate-300" />
-              <h2 className="mt-3 font-bold text-slate-800">Chưa có việc làm đủ phù hợp</h2>
-              <p className="mt-1 text-sm text-slate-500">Hãy cập nhật thêm tiêu chí hoặc quay lại sau khi có tin tuyển dụng mới.</p>
+            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10">
+              <MascotEmpty
+                scene="profileCheck"
+                description={(
+                  <>
+                    <h2 className="font-bold text-slate-800">Chưa có việc làm đủ phù hợp</h2>
+                    <p className="mt-1 text-sm text-slate-500">Hãy cập nhật thêm tiêu chí hoặc quay lại sau khi có tin tuyển dụng mới.</p>
+                  </>
+                )}
+              />
             </div>
           )}
 

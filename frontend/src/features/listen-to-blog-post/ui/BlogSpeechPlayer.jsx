@@ -1,6 +1,5 @@
 import {
   CloseOutlined,
-  CustomerServiceFilled,
   LoadingOutlined,
   PauseOutlined,
   PlayCircleFilled,
@@ -9,6 +8,7 @@ import {
 } from '@ant-design/icons'
 import { useEffect, useMemo, useRef } from 'react'
 import { useBlogSpeechPlayer } from '../model/use-blog-speech-player'
+import { SpeechMascot, SpeechWaveform } from './SpeechPlayerMascot'
 import './blog-speech-player.css'
 
 const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5]
@@ -74,10 +74,12 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
   const active = [
     'creating', 'queued', 'buffering', 'rebuffering', 'playing', 'paused',
   ].includes(player.status)
+  const duration = Math.max(0, Number(defaultAsset?.duration_ms) / 1000 || 0)
+  const progress = duration > 0 ? Math.min(100, (player.elapsed / duration) * 100) : 0
 
   return (
-    <div ref={rootRef} className="blog-speech">
-      <div className="blog-speech__rail-shell">
+    <div ref={rootRef} className="blog-speech" data-status={player.status}>
+      <div className={`blog-speech__rail-shell${active ? ' is-active' : ''}`}>
         <button
           type="button"
           onClick={player.railClick}
@@ -90,18 +92,18 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
           title={railLabel(player.status)}
           className={`blog-speech__rail-button${active ? ' is-active' : ''}`}
         >
-          {busy
-            ? <LoadingOutlined className="blog-speech__spin" aria-hidden="true" />
-            : player.status === 'paused'
-              ? <PauseOutlined aria-hidden="true" />
-              : player.status === 'playing'
-                ? <CustomerServiceFilled aria-hidden="true" />
-                : <PlayCircleFilled aria-hidden="true" />}
-          {player.status === 'playing' && (
-            <span className="blog-speech__live-dot">
-              <span />
+          <span className="blog-speech__rail-mascot">
+            <SpeechMascot size={44} status={player.status} />
+            <span className="blog-speech__rail-action" aria-hidden="true">
+              {busy
+                ? <LoadingOutlined className="blog-speech__spin" />
+                : player.status === 'paused'
+                  ? <PauseOutlined />
+                  : player.status === 'ended'
+                    ? <ReloadOutlined />
+                    : <PlayCircleFilled />}
             </span>
-          )}
+          </span>
         </button>
       </div>
 
@@ -113,11 +115,12 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
           className="blog-speech__panel"
         >
           <div className="blog-speech__header">
-            <span className="blog-speech__header-icon">
-              <CustomerServiceFilled aria-hidden="true" />
+            <span className="blog-speech__header-mascot">
+              <SpeechMascot size={68} status={player.status} />
             </span>
             <div className="blog-speech__header-copy">
-              <h2>Nghe bài viết</h2>
+              <span className="blog-speech__eyebrow">PROCV AUDIO</span>
+              <h2>Robot đọc cùng bạn</h2>
               <p className="blog-speech__status" role="status">
                 {player.status === 'playing' && <span className="blog-speech__status-dot" />}
                 {statusText(player.status)}
@@ -133,6 +136,32 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
               <CloseOutlined aria-hidden="true" />
             </button>
           </div>
+
+          {duration > 0 && player.elapsed > 0 && (
+            <div className="blog-speech__progress-wrap">
+              <div
+                className="blog-speech__progress"
+                role="progressbar"
+                aria-label="Tiến độ đọc bài viết"
+                aria-valuemin="0"
+                aria-valuemax={Math.round(duration)}
+                aria-valuenow={Math.round(player.elapsed)}
+              >
+                <span style={{ width: `${progress}%` }} />
+              </div>
+              <div className="blog-speech__progress-time" aria-hidden="true">
+                <span>{formatTime(player.elapsed)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+          )}
+
+          {player.status === 'playing' && (
+            <div className="blog-speech__now-playing" aria-hidden="true">
+              <SpeechWaveform />
+              <span>Robot đang đọc nội dung bài viết</span>
+            </div>
+          )}
 
           {['playing', 'rebuffering', 'paused'].includes(player.status) && (
             <div className="blog-speech__controls">
@@ -253,11 +282,6 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
               </button>
             </div>
           )}
-
-          <div className="blog-speech__metadata">
-            {player.cached && <span>· bản đọc đã cache</span>}
-            {player.truncated && <span>· nội dung dài đã rút gọn</span>}
-          </div>
         </aside>
       )}
     </div>

@@ -1,9 +1,10 @@
 import { Spin } from 'antd'
+import { MascotEmpty } from '@/shared/ui/mascot'
 import UserCvCard from './UserCvCard'
 
 // Khối danh sách CV (đã tạo / đã tải lên) — chỉ khác tiêu đề, nút hành động
 // và trạng thái rỗng nên dùng chung một section.
-export default function CvListSection({ title, action, emptyIcon, emptyText, cvs, loading, onRefresh }) {
+export default function CvListSection({ title, action, emptyText, cvs, loading, onRefresh }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-center justify-between">
@@ -23,12 +24,7 @@ export default function CvListSection({ title, action, emptyIcon, emptyText, cvs
             <Spin />
           </div>
         ) : cvs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 mb-4">
-              {emptyIcon}
-            </div>
-            <p className="text-sm font-semibold text-slate-400">{emptyText}</p>
-          </div>
+          <MascotEmpty className="py-8" scene="emptyStateCv" description={<p className="font-semibold text-slate-400">{emptyText}</p>} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {cvs.map((cv) => (
