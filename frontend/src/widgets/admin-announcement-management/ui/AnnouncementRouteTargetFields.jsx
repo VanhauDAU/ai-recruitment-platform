@@ -3,7 +3,7 @@ import {
   Form,
   Select,
 } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import {
   announcementPrefixRouteGroups,
@@ -24,6 +24,15 @@ function prefixRules(label) {
 function PrefixSelect({ options, placeholder, ...selectProps }) {
   const compact = useMediaQuery('(max-width: 640px)')
   const [open, setOpen] = useState(false)
+  const selectId = selectProps.id
+
+  useEffect(() => {
+    if (!compact || open) return undefined
+    const frame = requestAnimationFrame(() => {
+      if (document.activeElement?.id === selectId) document.activeElement.blur()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [compact, open, selectId])
 
   return (
     <Select
@@ -33,12 +42,14 @@ function PrefixSelect({ options, placeholder, ...selectProps }) {
       optionFilterProp="label"
       placeholder={placeholder}
       tokenSeparators={[',', '\n']}
-      maxTagCount="responsive"
+      maxTagCount={compact ? 1 : 'responsive'}
       allowClear
       open={open}
       onOpenChange={setOpen}
       onSelect={() => {
-        if (compact) setOpen(false)
+        if (compact) {
+          setOpen(false)
+        }
       }}
     />
   )

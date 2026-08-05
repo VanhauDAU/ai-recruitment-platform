@@ -209,7 +209,8 @@ export default function EmployerWorkspaceLayout() {
             type="button"
             aria-label="Đóng menu quản trị"
             onClick={() => setCollapsed(true)}
-            className="absolute inset-0 z-30 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
+            className="absolute inset-y-0 right-0 z-30 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
+            style={{ left: EMPLOYER_SIDEBAR_WIDTH }}
           />
         )}
         <Sider

@@ -127,7 +127,10 @@ describe('AnnouncementEditor', () => {
 
     await user.click(screen.getByText('Danh sách việc làm · Công khai — /viec-lam'))
 
-    await waitFor(() => expect(routeSelect).toHaveAttribute('aria-expanded', 'false'))
+    await waitFor(() => {
+      expect(routeSelect).toHaveAttribute('aria-expanded', 'false')
+      expect(routeSelect).not.toHaveFocus()
+    })
   })
 
   it('warns when a guest-facing cross-portal CTA requires login', async () => {

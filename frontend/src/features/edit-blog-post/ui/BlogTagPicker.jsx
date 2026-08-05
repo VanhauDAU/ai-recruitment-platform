@@ -26,7 +26,7 @@ export default function BlogTagPicker({ value = [], onChange, tags = [], loading
   ]
 
   const createMutation = useMutation({
-    mutationFn: () => createAdminBlogTag({ name: createName }),
+    mutationFn: (name) => createAdminBlogTag({ name }),
     onSuccess: (created) => {
       queryClient.setQueryData(adminBlogKeys.tags(), (current = []) => [...current, created])
       onChange?.([...value, created.public_id])
@@ -45,7 +45,9 @@ export default function BlogTagPicker({ value = [], onChange, tags = [], loading
   }
 
   const handleSelect = (selected) => {
-    if (selected === CREATE_VALUE && !createMutation.isPending) createMutation.mutate()
+    if (selected === CREATE_VALUE && !createMutation.isPending) {
+      createMutation.mutate(createName)
+    }
   }
 
   return (
