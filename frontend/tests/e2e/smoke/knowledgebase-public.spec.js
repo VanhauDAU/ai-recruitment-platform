@@ -139,6 +139,17 @@ test('public knowledgebase: simple browse, detail and hidden-content 404 stay re
   await questionFilter.clear()
   await expect(page.getByText('Tất cả chủ đề')).toHaveCount(0)
   await expect(page.locator('h1')).toHaveCount(1)
+  const questionItems = page.locator('.knowledge-question-list').first().locator('li')
+  await expect(questionItems).toHaveCount(2)
+  await expect(page.locator('.knowledge-question-list').first()).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(questionItems.first().getByRole('link')).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+  const [firstQuestionBox, secondQuestionBox, questionListBox] = await Promise.all([
+    questionItems.nth(0).boundingBox(),
+    questionItems.nth(1).boundingBox(),
+    page.locator('.knowledge-question-list').first().boundingBox(),
+  ])
+  expect(secondQuestionBox.y - (firstQuestionBox.y + firstQuestionBox.height)).toBeGreaterThanOrEqual(8)
+  expect(firstQuestionBox.x - questionListBox.x).toBeGreaterThanOrEqual(11)
 
   const sidebarBefore = await page.getByRole('complementary', { name: 'Chuyên mục trợ giúp' }).boundingBox()
 

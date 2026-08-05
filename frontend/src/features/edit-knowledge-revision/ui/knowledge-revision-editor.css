@@ -17,6 +17,10 @@
 .knowledge-preview { margin: 0 auto; max-width: 720px; padding: 28px 12px 80px; }
 .knowledge-preview__eyebrow { color: #059669; font-size: 13px; font-weight: 750; text-transform: uppercase; }
 .knowledge-preview h1 { color: #0f172a; font-size: clamp(26px, 4vw, 38px); line-height: 1.25; margin: 12px 0 26px; }
+.knowledge-new-revision-modal__intro { color: #475569; line-height: 1.6; margin: 0 0 16px; }
+.knowledge-new-revision-modal__label { color: #0f172a; display: block; font-size: 13px; font-weight: 650; margin-bottom: 7px; }
+.knowledge-new-revision-modal__label span { color: #dc2626; font-size: 11px; font-weight: 700; margin-left: 5px; text-transform: uppercase; }
+.knowledge-new-revision-modal__hint { color: #64748b; font-size: 12px; line-height: 1.5; margin: 8px 0 0; }
 @media (max-width: 1100px) {
   .knowledge-editor__layout { grid-template-columns: 1fr; }
   .knowledge-editor__sticky { position: static; }
@@ -26,4 +30,10 @@
   .knowledge-editor { --knowledge-editor-action-top: calc(var(--admin-topbar-height, 68px) + 8px); --knowledge-editor-content-sticky-top: calc(var(--knowledge-editor-action-top) + 72px); }
   .knowledge-editor__toolbar .ant-btn { min-height: 40px; }
   .knowledge-editor__save-state span { display: none; }
+  .knowledge-new-revision-modal {
+    margin: 12px !important;
+    max-width: none !important;
+    top: 12px !important;
+    width: calc(100vw - 24px) !important;
+  }
 }

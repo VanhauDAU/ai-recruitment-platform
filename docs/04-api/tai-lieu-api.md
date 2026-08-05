@@ -492,6 +492,9 @@ Mọi PATCH/action gửi `revision_token`; publish gửi thêm `revision_number`
 không tự chọn revision mới nhất. Token cũ hoặc transition sai trả `409` với
 `code` ổn định. Approved/rejected không sửa tại chỗ. Tạo bản sửa của bài đã
 publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đầu.
+Frontend thu thập `change_summary` trong modal **Tạo revision mới** trước khi
+gọi `POST .../revisions/`; không validate form revision đang ở trạng thái chỉ
+đọc. Response tạo draft mới làm editor mở lại và cho phép tiếp tục sửa tóm tắt.
 Upload tùy chọn chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600. Body nhận ảnh
 từ media library, đường dẫn nội bộ hoặc URL HTTPS mà không bắt buộc upload vào
 ProCV trước; ảnh vẫn phải có alt text có nghĩa. Khi không tìm kiếm, trang ứng

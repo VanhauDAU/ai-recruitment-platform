@@ -22,6 +22,7 @@ import {
   revisionToEditorValues,
 } from '../model/editor-model'
 import KnowledgeEditorFields from './KnowledgeEditorFields'
+import NewRevisionModal from './NewRevisionModal'
 import './knowledge-revision-editor.css'
 
 function isSameField(left, right) {
@@ -39,6 +40,9 @@ export default function KnowledgeRevisionEditor({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
+  const [revisionSummary, setRevisionSummary] = useState('')
+  const [revisionSummaryTouched, setRevisionSummaryTouched] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [conflict, setConflict] = useState(false)
   const initialized = useRef('')
@@ -185,6 +189,9 @@ export default function KnowledgeRevisionEditor({
     }),
     onSuccess: (saved) => {
       syncArticle(saved)
+      setRevisionDialogOpen(false)
+      setRevisionSummary('')
+      setRevisionSummaryTouched(false)
       message.success('Đã tạo revision mới để biên tập.')
     },
     onError: (error) => message.error(knowledgeErrorMessage(error, 'Không thể tạo revision mới.')),
@@ -197,12 +204,22 @@ export default function KnowledgeRevisionEditor({
       message.error('Vui lòng hoàn thiện các trường bắt buộc.')
     }
   }
-  const createRevision = async () => {
-    try {
-      revisionMutation.mutate(await form.validateFields())
-    } catch {
-      message.error('Vui lòng hoàn thiện nội dung trước khi tạo revision.')
+  const openRevisionDialog = () => {
+    setRevisionSummary('')
+    setRevisionSummaryTouched(false)
+    setRevisionDialogOpen(true)
+  }
+  const createRevision = () => {
+    const summary = revisionSummary.trim()
+    setRevisionSummaryTouched(true)
+    if (article?.first_published_at && !summary) {
+      message.error('Nhập tóm tắt thay đổi trước khi tạo revision.')
+      return
     }
+    revisionMutation.mutate({
+      ...form.getFieldsValue(true),
+      change_summary: summary,
+    })
   }
 
   return (
@@ -232,7 +249,7 @@ export default function KnowledgeRevisionEditor({
             ? 'Hoàn tất duyệt hoặc từ chối trước khi tạo bản chỉnh sửa tiếp theo.'
             : 'Tạo revision mới từ nội dung gần nhất để bắt đầu chỉnh sửa.'}
           action={latestRevision?.status !== 'IN_REVIEW' && (
-            <Button icon={<FileAddOutlined />} loading={revisionMutation.isPending} onClick={createRevision}>
+            <Button icon={<FileAddOutlined />} loading={revisionMutation.isPending} onClick={openRevisionDialog}>
               Tạo revision mới
             </Button>
           )}
@@ -259,6 +276,18 @@ export default function KnowledgeRevisionEditor({
           <KnowledgeArticleContent html={watched.body} />
         </div>
       </Drawer>
+
+      <NewRevisionModal
+        open={revisionDialogOpen}
+        required={Boolean(article?.first_published_at)}
+        loading={revisionMutation.isPending}
+        summary={revisionSummary}
+        touched={revisionSummaryTouched}
+        onCancel={() => setRevisionDialogOpen(false)}
+        onChange={setRevisionSummary}
+        onConfirm={createRevision}
+        onTouch={() => setRevisionSummaryTouched(true)}
+      />
     </Form>
   )
 }

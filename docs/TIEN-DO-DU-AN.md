@@ -1335,3 +1335,11 @@ title, tiếp theo là excerpt một dòng, đồng thời highlight phần kh�
 biệt dấu trong title/excerpt. Eyebrow “Chuyên mục” dùng `--brand-primary` được
 provider sinh từ site setting `brand_primary_color`, không tạo accessor setting
 song song. Unit 6/6 và smoke public 3/3 trên desktop/tablet/mobile đều pass.
+
+Cập nhật 2026-08-05i (FAQ — revision UX và danh sách tách thẻ): bỏ nền/viền của
+khung danh sách câu hỏi, giữ từng item nền trắng với gap và hover độc lập. Sửa
+luồng tạo revision bài đã publish bị kẹt do `change_summary` bắt buộc nhưng form
+đang chỉ đọc: modal tạo revision nhận tóm tắt trước, API clone draft rồi editor
+mở lại để tiếp tục chỉnh. Scope lại CSS workflow, nút gửi duyệt/duyệt/yêu cầu
+sửa còn cao 30 px và không full-width trên mobile. Targeted unit 5/5, smoke
+admin 3/3 và public 3/3 trên desktop/tablet/mobile đều pass; lint sạch.

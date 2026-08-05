@@ -16,7 +16,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   nhãn chuyên mục phía trên tiêu đề, tô sáng phần chữ khớp không phân biệt dấu
   và hiện mô tả đầu nội dung trên đúng một dòng có dấu “…”. Cột chuyên mục cố
   định, bỏ mục “Tất cả chủ đề”, giữ nguyên vị trí khi mở chi tiết và lấy màu chữ
-  “Chuyên mục” từ `brand_primary_color` qua CSS variable của hệ thống.
+  “Chuyên mục” từ `brand_primary_color` qua CSS variable của hệ thống. Khung
+  danh sách dùng nền trong suốt; từng câu hỏi là thẻ nền trắng có khoảng hở,
+  viền và hover riêng thay vì dính thành một mảng.
 - Media library trở thành tùy chọn: revision chấp nhận ảnh URL HTTPS hoặc đường
   dẫn nội bộ an toàn mà không yêu cầu upload vào ProCV trước; sanitizer và alt
   text vẫn là bắt buộc, readiness chỉ kiểm storage existence cho ảnh media nội
@@ -27,6 +29,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   thành các lớp riêng có khoảng cách, không còn chồng/cắt nút hoặc nội dung.
   Trang chi tiết render ảnh HTTPS/nội bộ, hiển thị cả giờ cập nhật và dùng nhãn
   “Câu hỏi tiếp” cho điều hướng cuối bài.
+- Sửa deadlock UX khi tạo revision của bài đã xuất bản: form chỉ đọc không còn
+  bị validate trường `change_summary` không thể nhập. Nút tạo revision mở modal
+  nhập tóm tắt bắt buộc, clone nội dung sang draft rồi mở lại toàn bộ trường để
+  tiếp tục sửa. Nút gửi duyệt/duyệt/yêu cầu sửa chuyển sang cụm compact 30 px,
+  selector CSS được scope riêng nên không còn bị style Ant Design lan rộng.
 - Loại bỏ outline lồng trên input con của ô tìm kiếm Ant Design; wrapper vẫn giữ
   focus state rõ ràng ở portal admin và nhà tuyển dụng.
 - Xác minh: 48 regression backend, 889 unit/coverage frontend, 6 targeted unit

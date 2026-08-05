@@ -81,18 +81,18 @@ export default function KnowledgeRevisionReview({ article, canManage, canReview,
       extra={<Tag color={status?.color}>{status?.label || current.status}</Tag>}
     >
       <div className="knowledge-workflow-card__next">
-        <div>
-          <span>Bước tiếp theo</span>
+        <div className="knowledge-workflow-card__next-copy">
+          <span className="knowledge-workflow-card__next-label">Bước tiếp theo</span>
           <strong>{nextStep}</strong>
         </div>
-        <Space wrap>
+        <Space className="knowledge-workflow-card__actions" size={8} wrap>
           {current.status === 'DRAFT' && canManage && (
-            <Button type="primary" icon={<SendOutlined />} disabled={disabled} onClick={() => openAction('submit')}>Gửi duyệt</Button>
+            <Button size="small" type="primary" icon={<SendOutlined />} disabled={disabled} onClick={() => openAction('submit')}>Gửi duyệt</Button>
           )}
           {current.status === 'IN_REVIEW' && canReview && (
             <>
-              <Button type="primary" icon={<CheckOutlined />} disabled={disabled} onClick={() => openAction('approve')}>Duyệt revision</Button>
-              <Button danger icon={<CloseOutlined />} disabled={disabled} onClick={() => openAction('reject')}>Yêu cầu chỉnh sửa</Button>
+              <Button size="small" type="primary" icon={<CheckOutlined />} disabled={disabled} onClick={() => openAction('approve')}>Duyệt revision</Button>
+              <Button size="small" danger icon={<CloseOutlined />} disabled={disabled} onClick={() => openAction('reject')}>Yêu cầu chỉnh sửa</Button>
             </>
           )}
         </Space>

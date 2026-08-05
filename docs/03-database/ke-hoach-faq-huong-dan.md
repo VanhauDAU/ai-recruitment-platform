@@ -447,6 +447,11 @@ bài đang public phải tạo revision số mới, clone nội dung cũ rồi c
 publish lại một revision `APPROVED` cũ để rollback nội dung; hành động này vẫn
 ghi audit và cập nhật `published_at` của lần phát hành tương ứng.
 
+Với bài đã publish, workspace giữ revision hiện tại ở chế độ chỉ đọc và nút
+**Tạo revision mới** mở modal riêng để nhập `change_summary` bắt buộc. Không
+validate form chỉ đọc trước khi tạo. Sau khi API clone thành revision `DRAFT`,
+editor chuyển sang editable và tóm tắt vẫn có thể chỉnh trước khi gửi duyệt.
+
 ### 8.6. `KnowledgeMediaAsset` — ảnh hướng dẫn
 
 Release đầu **có upload ảnh**, vì GUIDE cần screenshot. Model tối thiểu:
@@ -740,6 +745,9 @@ category.
 
 Editor không được tự publish chỉ vì có quyền manage. UI ẩn/disable action theo
 permission để dễ dùng, nhưng API phải kiểm quyền độc lập cho mọi mutation.
+Các action theo trạng thái đặt trong cụm compact ở đầu workflow, không giãn
+full-width trên mobile và selector CSS không được tác động vào span/button nội
+bộ của Ant Design ngoài phạm vi component.
 
 ## 12. SEO, accessibility và public readiness
 

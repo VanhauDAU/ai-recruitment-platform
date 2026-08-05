@@ -30,6 +30,9 @@ Index switch không thể vượt qua public switch hoặc global site setting
    storage nội bộ, còn ảnh HTTPS không cần media record.
 5. Xác nhận admin `/admin/app/knowledgebase` đọc được danh sách, revision, audit
    và filter hạn review.
+6. Smoke một bài đã publish: bấm **Tạo revision mới**, xác nhận nút tạo bị khóa
+   khi thiếu tóm tắt, nhập tóm tắt rồi tạo thành công; draft mới phải editable
+   và các nút workflow compact, không giãn hết chiều ngang ở mobile.
 
 ## 2. Mở public nhưng chưa index
 
