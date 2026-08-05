@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  answerSummary,
   buildReadySpeech,
   clampSpeech,
+  greetingSpeech,
   INTERVIEW_STEPS,
   MAX_SPEECH_CHARS,
-  resolveSpeech,
   salarySpeech,
+  stepById,
 } from './interview-script'
 
 const PREFERENCE = {
@@ -14,18 +16,48 @@ const PREFERENCE = {
   preferred_provinces: [{ id: 3, name: 'Đà Nẵng' }],
 }
 
+const CATALOG = {
+  categories: [{ id: 1, name: 'Lập trình viên', category_type: 'specialization' }],
+  provinceOptions: [{ value: 3, label: 'Đà Nẵng' }],
+}
+
 describe('interview-script', () => {
-  it('mỗi bước khai đủ trường và câu hỏi để đọc', () => {
+  it('mỗi lượt hỏi khai đủ trường, câu hỏi và cách dựng đáp án', () => {
     const ids = INTERVIEW_STEPS.map((step) => step.id)
     expect(new Set(ids).size).toBe(INTERVIEW_STEPS.length)
     for (const step of INTERVIEW_STEPS) {
       expect(step.fields.length).toBeGreaterThan(0)
-      expect(resolveSpeech(step.speech, { name: 'Hậu' })).not.toBe('')
+      expect(step.question).not.toBe('')
+      expect(typeof step.answer).toBe('function')
     }
   })
 
-  it('chèn tên ứng viên vào câu chào của bước đầu', () => {
-    expect(resolveSpeech(INTERVIEW_STEPS[0].speech, { name: 'Hậu' })).toContain('Chào Hậu!')
+  it('chào ứng viên bằng tên trước khi vào câu hỏi đầu tiên', () => {
+    expect(greetingSpeech({ full_name: 'Hậu' })).toContain('Chào Hậu!')
+    expect(greetingSpeech(null)).toContain('Chào bạn!')
+  })
+
+  it('dựng đáp án thành tin nhắn đọc lại được của ứng viên', () => {
+    const values = {
+      desired_salary_vnd: 15_000_000,
+      desired_specialization_ids: [1],
+      desired_position_other: 'Kỹ sư cầu nối',
+      experience_level: '2',
+      preferred_province_ids: [3],
+      willing_to_relocate: true,
+      ai_recommendation_consent: true,
+      recruiter_visibility_consent: false,
+    }
+
+    expect(answerSummary(stepById('specialization'), values, CATALOG)).toBe('Lập trình viên · Kỹ sư cầu nối')
+    expect(answerSummary(stepById('experience'), values, CATALOG)).toBe('2 năm')
+    expect(answerSummary(stepById('salary'), values, CATALOG)).toBe('15.000.000 VND/tháng')
+    expect(answerSummary(stepById('location'), values, CATALOG)).toBe('Đà Nẵng · Sẵn sàng đổi nơi làm việc')
+    expect(answerSummary(stepById('consent'), values, CATALOG)).toBe('Mình đồng ý nhận gợi ý việc làm từ hệ thống.')
+  })
+
+  it('nói rõ khi ứng viên không đồng ý mục nào', () => {
+    expect(answerSummary(stepById('consent'), {}, CATALOG)).toBe('Mình chưa đồng ý mục nào.')
   })
 
   it('đọc lương tròn triệu theo cách nói tự nhiên', () => {

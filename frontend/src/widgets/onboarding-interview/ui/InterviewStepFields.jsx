@@ -13,7 +13,7 @@ function ChoiceChip({ children, onClick, selected }) {
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`cursor-pointer rounded-xl border px-4 py-2.5 text-sm font-medium transition ${selected
+      className={`shrink-0 cursor-pointer whitespace-nowrap rounded-xl border px-4 py-2.5 text-sm font-medium transition ${selected
         ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-900/20'
         : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'
       }`}
@@ -24,10 +24,13 @@ function ChoiceChip({ children, onClick, selected }) {
 }
 
 /**
- * Control trả lời của từng bước. Tên trường giữ y hệt form một trang cũ nên
+ * Control trả lời của từng lượt hỏi. Tên trường giữ y hệt form một trang cũ nên
  * payload gửi lên `PUT /api/candidate/job-preferences/` không đổi.
+ *
+ * Lựa chọn chỉ có một đáp án (kinh nghiệm, mức lương gợi ý) gọi `onQuickAnswer`
+ * để bấm phát gửi luôn — đó là lý do cuộc trò chuyện không cần nút "Tiếp tục".
  */
-export default function InterviewStepFields({ catalog, setField, stepId, values }) {
+export default function InterviewStepFields({ catalog, onQuickAnswer, onSend, setField, stepId, values }) {
   if (stepId === 'specialization') {
     return (
       <div className="space-y-3">
@@ -63,7 +66,7 @@ export default function InterviewStepFields({ catalog, setField, stepId, values 
           <ChoiceChip
             key={option.value}
             selected={values.experience_level === option.value}
-            onClick={() => setField('experience_level', option.value)}
+            onClick={() => onQuickAnswer({ experience_level: option.value })}
           >
             {option.label}
           </ChoiceChip>
@@ -86,6 +89,7 @@ export default function InterviewStepFields({ catalog, setField, stepId, values 
             placeholder="0"
             value={values.desired_salary_vnd}
             onChange={(value) => setField('desired_salary_vnd', value)}
+            onPressEnter={onSend}
             formatter={(value) => (value == null || value === '' ? '' : new Intl.NumberFormat('vi-VN').format(value))}
             parser={(value) => {
               const num = Number(String(value || '').replace(/[^\d]/g, ''))
@@ -96,12 +100,14 @@ export default function InterviewStepFields({ catalog, setField, stepId, values 
             VND / tháng
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* Cuộn ngang như dải quick reply: ở mobile các mức lương không xuống
+            dòng làm ô soạn cao chiếm hết màn hình. */}
+        <div className="flex gap-2 overflow-x-auto pb-0.5">
           {SALARY_PRESETS.map((preset) => (
             <ChoiceChip
               key={preset.value}
               selected={values.desired_salary_vnd === preset.value}
-              onClick={() => setField('desired_salary_vnd', preset.value)}
+              onClick={() => onQuickAnswer({ desired_salary_vnd: preset.value })}
             >
               {preset.label}
             </ChoiceChip>

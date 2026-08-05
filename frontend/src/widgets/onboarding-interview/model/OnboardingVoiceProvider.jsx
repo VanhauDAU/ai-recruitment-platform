@@ -26,9 +26,9 @@ function storeEnabled(enabled) {
  * Giọng đọc dùng chung cho cả luồng onboarding.
  *
  * Provider phải nằm ở layout chứ không phải trong page: trình duyệt chỉ cho mở
- * AudioContext trong cử chỉ người dùng, mà cử chỉ mở luồng là nút "Bắt đầu" ở
- * `/onboard-user`. Nếu `useSpeak` sống trong page thì sang `/onboard-user-setting`
- * hook unmount, player bị destroy và context đã unlock mất theo.
+ * AudioContext trong cử chỉ người dùng, mà cử chỉ mở luồng là nút "Bắt đầu
+ * thôi!" trả lời lời chào. Nếu `useSpeak` sống trong page thì mỗi lần page
+ * unmount, player bị destroy và context đã unlock mất theo.
  *
  * Robot đọc ngay chứ không chờ ai bấm nút bật tiếng. Trường hợp duy nhất chưa
  * có cử chỉ nào (vào thẳng URL, F5 giữa chừng) thì context sinh ra ở trạng thái

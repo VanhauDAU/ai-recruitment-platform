@@ -123,11 +123,10 @@ test.describe('portal route registries', () => {
     })
 
     await page.goto('/onboard-user')
-    await expect(page.getByRole('heading', { name: 'Chào mừng bạn đến với ProCV, Ứng viên thử nghiệm' })).toBeVisible()
-    await page.getByRole('button', { name: 'Bắt đầu' }).click()
-    await expect(page).toHaveURL('/onboard-user-setting')
+    await expect(page.locator('.onboarding-chat__sr').first()).toContainText('Chào Ứng viên thử nghiệm!')
+    await page.getByRole('button', { name: 'Bắt đầu thôi!' }).click()
+    await expect(page).toHaveURL('/onboard-user')
     await expect(page.getByText('Câu 1/5')).toBeVisible()
-    await expect(page.locator('.onboarding-stage__sr')).toContainText('Chào Ứng viên thử nghiệm!')
     await page.getByRole('button', { name: 'Chọn danh mục vị trí chuyên môn' }).click()
     await expect(page.getByText('Công nghệ thông tin', { exact: true })).toBeVisible()
     if (testInfo.project.name === 'desktop-chromium') {

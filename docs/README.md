@@ -7,12 +7,14 @@
 | [01-phan-tich](01-phan-tich/)   | [phan-tich-yeu-cau.md](01-phan-tich/phan-tich-yeu-cau.md)        | Phân tích yêu cầu, bài toán, đối tượng người dùng (PRD)                 |
 | [02-tong-quan](02-tong-quan/)   | [tong-quan-he-thong.md](02-tong-quan/tong-quan-he-thong.md)      | Tổng quan hệ thống, kiến trúc, phạm vi MVP                              |
 | [02-tong-quan](02-tong-quan/)   | [quy-uoc-code.md](02-tong-quan/quy-uoc-code.md)                  | Quy ước cấu trúc module, DRY, trách nhiệm và kiểm tra chất lượng        |
+| [02-tong-quan](02-tong-quan/)   | [chatbot-local-decision-log.md](02-tong-quan/chatbot-local-decision-log.md) | Biên bản từng quyết định đã xác nhận cho chatbot AI chạy hoàn toàn local |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
 | [03-database](03-database/)     | [cv-builder-architecture-foundation.md](03-database/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |
 | [03-database](03-database/)     | [ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md](03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md) | Trạng thái và roadmap hoàn thiện CV Builder |
 | [03-database](03-database/)     | [ke-hoach-chien-dich-va-vong-doi-tin.md](03-database/ke-hoach-chien-dich-va-vong-doi-tin.md) | Ownership recruiter, chiến dịch, duyệt tin, quota và pipeline ứng viên |
 | [03-database](03-database/)     | [ke-hoach-database-phan-quyen-admin.md](03-database/ke-hoach-database-phan-quyen-admin.md) | RBAC admin theo phòng ban, role, membership và audit |
 | [03-database](03-database/)     | [ke-hoach-he-thong-thong-bao-chay.md](03-database/ke-hoach-he-thong-thong-bao-chay.md) | Dải thông báo đa cổng: revision, targeting, priority, consent, rollout |
+| [03-database](03-database/)     | [ke-hoach-faq-huong-dan.md](03-database/ke-hoach-faq-huong-dan.md) | Đặc tả full-stack FAQ/hướng dẫn ứng viên, workflow duyệt và lộ trình triển khai trước chatbot |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |

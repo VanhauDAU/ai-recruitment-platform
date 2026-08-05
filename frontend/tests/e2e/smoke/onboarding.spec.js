@@ -59,64 +59,80 @@ async function mockOnboardingApi(page) {
   })
 }
 
-test.describe('onboarding phỏng vấn bằng robot', () => {
-  test('robot dẫn hết năm câu rồi chốt bằng nhu cầu vừa lưu', async ({ page }) => {
+/** Phụ đề đầy đủ của robot, không phụ thuộc chữ đang chạy dần trong bong bóng. */
+function botTranscript(page) {
+  return page.locator('.onboarding-chat__sr')
+}
+
+test.describe('onboarding trò chuyện với robot', () => {
+  test('cả cuộc trò chuyện diễn ra trên một trang rồi chốt bằng nhu cầu vừa lưu', async ({ page }) => {
     await mockOnboardingApi(page)
 
     await page.goto('/onboard-user')
-    await expect(page.locator('.procv-mascot')).toHaveAttribute('data-pose', 'wave')
-    await page.getByRole('button', { name: 'Bắt đầu' }).click()
-    await expect(page).toHaveURL('/onboard-user-setting')
+    await expect(botTranscript(page).first()).toContainText('Chào Nguyễn An!')
+    await page.getByRole('button', { name: 'Bắt đầu thôi!' }).click()
 
-    // 1/5 — lĩnh vực
+    // 1/5 — lĩnh vực: nhiều lựa chọn nên gửi bằng nút gửi của ô soạn.
     await expect(page.getByText('Câu 1/5')).toBeVisible()
-    await expect(page.locator('.onboarding-stage__sr')).toContainText('Chào Nguyễn An!')
     await page.getByRole('button', { name: 'Chọn danh mục vị trí chuyên môn' }).click()
     await page.getByRole('button', { name: 'Lập trình viên' }).click()
     await page.getByRole('button', { name: 'Xác nhận' }).click()
-    await page.getByRole('button', { name: 'Tiếp tục' }).click()
+    await page.getByRole('button', { name: 'Gửi', exact: true }).click()
 
-    // 2/5 — kinh nghiệm
+    // 2/5 — kinh nghiệm: một lựa chọn, bấm phát gửi luôn.
     await expect(page.getByText('Câu 2/5')).toBeVisible()
     await page.getByRole('button', { name: '2 năm', exact: true }).click()
-    await page.getByRole('button', { name: 'Tiếp tục' }).click()
 
-    // 3/5 — mức lương
+    // 3/5 — mức lương: mức gợi ý cũng gửi ngay.
     await expect(page.getByText('Câu 3/5')).toBeVisible()
     await page.getByRole('button', { name: '15 triệu' }).click()
-    await page.getByRole('button', { name: 'Tiếp tục' }).click()
 
     // 4/5 — địa điểm
     await expect(page.getByText('Câu 4/5')).toBeVisible()
     await page.getByRole('combobox').click()
     await page.getByTitle('Thành phố Đà Nẵng').click()
-    await page.getByRole('button', { name: 'Tiếp tục' }).click()
+    await page.getByRole('button', { name: 'Gửi', exact: true }).click()
 
     // 5/5 — cho phép
     await expect(page.getByText('Câu 5/5')).toBeVisible()
     await page.getByRole('checkbox', { name: /gợi ý việc làm dựa trên nhu cầu/ }).check()
-    await page.getByRole('button', { name: 'Hoàn thành' }).click()
+    await page.getByRole('button', { name: 'Hoàn tất' }).click()
 
-    await expect(page.locator('.procv-mascot')).toHaveAttribute('data-emotion', 'thinking')
-    await expect(page.locator('.onboarding-stage__sr')).toContainText('Xong rồi Nguyễn An!', { timeout: 15_000 })
-    await expect(page.locator('.onboarding-stage__sr')).toContainText('Lập trình viên')
-    await expect(page.locator('.onboarding-stage__sr')).toContainText('Đà Nẵng')
-    await expect(page.locator('.onboarding-stage__sr')).toContainText('15 triệu')
-    await expect(page.locator('.procv-mascot')).toHaveAttribute('data-pose', 'thumbsUp')
+    // Không nhảy trang nào trong cả luồng.
+    await expect(page).toHaveURL('/onboard-user')
+    await expect(botTranscript(page).last()).toContainText('Xong rồi Nguyễn An!', { timeout: 15_000 })
+    await expect(botTranscript(page).last()).toContainText('Lập trình viên')
+    await expect(botTranscript(page).last()).toContainText('Đà Nẵng')
+    await expect(botTranscript(page).last()).toContainText('15 triệu')
+    await expect(page.locator('.procv-mascot').first()).toHaveAttribute('data-emotion', 'success')
+
+    // Đáp án cũ vẫn nằm nguyên trong lịch sử hội thoại.
+    await expect(page.getByText('15.000.000 VND/tháng')).toBeVisible()
   })
 
-  test('chặn qua bước khi chưa trả lời và cho bỏ qua onboarding', async ({ page }) => {
+  test('robot nhắc ngay trong hội thoại khi chưa trả lời và cho bỏ qua onboarding', async ({ page }) => {
+    await mockOnboardingApi(page)
+
+    await page.goto('/onboard-user')
+    await page.getByRole('button', { name: 'Bắt đầu thôi!' }).click()
+    await expect(page.getByText('Câu 1/5')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Gửi', exact: true }).click()
+
+    await expect(botTranscript(page).last()).toContainText('ít nhất một vị trí chuyên môn')
+    await expect(page.locator('.procv-mascot').first()).toHaveAttribute('data-emotion', 'error')
+    await expect(page.getByText('Câu 1/5')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Hoàn thiện sau' }).click()
+    await expect(page).toHaveURL('/')
+  })
+
+  test('URL onboarding cũ vẫn mở được cuộc trò chuyện', async ({ page }) => {
     await mockOnboardingApi(page)
 
     await page.goto('/onboard-user-setting')
-    await expect(page.getByText('Câu 1/5')).toBeVisible()
-    await page.getByRole('button', { name: 'Tiếp tục' }).click()
 
-    await expect(page.getByText('Vui lòng chọn ít nhất một vị trí chuyên môn.')).toBeVisible()
-    await expect(page.locator('.procv-mascot')).toHaveAttribute('data-emotion', 'error')
-    await expect(page.getByText('Câu 1/5')).toBeVisible()
-
-    await page.getByRole('button', { name: 'Tôi sẽ hoàn thiện sau' }).click()
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/onboard-user')
+    await expect(botTranscript(page).first()).toContainText('Chào Nguyễn An!')
   })
 })

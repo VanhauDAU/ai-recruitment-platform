@@ -7,15 +7,17 @@ const BG_IMAGE = legacyAsset('onboarding/bg-step-1.png')
 
 /**
  * Provider giọng nói nằm ở layout chứ không phải trong page: AudioContext chỉ
- * mở được trong cử chỉ người dùng (nút "Bắt đầu" ở `/onboard-user`), mà mỗi
- * page unmount là player bị destroy — đặt trong page thì sang bước phỏng vấn
- * robot sẽ câm.
+ * mở được trong cử chỉ người dùng (nút "Bắt đầu thôi!" mở cuộc trò chuyện), mà
+ * mỗi page unmount là player bị destroy.
+ *
+ * Layout cao đúng một màn hình và `min-h-0` xuống tận `main` để khung chat tự
+ * cuộn bên trong thay vì đẩy cả trang dài ra.
  */
 export default function OnboardingLayout() {
   return (
     <OnboardingVoiceProvider>
       <div
-        className="flex min-h-[100dvh] flex-col text-slate-900"
+        className="flex h-[100dvh] flex-col text-slate-900"
         style={{
           backgroundImage: `url(${BG_IMAGE})`,
           backgroundSize: 'cover',
@@ -31,7 +33,7 @@ export default function OnboardingLayout() {
             <span className="hidden text-sm text-slate-500 sm:block">Tiếp lợi thế, nối thành công</span>
           </div>
         </header>
-        <main className="flex flex-1 flex-col">
+        <main className="flex min-h-0 flex-1 flex-col">
           <Outlet />
         </main>
       </div>
