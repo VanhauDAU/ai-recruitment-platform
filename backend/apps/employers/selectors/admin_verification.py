@@ -6,11 +6,30 @@ from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquer
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from ..models import CompanyDocument, CompanyTaxLookupEvidence, EmployerVerificationCase
+from ..models import Company, CompanyDocument, CompanyTaxLookupEvidence, EmployerVerificationCase
 
 
 def admin_verification_cases_queryset(*, params=None):
     params = params or {}
+    duplicate_tax_code_companies = (
+        Company.objects.filter(tax_code=OuterRef('company__tax_code'))
+        .exclude(tax_code__isnull=True)
+        .exclude(pk=OuterRef('company_id'))
+        .values('tax_code')
+        .annotate(total=Count('id'))
+        .values('total')[:1]
+    )
+    verified_duplicate_tax_code_companies = (
+        Company.objects.filter(
+            tax_code=OuterRef('company__tax_code'),
+            verification_status=Company.VerificationStatus.VERIFIED,
+        )
+        .exclude(tax_code__isnull=True)
+        .exclude(pk=OuterRef('company_id'))
+        .values('tax_code')
+        .annotate(total=Count('id'))
+        .values('total')[:1]
+    )
     duplicate_companies = (
         CompanyDocument.objects.filter(
             sha256=OuterRef('sha256'),
@@ -61,6 +80,17 @@ def admin_verification_cases_queryset(*, params=None):
             ),
         )
         .annotate(
+            duplicate_tax_code_company_count=Coalesce(
+                Subquery(duplicate_tax_code_companies, output_field=IntegerField()),
+                Value(0),
+            ),
+            verified_duplicate_tax_code_company_count=Coalesce(
+                Subquery(
+                    verified_duplicate_tax_code_companies,
+                    output_field=IntegerField(),
+                ),
+                Value(0),
+            ),
             current_document_count=Count(
                 'documents',
                 filter=Q(documents__is_current=True),
@@ -86,7 +116,22 @@ def admin_verification_cases_queryset(*, params=None):
             | Q(company__tax_code__icontains=query)
         )
     if params.get('status'):
-        queryset = queryset.filter(status=params['status'])
+        if params['status'] == 'actionable':
+            queryset = queryset.filter(
+                Q(
+                    status__in=[
+                        EmployerVerificationCase.Status.PENDING,
+                        EmployerVerificationCase.Status.IN_REVIEW,
+                    ]
+                )
+                | Q(pending_document_count__gt=0)
+            )
+        elif params['status'] == EmployerVerificationCase.Status.PENDING:
+            queryset = queryset.filter(
+                Q(status=EmployerVerificationCase.Status.PENDING) | Q(pending_document_count__gt=0)
+            )
+        else:
+            queryset = queryset.filter(status=params['status'])
     if params.get('company'):
         queryset = queryset.filter(company__public_id=params['company'])
     if params.get('document_type'):
@@ -114,7 +159,26 @@ def admin_verification_cases_queryset(*, params=None):
     ):
         if params.get(key):
             queryset = queryset.filter(**{lookup: params[key]})
-    return queryset.distinct().order_by('-submitted_at', '-updated_at', '-id')
+    ordering = params.get('ordering', '-submitted_at')
+    allowed = {
+        'recruiter__user__full_name',
+        '-recruiter__user__full_name',
+        'company__company_name',
+        '-company__company_name',
+        'status',
+        '-status',
+        'current_document_count',
+        '-current_document_count',
+        'recruiter__phone_verified_at',
+        '-recruiter__phone_verified_at',
+        'submitted_at',
+        '-submitted_at',
+    }
+    return queryset.distinct().order_by(
+        ordering if ordering in allowed else '-submitted_at',
+        '-updated_at',
+        '-id',
+    )
 
 
 def admin_verification_summary():
@@ -124,12 +188,18 @@ def admin_verification_summary():
         EmployerVerificationCase.Status.IN_REVIEW,
     ]
     base = EmployerVerificationCase.objects.all()
+    pending_filter = Q(status__in=pending_states) | Q(
+        documents__is_current=True,
+        documents__status=CompanyDocument.Status.PENDING,
+    )
     return {
-        'pending': base.filter(status__in=pending_states).count(),
+        'pending': base.filter(pending_filter).distinct().count(),
         'overdue': base.filter(
-            status__in=pending_states,
+            pending_filter,
             submitted_at__lt=now - timedelta(hours=72),
-        ).count(),
+        )
+        .distinct()
+        .count(),
         'changes_requested': base.filter(
             status=EmployerVerificationCase.Status.CHANGES_REQUESTED
         ).count(),

@@ -1,12 +1,14 @@
 """Job-posting mutation workflows owned by the recruiter who created the job."""
 
 from copy import copy
+from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
+from apps.accounts.services import lock_account_for_write
 from apps.employers.models import CampaignActivity, RecruiterProfile
 from apps.employers.services import (
     record_campaign_activity,
@@ -29,9 +31,13 @@ from ..models import (
 
 FREE_JOB_QUOTA = 3
 VERIFIED_LEVEL_THREE_JOB_QUOTA = 100
+MAX_DEADLINE_DAYS = 30
+MAX_PUBLIC_LIFETIME_DAYS = 90
+EXPIRED_JOB_RENEWAL_GRACE_DAYS = 30
 
 
 def _locked_recruiter(user):
+    user = lock_account_for_write(user)
     recruiter = RecruiterProfile.objects.select_for_update().filter(user=user).first()
     if recruiter is None or recruiter.company_id is None:
         raise ValidationError('Cập nhật thông tin công ty trước khi đăng tin.')
@@ -137,8 +143,43 @@ def _record_job_assignment(job, *, previous_campaign, user):
         )
 
 
+def _move_public_revision_to_review(job, *, user, note='', update_fields=()):
+    """Hide a changed public revision until an admin approves it again."""
+    previous_status = job.status
+    now = timezone.now()
+    job.status = Job.Status.PENDING
+    job.submitted_at = job.submitted_at or now
+    job.published_at = None
+    job.approved_at = None
+    job.closed_at = None
+    job.rejected_reason = ''
+    job.slug = f'{slugify(job.title)}-{job.public_id}'
+    job.save(
+        update_fields=[
+            *update_fields,
+            'status',
+            'submitted_at',
+            'published_at',
+            'approved_at',
+            'closed_at',
+            'rejected_reason',
+            'slug',
+            'updated_at',
+        ]
+    )
+    _record_status(
+        job,
+        from_status=previous_status,
+        to_status=Job.Status.PENDING,
+        user=user,
+        note=note,
+    )
+    return job
+
+
 def _validate_publishable(job):
     errors = {}
+    today = timezone.localdate()
     if not job.title.strip():
         errors['title'] = 'Nhập tiêu đề tin tuyển dụng.'
     if not job.description.strip():
@@ -181,8 +222,10 @@ def _validate_publishable(job):
         role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
     ).exists():
         errors['category_assignments'] = 'Chọn một vị trí chuyên môn chính.'
-    if job.deadline is None or job.deadline < timezone.localdate():
+    if job.deadline is None or job.deadline < today:
         errors['deadline'] = 'Hạn nộp phải từ hôm nay trở đi.'
+    elif job.deadline > today + timedelta(days=MAX_DEADLINE_DAYS):
+        errors['deadline'] = f'Hạn nộp không được quá {MAX_DEADLINE_DAYS} ngày kể từ hôm nay.'
     contact = getattr(job, 'application_contact', None)
     if contact is None:
         errors['application_contact'] = 'Nhập thông tin người nhận hồ sơ.'
@@ -307,16 +350,26 @@ def create_pending_job(serializer, user):
 @transaction.atomic
 def update_employer_job(serializer, user):
     """Persist an employer's existing job through the domain mutation boundary."""
+    _locked_recruiter(user)
+    serializer.instance = _locked_job(serializer.instance)
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
+    previous_status = serializer.instance.status
     previous_campaign = serializer.instance.campaign
     job = serializer.save()
     _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
+    if previous_status == Job.Status.ACTIVE:
+        return _move_public_revision_to_review(
+            job,
+            user=user,
+            note='Cập nhật nội dung tin đang tuyển',
+        )
     return job
 
 
 @transaction.atomic
 def close_job(job, user):
+    _locked_recruiter(user)
     job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể đóng tin đang tuyển của bạn.')
@@ -329,6 +382,7 @@ def close_job(job, user):
 
 @transaction.atomic
 def reopen_job(job, user, deadline):
+    _locked_recruiter(user)
     job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.CLOSED:
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
@@ -355,12 +409,54 @@ def reopen_job(job, user, deadline):
 
 @transaction.atomic
 def extend_job_deadline(job, user, deadline):
+    _locked_recruiter(user)
     job = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
-    if deadline < timezone.localdate():
-        raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
+    today = timezone.localdate()
+    if job.deadline is None or deadline <= job.deadline:
+        raise ValidationError({'deadline': 'Hạn gia hạn phải sau hạn nộp hiện tại.'})
+    if deadline > today + timedelta(days=MAX_DEADLINE_DAYS):
+        raise ValidationError(
+            {'deadline': f'Hạn gia hạn không được quá {MAX_DEADLINE_DAYS} ngày kể từ hôm nay.'}
+        )
+    if job.deadline < today - timedelta(days=EXPIRED_JOB_RENEWAL_GRACE_DAYS):
+        raise ValidationError(
+            {
+                'deadline': (
+                    'Chỉ có thể gia hạn tin hết hạn trong vòng '
+                    f'{EXPIRED_JOB_RENEWAL_GRACE_DAYS} ngày.'
+                )
+            }
+        )
+    if job.published_at:
+        published_date = timezone.localdate(job.published_at)
+        if deadline > published_date + timedelta(days=MAX_PUBLIC_LIFETIME_DAYS):
+            raise ValidationError(
+                {
+                    'deadline': (
+                        'Tổng thời gian công khai của tin không được quá '
+                        f'{MAX_PUBLIC_LIFETIME_DAYS} ngày.'
+                    )
+                }
+            )
+    if job.campaign_id:
+        if job.campaign.status != job.campaign.Status.ACTIVE:
+            raise ValidationError({'deadline': 'Chỉ có thể gia hạn trong chiến dịch đang chạy.'})
+        if job.campaign.target_date and deadline > job.campaign.target_date:
+            raise ValidationError(
+                {'deadline': 'Hạn gia hạn không được sau ngày kết thúc chiến dịch.'}
+            )
+
+    was_expired = job.deadline < today
     job.deadline = deadline
+    if was_expired:
+        return _move_public_revision_to_review(
+            job,
+            user=user,
+            note='Gia hạn tin đã hết hạn',
+            update_fields=('deadline',),
+        )
     job.save(update_fields=['deadline', 'updated_at'])
     if job.campaign_id:
         record_campaign_activity(
@@ -376,6 +472,8 @@ def extend_job_deadline(job, user, deadline):
 
 @transaction.atomic
 def duplicate_job(job, user):
+    _locked_recruiter(user)
+    job = _locked_job(job)
     if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền sao chép tin này.')
     duplicate = copy(job)
@@ -389,6 +487,11 @@ def duplicate_job(job, user):
     duplicate.closed_at = None
     duplicate.approved_at = None
     duplicate.rejected_reason = ''
+    duplicate.policy_hold = Job.PolicyHold.NONE
+    duplicate.policy_held_at = None
+    duplicate.policy_hold_transition = None
+    duplicate.moderation_hold = Job.ModerationHold.NONE
+    duplicate.moderation_held_at = None
     duplicate.view_count = 0
     duplicate.impression_count = 0
     duplicate.application_count = 0

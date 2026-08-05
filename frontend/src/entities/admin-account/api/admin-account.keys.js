@@ -2,7 +2,7 @@ const root = ['admin-accounts']
 
 export const adminAccountKeys = {
   all: root,
-  summary: [...root, 'summary'],
+  summary: (params = {}) => [...root, 'summary', params],
   list: (params = {}) => [...root, 'list', params],
   detail: (publicId) => [...root, 'detail', publicId],
   profile: (publicId, reveal = false) => [...root, 'profile', publicId, { reveal }],

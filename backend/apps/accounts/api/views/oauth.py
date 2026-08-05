@@ -7,8 +7,9 @@ from django.urls import reverse
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from common.throttling import ClientIPScopedRateThrottle
 
 from ... import oauth
 from ...models import User
@@ -28,7 +29,7 @@ class OAuthStartView(APIView):
 
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'oauth'
 
     def get(self, request, provider):
@@ -101,13 +102,21 @@ class OAuthCallbackView(APIView):
 )
 class OAuthCompleteView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'oauth'
 
     def post(self, request):
-        user_id = oauth.pop_one_time_code(request.data.get('code'))
-        user = User.objects.filter(pk=user_id, is_active=True).first() if user_id else None
-        if user is None:
+        identity = oauth.pop_one_time_code(request.data.get('code'))
+        user = (
+            User.objects.filter(pk=identity.get('user_id'), is_active=True).first()
+            if isinstance(identity, dict)
+            else None
+        )
+        if (
+            user is None
+            or identity.get('auth_revision') != user.auth_revision
+            or identity.get('email') != User.objects.normalize_email(user.email)
+        ):
             return Response(
                 {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'},
                 status=status.HTTP_400_BAD_REQUEST,

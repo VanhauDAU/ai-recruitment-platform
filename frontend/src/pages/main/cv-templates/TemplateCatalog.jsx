@@ -9,7 +9,7 @@ import {
 import { useLocales } from '@/entities/locale'
 import { UseTemplateModal } from '@/features/create-cv-from-template'
 import { useLoginPrompt } from '@/features/auth'
-import { setDocumentTitle } from '@/shared/config/document-title'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import {
   catalogCategoryFromPath,
   catalogLocaleFromPath,
@@ -96,7 +96,19 @@ export default function TemplateCatalog() {
     return () => { cancelled = true }
   }, [locale, activeCategory, page])
 
-  useEffect(() => { setDocumentTitle('Mẫu CV chuyên nghiệp') }, [])
+  useDocumentMetadata(
+    {
+      title: activeCategory
+        ? `${activeCategory.name} - Mẫu CV ${localeLabel}`
+        : `Mẫu CV ${localeLabel} chuyên nghiệp`,
+      description: activeCategory
+        ? `Khám phá mẫu CV ${localeLabel} ${activeCategory.name}, dễ chỉnh sửa và dùng ngay.`
+        : `Khám phá mẫu CV ${localeLabel} chuyên nghiệp, dễ chỉnh sửa và phù hợp nhiều ngành nghề.`,
+      canonicalPath: activeCategory
+        ? catalogPathForCategory(basePath, activeCategory.slug)
+        : basePath,
+    },
+  )
 
   // Infinite scroll
   useEffect(() => {

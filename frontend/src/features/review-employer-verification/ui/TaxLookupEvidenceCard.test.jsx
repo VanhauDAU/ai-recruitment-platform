@@ -9,6 +9,7 @@ describe('TaxLookupEvidenceCard', () => {
     render(
       <TaxLookupEvidenceCard
         canRefresh
+        recruiterCompanyRole="member"
         onRefresh={onRefresh}
         evidence={{
           status: 'found',
@@ -30,6 +31,8 @@ describe('TaxLookupEvidenceCard', () => {
     expect(screen.getByText('Công ty Casso')).toBeInTheDocument()
     expect(screen.getByText('CÔNG TY TNHH CASSO')).toBeInTheDocument()
     expect(screen.getByText('Khác dữ liệu')).toBeInTheDocument()
+    expect(screen.getByText(/là thành viên của công ty/)).toBeInTheDocument()
+    expect(screen.getByText(/không có nghĩa người này đã tạo hoặc chỉnh sửa công ty/)).toBeInTheDocument()
     expect(screen.queryByText('Địa chỉ đăng ký')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Tra cứu lại/ }))
     expect(onRefresh).toHaveBeenCalledOnce()

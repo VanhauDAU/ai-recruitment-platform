@@ -3,10 +3,10 @@
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from common.media_storage import delete_local_media_url, save_image_upload
+from common.throttling import ClientIPScopedRateThrottle
 
 from ...models import AuthEmailJob, User
 from ...services import (
@@ -31,13 +31,15 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'register'
 
     def create(self, request, *args, **kwargs):
+        # Captcha trước validate: xem ghi chú ở EmployerRegisterView — thông báo
+        # "email đã được sử dụng" là oracle dò tài khoản nếu trả lời trước captcha.
+        verify_request_captcha(request, 'register')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        verify_request_captcha(request, 'register')
         user = serializer.save()
         queue_verification_email(user)
         tokens = issue_tokens(user, request, auth_method='registration')
@@ -64,16 +66,16 @@ class RegisterEmailAvailabilityView(APIView):
     """Rate-limited UX pre-check; RegisterSerializer remains the final authority."""
 
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'register_email_check'
 
     def post(self, request):
         serializer = RegisterEmailAvailabilitySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        exists = User.objects.filter(
-            email__iexact=serializer.validated_data['email'],
-            role=serializer.validated_data['role'],
-        ).exists()
+        exists = User.objects.email_claimed_for_role(
+            serializer.validated_data['email'],
+            serializer.validated_data['role'],
+        )
         return Response({'available': not exists})
 
 
@@ -99,7 +101,7 @@ class RegisterEmailAvailabilityView(APIView):
 class LoginView(APIView):
     serializer_class = LoginCredentialsSerializer
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):

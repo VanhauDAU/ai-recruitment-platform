@@ -60,3 +60,140 @@ permission admin.
 
 Khi thêm field frontend mới, cập nhật đồng thời serializer, selector/query,
 contract test và bảng này. Không dùng `fields = '__all__'` trong API serializer.
+
+## Contract thông báo chạy đa cổng
+
+Contract này được chốt ở AN-P0 và chỉ có hiệu lực sau khi backend foundation
+AN-P1 được merge. Public feed không phản chiếu model/revision nội bộ.
+
+### Active feed
+
+`GET /api/site/announcements/active/?surface=candidate&path=/viec-lam&locale=vi`
+
+```json
+{
+  "items": [
+    {
+      "public_id": "ann_...",
+      "revision": 3,
+      "kind": "info",
+      "priority_tier": 6,
+      "priority": 50,
+      "message": "Khám phá cơ hội việc làm mới.",
+      "badge": "Mới",
+      "icon": "sparkles",
+      "cta": {
+        "label": "Xem ngay",
+        "url": "/viec-lam",
+        "external": false
+      },
+      "animation": "slide",
+      "display_seconds": 6,
+      "dismiss": {
+        "mode": "close",
+        "snooze_seconds": null,
+        "version": 1
+      },
+      "starts_at": "2026-07-29T03:00:00Z",
+      "ends_at": "2026-08-05T03:00:00Z"
+    }
+  ],
+  "next_transition_at": "2026-08-05T03:00:00Z",
+  "remote_enabled": true
+}
+```
+
+Rules:
+
+- `items` chỉ chứa tier cao nhất đã qua targeting và dismiss; thứ tự đã
+  deterministic từ backend.
+- `message`/`badge`/`cta.label` đã resolve locale, fallback từng field về
+  tiếng Việt.
+- `cta` là `null` khi không cấu hình; client không tự suy ra external từ text.
+- `next_transition_at` là boundary sớm nhất có thể đổi feed, hoặc `null`.
+- `remote_enabled` là kill switch authoritative theo surface. Frontend bỏ mọi
+  remote item nếu field thiếu hoặc false; system label resolve độc lập.
+- `internal_name`, creator, publisher, target rule và raw translations không
+  xuất hiện trong public DTO.
+
+### Functional state
+
+`PUT /api/site/announcements/{public_id}/state/`
+
+```json
+{
+  "revision": 3,
+  "dismissal_version": 1,
+  "action": "snooze"
+}
+```
+
+Response `200` trả state canonical gồm `dismissed_at` hoặc `snoozed_until`.
+Gửi lại cùng action là idempotent. Guest không gọi endpoint này.
+Endpoint yêu cầu authenticated session. Revision hoặc dismissal version cũ trả
+`409 announcement_state_stale`; `locked` hoặc action không khớp cấu hình trả
+`400` và không tạo user state.
+
+### Event batch
+
+`POST /api/site/announcements/events/`
+
+```json
+{
+  "events": [
+    {
+      "public_id": "ann_...",
+      "revision": 3,
+      "surface": "candidate",
+      "event": "impression"
+    }
+  ]
+}
+```
+
+Response `202 {"accepted": true}` không cam kết event được cộng khi thiếu
+analytics consent hoặc Redis đang lỗi. Client không retry vô hạn.
+Batch nhận 1–50 event, loại trùng trong cùng payload và throttle độc lập
+240 request/giờ. Backend chỉ nhận revision đã publish và surface thuộc revision;
+không lưu path, IP hoặc user-agent. CTA không chờ response tracking.
+
+### Runtime operational event
+
+`POST /api/site/announcements/runtime-events/`
+
+```json
+{
+  "surface": "candidate",
+  "event": "feed_error",
+  "reason": "http_5xx"
+}
+```
+
+Endpoint AllowAny, throttle 60 request/giờ và chỉ nhận enum. Event:
+`feed_error`, `contract_error`, `render_error`; reason: `network`, `timeout`,
+`http_4xx`, `http_5xx`, `contract`, `render`, `unknown`. Không gửi path, error
+message, stack, user/cookie identifier hoặc payload API.
+
+### Admin metrics
+
+`GET /api/site/admin/announcements/{public_id}/metrics/?date_from=2026-07-01&date_to=2026-07-29`
+
+- yêu cầu `announcement.view`;
+- mặc định 30 ngày, tối đa 93 ngày, ngày báo cáo theo `Asia/Ho_Chi_Minh`;
+- `summary` trả `impressions`, `unique_impressions`, `clicks`,
+  `unique_clicks`, `dismisses`, `ctr`, `dismiss_rate`;
+- `daily[]` aggregate theo ngày và surface trên toàn bộ revision;
+- `consent_notice` bắt buộc để tránh diễn giải số liệu như toàn bộ traffic.
+
+### Admin list/detail
+
+Admin list trả paginated DTO phục vụ bảng:
+
+- `public_id`, `internal_name`, `lifecycle_state`, `presentation_status`;
+- `kind`, `surfaces`, `starts_at`, `ends_at`, `priority`;
+- active/draft revision numbers, creator/publisher summary và timestamps;
+- aggregate `impressions`, `clicks`, `ctr`, `dismisses`.
+
+Detail mới trả raw nội dung Việt/Anh, target rules, dismiss/animation config,
+revision token và revision history. Mutation phải gửi revision token; stale
+token trả `409` với code `announcement_revision_stale`.

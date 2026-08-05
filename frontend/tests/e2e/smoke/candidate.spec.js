@@ -378,10 +378,16 @@ test('candidate smoke: CV library permanently deletes a CV through V2', async ({
   const deleteMenuItem = page.getByRole('menuitem', { name: 'Xoá' })
   await expect(deleteMenuItem).toBeVisible()
   const deleteDialog = page.getByRole('dialog', { name: 'Xóa CV của bạn?' })
-  await deleteMenuItem.click()
+  // Ant Design renders the menu in a moving portal. On a busy mobile CI worker
+  // the sticky header can briefly intercept pointer events while it settles;
+  // keyboard activation exercises the same accessible menu action without
+  // depending on transient overlay coordinates.
+  await deleteMenuItem.press('Enter')
   await expect(deleteDialog).toBeVisible({ timeout: 10_000 })
   const deleteRequest = page.waitForRequest((request) => request.url().endsWith('/api/v2/cvs/cv_1/') && request.method() === 'DELETE')
-  await deleteDialog.getByRole('button', { name: 'Xóa vĩnh viễn', exact: true }).click()
+  await deleteDialog
+    .getByRole('button', { name: 'Xóa vĩnh viễn', exact: true })
+    .press('Enter')
   await deleteRequest
   await expect(page.getByText('CV cần xóa', { exact: true })).toHaveCount(0)
 })

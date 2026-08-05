@@ -14,11 +14,15 @@ from apps.accounts.services import (
 )
 
 from ..models import (
-    Company,
     CompanyDocument,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
+)
+from .companies import (
+    CompanyTaxCodeConflict,
+    ensure_company_tax_code_can_be_verified,
+    mark_company_verified,
 )
 from .tax_lookup import queue_company_tax_lookup
 
@@ -94,7 +98,9 @@ def verification_checks(case):
     documents = getattr(case, 'current_documents_for_checks', None)
     if documents is None:
         documents = case.documents.filter(is_current=True)
-    current_documents = {document.doc_type: document for document in documents}
+    current_documents = {}
+    for document in documents:
+        current_documents.setdefault(document.doc_type, []).append(document)
     recruitment_needs = getattr(recruiter, 'verification_recruitment_needs', None)
     consulting_need_completed = (
         bool(recruitment_needs)
@@ -113,16 +119,21 @@ def verification_checks(case):
         'representative_documents_submitted': business_required.issubset(current_documents),
         'business_documents_approved': all(
             current_documents.get(doc_type)
-            and current_documents[doc_type].status == CompanyDocument.Status.APPROVED
+            and all(
+                document.status == CompanyDocument.Status.APPROVED
+                for document in current_documents[doc_type]
+            )
             for doc_type in business_required
         ),
         'candidate_dpa_submitted': (
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT in current_documents
         ),
         'candidate_dpa_approved': (
-            current_documents.get(CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT) is not None
-            and current_documents[CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT].status
-            == CompanyDocument.Status.APPROVED
+            bool(current_documents.get(CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT))
+            and all(
+                document.status == CompanyDocument.Status.APPROVED
+                for document in current_documents[CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT]
+            )
         ),
         'dpa_accepted': recruiter.dpa_accepted_at is not None,
         'case_approved': case.status == EmployerVerificationCase.Status.APPROVED,
@@ -157,6 +168,28 @@ def recruiter_requires_approved_verification():
     return bool(getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False))
 
 
+def _current_document_issue(case):
+    current_documents = case.documents.filter(is_current=True)
+    rejected = (
+        current_documents.filter(status=CompanyDocument.Status.REJECTED)
+        .order_by('-reviewed_at', '-updated_at', '-id')
+        .first()
+    )
+    if rejected is not None:
+        return EmployerVerificationCase.Status.REJECTED, rejected.review_note
+    changes_requested = (
+        current_documents.filter(status=CompanyDocument.Status.CHANGES_REQUESTED)
+        .order_by('-reviewed_at', '-updated_at', '-id')
+        .first()
+    )
+    if changes_requested is not None:
+        return (
+            EmployerVerificationCase.Status.CHANGES_REQUESTED,
+            changes_requested.review_note,
+        )
+    return None, ''
+
+
 @transaction.atomic
 def record_verification_upload(
     *,
@@ -180,12 +213,16 @@ def record_verification_upload(
         EmployerVerificationCase.Status.REJECTED,
     }
     case.company = recruiter.company
-    case.status = EmployerVerificationCase.Status.PENDING
+    issue_status, issue_reason = _current_document_issue(case)
+    case.status = issue_status or EmployerVerificationCase.Status.PENDING
     case.submitted_at = timezone.now()
-    case.review_started_at = None
-    case.decided_at = None
-    case.decision_reason = ''
-    case.reviewer = None
+    if issue_status is None:
+        case.review_started_at = None
+        case.decided_at = None
+        case.decision_reason = ''
+        case.reviewer = None
+    else:
+        case.decision_reason = issue_reason
     case.lock_version += 1
     if resubmission:
         case.revision += 1
@@ -286,10 +323,11 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
         raise ValidationError('Kết quả xử lý giấy tờ không hợp lệ.')
     if decision != CompanyDocument.Status.APPROVED and not reason.strip():
         raise ValidationError('Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.')
+    normalized_reason = '' if decision == CompanyDocument.Status.APPROVED else reason.strip()
     document.status = decision
     document.reviewed_by = actor
     document.reviewed_at = timezone.now()
-    document.review_note = reason.strip()
+    document.review_note = normalized_reason
     document.save(
         update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at']
     )
@@ -299,20 +337,32 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     automatically_approved = False
     if decision == CompanyDocument.Status.CHANGES_REQUESTED:
         case.status = EmployerVerificationCase.Status.CHANGES_REQUESTED
-        case.decision_reason = reason.strip()
+        case.decision_reason = normalized_reason
+        case.decided_at = None
     elif decision == CompanyDocument.Status.REJECTED:
         case.status = EmployerVerificationCase.Status.REJECTED
-        case.decision_reason = reason.strip()
+        case.decision_reason = normalized_reason
         case.decided_at = timezone.now()
     else:
+        issue_status, issue_reason = _current_document_issue(case)
         can_approve, _ = verification_can_be_approved(case)
-        if can_approve and case.status != EmployerVerificationCase.Status.APPROVED:
+        if issue_status is not None:
+            case.status = issue_status
+            case.decision_reason = issue_reason
+            case.decided_at = (
+                case.decided_at
+                if issue_status == EmployerVerificationCase.Status.REJECTED
+                else None
+            )
+        elif can_approve and case.status != EmployerVerificationCase.Status.APPROVED:
             case.status = EmployerVerificationCase.Status.APPROVED
             case.decision_reason = ''
             case.decided_at = timezone.now()
             automatically_approved = True
-        elif case.status == EmployerVerificationCase.Status.PENDING:
+        elif case.status != EmployerVerificationCase.Status.APPROVED:
             case.status = EmployerVerificationCase.Status.IN_REVIEW
+            case.decision_reason = ''
+            case.decided_at = None
     case.save(
         update_fields=[
             'status',
@@ -332,16 +382,12 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
             'document_public_id': document.public_id,
             'doc_type': document.doc_type,
             'decision': decision,
-            'reason': reason.strip(),
+            'reason': normalized_reason,
         },
     )
     if automatically_approved:
         if case.company_id:
-            Company.objects.filter(pk=case.company_id).update(
-                verification_status=Company.VerificationStatus.VERIFIED,
-                verified_at=timezone.now(),
-                rejected_reason='',
-            )
+            mark_company_verified(case.company)
         EmployerVerificationEvent.objects.create(
             verification_case=case,
             actor=actor,
@@ -381,6 +427,65 @@ def review_verification_document(document, *, actor, decision, reason, lock_vers
     return document, case
 
 
+@transaction.atomic
+def reconcile_verification_case(case, *, source='reconciliation'):
+    """Approve one ready case after any prerequisite mutation.
+
+    Document review is not guaranteed to be the final verification action. For
+    example, an administrator may approve every document before the recruiter
+    verifies their phone. Locking and re-checking the case here makes every
+    caller safe to retry and prevents duplicate approval events.
+    """
+    # Lock only the case row. PostgreSQL rejects FOR UPDATE when select_related
+    # introduces the nullable company/reviewer side through an outer join.
+    case = EmployerVerificationCase.objects.select_for_update().get(pk=case.pk)
+    if case.status == EmployerVerificationCase.Status.APPROVED:
+        return case, False
+
+    can_approve, _ = verification_can_be_approved(case)
+    if not can_approve:
+        return case, False
+    now = timezone.now()
+    if case.company_id:
+        try:
+            ensure_company_tax_code_can_be_verified(case.company)
+            mark_company_verified(case.company, verified_at=now)
+        except CompanyTaxCodeConflict:
+            return case, False
+
+    case.status = EmployerVerificationCase.Status.APPROVED
+    case.decision_reason = ''
+    case.decided_at = now
+    case.lock_version += 1
+    case.save(
+        update_fields=[
+            'status',
+            'decision_reason',
+            'decided_at',
+            'lock_version',
+            'updated_at',
+        ]
+    )
+    EmployerVerificationEvent.objects.create(
+        verification_case=case,
+        event_type=EmployerVerificationEvent.EventType.APPROVED,
+        payload={'reason': '', 'revision': case.revision, 'source': source},
+    )
+    _queue_verification_notification(
+        case,
+        event_type=EmployerVerificationCase.Status.APPROVED,
+    )
+    return case, True
+
+
+def reconcile_recruiter_verification(recruiter, *, source):
+    """Re-check the recruiter's existing case after a prerequisite changes."""
+    case = EmployerVerificationCase.objects.filter(recruiter=recruiter).first()
+    if case is None:
+        return None, False
+    return reconcile_verification_case(case, source=source)
+
+
 def reconcile_completed_verification_cases():
     """Approve previously reviewed cases that now satisfy every requirement."""
     reconciled_cases = []
@@ -389,41 +494,11 @@ def reconcile_completed_verification_cases():
     ).values_list('pk', flat=True)
 
     for case_id in case_ids.iterator():
-        with transaction.atomic():
-            case = EmployerVerificationCase.objects.select_for_update().get(pk=case_id)
-            can_approve, _ = verification_can_be_approved(case)
-            if not can_approve:
-                continue
-
-            now = timezone.now()
-            case.status = EmployerVerificationCase.Status.APPROVED
-            case.decision_reason = ''
-            case.decided_at = now
-            case.lock_version += 1
-            case.save(
-                update_fields=[
-                    'status',
-                    'decision_reason',
-                    'decided_at',
-                    'lock_version',
-                    'updated_at',
-                ]
-            )
-            if case.company_id:
-                Company.objects.filter(pk=case.company_id).update(
-                    verification_status=Company.VerificationStatus.VERIFIED,
-                    verified_at=now,
-                    rejected_reason='',
-                )
-            EmployerVerificationEvent.objects.create(
-                verification_case=case,
-                event_type=EmployerVerificationEvent.EventType.APPROVED,
-                payload={'reason': '', 'revision': case.revision, 'source': 'reconciliation'},
-            )
-            _queue_verification_notification(
-                case,
-                event_type=EmployerVerificationCase.Status.APPROVED,
-            )
+        case, reconciled = reconcile_verification_case(
+            EmployerVerificationCase(pk=case_id),
+            source='reconciliation',
+        )
+        if reconciled:
             reconciled_cases.append(case)
 
     return reconciled_cases
@@ -442,6 +517,8 @@ def verification_decision_impact(case, *, decision, reason):
     if decision == EmployerVerificationCase.Status.APPROVED and not can_approve:
         missing = [key for key, value in checks.items() if not value and key != 'case_approved']
         raise ValidationError({'missing_requirements': missing})
+    if decision == EmployerVerificationCase.Status.APPROVED and case.company_id:
+        ensure_company_tax_code_can_be_verified(case.company)
     payload = {'decision': decision, 'reason': reason.strip()}
     return {
         'decision': decision,
@@ -489,11 +566,7 @@ def confirm_verification_decision(case, *, actor, decision, reason, impact_token
         ]
     )
     if decision == EmployerVerificationCase.Status.APPROVED and case.company_id:
-        Company.objects.filter(pk=case.company_id).update(
-            verification_status=Company.VerificationStatus.VERIFIED,
-            verified_at=timezone.now(),
-            rejected_reason='',
-        )
+        mark_company_verified(case.company)
     event_type = {
         EmployerVerificationCase.Status.APPROVED: EmployerVerificationEvent.EventType.APPROVED,
         EmployerVerificationCase.Status.CHANGES_REQUESTED: (
@@ -537,6 +610,8 @@ __all__ = [
     'confirm_verification_decision',
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',
+    'reconcile_recruiter_verification',
+    'reconcile_verification_case',
     'record_verification_upload',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',

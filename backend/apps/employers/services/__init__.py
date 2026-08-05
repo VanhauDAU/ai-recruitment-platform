@@ -9,13 +9,16 @@ from .campaigns import (
 from .companies import (
     SENSITIVE_FIELDS,
     UPDATABLE_COMPANY_FIELDS,
+    CompanyTaxCodeConflict,
     apply_update_request,
+    ensure_company_tax_code_can_be_verified,
+    mark_company_verified,
     review_company_update_document,
     set_company_industries,
     verify_company,
 )
-from .document_preview import render_office_document_preview
-from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
+from .document_preview import render_office_document_preview, render_office_upload_preview
+from .onboarding import accept_recruiter_dpa, phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import (
     ensure_recruiter_candidate_data_access,
     get_or_create_recruiter,
@@ -38,6 +41,8 @@ from .verification import (
     confirm_verification_decision,
     get_or_create_verification_case,
     reconcile_completed_verification_cases,
+    reconcile_recruiter_verification,
+    reconcile_verification_case,
     record_verification_upload,
     recruiter_is_approved,
     recruiter_requires_approved_verification,
@@ -48,14 +53,17 @@ from .verification import (
 )
 
 __all__ = [
+    'CompanyTaxCodeConflict',
     'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'UPDATABLE_COMPANY_FIELDS',
+    'accept_recruiter_dpa',
     'apply_update_request',
     'change_campaign_status',
     'create_campaign',
     'create_initial_recruitment_need',
     'render_office_document_preview',
+    'render_office_upload_preview',
     'ensure_recruiter_candidate_data_access',
     'confirm_verification_decision',
     'record_campaign_activity',
@@ -64,6 +72,8 @@ __all__ = [
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',
+    'reconcile_recruiter_verification',
+    'reconcile_verification_case',
     'recruiter_posting_readiness',
     'latest_tax_lookup_evidence',
     'lookup_company_tax',
@@ -71,6 +81,8 @@ __all__ = [
     'refresh_company_update_tax_lookup',
     'refresh_verification_tax_lookup',
     'record_verification_upload',
+    'ensure_company_tax_code_can_be_verified',
+    'mark_company_verified',
     'review_company_update_document',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',

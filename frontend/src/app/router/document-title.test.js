@@ -24,7 +24,8 @@ describe('resolveEmployerRouteTitle', () => {
 describe('admin route titles', () => {
   it('derives job moderation and access titles from the admin route config', () => {
     window.history.replaceState({}, '', adminPath('/job-moderation'))
-    expect(resolveRouteTitle(adminPath('/job-moderation'))).toBe('Duyệt tin tuyển dụng')
+    expect(resolveRouteTitle(adminPath('/job-moderation'))).toBe('Quản lý tin tuyển dụng')
+    expect(resolveRouteTitle(adminPath('/job-moderation/job_123'))).toBe('Chi tiết tin tuyển dụng')
     expect(resolveRouteTitle(adminPath('/account'))).toBe('Cài đặt tài khoản')
   })
 

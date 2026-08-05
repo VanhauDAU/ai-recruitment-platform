@@ -2,9 +2,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job'
 import { useJobView } from '@/features/track-job-engagement'
-import { setDocumentTitle } from '@/shared/config/document-title'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 
 const RELATED_PAGE_SIZE = 4
+
+function plainText(value) {
+  return String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+}
 
 export default function useJobDetailPageData({ slug, companySlug, navigate }) {
   const queryClient = useQueryClient()
@@ -25,12 +29,17 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
     },
   })
 
-  useEffect(() => {
-    if (!job?.title) return undefined
-    const previousTitle = document.title
-    setDocumentTitle(`Tuyển ${job.title}`)
-    return () => { setDocumentTitle(previousTitle) }
-  }, [job?.title])
+  useDocumentMetadata(
+    job
+      ? {
+          title: `Tuyển ${job.title}`,
+          description: `Tuyển ${job.title} tại ${job.company_name}. ${plainText(job.short_description || job.description)}`,
+          canonicalPath: jobDetailPath(job),
+          imageUrl: job.company_logo_url,
+          pageType: 'website',
+        }
+      : null,
+  )
 
   useEffect(() => {
     if (!job) return

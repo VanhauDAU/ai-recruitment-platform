@@ -30,11 +30,15 @@ function ComparisonTag({ value }) {
 
 export default function TaxLookupEvidenceCard({
   evidence,
+  recruiterCompanyRole,
   canRefresh,
   refreshing,
   onRefresh,
   compact = false,
 }) {
+  const scopeDescription = recruiterCompanyRole === 'member'
+    ? 'Tài khoản này là thành viên của công ty. Kết quả chỉ đối chiếu pháp nhân của công ty trong hồ sơ xác thực quyền đại diện; không có nghĩa người này đã tạo hoặc chỉnh sửa công ty.'
+    : 'Kết quả chỉ đối chiếu pháp nhân của công ty trong hồ sơ xác thực quyền đại diện; không phải lịch sử tạo hoặc chỉnh sửa công ty.'
   const extra = canRefresh && (
     <Button
       size="small"
@@ -57,7 +61,7 @@ export default function TaxLookupEvidenceCard({
           showIcon
           type="info"
           title="Chưa có dữ liệu đối chiếu VietQR"
-          description="Hồ sơ vẫn được xử lý thủ công dựa trên giấy tờ pháp lý."
+          description={`${scopeDescription} Hồ sơ vẫn được xử lý thủ công dựa trên giấy tờ pháp lý.`}
         />
       </Card>
     )
@@ -75,6 +79,13 @@ export default function TaxLookupEvidenceCard({
       extra={extra}
       className={compact ? 'company-comparison-tax-lookup' : 'account-detail-card'}
     >
+      <Alert
+        className="mb-3"
+        showIcon
+        type="info"
+        title="Phạm vi đối chiếu"
+        description={`${scopeDescription} Yêu cầu cập nhật thông tin công ty, nếu có, được xử lý ở luồng riêng bên dưới.`}
+      />
       <Space wrap className="mb-3">
         <Tag color={status.color}>{status.label}</Tag>
         <Tag>VietQR.io</Tag>

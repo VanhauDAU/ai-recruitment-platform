@@ -64,6 +64,8 @@ class RecruiterProfile(models.Model):
     verified_phone = models.CharField(max_length=20, blank=True)
     phone_verified_at = models.DateTimeField(null=True, blank=True)
     dpa_accepted_at = models.DateTimeField(null=True, blank=True)
+    # Legacy compatibility only. Completion is derived from registration,
+    # verified email and a RecruitmentNeed; new code must not read/write this.
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

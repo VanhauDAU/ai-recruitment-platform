@@ -1,3 +1,4 @@
+import { startOAuthReauth } from '@/features/auth'
 import { ChangePasswordForm } from '@/features/change-password'
 
 export default function ChangePassword() {
@@ -10,7 +11,7 @@ export default function ChangePassword() {
         </p>
       </header>
 
-      <ChangePasswordForm showEmail reauthPath="/login" />
+      <ChangePasswordForm showEmail onReauth={startOAuthReauth} />
     </section>
   )
 }

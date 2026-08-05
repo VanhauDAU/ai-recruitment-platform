@@ -105,6 +105,23 @@ class ApplicationStatusTransitionServiceTests(TestCase):
         self.assertEqual(self.application.status, Application.Status.ACCEPTED)
         self.assertFalse(self.application.status_history.exists())
 
+    def test_restricted_candidate_can_only_be_rejected(self):
+        self.candidate.status = get_user_model().Status.INACTIVE
+        self.candidate.is_active = False
+        self.candidate.save(update_fields=['status', 'is_active', 'updated_at'])
+
+        with self.assertRaises(InvalidApplicationStatusTransition):
+            update_application_status(
+                self.serializer(status=Application.Status.SHORTLISTED),
+                changed_by=self.employer,
+            )
+
+        rejected = update_application_status(
+            self.serializer(status=Application.Status.REJECTED),
+            changed_by=self.employer,
+        )
+        self.assertEqual(rejected.status, Application.Status.REJECTED)
+
     def test_note_only_and_idempotent_status_updates_do_not_reset_timestamp(self):
         original_viewed_at = timezone.now()
         for payload in (

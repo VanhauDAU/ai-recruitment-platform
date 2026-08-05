@@ -19,6 +19,7 @@ import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { useSiteSettings } from '@/entities/site-settings'
 import { FeedbackModal } from '@/features/submit-feedback'
+import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
 import { message } from '@/shared/lib/toast'
 
 export default function FloatingActions() {
@@ -28,6 +29,7 @@ export default function FloatingActions() {
   const { promptLogin } = useLoginPrompt()
   const { settings, siteName } = useSiteSettings()
   const { items, saveSuccess } = useSavedJobs()
+  const viewportBottomInset = useVisualViewportBottomInset()
 
   // Khách bấm "Việc làm đã lưu" -> popup đăng nhập rồi mới vào trang, thay vì bị đá về /login.
   function openSavedJobs() {
@@ -86,9 +88,15 @@ export default function FloatingActions() {
 
   return (
     <>
-      <div className="fixed bottom-5 right-4 z-30 flex flex-col items-end gap-2.5 md:bottom-8 md:right-6">
+      <div
+        data-testid="floating-actions"
+        className="fixed left-4 z-30 flex flex-col items-start gap-2.5 md:left-6"
+        style={{
+          bottom: `calc(clamp(1.25rem, 3vw, 2rem) + ${viewportBottomInset}px + env(safe-area-inset-bottom, 0px))`,
+        }}
+      >
         {showScrollTop && (
-          <Tooltip title="Lên đầu trang" placement="left">
+          <Tooltip title="Lên đầu trang" placement="right">
             <button
               type="button"
               aria-label="Lên đầu trang"
@@ -103,7 +111,7 @@ export default function FloatingActions() {
           {saveNoticeOpen && (
             <div
               role="status"
-              className="absolute bottom-[calc(100%+12px)] right-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-emerald-100 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-emerald-900/20"
+              className="absolute bottom-[calc(100%+12px)] left-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-emerald-100 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-emerald-900/20"
               style={{ animation: 'savedNoticeIn 0.25s ease both' }}
             >
               <p className="font-bold text-white">Lưu tin thành công!</p>
@@ -112,7 +120,7 @@ export default function FloatingActions() {
               </p>
             </div>
           )}
-          <Tooltip title="Việc làm đã lưu" placement="left">
+          <Tooltip title="Việc làm đã lưu" placement="right">
             <Badge count={items.length} size="small" offset={[-4, 4]}>
               <button
                 key={heartPulseKey}
@@ -142,13 +150,13 @@ export default function FloatingActions() {
         </button>
 
         {/* Bọc riêng nút Hỗ trợ trong 1 khối `relative` để panel neo `absolute`
-            đúng ngay phía trên nút này (mép phải trùng mép phải nút), thay vì
+            đúng ngay phía trên nút này (mép trái trùng mép trái nút), thay vì
             xếp chung hàng với cả cụm 3 nút — nếu không panel (rộng 300px) sẽ
-            mở ra phía trên toàn bộ cụm nút hẹp hơn, trông như lệch/nổi bên trái. */}
+            mở ra phía trên toàn bộ cụm nút hẹp hơn, trông như lệch/nổi lệch bên. */}
         <div className="relative">
           {supportOpen && (
             <div
-              className="absolute bottom-[calc(100%+12px)] right-0 w-[300px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-500/15"
+              className="absolute bottom-[calc(100%+12px)] left-0 w-[300px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-500/15"
               style={{ animation: 'supportPanelIn 0.18s ease both' }}
             >
               <style>{`

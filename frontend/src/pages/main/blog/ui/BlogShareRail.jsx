@@ -10,7 +10,7 @@ function shareUrl(network) {
 
 // Cột thao tác dính bên trái bài viết, gom 2 nhóm khung bo tròn riêng:
 // (1) chia sẻ: copy link, FB, in, Twitter — (2) mục lục.
-export default function BlogShareRail({ onToggleToc, hasToc }) {
+export default function BlogShareRail({ onToggleToc, hasToc, speechControl }) {
   function share(network) {
     window.open(shareUrl(network), '_blank', 'noopener,noreferrer,width=640,height=520')
   }
@@ -25,7 +25,8 @@ export default function BlogShareRail({ onToggleToc, hasToc }) {
   }
 
   return (
-    <div className="flex flex-row gap-3 lg:sticky lg:top-32 lg:flex-col" aria-label="Chia sẻ bài viết">
+    <div className="flex flex-row gap-3 lg:sticky lg:top-32 lg:flex-col" aria-label="Công cụ bài viết">
+      {speechControl}
       <RailGroup label="Chia sẻ">
         <RailButton label="Sao chép liên kết" onClick={copyLink}><LinkOutlined /></RailButton>
         <RailButton label="Chia sẻ qua Facebook" onClick={() => share('facebook')}><FacebookFilled /></RailButton>

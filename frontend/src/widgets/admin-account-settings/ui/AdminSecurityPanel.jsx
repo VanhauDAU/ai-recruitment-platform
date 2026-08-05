@@ -3,7 +3,6 @@ import { useSession } from '@/entities/session'
 import { ChangePasswordForm } from '@/features/change-password'
 import { SessionManager } from '@/features/session-management'
 import { TwoFactorMethodsPanel } from '@/features/two-factor'
-import { adminPath } from '@/shared/config/portals'
 
 export default function AdminSecurityPanel() {
   const { user } = useSession()
@@ -12,7 +11,7 @@ export default function AdminSecurityPanel() {
   return (
     <div className="space-y-5">
       <Card title="Đổi mật khẩu">
-        <ChangePasswordForm reauthPath={adminPath('/login')} />
+        <ChangePasswordForm defaultLogoutAllSessions />
       </Card>
 
       <Card title="Xác thực hai yếu tố">

@@ -4,6 +4,13 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
+from apps.cv_templates.models import (
+    CvSectionDefinition,
+    CvTemplate,
+    CvTemplateSection,
+    CvTemplateVersion,
+)
+from apps.cv_templates.services import publish_template_version
 from apps.cvs.models import CvVersion, ImmutableCvVersionError, UserCv
 from apps.cvs.schemas import (
     canonicalize_legacy_cv_data,
@@ -12,6 +19,7 @@ from apps.cvs.schemas import (
     empty_style,
     validate_cv_document,
 )
+from apps.cvs.services.composition import compose_cv_document
 from apps.cvs.services.versions import (
     StaleDraftError,
     create_application_snapshot,
@@ -220,3 +228,94 @@ class CvVersioningServiceTests(TestCase):
                 style_json=draft.style_json,
                 expected_lock_version=0,
             )
+
+
+class MarkerSectionCompositionTests(TestCase):
+    """A template that maps identity markers must always receive them."""
+
+    def _template(self, renderer_key, section_keys, regions):
+        """Sections are only writable while a version is still a draft."""
+        template = CvTemplate.objects.create(name=f'Template {renderer_key}')
+        version = CvTemplateVersion.objects.create(
+            template=template,
+            version_number=1,
+            renderer_key=renderer_key,
+            renderer_version='1',
+            default_layout_json={
+                'schema_version': 1,
+                'page': {'size': 'A4', 'margin_mm': 12},
+                'regions': regions,
+            },
+            default_style_json=empty_style(),
+        )
+        for order, (section_key, region_key) in enumerate(section_keys):
+            CvTemplateSection.objects.create(
+                template_version=version,
+                section_definition=CvSectionDefinition.objects.get(section_key=section_key),
+                region_key=region_key,
+                default_order=order,
+            )
+        version = publish_template_version(template=template, version=version)
+        template.refresh_from_db()
+        return template, version
+
+    def test_header_layout_receives_the_identity_markers_it_maps(self):
+        template, _ = self._template(
+            'header_two_column_v1',
+            [('nameplate', 'header'), ('contact', 'header'), ('summary', 'main')],
+            [
+                {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
+                {'id': 'main', 'row': 1, 'width_percent': 60, 'section_instance_ids': []},
+                {'id': 'sidebar', 'row': 1, 'width_percent': 40, 'section_instance_ids': []},
+            ],
+        )
+
+        document = compose_cv_document(template=template, content_json=empty_content())
+
+        keys = [section['section_key'] for section in document['content_json']['sections']]
+        header = next(
+            region for region in document['layout_json']['regions'] if region['id'] == 'header'
+        )
+        self.assertEqual(keys, ['nameplate', 'contact'])
+        self.assertEqual(len(header['section_instance_ids']), 2)
+
+    def test_a_layout_with_its_own_header_block_gets_no_markers(self):
+        """Adding them would print the candidate's name twice."""
+        template, _ = self._template(
+            'classic_single_column_v1',
+            [('summary', 'main')],
+            [{'id': 'main', 'row': 0, 'width_percent': 100, 'section_instance_ids': []}],
+        )
+
+        document = compose_cv_document(template=template, content_json=empty_content())
+
+        self.assertEqual(document['content_json']['sections'], [])
+
+    def test_markers_already_present_in_content_are_not_duplicated(self):
+        template, _ = self._template(
+            'header_two_column_v1',
+            [('nameplate', 'header'), ('contact', 'header')],
+            [
+                {'id': 'header', 'row': 0, 'width_percent': 100, 'section_instance_ids': []},
+                {'id': 'main', 'row': 1, 'width_percent': 60, 'section_instance_ids': []},
+                {'id': 'sidebar', 'row': 1, 'width_percent': 40, 'section_instance_ids': []},
+            ],
+        )
+        content = empty_content()
+        content['sections'] = [
+            {
+                'instance_id': 'nameplate_1',
+                'section_key': 'nameplate',
+                'title': 'Danh thiếp',
+                'enabled': True,
+                'items': [],
+            }
+        ]
+
+        document = compose_cv_document(template=template, content_json=content)
+
+        keys = [section['section_key'] for section in document['content_json']['sections']]
+        self.assertEqual(keys, ['contact', 'nameplate'])
+        self.assertEqual(
+            len({section['instance_id'] for section in document['content_json']['sections']}), 2
+        )

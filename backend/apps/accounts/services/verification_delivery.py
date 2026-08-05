@@ -10,4 +10,8 @@ def queue_verification_email(user):
     from ..tasks import queue_auth_email
 
     email_verification.start_cooldown(user)
-    return queue_auth_email(AuthEmailJob.Kind.VERIFICATION, user)
+    return queue_auth_email(
+        AuthEmailJob.Kind.VERIFICATION,
+        user,
+        context={'email': user.email},
+    )

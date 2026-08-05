@@ -93,6 +93,8 @@ def _save_document(
     update_request=None,
     recruiter=None,
     verification_method='',
+    append_to_current_set=False,
+    replace_document_public_id='',
 ):
     recruiter = recruiter or get_or_create_recruiter(request.user)
     if company is None and recruiter.company_id:
@@ -103,6 +105,60 @@ def _save_document(
         directory = f'employers/{recruiter.public_id}/documents'
     else:
         raise ValidationError({'detail': 'Không xác định được chủ sở hữu của giấy tờ.'})
+
+    verification_case = None
+    existing = None
+    document_scope = None
+    if update_request is not None:
+        document_scope = CompanyDocument.objects.select_for_update().filter(
+            update_request=update_request,
+            doc_type=doc_type,
+            is_current=True,
+        )
+    elif doc_type in VERIFICATION_DOCUMENT_TYPES | {
+        CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+    }:
+        verification_case = get_or_create_verification_case(recruiter)
+        document_scope = CompanyDocument.objects.select_for_update().filter(
+            verification_case=verification_case,
+            doc_type=doc_type,
+            is_current=True,
+        )
+
+    if document_scope is not None:
+        if replace_document_public_id:
+            existing = document_scope.filter(public_id=replace_document_public_id).first()
+            if existing is None:
+                raise ValidationError({'replaces': 'Không tìm thấy tệp hiện hành cần thay thế.'})
+            existing.is_current = False
+            existing.save(update_fields=['is_current', 'updated_at'])
+        elif append_to_current_set:
+            if document_scope.count() >= 10:
+                raise ValidationError({'file': 'Mỗi loại giấy tờ được tải tối đa 10 tệp.'})
+            existing = None
+        else:
+            existing = document_scope.order_by('-version', '-created_at', '-id').first()
+            if existing is not None:
+                document_scope.update(is_current=False)
+
+    version_scope = CompanyDocument.objects.filter(doc_type=doc_type)
+    if update_request is not None:
+        version_scope = version_scope.filter(update_request=update_request)
+    elif verification_case is not None:
+        version_scope = version_scope.filter(verification_case=verification_case)
+    else:
+        version_scope = version_scope.filter(
+            company=company,
+            recruiter=recruiter,
+            update_request__isnull=True,
+            verification_case__isnull=True,
+        )
+    latest_version = (
+        version_scope.order_by('-version', '-created_at', '-id')
+        .values_list('version', flat=True)
+        .first()
+        or 0
+    )
 
     digest = hashlib.sha256()
     for chunk in upload.chunks():
@@ -118,37 +174,6 @@ def _save_document(
         if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
         else upload.name
     )
-    verification_case = None
-    existing = None
-    if update_request is not None:
-        existing = (
-            CompanyDocument.objects.select_for_update()
-            .filter(
-                update_request=update_request,
-                doc_type=doc_type,
-                is_current=True,
-            )
-            .first()
-        )
-        if existing is not None:
-            existing.is_current = False
-            existing.save(update_fields=['is_current', 'updated_at'])
-    elif doc_type in VERIFICATION_DOCUMENT_TYPES | {
-        CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-    }:
-        verification_case = get_or_create_verification_case(recruiter)
-        existing = (
-            CompanyDocument.objects.select_for_update()
-            .filter(
-                verification_case=verification_case,
-                doc_type=doc_type,
-                is_current=True,
-            )
-            .first()
-        )
-        if existing is not None:
-            existing.is_current = False
-            existing.save(update_fields=['is_current', 'updated_at'])
 
     document = CompanyDocument.objects.create(
         company=company,
@@ -157,7 +182,7 @@ def _save_document(
         recruiter=recruiter,
         verification_case=verification_case,
         supersedes=existing,
-        version=(existing.version + 1 if existing else 1),
+        version=latest_version + 1,
         doc_type=doc_type,
         file_url=path,
         file_name=document_name,

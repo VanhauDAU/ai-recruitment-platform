@@ -15,18 +15,6 @@ import {
 import { useState } from 'react'
 import { MODULE_LABELS } from '@/entities/admin-access'
 
-const PERMISSION_DEPENDENCIES = {
-  'blog.manage': ['blog.view'],
-  'blog.publish': ['blog.view'],
-  'company_update.review': ['company_update.view'],
-  'consultation_lead.manage': ['consultation_lead.view'],
-  'employer_verification.review': ['employer_verification.view'],
-  'job_moderation.approve': ['job_moderation.view'],
-  'job_moderation.reject': ['job_moderation.view'],
-  'service_catalog.manage': ['service_catalog.view'],
-  'site_setting.manage': ['site_setting.view'],
-}
-
 function availablePermissions(permissions) {
   return permissions.filter((permission) => (
     permission.is_active || permission.is_granted_to_role
@@ -56,22 +44,25 @@ function groupPermissions(permissions, search) {
 
 function addDependencies(selection, code, permissionByCode) {
   const pending = [code]
+  const visited = new Set()
   while (pending.length) {
     const current = pending.pop()
-    if (selection.has(current)) continue
+    if (visited.has(current)) continue
+    visited.add(current)
     selection.add(current)
-    const dependencies = PERMISSION_DEPENDENCIES[current] || []
+    const dependencies = permissionByCode.get(current)?.requires || []
     dependencies.forEach((requiredCode) => {
       if (permissionByCode.get(requiredCode)?.is_active) pending.push(requiredCode)
     })
   }
 }
 
-function removeDependents(selection, removedCodes) {
+function removeDependents(selection, removedCodes, permissionByCode) {
   let changed = true
   while (changed) {
     changed = false
-    Object.entries(PERMISSION_DEPENDENCIES).forEach(([code, requirements]) => {
+    permissionByCode.forEach((permission, code) => {
+      const requirements = permission.requires || []
       if (
         selection.has(code)
         && requirements.some((requiredCode) => removedCodes.has(requiredCode))
@@ -121,8 +112,8 @@ export default function PermissionPicker({
   const selectedActiveCount = permissions.filter((permission) => (
     permission.is_active && selected.has(permission.code)
   )).length
-  const hasCompanyUpdatePermissions = permissions.some((permission) => (
-    permission.code === 'company_update.review'
+  const hasDependentPermissions = permissions.some((permission) => (
+    permission.requires?.length
   ))
 
   const commit = (codes, checked) => {
@@ -132,19 +123,19 @@ export default function PermissionPicker({
     } else {
       const removedCodes = new Set(codes)
       codes.forEach((code) => next.delete(code))
-      removeDependents(next, removedCodes)
+      removeDependents(next, removedCodes, permissionByCode)
     }
     onChange?.([...next].sort())
   }
 
   return (
     <div className="space-y-4" aria-label="Danh sách quyền theo phân hệ">
-      {hasCompanyUpdatePermissions && (
+      {hasDependentPermissions && (
         <Alert
           showIcon
           type="info"
-          title="Quyền duyệt sửa công ty đã được tách riêng"
-          description="Cấp “Xem yêu cầu sửa công ty” để xem hàng chờ. Khi chọn “Duyệt sửa thông tin công ty”, hệ thống tự chọn kèm quyền xem."
+          title="Quyền nền được đồng bộ tự động"
+          description="Khi chọn quyền thao tác hoặc quyền xem dữ liệu nâng cao, hệ thống tự chọn quyền đọc cần thiết. Bỏ quyền nền cũng sẽ bỏ các quyền phụ thuộc."
         />
       )}
 
@@ -249,6 +240,13 @@ export default function PermissionPicker({
                           <Typography.Text code className="!mt-2 !inline-block !text-xs">
                             {permission.code}
                           </Typography.Text>
+                          {permission.requires?.length > 0 && (
+                            <Typography.Text type="secondary" className="!ml-2 !text-xs">
+                              {`Cần: ${permission.requires.map(
+                                (code) => permissionByCode.get(code)?.label || code,
+                              ).join(', ')}`}
+                            </Typography.Text>
+                          )}
                         </label>
                       </div>
                     )

@@ -5,6 +5,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.core import mail
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -14,7 +15,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AuthEmailJob, User
+from apps.accounts.models import AuthEmailJob, SocialAccount, User
 from apps.accounts.services.tokens import issue_tokens
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
@@ -92,6 +93,7 @@ def company_payload(industry, **overrides):
 )
 class EmployerRegistrationTests(APITestCase):
     def setUp(self):
+        cache.clear()
         self.location = Location.objects.create(
             code='01',
             level=Location.Level.PROVINCE,
@@ -156,6 +158,67 @@ class EmployerRegistrationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('terms_accepted', response.data)
         self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
+
+    def test_a_failed_captcha_hides_whether_the_email_already_belongs_to_an_employer(self):
+        """Captcha phải chặn TRƯỚC validator email, nếu không đây là oracle dò email.
+
+        Serializer chạy trước captcha thì kẻ tấn công gửi captcha_token rác vẫn
+        đọc được thông điệp "email đã được sử dụng" — dò sạch danh sách NTD mà
+        không tốn một lượt captcha nào.
+        """
+        User.objects.create_user(
+            email='hr@acme.vn', password='Password@123', role=User.Role.EMPLOYER
+        )
+
+        with (
+            override_settings(RECAPTCHA_SECRET_KEY='server-secret'),
+            patch('apps.accounts.services.captcha.requests.post') as verify,
+        ):
+            verify.return_value.json.return_value = {'success': False}
+            response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('captcha_token', response.data)
+        self.assertNotIn('email', response.data)
+
+    def test_a_duplicate_slipping_past_validation_is_a_400_not_a_500(self):
+        """Cửa sổ TOCTOU giữa validate_email và create_user phải trả lỗi tử tế.
+
+        Hai request song song cùng email đều qua được validator rồi mới đụng
+        ràng buộc uniq_users_email_role_lower ở DB.
+        """
+        User.objects.create_user(
+            email='hr@acme.vn', password='Password@123', role=User.Role.EMPLOYER
+        )
+
+        with patch.object(User.objects, 'email_claimed_for_role', return_value=False):
+            response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('email', response.data)
+        self.assertEqual(User.objects.filter(email='hr@acme.vn').count(), 1)
+
+    def test_registration_rejects_email_reserved_by_existing_oauth_employer(self):
+        oauth_user = User.objects.create_user(
+            email='oauth-current@acme.vn',
+            password=None,
+            role=User.Role.EMPLOYER,
+        )
+        SocialAccount.objects.create(
+            user=oauth_user,
+            provider=User.Provider.GOOGLE,
+            provider_user_id='google-employer-existing',
+            email=self.payload['email'],
+        )
+
+        response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+        self.assertEqual(
+            User.objects.filter(role=User.Role.EMPLOYER).count(),
+            1,
+        )
 
     def test_registration_rejects_weak_password_and_allows_duplicate_contact_phone(self):
         weak = self.client.post(
@@ -434,6 +497,79 @@ class PhoneOtpTests(APITestCase):
         self.assertEqual(self.recruiter.verified_phone, '0912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
 
+    def test_verifying_phone_last_approves_a_fully_reviewed_case(self):
+        now = timezone.now()
+        self.user.email_verified = True
+        self.user.save(update_fields=['email_verified', 'updated_at'])
+        company = Company.objects.create(
+            company_name='Công ty hoàn tất điện thoại sau cùng',
+            tax_code='0109876543',
+            created_by=self.user,
+        )
+        self.recruiter.company = company
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.registration_completed_at = now
+        self.recruiter.dpa_accepted_at = now
+        self.recruiter.save(
+            update_fields=[
+                'company',
+                'company_role',
+                'registration_completed_at',
+                'dpa_accepted_at',
+                'updated_at',
+            ]
+        )
+        category = JobCategory.objects.create(
+            name='Kiểm thử reconcile điện thoại',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=self.recruiter,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            is_continuous=True,
+            headcount=1,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=now,
+        )
+        verification_case = EmployerVerificationCase.objects.create(
+            recruiter=self.recruiter,
+            company=company,
+            verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION,
+            status=EmployerVerificationCase.Status.IN_REVIEW,
+            submitted_at=now,
+            review_started_at=now,
+        )
+        for index, doc_type in enumerate(
+            (
+                CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+            ),
+            start=1,
+        ):
+            CompanyDocument.objects.create(
+                company=company,
+                recruiter=self.recruiter,
+                uploaded_by=self.user,
+                verification_case=verification_case,
+                doc_type=doc_type,
+                file_url=f'employers/reconcile/{doc_type}.pdf',
+                file_name=f'{doc_type}.pdf',
+                mime_type='application/pdf',
+                file_size=1024,
+                sha256=f'{index:064x}',
+                status=CompanyDocument.Status.APPROVED,
+                reviewed_at=now,
+            )
+
+        self._send_otp()
+        code = re.search(r'\b(\d{6})\b', mail.outbox[0].body).group(1)
+        response = self.client.post(reverse('employer-phone-verify'), {'code': code})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        verification_case.refresh_from_db()
+        self.assertEqual(verification_case.status, EmployerVerificationCase.Status.APPROVED)
+
     def test_otp_email_is_deferred_until_commit(self):
         """Mã chỉ được gửi sau khi hàng PhoneOtp thực sự commit, không sớm hơn."""
         with self.captureOnCommitCallbacks(execute=False) as callbacks:
@@ -555,7 +691,7 @@ class CompanyCreateTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_duplicate_tax_code_rejected(self):
+    def test_duplicate_tax_code_and_company_name_are_accepted_for_admin_review(self):
         self.client.post(
             reverse('employer-company-create'), company_payload(self.industry), format='json'
         )
@@ -566,7 +702,33 @@ class CompanyCreateTests(APITestCase):
             company_payload(self.industry, company_name='Acme Fake'),
             format='json',
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        duplicate = Company.objects.get(public_id=response.data['public_id'])
+        self.assertEqual(duplicate.tax_code, '0101234567')
+        self.assertEqual(duplicate.verification_status, Company.VerificationStatus.UNVERIFIED)
+
+        user3, _ = make_employer('hr3@example.com')
+        authenticate_employer(self.client, user3)
+        same_name_response = self.client.post(
+            reverse('employer-company-create'),
+            company_payload(self.industry),
+            format='json',
+        )
+        self.assertEqual(
+            same_name_response.status_code,
+            status.HTTP_201_CREATED,
+            same_name_response.data,
+        )
+        self.assertEqual(
+            Company.objects.filter(
+                tax_code='0101234567',
+                company_name='Acme Corp',
+            ).count(),
+            2,
+        )
+        original = Company.objects.get(created_by=self.user)
+        same_name = Company.objects.get(public_id=same_name_response.data['public_id'])
+        self.assertNotEqual(original.slug, same_name.slug)
 
     def test_tax_code_is_normalized_and_rich_text_is_sanitized(self):
         payload = company_payload(
@@ -674,6 +836,38 @@ class JoinCompanyTests(APITestCase):
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.company, self.company)
         self.assertEqual(self.recruiter.company_role, RecruiterProfile.CompanyRole.MEMBER)
+
+    def test_joining_verified_company_does_not_inherit_other_recruiter_documents(self):
+        self.company.verification_status = Company.VerificationStatus.VERIFIED
+        self.company.verified_at = timezone.now()
+        self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
+        for doc_type in (
+            CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        ):
+            CompanyDocument.objects.create(
+                company=self.company,
+                uploaded_by=self.company.created_by,
+                doc_type=doc_type,
+                file_url=f'employers/owner/{doc_type}.pdf',
+                file_name=f'{doc_type}.pdf',
+                status=CompanyDocument.Status.APPROVED,
+            )
+
+        join_response = self._join()
+        profile_response = self.client.get(reverse('employer-me'))
+        documents_response = self.client.get(reverse('employer-company-documents'))
+
+        self.assertEqual(join_response.status_code, status.HTTP_200_OK, join_response.data)
+        self.assertEqual(profile_response.status_code, status.HTTP_200_OK, profile_response.data)
+        onboarding = profile_response.data['onboarding']
+        self.assertTrue(onboarding['company_linked'])
+        self.assertFalse(onboarding['business_doc_submitted'])
+        self.assertFalse(onboarding['candidate_dpa_submitted'])
+        self.assertFalse(onboarding['dpa_accepted'])
+        self.assertFalse(onboarding['verification_completed'])
+        self.assertEqual(documents_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(documents_response.data, [])
 
     def test_join_does_not_require_verified_phone(self):
         self.recruiter.verified_phone = ''
@@ -912,6 +1106,36 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(preview['Content-Type'], 'application/pdf')
         self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
+    @patch(
+        'apps.employers.api.views.verification.render_office_upload_preview',
+        return_value=b'%PDF-selected-preview',
+    )
+    def test_selected_word_agreement_can_be_previewed_without_persisting_it(self, render_preview):
+        upload = SimpleUploadedFile(
+            'thoa-thuan.docx',
+            DOCX_BYTES,
+            content_type='application/octet-stream',
+        )
+
+        response = self.client.post(
+            reverse('employer-company-document-upload-preview'),
+            {'file': upload},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.content, b'%PDF-selected-preview')
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        render_preview.assert_called_once()
+        preview_upload, preview_content_type = render_preview.call_args.args
+        self.assertEqual(preview_upload.name, 'thoa-thuan.docx')
+        self.assertEqual(
+            preview_content_type,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertFalse(CompanyDocument.objects.filter(recruiter=self.recruiter).exists())
+
 
 class CompanyUpdateRequestTests(APITestCase):
     def setUp(self):
@@ -1108,13 +1332,16 @@ class CompanyUpdateRequestTests(APITestCase):
             budget_source=RecruitmentNeed.BudgetSource.COMPANY,
             completed_at=now,
         )
+        verification_case = services.get_or_create_verification_case(self.recruiter)
         for doc_type in (
             CompanyDocument.DocType.BUSINESS_REGISTRATION,
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         ):
             CompanyDocument.objects.create(
                 company=self.company,
+                recruiter=self.recruiter,
                 uploaded_by=self.user,
+                verification_case=verification_case,
                 doc_type=doc_type,
                 file_url=f'employers/documents/{doc_type}.pdf',
                 file_name=f'{doc_type}.pdf',
@@ -1282,6 +1509,194 @@ class CompanyUpdateRequestTests(APITestCase):
                 is_current=False,
             ).exists()
         )
+
+    def test_identity_document_accepts_multiple_current_images_but_authorization_does_not(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                authorization = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'file': SimpleUploadedFile(
+                            'uy-quyen.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_front = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'verification_method': 'authorization_and_id',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-truoc.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_back = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'append': 'true',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-sau.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                invalid_authorization_append = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'append': 'true',
+                        'file': SimpleUploadedFile(
+                            'uy-quyen-trang-2.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(authorization.status_code, status.HTTP_201_CREATED, authorization.data)
+        self.assertEqual(identity_front.status_code, status.HTTP_201_CREATED, identity_front.data)
+        self.assertEqual(identity_back.status_code, status.HTTP_201_CREATED, identity_back.data)
+        self.assertEqual(
+            invalid_authorization_append.status_code,
+            status.HTTP_400_BAD_REQUEST,
+            invalid_authorization_append.data,
+        )
+        current_identity_documents = CompanyDocument.objects.filter(
+            verification_case=self.recruiter.verification_case,
+            doc_type=CompanyDocument.DocType.IDENTITY_DOCUMENT,
+            is_current=True,
+        ).order_by('version')
+        self.assertEqual(current_identity_documents.count(), 2)
+        self.assertEqual(
+            list(current_identity_documents.values_list('file_name', flat=True)),
+            ['cccd-mat-truoc.png', 'cccd-mat-sau.png'],
+        )
+        self.assertTrue(
+            services.verification_checks(self.recruiter.verification_case)[
+                'representative_documents_submitted'
+            ]
+        )
+        current_identity_documents.update(status=CompanyDocument.Status.APPROVED)
+        CompanyDocument.objects.filter(pk=authorization.data['id']).update(
+            status=CompanyDocument.Status.APPROVED
+        )
+        self.assertTrue(
+            services.verification_checks(self.recruiter.verification_case)[
+                'business_documents_approved'
+            ]
+        )
+
+    def test_replacing_one_rejected_identity_keeps_other_current_files(self):
+        media_root = tempfile.mkdtemp()
+        try:
+            with self.settings(MEDIA_ROOT=media_root):
+                authorization = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.AUTHORIZATION_LETTER,
+                        'file': SimpleUploadedFile(
+                            'uy-quyen.pdf', PDF_BYTES, content_type='application/pdf'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_front = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'verification_method': 'authorization_and_id',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-truoc.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                identity_back = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'append': 'true',
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-sau.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+                front = CompanyDocument.objects.get(pk=identity_front.data['id'])
+                back = CompanyDocument.objects.get(pk=identity_back.data['id'])
+                front.status = CompanyDocument.Status.APPROVED
+                front.save(update_fields=['status'])
+                back.status = CompanyDocument.Status.REJECTED
+                back.review_note = 'Mặt sau bị mờ.'
+                back.save(update_fields=['status', 'review_note'])
+                case = back.verification_case
+                case.status = EmployerVerificationCase.Status.REJECTED
+                case.decision_reason = back.review_note
+                case.save(update_fields=['status', 'decision_reason'])
+
+                replacement = self.client.post(
+                    reverse('employer-company-documents'),
+                    {
+                        'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                        'replaces': back.public_id,
+                        'file': SimpleUploadedFile(
+                            'cccd-mat-sau-moi.png', PNG_BYTES, content_type='image/png'
+                        ),
+                    },
+                    format='multipart',
+                )
+        finally:
+            shutil.rmtree(media_root, ignore_errors=True)
+
+        self.assertEqual(authorization.status_code, status.HTTP_201_CREATED, authorization.data)
+        self.assertEqual(identity_front.status_code, status.HTTP_201_CREATED, identity_front.data)
+        self.assertEqual(identity_back.status_code, status.HTTP_201_CREATED, identity_back.data)
+        self.assertEqual(replacement.status_code, status.HTTP_201_CREATED, replacement.data)
+        front.refresh_from_db()
+        back.refresh_from_db()
+        replacement_document = CompanyDocument.objects.get(pk=replacement.data['id'])
+        case.refresh_from_db()
+        self.assertTrue(front.is_current)
+        self.assertEqual(front.status, CompanyDocument.Status.APPROVED)
+        self.assertFalse(back.is_current)
+        self.assertTrue(replacement_document.is_current)
+        self.assertEqual(replacement_document.supersedes, back)
+        self.assertEqual(replacement_document.status, CompanyDocument.Status.PENDING)
+        self.assertEqual(case.status, EmployerVerificationCase.Status.PENDING)
+        self.assertEqual(case.decision_reason, '')
+
+    def test_replacement_must_target_a_current_document_of_the_same_type(self):
+        other_type = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            verification_case=services.get_or_create_verification_case(self.recruiter),
+            doc_type=CompanyDocument.DocType.AUTHORIZATION_LETTER,
+            file_url='employers/test/authorization.pdf',
+            file_name='authorization.pdf',
+        )
+
+        response = self.client.post(
+            reverse('employer-company-documents'),
+            {
+                'doc_type': CompanyDocument.DocType.IDENTITY_DOCUMENT,
+                'replaces': other_type.public_id,
+                'file': SimpleUploadedFile('cccd.png', PNG_BYTES, content_type='image/png'),
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertIn('replaces', response.data)
+        other_type.refresh_from_db()
+        self.assertTrue(other_type.is_current)
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])

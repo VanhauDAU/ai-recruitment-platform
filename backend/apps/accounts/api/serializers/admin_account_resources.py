@@ -7,6 +7,7 @@ from apps.applications.models import Application
 from apps.candidates.models import CandidateConsent
 from apps.cvs.models import UserCv
 from apps.employers.models import RecruitmentCampaign, RecruitmentNeed
+from apps.employers.selectors import build_employer_initial_onboarding
 from apps.jobs.models import Job
 from common.media_storage import media_url_from_value
 
@@ -108,6 +109,7 @@ class AdminAccountProfileSerializer(serializers.Serializer):
             (item.industry.name for item in industry_assignments if item.is_primary),
             None,
         )
+        initial_onboarding = build_employer_initial_onboarding(recruiter)
         return {
             'position_title': recruiter.position_title,
             'gender': recruiter.gender,
@@ -129,7 +131,7 @@ class AdminAccountProfileSerializer(serializers.Serializer):
             'marketing_opt_in': recruiter.marketing_opt_in,
             'marketing_decided_at': recruiter.marketing_decided_at,
             'dpa_accepted_at': recruiter.dpa_accepted_at,
-            'onboarding_completed_at': recruiter.onboarding_completed_at,
+            'initial_onboarding': initial_onboarding,
             'company': (
                 {
                     'public_id': company.public_id,
@@ -374,6 +376,10 @@ class AdminRecruitmentNeedSerializer(serializers.ModelSerializer):
 
 class AdminJobSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
+    policy_hold_label = serializers.CharField(
+        source='get_policy_hold_display',
+        read_only=True,
+    )
     campaign_name = serializers.CharField(source='campaign.name', allow_null=True, read_only=True)
     company_name = serializers.CharField(source='company.company_name', read_only=True)
 
@@ -386,6 +392,9 @@ class AdminJobSerializer(serializers.ModelSerializer):
             'campaign_name',
             'status',
             'status_label',
+            'policy_hold',
+            'policy_hold_label',
+            'policy_held_at',
             'application_count',
             'view_count',
             'deadline',
@@ -398,6 +407,10 @@ class AdminJobSerializer(serializers.ModelSerializer):
 
 class AdminCampaignSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
+    policy_hold_label = serializers.CharField(
+        source='get_policy_hold_display',
+        read_only=True,
+    )
     position_category_name = serializers.CharField(
         source='position_category.name',
         allow_null=True,
@@ -416,6 +429,9 @@ class AdminCampaignSerializer(serializers.ModelSerializer):
             'headcount_target',
             'status',
             'status_label',
+            'policy_hold',
+            'policy_hold_label',
+            'policy_held_at',
             'job_count',
             'application_count',
             'start_date',

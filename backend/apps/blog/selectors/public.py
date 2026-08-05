@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.db.models import Prefetch
 
+from apps.speech.models import BlogSpeechAsset
 from common.db.search import search_q
 
 from ..models import PinnedPost, Post, PostCategory, Tag
@@ -39,10 +41,29 @@ def published_posts_queryset(params):
 
 def published_post_detail_queryset():
     """Bài đã xuất bản kèm quan hệ cho trang chi tiết."""
+    ready_speech_assets = BlogSpeechAsset.objects.filter(
+        status=BlogSpeechAsset.Status.READY,
+        model_revision=settings.SPEECH_MODEL_REVISION,
+    ).only(
+        'post_id',
+        'post_revision',
+        'storage_key',
+        'mime_type',
+        'duration_ms',
+        'voice_id',
+        'style',
+    )
     return (
         Post.objects.filter(status=Post.Status.PUBLISHED)
         .select_related('category', 'related_job_category')
-        .prefetch_related(Prefetch('tags', queryset=Tag.objects.filter(is_active=True)))
+        .prefetch_related(
+            Prefetch('tags', queryset=Tag.objects.filter(is_active=True)),
+            Prefetch(
+                'speech_assets',
+                queryset=ready_speech_assets.order_by('created_at'),
+                to_attr='prefetched_ready_speech_assets',
+            ),
+        )
         .only(
             'public_id',
             'title',
@@ -51,8 +72,10 @@ def published_post_detail_queryset():
             'content',
             'summary',
             'published_at',
+            'updated_at',
             'seo_title',
             'seo_description',
+            'edit_revision',
             'category_id',
             'category__name',
             'category__slug',

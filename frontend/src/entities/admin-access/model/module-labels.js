@@ -3,6 +3,7 @@ export const MODULE_LABELS = {
   admin_access: 'Quản lý phân quyền',
   audit_log: 'Lịch sử hệ thống',
   blog: 'Bài viết',
+  company: 'Công ty & nhà tuyển dụng',
   company_update: 'Cập nhật thông tin công ty',
   consultation_lead: 'Lead tư vấn',
   cv_template: 'Catalogue CV',

@@ -1,5 +1,174 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-08-05 — Onboarding gộp thành một cuộc trò chuyện (1.24i)
+
+Phản hồi: onboarding cũ bắt thao tác quá nhiều (trang chào → 5 bước bấm "Tiếp
+tục" → màn cá nhân hoá → màn sẵn sàng, 4 màn/8 cú bấm). Nay **toàn bộ nằm trên
+một trang duy nhất dưới dạng chat** giữa robot và ứng viên. Backend vẫn không
+đổi một dòng: payload `PUT`, cờ `job_preferences_configured`, URL đích giữ nguyên.
+
+- **Bỏ hẳn "Tiếp tục / Quay lại".** Đáp án một lựa chọn (kinh nghiệm, mức lương
+  gợi ý) bấm phát gửi luôn; đáp án nhiều lựa chọn gửi bằng nút gửi của ô soạn —
+  đó là thao tác vốn có của chat, không phải nút điều hướng. Thay cho "Quay
+  lại": bấm **"Sửa"** ngay trên bong bóng đáp án cũ để sửa tại chỗ, không tua
+  ngược hội thoại; huỷ thì trả lại giá trị trước đó.
+- **Transcript suy ra từ state** (`chat-transcript.js`) chứ không lưu riêng, nên
+  sửa một đáp án là bong bóng tương ứng đổi theo và **không tin nhắn nào biến
+  mất giữa chừng**. `id` tin nhắn cố định vì đó cũng là khoá `speakOnce` — cuộn
+  lại lịch sử không đốt hạn mức TTS.
+- **Lỗi cũng là một lượt nói.** Trả lời thiếu thì robot nhắc bằng tin nhắn và
+  câu nhắc **ở lại trong lịch sử** (đúng như chat thật); backend từ chối field
+  nào thì robot xin lỗi trong hội thoại rồi mở lại đúng ô đó với nút "Gửi lại".
+- **Lưu và chốt cũng nằm trong luồng chat:** bong bóng "đang lọc việc làm" kèm
+  thanh tiến trình, rồi câu chốt cá nhân hoá + nút đi tới việc làm. Không còn
+  chuyển màn. `/onboard-user-setting` redirect về `/onboard-user` để link cũ
+  không chết; xoá `OnboardUserSetting`, `PersonalizingScreen`, `ReadyScreen`,
+  `OnboardingInterview`, `InterviewMascot`, `use-interview-flow`.
+- **Chỉ tin nhắn mới nhất mới đọc và chạy chữ**, tin cũ hiện nguyên văn ngay.
+  Giữ nhịp "robot đang gõ" 420ms trước mỗi lượt nói; ô soạn hiện ngay khi bong
+  bóng xuất hiện chứ không chờ đọc xong, để không bao giờ có ngõ cụt.
+- **Sửa lỗi tự gây:** `aliveRef` chỉ gán ở cleanup nên StrictMode (mount →
+  cleanup → mount) tắt cờ vĩnh viễn, câu chốt không bao giờ hiện ở dev. E2E chạy
+  trên dev server bắt được, unit test (không bọc StrictMode) thì không.
+- **Layout khung chat:** `min-h-0` xuống tận `main` để transcript tự cuộn bên
+  trong thay vì đẩy ô soạn xuống dưới mép màn hình; `mt-auto` neo tin nhắn sát
+  đáy khi hội thoại còn ngắn; header thu gọn và dải mức lương cuộn ngang ở mobile.
+
+Verify: `npm run lint`, `check:architecture`, 227 file/865 test unit, `build`,
+`test:e2e:smoke` 185 pass (desktop + tablet + mobile). Đã soát lại bằng ảnh chụp
+thật ở 1280 và 393 cho cả 5 lượt hỏi, màn lưu và màn chốt. `check:bundle-budget`
+vẫn đỏ ở Initial CSS như trước thay đổi (35.2 → 35.0 KiB, ngưỡng 35.0) — nợ cũ.
+
+## Cập nhật 2026-08-05 — Robot phỏng vấn onboarding ứng viên (1.24f)
+
+Onboarding ứng viên đổi từ một form 8 trường sang **cuộc phỏng vấn 5 câu do
+mascot ProCV dẫn bằng giọng nói**. Tận dụng đúng hai thứ đã có sẵn trong repo mà
+onboarding chưa dùng: rig mascot (`shared/ui/mascot`) và TTS tiếng Việt
+(`features/speak-text`). **Backend không đổi một dòng** — payload
+`PUT /api/candidate/job-preferences/`, cờ `job_preferences_configured` và route
+giữ nguyên.
+
+- **`widgets/onboarding-interview` (mới).** Phải là widget vì ghép hai feature
+  (`speak-text` + `configure-job-preferences`) mà depcruise cấm feature import
+  feature. Gồm kịch bản tĩnh, state machine 5 bước, bản đồ trạng thái mascot và
+  provider giọng đọc.
+- **Provider giọng đọc mount ở `OnboardingLayout`, không ở page.** AudioContext
+  chỉ mở được trong cử chỉ người dùng (nút "Bắt đầu" ở `/onboard-user`), mà page
+  unmount là `useSpeak` destroy player — đặt trong page thì sang bước phỏng vấn
+  robot sẽ câm. Robot đọc ngay, không có nút "bật tiếng"; trường hợp vào thẳng
+  URL thì listener một lần resume audio ở thao tác đầu tiên bất kỳ.
+- **Pose `checklist` (mới)** nối bộ tay `arms/hold` + `props/robot-prop-checklist`
+  đang bỏ trống. `ProcvMascot` nay đỡ được **hai** bàn tay trước (`front` dạng
+  mảng); pose `microphone` một tay chạy y cũ.
+- **Sửa lỗi rig có sẵn:** khi `talking`, lớp miệng theo emotion không bị ẩn nên
+  hai khẩu hình chồng nhau (rõ nhất ở `success`). Nay dùng cặp animation nghịch
+  đảo như mắt chớp, kèm nhịp nói chia không đều cho tự nhiên hơn.
+- **Không cắt lời robot:** `PersonalizingScreen` và `ReadyScreen` chỉ chuyển
+  tiếp sau khi mascot báo đã nói dứt câu (có chốt chặn 9s/14s phòng audio treo).
+- **Tách model dùng chung khỏi `JobPreferencesForm`** (`job-preferences-fields`,
+  `use-job-preference-catalog`, `save-job-preferences`) để phỏng vấn và form
+  settings dùng chung một bộ validate/submit/map lỗi field; xoá nhánh
+  `variant="onboarding"` đã chết. Chuyển `use-progressive-reply` lên
+  `shared/hooks` cho cả trợ lý lẫn onboarding dùng.
+- **Sửa lỗi tự gây:** effect đồng bộ `preference` trong `useInterviewFlow` gây
+  vòng lặp render vô tận khi prop là object dựng mới mỗi render — bỏ hẳn effect
+  vì page đã chờ tải xong mới mount widget.
+
+Verify: `npm run lint`, `check:architecture`, 224 file/847 test unit, `build`,
+E2E smoke onboarding desktop + mobile xanh; đã xem lại bằng ảnh chụp thật cả
+desktop 1280 và mobile 393 cho toàn bộ 5 bước, màn lỗi và màn kết.
+
+## Cập nhật 2026-07-30 — Kiểm toán luồng xác thực nhà tuyển dụng
+
+Rà soát toàn bộ luồng auth NTD theo từng lớp; mỗi lỗi được chứng minh bằng test
+đỏ trước khi vá. Test kiểm toán:
+`backend/apps/accounts/tests/test_employer_auth_audit.py`,
+`frontend/src/shared/api/client.test.js`.
+
+- ✅ **Nghiêm trọng — throttle auth bị vô hiệu từ xa.** `NUM_PROXIES` không được
+  cấu hình nên DRF lấy nguyên chuỗi `X-Forwarded-For` làm khoá throttle, còn
+  nginx thì nối giá trị client gửi. Đổi header mỗi request là có bucket mới ⇒
+  mất sạch giới hạn của login/register/2FA/password-reset. Vá bằng
+  `common/client_ip.py` + `common/throttling.ClientIPScopedRateThrottle`, lấy IP
+  theo `TRUSTED_PROXY_HOPS` phần tử ngoài cùng bên phải.
+- ✅ **Nghiêm trọng — brute-force TOTP/mã dự phòng.** Chỉ OTP email có
+  `MAX_VERIFY_ATTEMPTS`; TOTP và backup code không đếm lần sai và challenge
+  không chết. Nay ngân sách tính theo challenge, áp cho mọi phương thức.
+- ✅ **Chống dò mật khẩu phân tán** (`services/login_guard.py`): backoff mũ theo
+  `(email, cổng)`, không khoá cứng để không mở đường DoS khoá tài khoản NTD.
+- ✅ **Dùng lại refresh token đã xoay vòng ⇒ thu hồi phiên**, kèm ân hạn
+  `AUTH_REFRESH_REUSE_GRACE_SECONDS` cho đua giữa hai tab và bắt buộc chữ ký hợp
+  lệ để không ai bịa `sid` thu hồi phiên người khác.
+- ✅ **Dò email NTD:** captcha chuyển lên trước `serializer.is_valid()` ở
+  `employer/register`, `auth/register`, `password-reset`; đăng nhập luôn băm mật
+  khẩu một lần kể cả khi email không tồn tại (timing oracle).
+- ✅ **Sửa nhận diện IP của phiên đăng nhập:** trước đây lấy phần tử ĐẦU của
+  `X-Forwarded-For` — chính là phần client tự khai — nên IP trong danh sách
+  thiết bị giả mạo được.
+- ✅ Đăng ký NTD trùng email do đua request trả 400 thay vì 500; thêm throttle
+  cho `verify/confirm`, `change-email`, `password-reset/validate`.
+- ✅ Frontend: refresh hỏng nay phát `notifySessionExpired` để `SessionProvider`
+  dọn state và đưa về login — trước đó guard vẫn giữ người dùng trong workspace
+  còn mọi request 401 âm thầm. Interceptor không còn ném `TypeError` với lỗi
+  không có `config` (request bị huỷ). `client.js` lần đầu có test.
+- ✅ `TRUSTED_PROXY_IPS` thành bắt buộc ở production: thiếu nó thì `REMOTE_ADDR`
+  luôn là IP nginx và cả hệ thống dùng chung một bucket throttle.
+- ✅ Gate đầy đủ: 666 backend test (coverage 86.32%), 711 frontend test,
+  lint/architecture/build/bundle budget và 159 E2E smoke đều xanh.
+- ⬜ Còn nợ: hành động bảo mật NTD tự thực hiện (đổi mật khẩu, bật/tắt MFA, thu
+  hồi phiên, sinh lại backup code) không để lại audit row vì
+  `record_admin_self_action` no-op với user không phải admin. Cần bảng audit
+  riêng cho sự kiện bảo mật tài khoản mọi role — quyết định thiết kế + migration,
+  tách khỏi lượt vá này.
+
+## Cập nhật 2026-07-29 — Account status enforcement
+
+- ✅ Schema + backfill fail-closed: transition evidence, policy hold campaign/
+  job và hai permission mới không grant mặc định.
+- ✅ State machine tạm khóa/cấm/khôi phục nhiều bước; không cho
+  `BANNED → ACTIVE`, không ghi đè business status.
+- ✅ Revoke credential/session, transactional outbox, audit action riêng và
+  preview bind role-aware resource snapshot.
+- ✅ Canonical public selector (kể cả danh sách việc làm đã lưu) + write guard
+  transaction cho job/campaign/application; recruiter khác cùng công ty không
+  bị ảnh hưởng.
+- ✅ Candidate restriction giữ CV/application snapshot và chỉ cho employer
+  chuyển hồ sơ sang từ chối.
+- ✅ UI action rõ nghĩa, modal 820px, đối chiếu user, required mark, impact theo
+  vai trò, stale re-preview không auto-confirm.
+- ✅ Docs thiết kế, rollout/rollback runbook, changelog, permission catalog và
+  command `reconcile_account_status_holds`.
+- ✅ Full gate `./scripts/check_all.sh`: 633 backend test (coverage 86.25%),
+  699 frontend test, lint/architecture/build/bundle budget và 159 E2E smoke
+  desktop/tablet/mobile đều xanh.
+- ✅ Đối soát DB local sau migrate: 6/6 nhóm mismatch bằng 0; hai permission
+  nhạy cảm chưa được grant cho role nào.
+- 🟡 Còn bước vận hành ngoài code: rehearsal trên staging từ production
+  snapshot, kiểm tra email worker/metrics và phê duyệt rollout theo runbook.
+
+## Cập nhật 2026-07-29 — Xác thực lại OAuth khi đặt mật khẩu lần đầu
+
+- ✅ Backend: `GET /api/auth/password/` trả điều kiện của phiên hiện tại; tách
+  `current_session` + `requires_oauth_reauthentication` thành service dùng chung
+  để GET và POST không thể lệch luật.
+- ✅ Frontend: banner cảnh báo ngay khi mở trang kèm nút xác thực lại với đúng
+  provider, quay về đúng trang đang đứng thay vì xoá phiên và đá về `/login`.
+- ✅ Áp dụng cho cả cổng ứng viên và nhà tuyển dụng (dùng chung
+  `features/change-password`, page truyền `onReauth`).
+- ✅ Bổ sung regression backend (5 case) + frontend (4 case) và cập nhật tài
+  liệu API, hướng dẫn social login, ARCHITECTURE, CHANGELOG.
+- ⬜ Còn lại: `POST /api/auth/change-email/` vẫn dùng thông báo re-auth kiểu cũ,
+  chưa có nút xác thực lại tại chỗ.
+
+## Cập nhật 2026-07-29 — UX xác thực nhà tuyển dụng quản trị
+
+- ✅ Đồng nhất badge hàng chờ với danh sách “Cần xử lý”, bao gồm hồ sơ đang
+  duyệt và giấy tờ nộp lại; không còn trạng thái badge `1` nhưng bảng rỗng.
+- ✅ Sửa warning cell render của Ant Design khi ngày trống.
+- ✅ Trang chi tiết mặc định thu gọn hành trình 9 bước, nhóm giấy tờ theo nghiệp
+  vụ và giải thích đúng phạm vi đối chiếu MST cho cả owner/member.
+- ✅ Bổ sung regression frontend/backend và cập nhật tài liệu luồng.
+
 ## Cập nhật 2026-07-26 — Vá reset mật khẩu Admin
 
 - Luồng “Gửi đặt lại mật khẩu” từ Quản lý tài khoản nhận diện đúng `role=admin`:
@@ -32,6 +201,23 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 7 — Phỏng vấn AI | 0/4 | ⬜ |
 | 8 — Deployment | 0/2 | ⬜ |
 | **Tổng** | **64/88 + 1 phần** | |
+
+## Epic thông báo chạy đa cổng (AN, 2026-07-29)
+
+Thiết kế canonical:
+[hệ thống thông báo chạy đa cổng](./03-database/ke-hoach-he-thong-thong-bao-chay.md).
+Mỗi phase dùng một nhánh `feature/announcement-*` tuần tự từ `dev`; phase sau
+chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| AN-P0 | Chốt PRD, ERD, lifecycle, priority, API/DTO, ownership, failure mode và rollout | ✅ |
+| AN-P1 | Backend foundation: model/revision, permission, selector/service, public/admin API và OpenAPI | ✅ |
+| AN-P2 | Runtime strip đa portal, system reminder, animation, accessibility và fail-safe | ✅ |
+| AN-P3 | Admin workspace, editor, preview, priority simulator, revision và audit | ✅ |
+| AN-P4 | Dismiss/snooze, consent-aware analytics, Redis dedupe và metrics | ✅ |
+| AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | 🟡 Rehearsal cô lập đạt; chờ merge fix + staging thật/soak |
+| AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
 
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
@@ -176,13 +362,15 @@ Theo *Kế hoạch tái cấu trúc ProCV sau merge main (2026-07-12)* — 11 gi
 | 1.22 | Khung layout 3 cột trang tài khoản ứng viên `/tai-khoan/*` (sidebar accordion + cột phải hồ sơ + 11 route placeholder) | ✅ |
 | 1.23 | Trang "Cài đặt thông tin cá nhân": PATCH `/auth/me/` sửa họ tên + SĐT (nhiều lần), email read-only | ✅ |
 | 1.24 | Onboarding và cài đặt gợi ý việc làm: form preference dùng chung, giới tính tại settings, modal chọn vị trí responsive, feedback validation/toast và sidebar hồ sơ sticky | ✅ |
-| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược 9s + nút đi ngay) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24b | Kết thúc onboarding kiểu TopCV: màn "đang cá nhân hoá" (progress) → màn "đã sẵn sàng" (đếm ngược + nút đi ngay; từ 1.24f đồng hồ chỉ chạy sau khi robot nói dứt câu) → redirect `/viec-lam` với bộ lọc dựng từ preference (`cat` + `search` + `locations` + path `/tai/<slug>`) | ✅ |
+| 1.24f | Robot phỏng vấn onboarding: tách form 8 trường thành 5 câu hỏi do mascot dẫn bằng giọng nói tiếng Việt (VieNeu-TTS), phụ đề chạy theo audio, mascot đổi emotion/pose theo ngữ cảnh (`microphone` khi nói, `checklist` mới khi chờ trả lời, `error`/`success`/`thinking`), câu chốt cá nhân hoá từ nhu cầu vừa lưu; payload `PUT` và cờ `job_preferences_configured` giữ nguyên | ✅ |
 | 1.24c | Empty state trang việc làm kiểu TopCV: dưới "Rất tiếc..." hiện banner admin cấu hình (placement `job_empty`) + khối "Việc làm có thể bạn sẽ quan tâm" gợi ý theo preference đã lưu, nới lỏng 3 tầng | ✅ |
 | 1.24d | Bổ sung trang việc làm theo khảo sát TopCV: banner chèn giữa danh sách (placement `job_list_inline`), card "Ứng viên cũng tìm kiếm", chip "Danh mục Nghề liên quan", box CTA nhận thông báo, khảo sát hài lòng 1 chạm (Feedback.satisfaction), SEO text theo nhánh nghề, sort "Cần tuyển gấp" | ✅ |
 | 1.24e | Tối ưu menu tài khoản desktop: click, single accordion, tự mở route active, cuộn trong viewport và giữ logout hiển thị | ✅ |
 | 1.24f | Cài đặt 12 loại thông báo email candidate, mặc định bật, PATCH tự lưu và UI ba nhóm phẳng | ✅ |
 | 1.24g | Trang đổi mật khẩu candidate dùng workflow chung, email read-only, token/session rotation và validation khớp backend | ✅ |
 | 1.24h | Trang việc làm phù hợp preference-first: consent, CV bổ sung/fallback không CV, score/reasons, pagination và lưu việc | ✅ |
+| 1.24i | Onboarding gộp về một trang dạng chat: bỏ trang chào + wizard "Tiếp tục/Quay lại" + hai màn kết, tất cả thành tin nhắn trong cùng transcript; đáp án một lựa chọn bấm phát gửi, sửa đáp án cũ tại chỗ bằng "Sửa", robot nhắc lỗi và báo lỗi backend ngay trong hội thoại; `/onboard-user-setting` redirect về `/onboard-user` | ✅ |
 | 1.25 | Cookie consent + job view tracking: signed cookie, UI tùy chỉnh, policy, optional-storage gate và deduplicated tracking | ✅ |
 | 1.26 | API response DTO theo màn hình: list/detail/write riêng, query tối thiểu và contract test chống field dư/nhạy cảm | ✅ |
 
@@ -803,10 +991,155 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-26 (ADMIN-RBAC-G2 — hoàn tất core quản trị phòng
-ban/chức danh/nhân viên qua API và UI; superuser-only cho mọi ghi/dữ liệu nhân
-sự, impact token + row locking + audit/cache, seed/restore system-managed.
-Delegation scope, audit viewer, dashboard/blog và invite admin thuộc G3.)
+Cập nhật lần cuối: 2026-07-29m (AN-P2/AN-P3 equal-tier UX follow-up — Docker
+selector xác nhận hai thông báo info cùng hạng 6/priority 300 đều được trả cho
+candidate authenticated tại `/viec-lam`; runtime chủ đích chỉ hiển thị một item
+mỗi lần và luân phiên theo 5/6 giây. Sửa dismissal chuẩn hóa queue index và
+announce item kế tiếp trước render nên focus-pause không còn để nội dung opacity
+0 trên nền rail. Editor đổi nhãn thành “Thứ tự trong cùng hạng”, giải thích số
+lớn chạy trước nhưng không loại item thấp hơn, đồng thời nhắc mọi target/lịch
+phải cùng khớp request. Regression mục tiêu 13/13 và smoke runtime 15/15 trên
+desktop/tablet/mobile pass. Không đổi API, migration, permission hoặc trạng
+thái AN-P5/AN-P6.)
+
+Cập nhật 2026-07-29l (AN-P2/AN-P3 animation follow-up — sửa `slide`
+và `fade` chỉ chạy 280–320 ms lúc mount khiến một thông báo trông như đứng
+yên. Runtime nay lặp animation nhẹ theo `display_seconds` khi queue có một
+item; queue nhiều item vẫn luân phiên như cũ. Hover/focus/tab ẩn pause chuyển
+động; `static` và reduced motion không animate. Preview quản trị chạy đúng
+animation và thời lượng bản nháp. Verify: 683 frontend test; lint,
+architecture, build và bundle budget 293,6 KiB JS / 34,2 KiB CSS pass; smoke
+runtime 12/12 trên desktop/tablet/mobile xác nhận animation name, 6 giây và
+infinite iteration. Không đổi API, migration, permission hoặc trạng thái
+AN-P5/AN-P6.)
+
+Cập nhật 2026-07-29k (AN-P3/AN-P5 UX hardening — editor thay URL CTA
+nội bộ và textarea prefix bằng danh mục route có tìm kiếm. CTA được chọn độc
+lập với surface hiển thị, nhóm theo bốn portal, tự sinh URL local/subdomain và
+gắn nhãn Công khai/Cần đăng nhập; guest nhận cảnh báo nếu CTA đi vào route có
+AuthGuard. Include/exclude lọc theo surface, hỗ trợ tags/custom prefix và
+validation cùng contract backend. Preview bước 5 đọc toàn bộ form store nên
+hiển thị đúng nội dung đã soạn ở bước 1. Regression gồm route catalog, form
+binding, guest/auth warning và luồng editor năm bước; kiểm tra trực tiếp local
+xác nhận CTA Ứng viên → Marketing NTD công khai, cảnh báo workspace cần đăng
+nhập và preview đúng bản nháp. Verify: 683 frontend test; lint, architecture,
+build, bundle budget 293,6 KiB JS / 34,2 KiB CSS và smoke quản trị thông báo
+6/6 trên desktop/tablet/mobile đều pass. Không đổi API, migration, permission
+hoặc trạng thái AN-P5/AN-P6.)
+
+Cập nhật 2026-07-29j (AN-P5 — staging rehearsal: dựng Compose project
+cô lập và mở tuần tự Admin → NTD marketing → workspace NTD → ứng viên. Preflight
+đủ bốn surface trả `status=ok`, không warning/error; smoke desktop/tablet/mobile
+không overlap hoặc tràn ngang trên các route kiểm tra. Priority thực tế xác
+nhận critical vượt DPA, xác thực email vượt nhắc nhu cầu công việc và nhắc nhu
+cầu vượt remote info. Kill switch candidate trả false/empty nhưng system label
+vẫn hiển thị. Failure injection Redis phát hiện throttle trả 500 trước service;
+nhánh `fix/announcement-redis-resilience` chuyển riêng telemetry throttle sang
+fail-open có metric PII-free, chạy lại khi Redis dừng đạt 202. Verify bản vá:
+55 sitecontent test, 13 analytics test, ruff/format/import-linter/Django check
+và migration check sạch. Full repository gate sau commit đạt 617 backend test,
+coverage 86,13%, 666 frontend test, bundle budget và 153 smoke E2E. Evidence:
+`06-deployment/announcement-staging-evidence-2026-07-29.md`. AN-P5 giữ 🟡 cho
+tới khi merge fix, deploy staging hạ tầng thật và soak tối thiểu 30 phút mỗi
+surface; AN-P6 vẫn bị khóa cho tới một release ổn định.)
+
+Cập nhật 2026-07-29i (AN-P5 — rollout hardening: backend có kill
+switch fail-closed theo từng surface; response active feed công khai
+`remote_enabled`, surface tắt trả danh sách rỗng và không query database.
+Frontend chỉ nhận remote item khi cờ này là `true`, retry có giới hạn, báo
+telemetry PII-free và dùng error boundary trả banner legacy nếu render lỗi;
+system label xác thực/bảo mật/tuân thủ không phụ thuộc remote feed. Thêm runtime
+event throttle 60/giờ, metric feed latency/status và command read-only
+`announcement_rollout_preflight` kiểm integrity, critical end time, live surface
+và rotation group. Runbook chốt rollout Admin → NTD marketing → workspace NTD →
+ứng viên, failure injection, ngưỡng dừng và rollback không reverse schema.
+Không có migration hoặc permission mới. Verify toàn repo: backend 615/615 pass,
+coverage 86,12%; frontend 187 file/666 test pass, coverage 44,03% statements /
+41,32% branches / 39,51% functions / 46,37% lines; architecture 909 module /
+1.830 dependency sạch; OpenAPI validate; bundle 293,6 KiB JS / 34,2 KiB CSS;
+smoke 153/153 trên desktop/tablet/mobile. AN-P5 giữ 🟡 cho tới khi có preflight,
+kill-switch rehearsal, monitoring và smoke evidence từ staging thật; AN-P6
+chưa được mở trước một release ổn định.)
+
+Cập nhật 2026-07-29h (AN-P4 — dismiss/snooze và analytics:
+authenticated state dùng `PUT` idempotent, row lock, revision +
+dismissal-version stale trả `409`; feed loại state dismiss/snooze bằng
+`Exists` trong cùng một query. Guest state chuyển sang `localStorage` và giữ
+fallback P2 `sessionStorage`. Event impression/click/dismiss được gom batch,
+throttle 240/giờ, chỉ ghi khi signed Analytics consent hợp lệ và Redis claim
+viewer–revision–surface–event–ngày thành công; Redis lỗi/duplicate/invalid event
+fail-closed và phát operational metric PII-free, CTA không chờ tracking.
+Admin list trả aggregate thật và sort server-side; tab Hiệu quả đọc summary +
+daily metrics toàn bộ revision trong 7/30/90 ngày, kèm cảnh báo phạm vi consent.
+Không có migration hoặc permission mới; OpenAPI thêm state/event/metrics.
+Verify: backend 609/609 pass, coverage 86,09%, concurrency/query budget/throttle/
+Redis failure pass; frontend 185 file/661 test pass, coverage 43,95% statements /
+41,25% branches / 39,42% functions / 46,28% lines; architecture 904 module /
+1.822 dependency sạch; build + bundle budget 293,6 KiB JS / 34,2 KiB CSS pass;
+full smoke 150/150 và focused admin metrics 6/6 pass trên
+desktop/tablet/mobile. Rollback code không xóa user state/daily aggregate và
+không làm mất system security label.)
+
+Cập nhật 2026-07-29g (AN-P3 CI follow-up — GitHub E2E sau merge
+phát hiện mobile CV delete bị flaky do hai Ant Design portal còn chuyển động,
+khiến sticky header chặn pointer hoặc confirmation button bị thay node trong lúc
+Playwright chờ vị trí ổn định. Smoke chuyển hai action menu/modal sang keyboard
+activation theo đúng role accessible, không dùng `force` hoặc tăng timeout để
+che lỗi. Verify: tái hiện 5/5 fail trước sửa; sau sửa mobile concurrent 5/5 pass
+và desktop/tablet/mobile lặp ba lần 9/9 pass. AN-P4 bị giữ lại cho tới khi fix
+branch merge và CI xanh.)
+
+Cập nhật 2026-07-29f (AN-P3 — workspace quản trị thông báo:
+thêm route `/admin/app/announcements` theo `announcement.view`, danh sách
+server-side có URL filter/sort/pagination, editor 5 bước, preview desktop/mobile
+và Việt/Anh, priority simulator, lifecycle publish/schedule/pause/resume/archive,
+duplicate/rename, immutable revision và audit history. Mutation được khóa chống
+submit lặp; revision token stale trả `409` và buộc tải lại, không tự ghi đè.
+Detail read-model bổ sung audit bằng một query phẳng; query budget detail tăng
+có chủ đích từ 2 lên 3. Không có migration hoặc permission mới; OpenAPI thêm
+`AnnouncementAuditEvent`. Verify: toàn backend 595 test pass, coverage 86,02%;
+Ruff/format, 2 import contract, Django check, migration drift và OpenAPI validate
+pass. Toàn frontend 182 file/654 test pass; coverage 43,83% statements /
+41,09% branches / 39,33% functions / 46,15% lines; architecture 897 module /
+1.808 dependency không vi phạm; build + bundle budget 293,6 KiB JS /
+34,2 KiB CSS pass; full smoke 150/150 pass trên desktop/tablet/mobile, trong đó
+6/6 scenario AN-P3 cover create, publish, stale conflict và view-only.
+AN-P3 không thay đổi schema; rollback application code/OpenAPI không làm mất
+announcement, revision, permission hoặc audit.)
+
+Cập nhật 2026-07-29e (AN-P2 — runtime strip đa cổng: thêm
+`entities/announcement` sở hữu active-feed contract/query key theo session,
+normalize DTO/URL/enum fail-closed; `widgets/announcement-strip` hợp nhất remote
+feed với xác thực email, DPA và nhu cầu công việc bằng pure priority resolver
+tier 1–6. Strip sticky tự đo chiều cao, slide/fade/static, pause khi
+hover/focus/tab ẩn, reduced-motion static, desktop một dòng/mobile hai dòng,
+CTA internal/HTTPS an toàn, manual live-region và compatibility banner theo
+`VITE_ANNOUNCEMENT_ROLLOUT_SURFACES`. Bốn surface candidate, employer marketing,
+employer workspace và admin workspace đã gắn; rollout mặc định tắt và rollback
+về legacy không cần đổi schema. Verify: 30 test phạm vi pass; toàn frontend
+177 file/644 test pass, coverage 44,30% statements / 41,48% branches /
+39,83% functions / 46,71% lines; architecture 873 module/1.759 dependency
+không vi phạm; build + bundle budget 293,3 KiB JS / 34,2 KiB CSS pass; full
+smoke 144/144 pass trên desktop/tablet/mobile, không pageerror hoặc horizontal
+overflow. Không có migration, permission hay OpenAPI diff ở AN-P2.)
+
+Cập nhật 2026-07-29d (AN-P1 — backend foundation dải thông báo:
+thêm schema additive announcement/revision/user-state/daily-metric; ba permission
+`announcement.view/manage/publish`; active feed target theo surface/session/path,
+priority deterministic và locale fallback; admin API tạo revision bất biến,
+publish/pause/resume/archive/duplicate với row lock, revision token `409` và
+audit. Migration forward/reverse test pass; public/list/detail query budget lần
+lượt 1/2/2; toàn backend 595 test pass, coverage 86,01%; accounts + sitecontent
+213 test pass; frontend permission contract 2 test, lint, architecture, build
+và bundle budget pass. OpenAPI đã sinh/validate; runtime UI chưa được gắn và
+thuộc AN-P2.)
+
+Cập nhật 2026-07-29b (AUTH-OAUTH-REAUTH — `GET /api/auth/password/`
+trả điều kiện phiên; banner xác thực lại tại chỗ với `next` quay về đúng trang,
+thay cho việc xoá phiên và đá về `/login`.)
+
+Cập nhật 2026-07-29 (ADMIN-EMPLOYER-VERIFY — đồng nhất badge/hàng chờ,
+thu gọn hành trình 9 bước, nhóm giấy tờ và làm rõ phạm vi đối chiếu MST.)
 
 Cập nhật 2026-07-26a (ADMIN-RBAC-G2 — migration `accounts.0014` backfill
 `is_system_managed`; ma trận seed chuyển vào constants và giữ độc lập ownership
@@ -826,6 +1159,18 @@ lọc nâng cao, drawer + chi tiết hồ sơ/bảo mật/audit, form mời ch�
 `available-roles`, luồng accept public và tab Cấp tài khoản superuser. Có seed
 Docker demo, backend concurrency/API test, frontend unit/architecture/build và
 E2E smoke responsive.)
+
+Cập nhật 2026-07-29b (ACCOUNT-IDENTITY-RECOVERY-P0 — migration
+`accounts.0020` thêm `auth_revision` cho User/AuthSession, outbox cancelled +
+notice và hai permission không grant mặc định. JWT/refresh/password reset/MFA
+challenge/OAuth one-time code đều bind revision; worker fail-closed với identity
+snapshot stale. Admin có hai luồng preview/confirm độc lập: đổi email buộc
+password unusable, revoke session/OAuth và gửi cảnh báo; reset MFA xóa email
+OTP/TOTP/backup code nhưng giữ password/OAuth/email/status. Frontend thêm feature
+`recover-account-identity`, gate từng quyền, 409 tự re-preview không tự confirm.
+Production cấm tuyệt đối `/admin/` bằng `DJANGO_ADMIN_ENABLED=False`; break-glass
+qua `createsuperuser` + `bootstrap_admin_mfa` có quyền máy chủ. P0 superuser-only,
+PENDING/soft-deleted fail-closed; runbook yêu cầu email → MFA → password reset.)
 
 Xác minh bàn giao G3: backend **443/443** test với coverage **84,85%** trên
 PostgreSQL Docker; frontend **441/441** unit test, dependency-cruiser **0**
@@ -883,3 +1228,13 @@ Cập nhật 2026-07-20d (EMP-P11 — khóa liên kết công ty): bỏ dependen
 Cập nhật 2026-07-20e (CI — frontend green): khắc phục ba job PR bị đỏ và một job bị skip. `static-quality` sạch sau khi bỏ icon không dùng; test cài đặt 2FA dùng `data-testid` contract thay selector class layout để layout grid không gây lỗi coverage; CSS initial gzip 31,5 KiB được kiểm soát bởi budget thực tế 35 KiB (JS 279/320 KiB). Đồng bộ smoke employer với UX dashboard mới: tài khoản đã đủ năm xác thực phải rời checklist, còn CTA **Đăng tin tuyển dụng đầu tiên** vẫn được ghim ngoài hành trình xác thực. Verify đầy đủ: API/feature boundary, oxlint, dependency-cruiser, 76/76 Vitest files (270 test) với coverage, build production, `check:bundle-budget` và 63/63 Playwright smoke desktop/tablet/mobile xanh.
 
 Cập nhật 2026-07-22a (Chi tiết việc làm — kỹ năng & quyền lợi bổ sung): tách kỹ năng khỏi hàng tag tóm tắt và render thành khối riêng đúng ngữ cảnh đọc. `JobDetailSerializer` thêm `required_skills`, `preferred_skills`, `benefit_groups` (gom theo `Benefit.Category`, thứ tự Phụ cấp → Hỗ trợ thiết bị → Phúc lợi → Khác); `get_requirement_tags` không còn nối tên kỹ năng required nên hàng "Yêu cầu:" chỉ còn kinh nghiệm/tuổi/học vấn/giới tính. Không thêm cột DB, `active_job_detail_queryset()` đã prefetch sẵn `job_skills__skill` + `job_benefits__benefit` nên không phát sinh N+1. Frontend: `JobDetailBlocks` thêm `JobSkills` (2 cột `sm:grid-cols-2`, gộp 1 cột ở mobile) render dưới rich text "Yêu cầu ứng viên", `AdditionalBenefits` render dưới "Quyền lợi"; xoá `BenefitTags` (hàng "Quyền lợi:" trùng dữ liệu với khối mới). `JobText` nhận thêm `children` để lồng khối phụ trong đúng section. Verify: 307 test backend + coverage 84.22%, ruff/lint-imports/makemigrations sạch, 317 vitest + build; browser thật trên tin có đủ 3 loại dữ liệu — khối kỹ năng đo được `grid-template-columns: 340px 340px` ở desktop và 1 cột ở 375px, không tràn ngang. Còn nợ: `benefit_tags` thành field không consumer và `openapi.yaml` đang lệch ~1200 dòng so với code (tách commit riêng).
+
+Cập nhật 2026-07-31a (CV Builder — dữ liệu mẫu template + lọc danh mục): DB dev trước đó có 36 nội dung CV mẫu và 5 màu nhưng **0 `CvTemplate`**, nên `/mau-cv` rỗng và ứng viên không tạo được CV — `seed_cv_catalog` chỉ trang trí template đã tồn tại chứ không tạo template. Thêm command `seed_cv_templates` (idempotent) dựng 10 mẫu trên đủ 3 renderer đã deploy (`classic_single_column_v1`, `classic_two_column_v1`, `header_two_column_v1`): template + version publish qua service chính thức, mapping 13–15 section vào region, localization 4 ngôn ngữ, 19 danh mục 4 loại (style/audience/position/feature), 8 màu và 80 color link; dữ liệu khai báo tách sang `_cv_template_catalog.py`. Cờ `--snapshots` xếp hàng render ảnh preview thật. Sửa hai lỗi lộ ra khi dựng dữ liệu: (1) `compose_cv_document` nay tự tạo marker `nameplate`/`contact` khi template map chúng — layout header không có header block dựng sẵn nên trước đó CV tạo từ mẫu này **không hiển thị tên và liên hệ** ở cả preview lẫn PDF; (2) `snapshot_fingerprint` chọn locale theo `default_locale_code()` thay vì localization đầu bảng chữ cái, tránh thumbnail tiếng Anh trên catalogue tiếng Việt. Frontend: `CatalogFilterBar` bỏ wrap 3 hàng, chuyển thành một hàng cuộn ngang có nút mũi tên (ẩn khi hết nội dung), mask mờ ở mép, chip **Tất cả** ghim ngoài vùng cuộn, chip cùng `category_type` nhóm cạnh nhau và ngăn bằng vạch mờ, tự cuộn chip đang chọn vào tầm nhìn khi vào bằng URL danh mục. Verify: ruff/ruff format/lint-imports/makemigrations sạch, 685 test backend + coverage 86.44%; oxlint/dependency-cruiser/build, 722 vitest (200 file, thêm 4 test `CatalogFilterBar`), 162/162 Playwright smoke; browser thật xác nhận 10 thẻ có preview tiếng Việt, `dinh-cao` (header layout) render `nameplate_1` trong region header, và thanh lọc không tràn ngang ở 375px lẫn 1440px.
+
+Cập nhật 2026-07-31b (Thông báo đa cổng — hiện lại cho người đã đóng): báo cáo "tạo thông báo nhưng không hiển thị" hóa ra không phải lỗi target/rollout — backend trả đúng 1 item cho cả bốn surface với guest/candidate/employer/admin, và `VITE_ANNOUNCEMENT_ROLLOUT_SURFACES` + `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES` đều đủ bốn cổng. Nguyên nhân: người dùng đã bấm ✕ đóng thông báo đó; dismissal được khóa theo `(announcement, dismissal_version)` ở `AnnouncementUserState` và theo key local storage `announcement-strip:{id}:v{version}` ở trình duyệt khách, nhưng **`dismissal_version` chưa từng được tăng ở bất kỳ đâu trong repo** — `publish_announcement` chỉ tăng `revision_token`. Hệ quả: ai đã đóng một thông báo thì vĩnh viễn không thấy lại, dù admin sửa và publish bao nhiêu revision. Trường này vốn có sẵn check constraint, nằm trong unique constraint và được serialize xuống client làm khóa cache — tức năng lực "hiện lại" đã thiết kế sẵn nhưng chưa nối dây ở server. Bổ sung service `reset_announcement_dismissals` (khóa hàng, kiểm `revision_token`, chỉ cho phép khi `published`, giữ lại state row cũ làm lịch sử), endpoint `POST /api/site/admin/announcements/{public_id}/reset-dismissals/` dưới `announcement.publish`, audit action `announcement_reset_dismissals`, nút **Hiện lại cho người đã đóng** kèm hộp thoại xác nhận trong drawer chi tiết, và hiển thị **Phiên bản hiển thị lại** để chẩn đoán. Chọn action riêng thay vì tự tăng mỗi lần publish: sửa lỗi chính tả không nên làm phiền lại toàn bộ người đọc. Verify: ruff/ruff format/lint-imports sạch, 59/59 test sitecontent (thêm 2 test: revision mới không đủ để hiện lại, và chặn stale token/draft), 728 vitest (201 file, thêm test API cho cả 5 lifecycle action), oxlint/dependency-cruiser xanh; kiểm chứng trực tiếp trên DB docker: đóng → feed rỗng, POST reset → `dismissal_version` 1→2 và feed hiện lại, token cũ trả 409, thông báo archived trả 400.
+
+Cập nhật 2026-08-03a (UI — linh vật ProCV thay spinner chờ): thay spinner CSS hình tròn ở `PageLoading` và dot mặc định của antd `Spin` bằng ảnh động linh vật ProCV. Asset gốc là GIF 500×500, 172 frame, **6,66 MB** — quá nặng cho một chỉ báo chờ hiển thị ở mọi lần chuyển route lazy, nên tối ưu qua ffmpeg + `gif2webp`: cắt 1 giây đầu (đoạn zoom cận cảnh, lặp lại mỗi 5,7s trông rất lạ và là phần nén tốn bit nhất), hạ còn 192px/17fps/180 màu, xuất animated WebP `public/images/loading/procv-loader.webp` **260 KB** (giảm 96%, 80 frame, loop vô hạn, nền trong suốt giữ nguyên) kèm poster tĩnh `procv-loader-static.webp` 7,6 KB cho `prefers-reduced-motion`. Thêm `shared/ui/BrandLoader.jsx`: `size` dạng số thì set inline, bỏ trống thì để CSS quyết định — cần thiết vì `ConfigProvider spin={{indicator}}` chỉ nhận một node duy nhất, không biết `size` của từng `<Spin>`. Component phải nuốt prop `percent` do antd tiêm vào lúc `cloneElement`, nếu không sẽ rơi xuống thẻ `img` thành attribute lạ. `PageLoading` chuyển sang `BrandLoader size={128}`, phủ luôn `Suspense fallback` của `AppRouter`, `AuthGuard`/`GuestGuard`/`PermissionGuard`, `OAuthCallback`, `JobPreferenceSettings`, `OnboardUserSetting`. Kích thước indicator bám theo `size` của antd qua `.procv-spin-dot` (28/40/60px cho small/default/large) trong `index.css`; phải dùng `!important` vì antd chèn `.ant-spin .ant-spin-dot { width: 1em }` bằng CSS-in-JS lúc runtime, không đảm bảo thứ tự so với stylesheet. Đo trên browser thật phát hiện thêm một lỗi: Preflight đặt `img { max-width: 100% }` mà `.ant-spin` lại rộng 0 nên ảnh co về **0×40px** — thêm `max-width: none !important` mới ra đúng 28/40/60 vuông. Giữ nguyên 70 file dùng `Skeleton` (giữ được layout, đổi sang ảnh động sẽ gây nhảy layout). Verify: oxlint sạch, dependency-cruiser 1000 module không vi phạm, 784 test/211 file vitest (thêm 4 test `BrandLoader`), build production, 168/168 Playwright smoke; đo trực tiếp trong DOM xác nhận ba cỡ indicator đúng số. Lưu ý còn lại: WebP thừa hưởng alpha 1-bit của GIF gốc nên viền có thể hơi gắt trên nền tối, và asset 260 KB chưa được preload nên lần tải nguội đầu tiên chỉ hiện dòng chữ trước khi ảnh về.
+
+Cập nhật 2026-08-04a (TTS — mở giọng đọc cho mọi bề mặt, không riêng blog): hạ tầng đọc đã có sẵn và tốt (tts-service nhận text thô, single-flight theo `artifact_key`, cache, `PcmStreamPlayer` Web Audio), nhưng contract public bị khoá cứng vào bài viết: `SpeechSessionRequestSerializer` chỉ nhận `source_type='blog_post'`, view bắt buộc `published_blog_post_for_speech()`, normalizer nhận **model `Post`** và parse HTML, còn engine phát audio thì nằm trong `features/listen-to-blog-post/model/` nên slice khác không được import (feature không import feature). Mở thêm `source_type='text'` trên chính endpoint cũ: normalizer generic `plain_text_speech_script` (`plain-speech-v1`, mỗi dòng là một block để giữ nhịp ngắt, vẫn chạy HTML parser để không đọc to thẻ và không announce "đoạn mã được lược bỏ" như luồng bài viết), service `create_text_speech_session` **không** đăng ký `BlogSpeechAsset` và không bắn Celery finalizer — câu nói quá ngắn và quá nhiều để trả giá 1 row DB + 1 MP3 mỗi lượt, nên chỉ chạy live stream. `source_revision` ghim hằng `text:v1` để cùng một câu từ bất kỳ bề mặt nào rơi vào **một** artifact identity (đo thực tế: lần đọc thứ hai trả `cached: true`, trùng `artifact_key`). Rào chắn cho input đến từ client: `SPEECH_MAX_ADHOC_TEXT_CHARS=600` và scope throttle riêng `speech_adhoc` 90/hour (`get_throttles()` chọn scope theo `source_type`) để robot nói nhiều không ăn hết hạn ngạch 60/hour của người đang nghe blog — engine chỉ có `TTS_MAX_CONCURRENT_STREAMS=1` worker. Frontend: nâng `PcmStreamPlayer`/`NativeAudioPlayer`/`pcm-stream-format` + chính sách chờ 429/503 lên `shared/lib/speech/`, gom vòng retry mở luồng thành `playSpeechStream` dùng chung (blog và ad-hoc không còn copy nhau), thêm `createTextSpeechSession` vào `entities/speech` và feature mới `features/speak-text` với `useSpeak()` — `speak(text)` là đủ. Ràng buộc không bỏ được: AudioContext chỉ mở trong cử chỉ người dùng nên lần phát đầu phải nằm trong handler click/tap; bề mặt tự nói (trợ lý) gọi `unlock()` ở lần bấm đầu tiên rồi `speak()` tự do. Verify: ruff/ruff format/lint-imports/makemigrations sạch, 30/30 test app speech (thêm test cho throttle scope tách biệt, chặn text rỗng/quá dài, markup không được đọc to, không sinh artifact), 720 pass backend + coverage 86,31%; oxlint/dependency-cruiser (1026 module, 0 vi phạm)/build, 803 vitest (217 file, thêm 9 test `useSpeak`), 173/174 Playwright smoke. Đo trên stack docker thật: POST text → 201 + 230 KB WAV 48 kHz mono trong 0,83 s, lặp lại → `cached: true`, text rỗng và 700 ký tự đều 400. Nợ đã biết: 8 test `apps/jobs/test_posting_workflows.py` đang đỏ sẵn từ trước (deadline windows, không liên quan) và `blog-admin-permissions.spec.js` flaky (chạy lại xanh).
+
+Cập nhật 2026-08-04b (Trợ lý ứng viên — robot đọc câu trả lời): nối `useSpeak()` vào `widgets/candidate-assistant` qua hook `useAssistantVoice(messages)`. Chỉ đọc câu trả lời cho tin nhắn người dùng vừa gửi: mốc `spokenIdRef` khởi tạo bằng ID tin nhắn cuối lúc mount nên **lời chào không bao giờ được đọc** — panel là lazy chunk, lúc nó mount thì cử chỉ mở đã kết thúc và trình duyệt chặn autoplay, mà tự phát tiếng khi người dùng chưa hỏi gì cũng là hành vi gây khó chịu. `voice.prepare()` gọi `unlock()` ngay trong handler submit — cử chỉ hợp lệ duy nhất trước khi câu trả lời về sau ~1,1s. Giọng cố định `north-female-news` (Mai Anh). Nút loa trong header panel bật/tắt, lưu `procv_assistant_voice_v1` ở localStorage, tắt thì `stop()` ngay và không đọc các câu sau; bật lại cũng là cử chỉ hợp lệ để mở Web Audio. Bật tiếng giữa chừng không đọc lại câu cũ. Mascot dùng `talking={typing || voice.speaking}` và dòng trạng thái thêm "Đang đọc câu trả lời…". Verify: oxlint sạch, dependency-cruiser 1030 module 0 vi phạm, 820 test/219 file vitest (thêm 9 test `useAssistantVoice` + 2 test tích hợp trong `CandidateAssistant`), build, 174/174 Playwright smoke. Kiểm chứng trên browser thật với stack docker: gửi câu hỏi → POST `/api/speech/sessions/` 201 → stream `/tts/v1/streams/...` phát hết bài rồi tự về trạng thái nghỉ, patch `AbortController` xác nhận **0 lần abort** từ phía client (dòng `ERR_ABORTED` trong network panel chỉ là cách devtools ghi nhận response streaming dài); bấm tắt tiếng → `aria-pressed=false`, localStorage `off`, câu sau không phát.

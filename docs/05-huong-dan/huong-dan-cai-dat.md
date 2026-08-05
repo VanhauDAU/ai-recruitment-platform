@@ -61,7 +61,8 @@ python manage.py seed_locations
 python manage.py seed_province_merges
 python manage.py seed_job_categories
 python manage.py seed_sitecontent
-python manage.py seed_cv_catalog     # mẫu CV + nội dung mẫu — thiếu thì trang /mau-cv rỗng
+python manage.py seed_cv_catalog     # nội dung CV mẫu theo vị trí + blueprint + bảng màu
+python manage.py seed_cv_templates   # 10 mẫu CV đã publish — thiếu thì trang /mau-cv rỗng
 python manage.py seed_services       # nhóm/gói dịch vụ cho trang báo giá NTD
 python manage.py sync_admin_permissions
 python manage.py seed_admin_access
@@ -129,7 +130,17 @@ npm run dev   # http://localhost:5173
 ```env
 VITE_API_BASE_URL=http://localhost:8000/api
 VITE_RECAPTCHA_SITE_KEY=
+VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=
 ```
+
+Backend remote feed mặc định tắt. Bật theo surface trong `backend/.env`:
+
+```dotenv
+ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=admin_workspace
+```
+
+Danh sách và thứ tự production xem
+[runbook AN-P5](../06-deployment/announcement-rollout-runbook.md).
 
 Khi đã cài `node_modules` từ trước, chỉ cần chạy:
 

@@ -1,7 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.employers.selectors import build_employer_initial_onboarding
 from apps.employers.services import verification_checks
 
 from ...constants import ADMIN_PERMISSION_CODES
@@ -105,11 +107,21 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             company = recruiter.company
             verification = getattr(recruiter, 'verification_case', None)
             checks = verification_checks(verification) if verification else {}
+            initial_onboarding = build_employer_initial_onboarding(
+                recruiter,
+                has_recruitment_need=getattr(obj, '_has_recruitment_need', False),
+            )
             tax_code = company.tax_code if company else ''
             return {
                 'kind': 'employer',
                 'position_title': recruiter.position_title,
                 'company_role': recruiter.company_role,
+                'company_role_label': recruiter.get_company_role_display(),
+                'initial_onboarding': initial_onboarding,
+                # Compatibility for admin clients that have not moved to the
+                # explicit initial_onboarding object yet.
+                'onboarding_completed': initial_onboarding['completed'],
+                'phone_verified': bool(recruiter.phone_verified_at),
                 'verification': (
                     {
                         'public_id': verification.public_id,
@@ -211,12 +223,14 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
 class ManagedAccountDetailSerializer(ManagedAccountSerializer):
     profile = serializers.SerializerMethodField()
     section_counts = serializers.SerializerMethodField()
+    status_enforcement = serializers.SerializerMethodField()
 
     class Meta(ManagedAccountSerializer.Meta):
         fields = [
             *ManagedAccountSerializer.Meta.fields,
             'profile',
             'section_counts',
+            'status_enforcement',
         ]
 
     def get_profile(self, obj):
@@ -261,6 +275,65 @@ class ManagedAccountDetailSerializer(ManagedAccountSerializer):
             )
         return counts
 
+    def get_status_enforcement(self, obj):
+        transition = obj.status_transitions.select_related('actor').first()
+        payload = {
+            'last_transition': (
+                {
+                    'public_id': transition.public_id,
+                    'kind': transition.kind,
+                    'before_status': transition.before_status,
+                    'after_status': transition.after_status,
+                    'reason': transition.reason,
+                    'violation_category': transition.violation_category,
+                    'effect_summary': transition.effect_summary,
+                    'actor': (
+                        {
+                            'public_id': transition.actor.public_id,
+                            'email': transition.actor.email,
+                            'full_name': transition.actor.full_name,
+                        }
+                        if transition.actor
+                        else None
+                    ),
+                    'created_at': transition.created_at,
+                }
+                if transition
+                else None
+            ),
+            'requires_resource_review': False,
+            'campaign_holds': [],
+            'job_holds': [],
+        }
+        if not obj.is_employer:
+            return payload
+        recruiter = getattr(obj, 'recruiter_profile', None)
+        campaign_holds = (
+            list(
+                recruiter.campaigns.exclude(policy_hold='')
+                .values('policy_hold')
+                .annotate(count=Count('id'))
+                .order_by('policy_hold')
+            )
+            if recruiter
+            else []
+        )
+        job_holds = list(
+            obj.posted_jobs.exclude(policy_hold='')
+            .values('policy_hold')
+            .annotate(count=Count('id'))
+            .order_by('policy_hold')
+        )
+        payload.update(
+            campaign_holds=campaign_holds,
+            job_holds=job_holds,
+            requires_resource_review=any(
+                row['policy_hold'] in {'ban_review', 'legacy_lock'}
+                for row in [*campaign_holds, *job_holds]
+            ),
+        )
+        return payload
+
 
 class ManagedAccountUpdateSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=255, trim_whitespace=True)
@@ -277,10 +350,83 @@ class AccountStatusImpactSerializer(serializers.Serializer):
         choices=[User.Status.ACTIVE, User.Status.INACTIVE, User.Status.BANNED]
     )
     reason = serializers.CharField(max_length=500, trim_whitespace=True)
+    enforcement_evidence = serializers.CharField(
+        min_length=20,
+        max_length=500,
+        trim_whitespace=True,
+        allow_blank=True,
+        required=False,
+        default='',
+    )
+    violation_category = serializers.ChoiceField(
+        choices=['security', 'fraud', 'policy', 'legal', 'other'],
+        allow_blank=True,
+        required=False,
+        default='',
+    )
+
+    def validate(self, attrs):
+        target = self.context.get('target')
+        requires_enforcement = attrs['status'] == User.Status.BANNED or (
+            target is not None and target.status == User.Status.BANNED
+        )
+        if requires_enforcement and len(attrs.get('enforcement_evidence', '').strip()) < 20:
+            raise serializers.ValidationError(
+                {
+                    'enforcement_evidence': (
+                        'Bằng chứng xử lý cần mô tả cụ thể và có ít nhất 20 ký tự.'
+                    )
+                }
+            )
+        if attrs['status'] == User.Status.BANNED and not attrs.get('violation_category'):
+            raise serializers.ValidationError(
+                {'violation_category': 'Chọn nhóm vi phạm khi cấm tài khoản.'}
+            )
+        return attrs
 
 
 class AccountStatusChangeSerializer(AccountStatusImpactSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
+
+
+class AccountResourceHoldImpactSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=500, trim_whitespace=True)
+    enforcement_evidence = serializers.CharField(
+        min_length=20,
+        max_length=500,
+        trim_whitespace=True,
+    )
+
+
+class AccountResourceHoldChangeSerializer(AccountResourceHoldImpactSerializer):
+    impact_token = serializers.CharField(trim_whitespace=True)
+
+
+class AccountStatusImpactResponseSerializer(serializers.Serializer):
+    operation = serializers.CharField()
+    target = serializers.DictField()
+    before = serializers.DictField()
+    after = serializers.DictField()
+    transition_kind = serializers.CharField()
+    active_session_count = serializers.IntegerField()
+    sessions_will_be_revoked = serializers.BooleanField()
+    effects = serializers.DictField()
+    requires_manual_resource_review = serializers.BooleanField()
+    restoration_policy = serializers.CharField()
+    blocked_reasons = serializers.ListField(child=serializers.CharField())
+    can_apply = serializers.BooleanField()
+    impact_token = serializers.CharField()
+
+
+class AccountResourceHoldImpactResponseSerializer(serializers.Serializer):
+    operation = serializers.CharField()
+    target = serializers.DictField()
+    campaign_count = serializers.IntegerField()
+    job_count = serializers.IntegerField()
+    business_statuses_will_remain_unchanged = serializers.BooleanField()
+    account_will_remain_inactive = serializers.BooleanField()
+    can_apply = serializers.BooleanField()
+    impact_token = serializers.CharField()
 
 
 class ReasonSerializer(serializers.Serializer):
@@ -288,6 +434,47 @@ class ReasonSerializer(serializers.Serializer):
 
 
 class RevokeSessionsSerializer(ReasonSerializer):
+    impact_token = serializers.CharField(trim_whitespace=True)
+
+
+class AccountRecoverySerializer(ReasonSerializer):
+    verification_evidence = serializers.CharField(
+        min_length=20,
+        max_length=500,
+        trim_whitespace=True,
+        error_messages={
+            'min_length': 'Bằng chứng xác minh cần có ít nhất 20 ký tự.',
+            'max_length': 'Bằng chứng xác minh không được vượt quá 500 ký tự.',
+        },
+    )
+
+
+class AccountEmailImpactSerializer(AccountRecoverySerializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        value = User.objects.normalize_email(value)
+        user = self.context['target_user']
+        if value == User.objects.normalize_email(user.email):
+            raise serializers.ValidationError('Email mới trùng với email hiện tại.')
+        if User.objects.email_claimed_for_role(
+            value,
+            user.role,
+            exclude_user_id=user.pk,
+        ):
+            raise serializers.ValidationError('Email này đã thuộc một tài khoản cùng loại.')
+        return value
+
+
+class AccountEmailChangeSerializer(AccountEmailImpactSerializer):
+    impact_token = serializers.CharField(trim_whitespace=True)
+
+
+class AccountMfaResetImpactSerializer(AccountRecoverySerializer):
+    pass
+
+
+class AccountMfaResetSerializer(AccountMfaResetImpactSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 

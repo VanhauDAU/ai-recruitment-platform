@@ -1,13 +1,15 @@
 import { ExclamationCircleFilled, LockOutlined } from '@ant-design/icons'
-import { useMutation } from '@tanstack/react-query'
-import { Alert, Button, Checkbox, Form, Input } from 'antd'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Alert, Button, Checkbox, Form, Input, Skeleton } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { setTokens } from '@/shared/api/token-store'
 import { message } from '@/shared/lib/toast'
-import { changeCurrentPassword } from '../api/change-password.api'
+import { changeCurrentPassword, getPasswordSetupRequirements } from '../api/change-password.api'
+
+const PROVIDER_LABELS = { google: 'Google', facebook: 'Facebook', linkedin: 'LinkedIn' }
 
 const PASSWORD_CHECKS = [
   { label: 'Từ 8 đến 25 ký tự', test: (value) => value.length >= 8 && value.length <= 25 },
@@ -57,19 +59,42 @@ function PasswordStrengthGuide({ value }) {
   )
 }
 
+/**
+ * Form đặt/đổi mật khẩu dùng chung hai cổng.
+ *
+ * `onReauth(provider)` do page truyền: tài khoản OAuth chưa có mật khẩu phải
+ * xác thực lại với provider trước khi đặt mật khẩu lần đầu (không có mật khẩu
+ * hiện tại để đối chiếu). Page sở hữu URL OAuth và đường quay lại của cổng.
+ */
 export default function ChangePasswordForm({
+  defaultLogoutAllSessions = false,
   successRedirect,
-  reauthPath = '/login',
+  onReauth,
   onSuccess,
   showEmail = false,
 }) {
-  const { user, setCurrentUser, clearCurrentSession } = useSession()
+  const { user, setCurrentUser } = useSession()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const hasPassword = Boolean(user?.has_usable_password)
   const passwordValue = Form.useWatch('password', form) || ''
   const [passwordFocused, setPasswordFocused] = useState(false)
-  const [reauthRequired, setReauthRequired] = useState(false)
+  // Provider trả kèm 403 — chỉ dùng khi phiên hết hạn ngay giữa lúc điền form.
+  const [reauthFromError, setReauthFromError] = useState(null)
+  // Hỏi trước khi người dùng điền form; chỉ tài khoản chưa có mật khẩu mới vướng.
+  const requirements = useQuery({
+    queryKey: ['change-password', 'requirements'],
+    queryFn: getPasswordSetupRequirements,
+    enabled: !hasPassword,
+    staleTime: 0,
+  })
+  const needsReauth = reauthFromError !== null || requirements.data?.requires_reauth === true
+  const reauthProvider = requirements.data?.reauth_provider || reauthFromError || null
+  const providerLabel = PROVIDER_LABELS[reauthProvider] || 'mạng xã hội'
+  const reauthMinutes = Math.max(
+    1,
+    Math.round((requirements.data?.reauth_max_age_seconds || 300) / 60),
+  )
   const mutation = useMutation({
     mutationFn: changeCurrentPassword,
     onSuccess: (result) => {
@@ -83,7 +108,7 @@ export default function ChangePasswordForm({
     },
     onError: (error) => {
       if (error.response?.data?.code === 'reauth_required') {
-        setReauthRequired(true)
+        setReauthFromError(error.response.data.reauth_provider || '')
         return
       }
       const fields = error.response?.data && typeof error.response.data === 'object'
@@ -97,7 +122,7 @@ export default function ChangePasswordForm({
   })
 
   function submit(values) {
-    setReauthRequired(false)
+    setReauthFromError(null)
     mutation.mutate({
       current_password: values.current_password || '',
       password: values.password,
@@ -107,27 +132,30 @@ export default function ChangePasswordForm({
 
   return (
     <div className="max-w-[960px]">
-      {reauthRequired && (
+      {!hasPassword && requirements.isPending && (
+        <Skeleton active title={false} paragraph={{ rows: 2 }} className="!mb-4" />
+      )}
+      {needsReauth && (
         <Alert
           type="warning"
           showIcon
           className="!mb-4"
-          title="Cần đăng nhập lại để tạo mật khẩu"
-          description="Phiên xác thực mạng xã hội không còn đủ mới cho thao tác bảo mật này."
-          action={(
-            <Button
-              type="link"
-              onClick={() => {
-                clearCurrentSession?.()
-                navigate(reauthPath, { replace: true })
-              }}
-            >
-              Đăng nhập lại
-            </Button>
-          )}
+          title={`Xác thực lại với ${providerLabel} để tạo mật khẩu`}
+          description={
+            reauthProvider
+              ? `Tài khoản này đăng nhập bằng ${providerLabel} và chưa có mật khẩu, nên không có mật khẩu hiện tại để đối chiếu. Hãy xác thực lại với ${providerLabel} trong vòng ${reauthMinutes} phút trước khi đặt mật khẩu mới — bạn sẽ được đưa về đúng trang này.`
+              : 'Tài khoản này chưa có mật khẩu và cũng chưa liên kết tài khoản mạng xã hội nào. Hãy dùng chức năng “Quên mật khẩu” để đặt mật khẩu qua email.'
+          }
+          action={
+            reauthProvider && onReauth ? (
+              <Button type="primary" onClick={() => onReauth(reauthProvider)}>
+                Xác thực với {providerLabel}
+              </Button>
+            ) : null
+          }
         />
       )}
-      {!hasPassword && (
+      {!hasPassword && !needsReauth && !requirements.isPending && (
         <Alert
           type="info"
           showIcon
@@ -144,7 +172,7 @@ export default function ChangePasswordForm({
         wrapperCol={{ xs: { span: 24 }, sm: { flex: '1' } }}
         colon={false}
         onFinish={submit}
-        initialValues={{ logout_all_sessions: false }}
+        initialValues={{ logout_all_sessions: defaultLogoutAllSessions }}
         className="p-0 [&_.ant-form-item]:!mb-3 [&_.ant-form-item-label>label]:!text-sm [&_.ant-form-item-label>label]:!text-slate-600"
       >
         {showEmail && (
@@ -203,7 +231,14 @@ export default function ChangePasswordForm({
         <Form.Item label={null} className="!mb-0 sm:ml-[220px]">
           <div className="grid gap-2 sm:flex sm:gap-3">
             <Button htmlType="button" size="middle" onClick={() => form.resetFields()} className="min-w-24">Hủy</Button>
-            <Button type="primary" htmlType="submit" size="middle" loading={mutation.isPending} className="min-w-24">
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="middle"
+              loading={mutation.isPending}
+              disabled={needsReauth}
+              className="min-w-24"
+            >
               {hasPassword ? 'Cập nhật' : 'Tạo mật khẩu'}
             </Button>
           </div>

@@ -120,7 +120,15 @@ def pop_state(state):
 
 def create_one_time_code(user):
     code = secrets.token_urlsafe(32)
-    cache.set(f'{_CODE_PREFIX}{code}', user.pk, settings.OAUTH_CODE_TTL)
+    cache.set(
+        f'{_CODE_PREFIX}{code}',
+        {
+            'user_id': user.pk,
+            'email': User.objects.normalize_email(user.email),
+            'auth_revision': user.auth_revision,
+        },
+        settings.OAUTH_CODE_TTL,
+    )
     return code
 
 

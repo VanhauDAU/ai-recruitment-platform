@@ -9,8 +9,8 @@ export function getAdminAccounts(params = {}, { signal } = {}) {
   return data(client.get('/admin/accounts/', { params, signal }))
 }
 
-export function getAdminAccountSummary({ signal } = {}) {
-  return data(client.get('/admin/accounts/summary/', { signal }))
+export function getAdminAccountSummary(params = {}, { signal } = {}) {
+  return data(client.get('/admin/accounts/summary/', { params, signal }))
 }
 
 export function getAdminAccount(publicId, { signal } = {}) {
@@ -61,6 +61,39 @@ export function changeAccountStatus(publicId, payload, impactToken) {
   }))
 }
 
+export function getAccountResourceHoldImpact(publicId, payload) {
+  return data(client.post(`/admin/accounts/${publicId}/resource-hold-impact/`, payload))
+}
+
+export function releaseAccountResourceHolds(publicId, payload, impactToken) {
+  return data(client.post(`/admin/accounts/${publicId}/release-resource-holds/`, {
+    ...payload,
+    impact_token: impactToken,
+  }))
+}
+
+export function getAccountEmailImpact(publicId, payload) {
+  return data(client.post(`/admin/accounts/${publicId}/email-impact/`, payload))
+}
+
+export function changeAccountEmail(publicId, payload, impactToken) {
+  return data(client.post(`/admin/accounts/${publicId}/change-email/`, {
+    ...payload,
+    impact_token: impactToken,
+  }))
+}
+
+export function getAccountMfaResetImpact(publicId, payload) {
+  return data(client.post(`/admin/accounts/${publicId}/mfa-impact/`, payload))
+}
+
+export function resetAccountMfa(publicId, payload, impactToken) {
+  return data(client.post(`/admin/accounts/${publicId}/reset-mfa/`, {
+    ...payload,
+    impact_token: impactToken,
+  }))
+}
+
 export function getAccountSessionsImpact(publicId, reason) {
   return data(client.post(`/admin/accounts/${publicId}/revoke-sessions-impact/`, {
     reason,
@@ -74,8 +107,8 @@ export function revokeAccountSessions(publicId, reason, impactToken) {
   }))
 }
 
-export function sendAdminAccountPasswordReset(publicId) {
-  return data(client.post(`/admin/accounts/${publicId}/send-password-reset/`))
+export function sendAdminAccountPasswordReset(publicId, payload) {
+  return data(client.post(`/admin/accounts/${publicId}/send-password-reset/`, payload))
 }
 
 export function resendAdminAccountVerification(publicId) {

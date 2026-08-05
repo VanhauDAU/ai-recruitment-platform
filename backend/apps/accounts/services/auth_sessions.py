@@ -9,42 +9,44 @@ không còn được phép truy cập.
 """
 
 from datetime import timedelta
-from ipaddress import ip_address, ip_network
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from rest_framework_simplejwt.exceptions import TokenBackendError, TokenError
 from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.state import token_backend
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import datetime_from_epoch
 
+from common.client_ip import client_ip as _client_ip
+
 from ..models import AuthSession
+from .refresh_cookies import refresh_from_request
 
 SID_CLAIM = 'sid'
+AUTH_REVISION_CLAIM = 'auth_rev'
+_RETIRED_JTI_PREFIX = 'auth_session:retired-jti:'
 
 
-def _client_ip(request):
-    if request is None:
-        return None
-    remote = request.META.get('REMOTE_ADDR') or None
-    forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    if forwarded and _is_trusted_proxy(remote):
-        # Chỉ proxy đã cấu hình mới được quyền khai báo địa chỉ client.
-        return forwarded.split(',')[0].strip() or None
-    return remote
+def _remember_retired_jti(jti):
+    """Đánh dấu một jti vừa bị thay thế một cách hợp lệ.
+
+    Không phải lần nào token cũ xuất hiện lại cũng là bị đánh cắp. Hai trường
+    hợp lành tính xảy ra thường xuyên: hai tab cùng refresh một lúc (bên thua
+    cầm đúng token vừa bị xoay), và đăng nhập lại từ cùng thiết bị (phiên được
+    gộp, token cũ bị vô hiệu ngay). Cả hai đều diễn ra trong vài mili giây, nên
+    một khoảng ân hạn ngắn tách được chúng khỏi việc dùng lại token bị trộm —
+    thứ luôn xảy ra rất lâu sau lần xoay vòng.
+    """
+    if jti:
+        cache.set(f'{_RETIRED_JTI_PREFIX}{jti}', 1, settings.AUTH_REFRESH_REUSE_GRACE_SECONDS)
 
 
-def _is_trusted_proxy(remote):
-    if not remote:
-        return False
-    try:
-        address = ip_address(remote)
-        return any(
-            address in ip_network(entry, strict=False) for entry in settings.TRUSTED_PROXY_IPS
-        )
-    except ValueError:
-        return False
+def _was_recently_retired(jti):
+    return bool(jti) and cache.get(f'{_RETIRED_JTI_PREFIX}{jti}') is not None
 
 
 def _user_agent(request):
@@ -121,6 +123,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 .filter(
                     user=user,
                     portal=user.role,
+                    auth_revision=user.auth_revision,
                     ip_address=client_ip,
                     user_agent=user_agent,
                     revoked_at__isnull=True,
@@ -134,9 +137,11 @@ def start_session(user, refresh, request, *, auth_method='password'):
             # Các bản ghi cũ từ trước khi có cơ chế gộp không còn là phiên hợp lệ.
             for duplicate in matches[1:]:
                 revoke_session(duplicate)
+            _remember_retired_jti(session.refresh_jti)
             _blacklist_jti(session.refresh_jti)
             session.refresh_jti = new_jti
             session.auth_method = auth_method
+            session.auth_revision = user.auth_revision
             session.device_label = parse_device_label(user_agent)
             session.last_seen_at = now
             session.reauthenticated_at = now
@@ -145,6 +150,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 update_fields=[
                     'refresh_jti',
                     'auth_method',
+                    'auth_revision',
                     'device_label',
                     'last_seen_at',
                     'reauthenticated_at',
@@ -157,6 +163,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 portal=user.role,
                 refresh_jti=new_jti,
                 auth_method=auth_method,
+                auth_revision=user.auth_revision,
                 device_label=parse_device_label(user_agent),
                 user_agent=user_agent,
                 ip_address=client_ip,
@@ -171,13 +178,14 @@ def rotate_session(session, new_refresh_str):
     new_refresh = RefreshToken(new_refresh_str)
     _ensure_outstanding(new_refresh)
     new_jti = new_refresh[api_settings.JTI_CLAIM]
+    _remember_retired_jti(session.refresh_jti)
     session.refresh_jti = new_jti
     session.last_seen_at = timezone.now()
     session.save(update_fields=['refresh_jti', 'last_seen_at'])
     return session
 
 
-def locked_refresh_session(*, sid, user_id, refresh_jti):
+def locked_refresh_session(*, sid, user_id, refresh_jti, auth_revision):
     """Lock and return the exact live session represented by a refresh JWT."""
     if not sid:
         return None
@@ -187,6 +195,7 @@ def locked_refresh_session(*, sid, user_id, refresh_jti):
             id=sid,
             user_id=user_id,
             refresh_jti=refresh_jti,
+            auth_revision=auth_revision,
             revoked_at__isnull=True,
             expires_at__gt=timezone.now(),
         )
@@ -194,7 +203,7 @@ def locked_refresh_session(*, sid, user_id, refresh_jti):
     )
 
 
-def active_session_for_access(*, sid, user):
+def active_session_for_access(*, sid, user, auth_revision):
     """Enforce immediate access-token revocation and idle/absolute timeouts."""
     if not sid:
         return None
@@ -202,6 +211,7 @@ def active_session_for_access(*, sid, user):
         id=sid,
         user=user,
         portal=user.role,
+        auth_revision=auth_revision,
         revoked_at__isnull=True,
         expires_at__gt=timezone.now(),
     ).first()
@@ -219,6 +229,49 @@ def active_session_for_access(*, sid, user):
         AuthSession.objects.filter(pk=session.pk, revoked_at__isnull=True).update(last_seen_at=now)
         session.last_seen_at = now
     return session
+
+
+def current_session(request, user):
+    """Phiên thiết bị đang giữ ĐỒNG THỜI access token (`sid`) và refresh cookie.
+
+    Thao tác nhạy cảm không được tin mỗi access token: kẻ chiếm được token vẫn
+    thiếu cookie `HttpOnly`. Trả ``None`` khi thiếu một trong hai, khi hai bên
+    trỏ về phiên/tài khoản khác nhau, hoặc khi phiên đã bị thu hồi/hết hạn.
+    """
+    sid = request.auth.get(SID_CLAIM) if request.auth else None
+    refresh_string = refresh_from_request(request, user=user)
+    if not sid or not refresh_string:
+        return None
+    try:
+        refresh = RefreshToken(refresh_string)
+    except TokenError:
+        return None
+    if refresh.get(SID_CLAIM) != sid:
+        return None
+    if str(refresh.get(api_settings.USER_ID_CLAIM)) != str(user.pk):
+        return None
+    access_revision = request.auth.get(AUTH_REVISION_CLAIM, 1) if request.auth else 1
+    refresh_revision = refresh.get(AUTH_REVISION_CLAIM, 1)
+    if access_revision != user.auth_revision or refresh_revision != user.auth_revision:
+        return None
+    return (
+        active_sessions(user)
+        .filter(
+            id=sid,
+            refresh_jti=refresh[api_settings.JTI_CLAIM],
+            auth_revision=user.auth_revision,
+        )
+        .first()
+    )
+
+
+def requires_oauth_reauthentication(user, session):
+    """Đặt mật khẩu LẦN ĐẦU không có `current_password` để chứng minh chủ sở hữu.
+
+    Bằng chứng thay thế là một lần đăng nhập OAuth vừa diễn ra trên chính phiên
+    này, nên token bị đánh cắp không tự đặt được mật khẩu để chiếm tài khoản.
+    """
+    return not user.has_usable_password() and not is_recent_oauth_reauthentication(session)
 
 
 def is_recent_oauth_reauthentication(session):
@@ -252,6 +305,45 @@ def revoke_session(session):
         session.revoked_at = timezone.now()
         session.save(update_fields=['revoked_at'])
     _blacklist_jti(session.refresh_jti)
+
+
+def revoke_reused_refresh(raw_refresh):
+    """Thu hồi phiên khi một refresh token đã xoay vòng bị phát lại.
+
+    Rotation nghĩa là mỗi refresh token chỉ dùng được đúng một lần. Bản cũ xuất
+    hiện lần thứ hai nghĩa là có hai bên cùng giữ nó, và ta không thể biết bên
+    nào là chủ thật — nên giết cả phiên và bắt đăng nhập lại (khuyến nghị của
+    OAuth 2.1 cho refresh token rotation). Trước đây request chỉ bị từ chối, kẻ
+    trộm cookie cứ thế xoay vòng tiếp còn chủ tài khoản không hề hay biết.
+
+    Chữ ký BẮT BUỘC phải hợp lệ: nếu chấp nhận token không xác thực thì ai cũng
+    bịa được ``sid`` để thu hồi phiên người khác, biến chính lớp bảo vệ này
+    thành công cụ tấn công.
+    """
+    try:
+        payload = token_backend.decode(raw_refresh, verify=True)
+    except TokenBackendError:
+        return False
+
+    sid = payload.get(SID_CLAIM)
+    if not sid or _was_recently_retired(payload.get(api_settings.JTI_CLAIM)):
+        return False
+
+    with transaction.atomic():
+        session = (
+            AuthSession.objects.select_for_update()
+            .filter(
+                id=sid,
+                user_id=payload.get(api_settings.USER_ID_CLAIM),
+                auth_revision=payload.get(AUTH_REVISION_CLAIM, 1),
+                revoked_at__isnull=True,
+            )
+            .first()
+        )
+        if session is None:
+            return False
+        revoke_session(session)
+    return True
 
 
 def revoke_session_by_refresh_jti(jti):

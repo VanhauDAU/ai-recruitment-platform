@@ -5,6 +5,7 @@ import {
   Card,
   Form,
 } from 'antd'
+import { useSearchParams } from 'react-router'
 import {
   adminAccessKeys,
   createAdminDepartment,
@@ -30,6 +31,12 @@ import AccessControlTabs from './AccessControlTabs'
 export default function AdminAccessControl() {
   const { user } = useSession()
   const { isSuperuser } = useAdminAccess(user)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab') || 'departments'
+  const activeTab = (
+    ['departments', 'roles'].includes(requestedTab)
+    || (isSuperuser && ['staff', 'provisioning'].includes(requestedTab))
+  ) ? requestedTab : 'departments'
   const queryClient = useQueryClient()
   const [departmentForm] = Form.useForm()
   const [roleForm] = Form.useForm()
@@ -251,6 +258,13 @@ export default function AdminAccessControl() {
       <Card className="border-slate-200 shadow-sm">
         <AccessControlTabs
           isSuperuser={isSuperuser}
+          activeKey={activeTab}
+          onChange={(tab) => {
+            const next = new URLSearchParams(searchParams)
+            if (tab === 'departments') next.delete('tab')
+            else next.set('tab', tab)
+            setSearchParams(next)
+          }}
           department={{
             items: departments,
             query: departmentsQuery,

@@ -5,6 +5,7 @@ import {
   clearTokens,
   getAccessToken,
   notifyPermissionDenied,
+  notifySessionExpired,
   setTokens,
 } from './token-store'
 import { getCurrentPortal } from '@/shared/config/portals'
@@ -59,17 +60,23 @@ function refreshAccessToken() {
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Huỷ request (AbortSignal) và lỗi ném từ request interceptor tới đây mà
+    // không có `config`; đọc thẳng `.url` sẽ ném TypeError đè mất lỗi thật.
     const originalRequest = error.config
-    const isAuthEndpoint = originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh')
+    const url = originalRequest?.url || ''
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh')
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true
       try {
         const access = await refreshAccessToken()
         originalRequest.headers.Authorization = `Bearer ${access}`
         return client(originalRequest)
       } catch {
+        // Refresh hỏng = phiên hết hẳn. Báo cho SessionProvider để nó dọn state
+        // và đưa về trang đăng nhập của đúng cổng.
         clearTokens()
+        notifySessionExpired()
       }
     }
     if (

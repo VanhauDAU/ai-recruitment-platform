@@ -19,6 +19,7 @@ SECRET_KEY = config('SECRET_KEY', default=_DEFAULT_SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
+DJANGO_ADMIN_ENABLED = config('DJANGO_ADMIN_ENABLED', default=DEBUG, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
@@ -84,6 +85,7 @@ INSTALLED_APPS = [
     'apps.blog',
     'apps.privacy',
     'apps.services',
+    'apps.speech',
 ]
 
 MIDDLEWARE = [
@@ -252,6 +254,13 @@ if R2_ENABLED:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Reverse proxy: khai báo ai được quyền nói thay client. Đặt trước
+# REST_FRAMEWORK vì throttle lấy danh tính client từ đây.
+TRUSTED_PROXY_IPS = config('TRUSTED_PROXY_IPS', default='', cast=Csv())
+# Số hop reverse proxy của mình đứng trước Django. Chỉ ngần này phần tử ngoài
+# cùng bên phải của X-Forwarded-For là do proxy ghi; phần còn lại client tự khai.
+TRUSTED_PROXY_HOPS = config('TRUSTED_PROXY_HOPS', default=1, cast=int)
+
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('apps.accounts.authentication.AccountJWTAuthentication',),
@@ -259,6 +268,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'common.pagination.StandardPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Phòng thủ lớp hai cho các throttle chưa dùng ClientIPScopedRateThrottle:
+    # mặc định của DRF (None) lấy nguyên chuỗi X-Forwarded-For làm khoá, tức là
+    # để client tự chọn bucket cho mình.
+    'NUM_PROXIES': TRUSTED_PROXY_HOPS,
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/min',
         'two_factor': '5/min',
@@ -266,7 +279,12 @@ REST_FRAMEWORK = {
         'register': '5/min',
         'register_email_check': '12/min',
         'verify_email': '5/min',
+        # Bucket riêng cho các bước ĐỔI token lấy kết quả: gõ/mở link hỏng vài
+        # lần không được phép khoá luôn khả năng xin gửi lại mail, và ngược lại.
+        'verify_email_confirm': '20/min',
+        'change_email': '5/min',
         'password_reset': '5/min',
+        'password_reset_validate': '20/min',
         # Bucket riêng cho bước confirm: gõ sai mật khẩu mới vài lần không được
         # phép khoá luôn việc xin link (và ngược lại) — chung IP, chung quota.
         'password_reset_confirm': '10/min',
@@ -276,7 +294,12 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         'job_view': '120/hour',
         'job_impression': '240/hour',
+        'announcement_event': '240/hour',
+        'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
+        'speech_catalog': '120/hour',
+        'speech_session': '60/hour',
+        'speech_adhoc': '90/hour',
     },
 }
 
@@ -317,6 +340,19 @@ SPECTACULAR_SETTINGS = {
         # CvSkill.Level và JobSkill.MinLevel cùng tập beginner/intermediate/advanced -> 1 enum chung
         'SkillLevelEnum': 'apps.jobs.models.JobSkill.MinLevel',
         'LocationLevelEnum': 'apps.locations.models.Location.Level',
+        'AnnouncementLifecycleStateEnum': ('apps.sitecontent.models.Announcement.LifecycleState'),
+        'AnnouncementKindEnum': 'apps.sitecontent.models.AnnouncementRevision.Kind',
+        'AnnouncementSurfaceEnum': 'apps.sitecontent.models.AnnouncementRevision.Surface',
+        'AnnouncementAudienceEnum': 'apps.sitecontent.models.AnnouncementRevision.Audience',
+        'AnnouncementIconEnum': 'apps.sitecontent.models.AnnouncementRevision.Icon',
+        'AnnouncementAnimationEnum': 'apps.sitecontent.models.AnnouncementRevision.Animation',
+        'AnnouncementDismissModeEnum': ('apps.sitecontent.models.AnnouncementRevision.DismissMode'),
+        'AnnouncementRuntimeEventEnum': (
+            'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_EVENTS'
+        ),
+        'AnnouncementRuntimeReasonEnum': (
+            'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_REASONS'
+        ),
     },
     'TAGS': [
         {'name': 'auth', 'description': 'Đăng ký, đăng nhập, JWT, tài khoản hiện tại'},
@@ -351,6 +387,19 @@ CONSENT_COOKIE_NAME = config('CONSENT_COOKIE_NAME', default='procv_consent')
 CONSENT_COOKIE_MAX_AGE = 180 * 24 * 60 * 60
 CONSENT_COOKIE_SECURE = IS_PRODUCTION
 CONSENT_COOKIE_SAMESITE = 'Lax'
+
+# Remote announcement delivery is a runtime, per-surface kill switch. Keep the
+# default fail-closed; the frontend rollout flag remains a separate build-time
+# compatibility gate. Operators enable surfaces progressively after smoke tests.
+ANNOUNCEMENT_REMOTE_ENABLED_SURFACES = tuple(
+    surface.strip().lower()
+    for surface in config(
+        'ANNOUNCEMENT_REMOTE_ENABLED_SURFACES',
+        default='',
+        cast=Csv(),
+    )
+    if surface.strip()
+)
 
 JOB_VIEW_DEDUP_TTL_SECONDS = config('JOB_VIEW_DEDUP_TTL_SECONDS', default=24 * 60 * 60, cast=int)
 JOB_VIEWER_COOKIE_NAME = config('JOB_VIEWER_COOKIE_NAME', default='procv_viewer_id')
@@ -397,8 +446,17 @@ AUTH_SESSION_TOUCH_INTERVAL_SECONDS = config(
     cast=int,
 )
 AUTH_REAUTH_MAX_AGE_SECONDS = config('AUTH_REAUTH_MAX_AGE_SECONDS', default=5 * 60, cast=int)
-TRUSTED_PROXY_IPS = config('TRUSTED_PROXY_IPS', default='', cast=Csv())
+# Ân hạn cho refresh token vừa bị xoay vòng: trong ngần này giây, việc gặp lại
+# nó được coi là đua giữa hai tab / đăng nhập lại chứ không phải token bị trộm.
+AUTH_REFRESH_REUSE_GRACE_SECONDS = config('AUTH_REFRESH_REUSE_GRACE_SECONDS', default=30, cast=int)
 ADMIN_ACCESS_TOKEN_MINUTES = config('ADMIN_ACCESS_TOKEN_MINUTES', default=5, cast=int)
+
+# Chống dò mật khẩu theo từng tài khoản: sau ngần này lần sai, mỗi lần kế tiếp
+# phải chờ gấp đôi lần trước (không khoá cứng — xem services/login_guard.py).
+LOGIN_BACKOFF_FREE_ATTEMPTS = config('LOGIN_BACKOFF_FREE_ATTEMPTS', default=5, cast=int)
+LOGIN_BACKOFF_BASE_SECONDS = config('LOGIN_BACKOFF_BASE_SECONDS', default=2, cast=int)
+LOGIN_BACKOFF_MAX_SECONDS = config('LOGIN_BACKOFF_MAX_SECONDS', default=15 * 60, cast=int)
+LOGIN_BACKOFF_WINDOW_SECONDS = config('LOGIN_BACKOFF_WINDOW_SECONDS', default=15 * 60, cast=int)
 
 # Redis cache — lưu token xác thực email + cooldown gửi lại (tự hết hạn theo TTL)
 REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')
@@ -423,6 +481,7 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
+    'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
@@ -445,7 +504,49 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.cvs.tasks.purge_expired_cv_import_sources',
         'schedule': 86400.0,
     },
+    'reconcile-speech-artifacts': {
+        'task': 'apps.speech.tasks.assets.reconcile_speech_artifacts',
+        'schedule': 60.0,
+    },
+    'purge-obsolete-speech-artifacts': {
+        'task': 'apps.speech.tasks.assets.purge_obsolete_speech_artifacts',
+        'schedule': 86400.0,
+    },
 }
+
+# VieNeu-TTS chạy trong process riêng để không nhân model theo số Gunicorn/Celery
+# worker. Django chỉ cấp session ngắn hạn sau khi đã resolve nội dung public.
+SPEECH_TTS_BASE_URL = config('SPEECH_TTS_BASE_URL', default='http://127.0.0.1:8001').strip()
+SPEECH_TTS_INTERNAL_TOKEN = config(
+    'SPEECH_TTS_INTERNAL_TOKEN', default='dev-tts-internal-token-change-me'
+).strip()
+SPEECH_TTS_CONNECT_TIMEOUT_SECONDS = config(
+    'SPEECH_TTS_CONNECT_TIMEOUT_SECONDS', default=0.5, cast=float
+)
+SPEECH_TTS_READ_TIMEOUT_SECONDS = config('SPEECH_TTS_READ_TIMEOUT_SECONDS', default=2.0, cast=float)
+SPEECH_GENERATION_TIMEOUT_SECONDS = config(
+    'SPEECH_GENERATION_TIMEOUT_SECONDS', default=900.0, cast=float
+)
+SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS = config(
+    'SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS', default=2.0, cast=float
+)
+SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS = config(
+    'SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS', default=120.0, cast=float
+)
+SPEECH_ARTIFACT_RETENTION_DAYS = config('SPEECH_ARTIFACT_RETENTION_DAYS', default=30, cast=int)
+SPEECH_CAPABILITIES_CACHE_SECONDS = config(
+    'SPEECH_CAPABILITIES_CACHE_SECONDS', default=300, cast=int
+)
+SPEECH_MAX_TEXT_CHARS = config('SPEECH_MAX_TEXT_CHARS', default=30_000, cast=int)
+# Ad-hoc text arrives from the client instead of from published editorial
+# content, so it is capped at roughly one spoken paragraph. The synthesis pool
+# runs a single model worker; a long request would block every other listener.
+SPEECH_MAX_ADHOC_TEXT_CHARS = config('SPEECH_MAX_ADHOC_TEXT_CHARS', default=600, cast=int)
+SPEECH_DEFAULT_VOICE_ID = config('SPEECH_DEFAULT_VOICE_ID', default='north-male-natural').strip()
+SPEECH_DEFAULT_STYLE = config('SPEECH_DEFAULT_STYLE', default='tu_nhien').strip()
+SPEECH_MODEL_REVISION = config(
+    'SPEECH_MODEL_REVISION', default='vieneu-3.2.3-v3-turbo-int8'
+).strip()
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
 # Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là
@@ -479,6 +580,19 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
 ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
+# SEO shell fetches the built Vite document from the internal frontend service,
+# then injects route-specific head tags without rendering the React body.
+FRONTEND_SHELL_URL = config('FRONTEND_SHELL_URL', default=FRONTEND_URL).rstrip('/') + '/'
+FRONTEND_SHELL_TIMEOUT_SECONDS = config(
+    'FRONTEND_SHELL_TIMEOUT_SECONDS',
+    default=2,
+    cast=float,
+)
+FRONTEND_SHELL_CACHE_SECONDS = config(
+    'FRONTEND_SHELL_CACHE_SECONDS',
+    default=30,
+    cast=int,
+)
 ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
 ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(

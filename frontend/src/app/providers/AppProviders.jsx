@@ -5,7 +5,14 @@ import { SessionProvider } from '@/entities/session'
 import { DEFAULT_SITE_SETTINGS, settingText, SiteSettingsProvider, useSiteSettings } from '@/entities/site-settings'
 import { ConsentProvider } from '@/entities/consent'
 import AppToast from '@/shared/ui/AppToast'
+import BrandLoader from '@/shared/ui/BrandLoader'
 import ToastSoundEffect from '@/shared/ui/ToastSoundEffect'
+
+// Mọi <Spin> trong app dùng chung linh vật ProCV. `em` bám token size của Spin;
+// inline style thắng CSS-in-JS của antd mà không kéo rule riêng vào initial CSS.
+const spinConfig = {
+  indicator: <BrandLoader style={{ width: '2em', height: '2em', maxWidth: '2em' }} />,
+}
 
 function ThemedProviders({ children }) {
   const { settings } = useSiteSettings()
@@ -19,7 +26,7 @@ function ThemedProviders({ children }) {
   }), [primaryColor])
 
   return (
-    <ConfigProvider theme={theme}>
+    <ConfigProvider theme={theme} spin={spinConfig}>
       <AntApp>
         <ConsentProvider>
           <AppToast />

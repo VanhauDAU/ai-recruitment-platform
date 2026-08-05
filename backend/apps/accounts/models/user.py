@@ -54,6 +54,25 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
+    def email_claimed_for_role(self, email, role, *, exclude_user_id=None):
+        """Whether an email identity is already owned inside a portal.
+
+        A verified OAuth address remains an identity of its linked account even
+        when that account later changes its password-login email. Ignoring
+        ``SocialAccount.email`` would allow a second same-role account to claim
+        the OAuth address and make password/OAuth login resolve to two users.
+        """
+        email = self.normalize_email(email)
+        users = self.filter(email__iexact=email, role=role)
+        social_accounts = SocialAccount.objects.filter(
+            email__iexact=email,
+            user__role=role,
+        )
+        if exclude_user_id is not None:
+            users = users.exclude(pk=exclude_user_id)
+            social_accounts = social_accounts.exclude(user_id=exclude_user_id)
+        return users.exists() or social_accounts.exists()
+
 
 class User(AbstractUser):
     class Role(models.TextChoices):
@@ -95,6 +114,10 @@ class User(AbstractUser):
     two_factor_email_enabled = models.BooleanField(default=False)
     two_factor_totp_secret = models.TextField(blank=True)
     two_factor_backup_code_hashes = models.JSONField(default=list, blank=True)
+    # Monotonic security boundary for every issued session or pre-auth artifact.
+    # Recovery actions bump this value so work already in flight cannot create a
+    # usable token after the account identity has changed.
+    auth_revision = models.PositiveBigIntegerField(default=1)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -185,12 +208,16 @@ class AuthEmailJob(models.Model):
         PASSWORD_RESET = 'password_reset', 'Password reset'
         TWO_FACTOR = 'two_factor', 'Two-factor authentication code'
         ADMIN_INVITATION = 'admin_invitation', 'Admin invitation'
+        EMAIL_CHANGED_NOTICE = 'email_changed_notice', 'Email changed security notice'
+        MFA_RESET_NOTICE = 'mfa_reset_notice', 'MFA reset security notice'
+        ACCOUNT_STATUS_NOTICE = 'account_status_notice', 'Account status security notice'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
         SENDING = 'sending', 'Sending'
         SENT = 'sent', 'Sent'
         FAILED = 'failed', 'Failed'
+        CANCELLED = 'cancelled', 'Cancelled'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='auth_email_jobs')
     kind = models.CharField(max_length=30, choices=Kind.choices)
@@ -236,6 +263,7 @@ class AuthSession(models.Model):
     portal = models.CharField(max_length=20, choices=User.Role.choices)
     refresh_jti = models.CharField(max_length=64, db_index=True)
     auth_method = models.CharField(max_length=20, default='password')
+    auth_revision = models.PositiveBigIntegerField(default=1)
     device_label = models.CharField(max_length=120, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.CharField(max_length=400, blank=True)

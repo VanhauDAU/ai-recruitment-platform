@@ -18,6 +18,7 @@ export function formatDocumentTitle(title, { portal = getCurrentPortal(), siteNa
   const suffix = portal === 'employer' ? EMPLOYER_SITE_TITLE : (siteName || DEFAULT_SITE_TITLE)
   const value = removeKnownSuffix(String(title || '').trim(), [EMPLOYER_SITE_TITLE, DEFAULT_SITE_TITLE, suffix])
   if (!value || value === suffix) return suffix
+  if (value.startsWith(`${suffix} - `)) return value
   return `${value}${TITLE_SEPARATOR}${suffix}`
 }
 

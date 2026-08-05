@@ -1,7 +1,6 @@
 import {
   ArrowLeftOutlined,
   EditOutlined,
-  KeyOutlined,
   MailOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
@@ -20,8 +19,8 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminAccountKeys,
   formatAdminDate,
@@ -31,7 +30,6 @@ import {
   getAdminAccountResource,
   getAdminAccountSessions,
   resendAdminAccountVerification,
-  sendAdminAccountPasswordReset,
   updateAdminAccountProfile,
 } from '@/entities/admin-account'
 import { useAdminAccess } from '@/entities/admin-access'
@@ -39,6 +37,13 @@ import { useSession } from '@/entities/session'
 import { AdminAccountProfileModal } from '@/features/edit-admin-account-profile'
 import { AdminAccountSecurityActions } from '@/features/manage-admin-account-security'
 import { EmployerVerificationReview } from '@/features/review-employer-verification'
+import {
+  canRecoverAccountIdentity,
+  ChangeAccountEmailButton,
+  IdentityRecoveryGuide,
+  ResetAccountMfaButton,
+} from '@/features/recover-account-identity'
+import { SendAccountPasswordResetButton } from '@/features/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -97,18 +102,58 @@ function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
   )
 }
 
-function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
+function SecurityPanel({
+  publicId,
+  account,
+  canEmailRecovery,
+  canManage,
+  canMfaRecovery,
+  canReleaseResourceHolds,
+  canStatus,
+  canBan,
+  isSuperuser,
+}) {
+  const [recoveryProgress, setRecoveryProgress] = useState({
+    emailCompleted: false,
+    mfaCompleted: false,
+    passwordResetSent: false,
+  })
   const sessions = useQuery({
     queryKey: adminAccountKeys.sessions(publicId),
     queryFn: ({ signal }) => getAdminAccountSessions(publicId, { signal }),
   })
   const [sending, setSending] = useState(false)
-  const send = async (kind) => {
+  useEffect(() => {
+    setRecoveryProgress({
+      emailCompleted: false,
+      mfaCompleted: false,
+      passwordResetSent: false,
+    })
+  }, [publicId])
+
+  const hasMfa = Boolean(
+    account.mfa_methods.email
+    || account.mfa_methods.totp
+    || account.mfa_methods.backup_codes_remaining > 0,
+  )
+  const emailRecoveryStarted = recoveryProgress.emailCompleted || (
+    account.email_verified === false
+    && account.has_usable_password === false
+  )
+  const mfaRecoveryComplete = recoveryProgress.mfaCompleted || (
+    emailRecoveryStarted && !hasMfa
+  )
+  const passwordResetBlockedByMfa = emailRecoveryStarted && !mfaRecoveryComplete
+  const passwordResetDisabled = account.status !== 'active' || passwordResetBlockedByMfa
+  const passwordResetDisabledReason = passwordResetBlockedByMfa
+    ? 'Hoàn tất bước 2 — đặt lại MFA — trước khi gửi link đặt lại mật khẩu.'
+    : 'Phải mở lại tài khoản bằng workflow trạng thái trước khi gửi password reset.'
+
+  const sendVerification = async () => {
     setSending(true)
     try {
-      if (kind === 'password') await sendAdminAccountPasswordReset(publicId)
-      else await resendAdminAccountVerification(publicId)
-      message.success('Đã xếp lịch gửi email bảo mật.')
+      await resendAdminAccountVerification(publicId)
+      message.success('Đã xếp lịch gửi email xác minh.')
     } catch (error) {
       message.error(getApiErrorMessage(error))
     } finally {
@@ -117,6 +162,54 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
   }
   return (
     <div className="space-y-5">
+      {(canManage || canEmailRecovery || canMfaRecovery) && (
+        <IdentityRecoveryGuide
+          account={account}
+          emailCompleted={recoveryProgress.emailCompleted}
+          mfaCompleted={recoveryProgress.mfaCompleted}
+          passwordResetSent={recoveryProgress.passwordResetSent}
+          emailAction={canEmailRecovery ? (
+            <ChangeAccountEmailButton
+              account={account}
+              publicId={publicId}
+              disabled={account.status === 'pending'}
+              disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
+              onSuccess={() => setRecoveryProgress((current) => ({
+                ...current,
+                emailCompleted: true,
+                mfaCompleted: false,
+                passwordResetSent: false,
+              }))}
+            />
+          ) : null}
+          mfaAction={canMfaRecovery && emailRecoveryStarted && hasMfa ? (
+            <ResetAccountMfaButton
+              account={account}
+              publicId={publicId}
+              disabled={account.status === 'pending'}
+              disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
+              onSuccess={() => setRecoveryProgress((current) => ({
+                ...current,
+                mfaCompleted: true,
+                passwordResetSent: false,
+              }))}
+            />
+          ) : null}
+          passwordResetAction={canManage && emailRecoveryStarted && mfaRecoveryComplete ? (
+            <SendAccountPasswordResetButton
+              account={account}
+              publicId={publicId}
+              accountEmail={account.email}
+              disabled={passwordResetDisabled}
+              disabledReason={passwordResetDisabledReason}
+              onSuccess={() => setRecoveryProgress((current) => ({
+                ...current,
+                passwordResetSent: true,
+              }))}
+            />
+          ) : null}
+        />
+      )}
       <Card title="Xác thực & quyền truy cập">
         <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
           <Descriptions.Item label="Email">
@@ -142,23 +235,54 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
             {account.active_session_count}
           </Descriptions.Item>
         </Descriptions>
-        {canManage && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button loading={sending} icon={<KeyOutlined />} onClick={() => send('password')}>
-              Gửi đặt lại mật khẩu
-            </Button>
-            {!account.email_verified && (
-              <Button loading={sending} icon={<MailOutlined />} onClick={() => send('verify')}>
-                Gửi lại xác minh email
-              </Button>
-            )}
-            {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
-                thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
-                bị cấm sẽ không còn đường mở lại từ giao diện. */}
-            <AdminAccountSecurityActions
-              account={account}
-              allowStatus={account.role !== 'admin' || isSuperuser}
-            />
+        {(canManage || canEmailRecovery || canMfaRecovery || canStatus) && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="mb-3">
+              <Typography.Text strong>Thao tác bảo mật độc lập</Typography.Text>
+              <div>
+                <Typography.Text type="secondary" className="!text-xs">
+                  Dùng khi không thực hiện quy trình đổi email ở phía trên.
+                </Typography.Text>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {!emailRecoveryStarted && canMfaRecovery && (
+                <ResetAccountMfaButton
+                  account={account}
+                  publicId={publicId}
+                  disabled={account.status === 'pending' || !hasMfa}
+                  disabledReason={account.status === 'pending'
+                    ? 'Tài khoản đang chờ phải xử lý qua quy trình lời mời.'
+                    : 'Tài khoản chưa bật phương thức MFA nào.'}
+                />
+              )}
+              {!emailRecoveryStarted && canManage && (
+                <SendAccountPasswordResetButton
+                  account={account}
+                  publicId={publicId}
+                  accountEmail={account.email}
+                  disabled={account.status !== 'active'}
+                  disabledReason="Phải mở lại tài khoản trước khi gửi password reset."
+                />
+              )}
+              {canManage && !account.email_verified && (
+                <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
+                  Gửi lại xác minh email
+                </Button>
+              )}
+              {/* Backend (`ensure_account_write_allowed`) cho superuser đổi trạng
+                  thái tài khoản admin; UI phải mở tương ứng, nếu không một admin
+                  bị cấm sẽ không còn đường mở lại từ giao diện. */}
+              {(canManage || canStatus) && (
+                <AdminAccountSecurityActions
+                  account={account}
+                  allowStatus={canStatus && (account.role !== 'admin' || isSuperuser)}
+                  allowBan={canBan}
+                  allowResourceRelease={canReleaseResourceHolds}
+                  allowSessions={canManage}
+                />
+              )}
+            </div>
           </div>
         )}
       </Card>
@@ -174,7 +298,7 @@ function SecurityPanel({ publicId, account, canManage, isSuperuser }) {
             { title: 'Cổng', dataIndex: 'portal' },
             { title: 'Phương thức', dataIndex: 'auth_method' },
             { title: 'IP', dataIndex: 'ip_address', render: (value) => value || '—' },
-            { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: formatAdminDate },
+            { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: (value) => formatAdminDate(value) },
             {
               title: 'Trạng thái',
               key: 'status',
@@ -211,7 +335,7 @@ function ActivityPanel({ publicId }) {
         onChange: setPage,
       }}
       columns={[
-        { title: 'Thời gian', dataIndex: 'created_at', render: formatAdminDate },
+        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => formatAdminDate(value) },
         {
           title: 'Hành động',
           dataIndex: 'action',
@@ -312,7 +436,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'Phát hành', dataIndex: 'lifecycle_status_label' },
         { title: 'Hiển thị', dataIndex: 'visibility_label' },
         { title: 'Mặc định', dataIndex: 'is_default', render: (value) => value ? 'Có' : 'Không' },
-        { title: 'Cập nhật', dataIndex: 'updated_at', render: formatAdminDate },
+        { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
       ]}
       />,
     },
@@ -325,7 +449,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'CV đã nộp', dataIndex: 'submitted_cv_title' },
         { title: 'Trạng thái', dataIndex: 'status_label' },
         { title: 'Nguồn', dataIndex: 'source_label' },
-        { title: 'Ngày ứng tuyển', dataIndex: 'applied_at', render: formatAdminDate },
+        { title: 'Ngày ứng tuyển', dataIndex: 'applied_at', render: (value) => formatAdminDate(value) },
       ]}
       />,
     },
@@ -336,7 +460,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'Mục đích', dataIndex: 'consent_type_label' },
         { title: 'Quyết định', dataIndex: 'decision_label' },
         { title: 'Phiên bản chính sách', dataIndex: 'policy_version' },
-        { title: 'Quyết định lúc', dataIndex: 'decided_at', render: formatAdminDate },
+        { title: 'Quyết định lúc', dataIndex: 'decided_at', render: (value) => formatAdminDate(value) },
       ]}
       />,
     },
@@ -368,9 +492,16 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Tiêu đề', dataIndex: 'title' },
             { title: 'Chiến dịch', dataIndex: 'campaign_name', render: (value) => value || 'Không thuộc chiến dịch' },
             { title: 'Trạng thái', dataIndex: 'status_label' },
+            {
+              title: 'Policy hold',
+              dataIndex: 'policy_hold_label',
+              render: (value, row) => row.policy_hold
+                ? <Tag color="orange">{value}</Tag>
+                : <Tag>Không giữ</Tag>,
+            },
             { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
             { title: 'Hạn nộp', dataIndex: 'deadline' },
-            { title: 'Cập nhật', dataIndex: 'updated_at', render: formatAdminDate },
+            { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
           ]}
           />,
         },
@@ -381,9 +512,16 @@ function EmployerRecruitment({ publicId }) {
             { title: 'Tên chiến dịch', dataIndex: 'name' },
             { title: 'Chuyên môn', dataIndex: 'position_category_name' },
             { title: 'Trạng thái', dataIndex: 'status_label' },
+            {
+              title: 'Policy hold',
+              dataIndex: 'policy_hold_label',
+              render: (value, row) => row.policy_hold
+                ? <Tag color="orange">{value}</Tag>
+                : <Tag>Không giữ</Tag>,
+            },
             { title: 'Tin tuyển dụng', dataIndex: 'job_count' },
             { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
-            { title: 'Cập nhật', dataIndex: 'updated_at', render: formatAdminDate },
+            { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
           ]}
           />,
         },
@@ -392,10 +530,11 @@ function EmployerRecruitment({ publicId }) {
   )
 }
 
-export default function AdminAccountDetail({ publicId }) {
+export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const { user } = useSession()
   const { has, isSuperuser } = useAdminAccess(user)
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [editState, setEditState] = useState(null)
@@ -417,12 +556,40 @@ export default function AdminAccountDetail({ publicId }) {
   const canEdit = isSuperuser || has('account.profile.manage')
   const canReveal = isSuperuser || has('account.sensitive.view')
   const canSecurity = isSuperuser || has('account.security.manage') || has('account.admin.manage')
+  const canStatus = isSuperuser || has('account.status.manage') || has('account.admin.manage')
+  const canBan = Boolean(isSuperuser)
+  const canReleaseResourceHolds = Boolean(isSuperuser)
+  const recoveryAccess = {
+    hasPermission: has,
+    isSuperuser,
+    targetRole: account?.role,
+  }
+  const canEmailRecovery = Boolean(account) && canRecoverAccountIdentity({
+    ...recoveryAccess,
+    permission: 'account.email.manage',
+  })
+  const canMfaRecovery = Boolean(account) && canRecoverAccountIdentity({
+    ...recoveryAccess,
+    permission: 'account.mfa.reset',
+  })
   const canViewVerification = isSuperuser || has('employer_verification.view')
   const canReviewVerification = isSuperuser || has('employer_verification.review')
   const canViewCompanyUpdates = isSuperuser || has('company_update.view')
   const canReviewCompanyUpdates = isSuperuser || has('company_update.review')
   const canViewSensitiveDocument = canReveal
   const activeTab = searchParams.get('tab') || 'overview'
+  const fallbackPath = adminPath(routeScope === 'recruiters' ? '/recruiters' : '/accounts')
+  const origin = location.state?.origin
+  const safeOrigin = (
+    origin?.pathname?.startsWith(adminPath('/'))
+    && !origin.pathname.includes(`/${publicId}`)
+  ) ? origin : null
+  const backTarget = safeOrigin
+    ? `${safeOrigin.pathname}${safeOrigin.search || ''}`
+    : fallbackPath
+  const backLabel = safeOrigin?.label || (
+    routeScope === 'recruiters' ? 'Danh sách nhà tuyển dụng' : 'Danh sách người dùng'
+  )
 
   const profilePanel = account && (
     <AccountProfilePanel
@@ -444,7 +611,12 @@ export default function AdminAccountDetail({ publicId }) {
     <SecurityPanel
       publicId={publicId}
       account={account}
+      canEmailRecovery={canEmailRecovery}
       canManage={canSecurity}
+      canMfaRecovery={canMfaRecovery}
+      canStatus={canStatus}
+      canBan={canBan}
+      canReleaseResourceHolds={canReleaseResourceHolds}
       isSuperuser={isSuperuser}
     />
   )
@@ -480,7 +652,7 @@ export default function AdminAccountDetail({ publicId }) {
           children: <EmployerRecruitment publicId={publicId} />,
         },
         { key: 'security', label: 'Bảo mật', children: security },
-        { key: 'activity', label: 'Hoạt động', children: activity },
+        { key: 'activity', label: 'Nhật ký hoạt động', children: activity },
       ]
     }
     return [
@@ -494,6 +666,45 @@ export default function AdminAccountDetail({ publicId }) {
       { key: 'activity', label: 'Hoạt động', children: activity },
     ]
   })()
+  const currentTabs = account ? tabs.map((item) => (
+    item.key === 'overview' ? { ...item, children: <Overview account={account} /> } : item
+  )) : tabs
+  const validActiveTab = resolveActiveAdminAccountTab(currentTabs, activeTab)
+  const canonicalScope = account?.role === 'employer' ? 'recruiters' : 'accounts'
+  const currentScope = routeScope === 'recruiters' ? 'recruiters' : 'accounts'
+  const hasCanonicalMismatch = Boolean(account && canonicalScope !== currentScope)
+
+  useEffect(() => {
+    if (!account) return
+    if (canonicalScope === currentScope) return
+    navigate(
+      `${adminPath(`/${canonicalScope}/${publicId}`)}${location.search}`,
+      { replace: true, state: location.state },
+    )
+  }, [
+    account,
+    canonicalScope,
+    currentScope,
+    location.search,
+    location.state,
+    navigate,
+    publicId,
+  ])
+
+  useEffect(() => {
+    if (!account || hasCanonicalMismatch || activeTab === validActiveTab) return
+    const next = new URLSearchParams(searchParams)
+    if (validActiveTab === 'overview') next.delete('tab')
+    else next.set('tab', validActiveTab)
+    setSearchParams(next, { replace: true })
+  }, [
+    account,
+    activeTab,
+    hasCanonicalMismatch,
+    searchParams,
+    setSearchParams,
+    validActiveTab,
+  ])
 
   if (query.isLoading) return <Card><Skeleton active paragraph={{ rows: 12 }} /></Card>
   if (query.isError || !account) {
@@ -503,20 +714,15 @@ export default function AdminAccountDetail({ publicId }) {
         type="error"
         title="Không thể tải tài khoản"
         description={getApiErrorMessage(query.error)}
-        action={<Button onClick={() => navigate(adminPath('/accounts'))}>Quay lại</Button>}
+        action={<Button onClick={() => navigate(backTarget)}>{backLabel}</Button>}
       />
     )
   }
 
-  const currentTabs = tabs.map((item) => (
-    item.key === 'overview' ? { ...item, children: <Overview account={account} /> } : item
-  ))
-  const validActiveTab = resolveActiveAdminAccountTab(currentTabs, activeTab)
-
   return (
     <div className="space-y-5">
-      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(adminPath('/accounts'))}>
-        Quay lại danh sách
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(backTarget)}>
+        {backLabel}
       </Button>
       <section className="account-detail-hero">
         <div className="account-detail-hero__identity">
@@ -560,7 +766,12 @@ export default function AdminAccountDetail({ publicId }) {
         <Tabs
           activeKey={validActiveTab}
           items={currentTabs}
-          onChange={(tab) => setSearchParams({ tab })}
+          onChange={(tab) => {
+            const next = new URLSearchParams(searchParams)
+            if (tab === 'overview') next.delete('tab')
+            else next.set('tab', tab)
+            setSearchParams(next)
+          }}
           tabBarGutter={22}
         />
       </section>

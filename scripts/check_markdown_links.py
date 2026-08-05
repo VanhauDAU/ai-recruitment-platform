@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate repository-local links in Git-tracked Markdown files.
+"""Validate repository-local links in tracked and new Markdown files.
 
 The checker deliberately stays offline: external URLs and site-absolute paths
 are left untouched so historical references do not make documentation CI
@@ -78,10 +78,19 @@ class CheckStats:
     reference_uses: int = 0
 
 
-def git_tracked_paths() -> list[str]:
-    """Return tracked paths relative to the repository root."""
+def git_worktree_paths() -> list[str]:
+    """Return tracked and untracked, non-ignored paths in the worktree."""
     result = subprocess.run(
-        ["git", "-C", str(REPOSITORY_ROOT), "ls-files", "-z"],
+        [
+            "git",
+            "-C",
+            str(REPOSITORY_ROOT),
+            "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+            "-z",
+        ],
         check=True,
         capture_output=True,
     )
@@ -595,7 +604,7 @@ class MarkdownLinkChecker:
                 source=link.source,
                 line=link.line,
                 destination=link.destination,
-                message=f"tracked target does not exist{suggestion}",
+                message=f"repository target does not exist{suggestion}",
             )
 
         if expects_directory and target not in self.directories:
@@ -603,7 +612,7 @@ class MarkdownLinkChecker:
                 source=link.source,
                 line=link.line,
                 destination=link.destination,
-                message="target ends with '/' but is not a tracked directory",
+                message="target ends with '/' but is not a repository directory",
             )
 
         if not fragment:
@@ -653,9 +662,9 @@ class MarkdownLinkChecker:
 
 def main() -> int:
     try:
-        tracked_paths = git_tracked_paths()
+        tracked_paths = git_worktree_paths()
     except (OSError, subprocess.CalledProcessError) as error:
-        print(f"Unable to list Git-tracked files: {error}", file=sys.stderr)
+        print(f"Unable to list repository files: {error}", file=sys.stderr)
         return 2
 
     markdown_paths = sorted(
@@ -675,7 +684,7 @@ def main() -> int:
                     source=markdown_path,
                     line=1,
                     destination=markdown_path,
-                    message=f"cannot read tracked Markdown file: {error}",
+                    message=f"cannot read Markdown file: {error}",
                 )
             )
             continue
@@ -708,7 +717,7 @@ def main() -> int:
         print(
             "Markdown link check failed: "
             f"{len(issues)} issue(s), {stats.internal} internal destination(s) "
-            f"checked across {stats.markdown_files} tracked Markdown file(s).",
+            f"checked across {stats.markdown_files} Markdown file(s).",
             file=sys.stderr,
         )
         return 1
@@ -716,7 +725,7 @@ def main() -> int:
     print(
         "Markdown link check passed: "
         f"{stats.internal} internal destination(s) checked across "
-        f"{stats.markdown_files} tracked Markdown file(s); "
+        f"{stats.markdown_files} Markdown file(s); "
         f"{stats.external} external destination(s) skipped"
         f"; {stats.reference_uses} reference-style use(s) resolved."
     )

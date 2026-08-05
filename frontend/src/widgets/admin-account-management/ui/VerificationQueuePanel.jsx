@@ -1,8 +1,9 @@
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, DatePicker, Input, Select, Table, Tag, Typography } from 'antd'
-import { useDeferredValue, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import dayjs from 'dayjs'
+import { useDeferredValue, useMemo } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminEmployerVerificationKeys,
   getAdminEmployerVerifications,
@@ -12,7 +13,8 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 
 const STATUS_OPTIONS = [
-  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'actionable', label: 'Cần xử lý' },
+  { value: 'all', label: 'Tất cả trạng thái' },
   { value: 'pending', label: 'Chờ duyệt' },
   { value: 'in_review', label: 'Đang xử lý' },
   { value: 'changes_requested', label: 'Cần bổ sung' },
@@ -28,6 +30,36 @@ const DOCUMENT_OPTIONS = [
   { value: 'data_processing_agreement', label: 'Văn bản xử lý dữ liệu' },
 ]
 
+const VERIFICATION_QUERY_KEYS = {
+  q: 'verify_q',
+  status: 'verify_status',
+  document_type: 'verify_document',
+  phone_verified: 'verify_phone',
+  age: 'verify_age',
+  submitted_from: 'verify_from',
+  submitted_to: 'verify_to',
+  page: 'verify_page',
+  ordering: 'verify_ordering',
+}
+
+function verificationFiltersFromQuery(searchParams) {
+  const page = Number(searchParams.get(VERIFICATION_QUERY_KEYS.page) || 1)
+  const submittedFrom = searchParams.get(VERIFICATION_QUERY_KEYS.submitted_from)
+  const submittedTo = searchParams.get(VERIFICATION_QUERY_KEYS.submitted_to)
+  return {
+    q: searchParams.get(VERIFICATION_QUERY_KEYS.q) || '',
+    status: searchParams.get(VERIFICATION_QUERY_KEYS.status) || 'actionable',
+    document_type: searchParams.get(VERIFICATION_QUERY_KEYS.document_type) || '',
+    phone_verified: searchParams.get(VERIFICATION_QUERY_KEYS.phone_verified) || '',
+    age: searchParams.get(VERIFICATION_QUERY_KEYS.age) || '',
+    ordering: searchParams.get(VERIFICATION_QUERY_KEYS.ordering) || '-submitted_at',
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+    submitted_range: submittedFrom && submittedTo
+      ? [dayjs(submittedFrom), dayjs(submittedTo)]
+      : [],
+  }
+}
+
 function formatDate(value) {
   if (!value) return 'Chưa nộp'
   return new Intl.DateTimeFormat('vi-VN', {
@@ -38,24 +70,24 @@ function formatDate(value) {
 
 export default function VerificationQueuePanel() {
   const navigate = useNavigate()
-  const [page, setPage] = useState(1)
-  const [filters, setFilters] = useState({
-    q: '',
-    status: '',
-    document_type: '',
-    phone_verified: '',
-    age: '',
-    submitted_range: [],
-  })
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filters = useMemo(
+    () => verificationFiltersFromQuery(searchParams),
+    [searchParams],
+  )
+  const page = filters.page
   const search = useDeferredValue(filters.q.trim())
   const params = useMemo(() => {
     const result = {
       page,
       q: search,
-      status: filters.status,
+      status: filters.status === 'all' ? '' : filters.status,
       document_type: filters.document_type,
       phone_verified: filters.phone_verified,
       age: filters.age,
+      ordering: filters.ordering,
+      company: searchParams.get('company') || '',
     }
     if (filters.submitted_range?.length === 2) {
       result.submitted_from = filters.submitted_range[0].format('YYYY-MM-DD')
@@ -64,15 +96,35 @@ export default function VerificationQueuePanel() {
     return Object.fromEntries(
       Object.entries(result).filter(([, value]) => value !== ''),
     )
-  }, [filters, page, search])
+  }, [filters, page, search, searchParams])
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.list(params),
     queryFn: ({ signal }) => getAdminEmployerVerifications(params, { signal }),
   })
 
   const update = (key, value) => {
-    setFilters((current) => ({ ...current, [key]: value }))
-    setPage(1)
+    const next = new URLSearchParams(searchParams)
+    if (key === 'submitted_range') {
+      if (value?.length === 2) {
+        next.set(VERIFICATION_QUERY_KEYS.submitted_from, value[0].format('YYYY-MM-DD'))
+        next.set(VERIFICATION_QUERY_KEYS.submitted_to, value[1].format('YYYY-MM-DD'))
+      } else {
+        next.delete(VERIFICATION_QUERY_KEYS.submitted_from)
+        next.delete(VERIFICATION_QUERY_KEYS.submitted_to)
+      }
+    } else {
+      const queryKey = VERIFICATION_QUERY_KEYS[key]
+      const defaultValue = key === 'ordering'
+        ? '-submitted_at'
+        : key === 'status' ? 'actionable' : ''
+      if (value === defaultValue || value === '' || value == null || (key === 'page' && value === 1)) {
+        next.delete(queryKey)
+      } else {
+        next.set(queryKey, String(value))
+      }
+    }
+    if (key !== 'page') next.delete(VERIFICATION_QUERY_KEYS.page)
+    setSearchParams(next)
   }
 
   return (
@@ -86,6 +138,7 @@ export default function VerificationQueuePanel() {
           onChange={(event) => update('q', event.target.value)}
         />
         <Select
+          aria-label="Trạng thái xác thực NTD"
           value={filters.status}
           options={STATUS_OPTIONS}
           onChange={(value) => update('status', value)}
@@ -145,13 +198,16 @@ export default function VerificationQueuePanel() {
             total: query.data?.count || 0,
             showSizeChanger: false,
             showTotal: (total) => `${total.toLocaleString('vi-VN')} hồ sơ`,
-            onChange: setPage,
           }}
           columns={[
             {
               title: 'Nhà tuyển dụng',
-              key: 'recruiter',
+              key: 'recruiter__user__full_name',
               width: 250,
+              sorter: true,
+              sortOrder: filters.ordering === 'recruiter__user__full_name'
+                ? 'ascend'
+                : filters.ordering === '-recruiter__user__full_name' ? 'descend' : null,
               render: (_, row) => (
                 <div>
                   <Typography.Text strong className="!block">
@@ -165,8 +221,12 @@ export default function VerificationQueuePanel() {
             },
             {
               title: 'Công ty',
-              key: 'company',
+              key: 'company__company_name',
               width: 220,
+              sorter: true,
+              sortOrder: filters.ordering === 'company__company_name'
+                ? 'ascend'
+                : filters.ordering === '-company__company_name' ? 'descend' : null,
               render: (_, row) => (
                 <div>
                   <Typography.Text className="!block">
@@ -181,22 +241,51 @@ export default function VerificationQueuePanel() {
             {
               title: 'Trạng thái',
               dataIndex: 'status',
+              key: 'status',
               width: 150,
-              render: (status) => {
+              sorter: true,
+              sortOrder: filters.ordering === 'status'
+                ? 'ascend'
+                : filters.ordering === '-status' ? 'descend' : null,
+              render: (status, row) => {
                 const meta = verificationStatusMeta(status)
-                return <Tag color={meta.color}>{meta.label}</Tag>
+                if (!row.pending_document_count) {
+                  return <Tag color={meta.color}>{meta.label}</Tag>
+                }
+                return (
+                  <div className="flex flex-wrap gap-1">
+                    <Tag color="gold" className="!m-0">
+                      {`${row.pending_document_count} file chờ duyệt`}
+                    </Tag>
+                    {status !== 'pending' && (
+                      <Tag color={meta.color} className="!m-0">
+                        {`Hồ sơ: ${meta.label}`}
+                      </Tag>
+                    )}
+                  </div>
+                )
               },
             },
             {
               title: 'Bước còn thiếu',
               dataIndex: 'missing_steps',
+              key: 'current_document_count',
               width: 135,
+              sorter: true,
+              sortOrder: filters.ordering === 'current_document_count'
+                ? 'ascend'
+                : filters.ordering === '-current_document_count' ? 'descend' : null,
               render: (value) => `${value?.length || 0} bước`,
             },
             {
               title: 'Điện thoại',
               dataIndex: 'phone_verified',
+              key: 'recruiter__phone_verified_at',
               width: 145,
+              sorter: true,
+              sortOrder: filters.ordering === 'recruiter__phone_verified_at'
+                ? 'ascend'
+                : filters.ordering === '-recruiter__phone_verified_at' ? 'descend' : null,
               render: (value) => (
                 <Tag color={value ? 'green' : 'orange'}>
                   {value ? 'Đã xác minh' : 'Chưa xác minh'}
@@ -206,7 +295,12 @@ export default function VerificationQueuePanel() {
             {
               title: 'Nộp gần nhất',
               dataIndex: 'submitted_at',
+              key: 'submitted_at',
               width: 170,
+              sorter: true,
+              sortOrder: filters.ordering === 'submitted_at'
+                ? 'ascend'
+                : filters.ordering === '-submitted_at' ? 'descend' : null,
               render: formatDate,
             },
             {
@@ -219,7 +313,16 @@ export default function VerificationQueuePanel() {
                   type="link"
                   icon={<EyeOutlined />}
                   onClick={() => navigate(
-                    `${adminPath(`/accounts/${row.user_public_id}`)}?tab=verification`,
+                    `${adminPath(`/recruiters/${row.user_public_id}`)}?tab=verification`,
+                    {
+                      state: {
+                        origin: {
+                          pathname: location.pathname,
+                          search: location.search,
+                          label: 'Hàng chờ xác thực NTD',
+                        },
+                      },
+                    },
                   )}
                 >
                   Xử lý
@@ -227,6 +330,16 @@ export default function VerificationQueuePanel() {
               ),
             },
           ]}
+          onChange={(pagination, _, sorter, extra) => {
+            if (extra.action === 'sort') {
+              const ordering = sorter.order
+                ? `${sorter.order === 'descend' ? '-' : ''}${sorter.columnKey}`
+                : '-submitted_at'
+              update('ordering', ordering)
+              return
+            }
+            update('page', pagination.current)
+          }}
         />
       </div>
     </div>

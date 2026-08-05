@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build:mascot-assets": "node scripts/build-mascot-assets.mjs",
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
@@ -42,6 +43,7 @@
     "react-google-recaptcha-v3": "^1.11.0",
     "react-i18next": "^17.0.10",
     "react-router": "8.3.0",
+    "recharts": "^3.10.1",
     "sonner": "^2.0.7"
   },
   "devDependencies": {

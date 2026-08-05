@@ -20,6 +20,12 @@ class RecruitmentCampaign(models.Model):
         COMPLETED = 'completed', 'Hoàn tất'
         CANCELLED = 'cancelled', 'Đã hủy'
 
+    class PolicyHold(models.TextChoices):
+        NONE = '', 'Không giữ'
+        TEMPORARY_LOCK = 'temporary_lock', 'Tạm giữ do khóa tài khoản'
+        BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
+        LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
+
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
         'employers.Company',
@@ -58,6 +64,20 @@ class RecruitmentCampaign(models.Model):
         max_length=20, choices=BudgetSource.choices, default=BudgetSource.COMPANY
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    policy_hold = models.CharField(
+        max_length=24,
+        choices=PolicyHold.choices,
+        default=PolicyHold.NONE,
+        blank=True,
+    )
+    policy_held_at = models.DateTimeField(null=True, blank=True)
+    policy_hold_transition = models.ForeignKey(
+        'accounts.AccountStatusTransition',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='held_campaigns',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -65,6 +85,10 @@ class RecruitmentCampaign(models.Model):
         indexes = [
             models.Index(
                 fields=['owner', 'status', '-created_at'], name='emp_camp_owner_status_idx'
+            ),
+            models.Index(
+                fields=['policy_hold', 'status'],
+                name='emp_camp_hold_status_idx',
             ),
         ]
         ordering = ['-created_at']
@@ -100,6 +124,11 @@ class CampaignActivity(models.Model):
         APPLICATION_STATUS_CHANGED = (
             'application_status_changed',
             'Đổi trạng thái ứng viên',
+        )
+        ACCOUNT_POLICY_HELD = 'account_policy_held', 'Giữ do trạng thái tài khoản'
+        ACCOUNT_POLICY_RELEASED = (
+            'account_policy_released',
+            'Gỡ giữ do trạng thái tài khoản',
         )
 
     campaign = models.ForeignKey(

@@ -209,6 +209,16 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
             'name': obj.company.company_name,
             'tax_code': tax_code,
             'verification_status': obj.company.verification_status,
+            'duplicate_tax_code_company_count': getattr(
+                obj,
+                'duplicate_tax_code_company_count',
+                0,
+            ),
+            'verified_duplicate_tax_code_company_count': getattr(
+                obj,
+                'verified_duplicate_tax_code_company_count',
+                0,
+            ),
         }
 
     def get_missing_steps(self, obj):

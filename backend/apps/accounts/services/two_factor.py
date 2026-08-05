@@ -29,6 +29,7 @@ _CODE_PREFIX = 'two_factor:code:'
 _CHALLENGE_PREFIX = 'two_factor:challenge:'
 _EXPIRY_PREFIX = 'two_factor:expiry:'
 _ATTEMPTS_PREFIX = 'two_factor:attempts:'
+_CHALLENGE_ATTEMPTS_PREFIX = 'two_factor:challenge-attempts:'
 _TOTP_SETUP_PREFIX = 'two_factor:totp-setup:'
 TOTP_PERIOD_SECONDS = 30
 TOTP_DIGITS = 6
@@ -42,6 +43,10 @@ def _code_key(user_id, purpose):
 
 def _challenge_key(challenge):
     return f'{_CHALLENGE_PREFIX}{challenge}'
+
+
+def _challenge_attempts_key(challenge):
+    return f'{_CHALLENGE_ATTEMPTS_PREFIX}{challenge}'
 
 
 def _expiry_key(user_id, purpose):
@@ -102,6 +107,18 @@ def pending_totp_secret(user):
 
 def discard_pending_totp_secret(user):
     cache.delete(_totp_setup_key(user.pk))
+
+
+def invalidate_user_artifacts(user):
+    """Invalidate every user-addressable MFA artifact.
+
+    Login challenge keys are random and cannot be enumerated; their embedded
+    auth revision makes them fail closed after a recovery bump.
+    """
+
+    for purpose in (PURPOSE_SETUP, PURPOSE_LOGIN, PURPOSE_DISABLE, PURPOSE_BACKUP):
+        _clear_code(user.pk, purpose)
+    discard_pending_totp_secret(user)
 
 
 def _totp_code(secret, counter):
@@ -219,7 +236,11 @@ def start_login_challenge(user, portal):
     challenge = secrets.token_urlsafe(32)
     cache.set(
         _challenge_key(challenge),
-        {'user_id': user.pk, 'portal': portal or ''},
+        {
+            'user_id': user.pk,
+            'portal': portal or '',
+            'auth_revision': user.auth_revision,
+        },
         settings.TWO_FACTOR_CODE_TTL,
     )
     return challenge
@@ -232,6 +253,43 @@ def get_login_challenge(challenge):
 def consume_login_challenge(challenge):
     if challenge:
         cache.delete(_challenge_key(challenge))
+        cache.delete(_challenge_attempts_key(challenge))
+
+
+def register_failed_login_attempt(challenge):
+    """Đếm số lần nhập sai trên MỘT challenge, không phân biệt phương thức.
+
+    ``verify_code`` chỉ giới hạn được mã email vì nó giữ ngân sách theo mã. TOTP
+    và mã dự phòng không có mã lưu phía server, nên nếu không đếm ở đây thì
+    challenge sống hết TTL và cho phép dò 6 chữ số thoải mái — chỉ còn rate
+    limit theo IP đứng chắn, mà kẻ tấn công phân tán IP thì không còn gì cả.
+
+    Trả về ``True`` khi challenge vừa bị hủy vì hết lượt.
+    """
+    if not challenge:
+        return False
+    key = _challenge_attempts_key(challenge)
+    attempts = (cache.get(key) or 0) + 1
+    if attempts >= MAX_VERIFY_ATTEMPTS:
+        consume_login_challenge(challenge)
+        return True
+    cache.set(key, attempts, settings.TWO_FACTOR_CODE_TTL)
+    return False
+
+
+def register_failed_verification(user, purpose):
+    """Ngân sách nhập sai cho các luồng step-up đã đăng nhập (không có challenge).
+
+    Hết lượt thì hủy mã hiện tại, buộc người dùng yêu cầu mã mới thay vì cho dò
+    TOTP/mã dự phòng không giới hạn.
+    """
+    key = _attempts_key(user.pk, purpose)
+    attempts = (cache.get(key) or 0) + 1
+    if attempts >= MAX_VERIFY_ATTEMPTS:
+        _clear_code(user.pk, purpose)
+        return True
+    cache.set(key, attempts, settings.TWO_FACTOR_CODE_TTL)
+    return False
 
 
 def _employer_action_label(purpose, target=None):
@@ -249,11 +307,12 @@ def _employer_action_label(purpose, target=None):
     return 'Xác thực 2 yếu tố'
 
 
-def send_two_factor_email(user, purpose, *, target=None):
+def send_two_factor_email(user, purpose, *, target=None, recipient=None):
     """Gửi mã đã được phát trước đó; job cũ không thể gửi mã hết hạn."""
     code = cache.get(_code_key(user.pk, purpose))
     if not code:
         return
+    recipient = recipient or user.email
     site_name = site_setting('site_name', 'ProCV')
     minutes = max(1, settings.TWO_FACTOR_CODE_TTL // 60)
     portal_label = (
@@ -294,7 +353,7 @@ def send_two_factor_email(user, purpose, *, target=None):
             </div>
           </div>
         </div>"""
-        send_html_email(subject=subject, text=text, html=html, to=user.email)
+        send_html_email(subject=subject, text=text, html=html, to=recipient)
         return
 
     text = (
@@ -308,4 +367,4 @@ def send_two_factor_email(user, purpose, *, target=None):
       <p style="margin:24px 0;text-align:center;font-size:30px;font-weight:700;letter-spacing:8px;color:#00b14f">{code}</p>
       <p>Mã có hiệu lực trong <strong>{minutes} phút</strong>. Không chia sẻ mã này với bất kỳ ai.</p>
     </div>"""
-    send_html_email(subject=subject, text=text, html=html, to=user.email)
+    send_html_email(subject=subject, text=text, html=html, to=recipient)

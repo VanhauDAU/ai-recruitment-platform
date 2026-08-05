@@ -9,30 +9,20 @@ const mocks = vi.hoisted(() => ({ getCampaignJobPerformance: vi.fn() }))
 
 vi.mock('@/entities/campaign', () => ({
   campaignKeys: {
-    jobPerformance: (publicId, days) => ['campaigns', 'job-performance', publicId, days],
+    jobPerformance: (publicId, days, jobPublicId = '') => [
+      'campaigns',
+      'job-performance',
+      publicId,
+      days,
+      jobPublicId || 'all',
+    ],
   },
   getCampaignJobPerformance: mocks.getCampaignJobPerformance,
 }))
 
-function performance(days = 7) {
-  return {
-    range: { days, start: '2026-07-16', end: '2026-07-22' },
-    data_available_from: '2026-07-22',
-    summary: {
-      impressions: 100,
-      views: 20,
-      applications: 5,
-      view_rate: 20,
-      application_rate: 25,
-    },
-    daily: Array.from({ length: days }, (_, index) => ({
-      date: `2026-07-${String(index + 1).padStart(2, '0')}`,
-      available: true,
-      impressions: index + 1,
-      views: index % 2,
-      applications: 0,
-    })),
-    jobs: [{
+function performance(days = 7, jobPublicId = '') {
+  const jobs = [
+    {
       public_id: 'job_1',
       slug: 'ky-su-frontend',
       title: 'Kỹ sư Frontend',
@@ -45,7 +35,57 @@ function performance(days = 7) {
       applications: 5,
       view_rate: 20,
       application_rate: 25,
-    }],
+    },
+    {
+      public_id: 'job_2',
+      slug: 'backend-engineer',
+      title: 'Backend Engineer',
+      status: 'closed',
+      deadline: '2026-09-15',
+      available: true,
+      data_available_from: '2026-07-22',
+      impressions: 50,
+      views: 10,
+      applications: 1,
+      view_rate: 20,
+      application_rate: 10,
+    },
+  ]
+  const selectedJob = jobs.find((job) => job.public_id === jobPublicId)
+  const summary = selectedJob
+    ? {
+        impressions: selectedJob.impressions,
+        views: selectedJob.views,
+        applications: selectedJob.applications,
+        view_rate: selectedJob.view_rate,
+        application_rate: selectedJob.application_rate,
+      }
+    : {
+        impressions: 150,
+        views: 30,
+        applications: 6,
+        view_rate: 20,
+        application_rate: 20,
+      }
+  return {
+    range: { days, start: '2026-07-16', end: '2026-07-22' },
+    data_available_from: '2026-07-22',
+    scope: {
+      type: selectedJob ? 'job' : 'all_jobs',
+      job_public_id: selectedJob?.public_id || null,
+      job_title: selectedJob?.title || null,
+      included_job_count: selectedJob ? 1 : jobs.length,
+      total_job_count: jobs.length,
+    },
+    summary,
+    daily: Array.from({ length: days }, (_, index) => ({
+      date: `2026-07-${String(index + 1).padStart(2, '0')}`,
+      available: true,
+      impressions: index === days - 1 ? summary.impressions : 0,
+      views: index === days - 1 ? summary.views : 0,
+      applications: index === days - 1 ? summary.applications : 0,
+    })),
+    jobs,
   }
 }
 
@@ -62,13 +102,18 @@ function renderPanel(campaign) {
 
 describe('CampaignJobsPanel', () => {
   beforeEach(() => {
-    mocks.getCampaignJobPerformance.mockReset().mockImplementation((_, days) => Promise.resolve(performance(days)))
+    mocks.getCampaignJobPerformance.mockReset().mockImplementation((_, days, jobPublicId) => (
+      Promise.resolve(performance(days, jobPublicId))
+    ))
   })
 
-  it('renders the three-series report and period-aligned job metrics', async () => {
+  it('defaults to the aggregate report and keeps per-job metrics in the table', async () => {
     renderPanel()
 
     expect(await screen.findByText('Báo cáo Tin tuyển dụng:')).toBeInTheDocument()
+    expect(screen.getByText('Tất cả 2 tin trong chiến dịch')).toBeInTheDocument()
+    expect(screen.getByText('Các chỉ số và biểu đồ đang tổng hợp toàn bộ 2 tin tuyển dụng.')).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Phạm vi báo cáo' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
       'href',
       '/tuyendung/app/jobs/new?campaign=camp_1',
@@ -85,10 +130,36 @@ describe('CampaignJobsPanel', () => {
       'href',
       '/tuyendung/app/jobs/job_1/edit',
     )
-    expect(screen.getAllByText('100').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('button', { name: 'Xem báo cáo Kỹ sư Frontend' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xem báo cáo Backend Engineer' })).toBeInTheDocument()
+    expect(screen.getByText('Lượt hiển thị', { selector: 'p' }).closest('article')).toHaveTextContent('150')
     expect(screen.getAllByText('20%').length).toBeGreaterThan(0)
     expect(screen.getAllByText('25%').length).toBeGreaterThan(0)
     expect(screen.getByText(/bao gồm ứng tuyển lại/)).toBeInTheDocument()
+  })
+
+  it('opens one job report from its table row and can return to the aggregate report', async () => {
+    const user = userEvent.setup()
+    renderPanel()
+    await screen.findByText('Tất cả 2 tin trong chiến dịch')
+
+    await user.click(screen.getByRole('button', { name: 'Xem báo cáo Backend Engineer' }))
+
+    await waitFor(() => expect(mocks.getCampaignJobPerformance).toHaveBeenLastCalledWith(
+      'camp_1',
+      7,
+      'job_2',
+    ))
+    await waitFor(() => expect(screen.getByText('Lượt hiển thị', { selector: 'p' }).closest('article')).toHaveTextContent('50'))
+    expect(screen.getByText('Các chỉ số và biểu đồ đang hiển thị riêng tin đã chọn.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xem báo cáo Backend Engineer' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Xem báo cáo tổng hợp' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xem báo cáo Kỹ sư Frontend' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Xem báo cáo tổng hợp' }))
+
+    await waitFor(() => expect(screen.getByText('Tất cả 2 tin trong chiến dịch')).toBeInTheDocument())
+    expect(screen.getByText('Lượt hiển thị', { selector: 'p' }).closest('article')).toHaveTextContent('150')
   })
 
   it('reloads the report when the recruiter selects 30 days', async () => {
@@ -99,7 +170,7 @@ describe('CampaignJobsPanel', () => {
     await user.click(screen.getByRole('combobox', { name: 'Khoảng thời gian báo cáo' }))
     await user.click(await screen.findByText('30 ngày qua', { selector: '.ant-select-item-option-content' }))
 
-    await waitFor(() => expect(mocks.getCampaignJobPerformance).toHaveBeenLastCalledWith('camp_1', 30))
+    await waitFor(() => expect(mocks.getCampaignJobPerformance).toHaveBeenLastCalledWith('camp_1', 30, ''))
   })
 
   it('shows unavailable values as dashes instead of false zeroes', async () => {

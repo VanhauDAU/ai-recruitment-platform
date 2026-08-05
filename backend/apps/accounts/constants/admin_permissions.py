@@ -24,6 +24,24 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem danh sách và chi tiết tài khoản quản trị nội bộ.',
     },
     {
+        'code': 'account.email.manage',
+        'module': 'account',
+        'label': 'Khôi phục email đăng nhập',
+        'description': 'Đổi email đăng nhập sau khi hoàn tất quy trình xác minh danh tính thủ công.',
+    },
+    {
+        'code': 'account.employer.view',
+        'module': 'account',
+        'label': 'Xem tài khoản nhà tuyển dụng',
+        'description': 'Xem danh sách và chi tiết tài khoản nhà tuyển dụng, không mở dữ liệu ứng viên.',
+    },
+    {
+        'code': 'account.mfa.reset',
+        'module': 'account',
+        'label': 'Đặt lại xác thực đa yếu tố',
+        'description': 'Xóa các phương thức xác thực đa yếu tố sau khi xác minh danh tính thủ công.',
+    },
+    {
         'code': 'account.profile.manage',
         'module': 'account',
         'label': 'Sửa thông tin tài khoản',
@@ -36,10 +54,22 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem dữ liệu cá nhân, consent, CV và giấy tờ riêng tư có ghi audit.',
     },
     {
+        'code': 'account.resource_hold.release',
+        'module': 'account',
+        'label': 'Gỡ giữ tài nguyên tài khoản',
+        'description': 'Gỡ policy hold sau khi hoàn tất rà soát tài nguyên của tài khoản bị cấm hoặc khóa cũ.',
+    },
+    {
         'code': 'account.security.manage',
         'module': 'account',
         'label': 'Hỗ trợ bảo mật tài khoản',
         'description': 'Gửi xác minh, đặt lại mật khẩu và thu hồi phiên tài khoản.',
+    },
+    {
+        'code': 'account.status.ban',
+        'module': 'account',
+        'label': 'Cấm tài khoản',
+        'description': 'Cấm tài khoản và giữ tài nguyên liên quan để rà soát trước khi khôi phục.',
     },
     {
         'code': 'account.status.manage',
@@ -84,6 +114,24 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem và xuất lịch sử thay đổi quyền quản trị.',
     },
     {
+        'code': 'announcement.manage',
+        'module': 'announcement',
+        'label': 'Quản lý thông báo',
+        'description': 'Tạo thông báo và revision nội dung trước khi phát hành.',
+    },
+    {
+        'code': 'announcement.publish',
+        'module': 'announcement',
+        'label': 'Phát hành thông báo',
+        'description': 'Phát hành, lên lịch, tạm dừng, tiếp tục hoặc lưu trữ thông báo.',
+    },
+    {
+        'code': 'announcement.view',
+        'module': 'announcement',
+        'label': 'Xem thông báo',
+        'description': 'Xem danh sách, nội dung, lịch sử revision và hiệu quả thông báo.',
+    },
+    {
         'code': 'blog.manage',
         'module': 'blog',
         'label': 'Quản lý bài viết',
@@ -112,6 +160,24 @@ ADMIN_PERMISSIONS = (
         'module': 'consultation_lead',
         'label': 'Xem lead tư vấn',
         'description': 'Xem thông tin lead tư vấn doanh nghiệp.',
+    },
+    {
+        'code': 'company.sensitive.view',
+        'module': 'company',
+        'label': 'Xem dữ liệu công ty nhạy cảm',
+        'description': 'Xem đầy đủ mã số thuế, email và số điện thoại của công ty.',
+    },
+    {
+        'code': 'company.view',
+        'module': 'company',
+        'label': 'Xem công ty',
+        'description': 'Xem danh sách và hồ sơ pháp lý của công ty tuyển dụng.',
+    },
+    {
+        'code': 'company_recruiter.view',
+        'module': 'company',
+        'label': 'Xem nhà tuyển dụng của công ty',
+        'description': 'Xem owner, member và trạng thái xác thực của nhà tuyển dụng thuộc công ty.',
     },
     {
         'code': 'company_update.review',
@@ -186,6 +252,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Phê duyệt tin tuyển dụng đã gửi duyệt.',
     },
     {
+        'code': 'job_moderation.enforce_visibility',
+        'module': 'job_moderation',
+        'label': 'Tạm ẩn hoặc khôi phục tin tuyển dụng',
+        'description': 'Áp dụng hoặc gỡ moderation hold mà không đổi trạng thái nghiệp vụ của tin.',
+    },
+    {
         'code': 'job_moderation.reject',
         'module': 'job_moderation',
         'label': 'Từ chối tin tuyển dụng',
@@ -200,8 +272,14 @@ ADMIN_PERMISSIONS = (
     {
         'code': 'job_moderation.view',
         'module': 'job_moderation',
-        'label': 'Xem tin chờ duyệt',
-        'description': 'Xem danh sách tin tuyển dụng cần kiểm duyệt.',
+        'label': 'Xem quản lý tin tuyển dụng',
+        'description': 'Xem danh sách, chi tiết, lịch sử và hàng chờ kiểm duyệt tin tuyển dụng.',
+    },
+    {
+        'code': 'job_moderation.view_sensitive_contact',
+        'module': 'job_moderation',
+        'label': 'Xem liên hệ nhận hồ sơ',
+        'description': 'Xem email và số điện thoại nội bộ nhận hồ sơ khi rà soát gian lận.',
     },
     {
         'code': 'service_catalog.manage',
@@ -230,3 +308,56 @@ ADMIN_PERMISSIONS = (
 )
 
 ADMIN_PERMISSION_CODES = frozenset(item['code'] for item in ADMIN_PERMISSIONS)
+
+# Quan hệ quyền nền được sở hữu ở backend để API, seed và UI không thể tạo một
+# chức danh có quyền thao tác nhưng thiếu quyền đọc tài nguyên tương ứng.
+ADMIN_PERMISSION_DEPENDENCIES = {
+    'account.admin.manage': ('account.admin.view',),
+    'account.email.manage': ('account.view', 'account.security.manage'),
+    'account.mfa.reset': ('account.view', 'account.security.manage'),
+    'account.profile.manage': ('account.view',),
+    'account.resource_hold.release': ('account.view', 'account.status.manage'),
+    'account.security.manage': ('account.view',),
+    'account.sensitive.view': ('account.view',),
+    'account.status.ban': ('account.view', 'account.status.manage'),
+    'account.status.manage': ('account.view',),
+    'admin_access.manage_department': ('admin_access.view',),
+    'admin_access.manage_role': ('admin_access.view',),
+    'admin_access.manage_staff': ('admin_access.view',),
+    'announcement.manage': ('announcement.view',),
+    'announcement.publish': ('announcement.view',),
+    'blog.manage': ('blog.view',),
+    'blog.publish': ('blog.view',),
+    'company.sensitive.view': ('company.view',),
+    'company_recruiter.view': ('company.view',),
+    'company_update.review': ('company_update.view',),
+    'consultation_lead.manage': ('consultation_lead.view',),
+    'cv_template.archive': ('cv_template.view',),
+    'cv_template.create': ('cv_template.view',),
+    'cv_template.delete': ('cv_template.view',),
+    'cv_template.edit': ('cv_template.view',),
+    'cv_template.publish': ('cv_template.view',),
+    'employer_verification.review': ('employer_verification.view',),
+    'job_moderation.approve': ('job_moderation.view',),
+    'job_moderation.enforce_visibility': ('job_moderation.view',),
+    'job_moderation.reject': ('job_moderation.view',),
+    'job_moderation.resolve_report': ('job_moderation.view',),
+    'job_moderation.view_sensitive_contact': ('job_moderation.view',),
+    'service_catalog.manage': ('service_catalog.view',),
+    'site_setting.manage': ('site_setting.view',),
+}
+
+
+def expand_admin_permission_codes(codes):
+    """Bổ sung đệ quy mọi quyền nền cần thiết cho một tập quyền."""
+
+    expanded = set(codes)
+    pending = list(expanded)
+    while pending:
+        code = pending.pop()
+        for required_code in ADMIN_PERMISSION_DEPENDENCIES.get(code, ()):
+            if required_code in expanded:
+                continue
+            expanded.add(required_code)
+            pending.append(required_code)
+    return expanded

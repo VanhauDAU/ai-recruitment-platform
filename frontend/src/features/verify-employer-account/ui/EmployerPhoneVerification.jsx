@@ -21,11 +21,19 @@ import {
 import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { EMPLOYER_PASSWORD_SETTINGS_URL } from '@/shared/config/portals'
+import {
+  EMPLOYER_PASSWORD_SETTINGS_URL,
+  EMPLOYER_PHONE_VERIFY_URL,
+} from '@/shared/config/portals'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
+import { getPasswordSetupFromPhoneUrl } from '../model/phone-verification-navigation'
 
 const BANNER_SRC = '/images/employer/phone-verify-banner.png'
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
+const PASSWORD_SETTINGS_FROM_PHONE_URL = getPasswordSetupFromPhoneUrl(
+  EMPLOYER_PASSWORD_SETTINGS_URL,
+  EMPLOYER_PHONE_VERIFY_URL,
+)
 
 const BENEFITS = [
   {
@@ -146,7 +154,10 @@ export default function EmployerPhoneVerification() {
             description={
               <span>
                 Vui lòng{' '}
-                <Link to={EMPLOYER_PASSWORD_SETTINGS_URL} className="font-bold">
+                <Link
+                  to={PASSWORD_SETTINGS_FROM_PHONE_URL}
+                  className="font-bold"
+                >
                   cập nhật mật khẩu tại đây
                 </Link>{' '}
                 trước khi xác thực số điện thoại. Hỗ trợ: {hotline} · {supportEmail}.

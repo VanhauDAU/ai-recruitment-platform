@@ -9,6 +9,7 @@ from django.db import close_old_connections, connection
 from django.test import TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.admin_invitation_tokens import create_admin_invitation_token
@@ -34,9 +35,12 @@ from apps.accounts.services import (
 from apps.employers.models import (
     CampaignActivity,
     Company,
+    EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentCampaign,
+    RecruitmentNeed,
 )
+from apps.jobs.models import JobCategory
 
 
 class AccountManagementG3ApiTests(TestCase):
@@ -141,7 +145,228 @@ class AccountManagementG3ApiTests(TestCase):
             self.department.code,
         )
 
-    def test_locking_employer_pauses_only_their_active_campaigns(self):
+    def test_employer_view_permission_does_not_expose_candidates(self):
+        employer_permission, _ = AdminPermission.objects.get_or_create(
+            code='account.employer.view',
+            defaults={
+                'module': 'account',
+                'label': 'Xem tài khoản nhà tuyển dụng',
+            },
+        )
+        employer_role = AdminRole.objects.create(
+            department=self.department,
+            code='employer-reader',
+            name='Tra cứu NTD',
+        )
+        employer_role.permissions.add(employer_permission)
+        assign_membership(self.provisioner, employer_role, actor=self.superuser)
+        candidate = User.objects.create_user(
+            'candidate-scope@example.com',
+            self.password,
+            role=User.Role.CANDIDATE,
+            status=User.Status.ACTIVE,
+        )
+        employer = User.objects.create_user(
+            'employer-scope@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+        )
+        self.authenticate(self.provisioner)
+
+        response = self.client.get(reverse('admin-account-list'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(
+            [item['public_id'] for item in response.json()['results']],
+            [employer.public_id],
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse('admin-account-detail', kwargs={'public_id': employer.public_id})
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse('admin-account-detail', kwargs={'public_id': candidate.public_id})
+            ).status_code,
+            404,
+        )
+
+    def test_explicit_account_scopes_separate_users_and_recruiters(self):
+        candidate = User.objects.create_user(
+            'scoped-candidate@example.com',
+            self.password,
+            role=User.Role.CANDIDATE,
+            status=User.Status.ACTIVE,
+        )
+        employer = User.objects.create_user(
+            'scoped-employer@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+        )
+        self.authenticate(self.superuser)
+
+        users = self.client.get(reverse('admin-account-list'), {'scope': 'users'})
+        recruiters = self.client.get(
+            reverse('admin-account-list'),
+            {'scope': 'recruiters'},
+        )
+
+        self.assertEqual(users.status_code, 200, users.data)
+        self.assertIn(candidate.public_id, [item['public_id'] for item in users.data['results']])
+        self.assertNotIn(employer.public_id, [item['public_id'] for item in users.data['results']])
+        self.assertEqual(recruiters.status_code, 200, recruiters.data)
+        self.assertEqual(
+            [item['public_id'] for item in recruiters.data['results']],
+            [employer.public_id],
+        )
+
+    def test_account_scope_rejects_incompatible_role_and_invalid_status(self):
+        self.authenticate(self.superuser)
+
+        incompatible = self.client.get(
+            reverse('admin-account-list'),
+            {'scope': 'users', 'role': User.Role.EMPLOYER},
+        )
+        invalid_status = self.client.get(
+            reverse('admin-account-list'),
+            {'scope': 'users', 'status': 'active,unknown'},
+        )
+
+        self.assertEqual(incompatible.status_code, 400)
+        self.assertEqual(invalid_status.status_code, 400)
+
+    def test_scoped_summaries_use_full_scope_and_live_pending_invitations(self):
+        User.objects.create_user(
+            'summary-candidate@example.com',
+            self.password,
+            role=User.Role.CANDIDATE,
+            status=User.Status.BANNED,
+            email_verified=False,
+        )
+        linked_user = User.objects.create_user(
+            'summary-linked@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+            email_verified=True,
+        )
+        missing_user = User.objects.create_user(
+            'summary-missing@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.INACTIVE,
+        )
+        company = Company.objects.create(
+            company_name='Summary company',
+            created_by=linked_user,
+        )
+        recruiter = RecruiterProfile.objects.create(
+            user=linked_user,
+            company=company,
+            registration_completed_at=timezone.now(),
+        )
+        RecruiterProfile.objects.create(user=missing_user)
+        EmployerVerificationCase.objects.create(
+            recruiter=recruiter,
+            company=company,
+            status=EmployerVerificationCase.Status.APPROVED,
+        )
+        category = JobCategory.objects.create(
+            name='Nhu cầu cho thống kê tài khoản',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=recruiter,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=timezone.now(),
+        )
+        invitation = self.invite(email='summary-invited@example.com')
+        self.assertEqual(invitation.status_code, 201)
+        self.authenticate(self.superuser)
+
+        users = self.client.get(
+            reverse('admin-account-summary'),
+            {'scope': 'users'},
+        )
+        recruiters = self.client.get(
+            reverse('admin-account-summary'),
+            {'scope': 'recruiters'},
+        )
+
+        self.assertEqual(users.status_code, 200, users.data)
+        self.assertEqual(users.data['by_role']['candidate']['total'], 1)
+        self.assertEqual(users.data['by_role']['candidate']['restricted'], 1)
+        self.assertEqual(users.data['queues']['pending_admin_invitations'], 1)
+        self.assertEqual(recruiters.status_code, 200, recruiters.data)
+        self.assertEqual(recruiters.data['totals']['total'], 2)
+        self.assertEqual(recruiters.data['linked_company'], 1)
+        self.assertEqual(recruiters.data['companyless'], 1)
+        self.assertEqual(recruiters.data['onboarding_incomplete'], 1)
+        self.assertEqual(recruiters.data['verification']['approved'], 1)
+
+    def test_recruiter_list_derives_initial_setup_and_supports_ordering(self):
+        complete_user = User.objects.create_user(
+            'complete-setup@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+            email_verified=True,
+        )
+        incomplete_user = User.objects.create_user(
+            'incomplete-setup@example.com',
+            self.password,
+            role=User.Role.EMPLOYER,
+            status=User.Status.ACTIVE,
+            email_verified=True,
+        )
+        complete = RecruiterProfile.objects.create(
+            user=complete_user,
+            registration_completed_at=timezone.now(),
+        )
+        RecruiterProfile.objects.create(
+            user=incomplete_user,
+            registration_completed_at=timezone.now(),
+        )
+        category = JobCategory.objects.create(
+            name='Nhu cầu hoàn tất thiết lập',
+            category_type=JobCategory.CategoryType.SPECIALIZATION,
+        )
+        RecruitmentNeed.objects.create(
+            recruiter=complete,
+            position_category=category,
+            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
+            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
+            completed_at=timezone.now(),
+        )
+        self.authenticate(self.superuser)
+
+        response = self.client.get(
+            reverse('admin-account-list'),
+            {
+                'scope': 'recruiters',
+                'ordering': '-recruiter_initial_onboarding_completed',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        results = response.data['results']
+        self.assertEqual(results[0]['public_id'], complete_user.public_id)
+        self.assertTrue(results[0]['context']['initial_onboarding']['completed'])
+        incomplete = next(
+            item for item in results if item['public_id'] == incomplete_user.public_id
+        )
+        self.assertEqual(
+            incomplete['context']['initial_onboarding']['missing_steps'],
+            ['consulting_need_completed'],
+        )
+
+    def test_banning_employer_holds_only_nonterminal_campaigns(self):
         employer = User.objects.create_user(
             'campaign-owner@example.com',
             self.password,
@@ -165,26 +390,38 @@ class AccountManagementG3ApiTests(TestCase):
             employer,
             status=User.Status.BANNED,
             reason='Vi phạm chính sách.',
+            enforcement_evidence='Ticket SEC-123 đã được bộ phận an toàn xác minh.',
+            violation_category='policy',
         )
 
         confirm_account_status(
             employer,
             status=User.Status.BANNED,
             reason='Vi phạm chính sách.',
+            enforcement_evidence='Ticket SEC-123 đã được bộ phận an toàn xác minh.',
+            violation_category='policy',
             impact_token=impact['impact_token'],
             actor=self.superuser,
         )
 
         active_campaign.refresh_from_db()
         completed_campaign.refresh_from_db()
-        self.assertEqual(active_campaign.status, RecruitmentCampaign.Status.PAUSED)
+        self.assertEqual(active_campaign.status, RecruitmentCampaign.Status.ACTIVE)
+        self.assertEqual(
+            active_campaign.policy_hold,
+            RecruitmentCampaign.PolicyHold.BAN_REVIEW,
+        )
         self.assertEqual(completed_campaign.status, RecruitmentCampaign.Status.COMPLETED)
+        self.assertEqual(
+            completed_campaign.policy_hold,
+            RecruitmentCampaign.PolicyHold.NONE,
+        )
         self.assertTrue(
             CampaignActivity.objects.filter(
                 campaign=active_campaign,
-                event_type=CampaignActivity.EventType.CAMPAIGN_PAUSED,
+                event_type=CampaignActivity.EventType.ACCOUNT_POLICY_HELD,
                 actor=self.superuser,
-                metadata={'reason': 'employer_account_locked'},
+                metadata__reason='account_status_policy_hold',
             ).exists()
         )
 
@@ -402,7 +639,7 @@ class AccountManagementG3ApiTests(TestCase):
         self.authenticate(self.superuser)
         url = reverse('admin-account-list')
         with CaptureQueriesContext(connection) as baseline:
-            response = self.client.get(url)
+            response = self.client.get(url, {'scope': 'users'})
             self.assertEqual(response.status_code, 200)
             list(response.data['results'])
         for index in range(12):
@@ -413,7 +650,7 @@ class AccountManagementG3ApiTests(TestCase):
                 status=User.Status.ACTIVE,
             )
         with CaptureQueriesContext(connection) as expanded:
-            response = self.client.get(url)
+            response = self.client.get(url, {'scope': 'users'})
             self.assertEqual(response.status_code, 200)
             list(response.data['results'])
         self.assertLessEqual(len(expanded), len(baseline) + 1)
@@ -434,6 +671,7 @@ class AccountManagementG3ApiTests(TestCase):
                 'admin-account-send-password-reset',
                 kwargs={'public_id': locked_admin.public_id},
             ),
+            {'reason': 'Admin báo quên mật khẩu qua quy trình hỗ trợ nội bộ'},
             format='json',
         )
 
@@ -445,6 +683,41 @@ class AccountManagementG3ApiTests(TestCase):
                 kind=AuthEmailJob.Kind.PASSWORD_RESET,
             ).exists()
         )
+
+    def test_password_reset_email_requires_and_audits_a_reason(self):
+        managed_admin = User.objects.create_user(
+            'managed-admin@example.com',
+            self.password,
+            role=User.Role.ADMIN,
+            status=User.Status.ACTIVE,
+            is_active=True,
+        )
+        assign_membership(managed_admin, self.target_role, actor=self.superuser)
+        self.authenticate(self.superuser)
+        url = reverse(
+            'admin-account-send-password-reset',
+            kwargs={'public_id': managed_admin.public_id},
+        )
+
+        missing_reason = self.client.post(url, {}, format='json')
+        self.assertEqual(missing_reason.status_code, 400)
+        self.assertIn('reason', missing_reason.json())
+
+        reason = 'Đã xác minh danh tính admin qua quy trình hỗ trợ nội bộ'
+        response = self.client.post(url, {'reason': reason}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            AuthEmailJob.objects.filter(
+                user=managed_admin,
+                kind=AuthEmailJob.Kind.PASSWORD_RESET,
+            ).exists()
+        )
+        audit = AdminAccessAuditLog.objects.filter(
+            action='send_account_password_reset',
+            target_public_id=managed_admin.public_id,
+        ).latest('created_at')
+        self.assertEqual(audit.payload['reason'], reason)
 
     def test_audit_does_not_contain_the_invitation_token(self):
         response = self.invite()

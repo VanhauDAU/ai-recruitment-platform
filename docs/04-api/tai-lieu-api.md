@@ -33,7 +33,8 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/password-reset/` | Gửi email chứa link đặt lại mật khẩu (public, cần `captcha_token`). **Luôn trả 200 kèm cùng một `detail`** dù email có tồn tại hay không — chống dò danh sách email. Cooldown 60s/tài khoản (im lặng), throttle 5/phút theo IP |
 | GET | `/api/auth/password-reset/validate/?token=` | Kiểm tra link còn hiệu lực, **không tiêu token**; 200 → `{email, role}`, 400 → link sai/hết hạn/tài khoản đã khóa. Link Admin phải thêm `portal=admin` và chỉ được phát từ khu vực quản trị. |
 | POST | `/api/auth/password-reset/confirm/` | Đổi `token` + `password` lấy mật khẩu mới (public — token là bằng chứng, không cần captcha). Token dùng **một lần**, TTL 30 phút. Với Admin, body bắt buộc có `portal: "admin"`; tài khoản không active bị từ chối. Trả `{detail, role}` để frontend điều hướng về đúng cổng đăng nhập. Throttle riêng 10/phút (`password_reset_confirm`) |
-| POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu đặt lần đầu chỉ với `password`. Có thể gửi `logout_all_sessions` để thu hồi các phiên khác; response xoay token của phiên hiện tại. Phiên OAuth không còn đủ mới trả `403 {code: "reauth_required"}` để client xóa phiên cũ và đưa người dùng đăng nhập lại. |
+| GET | `/api/auth/password/` | Điều kiện đặt/đổi mật khẩu của **phiên hiện tại**: `{has_usable_password, requires_reauth, reauth_provider, reauth_max_age_seconds}`. Client gọi trước khi hiển thị form để cảnh báo sớm, thay vì để người dùng điền xong rồi mới nhận 403. `reauth_provider` chỉ có giá trị khi `requires_reauth` = true; `null` nghĩa là tài khoản không có provider nào để xác thực lại (phải dùng luồng quên mật khẩu). |
+| POST | `/api/auth/password/` | Đổi mật khẩu khi đã đăng nhập. Tài khoản thường gửi `current_password`; tài khoản OAuth chưa có mật khẩu đặt lần đầu chỉ với `password`. Có thể gửi `logout_all_sessions` để thu hồi các phiên khác; response xoay token của phiên hiện tại. Cả GET lẫn POST đều yêu cầu access token và refresh cookie trỏ về **cùng một phiên** (`sid`), và phiên OAuth quá cũ trả `403 {code: "reauth_required", reauth_provider}` để client mở luồng xác thực lại tại chỗ. |
 | POST | `/api/auth/avatar/` | Upload avatar vào storage nội bộ (JPG/PNG/GIF/WebP, multipart `file`; DB lưu storage key) |
 | GET | `/api/auth/oauth/{provider}/start/?portal=main\|employer&next=/...` | Bắt đầu social login (`provider` = google/facebook/linkedin), redirect sang provider. Cổng `employer` chỉ chấp nhận google |
 | GET | `/api/auth/oauth/{provider}/callback/` | Provider gọi lại; verify state, tạo/liên kết user, redirect về trang callback frontend kèm `one_time_code` (hoặc `?error=`) |
@@ -155,7 +156,8 @@ Base quản trị: `/api/admin/`; public accept: `/api/auth/admin-invitations/`.
 | GET | `/accounts/`, `/accounts/summary/`, `/accounts/{id}/` | Danh sách, KPI và chi tiết theo permission đọc |
 | PATCH | `/accounts/{id}/` | Sửa họ tên/SĐT; Admin active vẫn superuser-only |
 | GET | `/accounts/{id}/sessions/`, `/activity/` | Phiên và audit liên quan |
-| POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận khóa, mở khóa hoặc cấm |
+| POST | `/accounts/{id}/status-impact/`, `/change-status/` | Preview/xác nhận state machine tạm khóa, cấm, bắt đầu khôi phục hoặc mở lại; payload cấm cần `violation_category` và `enforcement_evidence` |
+| POST | `/accounts/{id}/resource-hold-impact/`, `/release-resource-holds/` | Superuser preview/xác nhận gỡ `ban_review`/`legacy_lock`; account vẫn inactive |
 | POST | `/accounts/{id}/revoke-sessions-impact/`, `/revoke-sessions/` | Preview/xác nhận thu hồi phiên |
 | POST | `/accounts/{id}/send-password-reset/`, `/resend-verification/` | Xếp lịch email bảo mật. Admin nhận template/link cổng Admin; không gửi reset cho tài khoản `inactive`/`banned`. |
 | GET/POST | `/account-invitations/` | Danh sách theo scope người mời / tạo lời mời |
@@ -175,6 +177,29 @@ khoảng lần đăng nhập và `ordering`. Lời mời hỗ trợ `q`, `status
 Các POST xác nhận impact bắt buộc gửi lại `impact_token` từ preview. Token stale
 trả `409 admin_resource_changed`. Role ngoài whitelist và thao tác vượt scope
 trả `403 admin_permission_denied`; validation field thông thường trả `400`.
+
+Contract trạng thái tài khoản:
+
+- `status-impact` nhận `status`, `reason`, `enforcement_evidence` và
+  `violation_category`. Evidence và nhóm vi phạm bắt buộc khi đích là
+  `banned`; evidence cũng bắt buộc khi bắt đầu khôi phục từ `banned`.
+- Transition hợp lệ: `active → inactive|banned`,
+  `inactive → active|banned`, `banned → inactive`. Không có
+  `banned → active`.
+- Response preview trả `transition_kind`, `active_session_count`, `effects`,
+  `requires_manual_resource_review`, `blocked_reasons`, `can_apply` và
+  `impact_token`. Client chỉ được bật confirm khi `can_apply=true`.
+- `change-status` nhận lại chính payload preview cộng `impact_token`. Confirm
+  trả `ManagedAccountDetail`; backend khóa account/session/campaign/job trước
+  khi xác nhận snapshot.
+- `resource-hold-impact` và `release-resource-holds` nhận `reason`,
+  `enforcement_evidence` (20–500 ký tự); chỉ superuser, chỉ áp dụng cho employer
+  `inactive` có `ban_review`/`legacy_lock`. Thao tác không đổi status nghiệp vụ
+  và không tự mở account.
+- Thiếu permission trả `403`; account `PENDING` hoặc transition sai trả `400`;
+  soft-deleted fail-closed thành `404`; input/snapshot/global audit revision
+  đổi giữa preview và confirm trả `409`. Client phải tải preview mới nhưng
+  không tự gửi confirm lại.
 
 ### API quản trị phân quyền G2
 
@@ -370,3 +395,39 @@ Payload tạo CV V2:
 vẫn được nhận cho client cũ nhưng không được gửi cùng `position_public_id`. Nếu gửi màu không
 active hoặc không được gán cho template, API trả `400 theme_color`. Màu hợp lệ
 được copy vào `style_json.theme_color` của initial version và draft.
+
+## Thông báo chạy đa cổng
+
+> Trạng thái AN-P1: backend foundation và OpenAPI đã triển khai. Runtime UI thuộc
+> AN-P2; dismiss/event/metrics thuộc AN-P4. Nguồn thiết kế canonical:
+> [kế hoạch hệ thống thông báo chạy](../03-database/ke-hoach-he-thong-thong-bao-chay.md).
+
+| Method | Endpoint | Quyền | Mục đích |
+| --- | --- | --- | --- |
+| `GET` | `/api/site/announcements/active/` | Theo surface/session | Feed runtime đã target và xếp priority |
+| `PUT` | `/api/site/announcements/{public_id}/state/` | Authenticated | Dismiss/snooze idempotent theo revision và dismissal version |
+| `POST` | `/api/site/announcements/events/` | Consent + throttle | Batch analytics best-effort; luôn không chặn runtime/CTA |
+| `POST` | `/api/site/announcements/runtime-events/` | AllowAny + throttle | Operational event PII-free cho feed/contract/render failure |
+| `GET/POST` | `/api/site/admin/announcements/` | `announcement.view/manage` | List/create |
+| `GET/PATCH` | `/api/site/admin/announcements/{public_id}/` | `announcement.view/manage` | Detail/lịch sử và đổi tên vận hành |
+| `POST` | `/api/site/admin/announcements/{public_id}/revisions/` | `announcement.manage` | Tạo revision mới |
+| `POST` | `/api/site/admin/announcements/{public_id}/publish/` | `announcement.publish` | Publish ngay hoặc schedule |
+| `POST` | `/api/site/admin/announcements/{public_id}/pause/` | `announcement.publish` | Pause |
+| `POST` | `/api/site/admin/announcements/{public_id}/resume/` | `announcement.publish` | Resume |
+| `POST` | `/api/site/admin/announcements/{public_id}/archive/` | `announcement.publish` | Archive |
+| `POST` | `/api/site/admin/announcements/{public_id}/reset-dismissals/` | `announcement.publish` | Tăng `dismissal_version` để hiện lại cho người đã đóng |
+| `POST` | `/api/site/admin/announcements/{public_id}/duplicate/` | `announcement.manage` | Tạo draft độc lập |
+| `GET` | `/api/site/admin/announcements/{public_id}/metrics/` | `announcement.view` | Summary và daily metrics toàn bộ revision, mặc định 30 ngày |
+
+Public feed yêu cầu `surface`, chấp nhận `path` và `locale`. Role/auth state lấy
+từ request. Surface/path/locale sai trả `400`; không có item trả `200` với mảng
+rỗng. Response luôn có `remote_enabled`; false nghĩa kill switch đang tắt
+surface và backend không query feed. Feed personalized dùng
+`Cache-Control: private, no-store`.
+
+Admin mutation lỗi validation trả `400`; thiếu quyền trả
+`403 admin_permission_denied`; resource không tồn tại trả `404`; revision stale
+trả `409 announcement_revision_stale`. Publish/pause/resume/archive là service
+transactional, khóa hàng bằng `select_for_update()` và ghi audit. Mọi mutation
+sau create gửi `revision_token`; publish gửi thêm số `revision`. Revision đã
+publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo revision mới.

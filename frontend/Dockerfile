@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 # Build vite -> serve tĩnh bằng nginx. Biến VITE_* phải có LÚC BUILD
 # (vite inline vào bundle) — truyền qua build args.
 FROM node:22-alpine AS build
@@ -5,13 +7,16 @@ FROM node:22-alpine AS build
 ARG VITE_API_BASE_URL
 ARG VITE_RECAPTCHA_SITE_KEY=
 ARG VITE_PUBLIC_ASSET_BASE_URL=
+ARG VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_RECAPTCHA_SITE_KEY=$VITE_RECAPTCHA_SITE_KEY \
-    VITE_PUBLIC_ASSET_BASE_URL=$VITE_PUBLIC_ASSET_BASE_URL
+    VITE_PUBLIC_ASSET_BASE_URL=$VITE_PUBLIC_ASSET_BASE_URL \
+    VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=$VITE_ANNOUNCEMENT_ROLLOUT_SURFACES
 
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 

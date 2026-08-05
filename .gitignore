@@ -16,7 +16,11 @@ celerybeat-schedule*
 
 # Python tooling
 .coverage
+.coverage.*
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.import_linter_cache/
 htmlcov/
 backend/coverage.json
 backend/pytest-results.xml
@@ -24,7 +28,8 @@ backend/pytest-results.xml
 # Node
 node_modules/
 frontend/dist/
-frontend/.vite/
+frontend/dist-ssr/
+.vite/
 
 # Env files
 .env

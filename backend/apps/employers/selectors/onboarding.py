@@ -8,6 +8,12 @@ from common.company_email import is_company_domain_email
 from ..models import CompanyDocument, EmployerVerificationCase
 from .company_status import has_explicit_company_link
 
+INITIAL_ONBOARDING_STEP_LABELS = {
+    'registration_completed': 'Hồ sơ đăng ký',
+    'email_verified': 'Xác minh email',
+    'consulting_need_completed': 'Nhu cầu tuyển dụng',
+}
+
 
 def _is_company_email(recruiter):
     """Return whether the verified user email belongs to the company domain."""
@@ -15,14 +21,51 @@ def _is_company_email(recruiter):
     return is_company_domain_email(recruiter.user.email, company_email)
 
 
+def build_employer_initial_onboarding(recruiter, *, has_recruitment_need=None):
+    """Derive the three steps that gate access to the employer application."""
+    if has_recruitment_need is None:
+        prefetched_needs = getattr(recruiter, 'verification_recruitment_needs', None)
+        has_recruitment_need = (
+            bool(prefetched_needs)
+            if prefetched_needs is not None
+            else recruiter.recruitment_needs.exists()
+        )
+    steps = {
+        'registration_completed': recruiter.registration_completed_at is not None,
+        'email_verified': recruiter.user.email_verified,
+        'consulting_need_completed': bool(has_recruitment_need),
+    }
+    missing_steps = [key for key, completed in steps.items() if not completed]
+    return {
+        'completed': not missing_steps,
+        'steps': steps,
+        'missing_steps': missing_steps,
+        'missing_step_labels': [INITIAL_ONBOARDING_STEP_LABELS[key] for key in missing_steps],
+    }
+
+
 def build_employer_onboarding_steps(recruiter):
     """Derive every onboarding/checklist state from its canonical record."""
+    initial_onboarding = build_employer_initial_onboarding(recruiter)
     company_linked = has_explicit_company_link(recruiter)
     case = getattr(recruiter, 'verification_case', None)
-    case_documents = (
-        CompanyDocument.objects.filter(verification_case=case, is_current=True)
-        if case is not None
-        else CompanyDocument.objects.none()
+    # Verification evidence is account-scoped. A recruiter joining an existing
+    # company must never inherit documents uploaded by another recruiter.
+    owned_documents = Q(
+        verification_case__isnull=True,
+        update_request__isnull=True,
+        recruiter=recruiter,
+    ) | Q(
+        verification_case__isnull=True,
+        update_request__isnull=True,
+        recruiter__isnull=True,
+        uploaded_by=recruiter.user,
+    )
+    if case is not None:
+        owned_documents |= Q(verification_case=case)
+    case_documents = CompanyDocument.objects.filter(
+        owned_documents,
+        is_current=True,
     )
     business_types = {
         CompanyDocument.DocType.AUTHORIZATION_LETTER,
@@ -38,16 +81,6 @@ def build_employer_onboarding_steps(recruiter):
         .exclude(status=CompanyDocument.Status.APPROVED)
         .exists()
     )
-    candidate_dpa = Q(
-        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        recruiter=recruiter,
-    )
-    if company_linked:
-        # Hỗ trợ văn bản DLCN cũ được lưu trước khi contract tách theo recruiter.
-        candidate_dpa |= Q(
-            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-            company=recruiter.company,
-        )
     has_candidate_dpa = (
         case_documents.filter(
             doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
@@ -62,27 +95,8 @@ def build_employer_onboarding_steps(recruiter):
         status=CompanyDocument.Status.APPROVED,
     ).exists()
     case_approved = case is not None and case.status == EmployerVerificationCase.Status.APPROVED
-    if not getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
-        # Compatibility while rollout is still in read-only/backlog mode.
-        legacy_business = (
-            company_linked
-            and recruiter.company.documents.filter(
-                doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-            )
-            .exclude(status=CompanyDocument.Status.REJECTED)
-            .exists()
-        )
-        legacy_dpa = (
-            CompanyDocument.objects.filter(candidate_dpa)
-            .exclude(status=CompanyDocument.Status.REJECTED)
-            .exists()
-        )
-        has_business_doc = has_business_doc or legacy_business
-        has_candidate_dpa = has_candidate_dpa or legacy_dpa
     steps = {
-        'email_verified': recruiter.user.email_verified,
-        'registration_completed': recruiter.registration_completed_at is not None,
-        'consulting_need_completed': recruiter.recruitment_needs.exists(),
+        **initial_onboarding['steps'],
         'phone_verified': recruiter.phone_verified_at is not None,
         'company_linked': company_linked,
         'business_doc_submitted': has_business_doc,
@@ -97,13 +111,7 @@ def build_employer_onboarding_steps(recruiter):
         'representative_verified': case_approved,
         'first_job_posted': recruiter.user.posted_jobs.exists(),
     }
-    steps['account_ready'] = all(
-        [
-            steps['email_verified'],
-            steps['registration_completed'],
-            steps['consulting_need_completed'],
-        ]
-    )
+    steps['account_ready'] = initial_onboarding['completed']
     # Xác thực tài khoản hoàn tất sau năm workflow bảo mật/pháp lý đang khả
     # dụng. Đăng tin đầu tiên là bước kích hoạt sản phẩm riêng và chưa được dùng
     # để buộc một tài khoản đã xác thực quay lại checklist ở mỗi lần đăng nhập.

@@ -4,9 +4,12 @@ import {
   changeAccountStatus,
   createAdminInvitation,
   getAdminAccounts,
+  getAdminAccountSummary,
+  getAccountResourceHoldImpact,
   getAvailableAdminInvitationRoles,
   getProvisioningScopeImpact,
   resendAdminInvitation,
+  releaseAccountResourceHolds,
   revokeAccountSessions,
   setProvisioningScopeStatus,
 } from './admin-account.api'
@@ -46,6 +49,14 @@ describe('admin account management API', () => {
     })
   })
 
+  it('requests the explicit account summary scope', async () => {
+    await getAdminAccountSummary({ scope: 'users' }, { signal: 'signal' })
+    expect(get).toHaveBeenCalledWith('/admin/accounts/summary/', {
+      params: { scope: 'users' },
+      signal: 'signal',
+    })
+  })
+
   it('never derives invitation roles locally and posts the selected public id', async () => {
     await getAvailableAdminInvitationRoles({ signal: 'signal' })
     await createAdminInvitation({
@@ -73,6 +84,18 @@ describe('admin account management API', () => {
       'impact-status',
     )
     await revokeAccountSessions('usr_1', 'Thiết bị thất lạc', 'impact-session')
+    await getAccountResourceHoldImpact('usr_1', {
+      reason: 'Đã rà soát',
+      enforcement_evidence: 'Biên bản rà soát có đủ hơn hai mươi ký tự.',
+    })
+    await releaseAccountResourceHolds(
+      'usr_1',
+      {
+        reason: 'Đã rà soát',
+        enforcement_evidence: 'Biên bản rà soát có đủ hơn hai mươi ký tự.',
+      },
+      'impact-hold',
+    )
     await getProvisioningScopeImpact('apscope_1', false)
     await setProvisioningScopeStatus('apscope_1', false, 'impact-scope')
 
@@ -95,11 +118,28 @@ describe('admin account management API', () => {
     )
     expect(post).toHaveBeenNthCalledWith(
       3,
+      '/admin/accounts/usr_1/resource-hold-impact/',
+      {
+        reason: 'Đã rà soát',
+        enforcement_evidence: 'Biên bản rà soát có đủ hơn hai mươi ký tự.',
+      },
+    )
+    expect(post).toHaveBeenNthCalledWith(
+      4,
+      '/admin/accounts/usr_1/release-resource-holds/',
+      {
+        reason: 'Đã rà soát',
+        enforcement_evidence: 'Biên bản rà soát có đủ hơn hai mươi ký tự.',
+        impact_token: 'impact-hold',
+      },
+    )
+    expect(post).toHaveBeenNthCalledWith(
+      5,
       '/admin/provisioning-scopes/apscope_1/status-impact/',
       { is_active: false },
     )
     expect(post).toHaveBeenNthCalledWith(
-      4,
+      6,
       '/admin/provisioning-scopes/apscope_1/deactivate/',
       { impact_token: 'impact-scope' },
     )

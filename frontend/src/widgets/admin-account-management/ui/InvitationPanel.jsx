@@ -21,6 +21,7 @@ import {
   Typography,
 } from 'antd'
 import { useDeferredValue, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import {
   adminAccountKeys,
   createAdminInvitation,
@@ -34,6 +35,29 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { InvitationStatusTag } from './AccountStatusTag'
+
+const INVITATION_QUERY_KEYS = {
+  q: 'invite_q',
+  status: 'invite_status',
+  department: 'invite_department',
+  role: 'invite_role',
+  invited_by: 'invite_by',
+  page: 'invite_page',
+  ordering: 'invite_ordering',
+}
+
+function invitationFiltersFromQuery(searchParams) {
+  const page = Number(searchParams.get(INVITATION_QUERY_KEYS.page) || 1)
+  return {
+    q: searchParams.get(INVITATION_QUERY_KEYS.q) || '',
+    status: searchParams.get(INVITATION_QUERY_KEYS.status) || '',
+    department: searchParams.get(INVITATION_QUERY_KEYS.department) || '',
+    role: searchParams.get(INVITATION_QUERY_KEYS.role) || '',
+    invited_by: searchParams.get(INVITATION_QUERY_KEYS.invited_by) || '',
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+    ordering: searchParams.get(INVITATION_QUERY_KEYS.ordering) || '-created_at',
+  }
+}
 
 function RoleSummary({ role }) {
   if (!role) return null
@@ -153,15 +177,12 @@ function InvitationModal({
 
 export default function InvitationPanel({ departments, roles: allRoles, isSuperuser }) {
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [form] = Form.useForm()
-  const [filters, setFilters] = useState({
-    q: '',
-    status: '',
-    department: '',
-    role: '',
-    invited_by: '',
-    page: 1,
-  })
+  const filters = useMemo(
+    () => invitationFiltersFromQuery(searchParams),
+    [searchParams],
+  )
   const deferredSearch = useDeferredValue(filters.q.trim())
   const params = useMemo(() => ({
     ...filters,
@@ -189,11 +210,18 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     new Map(invitations.map((item) => [item.invited_by.public_id, item.invited_by])).values(),
   ), [invitations])
 
-  const patchFilter = (key, value) => setFilters((current) => ({
-    ...current,
-    [key]: value,
-    page: key === 'page' ? value : 1,
-  }))
+  const patchFilter = (key, value) => {
+    const next = new URLSearchParams(searchParams)
+    const queryKey = INVITATION_QUERY_KEYS[key]
+    const defaultValue = key === 'ordering' ? '-created_at' : ''
+    if (value === defaultValue || value === '' || value == null || (key === 'page' && value === 1)) {
+      next.delete(queryKey)
+    } else {
+      next.set(queryKey, String(value))
+    }
+    if (key !== 'page') next.delete(INVITATION_QUERY_KEYS.page)
+    setSearchParams(next)
+  }
 
   const openEditor = (invitation = null) => {
     form.setFieldsValue(invitation ? {
@@ -268,8 +296,12 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
   const columns = [
     {
       title: 'Người được mời',
-      key: 'user',
+      key: 'user__full_name',
       width: 250,
+      sorter: true,
+      sortOrder: filters.ordering === 'user__full_name'
+        ? 'ascend'
+        : filters.ordering === '-user__full_name' ? 'descend' : null,
       render: (_, row) => (
         <div className="min-w-0">
           <Typography.Text strong ellipsis className="!block">
@@ -283,8 +315,12 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     },
     {
       title: 'Phòng ban / chức danh',
-      key: 'role',
+      key: 'target_role__name',
       width: 240,
+      sorter: true,
+      sortOrder: filters.ordering === 'target_role__name'
+        ? 'ascend'
+        : filters.ordering === '-target_role__name' ? 'descend' : null,
       render: (_, row) => (
         <div>
           <strong className="block">{row.target_role.name}</strong>
@@ -294,26 +330,45 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
     },
     {
       title: 'Người mời',
-      key: 'inviter',
+      key: 'invited_by__full_name',
       width: 210,
+      sorter: true,
+      sortOrder: filters.ordering === 'invited_by__full_name'
+        ? 'ascend'
+        : filters.ordering === '-invited_by__full_name' ? 'descend' : null,
       render: (_, row) => row.invited_by.full_name || row.invited_by.email,
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
+      key: 'status',
       width: 145,
+      sorter: true,
+      sortOrder: filters.ordering === 'status'
+        ? 'ascend'
+        : filters.ordering === '-status' ? 'descend' : null,
       render: (value) => <InvitationStatusTag status={value} />,
     },
     {
       title: 'Thời hạn',
       dataIndex: 'expires_at',
+      key: 'expires_at',
       width: 155,
+      sorter: true,
+      sortOrder: filters.ordering === 'expires_at'
+        ? 'ascend'
+        : filters.ordering === '-expires_at' ? 'descend' : null,
       render: (value) => formatAdminDate(value),
     },
     {
-      title: 'Gửi gần nhất',
-      dataIndex: 'updated_at',
+      title: 'Ngày tạo',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: 155,
+      sorter: true,
+      sortOrder: filters.ordering === 'created_at'
+        ? 'ascend'
+        : filters.ordering === '-created_at' ? 'descend' : null,
       render: (value) => formatAdminDate(value),
     },
     {
@@ -452,8 +507,17 @@ export default function InvitationPanel({ departments, roles: allRoles, isSuperu
             total: invitationsQuery.data?.count || 0,
             pageSize: 20,
             showSizeChanger: false,
-            onChange: (page) => patchFilter('page', page),
             showTotal: (total) => `${total} lời mời`,
+          }}
+          onChange={(pagination, _, sorter, extra) => {
+            if (extra.action === 'sort') {
+              const ordering = sorter.order
+                ? `${sorter.order === 'descend' ? '-' : ''}${sorter.columnKey}`
+                : '-created_at'
+              patchFilter('ordering', ordering)
+              return
+            }
+            patchFilter('page', pagination.current)
           }}
         />
       </div>

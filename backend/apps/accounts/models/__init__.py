@@ -9,9 +9,11 @@ from .admin_access import (
     AdminRole,
     Department,
 )
+from .status import AccountStatusTransition
 from .user import AuthEmailJob, AuthSession, SocialAccount, User, UserManager
 
 __all__ = [
+    'AccountStatusTransition',
     'AdminAccessAuditLog',
     'AdminInvitation',
     'AdminMembership',

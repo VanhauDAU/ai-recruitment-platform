@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class SpeechConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.speech'
+    verbose_name = 'Giọng đọc nội dung'

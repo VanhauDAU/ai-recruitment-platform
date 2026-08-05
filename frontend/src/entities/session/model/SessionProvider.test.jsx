@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { withQueryClient } from '@/test/render-with-query-client'
-import { notifyPermissionDenied } from '@/shared/api/token-store'
+import { notifyPermissionDenied, notifySessionExpired } from '@/shared/api/token-store'
 import SessionProvider from './SessionProvider'
 import { useSession } from './use-session'
 const { getCurrentSessionUser, logoutCurrentPortal, logoutAllDevices } = vi.hoisted(() => ({
@@ -135,6 +135,32 @@ describe('SessionProvider', () => {
 
     expect(result.current.isAuthenticated).toBe(false)
     expect(localStorage.getItem('main_access_token')).toBeNull()
+  })
+
+  it('sends an employer back to their portal login when the session expires', async () => {
+    window.history.replaceState({}, '', '/tuyendung/app/dashboard')
+    getCurrentSessionUser.mockResolvedValue({ public_id: 'employer-1', role: 'employer' })
+    const { result } = renderHook(() => useSession(), { wrapper })
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
+
+    act(() => notifySessionExpired())
+
+    expect(result.current.isAuthenticated).toBe(false)
+    expect(navigate).toHaveBeenCalledWith('/tuyendung/app/login', { replace: true })
+    expect(message.warning).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves an anonymous visitor alone when a public request fails to refresh', async () => {
+    // Khách chưa đăng nhập cũng gặp 401 khi lướt trang công khai; đá họ về trang
+    // đăng nhập là phá luồng duyệt tin bình thường.
+    getCurrentSessionUser.mockResolvedValue(null)
+    const { result } = renderHook(() => useSession(), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => notifySessionExpired())
+
+    expect(navigate).not.toHaveBeenCalled()
+    expect(message.warning).not.toHaveBeenCalled()
   })
 
   it('coalesces a burst of admin permission denials into one refresh and toast', async () => {

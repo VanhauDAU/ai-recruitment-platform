@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -12,10 +13,13 @@ from common.pagination import StandardPagination
 from ...admin_access_rules import InvalidImpactToken, StaleImpactToken
 from ...admin_invitation_tokens import InvalidAdminInvitationToken
 from ...exceptions import AdminPermissionDenied, AdminResourceChanged
-from ...models import AuthEmailJob
+from ...models import AuthEmailJob, User
 from ...permissions import HasAdminPermission, require_admin_permission
 from ...selectors import (
     account_activity_queryset,
+    account_email_change_impact,
+    account_mfa_reset_impact,
+    account_resource_hold_impact,
     account_revoke_sessions_impact,
     account_sessions_queryset,
     account_status_impact,
@@ -28,11 +32,16 @@ from ...selectors import (
 )
 from ...services import (
     accept_admin_invitation,
+    confirm_account_email,
     confirm_account_status,
     confirm_provisioning_scope_status,
+    confirm_release_account_resource_holds,
+    confirm_reset_account_mfa,
     confirm_revoke_account_sessions,
     create_admin_invitation,
     create_provisioning_scope,
+    ensure_account_recovery_allowed,
+    ensure_account_status_change_allowed,
     ensure_account_write_allowed,
     queue_account_security_email,
     resend_admin_invitation,
@@ -44,7 +53,15 @@ from ...services import (
 )
 from ..serializers.account_management import (
     AccountActivitySerializer,
+    AccountEmailChangeSerializer,
+    AccountEmailImpactSerializer,
+    AccountMfaResetImpactSerializer,
+    AccountMfaResetSerializer,
+    AccountResourceHoldChangeSerializer,
+    AccountResourceHoldImpactResponseSerializer,
+    AccountResourceHoldImpactSerializer,
     AccountStatusChangeSerializer,
+    AccountStatusImpactResponseSerializer,
     AccountStatusImpactSerializer,
     AdminInvitationAcceptSerializer,
     AdminInvitationCreateSerializer,
@@ -107,6 +124,27 @@ def _can_view_sensitive(user):
     return True
 
 
+def _validated_account_params(query_params):
+    params = query_params.copy()
+    scope = params.get('scope', '').strip()
+    if scope and scope not in {'users', 'recruiters'}:
+        raise ValidationError({'scope': 'Phạm vi tài khoản không hợp lệ.'})
+    role = params.get('role', '').strip()
+    if role and role not in User.Role.values:
+        raise ValidationError({'role': 'Vai trò tài khoản không hợp lệ.'})
+    if scope == 'users' and role == User.Role.EMPLOYER:
+        raise ValidationError({'role': 'Nhà tuyển dụng không thuộc phạm vi người dùng.'})
+    if scope == 'recruiters' and role and role != User.Role.EMPLOYER:
+        raise ValidationError({'role': 'Phạm vi nhà tuyển dụng chỉ chấp nhận role employer.'})
+    statuses = [value.strip() for value in params.get('status', '').split(',') if value.strip()]
+    if any(value not in User.Status.values for value in statuses):
+        raise ValidationError({'status': 'Trạng thái tài khoản không hợp lệ.'})
+    company_state = params.get('company_state', '').strip()
+    if company_state and company_state not in {'linked', 'missing'}:
+        raise ValidationError({'company_state': 'Trạng thái liên kết công ty không hợp lệ.'})
+    return params
+
+
 class AdminAccountViewSet(
     viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin
 ):
@@ -117,6 +155,7 @@ class AdminAccountViewSet(
     required_admin_permissions = {
         'list': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -124,6 +163,7 @@ class AdminAccountViewSet(
         ],
         'retrieve': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -131,6 +171,7 @@ class AdminAccountViewSet(
         ],
         'summary': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.admin.invite',
             'employer_verification.view',
@@ -140,6 +181,7 @@ class AdminAccountViewSet(
         'partial_update': ['account.profile.manage'],
         'profile': [
             'account.view',
+            'account.employer.view',
             'account.admin.view',
             'account.profile.manage',
             'employer_verification.view',
@@ -148,21 +190,47 @@ class AdminAccountViewSet(
         'cvs': ['account.view'],
         'applications': ['account.view'],
         'consents': ['account.view'],
-        'recruitment_needs': ['account.view', 'employer_verification.view'],
-        'jobs': ['account.view', 'employer_verification.view'],
-        'campaigns': ['account.view', 'employer_verification.view'],
-        'sessions': ['account.view', 'account.admin.view', 'account.admin.invite'],
-        'activity': ['account.view', 'account.admin.view', 'account.admin.invite'],
+        'recruitment_needs': [
+            'account.view',
+            'account.employer.view',
+            'employer_verification.view',
+        ],
+        'jobs': ['account.view', 'account.employer.view', 'employer_verification.view'],
+        'campaigns': [
+            'account.view',
+            'account.employer.view',
+            'employer_verification.view',
+        ],
+        'sessions': [
+            'account.view',
+            'account.employer.view',
+            'account.admin.view',
+            'account.admin.invite',
+        ],
+        'activity': [
+            'account.view',
+            'account.employer.view',
+            'account.admin.view',
+            'account.admin.invite',
+        ],
         'status_impact': ['account.status.manage', 'account.admin.manage'],
         'change_status': ['account.status.manage', 'account.admin.manage'],
+        'resource_hold_impact': ['account.resource_hold.release'],
+        'release_resource_holds': ['account.resource_hold.release'],
         'revoke_sessions_impact': ['account.security.manage', 'account.admin.manage'],
         'revoke_sessions': ['account.security.manage', 'account.admin.manage'],
         'send_password_reset': ['account.security.manage', 'account.admin.manage'],
         'resend_verification': ['account.security.manage', 'account.admin.manage'],
+        'email_impact': ['account.email.manage'],
+        'change_email': ['account.email.manage'],
+        'mfa_impact': ['account.mfa.reset'],
+        'reset_mfa': ['account.mfa.reset'],
     }
 
     def get_queryset(self):
-        params = self.request.query_params if self.action == 'list' else {}
+        params = (
+            _validated_account_params(self.request.query_params) if self.action == 'list' else {}
+        )
         queryset = accounts_queryset(self.request.user, params=params)
         if self.action == 'profile':
             queryset = queryset.select_related(
@@ -194,7 +262,8 @@ class AdminAccountViewSet(
 
     @action(detail=False, methods=['get'])
     def summary(self, request):
-        return Response(account_summary(request.user))
+        params = _validated_account_params(request.query_params)
+        return Response(account_summary(request.user, scope=params.get('scope', '')))
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
@@ -339,25 +408,79 @@ class AdminAccountViewSet(
         serializer = AccountActivitySerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @extend_schema(
+        request=AccountStatusImpactSerializer,
+        responses={200: AccountStatusImpactResponseSerializer},
+        summary='Preview tác động thay đổi trạng thái tài khoản',
+    )
     @action(detail=True, methods=['post'], url_path='status-impact')
     def status_impact(self, request, public_id=None):
-        serializer = AccountStatusImpactSerializer(data=request.data)
+        user = self.get_object()
+        serializer = AccountStatusImpactSerializer(
+            data=request.data,
+            context={'target': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        _call(
+            ensure_account_status_change_allowed,
+            actor=request.user,
+            user=user,
+            status=serializer.validated_data['status'],
+        )
+        return Response(account_status_impact(user, **serializer.validated_data))
+
+    @extend_schema(
+        request=AccountStatusChangeSerializer,
+        responses={200: ManagedAccountDetailSerializer},
+        summary='Xác nhận thay đổi trạng thái tài khoản',
+    )
+    @action(detail=True, methods=['post'], url_path='change-status')
+    def change_status(self, request, public_id=None):
+        target = self.get_object()
+        serializer = AccountStatusChangeSerializer(
+            data=request.data,
+            context={'target': target},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = _confirmed_call(
+            confirm_account_status,
+            user=target,
+            actor=request.user,
+            **serializer.validated_data,
+        )
+        return Response(_serialize_account(user, request.user, detail=True))
+
+    @extend_schema(
+        request=AccountResourceHoldImpactSerializer,
+        responses={200: AccountResourceHoldImpactResponseSerializer},
+        summary='Preview tác động gỡ policy hold của tài khoản',
+    )
+    @action(detail=True, methods=['post'], url_path='resource-hold-impact')
+    def resource_hold_impact(self, request, public_id=None):
+        serializer = AccountResourceHoldImpactSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self.get_object()
         _call(
             ensure_account_write_allowed,
             actor=request.user,
             user=user,
-            permission='account.status.manage',
+            permission='account.resource_hold.release',
         )
-        return Response(account_status_impact(user, **serializer.validated_data))
+        if not request.user.is_superuser:
+            raise AdminPermissionDenied('Gỡ policy hold chỉ dành cho superuser.')
+        return Response(account_resource_hold_impact(user, **serializer.validated_data))
 
-    @action(detail=True, methods=['post'], url_path='change-status')
-    def change_status(self, request, public_id=None):
-        serializer = AccountStatusChangeSerializer(data=request.data)
+    @extend_schema(
+        request=AccountResourceHoldChangeSerializer,
+        responses={200: ManagedAccountDetailSerializer},
+        summary='Xác nhận gỡ policy hold sau rà soát',
+    )
+    @action(detail=True, methods=['post'], url_path='release-resource-holds')
+    def release_resource_holds(self, request, public_id=None):
+        serializer = AccountResourceHoldChangeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = _confirmed_call(
-            confirm_account_status,
+            confirm_release_account_resource_holds,
             user=self.get_object(),
             actor=request.user,
             **serializer.validated_data,
@@ -389,13 +512,74 @@ class AdminAccountViewSet(
         )
         return Response({'revoked_session_count': revoked})
 
+    @action(detail=True, methods=['post'], url_path='email-impact')
+    def email_impact(self, request, public_id=None):
+        user = self.get_object()
+        serializer = AccountEmailImpactSerializer(
+            data=request.data,
+            context={'target_user': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        _call(
+            ensure_account_recovery_allowed,
+            actor=request.user,
+            user=user,
+            permission='account.email.manage',
+        )
+        return Response(account_email_change_impact(user, **serializer.validated_data))
+
+    @action(detail=True, methods=['post'], url_path='change-email')
+    def change_email(self, request, public_id=None):
+        user = self.get_object()
+        serializer = AccountEmailChangeSerializer(
+            data=request.data,
+            context={'target_user': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = _confirmed_call(
+            confirm_account_email,
+            user=user,
+            actor=request.user,
+            **serializer.validated_data,
+        )
+        return Response(_serialize_account(user, request.user, detail=True))
+
+    @action(detail=True, methods=['post'], url_path='mfa-impact')
+    def mfa_impact(self, request, public_id=None):
+        user = self.get_object()
+        serializer = AccountMfaResetImpactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        _call(
+            ensure_account_recovery_allowed,
+            actor=request.user,
+            user=user,
+            permission='account.mfa.reset',
+        )
+        return Response(account_mfa_reset_impact(user, **serializer.validated_data))
+
+    @action(detail=True, methods=['post'], url_path='reset-mfa')
+    def reset_mfa(self, request, public_id=None):
+        serializer = AccountMfaResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = _confirmed_call(
+            confirm_reset_account_mfa,
+            user=self.get_object(),
+            actor=request.user,
+            **serializer.validated_data,
+        )
+        return Response(_serialize_account(user, request.user, detail=True))
+
+    @extend_schema(request=ReasonSerializer)
     @action(detail=True, methods=['post'], url_path='send-password-reset')
     def send_password_reset(self, request, public_id=None):
+        serializer = ReasonSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         _call(
             queue_account_security_email,
             user=self.get_object(),
             kind=AuthEmailJob.Kind.PASSWORD_RESET,
             actor=request.user,
+            **serializer.validated_data,
         )
         return Response({'detail': 'Đã xếp lịch gửi email đặt lại mật khẩu.'})
 

@@ -18,14 +18,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { getEmployerProfile } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
-import {
-  campaignKeys,
-  getCampaign,
-} from '@/entities/campaign'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
+import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_DATA_PROTECTION_URL,
@@ -72,7 +70,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
 
 export default function EmployerWorkspaceLayout() {
   const { user, logout } = useSession()
-  const { pathname, key: locationKey } = useLocation()
+  const { pathname, search, key: locationKey } = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
@@ -94,17 +92,14 @@ export default function EmployerWorkspaceLayout() {
   const isCampaignList = pathname === employerAppPath('/campaigns')
   const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
   const isCampaignDetail = Boolean(campaignDetailMatch)
-  const campaignPublicId = campaignDetailMatch?.[1]
   const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
   const isJobNew = pathname === employerAppPath('/jobs/new')
   const isJobForm = isJobNew || Boolean(jobEditMatch)
+  const isApplicationWorkspace = pathname === employerAppPath('/applications')
+  const applicationParams = new URLSearchParams(search)
+  const applicationJobId = applicationParams.get('job')
+  const applicationCampaignId = applicationParams.get('campaign')
 
-  const campaignQuery = useQuery({
-    queryKey: campaignKeys.detail(campaignPublicId),
-    queryFn: () => getCampaign(campaignPublicId),
-    enabled: isCampaignDetail,
-  })
-  const campaignData = campaignQuery.data
   // Quay lại "thông minh": ưu tiên URL trước đó trong lịch sử phiên (đến từ tin
   // hay chiến dịch đều về đúng chỗ). Khi mở trực tiếp/không có lịch sử nội bộ
   // (key === 'default'), lùi về nơi hợp lý thay vì rời khỏi ứng dụng.
@@ -115,6 +110,22 @@ export default function EmployerWorkspaceLayout() {
     }
     navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
   }
+  const goBackFromApplications = () => {
+    if (applicationJobId) {
+      navigate(`${employerAppPath('/jobs')}/${encodeURIComponent(applicationJobId)}`)
+      return
+    }
+    if (applicationCampaignId) {
+      navigate(`${employerAppPath('/campaigns')}/${encodeURIComponent(applicationCampaignId)}?active_tab=apply_cv`)
+      return
+    }
+    navigate(employerAppPath('/jobs'))
+  }
+  const applicationBackLabel = applicationJobId
+    ? 'Quay lại chi tiết tin tuyển dụng'
+    : applicationCampaignId
+      ? 'Quay lại chiến dịch tuyển dụng'
+      : 'Quay lại danh sách tin tuyển dụng'
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
@@ -142,13 +153,6 @@ export default function EmployerWorkspaceLayout() {
 
   return (
     <Layout data-testid="employer-workspace" className="!flex !h-dvh !min-h-dvh !flex-col !overflow-hidden !bg-[#edf1f5]">
-      {showComplianceNotice && (
-        <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
-          <span className="hidden sm:inline">[QUAN TRỌNG] Hoàn thiện Thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên. </span>
-          <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">Cập nhật ngay</Link>
-        </div>
-      )}
-
       <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between !bg-[#1e2f40] !px-3 !leading-none sm:!px-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Button
@@ -185,13 +189,28 @@ export default function EmployerWorkspaceLayout() {
         </div>
       </Header>
 
+      <AnnouncementStrip
+        surface={ANNOUNCEMENT_SURFACES.EMPLOYER_WORKSPACE}
+        path={pathname}
+        verificationPath={employerAppPath('/xac-thuc-email')}
+        employerProfile={profile}
+        employerProfileReady={profileQuery.isSuccess}
+        legacy={showComplianceNotice ? (
+          <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
+            <span className="hidden sm:inline">[QUAN TRỌNG] Hoàn thiện Thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên. </span>
+            <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">Cập nhật ngay</Link>
+          </div>
+        ) : null}
+      />
+
       <Layout className="!relative !min-h-0 !min-w-0 !flex-1 !overflow-hidden !bg-[#edf1f5]">
         {isMobileViewport && !sidebarCollapsed && (
           <button
             type="button"
             aria-label="Đóng menu quản trị"
             onClick={() => setCollapsed(true)}
-            className="absolute inset-0 z-30 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
+            className="absolute inset-y-0 right-0 z-30 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
+            style={{ left: EMPLOYER_SIDEBAR_WIDTH }}
           />
         )}
         <Sider
@@ -285,20 +304,26 @@ export default function EmployerWorkspaceLayout() {
         <Layout className="!min-h-0 !min-w-0 !overflow-hidden !bg-[#edf1f5]">
           <div className="flex min-h-11 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 py-2 sm:min-h-12 sm:px-6">
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-              {(isJobForm || isCampaignDetail) && (
+              {(isJobForm || isCampaignDetail || isApplicationWorkspace) && (
                 <Button
                   size="small"
                   icon={<ArrowLeftOutlined />}
-                  onClick={isCampaignDetail ? () => navigate(employerAppPath('/campaigns')) : goBackFromForm}
+                  aria-label={isApplicationWorkspace ? applicationBackLabel : 'Quay lại'}
+                  title={isApplicationWorkspace ? applicationBackLabel : undefined}
+                  onClick={isCampaignDetail
+                    ? () => navigate(employerAppPath('/campaigns'))
+                    : isApplicationWorkspace
+                      ? goBackFromApplications
+                      : goBackFromForm}
                   className="!inline-flex !items-center !gap-1.5 !rounded-lg !border !border-slate-300 !bg-white !px-3 !py-1 !text-xs !font-semibold !text-slate-700 shadow-2xs transition hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
                 >
                   Quay lại
                 </Button>
               )}
               {isCampaignDetail ? (
-                <h1 className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base" title={campaignData?.name || 'Chiến dịch tuyển dụng'}>
-                  {campaignData?.name || 'Chiến dịch tuyển dụng'}
-                </h1>
+                <strong className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base">
+                  Chi tiết chiến dịch
+                </strong>
               ) : (
                 <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
               )}
@@ -315,9 +340,8 @@ export default function EmployerWorkspaceLayout() {
               </Link>
             )}
           </div>
-          {/* --workspace-viewport = chiều cao vùng cuộn (dvh trừ banner 32 + topbar 56 + thanh tiêu đề 48), cho các cột sticky dùng làm max-height */}
           <Content
-            className={`min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 sm:p-5 sm:pt-0 xl:p-6 xl:pt-0 ${showComplianceNotice ? '[--workspace-viewport:calc(100dvh_-_136px)]' : '[--workspace-viewport:calc(100dvh_-_104px)]'}`}
+            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-0 [--workspace-viewport:100%] sm:p-5 sm:pt-0 xl:p-6 xl:pt-0"
           >
             <div className="mx-auto w-full max-w-[1320px]">
               <Outlet />

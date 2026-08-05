@@ -1,3 +1,19 @@
+from .announcements import (
+    ActiveAnnouncementListView,
+    AdminAnnouncementArchiveView,
+    AdminAnnouncementDetailView,
+    AdminAnnouncementDuplicateView,
+    AdminAnnouncementListCreateView,
+    AdminAnnouncementMetricView,
+    AdminAnnouncementPauseView,
+    AdminAnnouncementPublishView,
+    AdminAnnouncementResetDismissalsView,
+    AdminAnnouncementResumeView,
+    AdminAnnouncementRevisionCreateView,
+    AnnouncementEventBatchView,
+    AnnouncementRuntimeEventView,
+    AnnouncementStateView,
+)
 from .settings import (
     AdminLocaleDetailView,
     AdminLocaleListCreateView,
@@ -11,6 +27,20 @@ from .settings import (
 )
 
 __all__ = [
+    'ActiveAnnouncementListView',
+    'AnnouncementEventBatchView',
+    'AnnouncementRuntimeEventView',
+    'AnnouncementStateView',
+    'AdminAnnouncementArchiveView',
+    'AdminAnnouncementDetailView',
+    'AdminAnnouncementDuplicateView',
+    'AdminAnnouncementListCreateView',
+    'AdminAnnouncementMetricView',
+    'AdminAnnouncementPauseView',
+    'AdminAnnouncementPublishView',
+    'AdminAnnouncementResetDismissalsView',
+    'AdminAnnouncementResumeView',
+    'AdminAnnouncementRevisionCreateView',
     'AdminLocaleDetailView',
     'AdminLocaleListCreateView',
     'AdminSettingUploadView',

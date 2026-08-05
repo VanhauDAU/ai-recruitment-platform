@@ -1,15 +1,15 @@
 import {
-  CalendarOutlined,
+  AppstoreOutlined,
   EditOutlined,
+  FileTextOutlined,
   HistoryOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Modal, Skeleton, Tag } from 'antd'
-import { useState } from 'react'
+import { Alert, Button, Modal, Select, Skeleton } from 'antd'
+import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
-  CAMPAIGN_STATUS_COLORS,
-  CAMPAIGN_STATUS_LABELS,
   campaignKeys,
   getCampaign,
   getCampaignReport,
@@ -17,7 +17,6 @@ import {
 } from '@/entities/campaign'
 import {
   CampaignNameForm,
-  CampaignLifecycleActions,
 } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
@@ -25,12 +24,13 @@ import CampaignActivityPanel from './CampaignActivityPanel'
 import CampaignApplyCvPanel from './CampaignApplyCvPanel'
 import CampaignJobsPanel from './CampaignJobsPanel'
 import CampaignOverviewPanel from './CampaignOverviewPanel'
+import CampaignWorkspaceHero from './CampaignWorkspaceHero'
 
 const TABS = [
-  { key: 'overview', label: 'Tổng quan' },
-  { key: 'apply_cv', label: 'CV ứng tuyển' },
-  { key: 'job', label: 'Tin tuyển dụng' },
-  { key: 'activity', label: 'Lịch sử hoạt động' },
+  { key: 'overview', label: 'Tổng quan', icon: AppstoreOutlined },
+  { key: 'apply_cv', label: 'CV ứng tuyển', icon: TeamOutlined },
+  { key: 'job', label: 'Tin tuyển dụng', icon: FileTextOutlined },
+  { key: 'activity', label: 'Lịch sử hoạt động', icon: HistoryOutlined },
 ]
 
 const LEGACY_TAB_MAP = {
@@ -38,18 +38,15 @@ const LEGACY_TAB_MAP = {
   jobs: 'job',
 }
 
-function formatDate(value, includeTime = false) {
-  if (!value) return 'Chưa có'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Chưa có'
-  return includeTime
-    ? date.toLocaleString('vi-VN')
-    : date.toLocaleDateString('vi-VN')
+function valueOrZero(value) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 export default function EmployerCampaignWorkspace({ publicId }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState(false)
+  const tabRefs = useRef([])
   const queryClient = useQueryClient()
   const campaignQuery = useQuery({
     queryKey: campaignKeys.detail(publicId),
@@ -110,9 +107,32 @@ export default function EmployerCampaignWorkspace({ publicId }) {
 
   const campaign = campaignQuery.data
   const report = reportQuery.data || {}
+  const tabCounts = {
+    apply_cv: valueOrZero(
+      report.application_pair_count
+      ?? campaign.application_pair_count
+      ?? campaign.application_count,
+    ),
+    job: valueOrZero(report.jobs?.total ?? campaign.job_count),
+  }
+  const moveTabFocus = (event, index) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End']
+    if (!keys.includes(event.key)) return
+    event.preventDefault()
+    const lastIndex = TABS.length - 1
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? lastIndex
+        : event.key === 'ArrowRight'
+          ? (index + 1) % TABS.length
+          : (index - 1 + TABS.length) % TABS.length
+    selectTab(TABS[nextIndex].key)
+    tabRefs.current[nextIndex]?.focus()
+  }
 
   return (
-    <section className="space-y-3 pb-6 pt-3">
+    <section className="space-y-4 pb-8 pt-3">
       {reportQuery.isError && (
         <Alert
           type="warning"
@@ -122,75 +142,78 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         />
       )}
 
-      <header className="border border-slate-200 bg-white p-4 lg:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-xl font-bold text-slate-900">{campaign.name}</h1>
-              <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]}>
-                {CAMPAIGN_STATUS_LABELS[campaign.status] || campaign.status_label}
-              </Tag>
-            </div>
-            <p className="mt-1 text-sm text-slate-500">Mã chiến dịch: {campaign.public_id}</p>
-            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
-              <span><CalendarOutlined className="mr-1" />Tạo ngày {formatDate(campaign.created_at)}</span>
-              <span>
-                <HistoryOutlined className="mr-1" />
-                Hoạt động gần nhất: {campaign.last_activity?.label || 'Chưa có'}
-                {' · '}
-                {formatDate(campaign.last_activity?.occurred_at, true)}
-              </span>
-              <span>
-                Sửa thông tin chiến dịch lúc {formatDate(campaign.updated_at, true)}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="primary"
-              icon={<EditOutlined aria-hidden />}
-              className="!h-10 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-4 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
-              onClick={() => setEditing(true)}
-            >
-              Sửa chiến dịch
-            </Button>
-            <CampaignLifecycleActions campaign={campaign} />
-          </div>
-        </div>
-      </header>
+      <CampaignWorkspaceHero campaign={campaign} onEdit={() => setEditing(true)} />
 
-      <section className="min-w-0 border border-slate-200 bg-white">
-        <div className="overflow-x-auto border-b border-slate-200">
-          <div role="tablist" aria-label="Nội dung chiến dịch" className="flex min-w-max px-2">
-            {TABS.map((tab) => {
-              const selected = tab.key === activeTab
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  className={`relative mx-0.5 h-14 whitespace-nowrap rounded-t-xl px-4 text-sm font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-500 ${
-                    selected
-                      ? 'bg-emerald-50/70 text-emerald-800'
-                      : 'text-slate-500 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-emerald-700'
-                  }`}
-                  onClick={() => selectTab(tab.key)}
-                >
-                  {tab.label}
-                  {selected && (
-                    <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-emerald-600 shadow-[0_-2px_8px_rgba(5,150,105,0.28)]" />
-                  )}
-                </button>
-              )
-            })}
+      <section className="min-w-0">
+        <div className="sticky top-0 z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+          <div className="sm:hidden">
+            <Select
+              aria-label="Chọn nội dung chiến dịch"
+              value={activeTab}
+              className="w-full"
+              popupMatchSelectWidth
+              options={TABS.map((tab) => ({
+                value: tab.key,
+                label: tabCounts[tab.key] == null
+                  ? tab.label
+                  : `${tab.label} (${tabCounts[tab.key]})`,
+              }))}
+              onChange={selectTab}
+            />
+          </div>
+          <div className="hidden overflow-x-auto sm:block">
+            <div role="tablist" aria-label="Nội dung chiến dịch" className="flex min-w-max gap-1">
+              {TABS.map((tab, index) => {
+                const selected = tab.key === activeTab
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.key}
+                    ref={(node) => { tabRefs.current[index] = node }}
+                    id={`campaign-tab-${tab.key}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    aria-controls={`campaign-panel-${tab.key}`}
+                    aria-label={tab.label}
+                    tabIndex={selected ? 0 : -1}
+                    className={`inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 ${
+                      selected
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/15'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-emerald-700'
+                    }`}
+                    onClick={() => selectTab(tab.key)}
+                    onKeyDown={(event) => moveTabFocus(event, index)}
+                  >
+                    <Icon aria-hidden />
+                    {tab.label}
+                    {tabCounts[tab.key] != null && (
+                      <span
+                        aria-hidden
+                        className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs ${selected ? 'bg-white text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                      >
+                        {tabCounts[tab.key]}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
-        <div role="tabpanel">
+        <div
+          id={`campaign-panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`campaign-tab-${activeTab}`}
+          className={activeTab === 'overview'
+            ? 'mt-4'
+            : 'mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm'}
+        >
           {activeTab === 'overview' && (
             <CampaignOverviewPanel
               campaign={campaign}
               report={report}
+              reportLoading={reportQuery.isLoading}
             />
           )}
           {activeTab === 'apply_cv' && <CampaignApplyCvPanel publicId={publicId} />}

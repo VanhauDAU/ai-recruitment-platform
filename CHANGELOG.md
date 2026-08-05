@@ -6,6 +6,145 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-07-29
+
+#### Added — Account status enforcement theo vai trò
+
+- Thay thao tác đổi trạng thái chung bằng state machine rõ: tạm khóa, cấm,
+  bắt đầu khôi phục, gỡ giữ tài nguyên và mở lại; cấm/khôi phục tài khoản bị
+  cấm vẫn superuser-only ở P0.
+- Thêm `AccountStatusTransition` cùng `temporary_lock`/`ban_review`/
+  `legacy_lock` cho campaign và job. Workflow không còn đổi campaign active
+  thành paused, nhờ đó không làm sai trạng thái nghiệp vụ và chỉ khôi phục đúng
+  lớp hold của thao tác.
+- Public job selector fail-closed theo job, campaign, poster và campaign owner,
+  bao gồm cả danh sách việc làm ứng viên đã lưu; mutation job/campaign/
+  application khóa account trước resource để đóng race với admin enforcement.
+- Candidate bị hạn chế vẫn giữ CV/application snapshot; employer chỉ được
+  chuyển hồ sơ sang `rejected`, không được đẩy pipeline tiến thêm.
+- UI admin có modal rộng, thông tin đối chiếu user, dấu bắt buộc, preview tác
+  động theo vai trò và hướng dẫn quy trình khôi phục nhiều bước. 409 tự tải lại
+  preview nhưng không tự confirm.
+- Thêm transactional notice không chứa evidence, permission không grant mặc
+  định, command đối soát read-only/`--apply`, tài liệu thiết kế và runbook
+  rollout/rollback.
+- Quality gate toàn repo: 633 backend test pass, coverage 86.25%; 699 frontend
+  unit/integration test pass; production build và bundle budget đạt; 159 E2E
+  smoke test pass trên desktop/tablet/mobile. Reconciliation staging local có
+  0 mismatch và hai permission nhạy cảm có 0 role grant.
+
+#### Fixed — Animation dải thông báo
+
+- `slide` và `fade` của một thông báo nay lặp nhẹ theo khoảng 4–15 giây đã cấu
+  hình; trước đây hiệu ứng chỉ chạy 280–320 ms lúc component vừa mount nên
+  người dùng gần như luôn thấy nội dung đứng yên.
+- Nhóm có nhiều thông báo vẫn chuyển item theo thời lượng riêng; `static` không
+  chuyển động. Animation dừng khi hover/focus/tab bị ẩn và tự tắt khi thiết bị
+  yêu cầu reduced motion.
+- Preview quản trị chạy đúng loại và thời lượng animation của bản nháp. Verify:
+  683 frontend test, lint/architecture/build/bundle budget và 12/12 smoke
+  runtime trên desktop/tablet/mobile đều pass.
+
+#### Fixed — Luân phiên và tạm ẩn thông báo cùng hạng
+
+- Khi tạm ẩn một item trong hàng đợi cùng hạng, runtime xác định lại index và
+  đưa item kế tiếp lên ngay. Focus còn ở nút đóng vẫn pause animation nhưng nội
+  dung mới luôn nhìn thấy; không còn trạng thái mất chữ nhưng nền dải còn lại.
+- Editor đổi nhãn thành **Thứ tự trong cùng hạng** và giải thích: số lớn chạy
+  trước, mọi item thuộc hạng cao nhất vẫn luân phiên từng cái chứ không hiển thị
+  đồng thời.
+- Regression mới đóng lần lượt hai item cùng hạng và kiểm tra count, nội dung,
+  opacity cùng focus-pause trên desktop/tablet/mobile. Verify: 684 frontend
+  test, lint/architecture/build/bundle budget và 15/15 smoke runtime pass.
+
+#### Changed — Trải nghiệm soạn thông báo đa cổng
+
+- Thay ô nhập URL CTA nội bộ bằng danh mục có tìm kiếm, nhóm theo bốn portal và
+  tự sinh URL đúng cho local hoặc subdomain triển khai. Nơi hiển thị và trang
+  CTA độc lập nên thông báo ở cổng Ứng viên có thể dẫn sang Marketing NTD.
+- Gắn nhãn **Công khai** hoặc **Cần đăng nhập** cho trang CTA; cảnh báo trực
+  tiếp khi thông báo dành cho guest nhưng CTA đi vào workspace được bảo vệ.
+- Thay textarea route include/exclude bằng multi-select có tìm kiếm, lọc theo
+  surface và vẫn cho nhập prefix nâng cao với validation tương thích backend.
+- Catalog có test contract cho URL/prefix/access. Route mới được đăng ký một
+  lần để xuất hiện ở mọi editor sau lần triển khai; revision đã publish không
+  bị tự viết lại URL.
+- Verify: 683 frontend test pass; lint/architecture/build và bundle budget
+  293,6/320 KiB JS, 34,2/35 KiB CSS pass; smoke quản trị thông báo 6/6 trên
+  desktop/tablet/mobile.
+
+#### Fixed — Preview bản nháp thông báo
+
+- Bước Xem trước nay đọc toàn bộ form store, không còn nhận object rỗng và hiện
+  placeholder sau khi quản trị viên đã soạn nội dung ở bước đầu.
+- Route selector chuyển tiếp đầy đủ `value`, `onChange` và `id` của Ant Form,
+  tránh trạng thái nhìn như đã chọn nhưng payload không lưu prefix.
+
+#### Added — Announcement AN-P5 rollout hardening
+
+- Thêm kill switch runtime fail-closed theo từng surface bằng
+  `ANNOUNCEMENT_REMOTE_ENABLED_SURFACES`. Feed bị tắt trả
+  `remote_enabled=false`, danh sách rỗng và không query dữ liệu; label xác thực,
+  bảo mật và tuân thủ do hệ thống sở hữu vẫn tiếp tục hiển thị.
+- Thêm telemetry PII-free cho latency/feed/contract/render error, throttle cho
+  runtime event và error boundary trả banner legacy khi strip gặp lỗi. Client
+  chỉ nhận contract remote khi backend xác nhận `remote_enabled=true`.
+- Thêm command read-only `announcement_rollout_preflight`, kiểm tra integrity,
+  critical end time, live/scheduled surface và nhóm rotation xung đột trước khi
+  mở rollout.
+- Bổ sung runbook staging theo thứ tự Admin → NTD marketing → workspace NTD →
+  ứng viên, ngưỡng monitoring, failure injection, kill-switch rehearsal và
+  rollback không reverse schema hay xóa dữ liệu.
+- Quality gate code cuối: 615 backend test (86,12% coverage), 666 frontend test,
+  architecture/import contract sạch, OpenAPI validate, bundle 293,6 KiB JS /
+  34,2 KiB CSS gzip và 153 smoke E2E trên desktop/tablet/mobile. Rollout staging
+  thực tế vẫn cần evidence vận hành theo runbook trước khi chốt AN-P5 hoàn tất.
+
+#### Fixed — Announcement analytics khi Redis gián đoạn
+
+- Failure injection trên staging cô lập phát hiện rate-limit truy cập Redis
+  trước service analytics và trả HTTP 500, dù tracking được thiết kế
+  best-effort.
+- Hai endpoint telemetry announcement nay fail-open riêng ở lớp throttle khi
+  cache lỗi, phát metric PII-free `announcement_throttle`; giới hạn vẫn hoạt
+  động bình thường khi cache khỏe và analytics dedupe vẫn không tăng aggregate
+  khi Redis lỗi.
+- Chạy lại với Redis dừng đạt HTTP 202, sau đó Redis được khôi phục healthy và
+  active feed tiếp tục trả 200. Bằng chứng bốn surface, priority và kill switch
+  nằm tại
+  [rehearsal staging 2026-07-29](docs/06-deployment/announcement-staging-evidence-2026-07-29.md).
+- Full gate sau bản vá đạt 617 backend test với coverage 86,13%, 666 frontend
+  test, bundle budget và 153 smoke E2E desktop/tablet/mobile.
+
+#### Fixed — Đặt mật khẩu lần đầu cho tài khoản mạng xã hội
+
+- Thay cảnh báo “Cần đăng nhập lại để tạo mật khẩu” (chỉ hiện sau khi người dùng
+  điền xong form rồi bấm lưu, và xoá phiên để đá về `/login`) bằng luồng xác
+  thực lại tại chỗ: banner hiện ngay khi mở trang, nút “Xác thực với
+  &lt;Provider&gt;” mở OAuth với `next` là trang hiện tại nên người dùng quay về
+  đúng chỗ đang làm, không mất phiên.
+- Thêm `GET /api/auth/password/` trả `{has_usable_password, requires_reauth,
+  reauth_provider, reauth_max_age_seconds}` để client biết trước điều kiện của
+  phiên. `POST` trả kèm `reauth_provider` trong lỗi 403 `reauth_required`.
+- Nút “Tạo mật khẩu” bị vô hiệu hoá khi phiên chưa đủ điều kiện; tài khoản không
+  liên kết provider nào được hướng sang luồng “Quên mật khẩu” thay vì kẹt.
+- Giữ nguyên cửa sổ bảo mật `AUTH_REAUTH_MAX_AGE_SECONDS` (mặc định 5 phút) —
+  đây là bằng chứng duy nhất thay cho mật khẩu hiện tại, không nới lỏng.
+
+#### Fixed — Hàng chờ và chi tiết xác thực nhà tuyển dụng
+
+- Đồng nhất badge “Chờ xác thực NTD” với bộ lọc mặc định “Cần xử lý”: hàng chờ
+  nay gồm hồ sơ `pending`, `in_review` và hồ sơ có giấy tờ hiện hành chờ duyệt,
+  nên không còn badge có số nhưng bảng rỗng.
+- Sửa cảnh báo Ant Design `columns.render return cell props is deprecated` ở
+  bảng tài khoản. Formatter ngày nay chỉ nhận giá trị ô, không nhận nhầm cả
+  record làm fallback khi ngày trống.
+- Thu gọn hành trình 9 bước theo mặc định, cho phép mở chi tiết khi cần; nhóm
+  bộ giấy tờ theo quyền đại diện, pháp lý doanh nghiệp và bảo vệ dữ liệu.
+- Làm rõ đối chiếu mã số thuế là bằng chứng bổ trợ về pháp nhân công ty trong
+  hồ sơ xác thực quyền đại diện, không phải dấu hiệu NTD đã tạo hoặc chỉnh sửa
+  công ty; yêu cầu cập nhật công ty tiếp tục là workflow độc lập.
+
 ### 2026-07-27
 
 #### Changed — Quyền truy cập nhà tuyển dụng

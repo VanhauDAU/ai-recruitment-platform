@@ -27,7 +27,6 @@ import {
   CvOwnerViewPage,
   CvSharedViewPage,
   OnboardUserPage,
-  OnboardUserSettingPage,
   PersonalInfoPage,
   MyCvsPage,
   JobPreferenceSettingsPage,
@@ -128,7 +127,8 @@ export function mainRoutes() {
       <Route element={<RoleGuard allowedRoles={['candidate']} />}>
         <Route element={<OnboardingLayout />}>
           <Route path="/onboard-user" element={<OnboardUserPage />} />
-          <Route path="/onboard-user-setting" element={<OnboardUserSettingPage />} />
+          {/* Onboarding gộp về một trang; URL cũ giữ lại cho link đã phát ra. */}
+          <Route path="/onboard-user-setting" element={<Navigate to="/onboard-user" replace />} />
         </Route>
       </Route>
     </Route>,

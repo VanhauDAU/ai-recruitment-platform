@@ -15,6 +15,7 @@ const LOGOUT_EVENT_NAME = 'procv:auth-logout'
 const LOGOUT_POLL_INTERVAL_MS = 1000
 const accessTokens = new Map()
 const permissionDeniedSubscribers = new Set()
+const sessionExpiredSubscribers = new Set()
 
 // One-time migration cleanup: no JWT from an older release may remain readable
 // through localStorage after this bundle starts.
@@ -168,4 +169,17 @@ export function notifyPermissionDenied() {
 export function subscribeToPermissionDenied(subscriber) {
   permissionDeniedSubscribers.add(subscriber)
   return () => permissionDeniedSubscribers.delete(subscriber)
+}
+
+// Phiên chết hẳn (refresh thất bại) KHÁC với đăng xuất chủ động: nó chỉ xảy ra
+// trên tab này nên không đổi marker, và vì thế `subscribeToSessionLogout` không
+// bao giờ biết. Thiếu kênh riêng thì SessionProvider giữ nguyên user cũ, guard
+// vẫn render workspace còn mọi request thì 401 âm thầm.
+export function notifySessionExpired() {
+  sessionExpiredSubscribers.forEach((subscriber) => subscriber())
+}
+
+export function subscribeToSessionExpired(subscriber) {
+  sessionExpiredSubscribers.add(subscriber)
+  return () => sessionExpiredSubscribers.delete(subscriber)
 }

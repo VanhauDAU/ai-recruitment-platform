@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 
@@ -25,6 +25,11 @@ vi.mock('@/entities/campaign', () => ({
   getCampaign: vi.fn(),
   getCampaignReport: vi.fn(),
 }))
+
+function CampaignDestination() {
+  const { search } = useLocation()
+  return <p>Chiến dịch đang mở {search}</p>
+}
 
 describe('EmployerWorkspaceLayout', () => {
   beforeEach(() => {
@@ -201,5 +206,49 @@ describe('EmployerWorkspaceLayout', () => {
     const backBtn = screen.getByRole('button', { name: /Quay lại/i })
     expect(backBtn).toBeInTheDocument()
     expect(backBtn).toHaveClass('!border')
+  })
+
+  it('returns the application workspace to its scoped job detail', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/applications?job=jb_123&application=app_1']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/applications" element={<p>Hồ sơ đang mở</p>} />
+            <Route path="/tuyendung/app/jobs/:publicId" element={<p>Chi tiết tin đang mở</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quay lại chi tiết tin tuyển dụng' }))
+
+    expect(screen.getByText('Chi tiết tin đang mở')).toBeInTheDocument()
+  })
+
+  it('returns campaign-scoped applications to the campaign CV tab', () => {
+    useSession.mockReturnValue({
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      logout: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tuyendung/app/applications?campaign=camp_123&application=app_1']}>
+        <Routes>
+          <Route element={<EmployerWorkspaceLayout />}>
+            <Route path="/tuyendung/app/applications" element={<p>Hồ sơ đang mở</p>} />
+            <Route path="/tuyendung/app/campaigns/:publicId" element={<CampaignDestination />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quay lại chiến dịch tuyển dụng' }))
+
+    expect(screen.getByText(/Chiến dịch đang mở/)).toHaveTextContent('?active_tab=apply_cv')
   })
 })

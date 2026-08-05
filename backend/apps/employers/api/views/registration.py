@@ -1,7 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.serializers import SessionUserSerializer
@@ -9,6 +8,7 @@ from apps.accounts.permissions import IsEmployer
 from apps.accounts.services import queue_verification_email, verify_request_captcha
 from apps.accounts.services.refresh_cookies import set_refresh_cookie
 from apps.accounts.services.tokens import issue_tokens
+from common.throttling import ClientIPScopedRateThrottle
 
 from ...services.registration import complete_registration_profile, register_employer
 from ..serializers import RecruiterProfileSerializer
@@ -21,7 +21,7 @@ from ..serializers.registration import (
 class EmployerRegisterView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'register'
 
     @extend_schema(
@@ -31,9 +31,12 @@ class EmployerRegisterView(APIView):
         tags=['employer-auth'],
     )
     def post(self, request):
+        # Captcha TRƯỚC khi validate: validator email trả lời "email này đã có
+        # tài khoản NTD", nên chạy nó trước captcha là biếu không một oracle dò
+        # danh sách nhà tuyển dụng cho mọi client.
+        verify_request_captcha(request, 'register')
         serializer = EmployerRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        verify_request_captcha(request, 'register')
         user, recruiter = register_employer(serializer.validated_data)
         queue_verification_email(user)
         tokens = issue_tokens(user, request, auth_method='registration')

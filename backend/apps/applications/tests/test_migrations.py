@@ -23,7 +23,6 @@ from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
 from apps.cvs.models import CvVersion, UserCv
-from apps.jobs.models import Job
 
 BEFORE = [('applications', '0003_initial')]
 EXPAND = [('applications', '0004_application_snapshot_expand')]
@@ -69,6 +68,18 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
             with_applied_migrations=True
         ).apps.get_model('employers', 'Company')
 
+    def _historical_job(self):
+        """Return Job from the schema state currently applied by the executor.
+
+        Rolling applications back can also roll back newer cross-app migrations.
+        Using the runtime Job model would then attempt to write fields that do
+        not exist yet (for example account-policy hold columns).
+        """
+        executor = MigrationExecutor(connection)
+        return executor._create_project_state(  # noqa: SLF001 - migration-state test
+            with_applied_migrations=True
+        ).apps.get_model('jobs', 'Job')
+
     def _snapshot_application(self):
         """Return the Application model matching the 0004–0006 test schema.
 
@@ -100,11 +111,13 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
             company_name=f'Legacy Co {suffix}',
             created_by_id=owner.pk,
         )
-        job = Job.objects.create(
+        job = self._historical_job().objects.create(
+            public_id=f'jb-mig-{suffix}',
             title=f'Legacy Job {suffix}',
+            slug=f'legacy-job-{suffix}',
             description='d',
             company_id=company.pk,
-            posted_by=owner,
+            posted_by_id=owner.pk,
         )
         cv = UserCv.objects.create(cv_type='builder', title=f'Legacy CV {suffix}', user=candidate)
         CvVersion.objects.create(

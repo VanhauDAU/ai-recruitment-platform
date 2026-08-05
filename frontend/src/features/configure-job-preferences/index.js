@@ -1,1 +1,6 @@
+export { EXPERIENCE_OPTIONS, toFormValues } from './model/job-preferences-fields'
+export { jobPreferenceFieldErrors, saveJobPreferences } from './model/save-job-preferences'
+export { MAX_DESIRED_SPECIALIZATIONS } from './model/specialization-limit'
+export { useJobPreferenceCatalog } from './model/use-job-preference-catalog'
 export { default as JobPreferencesForm } from './ui/JobPreferencesForm'
+export { default as JobSpecializationPicker } from './ui/JobSpecializationPicker'

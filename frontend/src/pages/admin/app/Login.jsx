@@ -21,9 +21,13 @@ export default function AdminLogin({ destinationResolver }) {
           portal="admin"
           expectedRoles={['admin']}
           forgotPasswordLink={null}
+          passwordHelp={(
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Quên mật khẩu? Liên hệ kỹ thuật
+            </span>
+          )}
           destinationResolver={destinationResolver}
         />
-
       </div>
     </ConfigProvider>
   )

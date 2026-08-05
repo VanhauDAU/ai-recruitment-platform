@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminSettings from './Settings'
 
@@ -59,7 +60,11 @@ describe('AdminSettings', () => {
 
   it('refreshes the application theme after saving the primary color', async () => {
     const user = userEvent.setup()
-    render(<AdminSettings />)
+    render(
+      <MemoryRouter>
+        <AdminSettings />
+      </MemoryRouter>,
+    )
 
     await user.click(await screen.findByRole('button', { name: 'Chọn màu tím' }))
     await user.click(screen.getByRole('button', { name: 'Lưu thay đổi' }))

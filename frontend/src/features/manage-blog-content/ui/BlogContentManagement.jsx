@@ -2,6 +2,7 @@ import {
   CheckCircleOutlined,
   EditOutlined,
   EyeInvisibleOutlined,
+  ExportOutlined,
   HolderOutlined,
   MoreOutlined,
   PlusOutlined,
@@ -16,14 +17,11 @@ import {
   PointerSensor,
   TouchSensor,
   closestCenter,
-  pointerWithin,
-  useDraggable,
-  useDroppable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS, getEventCoordinates } from '@dnd-kit/utilities'
+import { CSS } from '@dnd-kit/utilities'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
@@ -44,10 +42,11 @@ import {
   Tabs,
   Tag,
 } from 'antd'
-import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import {
   adminBlogKeys,
+  blogPostPath,
   createAdminBlogCategory,
   createAdminBlogPin,
   deleteAdminBlogPin,
@@ -132,14 +131,6 @@ const POST_STATUS_ACTIONS = [
   },
 ]
 
-const DROP_TONE_CLASSES = {
-  amber: 'border-amber-300 bg-amber-50 text-amber-900',
-  emerald: 'border-emerald-300 bg-emerald-50 text-emerald-900',
-  blue: 'border-blue-300 bg-blue-50 text-blue-900',
-  rose: 'border-rose-300 bg-rose-50 text-rose-900',
-  violet: 'border-violet-300 bg-violet-50 text-violet-900',
-}
-
 const POST_ACTION_SUCCESS_PREFIX = {
   submit: 'Đã gửi duyệt',
   publish: 'Đã xuất bản',
@@ -147,6 +138,8 @@ const POST_ACTION_SUCCESS_PREFIX = {
   archive: 'Đã ẩn',
   restore: 'Đã khôi phục',
 }
+
+const PUBLIC_EDITORIAL_STATES = new Set(['published', 'published_with_draft', 'published_with_pending'])
 
 function statusColor(state) {
   if (state === 'published') return 'green'
@@ -167,73 +160,46 @@ function getActionErrorMessage(error) {
   return firstFieldError || 'Không thể đổi trạng thái bài viết. Vui lòng thử lại.'
 }
 
-function snapPostOverlayToCursor({ activatorEvent, activeNodeRect, overlayNodeRect, transform }) {
-  if (!activatorEvent || !activeNodeRect || !overlayNodeRect) return transform
-  const cursor = getEventCoordinates(activatorEvent)
-  if (!cursor) return transform
-  return {
-    ...transform,
-    x: transform.x + cursor.x - activeNodeRect.left - overlayNodeRect.width / 2,
-    y: transform.y + cursor.y - activeNodeRect.top - overlayNodeRect.height / 2,
-  }
-}
-
 function canTransitionPost(post) {
   return POST_STATUS_ACTIONS.some((action) => post.allowed_actions?.includes(action.action))
 }
 
-function PostDragHandle({ post, disabled = false }) {
-  const draggable = useDraggable({
-    id: post.public_id,
-    disabled,
-    data: { post },
-  })
+function AdminPostLink({ post, children, className = '', label }) {
   return (
-    <button
-      ref={draggable.setNodeRef}
-      {...draggable.attributes}
-      {...draggable.listeners}
-      type="button"
-      disabled={disabled}
-      className={`grid min-h-11 min-w-11 touch-none place-items-center rounded-xl border border-slate-200 bg-white text-slate-400 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:cursor-grabbing disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-35 ${draggable.isDragging ? 'cursor-grabbing border-emerald-400 bg-emerald-50 text-emerald-700' : 'cursor-grab'}`}
-      aria-label={disabled ? `Không có quyền đổi trạng thái bài “${post.title}”` : `Kéo bài “${post.title}” để đổi trạng thái`}
-      title={disabled ? 'Bạn không có thao tác trạng thái hợp lệ' : 'Kéo vào vùng trạng thái'}
+    <Link
+      to={adminPath(`/blog/${post.public_id}/edit`)}
+      className={className}
+      aria-label={label || `Mở bài “${post.title}” trong trang admin`}
     >
-      <HolderOutlined />
-    </button>
+      {children}
+    </Link>
   )
 }
 
-function PostStatusDropZone({ action, activePosts }) {
-  const enabled = activePosts.length > 0 && activePosts.every((post) => post.allowed_actions?.includes(action.action))
-  const droppable = useDroppable({
-    id: action.action,
-    disabled: !enabled,
-    data: { action: action.action },
-  })
-  const Icon = action.icon
-  const FeedbackIcon = droppable.isOver ? CheckCircleOutlined : Icon
+function PublicPostUrl({ post }) {
+  const path = blogPostPath(post.slug)
+  const content = (
+    <>
+      <span className="truncate">{path}</span>
+      {PUBLIC_EDITORIAL_STATES.has(post.editorial_state) && <ExportOutlined className="shrink-0" aria-hidden="true" />}
+    </>
+  )
+  const className = 'mt-1 flex w-fit max-w-full items-center gap-1 text-xs focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600'
+
+  if (!PUBLIC_EDITORIAL_STATES.has(post.editorial_state)) {
+    return <span className={`${className} cursor-not-allowed !text-slate-400`} title="Chỉ mở được ở trang public sau khi bài viết được xuất bản">{content}</span>
+  }
+
   return (
-    <div
-      ref={droppable.setNodeRef}
-      data-testid={`post-status-drop-${action.action}`}
-      aria-disabled={!enabled}
-      className={`min-h-20 min-w-0 flex-1 rounded-xl border-2 border-dashed px-3 py-3 transition duration-200 motion-reduce:transition-none sm:min-w-36 ${
-        enabled
-          ? `${DROP_TONE_CLASSES[action.tone]} ${droppable.isOver ? 'scale-[1.04] border-solid shadow-xl ring-4 ring-emerald-200/70' : 'opacity-90'}`
-          : 'border-slate-200 bg-slate-100 text-slate-400 opacity-55'
-      }`}
+    <a
+      href={path}
+      target="_blank"
+      rel="noreferrer"
+      className={`${className} !text-slate-500 transition hover:!text-emerald-700 hover:underline`}
+      aria-label={`Mở URL ${path} ở trang public`}
     >
-      <div className="flex items-center gap-2">
-        <span className={`grid size-9 shrink-0 place-items-center rounded-lg bg-white/80 shadow-sm ${droppable.isOver ? 'text-lg text-emerald-700' : ''}`}><FeedbackIcon /></span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold">{action.label}</p>
-          <p className={`truncate text-[11px] ${droppable.isOver ? 'font-bold' : ''}`}>
-            {droppable.isOver ? 'Thả chuột để chọn' : enabled ? action.targetLabel : 'Không hợp lệ'}
-          </p>
-        </div>
-      </div>
-    </div>
+      {content}
+    </a>
   )
 }
 
@@ -280,27 +246,23 @@ function PostList({ canManage }) {
   const [q, setQ] = useState('')
   const [status, setStatus] = useState()
   const [category, setCategory] = useState()
+  const [ordering, setOrdering] = useState('-updated_at')
   const [page, setPage] = useState(1)
   const [selectedPostIds, setSelectedPostIds] = useState([])
-  const [activePosts, setActivePosts] = useState([])
-  const [overActionName, setOverActionName] = useState(null)
-  const activePostsRef = useRef([])
   const [pendingAction, setPendingAction] = useState(null)
   const [actionNote, setActionNote] = useState('')
-  const params = useMemo(() => ({ q: q || undefined, status, category, page, page_size: 20 }), [category, page, q, status])
+  const params = useMemo(
+    () => ({ q: q || undefined, status, category, ordering, page, page_size: 20 }),
+    [category, ordering, page, q, status],
+  )
   const postsQuery = useQuery({ queryKey: adminBlogKeys.posts(params), queryFn: ({ signal }) => getAdminBlogPosts(params, { signal }) })
   const summaryQuery = useQuery({ queryKey: adminBlogKeys.summary, queryFn: getAdminBlogSummary })
   const categoriesQuery = useQuery({ queryKey: adminBlogKeys.categories, queryFn: getAdminBlogCategories })
   const rows = postsQuery.data?.results || []
   const selectablePosts = rows.filter(canTransitionPost)
   const selectedPosts = selectablePosts.filter((post) => selectedPostIds.includes(post.public_id))
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
-    useSensor(KeyboardSensor),
-  )
 
-  useEffect(() => setSelectedPostIds([]), [category, page, q, status])
+  useEffect(() => setSelectedPostIds([]), [category, ordering, page, q, status])
 
   const actionMutation = useMutation({
     mutationFn: async ({ posts, action, note }) => {
@@ -337,16 +299,6 @@ function PostList({ canManage }) {
     setPendingAction({ posts, action })
   }
 
-  const finishPostDrag = ({ active, over }) => {
-    const post = active.data.current?.post
-    const draggedPosts = activePostsRef.current.length ? activePostsRef.current : (post ? [post] : [])
-    activePostsRef.current = []
-    setActivePosts([])
-    setOverActionName(null)
-    if (!post || !over) return
-    openActionConfirmation(draggedPosts, over.id)
-  }
-
   const confirmStatusAction = () => {
     if (!pendingAction) return
     if (pendingAction.action.noteRequired && !actionNote.trim()) {
@@ -360,30 +312,45 @@ function PostList({ canManage }) {
     })
   }
 
+  const sortable = (field) => ({
+    key: field,
+    sorter: true,
+    sortOrder: ordering === field ? 'ascend' : ordering === `-${field}` ? 'descend' : null,
+  })
   const columns = [
     {
-      title: <span className="sr-only">Kéo thả</span>,
-      key: 'drag',
-      width: 64,
-      render: (_, row) => <PostDragHandle post={row} disabled={!canTransitionPost(row)} />,
-    },
-    {
       title: 'Bài viết',
-      key: 'post',
-      width: 420,
+      width: 440,
+      ...sortable('title'),
       render: (_, row) => (
         <div className="flex min-w-0 gap-3">
-          {row.thumbnail_url ? <img src={row.thumbnail_url} alt="" className="h-16 w-24 shrink-0 rounded-lg object-cover" /> : <div className="grid h-16 w-24 shrink-0 place-items-center rounded-lg bg-slate-100 text-2xl font-bold text-slate-300">{row.title?.[0]}</div>}
-          <div className="min-w-0"><p className="line-clamp-2 font-semibold text-slate-800">{row.title}</p><p className="mt-1 truncate text-xs text-slate-400">/blog/{row.slug}</p></div>
+          <AdminPostLink post={row} className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" label={`Mở ảnh bài “${row.title}” trong trang admin`}>
+            {row.thumbnail_url ? <img src={row.thumbnail_url} alt="" className="h-16 w-24 rounded-lg object-cover transition hover:opacity-85" /> : <span className="grid h-16 w-24 place-items-center rounded-lg bg-slate-100 text-2xl font-bold text-slate-300">{row.title?.[0]}</span>}
+          </AdminPostLink>
+          <div className="min-w-0">
+            <AdminPostLink post={row} className="line-clamp-2 font-semibold !text-slate-800 transition hover:!text-emerald-700 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+              {row.title}
+            </AdminPostLink>
+            <PublicPostUrl post={row} />
+          </div>
         </div>
       ),
     },
-    { title: 'Danh mục', dataIndex: ['category', 'name'], width: 180 },
-    { title: 'Tác giả', dataIndex: ['author', 'name'], width: 180, render: (value) => value || 'Không xác định' },
-    { title: 'Trạng thái', width: 190, render: (_, row) => <Tag color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag> },
-    { title: 'Hoàn thiện', width: 130, render: (_, row) => <Progress percent={row.completeness.score} size="small" /> },
-    { title: 'Lượt xem', dataIndex: 'view_count', width: 100 },
-    { title: 'Cập nhật', dataIndex: 'updated_at', width: 150, render: (value) => new Date(value).toLocaleDateString('vi-VN') },
+    { title: 'Danh mục', dataIndex: ['category', 'name'], width: 180, ...sortable('category'), render: (value) => value || 'Chưa phân loại' },
+    { title: 'Tác giả', dataIndex: ['author', 'name'], width: 180, ...sortable('author'), render: (value) => value || 'Không xác định' },
+    { title: 'Trạng thái', width: 190, ...sortable('editorial_state'), render: (_, row) => <Tag color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag> },
+    { title: 'Hoàn thiện', width: 130, ...sortable('completeness'), render: (_, row) => <Progress percent={row.completeness.score} size="small" /> },
+    { title: 'Lượt xem', dataIndex: 'view_count', width: 110, ...sortable('view_count'), render: (value) => Number(value || 0).toLocaleString('vi-VN') },
+    {
+      title: 'Cập nhật',
+      dataIndex: 'updated_at',
+      width: 160,
+      ...sortable('updated_at'),
+      render: (value) => {
+        const date = new Date(value)
+        return <span title={date.toLocaleString('vi-VN')}>{date.toLocaleDateString('vi-VN')}</span>
+      },
+    },
     {
       title: 'Thao tác',
       fixed: 'right',
@@ -398,34 +365,74 @@ function PostList({ canManage }) {
   ]
 
   const stats = summaryQuery.data || {}
-  const overAction = POST_STATUS_ACTIONS.find((action) => action.action === overActionName)
   const allVisibleSelected = selectablePosts.length > 0 && selectedPosts.length === selectablePosts.length
   const someVisibleSelected = selectedPosts.length > 0 && !allVisibleSelected
+  const hasFilters = Boolean(q || status || category)
+  const clearFilters = () => {
+    setQ('')
+    setStatus(undefined)
+    setCategory(undefined)
+    setPage(1)
+  }
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
         {[['all', 'Tất cả'], ...STATUS_OPTIONS.map((item) => [item.value, item.label])].map(([key, label]) => (
-          <button key={key} type="button" className="text-left" aria-pressed={(key === 'all' && !status) || status === key} onClick={() => { setStatus(key === 'all' ? undefined : key); setPage(1) }}>
-            <Card size="small" className="h-full cursor-pointer transition hover:border-emerald-300">
+          <button
+            key={key}
+            type="button"
+            className="text-left"
+            aria-label={`Lọc ${label}: ${stats[key] || 0} bài`}
+            aria-pressed={(key === 'all' && !status) || status === key}
+            onClick={() => { setStatus(key === 'all' ? undefined : key); setPage(1) }}
+          >
+            <Card
+              size="small"
+              className={`h-full cursor-pointer transition hover:border-emerald-300 hover:shadow-sm ${
+                ((key === 'all' && !status) || status === key) ? 'border-emerald-500 bg-emerald-50/60' : ''
+              }`}
+            >
               <p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-slate-800">{stats[key] || 0}</p>
             </Card>
           </button>
         ))}
       </div>
       <Card>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2 border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Danh sách bài viết</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {postsQuery.isLoading ? 'Đang tải dữ liệu…' : `${Number(postsQuery.data?.count || 0).toLocaleString('vi-VN')} bài viết phù hợp`}
+            </p>
+          </div>
+          <p className="text-xs text-slate-500">Tên mở trang quản trị; URL của bài đã xuất bản mở trang public trong tab mới.</p>
+        </div>
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="grid flex-1 gap-3 sm:grid-cols-3">
             <Input allowClear prefix={<SearchOutlined />} placeholder="Tìm tiêu đề hoặc slug" value={q} onChange={(event) => { setQ(event.target.value); setPage(1) }} />
             <Select allowClear placeholder="Trạng thái" value={status} options={STATUS_OPTIONS} onChange={(value) => { setStatus(value); setPage(1) }} />
             <Select allowClear placeholder="Danh mục" value={category} options={(categoriesQuery.data || []).map((item) => ({ value: item.public_id, label: item.name }))} onChange={(value) => { setCategory(value); setPage(1) }} />
           </div>
-          {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/new'))}>Tạo bài viết</Button>}
+          <Space wrap>
+            {hasFilters && <Button onClick={clearFilters}>Xóa bộ lọc</Button>}
+            {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/new'))}>Tạo bài viết</Button>}
+          </Space>
         </div>
+        {postsQuery.isError && (
+          <Alert
+            className="mb-4"
+            type="error"
+            showIcon
+            message="Không thể tải danh sách bài viết"
+            description="Hãy kiểm tra kết nối rồi thử lại."
+            action={<Button size="small" onClick={() => postsQuery.refetch()}>Thử lại</Button>}
+          />
+        )}
         {selectedPosts.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
             <div>
               <p className="font-semibold text-blue-950">Đã chọn {selectedPosts.length} bài viết</p>
-              <p className="text-xs text-blue-700">Kéo tay nắm của một bài đã chọn để di chuyển cả nhóm.</p>
+              <p className="text-xs text-blue-700">Áp dụng cùng một thay đổi trạng thái cho các bài đã chọn.</p>
             </div>
             <Space wrap>
               <Button onClick={() => setSelectedPostIds([])}>Bỏ chọn</Button>
@@ -433,30 +440,23 @@ function PostList({ canManage }) {
             </Space>
           </div>
         )}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={pointerWithin}
-          onDragStart={({ active }) => {
-            const post = active.data.current?.post
-            if (!post) return
-            const posts = selectedPostIds.includes(post.public_id) && selectedPosts.length > 0 ? selectedPosts : [post]
-            activePostsRef.current = posts
-            setActivePosts(posts)
-          }}
-          onDragOver={({ over }) => setOverActionName(over?.id || null)}
-          onDragCancel={() => {
-            activePostsRef.current = []
-            setActivePosts([])
-            setOverActionName(null)
-          }}
-          onDragEnd={finishPostDrag}
-        >
+        <>
           <div className="hidden overflow-x-auto md:block">
             <Table
               rowKey="public_id"
               loading={postsQuery.isLoading}
               dataSource={rows}
               columns={columns}
+              onChange={(_, __, sorter, extra) => {
+                if (extra.action !== 'sort') return
+                const selectedSorter = Array.isArray(sorter) ? sorter[0] : sorter
+                const field = selectedSorter?.columnKey
+                const nextOrdering = selectedSorter?.order
+                  ? `${selectedSorter.order === 'descend' ? '-' : ''}${field}`
+                  : '-updated_at'
+                setOrdering(nextOrdering)
+                setPage(1)
+              }}
               rowSelection={selectablePosts.length ? {
                 selectedRowKeys: selectedPostIds,
                 onChange: setSelectedPostIds,
@@ -466,8 +466,16 @@ function PostList({ canManage }) {
                   disabled: !canTransitionPost(row),
                 }),
               } : undefined}
-              scroll={{ x: 1680 }}
-              pagination={{ current: page, pageSize: 20, total: postsQuery.data?.count || 0, showSizeChanger: false, onChange: setPage }}
+              scroll={{ x: 1580 }}
+              showSorterTooltip={{ target: 'sorter-icon' }}
+              pagination={{
+                current: page,
+                pageSize: 20,
+                total: postsQuery.data?.count || 0,
+                showSizeChanger: false,
+                showTotal: (total, range) => `${range[0]}–${range[1]} / ${total} bài`,
+                onChange: setPage,
+              }}
             />
           </div>
           <div className="space-y-3 md:hidden">
@@ -493,9 +501,22 @@ function PostList({ canManage }) {
                         : current.filter((id) => id !== row.public_id))}
                     />
                   </label>
-                  <PostDragHandle post={row} disabled={!canTransitionPost(row)} />
-                  {row.thumbnail_url && <img src={row.thumbnail_url} alt="" className="h-16 w-24 rounded-lg object-cover" />}
-                  <div className="min-w-0 flex-1"><p className="font-semibold text-slate-800">{row.title}</p><Tag className="mt-2" color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag></div>
+                  {row.thumbnail_url && (
+                    <AdminPostLink post={row} className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" label={`Mở ảnh bài “${row.title}” trong trang admin`}>
+                      <img src={row.thumbnail_url} alt="" className="h-16 w-24 rounded-lg object-cover" />
+                    </AdminPostLink>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <AdminPostLink post={row} className="line-clamp-2 font-semibold !text-slate-800 hover:!text-emerald-700 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+                      {row.title}
+                    </AdminPostLink>
+                    <PublicPostUrl post={row} />
+                    <Tag className="mt-2" color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                  <span>{row.category?.name || 'Chưa phân loại'}</span>
+                  <span className="text-right">{Number(row.view_count || 0).toLocaleString('vi-VN')} lượt xem</span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <Progress percent={row.completeness.score} size="small" className="min-w-32 flex-1" />
@@ -508,48 +529,7 @@ function PostList({ canManage }) {
             ))}
             {!postsQuery.isLoading && rows.length === 0 && <Empty description="Không có bài viết phù hợp" />}
           </div>
-
-          <div
-            data-testid="post-status-drop-tray"
-            aria-hidden={!activePosts.length}
-            className={`fixed inset-x-3 bottom-4 z-[1050] mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur transition duration-200 motion-reduce:transition-none sm:inset-x-6 sm:p-4 ${
-              activePosts.length ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-8 opacity-0'
-            }`}
-          >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-900">Đang di chuyển: {activePosts.length > 1 ? `${activePosts.length} bài viết đã chọn` : activePosts[0]?.title}</p>
-                <p aria-live="polite" className={`text-xs ${overAction ? 'font-semibold text-emerald-700' : 'text-slate-500'}`}>
-                  {overAction ? `Đã nhận vùng “${overAction.label}” — thả chuột để xác nhận.` : 'Đưa con trỏ vào giữa một vùng hợp lệ.'}
-                </p>
-              </div>
-              <Tag color={activePosts.length === 1 ? statusColor(activePosts[0].editorial_state) : 'blue'}>
-                {activePosts.length === 1 ? activePosts[0].editorial_state_label : `${activePosts.length} bài`}
-              </Tag>
-            </div>
-            <div className="grid grid-cols-2 gap-2 pb-1 sm:flex sm:overflow-x-auto">
-              {POST_STATUS_ACTIONS.map((action) => <PostStatusDropZone key={action.action} action={action} activePosts={activePosts} />)}
-            </div>
-          </div>
-
-          <DragOverlay
-            zIndex={1100}
-            modifiers={[snapPostOverlayToCursor]}
-            dropAnimation={{ duration: 180, easing: 'ease-out' }}
-          >
-            {activePosts.length > 0 && (
-              <div data-testid="post-status-drag-overlay" className={`flex w-80 max-w-[80vw] items-center gap-3 rounded-xl border-2 bg-white px-4 py-3 shadow-2xl transition duration-150 motion-reduce:transition-none ${overAction ? 'scale-[1.03] border-emerald-600 ring-4 ring-emerald-200/70' : 'border-emerald-500'}`}>
-                {overAction ? <CheckCircleOutlined className="shrink-0 text-xl text-emerald-600" /> : <HolderOutlined className="shrink-0 text-lg text-emerald-600" />}
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-slate-800">{activePosts.length > 1 ? `${activePosts.length} bài viết đã chọn` : activePosts[0].title}</p>
-                  <p className={`truncate text-xs ${overAction ? 'font-bold text-emerald-700' : 'text-slate-500'}`}>
-                    {overAction ? `Đã nhận: ${overAction.label}` : `${activePosts.length > 1 ? 'Di chuyển cùng nhau' : activePosts[0].editorial_state_label} · Chọn trạng thái mới`}
-                  </p>
-                </div>
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
+        </>
       </Card>
 
       <Modal

@@ -2,9 +2,10 @@ from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase
 
-from apps.employers.services import render_office_document_preview
+from apps.employers.services import render_office_document_preview, render_office_upload_preview
 
 
 class EmployerDocumentPreviewTests(SimpleTestCase):
@@ -31,6 +32,9 @@ class EmployerDocumentPreviewTests(SimpleTestCase):
             'employers/rec_1/documents/agreement.docx', 'rb'
         )
         self.assertIn('--safe-mode', soffice_run.call_args.args[0])
+        self.assertTrue(
+            soffice_run.call_args.args[0][1].startswith('-env:UserInstallation=file://')
+        )
 
     @patch('apps.employers.services.document_preview.private_media_storage')
     def test_skips_conversion_for_a_format_without_a_safe_office_renderer(self, storage_factory):
@@ -40,3 +44,25 @@ class EmployerDocumentPreviewTests(SimpleTestCase):
 
         self.assertIsNone(preview)
         storage_factory.assert_not_called()
+
+    @patch('apps.employers.services.document_preview.subprocess.run')
+    def test_renders_an_unpersisted_docx_upload_and_restores_its_position(self, soffice_run):
+        upload = SimpleUploadedFile(
+            'agreement.docx',
+            b'PK\x03\x04document',
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+        def create_pdf(command, **_kwargs):
+            source_path = Path(command[-1])
+            source_path.with_suffix('.pdf').write_bytes(b'%PDF-upload-preview')
+
+        soffice_run.side_effect = create_pdf
+
+        preview = render_office_upload_preview(
+            upload,
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+        self.assertEqual(preview, b'%PDF-upload-preview')
+        self.assertEqual(upload.tell(), 0)

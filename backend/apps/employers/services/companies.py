@@ -1,13 +1,19 @@
 """Company mutation and review workflows."""
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import StaleImpactToken, record_admin_action
 from common.media_storage import delete_local_media_url
 
-from ..models import Company, CompanyDocument, CompanyImage, CompanyIndustry, Industry
+from ..models import (
+    Company,
+    CompanyDocument,
+    CompanyImage,
+    CompanyIndustry,
+    Industry,
+)
 
 UPDATABLE_COMPANY_FIELDS = {
     'business_type',
@@ -29,6 +35,77 @@ UPDATABLE_COMPANY_FIELDS = {
     'founded_year',
 }
 SENSITIVE_FIELDS = {'tax_code', 'company_name'}
+
+
+class CompanyTaxCodeConflict(Exception):
+    """The requested tax code belongs to another company."""
+
+    def __init__(self, tax_code, *, claim_status):
+        self.tax_code = tax_code
+        self.claim_status = claim_status
+        super().__init__(f'Mã số thuế {tax_code} đã được sử dụng bởi một công ty khác.')
+
+
+def _verified_tax_code_claim_exists(*, company, tax_code):
+    if not tax_code:
+        return False
+    return (
+        Company.objects.filter(
+            tax_code=tax_code,
+            verification_status=Company.VerificationStatus.VERIFIED,
+        )
+        .exclude(pk=company.pk)
+        .exists()
+    )
+
+
+def ensure_company_tax_code_can_be_verified(company, *, tax_code=None):
+    """Only verified companies own an exclusive tax-code claim."""
+    tax_code = (company.tax_code if tax_code is None else tax_code) or None
+    if _verified_tax_code_claim_exists(company=company, tax_code=tax_code):
+        raise CompanyTaxCodeConflict(tax_code, claim_status='verified')
+
+
+def mark_company_verified(company, *, verified_at=None):
+    """Mark one company verified and translate uniqueness races to a domain error."""
+    verified_at = verified_at or timezone.now()
+    ensure_company_tax_code_can_be_verified(company)
+    try:
+        # The savepoint keeps the surrounding review transaction usable when
+        # the conditional database constraint wins a concurrent approval race.
+        with transaction.atomic():
+            Company.objects.filter(pk=company.pk).update(
+                verification_status=Company.VerificationStatus.VERIFIED,
+                verified_at=verified_at,
+                rejected_reason='',
+                updated_at=verified_at,
+            )
+    except IntegrityError as error:
+        if _verified_tax_code_claim_exists(company=company, tax_code=company.tax_code):
+            raise CompanyTaxCodeConflict(
+                company.tax_code,
+                claim_status='concurrent',
+            ) from error
+        raise
+    company.verification_status = Company.VerificationStatus.VERIFIED
+    company.verified_at = verified_at
+    company.rejected_reason = ''
+    return company
+
+
+def _save_company_with_tax_code_policy(*, company, tax_code):
+    if company.verification_status == Company.VerificationStatus.VERIFIED:
+        ensure_company_tax_code_can_be_verified(company, tax_code=tax_code)
+    try:
+        with transaction.atomic():
+            company.save()
+    except IntegrityError as error:
+        if (
+            company.verification_status == Company.VerificationStatus.VERIFIED
+            and _verified_tax_code_claim_exists(company=company, tax_code=tax_code)
+        ):
+            raise CompanyTaxCodeConflict(tax_code, claim_status='concurrent') from error
+        raise
 
 
 @transaction.atomic
@@ -80,7 +157,7 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
                 raise ValidationError(
                     {'detail': ('Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh đã được duyệt.')}
                 )
-        company = update_request.company
+        company = Company.objects.select_for_update().get(pk=update_request.company_id)
         changes = dict(update_request.changes)
         industry_ids = changes.pop('industries', None)
         primary_id = changes.pop('primary_industry', None)
@@ -90,6 +167,7 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
         gallery_deletions = changes.pop('gallery_deletions', [])
         changes.pop('logo_pending', None)
         changes.pop('gallery_pending', None)
+        proposed_tax_code = changes.get('tax_code', company.tax_code) or None
         old_logo_url = ''
         old_cover_image_url = ''
         if logo_url is not None:
@@ -116,7 +194,10 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
         )
         if final_gallery_count > 10:
             raise ValidationError({'detail': 'Thư viện công ty chỉ được có tối đa 10 ảnh.'})
-        company.save()
+        _save_company_with_tax_code_policy(
+            company=company,
+            tax_code=proposed_tax_code,
+        )
         if industry_ids:
             industries = list(Industry.objects.filter(id__in=industry_ids))
             primary = next(
@@ -259,9 +340,8 @@ def review_company_update_document(
 def verify_company(company, admin_user, approve, reason=''):
     """Review company verification after its documents were inspected."""
     if approve:
-        company.verification_status = Company.VerificationStatus.VERIFIED
-        company.verified_at = timezone.now()
-        company.rejected_reason = ''
+        mark_company_verified(company)
+        return company
     else:
         company.verification_status = Company.VerificationStatus.REJECTED
         company.rejected_reason = reason

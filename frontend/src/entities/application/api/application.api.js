@@ -44,6 +44,16 @@ export async function getRecruiterApplicationPage(params = {}) {
     : data
 }
 
+export async function getAdminJobApplicationPage(jobPublicId, params = {}, { signal } = {}) {
+  const { data } = await api.get(`/v2/admin/jobs/${jobPublicId}/applications/`, {
+    params,
+    signal,
+  })
+  return Array.isArray(data)
+    ? { count: data.length, next: null, previous: null, results: data }
+    : data
+}
+
 export async function exportRecruiterApplications(params = {}) {
   const { data, headers } = await api.get('/v2/recruiter/applications/export/', {
     params,

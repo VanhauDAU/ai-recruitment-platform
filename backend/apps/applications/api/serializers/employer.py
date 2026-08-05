@@ -20,6 +20,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     job_title = serializers.CharField(source='job.title', read_only=True)
     candidate_name = serializers.CharField(source='candidate.full_name', read_only=True)
     candidate_email = serializers.EmailField(source='candidate.email', read_only=True)
+    candidate_account_status = serializers.CharField(source='candidate.status', read_only=True)
+    candidate_account_restricted = serializers.SerializerMethodField()
     cv_title = serializers.CharField(source='cv.title', read_only=True)
     submitted_cv_version = serializers.CharField(
         source='submitted_cv_version.public_id', read_only=True
@@ -33,6 +35,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'job_title',
             'candidate_name',
             'candidate_email',
+            'candidate_account_status',
+            'candidate_account_restricted',
             'cv',
             'cv_title',
             'submitted_cv_version',
@@ -70,6 +74,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'accepted_at',
             'updated_at',
         ]
+
+    def get_candidate_account_restricted(self, obj):
+        return bool(
+            obj.candidate.status != 'active'
+            or not obj.candidate.is_active
+            or obj.candidate.is_deleted
+        )
 
     def validate_cv(self, cv):
         request = self.context['request']

@@ -15,7 +15,6 @@ const EXACT_MAIN_TITLES = new Map([
   ['/chinh-sach-cookie', 'Chính sách cookie'],
   ['/tai-khoan/xac-thuc-email', 'Xác thực email'],
   ['/onboard-user', 'Cá nhân hóa việc làm'],
-  ['/onboard-user-setting', 'Thiết lập hồ sơ'],
   ['/login', 'Đăng nhập'],
   ['/sign-up', 'Đăng ký tài khoản'],
   ['/register', 'Đăng ký tài khoản'],
@@ -119,11 +118,16 @@ function adminTitle(pathname) {
   const exact = EXACT_ADMIN_TITLES.get(pathname)
   if (exact) return exact
 
-  const accountDetailPrefix = `${adminPath('/accounts/')}`
-  const accountPublicId = pathname.slice(accountDetailPrefix.length)
-  if (pathname.startsWith(accountDetailPrefix) && accountPublicId && !accountPublicId.includes('/')) {
-    return 'Chi tiết tài khoản'
-  }
+  const pathSegments = pathname.split('/').filter(Boolean)
+  const dynamicRoute = ADMIN_ROUTES.find((route) => {
+    if (!route.segment.includes(':')) return false
+    const routeSegments = adminPath(route.segment).split('/').filter(Boolean)
+    return routeSegments.length === pathSegments.length
+      && routeSegments.every((segment, index) => (
+        segment.startsWith(':') || segment === pathSegments[index]
+      ))
+  })
+  if (dynamicRoute) return dynamicRoute.title
 
   return 'Trang không tồn tại'
 }

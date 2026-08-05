@@ -4,11 +4,19 @@ function isHtmlResponse(value) {
   return normalized.startsWith('<!doctype html') || normalized.startsWith('<html') || normalized.includes('<body')
 }
 
+// Khoá máy-đọc trong payload lỗi (vd SimpleJWT trả {detail, code}) — không ghép
+// vào chuỗi hiển thị, nếu không người dùng thấy "... no_active_account".
+const MACHINE_READABLE_KEYS = new Set(['code', 'codes', 'error_code', 'error'])
+
 function flattenMessages(value) {
   if (!value || isHtmlResponse(value)) return []
   if (typeof value === 'string') return [value]
   if (Array.isArray(value)) return value.flatMap(flattenMessages)
-  if (typeof value === 'object') return Object.values(value).flatMap(flattenMessages)
+  if (typeof value === 'object') {
+    return Object.entries(value)
+      .filter(([key]) => !MACHINE_READABLE_KEYS.has(key))
+      .flatMap(([, item]) => flattenMessages(item))
+  }
   return []
 }
 
@@ -24,16 +32,39 @@ function translateApiErrorMessage(message) {
   return API_ERROR_MESSAGES[normalized] || message
 }
 
+function explicitApiMessage(data) {
+  if (!data || typeof data !== 'object') return ''
+  if (typeof data.message === 'string') return data.message
+  if (
+    data.detail
+    && typeof data.detail === 'object'
+    && typeof data.detail.message === 'string'
+  ) {
+    return data.detail.message
+  }
+  if (typeof data.detail === 'string') return data.detail
+  return ''
+}
+
 export function getApiErrorMessage(error, fallback = 'Có lỗi xảy ra, vui lòng thử lại.') {
   const { response } = error || {}
 
   if (!response) {
-    return 'Không kết nối được máy chủ. Vui lòng kiểm tra backend đang chạy và thử lại.'
+    const isNetworkError = Boolean(
+      error?.isAxiosError
+      || ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error?.code),
+    )
+    return isNetworkError
+      ? 'Không kết nối được máy chủ. Vui lòng kiểm tra backend đang chạy và thử lại.'
+      : fallback
   }
 
   if (response.status >= 500 || isHtmlResponse(response.data)) {
     return 'Hệ thống đang gặp lỗi. Vui lòng thử lại sau ít phút.'
   }
+
+  const explicitMessage = explicitApiMessage(response.data)
+  if (explicitMessage) return translateApiErrorMessage(explicitMessage)
 
   const messages = flattenMessages(response.data)
   return messages.length ? messages.map(translateApiErrorMessage).join(' ') : fallback

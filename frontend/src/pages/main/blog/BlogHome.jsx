@@ -3,8 +3,8 @@ import { Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
 import { getBlogCategories, getBlogHome } from '@/entities/blog'
-import { setDocumentTitle } from '@/shared/config/document-title'
 import { legacyAsset } from '@/shared/config/assets'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogInlineBanner from './ui/BlogInlineBanner'
 import CategorySection from './ui/CategorySection'
@@ -32,7 +32,13 @@ export default function BlogHome() {
     return () => { cancelled = true }
   }, [])
 
-  useEffect(() => { setDocumentTitle(pageTitle) }, [pageTitle])
+  useDocumentMetadata(
+    {
+      title: pageTitle,
+      description: 'Kiến thức tìm việc, viết CV, phỏng vấn và phát triển sự nghiệp dành cho ứng viên.',
+      canonicalPath: '/blog',
+    },
+  )
 
   const sections = home?.sections || []
 

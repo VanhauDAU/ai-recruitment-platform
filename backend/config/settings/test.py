@@ -5,6 +5,7 @@ from .base import *
 ENVIRONMENT = 'test'
 IS_PRODUCTION = False
 DEBUG = False
+DJANGO_ADMIN_ENABLED = False
 R2_ENABLED = False
 R2_PUBLIC_BASE_URL = ''
 MEDIA_PUBLIC_BASE_URL = ''
@@ -38,6 +39,15 @@ CACHES = {
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Announcement tests exercise every surface by default. Individual kill-switch
+# tests override this setting explicitly.
+ANNOUNCEMENT_REMOTE_ENABLED_SURFACES = (
+    'candidate',
+    'employer_marketing',
+    'employer_workspace',
+    'admin_workspace',
+)
 
 # These flags must never redirect the Django test client away from HTTP routes.
 SECURE_SSL_REDIRECT = False

@@ -2,6 +2,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.accounts.services import lock_account_for_write
+
 from ..models import CampaignActivity, RecruiterProfile, RecruitmentCampaign
 
 
@@ -9,6 +11,7 @@ def _recruiter_for(user):
     # A campaign is personal workspace data. It can be created as soon as an
     # employer account exists; company verification is enforced only when the
     # recruiter submits a job for review.
+    user = lock_account_for_write(user)
     recruiter, _ = RecruiterProfile.objects.select_related('company').get_or_create(user=user)
     return recruiter
 

@@ -8,6 +8,7 @@ import {
   clearAllPortalSessions,
   clearCurrentPortalSession,
   clearTokens,
+  subscribeToSessionExpired,
   subscribeToSessionLogout,
   subscribeToPermissionDenied,
 } from '@/shared/api/token-store'
@@ -30,6 +31,13 @@ export default function SessionProvider({ children }) {
   const queryClient = useQueryClient()
   const lastRefreshAt = useRef(0)
   const permissionDeniedAt = useRef(0)
+  // Khách vãng lai cũng gặp 401 khi lướt trang công khai; chỉ người ĐANG đăng
+  // nhập mới bị đá về trang login.
+  const loggedInRef = useRef(false)
+
+  useEffect(() => {
+    loggedInRef.current = Boolean(user)
+  }, [user])
 
   const clearSessionState = useCallback(() => {
     setUser(null)
@@ -114,6 +122,16 @@ export default function SessionProvider({ children }) {
     () => subscribeToSessionLogout(clearSessionState),
     [clearSessionState],
   )
+
+  // Refresh hỏng giữa chừng: dọn state và đưa về trang đăng nhập của cổng hiện
+  // tại. Không có nhánh này thì guard vẫn thấy isAuthenticated=true và giữ người
+  // dùng ở lại workspace trong khi mọi request đều 401.
+  useEffect(() => subscribeToSessionExpired(() => {
+    if (!loggedInRef.current) return
+    clearSessionState()
+    message.warning('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+    navigate(loginPathForCurrentPortal(), { replace: true })
+  }), [clearSessionState, navigate])
 
   useEffect(() => subscribeToPermissionDenied(() => {
     const now = Date.now()

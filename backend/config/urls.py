@@ -15,7 +15,12 @@ def health_check(request):
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Search-visible HTML shell routes live outside /api by design. Order keeps
+    # their explicit public paths ahead of API and Django-admin composition.
+    path('', include('apps.jobs.urls_seo')),
+    path('', include('apps.blog.urls_seo')),
+    path('', include('apps.cv_templates.urls_seo')),
+    path('', include('apps.sitecontent.urls_seo')),
     path('api/health/', health_check, name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/admin/', include('apps.accounts.urls_admin')),
@@ -33,7 +38,11 @@ urlpatterns = [
     path('api/services/', include('apps.services.urls')),
     path('api/blog/', include('apps.blog.urls')),
     path('api/privacy/', include('apps.privacy.urls')),
+    path('api/speech/', include('apps.speech.urls')),
 ]
+
+if settings.DJANGO_ADMIN_ENABLED:
+    urlpatterns += [path('admin/', admin.site.urls)]
 
 if settings.API_DOCS_ENABLED:
     urlpatterns += [

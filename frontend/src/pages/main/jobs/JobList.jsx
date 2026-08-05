@@ -5,7 +5,7 @@ import { message } from '@/shared/lib/toast'
 import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
-import { setDocumentTitle } from '@/shared/config/document-title'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { formatNumber } from '@/entities/job'
 import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
@@ -179,9 +179,15 @@ export default function JobList() {
     updateLabel,
   })
 
-  useEffect(() => {
-    setDocumentTitle(pageTitle)
-  }, [pageTitle])
+  useDocumentMetadata(
+    {
+      title: pageTitle,
+      description: fullContextLabel
+        ? `Tìm việc làm ${fullContextLabel} mới nhất trên ProCV.`
+        : 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm trên ProCV.',
+      canonicalPath: window.location.pathname,
+    },
+  )
 
   const wardSuggestionInsertIndex = useMemo(() => {
     if (results.length < 3) return 1

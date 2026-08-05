@@ -9,6 +9,7 @@ from common.media_storage import media_url_from_value
 
 from ...models import User
 from ...selectors import admin_access_snapshot
+from ...services import login_guard
 from ...services.access import is_account_accessible
 
 # Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
@@ -54,7 +55,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         Mô hình tách cổng — một email có thể có tài khoản ứng viên và NTD riêng.
         """
-        if User.objects.filter(email__iexact=attrs['email'], role=attrs['role']).exists():
+        if User.objects.email_claimed_for_role(attrs['email'], attrs['role']):
             raise serializers.ValidationError(
                 {'email': 'Email này đã được sử dụng cho một tài khoản cùng loại.'}
             )
@@ -160,11 +161,16 @@ class SessionUserSerializer(serializers.ModelSerializer):
             recruiter = obj.recruiter_profile
         except ObjectDoesNotExist:
             return 'registration'
-        if recruiter.registration_completed_at is None:
+        # Keep routing and the administrator read model on the same canonical
+        # three-step definition.
+        from apps.employers.selectors import build_employer_initial_onboarding
+
+        onboarding = build_employer_initial_onboarding(recruiter)
+        if not onboarding['steps']['registration_completed']:
             return 'registration'
-        if not obj.email_verified:
+        if not onboarding['steps']['email_verified']:
             return 'email_verification'
-        if not recruiter.recruitment_needs.exists():
+        if not onboarding['steps']['consulting_need_completed']:
             return 'consulting_need'
         return 'complete'
 
@@ -260,8 +266,9 @@ class ChangeEmailSerializer(serializers.Serializer):
         user = self.context['request'].user
         if value.lower() == user.email.lower():
             raise serializers.ValidationError('Email mới trùng với email hiện tại.')
-        # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng).
-        if User.objects.filter(email__iexact=value, role=user.role).exclude(pk=user.pk).exists():
+        # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng), nhưng
+        # phải tính cả email đã được một danh tính OAuth cùng cổng sở hữu.
+        if User.objects.email_claimed_for_role(value, user.role, exclude_user_id=user.pk):
             raise serializers.ValidationError(
                 'Email này đã được sử dụng cho một tài khoản cùng loại.'
             )
@@ -342,16 +349,23 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
         role = PORTAL_ROLE_BY_NAME[self.portal]
 
         email = User.objects.normalize_email(attrs.get(self.username_field) or '')
+        password = attrs.get('password') or ''
+        login_guard.ensure_not_throttled(email, self.portal)
+
         user = User.objects.filter(email__iexact=email, role=role).first()
-        if (
-            user is None
-            or not user.check_password(attrs.get('password') or '')
-            or not is_account_accessible(user)
-        ):
+        if user is None:
+            # Băm một lần cho tài khoản không tồn tại, đúng như
+            # ``ModelBackend.authenticate``: bỏ qua bước này thì thời gian phản
+            # hồi tự nó tiết lộ email nào đã có tài khoản ở cổng này.
+            User().set_password(password)
+
+        if user is None or not user.check_password(password) or not is_account_accessible(user):
+            login_guard.register_failure(email, self.portal)
             raise AuthenticationFailed(
                 self.error_messages['no_active_account'], 'no_active_account'
             )
 
+        login_guard.clear(email, self.portal)
         self.user = user
         return {}
 

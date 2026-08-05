@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
-test('public smoke: home and jobs routes load', async ({ page }) => {
+test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   await mockPublicApi(page)
   let currentUserRequestCount = 0
   page.on('request', (request) => {
@@ -19,8 +19,135 @@ test('public smoke: home and jobs routes load', async ({ page }) => {
   expect(currentUserRequestCount).toBe(0)
   await expect(page.locator('body')).not.toBeEmpty()
 
+  const heroMascot = page.locator('.home-hero-mascot')
+  if (testInfo.project.name === 'desktop-chromium') {
+    await expect(heroMascot).toBeVisible()
+    await expect(heroMascot).toHaveCSS('animation-name', 'homeHeroMascotPatrol')
+    expect(await page.locator('#section-header').evaluate((section) => ({
+      before: {
+        delay: getComputedStyle(section, '::before').animationDelay,
+        duration: getComputedStyle(section, '::before').animationDuration,
+        name: getComputedStyle(section, '::before').animationName,
+      },
+      after: {
+        delay: getComputedStyle(section, '::after').animationDelay,
+        duration: getComputedStyle(section, '::after').animationDuration,
+        name: getComputedStyle(section, '::after').animationName,
+      },
+    }))).toEqual({
+      before: { delay: '0s', duration: '12s', name: 'homeHeaderGlowFromLeft' },
+      after: { delay: '0s', duration: '12s', name: 'homeHeaderGlowFromRight' },
+    })
+    const [mascotBox, searchBox] = await Promise.all([
+      heroMascot.boundingBox(),
+      page.locator('.home-search-stage').boundingBox(),
+    ])
+    expect(mascotBox.y + mascotBox.height).toBeLessThanOrEqual(searchBox.y + 16)
+    await expect(page.locator('.home-search-stage')).toHaveCSS('margin-top', '28px')
+  } else {
+    await expect(heroMascot).toBeHidden()
+  }
+
   await page.goto('/viec-lam')
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
+})
+
+test('public smoke: tablet header taps open top-level submenus', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'tablet-chromium')
+  await mockPublicApi(page)
+  await page.goto('/')
+
+  const navigation = page.locator('header nav')
+  await navigation.getByRole('button', { name: /Việc làm/ }).click()
+  await expect(page.getByText('Việc làm theo vị trí', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL('/')
+
+  await navigation.getByRole('button', { name: /Tạo CV/ }).click()
+  await expect(page.getByText('Mẫu CV theo style', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL('/')
+})
+
+test('public smoke: tablet floating actions stay inside the visual viewport', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'tablet-chromium')
+  await page.addInitScript(() => {
+    const viewport = new EventTarget()
+    Object.assign(viewport, {
+      height: 1112,
+      offsetLeft: 0,
+      offsetTop: 0,
+      pageLeft: 0,
+      pageTop: 0,
+      scale: 1,
+      width: 834,
+    })
+    viewport.setGeometry = (height, offsetTop) => {
+      viewport.height = height
+      viewport.offsetTop = offsetTop
+      viewport.dispatchEvent(new Event('resize'))
+    }
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: viewport,
+    })
+  })
+  await mockPublicApi(page)
+  await page.goto('/')
+
+  const assistant = page.getByTestId('candidate-assistant')
+  const support = page.getByTestId('floating-actions')
+  const initialAssistantBottom = await assistant.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom))
+  const initialSupportBottom = await support.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom))
+
+  await page.evaluate(() => window.visualViewport.setGeometry(880, 24))
+  await expect.poll(
+    () => assistant.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom)),
+  ).toBeGreaterThan(initialAssistantBottom + 200)
+  await expect.poll(
+    () => support.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom)),
+  ).toBeGreaterThan(initialSupportBottom + 200)
+})
+
+test('public smoke: candidate assistant opens, replies and stays responsive', async ({ page }) => {
+  await mockPublicApi(page)
+  await page.goto('/')
+
+  const launcher = page.getByRole('button', { name: 'Mở trợ lý ProCV' })
+  await expect(launcher).toBeVisible()
+  await launcher.click()
+
+  const panel = page.getByRole('dialog', { name: 'Trợ lý ProCV' })
+  await expect(panel).toBeVisible()
+  await expect(panel.getByText('Trợ lý đang trong giai đoạn thử nghiệm, câu trả lời là mẫu có sẵn.')).toBeVisible()
+
+  await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Làm sao để tạo CV đẹp?')
+  await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
+  await expect(panel.getByRole('status', { name: 'Trợ lý đang trả lời' })).toBeVisible()
+  const progressiveReplies = panel.locator('.assistant-message__bubble--bot [aria-hidden="true"]')
+  await expect(progressiveReplies).toHaveCount(1)
+  const progressiveReply = progressiveReplies.last()
+  await expect(progressiveReply).toBeVisible()
+  await expect(progressiveReply.locator('.assistant-message__caret')).toBeVisible()
+  // Smoke cố ý trả 503 cho TTS: chữ vẫn phải tự đánh máy đến hết.
+  await expect(progressiveReply).toHaveText(/Bạn có thể chọn mẫu CV/, { timeout: 8000 })
+  await expect(progressiveReply.locator('.assistant-message__caret')).toBeHidden()
+
+  // Response kế tiếp cũng phải khởi tạo typewriter mới, không kế thừa trạng
+  // thái completed/error của câu đầu tiên.
+  await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Tôi muốn ứng tuyển')
+  await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
+  await expect(progressiveReplies).toHaveCount(2)
+  const secondReply = progressiveReplies.last()
+  await expect(secondReply.locator('.assistant-message__caret')).toBeVisible()
+  await expect(secondReply.locator('.assistant-message__caret')).toBeHidden({ timeout: 8000 })
+  const messagesPinnedToBottom = await panel.locator('.assistant-panel__messages').evaluate(
+    (element) => element.scrollHeight - element.scrollTop - element.clientHeight < 2,
+  )
+  expect(messagesPinnedToBottom).toBe(true)
+
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(hasHorizontalOverflow).toBe(false)
 })
 
 test('public smoke: CV template colors change preview and detail offers the create flow', async ({ page }) => {

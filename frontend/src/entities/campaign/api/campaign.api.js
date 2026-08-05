@@ -52,9 +52,12 @@ export async function getCampaignReport(publicId) {
   return data
 }
 
-export async function getCampaignJobPerformance(publicId, days = 7) {
+export async function getCampaignJobPerformance(publicId, days = 7, jobPublicId = '') {
   const { data } = await api.get(`/employer/campaigns/${publicId}/job-performance/`, {
-    params: { days },
+    params: {
+      days,
+      ...(jobPublicId ? { job: jobPublicId } : {}),
+    },
   })
   return data
 }

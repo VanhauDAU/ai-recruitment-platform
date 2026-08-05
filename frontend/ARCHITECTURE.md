@@ -166,6 +166,18 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
   `tests/e2e/smoke/employer.spec.js`, gồm kiểm tra hiển thị và không tràn ngang ở
   cả ba Playwright project.
 
+## Bảng dữ liệu quản trị
+
+- Mọi cột dữ liệu của bảng quản trị phải có sorter và icon tăng/giảm rõ ràng.
+  Cột chọn dòng, kéo sắp thứ tự và thao tác là ngoại lệ vì không đại diện cho
+  một giá trị dữ liệu có thể sắp xếp.
+- Bảng có phân trang phải sort phía server bằng field được backend whitelist;
+  không sort riêng các bản ghi của trang hiện tại. Frontend giữ sorter ở trạng
+  thái controlled, đưa trang về trang 1 khi đổi sort và giữ thứ tự mặc định ổn
+  định khi người dùng bỏ chọn sorter.
+- Khi thêm bảng hoặc cột mới, bổ sung regression kiểm tra icon sorter, query
+  ordering tăng/giảm và thứ tự kết quả.
+
 ## Cấu trúc hiện tại
 
 ```text
@@ -188,13 +200,35 @@ phòng hờ.
 ```text
 app/router
   → pages/main/blog + pages/admin/app/Blog*
-    → features/edit-blog-post, manage-blog-content, manage-blog-tags
-      → entities/blog, job
+    → features/edit-blog-post, manage-blog-content, manage-blog-tags,
+      listen-to-blog-post
+      → entities/blog, job, speech
         → shared/api, shared/ui
 ```
 
 - `entities/blog` sở hữu public/admin HTTP contract, formatter và renderer HTML
   đã sanitize dùng chung giữa trang ứng viên với preview admin.
+- `shared/lib/speech` sở hữu hạ tầng phát audio không biết domain:
+  `PcmStreamPlayer` (Web Audio cho luồng chưa biết độ dài), `NativeAudioPlayer`
+  (asset MP3 đã có sẵn), `playSpeechStream` và chính sách chờ 429/503. Đặt ở
+  `shared` vì cả blog lẫn các bề mặt khác đều dùng, mà feature thì không được
+  import feature.
+- `entities/speech` sở hữu contract voice/session dùng lại được nhưng không
+  import blog: `createBlogSpeechSession` cho bài viết đã đăng và
+  `createTextSpeechSession` cho một câu bất kỳ.
+- `features/listen-to-blog-post` phát mọi voice/style artifact đã được tạo từ
+  lượt nghe trước bằng native audio; chỉ tạo session streaming khi tổ hợp đó
+  chưa sẵn sàng. Catalogue chỉ tải khi mở bảng tùy chỉnh. Feature tự giữ
+  lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ page;
+  nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
+  control-plane resolve source/rate-limit; các listener cùng artifact identity
+  bám một live inference, và MP3 được encode từ chính live PCM đó.
+- `features/speak-text` sở hữu `useSpeak()` — `speak(text)` cho bề mặt bất kỳ
+  (trợ lý, thông báo). Câu nói KHÔNG sinh artifact lâu dài: quá ngắn và quá
+  nhiều để lưu, nên chỉ chạy live stream và ăn cache của engine khi lặp lại.
+  Backend giới hạn riêng bằng scope `speech_adhoc` và
+  `SPEECH_MAX_ADHOC_TEXT_CHARS`. Lần phát đầu phải nằm trong cử chỉ click/tap;
+  bề mặt tự nói thì gọi `unlock()` ở lần bấm đầu tiên.
 - `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
   preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
   `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;
@@ -203,6 +237,91 @@ app/router
 - Page admin chỉ lấy `publicId` hoặc compose feature. Route blog admin dùng
   `blog.view`; action ghi và phát hành tiếp tục được backend khóa bằng
   `blog.manage`/`blog.publish`.
+
+## Ownership map — Danh bạ công ty quản trị
+
+```text
+app/router + app/layouts
+  → pages/admin/app/Companies + CompanyDetail
+    → widgets/admin-company-directory
+      → entities/admin-company
+        → shared/api
+```
+
+- `entities/admin-company` sở hữu HTTP contract chỉ đọc cho danh sách, chi tiết
+  và roster NTD. `widgets/admin-company-directory` sở hữu bộ lọc, bảng và cách
+  trình bày riêng của portal quản trị; page chỉ lấy route params rồi compose.
+- Sidebar quản trị dùng cây `ADMIN_NAVIGATION` tham chiếu route bằng `routeRef`;
+  permission được lọc từ leaf lên ancestor. Trạng thái pháp lý của công ty và
+  trạng thái xác thực đại diện của từng NTD là hai contract độc lập.
+
+## Ownership map — Người dùng và nhà tuyển dụng quản trị
+
+```text
+app/router + app/layouts
+  → pages/admin/app/Accounts + Recruiters + AccountDetail + RecruiterDetail
+    → widgets/admin-account-management + widgets/admin-account-detail
+      → entities/admin-account + entities/admin-employer-verification
+        → shared/api
+```
+
+- `entities/admin-account` sở hữu DTO, API và query key. Mọi truy vấn danh sách
+  từ frontend phải truyền `scope=users` hoặc `scope=recruiters`; query key phải
+  chứa scope cùng toàn bộ filter, ordering và pagination.
+- `widgets/admin-account-management` sở hữu hai cấu hình workspace riêng.
+  `users` chỉ gồm ứng viên và quản trị viên; `recruiters` chỉ gồm tài khoản nhà
+  tuyển dụng. Page chỉ chọn scope và compose widget.
+
+## Ownership map — Mascot và trợ lý ứng viên
+
+```text
+app/layouts/MainLayout + pages/main
+  → widgets/candidate-assistant
+    → shared/ui/mascot
+      → public/images/mascot
+
+app/layouts/OnboardingLayout + pages/main/onboarding
+  → widgets/onboarding-interview
+    → features/speak-text, features/configure-job-preferences
+    → shared/ui/mascot, shared/hooks/use-progressive-reply
+```
+
+- `shared/ui/mascot` sở hữu rig trình bày không biết domain, scene empty-state và
+  animation CSS. Mọi layer asset giữ canvas 500×500; thứ tự render là shadow,
+  body, tay phải, tay trái, đạo cụ, bàn tay trước, đầu, mắt và miệng. Pose cầm
+  đạo cụ hai tay (`checklist`) khai `front` dạng mảng hai bàn tay. Mắt chớp và
+  miệng nói đều dùng cặp animation nghịch đảo để không bao giờ chồng hai khẩu
+  hình hoặc hai bộ mắt. Animation phải tắt khi người dùng bật
+  `prefers-reduced-motion`.
+- `widgets/candidate-assistant` sở hữu launcher, panel, kịch bản mẫu và quick
+  action của portal ứng viên. Panel được lazy-load khi mở lần đầu; phase 1 không
+  gọi API chatbot và phải hiển thị rõ đây là câu trả lời mẫu.
+- Widget chỉ mount trong nhánh thường của `MainLayout`, không mount trong CV
+  editor. Vị trí launcher phải tránh banner cookie theo chiều cao thực tế và
+  thanh ứng tuyển mobile ở trang chi tiết việc làm.
+- `widgets/onboarding-interview` sở hữu cuộc phỏng vấn onboarding: kịch bản
+  tĩnh, state machine năm bước, bản đồ trạng thái mascot và provider giọng đọc.
+  Phải là widget vì ghép hai feature (`speak-text` và `configure-job-preferences`)
+  mà feature không được import feature. `OnboardingVoiceProvider` mount ở
+  `OnboardingLayout` chứ không phải trong page: AudioContext chỉ mở được trong
+  cử chỉ người dùng ở `/onboard-user`, mà page unmount là player bị destroy.
+  Bước phỏng vấn giữ nguyên tên trường và payload `PUT` của form một trang.
+- `shared/hooks/use-progressive-reply` sở hữu đồng hồ hiện chữ theo tiến độ
+  audio, dùng chung cho trợ lý và onboarding; nằm ở `shared` vì hai widget khác
+  nhau đều cần và widget không được import widget.
+- WebP trong `public/images/mascot` được tái tạo bằng
+  `npm run build:mascot-assets -- --src <folder>`; không commit PNG nguồn hoặc
+  các ảnh `states/` có thể dựng lại bằng rig.
+- URL là nguồn chuẩn cho tab, filter, ordering và page. Lời mời quản trị dùng
+  namespace `invite_*`, hàng chờ xác thực NTD dùng `verify_*`; tham số không
+  tương thích phải được bỏ khi chuyển tab.
+- `/admin/app/accounts/:publicId` là route canonical của ứng viên/admin;
+  `/admin/app/recruiters/:publicId` là route canonical của NTD. Route chi tiết
+  phải chuyển bằng `replace` khi role không khớp và giữ `pathname + search` của
+  nguồn điều hướng nội bộ để nút quay lại khôi phục đúng workspace.
+- Summary tài khoản, NTD và công ty là aggregate phía server theo permission,
+  không được suy ra từ `results` của một trang phân trang. Trạng thái pháp lý
+  công ty, xác thực đại diện NTD và vai trò owner/member là ba contract riêng.
 
 ## Ownership map — CV Builder
 
@@ -265,6 +384,32 @@ pages/main/jobs/JobDetail
 - `features/apply-for-job` sở hữu tải CV/version, cảnh báo publish và submit
   explicit `version_public_id`. Page chỉ kiểm tra session/role rồi mở feature.
 
+## Ownership map — Quản lý tin tuyển dụng quản trị
+
+```text
+app/router + app/layouts
+  → pages/admin/app/JobModeration + JobModerationDetail
+    → widgets/admin-job-management
+      → features/review-job-submission + enforce-job-visibility
+        → entities/admin-job + entities/admin-access + entities/session
+          → shared/api, shared/ui
+```
+
+- `entities/admin-job` sở hữu HTTP contract, query key và metadata trình bày cho
+  danh sách, aggregate tổng quan, chi tiết và quyết định kiểm duyệt. Contract
+  quản trị tách khỏi `entities/job` dùng chung cho ứng viên/nhà tuyển dụng.
+- `widgets/admin-job-management` sở hữu URL state `job_*`, bảng sort/phân trang
+  phía server, dashboard tổng quan và bề mặt chi tiết đầy đủ. Route danh sách
+  giữ `tab=reports` để tương thích hàng đợi báo cáo hiện hành; route chi tiết giữ
+  nguồn điều hướng nội bộ để quay lại đúng bộ lọc.
+- `features/review-job-submission` sở hữu duyệt/từ chối tin chờ duyệt;
+  `features/enforce-job-visibility` sở hữu tạm ẩn/khôi phục tin đang tuyển. Hai
+  feature dùng review token của revision đang xem; lỗi `409
+  job_moderation_stale` bắt buộc tải lại, không retry hoặc ghi đè ngầm.
+- `policy_hold` phản ánh hạn chế từ tài khoản/chính sách; `moderation_hold` phản
+  ánh quyết định tạm ẩn nội dung. Tin có một trong hai hold không được xuất hiện
+  ở bất kỳ bề mặt công khai nào, nhưng vẫn hiện trong workspace quản trị.
+
 ## Ownership map — Job engagement
 
 ```text
@@ -310,6 +455,12 @@ widgets/main-header/CandidateUserMenu
 - `features/change-password` dùng chung hai portal và không chứa redirect/copy
   riêng của employer. Page portal truyền `successRedirect` khi cần; candidate
   giữ nguyên route và có thể hiển thị email read-only.
+- Tài khoản OAuth chưa có mật khẩu phải xác thực lại với provider trước khi đặt
+  mật khẩu lần đầu. Feature đọc `GET /api/auth/password/` để cảnh báo và khoá
+  nút lưu **trước** khi người dùng điền form; 403 `reauth_required` chỉ là
+  fallback khi phiên hết hạn giữa chừng. URL OAuth và đường quay lại thuộc về
+  page (prop `onReauth`) vì feature không import feature khác — `features/auth`
+  sở hữu `startOAuthReauth`, dùng lại full-page redirect của luồng đăng nhập.
 - `entities/job` sở hữu contract/keys của feed recommendation. Trang matching
   chỉ hiển thị `status`, `sources`, score và reasons do backend trả; không tự
   tính điểm hoặc tuyên bố dùng search activity. Lưu job và impression tiếp tục
@@ -421,3 +572,97 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
 - Login/register/recovery employer dùng `EmployerAuthLayout` và route helper
   `employerAppPath`; không hardcode host, token key hoặc điều hướng sang cổng
   candidate.
+
+## Ownership map — Dải thông báo đa cổng
+
+```text
+app/layouts
+  → widgets/announcement-strip
+    → entities/announcement + entities/session|employer-profile|consent
+      → shared/api, shared/ui
+
+pages/admin/app/Announcements
+  → widgets/admin-announcement-management
+    → features/manage-announcement
+      → entities/announcement
+        → shared/api, shared/ui
+```
+
+- `entities/announcement` sở hữu HTTP contract active/state/event/admin-metrics,
+  query keys, locale fallback và presentation enum. Entity không biết layout
+  hoặc system reminder.
+- `widgets/announcement-strip` sở hữu composition giữa feed từ backend với
+  email verification, compliance employer và job-preference reminder; pure
+  priority resolver nằm trong widget vì đây là logic ghép nhiều domain. Widget
+  cũng sở hữu batch impression/click/dismiss best-effort và local state guest;
+  signed cookie phía server vẫn là nguồn consent analytics chuẩn. Runtime feed
+  chỉ nhận remote item khi backend trả `remote_enabled=true`; health hook chỉ
+  gửi enum PII-free và error boundary trong cùng widget trả banner legacy, nên
+  app/layout không sở hữu recovery logic domain.
+- `features/manage-announcement` chỉ sở hữu mutation create/revision/publish/
+  pause/resume/archive/duplicate. Feature không import feature khác.
+- `widgets/admin-announcement-management` sở hữu bảng, editor, preview,
+  conflict simulator và dashboard metrics 7/30/90 ngày lấy aggregate phía
+  server. Page admin chỉ compose widget; route/lazy registry vẫn thuộc `app`.
+- Workspace `/admin/app/announcements` dùng URL làm nguồn chuẩn cho filter,
+  ordering và page. Mọi cột dữ liệu sort phía server; action column là ngoại
+  lệ. Quyền route là `announcement.view`; `manage` và `publish` chỉ điều khiển
+  mutation tương ứng, backend vẫn fail-closed khi gọi API trực tiếp.
+- Editor giữ form qua năm bước nhưng chỉ submit DTO thật; sửa live tạo immutable
+  revision mới. Detail read-model trả revision và audit history chỉ đọc. Lỗi
+  `409 announcement_revision_stale` buộc tải lại token hiện hành, không retry
+  hoặc ghi đè ngầm.
+- Catalog CTA/prefix là metadata trình bày riêng của editor và nằm tại
+  `widgets/admin-announcement-management/model/route-catalog.js`; không import
+  ngược router từ `app`. Route có thể dùng cho thông báo được đăng ký một lần
+  với label, surface và access `public|authenticated`; test catalog giữ URL/
+  prefix an toàn. Catalog chỉ sinh lựa chọn cho revision mới, không tự viết lại
+  URL của revision đã publish.
+- Bốn surface canonical là `candidate`, `employer_marketing`,
+  `employer_workspace`, `admin_workspace`. Layout truyền surface và path; không
+  hardcode role hoặc tự lọc quyền admin ở component.
+- Strip phải fail-safe: lỗi remote feed không được làm mất cảnh báo hệ thống,
+  header hoặc main content. Chiều cao được đo và công bố bằng CSS custom
+  property; không thêm hằng số viewport theo từng layout.
+- Motion thuộc widget: một item `slide|fade` lặp theo `display_seconds`, nhiều
+  item chuyển queue theo cùng contract; hover/focus/tab ẩn phải pause,
+  `prefers-reduced-motion` và `static` phải tắt animation mà không thay DOM.
+- Dismiss/snooze chỉ loại active item và phải chuẩn hóa lại queue index trước
+  render kế tiếp. Strip chỉ unmount khi queue rỗng; focus-pause không được để
+  item kế tiếp ở opacity 0 trong một rail còn nền.
+- Mọi import liên-slice đi qua public `index.js`; các adapter hệ thống chỉ được
+  compose trong widget, không chuyển session/profile logic xuống `shared`.
+
+## SEO shell và metadata khi điều hướng SPA
+
+```text
+backend public SEO route
+  → common/seo.py chèn head vào Vite index.html
+    → React DocumentMetadataManager
+      → page override qua shared/hooks/use-document-metadata
+```
+
+- Route public có nội dung tìm kiếm được phải có SEO shell phía backend; không
+  chỉ đặt `document.title` trong React. Shell giữ nguyên body SPA, chỉ thay
+  `title`, description, robots, canonical, Open Graph, Twitter và JSON-LD.
+- Owner backend của nội dung sở hữu metadata động và sitemap tương ứng:
+  `jobs`, `blog`, `cv_templates`; `sitecontent` sở hữu homepage, landing tĩnh,
+  `robots.txt` và sitemap index. HTML/JSON-LD dùng helper an toàn tại
+  `common/seo.py`, không tự nối chuỗi script ở từng app.
+- Reverse proxy chỉ chuyển các route public đã đăng ký qua SEO shell. Fallback
+  nginx của SPA luôn phát `X-Robots-Tag: noindex, nofollow`, vì đó là workspace,
+  auth, route chưa phân loại hoặc 404; route public mới phải được thêm đồng thời
+  vào backend URL, nginx và sitemap.
+- Frontend dùng `DocumentMetadataManager` làm nguồn metadata duy nhất khi chuyển
+  route không tải lại trang. Page có dữ liệu async đăng ký override bằng
+  `useDocumentMetadata`; không thêm `MutationObserver`, không deep-import app
+  từ page và không giữ JSON-LD của route trước.
+- URL `/jobs/:slug` và `/brand/:company/tuyen-dung/:slug` chỉ là compatibility
+  route; canonical V1 luôn là `/viec-lam/:slug`. Mọi link mới phải đi qua
+  `entities/job.jobDetailPath()`.
+- Workspace, auth, CV riêng tư và route không tồn tại luôn `noindex`. Nội dung
+  đã đóng/gỡ phải trả HTTP 404 thật từ SEO shell; React UI 404 không thay thế
+  status HTTP.
+- Khi thêm route indexable, regression tối thiểu phải khóa title, description,
+  canonical, robots, status 404 và sitemap; structured data domain phải được
+  test riêng (`JobPosting`, `Article`, `BreadcrumbList`, ...).

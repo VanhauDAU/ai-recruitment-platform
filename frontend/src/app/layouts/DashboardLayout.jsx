@@ -5,6 +5,7 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
 } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
@@ -12,10 +13,25 @@ import {
   canAccessAdminRoute,
   useAdminAccess,
 } from '@/entities/admin-access'
+import {
+  adminAccountKeys,
+  getAdminAccountSummary,
+} from '@/entities/admin-account'
+import {
+  adminCompanyKeys,
+  getAdminCompanySummary,
+} from '@/entities/admin-company'
+import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { adminPath } from '@/shared/config/portals'
+import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
+import { ADMIN_NAVIGATION } from '../router/admin/admin-navigation.config'
+import {
+  buildAdminNavigation,
+  findActiveAdminNavigation,
+} from '../router/admin/admin-navigation'
 import AdminNavigation from './AdminNavigation'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import './admin-dashboard.css'
@@ -36,34 +52,111 @@ function AdminBrand({ collapsed = false }) {
   )
 }
 
+function hasBadgeKey(nodes, badgeKeys) {
+  return nodes.some((node) => (
+    badgeKeys.includes(node.badgeKey)
+    || (node.children && hasBadgeKey(node.children, badgeKeys))
+  ))
+}
+
+function attachBadgeCounts(nodes, counts) {
+  return nodes.map((node) => {
+    const children = node.children
+      ? attachBadgeCounts(node.children, counts)
+      : undefined
+    const ownCount = Number(node.badgeKey ? counts[node.badgeKey] || 0 : 0)
+    const childrenCount = children?.reduce(
+      (total, child) => total + Number(child.badgeCount || 0),
+      0,
+    ) || 0
+    return {
+      ...node,
+      badgeCount: ownCount + childrenCount,
+      ...(children ? { children } : {}),
+    }
+  })
+}
+
 export default function DashboardLayout() {
   const { user, logout } = useSession()
   const adminAccess = useAdminAccess(user)
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarPeek, setSidebarPeek] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const items = useMemo(() => user?.role === 'admin'
+  const availableRoutes = useMemo(() => user?.role === 'admin'
     ? ADMIN_ROUTES
       .filter(
-        (route) => route.showInNav && canAccessAdminRoute(route, adminAccess),
+        (route) => canAccessAdminRoute(route, adminAccess),
       )
       .map((route) => ({
         ...route,
         path: adminPath(route.segment),
       }))
     : [], [adminAccess, user?.role])
+  const items = useMemo(
+    () => availableRoutes.filter((route) => route.showInNav),
+    [availableRoutes],
+  )
+  const navigation = useMemo(
+    () => buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, adminAccess),
+    [adminAccess],
+  )
+  const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
+  const recruitersSummaryParams = useMemo(() => ({ scope: 'recruiters' }), [])
+  const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations'])
+  const needsRecruitersSummary = hasBadgeKey(
+    navigation,
+    ['recruiter_verification'],
+  )
+  const needsCompaniesSummary = hasBadgeKey(
+    navigation,
+    ['company_pending', 'company_updates'],
+  )
+  const usersSummary = useQuery({
+    queryKey: adminAccountKeys.summary(usersSummaryParams),
+    queryFn: ({ signal }) => getAdminAccountSummary(usersSummaryParams, { signal }),
+    enabled: user?.role === 'admin' && needsUsersSummary,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const recruitersSummary = useQuery({
+    queryKey: adminAccountKeys.summary(recruitersSummaryParams),
+    queryFn: ({ signal }) => getAdminAccountSummary(recruitersSummaryParams, { signal }),
+    enabled: user?.role === 'admin' && needsRecruitersSummary,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const companiesSummary = useQuery({
+    queryKey: adminCompanyKeys.summary,
+    queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
+    enabled: user?.role === 'admin' && needsCompaniesSummary,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
+    admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
+    recruiter_verification: recruitersSummary.data?.verification?.pending,
+    company_pending: companiesSummary.data?.verification?.pending,
+    company_updates: companiesSummary.data?.pending_update_requests,
+  }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])
   const hasNoDepartment = (
     user?.role === 'admin'
     && !adminAccess.isSuperuser
     && adminAccess.memberships.length === 0
   )
-  const currentRoute = items.find((item) => (
-    item.path === pathname || pathname.startsWith(`${item.path}/`)
-  ))
-  const navigationPath = currentRoute?.path || pathname
-
+  const currentRoute = [...availableRoutes]
+    .sort((left, right) => right.path.length - left.path.length)
+    .find((item) => {
+      const staticPath = item.path.replace(/:[^/]+/g, '')
+      return pathname === item.path || pathname.startsWith(staticPath)
+    })
+  const activeLeaf = findActiveAdminNavigation(navigation, pathname, search)
+  const currentTitle = currentRoute?.segment.includes(':')
+    ? currentRoute.title
+    : activeLeaf?.label || currentRoute?.title
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
     setMobileNavOpen(false)
@@ -91,19 +184,42 @@ export default function DashboardLayout() {
           collapsedWidth={80}
           collapsed={sidebarCollapsed}
           trigger={null}
+          onMouseEnter={() => sidebarCollapsed && setSidebarPeek(true)}
+          onFocusCapture={() => sidebarCollapsed && setSidebarPeek(true)}
         >
           <AdminBrand collapsed={sidebarCollapsed} />
           <AdminNavigation
-            items={items}
-            pathname={navigationPath}
+            navigation={navigationWithBadges}
+            pathname={pathname}
+            search={search}
             navigate={navigate}
             collapsed={sidebarCollapsed}
+            onRequestExpand={() => setSidebarPeek(true)}
           />
           {hasNoDepartment && !sidebarCollapsed && (
             <p className="admin-sider__notice">
               Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
               (superuser) để được cấp quyền.
             </p>
+          )}
+          {sidebarCollapsed && sidebarPeek && (
+            <div
+              className="admin-sider__peek"
+              onMouseLeave={() => setSidebarPeek(false)}
+            >
+              <AdminNavigation
+                navigation={navigationWithBadges}
+                pathname={pathname}
+                search={search}
+                navigate={navigate}
+              />
+              {hasNoDepartment && (
+                <p className="admin-sider__notice">
+                  Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống
+                  để được cấp quyền.
+                </p>
+              )}
+            </div>
           )}
         </Sider>
 
@@ -118,9 +234,11 @@ export default function DashboardLayout() {
           <div className="admin-sider min-h-full">
             <AdminBrand />
             <AdminNavigation
-              items={items}
-              pathname={navigationPath}
+              navigation={navigationWithBadges}
+              pathname={pathname}
+              search={search}
               navigate={navigate}
+              mobile
               onNavigate={() => setMobileNavOpen(false)}
             />
             {hasNoDepartment && <p className="admin-sider__notice">Tài khoản chưa được gán phòng ban. Liên hệ quản trị hệ thống để được cấp quyền.</p>}
@@ -145,7 +263,7 @@ export default function DashboardLayout() {
               <div className="admin-topbar__location min-w-0">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Không gian làm việc</p>
                 <p className="truncate text-sm font-semibold text-slate-800">
-                  {`Đang ở: ${currentRoute?.title || 'Quản trị hệ thống'}`}
+                  {`Đang ở: ${currentTitle || 'Quản trị hệ thống'}`}
                 </p>
               </div>
             </div>
@@ -193,6 +311,11 @@ export default function DashboardLayout() {
               </Popconfirm>
             </div>
           </Header>
+          <AnnouncementStrip
+            surface={ANNOUNCEMENT_SURFACES.ADMIN_WORKSPACE}
+            path={pathname}
+            stickyOffset="var(--admin-topbar-height)"
+          />
           <Content>
             <main id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
               <Outlet context={{ availableRoutes: items, adminAccess }} />

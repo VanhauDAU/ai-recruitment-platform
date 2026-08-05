@@ -159,6 +159,43 @@ là điều kiện bắt buộc để tới được trang. Sáu mốc theo th�
 5. đồng ý thỏa thuận xử lý DLCN với ProCV;
 6. đăng tin tuyển dụng đầu tiên.
 
+## Luồng quản trị hồ sơ xác thực nhà tuyển dụng
+
+Hàng chờ tại `/admin/app/recruiters?tab=verification` mặc định dùng trạng thái
+**Cần xử lý**. Số badge và danh sách dùng cùng một định nghĩa:
+
+- hồ sơ đang chờ duyệt (`pending`);
+- hồ sơ quản trị viên đã nhận xử lý (`in_review`);
+- hồ sơ ở trạng thái khác nhưng có ít nhất một giấy tờ hiện hành vừa nộp lại và
+  đang chờ duyệt.
+
+Vì vậy thao tác **Nhận xử lý** không làm hồ sơ biến mất khỏi hàng chờ. Các bộ
+lọc “Chờ duyệt”, “Đang xử lý”, “Cần bổ sung”, “Bị từ chối” và “Đã xác thực”
+vẫn dùng để thu hẹp theo trạng thái nghiệp vụ khi cần.
+
+Ở trang chi tiết, hành trình 9 bước mặc định chỉ hiển thị phần tóm tắt và thanh
+tiến độ; quản trị viên chủ động mở danh sách bước khi cần audit. Giấy tờ hiện
+hành được chia thành ba nhóm:
+
+1. **Quyền đại diện** — giấy ủy quyền và CCCD/hộ chiếu;
+2. **Pháp lý doanh nghiệp** — giấy đăng ký doanh nghiệp và chứng minh tên
+   thương mại;
+3. **Bảo vệ dữ liệu** — thỏa thuận xử lý dữ liệu cá nhân với ứng viên.
+
+### Ý nghĩa của đối chiếu mã số thuế
+
+Khi một giấy tờ thuộc hồ sơ xác thực quyền đại diện được nộp và công ty đã có mã
+số thuế, hệ thống tự động lấy bằng chứng đối chiếu tên pháp lý/MST theo phiên hồ
+sơ. Quy tắc này áp dụng cả với **Thành viên** đã chọn công ty có sẵn. Kết quả
+đối chiếu chỉ trả lời “pháp nhân công ty trong hồ sơ này có khớp nguồn tham
+khảo hay không”; nó không khẳng định người nộp đã tạo, sở hữu hoặc chỉnh sửa hồ
+sơ công ty.
+
+Quyền đại diện của thành viên vẫn phải dựa trên giấy ủy quyền và giấy tờ định
+danh. Mọi thay đổi tên pháp lý, MST hoặc thông tin công ty đi qua **Yêu cầu cập
+nhật công ty** riêng và không được suy ra từ thẻ đối chiếu MST. Nguồn đối chiếu
+chỉ mang tính bổ trợ; quyết định cuối cùng dựa trên giấy tờ pháp lý và audit.
+
 Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
 chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi
 tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên thương mại/MST
@@ -324,6 +361,39 @@ không mô phỏng thao tác thành công khi backend chưa tồn tại.
 Consent nằm trên `RecruiterProfile`: `terms_accepted_at`,
 `terms_policy_version`, `marketing_opt_in`, `marketing_decided_at`. Phiên bản
 hiện tại lấy từ `EMPLOYER_TERMS_POLICY_VERSION`.
+
+## Chống lạm dụng ở luồng đăng nhập
+
+Kết quả lượt kiểm toán 2026-07-30. Test tương ứng ở
+`backend/apps/accounts/tests/test_employer_auth_audit.py`.
+
+- **Danh tính IP cho rate limit** lấy từ `common/client_ip.py`, không lấy từ
+  `X-Forwarded-For` thô. nginx dùng `$proxy_add_x_forwarded_for` nên header này
+  chứa cả lời khai của client; chỉ `TRUSTED_PROXY_HOPS` phần tử ngoài cùng bên
+  **phải** là do proxy ghi. Mọi endpoint auth dùng
+  `common/throttling.ClientIPScopedRateThrottle`.
+- **`TRUSTED_PROXY_IPS` là bắt buộc ở production.** Không khai thì `REMOTE_ADDR`
+  luôn là địa chỉ nginx, tức toàn hệ thống dùng chung một bucket throttle.
+- **Chống dò mật khẩu theo tài khoản** (`services/login_guard.py`): sau
+  `LOGIN_BACKOFF_FREE_ATTEMPTS` lần sai, mỗi lần kế tiếp phải chờ gấp đôi lần
+  trước. Cố ý **không khoá cứng** — khoá cứng cho phép bất kỳ ai biết email của
+  một NTD là khoá được họ khỏi hệ thống. Bộ đếm tách theo cổng nên tài khoản ứng
+  viên cùng email không bị ảnh hưởng; đăng nhập đúng xoá sạch bộ đếm.
+- **Ngân sách nhập sai MFA tính theo challenge**, áp cho cả email OTP, TOTP và
+  mã dự phòng. Đổi qua lại giữa các phương thức không nhân thêm lượt; hết lượt
+  thì challenge chết và phải đăng nhập lại từ đầu.
+- **Refresh token dùng lại sau khi xoay vòng ⇒ thu hồi cả phiên.** Có ân hạn
+  `AUTH_REFRESH_REUSE_GRACE_SECONDS` để hai tab cùng refresh hoặc đăng nhập lại
+  từ cùng thiết bị không bị hiểu nhầm là bị trộm. Chữ ký bắt buộc hợp lệ, nếu
+  không kẻ tấn công bịa `sid` để thu hồi phiên người khác.
+- **Captcha chạy trước validate** ở `register` và `password-reset`: thông báo
+  "email đã được sử dụng" là oracle dò danh sách NTD nếu trả lời trước captcha.
+- **Đăng nhập luôn băm mật khẩu một lần**, kể cả khi email không tồn tại, để
+  thời gian phản hồi không tiết lộ tài khoản nào có thật.
+
+Còn nợ: hành động bảo mật NTD tự thực hiện (đổi mật khẩu, bật/tắt MFA, thu hồi
+phiên) chưa ghi audit log — `record_admin_self_action` no-op với user không phải
+admin. Cần bảng audit riêng, xem mục tồn đọng trong `TIEN-DO-DU-AN.md`.
 
 ## Kiểm thử bắt buộc
 

@@ -4,9 +4,12 @@ from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import update_last_login
+from django.db import transaction
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from ..models import User
 from . import auth_sessions
 from .access import is_account_accessible
 
@@ -16,25 +19,31 @@ def build_refresh_token(user):
     token = RefreshToken.for_user(user)
     token['role'] = user.role
     token['email'] = user.email
+    token[auth_sessions.AUTH_REVISION_CLAIM] = user.auth_revision
     return token
 
 
 def issue_tokens(user, request=None, *, auth_method='password'):
-    if not is_account_accessible(user):
-        raise ValueError('Cannot issue tokens for an inaccessible account.')
-    update_last_login(None, user)
-    refresh = build_refresh_token(user)
-    # Tạo phiên thiết bị và gắn claim `sid` TRƯỚC khi serialize access/refresh.
-    auth_sessions.start_session(user, refresh, request, auth_method=auth_method)
-    access = refresh.access_token
-    if user.is_admin_role:
-        # ``access_token`` kế thừa ``iat`` của refresh. Dùng đúng mốc đó để
-        # thời hạn 5 phút của admin không bị lệch một giây khi qua boundary.
-        access.set_exp(
-            from_time=datetime.fromtimestamp(access['iat'], tz=UTC),
-            lifetime=timedelta(minutes=settings.ADMIN_ACCESS_TOKEN_MINUTES),
-        )
-    return {'access': str(access), 'refresh': str(refresh)}
+    expected_revision = user.auth_revision
+    with transaction.atomic():
+        user = User.objects.select_for_update().get(pk=user.pk)
+        if not is_account_accessible(user):
+            raise AuthenticationFailed('Tài khoản không còn khả dụng.')
+        if user.auth_revision != expected_revision:
+            raise AuthenticationFailed('Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại.')
+        update_last_login(None, user)
+        refresh = build_refresh_token(user)
+        # Tạo phiên thiết bị và gắn claim `sid` TRƯỚC khi serialize access/refresh.
+        auth_sessions.start_session(user, refresh, request, auth_method=auth_method)
+        access = refresh.access_token
+        if user.is_admin_role:
+            # ``access_token`` kế thừa ``iat`` của refresh. Dùng đúng mốc đó để
+            # thời hạn 5 phút của admin không bị lệch một giây khi qua boundary.
+            access.set_exp(
+                from_time=datetime.fromtimestamp(access['iat'], tz=UTC),
+                lifetime=timedelta(minutes=settings.ADMIN_ACCESS_TOKEN_MINUTES),
+            )
+        return {'access': str(access), 'refresh': str(refresh)}
 
 
 def revoke_refresh_tokens(user):
