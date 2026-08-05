@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Form } from 'antd'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ANNOUNCEMENT_AUDIENCES,
   ANNOUNCEMENT_SURFACES,
@@ -10,6 +11,19 @@ import {
   PreviewStep,
   TargetStep,
 } from './AnnouncementEditorSteps'
+
+function mockMobileViewport() {
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+    matches: query === '(max-width: 640px)',
+    media: query,
+    onchange: null,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent: () => false,
+  }))
+}
 
 function CtaFieldsHarness({ ctaUrl }) {
   const [form] = Form.useForm()
@@ -52,6 +66,8 @@ function PreviewHarness() {
 }
 
 describe('AnnouncementEditor', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   it('previews content preserved from a previous editor step', () => {
     render(<PreviewHarness />)
 
@@ -84,6 +100,34 @@ describe('AnnouncementEditor', () => {
     expect(screen.getByRole('combobox', {
       name: 'Không hiển thị tại các nhóm trang',
     })).toHaveAttribute('id', 'exclude_path_prefixes')
+  })
+
+  it('closes the route menu after a mobile selection so editor actions stay reachable', async () => {
+    mockMobileViewport()
+    const user = userEvent.setup()
+    render(
+      <Form
+        initialValues={{
+          auth_audiences: [ANNOUNCEMENT_AUDIENCES.GUEST],
+          exclude_path_prefixes: [],
+          include_path_prefixes: [],
+          roles: [],
+          surfaces: [ANNOUNCEMENT_SURFACES.CANDIDATE],
+        }}
+      >
+        <TargetStep surfaces={[ANNOUNCEMENT_SURFACES.CANDIDATE]} />
+      </Form>,
+    )
+
+    const routeSelect = screen.getByRole('combobox', {
+      name: 'Chỉ hiển thị tại các nhóm trang',
+    })
+    await user.click(routeSelect)
+    expect(routeSelect).toHaveAttribute('aria-expanded', 'true')
+
+    await user.click(screen.getByText('Danh sách việc làm · Công khai — /viec-lam'))
+
+    await waitFor(() => expect(routeSelect).toHaveAttribute('aria-expanded', 'false'))
   })
 
   it('warns when a guest-facing cross-portal CTA requires login', async () => {
