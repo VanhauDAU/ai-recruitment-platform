@@ -11,6 +11,7 @@
   box-shadow: 0 5px 18px color-mix(in srgb, var(--announcement-accent) 9%, transparent);
   color: var(--announcement-fg);
   isolation: isolate;
+  overflow: hidden;
   position: sticky;
   flex: 0 0 auto;
   top: var(--announcement-strip-sticky-top);

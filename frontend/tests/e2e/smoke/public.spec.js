@@ -52,6 +52,61 @@ test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   await expect(page.getByRole('heading', { name: /Tuyển dụng/ })).toBeVisible()
 })
 
+test('public smoke: tablet header taps open top-level submenus', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'tablet-chromium')
+  await mockPublicApi(page)
+  await page.goto('/')
+
+  const navigation = page.locator('header nav')
+  await navigation.getByRole('button', { name: /Việc làm/ }).click()
+  await expect(page.getByText('Việc làm theo vị trí', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL('/')
+
+  await navigation.getByRole('button', { name: /Tạo CV/ }).click()
+  await expect(page.getByText('Mẫu CV theo style', { exact: true })).toBeVisible()
+  await expect(page).toHaveURL('/')
+})
+
+test('public smoke: tablet floating actions stay inside the visual viewport', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'tablet-chromium')
+  await page.addInitScript(() => {
+    const viewport = new EventTarget()
+    Object.assign(viewport, {
+      height: 1112,
+      offsetLeft: 0,
+      offsetTop: 0,
+      pageLeft: 0,
+      pageTop: 0,
+      scale: 1,
+      width: 834,
+    })
+    viewport.setGeometry = (height, offsetTop) => {
+      viewport.height = height
+      viewport.offsetTop = offsetTop
+      viewport.dispatchEvent(new Event('resize'))
+    }
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: viewport,
+    })
+  })
+  await mockPublicApi(page)
+  await page.goto('/')
+
+  const assistant = page.getByTestId('candidate-assistant')
+  const support = page.getByTestId('floating-actions')
+  const initialAssistantBottom = await assistant.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom))
+  const initialSupportBottom = await support.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom))
+
+  await page.evaluate(() => window.visualViewport.setGeometry(880, 24))
+  await expect.poll(
+    () => assistant.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom)),
+  ).toBeGreaterThan(initialAssistantBottom + 200)
+  await expect.poll(
+    () => support.evaluate((element) => Number.parseFloat(getComputedStyle(element).bottom)),
+  ).toBeGreaterThan(initialSupportBottom + 200)
+})
+
 test('public smoke: candidate assistant opens, replies and stays responsive', async ({ page }) => {
   await mockPublicApi(page)
   await page.goto('/')

@@ -5,8 +5,8 @@
 Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
 
 - rig ghép layer với năm cảm xúc (`neutral`, `happy`, `thinking`, `success`,
-  `error`), bốn pose (`neutral`, `wave`, `thumbsUp`, `microphone`), blink, talk,
-  float và hai loại shadow;
+  `error`), năm pose (`neutral`, `wave`, `thumbsUp`, `microphone`, `checklist`),
+  blink, talk, float và hai loại shadow;
 - trợ lý mẫu sticky, panel lazy-load, hội thoại theo từ khóa, quick action điều
   hướng thật và liên hệ lấy từ site settings;
 - mascot ở hero trang chủ với patrol animation phía trên cụm tìm kiếm, tự đổi
@@ -14,14 +14,20 @@ Phase 1 tích hợp mascot vào portal ứng viên đã gồm:
   tuyển và việc làm phù hợp;
 - robot cầm micro trong trình đọc bài viết, phản ứng theo trạng thái chuẩn bị,
   đang đọc, tạm dừng, hoàn tất hoặc lỗi;
-- blink dùng hai animation nghịch đảo: lớp mắt thường được ẩn đúng lúc lớp mắt
-  nhắm xuất hiện, tránh hiện tượng chồng hai bộ mắt;
+- robot dẫn cuộc phỏng vấn onboarding ứng viên: cầm micro khi đang nói, cầm
+  bảng checklist khi chờ trả lời, mắt/miệng đổi theo trả lời đúng, thiếu thông
+  tin hay đang lưu;
+- blink và talk đều dùng hai animation nghịch đảo: lớp mắt thường ẩn đúng lúc
+  lớp mắt nhắm xuất hiện, lớp miệng theo cảm xúc ẩn đúng lúc lớp miệng mở xuất
+  hiện — tránh chồng hai bộ mắt hoặc hai khẩu hình (rõ nhất ở `success`);
 - xử lý va chạm với banner cookie theo chiều cao thực tế, thanh ứng tuyển mobile
   và `prefers-reduced-motion`;
 - unit/regression test và smoke test responsive cho workflow trợ lý.
 
 Phase này không thay đổi backend, API payload, route, auth guard, storage token
 hoặc `BrandLoader`. Chatbot luôn ghi rõ câu trả lời đang dùng kịch bản mẫu.
+Onboarding phỏng vấn cũng giữ nguyên payload `PUT /api/candidate/job-preferences/`
+và cờ `job_preferences_configured`.
 
 ## Tái tạo asset
 
@@ -43,7 +49,9 @@ file nguồn bị lỗi và vẫn có fallback pad trong suốt, không scale, c
 Các mục sau được chủ động để ngoài phase 1:
 
 1. Kết nối conversation API/LLM, streaming và cơ chế safety/feedback.
-2. Các pose đạo cụ còn lại (`hold`, `carry`) và scene interview coach.
+2. Các pose đạo cụ còn lại: `carry` và các đạo cụ chưa nối (`badge`,
+   `briefcase`, `cv`, `magnifier`, `tie`); scene interview coach. Bộ tay `hold`
+   đã dùng cho pose `checklist`.
 3. Telemetry có consent cho open rate, quick action và helpfulness.
 4. Thử nghiệm nội dung/chuyển động theo ngữ cảnh trước khi mở rộng sang portal
    nhà tuyển dụng hoặc admin.

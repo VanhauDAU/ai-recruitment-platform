@@ -80,11 +80,6 @@ function jobPreferences() {
       external: false,
     },
     animation: ANNOUNCEMENT_ANIMATIONS.FADE,
-    dismiss: {
-      mode: ANNOUNCEMENT_DISMISS_MODES.SNOOZE,
-      snoozeSeconds: 7 * 24 * 60 * 60,
-      version: 1,
-    },
   })
 }
 

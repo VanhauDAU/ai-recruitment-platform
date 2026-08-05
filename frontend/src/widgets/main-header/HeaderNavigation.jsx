@@ -57,7 +57,10 @@ export function DesktopNavigation({ menus, openKey, pathname, onOpen, onSelect }
             onMouseEnter={() => onOpen(menu.key)}
           >
             <button
-              onClick={() => (menu.to ? onSelect(menu) : onOpen(menu.key))}
+              type="button"
+              onClick={() => onOpen(menu.key)}
+              aria-expanded={open}
+              aria-haspopup="menu"
               aria-current={active ? 'page' : undefined}
               className={`relative flex h-16 cursor-pointer items-center gap-1 px-1 transition ${
                 active || open ? 'text-[var(--brand-primary)]' : 'hover:text-[var(--brand-primary)]'

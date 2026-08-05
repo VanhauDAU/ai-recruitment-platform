@@ -15,7 +15,6 @@ const EXACT_MAIN_TITLES = new Map([
   ['/chinh-sach-cookie', 'Chính sách cookie'],
   ['/tai-khoan/xac-thuc-email', 'Xác thực email'],
   ['/onboard-user', 'Cá nhân hóa việc làm'],
-  ['/onboard-user-setting', 'Thiết lập hồ sơ'],
   ['/login', 'Đăng nhập'],
   ['/sign-up', 'Đăng ký tài khoản'],
   ['/register', 'Đăng ký tài khoản'],

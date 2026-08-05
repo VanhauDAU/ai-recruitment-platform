@@ -49,6 +49,7 @@ describe('announcement priority resolver', () => {
     expect(verified.map(({ id }) => id)).toEqual([
       'system-candidate-job-preferences',
     ])
+    expect(verified[0].dismiss.mode).toBe('locked')
   })
 
   it('rotates only equal-tier items in deterministic priority order', () => {

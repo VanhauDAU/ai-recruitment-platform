@@ -12,6 +12,19 @@ docker compose up
 - Frontend (vite dev): http://localhost:5173
 - Backend API: http://localhost:8000/api
 - Swagger UI: http://localhost:8000/api/docs/
+
+### Kiểm thử bằng điện thoại trong mạng LAN
+
+Frontend dev proxy cả `/api`, `/media` và `/tts`, vì vậy điện thoại không cần
+truy cập trực tiếp các cổng backend. Kết nối điện thoại và máy dev vào cùng một
+mạng Wi-Fi, lấy IP LAN của máy dev rồi mở:
+
+```text
+http://<IP-LAN>:5173
+```
+
+Ví dụ `http://192.168.1.144:5173`. Nếu đổi mạng Wi-Fi, chỉ URL trên điện thoại
+thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`.
 - `DB_HOST`/`REDIS_URL` được compose override trỏ vào service `db`/`redis` —
   không cần sửa `.env`.
 - **Postgres của compose ở host cổng `5433`** (trong mạng compose vẫn là

@@ -20,7 +20,6 @@ export const MatchingJobsPage = lazy(() => import('@/pages/main/account/Matching
 export const JobPreferenceSettingsPage = lazy(() => import('@/pages/main/account/JobPreferenceSettings'))
 export const AppliedJobsPage = lazy(() => import('@/pages/main/account/AppliedJobs'))
 export const OnboardUserPage = lazy(() => import('@/pages/main/onboarding/OnboardUser'))
-export const OnboardUserSettingPage = lazy(() => import('@/pages/main/onboarding/OnboardUserSetting'))
 export const BlogHomePage = lazy(() => import('@/pages/main/blog/BlogHome'))
 export const BlogCategoryPage = lazy(() => import('@/pages/main/blog/BlogCategory'))
 export const BlogDetailPage = lazy(() => import('@/pages/main/blog/BlogDetail'))

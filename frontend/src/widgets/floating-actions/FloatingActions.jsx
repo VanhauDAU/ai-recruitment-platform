@@ -19,6 +19,7 @@ import { useSession } from '@/entities/session'
 import { useSavedJobs } from '@/features/saved-jobs'
 import { useSiteSettings } from '@/entities/site-settings'
 import { FeedbackModal } from '@/features/submit-feedback'
+import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
 import { message } from '@/shared/lib/toast'
 
 export default function FloatingActions() {
@@ -28,6 +29,7 @@ export default function FloatingActions() {
   const { promptLogin } = useLoginPrompt()
   const { settings, siteName } = useSiteSettings()
   const { items, saveSuccess } = useSavedJobs()
+  const viewportBottomInset = useVisualViewportBottomInset()
 
   // Khách bấm "Việc làm đã lưu" -> popup đăng nhập rồi mới vào trang, thay vì bị đá về /login.
   function openSavedJobs() {
@@ -86,7 +88,13 @@ export default function FloatingActions() {
 
   return (
     <>
-      <div className="fixed bottom-5 left-4 z-30 flex flex-col items-start gap-2.5 md:bottom-8 md:left-6">
+      <div
+        data-testid="floating-actions"
+        className="fixed left-4 z-30 flex flex-col items-start gap-2.5 md:left-6"
+        style={{
+          bottom: `calc(clamp(1.25rem, 3vw, 2rem) + ${viewportBottomInset}px + env(safe-area-inset-bottom, 0px))`,
+        }}
+      >
         {showScrollTop && (
           <Tooltip title="Lên đầu trang" placement="right">
             <button
