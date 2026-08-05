@@ -73,7 +73,12 @@ export function resolveRouteMetadata({ pathname, portal, settings }) {
   const title = normalized === '/'
     ? settings.seo_default_title
     : resolveRouteTitle(normalized)
-  const indexable = isIndexableRoute(normalized, portal) && title !== 'Trang không tồn tại'
+  const knowledgebaseIndexable = (
+    normalized === '/tro-giup' || normalized.startsWith('/tro-giup/')
+  ) && settings.knowledgebase_public_enabled === true
+    && settings.knowledgebase_search_index_enabled === true
+  const indexable = (isIndexableRoute(normalized, portal) || knowledgebaseIndexable)
+    && title !== 'Trang không tồn tại'
 
   return {
     title,

@@ -23,6 +23,7 @@ export default function usePublicKnowledgebase(categorySlug) {
     ? searchParams.get('type')
     : ''
   const page = positivePage(searchParams.get('page'))
+  const hasIndexingParameters = ['q', 'type', 'page'].some((name) => searchParams.has(name))
 
   const categoriesQuery = useQuery({
     queryKey: publicKnowledgeKeys.categories,
@@ -91,6 +92,7 @@ export default function usePublicKnowledgebase(categorySlug) {
     categories,
     data,
     error: categoriesQuery.error || articlesQuery.error,
+    hasIndexingParameters,
     loading,
     notFound,
     page,

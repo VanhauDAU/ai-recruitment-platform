@@ -1,6 +1,6 @@
 # Đặc tả chức năng FAQ và hướng dẫn sử dụng
 
-> Trạng thái: **Đang triển khai — KB-P0 đến KB-P5 hoàn tất**
+> Trạng thái: **Hoàn tất release FAQ — KB-P0 đến KB-P6**
 >
 > Phạm vi ưu tiên: **Cổng ứng viên, public help center và workspace quản trị**
 >
@@ -54,6 +54,13 @@ trải nghiệm sử dụng.
 - Public site-settings lấy `knowledgebase_public_enabled` trực tiếp từ backend
   kill switch. Floating actions và header fail-closed theo capability này; ba
   placeholder FAQ, tìm việc an toàn và hướng dẫn CV đã nối route canonical.
+- KB-P6 tách `KNOWLEDGEBASE_SEARCH_INDEX_ENABLED` khỏi public switch; HTML shell,
+  client metadata và sitemap chỉ index khi public/index/global SEO cùng bật.
+  Search/filter page vẫn noindex để tránh URL trùng lặp.
+- Command `check_knowledgebase_readiness --json` fail-closed khi thiếu category/
+  bài public, source/SEO, review an toàn, link canonical hoặc media/alt. Public và
+  admin phát metric latency/request PII-free; runbook khóa thứ tự rollout,
+  quan sát và rollback không reverse-delete dữ liệu.
 
 ## 1. Vấn đề hiện tại
 
@@ -806,12 +813,12 @@ bộ chức năng vào một thay đổi lớn.
 | `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | **Hoàn tất 2026-08-05** — architecture/build, 13 targeted tests và workflow E2E 3 viewport pass |
 | `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | **Hoàn tất 2026-08-05** — 12 backend public/cache/SEO test, 9 frontend regression và E2E 3 viewport pass |
 | `KB-P5` | nội dung ProCV thật, review đủ bảy category và nối các placeholder hiện có | **Hoàn tất 2026-08-05** — 7/7 category có bài public đã đối chiếu; 26 backend và 4 frontend regression test pass |
-| `KB-P6` | hardening, observability, sitemap/index rollout, runbook và rollback rehearsal | toàn bộ Definition of Done đạt |
+| `KB-P6` | hardening, observability, sitemap/index rollout, runbook và rollback rehearsal | **Hoàn tất 2026-08-05** — readiness + SEO/sitemap + PII-free metrics + kill-switch rehearsal; 48 backend và 14 frontend regression test pass; full gate 769 backend, 886 frontend và 191 E2E pass |
 | `KB-AI` | chunking, embedding, pgvector và tích hợp chatbot | chỉ bắt đầu sau `KB-P6` |
 
-Các phase `KB-P0` đến `KB-P5` đã hoàn tất và được commit độc lập. Bước tiếp theo
-là `KB-P6`: hardening, observability, sitemap/index rollout, runbook và diễn tập
-rollback. Không bắt đầu `KB-AI` trước khi hardening `KB-P6` hoàn tất.
+Các phase `KB-P0` đến `KB-P6` đã hoàn tất và được commit độc lập. Release FAQ
+không phụ thuộc chatbot/Ollama. `KB-AI` là epic tiếp theo riêng biệt và chỉ dùng
+revision approved đang publish làm nguồn chuẩn như hợp đồng ở mục 20.
 
 ## 15. Bảo mật, vận hành và rollout
 
@@ -850,6 +857,13 @@ Backend setting `KNOWLEDGEBASE_PUBLIC_ENABLED` là nguồn chuẩn, mặc địn
 readiness. Public site-settings trả capability
 `knowledgebase_public_enabled` để frontend ẩn/hiện link; không tạo thêm một env
 flag frontend độc lập dễ lệch trạng thái.
+
+`KNOWLEDGEBASE_SEARCH_INDEX_ENABLED` mặc định `false` ở mọi môi trường và là cờ
+rollout riêng. Backend trả capability tính toán
+`knowledgebase_search_index_enabled`; giá trị chỉ true khi cả public và index
+switch cùng bật. Global `seo_robots_index=false` vẫn có quyền chặn index toàn
+site. Quy trình vận hành chi tiết nằm ở
+[runbook rollout knowledgebase](../06-deployment/knowledgebase-rollout-runbook.md).
 
 Khi switch tắt:
 

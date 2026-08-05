@@ -4,14 +4,20 @@ from django.conf import settings
 from django.views import View
 
 from apps.sitecontent.services import resolved_seo_settings
-from common.seo import SeoMetadata, absolute_url, render_seo_shell, truncate_text
+from common.seo import (
+    SeoMetadata,
+    absolute_url,
+    render_seo_shell,
+    sitemap_urlset,
+    truncate_text,
+    xml_response,
+)
 
 from ...selectors.seo import (
+    knowledge_sitemap_rows,
     seo_knowledge_article_by_slugs,
     seo_knowledge_category_by_slug,
 )
-
-ROBOTS = 'noindex, nofollow'
 
 
 def _metadata(
@@ -22,14 +28,20 @@ def _metadata(
     canonical_path,
     page_type='website',
     structured_data=(),
+    robots=None,
 ):
     site = resolved_seo_settings()
+    allow_index = (
+        settings.KNOWLEDGEBASE_PUBLIC_ENABLED
+        and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
+        and site['seo_robots_index']
+    )
     return SeoMetadata(
         title=f'{title} | {site["site_name"]}',
         description=description or site['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=site['site_name'],
-        robots=ROBOTS,
+        robots=robots or ('index, follow' if allow_index else 'noindex, nofollow'),
         image_url=absolute_url(
             request,
             site['seo_og_image'] or site['brand_logo_url'],
@@ -48,6 +60,7 @@ def _not_found(request, canonical_path, label='Nội dung trợ giúp không t�
             title=label,
             description='Nội dung không tồn tại hoặc hiện chưa được công khai.',
             canonical_path=canonical_path,
+            robots='noindex, nofollow',
         ),
         status=404,
     )
@@ -86,6 +99,12 @@ def _breadcrumb(request, article, canonical_url):
     }
 
 
+def _browser_robots(request):
+    if any(key in request.GET for key in ('q', 'type', 'page')):
+        return 'noindex, nofollow'
+    return None
+
+
 class KnowledgeHomeSeoShellView(View):
     def get(self, request):
         if not settings.KNOWLEDGEBASE_PUBLIC_ENABLED:
@@ -97,6 +116,7 @@ class KnowledgeHomeSeoShellView(View):
                 title='Trung tâm trợ giúp',
                 description=('Câu hỏi thường gặp và hướng dẫn sử dụng ProCV dành cho ứng viên.'),
                 canonical_path='/tro-giup',
+                robots=_browser_robots(request),
             ),
         )
 
@@ -116,6 +136,7 @@ class KnowledgeCategorySeoShellView(View):
                 title=category.seo_title or category.name,
                 description=category.seo_description or category.description,
                 canonical_path=f'/tro-giup/{category.slug}',
+                robots=_browser_robots(request),
             ),
         )
 
@@ -162,3 +183,34 @@ class KnowledgeDetailSeoShellView(View):
                 ),
             ),
         )
+
+
+class KnowledgeSitemapView(View):
+    def get(self, request):
+        site = resolved_seo_settings()
+        if not (
+            settings.KNOWLEDGEBASE_PUBLIC_ENABLED
+            and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
+            and site['seo_robots_index']
+        ):
+            return xml_response(sitemap_urlset(()))
+
+        categories, articles = knowledge_sitemap_rows()
+        items = (
+            [{'loc': absolute_url(request, '/tro-giup')}]
+            + [
+                {
+                    'loc': absolute_url(request, f'/tro-giup/{slug}'),
+                    'lastmod': updated_at.date().isoformat(),
+                }
+                for slug, updated_at in categories
+            ]
+            + [
+                {
+                    'loc': absolute_url(request, f'/tro-giup/{category_slug}/{slug}'),
+                    'lastmod': updated_at.date().isoformat(),
+                }
+                for category_slug, slug, updated_at in articles
+            ]
+        )
+        return xml_response(sitemap_urlset(items))

@@ -13,6 +13,7 @@ import {
   knowledgeCategoryPath,
   knowledgeTypeLabel,
 } from '@/entities/knowledgebase'
+import { useSiteSettings } from '@/entities/site-settings'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import usePublicKnowledgeArticle from '../model/use-public-knowledge-article'
 import KnowledgeCategorySidebar from './KnowledgeCategorySidebar'
@@ -26,6 +27,7 @@ function absolute(path) {
 }
 
 export default function PublicKnowledgeArticle({ categorySlug, articleSlug }) {
+  const { settings } = useSiteSettings()
   const state = usePublicKnowledgeArticle(categorySlug, articleSlug)
   const article = state.article
   const canonicalPath = article
@@ -54,13 +56,17 @@ export default function PublicKnowledgeArticle({ categorySlug, articleSlug }) {
       },
     ],
   } : undefined
+  const allowIndex = Boolean(article)
+    && settings.knowledgebase_public_enabled === true
+    && settings.knowledgebase_search_index_enabled === true
+    && settings.seo_robots_index !== false
 
   useDocumentMetadata({
     title: article?.seo_title || article?.title || (state.notFound ? 'Nội dung trợ giúp không tồn tại' : 'Trung tâm trợ giúp'),
     description: article?.seo_description || article?.excerpt || 'Hướng dẫn sử dụng ProCV dành cho ứng viên.',
     canonicalPath,
     pageType: article ? 'article' : 'website',
-    robots: 'noindex, nofollow',
+    robots: allowIndex ? 'index, follow' : 'noindex, nofollow',
     structuredData,
   })
 

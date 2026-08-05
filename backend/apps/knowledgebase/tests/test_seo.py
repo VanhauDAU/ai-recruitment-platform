@@ -79,6 +79,34 @@ class KnowledgebaseSeoTests(PublishedKnowledgeMixin, TestCase):
     @override_settings(KNOWLEDGEBASE_PUBLIC_ENABLED=False)
     def test_feature_switch_returns_noindex_404_for_all_shells(self):
         response = self.client.get(reverse('seo-knowledge-home'))
+        sitemap = self.client.get(reverse('seo-sitemap-knowledgebase'))
+        sitemap_index = self.client.get(reverse('seo-sitemap-index'))
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+        self.assertNotContains(sitemap, '/tro-giup')
+        self.assertNotContains(sitemap_index, '/sitemaps/knowledgebase.xml')
+
+    @override_settings(KNOWLEDGEBASE_SEARCH_INDEX_ENABLED=True)
+    def test_index_rollout_adds_only_public_help_content_to_sitemap(self):
+        home = self.client.get(reverse('seo-knowledge-home'))
+        detail = self.client.get(
+            reverse(
+                'seo-knowledge-detail',
+                args=[self.category.slug, self.article.slug],
+            )
+        )
+        sitemap = self.client.get(reverse('seo-sitemap-knowledgebase'))
+        sitemap_index = self.client.get(reverse('seo-sitemap-index'))
+        search_result = self.client.get(reverse('seo-knowledge-home'), {'q': 'bao mat'})
+
+        self.assertEqual(home['X-Robots-Tag'], 'index, follow')
+        self.assertEqual(detail['X-Robots-Tag'], 'index, follow')
+        self.assertEqual(search_result['X-Robots-Tag'], 'noindex, nofollow')
+        self.assertContains(sitemap, '/tro-giup</loc>')
+        self.assertContains(
+            sitemap,
+            f'/tro-giup/{self.category.slug}/{self.article.slug}',
+        )
+        self.assertNotContains(sitemap, self.draft.slug)
+        self.assertContains(sitemap_index, '/sitemaps/knowledgebase.xml')

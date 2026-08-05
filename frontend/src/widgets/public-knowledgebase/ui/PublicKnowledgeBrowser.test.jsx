@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
+import { DocumentMetadataContext } from '@/shared/config/document-metadata-context'
 import PublicKnowledgeBrowser from './PublicKnowledgeBrowser'
 
 const { getPublicKnowledgeArticles, getPublicKnowledgeCategories } = vi.hoisted(() => ({
@@ -54,16 +56,27 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}{location.search}</output>
 }
 
-function renderBrowser({ entry = '/tro-giup', categorySlug } = {}) {
+function renderBrowser({ entry = '/tro-giup', categorySlug, metadata } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[entry]}>
-        <PublicKnowledgeBrowser categorySlug={categorySlug} />
-        <LocationProbe />
-      </MemoryRouter>
+      <SiteSettingsContext.Provider value={{
+        settings: {
+          ...DEFAULT_SITE_SETTINGS,
+          knowledgebase_public_enabled: true,
+          knowledgebase_search_index_enabled: true,
+          seo_robots_index: true,
+        },
+      }}>
+        <DocumentMetadataContext.Provider value={metadata || null}>
+          <MemoryRouter initialEntries={[entry]}>
+            <PublicKnowledgeBrowser categorySlug={categorySlug} />
+            <LocationProbe />
+          </MemoryRouter>
+        </DocumentMetadataContext.Provider>
+      </SiteSettingsContext.Provider>
     </QueryClientProvider>,
   )
 }
@@ -125,5 +138,16 @@ describe('PublicKnowledgeBrowser', () => {
 
     expect(await screen.findByText('Chuyên mục trợ giúp không tồn tại')).toBeInTheDocument()
     expect(getPublicKnowledgeArticles).not.toHaveBeenCalled()
+  })
+
+  it('keeps an explicit empty search URL out of the index after hydration', async () => {
+    const metadata = vi.fn(() => () => {})
+
+    renderBrowser({ entry: '/tro-giup?q=', metadata })
+
+    await screen.findByRole('heading', { level: 1, name: 'Chúng tôi có thể giúp gì cho bạn?' })
+    await waitFor(() => expect(metadata).toHaveBeenLastCalledWith(
+      expect.objectContaining({ robots: 'noindex, nofollow' }),
+    ))
   })
 })

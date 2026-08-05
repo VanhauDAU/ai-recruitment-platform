@@ -1,4 +1,5 @@
 from io import BytesIO
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -101,7 +102,10 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT, response.data)
         self.assertEqual(response.data['code'], 'knowledgebase_revision_stale')
         self.assertEqual(
-            KnowledgeArticleRevision.objects.get().body,
+            KnowledgeArticleRevision.objects.get(
+                article__public_id=created.data['public_id'],
+                number=1,
+            ).body,
             '<h2>Các bước</h2><p>Mở trang đăng nhập.</p>',
         )
 
@@ -155,6 +159,20 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(response.data['count'], 1)
         invalid = self.client.get(reverse('kb-admin-article-list'), {'ordering': 'drop table'})
         self.assertEqual(invalid.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch('apps.knowledgebase.api.views.admin.record_metric')
+    def test_admin_requests_emit_pii_free_status_and_latency_metrics(self, metric):
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(reverse('kb-admin-article-list'))
+
+        self.assertEqual(response.status_code, 200)
+        names = [call.args[0] for call in metric.call_args_list]
+        self.assertEqual(
+            names,
+            ['knowledgebase_admin_request', 'knowledgebase_admin_latency_ms'],
+        )
+        self.assertNotIn(self.admin.email, str(metric.call_args_list))
 
     def test_media_upload_records_verified_dimensions_and_rejects_gif(self):
         self.client.force_authenticate(self.admin)

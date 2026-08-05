@@ -65,6 +65,9 @@ class SiteSettingListView(APIView):
         # Capability vận hành phải theo backend kill switch, không phải một row
         # SiteSetting mà admin có thể vô tình bật lệch với public API/SEO shell.
         response_data['knowledgebase_public_enabled'] = bool(settings.KNOWLEDGEBASE_PUBLIC_ENABLED)
+        response_data['knowledgebase_search_index_enabled'] = bool(
+            settings.KNOWLEDGEBASE_PUBLIC_ENABLED and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
+        )
         return Response(response_data)
 
 

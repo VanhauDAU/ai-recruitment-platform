@@ -87,6 +87,26 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - 26 backend test và 4 frontend regression test pass; Ruff, oxlint và kiểm tra
   kiến trúc frontend đều đạt.
 
+#### Added — FAQ/Help Center KB-P6 hardening và rollout
+
+- Thêm `KNOWLEDGEBASE_SEARCH_INDEX_ENABLED` mặc định tắt, độc lập với public
+  kill switch; backend SEO shell, frontend metadata và sitemap chỉ index khi
+  public/index/global SEO cùng bật, còn URL search/filter luôn noindex.
+- Thêm `/sitemaps/knowledgebase.xml`, chỉ chứa home, category có nội dung và
+  article active với revision approved đang publish; sitemap index tự thêm/gỡ
+  theo rollout configuration.
+- Thêm command `check_knowledgebase_readiness --json` kiểm taxonomy, public
+  coverage, source/SEO, hạn review, nội dung an toàn, link route và media/alt;
+  lỗi làm command exit khác 0 để chặn rollout.
+- Ghi metric request/latency public/admin, zero-result bucket và content state
+  qua product metric boundary mà không ghi raw search hay PII; thêm regression
+  xác nhận dữ liệu không mất qua chuỗi bật → tắt → bật lại.
+- Thêm runbook rollout/rollback, ngưỡng quan sát sau khi có baseline và nguyên
+  tắc không reverse-delete migration nội dung. 48 backend và 14 frontend
+  regression test mục tiêu đều đạt; full gate đạt 769 backend test (coverage
+  86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca không áp dụng được
+  skip; lint, format, import/architecture và production build đều đạt.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò

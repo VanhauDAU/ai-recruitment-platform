@@ -600,6 +600,11 @@ KNOWLEDGEBASE_PUBLIC_ENABLED = config(
     default=not IS_PRODUCTION,
     cast=bool,
 )
+KNOWLEDGEBASE_SEARCH_INDEX_ENABLED = config(
+    'KNOWLEDGEBASE_SEARCH_INDEX_ENABLED',
+    default=False,
+    cast=bool,
+)
 ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
 ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
@@ -182,6 +184,40 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
         )
         self.assertEqual(response['Cache-Control'], 'no-store')
         self.assertTrue(KnowledgeArticle.objects.filter(pk=self.public_article.pk).exists())
+
+    @patch('apps.knowledgebase.api.views.public.record_metric')
+    def test_search_metrics_use_buckets_and_never_record_raw_query(self, metric):
+        raw_query = 'candidate.private@example.com'
+
+        response = self.client.get(
+            reverse('kb-public-article-list'),
+            {'q': raw_query},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        serialized_calls = str(metric.call_args_list)
+        self.assertNotIn(raw_query, serialized_calls)
+        self.assertEqual(metric.call_args_list[0].kwargs['query_length_bucket'], '21_60')
+        self.assertEqual(metric.call_args_list[0].kwargs['result_bucket'], 'zero')
+
+    def test_kill_switch_rehearsal_preserves_and_restores_the_same_public_data(self):
+        url = reverse('kb-public-article-list')
+        before = self.client.get(url)
+        before_ids = [item['public_id'] for item in before.data['results']]
+
+        with self.settings(KNOWLEDGEBASE_PUBLIC_ENABLED=False):
+            cache.clear()
+            disabled = self.client.get(url)
+
+        cache.clear()
+        restored = self.client.get(url)
+        restored_ids = [item['public_id'] for item in restored.data['results']]
+
+        self.assertEqual(before.status_code, 200)
+        self.assertEqual(disabled.status_code, 404)
+        self.assertEqual(disabled['Cache-Control'], 'no-store')
+        self.assertEqual(restored.status_code, 200)
+        self.assertEqual(restored_ids, before_ids)
 
 
 @override_settings(KNOWLEDGEBASE_PUBLIC_ENABLED=True)

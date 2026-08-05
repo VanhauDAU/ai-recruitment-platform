@@ -20,6 +20,7 @@
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
 | [05-huong-dan](05-huong-dan/)   | [huong-dan-cai-dat.md](05-huong-dan/huong-dan-cai-dat.md)        | Hướng dẫn cài đặt, chạy dự án local                                     |
 | [05-huong-dan](05-huong-dan/)   | [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md) | Cấu hình site settings (15 nhóm, schema-driven, quy ước env)         |
+| [06-deployment](06-deployment/) | [knowledgebase-rollout-runbook.md](06-deployment/knowledgebase-rollout-runbook.md) | Rollout, readiness, observability và rollback Help Center |
 | [05-huong-dan](05-huong-dan/)   | [social-login.md](05-huong-dan/social-login.md)                 | Cấu hình social login OAuth (lấy key Google/Facebook/LinkedIn)          |
 | [05-huong-dan](05-huong-dan/)   | [quy-trinh-pull-request.md](05-huong-dan/quy-trinh-pull-request.md) | Quy trình Pull Request, review, branch protection và Definition of Done |
 | [05-huong-dan](05-huong-dan/)   | [quan-tri-thong-bao-da-cong.md](05-huong-dan/quan-tri-thong-bao-da-cong.md) | Vận hành editor, priority, revision, lifecycle và audit thông báo |

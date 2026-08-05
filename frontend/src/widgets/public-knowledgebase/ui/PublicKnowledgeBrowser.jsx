@@ -12,6 +12,7 @@ import {
   KNOWLEDGE_ROOT,
   knowledgeCategoryPath,
 } from '@/entities/knowledgebase'
+import { useSiteSettings } from '@/entities/site-settings'
 import { KnowledgeSearchBox } from '@/features/search-knowledgebase'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import usePublicKnowledgebase from '../model/use-public-knowledgebase'
@@ -38,6 +39,7 @@ function groupArticles(articles, categories) {
 }
 
 export default function PublicKnowledgeBrowser({ categorySlug }) {
+  const { settings } = useSiteSettings()
   const state = usePublicKnowledgebase(categorySlug)
   const groups = useMemo(
     () => groupArticles(state.data.results || [], state.categories),
@@ -51,12 +53,17 @@ export default function PublicKnowledgeBrowser({ categorySlug }) {
     : state.activeCategory?.name || 'Trung tâm trợ giúp'
   const description = state.activeCategory?.description
     || 'Tìm câu trả lời và hướng dẫn sử dụng ProCV dành cho ứng viên.'
+  const allowIndex = !state.notFound
+    && !state.hasIndexingParameters
+    && settings.knowledgebase_public_enabled === true
+    && settings.knowledgebase_search_index_enabled === true
+    && settings.seo_robots_index !== false
 
   useDocumentMetadata({
     title,
     description,
     canonicalPath,
-    robots: 'noindex, nofollow',
+    robots: allowIndex ? 'index, follow' : 'noindex, nofollow',
   })
 
   if (state.notFound) return <KnowledgeNotFound title="Chuyên mục trợ giúp không tồn tại" />

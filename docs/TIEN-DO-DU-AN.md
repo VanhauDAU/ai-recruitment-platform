@@ -217,7 +217,7 @@ sửa và rollout public qua capability switch.
 | KB-P3 | Workspace quản trị, editor, preview, diff và media library | ✅ |
 | KB-P4 | Help center public, search, detail và SEO noindex | ✅ |
 | KB-P5 | Nội dung đã xác minh và nối các entry point | ✅ |
-| KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ⬜ |
+| KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ✅ |
 
 ## Epic thông báo chạy đa cổng (AN, 2026-07-29)
 
@@ -1285,7 +1285,7 @@ responsive và renderer ảnh lỗi an toàn. 28/28 test knowledgebase backend, 
 frontend regression, lint/architecture/build và E2E public ở ba viewport đều
 pass. KB-P5 nội dung đã xác minh và entry point là bước tiếp theo.
 
-Cập nhật lần cuối: 2026-08-05e (FAQ/Help Center KB-P5): thêm bảy bài ProCV
+Cập nhật 2026-08-05e (FAQ/Help Center KB-P5): thêm bảy bài ProCV
 approved/published, mỗi category active có một bài; nội dung được đối chiếu với
 route, component và hành vi đăng ký/khôi phục, bảo mật, tìm việc, ứng tuyển, CV,
 báo cáo rủi ro và hỗ trợ. Data migration additive có ID ổn định, không ghi đè
@@ -1295,3 +1295,16 @@ actions và mục hướng dẫn CV trên header chỉ hiện khi capability b�
 tới route canonical thay cho toast sắp ra mắt. 26 backend test và 4 frontend
 regression test pass; Ruff, oxlint và architecture gate sạch. KB-P6 hardening,
 observability, sitemap/index và runbook là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05f (FAQ/Help Center KB-P6): thêm index switch riêng
+mặc định tắt, đồng bộ SEO shell/client metadata, search page noindex và sitemap
+knowledgebase chỉ xuất hiện khi public + index + global SEO cùng bật. Bổ sung
+command readiness JSON kiểm 7 category, bài public, source/SEO, review, hạn,
+link canonical, media/alt; structured metric request/latency public/admin,
+zero-result và content state không chứa raw query/PII. Runbook khóa trình tự mở
+public rồi index, tiêu chí quan sát và rollback không reverse migration. Test
+diễn tập bật → đọc ID → tắt → 404 → bật lại xác nhận cùng dữ liệu. 48 backend
+và 14 frontend regression test mục tiêu đều xanh. Full gate đạt 769 backend test
+(coverage 86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca theo viewport
+không áp dụng được skip; Ruff/format/import-linter/migration drift,
+oxlint/architecture/build đều xanh. Toàn bộ KB-P0 đến KB-P6 hoàn tất.

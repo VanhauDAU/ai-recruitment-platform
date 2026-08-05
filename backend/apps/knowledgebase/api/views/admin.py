@@ -1,3 +1,5 @@
+from time import monotonic
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
@@ -8,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminPermission
+from common.metrics import record_metric
 from common.pagination import StandardPagination
 
 from ...selectors import (
@@ -83,9 +86,30 @@ ERROR_RESPONSES = {
 
 
 class PrivateNoStoreMixin:
+    def initial(self, request, *args, **kwargs):
+        self._knowledgebase_started_at = monotonic()
+        return super().initial(request, *args, **kwargs)
+
     def finalize_response(self, request, response, *args, **kwargs):
         response = super().finalize_response(request, response, *args, **kwargs)
         response['Cache-Control'] = 'private, no-store'
+        endpoint = request.resolver_match.url_name or 'unknown'
+        status_code = response.status_code
+        tags = {
+            'endpoint': endpoint,
+            'status': status_code,
+            'failure_code': (
+                response.data.get('code', f'http_{status_code}')
+                if status_code >= 400 and isinstance(response.data, dict)
+                else ''
+            ),
+        }
+        record_metric('knowledgebase_admin_request', 1, **tags)
+        record_metric(
+            'knowledgebase_admin_latency_ms',
+            round((monotonic() - self._knowledgebase_started_at) * 1000, 2),
+            **tags,
+        )
         return response
 
 

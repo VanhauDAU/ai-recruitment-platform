@@ -4,9 +4,15 @@ from .api.views.seo import (
     KnowledgeCategorySeoShellView,
     KnowledgeDetailSeoShellView,
     KnowledgeHomeSeoShellView,
+    KnowledgeSitemapView,
 )
 
 urlpatterns = [
+    path(
+        'sitemaps/knowledgebase.xml',
+        KnowledgeSitemapView.as_view(),
+        name='seo-sitemap-knowledgebase',
+    ),
     path('tro-giup', KnowledgeHomeSeoShellView.as_view(), name='seo-knowledge-home'),
     path(
         'tro-giup/<slug:category_slug>',

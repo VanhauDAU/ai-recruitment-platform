@@ -7,6 +7,8 @@ const settings = {
   seo_og_image: '',
   seo_robots_index: true,
   seo_google_site_verification: '',
+  knowledgebase_public_enabled: true,
+  knowledgebase_search_index_enabled: false,
 }
 
 describe('route metadata', () => {
@@ -36,5 +38,18 @@ describe('route metadata', () => {
       portal: 'main',
       settings: { ...settings, seo_robots_index: false },
     }).robots).toBe('noindex, nofollow')
+  })
+
+  it('indexes Help Center only after both backend rollout capabilities are enabled', () => {
+    expect(resolveRouteMetadata({
+      pathname: '/tro-giup/cv-va-mau-cv',
+      portal: 'main',
+      settings,
+    }).robots).toBe('noindex, nofollow')
+    expect(resolveRouteMetadata({
+      pathname: '/tro-giup/cv-va-mau-cv',
+      portal: 'main',
+      settings: { ...settings, knowledgebase_search_index_enabled: true },
+    }).robots).toBe('index, follow')
   })
 })

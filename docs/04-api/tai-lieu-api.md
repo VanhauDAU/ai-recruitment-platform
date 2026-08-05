@@ -432,7 +432,7 @@ transactional, khóa hàng bằng `select_for_update()` và ghi audit. Mọi mut
 sau create gửi `revision_token`; publish gửi thêm số `revision`. Revision đã
 publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo revision mới.
 
-## Trung tâm trợ giúp — Public và Admin API (KB-P2/KB-P4)
+## Trung tâm trợ giúp — Public, Admin và rollout (KB-P2–KB-P6)
 
 Public API không yêu cầu đăng nhập, dùng throttle `knowledgebase_public`
 120 request/phút theo IP client đã kiểm chứng và chỉ trả article active thuộc
@@ -452,9 +452,21 @@ stale-while-revalidate=300` và ETag; conditional request khớp trả `304`.
 `KNOWLEDGEBASE_PUBLIC_ENABLED=false` làm public API fail-closed `404` nhưng giữ
 nguyên admin/data. `GET /api/site/settings/` đồng thời trả capability boolean
 `knowledgebase_public_enabled` lấy trực tiếp từ switch này để frontend ẩn/hiện
-entry point; đây không phải row site setting mà admin có thể sửa. Admin API luôn
-yêu cầu tài khoản quản trị, permission cụ thể và trả
+entry point. Response còn có `knowledgebase_search_index_enabled`, chỉ true khi
+public và index switch backend cùng bật; cả hai không phải row site setting mà
+admin có thể sửa. Admin API luôn yêu cầu tài khoản quản trị, permission cụ thể và trả
 `Cache-Control: private, no-store`.
+
+`KNOWLEDGEBASE_SEARCH_INDEX_ENABLED=false` giữ toàn bộ Help Center `noindex` và
+sitemap riêng rỗng. Khi public switch, index switch và global
+`seo_robots_index` cùng true, home/category/article canonical chuyển sang
+`index, follow`, `/sitemaps/knowledgebase.xml` được thêm vào `/sitemap.xml`;
+URL có `q`, `type` hoặc `page` vẫn noindex. Trước khi bật phải chạy
+`python manage.py check_knowledgebase_readiness --json` theo runbook deployment.
+
+Public/admin request phát metric count/latency theo endpoint, status, loại và
+bucket kết quả/độ dài query. Raw query, title, body, email, source và review note
+không được ghi vào metric hoặc label.
 
 | Method | Endpoint | Quyền chính | Mục đích |
 | --- | --- | --- | --- |

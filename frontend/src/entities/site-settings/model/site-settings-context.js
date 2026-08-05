@@ -35,6 +35,7 @@ export const DEFAULT_SITE_SETTINGS = {
   contact_working_hours: '8:00 - 17:30, Thứ 2 - Thứ 6',
   cv_builder_wysiwyg_enabled: true,
   knowledgebase_public_enabled: false,
+  knowledgebase_search_index_enabled: false,
 }
 
 export const SiteSettingsContext = createContext({
