@@ -109,6 +109,7 @@ export default function IdentityRecoveryModal({
     <Modal
       open={open}
       width={760}
+      style={{ maxWidth: 'calc(100vw - 24px)' }}
       title={isEmail ? 'Khôi phục email đăng nhập' : 'Đặt lại xác thực đa yếu tố'}
       okText={preview ? 'Xác nhận thực hiện' : 'Xem tác động'}
       cancelText="Hủy"

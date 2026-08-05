@@ -80,6 +80,8 @@ describe('Identity recovery actions', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /Đổi email đăng nhập/i }))
+    expect(screen.getByRole('dialog', { name: 'Khôi phục email đăng nhập' }))
+      .toHaveStyle({ maxWidth: 'calc(100vw - 24px)' })
     expect(screen.getByText(
       'Đối chiếu: Nguyễn Thu Linh · old@example.com · usr-1',
     )).toBeInTheDocument()
