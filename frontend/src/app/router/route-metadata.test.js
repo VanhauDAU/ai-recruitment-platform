@@ -26,6 +26,8 @@ describe('route metadata', () => {
       .toBe('index, follow')
     expect(resolveRouteMetadata({ pathname: '/login', portal: 'main', settings }).robots)
       .toBe('noindex, nofollow')
+    expect(resolveRouteMetadata({ pathname: '/tro-giup', portal: 'main', settings }).robots)
+      .toBe('noindex, nofollow')
   })
 
   it('honors the global indexing kill switch', () => {

@@ -1,5 +1,9 @@
 """Public mutation boundary for the knowledgebase domain."""
 
+from .cache import (
+    invalidate_knowledge_public_cache,
+    knowledge_public_cache_version,
+)
 from .content import normalize_revision_content
 from .media import KnowledgeMediaTooLarge, upload_knowledge_media
 from .workflow import (
@@ -29,6 +33,8 @@ __all__ = [
     'create_article',
     'create_category',
     'create_revision',
+    'invalidate_knowledge_public_cache',
+    'knowledge_public_cache_version',
     'normalize_revision_content',
     'publish_revision',
     'reject_revision',

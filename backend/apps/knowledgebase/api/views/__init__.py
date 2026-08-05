@@ -19,6 +19,11 @@ from .admin import (
     AdminRevisionRejectView,
     AdminRevisionSubmitView,
 )
+from .public import (
+    PublicArticleDetailView,
+    PublicArticleListView,
+    PublicCategoryListView,
+)
 
 __all__ = [
     'AdminArticleArchiveView',
@@ -38,4 +43,7 @@ __all__ = [
     'AdminRevisionListCreateView',
     'AdminRevisionRejectView',
     'AdminRevisionSubmitView',
+    'PublicArticleDetailView',
+    'PublicArticleListView',
+    'PublicCategoryListView',
 ]

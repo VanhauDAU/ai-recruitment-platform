@@ -432,11 +432,26 @@ transactional, khóa hàng bằng `select_for_update()` và ghi audit. Mọi mut
 sau create gửi `revision_token`; publish gửi thêm số `revision`. Revision đã
 publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo revision mới.
 
-## Trung tâm trợ giúp — Admin API (KB-P2)
+## Trung tâm trợ giúp — Public và Admin API (KB-P2/KB-P4)
 
-> Public API `/api/knowledgebase/categories|articles` thuộc KB-P4 và chưa được
-> mở ở checkpoint này. Admin API luôn yêu cầu tài khoản quản trị, permission cụ
-> thể và trả `Cache-Control: private, no-store`.
+Public API không yêu cầu đăng nhập, dùng throttle `knowledgebase_public`
+120 request/phút theo IP client đã kiểm chứng và chỉ trả article active thuộc
+category active có revision đang publish ở trạng thái approved.
+
+| Method | Endpoint | Query | Mục đích |
+| --- | --- | --- | --- |
+| `GET` | `/api/knowledgebase/categories/` | — | Category active và số bài public |
+| `GET` | `/api/knowledgebase/articles/` | `category`, `type=faq\|guide`, `q`, `page`, `page_size<=60` | Browse/search bài public |
+| `GET` | `/api/knowledgebase/articles/{category_slug}/{article_slug}/` | — | Revision đang publish, related/trước/sau tối đa 6 bài |
+
+`q` dài 2–120 ký tự và search không dấu theo nhiều token. Draft, rejected,
+archived, category inactive và slug không tồn tại đều trả cùng `404`; response
+không lộ actor, review note, source reference, revision token hay revision chưa
+publish. Public response dùng `Cache-Control: public, max-age=60,
+stale-while-revalidate=300` và ETag; conditional request khớp trả `304`.
+`KNOWLEDGEBASE_PUBLIC_ENABLED=false` làm public API fail-closed `404` nhưng giữ
+nguyên admin/data. Admin API luôn yêu cầu tài khoản quản trị, permission cụ thể
+và trả `Cache-Control: private, no-store`.
 
 | Method | Endpoint | Quyền chính | Mục đích |
 | --- | --- | --- | --- |

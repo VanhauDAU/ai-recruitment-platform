@@ -18,9 +18,19 @@ from .api.views import (
     AdminRevisionListCreateView,
     AdminRevisionRejectView,
     AdminRevisionSubmitView,
+    PublicArticleDetailView,
+    PublicArticleListView,
+    PublicCategoryListView,
 )
 
 urlpatterns = [
+    path('categories/', PublicCategoryListView.as_view(), name='kb-public-category-list'),
+    path('articles/', PublicArticleListView.as_view(), name='kb-public-article-list'),
+    path(
+        'articles/<slug:category_slug>/<slug:article_slug>/',
+        PublicArticleDetailView.as_view(),
+        name='kb-public-article-detail',
+    ),
     path('admin/categories/', AdminCategoryListCreateView.as_view(), name='kb-admin-category-list'),
     path(
         'admin/categories/reorder/',

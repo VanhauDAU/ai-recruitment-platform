@@ -37,6 +37,13 @@
   margin: 1.25rem auto;
   max-width: 100%;
 }
+.knowledge-article-content img.is-broken {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  min-height: 4rem;
+  padding: 1rem;
+}
 .knowledge-article-content img[data-width="25%"] { width: 25%; }
 .knowledge-article-content img[data-width="50%"] { width: 50%; }
 .knowledge-article-content img[data-width="75%"] { width: 75%; }

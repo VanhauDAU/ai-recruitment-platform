@@ -54,6 +54,25 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Lint phần thay đổi và architecture check sạch, production build đạt, 13
   targeted test pass; smoke lưu → duyệt → xuất bản pass ở desktop/tablet/mobile.
 
+#### Added — FAQ/Help Center KB-P4 public help center
+
+- Mở public API category/article browse, search không dấu nhiều token, filter
+  type, pagination và detail có related/trước/sau; selector fail-closed chỉ lộ
+  revision approved đang publish của article/category active.
+- Thêm throttle IP 120/phút, cache policy public 60 giây + stale-while-revalidate
+  300 giây, ETag/304, generation invalidation sau mutation public và fallback
+  đọc DB khi cache lỗi; kill switch production trả 404 mà không ảnh hưởng admin.
+- Thêm SEO shell thật cho home/category/detail với canonical, Open Graph,
+  Article và BreadcrumbList; 404 có status thật, toàn bộ rollout KB-P4 giữ
+  `noindex, nofollow` và không dùng FAQPage schema.
+- Thêm ba route lazy `/tro-giup`, `/tro-giup/:categorySlug` và detail; giao diện
+  responsive theo mô hình hero search + sidebar category + question rows, URL
+  là nguồn chuẩn cho search/type/page, có loading/empty/error/retry/404 và rich
+  content sanitize với ảnh lazy/broken-image fallback.
+- 28 test knowledgebase backend pass; 9 frontend regression pass; lint,
+  architecture, build pass và smoke browse → search → detail → 404 pass trên
+  desktop/tablet/mobile.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò

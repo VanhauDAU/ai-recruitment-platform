@@ -1,6 +1,6 @@
 # Đặc tả chức năng FAQ và hướng dẫn sử dụng
 
-> Trạng thái: **Đang triển khai — KB-P0 đến KB-P3 hoàn tất**
+> Trạng thái: **Đang triển khai — KB-P0 đến KB-P4 hoàn tất**
 >
 > Phạm vi ưu tiên: **Cổng ứng viên, public help center và workspace quản trị**
 >
@@ -40,6 +40,14 @@ trải nghiệm sử dụng.
   permission. Smoke workflow đã chạy trên desktop, tablet và mobile.
 - Rich-text image library chung nhận policy MIME theo domain; FAQ chỉ cho
   JPEG/PNG/WebP đúng backend trong khi blog vẫn giữ policy cũ tương thích.
+- Public selector fail-closed chỉ trả article active thuộc category active với
+  `published_revision=APPROVED`; API có throttle theo IP, cache header, ETag và
+  generation invalidation sau mọi mutation ảnh hưởng dữ liệu public.
+- Ba route `/tro-giup` đã lazy-load theo FSD, URL là nguồn chuẩn cho search/type/
+  page, hủy request cũ qua TanStack Query và có loading/empty/error/404 riêng.
+  SEO shell dùng canonical/Open Graph/Article + BreadcrumbList nhưng giữ
+  `noindex, nofollow` đến content readiness; smoke browse → search → detail →
+  404 đã pass trên desktop, tablet và mobile.
 
 ## 1. Vấn đề hiện tại
 
@@ -790,14 +798,15 @@ bộ chức năng vào một thay đổi lớn.
 | `KB-P1` | app skeleton, common HTML sanitizer, models/migrations, 7 category, permissions/role mapping | **Hoàn tất 2026-08-05** — targeted test và import-linter pass |
 | `KB-P2` | services/selectors, workflow revision, media upload, admin API, audit và OpenAPI | **Hoàn tất 2026-08-05** — 22 targeted/regression tests, permission/concurrency/query-budget pass |
 | `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | **Hoàn tất 2026-08-05** — architecture/build, 13 targeted tests và workflow E2E 3 viewport pass |
-| `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | public leak/404/accessibility/SEO tests pass |
+| `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | **Hoàn tất 2026-08-05** — 12 backend public/cache/SEO test, 9 frontend regression và E2E 3 viewport pass |
 | `KB-P5` | nội dung ProCV thật, review đủ bảy category và nối các placeholder hiện có | content readiness checklist pass |
 | `KB-P6` | hardening, observability, sitemap/index rollout, runbook và rollback rehearsal | toàn bộ Definition of Done đạt |
 | `KB-AI` | chunking, embedding, pgvector và tích hợp chatbot | chỉ bắt đầu sau `KB-P6` |
 
-Các phase `KB-P0` đến `KB-P3` đã hoàn tất và được commit độc lập. Bước tiếp theo
-là `KB-P4`; không triển khai nội dung seed/`KB-AI` trước public contract, public
-leak test và SEO shell `noindex`.
+Các phase `KB-P0` đến `KB-P4` đã hoàn tất và được commit độc lập. Bước tiếp theo
+là `KB-P5`: chỉ publish nội dung ProCV đã đối chiếu với route/hành vi thật và
+nối entry point sau khi capability public sẵn sàng. Không bắt đầu `KB-AI` trước
+public contract, content readiness và hardening `KB-P6`.
 
 ## 15. Bảo mật, vận hành và rollout
 

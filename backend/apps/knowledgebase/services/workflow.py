@@ -9,6 +9,7 @@ from apps.accounts.services import record_admin_action
 from common.db.search import fold_accents
 
 from ..models import KnowledgeArticle, KnowledgeArticleRevision, KnowledgeCategory
+from .cache import invalidate_knowledge_public_cache
 from .content import normalize_revision_content
 
 
@@ -72,6 +73,7 @@ def create_category(*, actor, **data):
     category.full_clean()
     category.save()
     _record(actor=actor, action='knowledge_category_create', target=category)
+    invalidate_knowledge_public_cache()
     return category
 
 
@@ -93,6 +95,7 @@ def update_category(*, category, actor, expected_revision_token, **changes):
         target=category,
         payload={'fields': sorted(changes)},
     )
+    invalidate_knowledge_public_cache()
     return category
 
 
@@ -121,6 +124,7 @@ def reorder_categories(*, categories, ordered_public_ids, actor):
         target=locked[0],
         payload={'count': len(locked)},
     )
+    invalidate_knowledge_public_cache()
     return locked
 
 
@@ -141,6 +145,7 @@ def set_category_active(*, category, actor, is_active, expected_revision_token):
             ).count()
         },
     )
+    invalidate_knowledge_public_cache()
     return category
 
 
@@ -216,6 +221,8 @@ def update_article(*, article, actor, expected_revision_token, **changes):
         target=article,
         payload={'fields': sorted(changes)},
     )
+    if article.published_revision_id:
+        invalidate_knowledge_public_cache()
     return article
 
 
@@ -433,6 +440,7 @@ def publish_revision(
         target=article,
         payload={'revision': revision.number},
     )
+    invalidate_knowledge_public_cache()
     return article
 
 
@@ -448,6 +456,7 @@ def archive_article(*, article, actor, expected_revision_token):
     article.revision_token += 1
     article.save()
     _record(actor=actor, action='knowledge_article_archive', target=article)
+    invalidate_knowledge_public_cache()
     return article
 
 
@@ -463,6 +472,7 @@ def restore_article(*, article, actor, expected_revision_token):
     article.revision_token += 1
     article.save()
     _record(actor=actor, action='knowledge_article_restore', target=article)
+    invalidate_knowledge_public_cache()
     return article
 
 
@@ -490,4 +500,5 @@ def reorder_articles(*, category, ordered_public_ids, actor):
         target=category,
         payload={'count': len(articles)},
     )
+    invalidate_knowledge_public_cache()
     return articles

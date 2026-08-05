@@ -24,6 +24,7 @@ const ROUTE_DESCRIPTIONS = new Map([
   ['/viec-lam', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
   ['/jobs', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
   ['/blog', 'Kiến thức tìm việc, viết CV, phỏng vấn và phát triển sự nghiệp.'],
+  ['/tro-giup', 'Tìm câu trả lời và hướng dẫn sử dụng ProCV dành cho ứng viên.'],
   ['/mau-cv', 'Khám phá mẫu CV chuyên nghiệp, dễ chỉnh sửa và phù hợp nhiều ngành nghề.'],
 ])
 

@@ -215,7 +215,7 @@ sửa và rollout public qua capability switch.
 | KB-P1 | Backend foundation: common sanitizer, model/migration, 7 category và permission | ✅ |
 | KB-P2 | Workflow, media, admin API, audit và OpenAPI | ✅ |
 | KB-P3 | Workspace quản trị, editor, preview, diff và media library | ✅ |
-| KB-P4 | Help center public, search, detail và SEO noindex | ⬜ |
+| KB-P4 | Help center public, search, detail và SEO noindex | ✅ |
 | KB-P5 | Nội dung đã xác minh và nối các entry point | ⬜ |
 | KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ⬜ |
 
@@ -1267,7 +1267,7 @@ optimistic concurrency, media JPEG/PNG/WebP, admin API/RBAC, audit và OpenAPI.
 22 targeted/regression test, query budget 3, Ruff/import-linter/layering đều xanh;
 KB-P3 là bước tiếp theo.
 
-Cập nhật lần cuối: 2026-08-05c (FAQ/Help Center KB-P3): hoàn tất entity API +
+Cập nhật 2026-08-05c (FAQ/Help Center KB-P3): hoàn tất entity API +
 renderer, bốn feature biên tập/category/review/publish, widget danh sách và
 workspace editor, ba page lazy admin cùng navigation/RBAC. Danh sách giữ filter,
 sort và page trong URL; editor không autosave server, có dirty guard, local
@@ -1275,3 +1275,12 @@ recovery, preview, media JPEG/PNG/WebP, diff, history và optimistic token 409.
 Lint phần thay đổi sạch, architecture/build xanh, 13 targeted test pass và smoke
 workflow lưu → gửi duyệt → duyệt → xuất bản pass trên desktop/tablet/mobile.
 KB-P4 public help center là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05d (FAQ/Help Center KB-P4): hoàn tất public selector
+không lộ draft/rejected/archived/inactive, ba API browse/search/detail có
+throttle/cache/ETag/kill switch và SEO shell canonical + Article/BreadcrumbList
+giữ `noindex`. Frontend có ba route `/tro-giup`, search/type/page lấy URL làm
+nguồn chuẩn, trạng thái loading/empty/error/404, layout sidebar + question list
+responsive và renderer ảnh lỗi an toàn. 28/28 test knowledgebase backend, 9
+frontend regression, lint/architecture/build và E2E public ở ba viewport đều
+pass. KB-P5 nội dung đã xác minh và entry point là bước tiếp theo.
