@@ -18,7 +18,7 @@ function HighlightedText({ text, query }) {
   return parts
 }
 
-export default function KnowledgeQuestionList({ articles, query = '' }) {
+export default function KnowledgeQuestionList({ articles, query = '', showCategory = false }) {
   const showExcerpt = Boolean(query.trim())
   return (
     <ul className="knowledge-question-list">
@@ -26,6 +26,9 @@ export default function KnowledgeQuestionList({ articles, query = '' }) {
         <li key={article.public_id}>
           <Link to={knowledgeArticlePath(article)} className="knowledge-question">
             <span className="knowledge-question__content">
+              {showCategory && (
+                <span className="knowledge-question__category">{article.category.name}</span>
+              )}
               <span className="knowledge-question__title">
                 <HighlightedText text={article.title} query={query} />
               </span>

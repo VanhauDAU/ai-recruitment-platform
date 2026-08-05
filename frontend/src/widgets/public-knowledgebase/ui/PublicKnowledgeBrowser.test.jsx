@@ -32,7 +32,7 @@ const categories = [
     slug: 'bao-mat-va-quyen-rieng',
     description: 'Giữ tài khoản an toàn.',
     order: 2,
-    article_count: 0,
+    article_count: 1,
   },
 ]
 
@@ -49,6 +49,29 @@ const article = {
   excerpt: 'Nhập email và mật khẩu của bạn.',
   order: 1,
   updated_at: '2026-08-05T08:00:00Z',
+}
+
+const securityArticle = {
+  public_id: 'kba_privacy',
+  category: {
+    public_id: 'kbc_security',
+    name: 'Bảo mật và quyền riêng tư',
+    slug: 'bao-mat-va-quyen-rieng',
+  },
+  slug: 'bao-ve-du-lieu-ca-nhan',
+  article_type: 'FAQ',
+  title: 'Dữ liệu cá nhân được bảo vệ thế nào?',
+  excerpt: 'Kiểm soát quyền riêng tư và phiên đăng nhập của bạn.',
+  order: 1,
+  updated_at: '2026-08-05T08:00:00Z',
+}
+
+function fold(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLocaleLowerCase('vi-VN')
 }
 
 function renderBrowser({ entry = '/tro-giup', categorySlug, metadata } = {}) {
@@ -79,11 +102,21 @@ describe('PublicKnowledgeBrowser', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getPublicKnowledgeCategories.mockResolvedValue(categories)
-    getPublicKnowledgeArticles.mockResolvedValue({
-      count: 1,
-      next: null,
-      previous: null,
-      results: [article],
+    getPublicKnowledgeArticles.mockImplementation(async (params = {}) => {
+      let results = [article, securityArticle]
+      if (params.category) {
+        results = results.filter((item) => item.category.slug === params.category)
+      }
+      if (params.q) {
+        const query = fold(params.q)
+        results = results.filter((item) => fold(`${item.title} ${item.excerpt}`).includes(query))
+      }
+      return {
+        count: results.length,
+        next: null,
+        previous: null,
+        results,
+      }
     })
   })
 
@@ -92,7 +125,7 @@ describe('PublicKnowledgeBrowser', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Câu hỏi thường gặp' })).toBeInTheDocument()
     expect(container.querySelectorAll('h1')).toHaveLength(1)
-    expect(screen.getByRole('searchbox', { name: 'Tìm trong danh sách câu hỏi' })).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Tìm kiếm trong tất cả chuyên mục' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Chuyên mục trợ giúp' })).toBeInTheDocument()
     expect(screen.queryByText('Tất cả chủ đề')).not.toBeInTheDocument()
     expect(await screen.findByRole('link', { name: /Làm thế nào để đăng nhập an toàn/ })).toHaveAttribute(
@@ -101,7 +134,7 @@ describe('PublicKnowledgeBrowser', () => {
     )
   })
 
-  it('filters the loaded question list locally and ignores legacy API search parameters', async () => {
+  it('searches every category, labels results and ignores legacy URL search parameters', async () => {
     const { container } = renderBrowser({
       entry: '/tro-giup/tai-khoan-va-dang-nhap?type=faq&q=mat+khau',
       categorySlug: 'tai-khoan-va-dang-nhap',
@@ -111,26 +144,29 @@ describe('PublicKnowledgeBrowser', () => {
       level: 1,
       name: 'Tài khoản và đăng nhập',
     })).toBeInTheDocument()
-    const filter = screen.getByRole('searchbox', { name: 'Tìm trong danh sách câu hỏi' })
-    fireEvent.change(filter, { target: { value: 'không khớp' } })
-    expect(screen.getByText('Không tìm thấy câu hỏi phù hợp.')).toBeInTheDocument()
-    fireEvent.change(filter, { target: { value: 'dang nhap an toan' } })
-    expect(screen.getByRole('link', { name: new RegExp(article.title) })).toBeInTheDocument()
-    expect(screen.getByText('đăng nhập an toàn', { selector: 'mark' })).toBeInTheDocument()
-    expect(screen.getByText(article.excerpt)).toBeInTheDocument()
-    expect(container.querySelector('.knowledge-question__excerpt')).toHaveAttribute('title', article.excerpt)
-    fireEvent.change(filter, { target: { value: 'email và mật khẩu' } })
-    expect(screen.getByText('email và mật khẩu', { selector: 'mark' })).toBeInTheDocument()
-    await waitFor(() => expect(getPublicKnowledgeArticles).toHaveBeenCalledWith(
+    expect(await screen.findByRole('link', { name: new RegExp(article.title) })).toBeInTheDocument()
+    expect(getPublicKnowledgeArticles.mock.calls[0][0]).not.toHaveProperty('q')
+    expect(getPublicKnowledgeArticles.mock.calls[0][0]).not.toHaveProperty('type')
+
+    const filter = screen.getByRole('searchbox', { name: 'Tìm kiếm trong tất cả chuyên mục' })
+    fireEvent.change(filter, { target: { value: 'du lieu ca nhan' } })
+    await waitFor(() => expect(getPublicKnowledgeArticles).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        category: 'tai-khoan-va-dang-nhap',
+        q: 'du lieu ca nhan',
         page: 1,
         page_size: 60,
       }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
-    expect(getPublicKnowledgeArticles.mock.calls[0][0]).not.toHaveProperty('q')
-    expect(getPublicKnowledgeArticles.mock.calls[0][0]).not.toHaveProperty('type')
+    expect(getPublicKnowledgeArticles.mock.calls.at(-1)[0]).not.toHaveProperty('category')
+    expect(await screen.findByRole('status')).toHaveTextContent('Tìm thấy 1 kết quả cho “du lieu ca nhan”')
+    expect(screen.getByText('Dữ liệu cá nhân', { selector: 'mark' })).toBeInTheDocument()
+    expect(screen.getByText(securityArticle.category.name, { selector: '.knowledge-question__category' })).toBeInTheDocument()
+    expect(screen.getByText(securityArticle.excerpt)).toBeInTheDocument()
+    expect(container.querySelector('.knowledge-question__excerpt')).toHaveAttribute('title', securityArticle.excerpt)
+
+    fireEvent.change(filter, { target: { value: 'kiem soat quyen rieng' } })
+    expect(await screen.findByText('Kiểm soát quyền riêng', { selector: 'mark' })).toBeInTheDocument()
   })
 
   it('shows a real client-side not-found state for an unknown category', async () => {

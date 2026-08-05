@@ -1,7 +1,7 @@
 .knowledge-center {
   --knowledge-accent: var(--brand-primary, #00a86b);
-  --knowledge-accent-dark: #087a50;
-  --knowledge-soft: #eaf8f1;
+  --knowledge-accent-dark: var(--brand-primary-hover, #087a50);
+  --knowledge-soft: var(--brand-primary-soft, #eaf8f1);
   --knowledge-border: #e5e7eb;
   background: #f5f7fa;
   color: #1f2937;
@@ -44,7 +44,7 @@
 }
 
 .knowledge-sidebar__eyebrow {
-  color: #6b7280;
+  color: var(--brand-primary, #00b14f);
   font-size: 12px;
   font-weight: 750;
   letter-spacing: .04em;
@@ -202,6 +202,17 @@
   line-height: 1.5;
   transition: color .15s ease;
 }
+.knowledge-question__category {
+  background: var(--knowledge-soft);
+  border-radius: 999px;
+  color: var(--knowledge-accent-dark);
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.5;
+  margin-bottom: 5px;
+  padding: 2px 8px;
+}
 .knowledge-question mark {
   background: #fef08a;
   border-radius: 3px;
@@ -224,6 +235,13 @@
   font-size: 11px;
   transition: color .15s ease, transform .15s ease;
 }
+.knowledge-search-summary {
+  color: #475569;
+  font-size: 14px;
+  margin: -2px 0 14px;
+}
+.knowledge-search-summary strong { color: #0f172a; }
+.knowledge-search-hint { color: #64748b; font-size: 13px; margin: -2px 0 14px; }
 .knowledge-question:hover .knowledge-question__arrow {
   color: var(--knowledge-accent);
   transform: translateX(2px);

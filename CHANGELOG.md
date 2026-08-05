@@ -11,11 +11,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Changed — Rút gọn FAQ ứng viên và mở ảnh HTTPS
 
 - Rút trang `/tro-giup` về đúng hai khối chuyên mục + danh sách câu hỏi; bỏ hero,
-  type filter, topic cards và counter. Cột phải chỉ giữ một ô lọc cục bộ gọn,
-  không ghi query lên URL hoặc gọi API search; khi nhập, kết quả lọc theo tiêu
-  đề/mô tả, tô sáng phần chữ khớp không phân biệt dấu và hiện mô tả đầu nội dung
-  trên đúng một dòng có dấu “…”. Cột chuyên mục cố định, bỏ mục “Tất cả chủ đề”
-  và giữ nguyên vị trí khi mở chi tiết.
+  type filter, topic cards và counter. Cột phải chỉ giữ một ô tìm kiếm toàn bộ
+  chuyên mục, debounce nhưng không ghi query lên URL. Kết quả hiển thị tổng số,
+  nhãn chuyên mục phía trên tiêu đề, tô sáng phần chữ khớp không phân biệt dấu
+  và hiện mô tả đầu nội dung trên đúng một dòng có dấu “…”. Cột chuyên mục cố
+  định, bỏ mục “Tất cả chủ đề”, giữ nguyên vị trí khi mở chi tiết và lấy màu chữ
+  “Chuyên mục” từ `brand_primary_color` qua CSS variable của hệ thống.
 - Media library trở thành tùy chọn: revision chấp nhận ảnh URL HTTPS hoặc đường
   dẫn nội bộ an toàn mà không yêu cầu upload vào ProCV trước; sanitizer và alt
   text vẫn là bắt buộc, readiness chỉ kiểm storage existence cho ảnh media nội

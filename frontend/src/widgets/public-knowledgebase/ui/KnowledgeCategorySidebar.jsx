@@ -1,8 +1,5 @@
 import { Link } from 'react-router'
-import {
-  knowledgeArticlePath,
-  knowledgeCategoryPath,
-} from '@/entities/knowledgebase'
+import { knowledgeArticlePath, knowledgeCategoryPath } from '@/entities/knowledgebase'
 
 export default function KnowledgeCategorySidebar({
   activeSlug,

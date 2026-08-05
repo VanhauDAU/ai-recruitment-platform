@@ -15,9 +15,11 @@ function positivePage(value) {
   return Number.isFinite(page) && page > 0 ? page : 1
 }
 
-export default function usePublicKnowledgebase(categorySlug) {
+export default function usePublicKnowledgebase(categorySlug, searchQuery = '', searchPage = 1) {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = positivePage(searchParams.get('page'))
+  const normalizedSearch = searchQuery.trim().length >= 2 ? searchQuery.trim() : ''
+  const currentPage = normalizedSearch ? positivePage(searchPage) : page
   const hasIndexingParameters = ['q', 'type', 'page'].some((name) => searchParams.has(name))
 
   const categoriesQuery = useQuery({
@@ -32,10 +34,14 @@ export default function usePublicKnowledgebase(categorySlug) {
   )
   const categoryExists = !categorySlug || Boolean(activeCategory)
   const params = useMemo(() => ({
-    ...(categorySlug ? { category: categorySlug } : {}),
-    page,
+    ...(normalizedSearch
+      ? { q: normalizedSearch }
+      : categorySlug
+        ? { category: categorySlug }
+        : {}),
+    page: currentPage,
     page_size: PAGE_SIZE,
-  }), [categorySlug, page])
+  }), [categorySlug, currentPage, normalizedSearch])
   const articlesQuery = useQuery({
     queryKey: publicKnowledgeKeys.articles(params),
     queryFn: ({ signal }) => getPublicKnowledgeArticles(params, { signal }),
@@ -66,9 +72,11 @@ export default function usePublicKnowledgebase(categorySlug) {
     hasIndexingParameters,
     loading,
     notFound,
-    page,
+    page: currentPage,
     pageSize: PAGE_SIZE,
     refreshing: articlesQuery.isFetching && !articlesQuery.isLoading,
+    searchQuery: normalizedSearch,
+    searching: Boolean(normalizedSearch) && articlesQuery.isFetching,
     retry: () => {
       categoriesQuery.refetch()
       articlesQuery.refetch()

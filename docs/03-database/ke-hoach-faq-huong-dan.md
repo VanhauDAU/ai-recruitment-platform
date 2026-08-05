@@ -50,10 +50,10 @@ trải nghiệm sử dụng.
   generation invalidation sau mọi mutation ảnh hưởng dữ liệu public.
 - Ba route `/tro-giup` đã lazy-load theo FSD và có loading/empty/error/404 riêng.
   Sau phản hồi UX, trang ứng viên được rút gọn còn sidebar chuyên mục và danh
-  sách câu hỏi; chỉ có một ô lọc cục bộ ở cột phải, không hiển thị bộ lọc loại,
-  card chủ đề hoặc counter. Mô tả một dòng chỉ xuất hiện khi người dùng nhập để
-  lọc; tiêu đề/mô tả cùng tô sáng phần khớp. SEO shell vẫn dùng canonical/Open
-  Graph/Article + BreadcrumbList.
+  sách câu hỏi; chỉ có một ô tìm kiếm toàn bộ chuyên mục ở cột phải, không hiển
+  thị bộ lọc loại, card chủ đề hoặc counter. Kết quả có tổng số, nhãn chuyên mục
+  phía trên title và mô tả một dòng; tiêu đề/mô tả cùng tô sáng phần khớp. SEO
+  shell vẫn dùng canonical/Open Graph/Article + BreadcrumbList.
 - KB-P5 thêm bảy bài hướng dẫn ProCV đã đối chiếu trực tiếp route/component, một
   bài approved/published cho mỗi category active. Migration có ID ổn định,
   additive, không ghi đè article cùng slug và không reverse-delete lịch sử.
@@ -175,14 +175,17 @@ nội dung hỗ trợ sản phẩm, khác với cẩm nang nghề nghiệp.
 Desktop dùng bố cục hai cột:
 
 - cột trái: tiêu đề “Chuyên mục”, danh sách category, active state rõ ràng,
-  không có item tổng hợp và không đổi vị trí/kích thước khi mở nội dung;
-- cột phải: tên category hoặc tiêu đề help center, một ô lọc cục bộ và danh sách
-  article;
+  không có item tổng hợp và không đổi vị trí/kích thước khi mở nội dung; màu
+  eyebrow dùng biến thương hiệu sinh từ site setting `brand_primary_color`;
+- cột phải: tên category hoặc tiêu đề help center, một ô tìm kiếm toàn bộ chuyên
+  mục và danh sách article;
 - mặc định mỗi item chỉ hiển thị tiêu đề và affordance mở chi tiết;
-- ô lọc chỉ lọc tập câu hỏi đã tải theo tiêu đề hoặc excerpt, không gọi API,
-  không ghi URL và không hiển thị bộ lọc loại, card chủ đề hoặc counter;
-- khi đang nhập từ khóa, item hiện excerpt lấy từ đầu nội dung trên một dòng có
-  ellipsis; mọi đoạn chữ khớp trong tiêu đề/excerpt được highlight, không phân
+- ô tìm kiếm debounce rồi gọi API với `q` nhưng bỏ filter category để luôn tìm
+  trong mọi chuyên mục; không ghi URL và không hiển thị bộ lọc loại, card chủ đề
+  hoặc counter;
+- khi có từ khóa, phía trên danh sách hiển thị `Tìm thấy N kết quả cho “…”`; mỗi
+  item có nhãn chuyên mục phía trên title và excerpt đầu nội dung trên một dòng
+  có ellipsis; mọi đoạn chữ khớp trong title/excerpt được highlight, không phân
   biệt hoa thường hoặc dấu tiếng Việt;
 - URL là nguồn chuẩn cho category và page.
 
@@ -214,7 +217,7 @@ Trang chi tiết gồm:
 Không hiển thị tên nội bộ, revision nháp, ghi chú kiểm duyệt hoặc thông tin tài
 khoản quản trị ở public page.
 
-### 5.4. Tìm kiếm API và bộ lọc cục bộ trên trang ứng viên
+### 5.4. Tìm kiếm API toàn bộ chuyên mục trên trang ứng viên
 
 Release đầu tiên dùng tìm kiếm server-side trên nội dung đang xuất bản:
 
@@ -222,10 +225,10 @@ Release đầu tiên dùng tìm kiếm server-side trên nội dung đang xuất
 - dùng `common.db.search.search_q`, vì dự án đã có PostgreSQL `unaccent` và cơ
   chế tìm không phân biệt dấu/hoa thường theo từng token;
 - trim, gộp khoảng trắng; từ khóa tối thiểu 2 và tối đa 120 ký tự;
-- public API giữ query `q` để không phá contract và phục vụ tích hợp tương lai;
-- trang ứng viên không gửi/khôi phục `q` hoặc `type`; ô input duy nhất chỉ lọc
-  client-side theo title/excerpt trên danh sách đã tải, highlight phần khớp và
-  chỉ hiện excerpt một dòng trong lúc có từ khóa;
+- public API nhận query `q`; frontend debounce 250 ms, không gửi category khi có
+  từ khóa để kết quả bao phủ toàn bộ chuyên mục;
+- frontend không ghi/khôi phục `q` hoặc `type` trên URL; kết quả hiển thị count
+  từ API, nhãn chuyên mục, highlight phần khớp và excerpt một dòng;
 - phân trang ở backend;
 - sắp xếp xác định theo `category.order`, `article.order`, tiêu đề và
   `public_id`; không hứa hẹn xếp hạng độ liên quan trong MVP;
@@ -927,9 +930,9 @@ chỉ được thêm khi có baseline thực tế; local dùng structured log v�
 
 - URL là nguồn chuẩn; back/forward và direct navigation phục hồi category/page;
 - loading/empty/error/retry;
-- public list chỉ có một input lọc cục bộ, không render type filter, topic card
-  hoặc counter; mặc định ẩn excerpt, lúc lọc hiện excerpt một dòng và highlight
-  phần khớp trong title/excerpt;
+- public list chỉ có một input tìm toàn bộ chuyên mục, không render type filter,
+  topic card hoặc counter; kết quả có tổng số, nhãn category phía trên title,
+  excerpt một dòng và highlight phần khớp trong title/excerpt;
 - desktop hai cột, tablet/mobile một cột, 320 px không overflow;
 - keyboard, focus, live region, landmark/heading và reduced motion;
 - rich content sanitize, link an toàn, ảnh alt/lazy-load/broken-image;

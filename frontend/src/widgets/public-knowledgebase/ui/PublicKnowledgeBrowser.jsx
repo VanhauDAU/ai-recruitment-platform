@@ -7,7 +7,7 @@ import {
 } from '@/entities/knowledgebase'
 import { useSiteSettings } from '@/entities/site-settings'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
-import { foldKnowledgeText } from '../lib/knowledge-text'
+import useDebouncedValue from '@/shared/hooks/use-debounced-value'
 import usePublicKnowledgebase from '../model/use-public-knowledgebase'
 import KnowledgeCategorySidebar from './KnowledgeCategorySidebar'
 import KnowledgeQuestionList from './KnowledgeQuestionList'
@@ -27,24 +27,16 @@ function groupArticles(articles, categories) {
 
 export default function PublicKnowledgeBrowser({ categorySlug }) {
   const [filter, setFilter] = useState('')
+  const [searchPage, setSearchPage] = useState(1)
+  const debouncedFilter = useDebouncedValue(filter, 250)
   const { settings } = useSiteSettings()
-  const state = usePublicKnowledgebase(categorySlug)
+  const state = usePublicKnowledgebase(categorySlug, debouncedFilter, searchPage)
+  const waitingForSearch = filter.trim() !== debouncedFilter.trim()
+  const searchActive = Boolean(state.searchQuery)
   const groups = useMemo(
     () => groupArticles(state.data.results || [], state.categories),
     [state.categories, state.data.results],
   )
-  const visibleGroups = useMemo(() => {
-    const query = foldKnowledgeText(filter.trim())
-    if (!query) return groups
-    return groups
-      .map((group) => ({
-        ...group,
-        articles: group.articles.filter((article) => (
-          foldKnowledgeText(`${article.title} ${article.excerpt || ''}`).includes(query)
-        )),
-      }))
-      .filter((group) => group.articles.length > 0)
-  }, [filter, groups])
   const canonicalPath = state.activeCategory
     ? knowledgeCategoryPath(state.activeCategory.slug)
     : KNOWLEDGE_ROOT
@@ -72,11 +64,11 @@ export default function PublicKnowledgeBrowser({ categorySlug }) {
     <div className="knowledge-center">
       <div className="knowledge-shell knowledge-shell--browser">
         <KnowledgeCategorySidebar
-          activeSlug={categorySlug}
+          activeSlug={searchActive ? undefined : categorySlug}
           categories={state.categories}
         />
 
-        <main className="knowledge-main" aria-busy={state.refreshing}>
+        <main className="knowledge-main" aria-busy={state.refreshing || waitingForSearch}>
           <header className="knowledge-page-header">
             <h1>{state.activeCategory?.name || 'Câu hỏi thường gặp'}</h1>
             <p>{description}</p>
@@ -87,23 +79,45 @@ export default function PublicKnowledgeBrowser({ categorySlug }) {
             <input
               type="search"
               value={filter}
-              aria-label="Tìm trong danh sách câu hỏi"
-              placeholder="Tìm câu hỏi…"
-              onChange={(event) => setFilter(event.target.value)}
+              aria-label="Tìm kiếm trong tất cả chuyên mục"
+              placeholder="Tìm kiếm tất cả câu hỏi…"
+              onChange={(event) => {
+                setFilter(event.target.value)
+                setSearchPage(1)
+              }}
             />
           </label>
 
-          {state.loading ? (
+          {searchActive && !state.searching && !waitingForSearch && !state.error && (
+            <p className="knowledge-search-summary" role="status" aria-live="polite">
+              Tìm thấy <strong>{state.data.count}</strong> kết quả cho “<strong>{state.searchQuery}</strong>”
+            </p>
+          )}
+          {filter.trim().length === 1 && !waitingForSearch && (
+            <p className="knowledge-search-hint">Nhập ít nhất 2 ký tự để tìm trong tất cả chuyên mục.</p>
+          )}
+
+          {state.loading || state.searching || waitingForSearch ? (
             <KnowledgeLoading />
           ) : state.error ? (
             <KnowledgeError onRetry={state.retry} />
-          ) : visibleGroups.length === 0 ? (
+          ) : state.data.results.length === 0 ? (
             <div className="knowledge-empty">
-              <Empty description={filter ? 'Không tìm thấy câu hỏi phù hợp.' : 'Chuyên mục chưa có câu hỏi công khai.'} />
+              <Empty description={searchActive ? 'Không tìm thấy câu hỏi phù hợp.' : 'Chuyên mục chưa có câu hỏi công khai.'} />
+            </div>
+          ) : searchActive ? (
+            <div className="knowledge-groups">
+              <section className="knowledge-group" aria-label="Kết quả tìm kiếm FAQ">
+                <KnowledgeQuestionList
+                  articles={state.data.results}
+                  query={state.searchQuery}
+                  showCategory
+                />
+              </section>
             </div>
           ) : (
             <div className={`knowledge-groups ${state.refreshing ? 'is-refreshing' : ''}`}>
-              {visibleGroups.map((group) => (
+              {groups.map((group) => (
                 <section
                   key={group.category.slug}
                   className="knowledge-group"
@@ -121,7 +135,7 @@ export default function PublicKnowledgeBrowser({ categorySlug }) {
                       {group.category.name}
                     </h2>
                   )}
-                  <KnowledgeQuestionList articles={group.articles} query={filter} />
+                  <KnowledgeQuestionList articles={group.articles} />
                 </section>
               ))}
             </div>
@@ -134,7 +148,7 @@ export default function PublicKnowledgeBrowser({ categorySlug }) {
               pageSize={state.pageSize}
               total={state.data.count}
               showSizeChanger={false}
-              onChange={state.setPage}
+              onChange={searchActive ? setSearchPage : state.setPage}
               aria-label="Phân trang câu hỏi thường gặp"
             />
           )}

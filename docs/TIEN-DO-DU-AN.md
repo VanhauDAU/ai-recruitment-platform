@@ -1326,3 +1326,12 @@ Detail FAQ hiển thị ảnh, giờ cập nhật và nhãn “Câu hỏi tiếp
 regression, 889 frontend coverage, 6 targeted
 unit cho thay đổi tìm kiếm và 6 E2E public/admin trên desktop/tablet/mobile;
 Ruff/format/import-linter/migration drift, lint/architecture/build đều xanh.
+
+Cập nhật 2026-08-05h (FAQ — tìm kiếm toàn bộ chuyên mục): thay bộ lọc cục bộ của
+bản 08-05g bằng một truy vấn global tối giản: input debounce 250 ms, gửi `q` tới
+API nhưng không gửi category và không ghi từ khóa lên URL. Khi có từ khóa, UI
+hiển thị `Tìm thấy N kết quả cho “…”`; mỗi item đặt nhãn chuyên mục phía trên
+title, tiếp theo là excerpt một dòng, đồng thời highlight phần khớp không phân
+biệt dấu trong title/excerpt. Eyebrow “Chuyên mục” dùng `--brand-primary` được
+provider sinh từ site setting `brand_primary_color`, không tạo accessor setting
+song song. Unit 6/6 và smoke public 3/3 trên desktop/tablet/mobile đều pass.

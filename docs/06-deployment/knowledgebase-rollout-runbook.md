@@ -47,9 +47,10 @@ Index switch không thể vượt qua public switch hoặc global site setting
 
 3. Kỳ vọng API `200`, cache/ETag có mặt; shell trả `X-Robots-Tag: noindex,
    nofollow`; sitemap knowledgebase rỗng và sitemap index chưa chứa nó.
-4. Smoke bằng guest và candidate: browse → lọc cục bộ → category → detail → link
-   kế tiếp; kiểm tra 320 px, mobile, tablet và desktop. Direct URL draft/slug sai
-   phải trả HTTP `404` thật.
+4. Smoke bằng guest và candidate: browse → tìm toàn bộ chuyên mục → category →
+   detail → link kế tiếp; xác nhận count, nhãn category phía trên title và kiểm
+   tra 320 px, mobile, tablet, desktop. Direct URL draft/slug sai phải trả HTTP
+   `404` thật.
 5. Theo dõi metric `knowledgebase_public_request`,
    `knowledgebase_public_latency_ms`, error status, search `result_bucket=zero`
    và metric admin. Metric chỉ có endpoint/status/category bucket/type/query

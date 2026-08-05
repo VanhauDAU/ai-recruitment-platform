@@ -494,9 +494,10 @@ không tự chọn revision mới nhất. Token cũ hoặc transition sai trả 
 publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đầu.
 Upload tùy chọn chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600. Body nhận ảnh
 từ media library, đường dẫn nội bộ hoặc URL HTTPS mà không bắt buộc upload vào
-ProCV trước; ảnh vẫn phải có alt text có nghĩa. Trang ứng viên chỉ gọi API theo
-category/page; ô input duy nhất lọc cục bộ title/excerpt của dữ liệu đã tải,
-highlight phần khớp và hiện excerpt một dòng khi có từ khóa, không gửi `q`/`type`
-dù API vẫn giữ hai tham số này để không phá contract. Editor FAQ cung cấp tab
+ProCV trước; ảnh vẫn phải có alt text có nghĩa. Khi không tìm kiếm, trang ứng
+viên gọi API theo category/page. Khi nhập tối thiểu hai ký tự, frontend debounce
+250 ms rồi gọi list API với `q` và không gửi category để tìm trên toàn bộ chuyên
+mục; `q` không được ghi lên URL. UI dùng `count` từ response, đặt nhãn category
+phía trên title, highlight phần khớp và hiện excerpt một dòng. Editor FAQ cung cấp tab
 **Từ URL** bên cạnh kho media và upload để biên tập viên dùng trực tiếp nguồn
 HTTPS hợp lệ.

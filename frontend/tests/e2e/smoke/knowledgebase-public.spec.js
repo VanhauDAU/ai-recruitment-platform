@@ -32,19 +32,57 @@ const resetArticle = {
   updated_at: '2026-08-05T08:00:00Z',
 }
 
+const securityCategory = {
+  public_id: 'kbc_security',
+  name: 'Bảo mật và quyền riêng tư',
+  slug: 'bao-mat-va-quyen-rieng',
+  description: 'Bảo vệ dữ liệu và tài khoản.',
+  order: 2,
+  article_count: 1,
+}
+
+const privacyArticle = {
+  public_id: 'kba_privacy',
+  category: securityCategory,
+  slug: 'bao-ve-du-lieu-ca-nhan',
+  article_type: 'FAQ',
+  title: 'Dữ liệu cá nhân được bảo vệ thế nào?',
+  excerpt: 'Kiểm soát quyền riêng tư và phiên đăng nhập của bạn.',
+  order: 1,
+  updated_at: '2026-08-05T08:00:00Z',
+}
+
 test('public knowledgebase: simple browse, detail and hidden-content 404 stay responsive', async ({ page }) => {
   await mockPublicApi(page)
+  await page.route(
+    (url) => url.pathname === '/api/site/settings/',
+    (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        brand_primary_color: '#7c3aed',
+        knowledgebase_public_enabled: true,
+        knowledgebase_search_index_enabled: true,
+        seo_robots_index: true,
+      }),
+    }),
+  )
   await page.route(
     (url) => url.pathname.startsWith('/api/knowledgebase/'),
     async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
     if (path === '/api/knowledgebase/categories/') {
-      await route.fulfill({ contentType: 'application/json', body: JSON.stringify([category]) })
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify([category, securityCategory]) })
       return
     }
     if (path === '/api/knowledgebase/articles/') {
-      const items = [loginArticle, resetArticle]
+      let items = [loginArticle, resetArticle, privacyArticle]
+      const categoryFilter = url.searchParams.get('category')
+      const query = url.searchParams.get('q')?.toLocaleLowerCase('vi-VN')
+      if (categoryFilter) items = items.filter((item) => item.category.slug === categoryFilter)
+      if (query) {
+        items = items.filter((item) => `${item.title} ${item.excerpt}`.toLocaleLowerCase('vi-VN').includes(query))
+      }
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({ count: items.length, next: null, previous: null, results: items }),
@@ -77,17 +115,26 @@ test('public knowledgebase: simple browse, detail and hidden-content 404 stay re
 
   await page.goto('/tro-giup')
   await expect(page.getByRole('heading', { level: 1, name: 'Câu hỏi thường gặp' })).toBeVisible()
+  await expect(page.locator('.knowledge-sidebar__eyebrow').first()).toHaveCSS('color', 'rgb(124, 58, 237)')
   await expect(page.getByRole('link', { name: /Làm thế nào để đăng nhập an toàn/ })).toBeVisible()
-  const questionFilter = page.getByRole('searchbox', { name: 'Tìm trong danh sách câu hỏi' })
+  const questionFilter = page.getByRole('searchbox', { name: 'Tìm kiếm trong tất cả chuyên mục' })
   await expect(questionFilter).toBeVisible()
   await questionFilter.focus()
   await expect(questionFilter).toHaveCSS('outline-style', 'none')
-  await questionFilter.fill('đặt lại')
-  await expect(page.getByRole('link', { name: /đặt lại mật khẩu/ })).toBeVisible()
-  await expect(page.locator('.knowledge-question mark')).toHaveText('đặt lại')
-  await expect(page.getByText(resetArticle.excerpt)).toBeVisible()
+  await questionFilter.fill('Dữ liệu cá nhân')
+  await expect(page).toHaveURL('/tro-giup')
+  await expect(page.getByRole('status')).toHaveText('Tìm thấy 1 kết quả cho “Dữ liệu cá nhân”')
+  await expect(page.getByRole('link', { name: /Dữ liệu cá nhân được bảo vệ/ })).toBeVisible()
+  await expect(page.locator('.knowledge-question mark')).toHaveText('Dữ liệu cá nhân')
+  await expect(page.locator('.knowledge-question__category')).toHaveText(securityCategory.name)
+  await expect(page.getByText(privacyArticle.excerpt)).toBeVisible()
   await expect(page.locator('.knowledge-question__excerpt')).toHaveCSS('text-overflow', 'ellipsis')
   await expect(page.locator('.knowledge-question__excerpt')).toHaveCSS('white-space', 'nowrap')
+  const [categoryBox, titleBox] = await Promise.all([
+    page.locator('.knowledge-question__category').boundingBox(),
+    page.locator('.knowledge-question__title').boundingBox(),
+  ])
+  expect(categoryBox.y + categoryBox.height).toBeLessThanOrEqual(titleBox.y)
   await expect(page.getByRole('link', { name: /đăng nhập an toàn/ })).toHaveCount(0)
   await questionFilter.clear()
   await expect(page.getByText('Tất cả chủ đề')).toHaveCount(0)
