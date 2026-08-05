@@ -479,10 +479,17 @@
 
   .announcement-filters__heading,
   .announcement-metrics__toolbar,
-  .announcement-preview__toolbar,
-  .announcement-editor__footer {
+  .announcement-preview__toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .announcement-editor__footer {
+    position: static;
+    align-items: stretch;
+    flex-direction: column;
+    margin: 16px -16px -16px;
+    padding: 16px;
   }
 
   .announcement-filters__controls,

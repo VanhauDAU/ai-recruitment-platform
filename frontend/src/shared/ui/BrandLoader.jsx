@@ -4,8 +4,8 @@ const STATIC_SRC = '/images/loading/procv-loader-static.webp'
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-// Linh vật ProCV dùng cho mọi trạng thái chờ. Bỏ `size` khi muốn CSS quyết định
-// kích thước (xem `.procv-spin-dot` trong index.css cho indicator của antd Spin).
+// Linh vật ProCV dùng cho mọi trạng thái chờ. Bỏ `size` khi caller muốn style
+// quyết định kích thước, như indicator dùng chung của antd Spin.
 // `percent` bị antd Spin tiêm vào indicator lúc clone nên phải nhận rồi bỏ đi,
 // tránh rơi xuống thẻ img thành attribute lạ.
 export default function BrandLoader({ size, className = '', style, percent: _percent, ...rest }) {

@@ -1,10 +1,10 @@
 """Administrative moderation workflows for submitted job postings."""
 
 import hashlib
+from http import HTTPStatus
 
 from django.db import transaction
 from django.utils import timezone
-from rest_framework import status
 from rest_framework.exceptions import APIException, ValidationError
 
 from apps.accounts.services import (
@@ -23,7 +23,7 @@ REVIEW_OPERATION = 'job.moderation.mutate'
 
 
 class JobModerationStale(APIException):
-    status_code = status.HTTP_409_CONFLICT
+    status_code = HTTPStatus.CONFLICT
     default_detail = 'Tin đã thay đổi sau khi bạn mở bản xem trước. Vui lòng tải lại.'
     default_code = 'job_moderation_stale'
 

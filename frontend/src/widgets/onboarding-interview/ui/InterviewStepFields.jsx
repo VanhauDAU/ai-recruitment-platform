@@ -1,7 +1,7 @@
 import { AutoComplete, Checkbox, Input, InputNumber, Select } from 'antd'
 import { EXPERIENCE_OPTIONS, JobSpecializationPicker } from '@/features/configure-job-preferences'
 
-const DROPDOWN_CLASS_NAME = '!rounded-2xl !p-1 !shadow-lg [&_.ant-select-item-option]:!rounded-xl'
+const DROPDOWN_CLASS_NAME = 'onboarding-chat__dropdown'
 const SALARY_PRESETS = [8, 10, 15, 20, 30].map((millions) => ({
   label: `${millions} triệu`,
   value: millions * 1_000_000,
@@ -82,7 +82,7 @@ export default function InterviewStepFields({ catalog, onQuickAnswer, onSend, se
           <InputNumber
             autoFocus
             controls={false}
-            className="!h-12 !w-full !rounded-xl [&_.ant-input-number-input]:!pr-[7.5rem] [&_.ant-input-number-input]:!text-lg [&_.ant-input-number-input]:!font-semibold"
+            className="onboarding-chat__salary-input"
             min={1}
             precision={0}
             inputMode="numeric"
@@ -132,7 +132,7 @@ export default function InterviewStepFields({ catalog, onQuickAnswer, onSend, se
           classNames={{ popup: { root: DROPDOWN_CLASS_NAME } }}
           placeholder="Chọn tỉnh/thành"
           maxTagCount="responsive"
-          className="!min-h-12 !w-full [&_.ant-select-selector]:!min-h-12 [&_.ant-select-selector]:!rounded-xl"
+          className="onboarding-chat__location-select"
         />
         <Checkbox
           checked={values.willing_to_relocate}

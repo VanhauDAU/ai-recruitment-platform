@@ -13,6 +13,7 @@ import { BrandLogo, settingText, useSiteSettings } from '@/entities/site-setting
 import { EmployerFooter } from '@/widgets/employer-footer'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '@/shared/config/portals'
+import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 
 const NAV_ITEMS = [
   { key: 'home', to: employerMarketingPath(''), end: true },
@@ -47,6 +48,8 @@ function NavLinks({ className, onNavigate }) {
 
 export default function EmployerMarketingLayout() {
   const { i18n, t } = useTranslation('employer')
+  const language = i18n.resolvedLanguage || i18n.language || 'vi'
+  useDocumentMetadata({ language })
   const { isAuthenticated, user } = useSession()
   const { settings } = useSiteSettings()
   const { pathname } = useLocation()
@@ -120,7 +123,7 @@ export default function EmployerMarketingLayout() {
       <AnnouncementStrip
         surface={ANNOUNCEMENT_SURFACES.EMPLOYER_MARKETING}
         path={pathname}
-        locale={i18n.resolvedLanguage || i18n.language || 'vi'}
+        locale={language}
         verificationPath={employerAppPath('/xac-thuc-email')}
         stickyOffset="4rem"
         legacy={(

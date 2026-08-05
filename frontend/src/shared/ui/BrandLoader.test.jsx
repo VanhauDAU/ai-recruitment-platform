@@ -37,10 +37,10 @@ describe('BrandLoader', () => {
   })
 
   it('leaves sizing to CSS and drops the percent prop antd Spin injects', () => {
-    const { container } = render(<BrandLoader className="procv-spin-dot" percent={40} />)
+    const { container } = render(<BrandLoader className="spin-indicator" percent={40} />)
     const img = container.querySelector('img')
 
-    expect(img).toHaveClass('procv-spin-dot')
+    expect(img).toHaveClass('spin-indicator')
     expect(img).not.toHaveAttribute('percent')
     expect(img).not.toHaveAttribute('width')
     expect(img.style.width).toBe('')

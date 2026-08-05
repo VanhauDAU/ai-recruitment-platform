@@ -5,7 +5,7 @@ import { ProcvMascot } from '@/shared/ui/mascot'
 import { useOnboardingVoice } from '../model/onboarding-voice-context'
 import '../onboarding-interview.css'
 
-const BUBBLE_CLASS = 'max-w-[85%] rounded-2xl px-4 py-2.5 text-[0.9375rem] leading-relaxed sm:max-w-[75%]'
+const BUBBLE_CLASS = 'onboarding-chat__bubble'
 
 /**
  * Lượt nói của robot. Chỉ tin nhắn mới nhất (`live`) mới đọc và hiện dần theo
