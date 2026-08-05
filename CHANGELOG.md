@@ -22,6 +22,22 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Targeted backend test, migration drift check, Ruff, import-linter và backend
   layering gate đều đạt.
 
+#### Added — FAQ/Help Center KB-P2 workflow và admin API
+
+- Thêm transactional service cho toàn bộ lifecycle revision/article/category,
+  khóa hàng và `revision_token` trả 409 khi stale; bản public tiếp tục ổn định
+  trong lúc bản sửa còn draft/in-review/rejected và hỗ trợ rollback revision đã
+  duyệt.
+- Mở admin API quản lý category, article, revision, reorder, review, publish,
+  archive/restore và media; bốn permission được kiểm độc lập ở backend, response
+  quản trị luôn `private, no-store`.
+- Nội dung được sanitize/canonicalize, sinh plain text + SHA-256, ảnh bắt buộc
+  thuộc media library và có alt; upload chỉ nhận JPEG/PNG/WebP tối đa 5 MB,
+  resize trong 1600×1600 và lưu kích thước sau xử lý.
+- Audit chỉ ghi metadata nhỏ, không ghi body/review note. List admin giữ query
+  budget cố định 3 query cho 5 bài. 22 targeted/regression test cùng Ruff,
+  migration drift, import-linter và layering gate đều đạt.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò

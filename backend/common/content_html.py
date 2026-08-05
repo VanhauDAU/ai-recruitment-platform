@@ -76,9 +76,10 @@ def safe_content_url(value, *, allow_http=False):
 
 
 class _ContentHtmlSanitizer(HTMLParser):
-    def __init__(self, *, allow_http=False):
+    def __init__(self, *, allow_http=False, url_normalizer=None):
         super().__init__(convert_charrefs=True)
         self.allow_http = allow_http
+        self.url_normalizer = url_normalizer
         self.output = []
         self.drop_depth = 0
 
@@ -96,6 +97,8 @@ class _ContentHtmlSanitizer(HTMLParser):
             if name not in ALLOWED_ATTRIBUTES.get(tag, set()):
                 continue
             if name in {'href', 'src'}:
+                if self.url_normalizer:
+                    value = self.url_normalizer(tag, name, value)
                 value = safe_content_url(value, allow_http=self.allow_http)
                 if not value:
                     continue
@@ -164,8 +167,11 @@ class _ContentPlainTextParser(HTMLParser):
         self.parts.append(data)
 
 
-def sanitize_content_html(value, *, allow_http=False):
-    parser = _ContentHtmlSanitizer(allow_http=allow_http)
+def sanitize_content_html(value, *, allow_http=False, url_normalizer=None):
+    parser = _ContentHtmlSanitizer(
+        allow_http=allow_http,
+        url_normalizer=url_normalizer,
+    )
     parser.feed(value or '')
     parser.close()
     return ''.join(parser.output).strip()

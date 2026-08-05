@@ -431,3 +431,36 @@ trả `409 announcement_revision_stale`. Publish/pause/resume/archive là servic
 transactional, khóa hàng bằng `select_for_update()` và ghi audit. Mọi mutation
 sau create gửi `revision_token`; publish gửi thêm số `revision`. Revision đã
 publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo revision mới.
+
+## Trung tâm trợ giúp — Admin API (KB-P2)
+
+> Public API `/api/knowledgebase/categories|articles` thuộc KB-P4 và chưa được
+> mở ở checkpoint này. Admin API luôn yêu cầu tài khoản quản trị, permission cụ
+> thể và trả `Cache-Control: private, no-store`.
+
+| Method | Endpoint | Quyền chính | Mục đích |
+| --- | --- | --- | --- |
+| `GET/POST` | `/api/knowledgebase/admin/categories/` | `view/manage` | List/tạo category |
+| `GET/PATCH` | `/api/knowledgebase/admin/categories/{public_id}/` | `view/manage` | Detail/cập nhật category |
+| `POST` | `/api/knowledgebase/admin/categories/reorder/` | `manage` | Sắp xếp toàn bộ category |
+| `POST` | `/api/knowledgebase/admin/categories/{public_id}/activate/` | `publish` | Bật category public |
+| `POST` | `/api/knowledgebase/admin/categories/{public_id}/deactivate/` | `publish` | Tắt category public |
+| `GET/POST` | `/api/knowledgebase/admin/articles/` | `view/manage` | List/filter/tạo article + revision 1 |
+| `GET/PATCH` | `/api/knowledgebase/admin/articles/{public_id}/` | `view/manage` | Detail/audit/cập nhật metadata |
+| `POST` | `/api/knowledgebase/admin/articles/reorder/` | `manage` | Sắp xếp bài trong một category |
+| `GET/POST` | `/api/knowledgebase/admin/articles/{public_id}/revisions/` | `view/manage` | Lịch sử/tạo revision mới |
+| `GET/PATCH` | `/api/knowledgebase/admin/articles/{public_id}/revisions/{number}/` | `view/manage` | Xem/sửa revision nháp |
+| `POST` | `.../revisions/{number}/submit/` | `manage` | Gửi duyệt |
+| `POST` | `.../revisions/{number}/approve/` | `review` | Phê duyệt |
+| `POST` | `.../revisions/{number}/reject/` | `review` | Từ chối, bắt buộc lý do |
+| `POST` | `/api/knowledgebase/admin/articles/{public_id}/publish/` | `publish` | Publish/rollback revision approved chỉ định |
+| `POST` | `/api/knowledgebase/admin/articles/{public_id}/archive/` | `publish` | Ẩn bài nhưng giữ published pointer |
+| `POST` | `/api/knowledgebase/admin/articles/{public_id}/restore/` | `publish` | Khôi phục đúng revision trước đó |
+| `GET/POST` | `/api/knowledgebase/admin/media/` | `view/manage` | Media library/upload ảnh |
+
+Mọi PATCH/action gửi `revision_token`; publish gửi thêm `revision_number` và
+không tự chọn revision mới nhất. Token cũ hoặc transition sai trả `409` với
+`code` ổn định. Approved/rejected không sửa tại chỗ. Tạo bản sửa của bài đã
+publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đầu.
+Upload chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600; body chỉ nhận ảnh thuộc
+media library, link nội bộ/HTTPS/mailto/tel và alt text có nghĩa.

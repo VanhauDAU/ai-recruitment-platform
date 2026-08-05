@@ -213,7 +213,7 @@ sửa và rollout public qua capability switch.
 | --- | --- | --- |
 | KB-P0 | Chốt route, taxonomy, lifecycle, media, RBAC, SEO và rollout | ✅ |
 | KB-P1 | Backend foundation: common sanitizer, model/migration, 7 category và permission | ✅ |
-| KB-P2 | Workflow, media, admin/public API, audit và OpenAPI | ⬜ |
+| KB-P2 | Workflow, media, admin API, audit và OpenAPI | ✅ |
 | KB-P3 | Workspace quản trị, editor, preview, diff và media library | ⬜ |
 | KB-P4 | Help center public, search, detail và SEO noindex | ⬜ |
 | KB-P5 | Nội dung đã xác minh và nối các entry point | ⬜ |
@@ -1256,7 +1256,13 @@ Cập nhật 2026-08-04a (TTS — mở giọng đọc cho mọi bề mặt, khô
 
 Cập nhật 2026-08-04b (Trợ lý ứng viên — robot đọc câu trả lời): nối `useSpeak()` vào `widgets/candidate-assistant` qua hook `useAssistantVoice(messages)`. Chỉ đọc câu trả lời cho tin nhắn người dùng vừa gửi: mốc `spokenIdRef` khởi tạo bằng ID tin nhắn cuối lúc mount nên **lời chào không bao giờ được đọc** — panel là lazy chunk, lúc nó mount thì cử chỉ mở đã kết thúc và trình duyệt chặn autoplay, mà tự phát tiếng khi người dùng chưa hỏi gì cũng là hành vi gây khó chịu. `voice.prepare()` gọi `unlock()` ngay trong handler submit — cử chỉ hợp lệ duy nhất trước khi câu trả lời về sau ~1,1s. Giọng cố định `north-female-news` (Mai Anh). Nút loa trong header panel bật/tắt, lưu `procv_assistant_voice_v1` ở localStorage, tắt thì `stop()` ngay và không đọc các câu sau; bật lại cũng là cử chỉ hợp lệ để mở Web Audio. Bật tiếng giữa chừng không đọc lại câu cũ. Mascot dùng `talking={typing || voice.speaking}` và dòng trạng thái thêm "Đang đọc câu trả lời…". Verify: oxlint sạch, dependency-cruiser 1030 module 0 vi phạm, 820 test/219 file vitest (thêm 9 test `useAssistantVoice` + 2 test tích hợp trong `CandidateAssistant`), build, 174/174 Playwright smoke. Kiểm chứng trên browser thật với stack docker: gửi câu hỏi → POST `/api/speech/sessions/` 201 → stream `/tts/v1/streams/...` phát hết bài rồi tự về trạng thái nghỉ, patch `AbortController` xác nhận **0 lần abort** từ phía client (dòng `ERR_ABORTED` trong network panel chỉ là cách devtools ghi nhận response streaming dài); bấm tắt tiếng → `aria-pressed=false`, localStorage `off`, câu sau không phát.
 
-Cập nhật lần cuối: 2026-08-05a (FAQ/Help Center KB-P1): hoàn tất app skeleton,
+Cập nhật 2026-08-05a (FAQ/Help Center KB-P1): hoàn tất app skeleton,
 common HTML sanitizer, model/migration, seed bảy category và bốn permission với
 role mapping `content-cv`. Targeted test, Ruff, migration drift,
 import-linter/layering đều xanh; KB-P2 là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05b (FAQ/Help Center KB-P2): hoàn tất service state
+machine draft → review → approve/reject → publish/rollback, archive/restore,
+optimistic concurrency, media JPEG/PNG/WebP, admin API/RBAC, audit và OpenAPI.
+22 targeted/regression test, query budget 3, Ruff/import-linter/layering đều xanh;
+KB-P3 là bước tiếp theo.

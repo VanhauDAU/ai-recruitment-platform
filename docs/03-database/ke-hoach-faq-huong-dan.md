@@ -1,6 +1,6 @@
 # Đặc tả chức năng FAQ và hướng dẫn sử dụng
 
-> Trạng thái: **Đang triển khai — KB-P0, KB-P1 hoàn tất**
+> Trạng thái: **Đang triển khai — KB-P0 đến KB-P2 hoàn tất**
 >
 > Phạm vi ưu tiên: **Cổng ứng viên, public help center và workspace quản trị**
 >
@@ -29,8 +29,8 @@ trải nghiệm sử dụng.
 - RBAC của repo là catalogue do code sở hữu. Vì vậy permission knowledgebase
   được thêm đồng thời vào registry, dependency map, role matrix và data
   migration để lệnh sync không vô hiệu hóa grant sau deploy.
-- Media abstraction chung hiện chấp nhận GIF; knowledgebase sẽ khóa riêng
-  JPEG/PNG/WebP và lưu width/height ở service upload trong KB-P2.
+- Media abstraction chung chấp nhận GIF cho các domain cũ; knowledgebase đã
+  khóa riêng JPEG/PNG/WebP và lưu width/height đã xác minh ở service upload.
 - Sanitizer giàu nội dung đã được chuyển từ ownership của blog sang
   `common/content_html.py`; blog dùng lại policy tương thích, knowledgebase dùng
   policy HTTPS/internal chặt hơn. Đây là thay đổi kiến trúc đã dự kiến ở mục 8.7.
@@ -782,7 +782,7 @@ bộ chức năng vào một thay đổi lớn.
 | --- | --- | --- |
 | `KB-P0` | Đặc tả này; route, taxonomy, body, search, media, RBAC và SEO đã chốt | **Hoàn tất 2026-08-05** |
 | `KB-P1` | app skeleton, common HTML sanitizer, models/migrations, 7 category, permissions/role mapping | **Hoàn tất 2026-08-05** — targeted test và import-linter pass |
-| `KB-P2` | services/selectors, workflow revision, media upload, admin API, audit và OpenAPI | permission/concurrency/query-budget tests pass |
+| `KB-P2` | services/selectors, workflow revision, media upload, admin API, audit và OpenAPI | **Hoàn tất 2026-08-05** — 22 targeted/regression tests, permission/concurrency/query-budget pass |
 | `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | workflow admin E2E pass |
 | `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | public leak/404/accessibility/SEO tests pass |
 | `KB-P5` | nội dung ProCV thật, review đủ bảy category và nối các placeholder hiện có | content readiness checklist pass |
