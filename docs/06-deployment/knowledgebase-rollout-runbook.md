@@ -26,7 +26,8 @@ Index switch không thể vượt qua public switch hoặc global site setting
 
 4. Chỉ tiếp tục khi command exit `0`, `ready=true`, đủ category active, không có
    bài quá hạn, link lạ, metadata thiếu hoặc media/alt lỗi. Command đối chiếu link
-   nội bộ với registry route canonical và kiểm file media trong storage.
+   nội bộ với registry route canonical; chỉ kiểm file tồn tại với ảnh thuộc media
+   storage nội bộ, còn ảnh HTTPS không cần media record.
 5. Xác nhận admin `/admin/app/knowledgebase` đọc được danh sách, revision, audit
    và filter hạn review.
 
@@ -46,7 +47,7 @@ Index switch không thể vượt qua public switch hoặc global site setting
 
 3. Kỳ vọng API `200`, cache/ETag có mặt; shell trả `X-Robots-Tag: noindex,
    nofollow`; sitemap knowledgebase rỗng và sitemap index chưa chứa nó.
-4. Smoke bằng guest và candidate: browse → category → search → detail → link
+4. Smoke bằng guest và candidate: browse → lọc cục bộ → category → detail → link
    kế tiếp; kiểm tra 320 px, mobile, tablet và desktop. Direct URL draft/slug sai
    phải trả HTTP `404` thật.
 5. Theo dõi metric `knowledgebase_public_request`,
@@ -78,8 +79,8 @@ Thứ tự giảm ảnh hưởng:
 3. Xác nhận admin workspace vẫn hoạt động và số category/article/revision không
    đổi. Không chạy reverse migration xóa nội dung.
 4. Nếu cần, rollback code ứng dụng theo release tooling của môi trường.
-5. Diễn tập bật lại public switch và so sánh cùng public ID trước/sau; search và
-   detail phải trở lại mà không tạo hay mất revision.
+5. Diễn tập bật lại public switch và so sánh cùng public ID trước/sau; danh sách
+   và detail phải trở lại mà không tạo hay mất revision.
 
 Regression `test_kill_switch_rehearsal_preserves_and_restores_the_same_public_data`
 thực hiện chuỗi bật → đọc → tắt → 404 → bật lại → so sánh ID. Trước mỗi lần bật

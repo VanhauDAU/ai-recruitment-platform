@@ -16,4 +16,15 @@ describe('KnowledgeArticleContent', () => {
     expect(image).toHaveClass('is-broken')
     expect(image).toHaveAttribute('data-load-error', 'true')
   })
+
+  it('keeps a sanitized HTTPS image without requiring a ProCV media path', () => {
+    const { container } = render(
+      <KnowledgeArticleContent html='<img src="https://cdn.example.com/help/step.webp" alt="Các bước thao tác">' />,
+    )
+
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      'https://cdn.example.com/help/step.webp',
+    )
+  })
 })

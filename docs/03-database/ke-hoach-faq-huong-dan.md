@@ -6,7 +6,7 @@
 >
 > Ngày lập: **2026-08-05**
 >
-> Phiên bản quyết định: **1.0**
+> Phiên bản quyết định: **1.1**
 >
 > Nguồn quyết định: [Biên bản chatbot local](../02-tong-quan/chatbot-local-decision-log.md)
 >
@@ -24,30 +24,36 @@ trải nghiệm sử dụng.
 ### Nhật ký rà soát triển khai 2026-08-05
 
 - Đã đối chiếu trực tiếp trang danh sách và trang chi tiết TopCV: giữ mô hình
-  sidebar + search + card câu hỏi + điều hướng kế tiếp, nhưng dùng shell/màu và
-  nội dung riêng của ProCV như đặc tả.
+  sidebar + danh sách câu hỏi + điều hướng kế tiếp, nhưng dùng shell/màu và nội
+  dung riêng của ProCV như đặc tả.
 - RBAC của repo là catalogue do code sở hữu. Vì vậy permission knowledgebase
   được thêm đồng thời vào registry, dependency map, role matrix và data
   migration để lệnh sync không vô hiệu hóa grant sau deploy.
-- Media abstraction chung chấp nhận GIF cho các domain cũ; knowledgebase đã
-  khóa riêng JPEG/PNG/WebP và lưu width/height đã xác minh ở service upload.
+- Media library vẫn khóa upload JPEG/PNG/WebP và lưu width/height đã xác minh,
+  nhưng là tiện ích tùy chọn. Nội dung được phép chèn ảnh URL HTTPS hợp lệ mà
+  không cần upload trước vào ProCV; mọi ảnh vẫn bắt buộc có alt.
 - Sanitizer giàu nội dung đã được chuyển từ ownership của blog sang
   `common/content_html.py`; blog dùng lại policy tương thích, knowledgebase dùng
   policy HTTPS/internal chặt hơn. Đây là thay đổi kiến trúc đã dự kiến ở mục 8.7.
 - Workspace quản trị triển khai đúng FSD với URL filter server-side, drawer
   chuyên mục, editor lưu tường minh + bản khôi phục local, preview dùng renderer
   entity, diff plain text, lịch sử revision và action review/publish tách theo
-  permission. Smoke workflow đã chạy trên desktop, tablet và mobile.
-- Rich-text image library chung nhận policy MIME theo domain; FAQ chỉ cho
-  JPEG/PNG/WebP đúng backend trong khi blog vẫn giữ policy cũ tương thích.
+  permission. Theo phản hồi UX, khối “Bước tiếp theo” nằm trên form và thanh
+  Lưu/Xem trước sticky luôn nhìn thấy; toolbar định dạng được ghim bên dưới theo
+  cùng offset topbar để không chồng lớp khi cuộn. Smoke workflow đã chạy trên
+  desktop, tablet và mobile.
+- Rich-text image library chung nhận policy theo domain; FAQ cho phép chọn kho,
+  upload JPEG/PNG/WebP hoặc chèn trực tiếp URL HTTPS/đường dẫn nội bộ, trong khi
+  blog vẫn giữ policy cũ tương thích.
 - Public selector fail-closed chỉ trả article active thuộc category active với
   `published_revision=APPROVED`; API có throttle theo IP, cache header, ETag và
   generation invalidation sau mọi mutation ảnh hưởng dữ liệu public.
-- Ba route `/tro-giup` đã lazy-load theo FSD, URL là nguồn chuẩn cho search/type/
-  page, hủy request cũ qua TanStack Query và có loading/empty/error/404 riêng.
-  SEO shell dùng canonical/Open Graph/Article + BreadcrumbList nhưng giữ
-  `noindex, nofollow` đến content readiness; smoke browse → search → detail →
-  404 đã pass trên desktop, tablet và mobile.
+- Ba route `/tro-giup` đã lazy-load theo FSD và có loading/empty/error/404 riêng.
+  Sau phản hồi UX, trang ứng viên được rút gọn còn sidebar chuyên mục và danh
+  sách câu hỏi; chỉ có một ô lọc cục bộ ở cột phải, không hiển thị bộ lọc loại,
+  card chủ đề hoặc counter. Mô tả một dòng chỉ xuất hiện khi người dùng nhập để
+  lọc; tiêu đề/mô tả cùng tô sáng phần khớp. SEO shell vẫn dùng canonical/Open
+  Graph/Article + BreadcrumbList.
 - KB-P5 thêm bảy bài hướng dẫn ProCV đã đối chiếu trực tiếp route/component, một
   bài approved/published cho mỗi category active. Migration có ID ổn định,
   additive, không ghi đè article cùng slug và không reverse-delete lịch sử.
@@ -61,6 +67,9 @@ trải nghiệm sử dụng.
   bài public, source/SEO, review an toàn, link canonical hoặc media/alt. Public và
   admin phát metric latency/request PII-free; runbook khóa thứ tự rollout,
   quan sát và rollback không reverse-delete dữ liệu.
+- Regression sau tinh giản đạt 48 backend, 889 frontend coverage và 6 E2E
+  public/admin trên desktop, tablet, mobile; static architecture/build gate đều
+  xanh.
 
 ## 1. Vấn đề hiện tại
 
@@ -78,7 +87,7 @@ dung của website khác là kho kiến thức chính thức của ProCV.
 ## 2. Mục tiêu
 
 1. Cung cấp một trung tâm trợ giúp công khai cho khách và ứng viên.
-2. Cho phép duyệt nội dung theo chuyên mục, tìm câu hỏi và đọc bài chi tiết.
+2. Cho phép duyệt câu hỏi theo chuyên mục và đọc bài chi tiết bằng giao diện gọn.
 3. Cho quản trị viên soạn, gửi duyệt, duyệt, xuất bản và lưu trữ nội dung.
 4. Giữ lịch sử phiên bản; bản đang xuất bản không bị thay đổi khi bản sửa mới
    còn là nháp hoặc đang chờ duyệt.
@@ -125,7 +134,7 @@ không cần Ollama, Internet hoặc API key bên ngoài.
 Trang FAQ của TopCV hiện sử dụng:
 
 - cột chuyên mục bên trái và nội dung bên phải trên desktop;
-- ô tìm kiếm câu hỏi đặt ở đầu danh sách;
+- một ô lọc câu hỏi gọn đặt ở đầu danh sách;
 - mỗi chuyên mục có một trang danh sách câu hỏi riêng;
 - mỗi câu hỏi mở thành một trang chi tiết có breadcrumb, chuyên mục, ngày cập
   nhật, nội dung có ảnh và liên kết tới câu tiếp theo;
@@ -165,14 +174,20 @@ nội dung hỗ trợ sản phẩm, khác với cẩm nang nghề nghiệp.
 
 Desktop dùng bố cục hai cột:
 
-- cột trái: tiêu đề “Chuyên mục”, danh sách category, active state rõ ràng;
-- cột phải: ô tìm kiếm, tên category hoặc tiêu đề help center, danh sách article;
-- mỗi item hiển thị tiêu đề, loại `FAQ`/`GUIDE` khi cần và affordance mở chi tiết;
-- URL là nguồn chuẩn cho category, từ khóa tìm kiếm và page.
+- cột trái: tiêu đề “Chuyên mục”, danh sách category, active state rõ ràng,
+  không có item tổng hợp và không đổi vị trí/kích thước khi mở nội dung;
+- cột phải: tên category hoặc tiêu đề help center, một ô lọc cục bộ và danh sách
+  article;
+- mặc định mỗi item chỉ hiển thị tiêu đề và affordance mở chi tiết;
+- ô lọc chỉ lọc tập câu hỏi đã tải theo tiêu đề hoặc excerpt, không gọi API,
+  không ghi URL và không hiển thị bộ lọc loại, card chủ đề hoặc counter;
+- khi đang nhập từ khóa, item hiện excerpt lấy từ đầu nội dung trên một dòng có
+  ellipsis; mọi đoạn chữ khớp trong tiêu đề/excerpt được highlight, không phân
+  biệt hoa thường hoặc dấu tiếng Việt;
+- URL là nguồn chuẩn cho category và page.
 
 Mobile/tablet:
 
-- ô tìm kiếm nằm đầu trang;
 - category hiển thị bằng select hoặc chip cuộn ngang;
 - danh sách một cột, touch target tối thiểu 44 px;
 - không tạo sidebar cao hơn nội dung và không gây cuộn ngang.
@@ -181,7 +196,6 @@ Trạng thái bắt buộc:
 
 - loading skeleton;
 - không có nội dung trong category;
-- không có kết quả tìm kiếm;
 - lỗi tải dữ liệu có nút thử lại;
 - payload có item lỗi chỉ bỏ item đó, không làm hỏng toàn trang.
 
@@ -200,7 +214,7 @@ Trang chi tiết gồm:
 Không hiển thị tên nội bộ, revision nháp, ghi chú kiểm duyệt hoặc thông tin tài
 khoản quản trị ở public page.
 
-### 5.4. Tìm kiếm
+### 5.4. Tìm kiếm API và bộ lọc cục bộ trên trang ứng viên
 
 Release đầu tiên dùng tìm kiếm server-side trên nội dung đang xuất bản:
 
@@ -208,7 +222,10 @@ Release đầu tiên dùng tìm kiếm server-side trên nội dung đang xuất
 - dùng `common.db.search.search_q`, vì dự án đã có PostgreSQL `unaccent` và cơ
   chế tìm không phân biệt dấu/hoa thường theo từng token;
 - trim, gộp khoảng trắng; từ khóa tối thiểu 2 và tối đa 120 ký tự;
-- frontend debounce **300 ms** và hủy request cũ khi người dùng tiếp tục gõ;
+- public API giữ query `q` để không phá contract và phục vụ tích hợp tương lai;
+- trang ứng viên không gửi/khôi phục `q` hoặc `type`; ô input duy nhất chỉ lọc
+  client-side theo title/excerpt trên danh sách đã tải, highlight phần khớp và
+  chỉ hiện excerpt một dòng trong lúc có từ khóa;
 - phân trang ở backend;
 - sắp xếp xác định theo `category.order`, `article.order`, tiêu đề và
   `public_id`; không hứa hẹn xếp hạng độ liên quan trong MVP;
@@ -283,9 +300,10 @@ URL scheme nguy hiểm. Liên kết chỉ nhận route nội bộ bắt đầu b
 `mailto` hoặc `tel`; không nhận protocol-relative URL, URL chứa credentials,
 `javascript:` hoặc `data:`.
 
-Ảnh trong body chỉ được trỏ tới media đã upload vào chính hệ thống; không nhúng
-ảnh ngoài để tránh tracking, link chết và nội dung không kiểm soát. Mỗi ảnh bắt
-buộc có alt text có nghĩa, trừ ảnh trang trí được đánh dấu rõ là decorative.
+Ảnh trong body có thể dùng media đã upload vào hệ thống, đường dẫn nội bộ hoặc
+URL HTTPS hợp lệ; không bắt buộc tải lên kho media ProCV trước khi chèn. Mỗi ảnh
+bắt buộc có alt text có nghĩa, trừ ảnh trang trí được đánh dấu rõ là decorative.
+Biên tập viên chịu trách nhiệm chọn nguồn ảnh tin cậy và ổn định.
 
 ## 8. Kiến trúc backend
 
@@ -316,7 +334,7 @@ flowchart LR
     C["KnowledgeCategory"] -->|"1 : nhiều"| A["KnowledgeArticle"]
     A -->|"1 : nhiều phiên bản"| R["KnowledgeArticleRevision"]
     A -.->|"0 hoặc 1 published_revision"| R
-    R -.->|"HTML chỉ tham chiếu media nội bộ"| M["KnowledgeMediaAsset"]
+    R -.->|"Có thể tham chiếu media nội bộ"| M["KnowledgeMediaAsset"]
     U["Admin account"] -.->|"actor và audit"| C
     U -.->|"actor và audit"| A
     U -.->|"actor và audit"| R
@@ -442,8 +460,10 @@ Release đầu **có upload ảnh**, vì GUIDE cần screenshot. Model tối thi
 
 Dùng `common.media_storage.save_image_upload` với thư mục
 `knowledgebase/content`, chỉ nhận JPEG/PNG/WebP, tối đa **5 MB**, kích thước tối
-đa **1600×1600**. Không nhận SVG, GIF hoặc ảnh remote trong release đầu. Backend
-kiểm chữ ký file, không tin extension/MIME do client gửi.
+đa **1600×1600**. Không nhận SVG/GIF qua luồng upload. Backend kiểm chữ ký file,
+không tin extension/MIME do client gửi. Upload vào media library là tùy chọn;
+editor cũng được chèn ảnh qua URL HTTPS hợp lệ mà không cần tạo
+`KnowledgeMediaAsset` trước.
 
 Media không tự xóa khi revision thay đổi vì revision cũ phải còn render được.
 Không cung cấp hard-delete trong MVP; công việc dọn file chỉ được thêm sau khi có
@@ -456,7 +476,9 @@ allowlist HTML giàu nội dung thành module dùng chung
 `backend/common/content_html.py`; blog và knowledgebase gọi helper chung, còn
 policy riêng nếu có phải truyền bằng cấu hình rõ ràng. Sanitize tại service
 trước khi ghi database, sinh plain text/hash từ chính kết quả đã sanitize và
-validate mọi ảnh thuộc `KnowledgeMediaAsset` hợp lệ.
+validate URL ảnh chỉ dùng HTTPS hoặc đường dẫn nội bộ an toàn và bắt buộc alt
+(trừ ảnh được đánh dấu decorative). Ảnh nằm trong media storage vẫn được
+readiness gate kiểm tra file tồn tại; ảnh HTTPS không cần media record.
 
 Frontend vẫn sanitize bằng `frontend/src/shared/lib/sanitize-html.js` trước khi
 render để phòng thủ nhiều lớp và tái sử dụng
@@ -634,7 +656,6 @@ Ownership đã chốt:
 app/router
   → pages/main/help-center
     → widgets/help-center-browser, widgets/help-article-detail
-      → features/search-knowledge-articles
       → entities/knowledgebase
 
 app/router
@@ -671,8 +692,8 @@ Route quản trị canonical:
 Route admin yêu cầu role admin và `knowledgebase.view`; mutation kiểm permission
 chi tiết tại action. Danh sách dùng URL làm nguồn chuẩn cho `category`, `type`,
 `lifecycle`, `revision_status`, `q`, `ordering`, `page` và `page_size`. Public
-list dùng path cho category, còn `q`, `type`, `page` ở query string. Đổi filter
-đưa page về 1; back/forward phải phục hồi đúng state.
+list dùng path cho category và chỉ đưa `page` vào query string; `q`/`type` vẫn
+là contract API nhưng không xuất hiện trong UI ứng viên.
 
 Tái sử dụng `shared/ui/RichTextEditor`, sanitizer, API client, loading/error
 component hiện có. Không copy editor blog, không deep-import nội bộ blog và
@@ -743,8 +764,6 @@ SEO regression pass. Bật/tắt index là rollout configuration, không sửa t
 
 - một `h1` mỗi page; body bắt đầu từ `h2`;
 - sidebar/category control có label và active state cho screen reader;
-- search có label, trạng thái số kết quả và thông báo cập nhật qua live region
-  không gây spam khi đang gõ;
 - toàn bộ action dùng keyboard, focus visible, thứ tự focus hợp lý;
 - ảnh có alt; màu/badge không phải tín hiệu trạng thái duy nhất;
 - touch target tối thiểu 44 px và hỗ trợ `prefers-reduced-motion`;
@@ -874,7 +893,7 @@ Khi switch tắt:
 
 Rollback release ưu tiên tắt switch và quay code; không reverse migration có
 nguy cơ mất dữ liệu. Trước khi bật production phải diễn tập: bật → browse →
-search → detail → tắt → xác nhận 404/noindex → bật lại và dữ liệu còn nguyên.
+category → detail → tắt → xác nhận 404/noindex → bật lại và dữ liệu còn nguyên.
 
 ### 15.4. Observability
 
@@ -895,7 +914,7 @@ chỉ được thêm khi có baseline thực tế; local dùng structured log v�
 - public selector không rò draft, rejected, archived, inactive category hoặc
   source/review/actor nội bộ;
 - permission matrix cho bốn permission và role seed staff/manager;
-- sanitize allowlist, URL scheme, ảnh remote, ảnh không thuộc media library;
+- sanitize allowlist, URL scheme, ảnh HTTPS không cần media record, ảnh thiếu alt;
 - upload signature/MIME/size/dimensions và tên file nguy hiểm;
 - search không dấu, nhiều token, min/max length, pagination và ordering ổn định;
 - cache invalidation sau mọi thay đổi public;
@@ -906,8 +925,11 @@ chỉ được thêm khi có baseline thực tế; local dùng structured log v�
 
 ### 16.2. Frontend
 
-- URL là nguồn chuẩn; back/forward và direct navigation phục hồi state;
-- loading/empty/no-result/error/retry và hủy search request cũ;
+- URL là nguồn chuẩn; back/forward và direct navigation phục hồi category/page;
+- loading/empty/error/retry;
+- public list chỉ có một input lọc cục bộ, không render type filter, topic card
+  hoặc counter; mặc định ẩn excerpt, lúc lọc hiện excerpt một dòng và highlight
+  phần khớp trong title/excerpt;
 - desktop hai cột, tablet/mobile một cột, 320 px không overflow;
 - keyboard, focus, live region, landmark/heading và reduced motion;
 - rich content sanitize, link an toàn, ảnh alt/lazy-load/broken-image;
@@ -915,7 +937,7 @@ chỉ được thêm khi có baseline thực tế; local dùng structured log v�
 - editor dirty guard, preview, diff, media upload và giữ input khi save lỗi;
 - bảng admin sort/pagination server-side;
 - regression cho ba placeholder được nối sang help center;
-- E2E: public browse/search/detail/404 và admin
+- E2E: public browse/detail/404 và admin
   draft→review→reject/new draft→approve→publish→rollback→archive→restore.
 
 ### 16.3. Content và SEO QA
@@ -957,7 +979,7 @@ whitelist kiến trúc hoặc bỏ test chỉ để làm gate xanh.
 
 Chức năng FAQ/hướng dẫn chỉ được xem là hoàn thiện khi:
 
-- guest và candidate browse category, search và đọc detail bằng route canonical;
+- guest và candidate browse category và đọc detail bằng route canonical;
 - chỉ revision approved/published xuất hiện public;
 - admin workflow, concurrency và bốn permission hoạt động đúng;
 - bài đang public không đổi khi revision mới còn draft/in-review/rejected;

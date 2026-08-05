@@ -7,9 +7,8 @@ import {
   isKnowledgeNotFound,
   publicKnowledgeKeys,
 } from '@/entities/knowledgebase'
-import { useKnowledgeSearch } from '@/features/search-knowledgebase'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 60
 
 function positivePage(value) {
   const page = Number.parseInt(value || '1', 10)
@@ -18,10 +17,6 @@ function positivePage(value) {
 
 export default function usePublicKnowledgebase(categorySlug) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const search = useKnowledgeSearch()
-  const type = ['faq', 'guide'].includes(searchParams.get('type'))
-    ? searchParams.get('type')
-    : ''
   const page = positivePage(searchParams.get('page'))
   const hasIndexingParameters = ['q', 'type', 'page'].some((name) => searchParams.has(name))
 
@@ -38,11 +33,9 @@ export default function usePublicKnowledgebase(categorySlug) {
   const categoryExists = !categorySlug || Boolean(activeCategory)
   const params = useMemo(() => ({
     ...(categorySlug ? { category: categorySlug } : {}),
-    ...(search.query ? { q: search.query } : {}),
-    ...(type ? { type } : {}),
     page,
     page_size: PAGE_SIZE,
-  }), [categorySlug, page, search.query, type])
+  }), [categorySlug, page])
   const articlesQuery = useQuery({
     queryKey: publicKnowledgeKeys.articles(params),
     queryFn: ({ signal }) => getPublicKnowledgeArticles(params, { signal }),
@@ -51,27 +44,11 @@ export default function usePublicKnowledgebase(categorySlug) {
   })
   const data = articlesQuery.data ?? { count: 0, results: [] }
 
-  function setFilter(name, value) {
-    const next = new URLSearchParams(searchParams)
-    next.delete('page')
-    if (value) next.set(name, value)
-    else next.delete(name)
-    setSearchParams(next)
-  }
-
   function setPage(nextPage) {
-    const next = new URLSearchParams(searchParams)
+    const next = new URLSearchParams()
     if (nextPage > 1) next.set('page', String(nextPage))
-    else next.delete('page')
     setSearchParams(next)
   }
-
-  function resetFilters() {
-    setSearchParams(new URLSearchParams())
-  }
-
-  const navigationParams = new URLSearchParams(searchParams)
-  navigationParams.delete('page')
 
   const notFound = (
     isKnowledgeNotFound(categoriesQuery.error)
@@ -81,12 +58,6 @@ export default function usePublicKnowledgebase(categorySlug) {
   const loading = categoriesQuery.isLoading || (
     categoryExists && articlesQuery.isLoading
   )
-  const statusText = search.tooShort
-    ? 'Nhập ít nhất 2 ký tự để tìm kiếm.'
-    : articlesQuery.isFetching
-      ? 'Đang cập nhật kết quả tìm kiếm.'
-      : `${data.count || 0} kết quả trợ giúp.`
-
   return {
     activeCategory,
     categories,
@@ -97,17 +68,11 @@ export default function usePublicKnowledgebase(categorySlug) {
     notFound,
     page,
     pageSize: PAGE_SIZE,
-    queryString: navigationParams.toString(),
     refreshing: articlesQuery.isFetching && !articlesQuery.isLoading,
-    search,
-    statusText,
-    type,
     retry: () => {
       categoriesQuery.refetch()
       articlesQuery.refetch()
     },
-    resetFilters,
     setPage,
-    setType: (value) => setFilter('type', value),
   }
 }

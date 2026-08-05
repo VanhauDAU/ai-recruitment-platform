@@ -39,7 +39,7 @@ const article = {
   article_type: 'FAQ',
   title: 'Làm thế nào để đăng nhập an toàn?',
   excerpt: 'Đăng nhập bằng thông tin của bạn.',
-  body: '<h2>Các bước</h2><p>Nhập email.</p><script>steal()</script>',
+  body: '<h2>Các bước</h2><p>Nhập email.</p><img src="https://cdn.example.com/help/login.webp" alt="Minh họa đăng nhập"><script>steal()</script>',
   seo_title: 'Đăng nhập an toàn',
   seo_description: 'Hướng dẫn đăng nhập.',
   published_at: '2026-08-01T08:00:00Z',
@@ -79,6 +79,11 @@ describe('PublicKnowledgeArticle', () => {
     expect(container.querySelectorAll('h1')).toHaveLength(1)
     expect(screen.getByRole('heading', { level: 2, name: 'Các bước' })).toBeInTheDocument()
     expect(container.querySelector('script')).not.toBeInTheDocument()
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://cdn.example.com/help/login.webp')
+    expect(container.querySelector('img')).toHaveAttribute('referrerpolicy', 'no-referrer')
+    expect(screen.getByText(/Cập nhật/)).toHaveTextContent(/\d{2}:\d{2}/)
+    expect(screen.getByText(/Cập nhật/)).toHaveTextContent('05/08/2026')
+    expect(screen.getByText('Câu hỏi tiếp')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Bài viết trước và sau' })).toBeInTheDocument()
   })
 

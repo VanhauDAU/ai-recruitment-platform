@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, useLocation } from 'react-router'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
 import { DocumentMetadataContext } from '@/shared/config/document-metadata-context'
@@ -51,11 +51,6 @@ const article = {
   updated_at: '2026-08-05T08:00:00Z',
 }
 
-function LocationProbe() {
-  const location = useLocation()
-  return <output data-testid="location">{location.pathname}{location.search}</output>
-}
-
 function renderBrowser({ entry = '/tro-giup', categorySlug, metadata } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -73,7 +68,6 @@ function renderBrowser({ entry = '/tro-giup', categorySlug, metadata } = {}) {
         <DocumentMetadataContext.Provider value={metadata || null}>
           <MemoryRouter initialEntries={[entry]}>
             <PublicKnowledgeBrowser categorySlug={categorySlug} />
-            <LocationProbe />
           </MemoryRouter>
         </DocumentMetadataContext.Provider>
       </SiteSettingsContext.Provider>
@@ -96,38 +90,47 @@ describe('PublicKnowledgeBrowser', () => {
   it('renders one h1, accessible navigation and published help content', async () => {
     const { container } = renderBrowser()
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Chúng tôi có thể giúp gì cho bạn?' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Câu hỏi thường gặp' })).toBeInTheDocument()
     expect(container.querySelectorAll('h1')).toHaveLength(1)
-    expect(screen.getByRole('search')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Tìm trong danh sách câu hỏi' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Chuyên mục trợ giúp' })).toBeInTheDocument()
+    expect(screen.queryByText('Tất cả chủ đề')).not.toBeInTheDocument()
     expect(await screen.findByRole('link', { name: /Làm thế nào để đăng nhập an toàn/ })).toHaveAttribute(
       'href',
       '/tro-giup/tai-khoan-va-dang-nhap/dang-nhap-an-toan',
     )
   })
 
-  it('restores filters from URL and writes debounced search back to URL', async () => {
-    renderBrowser({
+  it('filters the loaded question list locally and ignores legacy API search parameters', async () => {
+    const { container } = renderBrowser({
       entry: '/tro-giup/tai-khoan-va-dang-nhap?type=faq&q=mat+khau',
       categorySlug: 'tai-khoan-va-dang-nhap',
     })
 
-    const input = await screen.findByRole('searchbox', { name: 'Tìm trong trung tâm trợ giúp' })
-    expect(input).toHaveValue('mat khau')
+    expect(await screen.findByRole('heading', {
+      level: 1,
+      name: 'Tài khoản và đăng nhập',
+    })).toBeInTheDocument()
+    const filter = screen.getByRole('searchbox', { name: 'Tìm trong danh sách câu hỏi' })
+    fireEvent.change(filter, { target: { value: 'không khớp' } })
+    expect(screen.getByText('Không tìm thấy câu hỏi phù hợp.')).toBeInTheDocument()
+    fireEvent.change(filter, { target: { value: 'dang nhap an toan' } })
+    expect(screen.getByRole('link', { name: new RegExp(article.title) })).toBeInTheDocument()
+    expect(screen.getByText('đăng nhập an toàn', { selector: 'mark' })).toBeInTheDocument()
+    expect(screen.getByText(article.excerpt)).toBeInTheDocument()
+    expect(container.querySelector('.knowledge-question__excerpt')).toHaveAttribute('title', article.excerpt)
+    fireEvent.change(filter, { target: { value: 'email và mật khẩu' } })
+    expect(screen.getByText('email và mật khẩu', { selector: 'mark' })).toBeInTheDocument()
     await waitFor(() => expect(getPublicKnowledgeArticles).toHaveBeenCalledWith(
       expect.objectContaining({
         category: 'tai-khoan-va-dang-nhap',
-        q: 'mat khau',
-        type: 'faq',
+        page: 1,
+        page_size: 60,
       }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     ))
-
-    fireEvent.change(input, { target: { value: 'bao mat' } })
-    await waitFor(
-      () => expect(screen.getByTestId('location')).toHaveTextContent('q=bao+mat'),
-      { timeout: 1000 },
-    )
+    expect(getPublicKnowledgeArticles.mock.calls[0][0]).not.toHaveProperty('q')
+    expect(getPublicKnowledgeArticles.mock.calls[0][0]).not.toHaveProperty('type')
   })
 
   it('shows a real client-side not-found state for an unknown category', async () => {
@@ -145,7 +148,7 @@ describe('PublicKnowledgeBrowser', () => {
 
     renderBrowser({ entry: '/tro-giup?q=', metadata })
 
-    await screen.findByRole('heading', { level: 1, name: 'Chúng tôi có thể giúp gì cho bạn?' })
+    await screen.findByRole('heading', { level: 1, name: 'Câu hỏi thường gặp' })
     await waitFor(() => expect(metadata).toHaveBeenLastCalledWith(
       expect.objectContaining({ robots: 'noindex, nofollow' }),
     ))

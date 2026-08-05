@@ -38,6 +38,7 @@ function MainFields({ article, canEdit, type }) {
             placeholder="Trình bày ngắn gọn, dùng các bước và hình minh họa khi cần…"
             onLoadImages={getAdminKnowledgeMedia}
             onUploadImage={uploadAdminKnowledgeMedia}
+            allowExternalImage
             acceptedImageTypes={KNOWLEDGE_IMAGE_TYPES}
             imageUploadHint="JPG, PNG hoặc WebP · tối đa 5 MB · tối đa 1600 × 1600 px"
           />
@@ -65,7 +66,7 @@ function MainFields({ article, canEdit, type }) {
   )
 }
 
-function Settings({ article, canEdit, categories, completion, dirty, conflict, saving, onPreview, onSave }) {
+function Settings({ article, canEdit, categories, completion }) {
   return (
     <aside className="knowledge-editor__sidebar">
       <Card className="knowledge-editor__card knowledge-editor__sticky" title="Thiết lập & chất lượng">
@@ -92,25 +93,38 @@ function Settings({ article, canEdit, categories, completion, dirty, conflict, s
           ))}
         </div>
 
-        <Space direction="vertical" className="knowledge-editor__actions">
-          <Button icon={<EyeOutlined />} block onClick={onPreview}>Xem trước</Button>
-          {canEdit && (
-            <Button type="primary" icon={<SaveOutlined />} block loading={saving} disabled={!dirty || conflict} onClick={onSave}>
-              {article ? 'Lưu bản nháp' : 'Tạo bài viết'}
-            </Button>
-          )}
-          <div className="knowledge-editor__save-state"><ClockCircleOutlined />{dirty ? 'Có thay đổi chưa lưu' : 'Đã đồng bộ với máy chủ'}</div>
-        </Space>
       </Card>
     </aside>
   )
 }
 
+function EditorActions({ article, canEdit, conflict, dirty, saving, onPreview, onSave }) {
+  return (
+    <div className="knowledge-editor__toolbar">
+      <div className="knowledge-editor__save-state">
+        <ClockCircleOutlined />
+        <span>{dirty ? 'Có thay đổi chưa lưu' : 'Đã đồng bộ với máy chủ'}</span>
+      </div>
+      <Space wrap>
+        <Button icon={<EyeOutlined />} onClick={onPreview}>Xem trước</Button>
+        {canEdit && (
+          <Button type="primary" icon={<SaveOutlined />} loading={saving} disabled={!dirty || conflict} onClick={onSave}>
+            {article ? 'Lưu bản nháp' : 'Tạo bài viết'}
+          </Button>
+        )}
+      </Space>
+    </div>
+  )
+}
+
 export default function KnowledgeEditorFields(props) {
   return (
-    <div className="knowledge-editor__layout">
-      <MainFields article={props.article} canEdit={props.canEdit} type={props.type} />
-      <Settings {...props} />
-    </div>
+    <>
+      <EditorActions {...props} />
+      <div className="knowledge-editor__layout">
+        <MainFields article={props.article} canEdit={props.canEdit} type={props.type} />
+        <Settings {...props} />
+      </div>
+    </>
   )
 }

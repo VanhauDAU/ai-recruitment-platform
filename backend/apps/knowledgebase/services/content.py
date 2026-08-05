@@ -1,13 +1,12 @@
 from hashlib import sha256
 from html.parser import HTMLParser
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from common.content_html import content_html_plain_text, sanitize_content_html
 from common.media_storage import media_storage_path
-
-from ..models import KnowledgeMediaAsset
 
 
 class _KnowledgeImageCollector(HTMLParser):
@@ -33,26 +32,25 @@ def _validate_images(body):
     parser = _KnowledgeImageCollector()
     parser.feed(body)
     parser.close()
-    storage_keys = []
     errors = []
     for image in parser.images:
-        storage_key = media_storage_path(image.get('src'))
-        if not storage_key:
-            errors.append('Ảnh phải được tải lên kho media của ProCV trước khi chèn.')
-            continue
-        storage_keys.append(storage_key)
+        source = str(image.get('src') or '').strip()
+        parsed = urlparse(source)
+        is_safe_source = (
+            bool(media_storage_path(source))
+            or (source.startswith('/') and not source.startswith('//'))
+            or (
+                parsed.scheme == 'https'
+                and bool(parsed.netloc)
+                and parsed.username is None
+                and parsed.password is None
+            )
+        )
+        if not is_safe_source:
+            errors.append('Ảnh phải dùng URL HTTPS hoặc đường dẫn nội bộ hợp lệ.')
         decorative = image.get('data-decorative') == 'true'
         if not decorative and not str(image.get('alt') or '').strip():
             errors.append('Mỗi ảnh nội dung phải có alt text có nghĩa.')
-
-    available = set(
-        KnowledgeMediaAsset.objects.filter(storage_key__in=storage_keys).values_list(
-            'storage_key', flat=True
-        )
-    )
-    missing = sorted(set(storage_keys) - available)
-    if missing:
-        errors.append('Ảnh không thuộc kho media knowledgebase hoặc không còn tồn tại.')
     if errors:
         raise ValidationError({'body': errors})
 

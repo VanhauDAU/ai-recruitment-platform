@@ -184,17 +184,27 @@ class KnowledgeWorkflowTests(TestCase):
         self.assertEqual(article.lifecycle_state, KnowledgeArticle.LifecycleState.ACTIVE)
         self.assertEqual(article.published_revision_id, revision.pk)
 
-    def test_content_normalization_rejects_remote_and_missing_alt_images(self):
+    def test_content_normalization_accepts_https_images_without_media_upload(self):
+        normalized = normalize_revision_content(
+            title='Ảnh ngoài',
+            body='<p>Nội dung</p><img src="https://cdn.example/a.png" alt="Ảnh hướng dẫn">',
+            source_reference='/test',
+        )
+
+        self.assertIn('src="https://cdn.example/a.png"', normalized['body'])
+        self.assertIn('alt="Ảnh hướng dẫn"', normalized['body'])
+
+    def test_content_normalization_rejects_unsafe_or_missing_alt_images(self):
         with self.assertRaises(ValidationError):
             normalize_revision_content(
-                title='Ảnh ngoài',
-                body='<p>Nội dung</p><img src="https://tracker.example/a.png" alt="Ảnh">',
+                title='Ảnh thiếu alt',
+                body='<p>Nội dung</p><img src="/media/knowledgebase/content/a.webp">',
                 source_reference='/test',
             )
 
         with self.assertRaises(ValidationError):
             normalize_revision_content(
-                title='Ảnh thiếu alt',
-                body='<p>Nội dung</p><img src="/media/knowledgebase/content/a.webp">',
+                title='Ảnh HTTP',
+                body='<p>Nội dung</p><img src="http://cdn.example/a.png" alt="Ảnh">',
                 source_reference='/test',
             )

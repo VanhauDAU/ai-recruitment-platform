@@ -36,3 +36,19 @@ class KnowledgebaseReadinessCommandTests(TestCase):
         self.assertFalse(report['ready'])
         self.assertIn('required_category_inactive', codes)
         self.assertIn('unknown_internal_link', codes)
+
+    def test_https_image_does_not_require_a_media_library_record(self):
+        article = KnowledgeArticle.objects.get(slug='tao-chinh-sua-va-quan-ly-cv')
+        revision = article.published_revision
+        revision.body += (
+            '<figure><img src="https://cdn.example/huong-dan.png" '
+            'alt="Minh họa thao tác tạo CV"></figure>'
+        )
+        revision.save(update_fields=['body', 'updated_at'])
+        output = StringIO()
+
+        call_command('check_knowledgebase_readiness', '--json', stdout=output)
+
+        report = json.loads(output.getvalue())
+        self.assertTrue(report['ready'])
+        self.assertEqual(report['counts']['media_issues'], 0)

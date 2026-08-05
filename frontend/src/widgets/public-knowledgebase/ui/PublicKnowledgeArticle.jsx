@@ -2,7 +2,6 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   ClockCircleOutlined,
-  SearchOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
 import {
@@ -73,7 +72,6 @@ export default function PublicKnowledgeArticle({ categorySlug, articleSlug }) {
   if (state.loading) {
     return (
       <div className="knowledge-center knowledge-center--detail">
-        <DetailTopBar />
         <div className="knowledge-shell"><KnowledgeLoading /></div>
       </div>
     )
@@ -83,7 +81,6 @@ export default function PublicKnowledgeArticle({ categorySlug, articleSlug }) {
 
   return (
     <div className="knowledge-center knowledge-center--detail">
-      <DetailTopBar />
       <div className="knowledge-shell knowledge-shell--detail">
         <KnowledgeCategorySidebar
           activeSlug={article.category.slug}
@@ -111,7 +108,7 @@ export default function PublicKnowledgeArticle({ categorySlug, articleSlug }) {
               <h1>{article.title}</h1>
               <p>
                 <ClockCircleOutlined aria-hidden="true" />
-                Cập nhật ngày {formatKnowledgeDate(article.updated_at)}
+                Cập nhật {formatKnowledgeDate(article.updated_at, { withTime: true })}
               </p>
             </header>
             <KnowledgeArticleContent html={article.body} className="knowledge-article-body" />
@@ -144,31 +141,13 @@ export default function PublicKnowledgeArticle({ categorySlug, articleSlug }) {
     </div>
   )
 }
-
-function DetailTopBar() {
-  return (
-    <header className="knowledge-detail-topbar">
-      <div>
-        <div>
-          <span>TRUNG TÂM TRỢ GIÚP</span>
-          <strong>Câu trả lời rõ ràng cho hành trình nghề nghiệp của bạn</strong>
-        </div>
-        <Link to={KNOWLEDGE_ROOT}>
-          <SearchOutlined aria-hidden="true" />
-          Tìm nội dung khác
-        </Link>
-      </div>
-    </header>
-  )
-}
-
 function ArticleNavigationLink({ article, direction }) {
   const previous = direction === 'previous'
   return (
     <Link to={knowledgeArticlePath(article)} className={previous ? '' : 'is-next'}>
       {previous && <ArrowLeftOutlined aria-hidden="true" />}
       <span>
-        <small>{previous ? 'Bài trước' : 'Bài tiếp theo'}</small>
+        <small>{previous ? 'Câu hỏi trước' : 'Câu hỏi tiếp'}</small>
         <strong>{article.title}</strong>
       </span>
       {!previous && <ArrowRightOutlined aria-hidden="true" />}

@@ -131,15 +131,51 @@ test('knowledgebase admin: explicit save, review and publish workflow', async ({
 
   await page.getByRole('button', { name: 'Làm thế nào để đặt lại mật khẩu?', exact: true }).click()
   await expect(page).toHaveURL('/admin/app/knowledgebase/kba_reset')
+  await expect(page.getByText('Bước tiếp theo', { exact: true })).toBeVisible()
+  const submitButton = page.getByRole('button', { name: /Gửi duyệt/ })
+  await expect(submitButton).toBeVisible()
   const title = page.getByLabel('Câu hỏi')
   await expect(title).toHaveValue('Làm thế nào để đặt lại mật khẩu?')
+  const [workflowTop, editorTop] = await Promise.all([
+    page.locator('.knowledge-article-workspace__workflow').evaluate((element) => element.getBoundingClientRect().top),
+    title.evaluate((element) => element.getBoundingClientRect().top),
+  ])
+  expect(workflowTop).toBeLessThan(editorTop)
+
+  await page.locator('.company-rich-editor__content').evaluate((element) => {
+    window.scrollTo(0, window.scrollY + element.getBoundingClientRect().top + 180)
+  })
+  await page.waitForTimeout(50)
+  const stickyStack = await page.evaluate(() => {
+    const rect = (selector) => {
+      const bounds = document.querySelector(selector).getBoundingClientRect()
+      return { bottom: bounds.bottom, left: bounds.left, right: bounds.right, top: bounds.top }
+    }
+    const action = rect('.knowledge-editor__toolbar')
+    const richText = rect('.company-rich-editor__toolbar')
+    const topbar = rect('.admin-topbar')
+    const ownerAt = ({ left, right, top, bottom }, selector) => (
+      document.elementFromPoint((left + right) / 2, (top + bottom) / 2)?.closest(selector) !== null
+    )
+    return {
+      action,
+      actionOwnsCenter: ownerAt(action, '.knowledge-editor__toolbar'),
+      richText,
+      richTextOwnsCenter: ownerAt(richText, '.company-rich-editor__toolbar'),
+      topbar,
+    }
+  })
+  expect(stickyStack.action.top).toBeGreaterThanOrEqual(stickyStack.topbar.bottom + 6)
+  expect(stickyStack.richText.top).toBeGreaterThanOrEqual(stickyStack.action.bottom + 6)
+  expect(stickyStack.actionOwnsCenter).toBe(true)
+  expect(stickyStack.richTextOwnsCenter).toBe(true)
+
   await title.fill('Tôi đặt lại mật khẩu như thế nào?')
   await page.getByRole('button', { name: /Lưu bản nháp/ }).click()
   await expect(page.getByText('Đã lưu bản nháp.')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tôi đặt lại mật khẩu như thế nào?' })).toBeVisible()
   await dismissToast()
 
-  const submitButton = page.getByRole('button', { name: /Gửi duyệt/ })
   await submitButton.scrollIntoViewIfNeeded()
   if (page.viewportSize().width < 600) {
     const geometry = await submitButton.evaluate((element) => {

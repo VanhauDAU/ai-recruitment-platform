@@ -1308,3 +1308,21 @@ và 14 frontend regression test mục tiêu đều xanh. Full gate đạt 769 ba
 (coverage 86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca theo viewport
 không áp dụng được skip; Ruff/format/import-linter/migration drift,
 oxlint/architecture/build đều xanh. Toàn bộ KB-P0 đến KB-P6 hoàn tất.
+
+Cập nhật 2026-08-05g (FAQ — tinh giản UX ứng viên): bỏ search server-side trên
+UI, type filter, topic cards và counter trên `/tro-giup`; giao diện chỉ còn
+sidebar chuyên mục cố định và danh sách câu hỏi gọn với một input lọc cục bộ
+không ghi URL/gọi search API. Mặc định item chỉ có title; khi nhập, bộ lọc khớp
+title/excerpt không phân biệt dấu, highlight phần trùng và hiện excerpt đầu nội
+dung trên một dòng có ellipsis. Bỏ item “Tất cả chủ đề”; API `q`/`type` vẫn giữ
+để không phá contract. Bỏ ràng buộc ảnh phải upload vào media ProCV: revision nhận URL
+HTTPS hoặc đường dẫn nội bộ an toàn, vẫn sanitize và bắt buộc alt; readiness chỉ
+kiểm tra file tồn tại với ảnh thuộc media storage nội bộ. Editor FAQ có tab
+**Từ URL** để chèn trực tiếp ảnh HTTPS mà không qua upload. Workspace biên tập
+đưa “Bước tiếp theo” cùng nút gửi duyệt/duyệt/yêu cầu sửa lên đầu, đồng thời giữ
+Lưu/Xem trước trên thanh sticky; topbar admin, thanh hành động và toolbar
+rich-text có offset/z-index riêng nên không chồng hoặc cắt nội dung khi cuộn.
+Detail FAQ hiển thị ảnh, giờ cập nhật và nhãn “Câu hỏi tiếp”. Verify: 48 backend
+regression, 889 frontend coverage, 6 targeted
+unit cho thay đổi tìm kiếm và 6 E2E public/admin trên desktop/tablet/mobile;
+Ruff/format/import-linter/migration drift, lint/architecture/build đều xanh.

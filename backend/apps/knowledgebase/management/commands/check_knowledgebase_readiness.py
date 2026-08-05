@@ -13,7 +13,6 @@ from common.metrics import record_metric
 from ...models import (
     KnowledgeArticle,
     KnowledgeCategory,
-    KnowledgeMediaAsset,
 )
 from ...selectors.public import PUBLIC_ARTICLE_FILTER
 
@@ -129,28 +128,41 @@ def build_readiness_report():
         for link in parser.links:
             _check_link(issues, article, link)
         for image in parser.images:
-            storage_key = media_storage_path(image.get('src'))
+            source = str(image.get('src') or '').strip()
+            parsed_source = urlsplit(source)
+            storage_key = media_storage_path(source)
+            source_is_safe = (
+                bool(storage_key)
+                or (source.startswith('/') and not source.startswith('//'))
+                or (
+                    parsed_source.scheme == 'https'
+                    and bool(parsed_source.netloc)
+                    and parsed_source.username is None
+                    and parsed_source.password is None
+                )
+            )
             has_alt = image.get('data-decorative') == 'true' or bool(
                 str(image.get('alt') or '').strip()
             )
-            image_references.append((article, storage_key, has_alt))
+            image_references.append((article, storage_key, source_is_safe, has_alt))
 
-    referenced_keys = {key for _, key, _ in image_references if key}
-    registered_keys = set(
-        KnowledgeMediaAsset.objects.filter(storage_key__in=referenced_keys).values_list(
-            'storage_key', flat=True
-        )
-    )
-    available_keys = {key for key in registered_keys if default_storage.exists(key)}
-    for article, storage_key, has_alt in image_references:
-        asset_exists = storage_key in available_keys
-        if not has_alt or not asset_exists:
+    referenced_keys = {key for _, key, _, _ in image_references if key}
+    available_keys = {key for key in referenced_keys if default_storage.exists(key)}
+    for article, storage_key, source_is_safe, has_alt in image_references:
+        asset_exists = not storage_key or storage_key in available_keys
+        if not has_alt or not source_is_safe or not asset_exists:
             media_issues += 1
             _issue(
                 issues,
                 'invalid_media_reference',
                 article.public_id,
-                'missing_alt' if not has_alt else 'missing_asset',
+                (
+                    'missing_alt'
+                    if not has_alt
+                    else 'unsafe_source'
+                    if not source_is_safe
+                    else 'missing_asset'
+                ),
             )
 
     counts = {

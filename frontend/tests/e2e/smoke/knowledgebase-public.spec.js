@@ -32,7 +32,7 @@ const resetArticle = {
   updated_at: '2026-08-05T08:00:00Z',
 }
 
-test('public knowledgebase: browse, search, detail and hidden-content 404 stay responsive', async ({ page }) => {
+test('public knowledgebase: simple browse, detail and hidden-content 404 stay responsive', async ({ page }) => {
   await mockPublicApi(page)
   await page.route(
     (url) => url.pathname.startsWith('/api/knowledgebase/'),
@@ -44,8 +44,7 @@ test('public knowledgebase: browse, search, detail and hidden-content 404 stay r
       return
     }
     if (path === '/api/knowledgebase/articles/') {
-      const query = url.searchParams.get('q')
-      const items = query ? [resetArticle] : [loginArticle, resetArticle]
+      const items = [loginArticle, resetArticle]
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({ count: items.length, next: null, previous: null, results: items }),
@@ -57,13 +56,13 @@ test('public knowledgebase: browse, search, detail and hidden-content 404 stay r
         contentType: 'application/json',
         body: JSON.stringify({
           ...resetArticle,
-          body: '<h2>Các bước thực hiện</h2><p>Mở trang quên mật khẩu và nhập email.</p>',
+          body: '<h2>Các bước thực hiện</h2><p>Mở trang quên mật khẩu và nhập email.</p><img src="/favicon-32.png" alt="Minh họa đặt lại mật khẩu">',
           seo_title: 'Đặt lại mật khẩu',
           seo_description: 'Hướng dẫn đặt lại mật khẩu.',
           published_at: '2026-08-01T08:00:00Z',
           related_articles: [loginArticle],
           previous_article: loginArticle,
-          next_article: null,
+          next_article: loginArticle,
         }),
       })
       return
@@ -77,21 +76,39 @@ test('public knowledgebase: browse, search, detail and hidden-content 404 stay r
   )
 
   await page.goto('/tro-giup')
-  await expect(page.getByRole('heading', { level: 1, name: 'Chúng tôi có thể giúp gì cho bạn?' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Câu hỏi thường gặp' })).toBeVisible()
   await expect(page.getByRole('link', { name: /Làm thế nào để đăng nhập an toàn/ })).toBeVisible()
+  const questionFilter = page.getByRole('searchbox', { name: 'Tìm trong danh sách câu hỏi' })
+  await expect(questionFilter).toBeVisible()
+  await questionFilter.focus()
+  await expect(questionFilter).toHaveCSS('outline-style', 'none')
+  await questionFilter.fill('đặt lại')
+  await expect(page.getByRole('link', { name: /đặt lại mật khẩu/ })).toBeVisible()
+  await expect(page.locator('.knowledge-question mark')).toHaveText('đặt lại')
+  await expect(page.getByText(resetArticle.excerpt)).toBeVisible()
+  await expect(page.locator('.knowledge-question__excerpt')).toHaveCSS('text-overflow', 'ellipsis')
+  await expect(page.locator('.knowledge-question__excerpt')).toHaveCSS('white-space', 'nowrap')
+  await expect(page.getByRole('link', { name: /đăng nhập an toàn/ })).toHaveCount(0)
+  await questionFilter.clear()
+  await expect(page.getByText('Tất cả chủ đề')).toHaveCount(0)
   await expect(page.locator('h1')).toHaveCount(1)
 
-  const search = page.getByRole('searchbox', { name: 'Tìm trong trung tâm trợ giúp' })
-  await search.fill('mat khau')
-  await expect(page).toHaveURL(/q=mat.*khau/)
-  await expect(page.getByRole('link', { name: /Làm thế nào để đặt lại mật khẩu/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Làm thế nào để đăng nhập an toàn/ })).toHaveCount(0)
+  const sidebarBefore = await page.getByRole('complementary', { name: 'Chuyên mục trợ giúp' }).boundingBox()
 
   await page.getByRole('link', { name: /Làm thế nào để đặt lại mật khẩu/ }).first().click()
   await expect(page).toHaveURL('/tro-giup/tai-khoan-va-dang-nhap/dat-lai-mat-khau')
   await expect(page.getByRole('heading', { level: 1, name: resetArticle.title })).toBeVisible()
   await expect(page.getByRole('heading', { level: 2, name: 'Các bước thực hiện' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Minh họa đặt lại mật khẩu' })).toBeVisible()
+  await expect(page.getByText(/Cập nhật/)).toContainText(/\d{2}:\d{2}/)
+  await expect(page.getByText('Câu hỏi tiếp')).toBeVisible()
   await expect(page.locator('h1')).toHaveCount(1)
+
+  if ((page.viewportSize()?.width || 0) > 760) {
+    const sidebarAfter = await page.getByRole('complementary', { name: 'Chuyên mục trợ giúp' }).boundingBox()
+    expect(Math.abs(sidebarAfter.x - sidebarBefore.x)).toBeLessThan(1)
+    expect(Math.abs(sidebarAfter.width - sidebarBefore.width)).toBeLessThan(1)
+  }
 
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

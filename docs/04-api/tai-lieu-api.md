@@ -492,5 +492,11 @@ Mọi PATCH/action gửi `revision_token`; publish gửi thêm `revision_number`
 không tự chọn revision mới nhất. Token cũ hoặc transition sai trả `409` với
 `code` ổn định. Approved/rejected không sửa tại chỗ. Tạo bản sửa của bài đã
 publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đầu.
-Upload chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600; body chỉ nhận ảnh thuộc
-media library, link nội bộ/HTTPS/mailto/tel và alt text có nghĩa.
+Upload tùy chọn chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600. Body nhận ảnh
+từ media library, đường dẫn nội bộ hoặc URL HTTPS mà không bắt buộc upload vào
+ProCV trước; ảnh vẫn phải có alt text có nghĩa. Trang ứng viên chỉ gọi API theo
+category/page; ô input duy nhất lọc cục bộ title/excerpt của dữ liệu đã tải,
+highlight phần khớp và hiện excerpt một dòng khi có từ khóa, không gửi `q`/`type`
+dù API vẫn giữ hai tham số này để không phá contract. Editor FAQ cung cấp tab
+**Từ URL** bên cạnh kho media và upload để biên tập viên dùng trực tiếp nguồn
+HTTPS hợp lệ.

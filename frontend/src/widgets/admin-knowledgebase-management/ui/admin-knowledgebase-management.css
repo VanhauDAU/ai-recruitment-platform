@@ -31,14 +31,14 @@
 .knowledge-due { color: #64748b; white-space: nowrap; }
 .knowledge-due--overdue { color: #dc2626; font-weight: 650; }
 .knowledge-article-workspace { padding-top: 16px; }
-.knowledge-article-workspace__header { align-items: center; background: rgba(255, 255, 255, .94); border: 1px solid #e6edf3; border-radius: 18px; display: flex; justify-content: space-between; margin-bottom: 18px; padding: 16px 18px; position: sticky; top: 8px; z-index: 8; }
+.knowledge-article-workspace__header { align-items: center; background: rgba(255, 255, 255, .94); border: 1px solid #e6edf3; border-radius: 18px; display: flex; justify-content: space-between; margin-bottom: 18px; padding: 16px 18px; }
 .knowledge-article-workspace__identity { align-items: center; display: flex; min-width: 0; }
 .knowledge-article-workspace__icon { align-items: center; background: #ecfdf5; border-radius: 12px; color: #059669; display: flex; flex: 0 0 42px; font-size: 19px; height: 42px; justify-content: center; margin: 0 12px 0 4px; }
 .knowledge-article-workspace__identity h1 { font-size: 18px; margin: 3px 0 0; max-width: 720px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .knowledge-article-workspace__identity p { color: #64748b; font-size: 12px; margin: 3px 0 0; }
 .knowledge-article-workspace__tags { display: flex; gap: 2px; }
 .knowledge-article-workspace__tags .ant-tag { font-size: 10px; line-height: 17px; margin-inline-end: 2px; }
-.knowledge-article-workspace__workflow { margin-top: 18px; }
+.knowledge-article-workspace__workflow { margin-bottom: 18px; }
 .knowledge-workspace-loading { margin: 24px auto; max-width: 1200px; padding: 32px; }
 @media (max-width: 1280px) {
   .knowledge-filterbar { grid-template-columns: repeat(3, 1fr); }
@@ -47,7 +47,7 @@
 @media (max-width: 900px) {
   .admin-knowledgebase__hero { align-items: flex-start; flex-direction: column; gap: 18px; }
   .admin-knowledgebase__metrics { grid-template-columns: repeat(2, 1fr); }
-  .knowledge-article-workspace__header { align-items: flex-start; position: static; }
+  .knowledge-article-workspace__header { align-items: flex-start; }
 }
 @media (max-width: 640px) {
   .admin-knowledgebase,

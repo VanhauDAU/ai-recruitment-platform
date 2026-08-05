@@ -1,8 +1,8 @@
 """Allow-list HTML helpers for reviewed, media-rich content.
 
 The parser intentionally owns only the technical HTML policy. Domain services
-remain responsible for checking that image URLs belong to their media library
-and that required editorial metadata (for example meaningful alt text) exists.
+remain responsible for any stricter source policy and required editorial
+metadata such as meaningful alt text.
 """
 
 from html import escape, unescape

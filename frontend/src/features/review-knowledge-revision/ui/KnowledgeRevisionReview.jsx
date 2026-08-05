@@ -35,6 +35,12 @@ export default function KnowledgeRevisionReview({ article, canManage, canReview,
   const current = article?.revisions?.[0]
   const published = article?.revisions?.find((item) => item.number === article.published_revision_number)
   const status = KNOWLEDGE_REVISION_STATUS[current?.status]
+  const nextStep = {
+    DRAFT: 'Lưu nội dung hoàn chỉnh, sau đó gửi revision cho người duyệt.',
+    IN_REVIEW: 'Kiểm tra nội dung, nguồn và hình ảnh trước khi duyệt hoặc yêu cầu chỉnh sửa.',
+    APPROVED: 'Revision đã được duyệt và sẵn sàng để người có quyền xuất bản.',
+    REJECTED: 'Revision cần được chỉnh sửa theo ghi chú của người duyệt.',
+  }[current?.status]
 
   const mutation = useMutation({
     mutationFn: ({ name, reviewNote }) => runAdminKnowledgeRevisionAction(
@@ -74,6 +80,23 @@ export default function KnowledgeRevisionReview({ article, canManage, canReview,
       title="Quy trình biên tập"
       extra={<Tag color={status?.color}>{status?.label || current.status}</Tag>}
     >
+      <div className="knowledge-workflow-card__next">
+        <div>
+          <span>Bước tiếp theo</span>
+          <strong>{nextStep}</strong>
+        </div>
+        <Space wrap>
+          {current.status === 'DRAFT' && canManage && (
+            <Button type="primary" icon={<SendOutlined />} disabled={disabled} onClick={() => openAction('submit')}>Gửi duyệt</Button>
+          )}
+          {current.status === 'IN_REVIEW' && canReview && (
+            <>
+              <Button type="primary" icon={<CheckOutlined />} disabled={disabled} onClick={() => openAction('approve')}>Duyệt revision</Button>
+              <Button danger icon={<CloseOutlined />} disabled={disabled} onClick={() => openAction('reject')}>Yêu cầu chỉnh sửa</Button>
+            </>
+          )}
+        </Space>
+      </div>
       {current.review_note && (
         <Alert className="knowledge-workflow-card__note" type={current.status === 'REJECTED' ? 'warning' : 'info'} showIcon message="Ghi chú của người duyệt" description={current.review_note} />
       )}
@@ -84,18 +107,6 @@ export default function KnowledgeRevisionReview({ article, canManage, canReview,
       </div>
       {current.change_summary && <p className="knowledge-workflow-card__change"><strong>Thay đổi:</strong> {current.change_summary}</p>}
       <DiffPanel current={current} published={published} />
-      <Space wrap>
-        {current.status === 'DRAFT' && canManage && (
-          <Button type="primary" icon={<SendOutlined />} disabled={disabled} onClick={() => openAction('submit')}>Gửi duyệt</Button>
-        )}
-        {current.status === 'IN_REVIEW' && canReview && (
-          <>
-            <Button type="primary" icon={<CheckOutlined />} disabled={disabled} onClick={() => openAction('approve')}>Duyệt revision</Button>
-            <Button danger icon={<CloseOutlined />} disabled={disabled} onClick={() => openAction('reject')}>Yêu cầu chỉnh sửa</Button>
-          </>
-        )}
-      </Space>
-
       <div className="knowledge-workflow-history">
         <strong>Lịch sử revision</strong>
         <Timeline

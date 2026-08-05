@@ -8,6 +8,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-05
 
+#### Changed — Rút gọn FAQ ứng viên và mở ảnh HTTPS
+
+- Rút trang `/tro-giup` về đúng hai khối chuyên mục + danh sách câu hỏi; bỏ hero,
+  type filter, topic cards và counter. Cột phải chỉ giữ một ô lọc cục bộ gọn,
+  không ghi query lên URL hoặc gọi API search; khi nhập, kết quả lọc theo tiêu
+  đề/mô tả, tô sáng phần chữ khớp không phân biệt dấu và hiện mô tả đầu nội dung
+  trên đúng một dòng có dấu “…”. Cột chuyên mục cố định, bỏ mục “Tất cả chủ đề”
+  và giữ nguyên vị trí khi mở chi tiết.
+- Media library trở thành tùy chọn: revision chấp nhận ảnh URL HTTPS hoặc đường
+  dẫn nội bộ an toàn mà không yêu cầu upload vào ProCV trước; sanitizer và alt
+  text vẫn là bắt buộc, readiness chỉ kiểm storage existence cho ảnh media nội
+  bộ. Editor FAQ có thêm tab **Từ URL** để chèn trực tiếp nguồn ảnh hợp lệ.
+- Đưa khối “Bước tiếp theo” và các nút gửi duyệt/duyệt/yêu cầu chỉnh sửa lên đầu
+  workspace biên tập; Lưu/Xem trước nằm trên thanh sticky để không bị che trên
+  mobile. Khi cuộn, topbar admin, thanh hành động và toolbar rich-text được xếp
+  thành các lớp riêng có khoảng cách, không còn chồng/cắt nút hoặc nội dung.
+  Trang chi tiết render ảnh HTTPS/nội bộ, hiển thị cả giờ cập nhật và dùng nhãn
+  “Câu hỏi tiếp” cho điều hướng cuối bài.
+- Loại bỏ outline lồng trên input con của ô tìm kiếm Ant Design; wrapper vẫn giữ
+  focus state rõ ràng ở portal admin và nhà tuyển dụng.
+- Xác minh: 48 regression backend, 889 unit/coverage frontend, 6 targeted unit
+  cho thay đổi tìm kiếm và 6 smoke E2E FAQ public/admin trên
+  desktop/tablet/mobile đều pass; Ruff, format,
+  import-linter, migration drift, lint, architecture và production build xanh.
+
 #### Added — FAQ/Help Center KB-P1 foundation
 
 - Thêm app Django `knowledgebase` theo ADR-0010 với category, article ổn định,

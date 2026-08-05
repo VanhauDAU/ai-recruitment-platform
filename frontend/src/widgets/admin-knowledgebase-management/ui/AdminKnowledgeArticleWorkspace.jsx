@@ -61,14 +61,6 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
         </Space>
       </header>
 
-      <KnowledgeRevisionEditor
-        article={article}
-        categories={categoriesQuery.data || []}
-        canManage={access.has('knowledgebase.manage')}
-        onArticleChange={sync}
-        onDirtyChange={setDirty}
-      />
-
       {article && (
         <section className="knowledge-article-workspace__workflow">
           <KnowledgeRevisionReview
@@ -80,6 +72,14 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
           />
         </section>
       )}
+
+      <KnowledgeRevisionEditor
+        article={article}
+        categories={categoriesQuery.data || []}
+        canManage={access.has('knowledgebase.manage')}
+        onArticleChange={sync}
+        onDirtyChange={setDirty}
+      />
     </div>
   )
 }
