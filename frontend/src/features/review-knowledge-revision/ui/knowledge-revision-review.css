@@ -1,0 +1,19 @@
+.knowledge-workflow-card { border: 1px solid #e6edf3; border-radius: 16px; }
+.knowledge-workflow-card__note { margin-bottom: 16px; }
+.knowledge-workflow-card__summary { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); margin-bottom: 16px; }
+.knowledge-workflow-card__summary div { background: #f8fafc; border-radius: 12px; display: grid; gap: 3px; padding: 12px; }
+.knowledge-workflow-card__summary span { color: #64748b; font-size: 12px; }
+.knowledge-workflow-card__summary strong { color: #0f172a; font-size: 13px; }
+.knowledge-workflow-card__change { background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 8px; color: #475569; padding: 10px 12px; }
+.knowledge-diff { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin: 16px 0; }
+.knowledge-diff > div { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; min-width: 0; padding: 12px; }
+.knowledge-diff span { color: #475569; font-size: 12px; font-weight: 700; }
+.knowledge-diff pre { color: #64748b; font-family: inherit; font-size: 12px; margin: 10px 0 0; max-height: 240px; overflow: auto; white-space: pre-wrap; }
+.knowledge-workflow-history { border-top: 1px solid #eef2f6; margin-top: 20px; padding-top: 18px; }
+.knowledge-workflow-history .ant-timeline { margin-top: 18px; }
+.knowledge-workflow-history .ant-timeline-item-content div { display: flex; justify-content: space-between; }
+.knowledge-workflow-history small { color: #94a3b8; }
+@media (max-width: 720px) {
+  .knowledge-workflow-card__summary,
+  .knowledge-diff { grid-template-columns: 1fr; }
+}

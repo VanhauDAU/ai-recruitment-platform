@@ -1,6 +1,6 @@
 # Đặc tả chức năng FAQ và hướng dẫn sử dụng
 
-> Trạng thái: **Đang triển khai — KB-P0 đến KB-P2 hoàn tất**
+> Trạng thái: **Đang triển khai — KB-P0 đến KB-P3 hoàn tất**
 >
 > Phạm vi ưu tiên: **Cổng ứng viên, public help center và workspace quản trị**
 >
@@ -34,6 +34,12 @@ trải nghiệm sử dụng.
 - Sanitizer giàu nội dung đã được chuyển từ ownership của blog sang
   `common/content_html.py`; blog dùng lại policy tương thích, knowledgebase dùng
   policy HTTPS/internal chặt hơn. Đây là thay đổi kiến trúc đã dự kiến ở mục 8.7.
+- Workspace quản trị triển khai đúng FSD với URL filter server-side, drawer
+  chuyên mục, editor lưu tường minh + bản khôi phục local, preview dùng renderer
+  entity, diff plain text, lịch sử revision và action review/publish tách theo
+  permission. Smoke workflow đã chạy trên desktop, tablet và mobile.
+- Rich-text image library chung nhận policy MIME theo domain; FAQ chỉ cho
+  JPEG/PNG/WebP đúng backend trong khi blog vẫn giữ policy cũ tương thích.
 
 ## 1. Vấn đề hiện tại
 
@@ -783,14 +789,15 @@ bộ chức năng vào một thay đổi lớn.
 | `KB-P0` | Đặc tả này; route, taxonomy, body, search, media, RBAC và SEO đã chốt | **Hoàn tất 2026-08-05** |
 | `KB-P1` | app skeleton, common HTML sanitizer, models/migrations, 7 category, permissions/role mapping | **Hoàn tất 2026-08-05** — targeted test và import-linter pass |
 | `KB-P2` | services/selectors, workflow revision, media upload, admin API, audit và OpenAPI | **Hoàn tất 2026-08-05** — 22 targeted/regression tests, permission/concurrency/query-budget pass |
-| `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | workflow admin E2E pass |
+| `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | **Hoàn tất 2026-08-05** — architecture/build, 13 targeted tests và workflow E2E 3 viewport pass |
 | `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | public leak/404/accessibility/SEO tests pass |
 | `KB-P5` | nội dung ProCV thật, review đủ bảy category và nối các placeholder hiện có | content readiness checklist pass |
 | `KB-P6` | hardening, observability, sitemap/index rollout, runbook và rollback rehearsal | toàn bộ Definition of Done đạt |
 | `KB-AI` | chunking, embedding, pgvector và tích hợp chatbot | chỉ bắt đầu sau `KB-P6` |
 
-Chưa code gì trong `KB-P0`. Bước code tiếp theo duy nhất là `KB-P1`; không triển
-khai frontend trước model/contract và không triển khai `KB-AI` sớm.
+Các phase `KB-P0` đến `KB-P3` đã hoàn tất và được commit độc lập. Bước tiếp theo
+là `KB-P4`; không triển khai nội dung seed/`KB-AI` trước public contract, public
+leak test và SEO shell `noindex`.
 
 ## 15. Bảo mật, vận hành và rollout
 

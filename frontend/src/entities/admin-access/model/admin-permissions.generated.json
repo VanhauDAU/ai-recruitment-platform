@@ -388,6 +388,40 @@
     ]
   },
   {
+    "code": "knowledgebase.manage",
+    "module": "knowledgebase",
+    "label": "Biên tập trung tâm trợ giúp",
+    "description": "Tạo chuyên mục, bài viết, revision và gửi nội dung đi duyệt.",
+    "requires": [
+      "knowledgebase.view"
+    ]
+  },
+  {
+    "code": "knowledgebase.publish",
+    "module": "knowledgebase",
+    "label": "Phát hành trung tâm trợ giúp",
+    "description": "Xuất bản, rollback, lưu trữ bài và thay đổi nội dung đang công khai.",
+    "requires": [
+      "knowledgebase.view"
+    ]
+  },
+  {
+    "code": "knowledgebase.review",
+    "module": "knowledgebase",
+    "label": "Duyệt nội dung trợ giúp",
+    "description": "Phê duyệt hoặc từ chối revision đang chờ kiểm duyệt.",
+    "requires": [
+      "knowledgebase.view"
+    ]
+  },
+  {
+    "code": "knowledgebase.view",
+    "module": "knowledgebase",
+    "label": "Xem trung tâm trợ giúp",
+    "description": "Xem bài, revision, preview và lịch sử vận hành nội dung trợ giúp.",
+    "requires": []
+  },
+  {
     "code": "service_catalog.manage",
     "module": "service_catalog",
     "label": "Quản lý gói dịch vụ",

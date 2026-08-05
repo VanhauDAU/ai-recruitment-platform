@@ -3,7 +3,7 @@ import { Alert, Button, Empty, Input, Modal, Skeleton, Tabs, Upload } from 'antd
 import { useEffect, useState } from 'react'
 import { message } from '@/shared/lib/toast'
 
-const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+const DEFAULT_ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 function defaultAlt(name = '') {
@@ -25,7 +25,15 @@ function errorMessage(error, fallback) {
   return fieldError || fallback
 }
 
-export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadImages, onUploadImage }) {
+export default function RichTextImageLibrary({
+  open,
+  onCancel,
+  onInsert,
+  onLoadImages,
+  onUploadImage,
+  acceptedImageTypes = DEFAULT_ACCEPTED_IMAGE_TYPES,
+  uploadHint = 'JPG, PNG, GIF, WebP · tối đa 5 MB · ảnh lớn tự thu về tối đa 1600 px',
+}) {
   const [activeTab, setActiveTab] = useState('library')
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
@@ -76,8 +84,8 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
 
   const upload = async (file) => {
     if (!onUploadImage) return Upload.LIST_IGNORE
-    if (!ACCEPTED_IMAGE_TYPES.has(file.type) || file.size > MAX_IMAGE_SIZE) {
-      const text = 'Chỉ hỗ trợ JPG, PNG, GIF hoặc WebP tối đa 5 MB.'
+    if (!acceptedImageTypes.includes(file.type) || file.size > MAX_IMAGE_SIZE) {
+      const text = `Chỉ hỗ trợ ${uploadHint}.`
       setError(text)
       message.error(text)
       return Upload.LIST_IGNORE
@@ -92,7 +100,7 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
       setActiveTab('library')
       message.success('Đã tải ảnh lên kho hình ảnh.')
     } catch (uploadError) {
-      const text = errorMessage(uploadError, 'Không thể tải ảnh. Chỉ hỗ trợ JPG, PNG, GIF hoặc WebP tối đa 5 MB.')
+      const text = errorMessage(uploadError, `Không thể tải ảnh. Chỉ hỗ trợ ${uploadHint}.`)
       setError(text)
       message.error(text)
     } finally {
@@ -148,7 +156,7 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
     <div>
       {error && <Alert className="mb-4" type="error" showIcon message={error} />}
       <Upload.Dragger
-        accept="image/jpeg,image/png,image/gif,image/webp"
+        accept={acceptedImageTypes.join(',')}
         beforeUpload={upload}
         disabled={uploading}
         multiple={false}
@@ -156,7 +164,7 @@ export default function RichTextImageLibrary({ open, onCancel, onInsert, onLoadI
       >
         <p className="ant-upload-drag-icon"><CloudUploadOutlined /></p>
         <p className="ant-upload-text">Kéo thả ảnh vào đây hoặc bấm để chọn</p>
-        <p className="ant-upload-hint">JPG, PNG, GIF, WebP · tối đa 5 MB · ảnh lớn tự thu về tối đa 1600 px</p>
+        <p className="ant-upload-hint">{uploadHint}</p>
         {uploading && <Button className="mt-4" loading>Đang tải ảnh…</Button>}
       </Upload.Dragger>
     </div>

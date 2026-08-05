@@ -90,7 +90,7 @@ function TableInsertControl({ editor, disabled }) {
   )
 }
 
-export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage }) {
+export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage, acceptedImageTypes, imageUploadHint }) {
   // `Form.setFieldsValue` có thể chạy trước khi TipTap hoàn tất khởi tạo. Giữ
   // content ban đầu rỗng và đồng bộ ở layout effect để editor luôn lấy đúng
   // giá trị controlled sau khi mở trang sửa tin.
@@ -237,6 +237,8 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
           onInsert={insertImage}
           onLoadImages={onLoadImages}
           onUploadImage={onUploadImage}
+          acceptedImageTypes={acceptedImageTypes}
+          uploadHint={imageUploadHint}
         />
       )}
     </div>

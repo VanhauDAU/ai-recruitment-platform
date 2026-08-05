@@ -214,7 +214,7 @@ sửa và rollout public qua capability switch.
 | KB-P0 | Chốt route, taxonomy, lifecycle, media, RBAC, SEO và rollout | ✅ |
 | KB-P1 | Backend foundation: common sanitizer, model/migration, 7 category và permission | ✅ |
 | KB-P2 | Workflow, media, admin API, audit và OpenAPI | ✅ |
-| KB-P3 | Workspace quản trị, editor, preview, diff và media library | ⬜ |
+| KB-P3 | Workspace quản trị, editor, preview, diff và media library | ✅ |
 | KB-P4 | Help center public, search, detail và SEO noindex | ⬜ |
 | KB-P5 | Nội dung đã xác minh và nối các entry point | ⬜ |
 | KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ⬜ |
@@ -1261,8 +1261,17 @@ common HTML sanitizer, model/migration, seed bảy category và bốn permission
 role mapping `content-cv`. Targeted test, Ruff, migration drift,
 import-linter/layering đều xanh; KB-P2 là bước tiếp theo.
 
-Cập nhật lần cuối: 2026-08-05b (FAQ/Help Center KB-P2): hoàn tất service state
+Cập nhật 2026-08-05b (FAQ/Help Center KB-P2): hoàn tất service state
 machine draft → review → approve/reject → publish/rollback, archive/restore,
 optimistic concurrency, media JPEG/PNG/WebP, admin API/RBAC, audit và OpenAPI.
 22 targeted/regression test, query budget 3, Ruff/import-linter/layering đều xanh;
 KB-P3 là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05c (FAQ/Help Center KB-P3): hoàn tất entity API +
+renderer, bốn feature biên tập/category/review/publish, widget danh sách và
+workspace editor, ba page lazy admin cùng navigation/RBAC. Danh sách giữ filter,
+sort và page trong URL; editor không autosave server, có dirty guard, local
+recovery, preview, media JPEG/PNG/WebP, diff, history và optimistic token 409.
+Lint phần thay đổi sạch, architecture/build xanh, 13 targeted test pass và smoke
+workflow lưu → gửi duyệt → duyệt → xuất bản pass trên desktop/tablet/mobile.
+KB-P4 public help center là bước tiếp theo.

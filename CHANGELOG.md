@@ -38,6 +38,22 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   budget cố định 3 query cho 5 bài. 22 targeted/regression test cùng Ruff,
   migration drift, import-linter và layering gate đều đạt.
 
+#### Added — FAQ/Help Center KB-P3 workspace quản trị
+
+- Thêm route lazy `/admin/app/knowledgebase`, trang tạo và workspace biên tập;
+  navigation và permission catalog dùng đủ `view/manage/review/publish`.
+- Danh sách quản trị có dashboard, tìm kiếm, filter category/type/revision/review
+  due, sort và phân trang server-side lấy URL làm nguồn chuẩn; drawer chuyên mục
+  hỗ trợ tạo, sửa, sắp xếp, bật/tắt và cảnh báo ảnh hưởng nội dung công khai.
+- Editor rich text lưu tường minh, dirty guard, local recovery, media library
+  JPEG/PNG/WebP, readiness checklist, preview sanitized, optimistic concurrency
+  và khóa metadata sau lần publish đầu.
+- Workflow revision có diff với bản public, lịch sử, submit/approve/reject có
+  ghi chú, publish với ngày rà soát, archive/restore; action tách feature và ẩn
+  theo RBAC. Modal workflow mobile dùng footer full-width không chồng nút.
+- Lint phần thay đổi và architecture check sạch, production build đạt, 13
+  targeted test pass; smoke lưu → duyệt → xuất bản pass ở desktop/tablet/mobile.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò

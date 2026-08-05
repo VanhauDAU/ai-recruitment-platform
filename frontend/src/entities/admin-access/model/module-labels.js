@@ -10,6 +10,7 @@ export const MODULE_LABELS = {
   dashboard: 'Tổng quan',
   employer_verification: 'Xác thực nhà tuyển dụng',
   job_moderation: 'Kiểm duyệt tin',
+  knowledgebase: 'FAQ & hướng dẫn',
   service_catalog: 'Dịch vụ nhà tuyển dụng',
   site_setting: 'Cài đặt hệ thống',
 }

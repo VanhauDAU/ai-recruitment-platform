@@ -1,0 +1,49 @@
+.knowledge-article-content {
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.85;
+  overflow-x: auto;
+}
+
+.knowledge-article-content h2,
+.knowledge-article-content h3,
+.knowledge-article-content h4 {
+  color: #0f172a;
+  font-weight: 750;
+  line-height: 1.35;
+  margin: 1.75rem 0 .75rem;
+}
+
+.knowledge-article-content h2 { font-size: 1.45rem; }
+.knowledge-article-content h3 { font-size: 1.2rem; }
+.knowledge-article-content h4 { font-size: 1.05rem; }
+.knowledge-article-content p { margin: 0 0 1rem; }
+.knowledge-article-content ul,
+.knowledge-article-content ol { margin: .75rem 0 1rem 1.4rem; }
+.knowledge-article-content ul { list-style: disc; }
+.knowledge-article-content ol { list-style: decimal; }
+.knowledge-article-content li { margin-bottom: .35rem; }
+.knowledge-article-content a { color: #00a86b; text-decoration: underline; }
+.knowledge-article-content blockquote {
+  border-left: 4px solid #86efac;
+  color: #64748b;
+  margin: 1.25rem 0;
+  padding: .25rem 0 .25rem 1rem;
+}
+.knowledge-article-content img {
+  border-radius: 12px;
+  display: block;
+  height: auto;
+  margin: 1.25rem auto;
+  max-width: 100%;
+}
+.knowledge-article-content img[data-width="25%"] { width: 25%; }
+.knowledge-article-content img[data-width="50%"] { width: 50%; }
+.knowledge-article-content img[data-width="75%"] { width: 75%; }
+.knowledge-article-content img[data-width="100%"] { width: 100%; }
+.knowledge-article-content img[data-align="left"] { margin-left: 0; margin-right: auto; }
+.knowledge-article-content img[data-align="right"] { margin-left: auto; margin-right: 0; }
+.knowledge-article-content table { border-collapse: collapse; margin: 1.25rem 0; min-width: 560px; width: 100%; }
+.knowledge-article-content td,
+.knowledge-article-content th { border: 1px solid #e2e8f0; padding: .65rem .75rem; text-align: left; }
+.knowledge-article-content th { background: #f8fafc; color: #0f172a; font-weight: 700; }
