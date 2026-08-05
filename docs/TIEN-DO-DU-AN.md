@@ -1343,3 +1343,10 @@ luồng tạo revision bài đã publish bị kẹt do `change_summary` bắt bu
 mở lại để tiếp tục chỉnh. Scope lại CSS workflow, nút gửi duyệt/duyệt/yêu cầu
 sửa còn cao 30 px và không full-width trên mobile. Targeted unit 5/5, smoke
 admin 3/3 và public 3/3 trên desktop/tablet/mobile đều pass; lint sạch.
+
+Cập nhật 2026-08-05j (FAQ — giữ vị trí item sidebar): đổi eyebrow “Trong chuyên
+mục này” thành “Tên chuyên mục”. Public compact article bổ sung `order`; sidebar
+chi tiết ghép bài hiện tại với related articles rồi sắp xếp theo cùng contract
+của danh sách. Vì vậy click bài chỉ đổi active state, không còn đẩy item lên đầu
+và làm người đọc lạc vị trí. Public API 9/9 và frontend unit 2/2 pass.
+Smoke public 3/3 trên desktop/tablet/mobile pass.

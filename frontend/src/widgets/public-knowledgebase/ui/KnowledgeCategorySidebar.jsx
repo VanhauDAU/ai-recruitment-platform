@@ -7,6 +7,14 @@ export default function KnowledgeCategorySidebar({
   currentArticle,
   relatedArticles = [],
 }) {
+  const categoryArticles = currentArticle
+    ? [currentArticle, ...relatedArticles].sort((left, right) => (
+      Number(left.order) - Number(right.order)
+      || left.title.localeCompare(right.title, 'vi')
+      || left.public_id.localeCompare(right.public_id)
+    ))
+    : []
+
   return (
     <aside className="knowledge-sidebar" aria-label="Chuyên mục trợ giúp">
       <nav className="knowledge-sidebar__card" aria-label="Chuyên mục trợ giúp">
@@ -25,19 +33,13 @@ export default function KnowledgeCategorySidebar({
 
       {currentArticle && (
         <nav className="knowledge-sidebar__card knowledge-sidebar__questions" aria-label="Bài trong chuyên mục">
-          <p className="knowledge-sidebar__eyebrow">Trong chuyên mục này</p>
-          <Link
-            to={knowledgeArticlePath(currentArticle)}
-            className="knowledge-sidebar__question is-current"
-            aria-current="page"
-          >
-            {currentArticle.title}
-          </Link>
-          {relatedArticles.map((article) => (
+          <p className="knowledge-sidebar__eyebrow">Tên chuyên mục</p>
+          {categoryArticles.map((article) => (
             <Link
               key={article.public_id}
               to={knowledgeArticlePath(article)}
-              className="knowledge-sidebar__question"
+              className={`knowledge-sidebar__question ${article.public_id === currentArticle.public_id ? 'is-current' : ''}`}
+              aria-current={article.public_id === currentArticle.public_id ? 'page' : undefined}
             >
               {article.title}
             </Link>

@@ -160,6 +160,15 @@ test('public knowledgebase: simple browse, detail and hidden-content 404 stay re
   await expect(page.getByRole('img', { name: 'Minh họa đặt lại mật khẩu' })).toBeVisible()
   await expect(page.getByText(/Cập nhật/)).toContainText(/\d{2}:\d{2}/)
   await expect(page.getByText('Câu hỏi tiếp')).toBeVisible()
+  if ((page.viewportSize()?.width || 0) > 760) {
+    const categoryQuestions = page.getByRole('navigation', { name: 'Bài trong chuyên mục' })
+    await expect(categoryQuestions.getByText('Tên chuyên mục')).toBeVisible()
+    await expect(categoryQuestions.getByRole('link')).toHaveText([
+      loginArticle.title,
+      resetArticle.title,
+    ])
+    await expect(categoryQuestions.getByRole('link', { name: resetArticle.title })).toHaveAttribute('aria-current', 'page')
+  }
   await expect(page.locator('h1')).toHaveCount(1)
 
   if ((page.viewportSize()?.width || 0) > 760) {

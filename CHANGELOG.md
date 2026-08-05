@@ -18,7 +18,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   định, bỏ mục “Tất cả chủ đề”, giữ nguyên vị trí khi mở chi tiết và lấy màu chữ
   “Chuyên mục” từ `brand_primary_color` qua CSS variable của hệ thống. Khung
   danh sách dùng nền trong suốt; từng câu hỏi là thẻ nền trắng có khoảng hở,
-  viền và hover riêng thay vì dính thành một mảng.
+  viền và hover riêng thay vì dính thành một mảng. Sidebar chi tiết đổi nhãn
+  “Trong chuyên mục này” thành “Tên chuyên mục”; bài đang xem chỉ nhận trạng
+  thái active và giữ nguyên vị trí theo `order`, không còn bị đưa lên đầu.
 - Media library trở thành tùy chọn: revision chấp nhận ảnh URL HTTPS hoặc đường
   dẫn nội bộ an toàn mà không yêu cầu upload vào ProCV trước; sanitizer và alt
   text vẫn là bắt buộc, readiness chỉ kiểm storage existence cho ảnh media nội

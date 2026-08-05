@@ -715,6 +715,8 @@ Sau khi public help center hoạt động:
 - nút hướng dẫn tìm việc an toàn điều hướng tới category tương ứng;
 - mục hướng dẫn viết CV điều hướng tới category CV;
 - không giữ toast “Nội dung sẽ sớm ra mắt” cho các link đã có dữ liệu public.
+- sidebar chi tiết giữ thứ tự bài giống danh sách public theo `order`; việc chọn
+  bài chỉ thay active state, không đưa bài hiện tại lên đầu danh sách.
 
 ## 11. Workspace quản trị
 

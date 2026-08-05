@@ -495,6 +495,9 @@ publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đ�
 Frontend thu thập `change_summary` trong modal **Tạo revision mới** trước khi
 gọi `POST .../revisions/`; không validate form revision đang ở trạng thái chỉ
 đọc. Response tạo draft mới làm editor mở lại và cho phép tiếp tục sửa tóm tắt.
+Các object `related_articles`, `previous_article` và `next_article` trong detail
+public có trường `order`; sidebar ghép bài hiện tại với related rồi sắp xếp theo
+`order`, không dùng trạng thái được chọn để thay đổi vị trí.
 Upload tùy chọn chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600. Body nhận ảnh
 từ media library, đường dẫn nội bộ hoặc URL HTTPS mà không bắt buộc upload vào
 ProCV trước; ảnh vẫn phải có alt text có nghĩa. Khi không tìm kiếm, trang ứng

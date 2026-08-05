@@ -135,6 +135,7 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
             {item['public_id'] for item in response.data['related_articles']},
         )
         self.assertLessEqual(len(response.data['related_articles']), 6)
+        self.assertTrue(all('order' in item for item in response.data['related_articles']))
         self.assertIsNotNone(response.data['next_article'])
         for article in (self.draft, self.archived, self.inactive_article):
             hidden = self.client.get(

@@ -50,6 +50,7 @@ class PublicArticleCompactSerializer(PublicArticleListSerializer):
             'article_type',
             'title',
             'excerpt',
+            'order',
             'updated_at',
         ]
 
