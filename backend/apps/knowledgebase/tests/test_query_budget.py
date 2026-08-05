@@ -41,7 +41,10 @@ class KnowledgebaseQueryBudgetTests(APITestCase):
         # 1 COUNT pagination + 1 SELECT article/category/published revision +
         # 1 batched prefetch cho toàn bộ revision/actor của trang.
         with self.assertNumQueries(ADMIN_KNOWLEDGE_ARTICLE_LIST_QUERY_BUDGET):
-            response = self.client.get(reverse('kb-admin-article-list'))
+            response = self.client.get(
+                reverse('kb-admin-article-list'),
+                {'q': 'Bài ngân sách'},
+            )
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(len(response.data['results']), 5)

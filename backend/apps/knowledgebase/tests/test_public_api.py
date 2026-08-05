@@ -28,9 +28,21 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
+        cls.seeded_public_ids = set(
+            KnowledgeArticle.objects.filter(
+                lifecycle_state=KnowledgeArticle.LifecycleState.ACTIVE,
+                category__is_active=True,
+                published_revision__status='APPROVED',
+            ).values_list('public_id', flat=True)
+        )
+        cls.seeded_category_count = KnowledgeArticle.objects.filter(
+            lifecycle_state=KnowledgeArticle.LifecycleState.ACTIVE,
+            category=cls.category,
+            published_revision__status='APPROVED',
+        ).count()
         cls.public_article = cls.publish_article()
         cls.guide = cls.publish_article(
-            title='Cách lấy lại mật khẩu nhanh chóng',
+            title='Cách lấy lại mật khẩu mã Zebracompass',
             body='<h2>Khôi phục</h2><p>Mở trang quên mật khẩu và kiểm tra email.</p>',
             article_type=KnowledgeArticle.ArticleType.GUIDE,
             order=2,
@@ -69,7 +81,10 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         public_ids = {item['public_id'] for item in response.data['results']}
-        self.assertEqual(public_ids, {self.public_article.public_id, self.guide.public_id})
+        self.assertEqual(
+            public_ids,
+            self.seeded_public_ids | {self.public_article.public_id, self.guide.public_id},
+        )
         forbidden = {
             'created_by',
             'submitted_by',
@@ -87,7 +102,7 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
     def test_search_type_validation_pagination_and_stable_filtering(self):
         searched = self.client.get(
             reverse('kb-public-article-list'),
-            {'q': 'mat khau', 'type': 'guide', 'page_size': 1},
+            {'q': 'zebracompass', 'type': 'guide', 'page_size': 1},
         )
         too_short = self.client.get(reverse('kb-public-article-list'), {'q': 'a'})
         too_long = self.client.get(reverse('kb-public-article-list'), {'q': 'x' * 121})
@@ -101,7 +116,7 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
         self.assertEqual(too_long.status_code, 400)
         self.assertEqual(invalid_type.status_code, 400)
         self.assertEqual(empty_search.status_code, 200)
-        self.assertEqual(empty_search.data['count'], 2)
+        self.assertEqual(empty_search.data['count'], len(self.seeded_public_ids) + 2)
 
     def test_detail_has_navigation_but_hidden_articles_share_the_same_404(self):
         response = self.client.get(
@@ -113,7 +128,11 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertIn('<h2>', response.data['body'])
-        self.assertEqual(len(response.data['related_articles']), 1)
+        self.assertIn(
+            self.guide.public_id,
+            {item['public_id'] for item in response.data['related_articles']},
+        )
+        self.assertLessEqual(len(response.data['related_articles']), 6)
         self.assertIsNotNone(response.data['next_article'])
         for article in (self.draft, self.archived, self.inactive_article):
             hidden = self.client.get(
@@ -129,7 +148,10 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         by_slug = {item['slug']: item for item in response.data}
-        self.assertEqual(by_slug[self.category.slug]['article_count'], 2)
+        self.assertEqual(
+            by_slug[self.category.slug]['article_count'],
+            self.seeded_category_count + 2,
+        )
         self.assertNotIn(self.inactive_category.slug, by_slug)
 
     def test_cache_headers_conditional_request_and_public_mutation_invalidation(self):
@@ -179,7 +201,10 @@ class KnowledgebasePublicQueryBudgetTests(PublishedKnowledgeMixin, APITestCase):
         with self.assertNumQueries(1):
             categories = self.client.get(reverse('kb-public-category-list'))
         with self.assertNumQueries(2):
-            articles = self.client.get(reverse('kb-public-article-list'))
+            articles = self.client.get(
+                reverse('kb-public-article-list'),
+                {'q': 'cau hoi ngan sach'},
+            )
         with self.assertNumQueries(3):
             detail = self.client.get(
                 reverse(

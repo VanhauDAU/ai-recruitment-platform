@@ -450,8 +450,11 @@ không lộ actor, review note, source reference, revision token hay revision ch
 publish. Public response dùng `Cache-Control: public, max-age=60,
 stale-while-revalidate=300` và ETag; conditional request khớp trả `304`.
 `KNOWLEDGEBASE_PUBLIC_ENABLED=false` làm public API fail-closed `404` nhưng giữ
-nguyên admin/data. Admin API luôn yêu cầu tài khoản quản trị, permission cụ thể
-và trả `Cache-Control: private, no-store`.
+nguyên admin/data. `GET /api/site/settings/` đồng thời trả capability boolean
+`knowledgebase_public_enabled` lấy trực tiếp từ switch này để frontend ẩn/hiện
+entry point; đây không phải row site setting mà admin có thể sửa. Admin API luôn
+yêu cầu tài khoản quản trị, permission cụ thể và trả
+`Cache-Control: private, no-store`.
 
 | Method | Endpoint | Quyền chính | Mục đích |
 | --- | --- | --- | --- |

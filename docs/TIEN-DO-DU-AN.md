@@ -216,7 +216,7 @@ sửa và rollout public qua capability switch.
 | KB-P2 | Workflow, media, admin API, audit và OpenAPI | ✅ |
 | KB-P3 | Workspace quản trị, editor, preview, diff và media library | ✅ |
 | KB-P4 | Help center public, search, detail và SEO noindex | ✅ |
-| KB-P5 | Nội dung đã xác minh và nối các entry point | ⬜ |
+| KB-P5 | Nội dung đã xác minh và nối các entry point | ✅ |
 | KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ⬜ |
 
 ## Epic thông báo chạy đa cổng (AN, 2026-07-29)
@@ -1276,7 +1276,7 @@ Lint phần thay đổi sạch, architecture/build xanh, 13 targeted test pass v
 workflow lưu → gửi duyệt → duyệt → xuất bản pass trên desktop/tablet/mobile.
 KB-P4 public help center là bước tiếp theo.
 
-Cập nhật lần cuối: 2026-08-05d (FAQ/Help Center KB-P4): hoàn tất public selector
+Cập nhật 2026-08-05d (FAQ/Help Center KB-P4): hoàn tất public selector
 không lộ draft/rejected/archived/inactive, ba API browse/search/detail có
 throttle/cache/ETag/kill switch và SEO shell canonical + Article/BreadcrumbList
 giữ `noindex`. Frontend có ba route `/tro-giup`, search/type/page lấy URL làm
@@ -1284,3 +1284,14 @@ nguồn chuẩn, trạng thái loading/empty/error/404, layout sidebar + questio
 responsive và renderer ảnh lỗi an toàn. 28/28 test knowledgebase backend, 9
 frontend regression, lint/architecture/build và E2E public ở ba viewport đều
 pass. KB-P5 nội dung đã xác minh và entry point là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05e (FAQ/Help Center KB-P5): thêm bảy bài ProCV
+approved/published, mỗi category active có một bài; nội dung được đối chiếu với
+route, component và hành vi đăng ký/khôi phục, bảo mật, tìm việc, ứng tuyển, CV,
+báo cáo rủi ro và hỗ trợ. Data migration additive có ID ổn định, không ghi đè
+bài đã có và không xóa dữ liệu khi reverse. Public site-settings expose
+`knowledgebase_public_enabled` từ backend kill switch; hai mục trong floating
+actions và mục hướng dẫn CV trên header chỉ hiện khi capability bật, điều hướng
+tới route canonical thay cho toast sắp ra mắt. 26 backend test và 4 frontend
+regression test pass; Ruff, oxlint và architecture gate sạch. KB-P6 hardening,
+observability, sitemap/index và runbook là bước tiếp theo.

@@ -1,6 +1,6 @@
 # Đặc tả chức năng FAQ và hướng dẫn sử dụng
 
-> Trạng thái: **Đang triển khai — KB-P0 đến KB-P4 hoàn tất**
+> Trạng thái: **Đang triển khai — KB-P0 đến KB-P5 hoàn tất**
 >
 > Phạm vi ưu tiên: **Cổng ứng viên, public help center và workspace quản trị**
 >
@@ -48,6 +48,12 @@ trải nghiệm sử dụng.
   SEO shell dùng canonical/Open Graph/Article + BreadcrumbList nhưng giữ
   `noindex, nofollow` đến content readiness; smoke browse → search → detail →
   404 đã pass trên desktop, tablet và mobile.
+- KB-P5 thêm bảy bài hướng dẫn ProCV đã đối chiếu trực tiếp route/component, một
+  bài approved/published cho mỗi category active. Migration có ID ổn định,
+  additive, không ghi đè article cùng slug và không reverse-delete lịch sử.
+- Public site-settings lấy `knowledgebase_public_enabled` trực tiếp từ backend
+  kill switch. Floating actions và header fail-closed theo capability này; ba
+  placeholder FAQ, tìm việc an toàn và hướng dẫn CV đã nối route canonical.
 
 ## 1. Vấn đề hiện tại
 
@@ -799,14 +805,13 @@ bộ chức năng vào một thay đổi lớn.
 | `KB-P2` | services/selectors, workflow revision, media upload, admin API, audit và OpenAPI | **Hoàn tất 2026-08-05** — 22 targeted/regression tests, permission/concurrency/query-budget pass |
 | `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | **Hoàn tất 2026-08-05** — architecture/build, 13 targeted tests và workflow E2E 3 viewport pass |
 | `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | **Hoàn tất 2026-08-05** — 12 backend public/cache/SEO test, 9 frontend regression và E2E 3 viewport pass |
-| `KB-P5` | nội dung ProCV thật, review đủ bảy category và nối các placeholder hiện có | content readiness checklist pass |
+| `KB-P5` | nội dung ProCV thật, review đủ bảy category và nối các placeholder hiện có | **Hoàn tất 2026-08-05** — 7/7 category có bài public đã đối chiếu; 26 backend và 4 frontend regression test pass |
 | `KB-P6` | hardening, observability, sitemap/index rollout, runbook và rollback rehearsal | toàn bộ Definition of Done đạt |
 | `KB-AI` | chunking, embedding, pgvector và tích hợp chatbot | chỉ bắt đầu sau `KB-P6` |
 
-Các phase `KB-P0` đến `KB-P4` đã hoàn tất và được commit độc lập. Bước tiếp theo
-là `KB-P5`: chỉ publish nội dung ProCV đã đối chiếu với route/hành vi thật và
-nối entry point sau khi capability public sẵn sàng. Không bắt đầu `KB-AI` trước
-public contract, content readiness và hardening `KB-P6`.
+Các phase `KB-P0` đến `KB-P5` đã hoàn tất và được commit độc lập. Bước tiếp theo
+là `KB-P6`: hardening, observability, sitemap/index rollout, runbook và diễn tập
+rollback. Không bắt đầu `KB-AI` trước khi hardening `KB-P6` hoàn tất.
 
 ## 15. Bảo mật, vận hành và rollout
 

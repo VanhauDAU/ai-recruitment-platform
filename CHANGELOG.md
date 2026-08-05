@@ -73,6 +73,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   architecture, build pass và smoke browse → search → detail → 404 pass trên
   desktop/tablet/mobile.
 
+#### Added — FAQ/Help Center KB-P5 verified content và entry points
+
+- Thêm bảy bài ProCV đã đối chiếu với route/component thật, mỗi category active
+  có một revision approved đang publish; bao phủ tài khoản, bảo mật, tìm việc,
+  ứng tuyển, CV, tìm việc an toàn và liên hệ hỗ trợ mà không sao chép nội dung
+  hay tài sản từ website tham chiếu.
+- Data migration dùng public ID ổn định, chỉ thêm khi slug chưa tồn tại, không
+  ghi đè nội dung admin và không reverse-delete dữ liệu/revision sau rollout.
+- Public site-settings expose `knowledgebase_public_enabled` trực tiếp từ
+  backend kill switch và frontend mặc định fail-closed; nối hai mục Help Center
+  trong floating actions cùng mục hướng dẫn CV trên header tới route canonical.
+- 26 backend test và 4 frontend regression test pass; Ruff, oxlint và kiểm tra
+  kiến trúc frontend đều đạt.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò
