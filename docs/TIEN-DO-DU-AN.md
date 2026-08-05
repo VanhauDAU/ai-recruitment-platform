@@ -202,6 +202,23 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 8 — Deployment | 0/2 | ⬜ |
 | **Tổng** | **64/88 + 1 phần** | |
 
+## Epic FAQ và hướng dẫn sử dụng (KB, 2026-08-05)
+
+Đặc tả canonical:
+[FAQ và hướng dẫn sử dụng](./03-database/ke-hoach-faq-huong-dan.md). Triển khai
+trên nhánh `codex/feat-faq-help-center`, giữ revision đã publish độc lập với bản
+sửa và rollout public qua capability switch.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| KB-P0 | Chốt route, taxonomy, lifecycle, media, RBAC, SEO và rollout | ✅ |
+| KB-P1 | Backend foundation: common sanitizer, model/migration, 7 category và permission | ✅ |
+| KB-P2 | Workflow, media, admin/public API, audit và OpenAPI | ⬜ |
+| KB-P3 | Workspace quản trị, editor, preview, diff và media library | ⬜ |
+| KB-P4 | Help center public, search, detail và SEO noindex | ⬜ |
+| KB-P5 | Nội dung đã xác minh và nối các entry point | ⬜ |
+| KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ⬜ |
+
 ## Epic thông báo chạy đa cổng (AN, 2026-07-29)
 
 Thiết kế canonical:
@@ -1238,3 +1255,8 @@ Cập nhật 2026-08-03a (UI — linh vật ProCV thay spinner chờ): thay spin
 Cập nhật 2026-08-04a (TTS — mở giọng đọc cho mọi bề mặt, không riêng blog): hạ tầng đọc đã có sẵn và tốt (tts-service nhận text thô, single-flight theo `artifact_key`, cache, `PcmStreamPlayer` Web Audio), nhưng contract public bị khoá cứng vào bài viết: `SpeechSessionRequestSerializer` chỉ nhận `source_type='blog_post'`, view bắt buộc `published_blog_post_for_speech()`, normalizer nhận **model `Post`** và parse HTML, còn engine phát audio thì nằm trong `features/listen-to-blog-post/model/` nên slice khác không được import (feature không import feature). Mở thêm `source_type='text'` trên chính endpoint cũ: normalizer generic `plain_text_speech_script` (`plain-speech-v1`, mỗi dòng là một block để giữ nhịp ngắt, vẫn chạy HTML parser để không đọc to thẻ và không announce "đoạn mã được lược bỏ" như luồng bài viết), service `create_text_speech_session` **không** đăng ký `BlogSpeechAsset` và không bắn Celery finalizer — câu nói quá ngắn và quá nhiều để trả giá 1 row DB + 1 MP3 mỗi lượt, nên chỉ chạy live stream. `source_revision` ghim hằng `text:v1` để cùng một câu từ bất kỳ bề mặt nào rơi vào **một** artifact identity (đo thực tế: lần đọc thứ hai trả `cached: true`, trùng `artifact_key`). Rào chắn cho input đến từ client: `SPEECH_MAX_ADHOC_TEXT_CHARS=600` và scope throttle riêng `speech_adhoc` 90/hour (`get_throttles()` chọn scope theo `source_type`) để robot nói nhiều không ăn hết hạn ngạch 60/hour của người đang nghe blog — engine chỉ có `TTS_MAX_CONCURRENT_STREAMS=1` worker. Frontend: nâng `PcmStreamPlayer`/`NativeAudioPlayer`/`pcm-stream-format` + chính sách chờ 429/503 lên `shared/lib/speech/`, gom vòng retry mở luồng thành `playSpeechStream` dùng chung (blog và ad-hoc không còn copy nhau), thêm `createTextSpeechSession` vào `entities/speech` và feature mới `features/speak-text` với `useSpeak()` — `speak(text)` là đủ. Ràng buộc không bỏ được: AudioContext chỉ mở trong cử chỉ người dùng nên lần phát đầu phải nằm trong handler click/tap; bề mặt tự nói (trợ lý) gọi `unlock()` ở lần bấm đầu tiên rồi `speak()` tự do. Verify: ruff/ruff format/lint-imports/makemigrations sạch, 30/30 test app speech (thêm test cho throttle scope tách biệt, chặn text rỗng/quá dài, markup không được đọc to, không sinh artifact), 720 pass backend + coverage 86,31%; oxlint/dependency-cruiser (1026 module, 0 vi phạm)/build, 803 vitest (217 file, thêm 9 test `useSpeak`), 173/174 Playwright smoke. Đo trên stack docker thật: POST text → 201 + 230 KB WAV 48 kHz mono trong 0,83 s, lặp lại → `cached: true`, text rỗng và 700 ký tự đều 400. Nợ đã biết: 8 test `apps/jobs/test_posting_workflows.py` đang đỏ sẵn từ trước (deadline windows, không liên quan) và `blog-admin-permissions.spec.js` flaky (chạy lại xanh).
 
 Cập nhật 2026-08-04b (Trợ lý ứng viên — robot đọc câu trả lời): nối `useSpeak()` vào `widgets/candidate-assistant` qua hook `useAssistantVoice(messages)`. Chỉ đọc câu trả lời cho tin nhắn người dùng vừa gửi: mốc `spokenIdRef` khởi tạo bằng ID tin nhắn cuối lúc mount nên **lời chào không bao giờ được đọc** — panel là lazy chunk, lúc nó mount thì cử chỉ mở đã kết thúc và trình duyệt chặn autoplay, mà tự phát tiếng khi người dùng chưa hỏi gì cũng là hành vi gây khó chịu. `voice.prepare()` gọi `unlock()` ngay trong handler submit — cử chỉ hợp lệ duy nhất trước khi câu trả lời về sau ~1,1s. Giọng cố định `north-female-news` (Mai Anh). Nút loa trong header panel bật/tắt, lưu `procv_assistant_voice_v1` ở localStorage, tắt thì `stop()` ngay và không đọc các câu sau; bật lại cũng là cử chỉ hợp lệ để mở Web Audio. Bật tiếng giữa chừng không đọc lại câu cũ. Mascot dùng `talking={typing || voice.speaking}` và dòng trạng thái thêm "Đang đọc câu trả lời…". Verify: oxlint sạch, dependency-cruiser 1030 module 0 vi phạm, 820 test/219 file vitest (thêm 9 test `useAssistantVoice` + 2 test tích hợp trong `CandidateAssistant`), build, 174/174 Playwright smoke. Kiểm chứng trên browser thật với stack docker: gửi câu hỏi → POST `/api/speech/sessions/` 201 → stream `/tts/v1/streams/...` phát hết bài rồi tự về trạng thái nghỉ, patch `AbortController` xác nhận **0 lần abort** từ phía client (dòng `ERR_ABORTED` trong network panel chỉ là cách devtools ghi nhận response streaming dài); bấm tắt tiếng → `aria-pressed=false`, localStorage `off`, câu sau không phát.
+
+Cập nhật lần cuối: 2026-08-05a (FAQ/Help Center KB-P1): hoàn tất app skeleton,
+common HTML sanitizer, model/migration, seed bảy category và bốn permission với
+role mapping `content-cv`. Targeted test, Ruff, migration drift,
+import-linter/layering đều xanh; KB-P2 là bước tiếp theo.

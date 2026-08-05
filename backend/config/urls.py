@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/blog/', include('apps.blog.urls')),
     path('api/privacy/', include('apps.privacy.urls')),
     path('api/speech/', include('apps.speech.urls')),
+    path('api/knowledgebase/', include('apps.knowledgebase.urls')),
 ]
 
 if settings.DJANGO_ADMIN_ENABLED:

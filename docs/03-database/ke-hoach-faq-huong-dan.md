@@ -1,6 +1,6 @@
 # Đặc tả chức năng FAQ và hướng dẫn sử dụng
 
-> Trạng thái: **Đặc tả đã chốt (KB-P0 hoàn tất) — chưa triển khai**
+> Trạng thái: **Đang triển khai — KB-P0, KB-P1 hoàn tất**
 >
 > Phạm vi ưu tiên: **Cổng ứng viên, public help center và workspace quản trị**
 >
@@ -20,6 +20,20 @@ embedding và `KnowledgeChunk` **không nằm trong release FAQ đầu tiên**.
 Không sao chép nguyên văn bài viết, hình ảnh, thương hiệu hoặc dữ liệu của
 TopCV. Nguồn tham khảo chỉ được dùng để phân tích information architecture và
 trải nghiệm sử dụng.
+
+### Nhật ký rà soát triển khai 2026-08-05
+
+- Đã đối chiếu trực tiếp trang danh sách và trang chi tiết TopCV: giữ mô hình
+  sidebar + search + card câu hỏi + điều hướng kế tiếp, nhưng dùng shell/màu và
+  nội dung riêng của ProCV như đặc tả.
+- RBAC của repo là catalogue do code sở hữu. Vì vậy permission knowledgebase
+  được thêm đồng thời vào registry, dependency map, role matrix và data
+  migration để lệnh sync không vô hiệu hóa grant sau deploy.
+- Media abstraction chung hiện chấp nhận GIF; knowledgebase sẽ khóa riêng
+  JPEG/PNG/WebP và lưu width/height ở service upload trong KB-P2.
+- Sanitizer giàu nội dung đã được chuyển từ ownership của blog sang
+  `common/content_html.py`; blog dùng lại policy tương thích, knowledgebase dùng
+  policy HTTPS/internal chặt hơn. Đây là thay đổi kiến trúc đã dự kiến ở mục 8.7.
 
 ## 1. Vấn đề hiện tại
 
@@ -767,7 +781,7 @@ bộ chức năng vào một thay đổi lớn.
 | Giai đoạn | Kết quả bàn giao | Điều kiện qua phase |
 | --- | --- | --- |
 | `KB-P0` | Đặc tả này; route, taxonomy, body, search, media, RBAC và SEO đã chốt | **Hoàn tất 2026-08-05** |
-| `KB-P1` | app skeleton, common HTML sanitizer, models/migrations, 7 category, permissions/role mapping | constraint, migration và import-linter pass |
+| `KB-P1` | app skeleton, common HTML sanitizer, models/migrations, 7 category, permissions/role mapping | **Hoàn tất 2026-08-05** — targeted test và import-linter pass |
 | `KB-P2` | services/selectors, workflow revision, media upload, admin API, audit và OpenAPI | permission/concurrency/query-budget tests pass |
 | `KB-P3` | entity/features/widgets/pages admin, editor, preview, diff và media library | workflow admin E2E pass |
 | `KB-P4` | public API/search/cache + ba public page `/tro-giup` và SEO shell `noindex` | public leak/404/accessibility/SEO tests pass |

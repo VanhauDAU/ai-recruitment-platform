@@ -6,6 +6,22 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-08-05
+
+#### Added — FAQ/Help Center KB-P1 foundation
+
+- Thêm app Django `knowledgebase` theo ADR-0010 với category, article ổn định,
+  revision có partial unique constraint cho một bản mở và media asset có kích
+  thước xác minh; ID public dùng prefix `kbc/kba/kbr/kbm`.
+- Seed idempotent đúng bảy chuyên mục đã chốt và bốn permission
+  `knowledgebase.view/manage/review/publish`; role `content-cv` staff được biên
+  tập, manager được duyệt/phát hành.
+- Tách sanitizer HTML giàu nội dung dùng chung sang `common/content_html.py`,
+  chặn active content, credential và URL scheme nguy hiểm; blog chuyển sang
+  helper chung mà vẫn giữ policy URL tương thích.
+- Targeted backend test, migration drift check, Ruff, import-linter và backend
+  layering gate đều đạt.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò

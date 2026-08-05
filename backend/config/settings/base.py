@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'apps.privacy',
     'apps.services',
     'apps.speech',
+    'apps.knowledgebase',
 ]
 
 MIDDLEWARE = [
