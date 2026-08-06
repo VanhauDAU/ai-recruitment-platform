@@ -15,6 +15,7 @@
 | [03-database](03-database/)     | [ke-hoach-database-phan-quyen-admin.md](03-database/ke-hoach-database-phan-quyen-admin.md) | RBAC admin theo phòng ban, role, membership và audit |
 | [03-database](03-database/)     | [ke-hoach-he-thong-thong-bao-chay.md](03-database/ke-hoach-he-thong-thong-bao-chay.md) | Dải thông báo đa cổng: revision, targeting, priority, consent, rollout |
 | [03-database](03-database/)     | [ke-hoach-faq-huong-dan.md](03-database/ke-hoach-faq-huong-dan.md) | Đặc tả full-stack FAQ/hướng dẫn ứng viên, workflow duyệt và lộ trình triển khai trước chatbot |
+| [03-database](03-database/)     | [ke-hoach-chatbot-ung-vien-faq.md](03-database/ke-hoach-chatbot-ung-vien-faq.md) | Chatbot ứng viên: retrieval FAQ tìm việc (pgvector + Ollama embedding), phase CB-P0…P3 |
 | [04-api](04-api/)               | [tai-lieu-api.md](04-api/tai-lieu-api.md)                        | Tài liệu API (endpoint, request/response)                               |
 | [04-api](04-api/)               | [frontend-response-contracts.md](04-api/frontend-response-contracts.md) | Contract response tối thiểu theo từng màn hình frontend             |
 | [04-api](04-api/)               | [cookie-consent-va-job-view-tracking.md](04-api/cookie-consent-va-job-view-tracking.md) | Consent cookie, browser storage và job-view tracking |
