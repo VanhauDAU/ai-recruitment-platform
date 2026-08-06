@@ -114,3 +114,34 @@ export function resolveAnnouncementThemeTokens(values = {}) {
   }
   return ANNOUNCEMENT_KIND_TOKENS[values.kind] || ANNOUNCEMENT_PRESET_TOKENS.brand
 }
+
+const OVERLAY_DARK_TEXT = Object.freeze({
+  accent: '#ffffff',
+  fg: '#f8fafc',
+  badgeBg: 'rgb(255 255 255 / 94%)',
+  badgeFg: '#0f172a',
+  badgeBorder: 'rgb(255 255 255 / 70%)',
+})
+
+/**
+ * Phủ tối → chữ/icon/CTA trắng; badge nền sáng + chữ đậm.
+ * Phủ sáng / không phủ → giữ token theme.
+ */
+export function applyOverlayTextContrast(tokens, overlay) {
+  if (overlay === ANNOUNCEMENT_BG_OVERLAYS.DARK) {
+    return {
+      ...tokens,
+      accent: OVERLAY_DARK_TEXT.accent,
+      fg: OVERLAY_DARK_TEXT.fg,
+      badgeBg: OVERLAY_DARK_TEXT.badgeBg,
+      badgeFg: OVERLAY_DARK_TEXT.badgeFg,
+      badgeBorder: OVERLAY_DARK_TEXT.badgeBorder,
+    }
+  }
+  return {
+    ...tokens,
+    badgeBg: null,
+    badgeFg: null,
+    badgeBorder: null,
+  }
+}

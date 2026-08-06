@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ANNOUNCEMENT_BG_OVERLAYS,
   ANNOUNCEMENT_THEME_MODES,
+  applyOverlayTextContrast,
   resolveAnnouncementThemeTokens,
 } from './announcement.presentation'
 
@@ -28,5 +30,13 @@ describe('resolveAnnouncementThemeTokens', () => {
     expect(tokens.accent).toBe('#112233')
     expect(tokens.fg).toBe('#445566')
     expect(tokens.bgFrom).toBeTruthy()
+  })
+
+  it('switches to light text under dark overlay', () => {
+    const base = resolveAnnouncementThemeTokens({ kind: 'info' })
+    const tokens = applyOverlayTextContrast(base, ANNOUNCEMENT_BG_OVERLAYS.DARK)
+    expect(tokens.fg).toBe('#f8fafc')
+    expect(tokens.accent).toBe('#ffffff')
+    expect(tokens.badgeFg).toBe('#0f172a')
   })
 })

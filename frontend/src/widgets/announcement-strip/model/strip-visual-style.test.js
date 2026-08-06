@@ -17,12 +17,27 @@ describe('buildAnnouncementStripVisual', () => {
         imageUrl: 'https://cdn.example.com/980x31.webp',
         fit: 'cover',
         position: 'center',
-        overlay: 'dark',
+        overlay: 'none',
       },
     })
     expect(visual.hasBackgroundImage).toBe(true)
     expect(visual.className).toContain('has-bg')
     expect(visual.style.backgroundImage).toContain('url("https://cdn.example.com/980x31.webp")')
     expect(visual.style['--announcement-accent']).toBe('#0284c7')
+  })
+
+  it('forces light text when dark overlay is on', () => {
+    const visual = buildAnnouncementStripVisual({
+      kind: 'info',
+      theme: { mode: 'preset', preset: 'ocean' },
+      background: {
+        imageUrl: 'https://cdn.example.com/980x31.webp',
+        overlay: 'dark',
+      },
+    })
+    expect(visual.className).toContain('overlay-dark')
+    expect(visual.style['--announcement-fg']).toBe('#f8fafc')
+    expect(visual.style['--announcement-accent']).toBe('#ffffff')
+    expect(visual.style['--announcement-badge-fg']).toBe('#0f172a')
   })
 })

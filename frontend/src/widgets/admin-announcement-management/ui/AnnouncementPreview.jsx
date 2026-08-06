@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import {
   ANNOUNCEMENT_BG_OVERLAYS,
   ANNOUNCEMENT_KINDS,
+  applyOverlayTextContrast,
   normalizeAnnouncementUrl,
   resolveAnnouncementThemeTokens,
 } from '@/entities/announcement'
@@ -16,10 +17,10 @@ function localized(values, field, locale) {
 
 function overlayLayer(overlay) {
   if (overlay === ANNOUNCEMENT_BG_OVERLAYS.LIGHT) {
-    return 'linear-gradient(90deg, rgb(255 255 255 / 72%), rgb(255 255 255 / 55%))'
+    return 'linear-gradient(90deg, rgb(255 255 255 / 78%), rgb(255 255 255 / 58%))'
   }
   if (overlay === ANNOUNCEMENT_BG_OVERLAYS.DARK) {
-    return 'linear-gradient(90deg, rgb(15 23 42 / 55%), rgb(15 23 42 / 40%))'
+    return 'linear-gradient(90deg, rgb(15 23 42 / 72%), rgb(15 23 42 / 58%))'
   }
   return null
 }
@@ -33,21 +34,34 @@ export default function AnnouncementPreview({ values = {} }) {
   const safeUrl = normalizeAnnouncementUrl(values.cta_url)
   const animation = values.animation || 'slide'
   const displaySeconds = values.display_seconds || 6
-  const tokens = useMemo(() => resolveAnnouncementThemeTokens(values), [values])
+  const baseTokens = useMemo(() => resolveAnnouncementThemeTokens(values), [values])
   const bgUrl = values.background_image_url || ''
   const overlay = Object.values(ANNOUNCEMENT_BG_OVERLAYS).includes(values.background_overlay)
     ? values.background_overlay
     : ANNOUNCEMENT_BG_OVERLAYS.NONE
   const fit = values.background_fit || 'cover'
   const position = values.background_position || 'center'
+  const tokens = useMemo(
+    () => applyOverlayTextContrast(baseTokens, overlay),
+    [baseTokens, overlay],
+  )
 
   const stripStyle = {
     '--announcement-preview-motion-period': `${displaySeconds}s`,
     color: tokens.fg,
+    '--announcement-accent': tokens.accent,
+    '--announcement-fg': tokens.fg,
+    ...(tokens.badgeBg
+      ? {
+          '--announcement-badge-bg': tokens.badgeBg,
+          '--announcement-badge-fg': tokens.badgeFg,
+          '--announcement-badge-border': tokens.badgeBorder,
+        }
+      : {}),
     backgroundImage: [
       overlayLayer(overlay),
       bgUrl ? `url("${bgUrl}")` : null,
-      `linear-gradient(100deg, ${tokens.bgFrom}, ${tokens.bgTo})`,
+      `linear-gradient(100deg, ${baseTokens.bgFrom}, ${baseTokens.bgTo})`,
     ].filter(Boolean).join(', '),
     backgroundSize: [
       overlayLayer(overlay) ? 'cover' : null,
@@ -99,6 +113,7 @@ export default function AnnouncementPreview({ values = {} }) {
           className={[
             'announcement-preview__strip',
             bgUrl ? 'has-bg' : '',
+            overlay === ANNOUNCEMENT_BG_OVERLAYS.DARK ? 'is-overlay-dark' : '',
             `is-motion-${animation}`,
           ].filter(Boolean).join(' ')}
           style={stripStyle}
@@ -111,10 +126,28 @@ export default function AnnouncementPreview({ values = {} }) {
             {values.kind === ANNOUNCEMENT_KINDS.CRITICAL ? '!' : '✦'}
           </span>
           <span className={`announcement-preview__content is-${device}`}>
-            {badge && <Tag className="!m-0">{badge}</Tag>}
-            <span className={`announcement-preview__message is-${device}`}>{message}</span>
+            {badge && (
+              <Tag
+                className="!m-0"
+                style={tokens.badgeBg
+                  ? {
+                      background: tokens.badgeBg,
+                      borderColor: tokens.badgeBorder,
+                      color: tokens.badgeFg,
+                    }
+                  : undefined}
+              >
+                {badge}
+              </Tag>
+            )}
+            <span
+              className={`announcement-preview__message is-${device}`}
+              style={{ color: tokens.fg }}
+            >
+              {message}
+            </span>
             {ctaLabel && safeUrl && (
-              <span className="announcement-preview__cta">
+              <span className="announcement-preview__cta" style={{ color: tokens.accent }}>
                 {ctaLabel}
                 <span aria-hidden="true">→</span>
               </span>

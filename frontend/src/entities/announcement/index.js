@@ -49,6 +49,7 @@ export {
   ANNOUNCEMENT_SURFACES,
   ANNOUNCEMENT_THEME_MODES,
   ANNOUNCEMENT_THEME_PRESETS,
+  applyOverlayTextContrast,
   resolveAnnouncementThemeTokens,
 } from './model/announcement.presentation'
 export { uploadAdminAnnouncementBackground } from './api/admin-announcement.api'

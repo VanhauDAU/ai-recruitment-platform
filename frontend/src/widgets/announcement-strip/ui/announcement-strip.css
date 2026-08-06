@@ -116,10 +116,16 @@
 }
 
 .announcement-strip__badge {
-  background: color-mix(in srgb, var(--announcement-accent) 12%, white);
-  border: 1px solid color-mix(in srgb, var(--announcement-accent) 26%, transparent);
+  background: var(
+    --announcement-badge-bg,
+    color-mix(in srgb, var(--announcement-accent) 12%, white)
+  );
+  border: 1px solid var(
+    --announcement-badge-border,
+    color-mix(in srgb, var(--announcement-accent) 26%, transparent)
+  );
   border-radius: 999px;
-  color: var(--announcement-accent);
+  color: var(--announcement-badge-fg, var(--announcement-accent));
   flex: 0 0 auto;
   font-size: 10px;
   font-weight: 800;
@@ -127,6 +133,13 @@
   line-height: 1;
   padding: 5px 7px;
   text-transform: uppercase;
+}
+
+/* Phủ tối: message/icon/CTA dùng --announcement-fg/--accent (trắng); badge giữ nền sáng. */
+.announcement-strip--overlay-dark .announcement-strip__message,
+.announcement-strip--overlay-dark .announcement-strip__position {
+  color: var(--announcement-fg);
+  text-shadow: 0 1px 2px rgb(15 23 42 / 35%);
 }
 
 .announcement-strip__message {
