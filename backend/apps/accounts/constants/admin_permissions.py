@@ -282,6 +282,30 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem email và số điện thoại nội bộ nhận hồ sơ khi rà soát gian lận.',
     },
     {
+        'code': 'knowledgebase.manage',
+        'module': 'knowledgebase',
+        'label': 'Biên tập trung tâm trợ giúp',
+        'description': 'Tạo chuyên mục, bài viết, revision và gửi nội dung đi duyệt.',
+    },
+    {
+        'code': 'knowledgebase.publish',
+        'module': 'knowledgebase',
+        'label': 'Phát hành trung tâm trợ giúp',
+        'description': 'Xuất bản, rollback, lưu trữ bài và thay đổi nội dung đang công khai.',
+    },
+    {
+        'code': 'knowledgebase.review',
+        'module': 'knowledgebase',
+        'label': 'Duyệt nội dung trợ giúp',
+        'description': 'Phê duyệt hoặc từ chối revision đang chờ kiểm duyệt.',
+    },
+    {
+        'code': 'knowledgebase.view',
+        'module': 'knowledgebase',
+        'label': 'Xem trung tâm trợ giúp',
+        'description': 'Xem bài, revision, preview và lịch sử vận hành nội dung trợ giúp.',
+    },
+    {
         'code': 'service_catalog.manage',
         'module': 'service_catalog',
         'label': 'Quản lý gói dịch vụ',
@@ -343,6 +367,9 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'job_moderation.reject': ('job_moderation.view',),
     'job_moderation.resolve_report': ('job_moderation.view',),
     'job_moderation.view_sensitive_contact': ('job_moderation.view',),
+    'knowledgebase.manage': ('knowledgebase.view',),
+    'knowledgebase.publish': ('knowledgebase.view',),
+    'knowledgebase.review': ('knowledgebase.view',),
     'service_catalog.manage': ('service_catalog.view',),
     'site_setting.manage': ('site_setting.view',),
 }

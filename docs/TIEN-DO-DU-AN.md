@@ -202,6 +202,23 @@ Thứ tự giai đoạn theo tài liệu database v1.4 (mục 7), đã đối ch
 | 8 — Deployment | 0/2 | ⬜ |
 | **Tổng** | **64/88 + 1 phần** | |
 
+## Epic FAQ và hướng dẫn sử dụng (KB, 2026-08-05)
+
+Đặc tả canonical:
+[FAQ và hướng dẫn sử dụng](./03-database/ke-hoach-faq-huong-dan.md). Triển khai
+trên nhánh `codex/feat-faq-help-center`, giữ revision đã publish độc lập với bản
+sửa và rollout public qua capability switch.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| KB-P0 | Chốt route, taxonomy, lifecycle, media, RBAC, SEO và rollout | ✅ |
+| KB-P1 | Backend foundation: common sanitizer, model/migration, 7 category và permission | ✅ |
+| KB-P2 | Workflow, media, admin API, audit và OpenAPI | ✅ |
+| KB-P3 | Workspace quản trị, editor, preview, diff và media library | ✅ |
+| KB-P4 | Help center public, search, detail và SEO noindex | ✅ |
+| KB-P5 | Nội dung đã xác minh và nối các entry point | ✅ |
+| KB-P6 | Hardening, observability, sitemap, runbook và rollback rehearsal | ✅ |
+
 ## Epic thông báo chạy đa cổng (AN, 2026-07-29)
 
 Thiết kế canonical:
@@ -1238,3 +1255,98 @@ Cập nhật 2026-08-03a (UI — linh vật ProCV thay spinner chờ): thay spin
 Cập nhật 2026-08-04a (TTS — mở giọng đọc cho mọi bề mặt, không riêng blog): hạ tầng đọc đã có sẵn và tốt (tts-service nhận text thô, single-flight theo `artifact_key`, cache, `PcmStreamPlayer` Web Audio), nhưng contract public bị khoá cứng vào bài viết: `SpeechSessionRequestSerializer` chỉ nhận `source_type='blog_post'`, view bắt buộc `published_blog_post_for_speech()`, normalizer nhận **model `Post`** và parse HTML, còn engine phát audio thì nằm trong `features/listen-to-blog-post/model/` nên slice khác không được import (feature không import feature). Mở thêm `source_type='text'` trên chính endpoint cũ: normalizer generic `plain_text_speech_script` (`plain-speech-v1`, mỗi dòng là một block để giữ nhịp ngắt, vẫn chạy HTML parser để không đọc to thẻ và không announce "đoạn mã được lược bỏ" như luồng bài viết), service `create_text_speech_session` **không** đăng ký `BlogSpeechAsset` và không bắn Celery finalizer — câu nói quá ngắn và quá nhiều để trả giá 1 row DB + 1 MP3 mỗi lượt, nên chỉ chạy live stream. `source_revision` ghim hằng `text:v1` để cùng một câu từ bất kỳ bề mặt nào rơi vào **một** artifact identity (đo thực tế: lần đọc thứ hai trả `cached: true`, trùng `artifact_key`). Rào chắn cho input đến từ client: `SPEECH_MAX_ADHOC_TEXT_CHARS=600` và scope throttle riêng `speech_adhoc` 90/hour (`get_throttles()` chọn scope theo `source_type`) để robot nói nhiều không ăn hết hạn ngạch 60/hour của người đang nghe blog — engine chỉ có `TTS_MAX_CONCURRENT_STREAMS=1` worker. Frontend: nâng `PcmStreamPlayer`/`NativeAudioPlayer`/`pcm-stream-format` + chính sách chờ 429/503 lên `shared/lib/speech/`, gom vòng retry mở luồng thành `playSpeechStream` dùng chung (blog và ad-hoc không còn copy nhau), thêm `createTextSpeechSession` vào `entities/speech` và feature mới `features/speak-text` với `useSpeak()` — `speak(text)` là đủ. Ràng buộc không bỏ được: AudioContext chỉ mở trong cử chỉ người dùng nên lần phát đầu phải nằm trong handler click/tap; bề mặt tự nói (trợ lý) gọi `unlock()` ở lần bấm đầu tiên rồi `speak()` tự do. Verify: ruff/ruff format/lint-imports/makemigrations sạch, 30/30 test app speech (thêm test cho throttle scope tách biệt, chặn text rỗng/quá dài, markup không được đọc to, không sinh artifact), 720 pass backend + coverage 86,31%; oxlint/dependency-cruiser (1026 module, 0 vi phạm)/build, 803 vitest (217 file, thêm 9 test `useSpeak`), 173/174 Playwright smoke. Đo trên stack docker thật: POST text → 201 + 230 KB WAV 48 kHz mono trong 0,83 s, lặp lại → `cached: true`, text rỗng và 700 ký tự đều 400. Nợ đã biết: 8 test `apps/jobs/test_posting_workflows.py` đang đỏ sẵn từ trước (deadline windows, không liên quan) và `blog-admin-permissions.spec.js` flaky (chạy lại xanh).
 
 Cập nhật 2026-08-04b (Trợ lý ứng viên — robot đọc câu trả lời): nối `useSpeak()` vào `widgets/candidate-assistant` qua hook `useAssistantVoice(messages)`. Chỉ đọc câu trả lời cho tin nhắn người dùng vừa gửi: mốc `spokenIdRef` khởi tạo bằng ID tin nhắn cuối lúc mount nên **lời chào không bao giờ được đọc** — panel là lazy chunk, lúc nó mount thì cử chỉ mở đã kết thúc và trình duyệt chặn autoplay, mà tự phát tiếng khi người dùng chưa hỏi gì cũng là hành vi gây khó chịu. `voice.prepare()` gọi `unlock()` ngay trong handler submit — cử chỉ hợp lệ duy nhất trước khi câu trả lời về sau ~1,1s. Giọng cố định `north-female-news` (Mai Anh). Nút loa trong header panel bật/tắt, lưu `procv_assistant_voice_v1` ở localStorage, tắt thì `stop()` ngay và không đọc các câu sau; bật lại cũng là cử chỉ hợp lệ để mở Web Audio. Bật tiếng giữa chừng không đọc lại câu cũ. Mascot dùng `talking={typing || voice.speaking}` và dòng trạng thái thêm "Đang đọc câu trả lời…". Verify: oxlint sạch, dependency-cruiser 1030 module 0 vi phạm, 820 test/219 file vitest (thêm 9 test `useAssistantVoice` + 2 test tích hợp trong `CandidateAssistant`), build, 174/174 Playwright smoke. Kiểm chứng trên browser thật với stack docker: gửi câu hỏi → POST `/api/speech/sessions/` 201 → stream `/tts/v1/streams/...` phát hết bài rồi tự về trạng thái nghỉ, patch `AbortController` xác nhận **0 lần abort** từ phía client (dòng `ERR_ABORTED` trong network panel chỉ là cách devtools ghi nhận response streaming dài); bấm tắt tiếng → `aria-pressed=false`, localStorage `off`, câu sau không phát.
+
+Cập nhật 2026-08-05a (FAQ/Help Center KB-P1): hoàn tất app skeleton,
+common HTML sanitizer, model/migration, seed bảy category và bốn permission với
+role mapping `content-cv`. Targeted test, Ruff, migration drift,
+import-linter/layering đều xanh; KB-P2 là bước tiếp theo.
+
+Cập nhật 2026-08-05b (FAQ/Help Center KB-P2): hoàn tất service state
+machine draft → review → approve/reject → publish/rollback, archive/restore,
+optimistic concurrency, media JPEG/PNG/WebP, admin API/RBAC, audit và OpenAPI.
+22 targeted/regression test, query budget 3, Ruff/import-linter/layering đều xanh;
+KB-P3 là bước tiếp theo.
+
+Cập nhật 2026-08-05c (FAQ/Help Center KB-P3): hoàn tất entity API +
+renderer, bốn feature biên tập/category/review/publish, widget danh sách và
+workspace editor, ba page lazy admin cùng navigation/RBAC. Danh sách giữ filter,
+sort và page trong URL; editor không autosave server, có dirty guard, local
+recovery, preview, media JPEG/PNG/WebP, diff, history và optimistic token 409.
+Lint phần thay đổi sạch, architecture/build xanh, 13 targeted test pass và smoke
+workflow lưu → gửi duyệt → duyệt → xuất bản pass trên desktop/tablet/mobile.
+KB-P4 public help center là bước tiếp theo.
+
+Cập nhật 2026-08-05d (FAQ/Help Center KB-P4): hoàn tất public selector
+không lộ draft/rejected/archived/inactive, ba API browse/search/detail có
+throttle/cache/ETag/kill switch và SEO shell canonical + Article/BreadcrumbList
+giữ `noindex`. Frontend có ba route `/tro-giup`, search/type/page lấy URL làm
+nguồn chuẩn, trạng thái loading/empty/error/404, layout sidebar + question list
+responsive và renderer ảnh lỗi an toàn. 28/28 test knowledgebase backend, 9
+frontend regression, lint/architecture/build và E2E public ở ba viewport đều
+pass. KB-P5 nội dung đã xác minh và entry point là bước tiếp theo.
+
+Cập nhật 2026-08-05e (FAQ/Help Center KB-P5): thêm bảy bài ProCV
+approved/published, mỗi category active có một bài; nội dung được đối chiếu với
+route, component và hành vi đăng ký/khôi phục, bảo mật, tìm việc, ứng tuyển, CV,
+báo cáo rủi ro và hỗ trợ. Data migration additive có ID ổn định, không ghi đè
+bài đã có và không xóa dữ liệu khi reverse. Public site-settings expose
+`knowledgebase_public_enabled` từ backend kill switch; hai mục trong floating
+actions và mục hướng dẫn CV trên header chỉ hiện khi capability bật, điều hướng
+tới route canonical thay cho toast sắp ra mắt. 26 backend test và 4 frontend
+regression test pass; Ruff, oxlint và architecture gate sạch. KB-P6 hardening,
+observability, sitemap/index và runbook là bước tiếp theo.
+
+Cập nhật lần cuối: 2026-08-05f (FAQ/Help Center KB-P6): thêm index switch riêng
+mặc định tắt, đồng bộ SEO shell/client metadata, search page noindex và sitemap
+knowledgebase chỉ xuất hiện khi public + index + global SEO cùng bật. Bổ sung
+command readiness JSON kiểm 7 category, bài public, source/SEO, review, hạn,
+link canonical, media/alt; structured metric request/latency public/admin,
+zero-result và content state không chứa raw query/PII. Runbook khóa trình tự mở
+public rồi index, tiêu chí quan sát và rollback không reverse migration. Test
+diễn tập bật → đọc ID → tắt → 404 → bật lại xác nhận cùng dữ liệu. 48 backend
+và 14 frontend regression test mục tiêu đều xanh. Full gate đạt 769 backend test
+(coverage 86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca theo viewport
+không áp dụng được skip; Ruff/format/import-linter/migration drift,
+oxlint/architecture/build đều xanh. Toàn bộ KB-P0 đến KB-P6 hoàn tất.
+
+Cập nhật 2026-08-05g (FAQ — tinh giản UX ứng viên): bỏ search server-side trên
+UI, type filter, topic cards và counter trên `/tro-giup`; giao diện chỉ còn
+sidebar chuyên mục cố định và danh sách câu hỏi gọn với một input lọc cục bộ
+không ghi URL/gọi search API. Mặc định item chỉ có title; khi nhập, bộ lọc khớp
+title/excerpt không phân biệt dấu, highlight phần trùng và hiện excerpt đầu nội
+dung trên một dòng có ellipsis. Bỏ item “Tất cả chủ đề”; API `q`/`type` vẫn giữ
+để không phá contract. Bỏ ràng buộc ảnh phải upload vào media ProCV: revision nhận URL
+HTTPS hoặc đường dẫn nội bộ an toàn, vẫn sanitize và bắt buộc alt; readiness chỉ
+kiểm tra file tồn tại với ảnh thuộc media storage nội bộ. Editor FAQ có tab
+**Từ URL** để chèn trực tiếp ảnh HTTPS mà không qua upload. Workspace biên tập
+đưa “Bước tiếp theo” cùng nút gửi duyệt/duyệt/yêu cầu sửa lên đầu, đồng thời giữ
+Lưu/Xem trước trên thanh sticky; topbar admin, thanh hành động và toolbar
+rich-text có offset/z-index riêng nên không chồng hoặc cắt nội dung khi cuộn.
+Detail FAQ hiển thị ảnh, giờ cập nhật và nhãn “Câu hỏi tiếp”. Verify: 48 backend
+regression, 889 frontend coverage, 6 targeted
+unit cho thay đổi tìm kiếm và 6 E2E public/admin trên desktop/tablet/mobile;
+Ruff/format/import-linter/migration drift, lint/architecture/build đều xanh.
+
+Cập nhật 2026-08-05h (FAQ — tìm kiếm toàn bộ chuyên mục): thay bộ lọc cục bộ của
+bản 08-05g bằng một truy vấn global tối giản: input debounce 250 ms, gửi `q` tới
+API nhưng không gửi category và không ghi từ khóa lên URL. Khi có từ khóa, UI
+hiển thị `Tìm thấy N kết quả cho “…”`; mỗi item đặt nhãn chuyên mục phía trên
+title, tiếp theo là excerpt một dòng, đồng thời highlight phần khớp không phân
+biệt dấu trong title/excerpt. Eyebrow “Chuyên mục” dùng `--brand-primary` được
+provider sinh từ site setting `brand_primary_color`, không tạo accessor setting
+song song. Unit 6/6 và smoke public 3/3 trên desktop/tablet/mobile đều pass.
+
+Cập nhật 2026-08-05i (FAQ — revision UX và danh sách tách thẻ): bỏ nền/viền của
+khung danh sách câu hỏi, giữ từng item nền trắng với gap và hover độc lập. Sửa
+luồng tạo revision bài đã publish bị kẹt do `change_summary` bắt buộc nhưng form
+đang chỉ đọc: modal tạo revision nhận tóm tắt trước, API clone draft rồi editor
+mở lại để tiếp tục chỉnh. Scope lại CSS workflow, nút gửi duyệt/duyệt/yêu cầu
+sửa còn cao 30 px và không full-width trên mobile. Targeted unit 5/5, smoke
+admin 3/3 và public 3/3 trên desktop/tablet/mobile đều pass; lint sạch.
+
+Cập nhật 2026-08-05j (FAQ — giữ vị trí item sidebar): đổi eyebrow “Trong chuyên
+mục này” thành “Tên chuyên mục”. Public compact article bổ sung `order`; sidebar
+chi tiết ghép bài hiện tại với related articles rồi sắp xếp theo cùng contract
+của danh sách. Vì vậy click bài chỉ đổi active state, không còn đẩy item lên đầu
+và làm người đọc lạc vị trí. Public API 9/9 và frontend unit 2/2 pass.
+Smoke public 3/3 trên desktop/tablet/mobile pass.

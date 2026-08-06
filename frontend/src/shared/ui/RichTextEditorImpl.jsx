@@ -90,7 +90,7 @@ function TableInsertControl({ editor, disabled }) {
   )
 }
 
-export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage }) {
+export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage, allowExternalImage = false, acceptedImageTypes, imageUploadHint }) {
   // `Form.setFieldsValue` có thể chạy trước khi TipTap hoàn tất khởi tạo. Giữ
   // content ban đầu rỗng và đồng bộ ở layout effect để editor luôn lấy đúng
   // giá trị controlled sau khi mở trang sửa tin.
@@ -190,7 +190,7 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
         {mode === 'blog' && (
           <>
             <span className="company-rich-editor__divider" />
-            <ToolbarButton title="Chèn ảnh từ kho" disabled={disabled || !onUploadImage} onClick={() => setImageLibraryOpen(true)}><FileImageOutlined /></ToolbarButton>
+            <ToolbarButton title="Chèn hình ảnh" disabled={disabled || (!onUploadImage && !allowExternalImage)} onClick={() => setImageLibraryOpen(true)}><FileImageOutlined /></ToolbarButton>
             <TableInsertControl editor={editor} disabled={disabled} />
           </>
         )}
@@ -237,6 +237,9 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
           onInsert={insertImage}
           onLoadImages={onLoadImages}
           onUploadImage={onUploadImage}
+          allowExternalImage={allowExternalImage}
+          acceptedImageTypes={acceptedImageTypes}
+          uploadHint={imageUploadHint}
         />
       )}
     </div>

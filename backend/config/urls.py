@@ -19,6 +19,7 @@ urlpatterns = [
     # their explicit public paths ahead of API and Django-admin composition.
     path('', include('apps.jobs.urls_seo')),
     path('', include('apps.blog.urls_seo')),
+    path('', include('apps.knowledgebase.urls_seo')),
     path('', include('apps.cv_templates.urls_seo')),
     path('', include('apps.sitecontent.urls_seo')),
     path('api/health/', health_check, name='health-check'),
@@ -39,6 +40,7 @@ urlpatterns = [
     path('api/blog/', include('apps.blog.urls')),
     path('api/privacy/', include('apps.privacy.urls')),
     path('api/speech/', include('apps.speech.urls')),
+    path('api/knowledgebase/', include('apps.knowledgebase.urls')),
 ]
 
 if settings.DJANGO_ADMIN_ENABLED:

@@ -6,6 +6,142 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-08-05
+
+#### Changed — Rút gọn FAQ ứng viên và mở ảnh HTTPS
+
+- Rút trang `/tro-giup` về đúng hai khối chuyên mục + danh sách câu hỏi; bỏ hero,
+  type filter, topic cards và counter. Cột phải chỉ giữ một ô tìm kiếm toàn bộ
+  chuyên mục, debounce nhưng không ghi query lên URL. Kết quả hiển thị tổng số,
+  nhãn chuyên mục phía trên tiêu đề, tô sáng phần chữ khớp không phân biệt dấu
+  và hiện mô tả đầu nội dung trên đúng một dòng có dấu “…”. Cột chuyên mục cố
+  định, bỏ mục “Tất cả chủ đề”, giữ nguyên vị trí khi mở chi tiết và lấy màu chữ
+  “Chuyên mục” từ `brand_primary_color` qua CSS variable của hệ thống. Khung
+  danh sách dùng nền trong suốt; từng câu hỏi là thẻ nền trắng có khoảng hở,
+  viền và hover riêng thay vì dính thành một mảng. Sidebar chi tiết đổi nhãn
+  “Trong chuyên mục này” thành “Tên chuyên mục”; bài đang xem chỉ nhận trạng
+  thái active và giữ nguyên vị trí theo `order`, không còn bị đưa lên đầu.
+- Media library trở thành tùy chọn: revision chấp nhận ảnh URL HTTPS hoặc đường
+  dẫn nội bộ an toàn mà không yêu cầu upload vào ProCV trước; sanitizer và alt
+  text vẫn là bắt buộc, readiness chỉ kiểm storage existence cho ảnh media nội
+  bộ. Editor FAQ có thêm tab **Từ URL** để chèn trực tiếp nguồn ảnh hợp lệ.
+- Đưa khối “Bước tiếp theo” và các nút gửi duyệt/duyệt/yêu cầu chỉnh sửa lên đầu
+  workspace biên tập; Lưu/Xem trước nằm trên thanh sticky để không bị che trên
+  mobile. Khi cuộn, topbar admin, thanh hành động và toolbar rich-text được xếp
+  thành các lớp riêng có khoảng cách, không còn chồng/cắt nút hoặc nội dung.
+  Trang chi tiết render ảnh HTTPS/nội bộ, hiển thị cả giờ cập nhật và dùng nhãn
+  “Câu hỏi tiếp” cho điều hướng cuối bài.
+- Sửa deadlock UX khi tạo revision của bài đã xuất bản: form chỉ đọc không còn
+  bị validate trường `change_summary` không thể nhập. Nút tạo revision mở modal
+  nhập tóm tắt bắt buộc, clone nội dung sang draft rồi mở lại toàn bộ trường để
+  tiếp tục sửa. Nút gửi duyệt/duyệt/yêu cầu sửa chuyển sang cụm compact 30 px,
+  selector CSS được scope riêng nên không còn bị style Ant Design lan rộng.
+- Loại bỏ outline lồng trên input con của ô tìm kiếm Ant Design; wrapper vẫn giữ
+  focus state rõ ràng ở portal admin và nhà tuyển dụng.
+- Xác minh: 48 regression backend, 889 unit/coverage frontend, 6 targeted unit
+  cho thay đổi tìm kiếm và 6 smoke E2E FAQ public/admin trên
+  desktop/tablet/mobile đều pass; Ruff, format,
+  import-linter, migration drift, lint, architecture và production build xanh.
+
+#### Added — FAQ/Help Center KB-P1 foundation
+
+- Thêm app Django `knowledgebase` theo ADR-0010 với category, article ổn định,
+  revision có partial unique constraint cho một bản mở và media asset có kích
+  thước xác minh; ID public dùng prefix `kbc/kba/kbr/kbm`.
+- Seed idempotent đúng bảy chuyên mục đã chốt và bốn permission
+  `knowledgebase.view/manage/review/publish`; role `content-cv` staff được biên
+  tập, manager được duyệt/phát hành.
+- Tách sanitizer HTML giàu nội dung dùng chung sang `common/content_html.py`,
+  chặn active content, credential và URL scheme nguy hiểm; blog chuyển sang
+  helper chung mà vẫn giữ policy URL tương thích.
+- Targeted backend test, migration drift check, Ruff, import-linter và backend
+  layering gate đều đạt.
+
+#### Added — FAQ/Help Center KB-P2 workflow và admin API
+
+- Thêm transactional service cho toàn bộ lifecycle revision/article/category,
+  khóa hàng và `revision_token` trả 409 khi stale; bản public tiếp tục ổn định
+  trong lúc bản sửa còn draft/in-review/rejected và hỗ trợ rollback revision đã
+  duyệt.
+- Mở admin API quản lý category, article, revision, reorder, review, publish,
+  archive/restore và media; bốn permission được kiểm độc lập ở backend, response
+  quản trị luôn `private, no-store`.
+- Nội dung được sanitize/canonicalize, sinh plain text + SHA-256, ảnh bắt buộc
+  thuộc media library và có alt; upload chỉ nhận JPEG/PNG/WebP tối đa 5 MB,
+  resize trong 1600×1600 và lưu kích thước sau xử lý.
+- Audit chỉ ghi metadata nhỏ, không ghi body/review note. List admin giữ query
+  budget cố định 3 query cho 5 bài. 22 targeted/regression test cùng Ruff,
+  migration drift, import-linter và layering gate đều đạt.
+
+#### Added — FAQ/Help Center KB-P3 workspace quản trị
+
+- Thêm route lazy `/admin/app/knowledgebase`, trang tạo và workspace biên tập;
+  navigation và permission catalog dùng đủ `view/manage/review/publish`.
+- Danh sách quản trị có dashboard, tìm kiếm, filter category/type/revision/review
+  due, sort và phân trang server-side lấy URL làm nguồn chuẩn; drawer chuyên mục
+  hỗ trợ tạo, sửa, sắp xếp, bật/tắt và cảnh báo ảnh hưởng nội dung công khai.
+- Editor rich text lưu tường minh, dirty guard, local recovery, media library
+  JPEG/PNG/WebP, readiness checklist, preview sanitized, optimistic concurrency
+  và khóa metadata sau lần publish đầu.
+- Workflow revision có diff với bản public, lịch sử, submit/approve/reject có
+  ghi chú, publish với ngày rà soát, archive/restore; action tách feature và ẩn
+  theo RBAC. Modal workflow mobile dùng footer full-width không chồng nút.
+- Lint phần thay đổi và architecture check sạch, production build đạt, 13
+  targeted test pass; smoke lưu → duyệt → xuất bản pass ở desktop/tablet/mobile.
+
+#### Added — FAQ/Help Center KB-P4 public help center
+
+- Mở public API category/article browse, search không dấu nhiều token, filter
+  type, pagination và detail có related/trước/sau; selector fail-closed chỉ lộ
+  revision approved đang publish của article/category active.
+- Thêm throttle IP 120/phút, cache policy public 60 giây + stale-while-revalidate
+  300 giây, ETag/304, generation invalidation sau mutation public và fallback
+  đọc DB khi cache lỗi; kill switch production trả 404 mà không ảnh hưởng admin.
+- Thêm SEO shell thật cho home/category/detail với canonical, Open Graph,
+  Article và BreadcrumbList; 404 có status thật, toàn bộ rollout KB-P4 giữ
+  `noindex, nofollow` và không dùng FAQPage schema.
+- Thêm ba route lazy `/tro-giup`, `/tro-giup/:categorySlug` và detail; giao diện
+  responsive theo mô hình hero search + sidebar category + question rows, URL
+  là nguồn chuẩn cho search/type/page, có loading/empty/error/retry/404 và rich
+  content sanitize với ảnh lazy/broken-image fallback.
+- 28 test knowledgebase backend pass; 9 frontend regression pass; lint,
+  architecture, build pass và smoke browse → search → detail → 404 pass trên
+  desktop/tablet/mobile.
+
+#### Added — FAQ/Help Center KB-P5 verified content và entry points
+
+- Thêm bảy bài ProCV đã đối chiếu với route/component thật, mỗi category active
+  có một revision approved đang publish; bao phủ tài khoản, bảo mật, tìm việc,
+  ứng tuyển, CV, tìm việc an toàn và liên hệ hỗ trợ mà không sao chép nội dung
+  hay tài sản từ website tham chiếu.
+- Data migration dùng public ID ổn định, chỉ thêm khi slug chưa tồn tại, không
+  ghi đè nội dung admin và không reverse-delete dữ liệu/revision sau rollout.
+- Public site-settings expose `knowledgebase_public_enabled` trực tiếp từ
+  backend kill switch và frontend mặc định fail-closed; nối hai mục Help Center
+  trong floating actions cùng mục hướng dẫn CV trên header tới route canonical.
+- 26 backend test và 4 frontend regression test pass; Ruff, oxlint và kiểm tra
+  kiến trúc frontend đều đạt.
+
+#### Added — FAQ/Help Center KB-P6 hardening và rollout
+
+- Thêm `KNOWLEDGEBASE_SEARCH_INDEX_ENABLED` mặc định tắt, độc lập với public
+  kill switch; backend SEO shell, frontend metadata và sitemap chỉ index khi
+  public/index/global SEO cùng bật, còn URL search/filter luôn noindex.
+- Thêm `/sitemaps/knowledgebase.xml`, chỉ chứa home, category có nội dung và
+  article active với revision approved đang publish; sitemap index tự thêm/gỡ
+  theo rollout configuration.
+- Thêm command `check_knowledgebase_readiness --json` kiểm taxonomy, public
+  coverage, source/SEO, hạn review, nội dung an toàn, link route và media/alt;
+  lỗi làm command exit khác 0 để chặn rollout.
+- Ghi metric request/latency public/admin, zero-result bucket và content state
+  qua product metric boundary mà không ghi raw search hay PII; thêm regression
+  xác nhận dữ liệu không mất qua chuỗi bật → tắt → bật lại.
+- Thêm runbook rollout/rollback, ngưỡng quan sát sau khi có baseline và nguyên
+  tắc không reverse-delete migration nội dung. 48 backend và 14 frontend
+  regression test mục tiêu đều đạt; full gate đạt 769 backend test (coverage
+  86,36%), 886 frontend test, 191 E2E smoke pass và 4 ca không áp dụng được
+  skip; lint, format, import/architecture và production build đều đạt.
+
 ### 2026-07-29
 
 #### Added — Account status enforcement theo vai trò

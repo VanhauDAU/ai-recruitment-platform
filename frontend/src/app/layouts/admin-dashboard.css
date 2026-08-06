@@ -836,8 +836,7 @@
 }
 
 .admin-shell .ant-btn:focus-visible,
-.admin-shell .ant-select-selector:focus-visible,
-.admin-shell .ant-input:focus-visible {
+.admin-shell .ant-select-selector:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--admin-primary) 22%, transparent);
   outline-offset: 2px;
 }

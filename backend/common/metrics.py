@@ -19,6 +19,11 @@ ALLOWED_METRICS = {
     'announcement_feed_latency_ms',
     'announcement_runtime',
     'announcement_throttle',
+    'knowledgebase_public_request',
+    'knowledgebase_public_latency_ms',
+    'knowledgebase_admin_request',
+    'knowledgebase_admin_latency_ms',
+    'knowledgebase_content_state',
 }
 
 
@@ -39,6 +44,12 @@ def record_metric(name, value=1, **tags):
             'reason',
             'scope',
             'surface',
+            'endpoint',
+            'category',
+            'article_type',
+            'query_length_bucket',
+            'result_bucket',
+            'state',
         }
     }
     logger.info(

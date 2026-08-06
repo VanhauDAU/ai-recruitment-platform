@@ -1,6 +1,7 @@
 import json
 import re
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view
@@ -57,12 +58,17 @@ class SiteSettingListView(APIView):
             cache.set(PUBLIC_SETTINGS_CACHE_KEY, data, 60 * 60)
         # Cache storage keys, không cache URL tuyệt đối. Nhờ vậy thay domain/CDN
         # không làm database hay cache giữ lại localhost/domain cũ.
-        return Response(
-            {
-                key: media_url_from_value(value, request=request) if is_image else value
-                for key, (value, is_image) in data.items()
-            }
+        response_data = {
+            key: media_url_from_value(value, request=request) if is_image else value
+            for key, (value, is_image) in data.items()
+        }
+        # Capability vận hành phải theo backend kill switch, không phải một row
+        # SiteSetting mà admin có thể vô tình bật lệch với public API/SEO shell.
+        response_data['knowledgebase_public_enabled'] = bool(settings.KNOWLEDGEBASE_PUBLIC_ENABLED)
+        response_data['knowledgebase_search_index_enabled'] = bool(
+            settings.KNOWLEDGEBASE_PUBLIC_ENABLED and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
         )
+        return Response(response_data)
 
 
 class LocaleListView(generics.ListAPIView):

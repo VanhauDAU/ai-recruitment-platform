@@ -24,6 +24,7 @@ const ROUTE_DESCRIPTIONS = new Map([
   ['/viec-lam', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
   ['/jobs', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
   ['/blog', 'Kiến thức tìm việc, viết CV, phỏng vấn và phát triển sự nghiệp.'],
+  ['/tro-giup', 'Tìm câu trả lời và hướng dẫn sử dụng ProCV dành cho ứng viên.'],
   ['/mau-cv', 'Khám phá mẫu CV chuyên nghiệp, dễ chỉnh sửa và phù hợp nhiều ngành nghề.'],
 ])
 
@@ -72,7 +73,12 @@ export function resolveRouteMetadata({ pathname, portal, settings }) {
   const title = normalized === '/'
     ? settings.seo_default_title
     : resolveRouteTitle(normalized)
-  const indexable = isIndexableRoute(normalized, portal) && title !== 'Trang không tồn tại'
+  const knowledgebaseIndexable = (
+    normalized === '/tro-giup' || normalized.startsWith('/tro-giup/')
+  ) && settings.knowledgebase_public_enabled === true
+    && settings.knowledgebase_search_index_enabled === true
+  const indexable = (isIndexableRoute(normalized, portal) || knowledgebaseIndexable)
+    && title !== 'Trang không tồn tại'
 
   return {
     title,

@@ -80,6 +80,33 @@ class SiteSettingCacheInvalidationTests(TestCase):
         self.assertEqual(rollback_callbacks, [])
         self.assertEqual(cache.get(PUBLIC_SETTINGS_CACHE_KEY), committed)
 
+    @override_settings(
+        KNOWLEDGEBASE_PUBLIC_ENABLED=True,
+        KNOWLEDGEBASE_SEARCH_INDEX_ENABLED=True,
+    )
+    def test_public_settings_exposes_backend_knowledgebase_capability(self):
+        response = self.client.get(reverse('site-settings'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIs(response.data['knowledgebase_public_enabled'], True)
+        self.assertIs(response.data['knowledgebase_search_index_enabled'], True)
+
+    @override_settings(KNOWLEDGEBASE_PUBLIC_ENABLED=False)
+    def test_public_settings_capability_is_fail_closed_and_not_overridden_by_database(self):
+        SiteSetting.objects.create(
+            key='knowledgebase_public_enabled',
+            label='Không dùng làm capability',
+            value=True,
+            value_type=SiteSetting.ValueType.BOOLEAN,
+            is_public=True,
+        )
+
+        response = self.client.get(reverse('site-settings'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIs(response.data['knowledgebase_public_enabled'], False)
+        self.assertIs(response.data['knowledgebase_search_index_enabled'], False)
+
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'], CACHES=LOCAL_CACHE)
 class SiteSettingImageUploadTests(APITransactionTestCase):

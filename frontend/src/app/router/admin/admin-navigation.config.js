@@ -197,6 +197,15 @@ export const ADMIN_NAVIGATION = [
         ],
       },
       {
+        key: 'knowledgebase',
+        label: 'FAQ & hướng dẫn',
+        children: [
+          { key: 'knowledgebase-articles', label: 'Tất cả nội dung', routeRef: 'knowledgebase' },
+          { key: 'knowledgebase-review', label: 'Hàng chờ duyệt', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' }, access: { allOf: ['knowledgebase.review'] } },
+          { key: 'knowledgebase-overdue', label: 'Cần rà soát', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
+        ],
+      },
+      {
         key: 'services',
         label: 'Dịch vụ',
         children: [

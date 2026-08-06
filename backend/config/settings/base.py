@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'apps.privacy',
     'apps.services',
     'apps.speech',
+    'apps.knowledgebase',
 ]
 
 MIDDLEWARE = [
@@ -300,6 +301,7 @@ REST_FRAMEWORK = {
         'speech_catalog': '120/hour',
         'speech_session': '60/hour',
         'speech_adhoc': '90/hour',
+        'knowledgebase_public': '120/min',
     },
 }
 
@@ -592,6 +594,16 @@ FRONTEND_SHELL_CACHE_SECONDS = config(
     'FRONTEND_SHELL_CACHE_SECONDS',
     default=30,
     cast=int,
+)
+KNOWLEDGEBASE_PUBLIC_ENABLED = config(
+    'KNOWLEDGEBASE_PUBLIC_ENABLED',
+    default=not IS_PRODUCTION,
+    cast=bool,
+)
+KNOWLEDGEBASE_SEARCH_INDEX_ENABLED = config(
+    'KNOWLEDGEBASE_SEARCH_INDEX_ENABLED',
+    default=False,
+    cast=bool,
 )
 ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
 ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')

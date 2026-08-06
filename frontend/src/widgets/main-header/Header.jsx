@@ -1,16 +1,16 @@
 import { MenuOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useLoginPrompt } from '@/features/auth'
 import { useSession } from '@/entities/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { message } from '@/shared/lib/toast'
-import { BrandLogo } from '@/entities/site-settings'
+import { BrandLogo, useSiteSettings } from '@/entities/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
-import { HEADER_NAVIGATION } from './header-navigation-config'
+import { HEADER_NAVIGATION, navigationForCapabilities } from './header-navigation-config'
 
 function GuestActions({ mobile = false, onSelect, navigate }) {
   // Đăng nhập chuyển sang trang /login.
@@ -82,12 +82,19 @@ function MobileActions({ isAuthenticated, navigate, onClose, user }) {
 export default function Header({ editorMode = false }) {
   const { user, isAuthenticated, logout } = useSession()
   const { promptLogin } = useLoginPrompt()
+  const { settings } = useSiteSettings()
   const navigate = useNavigate()
   const location = useLocation()
   const [openKey, setOpenKey] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileKey, setMobileKey] = useState(null)
   const headerVisible = useHideOnScroll()
+  const menus = useMemo(
+    () => navigationForCapabilities(HEADER_NAVIGATION, {
+      knowledgebaseEnabled: settings.knowledgebase_public_enabled === true,
+    }),
+    [settings.knowledgebase_public_enabled],
+  )
   const hideOnScroll = location.pathname === '/viec-lam'
     || location.pathname === '/jobs'
     || location.pathname.startsWith('/viec-lam/tai/')
@@ -126,7 +133,7 @@ export default function Header({ editorMode = false }) {
         </button>
         <BrandLogo variant="full" className="cursor-pointer whitespace-nowrap" imageClassName="h-8 max-w-[150px] sm:h-9 sm:max-w-[190px]" />
         <DesktopNavigation
-          menus={HEADER_NAVIGATION}
+          menus={menus}
           openKey={openKey}
           pathname={location.pathname}
           onOpen={setOpenKey}
@@ -143,7 +150,7 @@ export default function Header({ editorMode = false }) {
       </div>
 
       <MobileNavigation
-        menus={HEADER_NAVIGATION}
+        menus={menus}
         open={mobileOpen}
         openKey={mobileKey}
         onClose={() => setMobileOpen(false)}

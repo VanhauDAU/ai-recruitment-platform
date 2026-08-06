@@ -76,7 +76,12 @@ export const HEADER_NAVIGATION = [
         items: [
           soon('Quản lý CV', <ProfileOutlined />),
           soon('Tải CV lên', <UploadOutlined />),
-          soon('Hướng dẫn viết CV', <EditOutlined />),
+          {
+            label: 'Hướng dẫn viết CV',
+            to: '/tro-giup/cv-va-mau-cv',
+            icon: <EditOutlined />,
+            requiresKnowledgebase: true,
+          },
           soon('Quản lý Cover Letter', <FileProtectOutlined />),
           soon('Mẫu Cover Letter', <SnippetsOutlined />),
         ],
@@ -140,6 +145,18 @@ export const HEADER_NAVIGATION = [
 
 export function flattenMenuItems(menu) {
   return menu.columns.flatMap((column) => column.flatMap((group) => group.items))
+}
+
+export function navigationForCapabilities(menus, { knowledgebaseEnabled = false } = {}) {
+  return menus.map((menu) => ({
+    ...menu,
+    columns: menu.columns.map((column) => column.map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => knowledgebaseEnabled || !item.requiresKnowledgebase,
+      ),
+    }))),
+  }))
 }
 
 export function isMenuActive(menu, pathname) {

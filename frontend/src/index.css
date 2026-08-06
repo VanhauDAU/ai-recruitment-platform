@@ -8,6 +8,15 @@ body {
   margin: 0;
 }
 
+/* Input có prefix/suffix của Ant Design dùng wrapper làm focus surface. Không
+   vẽ thêm outline trên input con vì tạo cảm giác hai viền lồng nhau ở các ô
+   tìm kiếm của portal admin và nhà tuyển dụng. */
+.ant-input-affix-wrapper > input.ant-input:focus,
+.ant-input-affix-wrapper > input.ant-input:focus-visible {
+  box-shadow: none;
+  outline: none;
+}
+
 /* Tailwind v4 Preflight đặt cursor: default cho button; khôi phục con trỏ tay
    cho mọi nút bấm còn hoạt động (trừ nút bị disabled giữ nguyên not-allowed). */
 @layer base {

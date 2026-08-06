@@ -5302,7 +5302,36 @@ paths:
   /api/jobs/admin/moderation/:
     get:
       operationId: jobs_admin_moderation_list
+      summary: Danh sách tin tuyển dụng dành cho quản trị viên
       parameters:
+      - in: query
+        name: company
+        schema:
+          type: string
+      - in: query
+        name: deadline_from
+        schema:
+          type: string
+      - in: query
+        name: deadline_to
+        schema:
+          type: string
+      - in: query
+        name: employer
+        schema:
+          type: string
+      - in: query
+        name: has_reports
+        schema:
+          type: boolean
+      - in: query
+        name: moderation_hold
+        schema:
+          type: string
+      - in: query
+        name: ordering
+        schema:
+          type: string
       - name: page
         required: false
         in: query
@@ -5315,8 +5344,39 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: policy_hold
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: scope
+        schema:
+          type: string
+          enum:
+          - expired
+          - held
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: submitted_from
+        schema:
+          type: string
+      - in: query
+        name: submitted_to
+        schema:
+          type: string
+      - in: query
+        name: tier
+        schema:
+          type: string
       tags:
-      - jobs
+      - jobs-admin
       security:
       - jwtAuth: []
       responses:
@@ -5324,11 +5384,66 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedAdminJobModerationList'
+                $ref: '#/components/schemas/PaginatedAdminJobManagementListList'
+          description: ''
+  /api/jobs/admin/moderation/{public_id}/:
+    get:
+      operationId: jobs_admin_moderation_retrieve
+      summary: Chi tiết tin tuyển dụng dành cho quản trị viên
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJobDetail'
+          description: ''
+  /api/jobs/admin/moderation/{public_id}/decisions/:
+    post:
+      operationId: jobs_admin_moderation_decisions_create
+      summary: Ghi nhận quyết định kiểm duyệt tin tuyển dụng
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - jobs-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminJobDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminJobDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminJobDecisionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJobDetail'
           description: ''
   /api/jobs/admin/moderation/{public_id}/review/:
     post:
       operationId: jobs_admin_moderation_review_create
+      description: Backward-compatible endpoint retained for existing admin clients.
       parameters:
       - in: path
         name: public_id
@@ -5342,6 +5457,22 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/jobs/admin/moderation/summary/:
+    get:
+      operationId: jobs_admin_moderation_summary_retrieve
+      summary: Tổng quan vận hành tin tuyển dụng
+      tags:
+      - jobs-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/jobs/admin/reports/:
     get:
       operationId: jobs_admin_reports_list
@@ -5948,6 +6079,867 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobSuggest'
+          description: ''
+  /api/knowledgebase/admin/articles/:
+    get:
+      operationId: knowledgebase_admin_articles_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminArticleListList'
+          description: ''
+    post:
+      operationId: knowledgebase_admin_articles_create
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/:
+    get:
+      operationId: knowledgebase_admin_articles_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: knowledgebase_admin_articles_partial_update
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/archive/:
+    post:
+      operationId: knowledgebase_admin_articles_archive_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/publish/:
+    post:
+      operationId: knowledgebase_admin_articles_publish_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PublishRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PublishRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/restore/:
+    post:
+      operationId: knowledgebase_admin_articles_restore_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/revisions/:
+    get:
+      operationId: knowledgebase_admin_revision_list
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: knowledgebase_admin_articles_revisions_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevisionWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RevisionWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RevisionWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/revisions/{number}/:
+    get:
+      operationId: knowledgebase_admin_revision_detail
+      parameters:
+      - in: path
+        name: number
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: knowledgebase_admin_articles_revisions_partial_update
+      parameters:
+      - in: path
+        name: number
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRevisionWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRevisionWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRevisionWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/revisions/{number}/approve/:
+    post:
+      operationId: knowledgebase_admin_articles_revisions_approve_create
+      parameters:
+      - in: path
+        name: number
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/revisions/{number}/reject/:
+    post:
+      operationId: knowledgebase_admin_articles_revisions_reject_create
+      parameters:
+      - in: path
+        name: number
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/{public_id}/revisions/{number}/submit/:
+    post:
+      operationId: knowledgebase_admin_articles_revisions_submit_create
+      parameters:
+      - in: path
+        name: number
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RevisionActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminArticleDetail'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/articles/reorder/:
+    post:
+      operationId: knowledgebase_admin_articles_reorder_create
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminArticleList'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/categories/:
+    get:
+      operationId: knowledgebase_admin_categories_list
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminCategory'
+          description: ''
+    post:
+      operationId: knowledgebase_admin_categories_create
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/categories/{public_id}/:
+    get:
+      operationId: knowledgebase_admin_categories_retrieve
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: knowledgebase_admin_categories_partial_update
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/categories/{public_id}/activate/:
+    post:
+      operationId: knowledgebase_admin_categories_activate_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/categories/{public_id}/deactivate/:
+    post:
+      operationId: knowledgebase_admin_categories_deactivate_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/categories/reorder/:
+    post:
+      operationId: knowledgebase_admin_categories_reorder_create
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminCategory'
+          description: ''
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/admin/media/:
+    get:
+      operationId: knowledgebase_admin_media_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - knowledgebase-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMediaList'
+          description: ''
+    post:
+      operationId: knowledgebase_admin_media_create
+      tags:
+      - knowledgebase-admin
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MediaUploadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MediaUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+          description: ''
+        '413':
+          description: No response body
+        '400':
+          description: Dữ liệu không hợp lệ.
+        '403':
+          description: Thiếu permission quản trị.
+        '409':
+          description: Xung đột trạng thái hoặc revision token cũ.
+  /api/knowledgebase/articles/:
+    get:
+      operationId: knowledgebase_articles_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 60
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 120
+          minLength: 2
+      - in: query
+        name: type
+        schema:
+          enum:
+          - faq
+          - guide
+          type: string
+          minLength: 1
+        description: |-
+          * `faq` - faq
+          * `guide` - guide
+      tags:
+      - knowledgebase-public
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPublicArticleListList'
+          description: ''
+  /api/knowledgebase/articles/{category_slug}/{article_slug}/:
+    get:
+      operationId: knowledgebase_articles_retrieve
+      parameters:
+      - in: path
+        name: article_slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: category_slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - knowledgebase-public
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicArticleDetail'
+          description: ''
+  /api/knowledgebase/categories/:
+    get:
+      operationId: knowledgebase_categories_list
+      tags:
+      - knowledgebase-public
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicCategory'
           description: ''
   /api/locations/:
     get:
@@ -6719,6 +7711,40 @@ paths:
           description: ''
         '409':
           description: No response body
+  /api/site/admin/announcements/{public_id}/reset-dismissals/:
+    post:
+      operationId: site_admin_announcements_reset_dismissals_create
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - site-announcements-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementActionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnouncementActionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnouncementActionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAnnouncementDetail'
+          description: ''
+        '409':
+          description: No response body
   /api/site/admin/announcements/{public_id}/resume/:
     post:
       operationId: site_admin_announcements_resume_create
@@ -7277,6 +8303,71 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SkillGroup'
+          description: ''
+  /api/speech/sessions/:
+    post:
+      operationId: speech_sessions_create
+      tags:
+      - speech
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpeechSessionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SpeechSessionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SpeechSessionRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/speech/voices/:
+    get:
+      operationId: speech_voices_retrieve
+      tags:
+      - speech
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/v2/admin/cv-backgrounds/:
     get:
@@ -8538,6 +9629,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CvTemplateAdmin'
+          description: ''
+  /api/v2/admin/jobs/{job_public_id}/applications/:
+    get:
+      operationId: v2_admin_jobs_applications_list
+      summary: Danh sách ứng viên đã ứng tuyển vào một tin dành cho quản trị viên
+      parameters:
+      - in: path
+        name: job_public_id
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - name
+          - newest
+          - oldest
+          - status
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: submitted_from
+        schema:
+          type: string
+      - in: query
+        name: submitted_to
+        schema:
+          type: string
+      tags:
+      - applications-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminJobApplicationList'
           description: ''
   /api/v2/applications/:
     get:
@@ -10018,14 +11171,18 @@ components:
           minLength: 1
       required:
       - refresh
-    ActionEnum:
+    ActionDceEnum:
       enum:
-      - dismiss
-      - snooze
+      - approve
+      - reject
+      - hide
+      - restore
       type: string
       description: |-
-        * `dismiss` - dismiss
-        * `snooze` - snooze
+        * `approve` - Duyệt tin
+        * `reject` - Từ chối tin
+        * `hide` - Tạm ẩn tin
+        * `restore` - Khôi phục hiển thị
     ActiveAnnouncement:
       type: object
       properties:
@@ -10112,6 +11269,16 @@ components:
       - items
       - next_transition_at
       - remote_enabled
+    ActorRoleEnum:
+      enum:
+      - employer
+      - admin
+      - system
+      type: string
+      description: |-
+        * `employer` - Nhà tuyển dụng
+        * `admin` - Quản trị viên
+        * `system` - Hệ thống
     AdminAnnouncementDetail:
       type: object
       properties:
@@ -10336,6 +11503,144 @@ components:
       - starts_at
       - surfaces
       - updated_at
+    AdminArticleDetail:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/AdminCategory'
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 180
+          pattern: ^[-a-zA-Z0-9_]+$
+        article_type:
+          $ref: '#/components/schemas/ArticleTypeEnum'
+        title:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        lifecycle_state:
+          $ref: '#/components/schemas/LifecycleState4f9Enum'
+        latest_revision:
+          type: string
+          readOnly: true
+        published_revision_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        revision_token:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        review_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        first_published_at:
+          type: string
+          format: date-time
+          nullable: true
+        current_published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        revisions:
+          type: string
+          readOnly: true
+        audit_events:
+          type: string
+          readOnly: true
+      required:
+      - audit_events
+      - category
+      - created_at
+      - latest_revision
+      - public_id
+      - published_revision_number
+      - revisions
+      - slug
+      - title
+      - updated_at
+    AdminArticleList:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/AdminCategory'
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 180
+          pattern: ^[-a-zA-Z0-9_]+$
+        article_type:
+          $ref: '#/components/schemas/ArticleTypeEnum'
+        title:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        lifecycle_state:
+          $ref: '#/components/schemas/LifecycleState4f9Enum'
+        latest_revision:
+          type: string
+          readOnly: true
+        published_revision_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        revision_token:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        review_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        first_published_at:
+          type: string
+          format: date-time
+          nullable: true
+        current_published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - latest_revision
+      - public_id
+      - published_revision_number
+      - slug
+      - title
+      - updated_at
     AdminAuditLog:
       type: object
       description: Một dòng nhật ký. ``actor_email`` rỗng khi thao tác đến từ CLI/seed.
@@ -10374,6 +11679,66 @@ components:
       - public_id
       - source
       - target_type
+    AdminCategory:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          maxLength: 300
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        review_interval_days:
+          type: integer
+          maximum: 365
+          minimum: 30
+        seo_title:
+          type: string
+          maxLength: 200
+        seo_description:
+          type: string
+          maxLength: 300
+        revision_token:
+          type: integer
+          readOnly: true
+        article_count:
+          type: integer
+          readOnly: true
+          default: 0
+        public_article_count:
+          type: integer
+          readOnly: true
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - article_count
+      - created_at
+      - name
+      - public_article_count
+      - public_id
+      - revision_token
+      - slug
+      - updated_at
     AdminCompanyDetail:
       type: object
       properties:
@@ -10862,29 +12227,184 @@ components:
       required:
       - reason
       - target_role_public_id
-    AdminJobModeration:
+    AdminJobApplication:
       type: object
       properties:
         public_id:
           type: string
           readOnly: true
+        candidate_public_id:
+          type: string
+          readOnly: true
+        candidate_name:
+          type: string
+          readOnly: true
+        candidate_email:
+          type: string
+          format: email
+          readOnly: true
+        candidate_account_status:
+          type: string
+          readOnly: true
+        candidate_account_restricted:
+          type: string
+          readOnly: true
+        contact_name:
+          type: string
+          readOnly: true
+        contact_email:
+          type: string
+          format: email
+          readOnly: true
+        contact_phone:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        source:
+          allOf:
+          - $ref: '#/components/schemas/Source05aEnum'
+          readOnly: true
+        source_label:
+          type: string
+          readOnly: true
+        submitted_cv_title:
+          type: string
+          readOnly: true
+        submitted_cv_source:
+          type: string
+          readOnly: true
+        submitted_cv_version_public_id:
+          type: string
+          readOnly: true
+        cover_letter:
+          type: string
+          readOnly: true
+        preferred_locations:
+          type: string
+          readOnly: true
+        allow_ai_analysis:
+          type: boolean
+          readOnly: true
+        data_processing_consent:
+          type: boolean
+          readOnly: true
+        applied_at:
+          type: string
+          format: date-time
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - allow_ai_analysis
+      - applied_at
+      - candidate_account_restricted
+      - candidate_account_status
+      - candidate_email
+      - candidate_name
+      - candidate_public_id
+      - contact_email
+      - contact_name
+      - contact_phone
+      - cover_letter
+      - data_processing_consent
+      - preferred_locations
+      - public_id
+      - source
+      - source_label
+      - status
+      - status_label
+      - submitted_at
+      - submitted_cv_source
+      - submitted_cv_title
+      - submitted_cv_version_public_id
+      - updated_at
+    AdminJobDecisionRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionDceEnum'
+        review_token:
+          type: string
+          minLength: 1
+        reason_code:
+          oneOf:
+          - $ref: '#/components/schemas/ReasonCodeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        note:
+          type: string
+          maxLength: 3000
+        hold:
+          allOf:
+          - $ref: '#/components/schemas/HoldEnum'
+          default: manual_review
+        source_report_public_id:
+          type: string
+      required:
+      - action
+      - review_token
+    AdminJobDetail:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
         title:
+          type: string
+          readOnly: true
+        company_public_id:
           type: string
           readOnly: true
         company_name:
           type: string
           readOnly: true
+        company_verification_status:
+          type: string
+          readOnly: true
+        employer_public_id:
+          type: string
+          readOnly: true
         employer_name:
           type: string
           readOnly: true
-        description:
+        employer_email:
+          type: string
+          format: email
+          readOnly: true
+        employer_account_status:
           type: string
           readOnly: true
-        deadline:
-          type: string
-          format: date
+        employer_email_verified:
+          type: boolean
           readOnly: true
-          nullable: true
+        employer_phone_verified:
+          type: string
+          readOnly: true
+        company_role:
+          type: string
+          readOnly: true
+        company_role_label:
+          type: string
+          readOnly: true
+        recruiter_profile_created_at:
+          type: string
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/JobStatusEnum'
@@ -10892,7 +12412,55 @@ components:
         status_label:
           type: string
           readOnly: true
+        is_expired:
+          type: string
+          readOnly: true
+        policy_hold:
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/PolicyHoldEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        policy_hold_label:
+          type: string
+          readOnly: true
+        moderation_hold:
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/ModerationHoldEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        moderation_hold_label:
+          type: string
+          readOnly: true
+        tier:
+          allOf:
+          - $ref: '#/components/schemas/TierEnum'
+          readOnly: true
+        tier_label:
+          type: string
+          readOnly: true
+        is_hot:
+          type: boolean
+          readOnly: true
+          description: Nhãn HOT (đỏ) trên card
+        is_urgent:
+          type: boolean
+          readOnly: true
+          description: Nhãn GẤP / tuyển gấp (cam) trên card
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
         submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        published_at:
           type: string
           format: date-time
           readOnly: true
@@ -10902,30 +12470,429 @@ components:
           format: date-time
           readOnly: true
           nullable: true
-        rejected_reason:
+        updated_at:
           type: string
+          format: date-time
+          readOnly: true
+        view_count:
+          type: integer
           readOnly: true
         application_count:
           type: integer
+          readOnly: true
+        pending_report_count:
+          type: integer
+          readOnly: true
+          default: 0
+        report_count:
+          type: integer
+          readOnly: true
+          default: 0
+        approved_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        rejected_reason:
+          type: string
+          readOnly: true
+        description:
+          type: string
+        requirements:
+          type: string
+        benefits:
+          type: string
+        work_schedule_note:
+          type: string
+          description: Mô tả lịch không thể hiện hết bằng các khung giờ có cấu trúc.
+        work_type:
+          oneOf:
+          - $ref: '#/components/schemas/WorkTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        work_types:
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          oneOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        education_level:
+          oneOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        experience_years:
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+          oneOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        position_level:
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+          oneOf:
+          - $ref: '#/components/schemas/PositionLevel615Enum'
+          - $ref: '#/components/schemas/BlankEnum'
+        gender_requirement:
+          $ref: '#/components/schemas/GenderRequirementEnum'
+        age_min:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        age_max:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        number_of_vacancies:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: Số lượng cần tuyển; null = không giới hạn
+        salary_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        income_display_type:
+          $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        category_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobCategoryAssignment'
+          readOnly: true
+        job_locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobLocation'
+          readOnly: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobSkill'
+          readOnly: true
+        work_schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobWorkSchedule'
+          readOnly: true
+        job_benefits:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobBenefit'
+          readOnly: true
+        language_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobLanguageRequirement'
+          readOnly: true
+        application_contact:
+          type: string
+          readOnly: true
+        can_view_sensitive_contact:
+          type: string
+          readOnly: true
+        status_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobStatusHistoryAdmin'
+          readOnly: true
+        moderation_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobModerationEvent'
+          readOnly: true
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminJobReport'
+          readOnly: true
+        review_token:
+          type: string
+          readOnly: true
+        state_actions:
+          type: string
+          readOnly: true
+        blocked_reasons:
+          type: string
+          readOnly: true
+        employer_account_level:
+          type: string
+          readOnly: true
+        employer_verification_completed:
+          type: string
           readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - application_contact
       - application_count
       - approved_at
+      - approved_job_count
+      - blocked_reasons
+      - can_view_sensitive_contact
+      - category_assignments
       - company_name
+      - company_public_id
+      - company_role
+      - company_role_label
+      - company_verification_status
       - created_at
       - deadline
       - description
+      - employer_account_level
+      - employer_account_status
+      - employer_email
+      - employer_email_verified
       - employer_name
+      - employer_phone_verified
+      - employer_public_id
+      - employer_verification_completed
+      - has_flash_badge
+      - is_expired
+      - is_hot
+      - is_urgent
+      - job_benefits
+      - job_locations
+      - job_skills
+      - language_requirements
+      - moderation_events
+      - moderation_hold
+      - moderation_hold_label
+      - pending_report_count
+      - policy_hold
+      - policy_hold_label
       - public_id
+      - published_at
+      - recruiter_profile_created_at
       - rejected_reason
+      - report_count
+      - reports
+      - review_token
+      - slug
+      - state_actions
+      - status
+      - status_history
+      - status_label
+      - submitted_at
+      - tier
+      - tier_label
+      - title
+      - updated_at
+      - view_count
+      - work_schedules
+    AdminJobManagementList:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          readOnly: true
+        company_public_id:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_verification_status:
+          type: string
+          readOnly: true
+        employer_public_id:
+          type: string
+          readOnly: true
+        employer_name:
+          type: string
+          readOnly: true
+        employer_email:
+          type: string
+          format: email
+          readOnly: true
+        employer_account_status:
+          type: string
+          readOnly: true
+        employer_email_verified:
+          type: boolean
+          readOnly: true
+        employer_phone_verified:
+          type: string
+          readOnly: true
+        company_role:
+          type: string
+          readOnly: true
+        company_role_label:
+          type: string
+          readOnly: true
+        recruiter_profile_created_at:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/JobStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        is_expired:
+          type: string
+          readOnly: true
+        policy_hold:
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/PolicyHoldEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        policy_hold_label:
+          type: string
+          readOnly: true
+        moderation_hold:
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/ModerationHoldEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        moderation_hold_label:
+          type: string
+          readOnly: true
+        tier:
+          allOf:
+          - $ref: '#/components/schemas/TierEnum'
+          readOnly: true
+        tier_label:
+          type: string
+          readOnly: true
+        is_hot:
+          type: boolean
+          readOnly: true
+          description: Nhãn HOT (đỏ) trên card
+        is_urgent:
+          type: boolean
+          readOnly: true
+          description: Nhãn GẤP / tuyển gấp (cam) trên card
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        view_count:
+          type: integer
+          readOnly: true
+        application_count:
+          type: integer
+          readOnly: true
+        pending_report_count:
+          type: integer
+          readOnly: true
+          default: 0
+        report_count:
+          type: integer
+          readOnly: true
+          default: 0
+        approved_job_count:
+          type: integer
+          readOnly: true
+          default: 0
+        rejected_reason:
+          type: string
+          readOnly: true
+      required:
+      - application_count
+      - approved_at
+      - approved_job_count
+      - company_name
+      - company_public_id
+      - company_role
+      - company_role_label
+      - company_verification_status
+      - deadline
+      - employer_account_status
+      - employer_email
+      - employer_email_verified
+      - employer_name
+      - employer_phone_verified
+      - employer_public_id
+      - has_flash_badge
+      - is_expired
+      - is_hot
+      - is_urgent
+      - moderation_hold
+      - moderation_hold_label
+      - pending_report_count
+      - policy_hold
+      - policy_hold_label
+      - public_id
+      - published_at
+      - recruiter_profile_created_at
+      - rejected_reason
+      - report_count
+      - slug
       - status
       - status_label
       - submitted_at
+      - tier
+      - tier_label
       - title
+      - updated_at
+      - view_count
     AdminJobReport:
       type: object
       properties:
@@ -12827,6 +14794,14 @@ components:
         * `contract` - contract
         * `render` - render
         * `unknown` - unknown
+    AnnouncementStateWriteActionEnum:
+      enum:
+      - dismiss
+      - snooze
+      type: string
+      description: |-
+        * `dismiss` - dismiss
+        * `snooze` - snooze
     AnnouncementStateWriteRequest:
       type: object
       properties:
@@ -12837,7 +14812,7 @@ components:
           type: integer
           minimum: 1
         action:
-          $ref: '#/components/schemas/ActionEnum'
+          $ref: '#/components/schemas/AnnouncementStateWriteActionEnum'
       required:
       - action
       - dismissal_version
@@ -12925,7 +14900,7 @@ components:
           type: string
         source:
           allOf:
-          - $ref: '#/components/schemas/ApplicationSourceEnum'
+          - $ref: '#/components/schemas/Source05aEnum'
           readOnly: true
         status:
           allOf:
@@ -13008,16 +14983,6 @@ components:
       required:
       - count
       - date
-    ApplicationSourceEnum:
-      enum:
-      - applied
-      - recommended
-      - invited
-      type: string
-      description: |-
-        * `applied` - Applied
-        * `recommended` - Recommended
-        * `invited` - Invited
     ApplicationStatusEnum:
       enum:
       - submitted
@@ -13085,6 +15050,49 @@ components:
           maximum: 5
           minimum: 1
           nullable: true
+    ArticleCreateRequest:
+      type: object
+      properties:
+        category_public_id:
+          type: string
+          minLength: 1
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        body:
+          type: string
+          minLength: 1
+        source_reference:
+          type: string
+          minLength: 1
+          maxLength: 500
+        order:
+          type: integer
+          minimum: 0
+          default: 0
+        seo_title:
+          type: string
+          maxLength: 200
+        seo_description:
+          type: string
+          maxLength: 300
+      required:
+      - body
+      - category_public_id
+      - source_reference
+      - title
+      - type
+    ArticleTypeEnum:
+      enum:
+      - FAQ
+      - GUIDE
+      type: string
+      description: |-
+        * `FAQ` - Câu hỏi thường gặp
+        * `GUIDE` - Hướng dẫn
     AuthSession:
       type: object
       properties:
@@ -13661,6 +15669,37 @@ components:
         * `feature` - Feature
         * `position` - Position
         * `audience` - Audience
+    CategoryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          maxLength: 300
+        order:
+          type: integer
+          minimum: 0
+        review_interval_days:
+          type: integer
+          maximum: 365
+          minimum: 30
+        seo_title:
+          type: string
+          maxLength: 200
+        seo_description:
+          type: string
+          maxLength: 300
+        revision_token:
+          type: integer
+          minimum: 1
     ChangeEmailRequest:
       type: object
       description: |-
@@ -16772,6 +18811,13 @@ components:
         application_count:
           type: integer
           readOnly: true
+        candidate_count:
+          type: integer
+          readOnly: true
+          default: 0
+        candidate_previews:
+          type: string
+          readOnly: true
         view_count:
           type: integer
           readOnly: true
@@ -16806,6 +18852,8 @@ components:
       - approved_at
       - campaign
       - campaign_name
+      - candidate_count
+      - candidate_previews
       - company_name
       - created_at
       - deadline
@@ -17159,6 +19207,14 @@ components:
         * `campaign` - Chiến dịch
         * `job` - Tin tuyển dụng
         * `application` - Ứng viên
+    HoldEnum:
+      enum:
+      - manual_review
+      - confirmed_violation
+      type: string
+      description: |-
+        * `manual_review` - manual_review
+        * `confirmed_violation` - confirmed_violation
     ImportanceEnum:
       enum:
       - required
@@ -17792,6 +19848,72 @@ components:
           minimum: 0
       required:
       - location
+    JobModerationEvent:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        action:
+          allOf:
+          - $ref: '#/components/schemas/ActionDceEnum'
+          readOnly: true
+        action_label:
+          type: string
+          readOnly: true
+        reason_code:
+          allOf:
+          - $ref: '#/components/schemas/ReasonCodeEnum'
+          readOnly: true
+        reason_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        actor_email:
+          type: string
+          format: email
+          readOnly: true
+          default: ''
+        source_report_public_id:
+          type: string
+          readOnly: true
+          default: ''
+        from_status:
+          type: string
+          readOnly: true
+        to_status:
+          type: string
+          readOnly: true
+        from_hold:
+          type: string
+          readOnly: true
+        to_hold:
+          type: string
+          readOnly: true
+        content_fingerprint:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - action_label
+      - actor_email
+      - content_fingerprint
+      - created_at
+      - from_hold
+      - from_status
+      - note
+      - public_id
+      - reason_code
+      - reason_label
+      - source_report_public_id
+      - to_hold
+      - to_status
     JobReportCreateRequest:
       type: object
       properties:
@@ -18074,6 +20196,46 @@ components:
         * `active` - Đang tuyển
         * `closed` - Đã đóng
         * `rejected` - Từ chối
+    JobStatusHistoryAdmin:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        from_status:
+          type: string
+          readOnly: true
+        to_status:
+          type: string
+          readOnly: true
+        actor_role:
+          allOf:
+          - $ref: '#/components/schemas/ActorRoleEnum'
+          readOnly: true
+        actor_role_label:
+          type: string
+          readOnly: true
+        changed_by_email:
+          type: string
+          format: email
+          readOnly: true
+          default: ''
+        note:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor_role
+      - actor_role_label
+      - changed_by_email
+      - created_at
+      - from_status
+      - id
+      - note
+      - to_status
     JobSuggest:
       type: object
       properties:
@@ -18199,6 +20361,14 @@ components:
       required:
       - cv
       - draft
+    LifecycleState4f9Enum:
+      enum:
+      - ACTIVE
+      - ARCHIVED
+      type: string
+      description: |-
+        * `ACTIVE` - Đang hoạt động
+        * `ARCHIVED` - Đã lưu trữ
     LifecycleStatusEnum:
       enum:
       - draft
@@ -18584,6 +20754,68 @@ components:
           format: date-time
       required:
       - email
+    Media:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        url:
+          type: string
+          readOnly: true
+        storage_key:
+          type: string
+        original_name:
+          type: string
+          maxLength: 255
+        content_type:
+          type: string
+          maxLength: 100
+        size_bytes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        width:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        height:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        default_alt_text:
+          type: string
+          maxLength: 300
+        uploaded_by:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content_type
+      - created_at
+      - height
+      - original_name
+      - public_id
+      - size_bytes
+      - storage_key
+      - uploaded_by
+      - url
+      - width
+    MediaUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        default_alt_text:
+          type: string
+          maxLength: 300
+      required:
+      - file
     MethodEnum:
       enum:
       - email
@@ -18594,6 +20826,15 @@ components:
         * `email` - email
         * `totp` - totp
         * `backup` - backup
+    ModerationHoldEnum:
+      enum:
+      - manual_review
+      - confirmed_violation
+      type: string
+      description: |-
+        * `` - Không giữ
+        * `manual_review` - Tạm ẩn để rà soát nội dung
+        * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
     NeedEnum:
       enum:
       - post_job
@@ -18678,6 +20919,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminAnnouncementList'
+    PaginatedAdminArticleListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminArticleList'
     PaginatedAdminAuditLogList:
       type: object
       required:
@@ -18793,7 +21057,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminInvitation'
-    PaginatedAdminJobModerationList:
+    PaginatedAdminJobApplicationList:
       type: object
       required:
       - count
@@ -18815,7 +21079,30 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/AdminJobModeration'
+            $ref: '#/components/schemas/AdminJobApplication'
+    PaginatedAdminJobManagementListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminJobManagementList'
     PaginatedAdminJobReportList:
       type: object
       required:
@@ -19184,6 +21471,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ManagedAccount'
+    PaginatedMediaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
     PaginatedPostListList:
       type: object
       required:
@@ -19207,6 +21517,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PostList'
+    PaginatedPublicArticleListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicArticleList'
     PaginatedPublicJobListList:
       type: object
       required:
@@ -19624,6 +21957,25 @@ components:
           maximum: 5
           minimum: 1
           nullable: true
+    PatchedArticleUpdateRequest:
+      type: object
+      properties:
+        category_public_id:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 180
+          pattern: ^[-a-zA-Z0-9_]+$
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        order:
+          type: integer
+          minimum: 0
+        revision_token:
+          type: integer
+          minimum: 1
     PatchedCandidateEmailNotificationSettingsRequest:
       type: object
       description: Candidate-owned email notification preferences, enabled by default.
@@ -19660,6 +22012,37 @@ components:
         gender:
           type: string
           maxLength: 20
+    PatchedCategoryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          maxLength: 300
+        order:
+          type: integer
+          minimum: 0
+        review_interval_days:
+          type: integer
+          maximum: 365
+          minimum: 30
+        seo_title:
+          type: string
+          maxLength: 200
+        seo_description:
+          type: string
+          maxLength: 300
+        revision_token:
+          type: integer
+          minimum: 1
     PatchedCvBackgroundAdminRequest:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
@@ -20127,6 +22510,32 @@ components:
             $ref: '#/components/schemas/ConsultationTopicsEnum'
         is_active:
           type: boolean
+    PatchedRevisionWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        body:
+          type: string
+          minLength: 1
+        source_reference:
+          type: string
+          minLength: 1
+          maxLength: 500
+        change_summary:
+          type: string
+          maxLength: 500
+        seo_title:
+          type: string
+          maxLength: 200
+        seo_description:
+          type: string
+          maxLength: 300
+        revision_token:
+          type: integer
+          minimum: 1
     PhoneAvailability:
       type: object
       properties:
@@ -20150,6 +22559,17 @@ components:
       required:
       - slug
       - title
+    PolicyHoldEnum:
+      enum:
+      - temporary_lock
+      - ban_review
+      - legacy_lock
+      type: string
+      description: |-
+        * `` - Không giữ
+        * `temporary_lock` - Tạm giữ do khóa tài khoản
+        * `ban_review` - Giữ để rà soát sau cấm
+        * `legacy_lock` - Giữ do trạng thái khóa cũ
     Portal3faEnum:
       enum:
       - candidate
@@ -20250,6 +22670,12 @@ components:
         related_job_category:
           type: string
           readOnly: true
+        speech_default:
+          type: string
+          readOnly: true
+        speech_assets:
+          type: string
+          readOnly: true
         published_at:
           type: string
           format: date-time
@@ -20268,6 +22694,8 @@ components:
       - content
       - public_id
       - related_job_category
+      - speech_assets
+      - speech_default
       - tags
       - thumbnail_url
       - title
@@ -20428,6 +22856,154 @@ components:
       properties:
         is_active:
           type: boolean
+    PublicArticleCategory:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - name
+      - public_id
+      - slug
+    PublicArticleDetail:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/PublicArticleCategory'
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 180
+          pattern: ^[-a-zA-Z0-9_]+$
+        article_type:
+          $ref: '#/components/schemas/ArticleTypeEnum'
+        title:
+          type: string
+          readOnly: true
+        excerpt:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        body:
+          type: string
+          readOnly: true
+        seo_title:
+          type: string
+          readOnly: true
+        seo_description:
+          type: string
+          readOnly: true
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+        related_articles:
+          type: string
+          readOnly: true
+        previous_article:
+          type: string
+          readOnly: true
+        next_article:
+          type: string
+          readOnly: true
+      required:
+      - body
+      - category
+      - excerpt
+      - next_article
+      - previous_article
+      - public_id
+      - published_at
+      - related_articles
+      - seo_description
+      - seo_title
+      - slug
+      - title
+      - updated_at
+    PublicArticleList:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/PublicArticleCategory'
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 180
+          pattern: ^[-a-zA-Z0-9_]+$
+        article_type:
+          $ref: '#/components/schemas/ArticleTypeEnum'
+        title:
+          type: string
+          readOnly: true
+        excerpt:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - excerpt
+      - public_id
+      - slug
+      - title
+      - updated_at
+    PublicCategory:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          maxLength: 160
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+          maxLength: 300
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        article_count:
+          type: integer
+          readOnly: true
+      required:
+      - article_count
+      - name
+      - public_id
+      - slug
     PublicJobLanguageRequirement:
       type: object
       description: Language requirement DTO rendered by the public detail page.
@@ -20780,6 +23356,21 @@ components:
       required:
       - name_vi
       - slug
+    PublishRequest:
+      type: object
+      properties:
+        revision_number:
+          type: integer
+          minimum: 1
+        revision_token:
+          type: integer
+          minimum: 1
+        review_due_at:
+          type: string
+          format: date-time
+      required:
+      - revision_number
+      - revision_token
     Reason346Enum:
       enum:
       - fake_company
@@ -20795,6 +23386,24 @@ components:
         * `wrong_info` - Thông tin tin đăng sai sự thật
         * `duplicate` - Tin trùng lặp
         * `expired` - Tin đã tuyển xong nhưng chưa gỡ
+        * `other` - Lý do khác
+    ReasonCodeEnum:
+      enum:
+      - incomplete_content
+      - misleading_content
+      - prohibited_content
+      - fraud_risk
+      - duplicate_posting
+      - confirmed_report
+      - other
+      type: string
+      description: |-
+        * `incomplete_content` - Nội dung chưa đầy đủ
+        * `misleading_content` - Nội dung gây hiểu nhầm
+        * `prohibited_content` - Nội dung bị cấm
+        * `fraud_risk` - Có dấu hiệu lừa đảo
+        * `duplicate_posting` - Tin trùng lặp
+        * `confirmed_report` - Báo cáo vi phạm đã xác nhận
         * `other` - Lý do khác
     ReasonRequest:
       type: object
@@ -21664,6 +24273,59 @@ components:
       required:
       - label
       - search
+    ReorderRequest:
+      type: object
+      properties:
+        public_ids:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+        category_public_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+      - public_ids
+    RevisionActionRequest:
+      type: object
+      properties:
+        revision_token:
+          type: integer
+          minimum: 1
+        review_note:
+          type: string
+      required:
+      - revision_token
+    RevisionWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        body:
+          type: string
+          minLength: 1
+        source_reference:
+          type: string
+          minLength: 1
+          maxLength: 500
+        change_summary:
+          type: string
+          maxLength: 500
+        seo_title:
+          type: string
+          maxLength: 200
+        seo_description:
+          type: string
+          maxLength: 300
+        revision_token:
+          type: integer
+          minimum: 1
+      required:
+      - revision_token
     Role3faEnum:
       enum:
       - candidate
@@ -22215,6 +24877,49 @@ components:
           nullable: true
       required:
       - name
+    Source05aEnum:
+      enum:
+      - applied
+      - recommended
+      - invited
+      type: string
+      description: |-
+        * `applied` - Applied
+        * `recommended` - Recommended
+        * `invited` - Invited
+    SourceTypeEnum:
+      enum:
+      - blog_post
+      - text
+      type: string
+      description: |-
+        * `blog_post` - blog_post
+        * `text` - text
+    SpeechSessionRequestRequest:
+      type: object
+      properties:
+        source_type:
+          $ref: '#/components/schemas/SourceTypeEnum'
+        source_public_id:
+          type: string
+          minLength: 1
+          default: ''
+          pattern: ^[A-Za-z0-9_-]{3,50}$
+        text:
+          type: string
+          default: ''
+          maxLength: 600
+        voice_id:
+          type: string
+          minLength: 1
+          default: ''
+          pattern: ^[a-z0-9-]{1,64}$
+        style:
+          allOf:
+          - $ref: '#/components/schemas/StyleEnum'
+          default: ''
+      required:
+      - source_type
     Status399Enum:
       enum:
       - draft
@@ -22293,6 +24998,16 @@ components:
       description: |-
         * `saved-job-similarity-v1` - saved-job-similarity-v1
         * `recent-active-fallback-v1` - recent-active-fallback-v1
+    StyleEnum:
+      enum:
+      - tu_nhien
+      - tin_tuc
+      - doc_truyen
+      type: string
+      description: |-
+        * `tu_nhien` - tu_nhien
+        * `tin_tuc` - tin_tuc
+        * `doc_truyen` - doc_truyen
     Tag:
       type: object
       properties:
@@ -22345,6 +25060,14 @@ components:
         * `pending` - Chờ xử lý
         * `upheld` - Xác nhận vi phạm
         * `dismissed` - Bác bỏ
+    TokenActionRequest:
+      type: object
+      properties:
+        revision_token:
+          type: integer
+          minimum: 1
+      required:
+      - revision_token
     TwoFactorChallengeRequest:
       type: object
       properties:
@@ -22427,6 +25150,14 @@ components:
           maxLength: 128
       required:
       - challenge
+    TypeEnum:
+      enum:
+      - FAQ
+      - GUIDE
+      type: string
+      description: |-
+        * `FAQ` - Câu hỏi thường gặp
+        * `GUIDE` - Hướng dẫn
     VerificationMethodEnum:
       enum:
       - business_registration

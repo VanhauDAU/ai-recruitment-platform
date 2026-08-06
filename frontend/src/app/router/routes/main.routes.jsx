@@ -17,6 +17,9 @@ import {
   HomePage,
   JobDetailPage,
   JobListPage,
+  KnowledgeCategoryPage,
+  KnowledgeDetailPage,
+  KnowledgeHomePage,
   MainLoginPage,
   MainRegisterPage,
   MatchingJobsPage,
@@ -73,6 +76,9 @@ export function mainRoutes() {
       <Route path="/blog" element={<BlogHomePage />} />
       <Route path="/blog/danh-muc/:categorySlug" element={<BlogCategoryPage />} />
       <Route path="/blog/:slug" element={<BlogDetailPage />} />
+      <Route path="/tro-giup" element={<KnowledgeHomePage />} />
+      <Route path="/tro-giup/:categorySlug" element={<KnowledgeCategoryPage />} />
+      <Route path="/tro-giup/:categorySlug/:articleSlug" element={<KnowledgeDetailPage />} />
       <Route path="/tai-khoan/xac-thuc-email" element={<VerifyEmailPage />} />
       {/* Kho mẫu CV theo ngôn ngữ — URL đổi theo dropdown ngôn ngữ (kiểu TopCV):
           /mau-cv (vi), /mau-cv-tieng-anh, /mau-cv-tieng-nhat, /mau-cv-tieng-trung.

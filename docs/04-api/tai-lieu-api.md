@@ -431,3 +431,79 @@ trả `409 announcement_revision_stale`. Publish/pause/resume/archive là servic
 transactional, khóa hàng bằng `select_for_update()` và ghi audit. Mọi mutation
 sau create gửi `revision_token`; publish gửi thêm số `revision`. Revision đã
 publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo revision mới.
+
+## Trung tâm trợ giúp — Public, Admin và rollout (KB-P2–KB-P6)
+
+Public API không yêu cầu đăng nhập, dùng throttle `knowledgebase_public`
+120 request/phút theo IP client đã kiểm chứng và chỉ trả article active thuộc
+category active có revision đang publish ở trạng thái approved.
+
+| Method | Endpoint | Query | Mục đích |
+| --- | --- | --- | --- |
+| `GET` | `/api/knowledgebase/categories/` | — | Category active và số bài public |
+| `GET` | `/api/knowledgebase/articles/` | `category`, `type=faq\|guide`, `q`, `page`, `page_size<=60` | Browse/search bài public |
+| `GET` | `/api/knowledgebase/articles/{category_slug}/{article_slug}/` | — | Revision đang publish, related/trước/sau tối đa 6 bài |
+
+`q` dài 2–120 ký tự và search không dấu theo nhiều token. Draft, rejected,
+archived, category inactive và slug không tồn tại đều trả cùng `404`; response
+không lộ actor, review note, source reference, revision token hay revision chưa
+publish. Public response dùng `Cache-Control: public, max-age=60,
+stale-while-revalidate=300` và ETag; conditional request khớp trả `304`.
+`KNOWLEDGEBASE_PUBLIC_ENABLED=false` làm public API fail-closed `404` nhưng giữ
+nguyên admin/data. `GET /api/site/settings/` đồng thời trả capability boolean
+`knowledgebase_public_enabled` lấy trực tiếp từ switch này để frontend ẩn/hiện
+entry point. Response còn có `knowledgebase_search_index_enabled`, chỉ true khi
+public và index switch backend cùng bật; cả hai không phải row site setting mà
+admin có thể sửa. Admin API luôn yêu cầu tài khoản quản trị, permission cụ thể và trả
+`Cache-Control: private, no-store`.
+
+`KNOWLEDGEBASE_SEARCH_INDEX_ENABLED=false` giữ toàn bộ Help Center `noindex` và
+sitemap riêng rỗng. Khi public switch, index switch và global
+`seo_robots_index` cùng true, home/category/article canonical chuyển sang
+`index, follow`, `/sitemaps/knowledgebase.xml` được thêm vào `/sitemap.xml`;
+URL có `q`, `type` hoặc `page` vẫn noindex. Trước khi bật phải chạy
+`python manage.py check_knowledgebase_readiness --json` theo runbook deployment.
+
+Public/admin request phát metric count/latency theo endpoint, status, loại và
+bucket kết quả/độ dài query. Raw query, title, body, email, source và review note
+không được ghi vào metric hoặc label.
+
+| Method | Endpoint | Quyền chính | Mục đích |
+| --- | --- | --- | --- |
+| `GET/POST` | `/api/knowledgebase/admin/categories/` | `view/manage` | List/tạo category |
+| `GET/PATCH` | `/api/knowledgebase/admin/categories/{public_id}/` | `view/manage` | Detail/cập nhật category |
+| `POST` | `/api/knowledgebase/admin/categories/reorder/` | `manage` | Sắp xếp toàn bộ category |
+| `POST` | `/api/knowledgebase/admin/categories/{public_id}/activate/` | `publish` | Bật category public |
+| `POST` | `/api/knowledgebase/admin/categories/{public_id}/deactivate/` | `publish` | Tắt category public |
+| `GET/POST` | `/api/knowledgebase/admin/articles/` | `view/manage` | List/filter/tạo article + revision 1 |
+| `GET/PATCH` | `/api/knowledgebase/admin/articles/{public_id}/` | `view/manage` | Detail/audit/cập nhật metadata |
+| `POST` | `/api/knowledgebase/admin/articles/reorder/` | `manage` | Sắp xếp bài trong một category |
+| `GET/POST` | `/api/knowledgebase/admin/articles/{public_id}/revisions/` | `view/manage` | Lịch sử/tạo revision mới |
+| `GET/PATCH` | `/api/knowledgebase/admin/articles/{public_id}/revisions/{number}/` | `view/manage` | Xem/sửa revision nháp |
+| `POST` | `.../revisions/{number}/submit/` | `manage` | Gửi duyệt |
+| `POST` | `.../revisions/{number}/approve/` | `review` | Phê duyệt |
+| `POST` | `.../revisions/{number}/reject/` | `review` | Từ chối, bắt buộc lý do |
+| `POST` | `/api/knowledgebase/admin/articles/{public_id}/publish/` | `publish` | Publish/rollback revision approved chỉ định |
+| `POST` | `/api/knowledgebase/admin/articles/{public_id}/archive/` | `publish` | Ẩn bài nhưng giữ published pointer |
+| `POST` | `/api/knowledgebase/admin/articles/{public_id}/restore/` | `publish` | Khôi phục đúng revision trước đó |
+| `GET/POST` | `/api/knowledgebase/admin/media/` | `view/manage` | Media library/upload ảnh |
+
+Mọi PATCH/action gửi `revision_token`; publish gửi thêm `revision_number` và
+không tự chọn revision mới nhất. Token cũ hoặc transition sai trả `409` với
+`code` ổn định. Approved/rejected không sửa tại chỗ. Tạo bản sửa của bài đã
+publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đầu.
+Frontend thu thập `change_summary` trong modal **Tạo revision mới** trước khi
+gọi `POST .../revisions/`; không validate form revision đang ở trạng thái chỉ
+đọc. Response tạo draft mới làm editor mở lại và cho phép tiếp tục sửa tóm tắt.
+Các object `related_articles`, `previous_article` và `next_article` trong detail
+public có trường `order`; sidebar ghép bài hiện tại với related rồi sắp xếp theo
+`order`, không dùng trạng thái được chọn để thay đổi vị trí.
+Upload tùy chọn chỉ nhận JPEG/PNG/WebP, tối đa 5 MB và 1600×1600. Body nhận ảnh
+từ media library, đường dẫn nội bộ hoặc URL HTTPS mà không bắt buộc upload vào
+ProCV trước; ảnh vẫn phải có alt text có nghĩa. Khi không tìm kiếm, trang ứng
+viên gọi API theo category/page. Khi nhập tối thiểu hai ký tự, frontend debounce
+250 ms rồi gọi list API với `q` và không gửi category để tìm trên toàn bộ chuyên
+mục; `q` không được ghi lên URL. UI dùng `count` từ response, đặt nhãn category
+phía trên title, highlight phần khớp và hiện excerpt một dòng. Editor FAQ cung cấp tab
+**Từ URL** bên cạnh kho media và upload để biên tập viên dùng trực tiếp nguồn
+HTTPS hợp lệ.
