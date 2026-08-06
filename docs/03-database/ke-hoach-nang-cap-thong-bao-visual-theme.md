@@ -1,6 +1,6 @@
 # Kế hoạch nâng cấp visual — Thông báo đa cổng
 
-> Trạng thái: **AN-V0 chốt · AN-V1 backend hoàn tất · tiếp AN-V2 admin (upload + preview)**
+> Trạng thái: **AN-V0–V2 hoàn tất trên nhánh · tiếp AN-V3 runtime strip**
 >
 > Nhánh làm việc: `feat/announcement-visual-theme`
 >
@@ -226,7 +226,7 @@ Cross-layer:
 | --- | --- | --- | --- |
 | **AN-V0** | Đặc tả + chốt quyết định (màu hybrid, ảnh+overlay, responsive/preview) | Review chủ dự án | ✅ 2026-08-06 |
 | **AN-V1** | Migration + validate + public/admin DTO + tests | pytest announcement | ✅ 2026-08-06 |
-| **AN-V2** | Upload backgrounds + form admin màu/ảnh + **live preview responsive** | Vitest form/preview; admin mobile stack | ⬜ |
+| **AN-V2** | Upload backgrounds + form admin màu/ảnh + **live preview responsive** | Vitest form/preview; admin mobile stack | ✅ 2026-08-06 |
 | **AN-V3** | Strip runtime theme/bg + normalize FE + **responsive 3 viewport** | Strip tests + smoke desktop/tablet/mobile | ⬜ |
 | **AN-V4** | Runbook, seed ví dụ, đồng bộ doc/runtime guide | Readiness checklist | ⬜ |
 
@@ -284,12 +284,12 @@ Mỗi phase PR nhỏ; AN-V2 **không** ship runtime strip chưa preview ổn.
 - [x] Migration 0017 + service validate + DTO + tests
 - [x] TIEN-DO / CHANGELOG / docs index
 
-### AN-V2 (chưa)
+### AN-V2
 
-- [ ] Upload API backgrounds
-- [ ] Admin form màu + ảnh
-- [ ] Live preview desktop/tablet/mobile
-- [ ] Vitest preview + form
+- [x] Upload API `POST /api/site/admin/announcements/backgrounds/`
+- [x] Admin form màu + ảnh (`AnnouncementVisualFields`)
+- [x] Live preview desktop/tablet/mobile + theme tokens
+- [x] Vitest theme token resolve
 
 ### AN-V3 (chưa)
 

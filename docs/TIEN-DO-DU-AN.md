@@ -248,7 +248,7 @@ là bắt buộc ở phase frontend. Không đổi namespace API, priority tier 
 | --- | --- | --- |
 | AN-V0 | Đặc tả visual, chốt hybrid màu + ảnh/overlay + responsive/preview | ✅ |
 | AN-V1 | Backend: migration revision theme/background, validate, DTO public/admin, tests | ✅ |
-| AN-V2 | Upload background + form admin + **live preview** desktop/tablet/mobile | ⬜ |
+| AN-V2 | Upload background + form admin + **live preview** desktop/tablet/mobile | ✅ |
 | AN-V3 | Runtime strip apply theme/bg, FE contract, smoke 3 viewport | ⬜ |
 | AN-V4 | Runbook, seed ví dụ, đồng bộ doc runtime | ⬜ |
 
@@ -1024,7 +1024,14 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-08-06 (AN-V0/AN-V1 — nâng cấp visual thông báo đa cổng:
+Cập nhật lần cuối: 2026-08-06b (AN-V2 — upload ảnh nền + form/preview admin:
+`POST /api/site/admin/announcements/backgrounds/` (JPEG/PNG/WebP, 640–2400×24–120,
+≤1MB); editor bước “Loại & CTA” có theme kind/preset/custom, ColorPicker, upload
+nền, fit/overlay; preview Desktop/Tablet/Mobile áp token màu shared
+`resolveAnnouncementThemeTokens`, line-clamp 2 trên mobile, height theo content.
+AN-V3 còn: wire runtime strip. Nhánh `feat/announcement-visual-theme`.)
+
+Cập nhật 2026-08-06 (AN-V0/AN-V1 — nâng cấp visual thông báo đa cổng:
 chốt hybrid theme kind/preset/custom hex + một ảnh nền strip (ví dụ 980×31)
 kèm overlay contrast; height strip luôn theo content (cấm khóa 31px). AN-V1
 backend: migration `sitecontent.0017`, validate storage key/hex, public DTO

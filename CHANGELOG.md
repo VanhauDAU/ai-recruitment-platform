@@ -8,7 +8,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-06
 
-#### Added — Announcement visual theme (AN-V0 / AN-V1)
+#### Added — Announcement visual theme (AN-V0 / AN-V1 / AN-V2)
 
 - Mở epic **AN-V** nâng cấp dải thông báo đa cổng: chọn màu hiển thị (mode
   `kind` / `preset` / `custom` hex) và ảnh nền strip (ví dụ 980×31) kèm overlay
@@ -19,13 +19,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   `normalize_theme_and_background` (hex `#RRGGBB`, storage key ảnh, ép overlay
   `dark` khi có ảnh); public feed trả `theme` + `background.image_url`; admin
   revision đọc/ghi field visual (storage key chỉ admin).
-- Ràng buộc thiết kế đã chốt cho phase sau: **responsive** (mobile 2 dòng, touch
-  ≥ 44px, height strip theo content — không khóa 31px) và **live preview admin**
-  desktop/tablet/mobile tái dùng style runtime (AN-V2/AN-V3).
-- Tests: `test_announcement_visual_theme.py` + regression announcement public/
-  admin/models xanh. Cập nhật `docs/TIEN-DO-DU-AN.md`, runtime guide
-  `docs/08-frontend/dai-thong-bao-da-cong.md`, nới “ngoài phạm vi” ảnh banner
-  trong kế hoạch thông báo gốc.
+- **AN-V2 admin:** `POST /api/site/admin/announcements/backgrounds/` upload
+  JPEG/PNG/WebP (640–2400×24–120, ≤1MB); form editor theme + ColorPicker + upload
+  nền; live preview Desktop/Tablet/Mobile với token màu shared
+  (`resolveAnnouncementThemeTokens`), mobile line-clamp 2, height theo content
+  (không khóa 31px).
+- Còn **AN-V3**: áp theme/ảnh lên runtime strip đa cổng + smoke 3 viewport.
+- Tests: backend visual/upload + FE theme tokens. Cập nhật `docs/TIEN-DO-DU-AN.md`,
+  runtime guide `docs/08-frontend/dai-thong-bao-da-cong.md`.
 
 ### 2026-08-05
 

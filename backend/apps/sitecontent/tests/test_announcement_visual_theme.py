@@ -1,4 +1,8 @@
+from io import BytesIO
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -7,6 +11,12 @@ from apps.accounts.models import User
 from ..models import Announcement, AnnouncementRevision
 from ..services import normalize_revision_data
 from .announcement_helpers import revision_payload
+
+
+def _png_bytes(width, height, color=(16, 185, 129)):
+    buffer = BytesIO()
+    Image.new('RGB', (width, height), color).save(buffer, format='PNG')
+    return buffer.getvalue()
 
 
 class AnnouncementVisualThemeTests(APITestCase):
@@ -110,3 +120,33 @@ class AnnouncementVisualThemeTests(APITestCase):
         self.assertEqual(item['background']['overlay'], 'dark')
         # Public feed không lộ storage key.
         self.assertNotIn('image_storage_key', item['background'])
+
+    def test_background_upload_accepts_strip_dimensions(self):
+        upload = SimpleUploadedFile(
+            'banner.png',
+            _png_bytes(980, 31),
+            content_type='image/png',
+        )
+        response = self.client.post(
+            reverse('site-admin-announcement-backgrounds'),
+            {'file': upload},
+            format='multipart',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertTrue(response.data['path'].startswith('site/announcements/backgrounds/'))
+        self.assertEqual(response.data['width'], 980)
+        self.assertEqual(response.data['height'], 31)
+        self.assertIn('url', response.data)
+
+    def test_background_upload_rejects_too_tall_image(self):
+        upload = SimpleUploadedFile(
+            'tall.png',
+            _png_bytes(980, 200),
+            content_type='image/png',
+        )
+        response = self.client.post(
+            reverse('site-admin-announcement-backgrounds'),
+            {'file': upload},
+            format='multipart',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
