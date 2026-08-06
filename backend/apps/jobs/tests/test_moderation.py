@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from threading import Barrier
 
 from django.contrib.auth import get_user_model
@@ -14,11 +15,19 @@ from apps.accounts.models import AdminPermission, AdminRole, Department
 from apps.accounts.services import assign_membership
 from apps.employers.models import Company
 
-from ..models import Job, JobModerationEvent, JobStatusHistory
+from ..models import (
+    Job,
+    JobApplicationContact,
+    JobApplicationEmail,
+    JobModerationEvent,
+    JobStatusHistory,
+)
 from ..services import approve_job, reject_job
 
 
-class JobModerationApiTests(APITestCase):
+class JobModerationFixture:
+    """One pending job plus the two reviewer profiles the suites compare."""
+
     def setUp(self):
         user_model = get_user_model()
         self.employer = user_model.objects.create_user(
@@ -26,6 +35,11 @@ class JobModerationApiTests(APITestCase):
         )
         self.admin = user_model.objects.create_user(
             email='job-admin@example.com',
+            password='Password@123',
+            role=user_model.Role.ADMIN,
+        )
+        self.restricted_admin = user_model.objects.create_user(
+            email='job-admin-restricted@example.com',
             password='Password@123',
             role=user_model.Role.ADMIN,
         )
@@ -38,23 +52,31 @@ class JobModerationApiTests(APITestCase):
             code='staff',
             name='Nhân viên',
         )
-        role.permissions.add(
+        permissions = {
+            code: AdminPermission.objects.create(code=code, module='job_moderation', label=code)
+            for code in (
+                'job_moderation.view',
+                'job_moderation.approve',
+                'job_moderation.reject',
+                'job_moderation.enforce_visibility',
+                'job_moderation.view_sensitive_contact',
+            )
+        }
+        role.permissions.add(*permissions.values())
+        restricted_role = AdminRole.objects.create(
+            department=department,
+            code='staff-restricted',
+            name='Nhân viên hạn chế',
+        )
+        restricted_role.permissions.add(
             *[
-                AdminPermission.objects.create(
-                    code=code,
-                    module='job_moderation',
-                    label=code,
-                )
-                for code in (
-                    'job_moderation.view',
-                    'job_moderation.approve',
-                    'job_moderation.reject',
-                    'job_moderation.enforce_visibility',
-                    'job_moderation.view_sensitive_contact',
-                )
+                permission
+                for code, permission in permissions.items()
+                if code != 'job_moderation.view_sensitive_contact'
             ]
         )
         assign_membership(self.admin, role, actor=self.admin)
+        assign_membership(self.restricted_admin, restricted_role, actor=self.admin)
         company = Company.objects.create(company_name='Moderation Co', created_by=self.employer)
         self.job = Job.objects.create(
             posted_by=self.employer,
@@ -65,6 +87,8 @@ class JobModerationApiTests(APITestCase):
             submitted_at=timezone.now(),
         )
 
+
+class JobModerationApiTests(JobModerationFixture, APITestCase):
     def review_url(self):
         return reverse('admin-job-review', kwargs={'public_id': self.job.public_id})
 
@@ -231,6 +255,158 @@ class JobModerationApiTests(APITestCase):
         self.assertEqual(
             list(self.job.moderation_events.values_list('action', flat=True)),
             [JobModerationEvent.Action.RESTORE, JobModerationEvent.Action.HIDE],
+        )
+
+
+class JobRevisionReviewTests(JobModerationFixture, APITestCase):
+    """A revision of an approved job must be reviewable against its baseline."""
+
+    def detail_url(self):
+        return reverse(
+            'admin-job-moderation-detail',
+            kwargs={'public_id': self.job.public_id},
+        )
+
+    def decision_url(self):
+        return reverse('admin-job-decision', kwargs={'public_id': self.job.public_id})
+
+    def approve_current_revision(self):
+        self.client.force_authenticate(self.admin)
+        token = self.client.get(self.detail_url()).data['review_token']
+        return self.client.post(
+            self.decision_url(),
+            {'action': 'approve', 'review_token': token},
+            format='json',
+        )
+
+    def send_back_to_review(self, **changes):
+        for field, value in changes.items():
+            setattr(self.job, field, value)
+        self.job.status = Job.Status.PENDING
+        self.job.published_at = None
+        self.job.save(update_fields=[*changes, 'status', 'published_at', 'updated_at'])
+
+    def test_approval_captures_the_baseline_shown_to_candidates(self):
+        self.assertEqual(self.job.approved_snapshot, {})
+
+        self.approve_current_revision()
+
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.approved_snapshot['title'], 'Backend Engineer')
+        self.assertIsNotNone(self.job.approved_snapshot_at)
+
+    def test_detail_lists_what_the_employer_changed_since_the_last_approval(self):
+        self.approve_current_revision()
+        self.send_back_to_review(
+            title='Backend Engineer (Senior)',
+            description='Nội dung đã được nhà tuyển dụng sửa lại.',
+        )
+
+        changes = self.client.get(self.detail_url()).data['pending_changes']
+
+        self.assertTrue(changes['has_baseline'])
+        self.assertEqual(changes['changed_count'], 2)
+        self.assertEqual(
+            {item['key'] for item in changes['changes']},
+            {'title', 'description'},
+        )
+        title_change = next(item for item in changes['changes'] if item['key'] == 'title')
+        self.assertEqual(title_change['before'], 'Backend Engineer')
+        self.assertEqual(title_change['after'], 'Backend Engineer (Senior)')
+
+    def test_first_submission_reports_no_baseline_instead_of_a_fake_diff(self):
+        self.client.force_authenticate(self.admin)
+
+        changes = self.client.get(self.detail_url()).data['pending_changes']
+
+        self.assertFalse(changes['has_baseline'])
+        self.assertEqual(changes['changes'], [])
+
+    def test_contact_changes_stay_hidden_from_reviewers_without_the_permission(self):
+        contact = JobApplicationContact.objects.create(
+            job=self.job,
+            recipient_name='Nguyễn Văn A',
+            phone='0901234567',
+        )
+        JobApplicationEmail.objects.create(contact=contact, email='hr@example.com')
+        self.approve_current_revision()
+        contact.phone = '0987654321'
+        contact.save(update_fields=['phone', 'updated_at'])
+        self.send_back_to_review(title='Backend Engineer (Senior)')
+
+        privileged = self.client.get(self.detail_url()).data['pending_changes']
+        self.client.force_authenticate(self.restricted_admin)
+        restricted = self.client.get(self.detail_url()).data['pending_changes']
+
+        self.assertIn('contact_phone', {item['key'] for item in privileged['changes']})
+        self.assertNotIn('contact_phone', {item['key'] for item in restricted['changes']})
+        self.assertEqual(restricted['hidden_sensitive_count'], 1)
+        self.assertEqual(restricted['changed_count'], privileged['changed_count'])
+
+    def test_expired_pending_job_is_approved_together_with_a_new_deadline(self):
+        today = timezone.localdate()
+        self.job.deadline = today - timedelta(days=1)
+        self.job.save(update_fields=['deadline', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+
+        detail = self.client.get(self.detail_url())
+        without_deadline = self.client.post(
+            self.decision_url(),
+            {'action': 'approve', 'review_token': detail.data['review_token']},
+            format='json',
+        )
+        with_deadline = self.client.post(
+            self.decision_url(),
+            {
+                'action': 'approve',
+                'review_token': self.client.get(self.detail_url()).data['review_token'],
+                'deadline': (today + timedelta(days=7)).isoformat(),
+            },
+            format='json',
+        )
+
+        self.assertIn('approve', detail.data['state_actions'])
+        self.assertEqual(
+            [item['code'] for item in detail.data['approve_requirements']],
+            ['deadline'],
+        )
+        self.assertEqual(detail.data['approve_blockers'], [])
+        self.assertEqual(without_deadline.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(with_deadline.status_code, status.HTTP_200_OK, with_deadline.data)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.ACTIVE)
+        self.assertEqual(self.job.deadline, today + timedelta(days=7))
+
+    def test_public_visibility_flag_tracks_the_candidate_facing_predicate(self):
+        self.client.force_authenticate(self.admin)
+        self.job.deadline = timezone.localdate() + timedelta(days=7)
+        self.job.save(update_fields=['deadline', 'updated_at'])
+
+        pending = self.client.get(self.detail_url()).data['is_publicly_visible']
+        self.approve_current_revision()
+        approved = self.client.get(self.detail_url()).data['is_publicly_visible']
+        listed = self.client.get(reverse('admin-job-moderation-list')).data['results'][0]
+        self.job.refresh_from_db()
+        self.job.moderation_hold = Job.ModerationHold.MANUAL_REVIEW
+        self.job.save(update_fields=['moderation_hold', 'updated_at'])
+        held = self.client.get(self.detail_url()).data['is_publicly_visible']
+
+        self.assertFalse(pending)
+        self.assertTrue(approved)
+        self.assertTrue(listed['is_publicly_visible'])
+        self.assertFalse(held)
+
+    def test_held_job_still_hides_the_approve_action(self):
+        self.job.moderation_hold = Job.ModerationHold.MANUAL_REVIEW
+        self.job.save(update_fields=['moderation_hold', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+
+        detail = self.client.get(self.detail_url())
+
+        self.assertNotIn('approve', detail.data['state_actions'])
+        self.assertEqual(
+            [item['code'] for item in detail.data['approve_blockers']],
+            ['moderation_hold'],
         )
 
 

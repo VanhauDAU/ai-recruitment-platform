@@ -1,5 +1,9 @@
 """Public command API for the jobs domain."""
 
+from .content_snapshot import (
+    build_job_content_snapshot,
+    job_pending_changes,
+)
 from .engagement import (
     record_consented_job_impressions,
     record_consented_job_view,
@@ -30,6 +34,7 @@ from .reports import resolve_job_report, reverse_job_report, submit_job_report
 __all__ = [
     'close_job',
     'approve_job',
+    'build_job_content_snapshot',
     'create_job_review_token',
     'create_pending_job',
     'duplicate_job',
@@ -38,6 +43,7 @@ __all__ = [
     'publish_job',
     'hide_job_visibility',
     'job_moderation_state',
+    'job_pending_changes',
     'JobModerationStale',
     'record_consented_job_view',
     'record_consented_job_impressions',

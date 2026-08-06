@@ -1,6 +1,7 @@
 """Administrative moderation workflows for submitted job postings."""
 
 import hashlib
+from datetime import timedelta
 from http import HTTPStatus
 
 from django.db import transaction
@@ -17,9 +18,14 @@ from apps.accounts.services import (
 )
 
 from ..models import Job, JobModerationEvent, JobStatusHistory
-from .posting import _record_status
+from .content_snapshot import build_job_content_snapshot
+from .posting import MAX_DEADLINE_DAYS, _record_status
 
 REVIEW_OPERATION = 'job.moderation.mutate'
+
+# A deadline that lapsed while the job waited in the queue does not hide the
+# approve action: the reviewer sets a new deadline as part of the approval.
+FIXABLE_BLOCK_CODES = {'deadline_expired'}
 
 
 class JobModerationStale(APIException):
@@ -84,16 +90,31 @@ def job_moderation_state(job):
                 {'code': 'campaign_inactive', 'label': 'Chiến dịch hiện không hoạt động.'}
             )
 
+    approve_blockers = [item for item in blocked if item['code'] not in FIXABLE_BLOCK_CODES]
+    approve_requirements = [
+        {
+            'code': 'deadline',
+            'label': 'Hạn nhận hồ sơ đã qua — chọn hạn mới để duyệt tin.',
+        }
+        for item in blocked
+        if item['code'] == 'deadline_expired'
+    ]
+
     actions = []
     if job.status == Job.Status.PENDING:
         actions.append('reject')
-        if not blocked:
+        if not approve_blockers:
             actions.insert(0, 'approve')
     if job.status == Job.Status.ACTIVE and not job.moderation_hold:
         actions.append('hide')
     if job.moderation_hold:
         actions.append('restore')
-    return {'state_actions': actions, 'blocked_reasons': blocked}
+    return {
+        'state_actions': actions,
+        'blocked_reasons': blocked,
+        'approve_blockers': approve_blockers,
+        'approve_requirements': approve_requirements,
+    }
 
 
 def _record_moderation_event(
@@ -125,8 +146,24 @@ def _record_moderation_event(
     )
 
 
+def _approval_deadline(deadline, *, required):
+    """Validate the deadline a reviewer sets while approving, if any."""
+    if deadline is None:
+        if required:
+            raise ValidationError({'deadline': 'Chọn hạn nhận hồ sơ mới để duyệt tin đã quá hạn.'})
+        return None
+    today = timezone.localdate()
+    if deadline < today:
+        raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
+    if deadline > today + timedelta(days=MAX_DEADLINE_DAYS):
+        raise ValidationError(
+            {'deadline': f'Hạn nộp không được quá {MAX_DEADLINE_DAYS} ngày kể từ hôm nay.'}
+        )
+    return deadline
+
+
 @transaction.atomic
-def approve_job(*, job, user, review_token=''):
+def approve_job(*, job, user, review_token='', deadline=None):
     """Make one pending job public after an administrator approves its revision."""
     lock_account_for_write(job.posted_by)
     job = (
@@ -138,25 +175,41 @@ def approve_job(*, job, user, review_token=''):
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể duyệt tin đang chờ duyệt.')
     state = job_moderation_state(job)
-    if state['blocked_reasons']:
+    if state['approve_blockers']:
         raise ValidationError(
-            {'detail': 'Không thể duyệt tin.', 'blocked_reasons': state['blocked_reasons']}
+            {'detail': 'Không thể duyệt tin.', 'blocked_reasons': state['approve_blockers']}
         )
+    new_deadline = _approval_deadline(deadline, required=bool(state['approve_requirements']))
 
     fingerprint = job_content_fingerprint(job)
     now = timezone.now()
+    note = ''
+    update_fields = [
+        'status',
+        'approved_at',
+        'published_at',
+        'rejected_reason',
+        'approved_snapshot',
+        'approved_snapshot_at',
+        'updated_at',
+    ]
+    if new_deadline and new_deadline != job.deadline:
+        note = f'Duyệt kèm gia hạn hạn nhận hồ sơ đến {new_deadline:%d/%m/%Y}.'
+        job.deadline = new_deadline
+        update_fields.append('deadline')
     job.status = Job.Status.ACTIVE
     job.approved_at = now
     job.published_at = now
     job.rejected_reason = ''
-    job.save(
-        update_fields=['status', 'approved_at', 'published_at', 'rejected_reason', 'updated_at']
-    )
+    job.approved_snapshot = build_job_content_snapshot(job)
+    job.approved_snapshot_at = now
+    job.save(update_fields=update_fields)
     _record_status(
         job,
         from_status=Job.Status.PENDING,
         to_status=Job.Status.ACTIVE,
         user=user,
+        note=note,
         actor_role=JobStatusHistory.ActorRole.ADMIN,
     )
     _record_moderation_event(
@@ -164,6 +217,7 @@ def approve_job(*, job, user, review_token=''):
         action=JobModerationEvent.Action.APPROVE,
         actor=user,
         fingerprint=fingerprint,
+        note=note,
         from_status=Job.Status.PENDING,
         to_status=Job.Status.ACTIVE,
     )

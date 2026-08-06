@@ -1388,3 +1388,62 @@ chi tiết ghép bài hiện tại với related articles rồi sắp xếp theo
 của danh sách. Vì vậy click bài chỉ đổi active state, không còn đẩy item lên đầu
 và làm người đọc lạc vị trí. Public API 9/9 và frontend unit 2/2 pass.
 Smoke public 3/3 trên desktop/tablet/mobile pass.
+
+Cập nhật 2026-08-06 (JOB-REVIEW — duyệt tin biết rõ thay đổi và không mất nút
+Duyệt): thêm `Job.approved_snapshot`/`approved_snapshot_at` (migration
+`jobs.0034`) — mỗi lần duyệt lưu lại bản nội dung được công khai, nên khi nhà
+tuyển dụng sửa tin đang tuyển và tin quay về `pending`, trang duyệt hiển thị mục
+**Thay đổi cần duyệt** đối chiếu từng trường trước/sau (tiêu đề, mô tả rich text,
+thu nhập, hạn, kỹ năng, địa điểm, liên hệ…), badge “Bản cập nhật · N thay đổi” và
+chip điều hướng có số đếm; thay đổi thuộc thông tin liên hệ chỉ hiện với quyền
+`job_moderation.view_sensitive_contact`, người thiếu quyền thấy số lượng bị ẩn.
+Tin chưa có bản gốc nói rõ “Chưa có bản đã duyệt để so sánh” thay vì báo không có
+thay đổi; command `backfill_job_snapshots` gieo baseline cho tin đang tuyển.
+`deadline_expired` không còn ẩn nút Duyệt: nó thành `approve_requirements`, admin
+duyệt kèm chọn hạn nhận hồ sơ mới (ghi vào lịch sử kiểm duyệt), còn các điều kiện
+chặn thật (policy/moderation hold, tài khoản bị hạn chế, chiến dịch dừng) trả về
+`approve_blockers` khiến nút hiện dạng disabled kèm tooltip lý do thay vì biến
+mất. Gọn lại layout: nút Quay lại thành text nhỏ căn trái, cảnh báo chặn công
+khai còn một dòng, thu nhỏ quick-fact/disclosure header. Verify: backend
+784/784 pytest (coverage 86,31%), import-linter + migration check sạch, frontend
+lint/architecture/build xanh, unit 905/905 (thêm 3 test diff + 3 test hành động
+duyệt), kiểm mắt desktop 1512px và mobile 420px trên preview.
+
+Cập nhật 2026-08-06b (JOB-REVIEW UI — thanh "Đi nhanh đến" theo chuẩn hệ thống):
+đổi từ dãy chip bo tròn nhiều màu (nền xanh brand khi active, badge số tròn đỏ)
+sang một thanh segmented vuông vức: khung viền bo 8px, ô nhãn nền `#f8fafc` ngăn
+bằng divider, mỗi mục cao 36px vuông góc cách nhau bằng đường 1px, active dùng
+nền `#f1f5f9` + gạch chân `inset 0 -2px 0 #334155` thay vì đổi màu chữ sang brand,
+badge đếm là chip xám bo 4px (`#e2e8f0`, active đảo thành `#334155`). Mobile ẩn ô
+nhãn và giữ dải mục cuộn ngang trong khung. Chỉ CSS, không đổi markup/aria.
+Verify: lint sạch, build xanh, unit widget 4/4 pass, kiểm mắt 1512px và 420px.
+
+Cập nhật 2026-08-06c (JOB-REVIEW UI — chuyển trang duyệt sang mô hình tab):
+thay chuỗi disclosure thả xuống bằng tab thật — mỗi tab render đúng một panel nội
+dung (`AdminJobPanel` header tĩnh + body), không còn mở/đóng nhiều khối cùng lúc.
+Tablist theo chuẩn ARIA (`role="tablist"/"tab"/"tabpanel"`, `aria-selected`,
+roving `tabIndex`, phím ←/→/Home/End). Sidebar phải rút còn thẻ **Tóm tắt kiểm
+tra** dính (sticky); ba mục Nhà tuyển dụng/Nhận hồ sơ/Báo cáo chuyển thành panel
+chính (`AdminJobReviewPanels`). Tách `AdminJobDecisionDock` khỏi
+`AdminJobOverview` để dock quyết định và thanh tab nằm chung một khối sticky
+`admin-job-sticky-bar`, offset tính bằng `--admin-topbar-height +
+--announcement-strip-height` nên không bị thanh thông báo che; mobile ≤639px trả
+về tĩnh vì dock xếp dọc. Bỏ nút Mở tất cả/Thu gọn tất cả (vô nghĩa với tab). Tab
+mặc định là **Thay đổi** khi có diff, ngược lại là **Nội dung**. Verify: lint +
+architecture sạch, build xanh, unit 907/907 (thêm 2 test chuyển tab), kiểm mắt
+desktop 1512px và mobile 420px.
+
+Cập nhật 2026-08-06d (JOB-ADMIN — link trang công khai + rút gọn danh sách tin):
+backend annotate `is_publicly_visible` cho `_admin_job_queryset` bằng chính
+`publicly_available_job_filter()` (predicate dùng cho mọi bề mặt ứng viên) rồi
+phơi ra ở serializer list/detail, nên link admin không bao giờ trỏ tới trang 404.
+Frontend thêm `AdminJobPublicLink`: ở chi tiết là link chữ "Xem trang công khai"
+nằm cùng hàng với nút Quay lại; ở bảng danh sách chỉ là icon `ExportOutlined`
+cạnh tiêu đề (không thêm dòng), có Tooltip; tin chưa công khai hiện icon xám
+không bấm được kèm lý do. Dải 5 thẻ thống kê màu (AdminStatCard) ở trang danh
+sách đổi thành một thanh segmented xám trung tính: nhãn viết hoa nhỏ, số lớn,
+dòng chi tiết mờ, mục đang chọn nền `slate-100` + gạch chân — vẫn là bộ lọc scope
+như cũ. Không đụng `AdminStatCard` dùng chung (Dashboard vẫn giữ nguyên). Verify:
+backend 785/785 pytest coverage 86,31% (thêm test `is_publicly_visible` bám sát
+predicate công khai), ruff/format/import-linter sạch; frontend lint/architecture
+xanh, unit 907/907, build xanh, kiểm mắt danh sách + chi tiết trên preview.

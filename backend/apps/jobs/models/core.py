@@ -314,6 +314,10 @@ class Job(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
+    # Content made public by the last approval. An employer edit returns the job
+    # to the queue, so reviewers diff the pending revision against this baseline.
+    approved_snapshot = models.JSONField(default=dict, blank=True)
+    approved_snapshot_at = models.DateTimeField(null=True, blank=True)
     rejected_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

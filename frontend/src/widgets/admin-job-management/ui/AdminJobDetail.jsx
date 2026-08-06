@@ -9,13 +9,18 @@ import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { AdminPanel } from '@/shared/ui/admin'
+import AdminJobChangeReview from './AdminJobChangeReview'
 import AdminJobContentSections from './AdminJobContentSections'
+import AdminJobDecisionDock from './AdminJobDecisionDock'
 import AdminJobHistory from './AdminJobHistory'
 import AdminJobOverview from './AdminJobOverview'
-import AdminJobReviewSidebar from './AdminJobReviewSidebar'
+import AdminJobPublicLink from './AdminJobPublicLink'
+import AdminJobReviewPanels from './AdminJobReviewPanels'
+import AdminJobReviewSummary from './AdminJobReviewSummary'
 import '../admin-job-detail.css'
 
-const SECTION_NAVIGATION = [
+const TABS = [
+  { key: 'changes', label: 'Thay đổi' },
   { key: 'content', label: 'Nội dung' },
   { key: 'conditions', label: 'Điều kiện' },
   { key: 'workplace', label: 'Địa điểm' },
@@ -25,27 +30,23 @@ const SECTION_NAVIGATION = [
   { key: 'history', label: 'Lịch sử' },
 ]
 
-function defaultOpenSections(hasPendingReports = false) {
-  return new Set([
-    'content',
-    'employer',
-    ...(hasPendingReports ? ['reports'] : []),
-  ])
-}
+const CONTENT_TABS = ['content', 'conditions', 'workplace']
+const REVIEW_TABS = ['employer', 'contact', 'reports']
 
 export default function AdminJobDetail({ publicId }) {
   const { user } = useSession()
   const adminAccess = useAdminAccess(user)
   const location = useLocation()
   const navigate = useNavigate()
-  const [openSections, setOpenSections] = useState(() => defaultOpenSections())
+  const [activeTab, setActiveTab] = useState('content')
   const query = useQuery({
     queryKey: adminJobKeys.detail(publicId),
     queryFn: ({ signal }) => getAdminJob(publicId, { signal }),
   })
   const job = query.data
   const jobPublicId = job?.public_id
-  const hasPendingReports = Boolean(job?.pending_report_count)
+  const changeCount = job?.pending_changes?.changed_count || 0
+  const pendingReportCount = job?.pending_report_count || 0
   const fallback = adminPath('/job-moderation')
   const origin = location.state?.origin
   const backTarget = origin?.pathname?.startsWith(adminPath(''))
@@ -59,26 +60,24 @@ export default function AdminJobDetail({ publicId }) {
   ])
 
   useEffect(() => {
-    if (jobPublicId) setOpenSections(defaultOpenSections(hasPendingReports))
-  }, [hasPendingReports, jobPublicId])
+    if (!jobPublicId) return
+    setActiveTab(changeCount > 0 ? 'changes' : 'content')
+  }, [changeCount, jobPublicId])
 
-  function toggleSection(sectionKey) {
-    setOpenSections((current) => {
-      const next = new Set(current)
-      if (next.has(sectionKey)) next.delete(sectionKey)
-      else next.add(sectionKey)
-      return next
-    })
-  }
-
-  function jumpToSection(sectionKey) {
-    setOpenSections((current) => new Set([...current, sectionKey]))
-    window.requestAnimationFrame(() => {
-      document.getElementById(`admin-job-${sectionKey}`)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-    })
+  // Roving focus so the tab strip behaves like a standard tablist.
+  function handleTabKeys(event) {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key]
+    if (!step && event.key !== 'Home' && event.key !== 'End') return
+    event.preventDefault()
+    const index = TABS.findIndex((item) => item.key === activeTab)
+    const nextIndex = event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? TABS.length - 1
+        : (index + step + TABS.length) % TABS.length
+    const next = TABS[nextIndex].key
+    setActiveTab(next)
+    document.getElementById(`admin-job-tab-${next}`)?.focus()
   }
 
   if (query.isLoading) {
@@ -102,55 +101,71 @@ export default function AdminJobDetail({ publicId }) {
     )
   }
 
+  const tabCounts = { changes: changeCount, reports: pendingReportCount }
+
   return (
     <div className="admin-job-detail">
-      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(backTarget)}>
-        {origin?.label || 'Quay lại danh sách'}
-      </Button>
+      <div className="admin-job-detail__toolbar">
+        <Button
+          className="admin-job-detail__back"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(backTarget)}
+          size="small"
+          type="text"
+        >
+          {origin?.label || 'Quay lại danh sách'}
+        </Button>
+        <AdminJobPublicLink job={job} />
+      </div>
 
-      <AdminJobOverview
-        job={job}
-        onCollapseAll={() => setOpenSections(new Set())}
-        onOpenAll={() => setOpenSections(new Set(SECTION_NAVIGATION.map((item) => item.key)))}
-        openCount={openSections.size}
-        sectionCount={SECTION_NAVIGATION.length}
-      />
+      <AdminJobOverview job={job} />
 
-      <nav aria-label="Điều hướng hồ sơ tin tuyển dụng" className="admin-job-section-nav">
-        <span className="admin-job-section-nav__label">Đi nhanh đến</span>
-        <div className="admin-job-section-nav__items">
-          {SECTION_NAVIGATION.map((item) => (
-            <button
-              aria-pressed={openSections.has(item.key)}
-              className={openSections.has(item.key) ? 'admin-job-section-nav__item--active' : ''}
-              key={item.key}
-              onClick={() => jumpToSection(item.key)}
-              type="button"
-            >
-              {item.label}
-              {item.key === 'reports' && job.pending_report_count > 0 && (
-                <span>{job.pending_report_count}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
+      <div className="admin-job-sticky-bar">
+        <AdminJobDecisionDock job={job} />
+        <nav aria-label="Phần hồ sơ tin tuyển dụng" className="admin-job-section-nav">
+          <div className="admin-job-section-nav__items" onKeyDown={handleTabKeys} role="tablist">
+            {TABS.map((item) => (
+              <button
+                aria-controls="admin-job-tabpanel"
+                aria-selected={activeTab === item.key}
+                className={activeTab === item.key ? 'admin-job-section-nav__item--active' : ''}
+                id={`admin-job-tab-${item.key}`}
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
+                role="tab"
+                tabIndex={activeTab === item.key ? 0 : -1}
+                type="button"
+              >
+                {item.label}
+                {tabCounts[item.key] > 0 && <span>{tabCounts[item.key]}</span>}
+              </button>
+            ))}
+          </div>
+        </nav>
+      </div>
 
       <div className="admin-job-detail__layout">
-        <main className="min-w-0 space-y-4">
-          <AdminJobContentSections
-            job={job}
-            onToggle={toggleSection}
-            openSections={openSections}
-          />
-          <AdminJobHistory job={job} onToggle={toggleSection} openSections={openSections} />
+        <main
+          aria-labelledby={`admin-job-tab-${activeTab}`}
+          className="min-w-0"
+          id="admin-job-tabpanel"
+          role="tabpanel"
+          tabIndex={-1}
+        >
+          {activeTab === 'changes' && <AdminJobChangeReview job={job} />}
+          {CONTENT_TABS.includes(activeTab) && (
+            <AdminJobContentSections job={job} tab={activeTab} />
+          )}
+          {REVIEW_TABS.includes(activeTab) && (
+            <AdminJobReviewPanels
+              canViewEmployerProfile={canViewEmployerProfile}
+              job={job}
+              tab={activeTab}
+            />
+          )}
+          {activeTab === 'history' && <AdminJobHistory job={job} />}
         </main>
-        <AdminJobReviewSidebar
-          canViewEmployerProfile={canViewEmployerProfile}
-          job={job}
-          onToggle={toggleSection}
-          openSections={openSections}
-        />
+        <AdminJobReviewSummary job={job} />
       </div>
     </div>
   )

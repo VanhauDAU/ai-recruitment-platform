@@ -10,6 +10,7 @@ from django.utils import timezone
 from common.db.search import search_q
 
 from ..models import Job, JobModerationEvent, JobReport, JobStatusHistory
+from .listing import publicly_available_job_filter
 
 
 def _admin_job_queryset():
@@ -36,6 +37,13 @@ def _admin_job_queryset():
                 deadline__lt=timezone.localdate(),
                 then=Value(True),
             ),
+            default=Value(False),
+            output_field=BooleanField(),
+        ),
+        # Reuse the candidate-facing predicate so the admin link never points at
+        # a page that would 404 for the public.
+        is_publicly_visible=Case(
+            When(publicly_available_job_filter(), then=Value(True)),
             default=Value(False),
             output_field=BooleanField(),
         ),

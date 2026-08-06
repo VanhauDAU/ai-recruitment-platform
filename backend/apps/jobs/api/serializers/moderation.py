@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from ...models import Job, JobModerationEvent, JobStatusHistory
-from ...services import create_job_review_token, job_moderation_state
+from ...services import create_job_review_token, job_moderation_state, job_pending_changes
 from .reports import AdminJobReportSerializer
 from .supporting import (
     JobApplicationContactSerializer,
@@ -89,6 +89,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
         source='get_moderation_hold_display', read_only=True
     )
     is_expired = serializers.SerializerMethodField()
+    is_publicly_visible = serializers.BooleanField(read_only=True, default=False)
     pending_report_count = serializers.IntegerField(read_only=True, default=0)
     report_count = serializers.IntegerField(read_only=True, default=0)
     approved_job_count = serializers.IntegerField(read_only=True, default=0)
@@ -114,6 +115,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
             'status',
             'status_label',
             'is_expired',
+            'is_publicly_visible',
             'policy_hold',
             'policy_hold_label',
             'moderation_hold',
@@ -190,6 +192,9 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
     review_token = serializers.SerializerMethodField()
     state_actions = serializers.SerializerMethodField()
     blocked_reasons = serializers.SerializerMethodField()
+    approve_blockers = serializers.SerializerMethodField()
+    approve_requirements = serializers.SerializerMethodField()
+    pending_changes = serializers.SerializerMethodField()
     employer_account_level = serializers.SerializerMethodField()
     employer_verification_completed = serializers.SerializerMethodField()
 
@@ -229,6 +234,9 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
             'review_token',
             'state_actions',
             'blocked_reasons',
+            'approve_blockers',
+            'approve_requirements',
+            'pending_changes',
             'employer_account_level',
             'employer_verification_completed',
             'created_at',
@@ -261,6 +269,18 @@ class AdminJobDetailSerializer(AdminJobManagementListSerializer):
 
     def get_blocked_reasons(self, obj):
         return self._state(obj)['blocked_reasons']
+
+    def get_approve_blockers(self, obj):
+        return self._state(obj)['approve_blockers']
+
+    def get_approve_requirements(self, obj):
+        return self._state(obj)['approve_requirements']
+
+    def get_pending_changes(self, obj):
+        return job_pending_changes(
+            obj,
+            include_sensitive=bool(self.context.get('can_view_sensitive_contact')),
+        )
 
     def get_employer_account_level(self, obj):
         return self.context.get('employer_entitlement', {}).get('account_level', 0)
@@ -295,6 +315,7 @@ class AdminJobDecisionSerializer(serializers.Serializer):
         allow_blank=True,
     )
     note = serializers.CharField(required=False, allow_blank=True, max_length=3000)
+    deadline = serializers.DateField(required=False, allow_null=True)
     hold = serializers.ChoiceField(
         choices=[
             Job.ModerationHold.MANUAL_REVIEW,
