@@ -124,6 +124,18 @@ Docker local và production đều chuyển tiếp build arg này. Không sửa 
   tab mới với `noopener noreferrer`.
 - Nội dung chỉ render text node; icon lấy từ map code-owned, không nhận HTML.
 
+### 5.1. Visual theme & ảnh nền (epic AN-V)
+
+Nguồn: [kế hoạch visual](../03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+
+- Backend AN-V1 đã expose `theme` + `background` trên active feed (additive).
+- Runtime strip (AN-V3) sẽ map CSS variables từ DTO; ảnh nền decorative + overlay;
+  **height theo content**, không khóa theo pixel asset (vd. 980×31).
+- Admin (AN-V2) bắt buộc **live preview** với khung Desktop / Tablet / Mobile,
+  tái dùng style strip, cập nhật khi đổi màu/ảnh.
+- System reminder (email verify, DPA…) không nhận custom theme/ảnh.
+- Responsive smoke: desktop + tablet + mobile trước khi merge AN-V3.
+
 AN-P4 lưu close/snooze của guest trong `localStorage` theo
 `public_id:dismissal_version`, đồng thời đọc fallback `sessionStorage` của P2
 trong compatibility window. Authenticated remote item gọi state API idempotent;

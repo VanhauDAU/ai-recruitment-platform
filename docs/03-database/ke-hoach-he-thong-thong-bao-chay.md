@@ -1,8 +1,10 @@
 # Hệ thống thông báo chạy đa cổng
 
-Trạng thái: **AN-P3 workspace quản trị đã triển khai trên nhánh tính năng, chờ merge**
-Epic theo dõi: `AN-P0` đến `AN-P6` trong
+Trạng thái: **AN-P0…P4 đã ship; AN-P5 hardening 🟡; epic visual AN-V đang mở**
+Epic theo dõi: `AN-P0` đến `AN-P6` và `AN-V0`…`AN-V4` trong
 [`docs/TIEN-DO-DU-AN.md`](../TIEN-DO-DU-AN.md).
+Visual (màu + ảnh nền + preview/responsive):
+[ke-hoach-nang-cap-thong-bao-visual-theme.md](ke-hoach-nang-cap-thong-bao-visual-theme.md).
 
 ## 1. Mục tiêu
 
@@ -28,7 +30,10 @@ fail-safe: header, điều hướng và cảnh báo bảo mật cục bộ tiế
 
 - Không xây hộp thư, notification center hoặc thông báo cá nhân theo từng user.
 - Không gửi email, push notification hoặc WebSocket.
-- Không hỗ trợ HTML/rich text, ảnh banner, video hoặc marquee chạy ngang.
+- Không hỗ trợ HTML/rich text, video hoặc marquee chạy ngang.
+- Ảnh nền decorative + theme màu (preset/custom) được bổ sung theo
+  [ke-hoach-nang-cap-thong-bao-visual-theme.md](ke-hoach-nang-cap-thong-bao-visual-theme.md)
+  (AN-V); không mở rich media tùy ý trong message.
 - Không cho nhập regex route hoặc JavaScript URL.
 - Không thay đổi URL, token/storage key, role/guard và payload hiện hữu.
 - Không dùng analytics khi người dùng chưa cấp analytics consent.

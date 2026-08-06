@@ -6,6 +6,27 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-08-06
+
+#### Added — Announcement visual theme (AN-V0 / AN-V1)
+
+- Mở epic **AN-V** nâng cấp dải thông báo đa cổng: chọn màu hiển thị (mode
+  `kind` / `preset` / `custom` hex) và ảnh nền strip (ví dụ 980×31) kèm overlay
+  contrast. Đặc tả:
+  [`docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`](docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+- **AN-V1 backend:** migration `sitecontent.0017_announcement_revision_visual_theme`
+  thêm field theme/background trên `AnnouncementRevision`; service
+  `normalize_theme_and_background` (hex `#RRGGBB`, storage key ảnh, ép overlay
+  `dark` khi có ảnh); public feed trả `theme` + `background.image_url`; admin
+  revision đọc/ghi field visual (storage key chỉ admin).
+- Ràng buộc thiết kế đã chốt cho phase sau: **responsive** (mobile 2 dòng, touch
+  ≥ 44px, height strip theo content — không khóa 31px) và **live preview admin**
+  desktop/tablet/mobile tái dùng style runtime (AN-V2/AN-V3).
+- Tests: `test_announcement_visual_theme.py` + regression announcement public/
+  admin/models xanh. Cập nhật `docs/TIEN-DO-DU-AN.md`, runtime guide
+  `docs/08-frontend/dai-thong-bao-da-cong.md`, nới “ngoài phạm vi” ảnh banner
+  trong kế hoạch thông báo gốc.
+
 ### 2026-08-05
 
 #### Changed — Rút gọn FAQ ứng viên và mở ảnh HTTPS
