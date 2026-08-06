@@ -35,8 +35,8 @@ export default function AnnouncementPreview({ values = {} }) {
   const displaySeconds = values.display_seconds || 6
   const tokens = useMemo(() => resolveAnnouncementThemeTokens(values), [values])
   const bgUrl = values.background_image_url || ''
-  const overlay = values.background_image
-    ? (values.background_overlay || ANNOUNCEMENT_BG_OVERLAYS.DARK)
+  const overlay = Object.values(ANNOUNCEMENT_BG_OVERLAYS).includes(values.background_overlay)
+    ? values.background_overlay
     : ANNOUNCEMENT_BG_OVERLAYS.NONE
   const fit = values.background_fit || 'cover'
   const position = values.background_position || 'center'

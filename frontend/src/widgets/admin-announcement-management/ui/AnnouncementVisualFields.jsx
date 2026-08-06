@@ -44,9 +44,7 @@ export default function AnnouncementVisualFields({ form, themeMode }) {
       form.setFieldsValue({
         background_image: uploaded.path,
         background_image_url: uploaded.url,
-        background_overlay: form.getFieldValue('background_overlay') === 'none'
-          ? 'dark'
-          : form.getFieldValue('background_overlay'),
+        // Không đổi overlay đang chọn (kể cả "không phủ").
       })
       message.success(`Đã tải ảnh nền ${uploaded.width}×${uploaded.height}.`)
     } catch {

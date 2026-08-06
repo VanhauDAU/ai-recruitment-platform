@@ -4,6 +4,8 @@ import {
   resolveAnnouncementThemeTokens,
 } from '@/entities/announcement'
 
+const VALID_OVERLAYS = new Set(Object.values(ANNOUNCEMENT_BG_OVERLAYS))
+
 function overlayLayer(overlay) {
   if (overlay === ANNOUNCEMENT_BG_OVERLAYS.LIGHT) {
     return 'linear-gradient(90deg, rgb(255 255 255 / 72%), rgb(255 255 255 / 48%))'
@@ -31,8 +33,8 @@ export function buildAnnouncementStripVisual(item = {}) {
     color_fg: theme.fg,
   })
   const imageUrl = background.imageUrl || ''
-  const overlay = imageUrl
-    ? (background.overlay || ANNOUNCEMENT_BG_OVERLAYS.DARK)
+  const overlay = VALID_OVERLAYS.has(background.overlay)
+    ? background.overlay
     : ANNOUNCEMENT_BG_OVERLAYS.NONE
   const fit = background.fit || ANNOUNCEMENT_BG_FITS.COVER
   const position = background.position || 'center'

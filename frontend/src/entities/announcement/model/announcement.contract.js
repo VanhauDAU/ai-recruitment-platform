@@ -96,12 +96,9 @@ function normalizeTheme(value) {
 
 function normalizeBackground(value) {
   const imageUrl = normalizeImageUrl(value?.image_url ?? value?.imageUrl)
-  let overlay = VALID_BG_OVERLAYS.has(value?.overlay)
+  const overlay = VALID_BG_OVERLAYS.has(value?.overlay)
     ? value.overlay
     : ANNOUNCEMENT_BG_OVERLAYS.NONE
-  if (imageUrl && overlay === ANNOUNCEMENT_BG_OVERLAYS.NONE) {
-    overlay = ANNOUNCEMENT_BG_OVERLAYS.DARK
-  }
   return {
     imageUrl,
     fit: VALID_BG_FITS.has(value?.fit) ? value.fit : ANNOUNCEMENT_BG_FITS.COVER,

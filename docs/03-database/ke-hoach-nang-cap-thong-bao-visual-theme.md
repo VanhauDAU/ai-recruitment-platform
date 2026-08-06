@@ -124,7 +124,7 @@ elif theme_mode == custom:
 ```
 
 - Ảnh là **decorative** (`aria-hidden` layer), không thay message.
-- Khi có ảnh: bật overlay `light`/`dark` mặc định theo `color_fg` hoặc `dark` nếu fg sáng.
+- Overlay do admin chọn: `none` / `light` / `dark` — **không** tự đổi `none` thành `dark` khi lưu.
 - **Mobile:** vẫn cover full width; height strip do content (min ~42px) — ảnh 31px sẽ stretch cover, chấp nhận crop nhẹ. Không force height = 31px (tránh vỡ CTA/2 dòng mobile).
 
 ### 4.3. Preview admin (bắt buộc AN-V2)

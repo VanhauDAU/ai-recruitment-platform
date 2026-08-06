@@ -109,7 +109,7 @@ describe('announcement runtime contract', () => {
       imageUrl: 'https://cdn.example.com/banner.webp',
       fit: 'cover',
       position: 'center',
-      overlay: 'dark',
+      overlay: 'none',
     })
   })
 

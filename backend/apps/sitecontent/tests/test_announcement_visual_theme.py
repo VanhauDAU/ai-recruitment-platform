@@ -38,7 +38,7 @@ class AnnouncementVisualThemeTests(APITestCase):
         self.assertEqual(data['background_image'], '')
         self.assertEqual(data['background_overlay'], AnnouncementRevision.BackgroundOverlay.NONE)
 
-    def test_normalize_custom_hex_and_background_forces_overlay(self):
+    def test_normalize_custom_hex_and_preserves_none_overlay(self):
         data = normalize_revision_data(
             revision_payload(
                 theme_mode='custom',
@@ -53,7 +53,7 @@ class AnnouncementVisualThemeTests(APITestCase):
         self.assertEqual(data['theme_mode'], 'custom')
         self.assertEqual(data['color_accent'], '#0F766E')
         self.assertEqual(data['background_image'], 'site/announcements/backgrounds/demo.webp')
-        self.assertEqual(data['background_overlay'], 'dark')
+        self.assertEqual(data['background_overlay'], 'none')
 
     def test_normalize_rejects_invalid_hex_and_url_background(self):
         with self.assertRaises(Exception):

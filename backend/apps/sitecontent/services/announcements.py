@@ -144,13 +144,7 @@ def normalize_theme_and_background(data):
             raise ValidationError({field: 'Giá trị không hợp lệ.'})
         normalized[field] = value
 
-    # Có ảnh: ép overlay contrast nếu admin để none.
-    if (
-        normalized['background_image']
-        and normalized['background_overlay'] == AnnouncementRevision.BackgroundOverlay.NONE
-    ):
-        normalized['background_overlay'] = AnnouncementRevision.BackgroundOverlay.DARK
-
+    # Giữ nguyên overlay admin chọn (kể cả "none" khi có ảnh).
     return normalized
 
 
