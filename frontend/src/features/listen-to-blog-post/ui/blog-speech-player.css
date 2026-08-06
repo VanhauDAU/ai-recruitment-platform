@@ -1,7 +1,8 @@
 .blog-speech {
   flex-shrink: 0;
   position: relative;
-  z-index: 30;
+  /* Không nâng z-index toàn cục: sticky rail không được đè category nav (z-40). */
+  z-index: 1;
 }
 
 .blog-speech__rail-shell {
