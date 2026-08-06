@@ -1,3 +1,4 @@
+import math
 import re
 
 from django.conf import settings
@@ -8,6 +9,9 @@ from rest_framework import serializers
 from common.media_storage import media_url_from_value
 
 from ...models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
+
+DEFAULT_AUTHOR_NAME = 'Biên tập ProCV'
+WORDS_PER_MINUTE = 200
 
 
 class BlogMediaAssetSerializer(serializers.ModelSerializer):
@@ -90,6 +94,9 @@ class PostDetailSerializer(serializers.ModelSerializer):
     related_job_category = serializers.SerializerMethodField()
     speech_default = serializers.SerializerMethodField()
     speech_assets = serializers.SerializerMethodField()
+    related_posts = serializers.SerializerMethodField()
+    author = serializers.SerializerMethodField()
+    reading_time_minutes = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -103,6 +110,9 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'category',
             'tags',
             'related_job_category',
+            'related_posts',
+            'author',
+            'reading_time_minutes',
             'speech_default',
             'speech_assets',
             'published_at',
@@ -118,6 +128,31 @@ class PostDetailSerializer(serializers.ModelSerializer):
             return None
         cat = obj.related_job_category
         return {'id': cat.id, 'name': cat.name, 'slug': cat.slug}
+
+    def get_related_posts(self, obj):
+        related = getattr(obj, 'prefetched_related_posts', None)
+        if related is None:
+            related = self.context.get('related_posts') or []
+        return PostListSerializer(related, many=True, context=self.context).data
+
+    def get_author(self, obj):
+        author = getattr(obj, 'author', None)
+        if author is None:
+            return {'name': DEFAULT_AUTHOR_NAME}
+        name = (author.full_name or '').strip() or (author.email or '').strip()
+        return {'name': name or DEFAULT_AUTHOR_NAME}
+
+    def get_reading_time_minutes(self, obj):
+        html = re.sub(
+            r'</(?:p|div|h[1-6]|li|br)\s*>',
+            ' ',
+            obj.content or '',
+            flags=re.IGNORECASE,
+        )
+        words = len(strip_tags(html).split())
+        if words <= 0:
+            return 1
+        return max(1, math.ceil(words / WORDS_PER_MINUTE))
 
     def get_speech_default(self, obj):
         assets = self._current_speech_assets(obj)

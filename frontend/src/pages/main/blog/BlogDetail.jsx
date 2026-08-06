@@ -7,6 +7,7 @@ import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogBenefits from './ui/BlogBenefits'
 import BlogRelatedJobs from './ui/BlogRelatedJobs'
+import BlogRelatedPosts from './ui/BlogRelatedPosts'
 import BlogShareRail from './ui/BlogShareRail'
 import BlogSidebar from './ui/BlogSidebar'
 import BlogToc from './ui/BlogToc'
@@ -44,24 +45,33 @@ export default function BlogDetail() {
     return () => { cancelled = true }
   }, [slug])
 
+  const canonicalPath = post ? `/blog/${post.slug}` : null
+  const shareTitle = post ? (post.seo_title || post.title) : ''
+  const shareDescription = post
+    ? (post.seo_description || post.summary || settings.seo_default_description)
+    : ''
+
   useDocumentMetadata(
     post
       ? {
-          title: post.seo_title || post.title,
-          description: post.seo_description || post.summary || settings.seo_default_description,
-          canonicalPath: `/blog/${post.slug}`,
+          title: shareTitle,
+          description: shareDescription,
+          canonicalPath,
           imageUrl: post.thumbnail_url,
           pageType: 'article',
+          // Khớp route public indexable; crawler FB/X chủ yếu đọc SEO shell server.
+          robots: settings.seo_robots_index === false ? 'noindex, nofollow' : 'index, follow',
           structuredData: {
             '@context': 'https://schema.org',
             '@type': 'Article',
             headline: post.title,
             description: post.seo_description || post.summary,
             datePublished: post.published_at,
+            author: { '@type': 'Person', name: post.author?.name || 'Biên tập ProCV' },
             image: post.thumbnail_url
               ? new URL(post.thumbnail_url, window.location.origin).href
               : undefined,
-            mainEntityOfPage: new URL(`/blog/${post.slug}`, window.location.origin).href,
+            mainEntityOfPage: new URL(canonicalPath, window.location.origin).href,
           },
         }
       : null,
@@ -82,8 +92,13 @@ export default function BlogDetail() {
     )
   }
 
+  const readingLabel = post.reading_time_minutes
+    ? `${post.reading_time_minutes} phút đọc`
+    : null
+  const authorName = post.author?.name || 'Biên tập ProCV'
+
   return (
-    <div className="bg-[#f7f9fc]">
+    <div className="bg-[#f7f9fc] pb-24 sm:pb-10">
       <BlogCategoryNav categories={categories} activeSlug={post.category?.slug} />
 
       <BlogBenefits />
@@ -108,10 +123,13 @@ export default function BlogDetail() {
         <div className="mt-4 lg:grid lg:grid-cols-12 lg:gap-6">
           <div className="lg:col-span-8">
             <div className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:flex-row">
-              <div className="relative z-20 max-w-full shrink-0 pb-1 lg:pb-0">
+              <div className="max-w-full shrink-0 pb-1 lg:pb-0">
                 <BlogShareRail
                   hasToc={toc.length > 0}
                   onToggleToc={() => setTocDrawerOpen(true)}
+                  sharePath={canonicalPath}
+                  title={shareTitle}
+                  description={shareDescription}
                   speechControl={(
                     <Suspense fallback={<SpeechPlayerSkeleton />}>
                       <BlogSpeechPlayer
@@ -136,7 +154,17 @@ export default function BlogDetail() {
                 <h1 className="mt-1 break-words text-xl font-extrabold leading-7 text-slate-900 sm:text-3xl sm:leading-10">
                   {post.title}
                 </h1>
-                <p className="mt-2 text-sm text-slate-400">{formatBlogDate(post.published_at, { withTime: true })}</p>
+                <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-400">
+                  <span>{formatBlogDate(post.published_at, { withTime: true })}</span>
+                  {readingLabel && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span>{readingLabel}</span>
+                    </>
+                  )}
+                  <span aria-hidden="true">·</span>
+                  <span>{authorName}</span>
+                </p>
 
                 {toc.length > 0 && (
                   <div className="mt-5">
@@ -154,8 +182,14 @@ export default function BlogDetail() {
                   <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
                     <span className="text-sm font-semibold text-slate-600">Thẻ:</span>
                     {post.tags.map((tag) => (
-                      <Link key={tag.slug} to={`${BLOG_ROOT}?tag=${tag.slug}`} target="_blank" rel="noopener">
-                        <Tag className="cursor-pointer">{tag.name}</Tag>
+                      <Link
+                        key={tag.slug}
+                        to={`${BLOG_ROOT}?tag=${encodeURIComponent(tag.slug)}`}
+                        className="!text-inherit no-underline"
+                      >
+                        <Tag className="m-0 cursor-pointer !border-slate-200 !bg-slate-50 !text-slate-700 hover:!border-[var(--brand-primary)] hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)]">
+                          {tag.name}
+                        </Tag>
                       </Link>
                     ))}
                   </div>
@@ -168,6 +202,13 @@ export default function BlogDetail() {
             <BlogSidebar />
           </div>
         </div>
+
+        {/* Full-bleed dưới lưới 8+4: section riêng, 12 cột, 3 bài / hàng */}
+        {post.related_posts?.length > 0 && (
+          <div className="mt-8 sm:mt-10">
+            <BlogRelatedPosts posts={post.related_posts} category={post.category} />
+          </div>
+        )}
       </div>
 
       <Drawer

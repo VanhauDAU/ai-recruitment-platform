@@ -19,7 +19,7 @@ LEGACY_ASSETS = {
     'frontend/legacy/welcome/section-header-after.png': 'https://static.topcv.vn/v4/image/welcome/section-header/section_header_after_bg.png',
     'frontend/legacy/cv-template/toppy-list-mau-cv.png': 'https://www.topcv.vn/v4/image/cv-template/cv-sample/toppy-list-mau-cv.png',
     'frontend/legacy/cv-builder/bg-5.png': 'https://www.topcv.vn/v4/image/cv_builder/background/bg_5.png',
-    'frontend/legacy/blog/blog-banner-toppy-3d.png': 'https://static.topcv.vn/v4/image/blog/blog-banner-toppy-3d.png',
+    'frontend/legacy/blog/banner-blog-procv.png': 'https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/blog/banner-blog-procv.png',
     'frontend/legacy/blog/search-tool-v2.png': 'https://static.topcv.vn/v4/image/blog/blog-detail/search_tool_v2.png',
     'frontend/legacy/blog/cv-tool-v2.png': 'https://static.topcv.vn/v4/image/blog/blog-detail/cv_tool_v2.png',
     'frontend/legacy/blog/survey-tool-v2.png': 'https://static.topcv.vn/v4/image/blog/blog-detail/survey_tool_v2.png',

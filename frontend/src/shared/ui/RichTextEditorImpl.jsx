@@ -50,6 +50,44 @@ function ToolbarButton({ title, active = false, disabled = false, onClick, child
   )
 }
 
+function ProductLinkControl({ disabled, links, onInsert }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover
+      trigger="click"
+      placement="bottom"
+      open={open}
+      onOpenChange={(next) => { if (!disabled) setOpen(next) }}
+      content={(
+        <div className="flex min-w-48 flex-col gap-1 p-1" aria-label="Chèn liên kết sản phẩm">
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Liên kết nhanh</p>
+          {links.map((item) => (
+            <Button
+              key={item.href}
+              type="text"
+              className="!justify-start"
+              disabled={disabled}
+              onClick={() => {
+                onInsert(item)
+                setOpen(false)
+              }}
+            >
+              {item.label}
+              <span className="ml-2 text-xs text-slate-400">{item.href}</span>
+            </Button>
+          ))}
+        </div>
+      )}
+    >
+      <span>
+        <ToolbarButton title="Chèn liên kết sản phẩm" disabled={disabled} onClick={() => setOpen(true)}>
+          <span className="inline-flex items-center gap-0.5 text-xs font-semibold"><LinkOutlined />+</span>
+        </ToolbarButton>
+      </span>
+    </Popover>
+  )
+}
+
 function TableInsertControl({ editor, disabled }) {
   const [open, setOpen] = useState(false)
   const [rows, setRows] = useState(3)
@@ -90,7 +128,13 @@ function TableInsertControl({ editor, disabled }) {
   )
 }
 
-export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage, allowExternalImage = false, acceptedImageTypes, imageUploadHint }) {
+const BLOG_PRODUCT_LINKS = [
+  { label: 'Tìm việc', href: '/viec-lam' },
+  { label: 'Mẫu CV', href: '/mau-cv' },
+  { label: 'Trợ giúp', href: '/tro-giup' },
+]
+
+export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage, allowExternalImage = false, acceptedImageTypes, imageUploadHint, linkShortcuts }) {
   // `Form.setFieldsValue` có thể chạy trước khi TipTap hoàn tất khởi tạo. Giữ
   // content ban đầu rỗng và đồng bộ ở layout effect để editor luôn lấy đúng
   // giá trị controlled sau khi mở trang sửa tin.
@@ -156,6 +200,30 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
     else editor.chain().focus().extendMarkRange('link').setLink({ href: href.trim(), target: '_blank' }).run()
   }
 
+  const productLinks = Array.isArray(linkShortcuts)
+    ? linkShortcuts
+    : (mode === 'blog' ? BLOG_PRODUCT_LINKS : [])
+
+  const insertProductLink = (item) => {
+    if (!item?.href || disabled) return
+    const { from, to, empty } = editor.state.selection
+    const selected = empty ? '' : editor.state.doc.textBetween(from, to, ' ')
+    const label = (selected || item.label || item.href).trim()
+    if (empty) {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: 'text',
+          text: label,
+          marks: [{ type: 'link', attrs: { href: item.href, target: '_blank' } }],
+        })
+        .run()
+      return
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: item.href, target: '_blank' }).run()
+  }
+
   const imageAttributes = editor.getAttributes('image')
   const updateImage = (attributes) => editor.chain().focus().updateAttributes('image', attributes).run()
   const insertImage = ({ src, alt }) => {
@@ -180,6 +248,13 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
             <ToolbarButton title="Tiêu đề cấp 3" disabled={disabled} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
             <ToolbarButton title="Trích dẫn" disabled={disabled} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><FileTextOutlined /></ToolbarButton>
             <ToolbarButton title="Liên kết" disabled={disabled} active={editor.isActive('link')} onClick={setLink}><LinkOutlined /></ToolbarButton>
+            {productLinks.length > 0 && (
+              <ProductLinkControl
+                disabled={disabled}
+                links={productLinks}
+                onInsert={insertProductLink}
+              />
+            )}
           </>
         )}
         <span className="company-rich-editor__divider" />

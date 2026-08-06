@@ -79,6 +79,9 @@ class BlogPublicApiTests(APITestCase):
                 'category',
                 'tags',
                 'related_job_category',
+                'related_posts',
+                'author',
+                'reading_time_minutes',
                 'speech_default',
                 'speech_assets',
                 'published_at',
@@ -88,10 +91,47 @@ class BlogPublicApiTests(APITestCase):
         )
         self.assertIsNone(res.data['speech_default'])
         self.assertEqual(res.data['speech_assets'], [])
+        self.assertEqual(res.data['author'], {'name': 'Biên tập ProCV'})
+        self.assertGreaterEqual(res.data['reading_time_minutes'], 1)
+        self.assertEqual(res.data['related_posts'], [])
         self.published.refresh_from_db()
         self.assertEqual(self.published.view_count, 1)
         draft = self.client.get(reverse('blog-post-detail', args=[self.draft.slug]))
         self.assertEqual(draft.status_code, 404)
+
+    def test_detail_related_posts_prefer_same_category_then_tags(self):
+        same_category = Post.objects.create(
+            title='Kỹ năng chốt sale',
+            category=self.category,
+            summary='Cùng danh mục.',
+            content='<p>Nội dung cùng danh mục</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
+        )
+        other_category = Post.objects.create(
+            title='Mẹo tìm việc remote',
+            category=self.other,
+            summary='Khác danh mục, chung thẻ.',
+            content='<p>Nội dung khác danh mục</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
+        )
+        other_category.tags.add(self.tag)
+        unrelated = Post.objects.create(
+            title='Không liên quan',
+            category=self.other,
+            content='<p>x</p>',
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
+        )
+
+        res = self.client.get(reverse('blog-post-detail', args=[self.published.slug]))
+        self.assertEqual(res.status_code, 200)
+        related_slugs = [item['slug'] for item in res.data['related_posts']]
+        self.assertEqual(related_slugs[0], same_category.slug)
+        self.assertIn(other_category.slug, related_slugs)
+        self.assertNotIn(unrelated.slug, related_slugs)
+        self.assertNotIn(self.published.slug, related_slugs)
 
     def test_detail_returns_only_the_ready_current_default_speech_asset(self):
         BlogSpeechAsset.objects.create(
