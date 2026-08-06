@@ -128,13 +128,13 @@ Docker local và production đều chuyển tiếp build arg này. Không sửa 
 
 Nguồn: [kế hoạch visual](../03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
 
-- Backend AN-V1 đã expose `theme` + `background` trên active feed (additive).
-- Runtime strip (AN-V3) sẽ map CSS variables từ DTO; ảnh nền decorative + overlay;
-  **height theo content**, không khóa theo pixel asset (vd. 980×31).
-- Admin (AN-V2) bắt buộc **live preview** với khung Desktop / Tablet / Mobile,
-  tái dùng style strip, cập nhật khi đổi màu/ảnh.
-- System reminder (email verify, DPA…) không nhận custom theme/ảnh.
-- Responsive smoke: desktop + tablet + mobile trước khi merge AN-V3.
+- Backend AN-V1 expose `theme` + `background` trên active feed (additive).
+- Runtime strip (AN-V3) map CSS variables + layers ảnh/overlay qua
+  `buildAnnouncementStripVisual`; **height theo content**, không khóa 31px;
+  `announcement-strip--has-bg` tắt sheen.
+- Admin (AN-V2) **live preview** Desktop / Tablet / Mobile + form upload/màu.
+- System reminder (email verify, DPA…) không nhận custom theme/ảnh (chỉ kind tokens).
+- Mobile controls touch target 44×44; desktop 32×32.
 
 AN-P4 lưu close/snooze của guest trong `localStorage` theo
 `public_id:dismissal_version`, đồng thời đọc fallback `sessionStorage` của P2

@@ -24,9 +24,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   nền; live preview Desktop/Tablet/Mobile với token màu shared
   (`resolveAnnouncementThemeTokens`), mobile line-clamp 2, height theo content
   (không khóa 31px).
-- Còn **AN-V3**: áp theme/ảnh lên runtime strip đa cổng + smoke 3 viewport.
-- Tests: backend visual/upload + FE theme tokens. Cập nhật `docs/TIEN-DO-DU-AN.md`,
-  runtime guide `docs/08-frontend/dai-thong-bao-da-cong.md`.
+- **AN-V3 runtime:** public contract normalize `theme`/`background`; strip áp CSS
+  variables + ảnh/overlay (`buildAnnouncementStripVisual`); tắt sheen khi có
+  ảnh; nút điều khiển mobile 44×44; system banner vẫn palette theo kind.
+- Tests: backend visual/upload + FE contract/theme/strip visual. Cập nhật
+  `docs/TIEN-DO-DU-AN.md`, runtime guide.
 
 ### 2026-08-05
 

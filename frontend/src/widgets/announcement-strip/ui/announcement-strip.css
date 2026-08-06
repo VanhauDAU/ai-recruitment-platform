@@ -31,6 +31,24 @@
   z-index: -1;
 }
 
+/* Ảnh nền decorative: tắt sheen, layers do inline style; height vẫn theo content. */
+.announcement-strip--has-bg::before {
+  content: none;
+  animation: none;
+}
+
+.announcement-strip--has-bg {
+  background-color: transparent;
+  /* background-image/size/position/repeat set via style from buildAnnouncementStripVisual */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-strip::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 .announcement-strip--critical,
 .announcement-strip--warning {
   --announcement-accent: #dc2626;
@@ -152,14 +170,24 @@
 
 .announcement-strip__button {
   align-items: center;
+  appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   border: 0;
   border-radius: 999px;
   color: var(--announcement-accent);
+  cursor: pointer;
   display: inline-flex;
-  height: 32px;
+  height: 44px;
   justify-content: center;
-  width: 32px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  width: 44px;
+}
+
+.announcement-strip__button .anticon {
+  color: inherit;
 }
 
 .announcement-strip__button:hover,
@@ -190,6 +218,13 @@
   .announcement-strip__inner {
     min-height: 40px;
     padding-block: 6px;
+  }
+
+  .announcement-strip__button {
+    height: 32px;
+    min-height: 32px;
+    min-width: 32px;
+    width: 32px;
   }
 
   .announcement-strip__message {

@@ -1,14 +1,25 @@
 import {
   ANNOUNCEMENT_ANIMATIONS,
+  ANNOUNCEMENT_BG_FITS,
+  ANNOUNCEMENT_BG_OVERLAYS,
+  ANNOUNCEMENT_BG_POSITIONS,
   ANNOUNCEMENT_DISMISS_MODES,
   ANNOUNCEMENT_ICONS,
   ANNOUNCEMENT_KINDS,
+  ANNOUNCEMENT_THEME_MODES,
+  ANNOUNCEMENT_THEME_PRESETS,
 } from './announcement.presentation'
 
 const VALID_ANIMATIONS = new Set(Object.values(ANNOUNCEMENT_ANIMATIONS))
 const VALID_DISMISS_MODES = new Set(Object.values(ANNOUNCEMENT_DISMISS_MODES))
 const VALID_ICONS = new Set(Object.values(ANNOUNCEMENT_ICONS))
 const VALID_KINDS = new Set(Object.values(ANNOUNCEMENT_KINDS))
+const VALID_THEME_MODES = new Set(Object.values(ANNOUNCEMENT_THEME_MODES))
+const VALID_THEME_PRESETS = new Set(Object.values(ANNOUNCEMENT_THEME_PRESETS))
+const VALID_BG_FITS = new Set(Object.values(ANNOUNCEMENT_BG_FITS))
+const VALID_BG_POSITIONS = new Set(Object.values(ANNOUNCEMENT_BG_POSITIONS))
+const VALID_BG_OVERLAYS = new Set(Object.values(ANNOUNCEMENT_BG_OVERLAYS))
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/
 
 function text(value, fallback = '') {
   if (typeof value !== 'string') return fallback
@@ -47,6 +58,60 @@ function normalizeCta(value) {
   return { label, ...safeUrl }
 }
 
+function normalizeHex(value) {
+  const color = text(value)
+  return HEX_COLOR_RE.test(color) ? color.toUpperCase() : null
+}
+
+function normalizeImageUrl(value) {
+  const url = text(value)
+  if (!url) return ''
+  if (url.startsWith('https://')) {
+    try {
+      const parsed = new URL(url)
+      if (!parsed.username && !parsed.password) return url
+    } catch {
+      return ''
+    }
+  }
+  // Public media path same-origin (e.g. /media/...)
+  if (url.startsWith('/') && !url.startsWith('//')) return url
+  return ''
+}
+
+function normalizeTheme(value) {
+  const mode = VALID_THEME_MODES.has(value?.mode)
+    ? value.mode
+    : ANNOUNCEMENT_THEME_MODES.KIND
+  const preset = VALID_THEME_PRESETS.has(value?.preset) ? value.preset : null
+  return {
+    mode,
+    preset: mode === ANNOUNCEMENT_THEME_MODES.PRESET ? preset : null,
+    accent: mode === ANNOUNCEMENT_THEME_MODES.CUSTOM ? normalizeHex(value?.accent) : null,
+    bgFrom: mode === ANNOUNCEMENT_THEME_MODES.CUSTOM ? normalizeHex(value?.bg_from ?? value?.bgFrom) : null,
+    bgTo: mode === ANNOUNCEMENT_THEME_MODES.CUSTOM ? normalizeHex(value?.bg_to ?? value?.bgTo) : null,
+    fg: mode === ANNOUNCEMENT_THEME_MODES.CUSTOM ? normalizeHex(value?.fg) : null,
+  }
+}
+
+function normalizeBackground(value) {
+  const imageUrl = normalizeImageUrl(value?.image_url ?? value?.imageUrl)
+  let overlay = VALID_BG_OVERLAYS.has(value?.overlay)
+    ? value.overlay
+    : ANNOUNCEMENT_BG_OVERLAYS.NONE
+  if (imageUrl && overlay === ANNOUNCEMENT_BG_OVERLAYS.NONE) {
+    overlay = ANNOUNCEMENT_BG_OVERLAYS.DARK
+  }
+  return {
+    imageUrl,
+    fit: VALID_BG_FITS.has(value?.fit) ? value.fit : ANNOUNCEMENT_BG_FITS.COVER,
+    position: VALID_BG_POSITIONS.has(value?.position)
+      ? value.position
+      : ANNOUNCEMENT_BG_POSITIONS.CENTER,
+    overlay,
+  }
+}
+
 export function normalizeAnnouncement(value) {
   const publicId = text(value?.public_id)
   const message = text(value?.message, text(value?.message_vi))
@@ -79,6 +144,8 @@ export function normalizeAnnouncement(value) {
         : null,
       version: integerWithin(value.dismiss?.version, 1, Number.MAX_SAFE_INTEGER, 1),
     },
+    theme: normalizeTheme(value.theme),
+    background: normalizeBackground(value.background),
   }
 }
 

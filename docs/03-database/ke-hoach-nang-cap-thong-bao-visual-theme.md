@@ -1,6 +1,6 @@
 # Kế hoạch nâng cấp visual — Thông báo đa cổng
 
-> Trạng thái: **AN-V0–V2 hoàn tất trên nhánh · tiếp AN-V3 runtime strip**
+> Trạng thái: **AN-V0–V3 hoàn tất trên nhánh · AN-V4 runbook tuỳ chọn**
 >
 > Nhánh làm việc: `feat/announcement-visual-theme`
 >
@@ -227,7 +227,7 @@ Cross-layer:
 | **AN-V0** | Đặc tả + chốt quyết định (màu hybrid, ảnh+overlay, responsive/preview) | Review chủ dự án | ✅ 2026-08-06 |
 | **AN-V1** | Migration + validate + public/admin DTO + tests | pytest announcement | ✅ 2026-08-06 |
 | **AN-V2** | Upload backgrounds + form admin màu/ảnh + **live preview responsive** | Vitest form/preview; admin mobile stack | ✅ 2026-08-06 |
-| **AN-V3** | Strip runtime theme/bg + normalize FE + **responsive 3 viewport** | Strip tests + smoke desktop/tablet/mobile | ⬜ |
+| **AN-V3** | Strip runtime theme/bg + normalize FE + **responsive 3 viewport** | Strip tests + smoke desktop/tablet/mobile | ✅ 2026-08-06 |
 | **AN-V4** | Runbook, seed ví dụ, đồng bộ doc/runtime guide | Readiness checklist | ⬜ |
 
 Mỗi phase PR nhỏ; AN-V2 **không** ship runtime strip chưa preview ổn.
@@ -291,11 +291,12 @@ Mỗi phase PR nhỏ; AN-V2 **không** ship runtime strip chưa preview ổn.
 - [x] Live preview desktop/tablet/mobile + theme tokens
 - [x] Vitest theme token resolve
 
-### AN-V3 (chưa)
+### AN-V3
 
-- [ ] Strip runtime theme/bg responsive
-- [ ] FE contract normalize
-- [ ] Smoke 3 viewport
+- [x] Strip runtime theme/bg (`buildAnnouncementStripVisual`)
+- [x] FE contract normalize theme/background
+- [x] Unit tests contract + strip visual; mobile touch 44px
+- [ ] Smoke E2E 3 viewport (tuỳ staging)
 
 ## 11. Tham chiếu code
 
