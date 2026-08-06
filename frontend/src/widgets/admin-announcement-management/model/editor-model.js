@@ -64,6 +64,16 @@ export function announcementRevisionPayload(values) {
     snooze_seconds: values.dismiss_mode === ANNOUNCEMENT_DISMISS_MODES.SNOOZE
       ? Number(values.snooze_seconds)
       : null,
+    theme_mode: values.theme_mode || 'kind',
+    theme_preset: values.theme_mode === 'preset' ? (values.theme_preset || '') : '',
+    color_accent: values.theme_mode === 'custom' ? (values.color_accent || '') : '',
+    color_bg_from: values.theme_mode === 'custom' ? (values.color_bg_from || '') : '',
+    color_bg_to: values.theme_mode === 'custom' ? (values.color_bg_to || '') : '',
+    color_fg: values.theme_mode === 'custom' ? (values.color_fg || '') : '',
+    background_image: values.background_image?.trim() || '',
+    background_fit: values.background_fit || 'cover',
+    background_position: values.background_position || 'center',
+    background_overlay: values.background_overlay || 'none',
   }
 }
 

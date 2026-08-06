@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Modal, Select, Space } from 'antd'
+import { Button, DatePicker, Form, Input, Modal, Select, Space, Tooltip } from 'antd'
+import dayjs from 'dayjs'
 import { useState } from 'react'
 import {
   adminJobKeys,
@@ -16,11 +17,18 @@ export default function JobSubmissionReviewActions({ job }) {
   const access = useAdminAccess(user)
   const queryClient = useQueryClient()
   const [decision, setDecision] = useState('')
+  const [newDeadline, setNewDeadline] = useState(null)
   const [form] = Form.useForm()
+  const approveBlockers = job.approve_blockers || []
+  const needsDeadline = (job.approve_requirements || []).some((item) => item.code === 'deadline')
   const canApprove = access.has('job_moderation.approve')
     && job.state_actions?.includes('approve')
   const canReject = access.has('job_moderation.reject')
     && job.state_actions?.includes('reject')
+  // A blocked pending job still shows the approve button, disabled with its
+  // reason: a silently missing button reads as a bug to the reviewer.
+  const showApprove = access.has('job_moderation.approve')
+    && (canApprove || (job.status === 'pending' && approveBlockers.length > 0))
 
   const mutation = useMutation({
     mutationFn: (payload) => decideAdminJob(job.public_id, {
@@ -37,6 +45,7 @@ export default function JobSubmissionReviewActions({ job }) {
           : 'Đã lưu quyết định từ chối; lý do sẽ hiển thị cho nhà tuyển dụng.',
       )
       if (payload.action === 'reject') form.resetFields()
+      setNewDeadline(null)
       setDecision('')
     },
     onError: (error) => {
@@ -46,6 +55,14 @@ export default function JobSubmissionReviewActions({ job }) {
       message.error(getApiErrorMessage(error, 'Không thể ghi nhận quyết định kiểm duyệt.'))
     },
   })
+
+  function submitApprove() {
+    if (needsDeadline && !newDeadline) return
+    mutation.mutate({
+      action: 'approve',
+      ...(newDeadline && { deadline: newDeadline.format('YYYY-MM-DD') }),
+    })
+  }
 
   async function submitReject() {
     let values
@@ -61,15 +78,17 @@ export default function JobSubmissionReviewActions({ job }) {
     })
   }
 
-  if (!canApprove && !canReject) return null
+  if (!showApprove && !canReject) return null
 
   return (
     <>
       <Space wrap>
-        {canApprove && (
-          <Button type="primary" onClick={() => setDecision('approve')}>
-            Duyệt tin
-          </Button>
+        {showApprove && (
+          <Tooltip title={canApprove ? '' : approveBlockers.map((item) => item.label).join(' · ')}>
+            <Button disabled={!canApprove} onClick={() => setDecision('approve')} type="primary">
+              Duyệt tin
+            </Button>
+          </Tooltip>
         )}
         {canReject && (
           <Button danger onClick={() => setDecision('reject')}>
@@ -81,9 +100,13 @@ export default function JobSubmissionReviewActions({ job }) {
       <Modal
         cancelText="Hủy"
         confirmLoading={mutation.isPending}
+        okButtonProps={{ disabled: needsDeadline && !newDeadline }}
         okText="Duyệt và công khai"
-        onCancel={() => setDecision('')}
-        onOk={() => mutation.mutate({ action: 'approve' })}
+        onCancel={() => {
+          setNewDeadline(null)
+          setDecision('')
+        }}
+        onOk={submitApprove}
         open={decision === 'approve'}
         title="Duyệt tin tuyển dụng"
       >
@@ -91,6 +114,25 @@ export default function JobSubmissionReviewActions({ job }) {
           Xác nhận bạn đã kiểm tra nội dung, điều kiện tuyển dụng và tín hiệu tin cậy
           của nhà tuyển dụng. Tin sẽ hiển thị công khai ngay sau khi duyệt.
         </p>
+        {needsDeadline && (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-semibold text-slate-700">
+              Hạn nhận hồ sơ mới <span className="text-red-500">*</span>
+            </p>
+            <DatePicker
+              className="!w-full"
+              disabledDate={(date) => date && date.isBefore(dayjs().startOf('day'))}
+              format="DD/MM/YYYY"
+              onChange={setNewDeadline}
+              placeholder="-- Chọn hạn nhận hồ sơ --"
+              value={newDeadline}
+            />
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Hạn cũ đã qua nên tin không thể lên công khai. Chọn hạn mới để duyệt kèm gia hạn;
+              thay đổi này được ghi vào lịch sử kiểm duyệt.
+            </p>
+          </div>
+        )}
       </Modal>
 
       <Modal

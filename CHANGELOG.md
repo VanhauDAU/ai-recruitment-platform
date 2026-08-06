@@ -6,6 +6,30 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-08-06
+
+#### Added — Announcement visual theme (AN-V0 / AN-V1 / AN-V2)
+
+- Mở epic **AN-V** nâng cấp dải thông báo đa cổng: chọn màu hiển thị (mode
+  `kind` / `preset` / `custom` hex) và ảnh nền strip (ví dụ 980×31) kèm overlay
+  contrast. Đặc tả:
+  [`docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`](docs/03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+- **AN-V1 backend:** migration `sitecontent.0017_announcement_revision_visual_theme`
+  thêm field theme/background trên `AnnouncementRevision`; service
+  `normalize_theme_and_background` (hex `#RRGGBB`, storage key ảnh, ép overlay
+  `dark` khi có ảnh); public feed trả `theme` + `background.image_url`; admin
+  revision đọc/ghi field visual (storage key chỉ admin).
+- **AN-V2 admin:** `POST /api/site/admin/announcements/backgrounds/` upload
+  JPEG/PNG/WebP (640–2400×24–120, ≤1MB); form editor theme + ColorPicker + upload
+  nền; live preview Desktop/Tablet/Mobile với token màu shared
+  (`resolveAnnouncementThemeTokens`), mobile line-clamp 2, height theo content
+  (không khóa 31px).
+- **AN-V3 runtime:** public contract normalize `theme`/`background`; strip áp CSS
+  variables + ảnh/overlay (`buildAnnouncementStripVisual`); tắt sheen khi có
+  ảnh; nút điều khiển mobile 44×44; system banner vẫn palette theo kind.
+- Tests: backend visual/upload + FE contract/theme/strip visual. Cập nhật
+  `docs/TIEN-DO-DU-AN.md`, runtime guide.
+
 ### 2026-08-05
 
 #### Changed — Rút gọn FAQ ứng viên và mở ảnh HTTPS

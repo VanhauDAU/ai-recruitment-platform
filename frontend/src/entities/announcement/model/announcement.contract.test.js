@@ -76,6 +76,43 @@ describe('announcement runtime contract', () => {
     })
   })
 
+  it('normalizes theme and background visual fields safely', () => {
+    const item = normalizeAnnouncement({
+      public_id: 'ann_theme',
+      message: 'Campaign',
+      kind: 'feature',
+      theme: {
+        mode: 'custom',
+        accent: '#112233',
+        bg_from: 'bad',
+        bg_to: '#445566',
+        fg: '#778899',
+      },
+      background: {
+        image_url: 'https://cdn.example.com/banner.webp',
+        fit: 'cover',
+        position: 'center',
+        overlay: 'none',
+      },
+      dismiss: { mode: 'close', version: 1 },
+    })
+
+    expect(item.theme).toEqual({
+      mode: 'custom',
+      preset: null,
+      accent: '#112233',
+      bgFrom: null,
+      bgTo: '#445566',
+      fg: '#778899',
+    })
+    expect(item.background).toMatchObject({
+      imageUrl: 'https://cdn.example.com/banner.webp',
+      fit: 'cover',
+      position: 'center',
+      overlay: 'none',
+    })
+  })
+
   it('drops remote items when the runtime kill switch is absent or disabled', () => {
     const payload = {
       items: [{

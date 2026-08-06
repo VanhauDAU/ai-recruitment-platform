@@ -1,9 +1,3 @@
-import {
-  ClockCircleOutlined,
-  FileSearchOutlined,
-  PauseCircleOutlined,
-  SafetyCertificateOutlined,
-} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Input, Select, Space, Table, Tag, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
@@ -19,7 +13,8 @@ import {
 } from '@/entities/admin-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
-import { AdminPanel, AdminStatCard } from '@/shared/ui/admin'
+import { AdminPanel } from '@/shared/ui/admin'
+import AdminJobPublicLink from './AdminJobPublicLink'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const DEFAULT_SCOPE = 'pending'
@@ -113,12 +108,15 @@ export default function AdminJobList() {
       sortOrder: sorterOrder(ordering, 'title'),
       width: 280,
       render: (title, job) => (
-        <button className="text-left" onClick={() => openJob(job)} type="button">
-          <span className="font-semibold text-slate-900 hover:text-[var(--brand-primary)]">
-            {title}
-          </span>
-          <span className="mt-1 block font-mono text-xs text-slate-500">{job.public_id}</span>
-        </button>
+        <div className="flex min-w-0 items-start gap-1">
+          <button className="min-w-0 text-left" onClick={() => openJob(job)} type="button">
+            <span className="font-semibold text-slate-900 hover:text-[var(--brand-primary)]">
+              {title}
+            </span>
+            <span className="mt-1 block font-mono text-xs text-slate-500">{job.public_id}</span>
+          </button>
+          <AdminJobPublicLink iconOnly job={job} />
+        </div>
       ),
     },
     {
@@ -223,53 +221,41 @@ export default function AdminJobList() {
     },
   ]
 
+  const scopeStats = [
+    { key: 'all', label: 'Tất cả tin', value: summary.total, detail: 'Toàn bộ vòng đời' },
+    { key: 'pending', label: 'Chờ duyệt', value: summary.pending, detail: `${summary.overdue || 0} quá SLA ${summary.sla_hours || 24}h` },
+    { key: 'active', label: 'Đang tuyển', value: summary.active, detail: `${summary.expired || 0} quá hạn` },
+    { key: 'held', label: 'Đang tạm giữ', value: summary.held, detail: 'Policy hoặc kiểm duyệt' },
+    { key: 'rejected', label: 'Đã từ chối', value: summary.rejected, detail: `${summary.pending_reports || 0} báo cáo chờ` },
+  ]
+
   return (
-    <div className="space-y-5">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Tổng quan tin tuyển dụng">
-        <AdminStatCard
-          active={scope === 'all'}
-          icon={<FileSearchOutlined />}
-          label="Tất cả tin"
-          value={summary.total}
-          detail="Toàn bộ vòng đời"
-          onClick={() => chooseScope('all')}
-        />
-        <AdminStatCard
-          active={scope === 'pending'}
-          icon={<ClockCircleOutlined />}
-          label="Chờ duyệt"
-          value={summary.pending}
-          detail={`${summary.overdue || 0} tin quá SLA ${summary.sla_hours || 24} giờ`}
-          onClick={() => chooseScope('pending')}
-          tone="amber"
-        />
-        <AdminStatCard
-          active={scope === 'active'}
-          icon={<SafetyCertificateOutlined />}
-          label="Đang tuyển"
-          value={summary.active}
-          detail={`${summary.expired || 0} tin đã quá hạn`}
-          onClick={() => chooseScope('active')}
-          tone="green"
-        />
-        <AdminStatCard
-          active={scope === 'held'}
-          icon={<PauseCircleOutlined />}
-          label="Đang tạm giữ"
-          value={summary.held}
-          detail="Policy hoặc kiểm duyệt"
-          onClick={() => chooseScope('held')}
-          tone="red"
-        />
-        <AdminStatCard
-          active={scope === 'rejected'}
-          icon={<FileSearchOutlined />}
-          label="Đã từ chối"
-          value={summary.rejected}
-          detail={`${summary.pending_reports || 0} báo cáo đang chờ`}
-          onClick={() => chooseScope('rejected')}
-          tone="red"
-        />
+    <div className="space-y-4">
+      <section
+        aria-label="Tổng quan tin tuyển dụng"
+        className="flex overflow-x-auto rounded-lg border border-slate-200 bg-white"
+      >
+        {scopeStats.map((item) => (
+          <button
+            aria-pressed={scope === item.key}
+            className={`flex min-w-[9.5rem] flex-1 flex-col gap-0.5 border-r border-slate-100 px-4 py-2.5 text-left last:border-r-0 ${
+              scope === item.key
+                ? 'bg-slate-100 shadow-[inset_0_-2px_0_#334155]'
+                : 'hover:bg-slate-50'
+            }`}
+            key={item.key}
+            onClick={() => chooseScope(item.key)}
+            type="button"
+          >
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              {item.label}
+            </span>
+            <span className="text-lg font-bold leading-tight text-slate-900">
+              {item.value ?? 0}
+            </span>
+            <span className="truncate text-[11px] text-slate-400">{item.detail}</span>
+          </button>
+        ))}
       </section>
 
       <AdminPanel

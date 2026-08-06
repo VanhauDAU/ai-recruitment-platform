@@ -236,6 +236,22 @@ chỉ bắt đầu sau khi phase trước merge và quality gate đạt.
 | AN-P5 | Hardening, kill switch, staging rollout, changelog và runbook | 🟡 Rehearsal cô lập đạt; chờ merge fix + staging thật/soak |
 | AN-P6 | Xóa compatibility legacy sau tối thiểu một release ổn định | ⬜ |
 
+## Epic nâng cấp visual thông báo đa cổng (AN-V, 2026-08-06)
+
+Thiết kế:
+[ke-hoach-nang-cap-thong-bao-visual-theme.md](./03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md).
+Nhánh: `feat/announcement-visual-theme`. Bổ sung **theme màu (kind/preset/custom)**
+và **ảnh nền strip** (vd. 980×31) kèm overlay; **responsive** và **preview admin**
+là bắt buộc ở phase frontend. Không đổi namespace API, priority tier hay lifecycle.
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| AN-V0 | Đặc tả visual, chốt hybrid màu + ảnh/overlay + responsive/preview | ✅ |
+| AN-V1 | Backend: migration revision theme/background, validate, DTO public/admin, tests | ✅ |
+| AN-V2 | Upload background + form admin + **live preview** desktop/tablet/mobile | ✅ |
+| AN-V3 | Runtime strip apply theme/bg, FE contract, responsive touch targets | ✅ |
+| AN-V4 | Runbook, seed ví dụ, đồng bộ doc runtime | ⬜ |
+
 ## Epic hoàn thiện CV Builder (2026-07-15)
 
 | Phase | Nội dung | Trạng thái |
@@ -1008,7 +1024,29 @@ Cập nhật 2026-07-19b (CHỐT: Tài khoản tách theo cổng giống TopCV �
 
 Cập nhật 2026-07-19 (Đa vai — một tài khoản dùng cả cổng ứng viên lẫn NTD) — **ĐÃ THAY bằng bản 2026-07-19b ở trên**: bỏ mô hình `User.role` đơn trị làm cổng authorization. Năng lực suy từ hồ sơ (không thêm cột, không migration): `has_employer_capability`=`is_employer or có recruiter_profile`, `has_candidate_capability`=`is_candidate or có candidate_profile`, `available_roles` suy từ đó. Vai đang hoạt động = role trong JWT của từng cổng (token lưu tách cổng); `get_token/issue_tokens` nhận `active_role`, one-time-code OAuth và challenge 2FA mang `portal`; `/auth/me/` trả active role theo `request.auth['role']` nên guard/redirect FE chạy đúng mà không decode JWT. OAuth `resolve_user` bỏ chặn `wrong_portal` → `_ensure_portal_capability` tự cấp `recruiter_profile` (cổng NTD) / `candidate_profile` (cổng ứng viên) rồi vào onboarding sẵn có. Permissions capability-based (`IsEmployer`/`IsCandidate`); password-login KHÔNG tự cấp năng lực (chỉ Google/đăng ký), đối xứng hai chiều; admin vẫn cấp tay, không tự phục vụ. FE: nút "Chuyển sang Nhà tuyển dụng" trong menu tài khoản ứng viên khi đã có năng lực NTD. Verify: `apps.accounts` 53/53 test xanh, toàn bộ test permission ở candidates/cvs/jobs/applications/employers xanh, lint + architecture pass. Còn lại là lỗi độc lập ngoài phạm vi: 5 lỗi `apps.applications.tests_migrations` (InvalidCursorName trong `cv_snapshot_preflight`) và 2 lỗi `contact_phone` của feature "cho trùng SĐT" đang làm dở song song (migration 0011 chưa commit, model còn `unique=True`).
 
-Cập nhật lần cuối: 2026-07-29m (AN-P2/AN-P3 equal-tier UX follow-up — Docker
+Cập nhật lần cuối: 2026-08-06c (AN-V3 — runtime strip áp theme/ảnh nền:
+`normalizeAnnouncement` nhận `theme`/`background`; `buildAnnouncementStripVisual`
+set CSS vars + layers ảnh/overlay; class `announcement-strip--has-bg` tắt sheen;
+mobile nút điều khiển 44×44. System banner vẫn theo kind. Unit contract/strip
+visual pass. AN-V4 runbook còn lại.)
+
+Cập nhật 2026-08-06b (AN-V2 — upload ảnh nền + form/preview admin:
+`POST /api/site/admin/announcements/backgrounds/` (JPEG/PNG/WebP, 640–2400×24–120,
+≤1MB); editor bước “Loại & CTA” có theme kind/preset/custom, ColorPicker, upload
+nền, fit/overlay; preview Desktop/Tablet/Mobile áp token màu shared
+`resolveAnnouncementThemeTokens`, line-clamp 2 trên mobile, height theo content.
+AN-V3 còn: wire runtime strip. Nhánh `feat/announcement-visual-theme`.)
+
+Cập nhật 2026-08-06 (AN-V0/AN-V1 — nâng cấp visual thông báo đa cổng:
+chốt hybrid theme kind/preset/custom hex + một ảnh nền strip (ví dụ 980×31)
+kèm overlay contrast; height strip luôn theo content (cấm khóa 31px). AN-V1
+backend: migration `sitecontent.0017`, validate storage key/hex, public DTO
+`theme`/`background`, admin revision fields, tests visual + regression
+announcement xanh. Bắt buộc AN-V2 live preview admin (desktop/tablet/mobile)
+và AN-V3 runtime responsive. Nhánh `feat/announcement-visual-theme`. Doc:
+`03-database/ke-hoach-nang-cap-thong-bao-visual-theme.md`. AN-P5/AN-P6 không đổi.)
+
+Cập nhật 2026-07-29m (AN-P2/AN-P3 equal-tier UX follow-up — Docker
 selector xác nhận hai thông báo info cùng hạng 6/priority 300 đều được trả cho
 candidate authenticated tại `/viec-lam`; runtime chủ đích chỉ hiển thị một item
 mỗi lần và luân phiên theo 5/6 giây. Sửa dismissal chuẩn hóa queue index và
@@ -1350,3 +1388,62 @@ chi tiết ghép bài hiện tại với related articles rồi sắp xếp theo
 của danh sách. Vì vậy click bài chỉ đổi active state, không còn đẩy item lên đầu
 và làm người đọc lạc vị trí. Public API 9/9 và frontend unit 2/2 pass.
 Smoke public 3/3 trên desktop/tablet/mobile pass.
+
+Cập nhật 2026-08-06 (JOB-REVIEW — duyệt tin biết rõ thay đổi và không mất nút
+Duyệt): thêm `Job.approved_snapshot`/`approved_snapshot_at` (migration
+`jobs.0034`) — mỗi lần duyệt lưu lại bản nội dung được công khai, nên khi nhà
+tuyển dụng sửa tin đang tuyển và tin quay về `pending`, trang duyệt hiển thị mục
+**Thay đổi cần duyệt** đối chiếu từng trường trước/sau (tiêu đề, mô tả rich text,
+thu nhập, hạn, kỹ năng, địa điểm, liên hệ…), badge “Bản cập nhật · N thay đổi” và
+chip điều hướng có số đếm; thay đổi thuộc thông tin liên hệ chỉ hiện với quyền
+`job_moderation.view_sensitive_contact`, người thiếu quyền thấy số lượng bị ẩn.
+Tin chưa có bản gốc nói rõ “Chưa có bản đã duyệt để so sánh” thay vì báo không có
+thay đổi; command `backfill_job_snapshots` gieo baseline cho tin đang tuyển.
+`deadline_expired` không còn ẩn nút Duyệt: nó thành `approve_requirements`, admin
+duyệt kèm chọn hạn nhận hồ sơ mới (ghi vào lịch sử kiểm duyệt), còn các điều kiện
+chặn thật (policy/moderation hold, tài khoản bị hạn chế, chiến dịch dừng) trả về
+`approve_blockers` khiến nút hiện dạng disabled kèm tooltip lý do thay vì biến
+mất. Gọn lại layout: nút Quay lại thành text nhỏ căn trái, cảnh báo chặn công
+khai còn một dòng, thu nhỏ quick-fact/disclosure header. Verify: backend
+784/784 pytest (coverage 86,31%), import-linter + migration check sạch, frontend
+lint/architecture/build xanh, unit 905/905 (thêm 3 test diff + 3 test hành động
+duyệt), kiểm mắt desktop 1512px và mobile 420px trên preview.
+
+Cập nhật 2026-08-06b (JOB-REVIEW UI — thanh "Đi nhanh đến" theo chuẩn hệ thống):
+đổi từ dãy chip bo tròn nhiều màu (nền xanh brand khi active, badge số tròn đỏ)
+sang một thanh segmented vuông vức: khung viền bo 8px, ô nhãn nền `#f8fafc` ngăn
+bằng divider, mỗi mục cao 36px vuông góc cách nhau bằng đường 1px, active dùng
+nền `#f1f5f9` + gạch chân `inset 0 -2px 0 #334155` thay vì đổi màu chữ sang brand,
+badge đếm là chip xám bo 4px (`#e2e8f0`, active đảo thành `#334155`). Mobile ẩn ô
+nhãn và giữ dải mục cuộn ngang trong khung. Chỉ CSS, không đổi markup/aria.
+Verify: lint sạch, build xanh, unit widget 4/4 pass, kiểm mắt 1512px và 420px.
+
+Cập nhật 2026-08-06c (JOB-REVIEW UI — chuyển trang duyệt sang mô hình tab):
+thay chuỗi disclosure thả xuống bằng tab thật — mỗi tab render đúng một panel nội
+dung (`AdminJobPanel` header tĩnh + body), không còn mở/đóng nhiều khối cùng lúc.
+Tablist theo chuẩn ARIA (`role="tablist"/"tab"/"tabpanel"`, `aria-selected`,
+roving `tabIndex`, phím ←/→/Home/End). Sidebar phải rút còn thẻ **Tóm tắt kiểm
+tra** dính (sticky); ba mục Nhà tuyển dụng/Nhận hồ sơ/Báo cáo chuyển thành panel
+chính (`AdminJobReviewPanels`). Tách `AdminJobDecisionDock` khỏi
+`AdminJobOverview` để dock quyết định và thanh tab nằm chung một khối sticky
+`admin-job-sticky-bar`, offset tính bằng `--admin-topbar-height +
+--announcement-strip-height` nên không bị thanh thông báo che; mobile ≤639px trả
+về tĩnh vì dock xếp dọc. Bỏ nút Mở tất cả/Thu gọn tất cả (vô nghĩa với tab). Tab
+mặc định là **Thay đổi** khi có diff, ngược lại là **Nội dung**. Verify: lint +
+architecture sạch, build xanh, unit 907/907 (thêm 2 test chuyển tab), kiểm mắt
+desktop 1512px và mobile 420px.
+
+Cập nhật 2026-08-06d (JOB-ADMIN — link trang công khai + rút gọn danh sách tin):
+backend annotate `is_publicly_visible` cho `_admin_job_queryset` bằng chính
+`publicly_available_job_filter()` (predicate dùng cho mọi bề mặt ứng viên) rồi
+phơi ra ở serializer list/detail, nên link admin không bao giờ trỏ tới trang 404.
+Frontend thêm `AdminJobPublicLink`: ở chi tiết là link chữ "Xem trang công khai"
+nằm cùng hàng với nút Quay lại; ở bảng danh sách chỉ là icon `ExportOutlined`
+cạnh tiêu đề (không thêm dòng), có Tooltip; tin chưa công khai hiện icon xám
+không bấm được kèm lý do. Dải 5 thẻ thống kê màu (AdminStatCard) ở trang danh
+sách đổi thành một thanh segmented xám trung tính: nhãn viết hoa nhỏ, số lớn,
+dòng chi tiết mờ, mục đang chọn nền `slate-100` + gạch chân — vẫn là bộ lọc scope
+như cũ. Không đụng `AdminStatCard` dùng chung (Dashboard vẫn giữ nguyên). Verify:
+backend 785/785 pytest coverage 86,31% (thêm test `is_publicly_visible` bám sát
+predicate công khai), ruff/format/import-linter sạch; frontend lint/architecture
+xanh, unit 907/907, build xanh, kiểm mắt danh sách + chi tiết trên preview.
