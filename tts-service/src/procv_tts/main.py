@@ -18,6 +18,7 @@ from .cache import AudioCache
 from .config import Settings
 from .engine import VieneuRuntime
 from .identity import artifact_identity, text_hash
+from .metrics import RuntimeMetrics
 from .scheduler import SegmentScheduler
 from .segmentation import split_for_speech
 from .sessions import SpeechSessionStore
@@ -41,7 +42,12 @@ sessions = SpeechSessionStore(
 audio_cache = AudioCache(
     settings.cache_dir,
     max_bytes=settings.cache_max_bytes,
-    ttl_seconds=settings.cache_ttl_seconds,
+    ttl_by_suffix={
+        ".pcm": settings.pcm_cache_ttl_seconds,
+        ".wav": settings.wav_cache_ttl_seconds,
+        ".mp3": settings.artifact_cache_ttl_seconds,
+        ".meta.json": settings.artifact_cache_ttl_seconds,
+    },
 )
 segment_scheduler = SegmentScheduler(
     runtime,
@@ -52,10 +58,18 @@ segment_scheduler = SegmentScheduler(
 artifact_store = Mp3ArtifactStore(
     settings, audio_cache, sample_rate=runtime.sample_rate
 )
+runtime_metrics = RuntimeMetrics()
+_cache_stats_value = {"files": 0, "size_bytes": 0}
+_cache_stats_at = 0.0
+_cache_stats_guard = threading.Lock()
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    if not settings.runtime_enabled:
+        logger.warning("speech_runtime_disabled environment=%s", settings.environment)
+        yield
+        return
     runtime.load()
     audio_cache.prune(force=True)
     # Lần suy luận đầu tiên phải dựng ONNX session và cấp phát arena nên chậm
@@ -86,6 +100,7 @@ class SessionCreateRequest(BaseModel):
     text_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
     normalizer_version: str = Field(pattern=r"^[a-z0-9._-]{1,64}$")
     source_revision: str = Field(min_length=1, max_length=160)
+    artifact_policy: str = Field(default="cache_only", pattern=r"^(cache_only|durable)$")
 
     @field_validator("text")
     @classmethod
@@ -190,6 +205,7 @@ class _Generation:
         self.done = False
         self.failed = False
         self.condition = threading.Condition()
+        self.admitted_at = time.perf_counter()
         # Mở ngay tại đây để reader luôn mở được file: nếu đợi thread sinh tạo
         # file thì request bám đuôi có thể chạy trước và gặp FileNotFoundError.
         self.output = open(path, "wb")
@@ -207,11 +223,13 @@ class _Generation:
 
     def run(self) -> None:
         started_at = time.perf_counter()
+        runtime_metrics.generation_started()
         first_audio_at = None
         sample_count = 0
         failed = True
         try:
-            artifact_store.mark_generating(self.cache_key)
+            if self.item.artifact_policy == "durable":
+                artifact_store.mark_generating(self.cache_key)
             with self.output as output:
                 for segment in split_for_speech(self.item.text):
                     # A model worker is held for this bounded segment only.
@@ -239,13 +257,15 @@ class _Generation:
             # Encoding is detached from the response completion, but it reads
             # the exact immutable WAV assembled from the live PCM tee. No model
             # call and no second synthesis path is involved.
-            artifact_store.ensure_from_wav_async(
-                artifact_key=self.cache_key,
-                wav_path=wav_path,
-            )
+            if self.item.artifact_policy == "durable":
+                artifact_store.ensure_from_wav_async(
+                    artifact_key=self.cache_key,
+                    wav_path=wav_path,
+                )
             failed = False
         except Exception:
-            artifact_store.mark_failed(self.cache_key, "inference_failed")
+            if self.item.artifact_policy == "durable":
+                artifact_store.mark_failed(self.cache_key, "inference_failed")
             logger.exception(
                 "speech_stream_failed voice_id=%s style=%s",
                 self.item.voice_id,
@@ -260,12 +280,23 @@ class _Generation:
             self._finish(failed=failed)
             elapsed = time.perf_counter() - started_at
             audio_seconds = sample_count / runtime.sample_rate
+            ttfa_ms = (
+                (first_audio_at - started_at) * 1000 if first_audio_at else None
+            )
+            rtf = elapsed / audio_seconds if audio_seconds else None
+            runtime_metrics.generation_finished(
+                completed=not failed,
+                audio_seconds=audio_seconds,
+                ttfa_ms=ttfa_ms,
+                rtf=rtf,
+                queue_wait_ms=(started_at - self.admitted_at) * 1000,
+            )
             logger.info(
                 "speech_stream_complete voice_id=%s style=%s ttfa_ms=%.0f rtf=%.3f audio_seconds=%.2f completed=%s",
                 self.item.voice_id,
                 self.item.style,
-                (first_audio_at - started_at) * 1000 if first_audio_at else -1,
-                elapsed / audio_seconds if audio_seconds else 0,
+                ttfa_ms if ttfa_ms is not None else -1,
+                rtf if rtf is not None else 0,
                 audio_seconds,
                 not failed,
             )
@@ -308,6 +339,12 @@ def healthz():
 
 @app.get("/readyz")
 def readyz():
+    if not settings.runtime_enabled:
+        return Response(
+            content='{"status":"disabled"}',
+            media_type="application/json",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
     if not runtime.ready:
         return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     return {
@@ -319,6 +356,46 @@ def readyz():
         "model_workers": settings.max_concurrent_streams,
         "onnx_threads": settings.onnx_threads if settings.backend == "onnx" else None,
         "ffmpeg_available": shutil.which(settings.ffmpeg_binary) is not None,
+        "capacity": settings.max_active_generations,
+    }
+
+
+def _cached_cache_stats() -> dict[str, int]:
+    global _cache_stats_at, _cache_stats_value
+    now = time.monotonic()
+    with _cache_stats_guard:
+        if now - _cache_stats_at >= 60:
+            _cache_stats_value = audio_cache.stats()
+            _cache_stats_at = now
+        return dict(_cache_stats_value)
+
+
+@app.get("/internal/v1/status")
+def internal_status(x_tts_internal_token: str | None = Header(default=None)):
+    _require_internal_token(x_tts_internal_token)
+    with _generations_guard:
+        active = len(_generations)
+    return {
+        "status": "ready" if runtime.ready else (
+            "disabled" if not settings.runtime_enabled else "unavailable"
+        ),
+        "environment": settings.environment,
+        "runtime_enabled": settings.runtime_enabled,
+        "model_revision": settings.model_revision,
+        "backend": settings.backend,
+        "precision": settings.precision,
+        "native_streaming": runtime.native_streaming,
+        "model_workers": settings.max_concurrent_streams,
+        "onnx_threads": settings.onnx_threads if settings.backend == "onnx" else None,
+        "ffmpeg_available": shutil.which(settings.ffmpeg_binary) is not None,
+        "generations": {
+            "active": active,
+            "capacity": settings.max_active_generations,
+            "available": max(0, settings.max_active_generations - active),
+            "segment_queue": segment_scheduler.queue_size,
+        },
+        "metrics": runtime_metrics.snapshot(),
+        "cache": _cached_cache_stats(),
     }
 
 
@@ -356,12 +433,17 @@ def create_session(
         voice_id=request.voice_id,
         style=request.style,
         artifact_key=artifact_key,
+        artifact_policy=request.artifact_policy,
     )
     return {
         "stream_path": f"/tts/v1/streams/{token}",
         "expires_at": item.expires_at,
         "artifact_key": artifact_key,
-        "artifact_status": artifact_store.status(artifact_key)["status"],
+        "artifact_status": (
+            artifact_store.status(artifact_key)["status"]
+            if request.artifact_policy == "durable"
+            else "CACHE_ONLY"
+        ),
         "config_hash": config_hash,
         "model_revision": settings.model_revision,
         "cached": audio_cache.get(artifact_key) is not None,
@@ -417,32 +499,38 @@ def stream(token: str):
         "X-Content-Type-Options": "nosniff",
     }
     cached = audio_cache.get(artifact_key)
+    runtime_metrics.cache_lookup(hit=cached is not None)
     if cached is not None:
-        artifact_store.ensure_from_wav_async(
-            artifact_key=artifact_key,
-            wav_path=cached,
-        )
+        if item.artifact_policy == "durable":
+            artifact_store.ensure_from_wav_async(
+                artifact_key=artifact_key,
+                wav_path=cached,
+            )
         return FileResponse(cached, media_type="audio/wav", headers=headers)
 
+    start_generation = False
     with _generations_guard:
         generation = _generations.get(artifact_key)
-
-    if generation is None:
-        with _generations_guard:
-            existing = _generations.get(artifact_key)
-            if existing is None:
-                generation = _Generation(
-                    artifact_key,
-                    item,
-                    audio_cache.temporary_path(artifact_key),
+        if generation is None:
+            if len(_generations) >= settings.max_active_generations:
+                runtime_metrics.rejected()
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Speech generation capacity is full.",
+                    headers={"Retry-After": "2"},
                 )
-                _generations[artifact_key] = generation
-                threading.Thread(
-                    target=generation.run,
-                    name=f"tts-generate-{artifact_key[:8]}",
-                    daemon=True,
-                ).start()
-        if existing is not None:
-            generation = existing
+            generation = _Generation(
+                artifact_key,
+                item,
+                audio_cache.temporary_path(artifact_key),
+            )
+            _generations[artifact_key] = generation
+            start_generation = True
+    if start_generation:
+        threading.Thread(
+            target=generation.run,
+            name=f"tts-generate-{artifact_key[:8]}",
+            daemon=True,
+        ).start()
 
     return StreamingResponse(generation.tail(), media_type="audio/wav", headers=headers)

@@ -11,13 +11,16 @@ from fastapi.testclient import TestClient
 from procv_tts.identity import artifact_identity
 
 
-def app_module(monkeypatch, tmp_path):
+def app_module(monkeypatch, tmp_path, *, max_active_generations=3):
     monkeypatch.setenv("TTS_FAKE_ENGINE", "1")
     monkeypatch.setenv("TTS_CACHE_DIR", str(tmp_path))
     monkeypatch.setenv("TTS_INTERNAL_TOKEN", "test-internal-token")
     monkeypatch.setenv("TTS_BACKEND", "onnx")
     monkeypatch.setenv("TTS_PRECISION", "int8")
     monkeypatch.setenv("TTS_MAX_CONCURRENT_STREAMS", "1")
+    monkeypatch.setenv(
+        "TTS_MAX_ACTIVE_GENERATIONS", str(max_active_generations)
+    )
     import procv_tts.main
 
     return importlib.reload(procv_tts.main)
@@ -31,6 +34,7 @@ def session_payload(text="Xin chào, đây là bài viết thử nghiệm.", **o
         "source_revision": "blog.post:ps_test:r1",
         "voice_id": "north-male-natural",
         "style": "tu_nhien",
+        "artifact_policy": "durable",
         **overrides,
     }
 
@@ -176,6 +180,61 @@ def test_ten_listeners_share_one_live_inference_and_one_mp3(monkeypatch, tmp_pat
         artifact = wait_until_ready(client, sessions[0]["artifact_key"])
         assert artifact["asset_url"].endswith(f"{sessions[0]['artifact_key']}.mp3")
         assert encode_calls == [1]
+
+
+def test_cache_only_session_skips_mp3_and_metadata(monkeypatch, tmp_path):
+    module = app_module(monkeypatch, tmp_path)
+    encode_calls = []
+
+    def fake_encode(*_args, **_kwargs):
+        encode_calls.append(1)
+
+    monkeypatch.setattr("procv_tts.artifacts._encode_mp3", fake_encode)
+    with TestClient(module.app) as client:
+        created = client.post(
+            "/internal/v1/sessions",
+            headers=internal_headers(),
+            json=session_payload(artifact_policy="cache_only"),
+        ).json()
+        assert created["artifact_status"] == "CACHE_ONLY"
+        assert client.get(created["stream_path"]).status_code == 200
+        status_response = client.get(
+            f"/internal/v1/artifacts/{created['artifact_key']}",
+            headers=internal_headers(),
+        )
+        assert status_response.json()["status"] == "MISSING"
+        assert encode_calls == []
+        assert not module.audio_cache.metadata_path(created["artifact_key"]).exists()
+
+
+def test_unique_generation_over_capacity_returns_retry_after(monkeypatch, tmp_path):
+    module = app_module(monkeypatch, tmp_path, max_active_generations=1)
+    with TestClient(module.app) as client:
+        created = client.post(
+            "/internal/v1/sessions",
+            headers=internal_headers(),
+            json=session_payload(source_revision="blog.post:ps_test:r2"),
+        ).json()
+        with module._generations_guard:
+            module._generations["f" * 64] = object()
+        response = client.get(created["stream_path"])
+        assert response.status_code == 503
+        assert response.headers["retry-after"] == "2"
+        with module._generations_guard:
+            module._generations.clear()
+
+
+def test_internal_status_requires_token_and_reports_capacity(monkeypatch, tmp_path):
+    module = app_module(monkeypatch, tmp_path)
+    with TestClient(module.app) as client:
+        assert client.get("/internal/v1/status").status_code == 404
+        response = client.get("/internal/v1/status", headers=internal_headers())
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "ready"
+        assert body["generations"]["capacity"] == 3
+        assert body["metrics"]["process_rss_bytes"] > 0
+        assert body["cache"] == {"files": 0, "size_bytes": 0}
 
 
 def test_mp3_is_derived_from_live_wav_without_asset_generation_endpoint(

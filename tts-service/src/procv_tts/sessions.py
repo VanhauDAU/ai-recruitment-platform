@@ -12,6 +12,7 @@ class SpeechSession:
     voice_id: str
     style: str
     artifact_key: str
+    artifact_policy: str
     expires_at: float
 
 
@@ -23,7 +24,13 @@ class SpeechSessionStore:
         self._lock = threading.Lock()
 
     def create(
-        self, *, text: str, voice_id: str, style: str, artifact_key: str
+        self,
+        *,
+        text: str,
+        voice_id: str,
+        style: str,
+        artifact_key: str,
+        artifact_policy: str,
     ) -> tuple[str, SpeechSession]:
         now = time.time()
         token = secrets.token_urlsafe(32)
@@ -32,6 +39,7 @@ class SpeechSessionStore:
             voice_id=voice_id,
             style=style,
             artifact_key=artifact_key,
+            artifact_policy=artifact_policy,
             expires_at=now + self.ttl_seconds,
         )
         with self._lock:
