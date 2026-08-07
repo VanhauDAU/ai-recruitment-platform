@@ -1,5 +1,41 @@
 # Tiến độ dự án
 
+## Cập nhật 2026-08-07 — Tối ưu TTS production Giai đoạn 0–2
+
+- **Giai đoạn 0 hoàn thành về công cụ:** benchmark chính thức đo cache
+  miss/hit, ba artifact đồng thời, singleflight mười listener, TTFA/RTF/queue,
+  CPU/RAM/cache/rejection và ảnh hưởng Web API. Benchmark thật chưa chạy vì máy
+  hiện tại không có model/runtime production; đây vẫn là rollout gate, không
+  được coi số minh hoạ trong README là kết quả.
+- **Giai đoạn 1 hoàn thành:** hard switch production default off; admission tối
+  đa ba generation; status nội bộ có token; policy theo Site Setting, voice/
+  style cố định theo surface, quota ngày user/IP fail-closed cho cache miss;
+  aggregate `SpeechUsageDaily`; admin overview degraded-safe được compose vào
+  tab AI hiện có. Seed idempotent không ghi đè giá trị admin.
+- **Giai đoạn 2 hoàn thành:** blog click-to-play với durable R2; chatbot bỏ
+  auto-speak/global toggle và điều khiển từng message; onboarding mặc định off;
+  interview không có code chờ. Text workflow luôn hoạt động khi TTS disabled,
+  hết quota hoặc unavailable. Cache local PCM 24h, WAV/MP3/meta 72h, tối đa
+  5 GB; prune ngoài inference path. Artifact lỗi/revision cũ dọn sau 30 ngày.
+- Baseline deploy: host 4 vCPU/8 GB, một TTS worker, 2.5 CPU, 2 GB RAM, hai ONNX
+  threads, model snapshot + revision pin SHA. Production vẫn **chưa bật**.
+- Verify hoàn tất: TTS 17/17; backend 796/796 với coverage 86,21%,
+  import-linter, DRF layer, migration drift, Django check và query/regression
+  đều đạt; frontend 892/892, lint, architecture, production build và bundle
+  budget đều đạt. Smoke TTS cô lập 15/15 trên desktop/tablet/mobile (blog,
+  chatbot, onboarding); OpenAPI YAML và link Markdown hợp lệ.
+- Full `./scripts/check_all.sh` dừng ở nợ Ruff ngoài phạm vi TTS: import
+  `BytesIO` chưa dùng trong `sitecontent/services/announcement_media.py` và hai
+  ca `pytest.raises(Exception)` trong
+  `sitecontent/tests/test_announcement_visual_theme.py`; format check còn báo
+  năm file `sitecontent/blog` có sẵn. Full E2E không được chứng nhận vì Vite/
+  Node dev server abort khi tải chunk Ant Design trong lượt chạy song song;
+  trước thời điểm abort còn hai smoke admin cũ timeout. Không sửa lan các lỗi
+  này trong nhánh TTS.
+- Tiếp theo có điều kiện: **Giai đoạn 3** prepared audio onboarding (không có
+  placeholder trong nhánh này); **Giai đoạn 4** chạy benchmark trên production,
+  quan sát chi phí rồi mới bật hard switch/surface.
+
 ## Cập nhật 2026-08-05 — Onboarding gộp thành một cuộc trò chuyện (1.24i)
 
 Phản hồi: onboarding cũ bắt thao tác quá nhiều (trang chào → 5 bước bấm "Tiếp

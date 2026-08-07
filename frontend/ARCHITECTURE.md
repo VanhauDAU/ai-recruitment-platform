@@ -213,22 +213,30 @@ app/router
   (asset MP3 đã có sẵn), `playSpeechStream` và chính sách chờ 429/503. Đặt ở
   `shared` vì cả blog lẫn các bề mặt khác đều dùng, mà feature thì không được
   import feature.
-- `entities/speech` sở hữu contract voice/session dùng lại được nhưng không
-  import blog: `createBlogSpeechSession` cho bài viết đã đăng và
-  `createTextSpeechSession` cho một câu bất kỳ.
-- `features/listen-to-blog-post` phát mọi voice/style artifact đã được tạo từ
-  lượt nghe trước bằng native audio; chỉ tạo session streaming khi tổ hợp đó
-  chưa sẵn sàng. Catalogue chỉ tải khi mở bảng tùy chỉnh. Feature tự giữ
+- `entities/speech` sở hữu contract session/status dùng lại được nhưng không
+  import blog: `createBlogSpeechSession` cho bài viết đã đăng,
+  `createTextSpeechSession` bắt buộc surface và `getSpeechAdminOverview` cho
+  workflow quản trị. Voice/style production do backend chọn theo surface,
+  không phải input hoặc catalogue của client.
+- `features/listen-to-blog-post` phát artifact mặc định đã được tạo từ lượt
+  nghe trước bằng native audio; chỉ tạo session streaming khi artifact đó chưa
+  sẵn sàng. Feature tự giữ
   lifecycle native/Web Audio và AbortController, nhận `postPublicId` từ page;
   nội dung bài không được gửi từ browser sang dịch vụ TTS. Session API là
   control-plane resolve source/rate-limit; các listener cùng artifact identity
   bám một live inference, và MP3 được encode từ chính live PCM đó.
-- `features/speak-text` sở hữu `useSpeak()` — `speak(text)` cho bề mặt bất kỳ
-  (trợ lý, thông báo). Câu nói KHÔNG sinh artifact lâu dài: quá ngắn và quá
+- `features/speak-text` sở hữu `useSpeak({ surface })` — `speak(text)` cho
+  chatbot/onboarding. Câu nói KHÔNG sinh artifact lâu dài: quá ngắn và quá
   nhiều để lưu, nên chỉ chạy live stream và ăn cache của engine khi lặp lại.
   Backend giới hạn riêng bằng scope `speech_adhoc` và
-  `SPEECH_MAX_ADHOC_TEXT_CHARS`. Lần phát đầu phải nằm trong cử chỉ click/tap;
-  bề mặt tự nói thì gọi `unlock()` ở lần bấm đầu tiên.
+  `SPEECH_MAX_ADHOC_TEXT_CHARS`. Chatbot chỉ phát theo nút trên từng message;
+  onboarding mặc định off và chỉ gọi live TTS sau khi người dùng chủ động bật.
+  Mọi lần phát đầu nằm trong cử chỉ click/tap để mở Web Audio hợp lệ.
+- `features/manage-speech-runtime` là admin workflow được Settings page compose
+  ngay trong tab AI hiện có. Feature đọc overview qua `entities/speech`, hiển
+  thị policy/capacity/cache/usage và không sở hữu route, permission hoặc thao
+  tác xóa cache mới. Public flags vẫn thuộc `entities/site-settings` và chỉ tối
+  ưu UX; backend luôn enforce hard switch + DB policy.
 - `features/edit-blog-post` sở hữu autosave, optimistic revision, upload media,
   preview, chọn/tạo nhanh thẻ và workflow gửi/duyệt/gỡ bài.
   `features/manage-blog-content` sở hữu các tab danh sách, danh mục và bài ghim;

@@ -150,12 +150,16 @@ Compose đã đặt các mặc định an toàn, có thể override trong file `
 
 | Biến | Dev | Production | Ý nghĩa |
 | --- | ---: | ---: | --- |
-| `TTS_CPU_LIMIT` | `4.0` | `4.0` | Trần CPU của container inference; Docker hiển thị 400% = 4 core. |
-| `TTS_ONNX_THREADS` | `4` | `4` | Số thread ONNX/OMP, phải không lớn hơn đáng kể so với CPU limit. |
+| `SPEECH_RUNTIME_ENABLED` | `true` | `false` | Hard switch chung backend/TTS; Site Setting không thể vượt qua. |
+| `TTS_CPU_LIMIT` | `2.5` | `2.5` | Trần CPU container inference; thử `3.5` chỉ khi benchmark chưa đạt. |
+| `TTS_ONNX_THREADS` | `2` | `2` | Thread ONNX/OMP; thử `3` trước khi tăng CPU. |
 | `TTS_MEMORY_LIMIT` | `2g` | `2g` | Trần RAM của model. |
 | `TTS_MAX_CONCURRENT_STREAMS` | `1` | `1` | Một inference vật lý; request trùng dùng single-flight. |
-| `TTS_CACHE_MAX_GB` | `2` | `5` | Trần cache audio tái tạo được trong volume local. |
-| `TTS_CACHE_TTL_SECONDS` | `86400` | `259200` | TTL cache local: 1 ngày dev, 3 ngày production. MP3 bền vững vẫn ở R2. |
+| `TTS_MAX_ACTIVE_GENERATIONS` | `3` | `3` | Artifact mới thứ tư bị từ chối `503` + `Retry-After: 2`; không tăng worker. |
+| `TTS_CACHE_MAX_GB` | `5` | `5` | Trần cache audio tái tạo được trong volume local. |
+| `TTS_PCM_CACHE_TTL_SECONDS` | `86400` | `86400` | PCM giữ 24 giờ. |
+| `TTS_WAV_CACHE_TTL_SECONDS` | `259200` | `259200` | Full WAV giữ 72 giờ. |
+| `TTS_ARTIFACT_CACHE_TTL_SECONDS` | `259200` | `259200` | MP3/meta local giữ 72 giờ. |
 | `DOCKER_LOG_MAX_SIZE` | `10m` | `10m` | Kích thước mỗi file log container. |
 | `DOCKER_LOG_MAX_FILES` | `3` | `3` | Số file log giữ cho mỗi container. |
 
@@ -164,6 +168,34 @@ Cache TTS local là cache nóng, không phải nguồn dữ liệu chính. Khi M
 `tts_huggingface_cache` chứa model đã tải; nên giữ để tránh tải và warm-up lại.
 Service tự xóa WAV/PCM/MP3 local theo TTL + quota và dọn file `.part` bị bỏ lại
 sau hard-kill khi chúng cũ hơn một giờ.
+
+### Rollout TTS production
+
+Máy ban đầu cần 4 vCPU/8 GB RAM; riêng container TTS bị chặn ở 2.5 CPU/2 GB và
+chạy đúng một worker. Production compose yêu cầu `TTS_MODEL_SOURCE` trỏ tới
+snapshot đã pin trong image/volume và `TTS_MODEL_REVISION` là commit SHA tương
+ứng; không dùng revision label trôi nổi. Giữ `SPEECH_RUNTIME_ENABLED=false`
+trong lúc migrate/deploy và giữ toàn bộ switch speech trong
+`/admin/app/settings?group=ai` ở trạng thái tắt.
+
+Quy trình bật:
+
+1. Chạy benchmark theo `tts-service/README.md` trên đúng máy dự kiến; xác nhận
+   toàn bộ gate TTFA/RTF/queue/RAM/rejection/Web API đạt.
+2. Nếu không đạt, thử threads `2 → 3`, sau đó CPU `2.5 → 3.5` và đo lại. Không
+   tăng worker hoặc replica.
+3. Bật hard switch, kiểm tra admin overview ở tab AI, rồi bật master/live và
+   từng surface theo thứ tự blog → chatbot → onboarding. Interview tiếp tục tắt.
+4. Rollback tức thời bằng `SPEECH_RUNTIME_ENABLED=false`; text workflow không
+   phụ thuộc TTS nên vẫn hoạt động.
+
+Blog dùng policy `durable`: stream cache miss rồi lưu MP3 immutable lên R2.
+Artifact thuộc model revision hiện tại được giữ dài hạn. Celery beat tự xóa
+artifact `FAILED`, post revision cũ hoặc model revision cũ sau 30 ngày; không
+cần và không cung cấp nút xóa toàn bộ cache. Chatbot/onboarding dùng
+`cache_only`, không encode/upload MP3. Cấu hình lifecycle bucket R2 bên ngoài
+ứng dụng phải nhất quán với grace 30 ngày, không xóa prefix của revision hiện
+tại.
 
 ### Theo dõi và dọn Docker an toàn
 
