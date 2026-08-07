@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import AssistantMessage from './AssistantMessage'
 
 describe('AssistantMessage', () => {
-  it('exposes click-to-listen only for an available assistant surface', () => {
+  it('exposes click-to-listen only for an available assistant surface', async () => {
     const onToggle = vi.fn()
     render(
       <AssistantMessage
@@ -20,7 +20,7 @@ describe('AssistantMessage', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nghe tin nhắn' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Nghe tin nhắn' }))
 
     expect(onToggle).toHaveBeenCalledOnce()
   })

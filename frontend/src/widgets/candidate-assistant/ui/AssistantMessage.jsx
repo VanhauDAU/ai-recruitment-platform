@@ -17,7 +17,7 @@ export default function AssistantMessage({
   const speechActive = Boolean(speech?.active)
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const reveal = useProgressiveReply({
-    active: false,
+    active: assistant && progressive,
     elapsed: 0,
     enabled: false,
     progressive: assistant && progressive,

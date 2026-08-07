@@ -10,6 +10,7 @@ x-service-hosts: &service-hosts
   CELERY_BROKER_URL: redis://redis:6379/1
   SPEECH_TTS_BASE_URL: http://tts:8001
   SPEECH_TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN:-dev-tts-internal-token-change-me}
+  SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-true}
   SPEECH_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
   SPEECH_GENERATION_TIMEOUT_SECONDS: ${SPEECH_GENERATION_TIMEOUT_SECONDS:-900}
   SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS: ${SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS:-2}
@@ -153,24 +154,28 @@ services:
     build: ./tts-service
     # ONNX với threads=auto sẽ chiếm toàn bộ CPU Docker Desktop. Giới hạn
     # cứng + thread pool giúp web/DB luôn còn headroom khi đang synthesize.
-    cpus: ${TTS_CPU_LIMIT:-4.0}
+    cpus: ${TTS_CPU_LIMIT:-2.5}
     cpu_shares: 512
     mem_limit: ${TTS_MEMORY_LIMIT:-2g}
     pids_limit: 128
     environment:
       TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN:-dev-tts-internal-token-change-me}
       TTS_ENVIRONMENT: ${ENVIRONMENT:-development}
+      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-true}
       TTS_CACHE_DIR: /var/cache/procv-tts
-      TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-2}
-      TTS_CACHE_TTL_SECONDS: ${TTS_CACHE_TTL_SECONDS:-86400}
+      TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-5}
+      TTS_PCM_CACHE_TTL_SECONDS: ${TTS_PCM_CACHE_TTL_SECONDS:-86400}
+      TTS_WAV_CACHE_TTL_SECONDS: ${TTS_WAV_CACHE_TTL_SECONDS:-259200}
+      TTS_ARTIFACT_CACHE_TTL_SECONDS: ${TTS_ARTIFACT_CACHE_TTL_SECONDS:-259200}
       TTS_MAX_ACTIVE_SESSIONS: ${TTS_MAX_ACTIVE_SESSIONS:-1000}
+      TTS_MAX_ACTIVE_GENERATIONS: ${TTS_MAX_ACTIVE_GENERATIONS:-3}
       TTS_MAX_CONCURRENT_STREAMS: ${TTS_MAX_CONCURRENT_STREAMS:-1}
-      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-4}
+      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-2}
       TTS_BACKEND: onnx
       TTS_PRECISION: int8
       TTS_MODEL_SOURCE: ${TTS_MODEL_SOURCE:-pnnbao-ump/VieNeu-TTS-v3-Turbo}
       TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
-      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-4}
+      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-2}
       OMP_WAIT_POLICY: PASSIVE
       HF_HOME: /var/cache/huggingface
     volumes:
@@ -180,7 +185,9 @@ services:
       - '8001:8001'
     init: true
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8001/readyz", timeout=2)']
+      # Liveness remains healthy while the production hard switch is off;
+      # readiness is exposed separately through the authenticated status API.
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8001/healthz", timeout=2)']
       interval: 15s
       timeout: 5s
       retries: 20

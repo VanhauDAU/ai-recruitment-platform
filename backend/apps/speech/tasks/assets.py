@@ -161,13 +161,17 @@ def purge_obsolete_speech_artifacts(limit=RECONCILE_BATCH_SIZE):
     """Delete obsolete/failed durable objects after the configured grace period."""
     limit = max(1, min(int(limit), 100))
     cutoff = timezone.now() - timedelta(days=settings.SPEECH_ARTIFACT_RETENTION_DAYS)
-    obsolete = Q(
+    obsolete_post_revision = Q(
         status=BlogSpeechAsset.Status.READY,
         completed_at__lt=cutoff,
     ) & ~Q(post_revision=F('post__edit_revision'))
+    obsolete_model_revision = Q(
+        status=BlogSpeechAsset.Status.READY,
+        completed_at__lt=cutoff,
+    ) & ~Q(model_revision=settings.SPEECH_MODEL_REVISION)
     failed = Q(status=BlogSpeechAsset.Status.FAILED, updated_at__lt=cutoff)
     asset_ids = list(
-        BlogSpeechAsset.objects.filter(obsolete | failed)
+        BlogSpeechAsset.objects.filter(obsolete_post_revision | obsolete_model_revision | failed)
         .order_by('updated_at')
         .values_list('pk', flat=True)[:limit]
     )

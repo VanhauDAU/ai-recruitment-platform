@@ -105,6 +105,31 @@ def p95(values: list[float]) -> float | None:
     return round(ordered[round((len(ordered) - 1) * 0.95)], 3)
 
 
+def probe_web(url: str, runs: int) -> list[float]:
+    timings = []
+    for _ in range(runs):
+        started = time.perf_counter()
+        with urllib.request.urlopen(url, timeout=10) as response:
+            response.read()
+            if response.status >= 400:
+                raise RuntimeError(f"Web probe returned HTTP {response.status}.")
+        timings.append((time.perf_counter() - started) * 1000)
+    return timings
+
+
+def scenario_summary(samples: list[Sample]) -> dict:
+    return {
+        "samples": len(samples),
+        "ttfa_ms_p95": p95(
+            [sample.ttfa_ms for sample in samples if sample.ttfa_ms is not None]
+        ),
+        "rtf_p95": p95([sample.rtf for sample in samples if sample.rtf is not None]),
+        "cache_hits": sum(sample.cached for sample in samples),
+        "cache_misses": sum(not sample.cached for sample in samples),
+        "rejections": sum(sample.status in {429, 503} for sample in samples),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8001")
@@ -112,6 +137,8 @@ def main() -> int:
         "--token", default=os.getenv("TTS_INTERNAL_TOKEN", "")
     )
     parser.add_argument("--runs", type=int, default=5)
+    parser.add_argument("--web-url", default="http://127.0.0.1:8000/api/health/")
+    parser.add_argument("--web-runs", type=int, default=20)
     args = parser.parse_args()
     if not args.token:
         parser.error("--token or TTS_INTERNAL_TOKEN is required")
@@ -122,6 +149,7 @@ def main() -> int:
         "Nội dung đủ dài để phản ánh thời gian phát âm thực tế."
     )
     before = request_json(f"{base_url}/internal/v1/status", args.token)
+    web_baseline = probe_web(args.web_url, args.web_runs)
     samples: list[Sample] = []
 
     for index in range(args.runs):
@@ -145,7 +173,7 @@ def main() -> int:
             )
         )
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         futures = [
             executor.submit(
                 synthesize,
@@ -157,7 +185,9 @@ def main() -> int:
             )
             for index in range(3)
         ]
+        web_under_load_future = executor.submit(probe_web, args.web_url, args.web_runs)
         samples.extend(future.result() for future in futures)
+        web_under_load = web_under_load_future.result()
 
     shared_revision = f"benchmark:shared:{run_id}"
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -178,6 +208,14 @@ def main() -> int:
     ttfa = [sample.ttfa_ms for sample in samples if sample.ttfa_ms is not None]
     rtf = [sample.rtf for sample in samples if sample.rtf is not None]
     rejected = [sample for sample in samples if sample.status in {429, 503}]
+    by_scenario = {
+        scenario: scenario_summary(
+            [sample for sample in samples if sample.scenario == scenario]
+        )
+        for scenario in sorted({sample.scenario for sample in samples})
+    }
+    web_baseline_p95 = p95(web_baseline)
+    web_under_load_p95 = p95(web_under_load)
     output = {
         "samples": [asdict(sample) for sample in samples],
         "summary": {
@@ -196,6 +234,26 @@ def main() -> int:
             ),
             "queue_wait_ms_p95": after["metrics"]["queue_wait_ms_p95"],
             "cache": after["cache"],
+            "by_scenario": by_scenario,
+            "runtime_counters_delta": {
+                key: after["metrics"][key] - before["metrics"][key]
+                for key in (
+                    "started",
+                    "completed",
+                    "failed",
+                    "cache_hits",
+                    "cache_misses",
+                    "rejected",
+                )
+            },
+            "web_api": {
+                "baseline_ms_p95": web_baseline_p95,
+                "under_tts_load_ms_p95": web_under_load_p95,
+                "degradation_ratio": round(
+                    (web_under_load_p95 - web_baseline_p95) / web_baseline_p95,
+                    4,
+                ) if web_baseline_p95 else None,
+            },
         },
     }
     print(json.dumps(output, ensure_ascii=False, indent=2))

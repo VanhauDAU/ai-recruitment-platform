@@ -55,6 +55,19 @@ test('candidate blog: two featured posts use a balanced sparse layout', async ({
 
 test('candidate blog detail: compact speech launcher uses the microphone mascot', async ({ page }) => {
   await mockPublicApi(page)
+  let speechRequests = 0
+  await page.route('http://localhost:8000/api/site/settings/', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ speech_blog_enabled: true }),
+  }))
+  await page.route('http://localhost:8000/api/speech/sessions/', (route) => {
+    speechRequests += 1
+    return route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'speech_unavailable', detail: 'TTS unavailable.' }),
+    })
+  })
   await page.route('http://localhost:8000/api/blog/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     const body = path === '/api/blog/robot-doc-bai/'
@@ -81,6 +94,7 @@ test('candidate blog detail: compact speech launcher uses the microphone mascot'
 
   const launcher = page.getByRole('button', { name: 'Phát bài viết ngay' })
   await expect(launcher).toBeVisible()
+  expect(speechRequests).toBe(0)
   const launcherBox = await page.locator('.blog-speech__rail-shell').boundingBox()
   expect(launcherBox.width).toBeLessThanOrEqual(50)
   expect(launcherBox.height).toBeLessThanOrEqual(50)
@@ -89,6 +103,11 @@ test('candidate blog detail: compact speech launcher uses the microphone mascot'
   await expect(mascot).toHaveAttribute('data-pose', 'microphone')
   await expect(mascot.locator('img[src*="robot-prop-microphone.webp"]')).toHaveCount(1)
   await expect(mascot.locator('img[src*="robot-hand-left-grip-front.webp"]')).toHaveCount(1)
+
+  await launcher.click()
+  await expect.poll(() => speechRequests).toBe(1)
+  await expect(page.getByRole('alert')).toContainText('Hệ thống đọc đang bận')
+  await expect(page.getByRole('heading', { name: 'Robot đọc bài viết cùng bạn' })).toBeVisible()
 
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

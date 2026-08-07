@@ -234,6 +234,37 @@ class BlogSpeechAssetTests(TestCase):
         )
         self.assertFalse(BlogSpeechAsset.objects.filter(pk=asset.pk).exists())
 
+    @override_settings(
+        SPEECH_ARTIFACT_RETENTION_DAYS=30,
+        SPEECH_MODEL_REVISION='current-model-sha',
+    )
+    @patch('apps.speech.tasks.assets.public_media_storage')
+    def test_purge_removes_an_expired_previous_model_revision(self, storage_factory):
+        asset = BlogSpeechAsset.objects.create(
+            post=self.post,
+            post_revision=self.post.edit_revision,
+            text_hash='e' * 64,
+            artifact_key='f' * 64,
+            config_hash=CONFIG_HASH,
+            model_revision='previous-model-sha',
+            voice_id='north-male-natural',
+            style='tu_nhien',
+            status=BlogSpeechAsset.Status.READY,
+            storage_key='speech/artifacts/v2/old-model.mp3',
+            mime_type='audio/mpeg',
+            duration_ms=10_000,
+            size_bytes=100_000,
+            completed_at=timezone.now() - timedelta(days=31),
+        )
+
+        purged = purge_obsolete_speech_artifacts.run(limit=5)
+
+        self.assertEqual(purged, 1)
+        storage_factory.return_value.delete.assert_called_once_with(
+            'speech/artifacts/v2/old-model.mp3'
+        )
+        self.assertFalse(BlogSpeechAsset.objects.filter(pk=asset.pk).exists())
+
 
 class ConcurrentBlogSpeechAssetTests(TransactionTestCase):
     reset_sequences = True

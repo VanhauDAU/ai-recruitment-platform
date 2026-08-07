@@ -109,6 +109,19 @@ test('public smoke: tablet floating actions stay inside the visual viewport', as
 
 test('public smoke: candidate assistant opens, replies and stays responsive', async ({ page }) => {
   await mockPublicApi(page)
+  let speechRequests = 0
+  await page.route('http://localhost:8000/api/site/settings/', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ speech_chatbot_enabled: true }),
+  }))
+  await page.route('http://localhost:8000/api/speech/sessions/', (route) => {
+    speechRequests += 1
+    return route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'speech_unavailable', detail: 'Speech unavailable.' }),
+    })
+  })
   await page.goto('/')
 
   const launcher = page.getByRole('button', { name: 'Mở trợ lý ProCV' })
@@ -118,6 +131,10 @@ test('public smoke: candidate assistant opens, replies and stays responsive', as
   const panel = page.getByRole('dialog', { name: 'Trợ lý ProCV' })
   await expect(panel).toBeVisible()
   await expect(panel.getByText('Trợ lý đang trong giai đoạn thử nghiệm, câu trả lời là mẫu có sẵn.')).toBeVisible()
+  expect(speechRequests).toBe(0)
+  await panel.getByRole('button', { name: 'Nghe tin nhắn' }).first().click()
+  await expect.poll(() => speechRequests).toBe(1)
+  await expect(panel.getByText(/Chào bạn/)).toBeVisible()
 
   await panel.getByRole('textbox', { name: 'Nhập câu hỏi cho trợ lý' }).fill('Làm sao để tạo CV đẹp?')
   await panel.getByRole('button', { name: 'Gửi câu hỏi' }).click()
@@ -127,7 +144,7 @@ test('public smoke: candidate assistant opens, replies and stays responsive', as
   const progressiveReply = progressiveReplies.last()
   await expect(progressiveReply).toBeVisible()
   await expect(progressiveReply.locator('.assistant-message__caret')).toBeVisible()
-  // Smoke cố ý trả 503 cho TTS: chữ vẫn phải tự đánh máy đến hết.
+  // TTS chỉ được gọi từ click phía trên; chữ vẫn tự đánh máy đến hết khi lỗi.
   await expect(progressiveReply).toHaveText(/Bạn có thể chọn mẫu CV/, { timeout: 8000 })
   await expect(progressiveReply.locator('.assistant-message__caret')).toBeHidden()
 

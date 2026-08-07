@@ -107,8 +107,8 @@ class Settings:
                 "TTS_MAX_ACTIVE_GENERATIONS", 3, minimum=1
             ),
             # Auto (0) made ONNX consume every visible host core in Docker and
-            # hurt both RTF and web responsiveness. Four is a safe baseline;
-            # production can override it after benchmarking physical cores.
+            # hurt both RTF and web responsiveness. Two is the production
+            # baseline; increase to three only when the benchmark gate fails.
             onnx_threads=_integer("TTS_ONNX_THREADS", 2, minimum=0),
             backend=_choice("TTS_BACKEND", "onnx", {"onnx", "pytorch"}),
             precision=_choice("TTS_PRECISION", "int8", {"int8", "fp32"}),

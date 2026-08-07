@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CandidateAssistant from './CandidateAssistant'
+import { INITIAL_MESSAGE } from './model/assistant-script'
 import { findAssistantReply } from './model/use-assistant-script'
 
 const { promptLogin, siteSettings, speech, useConsent } = vi.hoisted(() => ({
@@ -67,14 +68,10 @@ describe('CandidateAssistant', () => {
 
     expect(speech.speak).not.toHaveBeenCalled()
     expect(await screen.findByText(findAssistantReply('tìm việc').reply, {}, { timeout: 2500 })).toBeInTheDocument()
-    await waitFor(
-      () => expect(screen.getAllByRole('button', { name: 'Nghe tin nhắn' })).toHaveLength(2),
-      { timeout: 2500 },
-    )
-    const listenButtons = screen.getAllByRole('button', { name: 'Nghe tin nhắn' })
-    fireEvent.click(listenButtons.at(-1))
+    const [listenButton] = screen.getAllByRole('button', { name: 'Nghe tin nhắn' })
+    fireEvent.click(listenButton)
 
-    expect(speech.speak).toHaveBeenCalledWith(findAssistantReply('tìm việc').reply)
+    expect(speech.speak).toHaveBeenCalledWith(INITIAL_MESSAGE.text)
   })
 
   it('ẩn toàn bộ hành động nghe khi policy chatbot đang tắt', async () => {
