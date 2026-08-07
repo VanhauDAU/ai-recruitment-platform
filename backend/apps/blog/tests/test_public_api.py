@@ -1,10 +1,12 @@
 from django.conf import settings
+from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.blog.models import PinnedPost, Post, PostCategory, Tag
 from apps.blog.selectors import blog_home_sections
+from apps.sitecontent.models import SiteSetting
 from apps.speech.models import BlogSpeechAsset
 
 
@@ -179,6 +181,41 @@ class BlogPublicApiTests(APITestCase):
             },
         )
         self.assertEqual(response.data['speech_assets'], [response.data['speech_default']])
+
+    def test_detail_uses_the_admin_configured_blog_voice_for_default_asset(self):
+        SiteSetting.objects.update_or_create(
+            key='speech_blog_voice_id',
+            defaults={
+                'group': 'ai',
+                'label': 'Giọng blog',
+                'value': 'north-female-news',
+                'value_type': 'string',
+            },
+        )
+        cache.clear()
+        configured = BlogSpeechAsset.objects.create(
+            post=self.published,
+            post_revision=self.published.edit_revision,
+            text_hash='d' * 64,
+            artifact_key='d' * 64,
+            config_hash='e' * 64,
+            model_revision=settings.SPEECH_MODEL_REVISION,
+            voice_id='north-female-news',
+            style=settings.SPEECH_DEFAULT_STYLE,
+            status=BlogSpeechAsset.Status.READY,
+            storage_key=f'speech/artifacts/v2/{"d" * 64}.mp3',
+            mime_type='audio/mpeg',
+            duration_ms=8_000,
+            size_bytes=80_000,
+        )
+
+        response = self.client.get(reverse('blog-post-detail', args=[self.published.slug]))
+
+        self.assertEqual(
+            response.data['speech_default']['url'],
+            f'http://testserver/media/{configured.storage_key}',
+        )
+        self.assertEqual(response.data['speech_default']['voice_id'], 'north-female-news')
 
     def test_pinned_only_published(self):
         res = self.client.get(reverse('blog-pinned-list'))

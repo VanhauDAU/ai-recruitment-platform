@@ -1,3 +1,3 @@
-from .speech import SpeechSessionView, SpeechVoiceCatalogView
+from .speech import AdminSpeechOverviewView, SpeechSessionView, SpeechVoiceCatalogView
 
-__all__ = ['SpeechSessionView', 'SpeechVoiceCatalogView']
+__all__ = ['AdminSpeechOverviewView', 'SpeechSessionView', 'SpeechVoiceCatalogView']

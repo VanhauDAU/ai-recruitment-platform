@@ -4,16 +4,15 @@ from rest_framework import serializers
 
 class SpeechSessionRequestSerializer(serializers.Serializer):
     source_type = serializers.ChoiceField(choices=['blog_post', 'text'])
+    surface = serializers.ChoiceField(
+        choices=['onboarding', 'chatbot', 'interview'], required=False
+    )
     source_public_id = serializers.RegexField(r'^[A-Za-z0-9_-]{3,50}$', required=False, default='')
     text = serializers.CharField(
         required=False,
         allow_blank=True,
         default='',
         max_length=settings.SPEECH_MAX_ADHOC_TEXT_CHARS,
-    )
-    voice_id = serializers.RegexField(r'^[a-z0-9-]{1,64}$', required=False, default='')
-    style = serializers.ChoiceField(
-        choices=['tu_nhien', 'tin_tuc', 'doc_truyen'], required=False, default=''
     )
 
     def validate(self, attrs):
@@ -25,4 +24,6 @@ class SpeechSessionRequestSerializer(serializers.Serializer):
             return attrs
         if not attrs['text'].strip():
             raise serializers.ValidationError({'text': 'Nội dung cần đọc không được để trống.'})
+        if not attrs.get('surface'):
+            raise serializers.ValidationError({'surface': 'Cần xác định bề mặt sử dụng giọng đọc.'})
         return attrs

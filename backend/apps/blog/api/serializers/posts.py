@@ -1,11 +1,11 @@
 import math
 import re
 
-from django.conf import settings
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from rest_framework import serializers
 
+from apps.speech.services import speech_surface_config
 from common.media_storage import media_url_from_value
 
 from ...models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
@@ -156,12 +156,13 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     def get_speech_default(self, obj):
         assets = self._current_speech_assets(obj)
+        speech_config = speech_surface_config('blog')
         asset = next(
             (
                 item
                 for item in assets
-                if item.voice_id == settings.SPEECH_DEFAULT_VOICE_ID
-                and item.style == settings.SPEECH_DEFAULT_STYLE
+                if item.voice_id == speech_config['voice_id']
+                and item.style == speech_config['style']
             ),
             None,
         )

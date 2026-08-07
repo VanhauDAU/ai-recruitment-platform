@@ -68,6 +68,17 @@ class SiteSettingListView(APIView):
         response_data['knowledgebase_search_index_enabled'] = bool(
             settings.KNOWLEDGEBASE_PUBLIC_ENABLED and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
         )
+        speech_enabled = bool(
+            settings.SPEECH_RUNTIME_ENABLED and response_data.get('speech_enabled') is True
+        )
+        speech_live_enabled = bool(
+            speech_enabled and response_data.get('speech_live_enabled') is True
+        )
+        response_data['speech_enabled'] = speech_enabled
+        response_data['speech_live_enabled'] = speech_live_enabled
+        for surface in ('blog', 'onboarding', 'chatbot', 'interview'):
+            key = f'speech_{surface}_enabled'
+            response_data[key] = bool(speech_live_enabled and response_data.get(key) is True)
         return Response(response_data)
 
 

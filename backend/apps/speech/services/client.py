@@ -94,6 +94,7 @@ class TtsServiceClient:
         text_hash,
         normalizer_version,
         source_revision,
+        artifact_policy,
     ):
         data = self._request(
             'POST',
@@ -105,6 +106,7 @@ class TtsServiceClient:
                 'text_hash': text_hash,
                 'normalizer_version': normalizer_version,
                 'source_revision': source_revision,
+                'artifact_policy': artifact_policy,
             },
         )
         stream_path = data.get('stream_path', '')
@@ -131,6 +133,16 @@ class TtsServiceClient:
             'cached': bool(data.get('cached')),
             'sample_rate': data.get('sample_rate', 48_000),
         }
+
+    def status(self):
+        data = self._request('GET', '/internal/v1/status')
+        if data.get('status') not in {'ready', 'disabled', 'unavailable'}:
+            raise SpeechServiceUnavailable
+        if not isinstance(data.get('generations'), dict):
+            raise SpeechServiceUnavailable
+        if not isinstance(data.get('metrics'), dict) or not isinstance(data.get('cache'), dict):
+            raise SpeechServiceUnavailable
+        return data
 
     def artifact_status(self, artifact_key):
         if not isinstance(artifact_key, str) or not re.fullmatch(r'[0-9a-f]{64}', artifact_key):

@@ -518,6 +518,7 @@ CELERY_BEAT_SCHEDULE = {
 
 # VieNeu-TTS chạy trong process riêng để không nhân model theo số Gunicorn/Celery
 # worker. Django chỉ cấp session ngắn hạn sau khi đã resolve nội dung public.
+SPEECH_RUNTIME_ENABLED = config('SPEECH_RUNTIME_ENABLED', default=not IS_PRODUCTION, cast=bool)
 SPEECH_TTS_BASE_URL = config('SPEECH_TTS_BASE_URL', default='http://127.0.0.1:8001').strip()
 SPEECH_TTS_INTERNAL_TOKEN = config(
     'SPEECH_TTS_INTERNAL_TOKEN', default='dev-tts-internal-token-change-me'
@@ -538,6 +539,10 @@ SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS = config(
 SPEECH_ARTIFACT_RETENTION_DAYS = config('SPEECH_ARTIFACT_RETENTION_DAYS', default=30, cast=int)
 SPEECH_CAPABILITIES_CACHE_SECONDS = config(
     'SPEECH_CAPABILITIES_CACHE_SECONDS', default=300, cast=int
+)
+SPEECH_POLICY_CACHE_SECONDS = config('SPEECH_POLICY_CACHE_SECONDS', default=60, cast=int)
+SPEECH_GENERATION_RESERVATION_SECONDS = config(
+    'SPEECH_GENERATION_RESERVATION_SECONDS', default=180, cast=int
 )
 SPEECH_MAX_TEXT_CHARS = config('SPEECH_MAX_TEXT_CHARS', default=30_000, cast=int)
 # Ad-hoc text arrives from the client instead of from published editorial

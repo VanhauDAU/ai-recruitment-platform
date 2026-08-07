@@ -9,27 +9,26 @@ from apps.speech.services.speech import (
     create_text_speech_session,
 )
 
-CATALOG = {
-    'default_voice_id': 'north-male-natural',
-    'voices': [
-        {
-            'id': 'north-male-natural',
-            'default_style': 'tu_nhien',
-        }
-    ],
-    'styles': [{'id': 'tu_nhien'}],
+SURFACE_CONFIG = {
+    'enabled': True,
+    'voice_id': 'north-male-natural',
+    'style': 'tu_nhien',
+    'daily_authenticated_limit': 30,
+    'daily_anonymous_limit': 30,
 }
 
 
 @override_settings(SPEECH_MAX_TEXT_CHARS=5000, SPEECH_MAX_ADHOC_TEXT_CHARS=600)
 class SpeechServiceTests(SimpleTestCase):
     @patch('apps.speech.services.speech.register_blog_speech_generation')
+    @patch('apps.speech.services.speech._apply_quota_and_usage')
     @patch('apps.speech.services.speech.tts_service_client.create_session')
-    @patch('apps.speech.services.speech.get_speech_catalog', return_value=CATALOG)
+    @patch('apps.speech.services.speech._surface_configuration', return_value=SURFACE_CONFIG)
     def test_resolves_server_defaults_for_one_click_playback(
         self,
-        _catalog,
+        _config,
         create_session,
+        _quota,
         register,
     ):
         create_session.return_value = {
@@ -48,8 +47,8 @@ class SpeechServiceTests(SimpleTestCase):
 
         result = create_blog_post_speech_session(
             post=post,
-            voice_id='',
-            style='',
+            quota_subject='127.0.0.1',
+            authenticated=False,
         )
 
         self.assertEqual(result['voice_id'], 'north-male-natural')
@@ -62,6 +61,7 @@ class SpeechServiceTests(SimpleTestCase):
         self.assertEqual(len(payload['text_hash']), 64)
         self.assertEqual(payload['normalizer_version'], 'blog-speech-v1')
         self.assertEqual(payload['source_revision'], 'blog.post:ps_test:r7')
+        self.assertEqual(payload['artifact_policy'], 'durable')
         register.assert_called_once_with(
             post=post,
             session=create_session.return_value,
@@ -71,12 +71,14 @@ class SpeechServiceTests(SimpleTestCase):
         )
 
     @patch('apps.speech.services.speech.register_blog_speech_generation')
+    @patch('apps.speech.services.speech._apply_quota_and_usage')
     @patch('apps.speech.services.speech.tts_service_client.create_session')
-    @patch('apps.speech.services.speech.get_speech_catalog', return_value=CATALOG)
+    @patch('apps.speech.services.speech._surface_configuration', return_value=SURFACE_CONFIG)
     def test_ad_hoc_text_reuses_one_cache_identity_and_stays_undurable(
         self,
-        _catalog,
+        _config,
         create_session,
+        _quota,
         register,
     ):
         create_session.return_value = {
@@ -89,8 +91,9 @@ class SpeechServiceTests(SimpleTestCase):
 
         result = create_text_speech_session(
             text='<b>Chào bạn</b>\nTôi tìm được ba việc phù hợp',
-            voice_id='',
-            style='',
+            surface='chatbot',
+            quota_subject='127.0.0.1',
+            authenticated=False,
         )
 
         self.assertEqual(result['voice_id'], 'north-male-natural')
@@ -99,17 +102,23 @@ class SpeechServiceTests(SimpleTestCase):
         self.assertEqual(payload['normalizer_version'], 'plain-speech-v1')
         # A constant source revision keeps the same sentence on one cache entry
         # no matter which surface asked for it.
-        self.assertEqual(payload['source_revision'], 'text:v1')
+        self.assertEqual(payload['source_revision'], 'text:chatbot:v1')
+        self.assertEqual(payload['artifact_policy'], 'cache_only')
         register.assert_not_called()
 
     @patch('apps.speech.services.speech.tts_service_client.create_session')
-    @patch('apps.speech.services.speech.get_speech_catalog', return_value=CATALOG)
+    @patch('apps.speech.services.speech._surface_configuration', return_value=SURFACE_CONFIG)
     def test_text_that_normalizes_to_nothing_never_reaches_the_engine(
         self,
-        _catalog,
+        _config,
         create_session,
     ):
         with self.assertRaises(SpeechServiceRejected):
-            create_text_speech_session(text='<script>alert(1)</script>', voice_id='', style='')
+            create_text_speech_session(
+                text='<script>alert(1)</script>',
+                surface='chatbot',
+                quota_subject='127.0.0.1',
+                authenticated=False,
+            )
 
         create_session.assert_not_called()

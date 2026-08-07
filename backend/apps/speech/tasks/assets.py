@@ -17,6 +17,7 @@ from ..services.client import (
     SpeechServiceUnavailable,
     tts_service_client,
 )
+from ..services.usage import record_speech_usage
 
 logger = logging.getLogger(__name__)
 RECONCILE_BATCH_SIZE = 25
@@ -108,7 +109,7 @@ def finalize_blog_speech_asset(self, asset_id):
         logger.exception('Unable to persist speech artifact %s.', asset.artifact_key)
         return _retry_or_fail(self, asset, 'artifact_storage_failed')
 
-    BlogSpeechAsset.objects.filter(
+    completed = BlogSpeechAsset.objects.filter(
         pk=asset_id,
         artifact_key=asset.artifact_key,
         status=BlogSpeechAsset.Status.GENERATING,
@@ -123,6 +124,13 @@ def finalize_blog_speech_asset(self, asset_id):
         completed_at=timezone.now(),
         updated_at=timezone.now(),
     )
+    if completed:
+        record_speech_usage(
+            'blog',
+            durable_artifact_count=1,
+            durable_artifact_bytes=result['size_bytes'],
+            durable_audio_ms=result['duration_ms'],
+        )
     return asset_id
 
 
