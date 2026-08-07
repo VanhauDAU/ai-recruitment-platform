@@ -36,6 +36,12 @@ export const DEFAULT_SITE_SETTINGS = {
   cv_builder_wysiwyg_enabled: true,
   knowledgebase_public_enabled: false,
   knowledgebase_search_index_enabled: false,
+  speech_enabled: false,
+  speech_live_enabled: false,
+  speech_blog_enabled: false,
+  speech_onboarding_enabled: false,
+  speech_chatbot_enabled: false,
+  speech_interview_enabled: false,
 }
 
 export const SiteSettingsContext = createContext({

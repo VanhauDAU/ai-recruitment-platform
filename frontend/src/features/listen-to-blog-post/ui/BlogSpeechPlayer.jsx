@@ -6,13 +6,13 @@ import {
   ReloadOutlined,
   StopOutlined,
 } from '@ant-design/icons'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { useSiteSettings } from '@/entities/site-settings'
 import { useBlogSpeechPlayer } from '../model/use-blog-speech-player'
 import { SpeechMascot, SpeechWaveform } from './SpeechPlayerMascot'
 import './blog-speech-player.css'
 
 const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5]
-const REGION_ORDER = ['Bắc', 'Trung', 'Nam']
 
 function formatTime(value) {
   const seconds = Math.max(0, Math.floor(Number(value) || 0))
@@ -41,18 +41,11 @@ function railLabel(status) {
   return 'Phát bài viết ngay'
 }
 
-export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId, preparedAssets }) {
-  const player = useBlogSpeechPlayer(postPublicId, { defaultAsset, onTiming, preparedAssets })
+export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId }) {
+  const { settings } = useSiteSettings()
+  const player = useBlogSpeechPlayer(postPublicId, { defaultAsset, onTiming })
   const { panelOpen, setPanelOpen } = player
   const rootRef = useRef(null)
-  const voicesByRegion = useMemo(() => {
-    const groups = new Map(REGION_ORDER.map((region) => [region, []]))
-    for (const voice of player.catalog?.voices || []) {
-      if (!groups.has(voice.region)) groups.set(voice.region, [])
-      groups.get(voice.region).push(voice)
-    }
-    return [...groups.entries()].filter(([, voices]) => voices.length)
-  }, [player.catalog])
 
   useEffect(() => {
     if (!panelOpen) return undefined
@@ -76,6 +69,8 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
   ].includes(player.status)
   const duration = Math.max(0, Number(defaultAsset?.duration_ms) / 1000 || 0)
   const progress = duration > 0 ? Math.min(100, (player.elapsed / duration) * 100) : 0
+
+  if (settings.speech_blog_enabled !== true) return null
 
   return (
     <div ref={rootRef} className="blog-speech" data-status={player.status}>
@@ -211,77 +206,27 @@ export default function BlogSpeechPlayer({ defaultAsset, onTiming, postPublicId,
             </div>
           )}
 
-          {!player.catalog && (
+          <div className="blog-speech__settings">
+            <label className="blog-speech__field">
+              Tốc độ
+              <select
+                aria-label="Tốc độ phát"
+                value={player.rate}
+                onChange={(event) => player.setRate(Number(event.target.value))}
+                className="blog-speech__select"
+              >
+                {PLAYBACK_RATES.map((rate) => <option key={rate} value={rate}>{rate}×</option>)}
+              </select>
+            </label>
             <button
               type="button"
-              onClick={player.loadCatalog}
-              disabled={player.catalogLoading}
-              className="blog-speech__load-catalog"
+              onClick={player.apply}
+              aria-label="Áp dụng và phát"
+              className="blog-speech__button blog-speech__button--apply"
             >
-              {player.catalogLoading ? <LoadingOutlined className="blog-speech__spin" /> : <ReloadOutlined />}
-              {player.catalogLoading ? 'Đang tải tùy chọn…' : 'Tải tùy chọn giọng đọc'}
+              <PlayCircleFilled /> Áp dụng và phát
             </button>
-          )}
-
-          {player.catalog && (
-            <div className="blog-speech__settings">
-              <label className="blog-speech__field blog-speech__field--voice">
-                Giọng đọc
-                <select
-                  aria-label="Giọng đọc"
-                  value={player.voiceId}
-                  onChange={(event) => player.setVoiceId(event.target.value)}
-                  className="blog-speech__select"
-                >
-                  {voicesByRegion.map(([region, voices]) => (
-                    <optgroup key={region} label={`Miền ${region}`}>
-                      {voices.map((voice) => (
-                        <option key={voice.id} value={voice.id}>
-                          {voice.label} · {voice.gender === 'female' ? 'Nữ' : 'Nam'}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-
-              <div className="blog-speech__settings-grid">
-                <label className="blog-speech__field">
-                  Phong cách
-                  <select
-                    aria-label="Phong cách đọc"
-                    value={player.style}
-                    onChange={(event) => player.setStyle(event.target.value)}
-                    className="blog-speech__select"
-                  >
-                    {player.catalog.styles.map((item) => (
-                      <option key={item.id} value={item.id}>{item.label}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="blog-speech__field">
-                  Tốc độ
-                  <select
-                    aria-label="Tốc độ phát"
-                    value={player.rate}
-                    onChange={(event) => player.setRate(Number(event.target.value))}
-                    className="blog-speech__select"
-                  >
-                    {PLAYBACK_RATES.map((rate) => <option key={rate} value={rate}>{rate}×</option>)}
-                  </select>
-                </label>
-              </div>
-
-              <button
-                type="button"
-                onClick={player.apply}
-                aria-label="Áp dụng và phát"
-                className="blog-speech__button blog-speech__button--apply"
-              >
-                <PlayCircleFilled /> Áp dụng và phát
-              </button>
-            </div>
-          )}
+          </div>
         </aside>
       )}
     </div>

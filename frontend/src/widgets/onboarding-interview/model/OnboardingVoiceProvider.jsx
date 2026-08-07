@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { PROCV_VOICE_ID } from '@/entities/speech'
+import { useSiteSettings } from '@/entities/site-settings'
 import { useSpeak } from '@/features/speak-text'
 import { OnboardingVoiceContext } from './onboarding-voice-context'
 
@@ -8,9 +8,9 @@ const GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchstart']
 
 function storedEnabled() {
   try {
-    return window.localStorage.getItem(VOICE_STORAGE_KEY) !== 'off'
+    return window.localStorage.getItem(VOICE_STORAGE_KEY) === 'on'
   } catch {
-    return true
+    return false
   }
 }
 
@@ -30,18 +30,22 @@ function storeEnabled(enabled) {
  * thôi!" trả lời lời chào. Nếu `useSpeak` sống trong page thì mỗi lần page
  * unmount, player bị destroy và context đã unlock mất theo.
  *
- * Robot đọc ngay chứ không chờ ai bấm nút bật tiếng. Trường hợp duy nhất chưa
- * có cử chỉ nào (vào thẳng URL, F5 giữa chừng) thì context sinh ra ở trạng thái
- * suspended — listener một lần bên dưới sẽ resume ngay ở thao tác đầu tiên của
- * ứng viên, dù đó là chạm vào đâu.
- *
  * `speakOnce` chỉ đọc mỗi câu một lần: quay lại bước cũ không phát lại, vừa đỡ
- * phiền vừa không đốt hạn mức `speech_adhoc` (90 request/giờ/IP).
+ * phiền vừa không đốt hạn mức. Người dùng phải chủ động bật giọng đọc trước.
  */
 export default function OnboardingVoiceProvider({ children }) {
-  const { elapsed, error, speak, speaking, status, stop, unlock } = useSpeak({ voiceId: PROCV_VOICE_ID })
-  const [enabled, setEnabled] = useState(storedEnabled)
+  const { settings } = useSiteSettings()
+  const available = settings.speech_onboarding_enabled === true
+  const { elapsed, error, speak, speaking, status, stop, unlock } = useSpeak({
+    surface: 'onboarding',
+  })
+  const [optedIn, setOptedIn] = useState(storedEnabled)
+  const enabled = available && optedIn
   const spokenIdsRef = useRef(new Set())
+
+  useEffect(() => {
+    if (!available) stop()
+  }, [available, stop])
 
   useEffect(() => {
     if (!enabled) return undefined
@@ -69,14 +73,16 @@ export default function OnboardingVoiceProvider({ children }) {
   }, [say])
 
   const toggle = useCallback(() => {
+    if (!available) return
     const next = !enabled
-    setEnabled(next)
+    setOptedIn(next)
     storeEnabled(next)
     if (next) unlock()
     else stop()
-  }, [enabled, stop, unlock])
+  }, [available, enabled, stop, unlock])
 
   const value = useMemo(() => ({
+    available,
     elapsed,
     enabled,
     error,
@@ -87,7 +93,7 @@ export default function OnboardingVoiceProvider({ children }) {
     stop,
     toggle,
     unlock,
-  }), [elapsed, enabled, error, say, speakOnce, speaking, status, stop, toggle, unlock])
+  }), [available, elapsed, enabled, error, say, speakOnce, speaking, status, stop, toggle, unlock])
 
   return <OnboardingVoiceContext.Provider value={value}>{children}</OnboardingVoiceContext.Provider>
 }

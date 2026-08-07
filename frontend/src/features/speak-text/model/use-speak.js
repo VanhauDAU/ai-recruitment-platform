@@ -9,7 +9,7 @@ const FAILED_MESSAGE = 'Chưa thể tạo giọng đọc. Vui lòng thử lại 
 const ACTIVE_STATUSES = ['creating', 'buffering', 'queued', 'playing']
 
 /**
- * Đọc to một câu bất kỳ: `const { speak } = useSpeak()` rồi `speak('Xin chào')`.
+ * Đọc to một câu bất kỳ: `useSpeak({ surface: 'chatbot' })`, rồi gọi `speak()`.
  *
  * Trình duyệt chỉ cho mở AudioContext bên trong cử chỉ của người dùng, nên lần
  * phát đầu tiên phải nằm trong handler click/tap. Bề mặt cần tự nói sau đó (ví
@@ -19,7 +19,7 @@ const ACTIVE_STATUSES = ['creating', 'buffering', 'queued', 'playing']
  * Câu nói không được lưu thành asset lâu dài: lần đọc lại cùng một câu ăn cache
  * của engine nên gần như tức thì, còn câu mới thì tổng hợp trực tiếp.
  */
-export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
+export function useSpeak({ rate = 1, surface } = {}) {
   const playerRef = useRef(null)
   const requestRef = useRef(null)
   const mountedRef = useRef(true)
@@ -96,9 +96,8 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
     try {
       const session = await createTextSpeechSession({
         signal: controller.signal,
-        style,
+        surface,
         text,
-        voiceId,
       })
       if (controller.signal.aborted) return
       await playSpeechStream({
@@ -120,7 +119,7 @@ export function useSpeak({ rate = 1, style = '', voiceId = '' } = {}) {
     } finally {
       if (requestRef.current === controller) requestRef.current = null
     }
-  }, [ensurePlayer, rate, style, voiceId])
+  }, [ensurePlayer, rate, surface])
 
   useEffect(() => {
     mountedRef.current = true

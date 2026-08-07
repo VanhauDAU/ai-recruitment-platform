@@ -160,16 +160,18 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
               Câu {chat.index + 1}/{chat.total}
             </span>
           )}
-          <button
-            type="button"
-            aria-label={voice.enabled ? 'Tắt giọng đọc' : 'Bật giọng đọc'}
-            aria-pressed={voice.enabled}
-            onClick={voice.toggle}
-            className={ICON_BUTTON_CLASS}
-          >
-            {voice.enabled ? <SoundOutlined /> : <AudioMutedOutlined />}
-          </button>
-          {voice.enabled && !compact && (
+          {voice.available && (
+            <button
+              type="button"
+              aria-label={voice.enabled ? 'Tắt giọng đọc' : 'Bật giọng đọc'}
+              aria-pressed={voice.enabled}
+              onClick={voice.toggle}
+              className={ICON_BUTTON_CLASS}
+            >
+              {voice.enabled ? <SoundOutlined /> : <AudioMutedOutlined />}
+            </button>
+          )}
+          {voice.available && voice.enabled && !compact && (
             <button
               type="button"
               aria-label="Nghe lại"

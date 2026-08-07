@@ -53,16 +53,15 @@ describe('useSpeak', () => {
   })
 
   it('speaks any sentence from one call and reports playing', async () => {
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     await act(async () => {
       await result.current.speak('Tôi tìm được ba việc phù hợp với bạn.')
     })
 
     expect(createTextSpeechSession).toHaveBeenCalledWith(expect.objectContaining({
-      style: '',
+      surface: 'chatbot',
       text: 'Tôi tìm được ba việc phù hợp với bạn.',
-      voiceId: '',
     }))
     expect(player.play).toHaveBeenCalledWith(
       SESSION.stream_url,
@@ -73,7 +72,7 @@ describe('useSpeak', () => {
   })
 
   it('reports elapsed playback time for synchronized UI', async () => {
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     await act(async () => {
       await result.current.speak('Tôi đang đọc câu trả lời này.')
@@ -84,7 +83,7 @@ describe('useSpeak', () => {
   })
 
   it('unlocks Web Audio synchronously before the first await', async () => {
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
     let pending
 
     // Trình duyệt chỉ mở AudioContext bên trong cử chỉ: unlock phải xảy ra
@@ -102,7 +101,7 @@ describe('useSpeak', () => {
   })
 
   it('lets a surface unlock on an earlier gesture so it can speak later', () => {
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     act(() => {
       expect(result.current.unlock()).toBe(true)
@@ -113,7 +112,7 @@ describe('useSpeak', () => {
   })
 
   it('never reaches the network for an empty line', async () => {
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     await act(async () => {
       await result.current.speak('   ')
@@ -130,7 +129,7 @@ describe('useSpeak', () => {
       if (signal.aborted) return
       window.setTimeout(() => resolve(SESSION), 0)
     }))
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     await act(async () => {
       const first = result.current.speak('Câu đầu tiên.')
@@ -147,7 +146,7 @@ describe('useSpeak', () => {
     const busy = new Error('Service Unavailable')
     busy.status = 503
     createTextSpeechSession.mockRejectedValue(busy)
-    const { result } = renderHook(() => useSpeak())
+    const { result } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     await act(async () => {
       await result.current.speak('Xin chào.')
@@ -159,7 +158,7 @@ describe('useSpeak', () => {
   })
 
   it('releases the audio engine on unmount', () => {
-    const { result, unmount } = renderHook(() => useSpeak())
+    const { result, unmount } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     act(() => {
       result.current.unlock()
@@ -170,7 +169,7 @@ describe('useSpeak', () => {
   })
 
   it('costs nothing until a surface actually asks for audio', () => {
-    const { unmount } = renderHook(() => useSpeak())
+    const { unmount } = renderHook(() => useSpeak({ surface: 'chatbot' }))
 
     unmount()
 

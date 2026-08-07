@@ -1,4 +1,4 @@
-import { AudioMutedOutlined, CloseOutlined, SendOutlined, SoundOutlined } from '@ant-design/icons'
+import { CloseOutlined, SendOutlined } from '@ant-design/icons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useLoginPrompt } from '@/features/auth'
@@ -20,7 +20,7 @@ export default function AssistantPanel({ onClose }) {
   const { isAuthenticated } = useSession()
   const { settings } = useSiteSettings()
   const { emotion, messages, sendMessage, typing } = useAssistantScript()
-  const voice = useAssistantVoice(messages)
+  const voice = useAssistantVoice(settings.speech_chatbot_enabled === true)
   const [input, setInput] = useState('')
   const listRef = useRef(null)
   const inputRef = useRef(null)
@@ -71,8 +71,6 @@ export default function AssistantPanel({ onClose }) {
 
   function submit(event) {
     event.preventDefault()
-    // Web Audio chỉ mở được trong cử chỉ này; câu trả lời về sau mới đọc được.
-    voice.prepare()
     if (sendMessage(input)) setInput('')
   }
 
@@ -95,15 +93,6 @@ export default function AssistantPanel({ onClose }) {
             {typing ? 'Đang soạn câu trả lời…' : voice.speaking ? 'Đang đọc câu trả lời…' : 'Sẵn sàng hỗ trợ bạn'}
           </p>
         </div>
-        <button
-          type="button"
-          aria-pressed={voice.enabled}
-          aria-label={voice.enabled ? 'Tắt giọng đọc trợ lý' : 'Bật giọng đọc trợ lý'}
-          onClick={voice.toggle}
-          className="assistant-panel__close"
-        >
-          {voice.enabled ? <SoundOutlined /> : <AudioMutedOutlined />}
-        </button>
         <button type="button" aria-label="Đóng trợ lý" onClick={onClose} className="assistant-panel__close">
           <CloseOutlined />
         </button>
@@ -119,8 +108,9 @@ export default function AssistantPanel({ onClose }) {
             onContentProgress={keepLatestMessageVisible}
             speech={{
               active: item.id === voice.activeMessageId,
-              elapsed: voice.elapsed,
-              enabled: voice.enabled,
+              available: voice.available,
+              onToggle: () => voice.toggleMessage(item.id, item.text),
+              speaking: voice.speaking,
               status: voice.status,
             }}
           />
