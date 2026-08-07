@@ -1,27 +1,27 @@
-import { act, render } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import AssistantMessage from './AssistantMessage'
 
 describe('AssistantMessage', () => {
-  afterEach(() => vi.useRealTimers())
-
-  it('yêu cầu cuộn xuống theo từng nhịp typewriter', () => {
-    vi.useFakeTimers()
-    const onContentProgress = vi.fn()
+  it('exposes click-to-listen only for an available assistant surface', async () => {
+    const onToggle = vi.fn()
     render(
       <AssistantMessage
         from="assistant"
-        onAction={vi.fn()}
-        onContentProgress={onContentProgress}
         progressive
-        speech={{ active: true, enabled: false, status: 'idle' }}
-        text="Câu trả lời đang được đánh máy."
+        speech={{
+          active: false,
+          available: true,
+          onToggle,
+          speaking: false,
+          status: 'idle',
+        }}
+        text="Câu trả lời của trợ lý."
       />,
     )
-    const callsAfterMount = onContentProgress.mock.calls.length
 
-    act(() => vi.advanceTimersByTime(120))
+    fireEvent.click(await screen.findByRole('button', { name: 'Nghe tin nhắn' }))
 
-    expect(onContentProgress.mock.calls.length).toBeGreaterThan(callsAfterMount)
+    expect(onToggle).toHaveBeenCalledOnce()
   })
 })

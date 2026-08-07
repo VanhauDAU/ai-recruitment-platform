@@ -3,6 +3,7 @@ import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
+import { SpeechRuntimeOverview } from '@/features/manage-speech-runtime'
 import { message } from '@/shared/lib/toast'
 import { AdminPanel } from '@/widgets/admin-workspace'
 
@@ -85,7 +86,10 @@ export default function AdminSettings() {
             )),
           })))
         }
-        if (updated.includes('brand_primary_color')) await refreshSiteSettings()
+        if (
+          updated.includes('brand_primary_color')
+          || updated.some((key) => key.startsWith('speech_'))
+        ) await refreshSiteSettings()
         message.success('Đã lưu cấu hình.')
       }
     } catch {
@@ -141,6 +145,7 @@ export default function AdminSettings() {
     ),
     children: (
       <div className="max-w-3xl">
+        {group.key === 'ai' && <SpeechRuntimeOverview />}
         <div className="divide-y divide-gray-100">
           {group.settings.map((setting) => (
             <div key={setting.key} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start">

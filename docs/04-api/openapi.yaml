@@ -8304,6 +8304,23 @@ paths:
                 items:
                   $ref: '#/components/schemas/SkillGroup'
           description: ''
+  /api/speech/admin/overview/:
+    get:
+      operationId: speech_admin_overview_retrieve
+      tags:
+      - speech-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: Effective policy, runtime health, artifact totals and 7/30-day usage.
+        '403':
+          description: Requires superuser and site_setting.view permission.
   /api/speech/sessions/:
     post:
       operationId: speech_sessions_create
@@ -8339,6 +8356,13 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: Daily quota exhausted; Retry-After is returned.
         '503':
           content:
             application/json:
@@ -24909,15 +24933,13 @@ components:
           type: string
           default: ''
           maxLength: 600
-        voice_id:
+        surface:
+          enum:
+          - onboarding
+          - chatbot
+          - interview
           type: string
-          minLength: 1
-          default: ''
-          pattern: ^[a-z0-9-]{1,64}$
-        style:
-          allOf:
-          - $ref: '#/components/schemas/StyleEnum'
-          default: ''
+          description: Required when source_type is text. Voice and style are selected server-side.
       required:
       - source_type
     Status399Enum:

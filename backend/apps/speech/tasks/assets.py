@@ -17,6 +17,7 @@ from ..services.client import (
     SpeechServiceUnavailable,
     tts_service_client,
 )
+from ..services.usage import record_speech_usage
 
 logger = logging.getLogger(__name__)
 RECONCILE_BATCH_SIZE = 25
@@ -108,7 +109,7 @@ def finalize_blog_speech_asset(self, asset_id):
         logger.exception('Unable to persist speech artifact %s.', asset.artifact_key)
         return _retry_or_fail(self, asset, 'artifact_storage_failed')
 
-    BlogSpeechAsset.objects.filter(
+    completed = BlogSpeechAsset.objects.filter(
         pk=asset_id,
         artifact_key=asset.artifact_key,
         status=BlogSpeechAsset.Status.GENERATING,
@@ -123,6 +124,13 @@ def finalize_blog_speech_asset(self, asset_id):
         completed_at=timezone.now(),
         updated_at=timezone.now(),
     )
+    if completed:
+        record_speech_usage(
+            'blog',
+            durable_artifact_count=1,
+            durable_artifact_bytes=result['size_bytes'],
+            durable_audio_ms=result['duration_ms'],
+        )
     return asset_id
 
 
@@ -153,13 +161,17 @@ def purge_obsolete_speech_artifacts(limit=RECONCILE_BATCH_SIZE):
     """Delete obsolete/failed durable objects after the configured grace period."""
     limit = max(1, min(int(limit), 100))
     cutoff = timezone.now() - timedelta(days=settings.SPEECH_ARTIFACT_RETENTION_DAYS)
-    obsolete = Q(
+    obsolete_post_revision = Q(
         status=BlogSpeechAsset.Status.READY,
         completed_at__lt=cutoff,
     ) & ~Q(post_revision=F('post__edit_revision'))
+    obsolete_model_revision = Q(
+        status=BlogSpeechAsset.Status.READY,
+        completed_at__lt=cutoff,
+    ) & ~Q(model_revision=settings.SPEECH_MODEL_REVISION)
     failed = Q(status=BlogSpeechAsset.Status.FAILED, updated_at__lt=cutoff)
     asset_ids = list(
-        BlogSpeechAsset.objects.filter(obsolete | failed)
+        BlogSpeechAsset.objects.filter(obsolete_post_revision | obsolete_model_revision | failed)
         .order_by('updated_at')
         .values_list('pk', flat=True)[:limit]
     )

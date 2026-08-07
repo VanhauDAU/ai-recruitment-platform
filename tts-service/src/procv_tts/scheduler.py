@@ -136,6 +136,10 @@ class SegmentScheduler:
                 self._threads.append(thread)
                 thread.start()
 
+    @property
+    def queue_size(self) -> int:
+        return self._queue.qsize()
+
     def close(self) -> None:
         with self._guard:
             if not self._started:

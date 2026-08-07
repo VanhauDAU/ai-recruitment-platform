@@ -1,10 +1,16 @@
-import { act, render, renderHook, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import OnboardingVoiceProvider from './OnboardingVoiceProvider'
 import { useOnboardingVoice } from './onboarding-voice-context'
 
-const mocks = vi.hoisted(() => ({ speak: vi.fn(), stop: vi.fn(), unlock: vi.fn() }))
+const { mocks, siteSettings } = vi.hoisted(() => ({
+  mocks: { speak: vi.fn(), stop: vi.fn(), unlock: vi.fn() },
+  siteSettings: { speech_onboarding_enabled: true },
+}))
+
+vi.mock('@/entities/site-settings', () => ({
+  useSiteSettings: () => ({ settings: siteSettings }),
+}))
 
 vi.mock('@/features/speak-text', () => ({
   useSpeak: () => ({
@@ -23,80 +29,50 @@ const wrapper = ({ children }) => <OnboardingVoiceProvider>{children}</Onboardin
 describe('OnboardingVoiceProvider', () => {
   beforeEach(() => {
     window.localStorage.clear()
-    mocks.speak.mockReset()
-    mocks.stop.mockReset()
-    mocks.unlock.mockReset().mockReturnValue(true)
+    siteSettings.speech_onboarding_enabled = true
+    vi.clearAllMocks()
+    mocks.unlock.mockReturnValue(true)
   })
 
-  it('đọc ngay, không chờ ai bấm nút bật tiếng', () => {
+  it('defaults to opt-out and never speaks automatically', () => {
     const { result } = renderHook(() => useOnboardingVoice(), { wrapper })
 
     act(() => result.current.speakOnce('step-1', 'Xin chào'))
 
-    expect(mocks.unlock).toHaveBeenCalled()
-    expect(mocks.speak).toHaveBeenCalledExactlyOnceWith('Xin chào')
-  })
-
-  it('chỉ đọc mỗi câu một lần dù bước được render lại', () => {
-    const { result } = renderHook(() => useOnboardingVoice(), { wrapper })
-
-    act(() => result.current.speakOnce('step-1', 'Xin chào'))
-    act(() => result.current.speakOnce('step-1', 'Xin chào'))
-
-    expect(mocks.speak).toHaveBeenCalledExactlyOnceWith('Xin chào')
-  })
-
-  it('thao tác đầu tiên của ứng viên resume audio còn bị treo', async () => {
-    const user = userEvent.setup()
-    render(<OnboardingVoiceProvider><button type="button">bất kỳ</button></OnboardingVoiceProvider>)
-
-    await user.click(screen.getByRole('button', { name: 'bất kỳ' }))
-
-    expect(mocks.unlock).toHaveBeenCalled()
-  })
-
-  it('nghe lại phát lại đúng câu đang hiện', () => {
-    const { result } = renderHook(() => useOnboardingVoice(), { wrapper })
-
-    act(() => result.current.replay('step-1', 'Đọc lại'))
-
-    expect(mocks.speak).toHaveBeenCalledWith('Đọc lại')
-  })
-
-  it('tắt tiếng thì dừng phát, không đọc nữa và nhớ cho lần sau', async () => {
-    const user = userEvent.setup()
-    function Probe() {
-      const voice = useOnboardingVoice()
-      return (
-        <>
-          <button type="button" onClick={voice.toggle}>toggle</button>
-          <button type="button" onClick={() => voice.speakOnce('step-1', 'Xin chào')}>speak</button>
-        </>
-      )
-    }
-    render(<OnboardingVoiceProvider><Probe /></OnboardingVoiceProvider>)
-
-    await user.click(screen.getByRole('button', { name: 'toggle' }))
-    await user.click(screen.getByRole('button', { name: 'speak' }))
-
-    expect(mocks.stop).toHaveBeenCalled()
-    expect(mocks.speak).not.toHaveBeenCalled()
-    expect(window.localStorage.getItem('procv_onboarding_voice_v1')).toBe('off')
-  })
-
-  it('nhớ lựa chọn tắt tiếng của lượt trước', () => {
-    window.localStorage.setItem('procv_onboarding_voice_v1', 'off')
-    const { result } = renderHook(() => useOnboardingVoice(), { wrapper })
-
+    expect(result.current.available).toBe(true)
     expect(result.current.enabled).toBe(false)
+    expect(mocks.speak).not.toHaveBeenCalled()
   })
 
-  it('trả về bản câm khi dùng ngoài provider để màn lẻ vẫn render được', () => {
+  it('speaks once only after the user explicitly opts in', () => {
+    const { result } = renderHook(() => useOnboardingVoice(), { wrapper })
+
+    act(() => result.current.toggle())
+    act(() => result.current.speakOnce('step-1', 'Xin chào'))
+    act(() => result.current.speakOnce('step-1', 'Xin chào'))
+
+    expect(result.current.enabled).toBe(true)
+    expect(mocks.unlock).toHaveBeenCalled()
+    expect(mocks.speak).toHaveBeenCalledExactlyOnceWith('Xin chào')
+    expect(window.localStorage.getItem('procv_onboarding_voice_v1')).toBe('on')
+  })
+
+  it('stays unavailable even when local storage was previously on', () => {
+    window.localStorage.setItem('procv_onboarding_voice_v1', 'on')
+    siteSettings.speech_onboarding_enabled = false
+
+    const { result } = renderHook(() => useOnboardingVoice(), { wrapper })
+    act(() => result.current.speakOnce('step-1', 'Xin chào'))
+
+    expect(result.current.available).toBe(false)
+    expect(result.current.enabled).toBe(false)
+    expect(mocks.speak).not.toHaveBeenCalled()
+  })
+
+  it('returns a silent fallback outside the provider', () => {
     const { result } = renderHook(() => useOnboardingVoice())
 
-    act(() => result.current.speakOnce('step-1', 'Xin chào'))
-
+    expect(result.current.available).toBe(false)
     expect(result.current.enabled).toBe(false)
-    expect(mocks.speak).not.toHaveBeenCalled()
   })
 })

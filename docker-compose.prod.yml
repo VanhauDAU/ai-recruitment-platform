@@ -22,6 +22,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       FRONTEND_SHELL_URL: http://frontend/
+      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes:
       - backend_media:/app/media
       - backend_static:/app/staticfiles
@@ -34,6 +35,7 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
+      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes:
       - backend_media:/app/media
 
@@ -44,22 +46,28 @@ services:
       REDIS_URL: redis://redis:6379/1
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
+      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
     volumes: []
 
   tts:
     restart: unless-stopped
     environment:
       TTS_ENVIRONMENT: production
+      SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
       TTS_INTERNAL_TOKEN: ${TTS_INTERNAL_TOKEN}
       TTS_CACHE_DIR: /var/cache/procv-tts
       TTS_CACHE_MAX_GB: ${TTS_CACHE_MAX_GB:-5}
-      TTS_CACHE_TTL_SECONDS: ${TTS_CACHE_TTL_SECONDS:-259200}
+      TTS_PCM_CACHE_TTL_SECONDS: ${TTS_PCM_CACHE_TTL_SECONDS:-86400}
+      TTS_WAV_CACHE_TTL_SECONDS: ${TTS_WAV_CACHE_TTL_SECONDS:-259200}
+      TTS_ARTIFACT_CACHE_TTL_SECONDS: ${TTS_ARTIFACT_CACHE_TTL_SECONDS:-259200}
       TTS_MAX_ACTIVE_SESSIONS: ${TTS_MAX_ACTIVE_SESSIONS:-1000}
+      TTS_MAX_ACTIVE_GENERATIONS: ${TTS_MAX_ACTIVE_GENERATIONS:-3}
       TTS_MAX_CONCURRENT_STREAMS: ${TTS_MAX_CONCURRENT_STREAMS:-1}
-      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-4}
-      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-4}
+      TTS_ONNX_THREADS: ${TTS_ONNX_THREADS:-2}
+      OMP_NUM_THREADS: ${TTS_ONNX_THREADS:-2}
       OMP_WAIT_POLICY: PASSIVE
-      TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:-vieneu-3.2.3-v3-turbo-int8}
+      TTS_MODEL_SOURCE: ${TTS_MODEL_SOURCE:?Pin TTS_MODEL_SOURCE to a local model snapshot}
+      TTS_MODEL_REVISION: ${TTS_MODEL_REVISION:?Set TTS_MODEL_REVISION to the snapshot commit SHA}
       HF_HOME: /var/cache/huggingface
     ports: !reset []
 

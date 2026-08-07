@@ -10,17 +10,15 @@ export async function playLiveBlogSpeech({
   rate,
   signal,
   sourcePublicId,
-  style,
-  voiceId,
 }) {
   onStatus('creating')
-  const session = await createBlogSpeechSession({ sourcePublicId, style, voiceId, signal })
+  const session = await createBlogSpeechSession({ sourcePublicId, signal })
   if (signal.aborted) return
 
   const config = {
     cached: Boolean(session.cached),
-    style: session.style || style || 'tu_nhien',
-    voiceId: session.voice_id || voiceId,
+    style: session.style,
+    voiceId: session.voice_id,
   }
   onSession(session, config)
 

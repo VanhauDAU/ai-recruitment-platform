@@ -1,7 +1,5 @@
 export const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5]
 
-const VOICE_STORAGE_KEY = 'procv_blog_speech_voice_v1'
-const STYLE_STORAGE_KEY = 'procv_blog_speech_style_v1'
 const RATE_STORAGE_KEY = 'procv_blog_speech_rate_v1'
 
 export function normalizeDefaultAsset(asset) {
@@ -13,28 +11,8 @@ export function normalizeDefaultAsset(asset) {
   }
 }
 
-export function findPreparedAsset(defaultAsset, preparedAssets, voiceId, style) {
-  // Empty preferences mean "use the server default". Never pick an arbitrary
-  // custom variant merely because it is the first persisted asset in the list.
-  if (!voiceId && !style) return normalizeDefaultAsset(defaultAsset)
-  const candidates = [defaultAsset, ...(Array.isArray(preparedAssets) ? preparedAssets : [])]
-  const seen = new Set()
-  for (const candidate of candidates) {
-    const asset = normalizeDefaultAsset(candidate)
-    if (!asset) continue
-    const identity = `${asset.voiceId}\0${asset.style}\0${asset.url}`
-    if (seen.has(identity)) continue
-    seen.add(identity)
-    if (assetMatches(asset, voiceId, style)) return asset
-  }
-  return null
-}
-
-export function assetMatches(asset, voiceId, style) {
-  if (!asset) return false
-  if (voiceId && (!asset.voiceId || voiceId !== asset.voiceId)) return false
-  if (style && style !== asset.style) return false
-  return true
+export function findPreparedAsset(defaultAsset) {
+  return normalizeDefaultAsset(defaultAsset)
 }
 
 export function connectionAllowsPreload() {
@@ -60,23 +38,9 @@ function storeValue(key, value) {
   }
 }
 
-export function storedSpeechVoice() {
-  return storedValue(VOICE_STORAGE_KEY)
-}
-
-export function storedSpeechStyle() {
-  return storedValue(STYLE_STORAGE_KEY)
-}
-
 export function storedSpeechRate() {
   const value = Number(storedValue(RATE_STORAGE_KEY))
   return PLAYBACK_RATES.includes(value) ? value : 1
-}
-
-export function storeSpeechPreferences({ rate, style, voiceId }) {
-  storeValue(VOICE_STORAGE_KEY, voiceId)
-  storeValue(STYLE_STORAGE_KEY, style)
-  storeValue(RATE_STORAGE_KEY, rate)
 }
 
 export function storeSpeechRate(rate) {

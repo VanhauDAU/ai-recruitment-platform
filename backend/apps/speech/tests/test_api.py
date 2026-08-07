@@ -9,6 +9,7 @@ from rest_framework.test import APIRequestFactory
 
 from apps.blog.models import Post, PostCategory
 from apps.speech.api.views.speech import SpeechSessionView
+from apps.speech.services import SpeechFeatureDisabled, SpeechQuotaExceeded
 from apps.speech.services.client import SpeechServiceUnavailable
 
 CATALOG = {
@@ -74,8 +75,8 @@ class SpeechApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         create_session.assert_called_once_with(
             post=self.post,
-            voice_id='north-male-natural',
-            style='tu_nhien',
+            quota_subject='127.0.0.1',
+            authenticated=False,
         )
         self.assertNotIn('text', response.data)
         self.assertEqual(response['Cache-Control'], 'no-store')
@@ -98,7 +99,11 @@ class SpeechApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        create_session.assert_called_once_with(post=self.post, voice_id='', style='')
+        create_session.assert_called_once_with(
+            post=self.post,
+            quota_subject='127.0.0.1',
+            authenticated=False,
+        )
 
     @patch('apps.speech.api.views.speech.create_text_speech_session')
     def test_speaks_caller_supplied_text_without_a_source_record(self, create_session):
@@ -111,15 +116,20 @@ class SpeechApiTests(TestCase):
 
         response = self.client.post(
             reverse('speech-session'),
-            {'source_type': 'text', 'text': 'Tôi tìm được ba việc phù hợp với bạn.'},
+            {
+                'source_type': 'text',
+                'surface': 'chatbot',
+                'text': 'Tôi tìm được ba việc phù hợp với bạn.',
+            },
             content_type='application/json',
         )
 
         self.assertEqual(response.status_code, 201)
         create_session.assert_called_once_with(
             text='Tôi tìm được ba việc phù hợp với bạn.',
-            voice_id='',
-            style='',
+            surface='chatbot',
+            quota_subject='127.0.0.1',
+            authenticated=False,
         )
         self.assertEqual(response['Cache-Control'], 'no-store')
 
@@ -131,12 +141,22 @@ class SpeechApiTests(TestCase):
         )
         oversized = self.client.post(
             reverse('speech-session'),
-            {'source_type': 'text', 'text': 'a' * 601},
+            {'source_type': 'text', 'surface': 'chatbot', 'text': 'a' * 601},
             content_type='application/json',
         )
 
         self.assertEqual(blank.status_code, 400)
         self.assertEqual(oversized.status_code, 400)
+
+    def test_text_requires_an_explicit_supported_surface(self):
+        response = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'text', 'text': 'Xin chào.'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('surface', response.data)
 
     def test_rejects_blog_source_without_a_post_id(self):
         response = self.client.post(
@@ -147,6 +167,35 @@ class SpeechApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('source_public_id', response.data)
+
+    @patch(
+        'apps.speech.api.views.speech.create_text_speech_session',
+        side_effect=SpeechFeatureDisabled,
+    )
+    def test_disabled_surface_fails_closed_without_blocking_text_ui(self, _create):
+        response = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'text', 'surface': 'chatbot', 'text': 'Xin chào.'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.data['code'], 'speech_disabled')
+
+    @patch(
+        'apps.speech.api.views.speech.create_text_speech_session',
+        side_effect=SpeechQuotaExceeded(3600),
+    )
+    def test_daily_quota_returns_retry_after(self, _create):
+        response = self.client.post(
+            reverse('speech-session'),
+            {'source_type': 'text', 'surface': 'chatbot', 'text': 'Xin chào.'},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.data['code'], 'speech_quota_exceeded')
+        self.assertEqual(response['Retry-After'], '3600')
 
     def test_ad_hoc_text_cannot_exhaust_the_article_playback_budget(self):
         factory = APIRequestFactory()

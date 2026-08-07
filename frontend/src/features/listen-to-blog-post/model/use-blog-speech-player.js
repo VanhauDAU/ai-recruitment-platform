@@ -1,23 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getSpeechVoiceCatalog } from '@/entities/speech'
 import { now, retryableStatus } from '@/shared/lib/speech/stream-retry'
 import { playLiveBlogSpeech } from './live-speech-stream'
 import {
   connectionAllowsPreload,
   findPreparedAsset,
   storedSpeechRate,
-  storedSpeechStyle,
-  storedSpeechVoice,
-  storeSpeechPreferences,
   storeSpeechRate,
 } from './speech-playback-utils'
 import { useSpeechEngines } from './use-speech-engines'
 
-const EMPTY_PREPARED_ASSETS = Object.freeze([])
-
 export function useBlogSpeechPlayer(
   sourcePublicId,
-  { defaultAsset, onTiming, preparedAssets = EMPTY_PREPARED_ASSETS } = {},
+  { defaultAsset, onTiming } = {},
 ) {
   const playbackModeRef = useRef(null)
   const activeConfigRef = useRef(null)
@@ -28,12 +22,8 @@ export function useBlogSpeechPlayer(
   onTimingRef.current = onTiming
 
   const [panelOpen, setPanelOpen] = useState(false)
-  const [catalog, setCatalog] = useState(null)
-  const [catalogLoading, setCatalogLoading] = useState(false)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
-  const [voiceId, setVoiceId] = useState(storedSpeechVoice)
-  const [style, setStyle] = useState(storedSpeechStyle)
   const [rate, setRate] = useState(storedSpeechRate)
   const [elapsed, setElapsed] = useState(0)
   const [cached, setCached] = useState(false)
@@ -93,15 +83,8 @@ export function useBlogSpeechPlayer(
   }, [resetPlayback])
 
   const start = useCallback(async (overrides = {}) => {
-    const nextVoiceId = overrides.voiceId ?? voiceId
-    const nextStyle = overrides.style ?? style
     const nextRate = Number(overrides.rate ?? rate)
-    const asset = findPreparedAsset(
-      defaultAsset,
-      preparedAssets,
-      nextVoiceId,
-      nextStyle,
-    )
+    const asset = findPreparedAsset(defaultAsset)
     const usePreparedAsset = Boolean(asset)
     let player = null
 
@@ -130,15 +113,15 @@ export function useBlogSpeechPlayer(
 
     try {
       if (usePreparedAsset) {
-        const resolvedVoice = asset.voiceId || nextVoiceId
-        const resolvedStyle = asset.style || nextStyle || 'tu_nhien'
         const nativePlayer = ensureNativePlayer()
         playbackModeRef.current = 'native'
-        activeConfigRef.current = { cached: true, style: resolvedStyle, voiceId: resolvedVoice }
-        setVoiceId(resolvedVoice)
-        setStyle(resolvedStyle)
+        activeConfigRef.current = {
+          cached: true,
+          style: asset.style,
+          voiceId: asset.voiceId,
+        }
         setRate(nextRate)
-        storeSpeechPreferences({ rate: nextRate, style: resolvedStyle, voiceId: resolvedVoice })
+        storeSpeechRate(nextRate)
         setCached(true)
         setTruncated(false)
         setStatus('buffering')
@@ -149,10 +132,8 @@ export function useBlogSpeechPlayer(
       await playLiveBlogSpeech({
         onQueued: (attempt) => reportTiming('queued', { attempt, mode: 'live-pcm' }),
         onSession: (session, config) => {
-          setVoiceId(config.voiceId)
-          setStyle(config.style)
           setRate(nextRate)
-          storeSpeechPreferences({ rate: nextRate, style: config.style, voiceId: config.voiceId })
+          storeSpeechRate(nextRate)
           setCached(config.cached)
           setTruncated(Boolean(session.truncated))
           playbackModeRef.current = 'pcm'
@@ -164,8 +145,6 @@ export function useBlogSpeechPlayer(
         rate: nextRate,
         signal: controller.signal,
         sourcePublicId,
-        style: nextStyle,
-        voiceId: nextVoiceId,
       })
     } catch (nextError) {
       if (controller.signal.aborted || nextError.name === 'AbortError') return
@@ -182,29 +161,7 @@ export function useBlogSpeechPlayer(
     } finally {
       if (requestRef.current === controller) requestRef.current = null
     }
-  }, [defaultAsset, ensureNativePlayer, ensurePlayer, preparedAssets, rate, reportTiming, resetPlayback, sourcePublicId, style, voiceId])
-
-  const loadCatalog = useCallback(async () => {
-    if (catalog || catalogLoading) return
-    setCatalogLoading(true)
-    try {
-      const nextCatalog = await getSpeechVoiceCatalog()
-      if (!nextCatalog?.voices?.length) throw new Error('Danh sách giọng đọc đang trống.')
-      setCatalog(nextCatalog)
-      setVoiceId((current) => (
-        nextCatalog.voices.some((voice) => voice.id === current)
-          ? current
-          : nextCatalog.default_voice_id
-      ))
-      setStyle((current) => (
-        nextCatalog.styles.some((item) => item.id === current) ? current : 'tu_nhien'
-      ))
-    } catch (nextError) {
-      setError(nextError.response?.data?.detail || nextError.message || 'Chưa thể tải danh sách giọng.')
-    } finally {
-      setCatalogLoading(false)
-    }
-  }, [catalog, catalogLoading])
+  }, [defaultAsset, ensureNativePlayer, ensurePlayer, rate, reportTiming, resetPlayback, sourcePublicId])
 
   const railClick = useCallback(() => {
     if (status === 'idle') {
@@ -212,8 +169,7 @@ export function useBlogSpeechPlayer(
       return
     }
     setPanelOpen(true)
-    if (status !== 'error') loadCatalog()
-  }, [loadCatalog, start, status])
+  }, [start, status])
 
   const togglePause = useCallback(() => {
     if (status === 'playing' || status === 'rebuffering') {
@@ -235,11 +191,7 @@ export function useBlogSpeechPlayer(
   }, [nativePlayerRef, playerRef, status])
 
   const apply = useCallback(() => {
-    const active = activeConfigRef.current
-    const sameVoiceAndStyle = active
-      && active.voiceId === voiceId
-      && active.style === style
-    if (sameVoiceAndStyle && ['playing', 'paused', 'rebuffering'].includes(status)) {
+    if (activeConfigRef.current && ['playing', 'paused', 'rebuffering'].includes(status)) {
       const nextRate = Number(rate)
       if (playbackModeRef.current === 'native') {
         nativePlayerRef.current?.setRate(nextRate)
@@ -252,25 +204,24 @@ export function useBlogSpeechPlayer(
       return
     }
     setPanelOpen(false)
-    start({ rate, style, voiceId })
-  }, [nativePlayerRef, playerRef, rate, reportTiming, start, status, style, voiceId])
+    start({ rate })
+  }, [nativePlayerRef, playerRef, rate, reportTiming, start, status])
 
   const preloadDefault = useCallback(() => {
     if (!connectionAllowsPreload()) return false
-    const asset = findPreparedAsset(defaultAsset, preparedAssets, voiceId, style)
+    const asset = findPreparedAsset(defaultAsset)
     if (!asset) return false
     ensureNativePlayer().preload(asset.url)
     reportTiming('asset-preload', { mode: 'prepared-asset' })
     return true
-  }, [defaultAsset, ensureNativePlayer, preparedAssets, reportTiming, style, voiceId])
+  }, [defaultAsset, ensureNativePlayer, reportTiming])
 
   useEffect(() => {
     stop()
     releaseEngines()
-    setCatalog(null)
     setPanelOpen(false)
     setError('')
-  }, [sourcePublicId, defaultAsset?.url, preparedAssets, releaseEngines, stop])
+  }, [sourcePublicId, defaultAsset?.url, releaseEngines, stop])
 
   useEffect(() => {
     const requestIdle = window.requestIdleCallback?.bind(window)
@@ -297,25 +248,18 @@ export function useBlogSpeechPlayer(
   return {
     apply,
     cached,
-    catalog,
-    catalogLoading,
     elapsed,
     error,
-    loadCatalog,
     panelOpen,
     preloadDefault,
     railClick,
     rate,
     setPanelOpen,
     setRate,
-    setStyle,
-    setVoiceId,
     start,
     status,
     stop,
-    style,
     togglePause,
     truncated,
-    voiceId,
   }
 }

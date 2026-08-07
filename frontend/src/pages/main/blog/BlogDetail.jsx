@@ -135,7 +135,6 @@ export default function BlogDetail() {
                       <BlogSpeechPlayer
                         defaultAsset={post.speech_default}
                         postPublicId={post.public_id}
-                        preparedAssets={post.speech_assets}
                       />
                     </Suspense>
                   )}

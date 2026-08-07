@@ -6,6 +6,7 @@ import { createContext, useContext } from 'react'
  * không phải dựng cả provider.
  */
 const SILENT_VOICE = Object.freeze({
+  available: false,
   elapsed: 0,
   enabled: false,
   error: '',

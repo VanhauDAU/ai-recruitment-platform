@@ -13,10 +13,16 @@ ORPHAN_PART_TTL_SECONDS = 60 * 60
 
 
 class AudioCache:
-    def __init__(self, root: Path, *, max_bytes: int, ttl_seconds: int):
+    def __init__(
+        self,
+        root: Path,
+        *,
+        max_bytes: int,
+        ttl_by_suffix: dict[str, int],
+    ):
         self.root = root
         self.max_bytes = max_bytes
-        self.ttl_seconds = ttl_seconds
+        self.ttl_by_suffix = ttl_by_suffix
         self.root.mkdir(parents=True, exist_ok=True)
         self._locks: weakref.WeakValueDictionary[str, threading.Lock] = (
             weakref.WeakValueDictionary()
@@ -34,7 +40,7 @@ class AudioCache:
         if not path.is_file():
             return None
         try:
-            if time.time() - path.stat().st_mtime > self.ttl_seconds:
+            if time.time() - path.stat().st_mtime > self._ttl_for(path):
                 path.unlink(missing_ok=True)
                 return None
             os.utime(path, None)
@@ -143,7 +149,7 @@ class AudioCache:
                 continue
             if path.suffix not in supported_suffixes:
                 continue
-            if now - stat.st_mtime > self.ttl_seconds:
+            if now - stat.st_mtime > self._ttl_for(path):
                 path.unlink(missing_ok=True)
                 continue
             files.append((stat.st_mtime, stat.st_size, path))
@@ -156,3 +162,26 @@ class AudioCache:
             total -= size
             if total <= self.max_bytes:
                 break
+
+    def stats(self) -> dict[str, int]:
+        files = 0
+        size_bytes = 0
+        try:
+            paths = tuple(self.root.iterdir())
+        except OSError:
+            return {"files": 0, "size_bytes": 0}
+        for path in paths:
+            if not path.is_file() or path.suffix == ".part":
+                continue
+            try:
+                size_bytes += path.stat().st_size
+            except OSError:
+                continue
+            files += 1
+        return {"files": files, "size_bytes": size_bytes}
+
+    def _ttl_for(self, path: Path) -> int:
+        name = path.name
+        if name.endswith(".meta.json"):
+            return self.ttl_by_suffix[".meta.json"]
+        return self.ttl_by_suffix.get(path.suffix, self.ttl_by_suffix[".wav"])

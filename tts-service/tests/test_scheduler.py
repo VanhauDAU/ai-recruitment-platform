@@ -31,7 +31,16 @@ class ControlledRuntime:
 
 
 def scheduler(runtime, tmp_path):
-    cache = AudioCache(tmp_path, max_bytes=10_000_000, ttl_seconds=3600)
+    cache = AudioCache(
+        tmp_path,
+        max_bytes=10_000_000,
+        ttl_by_suffix={
+            ".pcm": 3600,
+            ".wav": 3600,
+            ".mp3": 3600,
+            ".meta.json": 3600,
+        },
+    )
     value = SegmentScheduler(runtime, cache, workers=1, model_revision="test-model")
     value.start()
     return value

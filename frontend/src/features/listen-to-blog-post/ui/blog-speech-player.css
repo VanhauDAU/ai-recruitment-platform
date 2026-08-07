@@ -237,9 +237,7 @@
   color: #334155;
 }
 
-.blog-speech__controls,
-.blog-speech__settings-grid,
-.blog-speech__metadata {
+.blog-speech__controls {
   display: flex;
   gap: 0.5rem;
 }
@@ -248,8 +246,7 @@
   margin-top: 0.75rem;
 }
 
-.blog-speech__button,
-.blog-speech__load-catalog {
+.blog-speech__button {
   display: inline-flex;
   min-height: 2.25rem;
   align-items: center;
@@ -279,16 +276,14 @@
 }
 
 .blog-speech__button--secondary,
-.blog-speech__button--cancel,
-.blog-speech__load-catalog {
+.blog-speech__button--cancel {
   border: 1px solid #e2e8f0;
   background: #fff;
   color: #475569;
 }
 
 .blog-speech__button--secondary:hover,
-.blog-speech__button--cancel:hover,
-.blog-speech__load-catalog:hover {
+.blog-speech__button--cancel:hover {
   border-color: #a7f3d0;
   color: var(--brand-primary);
 }
@@ -322,15 +317,6 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
-}
-
-.blog-speech__load-catalog {
-  width: 100%;
-  margin-top: 0.75rem;
-}
-
-.blog-speech__load-catalog:disabled {
-  cursor: wait;
 }
 
 .blog-speech__settings {
@@ -370,14 +356,6 @@
 
 .blog-speech__button--apply {
   width: 100%;
-}
-
-.blog-speech__metadata {
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-  color: #94a3b8;
-  font-size: 0.625rem;
-  line-height: 1rem;
 }
 
 .blog-speech__spin {

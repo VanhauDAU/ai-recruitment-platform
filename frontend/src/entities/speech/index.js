@@ -1,7 +1,5 @@
 export {
   createBlogSpeechSession,
   createTextSpeechSession,
-  getSpeechVoiceCatalog,
+  getSpeechAdminOverview,
 } from './api/speech.api'
-export { PROCV_VOICE_ID } from './model/voices'
-

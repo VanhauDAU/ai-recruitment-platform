@@ -1,3 +1,3 @@
-from .assets import BlogSpeechAsset
+from .assets import BlogSpeechAsset, SpeechUsageDaily
 
-__all__ = ['BlogSpeechAsset']
+__all__ = ['BlogSpeechAsset', 'SpeechUsageDaily']
