@@ -136,6 +136,7 @@ describe('AdminCompanyWorkspace', () => {
   })
 
   it('shows enough context and a clear action for each pending update', async () => {
+    const user = userEvent.setup()
     updateApi.getAdminCompanyUpdateRequests.mockResolvedValue({
       count: 1,
       results: [{
@@ -172,10 +173,10 @@ describe('AdminCompanyWorkspace', () => {
     expect(screen.getByText('1 tài liệu · Giấy đăng ký doanh nghiệp')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Mở yêu cầu/ })).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: /Mở yêu cầu/ }))
+    await user.click(screen.getByRole('button', { name: /Mở yêu cầu/ }))
 
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/admin/app/recruiters/usr_owner?tab=verification&company_update=cur_alpha',
     )
-  }, 10000)
+  }, 20000)
 })

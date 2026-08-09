@@ -600,8 +600,10 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế
   guard và backend permission. Sau onboarding, `JobWorkspaceGuard` bảo vệ
-  jobs/campaigns và `CandidateDataGuard` bảo vệ applications. Direct URL bị từ
-  chối phải giữ nguyên để render blocker/retry, không redirect sang checklist.
+  jobs/campaigns và `CandidateDataGuard` bảo vệ applications. Khi readiness tải
+  thành công nhưng capability bị từ chối, route guard điều hướng về
+  `employer-verify`; khi readiness đang tải hoặc lỗi, guard giữ fail-closed và
+  chỉ hiện loading/retry. Redirect không thay thế backend permission.
 - Consumer candidate-data phải dùng `useEmployerReadiness`, tắt query nhạy cảm
   bằng `enabled=false` khi checking/error/denied và đồng thời không render dữ
   liệu đã cache. Aggregate không chứa danh tính được phép giữ; tên, avatar,

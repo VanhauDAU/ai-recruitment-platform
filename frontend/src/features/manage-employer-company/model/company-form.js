@@ -37,9 +37,19 @@ export function companyToForm(company = {}, pendingChanges = {}) {
   }
 }
 
-export function buildCompanyChanges(values, company) {
+export function buildCompanyChanges(values, company, { pendingChanges = {} } = {}) {
   const before = companyToForm(company)
+  const keepsExistingTradeName = (
+    values.trade_name_same_as_registered === true
+    && before.trade_name_same_as_registered === true
+    && values.company_name === before.company_name
+    && !Object.hasOwn(pendingChanges, 'trade_name')
+  )
   return Object.fromEntries(COMPANY_FORM_FIELDS.flatMap((field) => {
+    // Dữ liệu legacy có thể đánh dấu tên thương mại trùng tên pháp lý nhưng hai
+    // chuỗi đang lệch nhau. Không biến việc gửi một trường khác thành yêu cầu
+    // sửa tên thương mại ngoài ý muốn của người dùng.
+    if (field === 'trade_name' && keepsExistingTradeName) return []
     const current = values[field] ?? (Array.isArray(before[field]) ? [] : '')
     const previous = before[field] ?? (Array.isArray(current) ? [] : '')
     return JSON.stringify(current) === JSON.stringify(previous) ? [] : [[field, current]]

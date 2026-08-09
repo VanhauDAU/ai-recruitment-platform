@@ -493,6 +493,7 @@ test('employer company settings: a new member keeps personal empty state separat
   await expect(mineRequest.getByText('Đang xử lý', { exact: true })).toHaveCount(0)
 
   const companyHistory = page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })
+  await expect(companyHistory.getByText('1 yêu cầu')).toBeVisible()
   await expect(companyHistory.getByText('Trần Thành viên')).toBeVisible()
   await expect(companyHistory.getByText('Nội dung: Tên công ty, Logo công ty')).toBeVisible()
   await expect(page.getByText('Giá trị công ty không hiển thị trong lịch sử')).toHaveCount(0)
@@ -649,13 +650,15 @@ test('employer workspace: an incomplete account cannot access recruitment operat
 
   await page.goto('/tuyendung/app/jobs')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs$/)
-  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toBeVisible()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByText('Xác thực thông tin')).toBeVisible()
+  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toHaveCount(0)
 
   await page.goto('/tuyendung/app/campaigns')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/campaigns$/)
-  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toBeVisible()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByText('Xác thực thông tin')).toBeVisible()
+  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 })
 

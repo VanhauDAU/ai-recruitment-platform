@@ -134,6 +134,28 @@ Người phụ trách sản phẩm xác nhận toàn bộ các quyết định t
 
 Người phụ trách sản phẩm xác nhận toàn bộ ER-D35 đến ER-D41 ngày 2026-08-10.
 
+## Session 2026-08-10 — Corrective UX gate
+
+### Bối cảnh
+
+- Route recruiter bị chặn đang thay nội dung trang bằng một alert
+  “Workspace tuyển dụng chưa sẵn sàng”, dù đã có trang checklist xác thực.
+- Trang checklist lặp thêm readiness banner và case-status banner, làm loãng
+  luồng thao tác chính.
+- Trang công ty cần thể hiện lịch sử rõ ràng hơn; dữ liệu tên thương mại legacy
+  có thể bị kéo vào request dù người dùng chỉ sửa trường khác.
+
+### Quyết định đã xác nhận
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D42 | Known-denied job/campaign/application route điều hướng tới `employer-verify`; readiness fetch error vẫn retry fail-closed | Không render blocker page tùy tiện ở URL nghiệp vụ; backend permission vẫn authoritative |
+| ER-D43 | `employer-verify` chỉ hiển thị checklist/progress, không lặp readiness và case-status banner | Trạng thái chi tiết tiếp tục nằm tại bước/workflow sở hữu, không chèn badge tổng hợp |
+| ER-D44 | Company settings luôn có history section `scope=company`, count và requester an toàn | Personal card vẫn dùng `scope=mine`; raw value/file/PII không xuất hiện trong history |
+| ER-D45 | Untouched legacy trade name không được validate/submit như thay đổi mới | Diff giữ minimal; chỉ đồng bộ tên thương mại khi người dùng đổi tên/cờ liên quan |
+
+Người phụ trách sản phẩm xác nhận trực tiếp ER-D42 đến ER-D45 ngày 2026-08-10.
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |
@@ -141,7 +163,7 @@ Người phụ trách sản phẩm xác nhận toàn bộ ER-D35 đến ER-D41 n
 | `ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md` | `updated_at` làm ngày gửi; một pending/company; POST upsert cùng record; phone OTP qua email cho account mới |
 | `ke-hoach-trang-cong-ty.md` | Owner-only create request; member không được tạo request riêng |
 | `TIEN-DO-DU-AN.md` các ghi chú publish tức thì | Tin được tạo/gửi trước approval nhưng chỉ admin approval/publish khi blockers sạch |
-| Guard `verification_completed` tổng | Tách workspace readiness, verification approval, candidate-data access và DPA status |
+| Guard `verification_completed` tổng | Tách workspace readiness, verification approval, candidate-data access và DPA status; known denial điều hướng về checklist theo ER-D42 |
 
 Các phần lịch sử khác của tài liệu cũ vẫn được giữ cho tới khi phase tương ứng
 cập nhật chúng; không xóa dấu vết quyết định cũ.

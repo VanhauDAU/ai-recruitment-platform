@@ -34,6 +34,41 @@ describe('company form model', () => {
     expect(buildCompanyChanges(values, company)).toEqual({ address: 'TP.HCM' })
   })
 
+  it('does not submit an implicit trade-name change for inconsistent legacy data', () => {
+    const legacyCompany = {
+      ...company,
+      company_name: 'Công ty Cổ phần Acme',
+      trade_name: 'Acme cũ',
+      trade_name_same_as_registered: true,
+    }
+    const values = {
+      ...companyToForm(legacyCompany),
+      address: 'TP.HCM',
+      trade_name: legacyCompany.company_name,
+    }
+
+    expect(buildCompanyChanges(values, legacyCompany)).toEqual({ address: 'TP.HCM' })
+  })
+
+  it('keeps an explicit pending trade-name change when another field is edited', () => {
+    const legacyCompany = {
+      ...company,
+      company_name: 'Công ty Cổ phần Acme',
+      trade_name: 'Acme cũ',
+      trade_name_same_as_registered: true,
+    }
+    const pendingChanges = { trade_name: legacyCompany.company_name }
+    const values = {
+      ...companyToForm(legacyCompany, pendingChanges),
+      address: 'TP.HCM',
+    }
+
+    expect(buildCompanyChanges(values, legacyCompany, { pendingChanges })).toEqual({
+      trade_name: 'Công ty Cổ phần Acme',
+      address: 'TP.HCM',
+    })
+  })
+
   it('uses the latest pending values when reopening an update request', () => {
     expect(companyToForm(company, {
       website_url: 'https://acme.vn/abc',

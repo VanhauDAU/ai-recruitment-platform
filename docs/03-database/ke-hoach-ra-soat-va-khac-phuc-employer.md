@@ -217,6 +217,10 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D39 | `CONFIRMED` | Tách `review`, `revoke`, `tax_override`; revoke/override mặc định chỉ Super Admin hoặc Compliance Lead được gán rõ |
 | ER-D40 | `CONFIRMED` | Rejected dùng cùng case với `revision++`; revoked/expired xử lý lại về pending, recruiter resubmit rồi admin start review |
 | ER-D41 | `CONFIRMED` | Phase ER-5 chỉ hỗ trợ expired manual; chưa tự đặt TTL/scheduler trước chính sách thời hạn pháp lý riêng |
+| ER-D42 | `CONFIRMED` | Route job/campaign/application bị từ chối do chưa đủ xác thực phải điều hướng về `/tuyendung/app/employer-verify`; chỉ lỗi tải readiness mới giữ màn retry fail-closed |
+| ER-D43 | `CONFIRMED` | Trang `employer-verify` tập trung vào checklist; không chèn thêm banner readiness và banner trạng thái case trùng lặp |
+| ER-D44 | `CONFIRMED` | Trang thông tin công ty luôn có khu vực lịch sử `scope=company`, hiển thị số yêu cầu và requester đã redaction |
+| ER-D45 | `CONFIRMED` | Gửi một thay đổi công ty không được tự thêm `trade_name` hoặc bắt sửa tên thương mại legacy nếu người dùng không thay đổi trường liên quan |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -229,7 +233,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit đã xác nhận candidate CV dùng cùng unsafe default/private storage; tích hợp candidate upload/assets qua shared core trong slice riêng, không tạo coupling `cvs → employers` | Candidate upload integration bắt buộc trong ER-3; quyền xem/tải/export thuộc ER-2 |
 
-Các quyết định trên và ER-D29 đến ER-D41 được người phụ trách sản phẩm xác nhận
+Các quyết định trên và ER-D29 đến ER-D45 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
@@ -447,6 +451,12 @@ hoặc background refresh khóa toàn bộ write/upload/delete/submit cho tới 
 hai query thành công. Markdown link và whitespace gate đạt sau cập nhật tài
 liệu.
 
+Follow-up UX `fix/employer-verification-company-ui` giữ lịch sử công ty thành
+khu vực hiển thị rõ số lượng/requester, đồng thời loại thay đổi tên thương mại
+ngầm định từ dữ liệu legacy. Regression frontend liên quan đạt 25/25; hai smoke
+flow đạt 6/6 trên desktop/tablet/mobile; full coverage đạt 958/958 test trước
+edge regression cuối và delta cuối được chạy lại 17/17.
+
 #### ER-1B — Document object access
 
 **Nhánh:** `fix/employer-document-access-control`
@@ -517,8 +527,9 @@ revoked và account hold trước khi merge frontend.
 - Frontend commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
   `ab1c003e` và `d84760ba` thêm public readiness
   model/hook, `JobWorkspaceGuard`, `CandidateDataGuard`, machine-action mapping,
-  compliance UI và fail-closed consumer gating. Direct URL bị từ chối giữ
-  nguyên; query nhạy cảm không mount/chạy và PII đã cache biến mất ngay khi
+  compliance UI và fail-closed consumer gating. Theo ER-D42, route bị từ chối
+  đã biết điều hướng về checklist `employer-verify`; lỗi tải readiness vẫn giữ
+  retry fail-closed. Query nhạy cảm không mount/chạy và PII đã cache biến mất ngay khi
   readiness chuyển `true → false`. Theo ER-D29, aggregate không định danh được
   giữ lại; tên/email/avatar/CV/link/activity ứng viên bị khóa.
 - Ma trận unit đủ sáu trạng thái new/submitted/approved/DPA outdated/
@@ -1007,8 +1018,8 @@ Trạng thái thực hiện hiện tại:
 | ID | Trạng thái | Ghi chú |
 | --- | --- | --- |
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
-| ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
-| ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
+| ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate; follow-up lịch sử/tên thương mại đã có regression |
+| ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và corrective redirect 3-viewport đều đạt |
 | ER-3 | In progress | Storage boundary và shared quarantine/scan/retention core đã merge; domain integration, frontend, parser-specific PDF/image validation và real ClamAV staging còn mở |
 | ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
 | ER-5 | In progress | Backend Verified; admin final-decision/compliance UI còn mở |

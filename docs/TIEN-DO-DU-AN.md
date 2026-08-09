@@ -7,7 +7,7 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-5 backend verified; ER-3 đã merge storage boundary
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified và corrective UX guard/checklist đã đạt gate; ER-5 backend verified; ER-3 đã merge storage boundary
 > và shared quarantine/scan/retention core nhưng domain integration, frontend và
 > real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
 > exact-object review và redaction nhưng lifecycle V2 còn mở; ER-5 admin UI còn
@@ -25,6 +25,18 @@ Decision log:
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
+
+### Corrective UX 2026-08-10
+
+- Known-denied job/campaign/application route điều hướng về trang
+  `employer-verify`; lỗi readiness vẫn retry fail-closed.
+- Trang verify bỏ hai banner readiness/case status trùng checklist.
+- Company settings làm rõ history `scope=company` với count/requester và không
+  kéo tên thương mại legacy chưa sửa vào update request.
+- Evidence: 25/25 targeted unit/component; 6/6 smoke trên desktop/tablet/mobile;
+  full coverage 253/253 file và 958/958 test; edge regression cuối chạy lại
+  17/17. Oxlint không lỗi, architecture, production build, bundle budget và
+  Markdown link gate đều đạt.
 
 <details>
 <summary>Ghi chú ER-0</summary>

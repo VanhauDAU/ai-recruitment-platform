@@ -147,11 +147,61 @@ describe('EmployerCompanySettings', () => {
     expect(within(mineRequest).queryByText('Đang xử lý')).not.toBeInTheDocument()
 
     const history = screen.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })
+    expect(within(history).getByText('1 yêu cầu')).toBeInTheDocument()
     expect(within(history).getByText('Trần Thành viên')).toBeInTheDocument()
     expect(within(history).getByText('Nội dung: Tên công ty, Logo công ty')).toBeInTheDocument()
     expect(screen.queryByText('Tên công ty không được render trong lịch sử')).not.toBeInTheDocument()
     expect(screen.queryByText('employers/private/internal-logo.png')).not.toBeInTheDocument()
     expect(screen.queryByText('/api/employer/company/documents/private/content/')).not.toBeInTheDocument()
+  })
+
+  it('submits an unrelated change without requiring or adding a blank legacy trade name', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'owner',
+      company: {
+        public_id: 'co_legacy_trade_name',
+        business_type: 'enterprise',
+        company_name: 'Công ty Legacy',
+        trade_name: '',
+        trade_name_same_as_registered: false,
+        tax_code: '0101234567',
+        has_no_logo: true,
+        website_url: 'https://legacy.example.com',
+        has_no_website: false,
+        email: 'hr@legacy.example.com',
+        phone: '0912345678',
+        address: 'Hà Nội',
+        company_size: '25-99',
+        description: '<p>Giới thiệu công ty Legacy</p>',
+        employee_benefits: '',
+        markets: [],
+        target_customers: [],
+        industries_detail: [{ id: 1, name: 'IT - Phần mềm', is_primary: true }],
+        images: [],
+        verification_status: 'unverified',
+      },
+    })
+    api.createEmployerCompanyUpdateRequest.mockResolvedValue({ public_id: 'cur_address' })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo yêu cầu/ }))
+    fireEvent.change(screen.getByRole('textbox', { name: /^Địa chỉ liên hệ\/văn phòng/ }), {
+      target: { value: 'TP.HCM' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Gửi yêu cầu cập nhật/ }))
+
+    await waitFor(() => expect(api.createEmployerCompanyUpdateRequest).toHaveBeenCalledWith({
+      changes: { address: 'TP.HCM' },
+      reason: '',
+      proof_type: '',
+    }))
+    expect(screen.queryByText('Nhập tên thương mại.')).not.toBeInTheDocument()
   })
 
   it('shows a retry state and keeps write actions locked when request data fails', async () => {

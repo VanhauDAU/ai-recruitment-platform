@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Fixed — Employer verification và company settings UX
+
+- Route job/campaign/application bị chặn do chưa đủ readiness nay điều hướng về
+  checklist `employer-verify`, không thay trang nghiệp vụ bằng cảnh báo
+  “Workspace tuyển dụng chưa sẵn sàng”. Lỗi tải readiness vẫn fail-closed với
+  retry.
+- Trang verify bỏ hai banner readiness/case status trùng lặp, giữ checklist và
+  tiến độ làm nội dung chính.
+- Trang thông tin công ty hiển thị rõ lịch sử chung, số yêu cầu và requester đã
+  redaction. Update request không còn tự thêm hoặc bắt sửa tên thương mại
+  legacy khi người dùng chỉ thay đổi trường khác.
+
 #### Added — Employer verification final-decision backend ER-5
 
 - Tách document review khỏi quyết định cuối; thêm preview/confirm có signed
