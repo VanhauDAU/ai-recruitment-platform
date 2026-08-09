@@ -7,7 +7,7 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-5 backend verified; ER-3 đã merge storage boundary
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified và corrective UX guard/checklist đã đạt gate; ER-5 backend verified; ER-3 đã merge storage boundary
 > và shared quarantine/scan/retention core nhưng domain integration, frontend và
 > real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
 > exact-object review và redaction nhưng lifecycle V2 còn mở; ER-5 admin UI còn
@@ -25,6 +25,23 @@ Decision log:
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
+
+### Corrective UX 2026-08-10
+
+- Known-denied job/campaign/application route điều hướng về trang
+  `employer-verify`; lỗi readiness vẫn retry fail-closed.
+- Trang verify bỏ hai banner readiness/case status trùng checklist.
+- Company settings không tải/render history `scope=company`, chỉ hiển thị yêu
+  cầu của actor. Form không gửi/toast thành công khi diff rỗng, có nút quay lại,
+  và không kéo tên thương mại legacy chưa sửa vào update request.
+- Evidence: 25/25 targeted unit/component; 6/6 smoke trên desktop/tablet/mobile;
+  full coverage 253/253 file và 958/958 test; edge regression cuối chạy lại
+  17/17. Oxlint không lỗi, architecture, production build, bundle budget và
+  Markdown link gate đều đạt.
+- Corrective ER-D46: 19/19 unit/component, 6/6 smoke desktop/tablet/mobile và
+  full coverage 253/253 file, 961/961 test. Oxlint không lỗi; architecture
+  1142 module/2293 dependency, production build và bundle budget
+  JS 299,9/320 KiB, CSS 34,4/35 KiB đều đạt.
 
 <details>
 <summary>Ghi chú ER-0</summary>
@@ -136,10 +153,10 @@ Decision log:
 <details>
 <summary>Ghi chú ER-1</summary>
 
-- **ER-1A verified:** thẻ cá nhân chỉ đọc `scope=mine`, lịch sử công ty đọc
-  `scope=company`; không còn ngày/status giả hoặc request member khác trong thẻ
-  “Yêu cầu của tôi”. Lỗi initial/background query hiện retry và khóa
-  create/edit/upload/delete/submit cho tới khi cả hai scope đồng bộ.
+- **ER-1A verified:** thẻ cá nhân chỉ đọc `scope=mine`; corrective ER-D46 bỏ
+  consumer `scope=company` khỏi employer page. Không còn ngày/status giả hoặc
+  request member khác trong thẻ “Yêu cầu của tôi”. Lỗi initial/background query
+  actor scope hiện retry và khóa create/edit/upload/delete/submit.
 - **ER-1C verified:** backend chặn duyệt tin nếu verification case chưa
   `approved` đúng company hoặc DPA chưa hợp lệ; canonical và compatibility API
   cùng dùng một guard và recompute dưới transaction lock.

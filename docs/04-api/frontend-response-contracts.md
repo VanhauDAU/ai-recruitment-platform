@@ -93,7 +93,8 @@ permission admin.
   là error response đã triển khai ở ER-2.
 
 Frontend dùng `JobWorkspaceGuard` cho jobs/campaigns và `CandidateDataGuard`
-cho applications. URL bị từ chối được giữ nguyên để hiển thị blocker/retry.
+cho applications. Known denial điều hướng về `employer-verify`; checking/error
+không redirect và vẫn fail-closed với loading/retry.
 Query candidate-data phải tắt khi checking/error/denied và UI phải bỏ cả PII đã
 cache; aggregate không chứa danh tính vẫn được hiển thị.
 
@@ -107,14 +108,13 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
 - `requested_by_summary` có đúng view-model
   `{public_id, display_name}`; không trả email. `display_name` dùng họ tên đã
   trim hoặc nhãn an toàn `Thành viên công ty`.
-- `scope=mine` dùng cho thẻ cá nhân; `scope=company` dùng cho lịch sử chung và
-  là mặc định để giữ tương thích. Giá trị scope khác trả `400`.
-- Consumer phải dùng query key riêng cho `mine` và `company`, đồng thời giữ một
-  root chung để invalidate sau mutation. Thẻ cá nhân chỉ được suy trạng thái và
-  pending action từ response `mine`; tuyệt đối không lấy phần tử đầu của
-  response `company` làm request của actor.
-- Loading, error, empty và has-data là bốn state riêng. Nếu một trong hai query
-  lỗi, kể cả background refresh, client hiện retry và khóa fail-closed toàn bộ
+- `scope=mine` dùng cho thẻ cá nhân. `scope=company` giữ cho admin/audit và là
+  mặc định để tương thích, nhưng company settings của recruiter không gọi hoặc
+  render scope này. Giá trị scope khác trả `400`.
+- Consumer recruiter chỉ suy trạng thái và pending action từ response `mine`;
+  tuyệt đối không lấy phần tử đầu của response `company` làm request của actor.
+- Loading, error, empty và has-data là bốn state riêng. Nếu query `mine` lỗi,
+  kể cả background refresh, client hiện retry và khóa fail-closed toàn bộ
   create/edit/upload/delete/submit cho tới khi cả hai query thành công; không
   chuyển error thành mảng rỗng.
 - Ngày trên thẻ cá nhân chỉ dùng `submitted_at` hợp lệ. Không fallback sang

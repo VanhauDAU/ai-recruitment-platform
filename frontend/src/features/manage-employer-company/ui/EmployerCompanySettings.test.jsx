@@ -104,12 +104,12 @@ describe('EmployerCompanySettings', () => {
     expect(within(mineRequest).getByRole('button', { name: /Tạo yêu cầu/ })).toBeEnabled()
     expect(within(mineRequest).queryByText(/Ngày gửi gần nhất/)).not.toBeInTheDocument()
     expect(api.getEmployerCompanyUpdateRequests).toHaveBeenCalledWith({ scope: 'mine' })
-    expect(api.getEmployerCompanyUpdateRequests).toHaveBeenCalledWith({ scope: 'company' })
+    expect(api.getEmployerCompanyUpdateRequests).not.toHaveBeenCalledWith({ scope: 'company' })
     expect(screen.queryByRole('tab', { name: /Tìm kiếm thông tin công ty/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Tạo công ty mới/ })).not.toBeInTheDocument()
   })
 
-  it('keeps another member request out of the personal card and renders redacted company history', async () => {
+  it('keeps another member request and company history out of the employer page', async () => {
     api.getEmployerProfile.mockResolvedValue({
       onboarding: { company_linked: true },
       company_role: 'member',
@@ -118,20 +118,7 @@ describe('EmployerCompanySettings', () => {
         verification_status: 'unverified', industries_detail: [], images: [],
       },
     })
-    const otherRequest = {
-      public_id: 'cur_other',
-      status: 'pending',
-      submitted_at: '2026-08-10T08:30:00Z',
-      requested_by_summary: { public_id: 'usr_other', display_name: 'Trần Thành viên' },
-      changes: {
-        company_name: 'Tên công ty không được render trong lịch sử',
-        logo_url: 'employers/private/internal-logo.png',
-      },
-      documents: [{ file_url: '/api/employer/company/documents/private/content/' }],
-    }
-    api.getEmployerCompanyUpdateRequests.mockImplementation(({ scope }) => (
-      Promise.resolve(scope === 'mine' ? [] : [otherRequest])
-    ))
+    api.getEmployerCompanyUpdateRequests.mockResolvedValue([])
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
     render(
@@ -146,12 +133,110 @@ describe('EmployerCompanySettings', () => {
     expect(within(mineRequest).queryByText(/Ngày gửi gần nhất/)).not.toBeInTheDocument()
     expect(within(mineRequest).queryByText('Đang xử lý')).not.toBeInTheDocument()
 
-    const history = screen.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })
-    expect(within(history).getByText('Trần Thành viên')).toBeInTheDocument()
-    expect(within(history).getByText('Nội dung: Tên công ty, Logo công ty')).toBeInTheDocument()
-    expect(screen.queryByText('Tên công ty không được render trong lịch sử')).not.toBeInTheDocument()
-    expect(screen.queryByText('employers/private/internal-logo.png')).not.toBeInTheDocument()
-    expect(screen.queryByText('/api/employer/company/documents/private/content/')).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByText('Lịch sử yêu cầu của công ty')).not.toBeInTheDocument()
+    expect(api.getEmployerCompanyUpdateRequests).toHaveBeenCalledTimes(1)
+    expect(api.getEmployerCompanyUpdateRequests).toHaveBeenCalledWith({ scope: 'mine' })
+  })
+
+  it('blocks an empty update request and provides a back action', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'owner',
+      company: {
+        public_id: 'co_linked',
+        business_type: 'enterprise',
+        company_name: 'Công ty đã liên kết',
+        trade_name: 'Công ty đã liên kết',
+        trade_name_same_as_registered: true,
+        tax_code: '0101234567',
+        has_no_logo: true,
+        has_no_website: true,
+        website_url: '',
+        email: 'hr@example.com',
+        phone: '0912345678',
+        address: 'Hà Nội',
+        company_size: '25-99',
+        description: '<p>Giới thiệu công ty</p>',
+        employee_benefits: '',
+        markets: [],
+        target_customers: [],
+        industries_detail: [{ id: 1, name: 'IT - Phần mềm', is_primary: true }],
+        images: [],
+        verification_status: 'unverified',
+      },
+    })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo yêu cầu/ }))
+
+    const submit = screen.getByRole('button', { name: /Gửi yêu cầu cập nhật/ })
+    expect(submit).toBeDisabled()
+    expect(submit).toHaveAttribute(
+      'title',
+      'Hãy thay đổi ít nhất một thông tin trước khi gửi.',
+    )
+    expect(screen.getByRole('button', { name: 'Quay lại thông tin công ty' })).toBeEnabled()
+    fireEvent.submit(submit.closest('form'))
+    expect(api.createEmployerCompanyUpdateRequest).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quay lại thông tin công ty' }))
+    expect(await screen.findByText('Công ty đã liên kết')).toBeInTheDocument()
+  })
+
+  it('submits an unrelated change without requiring or adding a blank legacy trade name', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'owner',
+      company: {
+        public_id: 'co_legacy_trade_name',
+        business_type: 'enterprise',
+        company_name: 'Công ty Legacy',
+        trade_name: '',
+        trade_name_same_as_registered: false,
+        tax_code: '0101234567',
+        has_no_logo: true,
+        website_url: 'https://legacy.example.com',
+        has_no_website: false,
+        email: 'hr@legacy.example.com',
+        phone: '0912345678',
+        address: 'Hà Nội',
+        company_size: '25-99',
+        description: '<p>Giới thiệu công ty Legacy</p>',
+        employee_benefits: '',
+        markets: [],
+        target_customers: [],
+        industries_detail: [{ id: 1, name: 'IT - Phần mềm', is_primary: true }],
+        images: [],
+        verification_status: 'unverified',
+      },
+    })
+    api.createEmployerCompanyUpdateRequest.mockResolvedValue({ public_id: 'cur_address' })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo yêu cầu/ }))
+    fireEvent.change(screen.getByRole('textbox', { name: /^Địa chỉ liên hệ\/văn phòng/ }), {
+      target: { value: 'TP.HCM' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Gửi yêu cầu cập nhật/ }))
+
+    await waitFor(() => expect(api.createEmployerCompanyUpdateRequest).toHaveBeenCalledWith({
+      changes: { address: 'TP.HCM' },
+      reason: '',
+      proof_type: '',
+    }))
+    expect(screen.queryByText('Nhập tên thương mại.')).not.toBeInTheDocument()
   })
 
   it('shows a retry state and keeps write actions locked when request data fails', async () => {
@@ -236,6 +321,10 @@ describe('EmployerCompanySettings', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Tạo yêu cầu/ }))
     const submit = await screen.findByRole('button', { name: /Gửi yêu cầu cập nhật/ })
+    expect(submit).toBeDisabled()
+    fireEvent.change(screen.getByRole('textbox', { name: /^Địa chỉ liên hệ\/văn phòng/ }), {
+      target: { value: 'TP.HCM' },
+    })
     expect(submit).toBeEnabled()
 
     api.getEmployerCompanyUpdateRequests.mockRejectedValue(new Error('background refresh failed'))

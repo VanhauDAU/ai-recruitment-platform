@@ -8,6 +8,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Fixed — Employer verification và company settings UX
+
+- Route job/campaign/application bị chặn do chưa đủ readiness nay điều hướng về
+  checklist `employer-verify`, không thay trang nghiệp vụ bằng cảnh báo
+  “Workspace tuyển dụng chưa sẵn sàng”. Lỗi tải readiness vẫn fail-closed với
+  retry.
+- Trang verify bỏ hai banner readiness/case status trùng lặp, giữ checklist và
+  tiến độ làm nội dung chính.
+- Trang thông tin công ty không còn tải/hiển thị lịch sử yêu cầu của member
+  khác. Update form có nút quay lại, khóa gửi khi chưa có thay đổi thật và
+  không còn toast thành công giả cho diff rỗng.
+- Update request không còn tự thêm hoặc bắt sửa tên thương mại legacy khi người
+  dùng chỉ thay đổi trường khác.
+
 #### Added — Employer verification final-decision backend ER-5
 
 - Tách document review khỏi quyết định cuối; thêm preview/confirm có signed
@@ -134,15 +148,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Fixed — Employer request state ER-1A
 
-- Thẻ “Yêu cầu của tôi” nay chỉ đọc `scope=mine`, tách khỏi lịch sử
-  `scope=company`; member mới không còn thấy request hoặc ngày của member khác
-  như dữ liệu cá nhân. Ngày chỉ lấy từ `submitted_at` hợp lệ, không fallback
+- Thẻ “Yêu cầu của tôi” nay chỉ đọc `scope=mine`; employer page không tải
+  `scope=company`, nên member mới không còn thấy request hoặc ngày của member
+  khác. Ngày chỉ lấy từ `submitted_at` hợp lệ, không fallback
   sang `created_at`/`updated_at` và không hiển thị placeholder giả.
 - Tách rõ loading/error/empty/has-data. Lỗi tải lần đầu hoặc refresh nền đều
   hiện retry và khóa fail-closed toàn bộ thao tác tạo, sửa, upload, xóa media và
-  submit cho đến khi cả hai scope đồng bộ thành công.
-- Lịch sử công ty chỉ render requester summary và nhãn field theo allowlist;
-  không render raw change value, storage key, preview hoặc URL file nhạy cảm.
+  submit cho đến khi actor scope đồng bộ thành công.
+- Contract `scope=company` và redaction vẫn giữ ở backend cho admin/audit và
+  compatibility; không còn component history trong company settings recruiter.
 
 #### Security — Employer document access ER-1B
 

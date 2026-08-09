@@ -18,34 +18,12 @@ const VERIFICATION_STATUS = {
 
 const UPDATE_REQUEST_STATUS = {
   pending: ['processing', 'Đang xử lý'],
+  in_review: ['processing', 'Đang thẩm định'],
+  changes_requested: ['warning', 'Cần chỉnh sửa'],
   approved: ['success', 'Đã duyệt'],
   rejected: ['error', 'Bị từ chối'],
-}
-
-const COMPANY_CHANGE_LABELS = {
-  address: 'Địa chỉ',
-  business_type: 'Loại hình kinh doanh',
-  company_name: 'Tên công ty',
-  company_size: 'Quy mô công ty',
-  description: 'Mô tả công ty',
-  email: 'Email công ty',
-  employee_benefits: 'Phúc lợi nhân viên',
-  founded_year: 'Năm thành lập',
-  gallery_additions: 'Hình ảnh công ty',
-  gallery_deletions: 'Hình ảnh công ty',
-  has_no_logo: 'Logo công ty',
-  has_no_website: 'Website',
-  industries: 'Lĩnh vực hoạt động',
-  logo_pending: 'Logo công ty',
-  logo_url: 'Logo công ty',
-  markets: 'Thị trường hoạt động',
-  phone: 'Số điện thoại',
-  primary_industry: 'Lĩnh vực chính',
-  target_customers: 'Khách hàng mục tiêu',
-  tax_code: 'Mã số thuế',
-  trade_name: 'Tên thương mại',
-  trade_name_same_as_registered: 'Tên thương mại',
-  website_url: 'Website',
+  withdrawn: ['default', 'Đã rút'],
+  cancelled: ['default', 'Đã hủy'],
 }
 
 const DOCUMENT_LABELS = {
@@ -65,13 +43,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
     queryFn: () => getEmployerCompanyUpdateRequests({ scope: 'mine' }),
     enabled: canRequestUpdate,
   })
-  const companyQuery = useQuery({
-    queryKey: employerProfileKeys.companyUpdateRequestList('company'),
-    queryFn: () => getEmployerCompanyUpdateRequests({ scope: 'company' }),
-    enabled: canRequestUpdate,
-  })
   const mineRequests = mineQuery.data || []
-  const companyRequests = companyQuery.data || []
   const latestRequest = mineRequests[0]
   const pendingRequest = mineRequests.find((item) => item.status === 'pending')
   const documentsRequiringAction = (pendingRequest?.documents || []).filter((document) => (
@@ -81,24 +53,21 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const [defaultRequestStatusColor, defaultRequestStatusText] = UPDATE_REQUEST_STATUS[latestRequest?.status] || []
   const requestStatusColor = hasDocumentAction ? 'warning' : defaultRequestStatusColor
   const requestStatusText = hasDocumentAction ? 'Cần bổ sung giấy tờ' : defaultRequestStatusText
-  const requestQueriesHaveError = mineQuery.isError || companyQuery.isError
-  const requestQueriesFetching = mineQuery.isFetching || companyQuery.isFetching
-  const writeLocked = requestQueriesHaveError
+  const requestQueryHasError = mineQuery.isError
+  const requestQueryFetching = mineQuery.isFetching
+  const writeLocked = requestQueryHasError
     || !mineQuery.isSuccess
-    || !companyQuery.isSuccess
-    || requestQueriesFetching
+    || requestQueryFetching
 
-  async function retryRequestQueries() {
-    await Promise.all([mineQuery.refetch(), companyQuery.refetch()])
-  }
+  const retryRequestQuery = () => mineQuery.refetch()
 
-  const requestError = requestQueriesHaveError && (
+  const requestError = requestQueryHasError && (
     <Alert
       type="error"
       showIcon
       title="Không tải được dữ liệu yêu cầu chỉnh sửa"
       description="Thao tác tạo hoặc chỉnh sửa tạm khóa để tránh ghi đè dữ liệu chưa được đồng bộ."
-      action={<Button loading={requestQueriesFetching} onClick={retryRequestQueries}>Thử lại</Button>}
+      action={<Button loading={requestQueryFetching} onClick={retryRequestQuery}>Thử lại</Button>}
     />
   )
 
@@ -179,8 +148,6 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
         />
       )}
 
-      <CompanyUpdateRequestHistory query={companyQuery} requests={companyRequests} />
-
       <section className="linked-company-card">
         <header className="linked-company-card__header">
           <Avatar shape="square" size={60} src={company.logo_url || undefined} icon={<BankOutlined />} className="linked-company-card__logo" />
@@ -213,35 +180,6 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   )
 }
 
-function CompanyUpdateRequestHistory({ query, requests }) {
-  return (
-    <section className="company-update-history" aria-label="Lịch sử yêu cầu chỉnh sửa công ty" aria-busy={query.isLoading || undefined}>
-      <h2>Lịch sử yêu cầu của công ty</h2>
-      {query.isLoading && <Skeleton active paragraph={{ rows: 2 }} />}
-      {query.isError && <p>Không thể tải lịch sử yêu cầu của công ty.</p>}
-      {query.isSuccess && requests.length === 0 && <p>Chưa có yêu cầu chỉnh sửa nào.</p>}
-      {query.isSuccess && requests.length > 0 && (
-        <div className="company-update-history__list">
-          {requests.map((request) => {
-            const [statusColor, statusText] = UPDATE_REQUEST_STATUS[request.status] || ['default', 'Không xác định']
-            const submittedAt = formatDateTime(request.submitted_at)
-            return (
-              <article className="company-update-history__item" key={request.public_id}>
-                <div className="min-w-0">
-                  <strong>{request.requested_by_summary?.display_name || 'Thành viên công ty'}</strong>
-                  {submittedAt && <time dateTime={request.submitted_at}>{submittedAt}</time>}
-                  <p>{formatChangeSummary(request.changes)}</p>
-                </div>
-                <Tag color={statusColor}>{statusText}</Tag>
-              </article>
-            )
-          })}
-        </div>
-      )}
-    </section>
-  )
-}
-
 function Detail({ label, value, link = false, html, children }) {
   const content = children || (html
     ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
@@ -253,11 +191,6 @@ function Detail({ label, value, link = false, html, children }) {
 function formatValue(value) {
   if (Array.isArray(value)) return value.length ? value.join(', ') : '--'
   return value || '--'
-}
-
-function formatChangeSummary(changes) {
-  const labels = [...new Set(Object.keys(changes || {}).map((field) => COMPANY_CHANGE_LABELS[field]).filter(Boolean))]
-  return labels.length ? `Nội dung: ${labels.join(', ')}` : 'Nội dung thay đổi đã được giới hạn theo quyền truy cập.'
 }
 
 function formatDateTime(value) {

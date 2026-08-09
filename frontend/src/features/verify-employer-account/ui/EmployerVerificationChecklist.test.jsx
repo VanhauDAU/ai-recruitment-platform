@@ -33,30 +33,26 @@ describe('EmployerVerificationChecklist', () => {
     expect(screen.queryByText('Admin duyệt tài khoản')).not.toBeInTheDocument()
   })
 
-  it('shows canonical workspace and candidate-data status with a machine-mapped action', () => {
+  it('keeps the verification page focused on the checklist without duplicate status banners', () => {
     render(
       <MemoryRouter>
         <EmployerVerificationChecklist
-          profile={{ onboarding: {} }}
-          readiness={{
-            jobWorkspaceReady: true,
-            candidateDataAccess: false,
-            blockers: [{
-              code: 'dpa_outdated',
-              capabilities: ['candidate_data'],
-              message: 'DPA cần được cập nhật theo phiên bản hiện hành.',
-              action: 'accept_current_dpa',
-            }],
+          profile={{
+            onboarding: {},
+            verification_case: {
+              status: 'in_review',
+              status_label: 'Đang thẩm định',
+              revision: 2,
+            },
           }}
           onContinue={vi.fn()}
         />
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Workspace việc làm đã sẵn sàng; dữ liệu ứng viên vẫn được bảo vệ'))
-      .toBeInTheDocument()
-    expect(screen.getByText('DPA cần được cập nhật theo phiên bản hiện hành.'))
-      .toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cập nhật DPA hiện hành' })).toBeInTheDocument()
+    expect(screen.getByText('Xác thực thông tin')).toBeInTheDocument()
+    expect(screen.queryByText(/Workspace/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Đang thẩm định')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Hồ sơ lần/)).not.toBeInTheDocument()
   })
 })

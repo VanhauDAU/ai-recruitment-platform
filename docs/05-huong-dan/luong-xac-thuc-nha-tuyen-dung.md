@@ -295,9 +295,11 @@ nháp và gửi tin vào hàng chờ admin duyệt; tin chỉ hiển thị với
 được duyệt.
 Tài khoản có ba lượt gửi duyệt lần đầu miễn phí trọn đời mặc định; gửi lại tin
 bị từ chối không tiêu thêm lượt. Người dùng vẫn có thể chọn “xác thực thêm sau”
-để vào dashboard. Direct URL job/campaign vẫn giữ nguyên route; backend trả
-blocker và giao diện hiển thị compliance action phù hợp thay vì tự redirect về
-checklist.
+để vào dashboard. Route job/campaign vẫn giữ URL contract; backend trả blocker
+authoritative. Nếu readiness tải thành công nhưng workspace bị từ
+chối, frontend điều hướng về `/tuyendung/app/employer-verify`; lỗi tải readiness
+không redirect mà giữ retry fail-closed. Trang verify chỉ hiển thị checklist và
+progress, không lặp banner readiness/case status.
 
 ### Readiness và quyền dữ liệu ứng viên
 

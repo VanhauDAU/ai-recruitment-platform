@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildCompanyChanges, companyToForm, validateCompanyImage } from './company-form'
+import {
+  buildCompanyChanges,
+  companyToForm,
+  hasCompanyFormValueChanges,
+  validateCompanyImage,
+} from './company-form'
 
 const company = {
   business_type: 'enterprise',
@@ -34,6 +39,41 @@ describe('company form model', () => {
     expect(buildCompanyChanges(values, company)).toEqual({ address: 'TP.HCM' })
   })
 
+  it('does not submit an implicit trade-name change for inconsistent legacy data', () => {
+    const legacyCompany = {
+      ...company,
+      company_name: 'Công ty Cổ phần Acme',
+      trade_name: 'Acme cũ',
+      trade_name_same_as_registered: true,
+    }
+    const values = {
+      ...companyToForm(legacyCompany),
+      address: 'TP.HCM',
+      trade_name: legacyCompany.company_name,
+    }
+
+    expect(buildCompanyChanges(values, legacyCompany)).toEqual({ address: 'TP.HCM' })
+  })
+
+  it('keeps an explicit pending trade-name change when another field is edited', () => {
+    const legacyCompany = {
+      ...company,
+      company_name: 'Công ty Cổ phần Acme',
+      trade_name: 'Acme cũ',
+      trade_name_same_as_registered: true,
+    }
+    const pendingChanges = { trade_name: legacyCompany.company_name }
+    const values = {
+      ...companyToForm(legacyCompany, pendingChanges),
+      address: 'TP.HCM',
+    }
+
+    expect(buildCompanyChanges(values, legacyCompany, { pendingChanges })).toEqual({
+      trade_name: 'Công ty Cổ phần Acme',
+      address: 'TP.HCM',
+    })
+  })
+
   it('uses the latest pending values when reopening an update request', () => {
     expect(companyToForm(company, {
       website_url: 'https://acme.vn/abc',
@@ -44,6 +84,17 @@ describe('company form model', () => {
       industries: [3],
       primary_industry: 3,
     })
+  })
+
+  it('detects only actual form value changes against the opened draft', () => {
+    const initial = {
+      company_name: 'Công ty ABC',
+      address: 'Hà Nội',
+      markets: [],
+    }
+
+    expect(hasCompanyFormValueChanges({ ...initial }, initial)).toBe(false)
+    expect(hasCompanyFormValueChanges({ ...initial, address: 'TP.HCM' }, initial)).toBe(true)
   })
 
   it('validates image type and the 5 MB boundary before upload', () => {

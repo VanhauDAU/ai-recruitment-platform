@@ -430,7 +430,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 })
 
-test('employer company settings: a new member keeps personal empty state separate from company history', async ({ page }) => {
+test('employer company settings: a new member sees only the personal request state', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -464,24 +464,13 @@ test('employer company settings: a new member keeps personal empty state separat
       body: JSON.stringify({ business_types: [], company_sizes: [], markets: [], target_customers: [] }),
     })
   })
-  const requestedScopes = new Set()
+  const requestedScopes = []
   await page.route(/http:\/\/localhost:8000\/api\/employer\/company\/update-requests\/(?:\?.*)?$/, async (route) => {
     const scope = new URL(route.request().url()).searchParams.get('scope')
-    requestedScopes.add(scope)
-    const companyHistory = [{
-      public_id: 'cur_other_member',
-      status: 'pending',
-      submitted_at: '2026-08-10T08:30:00Z',
-      requested_by_summary: { public_id: 'usr_other_member', display_name: 'Trần Thành viên' },
-      changes: {
-        company_name: 'Giá trị công ty không hiển thị trong lịch sử',
-        logo_url: 'employers/private/internal-logo.png',
-      },
-      documents: [{ file_url: '/api/employer/company/documents/private/content/' }],
-    }]
+    requestedScopes.push(scope)
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify(scope === 'mine' ? [] : companyHistory),
+      body: '[]',
     })
   })
 
@@ -492,12 +481,10 @@ test('employer company settings: a new member keeps personal empty state separat
   await expect(mineRequest.getByText(/Ngày gửi gần nhất/)).toHaveCount(0)
   await expect(mineRequest.getByText('Đang xử lý', { exact: true })).toHaveCount(0)
 
-  const companyHistory = page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })
-  await expect(companyHistory.getByText('Trần Thành viên')).toBeVisible()
-  await expect(companyHistory.getByText('Nội dung: Tên công ty, Logo công ty')).toBeVisible()
-  await expect(page.getByText('Giá trị công ty không hiển thị trong lịch sử')).toHaveCount(0)
-  await expect(page.getByText('employers/private/internal-logo.png')).toHaveCount(0)
-  await expect.poll(() => [...requestedScopes].sort()).toEqual(['company', 'mine'])
+  await expect(page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' }))
+    .toHaveCount(0)
+  await expect(page.getByText('Lịch sử yêu cầu của công ty')).toHaveCount(0)
+  await expect.poll(() => requestedScopes).toEqual(['mine'])
   await expectNoHorizontalOverflow(page)
 })
 
@@ -649,13 +636,15 @@ test('employer workspace: an incomplete account cannot access recruitment operat
 
   await page.goto('/tuyendung/app/jobs')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs$/)
-  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toBeVisible()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByText('Xác thực thông tin')).toBeVisible()
+  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toHaveCount(0)
 
   await page.goto('/tuyendung/app/campaigns')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/campaigns$/)
-  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toBeVisible()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page.getByText('Xác thực thông tin')).toBeVisible()
+  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 })
 
@@ -1727,11 +1716,13 @@ test('employer company settings: pending values remain editable without creating
   const mineRequest = page.getByRole('region', { name: 'Yêu cầu của tôi' })
   await expect(mineRequest.getByText('Đang xử lý', { exact: true })).toBeVisible()
   await expect(mineRequest.getByText('Bị từ chối', { exact: true })).toHaveCount(0)
-  await expect(page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' }).getByText('Bị từ chối', { exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })).toHaveCount(0)
   await expect(page.getByText('Lý do từ chối của yêu cầu trước.')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Chỉnh sửa yêu cầu' })).toBeEnabled()
   await page.getByRole('button', { name: 'Chỉnh sửa yêu cầu' }).click()
 
+  await expect(page.getByRole('button', { name: 'Quay lại thông tin công ty' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Gửi yêu cầu cập nhật' })).toBeDisabled()
   await expect(page.getByRole('textbox', { name: /^Website/ })).toHaveValue('https://fecredit.vn/abc')
   await expect(page.getByRole('img', { name: 'Ảnh công ty đang chờ duyệt 1' })).toHaveAttribute(
     'src',
