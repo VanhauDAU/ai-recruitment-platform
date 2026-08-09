@@ -39,6 +39,33 @@ export function decideAdminEmployerVerification(publicId, payload) {
   return data(client.post(`/admin/employer-verifications/${publicId}/decision/`, payload))
 }
 
+const VERIFICATION_LIFECYCLE_PATHS = {
+  revoked: 'revoke',
+  expired: 'expire',
+}
+
+function verificationLifecyclePath(action) {
+  const path = VERIFICATION_LIFECYCLE_PATHS[action]
+  if (!path) throw new Error('Unsupported employer verification lifecycle action.')
+  return path
+}
+
+export function getAdminEmployerLifecycleImpact(publicId, action, payload) {
+  const path = verificationLifecyclePath(action)
+  return data(client.post(
+    `/admin/employer-verifications/${publicId}/${path}-impact/`,
+    payload,
+  ))
+}
+
+export function changeAdminEmployerVerificationLifecycle(publicId, action, payload) {
+  const path = verificationLifecyclePath(action)
+  return data(client.post(
+    `/admin/employer-verifications/${publicId}/${path}/`,
+    payload,
+  ))
+}
+
 export function refreshAdminEmployerTaxLookup(publicId) {
   return data(client.post(`/admin/employer-verifications/${publicId}/refresh-tax-lookup/`))
 }

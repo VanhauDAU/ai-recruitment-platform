@@ -1,7 +1,9 @@
 export {
+  changeAdminEmployerVerificationLifecycle,
   decideAdminEmployerVerification,
   downloadAdminEmployerDocument,
   getAdminEmployerDecisionImpact,
+  getAdminEmployerLifecycleImpact,
   getAdminEmployerDocumentContent,
   getAdminEmployerVerification,
   getAdminEmployerVerifications,

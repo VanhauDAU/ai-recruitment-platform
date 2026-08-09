@@ -451,7 +451,7 @@ test('admin employer detail: company media and compact verification comparison r
     context: {
       kind: 'employer',
       verification: {
-        public_id: 'evc_1', status: 'pending', status_label: 'Chờ duyệt',
+        public_id: 'evc_1', status: 'in_review', status_label: 'Đang xử lý',
         submitted_at: '2026-07-26T08:00:00Z', missing_step_count: 2,
       },
       company: {
@@ -462,7 +462,7 @@ test('admin employer detail: company media and compact verification comparison r
   }
   const verificationCase = {
     public_id: 'evc_1',
-    status: 'pending',
+    status: 'in_review',
     full_name: employer.full_name,
     email: employer.email,
     company: { public_id: 'co_1', name: 'FPT Software', tax_code: '***4567' },
@@ -480,8 +480,8 @@ test('admin employer detail: company media and compact verification comparison r
       phone_verified: true,
       company_linked: true,
       representative_documents_submitted: true,
-      business_documents_approved: false,
-      candidate_dpa_approved: false,
+      business_documents_approved: true,
+      candidate_dpa_approved: true,
       dpa_accepted: true,
     },
     tax_lookup_evidence: {
@@ -507,8 +507,8 @@ test('admin employer detail: company media and compact verification comparison r
         mime_type: 'image/svg+xml',
         version: 1,
         is_current: true,
-        status: 'pending',
-        status_label: 'Chờ duyệt',
+        status: 'approved',
+        status_label: 'Đã duyệt',
         created_at: '2026-07-26T08:00:00Z',
         duplicate_company_count: 0,
       },
@@ -623,6 +623,47 @@ test('admin employer detail: company media and compact verification comparison r
       })
       return
     }
+    else if (path === '/api/admin/employer-verifications/evc_1/decision-impact/') {
+      body = {
+        case_public_id: 'evc_1',
+        case_revision: 2,
+        lock_version: 0,
+        decision: 'approved',
+        reason: '',
+        checks: verificationCase.checks,
+        tax_advisory: {
+          status: 'matched',
+          provider_status: 'found',
+          evidence_public_id: 'tle_1',
+          comparison: { tax_code: 'match', company_name: 'match' },
+          requires_override: false,
+        },
+        tax_override: false,
+        tax_override_reason: '',
+        company_impact: {
+          company_public_id: 'co_1',
+          current_status: 'verified',
+          will_mark_verified: false,
+          will_downgrade: false,
+        },
+        capability_impact: {
+          candidate_data_access: 'eligible_after_recompute',
+          job_approval: 'eligible_after_recompute',
+          job_workspace: 'unchanged',
+        },
+        verification_hold_impact: {
+          hold_count: 0, campaign_count: 1, job_count: 2, active_jobs_to_unhide: 0,
+        },
+        unlocks_employer_capabilities: true,
+        impact_token: 'e2e-verification-impact',
+      }
+    }
+    else if (path === '/api/admin/employer-verifications/evc_1/decision/') {
+      verificationCase.status = 'approved'
+      verificationCase.status_label = 'Đã xác thực'
+      verificationCase.decision_reason = ''
+      body = verificationCase
+    }
     else if (path === '/api/admin/employer-verifications/evc_1/') body = verificationCase
     else if (path === '/api/admin/company-update-requests/') {
       body = { count: 1, next: null, previous: null, results: [companyUpdate] }
@@ -656,6 +697,7 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page.getByText('Pháp lý doanh nghiệp', { exact: true })).toBeVisible()
   await expect(page.getByText('Bảo vệ dữ liệu', { exact: true })).toBeVisible()
   await expect(page.getByText(/là thành viên của công ty/)).toBeVisible()
+  await expect(page.getByText('Giấy tờ và hồ sơ là hai lớp quyết định độc lập')).toBeVisible()
   await page.getByRole('button', { name: 'Xem 9 bước' }).click()
   await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
@@ -668,6 +710,14 @@ test('admin employer detail: company media and compact verification comparison r
   await expect.poll(() => page.locator('.verification-review-layout').evaluate(
     (element) => getComputedStyle(element).gap,
   )).toBe('20px')
+
+  await page.getByRole('button', { name: 'Duyệt hồ sơ' }).click()
+  const finalDecisionDialog = page.getByRole('dialog', { name: 'Duyệt hồ sơ' })
+  await finalDecisionDialog.getByRole('button', { name: 'Xem tác động' }).click()
+  await expect(finalDecisionDialog.getByText('Trạng thái pháp lý của công ty không bị hạ.'))
+    .toBeVisible()
+  await finalDecisionDialog.getByRole('button', { name: 'Xác nhận quyết định' }).click()
+  await expect(page.getByText('Hồ sơ đang có hiệu lực')).toBeVisible()
   await expect(page.getByRole('button', { name: /Xem chi tiết và đối chiếu/ })).toBeVisible()
   await expect(page.getByText('FPT Digital')).toHaveCount(0)
 

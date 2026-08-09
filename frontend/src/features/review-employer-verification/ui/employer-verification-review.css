@@ -839,8 +839,19 @@
 
   .verification-case-heading .ant-btn,
   .verification-decision-options .ant-btn,
+  .verification-final-actions .ant-btn,
   .company-update-review-summary > .ant-btn {
     min-height: 44px;
+  }
+
+  .verification-final-actions,
+  .verification-final-actions .ant-space-item,
+  .verification-final-actions .ant-btn {
+    width: 100%;
+  }
+
+  .verification-final-modal {
+    max-width: calc(100vw - 24px);
   }
 
   .company-update-review-summary {

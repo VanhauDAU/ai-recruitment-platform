@@ -574,6 +574,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   })
   const canViewVerification = isSuperuser || has('employer_verification.view')
   const canReviewVerification = isSuperuser || has('employer_verification.review')
+  const canRevokeVerification = isSuperuser || has('employer_verification.revoke')
+  const canOverrideVerificationTax = isSuperuser
+    || has('employer_verification.tax_override')
   const canViewCompanyUpdates = isSuperuser || has('company_update.view')
   const canReviewCompanyUpdates = isSuperuser || has('company_update.review')
   const canViewSensitiveDocument = canReveal
@@ -631,7 +634,12 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
         { key: 'overview', label: 'Tổng quan' },
         { key: 'profile', label: 'Hồ sơ NTD', children: profilePanel },
         { key: 'company', label: 'Công ty', children: companyPanel },
-        ...((canViewVerification || canReviewVerification || canViewCompanyUpdates || canReviewCompanyUpdates) ? [{
+        ...((canViewVerification
+          || canReviewVerification
+          || canRevokeVerification
+          || canOverrideVerificationTax
+          || canViewCompanyUpdates
+          || canReviewCompanyUpdates) ? [{
           key: 'verification',
           label: 'Xác thực',
           children: (
@@ -642,6 +650,8 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
               companyUpdateRequesterPublicId={publicId}
               canViewVerification={canViewVerification}
               canReviewVerification={canReviewVerification}
+              canRevokeVerification={canRevokeVerification}
+              canOverrideVerificationTax={canOverrideVerificationTax}
               canViewCompanyUpdates={canViewCompanyUpdates}
               canReviewCompanyUpdates={canReviewCompanyUpdates}
               canViewSensitive={canViewSensitiveDocument}
