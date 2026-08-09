@@ -49,6 +49,14 @@ CACHES = {
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+UPLOAD_QUARANTINE_ENABLED = True
+UPLOAD_SCANNER_BACKEND = 'apps.uploads.tests.fakes.FakeUploadScanner'
+UPLOAD_SESSION_ALLOWED_PURPOSES = (
+    'employer_verification',
+    'employer_company_update',
+    'candidate_cv',
+)
+UPLOAD_SCAN_RETRY_BASE_SECONDS = 1
 
 # Announcement tests exercise every surface by default. Individual kill-switch
 # tests override this setting explicitly.

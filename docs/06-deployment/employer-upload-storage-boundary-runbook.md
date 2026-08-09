@@ -72,6 +72,31 @@ retains both objects for manual reconciliation.
   `/app/legacy-media:ro`; no service maps it to `/media/` or an nginx path.
 - Clean, EICAR, scanner timeout and scanner-down tests are mandatory before the
   later quarantine feature flag is enabled.
+- Verify `UPLOAD_OWNER_MAX_ACTIVE_SESSIONS` and
+  `UPLOAD_OWNER_MAX_ACTIVE_BYTES` against expected traffic. Session creation
+  locks the owner before checking both quotas; do not replace this with a
+  cache-only counter. The active-byte limit must be at least `UPLOAD_MAX_BYTES`.
+  Expired/rejected rows with a persisted quarantine key, and expired clean rows
+  with an unclaimed private key, continue consuming quota until cleanup succeeds.
+- DOCX receives bounded container checks before scan. PDF/image validation is
+  currently limited to MIME, declared/actual size and magic signature;
+  parser-specific PDF/image validation remains an explicit residual and the
+  scanner verdict must not be treated as a structural-parser verdict.
+- Render production Compose and assert the worker consumes `upload-scan`; both
+  the direct scan task and Beat reconciliation/expiry tasks are routed there:
+
+  ```bash
+  docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+  docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+    exec worker celery -A config inspect active_queues
+  ```
+
+  The rendered worker command and `active_queues` output must contain
+  `upload-scan`. A deploy with an orphaned scan queue is a hard stop.
+- With `UPLOAD_QUARANTINE_ENABLED=true`, run
+  `python manage.py check` and
+  `python manage.py check_upload_scanner_readiness --json`; production startup
+  must fail for a fake backend, empty purpose allowlist or missing ClamAV host.
 
 ## Rollback
 

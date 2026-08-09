@@ -24,6 +24,10 @@ ALLOWED_METRICS = {
     'knowledgebase_admin_request',
     'knowledgebase_admin_latency_ms',
     'knowledgebase_content_state',
+    'upload_scan_duration_ms',
+    'upload_scan_result',
+    'upload_scanner_readiness',
+    'upload_session_state',
 }
 
 
