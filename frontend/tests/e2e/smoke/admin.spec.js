@@ -687,9 +687,11 @@ test('admin employer detail: company media and compact verification comparison r
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
 
-  await page.goto('/admin/app/accounts/usr_employer?tab=verification')
+  await page.goto('/admin/app/accounts/usr_employer?tab=verification&company_update=cur_1')
 
-  await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=verification$/)
+  await expect(page).toHaveURL(
+    /\/admin\/app\/recruiters\/usr_employer\?tab=verification&company_update=cur_1$/,
+  )
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('region', {
     name: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
