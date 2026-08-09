@@ -584,6 +584,7 @@ test('admin employer detail: company media and compact verification comparison r
     public_id: 'cur_1',
     company: { public_id: 'co_1', name: 'FPT Software', tax_code: '***4567' },
     requested_by_email: employer.email,
+    requested_by_public_id: employer.public_id,
     changes: {
       trade_name: 'FPT Digital',
       description: '<p>Mô tả mới</p>',
@@ -665,6 +666,7 @@ test('admin employer detail: company media and compact verification comparison r
       body = verificationCase
     }
     else if (path === '/api/admin/employer-verifications/evc_1/') body = verificationCase
+    else if (path === '/api/admin/company-update-requests/cur_1/') body = companyUpdate
     else if (path === '/api/admin/company-update-requests/') {
       body = { count: 1, next: null, previous: null, results: [companyUpdate] }
     } else if (path === '/api/privacy/consent/') {
