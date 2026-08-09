@@ -85,8 +85,7 @@ def _background_payload(revision, *, request=None, include_storage_key=False) ->
     payload = {
         'image_url': media_url_from_value(image_key, request=request) if image_key else None,
         'fit': revision.background_fit or AnnouncementRevision.BackgroundFit.COVER,
-        'position': revision.background_position
-        or AnnouncementRevision.BackgroundPosition.CENTER,
+        'position': revision.background_position or AnnouncementRevision.BackgroundPosition.CENTER,
         'overlay': revision.background_overlay or AnnouncementRevision.BackgroundOverlay.NONE,
     }
     if include_storage_key:
@@ -301,15 +300,11 @@ class AnnouncementRevisionWriteSerializer(serializers.Serializer):
         allow_blank=True,
         default='',
     )
-    color_accent = serializers.CharField(
-        max_length=7, required=False, allow_blank=True, default=''
-    )
+    color_accent = serializers.CharField(max_length=7, required=False, allow_blank=True, default='')
     color_bg_from = serializers.CharField(
         max_length=7, required=False, allow_blank=True, default=''
     )
-    color_bg_to = serializers.CharField(
-        max_length=7, required=False, allow_blank=True, default=''
-    )
+    color_bg_to = serializers.CharField(max_length=7, required=False, allow_blank=True, default='')
     color_fg = serializers.CharField(max_length=7, required=False, allow_blank=True, default='')
     background_image = serializers.CharField(
         max_length=2000, required=False, allow_blank=True, default=''

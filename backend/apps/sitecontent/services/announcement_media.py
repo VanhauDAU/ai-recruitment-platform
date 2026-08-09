@@ -1,7 +1,5 @@
 """Upload ảnh nền strip thông báo (AN-V2)."""
 
-from io import BytesIO
-
 from django.core.exceptions import ValidationError
 from PIL import Image
 from rest_framework.exceptions import ValidationError as DrfValidationError
@@ -56,15 +54,12 @@ def upload_announcement_background(*, upload, request=None):
         raise DrfValidationError(
             {
                 'file': (
-                    f'Chiều cao tối đa {ANNOUNCEMENT_BG_MAX_HEIGHT} px '
-                    '(dải thông báo ngang hẹp).'
+                    f'Chiều cao tối đa {ANNOUNCEMENT_BG_MAX_HEIGHT} px (dải thông báo ngang hẹp).'
                 )
             }
         )
     if width > ANNOUNCEMENT_BG_MAX_WIDTH:
-        raise DrfValidationError(
-            {'file': f'Chiều rộng tối đa {ANNOUNCEMENT_BG_MAX_WIDTH} px.'}
-        )
+        raise DrfValidationError({'file': f'Chiều rộng tối đa {ANNOUNCEMENT_BG_MAX_WIDTH} px.'})
 
     # GIF animation không phù hợp strip; chặn sau khi biết format.
     upload.seek(0)
