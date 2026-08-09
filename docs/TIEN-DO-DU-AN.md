@@ -7,10 +7,11 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã merge storage boundary
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-5 backend verified; ER-3 đã merge storage boundary
 > và shared quarantine/scan/retention core nhưng domain integration, frontend và
 > real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
-> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
+> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-5 admin UI còn
+> mở; ER-6A đã merge hạ
 > tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
@@ -20,7 +21,7 @@ Decision log:
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — shared core đã merge |
 | ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
-| ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — gate đã khóa |
+| ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — backend verified, admin UI còn mở |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
@@ -59,6 +60,27 @@ Decision log:
 - Residual: immutable revision snapshot, base-company version, transition
   submitted/in-review/changes-requested, resubmit/withdraw/cancel và conflict
   apply vẫn thuộc phần còn lại của ER-4; phase chưa được đánh dấu Verified.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-5</summary>
+
+- Backend đã tách document review khỏi final decision; prerequisite mutation
+  không tự approve case/company. Decision/revoke/expire bắt buộc preview rồi
+  confirm bằng signed impact token và recompute dưới lock.
+- Thêm `revoked`/`expired`, reapprove event, tax advisory override có quyền/lý
+  do riêng, verification compliance hold theo source và public-job fail closed.
+  Company không bị downgrade; workspace/tạo/sửa/gửi tin vẫn mở.
+- Migration `accounts.0023` chỉ seed permission, không grant mặc định;
+  `employers.0034` thêm state/hold schema. Legacy classifier dry-run mặc định,
+  không bịa actor/decision và không tự reset/hold cohort cũ.
+- Docker PostgreSQL `127.0.0.1:5433`: 235 test unaffected đạt, expectation auto
+  approve legacy được đảo và regression mới đạt 1/1. Query budget 4/5/7,
+  Ruff/format, import-linter, layering, Django/migration/OpenAPI, permission
+  registry, frontend lint/architecture và Markdown gate đều đạt.
+- Residual: frontend admin final-decision/company-warning/tax override/stale UX
+  và compliance link trong job UI; ER-5 tổng tiếp tục `In progress`.
 
 </details>
 

@@ -8,6 +8,28 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer verification final-decision backend ER-5
+
+- Tách document review khỏi quyết định cuối; thêm preview/confirm có signed
+  impact token cho approve/changes-requested/reject và revoke/expire manual.
+- Thêm tax advisory override có permission/lý do riêng, state
+  `revoked`/`expired`, reapprove event và legacy classifier dry-run mặc định.
+- Thêm verification compliance hold theo source với liên kết campaign/job;
+  revoke/expire chặn candidate-data/job approval và ẩn active public job nhưng
+  không downgrade company hoặc khóa workspace/tạo/sửa/gửi tin.
+
+#### Security — Verification race, redaction và RBAC ER-5
+
+- Chuẩn hóa lock order từ User/Recruiter/VerificationCase đến company/resource;
+  approve-vs-revoke commit sau luôn recheck và không thể công khai tin dưới
+  verification đã mất hiệu lực.
+- Reapprove chỉ gỡ exact verification hold; giữ nguyên DPA/account/moderation
+  hold. Hai permission revoke/tax override được seed nhưng không grant mặc định.
+- Stored decision snapshot dùng allowlist; response thiếu quyền nhạy cảm không
+  lộ integrity fingerprint, tax response hash hoặc raw document filename.
+- OpenAPI và contract frontend đã công bố workflow hai bước. Admin UI consume
+  final decision/compliance vẫn là phần còn mở nên ER-5 tổng chưa hoàn tất.
+
 #### Added — Shared upload quarantine core ER-3
 
 - Thêm shared app `uploads` với session/asset/scan-attempt state machine,

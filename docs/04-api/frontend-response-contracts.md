@@ -152,6 +152,38 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   status cùng `lock_version` trong transaction. Django admin chỉ đọc, không có
   đường mutation vượt service/API.
 
+### Contract admin quyết định cuối verification
+
+Workflow bắt buộc hai bước và backend là nguồn quyết định cuối:
+
+- `POST /api/admin/employer-verifications/{public_id}/decision-impact/` nhận
+  `decision`, `reason`, `tax_override`, `tax_override_reason`; chỉ preview,
+  không ghi dữ liệu. Response trả checks, tax advisory, company/capability/hold
+  impact và `impact_token`.
+- `POST .../decision/` nhận lại cùng payload kèm `impact_token`. Backend khóa
+  và tính lại hồ sơ, document, tax evidence, company, campaign, job và hold;
+  `409 admin_resource_changed` bắt frontend reload detail rồi preview lại.
+- Duyệt từng document chỉ đổi document và tăng `lock_version`; không tự approve
+  case/company. Final decision chỉ hợp lệ từ `in_review` sang
+  `approved|changes_requested|rejected`.
+- Tax `pending` luôn chặn. `missing|mismatch|not_found|unavailable|invalid` chỉ
+  cho approve khi actor có `employer_verification.tax_override` và gửi lý do.
+- `POST .../revoke-impact|expire-impact/` rồi `POST .../revoke|expire/` dùng
+  cùng preview/confirm model; action yêu cầu `employer_verification.revoke`.
+  Revoke/expire không downgrade company, nhưng chặn candidate data/job approval
+  và ẩn active public jobs; workspace cùng tạo/sửa/gửi tin vẫn hoạt động.
+- Detail chỉ trả `decision_snapshot` qua allowlist presentation. Không trả
+  `impact_token`, integrity fingerprint, raw filename, response hash hoặc field
+  nội bộ không xác định cho actor thiếu quyền nhạy cảm.
+- Error nghiệp vụ dùng code ổn định
+  `VERIFICATION_INVALID_TRANSITION`, `VERIFICATION_REQUIREMENTS_INCOMPLETE`,
+  `TAX_LOOKUP_PENDING`, `TAX_OVERRIDE_REQUIRED`,
+  `TAX_OVERRIDE_REASON_REQUIRED`; field validation vẫn theo tên field.
+
+Frontend admin ER-5 chưa được coi hoàn tất cho tới khi UI consume đủ impact,
+company warning, override reason và stale refresh; contract backend này không
+cho phép UI gọi confirm trực tiếp hoặc tự suy trạng thái.
+
 ### Contract blocker duyệt tin
 
 `approve` chỉ xuất hiện trong `state_actions` khi `approve_blockers=[]`. Tối

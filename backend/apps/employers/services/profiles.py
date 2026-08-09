@@ -7,7 +7,7 @@ from rest_framework.exceptions import APIException
 
 from apps.accounts.models import User
 
-from ..models import CompanyDocument, EmployerVerificationCase, RecruiterProfile
+from ..models import Company, CompanyDocument, EmployerVerificationCase, RecruiterProfile
 from ..models.readiness import (
     build_annotated_employer_readiness,
     employer_readiness_queryset,
@@ -21,6 +21,10 @@ JOB_APPROVAL_VERIFICATION_BLOCKER = {
 JOB_APPROVAL_DPA_BLOCKER = {
     'code': 'dpa_outdated',
     'label': 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.',
+}
+JOB_APPROVAL_COMPLIANCE_HOLD_BLOCKER = {
+    'code': 'compliance_hold_active',
+    'label': 'Nhà tuyển dụng đang có một giới hạn tuân thủ còn hiệu lực.',
 }
 
 
@@ -193,19 +197,27 @@ def recruiter_job_approval_state(user, *, company_id, lock=False):
     are serialized with the final approval decision.
     """
     recruiter, readiness = recruiter_readiness_state(user, lock=lock)
-    verification_approved = bool(
-        recruiter and recruiter.company_id == company_id and readiness['verification_approved']
-    )
+    company_matches = bool(recruiter and recruiter.company_id == company_id)
+    if lock and company_id is not None:
+        company_matches = bool(
+            Company.objects.select_for_update(of=('self',)).filter(pk=company_id).exists()
+            and company_matches
+        )
+    verification_approved = bool(company_matches and readiness['verification_approved'])
     dpa_current = readiness['dpa_status'] == 'current'
+    compliance_hold_active = readiness['compliance_hold_active']
     blockers = []
     if not verification_approved:
         blockers.append(dict(JOB_APPROVAL_VERIFICATION_BLOCKER))
     if not dpa_current:
         blockers.append(dict(JOB_APPROVAL_DPA_BLOCKER))
+    if compliance_hold_active:
+        blockers.append(dict(JOB_APPROVAL_COMPLIANCE_HOLD_BLOCKER))
 
     return {
         'verification_approved': verification_approved,
         'dpa_current': dpa_current,
+        'compliance_hold_active': compliance_hold_active,
         'approve_blockers': blockers,
     }
 

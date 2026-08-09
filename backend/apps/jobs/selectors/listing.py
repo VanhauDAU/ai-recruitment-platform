@@ -25,10 +25,16 @@ def publicly_available_job_filter():
         Q(status=Job.Status.ACTIVE)
         & Q(policy_hold=Job.PolicyHold.NONE)
         & Q(moderation_hold=Job.ModerationHold.NONE)
+        & ~Q(compliance_hold_links__hold__status='active')
         & Q(
             posted_by__status='active',
             posted_by__is_active=True,
             posted_by__is_deleted=False,
+            posted_by__recruiter_profile__company_id=F('company_id'),
+        )
+        & (
+            Q(posted_by__recruiter_profile__verification_case__isnull=True)
+            | Q(posted_by__recruiter_profile__verification_case__company_id=F('company_id'))
         )
         & (Q(deadline__isnull=True) | Q(deadline__gte=timezone.localdate()))
         & (
@@ -40,6 +46,7 @@ def publicly_available_job_filter():
                 campaign__owner__user__is_active=True,
                 campaign__owner__user__is_deleted=False,
             )
+            & ~Q(campaign__compliance_hold_links__hold__status='active')
         )
     )
 

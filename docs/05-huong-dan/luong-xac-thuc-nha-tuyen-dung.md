@@ -196,6 +196,26 @@ danh. Mọi thay đổi tên pháp lý, MST hoặc thông tin công ty đi qua *
 nhật công ty** riêng và không được suy ra từ thẻ đối chiếu MST. Nguồn đối chiếu
 chỉ mang tính bổ trợ; quyết định cuối cùng dựa trên giấy tờ pháp lý và audit.
 
+### Quyết định cuối và thay đổi hiệu lực
+
+- Admin phải **Nhận xử lý** để case vào `in_review`. Duyệt/từ chối/yêu cầu bổ
+  sung từng document không tự đổi case thành `approved` và không tự xác thực
+  company.
+- Quyết định cuối luôn theo hai bước: preview `decision-impact`, xem tax/company/
+  capability/hold impact, rồi confirm bằng `impact_token`. Nếu hồ sơ hoặc tài
+  nguyên thay đổi, API trả `409` và admin phải preview lại.
+- Tax `pending` phải chờ. Các kết quả advisory không đủ tin cậy chỉ được override
+  bởi actor có quyền riêng và phải ghi lý do audit.
+- Case đã duyệt có thể bị `revoked` hoặc `expired` thủ công qua preview/confirm.
+  Company vẫn giữ trạng thái pháp nhân; recruiter mất candidate-data và quyền
+  duyệt job, active job bị ẩn khỏi public nhưng workspace/tạo/sửa/gửi tin còn mở.
+- Recruiter xử lý lại trên cùng case với `revision++`, resubmit về `pending`,
+  admin nhận xử lý rồi có thể `reapproved`. Reapprove chỉ gỡ hold nguồn
+  verification, không gỡ DPA/account/moderation hold khác.
+- Hồ sơ auto-approved lịch sử được phân loại nguồn `legacy_auto` hoặc
+  `legacy_unknown` bằng command dry-run/apply; không bịa actor/quyết định và
+  không tự reset hoặc áp hold.
+
 Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
 chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi
 tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên thương mại/MST

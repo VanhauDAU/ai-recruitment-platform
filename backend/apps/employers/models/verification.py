@@ -21,6 +21,13 @@ class EmployerVerificationCase(models.Model):
         CHANGES_REQUESTED = 'changes_requested', 'Cần bổ sung'
         REJECTED = 'rejected', 'Bị từ chối'
         APPROVED = 'approved', 'Đã xác thực'
+        REVOKED = 'revoked', 'Đã thu hồi'
+        EXPIRED = 'expired', 'Hết hiệu lực'
+
+    class DecisionSource(models.TextChoices):
+        EXPLICIT_ADMIN = 'explicit_admin', 'Quyết định quản trị tường minh'
+        LEGACY_AUTO = 'legacy_auto', 'Tự duyệt lịch sử'
+        LEGACY_UNKNOWN = 'legacy_unknown', 'Không xác định nguồn lịch sử'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.OneToOneField(
@@ -54,6 +61,20 @@ class EmployerVerificationCase(models.Model):
     review_started_at = models.DateTimeField(null=True, blank=True)
     decided_at = models.DateTimeField(null=True, blank=True)
     decision_reason = models.TextField(blank=True)
+    decision_source = models.CharField(
+        max_length=24,
+        choices=DecisionSource.choices,
+        blank=True,
+    )
+    decision_snapshot = models.JSONField(default=dict, blank=True)
+    tax_override_reason = models.TextField(blank=True)
+    tax_override_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,6 +107,11 @@ class EmployerVerificationEvent(models.Model):
         RESUBMITTED = 'resubmitted', 'Đã nộp lại'
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Đã từ chối'
+        REVOKED = 'revoked', 'Đã thu hồi'
+        EXPIRED = 'expired', 'Hết hiệu lực'
+        REAPPROVED = 'reapproved', 'Đã duyệt lại'
+        HOLD_APPLIED = 'hold_applied', 'Đã áp dụng compliance hold'
+        HOLD_RELEASED = 'hold_released', 'Đã gỡ compliance hold'
         SENSITIVE_VIEWED = 'sensitive_viewed', 'Đã xem dữ liệu nhạy cảm'
         TAX_LOOKUP_REFRESHED = 'tax_lookup_refreshed', 'Đã tra cứu lại mã số thuế'
 

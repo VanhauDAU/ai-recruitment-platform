@@ -13,7 +13,12 @@ from apps.accounts.models import AdminPermission, AdminRole, Department, User
 from apps.accounts.services import assign_membership
 from apps.jobs.models import JobCategory
 
-from ..admin import CompanyAdmin, CompanyDocumentAdmin, CompanyUpdateRequestAdmin
+from ..admin import (
+    CompanyAdmin,
+    CompanyDocumentAdmin,
+    CompanyUpdateRequestAdmin,
+    RecruiterProfileAdmin,
+)
 from ..models import (
     Company,
     CompanyDocument,
@@ -115,11 +120,32 @@ class EmployerAccountVerificationTests(APITestCase):
                 sha256=f'{recruiter.pk:064x}',
                 status=CompanyDocument.Status.APPROVED,
             )
+        CompanyTaxLookupEvidence.objects.create(
+            company=self.company,
+            verification_case=case,
+            requested_by=recruiter.user,
+            workflow_revision=case.revision,
+            tax_code=self.company.tax_code,
+            submitted_company_name=self.company.company_name,
+            status=CompanyTaxLookupEvidence.Status.FOUND,
+            returned_tax_code=self.company.tax_code,
+            registered_name=self.company.company_name,
+            completed_at=timezone.now(),
+        )
+        return case
+
+    def _put_in_review(self, case):
+        case.status = EmployerVerificationCase.Status.IN_REVIEW
+        case.reviewer = self.admin
+        case.review_started_at = timezone.now()
+        case.save(update_fields=['status', 'reviewer', 'review_started_at', 'updated_at'])
         return case
 
     def test_recruiters_in_same_company_have_independent_cases(self):
+        self._put_in_review(self.first_case)
         impact = verification_decision_impact(
             self.first_case,
+            actor=self.admin,
             decision=EmployerVerificationCase.Status.APPROVED,
             reason='',
         )
@@ -149,8 +175,10 @@ class EmployerAccountVerificationTests(APITestCase):
         REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=True,
     )
     def test_hard_gate_uses_the_recruiters_own_case(self):
+        self._put_in_review(self.first_case)
         impact = verification_decision_impact(
             self.first_case,
+            actor=self.admin,
             decision=EmployerVerificationCase.Status.APPROVED,
             reason='',
         )
@@ -182,6 +210,7 @@ class EmployerAccountVerificationTests(APITestCase):
             ensure_recruiter_candidate_data_access(self.second_user)
 
     def test_stale_decision_returns_conflict(self):
+        self._put_in_review(self.first_case)
         self.client.force_authenticate(self.admin)
         impact = self.client.post(
             reverse(
@@ -211,7 +240,8 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 409, response.data)
 
-    def test_reviewer_approval_of_the_final_document_approves_the_case(self):
+    def test_reviewer_approval_of_the_final_document_keeps_case_in_review(self):
+        self._put_in_review(self.first_case)
         self.client.force_authenticate(self.admin)
         document = self.first_case.documents.filter(is_current=True).first()
 
@@ -235,11 +265,11 @@ class EmployerAccountVerificationTests(APITestCase):
         document.refresh_from_db()
         self.first_case.refresh_from_db()
         self.assertEqual(document.status, CompanyDocument.Status.APPROVED)
-        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.IN_REVIEW)
         self.assertEqual(self.first_case.lock_version, 2)
         self.company.refresh_from_db()
-        self.assertEqual(self.company.verification_status, Company.VerificationStatus.VERIFIED)
-        self.assertTrue(
+        self.assertEqual(self.company.verification_status, Company.VerificationStatus.UNVERIFIED)
+        self.assertFalse(
             EmployerVerificationNotification.objects.filter(
                 verification_case=self.first_case,
                 event_type=EmployerVerificationCase.Status.APPROVED,
@@ -253,7 +283,7 @@ class EmployerAccountVerificationTests(APITestCase):
         rejected_document.status = CompanyDocument.Status.REJECTED
         rejected_document.review_note = 'Văn bản DLCN thiếu chữ ký.'
         rejected_document.save(update_fields=['status', 'review_note'])
-        self.first_case.status = EmployerVerificationCase.Status.REJECTED
+        self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
         self.first_case.decision_reason = rejected_document.review_note
         self.first_case.save(update_fields=['status', 'decision_reason'])
         approved_document = self.first_case.documents.get(
@@ -283,7 +313,7 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(approved_document.review_note, '')
         self.assertEqual(
             self.first_case.status,
-            EmployerVerificationCase.Status.REJECTED,
+            EmployerVerificationCase.Status.IN_REVIEW,
         )
         self.assertEqual(
             self.first_case.decision_reason,
@@ -301,6 +331,12 @@ class EmployerAccountVerificationTests(APITestCase):
         self.second_case.company = duplicate_company
         self.second_case.save(update_fields=['company', 'updated_at'])
         self.second_case.documents.update(company=duplicate_company)
+        self.second_case.tax_lookup_evidences.update(
+            company=duplicate_company,
+            submitted_company_name=duplicate_company.company_name,
+            registered_name=duplicate_company.company_name,
+        )
+        self._put_in_review(self.second_case)
         self.client.force_authenticate(self.admin)
 
         detail = self.client.get(
@@ -365,6 +401,12 @@ class EmployerAccountVerificationTests(APITestCase):
         self.second_case.company = duplicate_company
         self.second_case.save(update_fields=['company', 'updated_at'])
         self.second_case.documents.update(company=duplicate_company)
+        self.second_case.tax_lookup_evidences.update(
+            company=duplicate_company,
+            submitted_company_name=duplicate_company.company_name,
+            registered_name=duplicate_company.company_name,
+        )
+        self._put_in_review(self.second_case)
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -387,10 +429,10 @@ class EmployerAccountVerificationTests(APITestCase):
         )
         self.assertEqual(
             self.second_case.status,
-            EmployerVerificationCase.Status.PENDING,
+            EmployerVerificationCase.Status.IN_REVIEW,
         )
 
-    def test_final_document_approval_reports_verified_tax_code_conflict(self):
+    def test_final_document_approval_does_not_evaluate_company_tax_claim(self):
         self.company.verification_status = Company.VerificationStatus.VERIFIED
         self.company.verified_at = timezone.now()
         self.company.save(update_fields=['verification_status', 'verified_at', 'updated_at'])
@@ -407,6 +449,7 @@ class EmployerAccountVerificationTests(APITestCase):
         document = self.second_case.documents.first()
         document.status = CompanyDocument.Status.PENDING
         document.save(update_fields=['status', 'updated_at'])
+        self._put_in_review(self.second_case)
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -425,28 +468,27 @@ class EmployerAccountVerificationTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(response.status_code, 409, response.data)
-        self.assertEqual(response.data['code'], 'company_tax_code_conflict')
+        self.assertEqual(response.status_code, 200, response.data)
         document.refresh_from_db()
         duplicate_company.refresh_from_db()
         self.second_case.refresh_from_db()
-        self.assertEqual(document.status, CompanyDocument.Status.PENDING)
+        self.assertEqual(document.status, CompanyDocument.Status.APPROVED)
         self.assertEqual(
             duplicate_company.verification_status,
             Company.VerificationStatus.UNVERIFIED,
         )
         self.assertEqual(
             self.second_case.status,
-            EmployerVerificationCase.Status.PENDING,
+            EmployerVerificationCase.Status.IN_REVIEW,
         )
 
-    def test_reconciliation_approves_a_previously_completed_case(self):
+    def test_reconciliation_never_creates_a_final_decision(self):
         reconciled = reconcile_completed_verification_cases()
 
         self.first_case.refresh_from_db()
-        self.assertIn(self.first_case, reconciled)
-        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
-        self.assertTrue(
+        self.assertEqual(reconciled, [])
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.PENDING)
+        self.assertFalse(
             EmployerVerificationEvent.objects.filter(
                 verification_case=self.first_case,
                 event_type=EmployerVerificationEvent.EventType.APPROVED,
@@ -469,11 +511,11 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['tax_lookup_evidence']['status'], 'pending')
-        evidence = CompanyTaxLookupEvidence.objects.get(verification_case=self.first_case)
+        evidence = self.first_case.tax_lookup_evidences.order_by('-created_at', '-id').first()
         self.assertEqual(evidence.workflow_revision, self.first_case.revision)
         delay.assert_called_once_with(evidence.pk)
 
-    def test_phone_completed_after_document_review_reconciles_case_once(self):
+    def test_phone_completed_after_document_review_does_not_decide_case(self):
         self.first.phone_verified_at = None
         self.first.verified_phone = ''
         self.first.save(update_fields=['phone_verified_at', 'verified_phone', 'updated_at'])
@@ -498,19 +540,19 @@ class EmployerAccountVerificationTests(APITestCase):
             source='phone_verified',
         )
 
-        self.assertTrue(reconciled)
+        self.assertFalse(reconciled)
         self.assertFalse(reconciled_again)
-        self.assertEqual(case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(case.status, EmployerVerificationCase.Status.IN_REVIEW)
         self.assertEqual(
             EmployerVerificationEvent.objects.filter(
                 verification_case=self.first_case,
                 event_type=EmployerVerificationEvent.EventType.APPROVED,
                 payload__source='phone_verified',
             ).count(),
-            1,
+            0,
         )
 
-    def test_accepting_dpa_last_approves_a_fully_reviewed_case(self):
+    def test_accepting_dpa_last_does_not_approve_a_fully_reviewed_case(self):
         self.first.dpa_accepted_at = None
         self.first.save(update_fields=['dpa_accepted_at', 'updated_at'])
         self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
@@ -521,8 +563,8 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.first_case.refresh_from_db()
-        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.APPROVED)
-        self.assertTrue(
+        self.assertEqual(self.first_case.status, EmployerVerificationCase.Status.IN_REVIEW)
+        self.assertFalse(
             EmployerVerificationEvent.objects.filter(
                 verification_case=self.first_case,
                 event_type=EmployerVerificationEvent.EventType.APPROVED,
@@ -642,8 +684,44 @@ class EmployerAccountVerificationTests(APITestCase):
         assign_membership(reviewer, role, actor=self.admin)
         self.client.force_authenticate(reviewer)
         document = self.first_case.documents.filter(is_current=True).first()
+        evidence = self.first_case.tax_lookup_evidences.order_by('-created_at', '-id').first()
+        evidence.response_hash = 'f' * 64
+        evidence.save(update_fields=['response_hash', 'updated_at'])
+        self.first_case.decision_snapshot = {
+            'case_public_id': self.first_case.public_id,
+            'case_revision': self.first_case.revision,
+            'lock_version': self.first_case.lock_version,
+            'decision': EmployerVerificationCase.Status.APPROVED,
+            'reason': '',
+            'checks': {},
+            'tax_advisory': {},
+            'tax_override': False,
+            'tax_override_reason': '',
+            'company_impact': {},
+            'capability_impact': {},
+            'verification_hold_impact': {},
+            'integrity_fingerprint': 'internal-fingerprint',
+            'future_unknown_field': 'must-not-leak',
+        }
+        self.first_case.save(update_fields=['decision_snapshot', 'updated_at'])
+        event = EmployerVerificationEvent.objects.create(
+            verification_case=self.first_case,
+            actor=self.admin,
+            event_type=EmployerVerificationEvent.EventType.SENSITIVE_VIEWED,
+            payload={
+                'document_public_id': document.public_id,
+                'document_file_name': 'hop-dong-noi-bo.pdf',
+                'action': 'preview',
+            },
+        )
 
         queue = self.client.get(reverse('admin-employer-verification-list'))
+        detail = self.client.get(
+            reverse(
+                'admin-employer-verification-detail',
+                kwargs={'public_id': self.first_case.public_id},
+            )
+        )
         content = self.client.get(
             reverse(
                 'admin-employer-verification-document-content',
@@ -655,7 +733,17 @@ class EmployerAccountVerificationTests(APITestCase):
         )
 
         self.assertEqual(queue.status_code, 200, queue.data)
+        self.assertEqual(detail.status_code, 200, detail.data)
         self.assertEqual(content.status_code, 403, content.data)
+        self.assertEqual(detail.data['tax_lookup_evidence']['response_hash'], '')
+        self.assertNotIn('integrity_fingerprint', detail.data['decision_snapshot'])
+        self.assertNotIn('future_unknown_field', detail.data['decision_snapshot'])
+        event_payload = next(
+            item['payload']
+            for item in detail.data['events']
+            if item['public_id'] == event.public_id
+        )
+        self.assertNotIn('document_file_name', event_payload)
 
     def test_company_update_permissions_are_independent_from_verification_review(self):
         reviewer = User.objects.create_user(
@@ -909,6 +997,24 @@ class EmployerAccountVerificationTests(APITestCase):
             'requested_by',
             model_admins[-1].get_readonly_fields(None, update_request),
         )
+        recruiter_admin = RecruiterProfileAdmin(RecruiterProfile, AdminSite())
+        self.assertIn('company', recruiter_admin.get_readonly_fields(None, self.first))
+        self.assertIn('company_role', recruiter_admin.get_readonly_fields(None, self.first))
+
+        forged_company = Company.objects.create(
+            company_name='Công ty giả mạo qua Django admin',
+            tax_code='0108888888',
+            created_by=self.admin,
+        )
+        original_company_id = self.first.company_id
+        original_company_role = self.first.company_role
+        self.first.company = forged_company
+        self.first.company_role = RecruiterProfile.CompanyRole.OWNER
+        recruiter_admin.save_model(None, self.first, form=None, change=True)
+
+        self.first.refresh_from_db()
+        self.assertEqual(self.first.company_id, original_company_id)
+        self.assertEqual(self.first.company_role, original_company_role)
 
     def test_document_content_infers_legacy_image_mime_for_inline_preview(self):
         self.client.force_authenticate(self.admin)

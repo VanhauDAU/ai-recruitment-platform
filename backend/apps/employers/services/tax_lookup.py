@@ -16,6 +16,7 @@ from apps.accounts.services import record_admin_action
 
 from ..models import CompanyTaxLookupEvidence, EmployerVerificationEvent
 from .company_update_locks import lock_company_update_request
+from .compliance import lock_verification_identity
 
 TAX_CODE_PATTERN = re.compile(r'\d{10}(?:-\d{3})?')
 
@@ -243,15 +244,14 @@ def latest_tax_lookup_evidence(workflow):
 
 @transaction.atomic
 def refresh_verification_tax_lookup(case, *, actor):
-    # Lock only the case row. ``company`` is nullable on verification cases, so
-    # select_related would add a LEFT OUTER JOIN that PostgreSQL cannot lock.
-    case = type(case).objects.select_for_update().get(pk=case.pk)
-    if case.company_id is None or not case.company.tax_code:
+    scope = lock_verification_identity(case)
+    case = scope.case
+    if scope.company is None or not scope.company.tax_code:
         raise ValueError('company_tax_code_is_required')
     case.lock_version += 1
     case.save(update_fields=['lock_version', 'updated_at'])
     evidence = queue_company_tax_lookup(
-        company=case.company,
+        company=scope.company,
         requested_by=actor,
         verification_case=case,
         workflow_revision=case.revision,

@@ -67,7 +67,12 @@ def ensure_company_tax_code_can_be_verified(company, *, tax_code=None):
         raise CompanyTaxCodeConflict(tax_code, claim_status='verified')
 
 
-def mark_company_verified(company, *, verified_at=None):
+def mark_company_verified(
+    company,
+    *,
+    verified_at=None,
+    verification_source=Company.VerificationSource.EXPLICIT_ADMIN,
+):
     """Mark one company verified and translate uniqueness races to a domain error."""
     verified_at = verified_at or timezone.now()
     ensure_company_tax_code_can_be_verified(company)
@@ -77,6 +82,7 @@ def mark_company_verified(company, *, verified_at=None):
         with transaction.atomic():
             Company.objects.filter(pk=company.pk).update(
                 verification_status=Company.VerificationStatus.VERIFIED,
+                verification_source=verification_source,
                 verified_at=verified_at,
                 rejected_reason='',
                 updated_at=verified_at,
@@ -89,6 +95,7 @@ def mark_company_verified(company, *, verified_at=None):
             ) from error
         raise
     company.verification_status = Company.VerificationStatus.VERIFIED
+    company.verification_source = verification_source
     company.verified_at = verified_at
     company.rejected_reason = ''
     return company
@@ -350,10 +357,12 @@ def verify_company(company, admin_user, approve, reason=''):
         return company
     else:
         company.verification_status = Company.VerificationStatus.REJECTED
+        company.verification_source = Company.VerificationSource.EXPLICIT_ADMIN
         company.rejected_reason = reason
     company.save(
         update_fields=[
             'verification_status',
+            'verification_source',
             'verified_at',
             'rejected_reason',
             'updated_at',

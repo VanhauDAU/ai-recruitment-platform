@@ -32,7 +32,7 @@ def build_employer_readiness(recruiter, *, onboarding=None, dpa_status=None):
     """Build the canonical readiness DTO from current employer records."""
     if recruiter is None:
         return missing_employer_readiness()
-    if onboarding is None and hasattr(recruiter, 'readiness_has_recruitment_need'):
+    if hasattr(recruiter, 'readiness_has_recruitment_need'):
         return build_annotated_employer_readiness(recruiter, dpa_status=dpa_status)
     onboarding = onboarding or build_employer_onboarding_steps(recruiter)
     try:
@@ -58,4 +58,5 @@ def build_employer_readiness(recruiter, *, onboarding=None, dpa_status=None):
         candidate_dpa_submitted=onboarding['candidate_dpa_submitted'],
         verification_case_status=verification_case_status,
         dpa_status=dpa_status if dpa_status is not None else current_dpa_status(recruiter),
+        compliance_hold_active=recruiter.compliance_holds.filter(status='active').exists(),
     )

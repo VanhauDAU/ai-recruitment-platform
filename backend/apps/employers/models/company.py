@@ -53,6 +53,11 @@ class Company(models.Model):
         VERIFIED = 'verified', 'Đã xác thực'
         REJECTED = 'rejected', 'Bị từ chối'
 
+    class VerificationSource(models.TextChoices):
+        EXPLICIT_ADMIN = 'explicit_admin', 'Quyết định quản trị tường minh'
+        LEGACY_AUTO = 'legacy_auto', 'Tự duyệt lịch sử'
+        LEGACY_UNKNOWN = 'legacy_unknown', 'Không xác định nguồn lịch sử'
+
     class Market(models.TextChoices):
         DOMESTIC = 'domestic', 'Nội địa'
         ASIA = 'asia', 'Châu Á'
@@ -103,6 +108,11 @@ class Company(models.Model):
     )
     verification_status = models.CharField(
         max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.UNVERIFIED
+    )
+    verification_source = models.CharField(
+        max_length=24,
+        choices=VerificationSource.choices,
+        blank=True,
     )
     verified_at = models.DateTimeField(null=True, blank=True)
     rejected_reason = models.TextField(blank=True)

@@ -1495,6 +1495,11 @@ paths:
   /api/admin/employer-verifications/{public_id}/decision/:
     post:
       operationId: admin_employer_verifications_decision_create
+      summary: Xác nhận quyết định cuối hồ sơ xác thực
+      description: >-
+        Bước 2/2. Yêu cầu employer_verification.review và impact_token còn
+        hiệu lực. Server khóa rồi tính lại toàn bộ hồ sơ, tax evidence,
+        company, campaign, job và compliance hold; trả 409 khi preview stale.
       parameters:
       - in: path
         name: public_id
@@ -1507,13 +1512,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AdminVerificationCaseDetailRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminVerificationCaseDetailRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminVerificationCaseDetailRequest'
+              $ref: '#/components/schemas/AdminVerificationDecisionConfirmationRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1523,9 +1523,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminVerificationCaseDetail'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationDecisionBadRequest'
+          description: Payload hoặc transition/tax policy không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu quyền review hoặc tax override.
+        '409':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/AdminVerificationStaleError'
+                - $ref: '#/components/schemas/AdminVerificationTaxConflictError'
+          description: Preview stale hoặc mã số thuế đã thuộc company khác.
   /api/admin/employer-verifications/{public_id}/decision-impact/:
     post:
       operationId: admin_employer_verifications_decision_impact_create
+      summary: Preview tác động quyết định cuối hồ sơ xác thực
+      description: >-
+        Bước 1/2, không ghi dữ liệu. Chỉ case in_review; tax pending luôn chặn,
+        advisory còn lại cần quyền tax_override và lý do tường minh.
       parameters:
       - in: path
         name: public_id
@@ -1538,13 +1562,96 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AdminVerificationCaseDetailRequest'
-          application/x-www-form-urlencoded:
+              $ref: '#/components/schemas/AdminVerificationDecisionPreviewRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationDecisionImpact'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationDecisionBadRequest'
+          description: Payload hoặc transition/tax policy không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu quyền review hoặc tax override.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationTaxConflictError'
+          description: Mã số thuế đã thuộc company khác.
+  /api/admin/employer-verifications/{public_id}/revoke-impact/:
+    post:
+      operationId: admin_employer_verifications_revoke_impact_create
+      summary: Preview tác động thu hồi xác thực recruiter
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
             schema:
-              $ref: '#/components/schemas/AdminVerificationCaseDetailRequest'
-          multipart/form-data:
+              $ref: '#/components/schemas/AdminVerificationLifecyclePreviewRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationLifecycleImpact'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationLifecycleBadRequest'
+          description: Payload hoặc transition không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu employer_verification.revoke.
+  /api/admin/employer-verifications/{public_id}/revoke/:
+    post:
+      operationId: admin_employer_verifications_revoke_create
+      summary: Xác nhận thu hồi xác thực recruiter
+      description: >-
+        Tạo verification compliance hold, chặn candidate-data/job approval và
+        ẩn active public jobs; không downgrade company, vẫn giữ workspace và
+        quyền tạo/sửa/gửi tin.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
             schema:
-              $ref: '#/components/schemas/AdminVerificationCaseDetailRequest'
+              $ref: '#/components/schemas/AdminVerificationLifecycleConfirmationRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1554,6 +1661,112 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminVerificationCaseDetail'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationLifecycleBadRequest'
+          description: Payload hoặc transition không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu employer_verification.revoke.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationStaleError'
+          description: Preview stale; phải preview lại.
+  /api/admin/employer-verifications/{public_id}/expire-impact/:
+    post:
+      operationId: admin_employer_verifications_expire_impact_create
+      summary: Preview tác động đánh dấu xác thực hết hiệu lực
+      description: Thao tác manual ER-5; chưa có TTL hoặc scheduler tự động.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationLifecyclePreviewRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationLifecycleImpact'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationLifecycleBadRequest'
+          description: Payload hoặc transition không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu employer_verification.revoke.
+  /api/admin/employer-verifications/{public_id}/expire/:
+    post:
+      operationId: admin_employer_verifications_expire_create
+      summary: Xác nhận xác thực recruiter hết hiệu lực
+      description: >-
+        Tạo verification compliance hold reason verification_expired; không
+        downgrade company.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationLifecycleConfirmationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationCaseDetail'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationLifecycleBadRequest'
+          description: Payload hoặc transition không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu employer_verification.revoke.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationStaleError'
+          description: Preview stale; phải preview lại.
   /api/admin/employer-verifications/{public_id}/documents/{document_public_id}/content/:
     get:
       operationId: admin_employer_verifications_documents_content_retrieve
@@ -14331,6 +14544,19 @@ components:
           readOnly: true
         decision_reason:
           type: string
+        decision_source:
+          type: string
+          enum: ['', explicit_admin, legacy_auto, legacy_unknown]
+        decision_snapshot:
+          allOf:
+          - $ref: '#/components/schemas/AdminVerificationStoredSnapshot'
+          readOnly: true
+        tax_override_reason:
+          type: string
+        tax_override_by_email:
+          type: string
+          format: email
+          readOnly: true
         tax_lookup_evidence:
           type: string
           readOnly: true
@@ -14339,6 +14565,7 @@ components:
       - company
       - current_document_count
       - decided_at
+      - decision_snapshot
       - documents
       - email
       - events
@@ -14357,6 +14584,7 @@ components:
       - status_label
       - submitted_at
       - tax_lookup_evidence
+      - tax_override_by_email
       - updated_at
       - user_public_id
       - verification_method
@@ -14366,6 +14594,140 @@ components:
       properties:
         decision_reason:
           type: string
+        decision_source:
+          type: string
+          enum: ['', explicit_admin, legacy_auto, legacy_unknown]
+        tax_override_reason:
+          type: string
+    AdminVerificationChecks:
+      type: object
+      additionalProperties: false
+      properties:
+        email_verified: {type: boolean}
+        registration_completed: {type: boolean}
+        consulting_need_completed: {type: boolean}
+        phone_verified: {type: boolean}
+        company_linked: {type: boolean}
+        representative_documents_submitted: {type: boolean}
+        business_documents_approved: {type: boolean}
+        candidate_dpa_submitted: {type: boolean}
+        candidate_dpa_approved: {type: boolean}
+        dpa_accepted: {type: boolean}
+        case_approved: {type: boolean}
+      required:
+      - email_verified
+      - registration_completed
+      - consulting_need_completed
+      - phone_verified
+      - company_linked
+      - representative_documents_submitted
+      - business_documents_approved
+      - candidate_dpa_submitted
+      - candidate_dpa_approved
+      - dpa_accepted
+      - case_approved
+    AdminVerificationDecisionPreviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        decision:
+          type: string
+          enum: [approved, changes_requested, rejected]
+        reason: {type: string, maxLength: 2000}
+        tax_override: {type: boolean, default: false}
+        tax_override_reason: {type: string, maxLength: 2000}
+      required: [decision]
+    AdminVerificationDecisionConfirmationRequest:
+      allOf:
+      - $ref: '#/components/schemas/AdminVerificationDecisionPreviewRequest'
+      - type: object
+        properties:
+          impact_token: {type: string, minLength: 1}
+        required: [impact_token]
+    AdminVerificationTaxComparison:
+      type: object
+      additionalProperties: false
+      properties:
+        tax_code:
+          type: string
+          enum: [match, mismatch, pending, unavailable, stale_input]
+        company_name:
+          type: string
+          enum: [match, mismatch, pending, unavailable, stale_input]
+      required: [tax_code, company_name]
+    AdminVerificationTaxAdvisory:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [missing, pending, matched, mismatch, not_found, unavailable, invalid]
+        provider_status: {type: string, nullable: true}
+        evidence_public_id: {type: string, nullable: true}
+        comparison:
+          $ref: '#/components/schemas/AdminVerificationTaxComparison'
+        requires_override: {type: boolean}
+      required: [status, provider_status, evidence_public_id, comparison, requires_override]
+    AdminVerificationDecisionImpact:
+      type: object
+      additionalProperties: false
+      properties:
+        case_public_id: {type: string}
+        case_revision: {type: integer, minimum: 1}
+        lock_version: {type: integer, minimum: 0}
+        decision:
+          type: string
+          enum: [approved, changes_requested, rejected]
+        reason: {type: string}
+        checks:
+          $ref: '#/components/schemas/AdminVerificationChecks'
+        tax_advisory:
+          $ref: '#/components/schemas/AdminVerificationTaxAdvisory'
+        tax_override: {type: boolean}
+        tax_override_reason: {type: string}
+        company_impact:
+          type: object
+          additionalProperties: false
+          properties:
+            company_public_id: {type: string, nullable: true}
+            current_status: {type: string, nullable: true}
+            will_mark_verified: {type: boolean}
+            will_downgrade: {type: boolean}
+          required: [company_public_id, current_status, will_mark_verified, will_downgrade]
+        capability_impact:
+          type: object
+          additionalProperties: false
+          properties:
+            candidate_data_access: {type: string, enum: [eligible_after_recompute, blocked]}
+            job_approval: {type: string, enum: [eligible_after_recompute, blocked]}
+            job_workspace: {type: string, enum: [unchanged]}
+          required: [candidate_data_access, job_approval, job_workspace]
+        verification_hold_impact:
+          type: object
+          additionalProperties: false
+          properties:
+            hold_count: {type: integer, minimum: 0}
+            campaign_count: {type: integer, minimum: 0}
+            job_count: {type: integer, minimum: 0}
+            active_jobs_to_unhide: {type: integer, minimum: 0}
+          required: [hold_count, campaign_count, job_count, active_jobs_to_unhide]
+        unlocks_employer_capabilities: {type: boolean}
+        impact_token: {type: string}
+      required:
+      - case_public_id
+      - case_revision
+      - lock_version
+      - decision
+      - reason
+      - checks
+      - tax_advisory
+      - tax_override
+      - tax_override_reason
+      - company_impact
+      - capability_impact
+      - verification_hold_impact
+      - unlocks_employer_capabilities
+      - impact_token
     AdminVerificationCaseList:
       type: object
       properties:
@@ -14460,6 +14822,157 @@ components:
       - user_public_id
       - verification_method
       - verification_method_label
+    AdminVerificationLifecyclePreviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason: {type: string, minLength: 1, maxLength: 2000}
+      required: [reason]
+    AdminVerificationLifecycleConfirmationRequest:
+      allOf:
+      - $ref: '#/components/schemas/AdminVerificationLifecyclePreviewRequest'
+      - type: object
+        properties:
+          impact_token: {type: string, minLength: 1}
+        required: [impact_token]
+    AdminVerificationLifecycleImpact:
+      type: object
+      additionalProperties: false
+      properties:
+        case_public_id: {type: string}
+        case_revision: {type: integer, minimum: 1}
+        lock_version: {type: integer, minimum: 0}
+        action: {type: string, enum: [revoked, expired]}
+        reason: {type: string}
+        company_impact:
+          type: object
+          additionalProperties: false
+          properties:
+            company_public_id: {type: string, nullable: true}
+            current_status: {type: string, nullable: true}
+            will_downgrade: {type: boolean}
+          required: [company_public_id, current_status, will_downgrade]
+        capability_impact:
+          type: object
+          additionalProperties: false
+          properties:
+            candidate_data_access: {type: string, enum: [blocked]}
+            job_approval: {type: string, enum: [blocked]}
+            job_workspace: {type: string, enum: [unchanged]}
+            job_create_edit_submit: {type: string, enum: [unchanged]}
+          required: [candidate_data_access, job_approval, job_workspace, job_create_edit_submit]
+        resources:
+          type: object
+          additionalProperties: false
+          properties:
+            campaign_count: {type: integer, minimum: 0}
+            job_count: {type: integer, minimum: 0}
+            active_jobs_hidden_from_public: {type: integer, minimum: 0}
+          required: [campaign_count, job_count, active_jobs_hidden_from_public]
+        impact_token: {type: string}
+      required:
+      - case_public_id
+      - case_revision
+      - lock_version
+      - action
+      - reason
+      - company_impact
+      - capability_impact
+      - resources
+      - impact_token
+    AdminVerificationStoredSnapshot:
+      type: object
+      additionalProperties: false
+      description: >-
+        Allowlist presentation của snapshot quyết định. Không bao giờ trả
+        impact_token, integrity fingerprint hoặc field nội bộ không xác định.
+      properties:
+        case_public_id: {type: string}
+        case_revision: {type: integer, minimum: 1}
+        lock_version: {type: integer, minimum: 0}
+        decision: {type: string, enum: [approved, changes_requested, rejected]}
+        action: {type: string, enum: [revoked, expired]}
+        reason: {type: string}
+        checks:
+          $ref: '#/components/schemas/AdminVerificationChecks'
+        tax_advisory:
+          $ref: '#/components/schemas/AdminVerificationTaxAdvisory'
+        tax_override: {type: boolean}
+        tax_override_reason: {type: string}
+        company_impact: {type: object}
+        capability_impact: {type: object}
+        verification_hold_impact: {type: object}
+        resources: {type: object}
+    AdminVerificationDecisionWorkflowError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+          - VERIFICATION_INVALID_TRANSITION
+          - VERIFICATION_REASON_REQUIRED
+          - VERIFICATION_REQUIREMENTS_INCOMPLETE
+          - TAX_LOOKUP_PENDING
+          - TAX_OVERRIDE_REQUIRED
+          - TAX_OVERRIDE_REASON_REQUIRED
+        detail: {type: string}
+        current_status: {type: string}
+        allowed_statuses: {type: array, items: {type: string}}
+        missing_requirements: {type: array, items: {type: string}}
+        tax_status: {type: string}
+      required: [code, detail]
+    AdminVerificationDecisionFieldError:
+      type: object
+      properties:
+        decision: {type: array, items: {type: string}}
+        reason: {type: array, items: {type: string}}
+        impact_token: {type: array, items: {type: string}}
+        tax_override: {type: array, items: {type: string}}
+        tax_override_reason: {type: array, items: {type: string}}
+    AdminVerificationDecisionBadRequest:
+      oneOf:
+      - $ref: '#/components/schemas/AdminVerificationDecisionWorkflowError'
+      - $ref: '#/components/schemas/AdminVerificationDecisionFieldError'
+    AdminVerificationLifecycleWorkflowError:
+      type: object
+      properties:
+        code:
+          type: string
+          enum: [VERIFICATION_INVALID_TRANSITION, VERIFICATION_REASON_REQUIRED]
+        detail: {type: string}
+        current_status: {type: string}
+        allowed_statuses: {type: array, items: {type: string}}
+      required: [code, detail]
+    AdminVerificationLifecycleFieldError:
+      type: object
+      properties:
+        reason: {type: array, items: {type: string}}
+        impact_token: {type: array, items: {type: string}}
+    AdminVerificationLifecycleBadRequest:
+      oneOf:
+      - $ref: '#/components/schemas/AdminVerificationLifecycleWorkflowError'
+      - $ref: '#/components/schemas/AdminVerificationLifecycleFieldError'
+    AdminVerificationPermissionError:
+      type: object
+      additionalProperties: false
+      properties:
+        code: {type: string, enum: [admin_permission_denied]}
+        message: {type: string}
+      required: [code, message]
+    AdminVerificationStaleError:
+      type: object
+      additionalProperties: false
+      properties:
+        code: {type: string, enum: [admin_resource_changed]}
+        message: {type: string}
+      required: [code, message]
+    AdminVerificationTaxConflictError:
+      type: object
+      additionalProperties: false
+      properties:
+        code: {type: string, enum: [company_tax_code_conflict]}
+        message: {type: string}
+      required: [code, message]
     AdminVerificationDocument:
       type: object
       properties:
@@ -14587,6 +15100,11 @@ components:
       - resubmitted
       - approved
       - rejected
+      - revoked
+      - expired
+      - reapproved
+      - hold_applied
+      - hold_released
       - sensitive_viewed
       - tax_lookup_refreshed
       type: string
@@ -14598,6 +15116,11 @@ components:
         * `resubmitted` - Đã nộp lại
         * `approved` - Đã duyệt
         * `rejected` - Đã từ chối
+        * `revoked` - Đã thu hồi
+        * `expired` - Hết hiệu lực
+        * `reapproved` - Đã duyệt lại
+        * `hold_applied` - Đã áp dụng compliance hold
+        * `hold_released` - Đã gỡ compliance hold
         * `sensitive_viewed` - Đã xem dữ liệu nhạy cảm
         * `tax_lookup_refreshed` - Đã tra cứu lại mã số thuế
     AnnouncementActionRequest:
@@ -25541,6 +26064,8 @@ components:
       - changes_requested
       - rejected
       - approved
+      - revoked
+      - expired
       type: string
       description: |-
         * `draft` - Chưa nộp
@@ -25549,6 +26074,8 @@ components:
         * `changes_requested` - Cần bổ sung
         * `rejected` - Bị từ chối
         * `approved` - Đã xác thực
+        * `revoked` - Đã thu hồi
+        * `expired` - Hết hiệu lực
     StrategyEnum:
       enum:
       - saved-job-similarity-v1

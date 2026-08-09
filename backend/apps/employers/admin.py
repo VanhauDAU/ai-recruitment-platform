@@ -108,6 +108,8 @@ class RecruiterProfileAdmin(admin.ModelAdmin):
     list_filter = ['company_role', 'gender', 'marketing_opt_in']
     search_fields = ['user__email', 'company__company_name', 'contact_phone', 'verified_phone']
     readonly_fields = [
+        'company',
+        'company_role',
         'verified_phone',
         'phone_verified_at',
         'registration_completed_at',
@@ -117,6 +119,15 @@ class RecruiterProfileAdmin(admin.ModelAdmin):
         'created_at',
         'updated_at',
     ]
+
+    def save_model(self, request, obj, form, change):
+        """Fail closed if a forged admin form tries to bypass link workflow."""
+
+        if change and obj.pk:
+            persisted = RecruiterProfile.objects.only('company_id', 'company_role').get(pk=obj.pk)
+            obj.company_id = persisted.company_id
+            obj.company_role = persisted.company_role
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(RecruitmentNeed)

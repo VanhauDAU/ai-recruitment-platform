@@ -41,9 +41,9 @@ review DPA.
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | In remediation — shared core merged; domain/staging open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open — domain/UI integration | ER-3 |
-| ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
-| ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
-| ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2; reconciliation follow-up ER-5 | ER-2/ER-5 |
+| ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Closed ER-5 backend | ER-5 |
+| ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Closed ER-1C/ER-5 backend | ER-1C/ER-5 |
+| ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2/ER-5 backend | ER-2/ER-5 |
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | In remediation — adapter foundation merged; live workflow open | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
@@ -302,8 +302,32 @@ review DPA.
 - Targeted evidence: 20 moderation/query-budget tests, 1 duplicate/DPA
   regression và 4 frontend blocker tests; Ruff, format, import-linter và
   migration drift đều đạt.
-- Residual risk: nếu approve hoàn tất trước rồi verification bị revoke, ER-5
-  phải lập tức tạo verification hold cho job/campaign đang active.
+- Residual risk trên đã được đóng ở ER-5 backend: revoke/expire khóa cùng prefix
+  với job approval và tạo hold/link cho resource hiện hữu trong transaction.
+
+**ER-5 backend evidence (2026-08-10)**
+
+- `review_verification_document`, phone/DPA/recruitment-need reconciliation chỉ
+  cập nhật prerequisite/document; không có đường tự approve case/company.
+- Final decision và revoke/expire là workflow preview/confirm; impact token ký
+  privacy-safe fingerprint của case, prerequisite, company, document/tax
+  evidence, campaign/job và hold/link. Same-count replacement cũng làm stale.
+- Global lock prefix là `User → Recruiter → VerificationCase → Company`, rồi
+  campaign/job/document/evidence/hold theo PK. Race approve-vs-revoke được test
+  cả hai thứ tự commit; phía commit sau luôn recheck trạng thái mới.
+- Hold có source/reason riêng, unique active theo recruiter/source và release
+  exact source. Public job filter fail closed khi recruiter relink sai company
+  hoặc có verification hold; không đổi business/moderation status.
+- Permission revoke/tax override tách khỏi review và không grant mặc định.
+  Tax response hash, filename và internal integrity fingerprint bị redacted;
+  `decision_snapshot` dùng allowlist.
+- PostgreSQL Docker cổng 5433: 235 test hiện hữu/ER-5 đạt trước một expectation
+  legacy sai; expectation được đảo sang “phone không auto approve” và đạt 1/1.
+  Query budget admin list/detail/impact đạt trần 4/5/7. Full Ruff/format,
+  import-linter, layering, Django/migration plan, OpenAPI refs, permission
+  registry và Markdown gates đều đạt.
+- Residual không phải backend security bypass: admin final-decision/compliance
+  UI còn phải consume đúng contract preview/confirm và stale refresh.
 
 ### ER-F08 — Candidate-data access
 

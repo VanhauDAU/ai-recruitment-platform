@@ -498,7 +498,7 @@ class PhoneOtpTests(APITestCase):
         self.assertEqual(self.recruiter.verified_phone, '0912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
 
-    def test_verifying_phone_last_approves_a_fully_reviewed_case(self):
+    def test_verifying_phone_last_does_not_approve_a_fully_reviewed_case(self):
         now = timezone.now()
         self.user.email_verified = True
         self.user.save(update_fields=['email_verified', 'updated_at'])
@@ -569,7 +569,9 @@ class PhoneOtpTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         verification_case.refresh_from_db()
-        self.assertEqual(verification_case.status, EmployerVerificationCase.Status.APPROVED)
+        company.refresh_from_db()
+        self.assertEqual(verification_case.status, EmployerVerificationCase.Status.IN_REVIEW)
+        self.assertNotEqual(company.verification_status, Company.VerificationStatus.VERIFIED)
 
     def test_otp_email_is_deferred_until_commit(self):
         """Mã chỉ được gửi sau khi hàng PhoneOtp thực sự commit, không sớm hơn."""
