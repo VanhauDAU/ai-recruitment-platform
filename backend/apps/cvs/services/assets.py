@@ -157,15 +157,24 @@ def validate_document_assets(*, owner, content_json, style_json):
             raise ValidationError({'style_json.background_asset_id': 'Background is unavailable.'})
 
 
-def sign_asset(asset, version=None):
-    value = json.dumps(
-        {'asset': asset.public_id, 'version': version.public_id if version else None},
-        separators=(',', ':'),
-    )
+def sign_asset(asset, version=None, *, audience='', subject='', resource=''):
+    payload = {
+        'asset': asset.public_id,
+        'version': version.public_id if version else None,
+    }
+    if audience:
+        payload.update(
+            {
+                'audience': audience,
+                'subject': subject,
+                'resource': resource,
+            }
+        )
+    value = json.dumps(payload, separators=(',', ':'))
     return signing.TimestampSigner(salt=ASSET_TOKEN_SALT).sign(value)
 
 
-def resolve_asset_token(token):
+def resolve_asset_token(token, *, include_context=False):
     try:
         value = signing.TimestampSigner(salt=ASSET_TOKEN_SALT).unsign(
             token, max_age=ASSET_TOKEN_MAX_AGE
@@ -182,10 +191,21 @@ def resolve_asset_token(token):
             raise CvAsset.DoesNotExist from error
         if asset.public_id not in document_asset_ids(version.content_json, version.style_json):
             raise CvAsset.DoesNotExist
+    if include_context:
+        return asset, payload
     return asset
 
 
-def asset_map(*, content_json, style_json, request=None, owner=None, version=None, signed=False):
+def asset_map(
+    *,
+    content_json,
+    style_json,
+    request=None,
+    owner=None,
+    version=None,
+    signed=False,
+    token_context=None,
+):
     requested = document_asset_ids(content_json, style_json)
     assets = CvAsset.objects.filter(public_id__in=requested, is_active=True)
     result = {}
@@ -194,7 +214,8 @@ def asset_map(*, content_json, style_json, request=None, owner=None, version=Non
             continue
         path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
         if signed:
-            path = f'{path}?token={sign_asset(asset, version)}'
+            token_context = token_context or {}
+            path = f'{path}?token={sign_asset(asset, version, **token_context)}'
         url = request.build_absolute_uri(path) if request else path
         result[asset.public_id] = {
             'url': url,

@@ -1,9 +1,21 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ...models import RecruiterProfile
-from ...selectors import build_employer_onboarding_steps
+from ...models import DpaStatus, RecruiterProfile
+from ...selectors import build_employer_onboarding_steps, build_employer_readiness
 from ...services import verification_checks
 from .companies import CompanySerializer
+
+
+class EmployerReadinessBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    capabilities = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=('job_workspace', 'verification', 'candidate_data', 'job_approval')
+        )
+    )
+    message = serializers.CharField()
+    action = serializers.CharField()
 
 
 class RecruiterProfileSerializer(serializers.ModelSerializer):
@@ -11,6 +23,11 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     work_location = serializers.SerializerMethodField()
     onboarding = serializers.SerializerMethodField()
     verification_case = serializers.SerializerMethodField()
+    job_workspace_ready = serializers.SerializerMethodField()
+    verification_approved = serializers.SerializerMethodField()
+    candidate_data_access = serializers.SerializerMethodField()
+    dpa_status = serializers.SerializerMethodField()
+    blockers = serializers.SerializerMethodField()
 
     class Meta:
         model = RecruiterProfile
@@ -32,6 +49,11 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'dpa_accepted_at',
             'onboarding',
             'verification_case',
+            'job_workspace_ready',
+            'verification_approved',
+            'candidate_data_access',
+            'dpa_status',
+            'blockers',
             'created_at',
         ]
         read_only_fields = [f for f in fields if f != 'position_title']
@@ -47,7 +69,45 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
 
     def get_onboarding(self, obj):
         """Các mốc đăng ký, bảo mật và kích hoạt — luôn suy từ dữ liệu nguồn."""
-        return build_employer_onboarding_steps(obj)
+        return self._onboarding(obj)
+
+    def _onboarding(self, obj):
+        cached = getattr(self, '_onboarding_cache', None)
+        if cached is None:
+            cached = self._onboarding_cache = {}
+        if obj.pk not in cached:
+            cached[obj.pk] = build_employer_onboarding_steps(obj)
+        return cached[obj.pk]
+
+    def _readiness(self, obj):
+        cached = getattr(self, '_readiness_cache', None)
+        if cached is None:
+            cached = self._readiness_cache = {}
+        if obj.pk not in cached:
+            cached[obj.pk] = build_employer_readiness(
+                obj,
+                onboarding=self._onboarding(obj),
+            )
+        return cached[obj.pk]
+
+    def get_job_workspace_ready(self, obj) -> bool:
+        return self._readiness(obj)['job_workspace_ready']
+
+    def get_verification_approved(self, obj) -> bool:
+        return self._readiness(obj)['verification_approved']
+
+    def get_candidate_data_access(self, obj) -> bool:
+        return self._readiness(obj)['candidate_data_access']
+
+    @extend_schema_field(
+        serializers.ChoiceField(choices=[(status.value, status.value) for status in DpaStatus])
+    )
+    def get_dpa_status(self, obj) -> str:
+        return self._readiness(obj)['dpa_status']
+
+    @extend_schema_field(EmployerReadinessBlockerSerializer(many=True))
+    def get_blockers(self, obj) -> list[dict]:
+        return self._readiness(obj)['blockers']
 
     def get_verification_case(self, obj):
         case = getattr(obj, 'verification_case', None)

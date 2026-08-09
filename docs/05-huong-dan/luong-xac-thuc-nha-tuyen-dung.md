@@ -268,12 +268,46 @@ Khối thứ hai là thỏa thuận **nền tảng – Nhà tuyển dụng**: ng
 đầy đủ ở `/data-processing-agreement`, tích xác nhận rồi bấm **Xác nhận** ngay
 trên trang. Cả Lưu và Xác nhận đều hoạt động khi nhà tuyển dụng chưa cập nhật
 thông tin công ty; hai trạng thái `candidate_dpa_submitted` và `dpa_accepted`
-vẫn được tính độc lập. Sau khi đủ năm điều kiện, recruiter có thể tạo nháp và
-gửi tin vào hàng chờ admin duyệt; tin chỉ hiển thị với ứng viên khi được duyệt.
+vẫn được lưu độc lập. Tài liệu chỉ mở readiness của workspace khi thuộc đúng
+recruiter và công ty đang liên kết; tài liệu từ công ty trước không được kế
+thừa sau khi relink. Sau khi đủ điều kiện workspace, recruiter có thể đọc/tạo
+nháp và gửi tin vào hàng chờ admin duyệt; tin chỉ hiển thị với ứng viên khi
+được duyệt.
 Tài khoản có ba lượt gửi duyệt lần đầu miễn phí trọn đời mặc định; gửi lại tin
 bị từ chối không tiêu thêm lượt. Người dùng vẫn có thể chọn “xác thực thêm sau”
-để vào dashboard, nhưng mỗi lần mở trang tin tuyển dụng sẽ được kiểm tra lại và
-chuyển về checklist nếu chưa đủ năm điều kiện.
+để vào dashboard. Direct URL job/campaign vẫn giữ nguyên route; backend trả
+blocker và giao diện hiển thị compliance action phù hợp thay vì tự redirect về
+checklist.
+
+### Readiness và quyền dữ liệu ứng viên
+
+Backend tách ba quyết định, không dùng một boolean chung:
+
+- `job_workspace_ready`: quyền vào/đọc/ghi job và campaign workspace;
+- `verification_approved`: case đại diện đã được admin duyệt đúng recruiter và
+  công ty hiện tại;
+- `candidate_data_access`: chỉ true khi workspace ready, verification approved
+  và DPA current.
+
+`GET /api/employer/me/` trả ba field trên cùng `dpa_status` và `blockers[]`.
+Blocker có `code`, `capabilities`, `message`, `action`; frontend map `action`
+qua allowlist route/action nội bộ, không tin URL động và không tự ghép từ
+checklist. Verification còn pending, rejected
+hoặc changes-requested không tự khóa workspace nếu các điều kiện workspace vẫn
+hợp lệ, nhưng luôn khóa dữ liệu ứng viên và admin approval.
+
+Job/campaign list/detail/options/report/activity và mọi mutation đều recheck
+workspace ở backend; direct API không thể bỏ qua frontend guard.
+Posting-context là ngoại lệ để tài khoản chưa ready vẫn đọc được blocker và
+đường khắc phục. Application list/detail/export/history/CV snapshot dùng gate
+candidate-data nghiêm ngặt hơn. Workspace bị chặn trả
+`EMPLOYER_WORKSPACE_BLOCKED`; candidate data bị chặn trả
+`CANDIDATE_DATA_BLOCKED`.
+
+`dpa_status` có contract
+`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Cơ sở dữ liệu
+hiện tại mới chứng minh được `missing|current`; evidence version/hash/IP/session
+và các trạng thái còn lại thuộc ER-6, không suy diễn cho tài khoản cũ.
 
 ### Cấp xác thực trên sidebar
 
@@ -290,12 +324,12 @@ phần trăm hoàn thành, trạng thái từng điều kiện và liên kết �
 phù hợp. DLCN và đăng tin đầu tiên vẫn hiển thị riêng ở checklist đầy đủ, không
 làm thay đổi cấp sidebar.
 
-Backend trả thêm `employer_verification_completed` trong session. Trạng thái này
-bằng `true` khi đã xác thực điện thoại, liên kết công ty với membership được
-duyệt, nộp ĐKDN, nộp thỏa thuận DLCN ứng viên và chấp nhận thỏa thuận nền tảng.
-Nó không phụ thuộc bước đăng tin đầu tiên; bước đó chỉ được ghi nhận sau khi
-tin đầu tiên thực sự xuất bản. Sau đăng nhập, tài khoản có trạng thái `false` vào `/employer-verify`; trạng thái
-`true` vào thẳng dashboard hoặc deep-link an toàn.
+Backend trả `employer_job_workspace_ready` trong session. Field cũ
+`employer_verification_completed` vẫn tồn tại trong compatibility window và
+không được dùng làm nguồn mới cho candidate-data permission. Nó không phụ
+thuộc bước đăng tin đầu tiên; bước đó chỉ được ghi nhận sau khi tin đầu tiên
+thực sự xuất bản. Client mới dùng workspace field cho route job/campaign và
+đọc canonical blocker từ `/api/employer/me/`.
 
 Dashboard dùng shell quản trị riêng, responsive desktop/mobile. Cấu trúc shell
 gồm dải cảnh báo tuân thủ theo trạng thái DLCN, topbar tối chứa hành động nhanh,

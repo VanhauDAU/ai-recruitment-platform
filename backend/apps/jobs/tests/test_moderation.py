@@ -17,10 +17,10 @@ from apps.accounts.services import assign_membership
 from apps.employers.models import (
     Company,
     EmployerVerificationCase,
-    RecruiterProfile,
     RecruitmentCampaign,
 )
 from apps.employers.services import recruiter_job_approval_state
+from apps.employers.tests.readiness_helpers import make_employer_ready
 
 from ..models import (
     Job,
@@ -29,21 +29,16 @@ from ..models import (
     JobModerationEvent,
     JobStatusHistory,
 )
-from ..services import approve_job, reject_job
+from ..services import JobModerationStale, approve_job, reject_job
 
 
 def make_approvable_recruiter(*, employer, company):
-    recruiter = RecruiterProfile.objects.create(
-        user=employer,
+    recruiter = make_employer_ready(
+        employer,
         company=company,
-        dpa_accepted_at=timezone.now(),
+        candidate_data=True,
     )
-    verification_case = EmployerVerificationCase.objects.create(
-        recruiter=recruiter,
-        company=company,
-        status=EmployerVerificationCase.Status.APPROVED,
-    )
-    return recruiter, verification_case
+    return recruiter, recruiter.verification_case
 
 
 class JobModerationFixture:
@@ -126,6 +121,20 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
 
     def decision_url(self):
         return reverse('admin-job-decision', kwargs={'public_id': self.job.public_id})
+
+    def test_deleted_campaign_from_stale_preview_returns_conflict_not_server_error(self):
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.recruiter,
+            company=self.company,
+            name='Campaign deleted during review',
+        )
+        self.job.campaign = campaign
+        self.job.save(update_fields=['campaign', 'updated_at'])
+        stale_job = Job.objects.select_related('posted_by', 'campaign').get(pk=self.job.pk)
+        campaign.delete()
+
+        with self.assertRaises(JobModerationStale):
+            approve_job(job=stale_job, user=self.admin)
 
     def test_admin_approves_pending_job_and_makes_it_public(self):
         self.client.force_authenticate(self.admin)

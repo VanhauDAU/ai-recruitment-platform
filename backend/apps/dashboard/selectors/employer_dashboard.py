@@ -2,14 +2,13 @@
 
 from datetime import timedelta
 
-from django.conf import settings
 from django.db.models import Count, Q, Sum, Value
 from django.db.models.functions import Coalesce, TruncDate
 from django.utils import timezone
 
 from apps.applications.models import Application
-from apps.employers.models import EmployerVerificationCase, RecruiterProfile
-from apps.employers.selectors import build_employer_onboarding_steps
+from apps.employers.models import RecruiterProfile
+from apps.employers.selectors import build_employer_onboarding_steps, build_employer_readiness
 from apps.jobs.models import Job
 
 
@@ -110,14 +109,7 @@ def build_employer_dashboard(user):
     verification = build_employer_onboarding_steps(recruiter)
     company = recruiter.company if verification['company_linked'] else None
     need = next(iter(recruiter.recruitment_needs.all()), None)
-    candidate_data_allowed = (
-        not getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS', False)
-        or EmployerVerificationCase.objects.filter(
-            recruiter=recruiter,
-            company_id=recruiter.company_id,
-            status=EmployerVerificationCase.Status.APPROVED,
-        ).exists()
-    )
+    readiness = build_employer_readiness(recruiter, onboarding=verification)
 
     return {
         'account': {
@@ -145,6 +137,6 @@ def build_employer_dashboard(user):
         },
         'recent_jobs': _recent_jobs(jobs),
         'recent_applications': (
-            _recent_applications(applications) if candidate_data_allowed else []
+            _recent_applications(applications) if readiness['candidate_data_access'] else []
         ),
     }
