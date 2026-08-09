@@ -58,6 +58,18 @@ permission admin.
   trim hoặc nhãn an toàn `Thành viên công ty`.
 - `scope=mine` dùng cho thẻ cá nhân; `scope=company` dùng cho lịch sử chung và
   là mặc định để giữ tương thích. Giá trị scope khác trả `400`.
+- Consumer phải dùng query key riêng cho `mine` và `company`, đồng thời giữ một
+  root chung để invalidate sau mutation. Thẻ cá nhân chỉ được suy trạng thái và
+  pending action từ response `mine`; tuyệt đối không lấy phần tử đầu của
+  response `company` làm request của actor.
+- Loading, error, empty và has-data là bốn state riêng. Nếu một trong hai query
+  lỗi, kể cả background refresh, client hiện retry và khóa fail-closed toàn bộ
+  create/edit/upload/delete/submit cho tới khi cả hai query thành công; không
+  chuyển error thành mảng rỗng.
+- Ngày trên thẻ cá nhân chỉ dùng `submitted_at` hợp lệ. Không fallback sang
+  `created_at`, `updated_at` hoặc placeholder. Lịch sử chỉ render
+  `requested_by_summary.display_name` và nhãn field theo allowlist, không render
+  raw change value, storage key, preview hay file URL.
 - Với request của member khác, `changes.logo_url`/`cover_image_url` là `null`,
   `gallery_additions=[]` và `media_previews={}`. Client chỉ được biết field
   media đã thay đổi, không nhận storage key hay preview URL.

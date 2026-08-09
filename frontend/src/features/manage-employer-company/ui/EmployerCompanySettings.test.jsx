@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerCompanySettings from './EmployerCompanySettings'
@@ -8,6 +8,8 @@ const api = vi.hoisted(() => ({
   employerProfileKeys: {
     company: ['employer', 'company'],
     companyDocuments: ['employer', 'company', 'documents'],
+    companyUpdateRequests: ['employer', 'company', 'update-requests'],
+    companyUpdateRequestList: (scope) => ['employer', 'company', 'update-requests', { scope }],
   },
   getEmployerProfile: vi.fn(),
   getEmployerIndustries: vi.fn(),
@@ -30,6 +32,7 @@ vi.mock('@/entities/employer-profile', () => api)
 
 describe('EmployerCompanySettings', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     api.getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: false, phone_verified: true } })
     api.getEmployerIndustries.mockResolvedValue([{ id: 1, name: 'IT - Phần mềm' }])
     api.getEmployerCompanyCatalogs.mockResolvedValue({
@@ -97,9 +100,152 @@ describe('EmployerCompanySettings', () => {
 
     expect(await screen.findByText('Công ty đã liên kết')).toBeInTheDocument()
     expect(screen.getByText(/tài khoản không thể chuyển sang công ty khác/)).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: /Tạo yêu cầu/ })).toBeEnabled()
+    const mineRequest = await screen.findByRole('region', { name: 'Yêu cầu của tôi' })
+    expect(within(mineRequest).getByRole('button', { name: /Tạo yêu cầu/ })).toBeEnabled()
+    expect(within(mineRequest).queryByText(/Ngày gửi gần nhất/)).not.toBeInTheDocument()
+    expect(api.getEmployerCompanyUpdateRequests).toHaveBeenCalledWith({ scope: 'mine' })
+    expect(api.getEmployerCompanyUpdateRequests).toHaveBeenCalledWith({ scope: 'company' })
     expect(screen.queryByRole('tab', { name: /Tìm kiếm thông tin công ty/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: /Tạo công ty mới/ })).not.toBeInTheDocument()
+  })
+
+  it('keeps another member request out of the personal card and renders redacted company history', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'member',
+      company: {
+        public_id: 'co_linked', company_name: 'Công ty đã liên kết', tax_code: '0101234567',
+        verification_status: 'unverified', industries_detail: [], images: [],
+      },
+    })
+    const otherRequest = {
+      public_id: 'cur_other',
+      status: 'pending',
+      submitted_at: '2026-08-10T08:30:00Z',
+      requested_by_summary: { public_id: 'usr_other', display_name: 'Trần Thành viên' },
+      changes: {
+        company_name: 'Tên công ty không được render trong lịch sử',
+        logo_url: 'employers/private/internal-logo.png',
+      },
+      documents: [{ file_url: '/api/employer/company/documents/private/content/' }],
+    }
+    api.getEmployerCompanyUpdateRequests.mockImplementation(({ scope }) => (
+      Promise.resolve(scope === 'mine' ? [] : [otherRequest])
+    ))
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    const createRequest = await screen.findByRole('button', { name: /Tạo yêu cầu/ })
+    const mineRequest = screen.getByRole('region', { name: 'Yêu cầu của tôi' })
+    expect(createRequest).toBeEnabled()
+    expect(within(mineRequest).queryByText(/Ngày gửi gần nhất/)).not.toBeInTheDocument()
+    expect(within(mineRequest).queryByText('Đang xử lý')).not.toBeInTheDocument()
+
+    const history = screen.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })
+    expect(within(history).getByText('Trần Thành viên')).toBeInTheDocument()
+    expect(within(history).getByText('Nội dung: Tên công ty, Logo công ty')).toBeInTheDocument()
+    expect(screen.queryByText('Tên công ty không được render trong lịch sử')).not.toBeInTheDocument()
+    expect(screen.queryByText('employers/private/internal-logo.png')).not.toBeInTheDocument()
+    expect(screen.queryByText('/api/employer/company/documents/private/content/')).not.toBeInTheDocument()
+  })
+
+  it('shows a retry state and keeps write actions locked when request data fails', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'member',
+      company: {
+        public_id: 'co_linked', company_name: 'Công ty đã liên kết', tax_code: '0101234567',
+        verification_status: 'unverified', industries_detail: [], images: [],
+      },
+    })
+    let mineFails = true
+    api.getEmployerCompanyUpdateRequests.mockImplementation(({ scope }) => {
+      if (scope === 'mine' && mineFails) return Promise.reject(new Error('request failed'))
+      return Promise.resolve([])
+    })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('Không tải được dữ liệu yêu cầu chỉnh sửa')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Tạo yêu cầu' })).not.toBeInTheDocument()
+
+    mineFails = false
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }))
+
+    expect(await screen.findByRole('button', { name: /Tạo yêu cầu/ })).toBeEnabled()
+    expect(screen.queryByText('Không tải được dữ liệu yêu cầu chỉnh sửa')).not.toBeInTheDocument()
+  })
+
+  it('omits a missing or invalid submitted date without falling back to update timestamps', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'member',
+      company: {
+        public_id: 'co_linked', company_name: 'Công ty đã liên kết', tax_code: '0101234567',
+        verification_status: 'unverified', industries_detail: [], images: [],
+      },
+    })
+    const request = {
+      public_id: 'cur_invalid_date',
+      status: 'pending',
+      submitted_at: 'not-a-date',
+      updated_at: '2035-08-10T08:30:00Z',
+      requested_by_summary: { public_id: 'usr_member', display_name: 'Nguyễn Thành viên' },
+      changes: { website_url: 'https://example.com' },
+    }
+    api.getEmployerCompanyUpdateRequests.mockResolvedValue([request])
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await screen.findByRole('button', { name: /Chỉnh sửa yêu cầu/ })
+    const mineRequest = screen.getByRole('region', { name: 'Yêu cầu của tôi' })
+    expect(within(mineRequest).queryByText(/Ngày gửi gần nhất/)).not.toBeInTheDocument()
+    expect(within(mineRequest).queryByText(/2035/)).not.toBeInTheDocument()
+  })
+
+  it('disables an open form when a background request refresh fails', async () => {
+    api.getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      company_role: 'owner',
+      company: {
+        public_id: 'co_linked', company_name: 'Công ty đã liên kết', tax_code: '0101234567',
+        verification_status: 'unverified', industries_detail: [], images: [],
+      },
+    })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter><EmployerCompanySettings /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tạo yêu cầu/ }))
+    const submit = await screen.findByRole('button', { name: /Gửi yêu cầu cập nhật/ })
+    expect(submit).toBeEnabled()
+
+    api.getEmployerCompanyUpdateRequests.mockRejectedValue(new Error('background refresh failed'))
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey: api.employerProfileKeys.companyUpdateRequests })
+    })
+
+    await waitFor(() => expect(submit).toBeDisabled())
+    expect(screen.getByRole('button', { name: 'Chọn logo' })).toBeDisabled()
+    expect(screen.getByText('Không tải được dữ liệu yêu cầu chỉnh sửa')).toBeInTheDocument()
   })
 
   it('keeps an existing pending company update editable', async () => {
@@ -115,23 +261,30 @@ describe('EmployerCompanySettings', () => {
         images: [],
       },
     })
-    api.getEmployerCompanyUpdateRequests.mockResolvedValue([
+    const requests = [
       {
         public_id: 'cur_pending',
         status: 'pending',
         changes: { website_url: 'https://example.com/abc' },
         revision: 2,
+        submitted_at: '2026-07-25T10:00:00Z',
         created_at: '2026-07-25T10:00:00Z',
-        updated_at: '2026-07-26T10:00:00Z',
+        updated_at: '2035-07-26T10:00:00Z',
+        requested_by_summary: { public_id: 'usr_owner', display_name: 'Nguyễn Chủ sở hữu' },
       },
       {
         public_id: 'cur_rejected',
         status: 'rejected',
         review_note: 'Lý do từ chối của yêu cầu cũ.',
+        submitted_at: '2026-07-24T10:00:00Z',
         created_at: '2026-07-24T10:00:00Z',
         updated_at: '2026-07-24T11:00:00Z',
+        requested_by_summary: { public_id: 'usr_owner', display_name: 'Nguyễn Chủ sở hữu' },
       },
-    ])
+    ]
+    api.getEmployerCompanyUpdateRequests.mockImplementation(({ scope }) => (
+      Promise.resolve(scope === 'mine' ? [requests[0]] : requests)
+    ))
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
     render(
@@ -140,11 +293,14 @@ describe('EmployerCompanySettings', () => {
       </QueryClientProvider>,
     )
 
-    const updateRequest = await screen.findByRole('region', { name: 'Yêu cầu cập nhật thông tin công ty' })
+    await screen.findByRole('button', { name: /Chỉnh sửa yêu cầu/ })
+    const updateRequest = screen.getByRole('region', { name: 'Yêu cầu của tôi' })
 
     expect(within(updateRequest).getByRole('button', { name: /Chỉnh sửa yêu cầu/ })).toBeEnabled()
     expect(within(updateRequest).getByText('Đang xử lý')).toBeInTheDocument()
-    expect(screen.queryByText('Bị từ chối')).not.toBeInTheDocument()
+    expect(within(updateRequest).getByText(/2026/)).toBeInTheDocument()
+    expect(within(updateRequest).queryByText(/2035/)).not.toBeInTheDocument()
+    expect(within(updateRequest).queryByText('Bị từ chối')).not.toBeInTheDocument()
     expect(screen.queryByText('Lý do từ chối của yêu cầu cũ.')).not.toBeInTheDocument()
   })
 
@@ -171,7 +327,8 @@ describe('EmployerCompanySettings', () => {
         gallery_additions: ['http://localhost:8000/media/employers/co_linked/gallerys/office.png'],
       },
       documents: [],
-      updated_at: '2026-07-27T00:00:00Z',
+      submitted_at: '2026-07-27T00:00:00Z',
+      requested_by_summary: { public_id: 'usr_owner', display_name: 'Nguyễn Chủ sở hữu' },
     }])
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
@@ -224,7 +381,8 @@ describe('EmployerCompanySettings', () => {
         status_label: 'Cần bổ sung',
         review_note: 'Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.',
       }],
-      updated_at: '2026-07-27T00:00:00Z',
+      submitted_at: '2026-07-27T00:00:00Z',
+      requested_by_summary: { public_id: 'usr_owner', display_name: 'Nguyễn Chủ sở hữu' },
     }])
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
@@ -234,7 +392,8 @@ describe('EmployerCompanySettings', () => {
       </QueryClientProvider>,
     )
 
-    const requestRegion = await screen.findByRole('region', { name: 'Yêu cầu cập nhật thông tin công ty' })
+    await screen.findByRole('button', { name: 'Bổ sung giấy tờ' })
+    const requestRegion = screen.getByRole('region', { name: 'Yêu cầu của tôi' })
     expect(within(requestRegion).getByText('Cần bổ sung giấy tờ')).toBeInTheDocument()
     expect(screen.getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeInTheDocument()
 

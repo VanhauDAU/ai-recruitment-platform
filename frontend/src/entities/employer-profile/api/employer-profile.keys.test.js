@@ -9,4 +9,22 @@ describe('employer profile query keys', () => {
       'documents',
     ])
   })
+
+  it('isolates personal and company update-request caches under one root', () => {
+    expect(employerProfileKeys.companyUpdateRequests).toEqual([
+      ...employerProfileKeys.company,
+      'update-requests',
+    ])
+    expect(employerProfileKeys.companyUpdateRequestList('mine')).toEqual([
+      ...employerProfileKeys.companyUpdateRequests,
+      { scope: 'mine' },
+    ])
+    expect(employerProfileKeys.companyUpdateRequestList('company')).toEqual([
+      ...employerProfileKeys.companyUpdateRequests,
+      { scope: 'company' },
+    ])
+    expect(employerProfileKeys.companyUpdateRequestList('mine')).not.toEqual(
+      employerProfileKeys.companyUpdateRequestList('company'),
+    )
+  })
 })

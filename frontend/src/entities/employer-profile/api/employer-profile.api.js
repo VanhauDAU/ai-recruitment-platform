@@ -134,8 +134,11 @@ export async function deleteEmployerCompanyImage(id) {
   await api.delete(`/employer/company/images/${id}/`)
 }
 
-export async function getEmployerCompanyUpdateRequests() {
-  const { data } = await api.get('/employer/company/update-requests/')
+export async function getEmployerCompanyUpdateRequests({ scope } = {}) {
+  const request = scope
+    ? api.get('/employer/company/update-requests/', { params: { scope } })
+    : api.get('/employer/company/update-requests/')
+  const { data } = await request
   return data?.results || data || []
 }
 
