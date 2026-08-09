@@ -180,9 +180,9 @@ Workflow bắt buộc hai bước và backend là nguồn quyết định cuối
   `TAX_LOOKUP_PENDING`, `TAX_OVERRIDE_REQUIRED`,
   `TAX_OVERRIDE_REASON_REQUIRED`; field validation vẫn theo tên field.
 
-Frontend admin ER-5 chưa được coi hoàn tất cho tới khi UI consume đủ impact,
-company warning, override reason và stale refresh; contract backend này không
-cho phép UI gọi confirm trực tiếp hoặc tự suy trạng thái.
+Frontend admin ER-5 đã consume đủ impact, company warning, override reason và
+stale refresh. UI không gọi confirm trực tiếp hoặc tự suy trạng thái; mọi thay
+đổi payload sau preview xóa impact hiện tại và bắt preview lại.
 
 ### Contract blocker duyệt tin
 
@@ -198,6 +198,11 @@ Khi blocker xuất hiện giữa preview và submit, backend trả HTTP 400 vớ
 detail và không hiển thị toast thành công. `review_token` bảo vệ revision của
 job nhưng không thay thế việc backend đọc lại verification/DPA/campaign trong
 transaction.
+
+Frontend map allowlist `verification_required|dpa_outdated` tới deep-link
+`/admin/app/recruiters/{employer_public_id}?tab=verification` chỉ khi actor có
+`employer_verification.view`. Blocker khác chỉ giữ nút approve disabled và
+label backend; không suy route từ message hoặc company.
 
 ## Query strategy
 

@@ -32,6 +32,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   revoke/expire chặn candidate-data/job approval và ẩn active public job nhưng
   không downgrade company hoặc khóa workspace/tạo/sửa/gửi tin.
 
+#### Added — Admin employer final-decision UI ER-5
+
+- Admin phải xem impact trước khi xác nhận approve/changes-requested/reject,
+  revoke hoặc expire; stale impact tải lại hồ sơ và bắt preview lại.
+- Company/capability/resource impact được trình bày trong modal; tax override
+  và lifecycle action bắt buộc quyền/lý do audit tương ứng.
+- Màn kiểm duyệt tin giữ nút duyệt disabled theo blocker backend và hiện link
+  exact recruiter verification chỉ cho actor có quyền xem màn đích.
+
 #### Security — Verification race, redaction và RBAC ER-5
 
 - Chuẩn hóa lock order từ User/Recruiter/VerificationCase đến company/resource;
@@ -41,8 +50,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   hold. Hai permission revoke/tax override được seed nhưng không grant mặc định.
 - Stored decision snapshot dùng allowlist; response thiếu quyền nhạy cảm không
   lộ integrity fingerprint, tax response hash hoặc raw document filename.
-- OpenAPI và contract frontend đã công bố workflow hai bước. Admin UI consume
-  final decision/compliance vẫn là phần còn mở nên ER-5 tổng chưa hoàn tất.
+- OpenAPI, contract frontend và admin UI cùng enforce workflow hai bước; UI
+  không tự suy eligibility hoặc gọi confirm khi chưa có signed impact token.
 
 #### Added — Shared upload quarantine core ER-3
 

@@ -216,6 +216,12 @@ chỉ mang tính bổ trợ; quyết định cuối cùng dựa trên giấy t�
   `legacy_unknown` bằng command dry-run/apply; không bịa actor/quyết định và
   không tự reset hoặc áp hold.
 
+Trên giao diện admin, khối **Quyết định cuối hồ sơ** chỉ hiện action mà actor
+có quyền. Mỗi action mở modal **Xem tác động** trước; nút xác nhận chỉ xuất hiện
+sau khi nhận `impact_token`. Nếu hồ sơ/tài nguyên thay đổi, modal xóa preview,
+tải lại detail và yêu cầu xem tác động lại. Từ màn kiểm duyệt tin, blocker xác
+thực/DPA chỉ tạo link tới đúng recruiter khi actor có quyền xem hồ sơ xác thực.
+
 Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
 chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi
 tới bước OTP. Trang công ty có hai tab độc lập: tìm theo tên/tên thương mại/MST

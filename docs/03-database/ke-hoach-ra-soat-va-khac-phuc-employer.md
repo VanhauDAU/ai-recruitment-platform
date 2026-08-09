@@ -1,7 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** ER-0, ER-1 và ER-2 đã Verified — ER-5 backend đã Verified;
-> ER-3/ER-4/ER-5 UI/ER-6–ER-8 vẫn đang triển khai
+> **Trạng thái:** ER-0, ER-1, ER-2 và ER-5 đã Verified;
+> ER-3/ER-4/ER-6–ER-8 vẫn đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.0
@@ -235,7 +235,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit đã xác nhận candidate CV dùng cùng unsafe default/private storage; tích hợp candidate upload/assets qua shared core trong slice riêng, không tạo coupling `cvs → employers` | Candidate upload integration bắt buộc trong ER-3; quyền xem/tải/export thuộc ER-2 |
 
-Các quyết định trên và ER-D29 đến ER-D45 được người phụ trách sản phẩm xác nhận
+Các quyết định trên và ER-D29 đến ER-D46 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
@@ -721,8 +721,25 @@ rủi ro cao được seed nhưng không grant mặc định. PostgreSQL Docker 
 regression đó đạt riêng 1/1; query budget list/detail/impact giữ trần 4/5/7.
 Ruff/format toàn backend, import-linter, DRF layering, Django check, migration
 drift/plan, OpenAPI YAML/local refs, permission registry, frontend lint/
-architecture và 196 Markdown link đều đạt. ER-5 tổng vẫn `In progress` tới khi
-admin UI consume preview/confirm/stale flow.
+architecture và 196 Markdown link đều đạt.
+
+**Frontend/admin verified (2026-08-10):** branch
+`feature/admin-employer-final-decision` consume đầy đủ decision/revoke/expire
+impact trước confirm, bắt buộc lý do override thuế/lifecycle, fail-closed và
+reload khi `409 admin_resource_changed`. UI chỉ hiện action theo permission
+`review|revoke|tax_override`; duyệt hết document không còn được trình bày như
+duyệt case. Job moderation giữ nút approve disabled theo
+`approve_blockers[]` và chỉ hiện deep-link exact recruiter verification cho
+actor có `employer_verification.view`, dựa trên blocker code allowlist thay vì
+parse label.
+
+Evidence sau sync `dev`: 17/17 targeted unit/API/component, full coverage
+255/255 file và 971/971 test; smoke admin final-decision + job blocker đạt 6/6
+trên desktop/tablet/mobile. Oxlint không lỗi mới, architecture 1.146 module/
+2.301 dependency, production build và bundle budget JS 299,9/320 KiB gzip,
+CSS 34,4/35 KiB đều đạt. ER-5 tổng được đổi sang `Verified`; TTL expiry tự động
+vẫn là policy phase khác theo ER-D41, không phải residual của implementation
+manual đã chốt.
 
 ### ER-6 — SMS và DPA evidence
 
@@ -843,9 +860,7 @@ docs/employer-audit-spec
         │       └── feature/employer-company-request-lifecycle
         │           └── feature/employer-company-request-ui
         └── feature/employer-verification-state-machine
-            ├── feature/admin-employer-final-decision
-            ├── feature/employer-compliance-holds
-            └── feature/admin-job-compliance-ui
+            └── feature/admin-employer-final-decision
                 ├── feature/employer-sms-verification
                 └── feature/employer-dpa-evidence
                     ├── feature/employer-company-unlink-request
@@ -1027,7 +1042,7 @@ Trạng thái thực hiện hiện tại:
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và corrective redirect 3-viewport đều đạt |
 | ER-3 | In progress | Storage boundary và shared quarantine/scan/retention core đã merge; domain integration, frontend, parser-specific PDF/image validation và real ClamAV staging còn mở |
 | ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
-| ER-5 | In progress | Backend Verified; admin final-decision/compliance UI còn mở |
+| ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |

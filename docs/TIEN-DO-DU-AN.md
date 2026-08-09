@@ -7,11 +7,10 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified và corrective UX guard/checklist đã đạt gate; ER-5 backend verified; ER-3 đã merge storage boundary
+> Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX guard/checklist đã đạt gate; ER-3 đã merge storage boundary
 > và shared quarantine/scan/retention core nhưng domain integration, frontend và
 > real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
-> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-5 admin UI còn
-> mở; ER-6A đã merge hạ
+> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
 > tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
@@ -21,7 +20,7 @@ Decision log:
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — shared core đã merge |
 | ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
-| ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — backend verified, admin UI còn mở |
+| ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
@@ -96,8 +95,16 @@ Decision log:
   approve legacy được đảo và regression mới đạt 1/1. Query budget 4/5/7,
   Ruff/format, import-linter, layering, Django/migration/OpenAPI, permission
   registry, frontend lint/architecture và Markdown gate đều đạt.
-- Residual: frontend admin final-decision/company-warning/tax override/stale UX
-  và compliance link trong job UI; ER-5 tổng tiếp tục `In progress`.
+- Frontend admin đã consume impact trước confirm cho final decision và
+  revoke/expire, hiện company/resource/capability impact, bắt reason cho tax
+  override/lifecycle và reload fail-closed khi impact stale.
+- Job moderation giữ approve disabled theo blocker canonical; deep-link exact
+  recruiter verification chỉ hiện khi actor có quyền màn đích, không parse
+  message backend.
+- Evidence frontend sau sync dev: 17/17 targeted; full coverage 255/255 file,
+  971/971 test; smoke 6/6 desktop/tablet/mobile; Oxlint, architecture 1.146
+  module/2.301 dependency, build và bundle budget JS 299,9/320 KiB, CSS
+  34,4/35 KiB đều đạt. ER-5 được đánh dấu `Verified`.
 
 </details>
 

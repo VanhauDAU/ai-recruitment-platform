@@ -56,15 +56,18 @@ Backend duyệt tin recompute verification/DPA/campaign trong cùng transaction.
 Khi verification bị revoke/expired, verification compliance hold ẩn active job
 khỏi public mà không đổi business status; reapprove chỉ release exact hold đó.
 
-Frontend follow-up `feature/admin-job-compliance-ui` phải:
+Frontend ER-5 đã hoàn tất:
 
 - render blocker code canonical, không parse message;
 - chỉ hiện deep-link verification nếu actor có quyền view màn đích;
 - tải exact recruiter/case target, không suy từ company;
 - giữ nút approve disabled khi có blocker và reload detail khi `review_token`
   hoặc verification impact stale;
-- không tuyên bố ER-5 hoàn tất trước khi final-decision UI đã consume
-  `decision-impact`/`decision` và các lifecycle impact/confirm endpoint.
+- final-decision UI đã consume `decision-impact`/`decision` và các lifecycle
+  impact/confirm endpoint trước khi ER-5 được đánh dấu Verified.
+
+Evidence: job blocker unit permission/allowlist và admin smoke cùng luồng final
+decision đạt 6/6 trên desktop/tablet/mobile; full frontend coverage đạt 971 test.
 
 ## UI/UX và quyền truy cập
 

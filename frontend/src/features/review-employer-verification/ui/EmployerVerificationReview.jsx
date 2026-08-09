@@ -44,6 +44,7 @@ import { buildVerificationTimeline } from '../model/event-timeline'
 import CompanyUpdateReviewPanel from './CompanyUpdateReviewPanel'
 import DocumentImageViewer from './DocumentImageViewer'
 import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
+import VerificationFinalDecisionPanel from './VerificationFinalDecisionPanel'
 import VerificationJourney from './VerificationJourney'
 import './employer-verification-review.css'
 
@@ -354,6 +355,8 @@ export default function EmployerVerificationReview({
   companyUpdateRequesterPublicId,
   canViewVerification,
   canReviewVerification,
+  canRevokeVerification,
+  canOverrideVerificationTax,
   canViewCompanyUpdates,
   canReviewCompanyUpdates,
   canViewSensitive,
@@ -487,6 +490,8 @@ export default function EmployerVerificationReview({
   const pendingDocumentCount = currentDocuments.filter(
     (document) => document.status === 'pending',
   ).length
+  const canReviewDocuments = canReviewVerification
+    && verificationCase.status === 'in_review'
   return (
     <div className="verification-review-layout">
       <Card size="small" className="account-detail-card verification-overview-card">
@@ -570,6 +575,14 @@ export default function EmployerVerificationReview({
         <VerificationJourney checks={verificationCase.checks} />
       </Card>
 
+      <VerificationFinalDecisionPanel
+        verificationCase={verificationCase}
+        canReview={canReviewVerification}
+        canRevoke={canRevokeVerification}
+        canTaxOverride={canOverrideVerificationTax}
+        onChanged={refresh}
+      />
+
       {canViewCompanyUpdates && (
         <CompanyUpdateReviewPanel
           companyPublicId={verificationCase.company?.public_id || companyPublicId}
@@ -625,7 +638,7 @@ export default function EmployerVerificationReview({
                           )}
                         </span>
                       </button>
-                      {canReviewVerification && (
+                      {canReviewDocuments && (
                         <Button
                           type="link"
                           onClick={(event) => {

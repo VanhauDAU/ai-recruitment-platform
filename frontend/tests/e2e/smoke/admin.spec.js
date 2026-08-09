@@ -451,7 +451,7 @@ test('admin employer detail: company media and compact verification comparison r
     context: {
       kind: 'employer',
       verification: {
-        public_id: 'evc_1', status: 'pending', status_label: 'Chờ duyệt',
+        public_id: 'evc_1', status: 'in_review', status_label: 'Đang xử lý',
         submitted_at: '2026-07-26T08:00:00Z', missing_step_count: 2,
       },
       company: {
@@ -462,7 +462,7 @@ test('admin employer detail: company media and compact verification comparison r
   }
   const verificationCase = {
     public_id: 'evc_1',
-    status: 'pending',
+    status: 'in_review',
     full_name: employer.full_name,
     email: employer.email,
     company: { public_id: 'co_1', name: 'FPT Software', tax_code: '***4567' },
@@ -480,8 +480,8 @@ test('admin employer detail: company media and compact verification comparison r
       phone_verified: true,
       company_linked: true,
       representative_documents_submitted: true,
-      business_documents_approved: false,
-      candidate_dpa_approved: false,
+      business_documents_approved: true,
+      candidate_dpa_approved: true,
       dpa_accepted: true,
     },
     tax_lookup_evidence: {
@@ -507,8 +507,8 @@ test('admin employer detail: company media and compact verification comparison r
         mime_type: 'image/svg+xml',
         version: 1,
         is_current: true,
-        status: 'pending',
-        status_label: 'Chờ duyệt',
+        status: 'approved',
+        status_label: 'Đã duyệt',
         created_at: '2026-07-26T08:00:00Z',
         duplicate_company_count: 0,
       },
@@ -584,6 +584,7 @@ test('admin employer detail: company media and compact verification comparison r
     public_id: 'cur_1',
     company: { public_id: 'co_1', name: 'FPT Software', tax_code: '***4567' },
     requested_by_email: employer.email,
+    requested_by_public_id: employer.public_id,
     changes: {
       trade_name: 'FPT Digital',
       description: '<p>Mô tả mới</p>',
@@ -623,7 +624,49 @@ test('admin employer detail: company media and compact verification comparison r
       })
       return
     }
+    else if (path === '/api/admin/employer-verifications/evc_1/decision-impact/') {
+      body = {
+        case_public_id: 'evc_1',
+        case_revision: 2,
+        lock_version: 0,
+        decision: 'approved',
+        reason: '',
+        checks: verificationCase.checks,
+        tax_advisory: {
+          status: 'matched',
+          provider_status: 'found',
+          evidence_public_id: 'tle_1',
+          comparison: { tax_code: 'match', company_name: 'match' },
+          requires_override: false,
+        },
+        tax_override: false,
+        tax_override_reason: '',
+        company_impact: {
+          company_public_id: 'co_1',
+          current_status: 'verified',
+          will_mark_verified: false,
+          will_downgrade: false,
+        },
+        capability_impact: {
+          candidate_data_access: 'eligible_after_recompute',
+          job_approval: 'eligible_after_recompute',
+          job_workspace: 'unchanged',
+        },
+        verification_hold_impact: {
+          hold_count: 0, campaign_count: 1, job_count: 2, active_jobs_to_unhide: 0,
+        },
+        unlocks_employer_capabilities: true,
+        impact_token: 'e2e-verification-impact',
+      }
+    }
+    else if (path === '/api/admin/employer-verifications/evc_1/decision/') {
+      verificationCase.status = 'approved'
+      verificationCase.status_label = 'Đã xác thực'
+      verificationCase.decision_reason = ''
+      body = verificationCase
+    }
     else if (path === '/api/admin/employer-verifications/evc_1/') body = verificationCase
+    else if (path === '/api/admin/company-update-requests/cur_1/') body = companyUpdate
     else if (path === '/api/admin/company-update-requests/') {
       body = { count: 1, next: null, previous: null, results: [companyUpdate] }
     } else if (path === '/api/privacy/consent/') {
@@ -646,16 +689,21 @@ test('admin employer detail: company media and compact verification comparison r
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
 
-  await page.goto('/admin/app/accounts/usr_employer?tab=verification')
+  await page.goto('/admin/app/accounts/usr_employer?tab=verification&company_update=cur_1')
 
-  await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=verification$/)
+  await expect(page).toHaveURL(
+    /\/admin\/app\/recruiters\/usr_employer\?tab=verification&company_update=cur_1$/,
+  )
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
-  await expect(page.getByRole('heading', { name: 'Theo dõi hành trình xác thực' })).toBeVisible()
+  await expect(page.getByRole('region', {
+    name: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
+  })).toBeVisible()
   await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toHaveCount(0)
   await expect(page.getByText('Quyền đại diện', { exact: true })).toBeVisible()
   await expect(page.getByText('Pháp lý doanh nghiệp', { exact: true })).toBeVisible()
   await expect(page.getByText('Bảo vệ dữ liệu', { exact: true })).toBeVisible()
   await expect(page.getByText(/là thành viên của công ty/)).toBeVisible()
+  await expect(page.getByText('Giấy tờ và hồ sơ là hai lớp quyết định độc lập')).toBeVisible()
   await page.getByRole('button', { name: 'Xem 9 bước' }).click()
   await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
@@ -668,6 +716,14 @@ test('admin employer detail: company media and compact verification comparison r
   await expect.poll(() => page.locator('.verification-review-layout').evaluate(
     (element) => getComputedStyle(element).gap,
   )).toBe('20px')
+
+  await page.getByRole('button', { name: 'Duyệt hồ sơ' }).click()
+  const finalDecisionDialog = page.getByRole('dialog', { name: 'Duyệt hồ sơ' })
+  await finalDecisionDialog.getByRole('button', { name: 'Xem tác động' }).click()
+  await expect(finalDecisionDialog.getByText('Trạng thái pháp lý của công ty không bị hạ.'))
+    .toBeVisible()
+  await finalDecisionDialog.getByRole('button', { name: 'Xác nhận quyết định' }).click()
+  await expect(page.getByText('Hồ sơ đang có hiệu lực')).toBeVisible()
   await expect(page.getByRole('button', { name: /Xem chi tiết và đối chiếu/ })).toBeVisible()
   await expect(page.getByText('FPT Digital')).toHaveCount(0)
 
@@ -976,6 +1032,7 @@ test('admin job management: list, detail and revision-bound approval workflow', 
         'job_moderation.reject',
         'job_moderation.enforce_visibility',
         'job_moderation.view_sensitive_contact',
+        'employer_verification.view',
       ],
       memberships: [],
     },
@@ -1045,8 +1102,14 @@ test('admin job management: list, detail and revision-bound approval workflow', 
     moderation_events: [],
     reports: [],
     review_token: 'signed-review-token',
-    state_actions: ['approve', 'reject'],
-    blocked_reasons: [],
+    state_actions: ['reject'],
+    blocked_reasons: [
+      { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+    ],
+    approve_blockers: [
+      { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+    ],
+    approve_requirements: [],
     employer_account_level: 3,
     employer_verification_completed: true,
   }
@@ -1104,6 +1167,17 @@ test('admin job management: list, detail and revision-bound approval workflow', 
   await contentTab.click()
   await expect(contentTab).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toBeVisible()
+
+  await expect(page.getByRole('button', { name: 'Duyệt tin' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: 'Mở hồ sơ xác thực' })).toHaveAttribute(
+    'href',
+    '/admin/app/recruiters/usr_employer?tab=verification',
+  )
+  detailJob.state_actions = ['approve', 'reject']
+  detailJob.blocked_reasons = []
+  detailJob.approve_blockers = []
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Duyệt tin' })).toBeEnabled()
 
   await page.getByRole('button', { name: 'Duyệt tin' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Duyệt và công khai' }).click()
