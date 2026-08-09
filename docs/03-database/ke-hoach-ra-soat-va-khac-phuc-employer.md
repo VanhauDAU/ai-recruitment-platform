@@ -1,6 +1,6 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** Đã phê duyệt ER-0 — đang triển khai theo từng giai đoạn
+> **Trạng thái:** ER-0, ER-1 và ER-2 đã Verified — đang triển khai các phase phụ thuộc
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.0
@@ -494,6 +494,37 @@ Frontend:
 **Gate ER-2:** demo ma trận account mới, submitted, approved, DPA outdated,
 revoked và account hold trước khi merge frontend.
 
+**Kết quả kỹ thuật ER-2 — Verified 2026-08-10:**
+
+- Backend commits `b5a50c45`, `49f11065`, `f1408e43` và `916d2bfb`, sau
+  merge-sync `8e01389e`, trả đúng
+  năm field readiness ở `/api/employer/me/` và
+  `employer_job_workspace_ready` ở `/api/auth/me/`. Workspace guard bao phủ
+  campaign mutations và toàn bộ employer job mutations; candidate policy không
+  còn feature-flag bypass trên application list/export/status/history/snapshot,
+  dashboard recent applications, job/campaign preview, activity metadata và
+  recruiter CV asset content.
+- Frontend commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
+  `ab1c003e` và `d84760ba` thêm public readiness
+  model/hook, `JobWorkspaceGuard`, `CandidateDataGuard`, machine-action mapping,
+  compliance UI và fail-closed consumer gating. Direct URL bị từ chối giữ
+  nguyên; query nhạy cảm không mount/chạy và PII đã cache biến mất ngay khi
+  readiness chuyển `true → false`. Theo ER-D29, aggregate không định danh được
+  giữ lại; tên/email/avatar/CV/link/activity ứng viên bị khóa.
+- Ma trận unit đủ sáu trạng thái new/submitted/approved/DPA outdated/
+  verification revoked/account hold; canonical partial, malformed hoặc
+  `true + blocker cùng capability` đều fail closed. Full coverage gate đạt 253
+  test file/953 test; readiness E2E đạt 9/9 trên desktop/tablet/mobile. Oxlint
+  không lỗi, architecture 1.142 module/2.293 dependency và production build
+  đều đạt.
+- Backend đạt 206 integration test và direct/read/query matrix 31/31; Ruff,
+  import-linter/layering, migration drift, query budget và race regression đều
+  đạt. Campaign list giữ 4 query phẳng; auth session giữ budget tối đa 12 query.
+- Residual được giữ đúng phase: ER-5 xử lý post-approval revoke/hold
+  reconciliation; ER-6 bổ sung DPA version/hash/IP/session và các trạng thái
+  `legacy_unversioned|outdated|grace|hold`. ER-2 đã khóa shape để các phase này
+  không phải đổi consumer contract.
+
 ### ER-3 — Upload quarantine foundation
 
 **Storage foundation:** `fix/media-storage-boundaries` — In progress
@@ -854,8 +885,8 @@ Trạng thái thực hiện hiện tại:
 | --- | --- | --- |
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
-| ER-2 | Planned | Gate ER-1 đã đạt; sẵn sàng triển khai |
-| ER-3 | Planned | Phụ thuộc readiness contract |
+| ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
+| ER-3 | In progress | Storage boundary/cutover foundation đạt scoped gate; upload session, scanner và retention còn mở |
 | ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
 | ER-5 | Planned | Phụ thuộc readiness/upload |
 | ER-6 | Planned | DPA phụ thuộc ER-O03 |

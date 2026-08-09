@@ -21,6 +21,11 @@ import {
   jobKeys,
   reopenEmployerJob,
 } from '@/entities/job'
+import {
+  EMPLOYER_CAPABILITIES,
+  EmployerReadinessGateState,
+  useEmployerReadiness,
+} from '@/entities/employer-profile'
 import { message } from '@/shared/lib/toast'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
@@ -91,6 +96,13 @@ export default function JobDetail() {
   const queryClient = useQueryClient()
   const [deadlineAction, setDeadlineAction] = useState(null)
   const [newDeadline, setNewDeadline] = useState(null)
+  const {
+    readiness,
+    profileQuery,
+    isChecking: readinessChecking,
+    isAccessError: readinessError,
+    canAccessCandidateData,
+  } = useEmployerReadiness()
   const requestedTab = searchParams.get('active_tab')
   const activeTab = VALID_TABS.has(requestedTab) ? requestedTab : 'apply_cv'
   const jobQuery = useQuery({
@@ -100,13 +112,27 @@ export default function JobDetail() {
   const applicationsQuery = useQuery({
     queryKey: applicationKeys.recruiterList({ job: publicId }),
     queryFn: () => getRecruiterApplications({ job: publicId }),
+    enabled: canAccessCandidateData,
   })
-  const applications = applicationsQuery.data || EMPTY_APPLICATIONS
+  const applications = canAccessCandidateData
+    ? applicationsQuery.data || EMPTY_APPLICATIONS
+    : EMPTY_APPLICATIONS
   const metrics = useMemo(() => ({
-    total: applicationsQuery.isLoading ? (jobQuery.data?.application_count || 0) : applications.length,
-    applied: applications.filter((item) => item.source === 'applied').length,
-    connected: applications.filter((item) => CONNECTED_STATUSES.has(item.status)).length,
-  }), [applications, applicationsQuery.isLoading, jobQuery.data?.application_count])
+    total: canAccessCandidateData && !applicationsQuery.isLoading
+      ? applications.length
+      : (jobQuery.data?.application_count || 0),
+    applied: canAccessCandidateData
+      ? applications.filter((item) => item.source === 'applied').length
+      : '—',
+    connected: canAccessCandidateData
+      ? applications.filter((item) => CONNECTED_STATUSES.has(item.status)).length
+      : '—',
+  }), [
+    applications,
+    applicationsQuery.isLoading,
+    canAccessCandidateData,
+    jobQuery.data?.application_count,
+  ])
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: jobKeys.employerDetail(publicId) })
@@ -160,7 +186,24 @@ export default function JobDetail() {
     {
       key: 'apply_cv',
       label: <span className="inline-flex items-center gap-2"><TeamOutlined /> CV ứng tuyển <strong>{metrics.applied}</strong></span>,
-      children: <JobApplicationsWorkspace jobPublicId={publicId} applications={applications} loading={applicationsQuery.isLoading} />,
+      children: canAccessCandidateData ? (
+        <JobApplicationsWorkspace
+          jobPublicId={publicId}
+          applications={applications}
+          loading={applicationsQuery.isLoading}
+        />
+      ) : (
+        <div className="p-4 sm:p-5">
+          <EmployerReadinessGateState
+            compact
+            capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+            checking={readinessChecking}
+            error={readinessError}
+            readiness={readiness}
+            onRetry={profileQuery.refetch}
+          />
+        </div>
+      ),
     },
     {
       key: 'viewed_job',

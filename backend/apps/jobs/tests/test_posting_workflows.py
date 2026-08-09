@@ -15,6 +15,8 @@ from apps.employers.models import (
     RecruitmentCampaign,
     RecruitmentNeed,
 )
+from apps.employers.services import recruiter_job_posting_entitlement
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
 
 from ..api.serializers import EmployerJobWriteSerializer
@@ -47,7 +49,8 @@ class JobPostingWorkflowTests(TestCase):
             email='posting-other@example.com', password='password', role='employer'
         )
         self.company = Company.objects.create(company_name='Posting Co', created_by=self.user)
-        self.recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        self.recruiter = make_employer_ready(self.user, company=self.company)
+        make_employer_ready(self.other_user, company=self.company)
         self.category = JobCategory.objects.create(
             name='Backend', category_type=JobCategory.CategoryType.SPECIALIZATION
         )
@@ -204,21 +207,17 @@ class JobPostingWorkflowTests(TestCase):
             budget_source=RecruitmentNeed.BudgetSource.COMPANY,
             completed_at=timezone.now(),
         )
-        verification_case = EmployerVerificationCase.objects.create(
-            recruiter=self.recruiter,
-            company=self.company,
-            status=EmployerVerificationCase.Status.APPROVED,
-        )
+        verification_case = self.recruiter.verification_case
+        verification_case.status = EmployerVerificationCase.Status.APPROVED
+        verification_case.save(update_fields=['status', 'updated_at'])
         for doc_type in (
             CompanyDocument.DocType.BUSINESS_REGISTRATION,
             CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         ):
-            CompanyDocument.objects.create(
-                company=self.company,
-                recruiter=self.recruiter,
-                uploaded_by=self.user,
+            CompanyDocument.objects.filter(
                 verification_case=verification_case,
                 doc_type=doc_type,
+            ).update(
                 file_url=f'employers/posting/{doc_type}.pdf',
                 file_name=f'{doc_type}.pdf',
                 mime_type='application/pdf',
@@ -242,6 +241,33 @@ class JobPostingWorkflowTests(TestCase):
 
         published = publish_job(self.make_publishable_job(title='Job after upgrade'), self.user)
         self.assertEqual(published.status, Job.Status.PENDING)
+
+    def test_previous_company_evidence_cannot_unlock_entitlement_or_posting_context(self):
+        previous_case = self.recruiter.verification_case
+        previous_case.status = EmployerVerificationCase.Status.APPROVED
+        previous_case.save(update_fields=['status', 'updated_at'])
+        previous_case.documents.update(status=CompanyDocument.Status.APPROVED)
+        replacement = Company.objects.create(
+            company_name='Replacement Posting Co',
+            tax_code='0109998877',
+            created_by=self.other_user,
+        )
+        self.recruiter.company = replacement
+        self.recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        self.recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+
+        _, entitlement = recruiter_job_posting_entitlement(self.user)
+        context = employer_job_posting_context(self.user)
+
+        self.assertFalse(entitlement['verification_completed'])
+        self.assertFalse(entitlement['admin_approved'])
+        self.assertFalse(entitlement['verified_job_quota_eligible'])
+        self.assertFalse(context['job_workspace_ready'])
+        self.assertFalse(context['job_postable'])
+        self.assertIn(
+            'business_document_required',
+            [blocker['code'] for blocker in context['blockers']],
+        )
 
     @patch('apps.jobs.services.posting.recruiter_job_posting_entitlement')
     def test_active_job_returns_to_pending_when_its_owner_resubmits_a_revision(self, entitlement):
@@ -514,3 +540,30 @@ class JobPostingWorkflowTests(TestCase):
             list(duplicate.application_contact.emails.values_list('email', 'sort_order')),
             [('hr@example.com', 2)],
         )
+
+    def test_duplicate_rejects_job_or_campaign_holds_without_clearing_evidence(self):
+        job = self.make_publishable_job()
+        job.policy_hold = Job.PolicyHold.TEMPORARY_LOCK
+        job.save(update_fields=['policy_hold', 'updated_at'])
+
+        with self.assertRaises(ValidationError) as job_hold:
+            duplicate_job(job, self.user)
+        self.assertEqual(str(job_hold.exception.detail['code']), 'RECRUITMENT_HOLD_ACTIVE')
+
+        job.policy_hold = Job.PolicyHold.NONE
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.recruiter,
+            company=self.company,
+            name='Held campaign',
+            policy_hold=RecruitmentCampaign.PolicyHold.TEMPORARY_LOCK,
+        )
+        job.campaign = campaign
+        job.save(update_fields=['campaign', 'policy_hold', 'updated_at'])
+
+        with self.assertRaises(ValidationError) as campaign_hold:
+            duplicate_job(job, self.user)
+        self.assertEqual(
+            str(campaign_hold.exception.detail['code']),
+            'RECRUITMENT_HOLD_ACTIVE',
+        )
+        self.assertFalse(Job.objects.filter(title=f'{job.title} (bản sao)').exists())

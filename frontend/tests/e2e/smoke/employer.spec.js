@@ -9,6 +9,41 @@ async function expectNoHorizontalOverflow(page) {
   })).toBeLessThanOrEqual(1)
 }
 
+const READY_EMPLOYER_READINESS = Object.freeze({
+  job_workspace_ready: true,
+  verification_approved: true,
+  candidate_data_access: true,
+  dpa_status: 'current',
+  blockers: [],
+})
+
+const INCOMPLETE_EMPLOYER_READINESS = Object.freeze({
+  job_workspace_ready: false,
+  verification_approved: false,
+  candidate_data_access: false,
+  dpa_status: 'missing',
+  blockers: [
+    {
+      code: 'phone_verification_required',
+      capabilities: ['job_workspace', 'candidate_data'],
+      message: 'Xác minh số điện thoại trước khi sử dụng workspace.',
+      action: 'verify_phone',
+    },
+    {
+      code: 'verification_required',
+      capabilities: ['verification', 'candidate_data', 'job_approval'],
+      message: 'Hồ sơ đại diện doanh nghiệp chưa được duyệt.',
+      action: 'open_verification',
+    },
+    {
+      code: 'dpa_missing',
+      capabilities: ['job_workspace', 'candidate_data', 'job_approval'],
+      message: 'Chưa có chấp thuận DPA.',
+      action: 'accept_dpa',
+    },
+  ],
+})
+
 test('employer smoke: marketing pages render', async ({ page }) => {
   await mockPublicApi(page)
   const isMobile = page.viewportSize().width < 1024
@@ -264,6 +299,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_test',
+        ...INCOMPLETE_EMPLOYER_READINESS,
         company: null,
         contact_phone: '0912345678',
         onboarding: {
@@ -291,7 +327,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(workspace).toHaveCSS('height', `${page.viewportSize().height}px`)
   await expect(page.getByTestId('employer-topbar')).toBeVisible()
   await expectNoHorizontalOverflow(page)
-  await expect(page.getByRole('link', { name: 'Cập nhật ngay' }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Xác thực số điện thoại' }).first()).toBeVisible()
   if (page.viewportSize().width < 1024) {
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
   }
@@ -562,6 +598,7 @@ test('employer workspace: completed verification redirects away from the checkli
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_verified',
+        ...READY_EMPLOYER_READINESS,
         onboarding: {
           phone_verified: true,
           company_linked: true,
@@ -597,6 +634,7 @@ test('employer workspace: an incomplete account cannot access recruitment operat
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_incomplete',
+        ...INCOMPLETE_EMPLOYER_READINESS,
         onboarding: {
           phone_verified: true,
           company_linked: true,
@@ -611,13 +649,13 @@ test('employer workspace: an incomplete account cannot access recruitment operat
 
   await page.goto('/tuyendung/app/jobs')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
-  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs$/)
+  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toBeVisible()
 
   await page.goto('/tuyendung/app/campaigns')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
-  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
+  await expect(page).toHaveURL(/\/tuyendung\/app\/campaigns$/)
+  await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 
@@ -635,6 +673,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_verified',
+        ...READY_EMPLOYER_READINESS,
         onboarding: { verification_completed: true },
       }),
     })
@@ -754,6 +793,7 @@ test('employer jobs: manual job form exposes the complete five-section workflow'
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_verified',
+        ...READY_EMPLOYER_READINESS,
         onboarding: {
           phone_verified: true,
           company_linked: true,
@@ -925,6 +965,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', as
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_verified',
+        ...READY_EMPLOYER_READINESS,
         onboarding: { verification_completed: true },
       }),
     })
@@ -1020,6 +1061,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_applications',
+        ...READY_EMPLOYER_READINESS,
         onboarding: { verification_completed: true },
       }),
     })
@@ -1145,6 +1187,7 @@ test('employer campaigns: operational list shows compact campaign controls', asy
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_campaign',
+        ...READY_EMPLOYER_READINESS,
         onboarding: { verification_completed: true },
       }),
     })
@@ -1233,6 +1276,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
       contentType: 'application/json',
       body: JSON.stringify({
         public_id: 'rec_campaign',
+        ...READY_EMPLOYER_READINESS,
         onboarding: { verification_completed: true },
       }),
     })
