@@ -1,25 +1,31 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import JobSubmissionReviewActions from './JobSubmissionReviewActions'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
-function renderActions(job) {
+function renderActions(job, permissions = [
+  'job_moderation.approve',
+  'job_moderation.reject',
+]) {
   useSession.mockReturnValue({
     user: {
       admin_access: {
-        permissions: ['job_moderation.approve', 'job_moderation.reject'],
+        permissions,
       },
     },
   })
   return render(
-    <QueryClientProvider client={new QueryClient()}>
-      <JobSubmissionReviewActions
-        job={{ public_id: 'jb_1', status: 'pending', review_token: 'token', ...job }}
-      />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient()}>
+        <JobSubmissionReviewActions
+          job={{ public_id: 'jb_1', status: 'pending', review_token: 'token', ...job }}
+        />
+      </QueryClientProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -37,17 +43,40 @@ describe('JobSubmissionReviewActions', () => {
 
   it('renders canonical verification and DPA blockers from the backend', () => {
     renderActions({
+      employer_public_id: 'usr_employer',
       state_actions: ['reject'],
       approve_blockers: [
         { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
         { code: 'dpa_outdated', label: 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.' },
       ],
       approve_requirements: [],
-    })
+    }, [
+      'job_moderation.approve',
+      'job_moderation.reject',
+      'employer_verification.view',
+    ])
 
     const approve = screen.getByRole('button', { name: 'Duyệt tin' })
     expect(approve).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Từ chối' })).toBeEnabled()
+    expect(screen.getByRole('link', { name: 'Mở hồ sơ xác thực' })).toHaveAttribute(
+      'href',
+      '/admin/app/recruiters/usr_employer?tab=verification',
+    )
+  })
+
+  it('does not expose the recruiter deep link without verification view permission', () => {
+    renderActions({
+      employer_public_id: 'usr_employer',
+      state_actions: ['reject'],
+      approve_blockers: [
+        { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+      ],
+      approve_requirements: [],
+    })
+
+    expect(screen.queryByRole('link', { name: 'Mở hồ sơ xác thực' }))
+      .not.toBeInTheDocument()
   })
 
   it('requires a new deadline before approving an expired submission', () => {

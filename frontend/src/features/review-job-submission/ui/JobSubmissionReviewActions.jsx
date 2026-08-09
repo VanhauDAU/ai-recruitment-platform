@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, DatePicker, Form, Input, Modal, Select, Space, Tooltip } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import {
   adminJobKeys,
   decideAdminJob,
@@ -10,7 +11,13 @@ import {
 import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+
+const EMPLOYER_COMPLIANCE_BLOCKERS = new Set([
+  'verification_required',
+  'dpa_outdated',
+])
 
 export default function JobSubmissionReviewActions({ job }) {
   const { user } = useSession()
@@ -29,6 +36,9 @@ export default function JobSubmissionReviewActions({ job }) {
   // reason: a silently missing button reads as a bug to the reviewer.
   const showApprove = access.has('job_moderation.approve')
     && (canApprove || (job.status === 'pending' && approveBlockers.length > 0))
+  const canOpenEmployerVerification = access.has('employer_verification.view')
+    && Boolean(job.employer_public_id)
+    && approveBlockers.some((item) => EMPLOYER_COMPLIANCE_BLOCKERS.has(item.code))
 
   const mutation = useMutation({
     mutationFn: (payload) => decideAdminJob(job.public_id, {
@@ -94,6 +104,14 @@ export default function JobSubmissionReviewActions({ job }) {
           <Button danger onClick={() => setDecision('reject')}>
             Từ chối
           </Button>
+        )}
+        {canOpenEmployerVerification && (
+          <Link
+            className="text-sm font-medium"
+            to={`${adminPath(`/recruiters/${job.employer_public_id}`)}?tab=verification`}
+          >
+            Mở hồ sơ xác thực
+          </Link>
         )}
       </Space>
 
