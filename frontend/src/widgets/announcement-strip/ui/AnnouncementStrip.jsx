@@ -26,6 +26,8 @@ import AnnouncementStripBoundary from './AnnouncementStripBoundary'
 import './announcement-strip.css'
 
 function AnnouncementStripRuntime({
+  employerReadiness,
+  employerReadinessReady = false,
   employerProfile,
   employerProfileReady = false,
   locale = 'vi',
@@ -54,6 +56,8 @@ function AnnouncementStripRuntime({
     surface,
   })
   const systemItems = useMemo(() => buildSystemAnnouncements({
+    employerReadiness,
+    employerReadinessReady,
     employerProfile,
     employerProfileReady,
     locale,
@@ -61,6 +65,8 @@ function AnnouncementStripRuntime({
     user,
     verificationPath,
   }), [
+    employerReadiness,
+    employerReadinessReady,
     employerProfile,
     employerProfileReady,
     locale,

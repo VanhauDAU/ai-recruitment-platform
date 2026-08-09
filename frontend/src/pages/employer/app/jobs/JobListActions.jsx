@@ -49,7 +49,12 @@ function confirmDelete(job, onDelete) {
   })
 }
 
-function menuItems(job, { onClose, onDelete, onDuplicate }) {
+function menuItems(job, {
+  candidateDataAccess,
+  onClose,
+  onDelete,
+  onDuplicate,
+}) {
   const items = [
     {
       key: 'detail',
@@ -57,7 +62,7 @@ function menuItems(job, { onClose, onDelete, onDuplicate }) {
       label: <Link to={employerAppPath(`/jobs/${job.public_id}`)}>Xem chi tiết</Link>,
     },
   ]
-  if (job.application_count > 0) {
+  if (candidateDataAccess && job.application_count > 0) {
     items.push({
       key: 'applications',
       icon: <TeamOutlined />,
@@ -104,13 +109,13 @@ function menuItems(job, { onClose, onDelete, onDuplicate }) {
   return items
 }
 
-function QuickActions({ job }) {
+function QuickActions({ job, candidateDataAccess }) {
   return (
     <div
       data-testid="job-hover-actions"
       className="pointer-events-none hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 lg:flex lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:opacity-100"
     >
-      {job.application_count > 0 && (
+      {candidateDataAccess && job.application_count > 0 && (
         <Tooltip title="Xem hồ sơ ứng tuyển">
           <Link
             aria-label="Xem hồ sơ ứng tuyển"
@@ -144,11 +149,12 @@ export default function JobListActions({
   onClose,
   onDelete,
   onDuplicate,
+  candidateDataAccess = false,
 }) {
   const action = primaryAction(job)
   return (
     <div data-testid="job-mobile-actions" className="relative ml-auto flex items-center justify-end gap-1">
-      {!action && <QuickActions job={job} />}
+      {!action && <QuickActions job={job} candidateDataAccess={candidateDataAccess} />}
       {action && (
         <Link
           className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-semibold !text-emerald-700 transition hover:bg-emerald-50"
@@ -158,7 +164,14 @@ export default function JobListActions({
         </Link>
       )}
       <Dropdown
-        menu={{ items: menuItems(job, { onClose, onDelete, onDuplicate }) }}
+        menu={{
+          items: menuItems(job, {
+            candidateDataAccess,
+            onClose,
+            onDelete,
+            onDuplicate,
+          }),
+        }}
         placement="bottomRight"
         trigger={['click']}
       >

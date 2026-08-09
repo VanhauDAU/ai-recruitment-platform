@@ -1,25 +1,49 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerDashboardOverview from './EmployerDashboardOverview'
 import { DashboardVerificationJourney } from './DashboardWelcomeSections'
 
-const { getEmployerDashboard, useSession } = vi.hoisted(() => ({
+const { getEmployerDashboard, readinessState, useSession } = vi.hoisted(() => ({
   getEmployerDashboard: vi.fn(),
+  readinessState: {
+    readiness: {
+      jobWorkspaceReady: true,
+      candidateDataAccess: true,
+      blockers: [],
+    },
+    profileQuery: { refetch: vi.fn() },
+    isChecking: false,
+    isAccessError: false,
+    canAccessCandidateData: true,
+  },
   useSession: vi.fn(),
 }))
 
 vi.mock('@/entities/employer-dashboard', () => ({ getEmployerDashboard }))
 vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+  ...await importOriginal(),
+  useEmployerReadiness: () => readinessState,
+}))
 
 describe('EmployerDashboardOverview', () => {
+  beforeEach(() => {
+    readinessState.readiness.jobWorkspaceReady = true
+    readinessState.readiness.candidateDataAccess = true
+    readinessState.readiness.blockers = []
+    readinessState.isChecking = false
+    readinessState.isAccessError = false
+    readinessState.canAccessCandidateData = true
+  })
   it('shows five main verification steps and keeps the first-job action separate', () => {
     render(
       <MemoryRouter>
         <DashboardVerificationJourney
           displayName="Nguyễn An"
           hasPassword
+          jobWorkspaceReady
           verification={{
             phone_verified: true,
             company_linked: true,
@@ -94,7 +118,43 @@ describe('EmployerDashboardOverview', () => {
     expect(screen.getByText('Kinh doanh phần mềm')).toBeInTheDocument()
     expect(screen.getByText('240')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Xác thực số điện thoại/ })).toHaveAttribute('target', '_blank')
-    expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/employer-verify')
+    expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
     expect(screen.getByRole('link', { name: 'Tạo tin' })).toHaveAttribute('href', '/tuyendung/app/jobs/new')
+  })
+
+  it('keeps aggregates but never mounts cached recent candidate PII when access is denied', async () => {
+    readinessState.readiness.candidateDataAccess = false
+    readinessState.readiness.blockers = [{
+      code: 'candidate_data_held',
+      capabilities: ['candidate_data'],
+      message: 'Dữ liệu ứng viên đang tạm giữ.',
+      action: 'accept_current_dpa',
+    }]
+    readinessState.canAccessCandidateData = false
+    useSession.mockReturnValue({ user: { full_name: 'Nguyễn An' } })
+    getEmployerDashboard.mockResolvedValue({
+      account: { verification: {} },
+      summary: { applications_total: 12 },
+      recent_jobs: [],
+      recent_applications: [{
+        public_id: 'application_1',
+        candidate_name: 'Nguyễn Minh Anh',
+        job_title: 'Frontend Engineer',
+        status: 'submitted',
+        applied_at: '2026-08-01T09:00:00Z',
+      }],
+    })
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter><EmployerDashboardOverview /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('12')).toBeInTheDocument()
+    expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Ứng viên mới nhất' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Dữ liệu ứng viên đang tạm giữ.').length).toBeGreaterThan(0)
   })
 })

@@ -32,4 +32,31 @@ describe('EmployerVerificationChecklist', () => {
     expect(screen.queryByText('Xác minh email')).not.toBeInTheDocument()
     expect(screen.queryByText('Admin duyệt tài khoản')).not.toBeInTheDocument()
   })
+
+  it('shows canonical workspace and candidate-data status with a machine-mapped action', () => {
+    render(
+      <MemoryRouter>
+        <EmployerVerificationChecklist
+          profile={{ onboarding: {} }}
+          readiness={{
+            jobWorkspaceReady: true,
+            candidateDataAccess: false,
+            blockers: [{
+              code: 'candidate_dpa_outdated',
+              capabilities: ['candidate_data'],
+              message: 'DPA cần được cập nhật theo phiên bản hiện hành.',
+              action: 'accept_current_dpa',
+            }],
+          }}
+          onContinue={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Workspace việc làm đã sẵn sàng; dữ liệu ứng viên vẫn được bảo vệ'))
+      .toBeInTheDocument()
+    expect(screen.getByText('DPA cần được cập nhật theo phiên bản hiện hành.'))
+      .toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cập nhật DPA hiện hành' })).toBeInTheDocument()
+  })
 })
