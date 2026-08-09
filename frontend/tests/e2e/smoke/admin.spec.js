@@ -1026,6 +1026,7 @@ test('admin job management: list, detail and revision-bound approval workflow', 
         'job_moderation.reject',
         'job_moderation.enforce_visibility',
         'job_moderation.view_sensitive_contact',
+        'employer_verification.view',
       ],
       memberships: [],
     },
@@ -1095,8 +1096,14 @@ test('admin job management: list, detail and revision-bound approval workflow', 
     moderation_events: [],
     reports: [],
     review_token: 'signed-review-token',
-    state_actions: ['approve', 'reject'],
-    blocked_reasons: [],
+    state_actions: ['reject'],
+    blocked_reasons: [
+      { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+    ],
+    approve_blockers: [
+      { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+    ],
+    approve_requirements: [],
     employer_account_level: 3,
     employer_verification_completed: true,
   }
@@ -1154,6 +1161,17 @@ test('admin job management: list, detail and revision-bound approval workflow', 
   await contentTab.click()
   await expect(contentTab).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toBeVisible()
+
+  await expect(page.getByRole('button', { name: 'Duyệt tin' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: 'Mở hồ sơ xác thực' })).toHaveAttribute(
+    'href',
+    '/admin/app/recruiters/usr_employer?tab=verification',
+  )
+  detailJob.state_actions = ['approve', 'reject']
+  detailJob.blocked_reasons = []
+  detailJob.approve_blockers = []
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Duyệt tin' })).toBeEnabled()
 
   await page.getByRole('button', { name: 'Duyệt tin' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Duyệt và công khai' }).click()
