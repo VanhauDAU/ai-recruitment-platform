@@ -151,10 +151,12 @@ Người phụ trách sản phẩm xác nhận toàn bộ ER-D35 đến ER-D41 n
 | --- | --- | --- |
 | ER-D42 | Known-denied job/campaign/application route điều hướng tới `employer-verify`; readiness fetch error vẫn retry fail-closed | Không render blocker page tùy tiện ở URL nghiệp vụ; backend permission vẫn authoritative |
 | ER-D43 | `employer-verify` chỉ hiển thị checklist/progress, không lặp readiness và case-status banner | Trạng thái chi tiết tiếp tục nằm tại bước/workflow sở hữu, không chèn badge tổng hợp |
-| ER-D44 | Company settings luôn có history section `scope=company`, count và requester an toàn | Personal card vẫn dùng `scope=mine`; raw value/file/PII không xuất hiện trong history |
+| ER-D44 | `SUPERSEDED` — Company settings có history section `scope=company` | Bị thay thế bởi ER-D46 theo phản hồi trực tiếp sau khi review UI |
 | ER-D45 | Untouched legacy trade name không được validate/submit như thay đổi mới | Diff giữ minimal; chỉ đồng bộ tên thương mại khi người dùng đổi tên/cờ liên quan |
+| ER-D46 | Employer company settings không hiển thị hoặc tải lịch sử `scope=company`; form update phải có thay đổi thật và có nút quay lại | Backend `scope=company` vẫn giữ cho admin/audit/compatibility; UI recruiter chỉ đọc `scope=mine` |
 
-Người phụ trách sản phẩm xác nhận trực tiếp ER-D42 đến ER-D45 ngày 2026-08-10.
+Người phụ trách sản phẩm xác nhận trực tiếp ER-D42 đến ER-D45 và thay ER-D44
+bằng ER-D46 ngày 2026-08-10.
 
 ## Tài liệu/mô tả bị thay thế
 

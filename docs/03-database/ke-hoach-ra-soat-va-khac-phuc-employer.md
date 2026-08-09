@@ -78,7 +78,8 @@ Epic phải đạt các kết quả sau:
 
 - Đăng ký, onboarding và xác minh số điện thoại của Nhà tuyển dụng.
 - Chọn/tạo công ty và xử lý trường hợp chọn nhầm công ty.
-- Thẻ “Yêu cầu của tôi” và lịch sử yêu cầu chỉnh sửa của công ty.
+- Thẻ “Yêu cầu của tôi”; lịch sử company giữ ở contract backend cho admin/audit
+  nhưng không hiển thị hoặc tải từ trang company settings của recruiter.
 - Tạo, resubmit, withdraw, cancel, review và quyết định yêu cầu chỉnh sửa.
 - Quyền xem metadata, nội dung thay đổi và file nhạy cảm.
 - Hồ sơ xác minh doanh nghiệp, DPA và quyết định cuối của admin.
@@ -219,8 +220,9 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D41 | `CONFIRMED` | Phase ER-5 chỉ hỗ trợ expired manual; chưa tự đặt TTL/scheduler trước chính sách thời hạn pháp lý riêng |
 | ER-D42 | `CONFIRMED` | Route job/campaign/application bị từ chối do chưa đủ xác thực phải điều hướng về `/tuyendung/app/employer-verify`; chỉ lỗi tải readiness mới giữ màn retry fail-closed |
 | ER-D43 | `CONFIRMED` | Trang `employer-verify` tập trung vào checklist; không chèn thêm banner readiness và banner trạng thái case trùng lặp |
-| ER-D44 | `CONFIRMED` | Trang thông tin công ty luôn có khu vực lịch sử `scope=company`, hiển thị số yêu cầu và requester đã redaction |
+| ER-D44 | `SUPERSEDED` | Thiết kế hiển thị history `scope=company` đã bị ER-D46 thay thế sau khi review UI |
 | ER-D45 | `CONFIRMED` | Gửi một thay đổi công ty không được tự thêm `trade_name` hoặc bắt sửa tên thương mại legacy nếu người dùng không thay đổi trường liên quan |
+| ER-D46 | `CONFIRMED` | Trang company settings của recruiter không hiển thị/tải history `scope=company`; update form chỉ cho gửi khi có thay đổi thật và luôn có nút quay lại |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -439,23 +441,25 @@ Các nhánh sau có thể chạy song song sau ER-0:
 - Tách loading, error, empty và has-data state.
 - Empty chỉ hiện nút tạo; không placeholder ngày/status.
 - Error hiện retry và khóa create/edit.
-- Thẻ chính dùng `scope=mine`; history dùng `scope=company`.
+- Thẻ chính chỉ dùng `scope=mine`; employer UI không tải/render history
+  `scope=company` theo ER-D46.
 - Hiển thị ngày `submitted_at`.
 - Unit/regression/E2E cho member mới vừa chọn company.
 
 Evidence: commit `828a8d0e`; 24/24 unit/API/query-key regression đạt; 9/9 E2E
 cho ba workflow company settings trên desktop/tablet/mobile đạt; Oxlint không có
-lỗi, architecture và production build đều xanh. `scope=mine` và
-`scope=company` có query key độc lập nhưng cùng root để invalidate; lỗi lần đầu
-hoặc background refresh khóa toàn bộ write/upload/delete/submit cho tới khi cả
-hai query thành công. Markdown link và whitespace gate đạt sau cập nhật tài
-liệu.
+lỗi, architecture và production build đều xanh. Contract `scope=company` vẫn
+giữ tương thích ở backend, nhưng corrective ER-D46 bỏ consumer đó khỏi employer
+UI; lỗi `scope=mine` lần đầu hoặc refresh nền vẫn khóa toàn bộ
+write/upload/delete/submit. Markdown link và whitespace gate đạt sau cập nhật
+tài liệu.
 
-Follow-up UX `fix/employer-verification-company-ui` giữ lịch sử công ty thành
-khu vực hiển thị rõ số lượng/requester, đồng thời loại thay đổi tên thương mại
-ngầm định từ dữ liệu legacy. Regression frontend liên quan đạt 25/25; hai smoke
-flow đạt 6/6 trên desktop/tablet/mobile; full coverage đạt 958/958 test trước
-edge regression cuối và delta cuối được chạy lại 17/17.
+Follow-up UX `fix/employer-verification-company-ui` loại thay đổi tên thương mại
+ngầm định từ dữ liệu legacy. Quyết định hiển thị history trong follow-up này đã
+bị ER-D46 thay thế: `fix/employer-company-request-form` bỏ history khỏi employer
+page, chặn submit rỗng ở UI trước API và bổ sung quay lại form. Corrective gate:
+19/19 unit/component, 6/6 smoke desktop/tablet/mobile và full coverage 961/961;
+lint không lỗi, architecture, build và bundle budget đều đạt.
 
 #### ER-1B — Document object access
 
@@ -651,7 +655,8 @@ Workflow:
 - Nhiều member gửi song song.
 - Creator sửa/resubmit trước review; in-review read-only.
 - Creator withdraw; owner cancel trước review kèm reason/audit.
-- Member xem company history nhưng binary permission vẫn giới hạn.
+- Backend giữ company history đã redaction cho admin/audit; recruiter page
+  không tải/render history theo ER-D46. Binary permission vẫn giới hạn.
 - Admin luôn review revision cụ thể.
 - Apply request trong transaction sau company-version conflict check.
 
@@ -1087,7 +1092,7 @@ cập nhật changelog đúng phần thay đổi thực tế của chính PR đ�
 
 | Rủi ro | Mức | Biện pháp | Phase |
 | --- | --- | --- | --- |
-| Member mới thấy request/ngày của người khác như request của mình | Cao | actor-scoped card, company history riêng, regression test | ER-1 |
+| Member mới thấy request/ngày của người khác như request của mình | Cao | actor-scoped card; employer UI không tải company history; regression test | ER-1 |
 | IDOR tài liệu nhạy cảm | Nghiêm trọng | object-level auth ở mọi path, 404, signed URL sau auth | ER-1 |
 | Hai request song song silent overwrite company | Cao | base version, immutable revision, transaction conflict check | ER-4 |
 | Upload lỗi một phần tạo request dở dang | Cao | upload session trước business submit | ER-3 |

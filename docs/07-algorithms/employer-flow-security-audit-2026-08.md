@@ -68,8 +68,8 @@ review DPA.
 
 **Retest**
 
-- `mine=[]`, `company=[other requester]`: thẻ cá nhân chỉ có Create; history vẫn
-  hiện requester.
+- `mine=[]`: thẻ cá nhân chỉ có Create; employer UI không gọi/render
+  `scope=company` hoặc request của requester khác.
 - 500 → alert/retry; không có create/edit cho tới khi retry thành công.
 - Không render fallback `updated_at`, `created_at` hoặc ngày giả.
 
@@ -77,14 +77,16 @@ review DPA.
 
 - Fixed in local branch `fix/employer-request-empty-state`, code commit
   `828a8d0e`.
-- Thẻ cá nhân và lịch sử dùng hai query key actor/company độc lập; request của
-  member khác không thể trở thành status, ngày hoặc nút sửa trong thẻ cá nhân.
+- Thẻ cá nhân chỉ dùng query actor `scope=mine`; contract company scope giữ cho
+  admin/audit nhưng không còn consumer trong employer settings.
 - Empty state không có ngày/status giả; ngày null hoặc không hợp lệ bị bỏ qua và
   chỉ `submitted_at` được phép hiển thị.
-- Lỗi initial fetch hoặc background refresh hiện retry và fail-closed toàn bộ
-  form, upload, media delete và submit cho tới khi cả hai scope thành công.
-- Lịch sử chỉ render `requested_by_summary.display_name` và nhãn field theo
-  allowlist, không render raw value, storage reference, preview hoặc file URL.
+- Lỗi initial fetch hoặc background refresh của actor scope hiện retry và
+  fail-closed toàn bộ form, upload, media delete và submit.
+- Corrective ER-D46 bỏ hẳn company history khỏi employer UI; backend vẫn
+  redaction/authorize scope này cho admin, audit và compatibility.
+- Corrective regression đạt 19/19 unit/component, 6/6 smoke trên ba viewport và
+  full coverage 961/961; employer page chỉ phát request `scope=mine`.
 - Targeted evidence: 24/24 unit/API/query-key regression và 9/9 E2E cho ba
   workflow trên desktop/tablet/mobile; Oxlint không lỗi, architecture và build
   đều đạt.

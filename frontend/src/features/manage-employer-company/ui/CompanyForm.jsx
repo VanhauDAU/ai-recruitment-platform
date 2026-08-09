@@ -1,4 +1,4 @@
-import { BankOutlined, CameraOutlined, DeleteOutlined, EditOutlined, LinkOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, BankOutlined, CameraOutlined, DeleteOutlined, EditOutlined, LinkOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Checkbox, Col, Form, Image, Input, Modal, Radio, Row, Select, Upload } from 'antd'
 import { useMemo, useRef, useState } from 'react'
@@ -15,7 +15,13 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import RichTextEditor from '@/shared/ui/RichTextEditor'
-import { buildCompanyChanges, companyToForm, DEFAULT_COMPANY_FORM, validateCompanyImage } from '../model/company-form'
+import {
+  buildCompanyChanges,
+  companyToForm,
+  DEFAULT_COMPANY_FORM,
+  hasCompanyFormValueChanges,
+  validateCompanyImage,
+} from '../model/company-form'
 
 function EditorField(props) {
   const { status } = Form.Item.useStatus()
@@ -52,10 +58,14 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   const isEdit = Boolean(company)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const initialGalleryDeletionIds = useMemo(
+    () => pendingRequest?.changes?.gallery_deletions || [],
+    [pendingRequest?.changes?.gallery_deletions],
+  )
   const [logoFile, setLogoFile] = useState(null)
   const [galleryFiles, setGalleryFiles] = useState([])
   const [galleryDeletionIds, setGalleryDeletionIds] = useState(
-    () => pendingRequest?.changes?.gallery_deletions || [],
+    () => initialGalleryDeletionIds,
   )
   const [pendingTradeProof, setPendingTradeProof] = useState(null)
   const [tradeNameTouched, setTradeNameTouched] = useState(false)
@@ -74,6 +84,8 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     () => company ? companyToForm(company, pendingRequest?.changes) : DEFAULT_COMPANY_FORM,
     [company, pendingRequest?.changes],
   )
+  const [currentFormValues, setCurrentFormValues] = useState(null)
+  const watchedValues = currentFormValues || initialValues
   const businessType = Form.useWatch('business_type', form) || initialValues.business_type
   const selectedIndustries = Form.useWatch('industries', form) || []
   const hasNoWebsite = Form.useWatch('has_no_website', form) ?? initialValues.has_no_website
@@ -123,6 +135,23 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       .map((document) => document.doc_type)),
     [pendingRequest?.documents],
   )
+
+  function hasEditDraftChanges(values) {
+    const galleryDeletionsChanged = JSON.stringify([...galleryDeletionIds].sort())
+      !== JSON.stringify([...initialGalleryDeletionIds].sort())
+    return hasCompanyFormValueChanges(values, initialValues)
+      || Boolean(
+        logoFile
+        || galleryFiles.length
+        || galleryDeletionsChanged
+        || pendingTradeProof
+        || businessProofFile
+        || authorizationFile
+        || identityFile,
+      )
+  }
+
+  const hasDraftChanges = !isEdit || hasEditDraftChanges(watchedValues)
 
   const saveMutation = useMutation({
     mutationFn: save,
@@ -253,6 +282,10 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
 
   function submitCompanyForm(values) {
     if (disabled || saveMutation.isPending) return
+    if (isEdit && !hasEditDraftChanges(values)) {
+      message.info('Chưa có thay đổi nào để gửi duyệt.')
+      return
+    }
     if (isSensitive) {
       setPendingSubmitValues(values)
       setSensitiveModalOpen(true)
@@ -336,10 +369,29 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       disabled={disabled || saveMutation.isPending}
       onFinish={submitCompanyForm}
       onFinishFailed={({ errorFields }) => errorFields[0] && form.scrollToField(errorFields[0].name, { behavior: 'smooth', block: 'center' })}
+      onValuesChange={(_, values) => setCurrentFormValues(values)}
       requiredMark={false}
       className="company-form"
     >
-      {isEdit && <header className="company-form-intro"><h2>Cập nhật thông tin công ty</h2><p>Thông tin này sẽ hiển thị với ứng viên trên tin tuyển dụng của bạn.</p></header>}
+      {isEdit && (
+        <header className="company-form-intro">
+          <Button
+            className="company-form-intro__back"
+            type="text"
+            htmlType="button"
+            icon={<ArrowLeftOutlined />}
+            aria-label="Quay lại thông tin công ty"
+            disabled={saveMutation.isPending}
+            onClick={onCancel}
+          >
+            Quay lại thông tin công ty
+          </Button>
+          <div>
+            <h2>Cập nhật thông tin công ty</h2>
+            <p>Thông tin này sẽ hiển thị với ứng viên trên tin tuyển dụng của bạn.</p>
+          </div>
+        </header>
+      )}
       {documentsRequiringReplacement.length > 0 && (
         <Alert
           className="company-form-document-request"
@@ -453,8 +505,28 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       </section>
 
       <div className="company-form-actions">
-        {onCancel && <Button size="large" onClick={onCancel}>Hủy</Button>}
-        <Button type="primary" htmlType="submit" size="large" disabled={disabled} icon={<PlusOutlined />} loading={saveMutation.isPending}>{isEdit ? 'Gửi yêu cầu cập nhật' : 'Lưu và liên kết công ty'}</Button>
+        {onCancel && (
+          <Button
+            size="large"
+            htmlType="button"
+            disabled={saveMutation.isPending}
+            onClick={onCancel}
+          >
+            Quay lại
+          </Button>
+        )}
+        <Button
+          type="primary"
+          htmlType="submit"
+          size="large"
+          disabled={disabled || !hasDraftChanges}
+          aria-label={isEdit ? 'Gửi yêu cầu cập nhật' : 'Lưu và liên kết công ty'}
+          title={isEdit && !hasDraftChanges ? 'Hãy thay đổi ít nhất một thông tin trước khi gửi.' : undefined}
+          icon={<PlusOutlined />}
+          loading={saveMutation.isPending}
+        >
+          {isEdit ? 'Gửi yêu cầu cập nhật' : 'Lưu và liên kết công ty'}
+        </Button>
       </div>
 
       <Modal

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildCompanyChanges, companyToForm, validateCompanyImage } from './company-form'
+import {
+  buildCompanyChanges,
+  companyToForm,
+  hasCompanyFormValueChanges,
+  validateCompanyImage,
+} from './company-form'
 
 const company = {
   business_type: 'enterprise',
@@ -79,6 +84,17 @@ describe('company form model', () => {
       industries: [3],
       primary_industry: 3,
     })
+  })
+
+  it('detects only actual form value changes against the opened draft', () => {
+    const initial = {
+      company_name: 'Công ty ABC',
+      address: 'Hà Nội',
+      markets: [],
+    }
+
+    expect(hasCompanyFormValueChanges({ ...initial }, initial)).toBe(false)
+    expect(hasCompanyFormValueChanges({ ...initial, address: 'TP.HCM' }, initial)).toBe(true)
   })
 
   it('validates image type and the 5 MB boundary before upload', () => {
