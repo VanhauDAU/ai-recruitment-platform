@@ -65,6 +65,7 @@ import { useAdminAccess } from '@/entities/admin-access'
 import { useSession } from '@/entities/session'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { AdminDataActions } from '@/shared/ui/admin'
 
 const STATUS_OPTIONS = [
   ['draft', 'Nháp'],
@@ -414,6 +415,28 @@ function PostList({ canManage }) {
             <Select allowClear placeholder="Danh mục" value={category} options={(categoriesQuery.data || []).map((item) => ({ value: item.public_id, label: item.name }))} onChange={(value) => { setCategory(value); setPage(1) }} />
           </div>
           <Space wrap>
+            <AdminDataActions
+              compact
+              columns={[
+                { key: 'public_id', label: 'Mã bài viết' },
+                { key: 'title', label: 'Tiêu đề' },
+                { label: 'Danh mục', value: (row) => row.category?.name },
+                { label: 'Tác giả', value: (row) => row.author?.name },
+                { key: 'editorial_state_label', label: 'Trạng thái' },
+                { key: 'view_count', label: 'Lượt xem' },
+                { key: 'updated_at', label: 'Cập nhật lúc' },
+              ]}
+              exportLabel="CSV trang này"
+              exportScopeLabel={`Xuất ${rows.length} bài viết của trang ${page}`}
+              filename={`bai-viet-trang-${page}`}
+              onRefresh={() => Promise.all([
+                postsQuery.refetch(),
+                summaryQuery.refetch(),
+                categoriesQuery.refetch(),
+              ])}
+              refreshing={postsQuery.isFetching || summaryQuery.isFetching}
+              rows={rows}
+            />
             {hasFilters && <Button onClick={clearFilters}>Xóa bộ lọc</Button>}
             {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/new'))}>Tạo bài viết</Button>}
           </Space>
@@ -521,7 +544,7 @@ function PostList({ canManage }) {
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <Progress percent={row.completeness.score} size="small" className="min-w-32 flex-1" />
                   <Space size={8}>
-                    <Button onClick={() => navigate(adminPath(`/blog/${row.public_id}/edit`))}>Mở</Button>
+                    <Button icon={<EditOutlined />} onClick={() => navigate(adminPath(`/blog/${row.public_id}/edit`))}>Mở</Button>
                     <PostActionMenu post={row} onAction={openActionConfirmation} />
                   </Space>
                 </div>
@@ -793,5 +816,5 @@ export default function BlogContentManagement({ tagPanel }) {
   const tab = ['posts', 'categories', 'tags', 'pins'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'posts'
   const changeTab = (key) => { const next = new URLSearchParams(searchParams); if (key === 'posts') next.delete('tab'); else next.set('tab', key); setSearchParams(next, { replace: true }) }
   const permissionAwareTagPanel = isValidElement(tagPanel) ? cloneElement(tagPanel, { canManage }) : tagPanel
-  return <section className="space-y-4"><div><h1 className="text-2xl font-bold text-slate-900">Cẩm nang nghề nghiệp</h1><p className="mt-1 text-sm text-slate-500">Biên tập, duyệt và tổ chức nội dung hiển thị cho ứng viên.</p></div><Tabs activeKey={tab} onChange={changeTab} items={[{ key: 'posts', label: 'Bài viết', children: <PostList canManage={canManage} /> }, { key: 'categories', label: 'Danh mục', children: <CategoryManager canManage={canManage} /> }, { key: 'tags', label: 'Thẻ', children: permissionAwareTagPanel }, { key: 'pins', label: 'Bài ghim', children: <PinManager canManage={canManage} /> }]} /></section>
+  return <section className="space-y-4"><Tabs activeKey={tab} onChange={changeTab} items={[{ key: 'posts', label: 'Bài viết', children: <PostList canManage={canManage} /> }, { key: 'categories', label: 'Danh mục', children: <CategoryManager canManage={canManage} /> }, { key: 'tags', label: 'Thẻ', children: permissionAwareTagPanel }, { key: 'pins', label: 'Bài ghim', children: <PinManager canManage={canManage} /> }]} /></section>
 }

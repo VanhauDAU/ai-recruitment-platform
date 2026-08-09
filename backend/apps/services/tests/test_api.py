@@ -1,4 +1,9 @@
+import csv
+import json
+from datetime import UTC, datetime
 from importlib import import_module
+from io import StringIO
+from unittest.mock import patch
 
 from django.apps import apps as django_apps
 from django.core.cache import cache
@@ -9,7 +14,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import AdminPermission, AdminRole, Department, User
+from apps.accounts.models import (
+    AdminAccessAuditLog,
+    AdminPermission,
+    AdminRole,
+    Department,
+    User,
+)
 from apps.accounts.services import assign_membership
 from apps.sitecontent.models import LinkGroup, LinkItem
 
@@ -167,21 +178,24 @@ class AdminServicesApiTests(APITestCase):
             code='manager',
             name='Trưởng phòng',
         )
-        role.permissions.add(
-            *[
-                AdminPermission.objects.create(
-                    code=code,
-                    module=code.split('.')[0],
-                    label=code,
-                )
-                for code in (
-                    'service_catalog.view',
-                    'service_catalog.manage',
-                    'consultation_lead.view',
-                    'consultation_lead.manage',
-                )
-            ]
-        )
+        permissions = []
+        for code in (
+            'service_catalog.view',
+            'service_catalog.manage',
+            'consultation_lead.view',
+            'consultation_lead.export',
+            'consultation_lead.manage',
+        ):
+            permission, _ = AdminPermission.objects.get_or_create(
+                code=code,
+                defaults={
+                    'module': code.split('.')[0],
+                    'label': code,
+                },
+            )
+            permissions.append(permission)
+        role.permissions.add(*permissions)
+        self.role = role
         assign_membership(self.admin, role, actor=self.admin)
         self.candidate = User.objects.create_user(
             email='candidate@example.com',
@@ -271,6 +285,220 @@ class AdminServicesApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lead.refresh_from_db()
         self.assertEqual(lead.status, ConsultationLead.Status.CONTACTED)
+
+    def test_admin_lead_list_applies_validated_search_date_and_ordering_filters(self):
+        target = ConsultationLead.objects.create(
+            full_name='Alpha Contact',
+            company_name='Alpha Co',
+            email='alpha@example.com',
+            phone='0901000001',
+            status=ConsultationLead.Status.NEW,
+        )
+        target_later = ConsultationLead.objects.create(
+            full_name='Alpha Zeta',
+            email='zeta@example.com',
+            phone='0901000004',
+            status=ConsultationLead.Status.NEW,
+        )
+        old = ConsultationLead.objects.create(
+            full_name='Alpha cũ',
+            email='old-alpha@example.com',
+            phone='0901000002',
+            status=ConsultationLead.Status.NEW,
+        )
+        ConsultationLead.objects.create(
+            full_name='Alpha đã liên hệ',
+            email='contacted-alpha@example.com',
+            phone='0901000003',
+            status=ConsultationLead.Status.CONTACTED,
+        )
+        ConsultationLead.objects.filter(pk=target.pk).update(
+            created_at=datetime(2026, 8, 5, 8, tzinfo=UTC)
+        )
+        ConsultationLead.objects.filter(pk=target_later.pk).update(
+            created_at=datetime(2026, 8, 5, 9, tzinfo=UTC)
+        )
+        ConsultationLead.objects.filter(pk=old.pk).update(
+            created_at=datetime(2026, 8, 1, 8, tzinfo=UTC)
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(
+            reverse('services-admin-consultations'),
+            {
+                'status': 'new',
+                'q': 'alpha',
+                'created_from': '2026-08-05',
+                'created_to': '2026-08-05',
+                'ordering': 'email',
+            },
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(
+            [item['id'] for item in response.data['results']],
+            [target.pk, target_later.pk],
+        )
+
+        descending = self.client.get(
+            reverse('services-admin-consultations'),
+            {
+                'status': 'new',
+                'q': 'alpha',
+                'created_from': '2026-08-05',
+                'created_to': '2026-08-05',
+                'ordering': '-email',
+            },
+        )
+        self.assertEqual(descending.status_code, status.HTTP_200_OK, descending.data)
+        self.assertEqual(
+            [item['id'] for item in descending.data['results']],
+            [target_later.pk, target.pk],
+        )
+
+        invalid_ordering = self.client.get(
+            reverse('services-admin-consultations'),
+            {'ordering': 'private_field'},
+        )
+        reversed_dates = self.client.get(
+            reverse('services-admin-consultations'),
+            {'created_from': '2026-08-06', 'created_to': '2026-08-05'},
+        )
+        invalid_status = self.client.get(
+            reverse('services-admin-consultations'),
+            {'status': 'unknown'},
+        )
+        self.assertEqual(invalid_ordering.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(reversed_dates.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(invalid_status.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_export_is_utf8_formula_safe_filtered_and_audited_without_search_value(self):
+        lead = ConsultationLead.objects.create(
+            full_name='=Formula Contact',
+            company_name='+Danger Inc',
+            email='formula@example.com',
+            phone='-0912345678',
+            province='@Hà Nội',
+            need=ConsultationLead.Need.BUY_SERVICE,
+            note='\tGhi chú nguy hiểm',
+            source_page='\r/tuyendung',
+            status=ConsultationLead.Status.NEW,
+        )
+        ConsultationLead.objects.create(
+            full_name='Không khớp',
+            email='other@example.com',
+            phone='0900000000',
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(
+            reverse('services-admin-consultations-export'),
+            {'status': 'new', 'q': 'Formula', 'ordering': 'full_name'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('attachment; filename="consultation-leads-', response['Content-Disposition'])
+        self.assertTrue(response.content.startswith(b'\xef\xbb\xbf'))
+        rows = list(csv.reader(StringIO(response.content.decode('utf-8-sig'))))
+        self.assertEqual(
+            rows[0],
+            [
+                'ID',
+                'Khách hàng',
+                'Công ty',
+                'Email',
+                'Số điện thoại',
+                'Tỉnh/TP',
+                'Nhu cầu',
+                'Ghi chú',
+                'Nguồn',
+                'Trạng thái',
+                'Ngày gửi',
+            ],
+        )
+        self.assertEqual(len(rows), 2)
+        exported = rows[1]
+        self.assertEqual(exported[0], str(lead.pk))
+        for index in (1, 2, 4, 5, 7, 8):
+            self.assertTrue(exported[index].startswith("'"), exported[index])
+
+        audit = AdminAccessAuditLog.objects.get(action='export_consultation_leads')
+        self.assertEqual(audit.target_type, 'consultation_lead_export')
+        self.assertEqual(audit.payload['filter_names'], ['status', 'q'])
+        self.assertEqual(audit.payload['row_count'], 1)
+        serialized_payload = json.dumps(audit.payload, ensure_ascii=False)
+        for forbidden in ('Formula', lead.email, lead.phone):
+            self.assertNotIn(forbidden, serialized_payload)
+
+    def test_admin_export_requires_dedicated_permission(self):
+        viewer = User.objects.create_user(
+            email='lead-viewer@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+        )
+        viewer_role = AdminRole.objects.create(
+            department=self.role.department,
+            code='viewer',
+            name='Người xem',
+        )
+        viewer_role.permissions.add(AdminPermission.objects.get(code='consultation_lead.view'))
+        assign_membership(viewer, viewer_role, actor=self.admin)
+        self.client.force_authenticate(viewer)
+
+        listed = self.client.get(reverse('services-admin-consultations'))
+        exported = self.client.get(reverse('services-admin-consultations-export'))
+
+        self.assertEqual(listed.status_code, status.HTTP_200_OK)
+        self.assertEqual(exported.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(
+            AdminAccessAuditLog.objects.filter(
+                actor=viewer,
+                action='export_consultation_leads',
+            ).exists()
+        )
+
+        exporter = User.objects.create_user(
+            email='lead-exporter@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+        )
+        exporter_role = AdminRole.objects.create(
+            department=self.role.department,
+            code='exporter',
+            name='Người xuất thiếu quyền xem',
+        )
+        exporter_role.permissions.add(AdminPermission.objects.get(code='consultation_lead.export'))
+        assign_membership(exporter, exporter_role, actor=self.admin)
+        self.client.force_authenticate(exporter)
+
+        export_without_view = self.client.get(reverse('services-admin-consultations-export'))
+
+        self.assertEqual(export_without_view.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(
+            AdminAccessAuditLog.objects.filter(
+                actor=exporter,
+                action='export_consultation_leads',
+            ).exists()
+        )
+
+    @patch('apps.services.api.views.catalog.ADMIN_CONSULTATION_LEAD_EXPORT_LIMIT', 2)
+    def test_admin_export_reports_when_the_safety_limit_truncates_rows(self):
+        for index in range(3):
+            ConsultationLead.objects.create(
+                full_name=f'Lead {index}',
+                email=f'lead-{index}@example.com',
+                phone=f'090000000{index}',
+            )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.get(reverse('services-admin-consultations-export'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['X-Export-Row-Limit'], '2')
+        self.assertEqual(response['X-Export-Truncated'], 'true')
+        rows = list(csv.reader(StringIO(response.content.decode('utf-8-sig'))))
+        self.assertEqual(len(rows), 3)
 
 
 @override_settings(CACHES=LOCAL_CACHE)

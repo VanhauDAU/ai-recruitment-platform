@@ -3,6 +3,7 @@
 from .admin import (
     AdminArticleDetailSerializer,
     AdminArticleListSerializer,
+    AdminArticleSummarySerializer,
     AdminCategorySerializer,
     ArticleCreateSerializer,
     ArticleQuerySerializer,
@@ -27,6 +28,7 @@ from .public import (
 __all__ = [
     'AdminArticleDetailSerializer',
     'AdminArticleListSerializer',
+    'AdminArticleSummarySerializer',
     'AdminCategorySerializer',
     'ArticleCreateSerializer',
     'ArticleQuerySerializer',

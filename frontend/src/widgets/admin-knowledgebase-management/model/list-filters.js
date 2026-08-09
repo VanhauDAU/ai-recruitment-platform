@@ -8,6 +8,11 @@ export function knowledgeListParams(searchParams) {
   )
 }
 
+export function knowledgeSummaryParams(params) {
+  const { ordering: _ordering, page: _page, page_size: _pageSize, ...filters } = params
+  return filters
+}
+
 export function updateKnowledgeListParams(searchParams, patch) {
   const next = new URLSearchParams(searchParams)
   Object.entries(patch).forEach(([key, value]) => {

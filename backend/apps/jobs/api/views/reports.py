@@ -12,6 +12,7 @@ from ...models import Job, JobReport
 from ...selectors import job_report_queryset
 from ...services import resolve_job_report, reverse_job_report, submit_job_report
 from ..serializers import (
+    AdminJobReportQuerySerializer,
     AdminJobReportResolveSerializer,
     AdminJobReportReverseSerializer,
     AdminJobReportSerializer,
@@ -46,13 +47,21 @@ class JobReportCreateView(APIView):
         )
 
 
+@extend_schema(
+    summary='Hàng chờ báo cáo tin tuyển dụng dành cho quản trị viên',
+    parameters=[AdminJobReportQuerySerializer],
+    responses={200: AdminJobReportSerializer(many=True)},
+    tags=['jobs-admin'],
+)
 class AdminJobReportListView(generics.ListAPIView):
     permission_classes = [HasAdminPermission]
     required_admin_permissions = {'GET': ['job_moderation.view']}
     serializer_class = AdminJobReportSerializer
 
     def get_queryset(self):
-        return job_report_queryset(status=self.request.query_params.get('status'))
+        query = AdminJobReportQuerySerializer(data=self.request.query_params)
+        query.is_valid(raise_exception=True)
+        return job_report_queryset(params=query.validated_data)
 
 
 @extend_schema(

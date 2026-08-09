@@ -2,6 +2,7 @@ from django.urls import path
 
 from .api.views import (
     AdminConsultationLeadDetailView,
+    AdminConsultationLeadExportView,
     AdminConsultationLeadListView,
     AdminServiceCategoryDetailView,
     AdminServiceCategoryListCreateView,
@@ -38,6 +39,11 @@ urlpatterns = [
         'admin/consultations/',
         AdminConsultationLeadListView.as_view(),
         name='services-admin-consultations',
+    ),
+    path(
+        'admin/consultations/export/',
+        AdminConsultationLeadExportView.as_view(),
+        name='services-admin-consultations-export',
     ),
     path(
         'admin/consultations/<int:pk>/',

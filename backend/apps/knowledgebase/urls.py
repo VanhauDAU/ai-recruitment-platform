@@ -7,6 +7,7 @@ from .api.views import (
     AdminArticlePublishView,
     AdminArticleReorderView,
     AdminArticleRestoreView,
+    AdminArticleSummaryView,
     AdminCategoryActivateView,
     AdminCategoryDeactivateView,
     AdminCategoryDetailView,
@@ -53,6 +54,11 @@ urlpatterns = [
         name='kb-admin-category-deactivate',
     ),
     path('admin/articles/', AdminArticleListCreateView.as_view(), name='kb-admin-article-list'),
+    path(
+        'admin/articles/summary/',
+        AdminArticleSummaryView.as_view(),
+        name='kb-admin-article-summary',
+    ),
     path(
         'admin/articles/reorder/',
         AdminArticleReorderView.as_view(),

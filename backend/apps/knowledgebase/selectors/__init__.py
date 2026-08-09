@@ -3,6 +3,7 @@
 from .admin import (
     ARTICLE_ORDERING,
     admin_article_detail_queryset,
+    admin_article_summary,
     admin_articles_queryset,
     admin_categories_queryset,
     admin_media_queryset,
@@ -20,6 +21,7 @@ from .seo import seo_knowledge_article_by_slugs, seo_knowledge_category_by_slug
 __all__ = [
     'ARTICLE_ORDERING',
     'admin_article_detail_queryset',
+    'admin_article_summary',
     'admin_articles_queryset',
     'admin_categories_queryset',
     'admin_media_queryset',

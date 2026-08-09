@@ -418,6 +418,33 @@ app/router + app/layouts
   ánh quyết định tạm ẩn nội dung. Tin có một trong hai hold không được xuất hiện
   ở bất kỳ bề mặt công khai nào, nhưng vẫn hiện trong workspace quản trị.
 
+## Ownership map — Catalogue và yêu cầu tư vấn quản trị
+
+```text
+pages/admin/app/ConsultationLeads
+  → widgets/admin-consultation-leads
+    → entities/consultation-lead + entities/admin-access + entities/session
+      → shared/api, shared/ui
+
+pages/admin/app/EmployerServices + CvCatalogue
+  → widgets/admin-service-catalog + widgets/admin-cv-catalogue
+    → entities/service-package + entities/cv-template + entities/locale
+      → shared/api, shared/ui
+```
+
+- Page chỉ compose page header và widget; filter, tab, bảng, editor và mutation
+  thuộc widget sở hữu workflow.
+- Danh sách lead dùng URL làm nguồn chuẩn cho tìm kiếm, trạng thái, khoảng ngày,
+  ordering và page; filter/sort/phân trang chạy phía server. Xuất lead phải qua
+  endpoint riêng, đồng thời kiểm tra `consultation_lead.view` và
+  `consultation_lead.export`, giới hạn số dòng và ghi audit không chứa PII.
+- Catalogue dịch vụ và CV hiện là contract không phân trang nên widget chỉ
+  search/sort dữ liệu đã tải. CSV phía client phải ghi rõ phạm vi tab/dữ liệu
+  đang hiển thị; không được gọi đó là xuất toàn bộ dữ liệu hệ thống.
+- Upload hình nền CV là asset workflow, không phải bulk import. Không hiển thị
+  nút nhập dữ liệu cho tới khi có contract dry-run, validate, idempotency,
+  permission và audit phía server.
+
 ## Ownership map — Job engagement
 
 ```text

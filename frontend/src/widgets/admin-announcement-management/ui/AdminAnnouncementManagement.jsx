@@ -14,6 +14,7 @@ import {
   useAnnouncementActions,
 } from '@/features/manage-announcement'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { AdminDataActions } from '@/shared/ui/admin'
 import AnnouncementDetailDrawer from './AnnouncementDetailDrawer'
 import AnnouncementEditor from './AnnouncementEditor'
 import AnnouncementFilters from './AnnouncementFilters'
@@ -212,13 +213,34 @@ export default function AdminAnnouncementManagement() {
   return (
     <section className="admin-announcement-management" aria-label="Quản lý thông báo">
       <AnnouncementFilters
+        actions={(
+          <AdminDataActions
+            compact
+            columns={[
+              { key: 'public_id', label: 'Mã thông báo' },
+              { key: 'internal_name', label: 'Tên vận hành' },
+              { label: 'Surface', value: (row) => row.surfaces },
+              { key: 'presentation_status', label: 'Trạng thái' },
+              { key: 'kind', label: 'Loại' },
+              { key: 'priority', label: 'Ưu tiên' },
+              { key: 'impressions', label: 'Hiển thị' },
+              { key: 'clicks', label: 'Click' },
+              { key: 'ctr', label: 'CTR (%)' },
+              { key: 'updated_at', label: 'Cập nhật lúc' },
+            ]}
+            exportLabel="CSV trang này"
+            exportScopeLabel={`Xuất ${data.results.length} thông báo của trang ${page}`}
+            filename={`thong-bao-trang-${page}`}
+            onRefresh={() => listQuery.refetch()}
+            refreshing={listQuery.isFetching}
+            rows={data.results}
+          />
+        )}
         canCreate={canManage}
         filters={filters}
-        loading={listQuery.isFetching}
         onChange={updateParams}
         onCreate={() => setEditorMode('create')}
         onReset={resetFilters}
-        onRetry={() => listQuery.refetch()}
         searchInput={searchInput}
         onSearchChange={(event) => setSearchInput(event.target.value)}
         total={data.count}

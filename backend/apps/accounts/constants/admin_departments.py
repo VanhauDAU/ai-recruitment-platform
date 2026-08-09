@@ -157,6 +157,7 @@ ADMIN_DEPARTMENTS = (
                     'service_catalog.view',
                     'service_catalog.manage',
                     'consultation_lead.view',
+                    'consultation_lead.export',
                     'consultation_lead.manage',
                 ),
             },

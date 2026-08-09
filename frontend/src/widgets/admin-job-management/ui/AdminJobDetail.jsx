@@ -145,7 +145,7 @@ export default function AdminJobDetail({ publicId }) {
       </div>
 
       <div className="admin-job-detail__layout">
-        <main
+        <section
           aria-labelledby={`admin-job-tab-${activeTab}`}
           className="min-w-0"
           id="admin-job-tabpanel"
@@ -164,7 +164,7 @@ export default function AdminJobDetail({ publicId }) {
             />
           )}
           {activeTab === 'history' && <AdminJobHistory job={job} />}
-        </main>
+        </section>
         <AdminJobReviewSummary job={job} />
       </div>
     </div>

@@ -1,13 +1,26 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
+import { SettingOutlined } from '@ant-design/icons'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Alert, Button, Modal, Skeleton, Tag, Tabs, Typography } from 'antd'
 import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
 import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/manage-site-settings'
 import { SpeechRuntimeOverview } from '@/features/manage-speech-runtime'
 import { message } from '@/shared/lib/toast'
-import { AdminPanel } from '@/widgets/admin-workspace'
+import { AdminDataActions, AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+
+function SettingsPageHeader() {
+  return (
+    <AdminPageHeader
+      eyebrow="Hệ thống"
+      title="Cài đặt hệ thống"
+      description="Quản lý cấu hình vận hành, thương hiệu, bảo mật và các bề mặt sản phẩm từ một nơi."
+      icon={<SettingOutlined />}
+      actions={<AdminDataActions allowExport={false} />}
+    />
+  )
+}
 
 export default function AdminSettings() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -18,19 +31,33 @@ export default function AdminSettings() {
   const [pendingImageFiles, setPendingImageFiles] = useState({})
   const [activeGroup, setActiveGroup] = useState(() => searchParams.get('group') || 'general')
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const loadSettings = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+    try {
+      const response = await getAdminSettings()
+      setGroups(response.groups)
+      const map = Object.fromEntries(
+        response.groups.flatMap((group) => (
+          group.settings.map((setting) => [setting.key, setting.value])
+        )),
+      )
+      setValues(map)
+      setInitial(map)
+    } catch {
+      setLoadError(true)
+      message.error('Không tải được cấu hình.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    getAdminSettings()
-      .then(({ groups }) => {
-        setGroups(groups)
-        const map = Object.fromEntries(
-          groups.flatMap((g) => g.settings.map((s) => [s.key, s.value]))
-        )
-        setValues(map)
-        setInitial(map)
-      })
-      .catch(() => message.error('Không tải được cấu hình.'))
-  }, [])
+    loadSettings()
+  }, [loadSettings])
 
   useEffect(() => {
     const requested = searchParams.get('group') || 'general'
@@ -133,7 +160,26 @@ export default function AdminSettings() {
     }
   }
 
-  if (!groups) return <Skeleton active paragraph={{ rows: 10 }} />
+  if (!groups) {
+    return (
+      <div className="space-y-5">
+        <SettingsPageHeader />
+        <AdminPanel>
+          {loadError ? (
+            <Alert
+              action={<Button onClick={loadSettings}>Thử lại</Button>}
+              description="Kết nối hoặc quyền truy cập có thể đã thay đổi. Hãy tải lại dữ liệu trước khi chỉnh sửa."
+              showIcon
+              title="Không thể tải cài đặt hệ thống"
+              type="error"
+            />
+          ) : (
+            <Skeleton active={loading} paragraph={{ rows: 10 }} />
+          )}
+        </AdminPanel>
+      </div>
+    )
+  }
 
   const items = groups.map((group) => ({
     key: group.key,
@@ -193,6 +239,7 @@ export default function AdminSettings() {
 
   return (
     <div className="space-y-5">
+      <SettingsPageHeader />
       <AdminPanel>
         <Tabs
           tabPlacement="top"

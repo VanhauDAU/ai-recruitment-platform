@@ -27,6 +27,7 @@ from .recommendations import (
     SavedJobRecommendationResponseSerializer,
 )
 from .reports import (
+    AdminJobReportQuerySerializer,
     AdminJobReportResolveSerializer,
     AdminJobReportReverseSerializer,
     AdminJobReportSerializer,
@@ -74,6 +75,7 @@ __all__ = [
     'JobModerationEventSerializer',
     'JobLocationSerializer',
     'AdminJobReportResolveSerializer',
+    'AdminJobReportQuerySerializer',
     'AdminJobReportReverseSerializer',
     'AdminJobReportSerializer',
     'JobReportCreateSerializer',

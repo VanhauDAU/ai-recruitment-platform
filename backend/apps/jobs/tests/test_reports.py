@@ -139,6 +139,105 @@ class JobReportAdminApiTests(APITestCase):
         self.assertEqual(listing.data['results'][0]['job_slug'], self.job.slug)
         self.assertEqual(forbidden.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_admin_list_filters_and_orders_the_complete_result_set(self):
+        user_model = get_user_model()
+        _, second_job = _employer_job('aaa-filter')
+        second_job.title = 'AAA Data Engineer'
+        second_job.company.company_name = 'AAA Company'
+        second_job.company.save(update_fields=['company_name'])
+        second_job.save(update_fields=['title'])
+        second_candidate = user_model.objects.create_user(
+            email='aaa-report-filter@example.com',
+            password='Password@123',
+            role=user_model.Role.CANDIDATE,
+        )
+        second_report = submit_job_report(
+            job=second_job,
+            reporter=second_candidate,
+            reason=JobReport.Reason.FAKE_COMPANY,
+            detail='AAA chi tiết cần kiểm tra.',
+        )
+        second_report.status = JobReport.Status.DISMISSED
+        second_report.save(update_fields=['status'])
+        JobReport.objects.filter(pk=self.report.pk).update(
+            created_at=timezone.now() - timedelta(days=2)
+        )
+        JobReport.objects.filter(pk=second_report.pk).update(
+            created_at=timezone.now() - timedelta(days=1)
+        )
+        self.client.force_authenticate(self.viewer)
+
+        filtered = self.client.get(
+            reverse('admin-job-report-list'),
+            {
+                'q': 'aaa-report-filter',
+                'reason': JobReport.Reason.FAKE_COMPANY,
+                'status': JobReport.Status.DISMISSED,
+                'created_from': (timezone.localdate() - timedelta(days=2)).isoformat(),
+                'created_to': timezone.localdate().isoformat(),
+            },
+        )
+
+        self.assertEqual(filtered.status_code, status.HTTP_200_OK, filtered.data)
+        self.assertEqual(
+            [item['public_id'] for item in filtered.data['results']],
+            [second_report.public_id],
+        )
+
+        for field in (
+            'job_title',
+            'company_name',
+            'reason',
+            'detail',
+            'reporter_email',
+            'status',
+            'created_at',
+        ):
+            ascending = self.client.get(
+                reverse('admin-job-report-list'),
+                {'ordering': field},
+            )
+            descending = self.client.get(
+                reverse('admin-job-report-list'),
+                {'ordering': f'-{field}'},
+            )
+            self.assertEqual(ascending.status_code, status.HTTP_200_OK, ascending.data)
+            self.assertEqual(descending.status_code, status.HTTP_200_OK, descending.data)
+            ascending_ids = [item['public_id'] for item in ascending.data['results']]
+            descending_ids = [item['public_id'] for item in descending.data['results']]
+            self.assertEqual(descending_ids, list(reversed(ascending_ids)))
+
+    def test_admin_list_validates_query_and_paginates_on_the_server(self):
+        for index in range(20):
+            JobReport.objects.create(
+                job=self.job,
+                reason=JobReport.Reason.OTHER,
+                detail=f'Báo cáo bổ sung {index}',
+            )
+        self.client.force_authenticate(self.viewer)
+
+        second_page = self.client.get(
+            reverse('admin-job-report-list'),
+            {'ordering': 'created_at', 'page': 2},
+        )
+        invalid_ordering = self.client.get(
+            reverse('admin-job-report-list'),
+            {'ordering': 'reporter__password'},
+        )
+        invalid_range = self.client.get(
+            reverse('admin-job-report-list'),
+            {
+                'created_from': timezone.localdate().isoformat(),
+                'created_to': (timezone.localdate() - timedelta(days=1)).isoformat(),
+            },
+        )
+
+        self.assertEqual(second_page.status_code, status.HTTP_200_OK, second_page.data)
+        self.assertEqual(second_page.data['count'], 21)
+        self.assertEqual(len(second_page.data['results']), 1)
+        self.assertEqual(invalid_ordering.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(invalid_range.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_resolve_and_reverse_keep_an_auditable_history(self):
         self.client.force_authenticate(self.resolver)
 

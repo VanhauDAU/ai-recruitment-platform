@@ -150,6 +150,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Xem khu vực quản trị bài viết.',
     },
     {
+        'code': 'consultation_lead.export',
+        'module': 'consultation_lead',
+        'label': 'Xuất lead tư vấn',
+        'description': 'Xuất danh sách lead tư vấn theo bộ lọc hiện tại với nhật ký audit.',
+    },
+    {
         'code': 'consultation_lead.manage',
         'module': 'consultation_lead',
         'label': 'Xử lý lead tư vấn',
@@ -355,6 +361,7 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'company.sensitive.view': ('company.view',),
     'company_recruiter.view': ('company.view',),
     'company_update.review': ('company_update.view',),
+    'consultation_lead.export': ('consultation_lead.view',),
     'consultation_lead.manage': ('consultation_lead.view',),
     'cv_template.archive': ('cv_template.view',),
     'cv_template.create': ('cv_template.view',),
