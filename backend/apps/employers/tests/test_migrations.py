@@ -11,7 +11,7 @@ AFTER = [('employers', '0022_employer_verification_notification')]
 UPDATE_REQUEST_BEFORE = [('employers', '0029_campaign_policy_hold')]
 UPDATE_REQUEST_AFTER = [('employers', '0030_company_update_request_requester_scope')]
 SMS_FOUNDATION_BEFORE = [('employers', '0030_company_update_request_requester_scope')]
-SMS_FOUNDATION_AFTER = [('employers', '0031_employer_sms_provider_foundation')]
+SMS_FOUNDATION_AFTER = [('employers', '0033_finalize_employer_sms_challenge_id')]
 
 
 class EmployerVerificationMigrationTests(TransactionTestCase):

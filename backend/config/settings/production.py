@@ -104,8 +104,23 @@ if EMPLOYER_SMS_OTP_ENABLED:
             Fernet(EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY.encode())
         except (TypeError, ValueError):
             _errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không hợp lệ.')
+        if EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY in {
+            SECRET_KEY,
+            SIMPLE_JWT.get('SIGNING_KEY', ''),
+            TWO_FACTOR_TOTP_ENCRYPTION_KEY,
+        } - {''}:
+            _errors.append(
+                'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không được dùng lại secret hệ thống khác.'
+            )
     if len(EMPLOYER_SMS_CHALLENGE_HMAC_KEY) < 32:
         _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY phải có ít nhất 32 ký tự.')
+    elif EMPLOYER_SMS_CHALLENGE_HMAC_KEY in {
+        SECRET_KEY,
+        SIMPLE_JWT.get('SIGNING_KEY', ''),
+        TWO_FACTOR_TOTP_ENCRYPTION_KEY,
+        EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY,
+    } - {''}:
+        _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY không được dùng lại secret hệ thống khác.')
     if EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS <= 0 or EMPLOYER_SMS_READ_TIMEOUT_SECONDS <= 0:
         _errors.append('Timeout SMS phải lớn hơn 0.')
 

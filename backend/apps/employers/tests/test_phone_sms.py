@@ -1,11 +1,13 @@
 from datetime import timedelta
 from io import StringIO
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import requests
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.management import CommandError, call_command
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -49,6 +51,28 @@ SMS_SETTINGS = {
     'EMPLOYER_SMS_EVENT_RETENTION_DAYS': 730,
     'IS_PRODUCTION': False,
 }
+VALID_FERNET_KEY = 'MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA='
+
+
+class SmsDeploymentConfigTests(SimpleTestCase):
+    def test_compose_worker_consumes_every_configured_task_queue(self):
+        compose = (Path(settings.BASE_DIR).parent / 'docker-compose.yml').read_text()
+        worker_section = compose.split('\n  worker:', 1)[1].split('\n  beat:', 1)[0]
+        command_line = next(
+            line.strip()
+            for line in worker_section.splitlines()
+            if line.strip().startswith('command: celery ')
+        )
+        queue_argument = command_line.split(' -Q ', 1)[1].split(' ', 1)[0]
+        worker_queues = set(queue_argument.split(','))
+        routed_queues = {
+            route['queue']
+            for route in settings.CELERY_TASK_ROUTES.values()
+            if isinstance(route, dict) and route.get('queue')
+        }
+
+        self.assertIn('auth-sms', worker_queues)
+        self.assertTrue(routed_queues.issubset(worker_queues))
 
 
 class VietnameseMobileNormalizationTests(TestCase):
@@ -389,3 +413,31 @@ class SmsReadinessTests(TestCase):
         errors = sms_configuration_errors(require_enabled=True)
         self.assertTrue(any('ENDPOINT_URL' in error for error in errors))
         self.assertTrue(any('API_TOKEN' in error for error in errors))
+
+    def test_production_rejects_reused_hmac_and_payload_secrets(self):
+        ready_settings = {
+            **SMS_SETTINGS,
+            'IS_PRODUCTION': True,
+            'EMPLOYER_SMS_PROVIDER': 'http',
+            'EMPLOYER_SMS_ENDPOINT_URL': 'https://sms-gateway.example.test/v1/messages',
+            'EMPLOYER_SMS_API_TOKEN': 'provider-token',
+            'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY': VALID_FERNET_KEY,
+            'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': settings.SECRET_KEY,
+            'TWO_FACTOR_TOTP_ENCRYPTION_KEY': 'distinct-totp-key',
+            'SIMPLE_JWT': {**settings.SIMPLE_JWT, 'SIGNING_KEY': 'distinct-jwt-key'},
+        }
+        with override_settings(**ready_settings):
+            errors = sms_configuration_errors(require_enabled=True)
+        self.assertTrue(any('HMAC_KEY không được dùng lại' in error for error in errors))
+
+        with override_settings(
+            **{
+                **ready_settings,
+                'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': 'distinct-hmac-key-at-least-32-characters',
+                'TWO_FACTOR_TOTP_ENCRYPTION_KEY': VALID_FERNET_KEY,
+            }
+        ):
+            errors = sms_configuration_errors(require_enabled=True)
+        self.assertTrue(
+            any('PAYLOAD_ENCRYPTION_KEY không được dùng lại' in error for error in errors)
+        )

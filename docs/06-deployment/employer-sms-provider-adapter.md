@@ -146,3 +146,10 @@ phone, OTP, ciphertext, authorization header và provider response.
 Rollback: tắt `EMPLOYER_SMS_OTP_ENABLED`; không reverse migration và không xóa
 event/challenge. Dispatch mới dừng fail closed, không giả thành công và không
 chuyển mã qua email.
+
+Xác nhận rendered Compose trước rollout:
+
+```bash
+docker compose config
+docker compose config | grep 'default,auth-email,auth-sms,cv-export,speech-artifacts'
+```
