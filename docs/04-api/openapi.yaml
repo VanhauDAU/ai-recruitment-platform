@@ -8479,6 +8479,207 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/uploads/sessions/:
+    post:
+      operationId: uploads_sessions_create
+      summary: Tạo upload session tạm
+      tags:
+      - uploads
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadSessionCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSession'
+          description: Session được tạo, chưa có byte nghiệp vụ hoặc scan verdict.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Metadata hoặc purpose không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Purpose không thuộc capability của role hiện tại.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Dung lượng khai báo vượt giới hạn.
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Vượt quota session hoặc tổng byte đang hoạt động của owner.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Pipeline quarantine chưa sẵn sàng; không có fallback.
+  /api/uploads/sessions/{public_id}/:
+    get:
+      operationId: uploads_sessions_retrieve
+      summary: Xem trạng thái upload session của chính mình
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - uploads
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSession'
+          description: Không chứa storage key, checksum hoặc scanner detail.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Không tồn tại hoặc không thuộc actor hiện tại.
+  /api/uploads/sessions/{public_id}/cancel/:
+    post:
+      operationId: uploads_sessions_cancel_create
+      summary: Hủy upload session và dọn byte tạm
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - uploads
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSession'
+          description: Hủy idempotent; state cuối là expired.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Không tồn tại hoặc không thuộc actor hiện tại.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Asset đã được business workflow claim.
+  /api/uploads/sessions/{public_id}/content/:
+    post:
+      operationId: uploads_sessions_content_create
+      summary: Ghi nội dung tệp vào quarantine
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - uploads
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadContentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSession'
+          description: Byte đang quarantined/scanning; chưa được submit nghiệp vụ.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: MIME/signature/size hoặc DOCX container không hợp lệ.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Không tồn tại hoặc không thuộc actor hiện tại.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session hết hạn, bận hoặc sai state.
+        '413':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Byte thực tế vượt giới hạn.
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Storage/pipeline không sẵn sàng; fail closed.
+  /api/uploads/sessions/{public_id}/retry/:
+    post:
+      operationId: uploads_sessions_retry_create
+      summary: Thử scan lại session lỗi còn attempt budget
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - uploads
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSession'
+          description: Retry đã được yêu cầu; vẫn fail closed tới verdict clean.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Không tồn tại hoặc không thuộc actor hiện tại.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Sai state hoặc đã hết attempt budget.
   /api/v2/admin/cv-backgrounds/:
     get:
       operationId: v2_admin_cv_backgrounds_list
@@ -25516,6 +25717,114 @@ components:
       description: |-
         * `FAQ` - Câu hỏi thường gặp
         * `GUIDE` - Hướng dẫn
+    UploadContentRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+    UploadError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+      required:
+      - code
+      - message
+      - retryable
+    UploadSession:
+      type: object
+      description: Owner-scoped state only; protected storage/scanner evidence is never serialized.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        purpose:
+          type: string
+          readOnly: true
+        original_filename:
+          type: string
+          readOnly: true
+        content_type:
+          type: string
+          readOnly: true
+        size_bytes:
+          type: integer
+          readOnly: true
+        state:
+          type: string
+          enum:
+          - uploading
+          - quarantined
+          - scanning
+          - clean
+          - rejected
+          - error
+          - expired
+          readOnly: true
+        result_code:
+          type: string
+          readOnly: true
+        scan_attempts:
+          type: integer
+          readOnly: true
+        retryable:
+          type: boolean
+          readOnly: true
+        ready_for_submit:
+          type: boolean
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content_type
+      - created_at
+      - expires_at
+      - original_filename
+      - public_id
+      - purpose
+      - ready_for_submit
+      - result_code
+      - retryable
+      - scan_attempts
+      - size_bytes
+      - state
+    UploadSessionCreateRequest:
+      type: object
+      properties:
+        purpose:
+          type: string
+          minLength: 2
+          maxLength: 64
+          description: Purpose được kiểm tra theo allowlist và role capability ở backend.
+        original_filename:
+          type: string
+          minLength: 1
+          maxLength: 255
+        content_type:
+          type: string
+          minLength: 1
+          maxLength: 127
+        size_bytes:
+          type: integer
+          minimum: 1
+      required:
+      - content_type
+      - original_filename
+      - purpose
+      - size_bytes
     VerificationMethodEnum:
       enum:
       - business_registration
@@ -25706,3 +26015,5 @@ tags:
   description: Ứng tuyển & quản lý hồ sơ ứng tuyển
 - name: locations
   description: Tra cứu địa điểm (tỉnh/xã)
+- name: uploads
+  description: Upload session tạm, quarantine và trạng thái malware scan dùng chung

@@ -10,6 +10,7 @@ from cryptography.fernet import Fernet
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
 
+from apps.uploads.configuration import upload_scanning_configuration_errors
 from common.private_storage import storage_boundary_configuration_errors
 
 from .base import *
@@ -142,6 +143,34 @@ _errors.extend(
             (R2_PRIVATE_ACCESS_KEY_ID, R2_PRIVATE_SECRET_ACCESS_KEY),
             (R2_QUARANTINE_ACCESS_KEY_ID, R2_QUARANTINE_SECRET_ACCESS_KEY),
         ),
+    )
+)
+_errors.extend(
+    upload_scanning_configuration_errors(
+        enabled=UPLOAD_QUARANTINE_ENABLED,
+        backend=UPLOAD_SCANNER_BACKEND,
+        allowed_purposes=UPLOAD_SESSION_ALLOWED_PURPOSES,
+        clamav_host=CLAMAV_HOST,
+        clamav_port=CLAMAV_PORT,
+        max_bytes=UPLOAD_MAX_BYTES,
+        owner_max_active_sessions=UPLOAD_OWNER_MAX_ACTIVE_SESSIONS,
+        owner_max_active_bytes=UPLOAD_OWNER_MAX_ACTIVE_BYTES,
+        docx_max_entries=UPLOAD_DOCX_MAX_ENTRIES,
+        docx_max_uncompressed_bytes=UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES,
+        docx_max_compression_ratio=UPLOAD_DOCX_MAX_COMPRESSION_RATIO,
+        spool_memory_bytes=UPLOAD_SPOOL_MEMORY_BYTES,
+        session_ttl_seconds=UPLOAD_SESSION_TTL_SECONDS,
+        write_lease_seconds=UPLOAD_WRITE_LEASE_SECONDS,
+        scan_lease_seconds=UPLOAD_SCAN_LEASE_SECONDS,
+        scan_max_attempts=UPLOAD_SCAN_MAX_ATTEMPTS,
+        scan_retry_base_seconds=UPLOAD_SCAN_RETRY_BASE_SECONDS,
+        clean_retention_days=UPLOAD_CLEAN_RETENTION_DAYS,
+        evidence_retention_days=UPLOAD_EVIDENCE_RETENTION_DAYS,
+        cleanup_batch_size=UPLOAD_CLEANUP_BATCH_SIZE,
+        clamav_connect_timeout_seconds=CLAMAV_CONNECT_TIMEOUT_SECONDS,
+        clamav_read_timeout_seconds=CLAMAV_READ_TIMEOUT_SECONDS,
+        clamav_stream_chunk_bytes=CLAMAV_STREAM_CHUNK_BYTES,
+        production=True,
     )
 )
 if not AUTH_REFRESH_COOKIE_SECURE:
