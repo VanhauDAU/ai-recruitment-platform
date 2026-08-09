@@ -10,6 +10,7 @@ import {
   getEmployerJobPage,
   jobKeys,
 } from '@/entities/job'
+import { useEmployerReadiness } from '@/entities/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -46,6 +47,7 @@ export default function JobList() {
     queryKey: jobKeys.employerList(queryParams),
     queryFn: () => getEmployerJobPage(queryParams),
   })
+  const { canAccessCandidateData } = useEmployerReadiness()
   const pageData = jobsQuery.data || EMPTY_PAGE
   const jobs = pageData.results || []
 
@@ -187,6 +189,7 @@ export default function JobList() {
               <JobListCard
                 key={job.public_id}
                 job={job}
+                candidateDataAccess={canAccessCandidateData}
                 closing={closeMutation.isPending && closeMutation.variables === job.public_id}
                 deleting={deleteMutation.isPending && deleteMutation.variables === job.public_id}
                 duplicating={duplicateMutation.isPending && duplicateMutation.variables === job.public_id}

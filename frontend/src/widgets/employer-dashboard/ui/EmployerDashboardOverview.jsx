@@ -2,6 +2,11 @@ import { ReloadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Skeleton } from 'antd'
 import { getEmployerDashboard } from '@/entities/employer-dashboard'
+import {
+  EMPLOYER_CAPABILITIES,
+  EmployerReadinessGateState,
+  useEmployerReadiness,
+} from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import ApplicationActivityCard from './ApplicationActivityCard'
 import DashboardSidebar from './DashboardSidebar'
@@ -18,6 +23,13 @@ import { RecentApplicationsCard, RecentJobsCard } from './RecentRecruitmentCards
 export default function EmployerDashboardOverview() {
   const { user } = useSession()
   const dashboardQuery = useQuery({ queryKey: ['employer-dashboard'], queryFn: getEmployerDashboard })
+  const {
+    readiness,
+    profileQuery,
+    isChecking: readinessChecking,
+    isAccessError: readinessError,
+    canAccessCandidateData,
+  } = useEmployerReadiness()
 
   if (dashboardQuery.isLoading) {
     return <div className="space-y-5"><Skeleton active paragraph={{ rows: 3 }} /><div className="grid gap-5 lg:grid-cols-3"><Skeleton active paragraph={{ rows: 12 }} className="lg:col-span-2" /><Skeleton active paragraph={{ rows: 12 }} /></div></div>
@@ -41,10 +53,11 @@ export default function EmployerDashboardOverview() {
 
   return (
     <div className="space-y-4">
-      <DashboardComplianceNotice verification={verification} />
+      <DashboardComplianceNotice readiness={readiness} />
       <DashboardPromotionGrid />
       <DashboardVerificationJourney
         verification={verification}
+        jobWorkspaceReady={!readinessChecking && !readinessError && readiness.jobWorkspaceReady}
         displayName={displayName}
         hasPassword={Boolean(user?.has_usable_password)}
       />
@@ -57,7 +70,18 @@ export default function EmployerDashboardOverview() {
         <div className="space-y-5">
           <ApplicationActivityCard activity={data.application_activity || []} summary={data.summary} />
           <RecentJobsCard jobs={data.recent_jobs || []} />
-          <RecentApplicationsCard applications={data.recent_applications || []} />
+          {canAccessCandidateData ? (
+            <RecentApplicationsCard applications={data.recent_applications || []} />
+          ) : (
+            <EmployerReadinessGateState
+              compact
+              capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+              checking={readinessChecking}
+              error={readinessError}
+              readiness={readiness}
+              onRetry={profileQuery.refetch}
+            />
+          )}
         </div>
         <DashboardSidebar account={account} recruitmentNeed={data.recruitment_need} />
       </div>

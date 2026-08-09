@@ -3,9 +3,9 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 
-const { useSession, getEmployerProfile, profileQueryState } = vi.hoisted(() => ({
+const { useSession, profileQueryState, useEmployerReadiness } = vi.hoisted(() => ({
   useSession: vi.fn(),
-  getEmployerProfile: vi.fn(),
+  useEmployerReadiness: vi.fn(),
   profileQueryState: {
     data: undefined,
     isSuccess: true,
@@ -15,7 +15,10 @@ const { useSession, getEmployerProfile, profileQueryState } = vi.hoisted(() => (
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => profileQueryState,
 }))
-vi.mock('@/entities/employer-profile', () => ({ getEmployerProfile }))
+vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+  ...await importOriginal(),
+  useEmployerReadiness,
+}))
 vi.mock('@/entities/session', () => ({ useSession }))
 vi.mock('@/entities/campaign', () => ({
   campaignKeys: {
@@ -45,6 +48,24 @@ describe('EmployerWorkspaceLayout', () => {
         dpa_accepted: false,
       },
     }
+    useEmployerReadiness.mockImplementation(() => ({
+      profile: profileQueryState.data,
+      profileQuery: { isSuccess: true, refetch: vi.fn() },
+      readiness: {
+        jobWorkspaceReady: true,
+        verificationApproved: false,
+        candidateDataAccess: false,
+        dpaStatus: 'outdated',
+        blockers: [{
+          code: 'dpa_outdated',
+          capabilities: ['candidate_data'],
+          message: 'Chấp thuận DPA không còn là phiên bản hiện hành.',
+          action: 'accept_dpa',
+        }],
+      },
+      isAccessError: false,
+      isChecking: false,
+    }))
   })
 
   it('temporarily opens the compact desktop icon rail on hover and collapses it when leaving', () => {

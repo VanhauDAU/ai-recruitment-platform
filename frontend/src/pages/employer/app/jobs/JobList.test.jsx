@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   deleteEmployerJob: vi.fn(),
   duplicateEmployerJob: vi.fn(),
   getEmployerJobPage: vi.fn(),
+  readinessState: { canAccessCandidateData: true },
   message: { error: vi.fn(), success: vi.fn() },
 }))
 
@@ -28,6 +29,10 @@ vi.mock('@/entities/job', () => ({
 }))
 
 vi.mock('@/shared/lib/toast', () => ({ message: mocks.message }))
+vi.mock('@/entities/employer-profile', async (importOriginal) => ({
+  ...await importOriginal(),
+  useEmployerReadiness: () => mocks.readinessState,
+}))
 
 const ACTIVE_JOB = {
   public_id: 'job_active',
@@ -84,7 +89,7 @@ function renderPage(initialEntry = '/tuyendung/app/jobs') {
       queries: { gcTime: 0, retry: false },
     },
   })
-  return render(
+  const rendered = render(
     <ConfigProvider theme={{ token: { motion: false } }} wave={{ disabled: true }}>
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -94,6 +99,7 @@ function renderPage(initialEntry = '/tuyendung/app/jobs') {
       </QueryClientProvider>
     </ConfigProvider>,
   )
+  return { ...rendered, queryClient }
 }
 
 describe('JobList', () => {
@@ -103,6 +109,7 @@ describe('JobList', () => {
   afterEach(() => confirmSpy.mockRestore())
 
   beforeEach(() => {
+    mocks.readinessState.canAccessCandidateData = true
     confirmation = null
     confirmSpy = vi.spyOn(Modal, 'confirm').mockImplementation((config) => {
       confirmation = config
@@ -126,6 +133,31 @@ describe('JobList', () => {
     })
     mocks.message.error.mockReset()
     mocks.message.success.mockReset()
+  })
+
+  it('redacts cached candidate identity and application links after access is revoked', async () => {
+    const page = renderPage()
+    const activeCard = await screen.findByTestId('job-list-item-job_active')
+    expect(within(activeCard).getByRole('link', { name: 'Mở hồ sơ Nguyễn Minh Anh' }))
+      .toBeInTheDocument()
+
+    mocks.readinessState.canAccessCandidateData = false
+    page.rerender(
+      <ConfigProvider theme={{ token: { motion: false } }} wave={{ disabled: true }}>
+        <QueryClientProvider client={page.queryClient}>
+          <MemoryRouter initialEntries={['/tuyendung/app/jobs']}>
+            <JobList />
+            <LocationProbe />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ConfigProvider>,
+    )
+
+    expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Mở hồ sơ/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Xem hồ sơ ứng tuyển' })).not.toBeInTheDocument()
+    expect(within(screen.getByTestId('job-list-item-job_active')).getByText('3 ứng viên'))
+      .toBeInTheDocument()
   })
 
   it('renders each job as a compact data row with status, deadline and grouped candidate avatars', async () => {

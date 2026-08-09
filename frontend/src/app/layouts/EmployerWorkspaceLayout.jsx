@@ -14,19 +14,22 @@ import {
   SearchOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
-import { getEmployerProfile } from '@/entities/employer-profile'
+import {
+  EMPLOYER_CAPABILITIES,
+  employerReadinessAction,
+  employerReadinessBlockersFor,
+  useEmployerReadiness,
+} from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
-  EMPLOYER_DATA_PROTECTION_URL,
   EMPLOYER_GENERAL_SETTINGS_URL,
   EMPLOYER_VERIFY_URL,
   employerAppPath,
@@ -75,19 +78,25 @@ export default function EmployerWorkspaceLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [isSidebarHovered, setIsSidebarHovered] = useState(false)
   const [isMobileViewport, setIsMobileViewport] = useState(false)
-  const profileQuery = useQuery({
-    queryKey: ['employer', 'profile'],
-    queryFn: getEmployerProfile,
-    staleTime: 30 * 1000,
-  })
-  const profile = profileQuery.data || {}
+  const {
+    profile: profileData,
+    profileQuery,
+    readiness,
+    isAccessError,
+    isChecking,
+  } = useEmployerReadiness()
+  const profile = profileData || {}
   const verification = profile.onboarding || {}
   const accountVerificationLevel = getEmployerAccountVerificationLevel(verification)
   // "An toàn" ở đây gắn với bảo mật đăng nhập: bật một trong các phương thức xác
   // thực 2 yếu tố (hiện có email) là đủ để ẩn cảnh báo đỏ ở sidebar.
   const accountSecure = Boolean(user?.two_factor_enabled)
-  const showComplianceNotice = profileQuery.isSuccess
-    && (!verification.candidate_dpa_submitted || !verification.dpa_accepted)
+  const candidateBlocker = employerReadinessBlockersFor(
+    readiness,
+    EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
+  )[0]
+  const complianceAction = employerReadinessAction(candidateBlocker?.action)
+  const showComplianceNotice = !isChecking && !isAccessError && !readiness.candidateDataAccess
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
   const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/([^/]+)$`))
@@ -195,10 +204,12 @@ export default function EmployerWorkspaceLayout() {
         verificationPath={employerAppPath('/xac-thuc-email')}
         employerProfile={profile}
         employerProfileReady={profileQuery.isSuccess}
+        employerReadiness={readiness}
+        employerReadinessReady={!isChecking && !isAccessError}
         legacy={showComplianceNotice ? (
           <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
-            <span className="hidden sm:inline">[QUAN TRỌNG] Hoàn thiện Thỏa thuận xử lý dữ liệu cá nhân để bảo vệ hồ sơ ứng viên. </span>
-            <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">Cập nhật ngay</Link>
+            <span className="hidden sm:inline">[QUAN TRỌNG] {candidateBlocker?.message || 'Dữ liệu ứng viên đang được bảo vệ.'} </span>
+            <Link to={complianceAction.to} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">{complianceAction.label}</Link>
           </div>
         ) : null}
       />

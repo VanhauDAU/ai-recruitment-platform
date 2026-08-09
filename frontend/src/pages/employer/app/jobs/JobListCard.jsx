@@ -15,7 +15,7 @@ import {
   jobStatusMeta,
 } from './job-list-presentation'
 
-function CandidatePreviews({ job }) {
+function CandidatePreviews({ job, candidateDataAccess }) {
   const previews = job.candidate_previews || []
   const candidateCount = job.candidate_count ?? previews.length
   const applicationCount = job.application_count || 0
@@ -24,6 +24,17 @@ function CandidatePreviews({ job }) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-slate-400">
         <TeamOutlined aria-hidden /> Chưa có hồ sơ
+      </span>
+    )
+  }
+
+  if (!candidateDataAccess) {
+    return (
+      <span className="inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs text-slate-500">
+        <TeamOutlined aria-hidden />
+        <strong className="font-semibold text-slate-800">{candidateCount} ứng viên</strong>
+        <span className="text-slate-300">·</span>
+        {applicationCount} CV
       </span>
     )
   }
@@ -85,6 +96,7 @@ export default function JobListCard({
   onClose,
   onDelete,
   onDuplicate,
+  candidateDataAccess = false,
 }) {
   const status = jobStatusMeta(job)
   const deadlineHelper = formatDeadline(job.deadline)
@@ -131,7 +143,7 @@ export default function JobListCard({
           </div>
         </div>
 
-        <CandidatePreviews job={job} />
+        <CandidatePreviews job={job} candidateDataAccess={candidateDataAccess} />
 
         <Tooltip title="Lượt xem tin tuyển dụng">
           <span className="hidden items-center gap-1.5 whitespace-nowrap text-xs text-slate-500 sm:inline-flex">
@@ -142,6 +154,7 @@ export default function JobListCard({
 
         <JobListActions
           job={job}
+          candidateDataAccess={candidateDataAccess}
           closing={closing}
           deleting={deleting}
           duplicating={duplicating}

@@ -9,6 +9,11 @@ import {
 import { Alert, Button, Modal, Progress, Tag } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import {
+  EMPLOYER_CAPABILITIES,
+  employerReadinessAction,
+  employerReadinessBlockersFor,
+} from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { settingText, useSiteSettings } from '@/entities/site-settings'
 import {
@@ -28,7 +33,7 @@ const STEP_DEFINITIONS = [
   { key: 'dpa_accepted', title: 'Đồng ý Thỏa thuận xử lý DLCN với nền tảng', description: 'Xác nhận vai trò và trách nhiệm bảo vệ dữ liệu trên hệ thống.', icon: SafetyCertificateOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 
-export default function EmployerVerificationChecklist({ profile, onContinue }) {
+export default function EmployerVerificationChecklist({ profile, readiness, onContinue }) {
   const { user } = useSession()
   const { settings, siteName } = useSiteSettings()
   const navigate = useNavigate()
@@ -38,6 +43,11 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   const progress = getEmployerVerificationProgress(verification)
   const hotline = settingText(settings.hotline, '1900 1234')
   const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
+  const candidateBlocker = employerReadinessBlockersFor(
+    readiness,
+    EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
+  )[0]
+  const blockerAction = employerReadinessAction(candidateBlocker?.action)
 
   function openStep(step) {
     if (step.key === 'phone_verified' && !user?.has_usable_password) {
@@ -63,6 +73,25 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
         <strong className="text-sm text-emerald-600">Hoàn thành {progress.percent}%</strong>
       </div>
       <Progress percent={progress.percent} showInfo={false} strokeColor="#00b14f" railColor="#e8edf2" className="!mb-6" />
+
+      {readiness && (
+        <Alert
+          className="!mb-5"
+          showIcon
+          type={readiness.candidateDataAccess ? 'success' : readiness.jobWorkspaceReady ? 'warning' : 'info'}
+          title={readiness.candidateDataAccess
+            ? 'Đã sẵn sàng truy cập dữ liệu ứng viên'
+            : readiness.jobWorkspaceReady
+              ? 'Workspace việc làm đã sẵn sàng; dữ liệu ứng viên vẫn được bảo vệ'
+              : 'Workspace tuyển dụng chưa sẵn sàng'}
+          description={candidateBlocker?.message || 'Trạng thái quyền truy cập đã được cập nhật.'}
+          action={candidateBlocker ? (
+            <Button size="small" onClick={() => navigate(blockerAction.to)}>
+              {blockerAction.label}
+            </Button>
+          ) : null}
+        />
+      )}
 
       {verificationCase.status !== 'draft' && (
         <Alert
