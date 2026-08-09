@@ -415,6 +415,7 @@ class SmsReadinessTests(TestCase):
         self.assertTrue(any('API_TOKEN' in error for error in errors))
 
     def test_production_rejects_reused_hmac_and_payload_secrets(self):
+        jwt_signing_key = 'distinct-jwt-signing-key-at-least-32-characters'
         ready_settings = {
             **SMS_SETTINGS,
             'IS_PRODUCTION': True,
@@ -422,18 +423,25 @@ class SmsReadinessTests(TestCase):
             'EMPLOYER_SMS_ENDPOINT_URL': 'https://sms-gateway.example.test/v1/messages',
             'EMPLOYER_SMS_API_TOKEN': 'provider-token',
             'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY': VALID_FERNET_KEY,
-            'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': settings.SECRET_KEY,
+            'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': 'distinct-hmac-key-at-least-32-characters',
             'TWO_FACTOR_TOTP_ENCRYPTION_KEY': 'distinct-totp-key',
-            'SIMPLE_JWT': {**settings.SIMPLE_JWT, 'SIGNING_KEY': 'distinct-jwt-key'},
+            'SIMPLE_JWT': {**settings.SIMPLE_JWT, 'SIGNING_KEY': jwt_signing_key},
         }
-        with override_settings(**ready_settings):
-            errors = sms_configuration_errors(require_enabled=True)
-        self.assertTrue(any('HMAC_KEY không được dùng lại' in error for error in errors))
+
+        for reused_hmac_key in (settings.SECRET_KEY, jwt_signing_key):
+            with self.subTest(reused_hmac_key=reused_hmac_key):
+                with override_settings(
+                    **{
+                        **ready_settings,
+                        'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': reused_hmac_key,
+                    }
+                ):
+                    errors = sms_configuration_errors(require_enabled=True)
+                self.assertTrue(any('HMAC_KEY không được dùng lại' in error for error in errors))
 
         with override_settings(
             **{
                 **ready_settings,
-                'EMPLOYER_SMS_CHALLENGE_HMAC_KEY': 'distinct-hmac-key-at-least-32-characters',
                 'TWO_FACTOR_TOTP_ENCRYPTION_KEY': VALID_FERNET_KEY,
             }
         ):
