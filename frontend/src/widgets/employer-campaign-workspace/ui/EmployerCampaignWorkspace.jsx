@@ -16,6 +16,11 @@ import {
   updateCampaign,
 } from '@/entities/campaign'
 import {
+  EMPLOYER_CAPABILITIES,
+  EmployerReadinessGateState,
+  useEmployerReadiness,
+} from '@/entities/employer-profile'
+import {
   CampaignNameForm,
 } from '@/features/manage-campaigns'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -48,6 +53,13 @@ export default function EmployerCampaignWorkspace({ publicId }) {
   const [editing, setEditing] = useState(false)
   const tabRefs = useRef([])
   const queryClient = useQueryClient()
+  const {
+    readiness,
+    profileQuery,
+    isChecking: readinessChecking,
+    isAccessError: readinessError,
+    canAccessCandidateData,
+  } = useEmployerReadiness()
   const campaignQuery = useQuery({
     queryKey: campaignKeys.detail(publicId),
     queryFn: () => getCampaign(publicId),
@@ -216,9 +228,41 @@ export default function EmployerCampaignWorkspace({ publicId }) {
               reportLoading={reportQuery.isLoading}
             />
           )}
-          {activeTab === 'apply_cv' && <CampaignApplyCvPanel publicId={publicId} />}
-          {activeTab === 'job' && <CampaignJobsPanel publicId={publicId} campaign={campaign} />}
-          {activeTab === 'activity' && <CampaignActivityPanel publicId={publicId} />}
+          {activeTab === 'apply_cv' && (canAccessCandidateData ? (
+            <CampaignApplyCvPanel publicId={publicId} />
+          ) : (
+            <div className="p-4 sm:p-5">
+              <EmployerReadinessGateState
+                compact
+                capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+                checking={readinessChecking}
+                error={readinessError}
+                readiness={readiness}
+                onRetry={profileQuery.refetch}
+              />
+            </div>
+          ))}
+          {activeTab === 'job' && (
+            <CampaignJobsPanel
+              publicId={publicId}
+              campaign={campaign}
+              candidateDataAccess={canAccessCandidateData}
+            />
+          )}
+          {activeTab === 'activity' && (canAccessCandidateData ? (
+            <CampaignActivityPanel publicId={publicId} />
+          ) : (
+            <div className="p-4 sm:p-5">
+              <EmployerReadinessGateState
+                compact
+                capability={EMPLOYER_CAPABILITIES.CANDIDATE_DATA}
+                checking={readinessChecking}
+                error={readinessError}
+                readiness={readiness}
+                onRetry={profileQuery.refetch}
+              />
+            </div>
+          ))}
         </div>
       </section>
 

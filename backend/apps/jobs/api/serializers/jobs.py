@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils.html import strip_tags
 from rest_framework import serializers
 
-from apps.employers.models import RecruitmentCampaign
+from apps.employers.models import DpaStatus, RecruitmentCampaign
 from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text
 
@@ -756,3 +756,35 @@ class EmployerJobListSerializer(PublicJobListSerializer):
             }
             for preview in getattr(obj, 'candidate_previews', [])
         ]
+
+
+class EmployerPostingBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    capabilities = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=('job_workspace', 'verification', 'candidate_data', 'job_approval')
+        )
+    )
+    message = serializers.CharField()
+    action = serializers.CharField()
+
+
+class EmployerJobPostingContextSerializer(serializers.Serializer):
+    verification_completed = serializers.BooleanField()
+    admin_approved = serializers.BooleanField()
+    account_level = serializers.IntegerField(min_value=0)
+    verified_job_quota_eligible = serializers.BooleanField()
+    job_workspace_ready = serializers.BooleanField()
+    candidate_data_access = serializers.BooleanField()
+    dpa_status = serializers.ChoiceField(
+        choices=[(status.value, status.value) for status in DpaStatus]
+    )
+    blockers = EmployerPostingBlockerSerializer(many=True)
+    published_jobs_count = serializers.IntegerField(min_value=0)
+    publish_limit = serializers.IntegerField(min_value=0)
+    publish_remain = serializers.IntegerField(min_value=0)
+    free_publish_limit = serializers.IntegerField(min_value=0)
+    free_publish_remain = serializers.IntegerField(min_value=0)
+    job_postable = serializers.BooleanField()
+    approval_required = serializers.BooleanField()
+    block_reason = serializers.CharField(allow_blank=True)

@@ -39,11 +39,11 @@ review DPA.
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
 | ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Mitigated ER-1B; lifecycle follow-up ER-4 | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
-| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Open | ER-3 |
+| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Storage boundary in remediation; scanner open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
-| ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Open | ER-2/ER-5 |
+| ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2; reconciliation follow-up ER-5 | ER-2/ER-5 |
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Open | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
@@ -171,6 +171,24 @@ review DPA.
 - Chỉ `clean` được attach và download; scan error fail closed.
 - Không có business request khi một file bắt buộc chưa clean.
 
+**ER-3 storage-foundation evidence (2026-08-10)**
+
+- Local và R2 có alias/root/bucket tách public, private, quarantine; private và
+  quarantine fail-closed khi gọi `.url()`. DEBUG/nginx chỉ được serve public.
+- Rendered production Compose chỉ publish nginx 80/443, không kế thừa source
+  bind hoặc port development; nginx chỉ nhận static và public-media volume.
+- Root shared cũ trở thành `LEGACY_MEDIA_ROOT` không phục vụ. Lệnh
+  `migrate_media_storage_layout` dry-run mặc định, batch/cursor, copy + hash
+  verify idempotent và giữ source rollback; không di chuyển byte trong schema
+  migration.
+- Classifier allowlist public, unknown → private; bao phủ `gallerys/`,
+  knowledgebase, frontend legacy và external-media migration.
+- Raw multipart DOC/DOCX preview trả machine code `UPLOAD_SCAN_REQUIRED` và
+  không gọi LibreOffice; authorized preview/download của document đã lưu vẫn
+  đọc private storage theo storage key cũ.
+- Finding chưa đóng: upload session, ClamAV, clean-only consume, retention và
+  candidate import quarantine tiếp tục ở các slice ER-3 sau.
+
 ### ER-F06 — Verification auto-finalization
 
 **Evidence**
@@ -237,6 +255,56 @@ review DPA.
 - List/detail/CV snapshot/download/export/history/direct route dùng cùng
   `candidate_data_access` selector.
 - Member cùng company không xem resource recruiter khác.
+
+**ER-2 evidence (2026-08-10)**
+
+- Fixed trên nhánh `feature/employer-readiness-contract` bằng các commit
+  `b5a50c45` (policy/contract), `49f11065` (candidate, CV và mutation
+  enforcement), `f1408e43` (authoritative job/campaign read guard) và
+  `916d2bfb` (OpenAPI/security evidence); đồng bộ `dev` tại merge commit
+  `8e01389e` trước retest cuối.
+- Một policy canonical trả `job_workspace_ready`, `verification_approved`,
+  `candidate_data_access`, `dpa_status` và danh sách blocker có thứ tự xác định.
+  `candidate_data_access` là tập con nghiêm ngặt của workspace, verification
+  approved đúng recruiter/company và DPA `current`; feature flag không còn là
+  đường bypass. Adapter DB hiện tại chỉ phát `missing/current`, còn enum công
+  khai giữ đủ `legacy_unversioned/outdated/grace/hold/unknown` cho ER-6.
+- `/api/employer/me`, `/api/auth/me` và posting-context cùng dùng contract này.
+  Direct API job/campaign list, detail, options, report, performance và activity
+  yêu cầu capability workspace; posting-context vẫn đọc được để trả blocker.
+  Verification pending/changes-requested với DPA current vẫn vào workspace,
+  nhưng không đọc candidate data hoặc duyệt tin.
+- Application list/export/status/history/snapshot, campaign activity metadata,
+  dashboard và job/campaign preview đều recheck candidate capability ở backend.
+  Signed recruiter CV asset được bind audience, actor, application và version,
+  rồi kiểm lại authorization sống khi tải; flow asset của candidate được giữ
+  tương thích. Theo ER-D29, aggregate không định danh vẫn có nhưng không kèm
+  PII/deep-link/activity nhạy cảm.
+- Endpoint errors đã triển khai là `EMPLOYER_WORKSPACE_BLOCKED`,
+  `CANDIDATE_DATA_BLOCKED`, `JOB_APPROVAL_BLOCKED`; blocker bên trong giữ mã
+  lowercase và capability ổn định. Không ghi nhận các target code phase sau như
+  `VERIFICATION_REQUIRED` hoặc `DPA_OUTDATED` là endpoint error đã có.
+- Mutation dùng lock order `User → Recruiter → Verification → Campaign → Job →
+  Application`; regression bao phủ relink/wrong-company document, campaign đổi
+  giữa snapshot và lock, job/campaign hold, duplicate và approve-vs-revoke.
+- Frontend commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
+  `ab1c003e`, `d84760ba`: jobs/campaigns dùng `JobWorkspaceGuard`, applications
+  dùng `CandidateDataGuard`; denied direct route giữ URL và render blocker/
+  retry. Job detail và campaign Apply CV/Activity không phát sensitive request
+  khi denied/error; cached name/avatar/email/CV link biến mất ngay khi readiness
+  chuyển `true → false`.
+- Retest cuối: 206/206 test trong các module accounts profile, employer
+  readiness/admin/campaign, jobs API/query budget/posting/moderation,
+  applications v2/service và dashboard; matrix direct read/query budget riêng
+  đạt 31/31. Ruff check/format, import-linter 2/2, DRF layering, diff check và
+  `makemigrations --check --dry-run` đều đạt; không có migration ER-2.
+- Frontend coverage gate đạt 253 test file/953 test, gồm ma trận sáu readiness
+  state; readiness E2E đạt 9/9 trên desktop/tablet/mobile. Oxlint,
+  architecture check và production build đều đạt.
+- Residual: tạo/propagate hold ngay sau revoke hoặc DPA transition thuộc ER-5;
+  DPA append-only evidence/version/hash/actor/IP/session thuộc ER-6. Bộ CV v2
+  đầy đủ còn có fixture locale/blueprint hỏng sẵn ngoài phạm vi ER-2; regression
+  signed-token chuyên biệt đã đạt.
 
 ### ER-F09 — Phone OTP transport
 

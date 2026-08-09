@@ -16,6 +16,11 @@ import {
 import { Button, Progress } from 'antd'
 import { useRef } from 'react'
 import { Link } from 'react-router'
+import {
+  EMPLOYER_CAPABILITIES,
+  employerReadinessAction,
+  employerReadinessBlockersFor,
+} from '@/entities/employer-profile'
 import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
 import {
@@ -35,16 +40,21 @@ const VERIFICATION_STEPS = [
   { key: 'dpa_accepted', label: 'Đồng ý Thỏa thuận xử lý DLCN với hệ thống', to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 
-export function DashboardComplianceNotice({ verification = {} }) {
-  if (verification.candidate_dpa_submitted && verification.dpa_accepted) return null
+export function DashboardComplianceNotice({ readiness }) {
+  if (!readiness || readiness.candidateDataAccess) return null
+  const blocker = employerReadinessBlockersFor(
+    readiness,
+    EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
+  )[0]
+  const action = employerReadinessAction(blocker?.action)
   return (
     <section className="flex flex-wrap items-center gap-3 rounded-lg border-l-4 border-blue-500 bg-white px-4 py-3 shadow-sm" aria-label="Thông báo quan trọng">
       <InfoCircleOutlined className="text-lg text-blue-600" />
       <div className="min-w-0 flex-1">
         <strong className="text-sm text-blue-700">Thông báo quan trọng</strong>
-        <p className="mt-0.5 text-xs leading-5 text-slate-500">Hoàn thiện văn bản và thỏa thuận xử lý dữ liệu cá nhân để đảm bảo hồ sơ ứng viên được tiếp nhận an toàn.</p>
+        <p className="mt-0.5 text-xs leading-5 text-slate-500">{blocker?.message || 'Dữ liệu ứng viên đang được bảo vệ cho tới khi trạng thái được xác minh.'}</p>
       </div>
-      <Link to={EMPLOYER_DATA_PROTECTION_URL} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">Cập nhật ngay</Link>
+      <Link to={action.to} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">{action.label}</Link>
     </section>
   )
 }
@@ -97,7 +107,12 @@ function VerificationStepCard({ step, done, isCurrent, target }) {
   )
 }
 
-export function DashboardVerificationJourney({ verification = {}, displayName, hasPassword }) {
+export function DashboardVerificationJourney({
+  verification = {},
+  displayName,
+  hasPassword,
+  jobWorkspaceReady = false,
+}) {
   const { settings } = useSiteSettings()
   const primaryColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
   const progress = getEmployerVerificationProgress(verification)
@@ -152,7 +167,7 @@ export function DashboardVerificationJourney({ verification = {}, displayName, h
         </div>
 
         <Link
-          to={progress.completed === progress.total ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
+          to={jobWorkspaceReady ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
           className="group flex w-40 shrink-0 items-center gap-3 self-stretch rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 transition hover:border-emerald-500 sm:w-56"
           aria-label="Đăng tin tuyển dụng đầu tiên"
         >

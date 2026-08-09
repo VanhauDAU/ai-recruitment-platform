@@ -14,7 +14,6 @@ from apps.accounts.services import (
     create_impact_token,
     decode_impact_token,
     is_account_accessible,
-    lock_account_for_write,
 )
 from apps.employers.models import RecruitmentCampaign
 from apps.employers.services import recruiter_job_approval_state
@@ -174,24 +173,38 @@ def _approval_deadline(deadline, *, required):
 @transaction.atomic
 def approve_job(*, job, user, review_token='', deadline=None):
     """Make one pending job public after an administrator approves its revision."""
-    lock_account_for_write(job.posted_by)
+    stale_posted_by_id = job.posted_by_id
+    stale_company_id = job.company_id
+    stale_campaign_id = job.campaign_id
+    employer_approval_state = recruiter_job_approval_state(
+        job.posted_by,
+        company_id=stale_company_id,
+        lock=True,
+    )
+    locked_campaign = None
+    if stale_campaign_id:
+        try:
+            locked_campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(
+                pk=stale_campaign_id
+            )
+        except RecruitmentCampaign.DoesNotExist as error:
+            raise JobModerationStale() from error
     job = (
         Job.objects.select_for_update(of=('self',))
         .select_related('posted_by', 'campaign')
         .get(pk=job.pk)
     )
+    if (
+        job.posted_by_id != stale_posted_by_id
+        or job.company_id != stale_company_id
+        or job.campaign_id != stale_campaign_id
+    ):
+        raise JobModerationStale()
+    if locked_campaign is not None:
+        job.campaign = locked_campaign
     _verify_review_token(job, review_token)
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể duyệt tin đang chờ duyệt.')
-    employer_approval_state = recruiter_job_approval_state(
-        job.posted_by,
-        company_id=job.company_id,
-        lock=True,
-    )
-    if job.campaign_id:
-        job.campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(
-            pk=job.campaign_id
-        )
     state = job_moderation_state(job, employer_approval_state=employer_approval_state)
     if state['approve_blockers']:
         raise ValidationError(

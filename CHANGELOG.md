@@ -8,6 +8,43 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Security — Upload storage boundary ER-3 foundation
+
+- Tách storage public/private/quarantine cho local và Cloudflare R2; chỉ public
+  được phép qua `/media`, private/quarantine không phát direct URL. Root shared
+  cũ trở thành nguồn migration không phục vụ trực tiếp.
+- Sửa production Compose override để không kế thừa bind-mount source hoặc các
+  cổng backend/PostgreSQL/Redis/Vite từ cấu hình development; chỉ nginx publish
+  cổng và chỉ mount public media.
+- Thêm lệnh kiểm kê/copy layout dry-run mặc định, idempotent, batch/cursor và
+  hash verify; unknown key fail-closed về private, đồng thời nhận đúng
+  `gallerys/` và các prefix public hiện hành.
+- Raw DOC/DOCX employer preview trước upload trả `UPLOAD_SCAN_REQUIRED` và
+  không gọi LibreOffice. Preview/download document đã lưu vẫn đi qua endpoint
+  có authorization. Upload session/malware scanner/retention tiếp tục ở slice
+  ER-3 kế tiếp.
+
+#### Changed — Employer readiness contract ER-2
+
+- `/api/employer/me/` nay trả năm field readiness canonical và `/api/auth/me/`
+  trả `employer_job_workspace_ready`. Workspace việc làm, verification approval,
+  candidate-data và DPA không còn bị gộp vào một boolean legacy.
+- Frontend tách `JobWorkspaceGuard` khỏi `CandidateDataGuard`, cập nhật login
+  destination, checklist và compliance strip theo machine blocker/action.
+  Direct URL bị từ chối giữ nguyên để hiển thị lý do và retry.
+
+#### Security — Employer candidate-data boundary ER-2
+
+- Backend áp cùng capability policy cho employer job/campaign mutation và mọi
+  đường application list/export/status/history/snapshot, dashboard/job/campaign
+  preview, activity metadata/deep-link và recruiter CV asset content; không còn
+  feature-flag bypass. Recruiter asset token được audience-bound và live
+  reauthorize trước khi mở nội dung.
+- Frontend không mount hoặc query JobDetail applications và campaign Apply CV/
+  Activity khi readiness checking/error/denied; PII, avatar, preview và CV link
+  đã cache cũng bị bỏ ngay khi quyền chuyển `true → false`. Aggregate không chứa
+  danh tính vẫn được giữ lại trong các bề mặt job/campaign/dashboard.
+
 #### Fixed — Employer request state ER-1A
 
 - Thẻ “Yêu cầu của tôi” nay chỉ đọc `scope=mine`, tách khỏi lịch sử

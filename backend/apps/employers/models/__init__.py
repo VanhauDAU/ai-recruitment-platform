@@ -4,6 +4,7 @@ from .campaign import CampaignActivity, RecruitmentCampaign
 from .company import Company, CompanyImage, CompanyIndustry, Industry
 from .membership import RecruiterProfile
 from .otp import PhoneOtp
+from .readiness import DpaStatus
 from .recruitment_need import RecruitmentNeed
 from .verification import (
     CompanyDocument,
@@ -21,6 +22,7 @@ __all__ = [
     'CompanyImage',
     'CompanyIndustry',
     'CompanyUpdateRequest',
+    'DpaStatus',
     'EmployerVerificationCase',
     'EmployerVerificationEvent',
     'EmployerVerificationNotification',

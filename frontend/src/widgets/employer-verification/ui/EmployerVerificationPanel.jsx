@@ -2,7 +2,7 @@ import { BarChartOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Skeleton } from 'antd'
 import { Navigate, useNavigate } from 'react-router'
-import { getEmployerProfile, getEmployerRecruitmentNeed } from '@/entities/employer-profile'
+import { getEmployerRecruitmentNeed, useEmployerReadiness } from '@/entities/employer-profile'
 import { useSession } from '@/entities/session'
 import { EmployerVerificationChecklist } from '@/features/verify-employer-account'
 import { employerAppPath } from '@/shared/config/portals'
@@ -40,13 +40,20 @@ function VerificationStory({ need, companyName }) {
 export default function EmployerVerificationPanel() {
   const navigate = useNavigate()
   const { user } = useSession()
-  const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
+  const {
+    profile,
+    profileQuery,
+    readiness,
+    isAccessError,
+    isChecking,
+    canAccessCandidateData,
+  } = useEmployerReadiness()
   const needQuery = useQuery({ queryKey: ['employer', 'recruitment-need'], queryFn: getEmployerRecruitmentNeed })
 
-  if (profileQuery.isLoading) {
+  if (isChecking && !profile) {
     return <div className="mx-auto max-w-6xl rounded-2xl bg-white p-8"><Skeleton active paragraph={{ rows: 14 }} /></div>
   }
-  if (profileQuery.isError) {
+  if (isAccessError) {
     return (
       <Alert
         type="error"
@@ -58,8 +65,8 @@ export default function EmployerVerificationPanel() {
     )
   }
 
-  const profile = profileQuery.data || {}
-  if (profile.onboarding?.verification_completed) {
+  const resolvedProfile = profile || {}
+  if (canAccessCandidateData) {
     return <Navigate to={employerAppPath('/dashboard')} replace />
   }
 
@@ -67,14 +74,15 @@ export default function EmployerVerificationPanel() {
     <div className="mx-auto grid min-w-0 max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,.10)] xl:grid-cols-[minmax(300px,.85fr)_minmax(0,1.15fr)]">
       <VerificationStory
         need={needQuery.data}
-        companyName={profile.onboarding?.company_linked ? profile.company?.company_name : ''}
+        companyName={resolvedProfile.onboarding?.company_linked ? resolvedProfile.company?.company_name : ''}
       />
       <section className="min-w-0 p-5 sm:p-8 xl:p-10">
         <h1 className="text-2xl font-black text-slate-900">Xin chào, <span className="text-emerald-600">{user?.full_name || user?.email}</span></h1>
         <p className="mt-2 text-sm leading-6 text-slate-500">Bạn có thể hoàn thiện các bước bảo mật ngay bây giờ hoặc tiếp tục vào dashboard và quay lại sau.</p>
         <div className="mt-8">
           <EmployerVerificationChecklist
-            profile={profile}
+            profile={resolvedProfile}
+            readiness={readiness}
             onContinue={() => navigate(employerAppPath('/dashboard'), { replace: true })}
           />
         </div>

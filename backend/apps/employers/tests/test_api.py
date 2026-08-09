@@ -1107,11 +1107,8 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(preview['Content-Type'], 'application/pdf')
         self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
-    @patch(
-        'apps.employers.api.views.verification.render_office_upload_preview',
-        return_value=b'%PDF-selected-preview',
-    )
-    def test_selected_word_agreement_can_be_previewed_without_persisting_it(self, render_preview):
+    @patch('apps.employers.services.document_preview.subprocess.run')
+    def test_raw_word_agreement_preview_requires_scan_without_running_office(self, soffice_run):
         upload = SimpleUploadedFile(
             'thoa-thuan.docx',
             DOCX_BYTES,
@@ -1124,17 +1121,10 @@ class JoinCompanyTests(APITestCase):
             format='multipart',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.content, b'%PDF-selected-preview')
-        self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertEqual(response['Cache-Control'], 'private, no-store')
-        render_preview.assert_called_once()
-        preview_upload, preview_content_type = render_preview.call_args.args
-        self.assertEqual(preview_upload.name, 'thoa-thuan.docx')
-        self.assertEqual(
-            preview_content_type,
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['code'], 'UPLOAD_SCAN_REQUIRED')
+        self.assertIn('quét an toàn', response.data['message'])
+        soffice_run.assert_not_called()
         self.assertFalse(CompanyDocument.objects.filter(recruiter=self.recruiter).exists())
 
 

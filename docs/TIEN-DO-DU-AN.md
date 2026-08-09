@@ -7,15 +7,16 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-1 verified sau khi ER-1A, ER-1B và ER-1C
-> đều đạt quality gate và có remediation evidence.
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã hoàn tất foundation
+> tách storage/cutover ở scoped gate và đang tiếp tục upload session, scanner,
+> clean-only consume cùng retention.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
-| ER-2 | Readiness/permission contract và frontend guards | ⬜ Chưa làm |
-| ER-3 | Upload session, quarantine, malware scan và retention | ⬜ Chưa làm |
+| ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — storage boundary |
 | ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
 | ER-5 | Verification final decision, blockers và compliance holds | ⬜ Chưa làm |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | ⬜ Chưa làm |
@@ -35,6 +36,22 @@ Decision log:
   dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
 - Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
   `git diff --check` đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-3</summary>
+
+- Slice `fix/media-storage-boundaries` tách public/private/quarantine cho local
+  và R2, khóa direct URL/private media serving, thêm công cụ copy legacy
+  idempotent batch/cursor và vô hiệu raw Office preview trước scan.
+- Đây là foundation P0, chưa phải completion ER-3: upload session, scanner,
+  retention, clean-only attach và candidate import quarantine vẫn phải đạt gate
+  trước khi đổi phase thành Verified.
+- Evidence foundation: 13/13 storage unit tests và 22/22 regression tests cho
+  employer preview/knowledgebase/site media đạt; scoped Ruff/format,
+  import-linter, Django check, migration drift, dev/prod Compose render và 194
+  internal Markdown destinations đều đạt.
 
 </details>
 
@@ -63,6 +80,31 @@ Decision log:
   lỗi, architecture, production build, Markdown links và whitespace gate đạt.
 - ER-1 hoàn tất ở mức `Verified`; release/deploy smoke và audit production vẫn
   thuộc rollout ER-8.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-2</summary>
+
+- `/api/employer/me/` trả năm field canonical; `/api/auth/me/` trả
+  `employer_job_workspace_ready`. Canonical present thắng legacy; partial,
+  malformed và contract tự mâu thuẫn đều fail closed.
+- Backend dùng cùng capability policy cho job/campaign mutations và mọi đường
+  candidate list/export/status/history/snapshot/asset; recruiter CV asset token
+  được audience-bound và luôn live reauthorize.
+- Frontend tách `JobWorkspaceGuard` và `CandidateDataGuard`, giữ direct URL khi
+  denied, render blocker/retry qua action allowlist, tắt query nhạy cảm và không
+  render PII đã cache khi checking/error/denied. Aggregate không chứa danh tính
+  vẫn hiển thị.
+- Evidence backend: commits `b5a50c45`, `49f11065`, `f1408e43`, `916d2bfb`,
+  merge-sync `8e01389e`; 206 integration test và direct/read/query matrix 31/31;
+  Ruff/import-linter/layering/migration/query-budget/race gates đạt.
+- Evidence frontend: commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
+  `ab1c003e`, `d84760ba`; coverage gate đạt 253 test file/953 test; readiness
+  model có ma trận sáu trạng thái; 9/9 E2E readiness desktop/tablet/mobile;
+  Oxlint, architecture 1.142 module/2.293 dependency và build đạt.
+- Residual: ER-5 sở hữu post-approval revoke/hold reconciliation; ER-6 sở hữu
+  DPA version/hash/IP/session và trạng thái legacy/outdated/grace/hold thật.
 
 </details>
 

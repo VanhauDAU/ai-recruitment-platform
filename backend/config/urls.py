@@ -54,4 +54,4 @@ if settings.API_DOCS_ENABLED:
     ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.PUBLIC_MEDIA_ROOT)

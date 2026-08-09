@@ -32,6 +32,7 @@
 | [06-deployment](06-deployment/) | [admin-rbac-g1-runbook.md](06-deployment/admin-rbac-g1-runbook.md) | Hai release G1.1/G1.2 và readiness gate cho RBAC admin |
 | [06-deployment](06-deployment/) | [announcement-rollout-runbook.md](06-deployment/announcement-rollout-runbook.md) | AN-P5: rollout tuần tự, kill switch, monitoring và rollback dải thông báo |
 | [06-deployment](06-deployment/) | [announcement-staging-evidence-2026-07-29.md](06-deployment/announcement-staging-evidence-2026-07-29.md) | AN-P5: bằng chứng rehearsal bốn surface, priority, kill switch và Redis failure |
+| [06-deployment](06-deployment/) | [employer-upload-storage-boundary-runbook.md](06-deployment/employer-upload-storage-boundary-runbook.md) | ER-3: tách public/private/quarantine, copy legacy, cutover và rollback |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
 | [07-algorithms](07-algorithms/) | [employer-flow-security-audit-2026-08.md](07-algorithms/employer-flow-security-audit-2026-08.md) | Baseline finding, evidence và retest criteria cho luồng Nhà tuyển dụng |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |

@@ -3,7 +3,6 @@ from io import BytesIO
 from unittest.mock import patch
 
 from django.contrib.admin.sites import AdminSite
-from django.core.exceptions import PermissionDenied
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -29,6 +28,7 @@ from ..models import (
     RecruitmentNeed,
 )
 from ..services import (
+    CandidateDataBlocked,
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
     get_or_create_verification_case,
@@ -167,17 +167,19 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertTrue(first_ready)
         self.assertFalse(second_ready)
         ensure_recruiter_candidate_data_access(self.first_user)
-        with self.assertRaisesMessage(PermissionDenied, 'xác thực quyền đại diện'):
+        with self.assertRaises(CandidateDataBlocked) as blocked:
             ensure_recruiter_candidate_data_access(self.second_user)
+        self.assertEqual(str(blocked.exception.detail['code']), 'CANDIDATE_DATA_BLOCKED')
 
     @override_settings(
         REQUIRE_APPROVED_EMPLOYER_VERIFICATION=True,
         REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS=False,
     )
-    def test_candidate_access_gate_can_roll_out_after_posting_gate(self):
+    def test_candidate_access_cannot_be_bypassed_by_feature_flag(self):
         _, ready = recruiter_posting_readiness(self.second_user)
         self.assertFalse(ready)
-        ensure_recruiter_candidate_data_access(self.second_user)
+        with self.assertRaises(CandidateDataBlocked):
+            ensure_recruiter_candidate_data_access(self.second_user)
 
     def test_stale_decision_returns_conflict(self):
         self.client.force_authenticate(self.admin)

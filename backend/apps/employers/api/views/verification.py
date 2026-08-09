@@ -2,12 +2,11 @@ import mimetypes
 from io import BytesIO
 from pathlib import PurePosixPath
 
-from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
 from django.db.models import Prefetch
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
@@ -28,8 +27,8 @@ from ...services import (
     lock_company_update_request,
     queue_company_tax_lookup,
     render_office_document_preview,
-    render_office_upload_preview,
 )
+from ..exceptions import UploadPreviewScanRequiredResponse
 from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
 from .memberships import (
     VERIFICATION_METHOD_DOCUMENT_TYPES,
@@ -240,7 +239,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
 
 
 class CompanyDocumentUploadPreviewView(generics.GenericAPIView):
-    """Convert an unpersisted Word agreement to PDF for local pre-submit preview."""
+    """Fail closed until an upload-session scan can authorize Office preview."""
 
     permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser]
@@ -251,46 +250,12 @@ class CompanyDocumentUploadPreviewView(generics.GenericAPIView):
             'CompanyDocumentUploadPreviewRequest',
             fields={'file': serializers.FileField()},
         ),
-        responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
+        responses={409: OpenApiTypes.OBJECT},
         tags=['employer-verification'],
     )
     def post(self, request):
-        upload = request.FILES.get('file')
-        if upload is None:
-            raise ValidationError({'file': 'Vui lòng chọn tệp cần xem trước.'})
-        max_size = getattr(settings, 'IMAGE_UPLOAD_MAX_SIZE', 5 * 1024 * 1024)
-        if upload.size > max_size:
-            raise ValidationError({'file': 'Văn bản phải nhỏ hơn 5 MB.'})
-
-        content_type = (upload.content_type or '').partition(';')[0].strip().lower()
-        signatures = {
-            'application/msword': b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': (
-                b'PK\x03\x04'
-            ),
-        }
-        if content_type not in signatures:
-            content_type = {
-                '.doc': 'application/msword',
-                '.docx': (
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                ),
-            }.get(PurePosixPath(upload.name).suffix.lower(), content_type)
-        signature = signatures.get(content_type)
-        header = upload.read(16)
-        upload.seek(0)
-        if signature is None or not header.startswith(signature):
-            raise ValidationError({'file': 'Chỉ hỗ trợ xem trước tệp DOC hoặc DOCX hợp lệ.'})
-
-        preview = render_office_upload_preview(upload, content_type)
-        if preview is None:
-            raise ValidationError(
-                {'file': 'Không thể tạo bản xem trước. Hãy kiểm tra lại nội dung tệp Word.'}
-            )
-        response = HttpResponse(preview, content_type='application/pdf')
-        response['Content-Disposition'] = 'inline; filename="document-preview.pdf"'
-        response['Cache-Control'] = 'private, no-store'
-        return response
+        del request
+        raise UploadPreviewScanRequiredResponse()
 
 
 @extend_schema(

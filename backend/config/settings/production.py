@@ -7,6 +7,8 @@ trong một lượt deploy thay vì gặp từng lỗi một.
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
 
+from common.private_storage import storage_boundary_configuration_errors
+
 from .base import *
 from .base import _DEFAULT_SECRET_KEY
 
@@ -83,6 +85,22 @@ if not R2_ENABLED:
     _errors.append(
         'Production yêu cầu Cloudflare R2: endpoint, access key, secret key và public base URL.',
     )
+_errors.extend(
+    storage_boundary_configuration_errors(
+        public_root=PUBLIC_MEDIA_ROOT,
+        private_root=PRIVATE_MEDIA_ROOT,
+        quarantine_root=UPLOAD_QUARANTINE_ROOT,
+        legacy_root=LEGACY_MEDIA_ROOT,
+        r2_enabled=R2_ENABLED,
+        r2_quarantine_enabled=R2_QUARANTINE_ENABLED,
+        r2_buckets=(R2_PUBLIC_BUCKET, R2_PRIVATE_BUCKET, R2_QUARANTINE_BUCKET),
+        r2_credential_pairs=(
+            (R2_PUBLIC_ACCESS_KEY_ID, R2_PUBLIC_SECRET_ACCESS_KEY),
+            (R2_PRIVATE_ACCESS_KEY_ID, R2_PRIVATE_SECRET_ACCESS_KEY),
+            (R2_QUARANTINE_ACCESS_KEY_ID, R2_QUARANTINE_SECRET_ACCESS_KEY),
+        ),
+    )
+)
 if not AUTH_REFRESH_COOKIE_SECURE:
     _errors.append('AUTH_REFRESH_COOKIE_SECURE phải bật ở production.')
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:

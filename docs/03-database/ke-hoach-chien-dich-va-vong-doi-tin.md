@@ -156,10 +156,11 @@ duyệt.
 
 - Campaign: `/api/employer/campaigns/` cùng `options/`, `suggestions/`,
   `from-need/{public_id}/`, `{public_id}/status/`, `{public_id}/report/`.
-  Modal tạo nhanh chỉ nhận `name` và có thể submit bằng Enter; không kiểm tra
-  công ty/xác thực. Sau khi tạo, UI yêu cầu chọn hoạt động “Đăng tin tuyển
-  dụng” hoặc mở workspace; không hiển thị CTA tìm CV cho đến khi có workflow
-  kho CV thật.
+  Modal tạo nhanh chỉ nhận `name` và có thể submit bằng Enter. Backend yêu cầu
+  `job_workspace_ready=true` cho cả read workspace và mutation; direct API
+  không thể bỏ qua frontend guard. Sau khi tạo, UI yêu cầu chọn hoạt động “Đăng
+  tin tuyển dụng” hoặc mở workspace; không hiển thị CTA tìm CV cho đến khi có
+  workflow kho CV thật.
 - Job workspace: `/api/jobs/mine/`, `posting-context/`, `submit/`, `close/`,
   `reopen/`, `extend/`, `duplicate/`.
 - Admin moderation: `/api/jobs/admin/moderation/` và
@@ -167,7 +168,21 @@ duyệt.
   kèm `reason`).
 - Candidate: `GET/POST /api/v2/applications/` trả nhãn/timeline công khai.
 - Recruiter: `/api/v2/recruiter/applications/`, detail update, `cv/` snapshot
-  và `history/`. Tất cả truy vấn luôn lọc `job__posted_by=request.user`.
+  và `history/`. Tất cả truy vấn luôn lọc `job__posted_by=request.user` và yêu
+  cầu `candidate_data_access=true`.
+
+`GET /api/jobs/mine/posting-context/` là endpoint compliance duy nhất của
+workspace vẫn đọc được khi chưa ready; response trả blocker/action để client
+điều hướng khắc phục. Job/campaign list/detail/options/report/performance/
+activity bị chặn authoritative với `EMPLOYER_WORKSPACE_BLOCKED` khi workspace
+không sẵn sàng. Verification chưa approved không tự khóa workspace; nó khóa
+candidate data và admin approval. Candidate preview/activity metadata chỉ có
+PII/deep-link khi candidate access hợp lệ.
+
+Write transaction theo lock order `User → Recruiter → Verification → Campaign
+→ Job → Application`. Nếu campaign đổi hoặc bị xóa giữa scope read và row lock,
+service fail closed bằng stale/resource-changed error thay vì tiếp tục trên row
+không được khóa.
 
 Frontend đặt route-level composition ở `pages/employer` và `pages/main`; action
 tạo chiến dịch/đăng tin ở `features`; API/domain dùng lại ở `entities`. Xem
@@ -184,4 +199,10 @@ tạo route hoặc thông báo thành công giả.
   hết hạn và sao chép recipient.
 - Candidate không nộp được tin hết hạn; public list/detail không lộ tin hết hạn.
 - Chuyển pipeline hợp lệ/không hợp lệ, timeline đã lọc cho ứng viên và query
-budget danh sách ứng tuyển.
+  budget danh sách ứng tuyển.
+- Direct GET job/campaign: account mới và DPA hold trả 403; verification
+  pending/changes-requested với DPA current vẫn đọc được workspace.
+- Candidate list/export/history/CV asset: thiếu candidate access trả 403;
+  recruiter khác nhận 404 và token asset recheck quyền live.
+- Query budget employer job list là 5 query và campaign list là 4 query, đều
+  phẳng theo số row.
