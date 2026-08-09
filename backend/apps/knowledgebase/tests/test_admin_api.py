@@ -1,3 +1,4 @@
+from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
@@ -159,6 +160,108 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(response.data['count'], 1)
         invalid = self.client.get(reverse('kb-admin-article-list'), {'ordering': 'drop table'})
         self.assertEqual(invalid.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_category_and_status_ordering_are_applied_by_the_server(self):
+        self.client.force_authenticate(self.admin)
+        category_a = KnowledgeCategory.objects.create(
+            name='AAA chuyên mục sắp xếp',
+            slug='aaa-chuyen-muc-sap-xep',
+            order=900,
+        )
+        category_z = KnowledgeCategory.objects.create(
+            name='ZZZ chuyên mục sắp xếp',
+            slug='zzz-chuyen-muc-sap-xep',
+            order=901,
+        )
+        records = [
+            (category_z, 'ACTIVE', KnowledgeArticleRevision.Status.IN_REVIEW, 'Z'),
+            (category_a, 'ARCHIVED', KnowledgeArticleRevision.Status.DRAFT, 'A'),
+        ]
+        for category, lifecycle, revision_status, suffix in records:
+            article = KnowledgeArticle.objects.create(
+                category=category,
+                slug=f'kb-sort-{suffix.lower()}',
+                lifecycle_state=lifecycle,
+                created_by=self.admin,
+            )
+            KnowledgeArticleRevision.objects.create(
+                article=article,
+                number=1,
+                status=revision_status,
+                title=f'KB sorting contract {suffix}',
+                body='<p>Nội dung</p>',
+                body_plain_text='Nội dung',
+                content_hash=suffix * 64,
+                source_reference='/test',
+                created_by=self.admin,
+            )
+
+        category_sorted = self.client.get(
+            reverse('kb-admin-article-list'),
+            {'q': 'KB sorting contract', 'ordering': 'category'},
+        )
+        self.assertEqual(category_sorted.status_code, 200, category_sorted.data)
+        self.assertEqual(
+            [row['category']['name'] for row in category_sorted.data['results']],
+            ['AAA chuyên mục sắp xếp', 'ZZZ chuyên mục sắp xếp'],
+        )
+
+        status_sorted = self.client.get(
+            reverse('kb-admin-article-list'),
+            {'q': 'KB sorting contract', 'ordering': '-revision_status'},
+        )
+        self.assertEqual(status_sorted.status_code, 200, status_sorted.data)
+        self.assertEqual(
+            [row['latest_revision']['status'] for row in status_sorted.data['results']],
+            ['IN_REVIEW', 'DRAFT'],
+        )
+
+    def test_summary_aggregates_the_complete_filtered_result_not_one_page(self):
+        self.client.force_authenticate(self.admin)
+        for index in range(25):
+            article = KnowledgeArticle.objects.create(
+                category=self.category,
+                slug=f'kb-summary-{index}',
+                created_by=self.admin,
+                review_due_at=(timezone.now() - timedelta(days=1)) if index < 3 else None,
+            )
+            revision_status = (
+                KnowledgeArticleRevision.Status.APPROVED
+                if index < 21
+                else KnowledgeArticleRevision.Status.IN_REVIEW
+                if index < 23
+                else KnowledgeArticleRevision.Status.DRAFT
+            )
+            revision = KnowledgeArticleRevision.objects.create(
+                article=article,
+                number=1,
+                status=revision_status,
+                title=f'KB summary aggregate {index}',
+                body='<p>Nội dung</p>',
+                body_plain_text='Nội dung',
+                content_hash=f'{index:064d}',
+                source_reference='/test',
+                created_by=self.admin,
+            )
+            if index < 21:
+                article.published_revision = revision
+                article.save(update_fields=['published_revision'])
+
+        list_response = self.client.get(
+            reverse('kb-admin-article-list'),
+            {'q': 'KB summary aggregate'},
+        )
+        self.assertEqual(len(list_response.data['results']), 20)
+
+        summary = self.client.get(
+            reverse('kb-admin-article-summary'),
+            {'q': 'KB summary aggregate', 'page': 2, 'page_size': 10},
+        )
+        self.assertEqual(summary.status_code, 200, summary.data)
+        self.assertEqual(
+            summary.data,
+            {'total': 25, 'published': 21, 'in_review': 2, 'overdue': 3},
+        )
 
     @patch('apps.knowledgebase.api.views.admin.record_metric')
     def test_admin_requests_emit_pii_free_status_and_latency_metrics(self, metric):

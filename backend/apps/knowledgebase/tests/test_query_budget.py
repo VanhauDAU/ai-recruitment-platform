@@ -11,6 +11,7 @@ from apps.knowledgebase.models import (
 )
 
 ADMIN_KNOWLEDGE_ARTICLE_LIST_QUERY_BUDGET = 3
+ADMIN_KNOWLEDGE_ARTICLE_SUMMARY_QUERY_BUDGET = 1
 
 
 class KnowledgebaseQueryBudgetTests(APITestCase):
@@ -48,3 +49,13 @@ class KnowledgebaseQueryBudgetTests(APITestCase):
 
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(len(response.data['results']), 5)
+
+    def test_admin_article_summary_is_one_aggregate_query(self):
+        with self.assertNumQueries(ADMIN_KNOWLEDGE_ARTICLE_SUMMARY_QUERY_BUDGET):
+            response = self.client.get(
+                reverse('kb-admin-article-summary'),
+                {'q': 'Bài ngân sách'},
+            )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['total'], 5)

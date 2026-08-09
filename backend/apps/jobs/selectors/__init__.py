@@ -12,7 +12,7 @@ from .moderation import (
     admin_job_management_summary,
     job_moderation_queryset,
 )
-from .reports import job_report_queryset
+from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
 from .saved_recommendations import recommend_jobs_from_saved
 from .stats import build_job_stats
 from .verification_badge import badge_criteria_payload, job_badge_criteria
@@ -29,6 +29,7 @@ __all__ = [
     'admin_job_management_summary',
     'job_badge_criteria',
     'job_moderation_queryset',
+    'ADMIN_JOB_REPORT_ORDERING_FIELDS',
     'job_report_queryset',
     'recommend_jobs_from_saved',
 ]

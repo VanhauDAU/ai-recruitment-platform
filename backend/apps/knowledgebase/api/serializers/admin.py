@@ -164,6 +164,13 @@ class AdminArticleListSerializer(serializers.ModelSerializer):
         }
 
 
+class AdminArticleSummarySerializer(serializers.Serializer):
+    total = serializers.IntegerField(min_value=0)
+    published = serializers.IntegerField(min_value=0)
+    in_review = serializers.IntegerField(min_value=0)
+    overdue = serializers.IntegerField(min_value=0)
+
+
 class AuditEventSerializer(serializers.Serializer):
     public_id = serializers.CharField()
     action = serializers.CharField()

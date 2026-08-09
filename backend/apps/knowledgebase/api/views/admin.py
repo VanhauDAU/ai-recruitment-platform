@@ -15,6 +15,7 @@ from common.pagination import StandardPagination
 
 from ...selectors import (
     admin_article_detail_queryset,
+    admin_article_summary,
     admin_articles_queryset,
     admin_categories_queryset,
     admin_media_queryset,
@@ -43,6 +44,7 @@ from ...services import (
 from ..serializers import (
     AdminArticleDetailSerializer,
     AdminArticleListSerializer,
+    AdminArticleSummarySerializer,
     AdminCategorySerializer,
     ArticleCreateSerializer,
     ArticleQuerySerializer,
@@ -308,6 +310,20 @@ class AdminArticleListCreateView(PrivateNoStoreMixin, generics.ListAPIView):
             return result
         article, _revision = result
         return _article_response(request, article, response_status=status.HTTP_201_CREATED)
+
+
+class AdminArticleSummaryView(PrivateNoStoreMixin, APIView):
+    permission_classes = [HasAdminPermission]
+    required_admin_permissions = {'GET': ['knowledgebase.view']}
+
+    @extend_schema(
+        responses={200: AdminArticleSummarySerializer, **ERROR_RESPONSES},
+        tags=['knowledgebase-admin'],
+    )
+    def get(self, request):
+        query = ArticleQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        return Response(admin_article_summary(query.validated_data))
 
 
 @extend_schema(tags=['knowledgebase-admin'])

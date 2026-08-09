@@ -1089,23 +1089,20 @@ test('admin job management: list, detail and revision-bound approval workflow', 
   await page.getByRole('button', { name: 'Xem chi tiết' }).click()
   await expect(page).toHaveURL('/admin/app/job-moderation/job_pending')
   await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | ProCV')
-  const contentSection = page.getByRole('button', { name: /Nội dung tuyển dụng/ })
-  const contactSection = page.getByRole('button', { name: /Thông tin nhận hồ sơ/ })
+  const contentTab = page.getByRole('tab', { name: 'Nội dung', exact: true })
+  const contactTab = page.getByRole('tab', { name: 'Nhận hồ sơ' })
 
-  await expect(contentSection).toHaveAttribute('aria-expanded', 'true')
-  await expect(contactSection).toHaveAttribute('aria-expanded', 'false')
+  await expect(contentTab).toHaveAttribute('aria-selected', 'true')
+  await expect(contactTab).toHaveAttribute('aria-selected', 'false')
   await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toBeVisible()
   await expect(page.getByText('0901234567')).toHaveCount(0)
 
-  await contactSection.click()
+  await contactTab.click()
+  await expect(contactTab).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('0901234567')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Thu gọn tất cả' }).click()
-  await expect(contentSection).toHaveAttribute('aria-expanded', 'false')
-  await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toHaveCount(0)
-
-  await page.getByRole('button', { name: 'Nội dung', exact: true }).click()
-  await expect(contentSection).toHaveAttribute('aria-expanded', 'true')
+  await contentTab.click()
+  await expect(contentTab).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('Xây dựng nền tảng tuyển dụng.')).toBeVisible()
 
   await page.getByRole('button', { name: 'Duyệt tin' }).click()
@@ -1201,7 +1198,7 @@ test('admin job reports: deep link, filter and resolve workflow are permission-g
     status: 'upheld',
     note: 'Đã đối chiếu nội dung tin.',
   })
-  await expect(page.getByText('Không có báo cáo phù hợp.')).toBeVisible()
+  await expect(page.getByText('Chưa có báo cáo trong hàng đợi.')).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

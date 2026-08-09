@@ -1,4 +1,5 @@
 from .catalog import (
+    AdminConsultationLeadQuerySerializer,
     AdminConsultationLeadSerializer,
     AdminServiceCategorySerializer,
     AdminServicePackageSerializer,
@@ -8,6 +9,7 @@ from .catalog import (
 )
 
 __all__ = [
+    'AdminConsultationLeadQuerySerializer',
     'AdminConsultationLeadSerializer',
     'AdminServiceCategorySerializer',
     'AdminServicePackageSerializer',

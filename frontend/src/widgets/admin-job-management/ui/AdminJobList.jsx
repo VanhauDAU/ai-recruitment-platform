@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { EyeOutlined } from '@ant-design/icons'
 import { Alert, Button, Input, Select, Space, Table, Tag, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
@@ -13,7 +14,7 @@ import {
 } from '@/entities/admin-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
-import { AdminPanel } from '@/shared/ui/admin'
+import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
 import AdminJobPublicLink from './AdminJobPublicLink'
 
 const EMPTY_PAGE = { count: 0, results: [] }
@@ -216,7 +217,15 @@ export default function AdminJobList() {
       fixed: 'right',
       width: 100,
       render: (_, job) => (
-        <Button size="small" type="link" onClick={() => openJob(job)}>Xem chi tiết</Button>
+        <Button
+          aria-label="Xem chi tiết"
+          icon={<EyeOutlined />}
+          size="small"
+          type="link"
+          onClick={() => openJob(job)}
+        >
+          Xem chi tiết
+        </Button>
       ),
     },
   ]
@@ -277,6 +286,25 @@ export default function AdminJobList() {
               onChange={chooseScope}
               options={JOB_SCOPE_OPTIONS}
               value={scope}
+            />
+            <AdminDataActions
+              compact
+              columns={[
+                { key: 'public_id', label: 'Mã tin' },
+                { key: 'title', label: 'Tin tuyển dụng' },
+                { key: 'company_name', label: 'Công ty' },
+                { label: 'Trạng thái', value: (row) => row.status_label || row.status },
+                { key: 'deadline', label: 'Hạn nộp' },
+                { key: 'submitted_at', label: 'Gửi duyệt lúc' },
+                { key: 'application_count', label: 'Số lượt ứng tuyển' },
+                { key: 'pending_report_count', label: 'Báo cáo đang chờ' },
+              ]}
+              exportLabel="CSV trang này"
+              exportScopeLabel={`Xuất ${jobs.results.length} tin của trang ${page}`}
+              filename={`tin-tuyen-dung-trang-${page}`}
+              onRefresh={() => Promise.all([jobsQuery.refetch(), summaryQuery.refetch()])}
+              refreshing={jobsQuery.isFetching || summaryQuery.isFetching}
+              rows={jobs.results}
             />
           </Space>
         )}

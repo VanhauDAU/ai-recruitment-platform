@@ -235,6 +235,7 @@ export default function AdminNavigation({
   mobile = false,
   onNavigate,
   onRequestExpand,
+  requestedOpenKey = '',
 }) {
   const activeLeaf = useMemo(
     () => findActiveAdminNavigation(navigation, pathname, search),
@@ -254,6 +255,10 @@ export default function AdminNavigation({
       setOpenLevelOne(activeLeaf.ancestors[0] || '')
     }
   }, [activeLeaf])
+
+  useEffect(() => {
+    if (requestedOpenKey) setOpenLevelOne(requestedOpenKey)
+  }, [requestedOpenKey])
 
   useEffect(() => {
     const handleEscape = (event) => {

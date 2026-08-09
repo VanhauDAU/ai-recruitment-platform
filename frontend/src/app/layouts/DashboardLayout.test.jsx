@@ -123,7 +123,8 @@ describe('DashboardLayout admin access', () => {
     expect(homeButton).toHaveAttribute('aria-current', 'page')
     expect(homeButton).not.toHaveAttribute('aria-expanded')
     expect(personalAccountButton).not.toHaveAttribute('aria-expanded')
-    expect(screen.queryByText('Bảng điều khiển')).not.toBeInTheDocument()
+    const navigation = screen.getByRole('navigation', { name: 'Điều hướng quản trị' })
+    expect(within(navigation).queryByText('Bảng điều khiển')).not.toBeInTheDocument()
     expect(screen.queryByText('Thông tin cá nhân')).not.toBeInTheDocument()
 
     expect(screen.getByText('Nội dung & dịch vụ')).toBeInTheDocument()

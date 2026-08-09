@@ -3,6 +3,7 @@ import re
 from rest_framework import serializers
 
 from ...models import ConsultationLead, ServiceCategory, ServicePackage
+from ...selectors import ADMIN_LEAD_ORDERING_FIELDS
 
 _PHONE = re.compile(r'^[0-9+ .()-]{8,20}$')
 
@@ -132,6 +133,36 @@ class ConsultationLeadCreateSerializer(serializers.ModelSerializer):
         if not _PHONE.match(value):
             raise serializers.ValidationError('Số điện thoại không hợp lệ.')
         return value
+
+
+class AdminConsultationLeadQuerySerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=ConsultationLead.Status.choices,
+        allow_blank=True,
+        required=False,
+    )
+    q = serializers.CharField(
+        allow_blank=True,
+        max_length=200,
+        required=False,
+        trim_whitespace=True,
+    )
+    created_from = serializers.DateField(required=False)
+    created_to = serializers.DateField(required=False)
+    ordering = serializers.ChoiceField(
+        choices=[value for field in ADMIN_LEAD_ORDERING_FIELDS for value in (field, f'-{field}')],
+        default='-created_at',
+        required=False,
+    )
+
+    def validate(self, attrs):
+        created_from = attrs.get('created_from')
+        created_to = attrs.get('created_to')
+        if created_from and created_to and created_from > created_to:
+            raise serializers.ValidationError(
+                {'created_to': 'Ngày kết thúc phải từ ngày bắt đầu trở đi.'}
+            )
+        return attrs
 
 
 class AdminConsultationLeadSerializer(serializers.ModelSerializer):

@@ -16,6 +16,7 @@ export const adminKnowledgeKeys = {
   root: ['admin-knowledgebase'],
   categories: ['admin-knowledgebase', 'categories'],
   articles: (params = {}) => ['admin-knowledgebase', 'articles', params],
+  summary: (params = {}) => ['admin-knowledgebase', 'summary', params],
   article: (publicId) => ['admin-knowledgebase', 'article', publicId],
   media: (params = {}) => ['admin-knowledgebase', 'media', params],
 }
@@ -45,6 +46,10 @@ export function setAdminKnowledgeCategoryActive(publicId, isActive, revisionToke
 
 export function getAdminKnowledgeArticles(params = {}, { signal } = {}) {
   return data(api.get('/knowledgebase/admin/articles/', { params, signal }))
+}
+
+export function getAdminKnowledgeArticleSummary(params = {}, { signal } = {}) {
+  return data(api.get('/knowledgebase/admin/articles/summary/', { params, signal }))
 }
 
 export function getAdminKnowledgeArticle(publicId, { signal } = {}) {

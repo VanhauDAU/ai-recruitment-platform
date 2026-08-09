@@ -35,6 +35,12 @@
   flex-direction: column;
 }
 
+.admin-sider > .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* Giữ điều hướng desktop trong viewport khi trang quản trị cuộn. Selector con
  * trực tiếp để không biến navigation trong Drawer mobile thành sticky. */
 .admin-shell > .admin-sider.ant-layout-sider {
@@ -57,6 +63,24 @@
   height: 82px;
   justify-content: center;
   padding: 0 20px;
+  position: relative;
+}
+
+.admin-sider__close.ant-btn {
+  border-color: rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+  height: 40px;
+  min-height: 40px;
+  position: absolute;
+  right: 14px;
+  top: 20px;
+  width: 40px;
+}
+
+.admin-sider__close.ant-btn:hover,
+.admin-sider__close.ant-btn:focus-visible {
+  background: rgba(148, 163, 184, 0.14);
+  color: #ffffff;
 }
 
 .admin-sider__brand--collapsed {
@@ -572,7 +596,7 @@
 .admin-main {
   margin-inline: auto;
   max-width: 1600px;
-  padding: 24px;
+  padding: 20px;
   width: 100%;
 }
 
@@ -600,9 +624,16 @@
 .admin-page-header {
   align-items: flex-start;
   display: flex;
-  gap: 20px;
+  gap: 16px;
   justify-content: space-between;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
+}
+
+.admin-page-header__content {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  min-width: 0;
 }
 
 .admin-page-header__icon {
@@ -639,9 +670,20 @@
 
 .admin-page-header__description {
   color: var(--admin-text-muted);
+  font-size: 13px;
   line-height: 1.55;
-  margin: 7px 0 0;
+  margin: 5px 0 0;
   max-width: 760px;
+}
+
+.admin-page-header__meta {
+  align-items: center;
+  color: var(--admin-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .admin-page-header__actions {
@@ -654,7 +696,7 @@
 .admin-panel {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
-  border-radius: 16px;
+  border-radius: 13px;
   box-shadow: var(--admin-shadow);
   min-width: 0;
   overflow: hidden;
@@ -666,7 +708,7 @@
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  padding: 18px 20px;
+  padding: 14px 16px;
 }
 
 .admin-panel__title {
@@ -685,7 +727,7 @@
 }
 
 .admin-panel__body {
-  padding: 20px;
+  padding: 16px;
 }
 
 .admin-panel__extra {
@@ -696,12 +738,56 @@
   align-items: center;
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
-  border-radius: 16px;
+  border-radius: 13px;
   box-shadow: var(--admin-shadow);
   display: flex;
   gap: 14px;
-  min-height: 126px;
-  padding: 18px;
+  min-height: 108px;
+  padding: 15px;
+}
+
+.admin-data-actions {
+  justify-content: flex-end;
+}
+
+.admin-data-actions .ant-btn {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.admin-list-toolbar {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-radius: 11px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+}
+
+.admin-list-toolbar__filters {
+  align-items: center;
+  display: flex;
+  flex: 1 1 520px;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-list-toolbar__summary {
+  color: var(--admin-text-muted);
+  flex: 0 1 auto;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-list-toolbar__summary strong {
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-stat-card--interactive {
@@ -893,6 +979,10 @@
     flex-direction: column;
   }
 
+  .admin-page-header__content {
+    width: 100%;
+  }
+
   .admin-page-header__actions,
   .admin-page-header__actions .ant-btn,
   .admin-panel__extra,
@@ -909,9 +999,151 @@
     padding: 16px;
   }
 
+  .admin-data-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .admin-data-actions > .ant-space-item,
+  .admin-data-actions > .ant-space-item > .ant-btn,
+  .admin-data-actions > .ant-space-item > span,
+  .admin-data-actions > .ant-space-item > span > .ant-btn,
+  .admin-data-actions .ant-upload-wrapper,
+  .admin-data-actions .ant-upload-select,
+  .admin-data-actions .ant-upload-select > .ant-btn {
+    width: 100%;
+  }
+
+  .admin-list-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-list-toolbar__filters {
+    flex-basis: auto;
+  }
+
   .admin-user__meta,
   .admin-topbar__location {
     display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .admin-shell > .admin-sider.ant-layout-sider {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .admin-shell,
+  .admin-shell > .ant-layout,
+  .admin-shell .ant-layout-content {
+    background: #ffffff !important;
+    display: block !important;
+    min-height: auto !important;
+    width: 100% !important;
+  }
+
+  .admin-shell > .admin-sider.ant-layout-sider,
+  .admin-shell .admin-topbar,
+  .admin-shell .admin-skip-link,
+  .admin-shell .announcement-strip,
+  .admin-shell [data-print-hide='true'],
+  .admin-shell .ant-pagination,
+  .admin-shell .ant-table-column-sorter,
+  .admin-shell .ant-table-filter-trigger,
+  .admin-shell .admin-list-toolbar,
+  .admin-shell .ant-btn,
+  .admin-shell .ant-tabs-nav,
+  .ant-drawer,
+  .ant-modal-root {
+    display: none !important;
+  }
+
+  .admin-main {
+    max-width: none;
+    padding: 0;
+  }
+
+  .admin-page-header {
+    margin-bottom: 12px;
+  }
+
+  .admin-page-header__icon {
+    border: 1px solid #cbd5e1;
+  }
+
+  .admin-page-header__title {
+    font-size: 22px;
+  }
+
+  .admin-panel,
+  .admin-shell .ant-card {
+    box-shadow: none !important;
+  }
+
+  .admin-stat-card {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .admin-shell .ant-table-wrapper,
+  .admin-shell .ant-table-container,
+  .admin-shell .ant-table-content,
+  .admin-shell .ant-table-body,
+  .admin-shell .overflow-x-auto {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .admin-shell .ant-table {
+    font-size: 9px;
+  }
+
+  .admin-shell .ant-table-content > table,
+  .admin-shell .ant-table-body > table {
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    width: 100% !important;
+  }
+
+  .admin-shell .ant-table col {
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .admin-shell .ant-table-cell {
+    overflow-wrap: anywhere;
+    white-space: normal !important;
+  }
+
+  .admin-shell .ant-table-cell-fix-left,
+  .admin-shell .ant-table-cell-fix-right {
+    left: auto !important;
+    position: static !important;
+    right: auto !important;
+  }
+
+  .admin-shell .ant-table-thead > tr > th,
+  .admin-shell .ant-table-tbody > tr > td {
+    padding: 5px 6px !important;
+  }
+
+  .admin-shell a {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }
 

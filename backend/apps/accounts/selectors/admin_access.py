@@ -20,6 +20,16 @@ from ..models import (
 )
 
 IMPACT_PREVIEW_LIMIT = 20
+MEMBERSHIP_DEFAULT_ORDERING = '-assigned_at'
+MEMBERSHIP_ORDERING_FIELDS = (
+    'user__full_name',
+    'role__department__name',
+    'role__name',
+    'user__two_factor_enabled',
+    'is_active',
+    'assigned_at',
+)
+MEMBERSHIP_STATUS_CHOICES = ('active', 'revoked', 'all')
 
 
 def _permissions_from_database(user):
@@ -145,22 +155,56 @@ def roles_queryset(*, department_code=None):
 def memberships_queryset(
     *,
     department_code=None,
+    department_public_id=None,
+    role_public_id=None,
     user_public_id=None,
     include_revoked=False,
+    query='',
+    status=None,
+    ordering=MEMBERSHIP_DEFAULT_ORDERING,
 ):
     queryset = AdminMembership.objects.select_related(
         'user',
         'role__department',
         'assigned_by',
         'revoked_by',
-    ).order_by('-assigned_at', '-id')
-    if not include_revoked:
+    )
+    effective_status = status or ('all' if include_revoked else 'active')
+    if effective_status not in MEMBERSHIP_STATUS_CHOICES:
+        effective_status = 'active'
+    if effective_status == 'active':
         queryset = queryset.filter(is_active=True)
+    elif effective_status == 'revoked':
+        queryset = queryset.filter(is_active=False)
     if department_code:
         queryset = queryset.filter(role__department__code=department_code)
+    if department_public_id:
+        queryset = queryset.filter(
+            Q(role__department__public_id=department_public_id)
+            | Q(role__department__code=department_public_id)
+        )
+    if role_public_id:
+        queryset = queryset.filter(role__public_id=role_public_id)
     if user_public_id:
         queryset = queryset.filter(user__public_id=user_public_id)
-    return queryset
+    normalized_query = query.strip()
+    if normalized_query:
+        queryset = queryset.filter(
+            Q(public_id__icontains=normalized_query)
+            | Q(user__public_id__icontains=normalized_query)
+            | Q(user__email__icontains=normalized_query)
+            | Q(user__full_name__icontains=normalized_query)
+            | Q(role__code__icontains=normalized_query)
+            | Q(role__name__icontains=normalized_query)
+            | Q(role__department__code__icontains=normalized_query)
+            | Q(role__department__name__icontains=normalized_query)
+        )
+
+    normalized_ordering = (ordering or MEMBERSHIP_DEFAULT_ORDERING).strip()
+    ordering_field = normalized_ordering.removeprefix('-')
+    if ordering_field not in MEMBERSHIP_ORDERING_FIELDS:
+        normalized_ordering = MEMBERSHIP_DEFAULT_ORDERING
+    return queryset.order_by(normalized_ordering, '-id')
 
 
 def admin_staff_queryset(*, query=''):

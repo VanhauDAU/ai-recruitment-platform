@@ -245,6 +245,15 @@
     "requires": []
   },
   {
+    "code": "consultation_lead.export",
+    "module": "consultation_lead",
+    "label": "Xuất lead tư vấn",
+    "description": "Xuất danh sách lead tư vấn theo bộ lọc hiện tại với nhật ký audit.",
+    "requires": [
+      "consultation_lead.view"
+    ]
+  },
+  {
     "code": "consultation_lead.manage",
     "module": "consultation_lead",
     "label": "Xử lý lead tư vấn",

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getAdminKnowledgeArticles,
+  getAdminKnowledgeArticleSummary,
   getAdminKnowledgeMedia,
   runAdminKnowledgeRevisionAction,
   setAdminKnowledgeCategoryActive,
@@ -27,6 +28,15 @@ describe('knowledgebase admin API', () => {
     const params = { q: 'đăng nhập', revision_status: 'IN_REVIEW', page: 2 }
     await getAdminKnowledgeArticles(params, { signal: 'signal' })
     expect(get).toHaveBeenCalledWith('/knowledgebase/admin/articles/', { params, signal: 'signal' })
+  })
+
+  it('loads aggregate article KPIs with the same server filters', async () => {
+    const params = { category: 'dang-nhap', lifecycle: 'ACTIVE' }
+    await getAdminKnowledgeArticleSummary(params, { signal: 'summary-signal' })
+    expect(get).toHaveBeenCalledWith('/knowledgebase/admin/articles/summary/', {
+      params,
+      signal: 'summary-signal',
+    })
   })
 
   it('sends revision tokens on category and editorial mutations', async () => {

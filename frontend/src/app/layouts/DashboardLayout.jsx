@@ -1,4 +1,5 @@
 import {
+  CloseOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuOutlined,
@@ -7,8 +8,9 @@ import {
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Avatar, Button, ConfigProvider, Drawer, Layout, Popconfirm, Typography } from 'antd'
+import viVN from 'antd/locale/vi_VN'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { matchPath, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   canAccessAdminRoute,
   useAdminAccess,
@@ -38,7 +40,7 @@ import './admin-dashboard.css'
 
 const { Header, Sider, Content } = Layout
 
-function AdminBrand({ collapsed = false }) {
+function AdminBrand({ collapsed = false, action = null }) {
   return (
     <div className={`admin-sider__brand ${collapsed ? 'admin-sider__brand--collapsed' : ''}`}>
       <BrandLogo
@@ -48,6 +50,7 @@ function AdminBrand({ collapsed = false }) {
         textClassName="text-sm"
       />
       {!collapsed && <span className="admin-sider__product">ProCV - Quản trị</span>}
+      {action}
     </div>
   )
 }
@@ -85,6 +88,7 @@ export default function DashboardLayout() {
   const mainRef = useRef(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarPeek, setSidebarPeek] = useState(false)
+  const [sidebarPeekGroup, setSidebarPeekGroup] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const availableRoutes = useMemo(() => user?.role === 'admin'
     ? ADMIN_ROUTES
@@ -149,10 +153,7 @@ export default function DashboardLayout() {
   )
   const currentRoute = [...availableRoutes]
     .sort((left, right) => right.path.length - left.path.length)
-    .find((item) => {
-      const staticPath = item.path.replace(/:[^/]+/g, '')
-      return pathname === item.path || pathname.startsWith(staticPath)
-    })
+    .find((item) => matchPath({ path: item.path, end: true }, pathname))
   const activeLeaf = findActiveAdminNavigation(navigation, pathname, search)
   const currentTitle = currentRoute?.segment.includes(':')
     ? currentRoute.title
@@ -160,12 +161,14 @@ export default function DashboardLayout() {
   useEffect(() => {
     mainRef.current?.focus({ preventScroll: true })
     setMobileNavOpen(false)
+    setSidebarPeek(false)
   }, [pathname])
 
   if (user?.role === 'employer') return <EmployerWorkspaceLayout />
 
   return (
     <ConfigProvider
+      locale={viVN}
       theme={{
         token: {
           borderRadius: 10,
@@ -179,7 +182,7 @@ export default function DashboardLayout() {
       <Layout className="admin-shell">
         <a className="admin-skip-link" href="#admin-main">Bỏ qua điều hướng</a>
         <Sider
-          className="admin-sider !hidden lg:!block"
+          className="admin-sider"
           width={280}
           collapsedWidth={80}
           collapsed={sidebarCollapsed}
@@ -194,7 +197,10 @@ export default function DashboardLayout() {
             search={search}
             navigate={navigate}
             collapsed={sidebarCollapsed}
-            onRequestExpand={() => setSidebarPeek(true)}
+            onRequestExpand={(key) => {
+              setSidebarPeekGroup(key)
+              setSidebarPeek(true)
+            }}
           />
           {hasNoDepartment && !sidebarCollapsed && (
             <p className="admin-sider__notice">
@@ -212,6 +218,8 @@ export default function DashboardLayout() {
                 pathname={pathname}
                 search={search}
                 navigate={navigate}
+                requestedOpenKey={sidebarPeekGroup}
+                onNavigate={() => setSidebarPeek(false)}
               />
               {hasNoDepartment && (
                 <p className="admin-sider__notice">
@@ -232,7 +240,17 @@ export default function DashboardLayout() {
           styles={{ body: { padding: 0, background: '#0b172a' } }}
         >
           <div className="admin-sider min-h-full">
-            <AdminBrand />
+            <AdminBrand
+              action={(
+                <Button
+                  aria-label="Đóng điều hướng"
+                  className="admin-sider__close"
+                  icon={<CloseOutlined />}
+                  onClick={() => setMobileNavOpen(false)}
+                  type="text"
+                />
+              )}
+            />
             <AdminNavigation
               navigation={navigationWithBadges}
               pathname={pathname}
@@ -258,7 +276,10 @@ export default function DashboardLayout() {
                 className="admin-icon-button !hidden lg:!inline-flex"
                 icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                 aria-label={sidebarCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-                onClick={() => setSidebarCollapsed((value) => !value)}
+                onClick={() => {
+                  setSidebarPeek(false)
+                  setSidebarCollapsed((value) => !value)
+                }}
               />
               <div className="admin-topbar__location min-w-0">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Không gian làm việc</p>
@@ -317,9 +338,9 @@ export default function DashboardLayout() {
             stickyOffset="var(--admin-topbar-height)"
           />
           <Content>
-            <main id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
+            <div id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
               <Outlet context={{ availableRoutes: items, adminAccess }} />
-            </main>
+            </div>
           </Content>
         </Layout>
       </Layout>

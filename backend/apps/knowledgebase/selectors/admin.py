@@ -17,6 +17,7 @@ ARTICLE_ORDERING = {
     'title': 'latest_revision_title',
     'category': 'category__name',
     'article_type': 'article_type',
+    'revision_status': 'latest_revision_status',
     'lifecycle_state': 'lifecycle_state',
     'updated_at': 'updated_at',
     'review_due_at': 'review_due_at',
@@ -66,9 +67,7 @@ def _article_base_queryset():
     )
 
 
-def admin_articles_queryset(params=None):
-    params = params or {}
-    queryset = _article_base_queryset()
+def _filter_admin_articles(queryset, params):
     if category := params.get('category'):
         queryset = queryset.filter(category__slug=category)
     if article_type := params.get('article_type'):
@@ -90,12 +89,38 @@ def admin_articles_queryset(params=None):
             review_due_at__lte=now + timedelta(days=30),
         )
 
+    return queryset
+
+
+def admin_articles_queryset(params=None):
+    params = params or {}
+    queryset = _filter_admin_articles(_article_base_queryset(), params)
+
     ordering = params.get('ordering') or 'order'
     descending = ordering.startswith('-')
     field = ARTICLE_ORDERING[ordering.lstrip('-')]
     if descending:
         field = f'-{field}'
     return queryset.order_by(field, 'category__order', 'order', 'public_id')
+
+
+def admin_article_summary(params=None):
+    """Aggregate list KPIs across the complete filtered result set."""
+    queryset = _filter_admin_articles(_article_base_queryset(), params or {}).order_by()
+    return queryset.aggregate(
+        total=Count('pk', distinct=True),
+        published=Count('pk', filter=Q(published_revision__isnull=False), distinct=True),
+        in_review=Count(
+            'pk',
+            filter=Q(latest_revision_status=KnowledgeArticleRevision.Status.IN_REVIEW),
+            distinct=True,
+        ),
+        overdue=Count(
+            'pk',
+            filter=Q(review_due_at__lt=timezone.now()),
+            distinct=True,
+        ),
+    )
 
 
 def admin_article_detail_queryset():
