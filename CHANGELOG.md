@@ -8,6 +8,70 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Shared upload quarantine core ER-3
+
+- Thêm shared app `uploads` với session/asset/scan-attempt state machine,
+  owner-scoped API, purpose/role capability map và transactional owner quota.
+  Quarantine/private byte còn tồn tại tiếp tục chiếm quota sau expiry/rejection
+  cho tới khi cleanup thực sự xóa storage key.
+- Thêm ClamAV INSTREAM adapter, bounded retry/lease/reconciliation, expiry,
+  cleanup và evidence purge trên queue `upload-scan`; status polling tách sang
+  `upload_status=120/min`, còn create/cancel/retry giữ `30/hour`.
+- Thêm clean-only claim bắt buộc owner và expected purpose, explicit release,
+  minimum retention 730 ngày, legal hold và privacy scrub metadata sau khi byte
+  cùng claim không còn giữ evidence.
+
+#### Security — Upload validation và rollout boundary ER-3
+
+- DOCX pre-scan validation nay kiểm bounded ZIP metadata, required parts,
+  encryption, traversal/symlink, duplicate entry, entry/uncompressed/ratio
+  limits và không extract Office content trước scan. PDF/image mới chỉ kiểm
+  MIME, dung lượng, magic signature và malware; chưa được tuyên bố hợp lệ ở cấp
+  parser.
+- Shared core đã merge tại `99b34781`, nhưng chưa nối vào employer/candidate
+  business workflow hoặc frontend. Candidate import/assets là integration bắt
+  buộc trong slice riêng qua shared core, không tạo coupling `cvs → employers`.
+  Production flag tiếp tục tắt cho tới khi real ClamAV
+  staging/readiness/EICAR và domain integration đạt gate; ER-3 vẫn `In progress`.
+
+#### Added — Employer SMS provider-neutral foundation ER-6A
+
+- Thêm challenge SMS theo purpose (`initial_verification`, `phone_change`,
+  `reverify`), adapter HTTP trung lập, fake provider cho development/test,
+  queue `auth-sms`, recovery bounded, metrics redacted và retention task. Đây
+  mới là hạ tầng; endpoint OTP hiện hành, frontend và nhà cung cấp production
+  chưa được chuyển sang SMS.
+- Thêm readiness command và production startup validation cho HTTPS endpoint,
+  credential, sender, template, Fernet/HMAC key riêng. Production tiếp tục giữ
+  `EMPLOYER_SMS_OTP_ENABLED=False` cho tới khi Product/Ops duyệt provider,
+  sender và template.
+
+#### Security — Employer SMS fail-closed boundary ER-6A
+
+- Destination và OTP của challenge mới được mã hóa; OTP hash gắn với public
+  challenge ID, Celery chỉ nhận opaque ID, HTTP không theo redirect và không
+  ghi raw phone/OTP/provider response. Challenge PII được purge sau 30 ngày;
+  event redacted giữ 730 ngày.
+- Khi SMS tắt hoặc cấu hình/provider lỗi, dispatch fail closed, không fallback
+  email và không giả delivery. Migration không gắn marker, deadline hoặc hold
+  và không thay đổi phone proof của tài khoản cũ.
+
+#### Security — Employer company-update review safety ER-4
+
+- Chuẩn hóa lock order `Company → CompanyUpdateRequest → CompanyDocument` cho
+  create/upload/review/tax-refresh hiện hành và khóa mutation trực tiếp qua
+  Django admin.
+- Admin list/retrieve che filename, MIME, size, SHA, uploader email và source
+  URL nếu thiếu `account.sensitive.view`; binary vẫn yêu cầu đồng thời quyền
+  xem company update và quyền sensitive.
+
+#### Fixed — Exact company-update review ER-4
+
+- Admin queue/deep-link nay truyền exact request public ID và detail gọi
+  retrieve-by-ID; panel từ chối xử lý nếu company, requester hoặc trạng thái
+  không khớp. Không còn lấy `results[0]` từ danh sách company rồi có thể duyệt
+  nhầm yêu cầu của member khác.
+
 #### Security — Upload storage boundary ER-3 foundation
 
 - Tách storage public/private/quarantine cho local và Cloudflare R2; chỉ public
@@ -21,8 +85,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   `gallerys/` và các prefix public hiện hành.
 - Raw DOC/DOCX employer preview trước upload trả `UPLOAD_SCAN_REQUIRED` và
   không gọi LibreOffice. Preview/download document đã lưu vẫn đi qua endpoint
-  có authorization. Upload session/malware scanner/retention tiếp tục ở slice
-  ER-3 kế tiếp.
+  có authorization. Shared upload session/scanner/retention core đã merge;
+  employer/candidate domain integration, frontend và real-scanner staging tiếp
+  tục ở các slice ER-3 kế tiếp.
 
 #### Changed — Employer readiness contract ER-2
 

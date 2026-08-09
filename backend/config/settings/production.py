@@ -4,9 +4,13 @@ Fail-fast: gom TẤT CẢ lỗi cấu hình rồi raise một lần — vận h�
 trong một lượt deploy thay vì gặp từng lỗi một.
 """
 
+from urllib.parse import urlparse
+
+from cryptography.fernet import Fernet
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
 
+from apps.uploads.configuration import upload_scanning_configuration_errors
 from common.private_storage import storage_boundary_configuration_errors
 
 from .base import *
@@ -81,6 +85,46 @@ if not TRUSTED_PROXY_IPS:
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     _errors.append('EMAIL_HOST_USER / EMAIL_HOST_PASSWORD là bắt buộc ở production.')
 
+if EMPLOYER_SMS_OTP_ENABLED:
+    if EMPLOYER_SMS_PROVIDER != 'http':
+        _errors.append('EMPLOYER_SMS_PROVIDER production phải là http khi bật SMS.')
+    if not EMPLOYER_SMS_ENDPOINT_URL:
+        _errors.append('EMPLOYER_SMS_ENDPOINT_URL là bắt buộc khi bật SMS.')
+    elif urlparse(EMPLOYER_SMS_ENDPOINT_URL).scheme != 'https':
+        _errors.append('EMPLOYER_SMS_ENDPOINT_URL production phải dùng HTTPS.')
+    if not EMPLOYER_SMS_API_TOKEN:
+        _errors.append('EMPLOYER_SMS_API_TOKEN là bắt buộc khi bật SMS.')
+    if not EMPLOYER_SMS_SENDER:
+        _errors.append('EMPLOYER_SMS_SENDER là bắt buộc khi bật SMS.')
+    if not EMPLOYER_SMS_TEMPLATE_ID:
+        _errors.append('EMPLOYER_SMS_TEMPLATE_ID là bắt buộc khi bật SMS.')
+    if not EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY:
+        _errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY là bắt buộc khi bật SMS.')
+    else:
+        try:
+            Fernet(EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY.encode())
+        except (TypeError, ValueError):
+            _errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không hợp lệ.')
+        if EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY in {
+            SECRET_KEY,
+            SIMPLE_JWT.get('SIGNING_KEY', ''),
+            TWO_FACTOR_TOTP_ENCRYPTION_KEY,
+        } - {''}:
+            _errors.append(
+                'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không được dùng lại secret hệ thống khác.'
+            )
+    if len(EMPLOYER_SMS_CHALLENGE_HMAC_KEY) < 32:
+        _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY phải có ít nhất 32 ký tự.')
+    elif EMPLOYER_SMS_CHALLENGE_HMAC_KEY in {
+        SECRET_KEY,
+        SIMPLE_JWT.get('SIGNING_KEY', ''),
+        TWO_FACTOR_TOTP_ENCRYPTION_KEY,
+        EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY,
+    } - {''}:
+        _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY không được dùng lại secret hệ thống khác.')
+    if EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS <= 0 or EMPLOYER_SMS_READ_TIMEOUT_SECONDS <= 0:
+        _errors.append('Timeout SMS phải lớn hơn 0.')
+
 if not R2_ENABLED:
     _errors.append(
         'Production yêu cầu Cloudflare R2: endpoint, access key, secret key và public base URL.',
@@ -99,6 +143,34 @@ _errors.extend(
             (R2_PRIVATE_ACCESS_KEY_ID, R2_PRIVATE_SECRET_ACCESS_KEY),
             (R2_QUARANTINE_ACCESS_KEY_ID, R2_QUARANTINE_SECRET_ACCESS_KEY),
         ),
+    )
+)
+_errors.extend(
+    upload_scanning_configuration_errors(
+        enabled=UPLOAD_QUARANTINE_ENABLED,
+        backend=UPLOAD_SCANNER_BACKEND,
+        allowed_purposes=UPLOAD_SESSION_ALLOWED_PURPOSES,
+        clamav_host=CLAMAV_HOST,
+        clamav_port=CLAMAV_PORT,
+        max_bytes=UPLOAD_MAX_BYTES,
+        owner_max_active_sessions=UPLOAD_OWNER_MAX_ACTIVE_SESSIONS,
+        owner_max_active_bytes=UPLOAD_OWNER_MAX_ACTIVE_BYTES,
+        docx_max_entries=UPLOAD_DOCX_MAX_ENTRIES,
+        docx_max_uncompressed_bytes=UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES,
+        docx_max_compression_ratio=UPLOAD_DOCX_MAX_COMPRESSION_RATIO,
+        spool_memory_bytes=UPLOAD_SPOOL_MEMORY_BYTES,
+        session_ttl_seconds=UPLOAD_SESSION_TTL_SECONDS,
+        write_lease_seconds=UPLOAD_WRITE_LEASE_SECONDS,
+        scan_lease_seconds=UPLOAD_SCAN_LEASE_SECONDS,
+        scan_max_attempts=UPLOAD_SCAN_MAX_ATTEMPTS,
+        scan_retry_base_seconds=UPLOAD_SCAN_RETRY_BASE_SECONDS,
+        clean_retention_days=UPLOAD_CLEAN_RETENTION_DAYS,
+        evidence_retention_days=UPLOAD_EVIDENCE_RETENTION_DAYS,
+        cleanup_batch_size=UPLOAD_CLEANUP_BATCH_SIZE,
+        clamav_connect_timeout_seconds=CLAMAV_CONNECT_TIMEOUT_SECONDS,
+        clamav_read_timeout_seconds=CLAMAV_READ_TIMEOUT_SECONDS,
+        clamav_stream_chunk_bytes=CLAMAV_STREAM_CHUNK_BYTES,
+        production=True,
     )
 )
 if not AUTH_REFRESH_COOKIE_SECURE:

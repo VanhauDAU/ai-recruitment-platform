@@ -115,15 +115,15 @@ services:
 
   worker:
     <<: *backend-image
-    # -Q bắt buộc: settings route task sang auth-email/cv-export; worker không
-    # khai queue sẽ chỉ nghe 'default' -> email xác thực và export CV chết lặng.
+    # -Q bắt buộc: settings route task sang auth-email/auth-sms/cv-export/upload-scan;
+    # worker không khai queue sẽ chỉ nghe 'default' -> auth, export hoặc scan chết lặng.
     # speech-artifacts chỉ sao chép MP3 đã được live inference tạo; model không
     # nạp và tuyệt đối không inference trong Celery.
     # Dùng worker sẵn có ở local để không tốn thêm ~1 container RAM.
     # Docker Desktop nhìn thấy toàn bộ CPU host nên Celery mặc định fork 10
     # process dù máy dev hầu như không có backlog. Hai process đủ tách một job
     # speech dài khỏi các job thường và giảm mạnh RAM/PID khi idle.
-    command: celery -A config worker --loglevel=info -Q default,auth-email,cv-export,speech-artifacts --concurrency=${CELERY_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1 --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-200}
+    command: celery -A config worker --loglevel=info -Q default,auth-email,auth-sms,cv-export,speech-artifacts,upload-scan --concurrency=${CELERY_WORKER_CONCURRENCY:-2} --prefetch-multiplier=1 --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-200}
     env_file: ./backend/.env
     environment:
       <<: *service-hosts

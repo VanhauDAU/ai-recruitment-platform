@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('employers', '0030_company_update_request_requester_scope'),
+        ('employers', '0033_finalize_employer_sms_challenge_id'),
         ('jobs', '0034_job_approved_snapshot_job_approved_snapshot_at'),
     ]
 

@@ -7,19 +7,21 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã hoàn tất foundation
-> tách storage/cutover ở scoped gate và đang tiếp tục upload session, scanner,
-> clean-only consume cùng retention.
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã merge storage boundary
+> và shared quarantine/scan/retention core nhưng domain integration, frontend và
+> real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
+> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
+> tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
-| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — storage boundary |
-| ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
-| ER-5 | Verification final decision, blockers và compliance holds | ⬜ Chưa làm |
-| ER-6 | SMS provider adapter và DPA evidence/version/grace | ⬜ Chưa làm |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — shared core đã merge |
+| ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
+| ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — gate đã khóa |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
@@ -40,18 +42,72 @@ Decision log:
 </details>
 
 <details>
+<summary>Ghi chú ER-4</summary>
+
+- Safety slice `fix/employer-company-request-review-safety` đã chuẩn hóa lock
+  order `Company → CompanyUpdateRequest → CompanyDocument` cho các mutation
+  hiện hành và khóa Django admin thành read-only cho ba model này.
+- Admin queue truyền exact `request.public_id`; detail gọi
+  `GET /api/admin/company-update-requests/{public_id}/` và fail-closed nếu
+  requester/company/status không khớp, không còn duyệt mù `results[0]`.
+- User chỉ có `company_update.view` nhận metadata tài liệu đã che; binary vẫn
+  cần thêm `account.sensitive.view`. Deep-link dùng query
+  `company_update=cur_*`, không suy request từ company.
+- Evidence: backend 108/108, frontend 10/10; scoped Ruff/format,
+  import-linter, layering, Django check, migration drift, lint và architecture
+  đạt. Merge `ddb8a47f` giữ nguyên thay đổi local của người dùng.
+- Residual: immutable revision snapshot, base-company version, transition
+  submitted/in-review/changes-requested, resubmit/withdraw/cancel và conflict
+  apply vẫn thuộc phần còn lại của ER-4; phase chưa được đánh dấu Verified.
+
+</details>
+
+<details>
 <summary>Ghi chú ER-3</summary>
 
 - Slice `fix/media-storage-boundaries` tách public/private/quarantine cho local
   và R2, khóa direct URL/private media serving, thêm công cụ copy legacy
   idempotent batch/cursor và vô hiệu raw Office preview trước scan.
-- Đây là foundation P0, chưa phải completion ER-3: upload session, scanner,
-  retention, clean-only attach và candidate import quarantine vẫn phải đạt gate
-  trước khi đổi phase thành Verified.
-- Evidence foundation: 13/13 storage unit tests và 22/22 regression tests cho
-  employer preview/knowledgebase/site media đạt; scoped Ruff/format,
-  import-linter, Django check, migration drift, dev/prod Compose render và 194
-  internal Markdown destinations đều đạt.
+- Shared core merge `99b34781` thêm upload-session state machine, owner-scoped
+  API, purpose/role capability, owner-row transactional quota, ClamAV INSTREAM
+  adapter và queue `upload-scan`, clean-only expected-purpose claim, explicit
+  release, retention/legal hold, privacy scrub và bounded DOCX ZIP validation.
+- Evidence chạy trên PostgreSQL Docker 16.14 của repo tại
+  `127.0.0.1:5433 → container:5432`: 83/83 targeted test đạt, gồm ba concurrency
+  regression và regression Compose worker giữ cả `auth-sms` lẫn `upload-scan`.
+  Ruff/format, import-linter 2/2, Django check, migration drift, static OpenAPI
+  1.492 reference/0 unresolved và production Compose render đều đạt trong phạm
+  vi slice. Generated OpenAPI vẫn có baseline 416 warning/122 error ngoài ER-3.
+- Phase chưa hoàn tất: còn nối core vào employer verification/company update,
+  candidate import/assets bắt buộc theo ER-O06 trong slice riêng không coupling
+  `cvs → employers`, frontend session UI và real ClamAV
+  staging/readiness/EICAR trước khi bật flag. PDF/image mới chỉ được kiểm
+  MIME/dung lượng/magic signature và malware scan; parser-specific structural
+  validation còn là residual, không được suy diễn từ verdict `clean`.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-6</summary>
+
+- ER-6A foundation đã merge provider-neutral adapter, challenge purpose/state,
+  queue `auth-sms`, bounded retry/recovery, retention, redacted event/metric và
+  production readiness validation. Runbook:
+  [`employer-sms-provider-adapter.md`](06-deployment/employer-sms-provider-adapter.md).
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False` và fail closed. Chưa chọn
+  provider/sender/template, chưa chuyển endpoint OTP hoặc frontend sang SMS;
+  vì vậy ER-F09 và toàn ER-6 vẫn chưa đóng. OpenAPI không đổi trong slice này.
+- Migration giữ nguyên phone proof hiện hữu: không marker, deadline, hold hay
+  backfill proof cho account cũ. ER-6B vẫn phải nhận diện DPA cũ mà không bịa
+  version/hash/IP/session.
+- Evidence code: `d58ad837`, `78f12be2`, `72468831`, `201e2829`; merge
+  `03ac8640`. Trên nhánh triển khai, 181 employer tests đạt, gồm 22 SMS tests và
+  3 migration tests; sau merge, ma trận SMS + migration đạt 25/25. Full Ruff,
+  format, import-linter, layering, Django check, migration drift, docs và
+  rendered Compose đều đạt.
+- Residual: PR workflow riêng cho account mới/change/reverify, endpoint/UI,
+  provider sandbox/production và gate outage/rate-limit/replay/uniqueness; toàn
+  bộ ER-6B DPA evidence/version/grace vẫn mở.
 
 </details>
 

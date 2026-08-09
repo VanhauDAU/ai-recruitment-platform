@@ -1,12 +1,17 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
+from django.utils import timezone
 
 BEFORE = [('employers', '0020_remove_campaign_insight_fields')]
 AFTER = [('employers', '0022_employer_verification_notification')]
 UPDATE_REQUEST_BEFORE = [('employers', '0029_campaign_policy_hold')]
 UPDATE_REQUEST_AFTER = [('employers', '0030_company_update_request_requester_scope')]
+SMS_FOUNDATION_BEFORE = [('employers', '0030_company_update_request_requester_scope')]
+SMS_FOUNDATION_AFTER = [('employers', '0033_finalize_employer_sms_challenge_id')]
 
 
 class EmployerVerificationMigrationTests(TransactionTestCase):
@@ -127,6 +132,64 @@ class CompanyUpdateRequestScopeMigrationTests(TransactionTestCase):
                 requested_by_id=first_user.pk,
                 changes={'address': 'Huế'},
             )
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        self._migrate(executor.loader.graph.leaf_nodes())
+
+
+class EmployerSmsFoundationMigrationTests(TransactionTestCase):
+    def _migrate(self, targets):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(targets)
+        return executor
+
+    def test_invalidates_active_legacy_otp_without_rewriting_existing_phone_proof(self):
+        before_executor = self._migrate(SMS_FOUNDATION_BEFORE)
+        old_apps = before_executor.loader.project_state(SMS_FOUNDATION_BEFORE).apps
+        RecruiterProfile = old_apps.get_model('employers', 'RecruiterProfile')
+        PhoneOtp = old_apps.get_model('employers', 'PhoneOtp')
+        user = get_user_model().objects.create_user(
+            email='sms-migration@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        verified_at = timezone.now() - timedelta(days=90)
+        recruiter = RecruiterProfile.objects.create(
+            public_id='rec-sms-migration',
+            user_id=user.pk,
+            verified_phone='0901234567',
+            phone_verified_at=verified_at,
+        )
+        active_legacy = PhoneOtp.objects.create(
+            user_id=user.pk,
+            phone='0987654321',
+            code_hash='legacy-hash',
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+
+        after_executor = self._migrate(SMS_FOUNDATION_AFTER)
+        new_apps = after_executor.loader.project_state(SMS_FOUNDATION_AFTER).apps
+        MigratedRecruiter = new_apps.get_model('employers', 'RecruiterProfile')
+        MigratedOtp = new_apps.get_model('employers', 'PhoneOtp')
+        Event = new_apps.get_model('employers', 'EmployerPhoneVerificationEvent')
+        migrated_recruiter = MigratedRecruiter.objects.get(pk=recruiter.pk)
+        migrated_otp = MigratedOtp.objects.get(pk=active_legacy.pk)
+
+        self.assertEqual(migrated_recruiter.verified_phone, '0901234567')
+        self.assertEqual(migrated_recruiter.phone_verified_at, verified_at)
+        self.assertIsNotNone(migrated_otp.invalidated_at)
+        self.assertEqual(migrated_otp.invalidation_reason, 'migration_cutover')
+        self.assertTrue(migrated_otp.public_id.startswith('poc_'))
+        self.assertTrue(
+            Event.objects.filter(
+                challenge_public_id=migrated_otp.public_id,
+                event_type='legacy_invalidated',
+                reason_code='migration_cutover',
+            ).exists()
+        )
 
     def tearDown(self):
         executor = MigrationExecutor(connection)

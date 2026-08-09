@@ -1,6 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** ER-0, ER-1 và ER-2 đã Verified — đang triển khai các phase phụ thuộc
+> **Trạng thái:** ER-0, ER-1 và ER-2 đã Verified — ER-3 shared core đã merge,
+> phase vẫn đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.0
@@ -98,8 +99,10 @@ Epic phải đạt các kết quả sau:
   cứu chỉ mang tính hỗ trợ; override cần lý do.
 - Chọn nhà cung cấp SMS production cụ thể. Epic chỉ xây provider-neutral adapter
   và fake provider cho dev/test trước.
-- Refactor pipeline upload phía ứng viên nếu pipeline đó không dùng chung. Epic
-  vẫn audit quyền truy cập CV; thay đổi lớn phía candidate cần gate riêng.
+- Refactor candidate ngoài upload trust boundary. Audit ER-O06 đã xác nhận CV
+  candidate dùng cùng unsafe default/private storage, nên integration qua shared
+  upload core là residual bắt buộc của ER-3 trong slice riêng; không tạo coupling
+  `cvs → employers`.
 - Bắt buộc MFA cho toàn bộ Nhà tuyển dụng. MFA tiếp tục tùy chọn; step-up áp dụng
   cho thao tác bảo mật nhạy cảm theo quyết định hiện hành.
 - Thu hẹp company search hoặc payload công ty trả cho member. Đây là accepted
@@ -224,7 +227,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O03 | `CONFIRMED` | DPA cũ được nhận diện `legacy_unversioned`; chặn candidate data/admin approval khi rollout, cho 30 ngày trước DPA hold | Migration/backfill và rollout ER-6 |
 | ER-O04 | `CONFIRMED` | Dùng `dev` làm integration branch và `dev → main` làm release PR | Branch/release flow của toàn epic |
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
-| ER-O06 | `CONFIRMED` | Audit và sửa quyền xem/tải/export CV; chỉ mở rộng pipeline upload candidate nếu phát hiện dùng chung hạ tầng không an toàn | Giới hạn scope CV của ER-2/ER-3 |
+| ER-O06 | `CONFIRMED` | Audit đã xác nhận candidate CV dùng cùng unsafe default/private storage; tích hợp candidate upload/assets qua shared core trong slice riêng, không tạo coupling `cvs → employers` | Candidate upload integration bắt buộc trong ER-3; quyền xem/tải/export thuộc ER-2 |
 
 Các quyết định trên và ER-D29 đến ER-D41 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
@@ -534,12 +537,15 @@ revoked và account hold trước khi merge frontend.
 
 ### ER-3 — Upload quarantine foundation
 
-**Storage foundation:** `fix/media-storage-boundaries` — In progress
-**Backend:** `feature/employer-upload-quarantine`
+**Trạng thái:** `In progress`
+**Storage foundation:** `fix/media-storage-boundaries` — đã merge
+**Shared backend core:** `feature/upload-quarantine-core` — đã merge vào `dev`
+tại `99b34781`
+**Domain backend integration:** `feature/employer-upload-quarantine`
 **Frontend:** `feature/employer-upload-session-ui`
 **Phụ thuộc:** ER-2
 
-Backend:
+Đã merge:
 
 - Storage foundation tách root/bucket public, private, quarantine; old shared
   root chỉ là unserved migration source. DEBUG/nginx chỉ serve public;
@@ -547,22 +553,74 @@ Backend:
 - Backfill byte dùng command dry-run/apply copy+verify idempotent,
   batch/cursor; không chạy storage I/O trong schema migration. Raw multipart
   DOC/DOCX preview bị khóa bằng `UPLOAD_SCAN_REQUIRED` cho tới clean-session.
-- Additive upload-session và scan-metadata schema.
-- Temporary/quarantine/clean storage boundary.
-- ClamAV adapter, worker task, timeout, retry và idempotency.
-- Retention/legal-hold cleanup command.
-- Existing file classification `legacy_trusted`.
-- Metrics không log raw filename/phone/document content.
+- Shared app `uploads` sở hữu additive schema `UploadSession`, `UploadAsset` và
+  `UploadScanAttempt`, cùng state machine
+  `uploading → quarantined → scanning → clean|rejected|error|expired`. Chỉ
+  session `clean` có private asset; các state còn lại không attach/download.
+- Tạo session fail-closed theo capability map purpose/role. Service khóa owner
+  row trước khi kiểm số session và tổng byte; quarantine/private byte còn tồn
+  tại vẫn chiếm quota dù session đã expired/rejected, chỉ cleanup thành công mới
+  giải phóng quota.
+- API `/api/uploads/sessions/` owner-scoped, object ngoài owner trả `404`, không
+  có generic claim/download endpoint và không trả storage key/checksum/threat
+  detail. GET status dùng throttle `upload_status=120/min`; create/cancel/retry
+  giữ `upload_session=30/hour`; authentication dựa có chủ đích vào global DRF
+  `IsAuthenticated` và có regression anonymous `401`.
+- ClamAV INSTREAM adapter, timeout/lease, bounded retry, reconciliation,
+  expiry, cleanup và evidence purge chạy trên queue `upload-scan`. Khi pipeline
+  được bật, production readiness fail nếu dùng fake scanner, thiếu host/purpose
+  hoặc retention/limit không an toàn; rollout flag vẫn tắt trước staging.
+- Domain chỉ consume qua `claim_clean_upload(owner, expected_purpose)`; claim
+  sai purpose fail-closed. Release phải tường minh; claimed asset chỉ được dọn
+  sau thời hạn giữ tối thiểu 730 ngày, đã release và không có legal hold.
+  Deleted asset hết hạn evidence được privacy-scrub metadata khi không còn byte
+  hay business claim giữ lại.
+- DOCX chỉ đọc bounded ZIP central-directory metadata và từ chối thiếu
+  `[Content_Types].xml`/`word/document.xml`, archive encrypted,
+  traversal/symlink, duplicate entry, quá số entry, tổng uncompressed hoặc
+  compression ratio. Không extract Office content trước scan. PDF/image hiện
+  chỉ kiểm MIME, dung lượng và magic signature trước malware scan; chưa được
+  coi là parser-level validity.
+- Existing object chỉ có thể đăng ký `legacy_trusted`, không giả scan evidence.
+  Metric/log không ghi raw filename, storage key, checksum, threat signature
+  hoặc scanner endpoint/version.
 
-Frontend:
+Evidence shared core:
 
-- UI cho uploading/quarantine/scanning/clean/rejected/error/expired.
-- Disable submit khi có file chưa `clean`.
-- Retry/cancel rõ ràng; không báo thành công nếu partial upload lỗi.
-- Không tạo business request trước khi file session đủ điều kiện submit.
+- Merge `99b34781`; targeted suite chạy với PostgreSQL Docker 16.14 của repo,
+  container `ai-recruitment-platform-db-1`, host `127.0.0.1:5433` map vào
+  container port `5432`. Lệnh từ `backend/` dùng
+  `DB_HOST=127.0.0.1 DB_PORT=5433 DB_NAME=ai_recruitment_er3_docker_gate`
+  cho `pytest apps/uploads/tests apps/employers/tests/test_phone_sms.py -q`:
+  83/83 test đạt, gồm ba concurrency regression và regression giữ đồng thời
+  queue `auth-sms`/`upload-scan`.
+- Ruff check/format, import-linter 2/2 contract, Django check và migration drift
+  đều đạt. Static OpenAPI parse kiểm 1.492 reference không có unresolved ref;
+  generated-schema gate exit 0 nhưng repo vẫn có baseline 416 warning/122 error
+  ngoài ER-3, vì vậy không tuyên bố OpenAPI toàn repo sạch.
+- Production Compose render giữ worker queues
+  `default,auth-email,auth-sms,cv-export,speech-artifacts,upload-scan`.
+
+Còn mở trước khi ER-3 được `Verified`:
+
+- Tích hợp shared core vào employer verification, company update và các đường
+  upload employer; chỉ tạo business record/attach sau explicit clean claim.
+- Candidate import/assets integration là residual bắt buộc vì audit ER-O06 đã
+  xác nhận CV dùng cùng unsafe default/private storage. Thực hiện trong slice
+  riêng qua shared core, không tạo coupling `cvs → employers`; purpose
+  `candidate_cv` trong core chưa đồng nghĩa workflow đã tích hợp.
+- Frontend hiển thị uploading/quarantine/scanning/clean/rejected/error/expired,
+  retry/cancel và fail-closed submit; không báo thành công khi partial upload lỗi.
+- Chạy real ClamAV staging readiness/EICAR/outage/retry/cleanup, duyệt rollout
+  rồi mới bật feature flag.
+- Bổ sung parser-specific structural validation cho PDF/image tại domain
+  integration phù hợp; verdict malware `clean` không được mô tả là file hợp lệ
+  ở cấp parser.
 
 **Gate ER-3:** clean, malware, timeout, scanner unavailable, retry, cancel,
-expiry và legacy download scenarios đều có evidence.
+expiry, quota/cleanup failure, claim/release/hold, domain submit và legacy
+download scenarios đều phải có evidence end-to-end. Shared-core gate đã đạt;
+domain integration, frontend và real-scanner staging gate chưa đạt.
 
 ### ER-4 — Company update request V2
 
@@ -597,6 +655,14 @@ Migration dữ liệu cũ:
 
 **Gate ER-4:** concurrent create, concurrent review, stale revision, overlapping
 fields, non-overlapping fields, resubmit, withdraw và cancel.
+
+**Safety slice đã merge (2026-08-10):** `ddb8a47f` chuẩn hóa lock order hiện
+hành `Company → CompanyUpdateRequest → CompanyDocument`; admin mở và review
+đúng request `public_id`, không lấy `results[0]`; metadata nhạy cảm được che nếu
+thiếu `account.sensitive.view`, còn binary bắt buộc cả view và sensitive. Backend
+108/108 và frontend 10/10 regression đạt cùng scoped quality gates. Đây là
+evidence trung gian, không thay cho schema revision/base-version và toàn bộ gate
+lifecycle ở trên.
 
 ### ER-5 — Verification, final decision và compliance holds
 
@@ -633,7 +699,8 @@ apply/release/reconcile và company-level impact đều có test.
 
 #### ER-6A — SMS adapter
 
-**Nhánh:** `feature/employer-sms-verification`
+**Foundation:** `feature/employer-sms-provider-adapter` — đã merge
+**Live workflow:** `feature/employer-sms-verification` — chưa triển khai
 **Phụ thuộc:** ER-2
 
 - Provider-neutral interface.
@@ -641,6 +708,30 @@ apply/release/reconcile và company-level impact đều có test.
   thiếu endpoint/credential/template.
 - TTL, throttle, attempt budget, replay protection và secret redaction.
 - Account cũ giữ nguyên; account mới, đổi phone hoặc reverify dùng SMS.
+
+**Evidence foundation (2026-08-10):**
+
+- Commits `d58ad837`, `78f12be2`, `72468831`, `201e2829`; merge vào `dev`
+  bằng `03ac8640`.
+- Đã có challenge purpose/state, provider-neutral HTTP/fake adapter, queue
+  `auth-sms`, bounded retry/recovery, retention, metrics/event redacted và
+  readiness validation. Runbook:
+  [`employer-sms-provider-adapter.md`](../06-deployment/employer-sms-provider-adapter.md).
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False`; disabled/misconfigured/
+  provider failure đều fail closed, không fallback email hoặc giả delivery.
+  Chưa chọn provider/sender/template và chưa đổi endpoint OTP, frontend hay
+  OpenAPI.
+- Migration không gắn marker/deadline/hold, không backfill hoặc thay đổi phone
+  proof hiện hữu. Tài khoản cũ chỉ dùng SMS về sau khi đổi số hoặc chủ động
+  reverify, đúng ER-D22/ER-D31.
+- Evidence test trên nhánh: 181 employer tests, trong đó 22 SMS và 3 migration
+  tests đều đạt. Post-merge SMS + migration matrix đạt 25/25; full Ruff/format,
+  import-linter, layering, Django check, migration drift, Markdown docs và
+  rendered Compose đều đạt.
+
+Foundation này chưa hoàn tất ER-6A: live endpoint/UI, provider production và
+gate outage/rate-limit/replay/phone uniqueness vẫn là residual. ER-6 giữ trạng
+thái `In progress`.
 
 #### ER-6B — DPA evidence
 
@@ -905,10 +996,10 @@ Trạng thái thực hiện hiện tại:
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
-| ER-3 | In progress | Storage boundary/cutover foundation đạt scoped gate; upload session, scanner và retention còn mở |
-| ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
-| ER-5 | Planned | Phụ thuộc readiness/upload |
-| ER-6 | Planned | DPA phụ thuộc ER-O03 |
+| ER-3 | In progress | Storage boundary và shared quarantine/scan/retention core đã merge; domain integration, frontend, parser-specific PDF/image validation và real ClamAV staging còn mở |
+| ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
+| ER-5 | In progress | ER-D35–ER-D41 đã khóa; implementation bắt đầu sau ER-4 safety |
+| ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 

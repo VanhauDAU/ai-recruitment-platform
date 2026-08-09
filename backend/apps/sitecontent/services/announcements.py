@@ -88,9 +88,7 @@ def validate_hex_color(value, *, field_name):
 def normalize_theme_and_background(data):
     """Chuẩn hóa visual fields revision (theme + ảnh nền)."""
     normalized = dict(data)
-    theme_mode = (
-        normalized.get('theme_mode') or AnnouncementRevision.ThemeMode.KIND
-    ).strip()
+    theme_mode = (normalized.get('theme_mode') or AnnouncementRevision.ThemeMode.KIND).strip()
     if theme_mode not in AnnouncementRevision.ThemeMode.values:
         raise ValidationError({'theme_mode': 'Chế độ theme không hợp lệ.'})
     normalized['theme_mode'] = theme_mode
@@ -109,9 +107,7 @@ def normalize_theme_and_background(data):
         for field in ('color_accent', 'color_bg_from', 'color_bg_to', 'color_fg'):
             colors[field] = validate_hex_color(normalized.get(field), field_name=field)
         if not any(colors.values()):
-            raise ValidationError(
-                {'color_accent': 'Theme custom cần ít nhất một màu #RRGGBB.'}
-            )
+            raise ValidationError({'color_accent': 'Theme custom cần ít nhất một màu #RRGGBB.'})
         normalized.update(colors)
     else:
         # kind: strip custom/preset so feed fallback pure kind CSS.
@@ -222,12 +218,8 @@ def normalize_revision_data(data):
     normalized.setdefault('color_fg', '')
     normalized.setdefault('background_image', '')
     normalized.setdefault('background_fit', AnnouncementRevision.BackgroundFit.COVER)
-    normalized.setdefault(
-        'background_position', AnnouncementRevision.BackgroundPosition.CENTER
-    )
-    normalized.setdefault(
-        'background_overlay', AnnouncementRevision.BackgroundOverlay.NONE
-    )
+    normalized.setdefault('background_position', AnnouncementRevision.BackgroundPosition.CENTER)
+    normalized.setdefault('background_overlay', AnnouncementRevision.BackgroundOverlay.NONE)
     normalized = normalize_theme_and_background(normalized)
     return normalized
 

@@ -134,11 +134,7 @@ def related_published_posts(post, *, limit=6):
     seen = {item.pk for item in related}
     seen.add(post.pk)
     need = limit - len(related)
-    extras = list(
-        base.filter(tags__in=tag_ids)
-        .exclude(pk__in=seen)
-        .distinct()[:need]
-    )
+    extras = list(base.filter(tags__in=tag_ids).exclude(pk__in=seen).distinct()[:need])
     related.extend(extras)
     return related[:limit]
 

@@ -232,6 +232,55 @@ R2_QUARANTINE_ENABLED = bool(
 MEDIA_PUBLIC_BASE_URL = R2_PUBLIC_BASE_URL or config('MEDIA_PUBLIC_BASE_URL', default='').strip()
 IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024, cast=int)
 
+# Shared upload-session quarantine. The HTTP/service surface remains fail-closed
+# until this flag is enabled with a real scanner and an explicit purpose allowlist.
+UPLOAD_QUARANTINE_ENABLED = config('UPLOAD_QUARANTINE_ENABLED', default=False, cast=bool)
+UPLOAD_SCANNER_BACKEND = config(
+    'UPLOAD_SCANNER_BACKEND',
+    default='apps.uploads.services.scanners.ClamAVStreamScanner',
+).strip()
+UPLOAD_SESSION_ALLOWED_PURPOSES = tuple(
+    config(
+        'UPLOAD_SESSION_ALLOWED_PURPOSES',
+        default='employer_verification,employer_company_update,candidate_cv',
+        cast=Csv(),
+    )
+)
+UPLOAD_ALLOWED_CONTENT_TYPES = (
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/gif',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+)
+UPLOAD_MAX_BYTES = config('UPLOAD_MAX_BYTES', default=25 * 1024 * 1024, cast=int)
+UPLOAD_OWNER_MAX_ACTIVE_SESSIONS = config('UPLOAD_OWNER_MAX_ACTIVE_SESSIONS', default=10, cast=int)
+UPLOAD_OWNER_MAX_ACTIVE_BYTES = config(
+    'UPLOAD_OWNER_MAX_ACTIVE_BYTES', default=100 * 1024 * 1024, cast=int
+)
+UPLOAD_SPOOL_MEMORY_BYTES = config('UPLOAD_SPOOL_MEMORY_BYTES', default=5 * 1024 * 1024, cast=int)
+UPLOAD_DOCX_MAX_ENTRIES = config('UPLOAD_DOCX_MAX_ENTRIES', default=500, cast=int)
+UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES = config(
+    'UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES', default=100 * 1024 * 1024, cast=int
+)
+UPLOAD_DOCX_MAX_COMPRESSION_RATIO = config(
+    'UPLOAD_DOCX_MAX_COMPRESSION_RATIO', default=100, cast=float
+)
+UPLOAD_SESSION_TTL_SECONDS = config('UPLOAD_SESSION_TTL_SECONDS', default=86400, cast=int)
+UPLOAD_WRITE_LEASE_SECONDS = config('UPLOAD_WRITE_LEASE_SECONDS', default=120, cast=int)
+UPLOAD_SCAN_LEASE_SECONDS = config('UPLOAD_SCAN_LEASE_SECONDS', default=120, cast=int)
+UPLOAD_SCAN_MAX_ATTEMPTS = config('UPLOAD_SCAN_MAX_ATTEMPTS', default=4, cast=int)
+UPLOAD_SCAN_RETRY_BASE_SECONDS = config('UPLOAD_SCAN_RETRY_BASE_SECONDS', default=30, cast=int)
+UPLOAD_CLEAN_RETENTION_DAYS = config('UPLOAD_CLEAN_RETENTION_DAYS', default=730, cast=int)
+UPLOAD_EVIDENCE_RETENTION_DAYS = config('UPLOAD_EVIDENCE_RETENTION_DAYS', default=730, cast=int)
+UPLOAD_CLEANUP_BATCH_SIZE = config('UPLOAD_CLEANUP_BATCH_SIZE', default=100, cast=int)
+CLAMAV_HOST = config('CLAMAV_HOST', default='').strip()
+CLAMAV_PORT = config('CLAMAV_PORT', default=3310, cast=int)
+CLAMAV_CONNECT_TIMEOUT_SECONDS = config('CLAMAV_CONNECT_TIMEOUT_SECONDS', default=2, cast=float)
+CLAMAV_READ_TIMEOUT_SECONDS = config('CLAMAV_READ_TIMEOUT_SECONDS', default=60, cast=float)
+CLAMAV_STREAM_CHUNK_BYTES = config('CLAMAV_STREAM_CHUNK_BYTES', default=1024 * 1024, cast=int)
+
 _LOCAL_MEDIA_STORAGE = {
     'BACKEND': 'django.core.files.storage.FileSystemStorage',
     'OPTIONS': {'location': PUBLIC_MEDIA_ROOT, 'base_url': MEDIA_URL},
@@ -346,6 +395,9 @@ REST_FRAMEWORK = {
         'speech_session': '60/hour',
         'speech_adhoc': '90/hour',
         'knowledgebase_public': '120/min',
+        'upload_session': '30/hour',
+        'upload_status': '120/min',
+        'upload_content': '20/hour',
     },
 }
 
@@ -525,9 +577,11 @@ CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
     'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
+    'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
+    'apps.uploads.tasks.*': {'queue': 'upload-scan'},
 }
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
@@ -556,6 +610,22 @@ CELERY_BEAT_SCHEDULE = {
     },
     'purge-obsolete-speech-artifacts': {
         'task': 'apps.speech.tasks.assets.purge_obsolete_speech_artifacts',
+        'schedule': 86400.0,
+    },
+    'dispatch-pending-upload-scans': {
+        'task': 'apps.uploads.tasks.dispatch_pending_upload_scans',
+        'schedule': 30.0,
+    },
+    'expire-and-clean-upload-sessions': {
+        'task': 'apps.uploads.tasks.expire_and_clean_upload_sessions',
+        'schedule': 300.0,
+    },
+    'recover-stale-employer-sms-dispatches': {
+        'task': 'apps.employers.tasks.phone_sms.recover_stale_employer_sms_dispatches',
+        'schedule': 60.0,
+    },
+    'purge-employer-sms-verification-data': {
+        'task': 'apps.employers.tasks.phone_sms.purge_employer_sms_verification_data',
         'schedule': 86400.0,
     },
 }
@@ -673,6 +743,30 @@ REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
     default=False,
     cast=bool,
 )
+
+# Provider-neutral employer phone verification. Production remains disabled
+# until Ops/Product explicitly select a gateway, sender and approved template.
+EMPLOYER_SMS_OTP_ENABLED = config('EMPLOYER_SMS_OTP_ENABLED', default=False, cast=bool)
+EMPLOYER_SMS_PROVIDER = config('EMPLOYER_SMS_PROVIDER', default='disabled').strip().lower()
+EMPLOYER_SMS_ENDPOINT_URL = config('EMPLOYER_SMS_ENDPOINT_URL', default='').strip()
+EMPLOYER_SMS_API_TOKEN = config('EMPLOYER_SMS_API_TOKEN', default='').strip()
+EMPLOYER_SMS_SENDER = config('EMPLOYER_SMS_SENDER', default='').strip()
+EMPLOYER_SMS_TEMPLATE_ID = config('EMPLOYER_SMS_TEMPLATE_ID', default='').strip()
+EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY = config(
+    'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY', default=''
+).strip()
+EMPLOYER_SMS_CHALLENGE_HMAC_KEY = config('EMPLOYER_SMS_CHALLENGE_HMAC_KEY', default='').strip()
+EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS = config(
+    'EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS', default=2.0, cast=float
+)
+EMPLOYER_SMS_READ_TIMEOUT_SECONDS = config(
+    'EMPLOYER_SMS_READ_TIMEOUT_SECONDS', default=5.0, cast=float
+)
+EMPLOYER_SMS_DISPATCH_STALE_SECONDS = config(
+    'EMPLOYER_SMS_DISPATCH_STALE_SECONDS', default=300, cast=int
+)
+EMPLOYER_SMS_CHALLENGE_RETENTION_DAYS = 30
+EMPLOYER_SMS_EVENT_RETENTION_DAYS = 730
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)
