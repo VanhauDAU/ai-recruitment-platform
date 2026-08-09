@@ -46,6 +46,7 @@ export default function EmployerVerificationPanel() {
     readiness,
     isAccessError,
     isChecking,
+    canAccessCandidateData,
   } = useEmployerReadiness()
   const needQuery = useQuery({ queryKey: ['employer', 'recruitment-need'], queryFn: getEmployerRecruitmentNeed })
 
@@ -65,7 +66,7 @@ export default function EmployerVerificationPanel() {
   }
 
   const resolvedProfile = profile || {}
-  if (readiness.candidateDataAccess) {
+  if (canAccessCandidateData) {
     return <Navigate to={employerAppPath('/dashboard')} replace />
   }
 
