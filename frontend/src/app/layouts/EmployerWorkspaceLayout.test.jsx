@@ -59,7 +59,7 @@ describe('EmployerWorkspaceLayout', () => {
         blockers: [{
           code: 'dpa_outdated',
           capabilities: ['candidate_data'],
-          message: 'Cần hoàn tất DPA.',
+          message: 'Chấp thuận DPA không còn là phiên bản hiện hành.',
           action: 'accept_dpa',
         }],
       },

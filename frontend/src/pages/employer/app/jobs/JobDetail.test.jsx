@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
       blockers: [{
         code: 'dpa_outdated',
         capabilities: ['candidate_data'],
-        message: 'Quyền xem hồ sơ ứng viên đang tạm giữ.',
+        message: 'Chấp thuận DPA không còn là phiên bản hiện hành.',
         action: 'accept_current_dpa',
       }],
     },

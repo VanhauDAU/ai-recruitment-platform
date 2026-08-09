@@ -127,7 +127,7 @@ describe('EmployerDashboardOverview', () => {
     readinessState.readiness.blockers = [{
       code: 'dpa_outdated',
       capabilities: ['candidate_data'],
-      message: 'Dữ liệu ứng viên đang tạm giữ.',
+      message: 'Chấp thuận DPA không còn là phiên bản hiện hành.',
       action: 'accept_current_dpa',
     }]
     readinessState.canAccessCandidateData = false
@@ -155,6 +155,7 @@ describe('EmployerDashboardOverview', () => {
     expect(await screen.findByText('12')).toBeInTheDocument()
     expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ứng viên mới nhất' })).not.toBeInTheDocument()
-    expect(screen.getAllByText('Dữ liệu ứng viên đang tạm giữ.').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Chấp thuận DPA không còn là phiên bản hiện hành.').length)
+      .toBeGreaterThan(0)
   })
 })
