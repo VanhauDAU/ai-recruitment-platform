@@ -41,7 +41,7 @@ review DPA.
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | In remediation — shared core merged; domain/staging open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open — domain/UI integration | ER-3 |
-| ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Closed ER-5 backend | ER-5 |
+| ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Closed ER-5 | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Closed ER-1C/ER-5 backend | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2/ER-5 backend | ER-2/ER-5 |
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | In remediation — adapter foundation merged; live workflow open | ER-6A |
@@ -328,8 +328,11 @@ review DPA.
   Query budget admin list/detail/impact đạt trần 4/5/7. Full Ruff/format,
   import-linter, layering, Django/migration plan, OpenAPI refs, permission
   registry và Markdown gates đều đạt.
-- Residual không phải backend security bypass: admin final-decision/compliance
-  UI còn phải consume đúng contract preview/confirm và stale refresh.
+- Admin final-decision UI consume đúng preview/confirm và stale refresh; action
+  theo permission riêng. Job blocker deep-link dùng code allowlist, exact
+  recruiter ID và chỉ hiện khi actor có quyền màn đích.
+- Frontend evidence: 17/17 targeted, full coverage 971/971 test và 6/6 admin
+  smoke desktop/tablet/mobile; lint/architecture/build/bundle budget đều đạt.
 
 ### ER-F08 — Candidate-data access
 
