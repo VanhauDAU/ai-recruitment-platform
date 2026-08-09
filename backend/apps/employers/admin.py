@@ -8,6 +8,7 @@ from .models import (
     CompanyImage,
     CompanyIndustry,
     CompanyUpdateRequest,
+    EmployerPhoneVerificationEvent,
     Industry,
     RecruiterProfile,
     RecruitmentNeed,
@@ -155,6 +156,8 @@ class RecruiterProfileAdmin(admin.ModelAdmin):
     list_filter = ['company_role', 'gender', 'marketing_opt_in']
     search_fields = ['user__email', 'company__company_name', 'contact_phone', 'verified_phone']
     readonly_fields = [
+        'verified_phone',
+        'phone_verified_at',
         'registration_completed_at',
         'terms_accepted_at',
         'terms_policy_version',
@@ -181,3 +184,29 @@ class RecruitmentNeedAdmin(admin.ModelAdmin):
         'position_category__name',
     ]
     readonly_fields = ['public_id', 'completed_at', 'created_at', 'updated_at']
+
+
+@admin.register(EmployerPhoneVerificationEvent)
+class EmployerPhoneVerificationEventAdmin(admin.ModelAdmin):
+    list_display = ['public_id', 'user', 'purpose', 'event_type', 'outcome', 'occurred_at']
+    list_filter = ['purpose', 'event_type', 'outcome']
+    search_fields = ['public_id', 'challenge_public_id', 'user__public_id']
+    readonly_fields = [
+        'public_id',
+        'user',
+        'challenge_public_id',
+        'purpose',
+        'event_type',
+        'outcome',
+        'reason_code',
+        'occurred_at',
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

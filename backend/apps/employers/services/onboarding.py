@@ -80,6 +80,7 @@ def verify_phone_otp(user, code):
         PhoneOtp.objects.filter(
             user=user,
             verified_at__isnull=True,
+            invalidated_at__isnull=True,
         )
         .order_by('-created_at')
         .first()
