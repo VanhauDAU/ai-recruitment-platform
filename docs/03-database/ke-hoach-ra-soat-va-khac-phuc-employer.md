@@ -509,7 +509,7 @@ revoked và account hold trước khi merge frontend.
   verification revoked/account hold; canonical partial, malformed hoặc
   `true + blocker cùng capability` đều fail closed. Full coverage gate đạt 253
   test file/953 test; readiness E2E đạt 9/9 trên desktop/tablet/mobile. Oxlint
-  không lỗi, architecture 1.141 module/2.292 dependency và production build
+  không lỗi, architecture 1.142 module/2.293 dependency và production build
   đều đạt.
 - Backend đạt 206 integration test và direct/read/query matrix 31/31; Ruff,
   import-linter/layering, migration drift, query budget và race regression đều

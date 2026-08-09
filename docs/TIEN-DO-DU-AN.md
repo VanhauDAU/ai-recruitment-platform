@@ -86,7 +86,7 @@ Decision log:
 - Evidence frontend: commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
   `ab1c003e`, `d84760ba`; coverage gate đạt 253 test file/953 test; readiness
   model có ma trận sáu trạng thái; 9/9 E2E readiness desktop/tablet/mobile;
-  Oxlint, architecture 1.141 module/2.292 dependency và build đạt.
+  Oxlint, architecture 1.142 module/2.293 dependency và build đạt.
 - Residual: ER-5 sở hữu post-approval revoke/hold reconciliation; ER-6 sở hữu
   DPA version/hash/IP/session và trạng thái legacy/outdated/grace/hold thật.
 
