@@ -1,7 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** ER-0, ER-1 và ER-2 đã Verified — ER-3 shared core đã merge,
-> phase vẫn đang triển khai
+> **Trạng thái:** ER-0, ER-1 và ER-2 đã Verified — ER-5 backend đã Verified;
+> ER-3/ER-4/ER-5 UI/ER-6–ER-8 vẫn đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.0
@@ -695,6 +695,19 @@ lifecycle ở trên.
 **Gate ER-5:** review/revoke/reapprove, race với job approval, hold
 apply/release/reconcile và company-level impact đều có test.
 
+**Backend verified (2026-08-10):** state machine, explicit final decision,
+tax override, revoke/expire/reapprove, source-scoped compliance hold, public-job
+filter, lock order và legacy classifier nằm trên
+`feature/employer-verification-state-machine` (`4de57c69`, `cc5dc426`, sync
+`dev` tại `20a5ec8c`). Document/phone/DPA/need không còn tự approve. Hai quyền
+rủi ro cao được seed nhưng không grant mặc định. PostgreSQL Docker 16 qua
+`127.0.0.1:5433`: 235 test employer/job đạt trước khi đảo một expectation legacy,
+regression đó đạt riêng 1/1; query budget list/detail/impact giữ trần 4/5/7.
+Ruff/format toàn backend, import-linter, DRF layering, Django check, migration
+drift/plan, OpenAPI YAML/local refs, permission registry, frontend lint/
+architecture và 196 Markdown link đều đạt. ER-5 tổng vẫn `In progress` tới khi
+admin UI consume preview/confirm/stale flow.
+
 ### ER-6 — SMS và DPA evidence
 
 #### ER-6A — SMS adapter
@@ -998,7 +1011,7 @@ Trạng thái thực hiện hiện tại:
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
 | ER-3 | In progress | Storage boundary và shared quarantine/scan/retention core đã merge; domain integration, frontend, parser-specific PDF/image validation và real ClamAV staging còn mở |
 | ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
-| ER-5 | In progress | ER-D35–ER-D41 đã khóa; implementation bắt đầu sau ER-4 safety |
+| ER-5 | In progress | Backend Verified; admin final-decision/compliance UI còn mở |
 | ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
