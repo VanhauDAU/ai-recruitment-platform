@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   Checkbox,
-  Descriptions,
   Form,
   Input,
   Modal,
@@ -28,6 +27,7 @@ import {
 } from '@/entities/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import VerificationDecisionImpactSummary from './VerificationDecisionImpactSummary'
 
 const DECISION_ACTIONS = {
   approved: { label: 'Duyệt hồ sơ', color: 'primary' },
@@ -38,65 +38,6 @@ const DECISION_ACTIONS = {
 const LIFECYCLE_ACTIONS = {
   revoked: { label: 'Thu hồi xác thực', danger: true, icon: <StopOutlined /> },
   expired: { label: 'Đánh dấu hết hiệu lực', icon: <ClockCircleOutlined /> },
-}
-
-const TAX_STATUS_LABELS = {
-  missing: 'Chưa có bằng chứng tra cứu',
-  pending: 'Đang chờ tra cứu',
-  matched: 'Khớp nguồn tham chiếu',
-  mismatch: 'Không khớp',
-  not_found: 'Không tìm thấy',
-  unavailable: 'Nguồn tra cứu không khả dụng',
-  invalid: 'Bằng chứng không hợp lệ',
-}
-
-function impactCompanyCopy(impact) {
-  if (impact?.company_impact?.will_mark_verified) {
-    return 'Công ty sẽ được đánh dấu đã xác thực khi xác nhận.'
-  }
-  if (impact?.company_impact?.will_downgrade === false) {
-    return 'Trạng thái pháp lý của công ty không bị hạ.'
-  }
-  return 'Không thay đổi trạng thái pháp lý của công ty.'
-}
-
-function ImpactSummary({ impact, mode }) {
-  const resources = impact.resources || impact.verification_hold_impact || {}
-  return (
-    <div className="space-y-3" data-testid="verification-impact-summary">
-      <Alert
-        showIcon
-        type="warning"
-        title="Kiểm tra tác động trước khi xác nhận"
-        description={impactCompanyCopy(impact)}
-      />
-      <Descriptions bordered size="small" column={1}>
-        {impact.tax_advisory && (
-          <Descriptions.Item label="Đối chiếu mã số thuế">
-            <Space wrap>
-              <Tag color={impact.tax_advisory.status === 'matched' ? 'green' : 'orange'}>
-                {TAX_STATUS_LABELS[impact.tax_advisory.status]
-                  || impact.tax_advisory.status}
-              </Tag>
-              {impact.tax_override && <Tag color="volcano">Sử dụng override</Tag>}
-            </Space>
-          </Descriptions.Item>
-        )}
-        <Descriptions.Item label="Quyền sau quyết định">
-          {mode.type === 'lifecycle'
-            ? 'Khóa dữ liệu ứng viên và duyệt tin; workspace/tạo/sửa/gửi tin giữ nguyên.'
-            : 'Backend sẽ tính lại readiness và quyền sau khi commit.'}
-        </Descriptions.Item>
-        <Descriptions.Item label="Tài nguyên bị tác động">
-          {`${resources.campaign_count || 0} chiến dịch · ${resources.job_count || 0} tin`}
-          {Number.isInteger(resources.active_jobs_hidden_from_public)
-            && ` · ${resources.active_jobs_hidden_from_public} tin active sẽ bị ẩn`}
-          {Number.isInteger(resources.active_jobs_to_unhide)
-            && ` · ${resources.active_jobs_to_unhide} tin có thể hiện lại`}
-        </Descriptions.Item>
-      </Descriptions>
-    </div>
-  )
 }
 
 function workflowPayload(mode, values) {
@@ -352,7 +293,12 @@ export default function VerificationFinalDecisionPanel({
         {errorMessage && (
           <Alert className="mb-3" showIcon type="error" title={errorMessage} />
         )}
-        {impact && <ImpactSummary impact={impact} mode={mode} />}
+        {impact && (
+          <VerificationDecisionImpactSummary
+            impact={impact}
+            lifecycle={mode.type === 'lifecycle'}
+          />
+        )}
       </Modal>
     </Card>
   )
