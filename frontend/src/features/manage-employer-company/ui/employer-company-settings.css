@@ -158,7 +158,10 @@
 .company-update-document-request__content li span { color: #78350f; }
 .company-update-document-request__content .ant-btn { justify-self: start; }
 .company-update-history { border: 1px solid #e5e7eb; display: grid; gap: 12px; padding: 15px 16px; }
-.company-update-history > h2 { color: #263238; font-size: 15px; font-weight: 700; margin: 0; }
+.company-update-history__header { align-items: flex-start; display: flex; gap: 12px; justify-content: space-between; }
+.company-update-history__header h2 { color: #263238; font-size: 15px; font-weight: 700; margin: 0; }
+.company-update-history__header p { color: #64748b; font-size: 12px; line-height: 1.45; margin: 4px 0 0; }
+.company-update-history__header .ant-tag { flex: 0 0 auto; margin: 0; }
 .company-update-history > p { color: #6b7280; font-size: 13px; margin: 0; }
 .company-update-history__list { display: grid; gap: 0; }
 .company-update-history__item { align-items: flex-start; border-top: 1px solid #eef2f6; display: flex; gap: 12px; justify-content: space-between; min-width: 0; padding: 12px 0; }

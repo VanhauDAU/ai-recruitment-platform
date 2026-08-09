@@ -78,7 +78,7 @@ describe('employer capability route guards', () => {
     expect(screen.getByText('Protected resource mounted')).toBeInTheDocument()
   })
 
-  it('keeps a denied candidate-data URL and does not mount its resource', () => {
+  it('redirects a denied candidate-data URL to the existing verification page', () => {
     useEmployerReadiness.mockReturnValue(state({
       canAccessCandidateData: false,
       readiness: {
@@ -100,13 +100,37 @@ describe('employer capability route guards', () => {
 
     expect(screen.queryByText('Protected resource mounted')).not.toBeInTheDocument()
     expect(screen.getByTestId('current-location')).toHaveTextContent(
-      '/tuyendung/app/applications?job=job_1',
-    )
-    expect(screen.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Xem trạng thái xác thực' })).toHaveAttribute(
-      'href',
       '/tuyendung/app/employer-verify',
     )
+    expect(screen.queryByText('Dữ liệu ứng viên đang được bảo vệ')).not.toBeInTheDocument()
+  })
+
+  it('redirects an incomplete job workspace to the existing verification page', () => {
+    useEmployerReadiness.mockReturnValue(state({
+      canUseJobWorkspace: false,
+      canAccessCandidateData: false,
+      readiness: {
+        source: 'canonical',
+        jobWorkspaceReady: false,
+        verificationApproved: false,
+        candidateDataAccess: false,
+        dpaStatus: 'missing',
+        blockers: [{
+          code: 'business_document_required',
+          capabilities: ['job_workspace', 'verification', 'candidate_data', 'job_approval'],
+          message: 'Cần nộp giấy tờ doanh nghiệp.',
+          action: 'upload_business_document',
+        }],
+      },
+    }))
+
+    renderGuard(JobWorkspaceGuard, '/tuyendung/app/jobs')
+
+    expect(screen.queryByText('Protected resource mounted')).not.toBeInTheDocument()
+    expect(screen.getByTestId('current-location')).toHaveTextContent(
+      '/tuyendung/app/employer-verify',
+    )
+    expect(screen.queryByText('Workspace tuyển dụng chưa sẵn sàng')).not.toBeInTheDocument()
   })
 
   it('fails a cached allowed state closed while refetching or after an error', () => {

@@ -58,6 +58,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     () => pendingRequest?.changes?.gallery_deletions || [],
   )
   const [pendingTradeProof, setPendingTradeProof] = useState(null)
+  const [tradeNameTouched, setTradeNameTouched] = useState(false)
   const [isTradeProofModalOpen, setTradeProofModalOpen] = useState(false)
   const [tradeProofSource, setTradeProofSource] = useState('file')
   const [tradeProofDraftFile, setTradeProofDraftFile] = useState(null)
@@ -78,6 +79,13 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   const hasNoWebsite = Form.useWatch('has_no_website', form) ?? initialValues.has_no_website
   const hasNoLogo = Form.useWatch('has_no_logo', form) ?? initialValues.has_no_logo
   const sameTradeName = Form.useWatch('trade_name_same_as_registered', form) ?? initialValues.trade_name_same_as_registered
+  const tradeNameRequired = !sameTradeName && (
+    !isEdit
+    || Boolean(company?.trade_name?.trim())
+    || tradeNameTouched
+    || Object.hasOwn(pendingRequest?.changes || {}, 'trade_name')
+    || Object.hasOwn(pendingRequest?.changes || {}, 'trade_name_same_as_registered')
+  )
   const watchedName = Form.useWatch('company_name', form) ?? initialValues.company_name
   const watchedTax = Form.useWatch('tax_code', form) ?? initialValues.tax_code
   const proofType = Form.useWatch('proof_type', form) || pendingRequest?.proof_type || 'business_registration'
@@ -151,7 +159,9 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     }
     let updateRequest = null
     if (isEdit) {
-      const changes = buildCompanyChanges(normalized, company)
+      const changes = buildCompanyChanges(normalized, company, {
+        pendingChanges: pendingRequest?.changes,
+      })
       if (logoFile) changes.logo_pending = true
       if (galleryFiles.length) changes.gallery_pending = true
       if (galleryDeletionIds.length) changes.gallery_deletions = galleryDeletionIds
@@ -214,6 +224,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
 
   function changeSameTradeName(event) {
     const checked = event.target.checked
+    setTradeNameTouched(true)
     if (checked) {
       tradeNameBackup.current = form.getFieldValue('trade_name') || tradeNameBackup.current
       form.setFieldValue('trade_name', form.getFieldValue('company_name') || '')
@@ -386,7 +397,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           <Col xs={24} md={12}><Form.Item name="tax_code" label={<RequiredLabel>{businessType === 'household' ? 'Mã số thuế người đại diện' : 'Mã số thuế'}</RequiredLabel>} rules={[{ required: true, message: 'Nhập mã số thuế.' }, { pattern: /^\d{10}(-\d{3})?$/, message: 'Nhập 10 chữ số hoặc dạng 10 chữ số-3 chữ số.' }]}><Input size="large" placeholder="0101234567" /></Form.Item></Col>
           <Col xs={24} md={12}><Form.Item name="company_name" label={<RequiredLabel>{businessType === 'household' ? 'Tên hộ kinh doanh' : 'Tên công ty'}</RequiredLabel>} rules={[{ required: true, whitespace: true, message: `Nhập tên ${entityLabel}.` }]}><Input size="large" onChange={(event) => sameTradeName && form.setFieldValue('trade_name', event.target.value)} /></Form.Item></Col>
           <Col span={24}><Form.Item name="trade_name_same_as_registered" valuePropName="checked"><Checkbox onChange={changeSameTradeName}>Tên thương mại trùng với tên đăng ký kinh doanh</Checkbox></Form.Item></Col>
-          <Col xs={24} md={12}><Form.Item name="trade_name" label={<RequiredLabel>Tên thương mại</RequiredLabel>} rules={[{ required: !sameTradeName, whitespace: true, message: 'Nhập tên thương mại.' }]}><Input size="large" disabled={sameTradeName} /></Form.Item></Col>
+          <Col xs={24} md={12}><Form.Item name="trade_name" label={tradeNameRequired ? <RequiredLabel>Tên thương mại</RequiredLabel> : 'Tên thương mại'} rules={[{ required: tradeNameRequired, whitespace: true, message: 'Nhập tên thương mại.' }]}><Input size="large" disabled={sameTradeName} onChange={() => setTradeNameTouched(true)} /></Form.Item></Col>
           {!sameTradeName && <Col xs={24} md={12}>
             <Form.Item>
               {currentTradeProof ? (

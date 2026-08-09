@@ -43,7 +43,6 @@ export default function EmployerVerificationPanel() {
   const {
     profile,
     profileQuery,
-    readiness,
     isAccessError,
     isChecking,
     canAccessCandidateData,
@@ -82,7 +81,6 @@ export default function EmployerVerificationPanel() {
         <div className="mt-8">
           <EmployerVerificationChecklist
             profile={resolvedProfile}
-            readiness={readiness}
             onContinue={() => navigate(employerAppPath('/dashboard'), { replace: true })}
           />
         </div>

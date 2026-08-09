@@ -18,8 +18,12 @@ const VERIFICATION_STATUS = {
 
 const UPDATE_REQUEST_STATUS = {
   pending: ['processing', 'Đang xử lý'],
+  in_review: ['processing', 'Đang thẩm định'],
+  changes_requested: ['warning', 'Cần chỉnh sửa'],
   approved: ['success', 'Đã duyệt'],
   rejected: ['error', 'Bị từ chối'],
+  withdrawn: ['default', 'Đã rút'],
+  cancelled: ['default', 'Đã hủy'],
 }
 
 const COMPANY_CHANGE_LABELS = {
@@ -216,7 +220,13 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
 function CompanyUpdateRequestHistory({ query, requests }) {
   return (
     <section className="company-update-history" aria-label="Lịch sử yêu cầu chỉnh sửa công ty" aria-busy={query.isLoading || undefined}>
-      <h2>Lịch sử yêu cầu của công ty</h2>
+      <header className="company-update-history__header">
+        <div>
+          <h2>Lịch sử yêu cầu của công ty</h2>
+          <p>Theo dõi các lần gửi duyệt của thành viên trong công ty.</p>
+        </div>
+        {query.isSuccess && <Tag>{`${requests.length} yêu cầu`}</Tag>}
+      </header>
       {query.isLoading && <Skeleton active paragraph={{ rows: 2 }} />}
       {query.isError && <p>Không thể tải lịch sử yêu cầu của công ty.</p>}
       {query.isSuccess && requests.length === 0 && <p>Chưa có yêu cầu chỉnh sửa nào.</p>}

@@ -93,7 +93,8 @@ permission admin.
   là error response đã triển khai ở ER-2.
 
 Frontend dùng `JobWorkspaceGuard` cho jobs/campaigns và `CandidateDataGuard`
-cho applications. URL bị từ chối được giữ nguyên để hiển thị blocker/retry.
+cho applications. Known denial điều hướng về `employer-verify`; checking/error
+không redirect và vẫn fail-closed với loading/retry.
 Query candidate-data phải tắt khi checking/error/denied và UI phải bỏ cả PII đã
 cache; aggregate không chứa danh tính vẫn được hiển thị.
 
