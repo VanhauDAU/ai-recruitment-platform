@@ -359,6 +359,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'tax_lookup_evidence',
             'revision',
             'lock_version',
+            'submitted_at',
             'created_at',
             'updated_at',
         ]

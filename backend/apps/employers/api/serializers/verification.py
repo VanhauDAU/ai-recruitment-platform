@@ -2,12 +2,14 @@ import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import EmailValidator, URLValidator
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
 from common.rich_text import rich_text_plain_text, sanitize_rich_text
 
-from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry
+from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry, RecruiterProfile
+from ...selectors import can_access_employer_document_content
 from ...services import SENSITIVE_FIELDS, UPDATABLE_COMPANY_FIELDS
 
 
@@ -41,14 +43,38 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_file_url(self, obj):
         if obj.file_url.startswith(('http://', 'https://')):
             return obj.file_url
+        if not self._can_view_content(obj):
+            return None
         from django.urls import reverse
 
         path = reverse('employer-company-document-content', kwargs={'pk': obj.pk})
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.file_url.startswith(('http://', 'https://')) and not self._can_view_content(
+            instance
+        ):
+            data['file_name'] = ''
+            data['mime_type'] = ''
+            data['file_size'] = 0
+        return data
+
+    def _can_view_content(self, obj):
+        request = self.context.get('request')
+        recruiter = self.context.get('recruiter')
+        if request is None or recruiter is None:
+            return False
+        return can_access_employer_document_content(
+            document=obj,
+            user=request.user,
+            recruiter=recruiter,
+        )
 
     def get_source_type(self, obj):
         # URL ngoài chỉ được dùng cho bằng chứng tên thương mại. Không cần thêm
@@ -64,11 +90,13 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
 class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
     documents = CompanyDocumentSerializer(many=True, read_only=True)
     media_previews = serializers.SerializerMethodField()
+    requested_by_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = CompanyUpdateRequest
         fields = [
             'public_id',
+            'requested_by_summary',
             'changes',
             'is_sensitive',
             'reason',
@@ -77,6 +105,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'review_note',
             'documents',
             'media_previews',
+            'submitted_at',
             'created_at',
             'updated_at',
             'revision',
@@ -84,16 +113,75 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'public_id',
+            'requested_by_summary',
             'is_sensitive',
             'status',
             'review_note',
+            'submitted_at',
             'created_at',
             'updated_at',
             'revision',
             'lock_version',
         ]
 
+    @extend_schema_field(
+        inline_serializer(
+            name='CompanyUpdateRequesterSummary',
+            fields={
+                'public_id': serializers.CharField(),
+                'display_name': serializers.CharField(),
+            },
+        )
+    )
+    def get_requested_by_summary(self, obj):
+        display_name = (obj.requested_by.full_name or '').strip() or 'Thành viên công ty'
+        return {
+            'public_id': obj.requested_by.public_id,
+            'display_name': display_name,
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self._can_view_request_files(instance):
+            changes = dict(data.get('changes') or {})
+            for field in ('logo_url', 'cover_image_url'):
+                if field in changes:
+                    changes[field] = None
+            if 'gallery_additions' in changes:
+                changes['gallery_additions'] = []
+            data['changes'] = changes
+            data['media_previews'] = {}
+        return data
+
+    def _can_view_request_files(self, obj):
+        request = self.context.get('request')
+        recruiter = self.context.get('recruiter')
+        if request is None or recruiter is None:
+            return False
+        return bool(
+            obj.requested_by_id == request.user.id
+            or (
+                recruiter.company_role == RecruiterProfile.CompanyRole.OWNER
+                and recruiter.company_id == obj.company_id
+            )
+        )
+
+    @extend_schema_field(
+        inline_serializer(
+            name='CompanyUpdateMediaPreviews',
+            fields={
+                'logo_url': serializers.URLField(required=False),
+                'cover_image_url': serializers.URLField(required=False),
+                'gallery_additions': serializers.ListField(
+                    child=serializers.URLField(),
+                    required=False,
+                ),
+            },
+        )
+    )
     def get_media_previews(self, obj):
+        if not self._can_view_request_files(obj):
+            return {}
         changes = obj.changes or {}
         request = self.context.get('request')
         previews = {

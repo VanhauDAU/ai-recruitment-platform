@@ -4764,8 +4764,18 @@ paths:
       description: |-
         Yêu cầu cập nhật công ty.
 
-        POST đầu tiên tạo yêu cầu; các POST tiếp theo trong lúc chờ duyệt cập nhật
-        chính record đó để người dùng luôn tiếp tục từ bản nháp gần nhất.
+        Mỗi requester có tối đa một yêu cầu pending trên một công ty. POST tiếp theo
+        của cùng requester cập nhật chính record đó; request của thành viên khác
+        luôn độc lập.
+      parameters:
+      - in: query
+        name: scope
+        schema:
+          type: string
+          enum:
+          - company
+          - mine
+        description: 'mine: yêu cầu của tôi; company: lịch sử toàn công ty (mặc định).'
       tags:
       - employer
       security:
@@ -4784,8 +4794,9 @@ paths:
       description: |-
         Yêu cầu cập nhật công ty.
 
-        POST đầu tiên tạo yêu cầu; các POST tiếp theo trong lúc chờ duyệt cập nhật
-        chính record đó để người dùng luôn tiếp tục từ bản nháp gần nhất.
+        Mỗi requester có tối đa một yêu cầu pending trên một công ty. POST tiếp theo
+        của cùng requester cập nhật chính record đó; request của thành viên khác
+        luôn độc lập.
       tags:
       - employer
       requestBody:
@@ -15913,6 +15924,7 @@ components:
           readOnly: true
         file_url:
           type: string
+          nullable: true
           readOnly: true
         file_name:
           type: string
@@ -16157,11 +16169,29 @@ components:
         * `3000+` - 3000+ nhân viên
         * `5000+` - 5000+ nhân viên
         * `10000+` - 10000+ nhân viên
+    CompanyUpdateMediaPreviews:
+      type: object
+      properties:
+        logo_url:
+          type: string
+          format: uri
+        cover_image_url:
+          type: string
+          format: uri
+        gallery_additions:
+          type: array
+          items:
+            type: string
+            format: uri
     CompanyUpdateRequest:
       type: object
       properties:
         public_id:
           type: string
+          readOnly: true
+        requested_by_summary:
+          allOf:
+          - $ref: '#/components/schemas/CompanyUpdateRequesterSummary'
           readOnly: true
         changes: {}
         is_sensitive:
@@ -16186,7 +16216,12 @@ components:
             $ref: '#/components/schemas/CompanyDocument'
           readOnly: true
         media_previews:
+          allOf:
+          - $ref: '#/components/schemas/CompanyUpdateMediaPreviews'
+          readOnly: true
+        submitted_at:
           type: string
+          format: date-time
           readOnly: true
         created_at:
           type: string
@@ -16209,9 +16244,11 @@ components:
       - lock_version
       - media_previews
       - public_id
+      - requested_by_summary
       - review_note
       - revision
       - status
+      - submitted_at
       - updated_at
     CompanyUpdateRequestRequest:
       type: object
@@ -16223,6 +16260,16 @@ components:
           oneOf:
           - $ref: '#/components/schemas/ProofTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+    CompanyUpdateRequesterSummary:
+      type: object
+      properties:
+        public_id:
+          type: string
+        display_name:
+          type: string
+      required:
+      - display_name
+      - public_id
     Consent:
       type: object
       description: Only optional categories are client-controlled; necessary stays

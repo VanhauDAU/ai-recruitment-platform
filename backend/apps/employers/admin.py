@@ -120,6 +120,13 @@ class CompanyUpdateRequestAdmin(admin.ModelAdmin):
     list_filter = ['status', 'is_sensitive']
     search_fields = ['company__company_name', 'requested_by__email']
     actions = ['approve_requests', 'reject_requests']
+    readonly_fields = ['public_id', 'submitted_at', 'created_at', 'updated_at']
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None:
+            fields.append('requested_by')
+        return fields
 
     @admin.action(description='Duyệt và áp thay đổi vào công ty')
     def approve_requests(self, request, queryset):
