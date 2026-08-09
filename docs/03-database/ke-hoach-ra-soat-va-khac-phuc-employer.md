@@ -641,7 +641,8 @@ apply/release/reconcile và company-level impact đều có test.
 
 #### ER-6A — SMS adapter
 
-**Nhánh:** `feature/employer-sms-verification`
+**Foundation:** `feature/employer-sms-provider-adapter` — đã merge
+**Live workflow:** `feature/employer-sms-verification` — chưa triển khai
 **Phụ thuộc:** ER-2
 
 - Provider-neutral interface.
@@ -649,6 +650,30 @@ apply/release/reconcile và company-level impact đều có test.
   thiếu endpoint/credential/template.
 - TTL, throttle, attempt budget, replay protection và secret redaction.
 - Account cũ giữ nguyên; account mới, đổi phone hoặc reverify dùng SMS.
+
+**Evidence foundation (2026-08-10):**
+
+- Commits `d58ad837`, `78f12be2`, `72468831`, `201e2829`; merge vào `dev`
+  bằng `03ac8640`.
+- Đã có challenge purpose/state, provider-neutral HTTP/fake adapter, queue
+  `auth-sms`, bounded retry/recovery, retention, metrics/event redacted và
+  readiness validation. Runbook:
+  [`employer-sms-provider-adapter.md`](../06-deployment/employer-sms-provider-adapter.md).
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False`; disabled/misconfigured/
+  provider failure đều fail closed, không fallback email hoặc giả delivery.
+  Chưa chọn provider/sender/template và chưa đổi endpoint OTP, frontend hay
+  OpenAPI.
+- Migration không gắn marker/deadline/hold, không backfill hoặc thay đổi phone
+  proof hiện hữu. Tài khoản cũ chỉ dùng SMS về sau khi đổi số hoặc chủ động
+  reverify, đúng ER-D22/ER-D31.
+- Evidence test trên nhánh: 181 employer tests, trong đó 22 SMS và 3 migration
+  tests đều đạt. Post-merge SMS + migration matrix đạt 25/25; full Ruff/format,
+  import-linter, layering, Django check, migration drift, Markdown docs và
+  rendered Compose đều đạt.
+
+Foundation này chưa hoàn tất ER-6A: live endpoint/UI, provider production và
+gate outage/rate-limit/replay/phone uniqueness vẫn là residual. ER-6 giữ trạng
+thái `In progress`.
 
 #### ER-6B — DPA evidence
 
@@ -916,7 +941,7 @@ Trạng thái thực hiện hiện tại:
 | ER-3 | In progress | Storage boundary/cutover foundation đạt scoped gate; upload session, scanner và retention còn mở |
 | ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
 | ER-5 | In progress | ER-D35–ER-D41 đã khóa; implementation bắt đầu sau ER-4 safety |
-| ER-6 | In progress | SMS adapter đang triển khai; DPA evidence vẫn mở |
+| ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 

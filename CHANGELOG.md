@@ -8,6 +8,28 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer SMS provider-neutral foundation ER-6A
+
+- Thêm challenge SMS theo purpose (`initial_verification`, `phone_change`,
+  `reverify`), adapter HTTP trung lập, fake provider cho development/test,
+  queue `auth-sms`, recovery bounded, metrics redacted và retention task. Đây
+  mới là hạ tầng; endpoint OTP hiện hành, frontend và nhà cung cấp production
+  chưa được chuyển sang SMS.
+- Thêm readiness command và production startup validation cho HTTPS endpoint,
+  credential, sender, template, Fernet/HMAC key riêng. Production tiếp tục giữ
+  `EMPLOYER_SMS_OTP_ENABLED=False` cho tới khi Product/Ops duyệt provider,
+  sender và template.
+
+#### Security — Employer SMS fail-closed boundary ER-6A
+
+- Destination và OTP của challenge mới được mã hóa; OTP hash gắn với public
+  challenge ID, Celery chỉ nhận opaque ID, HTTP không theo redirect và không
+  ghi raw phone/OTP/provider response. Challenge PII được purge sau 30 ngày;
+  event redacted giữ 730 ngày.
+- Khi SMS tắt hoặc cấu hình/provider lỗi, dispatch fail closed, không fallback
+  email và không giả delivery. Migration không gắn marker, deadline hoặc hold
+  và không thay đổi phone proof của tài khoản cũ.
+
 #### Security — Employer company-update review safety ER-4
 
 - Chuẩn hóa lock order `Company → CompanyUpdateRequest → CompanyDocument` cho
