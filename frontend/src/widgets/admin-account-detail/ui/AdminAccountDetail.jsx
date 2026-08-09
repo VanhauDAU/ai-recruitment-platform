@@ -638,6 +638,8 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
             <EmployerVerificationReview
               casePublicId={account.context?.verification?.public_id}
               companyPublicId={account.context?.company?.public_id}
+              companyUpdateRequestPublicId={searchParams.get('company_update') || ''}
+              companyUpdateRequesterPublicId={publicId}
               canViewVerification={canViewVerification}
               canReviewVerification={canReviewVerification}
               canViewCompanyUpdates={canViewCompanyUpdates}
@@ -770,6 +772,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
             const next = new URLSearchParams(searchParams)
             if (tab === 'overview') next.delete('tab')
             else next.set('tab', tab)
+            if (tab !== 'verification') next.delete('company_update')
             setSearchParams(next)
           }}
           tabBarGutter={22}

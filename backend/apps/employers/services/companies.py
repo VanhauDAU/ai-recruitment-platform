@@ -14,6 +14,7 @@ from ..models import (
     CompanyIndustry,
     Industry,
 )
+from .company_update_locks import lock_company_update_request
 
 UPDATABLE_COMPANY_FIELDS = {
     'business_type',
@@ -127,7 +128,10 @@ def set_company_industries(company, industries, primary_industry):
 @transaction.atomic
 def apply_update_request(update_request, admin_user, approve, note='', lock_version=None):
     """Review an update request and atomically apply approved changes."""
-    update_request = type(update_request).objects.select_for_update().get(pk=update_request.pk)
+    company, update_request = lock_company_update_request(
+        company_id=update_request.company_id,
+        update_request_id=update_request.pk,
+    )
     if update_request.status != update_request.Status.PENDING:
         raise ValidationError({'detail': 'Yêu cầu này đã được xử lý.'})
     if lock_version is not None and update_request.lock_version != lock_version:
@@ -157,7 +161,6 @@ def apply_update_request(update_request, admin_user, approve, note='', lock_vers
                 raise ValidationError(
                     {'detail': ('Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh đã được duyệt.')}
                 )
-        company = Company.objects.select_for_update().get(pk=update_request.company_id)
         changes = dict(update_request.changes)
         industry_ids = changes.pop('industries', None)
         primary_id = changes.pop('primary_industry', None)
@@ -294,10 +297,13 @@ def review_company_update_document(
     lock_version=None,
 ):
     """Review one current proof attached to a pending company update."""
-    document = CompanyDocument.objects.select_for_update().get(pk=document.pk)
-    update_request = (
-        type(document.update_request).objects.select_for_update().get(pk=document.update_request_id)
+    _, update_request = lock_company_update_request(
+        company_id=document.company_id,
+        update_request_id=document.update_request_id,
     )
+    document = CompanyDocument.objects.select_for_update().get(pk=document.pk)
+    if document.update_request_id != update_request.pk:
+        raise ValidationError({'detail': 'Giấy tờ không còn thuộc yêu cầu cập nhật này.'})
     if update_request.status != update_request.Status.PENDING:
         raise ValidationError({'detail': 'Yêu cầu cập nhật này đã được xử lý.'})
     if not document.is_current:

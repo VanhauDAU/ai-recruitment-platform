@@ -130,9 +130,26 @@ class AdminVerificationDocumentSerializer(serializers.ModelSerializer):
         return getattr(obj, 'duplicate_company_count', 0)
 
     def get_source_url(self, obj):
+        if not self.context.get('can_view_sensitive', False):
+            return None
         if obj.file_url.startswith(('http://', 'https://')):
             return obj.file_url
         return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context.get('can_view_sensitive', False):
+            data.update(
+                {
+                    'file_name': '',
+                    'mime_type': '',
+                    'file_size': 0,
+                    'sha256': '',
+                    'uploaded_by_email': '',
+                    'source_url': None,
+                }
+            )
+        return data
 
 
 class AdminVerificationEventSerializer(serializers.ModelSerializer):
