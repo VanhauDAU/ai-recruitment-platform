@@ -1,10 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, serializers, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
-from apps.employers.services import recruiter_candidate_data_access_allowed
+from apps.employers.services import ensure_recruiter_job_workspace
 
 from ...selectors import (
     attach_job_candidate_previews,
@@ -13,6 +12,7 @@ from ...selectors import (
 )
 from ...services import (
     close_job,
+    delete_job_draft,
     duplicate_job,
     employer_job_posting_context,
     extend_job_deadline,
@@ -25,11 +25,23 @@ from ..serializers import (
     EmployerJobDetailSerializer,
     EmployerJobDraftSerializer,
     EmployerJobListSerializer,
+    EmployerJobPostingContextSerializer,
     EmployerJobWriteSerializer,
 )
 
 
-class EmployerJobListCreateView(generics.ListCreateAPIView):
+class EmployerJobWorkspaceReadMixin:
+    """Authoritatively gate recruiter workspace reads and cache their state."""
+
+    def employer_workspace_readiness(self):
+        readiness = getattr(self, '_employer_workspace_readiness', None)
+        if readiness is None:
+            _, readiness = ensure_recruiter_job_workspace(self.request.user)
+            self._employer_workspace_readiness = readiness
+        return readiness
+
+
+class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCreateAPIView):
     permission_classes = [IsEmployer]
 
     def get_serializer_class(self):
@@ -40,6 +52,7 @@ class EmployerJobListCreateView(generics.ListCreateAPIView):
         )
 
     def get_queryset(self):
+        self.employer_workspace_readiness()
         return employer_job_list_queryset(
             self.request.user,
             status=self.request.query_params.get('status'),
@@ -51,13 +64,13 @@ class EmployerJobListCreateView(generics.ListCreateAPIView):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
-            if recruiter_candidate_data_access_allowed(request.user):
+            if self.employer_workspace_readiness()['candidate_data_access']:
                 attach_job_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
         jobs = list(queryset)
-        if recruiter_candidate_data_access_allowed(request.user):
+        if self.employer_workspace_readiness()['candidate_data_access']:
             attach_job_candidate_previews(jobs)
         return Response(self.get_serializer(jobs, many=True).data)
 
@@ -74,7 +87,7 @@ class EmployerJobListCreateView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
-class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
+class EmployerJobDetailView(EmployerJobWorkspaceReadMixin, generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsEmployer]
     lookup_field = 'public_id'
 
@@ -86,6 +99,7 @@ class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
 
     def get_queryset(self):
+        self.employer_workspace_readiness()
         return employer_job_detail_queryset(self.request.user)
 
     def update(self, request, *args, **kwargs):
@@ -110,13 +124,13 @@ class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         job = self.get_object()
-        if job.status != job.Status.DRAFT:
-            raise ValidationError({'detail': 'Chỉ có thể xóa tin nháp.'})
-        return super().destroy(request, *args, **kwargs)
+        delete_job_draft(job, request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EmployerJobPostingContextView(generics.GenericAPIView):
     permission_classes = [IsEmployer]
+    serializer_class = EmployerJobPostingContextSerializer
 
     def get(self, request):
         return Response(employer_job_posting_context(request.user))

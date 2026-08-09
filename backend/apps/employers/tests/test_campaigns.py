@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth import get_user_model
@@ -12,7 +13,15 @@ from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.jobs.models import Job, JobCategory, JobEngagementDaily
 
-from ..models import Company, RecruiterProfile, RecruitmentCampaign
+from ..models import (
+    CampaignActivity,
+    Company,
+    DpaStatus,
+    EmployerVerificationCase,
+    RecruiterProfile,
+    RecruitmentCampaign,
+)
+from .readiness_helpers import make_employer_ready
 
 
 class RecruitmentCampaignApiTests(TestCase):
@@ -25,8 +34,12 @@ class RecruitmentCampaignApiTests(TestCase):
             email='campaign-other@example.com', password='password', role='employer'
         )
         self.company = Company.objects.create(company_name='Campaign Co', created_by=self.owner)
-        self.owner_profile = RecruiterProfile.objects.create(user=self.owner, company=self.company)
-        self.other_profile = RecruiterProfile.objects.create(user=self.other, company=self.company)
+        self.owner_profile = make_employer_ready(
+            self.owner,
+            company=self.company,
+            candidate_data=True,
+        )
+        self.other_profile = make_employer_ready(self.other, company=self.company)
         self.category = JobCategory.objects.create(
             name='Software Engineer', category_type=JobCategory.CategoryType.SPECIALIZATION
         )
@@ -80,7 +93,7 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('headcount_target', response.data)
 
-    def test_campaign_creation_does_not_require_a_recruiter_profile_or_company(self):
+    def test_campaign_creation_requires_a_ready_workspace(self):
         user_model = get_user_model()
         unconfigured_employer = user_model.objects.create_user(
             email='campaign-no-company@example.com', password='password', role='employer'
@@ -91,10 +104,92 @@ class RecruitmentCampaignApiTests(TestCase):
             reverse('employer-campaign-list'), {'name': 'Chiến dịch khởi tạo'}, format='json'
         )
 
-        self.assertEqual(response.status_code, 201, response.data)
-        campaign = RecruitmentCampaign.objects.get(public_id=response.data['public_id'])
-        self.assertIsNone(campaign.company)
-        self.assertEqual(campaign.owner.user, unconfigured_employer)
+        self.assertEqual(response.status_code, 403, response.data)
+        self.assertEqual(response.data['code'], 'EMPLOYER_WORKSPACE_BLOCKED')
+        self.assertFalse(
+            RecruitmentCampaign.objects.filter(owner__user=unconfigured_employer).exists()
+        )
+
+    def test_new_or_dpa_held_employer_cannot_read_campaign_workspace_directly(self):
+        user_model = get_user_model()
+        legacy_user = user_model.objects.create_user(
+            email='campaign-legacy-reader@example.com',
+            password='password',
+            role='employer',
+        )
+        legacy_company = Company.objects.create(
+            company_name='Campaign legacy company',
+            created_by=legacy_user,
+        )
+        legacy_profile = RecruiterProfile.objects.create(
+            user=legacy_user,
+            company=legacy_company,
+        )
+        legacy_campaign = RecruitmentCampaign.objects.create(
+            owner=legacy_profile,
+            company=legacy_company,
+            name='Legacy inaccessible campaign',
+        )
+        self.client.force_authenticate(legacy_user)
+        urls = (
+            reverse('employer-campaign-list'),
+            reverse('employer-campaign-options'),
+            reverse(
+                'employer-campaign-detail',
+                kwargs={'public_id': legacy_campaign.public_id},
+            ),
+            reverse(
+                'employer-campaign-pause-impact',
+                kwargs={'public_id': legacy_campaign.public_id},
+            ),
+            reverse(
+                'employer-campaign-activities',
+                kwargs={'public_id': legacy_campaign.public_id},
+            ),
+            reverse(
+                'employer-campaign-report',
+                kwargs={'public_id': legacy_campaign.public_id},
+            ),
+            reverse(
+                'employer-campaign-job-performance',
+                kwargs={'public_id': legacy_campaign.public_id},
+            ),
+        )
+        for url in urls:
+            with self.subTest(url=url, state='new'):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 403, response.data)
+                self.assertEqual(response.data['code'], 'EMPLOYER_WORKSPACE_BLOCKED')
+
+        self.client.force_authenticate(self.owner)
+        with patch(
+            'apps.employers.models.readiness.current_dpa_status',
+            return_value=DpaStatus.HOLD,
+        ):
+            response = self.client.get(reverse('employer-campaign-list'))
+        self.assertEqual(response.status_code, 403, response.data)
+        self.assertEqual(response.data['code'], 'EMPLOYER_WORKSPACE_BLOCKED')
+
+    def test_nonapproved_verification_keeps_campaign_workspace_reads_available(self):
+        verification_case = self.owner_profile.verification_case
+        verification_case.status = EmployerVerificationCase.Status.CHANGES_REQUESTED
+        verification_case.save(update_fields=['status', 'updated_at'])
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile,
+            company=self.company,
+            name='Workspace survives verification changes request',
+        )
+        self.client.force_authenticate(self.owner)
+
+        for url in (
+            reverse('employer-campaign-list'),
+            reverse('employer-campaign-options'),
+            reverse('employer-campaign-detail', kwargs={'public_id': campaign.public_id}),
+            reverse('employer-campaign-report', kwargs={'public_id': campaign.public_id}),
+        ):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200, response.data)
 
     def test_campaign_list_exposes_operational_counts_and_filters(self):
         campaign = RecruitmentCampaign.objects.create(
@@ -287,6 +382,50 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertIn('campaign_paused', event_types)
         self.assertIn('campaign_resumed', event_types)
 
+    def test_candidate_activity_is_redacted_when_candidate_access_is_blocked(self):
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.owner_profile,
+            company=self.company,
+            name='Redacted activity campaign',
+        )
+        candidate = get_user_model().objects.create_user(
+            email='redacted-candidate@example.com',
+            password='password',
+            role='candidate',
+            full_name='Tên ứng viên nhạy cảm',
+        )
+        CampaignActivity.objects.create(
+            campaign=campaign,
+            actor=candidate,
+            group=CampaignActivity.Group.APPLICATION,
+            event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
+            subject_public_id='app-sensitive-deeplink',
+            metadata={
+                'candidate_name': candidate.full_name,
+                'candidate_email': candidate.email,
+                'application_deep_link': '/employer/applications/app-sensitive-deeplink',
+                'job_title': 'Backend Engineer',
+            },
+            occurred_at=timezone.now(),
+        )
+        verification_case = self.owner_profile.verification_case
+        verification_case.status = EmployerVerificationCase.Status.CHANGES_REQUESTED
+        verification_case.save(update_fields=['status', 'updated_at'])
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.get(
+            reverse('employer-campaign-activities', kwargs={'public_id': campaign.public_id})
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        activity = response.data['results'][0]
+        self.assertEqual(activity['actor_name'], 'Người dùng')
+        self.assertEqual(activity['subject_public_id'], '')
+        self.assertNotIn('candidate_name', activity['metadata'])
+        self.assertNotIn('candidate_email', activity['metadata'])
+        self.assertNotIn('application_deep_link', activity['metadata'])
+        self.assertEqual(activity['metadata']['job_title'], 'Backend Engineer')
+
     def test_campaign_can_only_update_its_name(self):
         campaign = RecruitmentCampaign.objects.create(
             owner=self.owner_profile,
@@ -405,7 +544,7 @@ class RecruitmentCampaignApiTests(TestCase):
             'employer-campaign-job-performance',
             kwargs={'public_id': campaign.public_id},
         )
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             response = self.client.get(url, {'days': 7})
 
         self.assertEqual(response.status_code, 200, response.data)
@@ -441,7 +580,7 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(response.data['daily'][-1]['views'], 30)
         self.assertEqual(response.data['daily'][-1]['applications'], 7)
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             selected = self.client.get(url, {'days': 7, 'job': second_job.public_id})
 
         self.assertEqual(selected.status_code, 200, selected.data)
@@ -496,7 +635,7 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         self.client.force_authenticate(self.owner)
 
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get(reverse('employer-campaign-list'))
 
         self.assertEqual(response.status_code, 200)

@@ -12,8 +12,10 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsCandidate
+from apps.applications.models import Application
 from apps.cv_templates.models import CvTemplate
 from apps.cv_templates.services import PositionContentUnavailable
+from apps.employers.services import ensure_recruiter_candidate_data_access
 from common.metrics import record_metric
 from common.r2_storage import cv_asset_storage, private_media_storage
 
@@ -817,9 +819,26 @@ class CvV2AssetContentView(APIView):
         token = request.query_params.get('token')
         try:
             if token:
-                asset = resolve_asset_token(token)
+                asset, token_context = resolve_asset_token(token, include_context=True)
                 if asset.public_id != asset_public_id:
                     raise CvAsset.DoesNotExist
+                audience = token_context.get('audience')
+                if audience:
+                    if audience != 'recruiter_application':
+                        raise CvAsset.DoesNotExist
+                    if (
+                        not request.user.is_authenticated
+                        or not request.user.is_employer
+                        or token_context.get('subject') != request.user.public_id
+                    ):
+                        raise CvAsset.DoesNotExist
+                    ensure_recruiter_candidate_data_access(request.user)
+                    if not Application.objects.filter(
+                        public_id=token_context.get('resource'),
+                        job__posted_by=request.user,
+                        submitted_cv_version__public_id=token_context.get('version'),
+                    ).exists():
+                        raise CvAsset.DoesNotExist
             else:
                 asset = CvAsset.objects.get(public_id=asset_public_id, is_active=True)
                 if asset.kind != CvAsset.Kind.BACKGROUND and (
