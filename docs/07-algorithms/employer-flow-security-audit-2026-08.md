@@ -39,7 +39,7 @@ review DPA.
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
 | ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Mitigated ER-1B; lifecycle follow-up ER-4 | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
-| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Open | ER-3 |
+| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Storage boundary in remediation; scanner open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
@@ -170,6 +170,24 @@ review DPA.
 - Clean/infected/polyglot/timeout/scanner-down/retry/expiry/cancel.
 - Chỉ `clean` được attach và download; scan error fail closed.
 - Không có business request khi một file bắt buộc chưa clean.
+
+**ER-3 storage-foundation evidence (2026-08-10)**
+
+- Local và R2 có alias/root/bucket tách public, private, quarantine; private và
+  quarantine fail-closed khi gọi `.url()`. DEBUG/nginx chỉ được serve public.
+- Rendered production Compose chỉ publish nginx 80/443, không kế thừa source
+  bind hoặc port development; nginx chỉ nhận static và public-media volume.
+- Root shared cũ trở thành `LEGACY_MEDIA_ROOT` không phục vụ. Lệnh
+  `migrate_media_storage_layout` dry-run mặc định, batch/cursor, copy + hash
+  verify idempotent và giữ source rollback; không di chuyển byte trong schema
+  migration.
+- Classifier allowlist public, unknown → private; bao phủ `gallerys/`,
+  knowledgebase, frontend legacy và external-media migration.
+- Raw multipart DOC/DOCX preview trả machine code `UPLOAD_SCAN_REQUIRED` và
+  không gọi LibreOffice; authorized preview/download của document đã lưu vẫn
+  đọc private storage theo storage key cũ.
+- Finding chưa đóng: upload session, ClamAV, clean-only consume, retention và
+  candidate import quarantine tiếp tục ở các slice ER-3 sau.
 
 ### ER-F06 — Verification auto-finalization
 
