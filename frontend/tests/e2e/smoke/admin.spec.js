@@ -691,7 +691,9 @@ test('admin employer detail: company media and compact verification comparison r
 
   await expect(page).toHaveURL(/\/admin\/app\/recruiters\/usr_employer\?tab=verification$/)
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
-  await expect(page.getByRole('heading', { name: 'Theo dõi hành trình xác thực' })).toBeVisible()
+  await expect(page.getByRole('region', {
+    name: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
+  })).toBeVisible()
   await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toHaveCount(0)
   await expect(page.getByText('Quyền đại diện', { exact: true })).toBeVisible()
   await expect(page.getByText('Pháp lý doanh nghiệp', { exact: true })).toBeVisible()
