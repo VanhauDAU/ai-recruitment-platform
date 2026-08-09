@@ -37,14 +37,14 @@ review DPA.
 | ID | Mức | Finding | Trạng thái | Phase |
 | --- | --- | --- | --- | --- |
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
-| ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Mitigated ER-1B; lifecycle follow-up ER-4 | ER-1B/ER-4 |
+| ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester; admin có thể mở sai request cùng company | Safety closed ER-4; lifecycle follow-up | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Storage boundary in remediation; scanner open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2; reconciliation follow-up ER-5 | ER-2/ER-5 |
-| ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Open | ER-6A |
+| ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | In remediation — adapter foundation merged; live workflow open | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
 | ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | In remediation | ER-0–ER-8 |
@@ -110,6 +110,22 @@ review DPA.
 - Một member chỉ có tối đa một active request; concurrent POST không tạo trùng.
 - `requested_by` bất biến qua update/resubmit/upload.
 
+**ER-4 safety evidence (2026-08-10)**
+
+- Merge `ddb8a47f` dùng canonical lock order
+  `Company → CompanyUpdateRequest → CompanyDocument` trên create/upload/review/
+  tax-refresh hiện hành; regression bao phủ concurrent ownership/status recheck.
+- Admin queue/detail truyền exact request public ID và gọi retrieve-by-ID. Panel
+  fail-closed nếu company, requester hoặc pending status không khớp; không còn
+  chọn `results[0]` từ danh sách lọc theo company.
+- Django admin cho Company, CompanyDocument và CompanyUpdateRequest là read-only
+  để không có mutation path bỏ qua service lock/authorization.
+- Backend 108/108, frontend 10/10; scoped Ruff/format, import-linter, layering,
+  Django/migration checks, lint và architecture đạt.
+- Finding sai-object/lock path được đóng ở safety slice. Revision immutable,
+  resubmit/withdraw/cancel và base-company conflict vẫn là residual lifecycle
+  ER-4, không được suy thành phase Verified.
+
 ### ER-F03 — Binary document IDOR
 
 **Evidence**
@@ -151,6 +167,15 @@ review DPA.
   check và migration drift đều đạt.
 - Residual risk: lifecycle revision/conflict/withdraw/cancel tiếp tục ở ER-4;
   quarantine, malware scan và retention của file tiếp tục ở ER-3.
+
+**ER-4 admin metadata evidence (2026-08-10)**
+
+- Admin list/retrieve chỉ cần `company_update.view` nhưng serializer che
+  filename, MIME, size, SHA, uploader email và source URL nếu actor thiếu
+  `account.sensitive.view`; tax code được mask theo cùng boundary.
+- Binary endpoint tiếp tục bắt buộc cả `company_update.view` và
+  `account.sensitive.view`, kiểm document thuộc exact request và stream private
+  với `Cache-Control: private, no-store`.
 
 ### ER-F04/ER-F05 — Upload trust boundary
 
@@ -321,6 +346,24 @@ review DPA.
 - Account mới/change/reverify gọi SMS provider adapter.
 - TTL/attempt/rate-limit/replay/provider outage/phone uniqueness đều fail safe.
 - Account cũ không bị backfill, deadline hoặc hold.
+
+**ER-6A infrastructure evidence (2026-08-10)**
+
+- Provider-neutral HTTP/fake adapter, purpose-bound challenge/state, queue
+  `auth-sms`, bounded retry/recovery, retention, redacted event/metrics và
+  production readiness đã merge qua `03ac8640` (code commits `d58ad837`,
+  `78f12be2`, `72468831`, `201e2829`).
+- Production flag vẫn tắt và dispatch fail closed khi disabled, cấu hình sai
+  hoặc provider lỗi; không fallback email, không giả delivery. OpenAPI và live
+  OTP endpoint/frontend chưa đổi, provider production chưa được chọn.
+- Migration không tạo marker/deadline/hold và không thay đổi phone proof cũ.
+  Challenge PII/ciphertext được purge sau 30 ngày; event redacted giữ 730 ngày.
+- Branch evidence: 181 employer tests, gồm 22 SMS và 3 migration tests; root
+  post-merge retest SMS + migration đạt 25/25. Ruff, format, import-linter,
+  layering, Django check, migration drift, docs và rendered Compose đều đạt.
+
+Finding chưa đóng cho tới khi account mới/change/reverify thực sự dùng SMS và
+toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
 
 ### ER-F10 — DPA evidence
 

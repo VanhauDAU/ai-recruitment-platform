@@ -28,6 +28,9 @@ ALLOWED_METRICS = {
     'upload_scan_result',
     'upload_scanner_readiness',
     'upload_session_state',
+    'employer_sms_dispatch',
+    'employer_sms_recovery',
+    'employer_sms_retention',
 }
 
 
@@ -54,6 +57,8 @@ def record_metric(name, value=1, **tags):
             'query_length_bucket',
             'result_bucket',
             'state',
+            'purpose',
+            'provider',
         }
     }
     logger.info(

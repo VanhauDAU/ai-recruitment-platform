@@ -576,6 +576,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
     'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
+    'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.speech.tasks.*': {'queue': 'speech-artifacts'},
@@ -617,6 +618,14 @@ CELERY_BEAT_SCHEDULE = {
     'expire-and-clean-upload-sessions': {
         'task': 'apps.uploads.tasks.expire_and_clean_upload_sessions',
         'schedule': 300.0,
+    },
+    'recover-stale-employer-sms-dispatches': {
+        'task': 'apps.employers.tasks.phone_sms.recover_stale_employer_sms_dispatches',
+        'schedule': 60.0,
+    },
+    'purge-employer-sms-verification-data': {
+        'task': 'apps.employers.tasks.phone_sms.purge_employer_sms_verification_data',
+        'schedule': 86400.0,
     },
 }
 
@@ -733,6 +742,30 @@ REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS = config(
     default=False,
     cast=bool,
 )
+
+# Provider-neutral employer phone verification. Production remains disabled
+# until Ops/Product explicitly select a gateway, sender and approved template.
+EMPLOYER_SMS_OTP_ENABLED = config('EMPLOYER_SMS_OTP_ENABLED', default=False, cast=bool)
+EMPLOYER_SMS_PROVIDER = config('EMPLOYER_SMS_PROVIDER', default='disabled').strip().lower()
+EMPLOYER_SMS_ENDPOINT_URL = config('EMPLOYER_SMS_ENDPOINT_URL', default='').strip()
+EMPLOYER_SMS_API_TOKEN = config('EMPLOYER_SMS_API_TOKEN', default='').strip()
+EMPLOYER_SMS_SENDER = config('EMPLOYER_SMS_SENDER', default='').strip()
+EMPLOYER_SMS_TEMPLATE_ID = config('EMPLOYER_SMS_TEMPLATE_ID', default='').strip()
+EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY = config(
+    'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY', default=''
+).strip()
+EMPLOYER_SMS_CHALLENGE_HMAC_KEY = config('EMPLOYER_SMS_CHALLENGE_HMAC_KEY', default='').strip()
+EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS = config(
+    'EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS', default=2.0, cast=float
+)
+EMPLOYER_SMS_READ_TIMEOUT_SECONDS = config(
+    'EMPLOYER_SMS_READ_TIMEOUT_SECONDS', default=5.0, cast=float
+)
+EMPLOYER_SMS_DISPATCH_STALE_SECONDS = config(
+    'EMPLOYER_SMS_DISPATCH_STALE_SECONDS', default=300, cast=int
+)
+EMPLOYER_SMS_CHALLENGE_RETENTION_DAYS = 30
+EMPLOYER_SMS_EVENT_RETENTION_DAYS = 730
 
 # Xác thực email: TTL token (24h) và thời gian chờ giữa 2 lần gửi lại (giây).
 EMAIL_VERIFICATION_TTL = config('EMAIL_VERIFICATION_TTL', default=60 * 60 * 24, cast=int)

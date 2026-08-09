@@ -207,6 +207,13 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D32 | `CONFIRMED` | Employer phone mới chỉ nhận số di động Việt Nam canonical `+84`; bỏ availability oracle, compatibility endpoint chỉ trả kết quả generic |
 | ER-D33 | `CONFIRMED` | Challenge phone chứa PII/ciphertext xóa sau 30 ngày; audit redacted giữ 24 tháng; admin không sửa trực tiếp phone đã xác minh |
 | ER-D34 | `CONFIRMED` | SMS production giữ flag tắt tới khi chọn gateway/template/sender; provider lỗi phải fail closed, không fallback email |
+| ER-D35 | `CONFIRMED` | Recruiter verification bị revoke/expired không tự downgrade company; pháp nhân chỉ đổi bằng quyết định company riêng |
+| ER-D36 | `CONFIRMED` | Hồ sơ auto-approved lịch sử được grandfather với nguồn `legacy_auto/legacy_unknown` và đưa vào báo cáo ops; không reset/hold tự động |
+| ER-D37 | `CONFIRMED` | Revoke/expire khóa candidate-data và job approval, ẩn active job khỏi public ngay; vẫn cho workspace, tạo/sửa/gửi tin |
+| ER-D38 | `CONFIRMED` | Tax `pending` phải chờ; mismatch/not_found/unavailable/invalid/missing chỉ approve với quyền override và reason |
+| ER-D39 | `CONFIRMED` | Tách `review`, `revoke`, `tax_override`; revoke/override mặc định chỉ Super Admin hoặc Compliance Lead được gán rõ |
+| ER-D40 | `CONFIRMED` | Rejected dùng cùng case với `revision++`; revoked/expired xử lý lại về pending, recruiter resubmit rồi admin start review |
+| ER-D41 | `CONFIRMED` | Phase ER-5 chỉ hỗ trợ expired manual; chưa tự đặt TTL/scheduler trước chính sách thời hạn pháp lý riêng |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -219,7 +226,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit và sửa quyền xem/tải/export CV; chỉ mở rộng pipeline upload candidate nếu phát hiện dùng chung hạ tầng không an toàn | Giới hạn scope CV của ER-2/ER-3 |
 
-Các quyết định trên và ER-D29 đến ER-D34 được người phụ trách sản phẩm xác nhận
+Các quyết định trên và ER-D29 đến ER-D41 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
@@ -591,6 +598,14 @@ Migration dữ liệu cũ:
 **Gate ER-4:** concurrent create, concurrent review, stale revision, overlapping
 fields, non-overlapping fields, resubmit, withdraw và cancel.
 
+**Safety slice đã merge (2026-08-10):** `ddb8a47f` chuẩn hóa lock order hiện
+hành `Company → CompanyUpdateRequest → CompanyDocument`; admin mở và review
+đúng request `public_id`, không lấy `results[0]`; metadata nhạy cảm được che nếu
+thiếu `account.sensitive.view`, còn binary bắt buộc cả view và sensitive. Backend
+108/108 và frontend 10/10 regression đạt cùng scoped quality gates. Đây là
+evidence trung gian, không thay cho schema revision/base-version và toàn bộ gate
+lifecycle ở trên.
+
 ### ER-5 — Verification, final decision và compliance holds
 
 **Backend:** `feature/employer-verification-state-machine`
@@ -607,6 +622,18 @@ fields, non-overlapping fields, resubmit, withdraw và cancel.
 - Hold có source/reason riêng; reconcile không gỡ business/moderation hold khác.
 - Existing active job/campaign dùng dry-run report, ops approval và batch apply.
 
+**Quyết định gate ER-5 đã khóa (ER-D35–ER-D41):**
+
+- Company verification độc lập với revoke/expire của một recruiter; không suy
+  diễn company downgrade.
+- Legacy auto-approved được grandfather và report ops, không tự reset/hold.
+- Revoke/expire ẩn active public jobs và khóa candidate-data/job approval,
+  nhưng không khóa workspace hoặc job draft/submit.
+- Tax pending phải chờ; trạng thái advisory còn lại cần permission override và
+  lý do audit. Review, revoke và tax override là ba quyền riêng.
+- Rejected dùng revision mới trên cùng case; revoked/expired quay về pending để
+  resubmit. Expired chỉ manual trong phase này, chưa có TTL/scheduler.
+
 **Gate ER-5:** review/revoke/reapprove, race với job approval, hold
 apply/release/reconcile và company-level impact đều có test.
 
@@ -614,7 +641,8 @@ apply/release/reconcile và company-level impact đều có test.
 
 #### ER-6A — SMS adapter
 
-**Nhánh:** `feature/employer-sms-verification`
+**Foundation:** `feature/employer-sms-provider-adapter` — đã merge
+**Live workflow:** `feature/employer-sms-verification` — chưa triển khai
 **Phụ thuộc:** ER-2
 
 - Provider-neutral interface.
@@ -622,6 +650,30 @@ apply/release/reconcile và company-level impact đều có test.
   thiếu endpoint/credential/template.
 - TTL, throttle, attempt budget, replay protection và secret redaction.
 - Account cũ giữ nguyên; account mới, đổi phone hoặc reverify dùng SMS.
+
+**Evidence foundation (2026-08-10):**
+
+- Commits `d58ad837`, `78f12be2`, `72468831`, `201e2829`; merge vào `dev`
+  bằng `03ac8640`.
+- Đã có challenge purpose/state, provider-neutral HTTP/fake adapter, queue
+  `auth-sms`, bounded retry/recovery, retention, metrics/event redacted và
+  readiness validation. Runbook:
+  [`employer-sms-provider-adapter.md`](../06-deployment/employer-sms-provider-adapter.md).
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False`; disabled/misconfigured/
+  provider failure đều fail closed, không fallback email hoặc giả delivery.
+  Chưa chọn provider/sender/template và chưa đổi endpoint OTP, frontend hay
+  OpenAPI.
+- Migration không gắn marker/deadline/hold, không backfill hoặc thay đổi phone
+  proof hiện hữu. Tài khoản cũ chỉ dùng SMS về sau khi đổi số hoặc chủ động
+  reverify, đúng ER-D22/ER-D31.
+- Evidence test trên nhánh: 181 employer tests, trong đó 22 SMS và 3 migration
+  tests đều đạt. Post-merge SMS + migration matrix đạt 25/25; full Ruff/format,
+  import-linter, layering, Django check, migration drift, Markdown docs và
+  rendered Compose đều đạt.
+
+Foundation này chưa hoàn tất ER-6A: live endpoint/UI, provider production và
+gate outage/rate-limit/replay/phone uniqueness vẫn là residual. ER-6 giữ trạng
+thái `In progress`.
 
 #### ER-6B — DPA evidence
 
@@ -887,9 +939,9 @@ Trạng thái thực hiện hiện tại:
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
 | ER-3 | In progress | Storage boundary/cutover foundation đạt scoped gate; upload session, scanner và retention còn mở |
-| ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
-| ER-5 | Planned | Phụ thuộc readiness/upload |
-| ER-6 | Planned | DPA phụ thuộc ER-O03 |
+| ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
+| ER-5 | In progress | ER-D35–ER-D41 đã khóa; implementation bắt đầu sau ER-4 safety |
+| ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 

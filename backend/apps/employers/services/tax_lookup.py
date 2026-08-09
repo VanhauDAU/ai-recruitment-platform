@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.accounts.services import record_admin_action
 
 from ..models import CompanyTaxLookupEvidence, EmployerVerificationEvent
+from .company_update_locks import lock_company_update_request
 
 TAX_CODE_PATTERN = re.compile(r'\d{10}(?:-\d{3})?')
 
@@ -277,15 +278,12 @@ def refresh_verification_tax_lookup(case, *, actor):
 
 @transaction.atomic
 def refresh_company_update_tax_lookup(update_request, *, actor):
-    update_request = (
-        type(update_request)
-        .objects.select_for_update()
-        .select_related('company')
-        .get(pk=update_request.pk)
+    company, update_request = lock_company_update_request(
+        company_id=update_request.company_id,
+        update_request_id=update_request.pk,
     )
     if not update_request.is_sensitive:
         raise ValueError('tax_lookup_only_applies_to_sensitive_updates')
-    company = update_request.company
     proposed_tax_code = update_request.changes.get('tax_code', company.tax_code)
     if not proposed_tax_code:
         raise ValueError('company_tax_code_is_required')

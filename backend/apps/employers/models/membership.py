@@ -61,7 +61,7 @@ class RecruiterProfile(models.Model):
     marketing_decided_at = models.DateTimeField(null=True, blank=True)
     # SĐT đã xác thực OTP; partial unique sinh ra đúng lỗi nghiệp vụ
     # "Đã có nhà tuyển dụng khác xác thực số điện thoại này".
-    verified_phone = models.CharField(max_length=20, blank=True)
+    verified_phone = models.CharField(max_length=20, null=True, blank=True, default=None)
     phone_verified_at = models.DateTimeField(null=True, blank=True)
     dpa_accepted_at = models.DateTimeField(null=True, blank=True)
     # Legacy compatibility only. Completion is derived from registration,
@@ -74,7 +74,7 @@ class RecruiterProfile(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['verified_phone'],
-                condition=~models.Q(verified_phone=''),
+                condition=models.Q(verified_phone__isnull=False) & ~models.Q(verified_phone=''),
                 name='uniq_recruiter_verified_phone',
             ),
         ]
