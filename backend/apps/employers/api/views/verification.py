@@ -25,6 +25,7 @@ from ...selectors import (
 )
 from ...services import (
     get_or_create_recruiter,
+    lock_company_update_request,
     queue_company_tax_lookup,
     render_office_document_preview,
     render_office_upload_preview,
@@ -170,6 +171,17 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             with transaction.atomic():
                 existing = None
                 if update_request is not None:
+                    company, update_request = lock_company_update_request(
+                        company_id=recruiter.company_id,
+                        update_request_id=update_request.pk,
+                    )
+                    if (
+                        update_request.requested_by_id != request.user.id
+                        or update_request.status != CompanyUpdateRequest.Status.PENDING
+                    ):
+                        raise ValidationError(
+                            {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
+                        )
                     existing = (
                         CompanyDocument.objects.select_for_update()
                         .filter(
@@ -183,7 +195,9 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                         existing.is_current = False
                         existing.save(update_fields=['is_current', 'updated_at'])
                 document = CompanyDocument.objects.create(
-                    company=_require_company(request.user).company,
+                    company=company
+                    if update_request is not None
+                    else _require_company(request.user).company,
                     recruiter=recruiter,
                     uploaded_by=request.user,
                     update_request=update_request,

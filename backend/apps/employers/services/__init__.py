@@ -17,6 +17,7 @@ from .companies import (
     set_company_industries,
     verify_company,
 )
+from .company_update_locks import lock_company_update_request
 from .document_preview import render_office_document_preview, render_office_upload_preview
 from .onboarding import accept_recruiter_dpa, phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import (
@@ -79,6 +80,7 @@ __all__ = [
     'recruiter_posting_readiness',
     'latest_tax_lookup_evidence',
     'lookup_company_tax',
+    'lock_company_update_request',
     'queue_company_tax_lookup',
     'refresh_company_update_tax_lookup',
     'refresh_verification_tax_lookup',

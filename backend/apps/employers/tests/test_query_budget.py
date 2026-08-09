@@ -3,6 +3,8 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -21,6 +23,7 @@ from ..models import (
 # one recruitment-need SELECT. The count must remain flat as rows are added.
 RECRUITMENT_NEED_READ_BUDGET = 2
 COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
+ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
 
 
 class RecruitmentNeedQueryBudgetTests(APITestCase):
@@ -116,3 +119,61 @@ class CompanyUpdateRequestQueryBudgetTests(APITestCase):
 
         self.assertEqual(expanded.status_code, 200)
         self.assertEqual(len(expanded.data), 6)
+
+
+class AdminCompanyUpdateRequestQueryBudgetTests(APITestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser(
+            email='company-request-admin-budget@example.com',
+            password='Password@123',
+        )
+        self.client.force_authenticate(self.admin)
+
+    def _request_with_document(self, index):
+        requester = get_user_model().objects.create_user(
+            email=f'company-request-admin-{index}@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        company = Company.objects.create(
+            company_name=f'Admin company request budget {index}',
+            created_by=requester,
+        )
+        recruiter = RecruiterProfile.objects.create(
+            user=requester,
+            company=company,
+            company_role=RecruiterProfile.CompanyRole.OWNER,
+        )
+        update_request = CompanyUpdateRequest.objects.create(
+            company=company,
+            requested_by=requester,
+            changes={'address': f'Địa chỉ {index}'},
+        )
+        CompanyDocument.objects.create(
+            company=company,
+            recruiter=recruiter,
+            uploaded_by=requester,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url=f'employers/admin-budget/document-{index}.pdf',
+        )
+
+    def test_admin_company_update_request_list_query_count_stays_flat(self):
+        self._request_with_document(1)
+        with CaptureQueriesContext(connection) as first_queries:
+            first = self.client.get(reverse('admin-company-update-request-list'))
+
+        for index in range(2, 7):
+            self._request_with_document(index)
+        with CaptureQueriesContext(connection) as expanded_queries:
+            expanded = self.client.get(reverse('admin-company-update-request-list'))
+
+        self.assertEqual(first.status_code, 200, first.data)
+        self.assertEqual(expanded.status_code, 200, expanded.data)
+        self.assertEqual(first.data['count'], 1)
+        self.assertEqual(expanded.data['count'], 6)
+        self.assertEqual(len(first_queries), len(expanded_queries))
+        self.assertLessEqual(
+            len(expanded_queries),
+            ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET,
+        )
