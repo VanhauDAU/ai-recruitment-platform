@@ -279,6 +279,26 @@ Approve bị từ chối với HTTP 400 và payload máy đọc được:
 Client không được gửi hoặc tự suy eligibility. `review_token` chỉ khóa revision
 của job; backend vẫn đọc lại policy state ngay trước khi chuyển sang `active`.
 
+### Admin employer verification — final decision và lifecycle
+
+| Method | Endpoint | Contract |
+| --- | --- | --- |
+| POST | `/api/admin/employer-verifications/{public_id}/decision-impact/` | Preview final decision, tax/company/capability/hold impact; không ghi dữ liệu |
+| POST | `/api/admin/employer-verifications/{public_id}/decision/` | Confirm bằng `impact_token`; stale trả `409 admin_resource_changed` |
+| POST | `/api/admin/employer-verifications/{public_id}/revoke-impact/`, `/revoke/` | Preview/xác nhận thu hồi và áp verification hold |
+| POST | `/api/admin/employer-verifications/{public_id}/expire-impact/`, `/expire/` | Preview/xác nhận hết hiệu lực manual |
+
+`decision` yêu cầu `employer_verification.review`; revoke/expire yêu cầu
+`employer_verification.revoke`. Approve với tax advisory không matched cần thêm
+`employer_verification.tax_override` và `tax_override_reason`. Hai quyền rủi ro
+cao không được grant mặc định cho manager/staff; Super Admin có bypass hiện hữu,
+Compliance Lead phải được gán tường minh qua RBAC.
+
+Document review không phải final decision. Revoke/expire không downgrade
+company; compliance hold chỉ chặn candidate-data/job approval và public job,
+không khóa workspace hoặc tạo/sửa/gửi tin. Reapprove chỉ gỡ exact verification
+hold, không gỡ hold thuộc DPA/account/moderation.
+
 ### CV catalogue admin (admin-only)
 
 | Method | Endpoint | Mô tả |

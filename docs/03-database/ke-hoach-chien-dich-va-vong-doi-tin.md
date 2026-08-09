@@ -184,6 +184,14 @@ Write transaction theo lock order `User → Recruiter → Verification → Campa
 service fail closed bằng stale/resource-changed error thay vì tiếp tục trên row
 không được khóa.
 
+ER-5 bổ sung verification compliance hold theo recruiter và liên kết tường minh
+tới campaign/job. Hold không đổi business status, không ghi đè `policy_hold` hay
+`moderation_hold`; public job filter loại job có verification hold active. Khi
+reapprove, service chỉ release hold cùng source và giữ nguyên mọi DPA/account/
+moderation hold khác. Cả approve job và revoke/expire dùng cùng lock prefix
+`User → Recruiter → Verification`, sau đó khóa campaign/job theo PK để kết quả
+commit trước luôn được đường còn lại đọc và recheck.
+
 Frontend đặt route-level composition ở `pages/employer` và `pages/main`; action
 tạo chiến dịch/đăng tin ở `features`; API/domain dùng lại ở `entities`. Xem
 `frontend/ARCHITECTURE.md` để biết quy tắc import/layer.

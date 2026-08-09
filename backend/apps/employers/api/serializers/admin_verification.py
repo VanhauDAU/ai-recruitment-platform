@@ -440,11 +440,11 @@ class AdminVerificationCaseDetailSerializer(AdminVerificationCaseListSerializer)
                 lazy_serializer(
                     'apps.employers.api.serializers.admin_verification.'
                     'AdminVerificationStoredDecisionSnapshotSerializer'
-                ),
+                )(),
                 lazy_serializer(
                     'apps.employers.api.serializers.admin_verification.'
                     'AdminVerificationStoredLifecycleSnapshotSerializer'
-                ),
+                )(),
             ],
             resource_type_field_name=None,
         )
