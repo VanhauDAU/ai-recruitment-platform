@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './smoke/helpers'
+import { mockPublicApi } from './helpers'
 
 const DENIED_PROFILE = {
   public_id: 'rec_readiness_denied',
