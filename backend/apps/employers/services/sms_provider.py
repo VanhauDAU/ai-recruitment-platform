@@ -109,6 +109,7 @@ class HttpSmsProvider:
                     settings.EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS,
                     settings.EMPLOYER_SMS_READ_TIMEOUT_SECONDS,
                 ),
+                allow_redirects=False,
             )
         except (requests.Timeout, requests.ConnectionError) as error:
             raise SmsProviderTemporaryError() from error

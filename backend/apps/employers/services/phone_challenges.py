@@ -8,6 +8,7 @@ import hmac
 import secrets
 from datetime import timedelta
 
+from celery import current_app
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -27,6 +28,7 @@ from .sms_provider import (
 )
 
 SMS_OTP_TTL = timedelta(minutes=10)
+SMS_MAX_DISPATCH_ATTEMPTS = 4
 _SMS_PURPOSES = {
     PhoneOtp.Purpose.INITIAL_VERIFICATION,
     PhoneOtp.Purpose.PHONE_CHANGE,
@@ -134,7 +136,17 @@ def create_sms_phone_challenge(*, user, phone, purpose):
     for old_challenge in active:
         old_challenge.invalidated_at = now
         old_challenge.invalidation_reason = 'superseded'
-        old_challenge.save(update_fields=['invalidated_at', 'invalidation_reason', 'updated_at'])
+        old_challenge.otp_ciphertext = ''
+        old_challenge.secret_purged_at = now
+        old_challenge.save(
+            update_fields=[
+                'invalidated_at',
+                'invalidation_reason',
+                'otp_ciphertext',
+                'secret_purged_at',
+                'updated_at',
+            ]
+        )
         _append_event(
             old_challenge,
             EmployerPhoneVerificationEvent.EventType.CHALLENGE_INVALIDATED,
@@ -168,9 +180,12 @@ def create_sms_phone_challenge(*, user, phone, purpose):
 def enqueue_sms_phone_challenge(challenge):
     """Enqueue after commit; only the opaque challenge ID crosses the broker."""
 
-    from ..tasks.phone_sms import dispatch_employer_sms_challenge
-
-    transaction.on_commit(lambda: dispatch_employer_sms_challenge.delay(challenge.public_id))
+    transaction.on_commit(
+        lambda: current_app.send_task(
+            'apps.employers.tasks.phone_sms.dispatch_employer_sms_challenge',
+            args=[challenge.public_id],
+        )
+    )
 
 
 @transaction.atomic
@@ -184,6 +199,33 @@ def _claim_dispatch(challenge_public_id):
         PhoneOtp.DispatchStatus.QUEUED,
         PhoneOtp.DispatchStatus.RETRY_PENDING,
     }:
+        return None
+    if challenge.dispatch_attempts >= SMS_MAX_DISPATCH_ATTEMPTS:
+        challenge.dispatch_status = PhoneOtp.DispatchStatus.FAILED
+        challenge.dispatch_error_code = 'dispatch_attempt_budget_exhausted'
+        challenge.otp_ciphertext = ''
+        challenge.secret_purged_at = timezone.now()
+        challenge.save(
+            update_fields=[
+                'dispatch_status',
+                'dispatch_error_code',
+                'otp_ciphertext',
+                'secret_purged_at',
+                'updated_at',
+            ]
+        )
+        _append_event(
+            challenge,
+            EmployerPhoneVerificationEvent.EventType.DISPATCH_FAILED,
+            outcome='failed',
+            reason_code='dispatch_attempt_budget_exhausted',
+        )
+        record_metric(
+            'employer_sms_dispatch',
+            status='failed',
+            failure_code='dispatch_attempt_budget_exhausted',
+            purpose=challenge.purpose,
+        )
         return None
     now = timezone.now()
     challenge.dispatch_status = PhoneOtp.DispatchStatus.DISPATCHING
@@ -224,7 +266,12 @@ def _mark_dispatch_error(challenge_public_id, error):
         event_type = EmployerPhoneVerificationEvent.EventType.DISPATCH_FAILED
     challenge.dispatch_status = status
     challenge.dispatch_error_code = error.reason_code
-    challenge.save(update_fields=['dispatch_status', 'dispatch_error_code', 'updated_at'])
+    update_fields = ['dispatch_status', 'dispatch_error_code', 'updated_at']
+    if status != PhoneOtp.DispatchStatus.RETRY_PENDING:
+        challenge.otp_ciphertext = ''
+        challenge.secret_purged_at = timezone.now()
+        update_fields.extend(['otp_ciphertext', 'secret_purged_at'])
+    challenge.save(update_fields=update_fields)
     _append_event(
         challenge,
         event_type,
@@ -311,7 +358,17 @@ def mark_sms_dispatch_retries_exhausted(challenge_public_id):
         return challenge
     challenge.dispatch_status = PhoneOtp.DispatchStatus.FAILED
     challenge.dispatch_error_code = 'provider_retries_exhausted'
-    challenge.save(update_fields=['dispatch_status', 'dispatch_error_code', 'updated_at'])
+    challenge.otp_ciphertext = ''
+    challenge.secret_purged_at = timezone.now()
+    challenge.save(
+        update_fields=[
+            'dispatch_status',
+            'dispatch_error_code',
+            'otp_ciphertext',
+            'secret_purged_at',
+            'updated_at',
+        ]
+    )
     _append_event(
         challenge,
         EmployerPhoneVerificationEvent.EventType.DISPATCH_FAILED,
@@ -341,18 +398,43 @@ def recover_stale_sms_dispatches(*, limit=100):
         .order_by('dispatch_started_at')[:limit]
     )
     for challenge in stale:
-        challenge.dispatch_status = PhoneOtp.DispatchStatus.RETRY_PENDING
-        challenge.dispatch_error_code = 'dispatch_stale'
-        challenge.save(update_fields=['dispatch_status', 'dispatch_error_code', 'updated_at'])
+        exhausted = challenge.dispatch_attempts >= SMS_MAX_DISPATCH_ATTEMPTS
+        challenge.dispatch_status = (
+            PhoneOtp.DispatchStatus.FAILED if exhausted else PhoneOtp.DispatchStatus.RETRY_PENDING
+        )
+        challenge.dispatch_error_code = (
+            'dispatch_attempt_budget_exhausted' if exhausted else 'dispatch_stale'
+        )
+        update_fields = ['dispatch_status', 'dispatch_error_code', 'updated_at']
+        if exhausted:
+            challenge.otp_ciphertext = ''
+            challenge.secret_purged_at = timezone.now()
+            update_fields.extend(['otp_ciphertext', 'secret_purged_at'])
+        challenge.save(update_fields=update_fields)
         _append_event(
             challenge,
-            EmployerPhoneVerificationEvent.EventType.STALE_RECOVERED,
-            outcome='retry_pending',
-            reason_code='dispatch_stale',
+            EmployerPhoneVerificationEvent.EventType.DISPATCH_FAILED
+            if exhausted
+            else EmployerPhoneVerificationEvent.EventType.STALE_RECOVERED,
+            outcome='failed' if exhausted else 'retry_pending',
+            reason_code=challenge.dispatch_error_code,
         )
-    if stale:
-        record_metric('employer_sms_recovery', value=len(stale), status='recovered')
-    return [challenge.public_id for challenge in stale]
+    retry_ids = [
+        challenge.public_id
+        for challenge in stale
+        if challenge.dispatch_status == PhoneOtp.DispatchStatus.RETRY_PENDING
+    ]
+    exhausted_count = len(stale) - len(retry_ids)
+    if retry_ids:
+        record_metric('employer_sms_recovery', value=len(retry_ids), status='recovered')
+    if exhausted_count:
+        record_metric(
+            'employer_sms_recovery',
+            value=exhausted_count,
+            status='failed',
+            failure_code='dispatch_attempt_budget_exhausted',
+        )
+    return retry_ids
 
 
 @transaction.atomic

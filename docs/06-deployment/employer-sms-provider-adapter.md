@@ -70,8 +70,10 @@ Gateway adapter nội bộ phải trả response 2xx:
 ```
 
 HTTP `429` và `5xx` là lỗi tạm thời; timeout/connection error cũng retry tối đa
-ba lần với backoff. Các lỗi `4xx`, payload response sai hoặc cấu hình sai là lỗi
-terminal. Lần retry cuối chuyển row sang `failed/provider_retries_exhausted`;
+ba lần với backoff, đồng thời global dispatch budget là bốn lần kể cả recovery
+sau worker crash. Adapter không follow redirect để tránh gửi token/phone/OTP sang
+host khác. Các lỗi `4xx`, payload response sai hoặc cấu hình sai là lỗi terminal.
+Lần retry cuối chuyển row sang `failed/provider_retries_exhausted`;
 worker không claim lại row terminal. Muốn thử lại phải tạo challenge mới, challenge
 cũ bị invalidated.
 

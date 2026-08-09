@@ -110,6 +110,8 @@ class SmsChallengeLifecycleTests(TestCase):
         first.refresh_from_db()
         self.assertIsNotNone(first.invalidated_at)
         self.assertEqual(first.invalidation_reason, 'superseded')
+        self.assertEqual(first.otp_ciphertext, '')
+        self.assertIsNotNone(first.secret_purged_at)
         self.assertIsNone(second.invalidated_at)
         self.assertTrue(
             EmployerPhoneVerificationEvent.objects.filter(
@@ -141,12 +143,15 @@ class SmsChallengeLifecycleTests(TestCase):
     def test_enqueue_passes_only_public_challenge_id_to_celery(self):
         challenge = self._challenge()
 
-        with patch('apps.employers.tasks.phone_sms.dispatch_employer_sms_challenge.delay') as delay:
+        with patch('apps.employers.services.phone_challenges.current_app.send_task') as send_task:
             with self.captureOnCommitCallbacks(execute=True):
                 enqueue_sms_phone_challenge(challenge)
 
-        delay.assert_called_once_with(challenge.public_id)
-        broker_arguments = str(delay.call_args)
+        send_task.assert_called_once_with(
+            'apps.employers.tasks.phone_sms.dispatch_employer_sms_challenge',
+            args=[challenge.public_id],
+        )
+        broker_arguments = str(send_task.call_args)
         self.assertNotIn('0912345678', broker_arguments)
         self.assertNotIn('+84912345678', broker_arguments)
 
@@ -166,6 +171,7 @@ class SmsChallengeLifecycleTests(TestCase):
         challenge.refresh_from_db()
         self.assertEqual(challenge.dispatch_status, PhoneOtp.DispatchStatus.FAILED)
         self.assertEqual(challenge.dispatch_error_code, 'provider_retries_exhausted')
+        self.assertEqual(challenge.otp_ciphertext, '')
         terminal_event = EmployerPhoneVerificationEvent.objects.get(
             challenge_public_id=challenge.public_id,
             event_type=EmployerPhoneVerificationEvent.EventType.DISPATCH_FAILED,
@@ -217,6 +223,7 @@ class SmsChallengeLifecycleTests(TestCase):
 
         challenge.refresh_from_db()
         self.assertEqual(challenge.dispatch_status, PhoneOtp.DispatchStatus.DISABLED)
+        self.assertEqual(challenge.otp_ciphertext, '')
         self.assertEqual(result['reason_code'], 'provider_disabled')
         output = '\n'.join(logs.output)
         self.assertNotIn('0912345678', output)
@@ -234,6 +241,26 @@ class SmsChallengeLifecycleTests(TestCase):
         challenge.refresh_from_db()
         self.assertEqual(challenge.dispatch_status, PhoneOtp.DispatchStatus.RETRY_PENDING)
         self.assertEqual(challenge.dispatch_error_code, 'dispatch_stale')
+
+    def test_stale_recovery_cannot_reset_the_global_dispatch_attempt_budget(self):
+        challenge = self._challenge()
+        challenge.dispatch_status = PhoneOtp.DispatchStatus.DISPATCHING
+        challenge.dispatch_attempts = 4
+        challenge.dispatch_started_at = timezone.now() - timedelta(minutes=10)
+        challenge.save(
+            update_fields=[
+                'dispatch_status',
+                'dispatch_attempts',
+                'dispatch_started_at',
+                'updated_at',
+            ]
+        )
+
+        self.assertEqual(recover_stale_sms_dispatches(limit=1), [])
+        challenge.refresh_from_db()
+        self.assertEqual(challenge.dispatch_status, PhoneOtp.DispatchStatus.FAILED)
+        self.assertEqual(challenge.dispatch_error_code, 'dispatch_attempt_budget_exhausted')
+        self.assertEqual(challenge.otp_ciphertext, '')
 
     def test_retention_purges_challenge_payload_after_30_days_and_events_after_24_months(self):
         challenge = self._challenge()
@@ -307,6 +334,7 @@ class HttpSmsProviderTests(TestCase):
         request = session.post.call_args
         self.assertEqual(request.kwargs['headers']['Idempotency-Key'], 'poc_http_test')
         self.assertEqual(request.kwargs['json']['to'], '+84912345678')
+        self.assertFalse(request.kwargs['allow_redirects'])
         self.assertNotIn('test-api-token', str(receipt))
 
     @override_settings(
