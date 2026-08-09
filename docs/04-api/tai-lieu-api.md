@@ -26,7 +26,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/auth/register/email-availability/` | Kiểm tra email đã được dùng chưa cho UX form đăng ký candidate; body `{email}`, trả `{available}`; public, throttle 12/phút. Đây chỉ là pre-check — endpoint đăng ký vẫn xác thực lại để tránh race condition. |
 | POST | `/api/auth/login/` | Đăng nhập, nhận access/refresh JWT (kèm `portal` để chặn sai vai trò theo cổng) |
 | POST | `/api/auth/refresh/` | Làm mới access token |
-| GET | `/api/auth/me/` | Thông tin tài khoản hiện tại |
+| GET | `/api/auth/me/` | Thông tin tài khoản hiện tại. Employer có thêm `employer_job_workspace_ready`; giữ `employer_verification_completed` trong compatibility window. |
 | POST | `/api/auth/verify/send/` | Gửi lại email xác thực (429 kèm `retry_after` khi còn cooldown) |
 | POST | `/api/auth/verify/confirm/` | Xác nhận email bằng `token` trong link (public) |
 | POST | `/api/auth/change-email/` | Đổi email → reset xác thực + gửi lại link |
@@ -43,15 +43,16 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/PUT | `/api/candidate/job-preferences/` | Candidate: đọc/lưu nhu cầu việc làm chuẩn hóa. PUT yêu cầu 1–5 `desired_specialization_ids`, ít nhất một `preferred_province_ids`, `experience_level` và `desired_salary_vnd` > 0; đồng thời lưu hai quyết định consent. |
 | GET/PATCH | `/api/candidate/email-notification-settings/` | Đọc/cập nhật từng phần 12 preference email candidate. GET chưa có row trả defaults bật mà không ghi DB; PATCH partial tạo khi ghi lần đầu. Email xác thực/reset mật khẩu/2FA là email giao dịch, không thuộc contract hay UI preference. |
 | GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
-| GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + state onboarding bắt buộc và checklist xác thực có thể hoàn thiện dần (chỉ `position_title` sửa được) |
+| GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + canonical `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers[]` (chỉ `position_title` sửa được). |
 | POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
 | GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |
-| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter đang đăng nhập. POST chỉ cần `name`, tự tạo `RecruiterProfile` khi chưa có, mở chiến dịch ngay và không yêu cầu company/xác thực. Filter gồm `status`, `q`, `scope=open|needs_review|active_jobs|pending_jobs|expired_jobs`; response kèm tổng/CV mới, offer và số tin theo từng trạng thái. |
-| GET/PATCH | `/api/employer/campaigns/{public_id}/` | Xem/sửa chiến dịch do chính recruiter sở hữu. |
+| GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter. Cả read workspace và mutation yêu cầu `job_workspace_ready=true`; POST chỉ nhận `name`. Filter gồm `status`, `q`, `scope=open|needs_review|active_jobs|pending_jobs|expired_jobs`. |
+| GET/PATCH | `/api/employer/campaigns/{public_id}/` | Xem/sửa chiến dịch do chính recruiter sở hữu và workspace đang ready. |
 | GET | `/api/employer/campaigns/options/` | `suggestions/` | Option để gắn tin (trừ chiến dịch hoàn tất/hủy) và nhu cầu tuyển dụng chưa chuyển thành chiến dịch. |
 | POST | `/api/employer/campaigns/from-need/{public_id}/` | Tạo và mở chiến dịch từ nhu cầu tuyển dụng của chính recruiter. |
 | POST/GET | `/api/employer/campaigns/{public_id}/status/` | `report/` | Dừng/mở lại/hoàn tất/hủy theo transition hợp lệ; report trả tổng tin theo trạng thái, lượt xem, tổng/CV mới, phễu và hồ sơ 7 ngày. |
+| GET | `/api/employer/campaigns/{public_id}/activities/` | Activity owner-only. Event application chỉ trả candidate actor/name/deep-link khi `candidate_data_access=true`; nếu chỉ workspace-ready thì metadata được allowlist/redact. |
 | POST | `/api/employer/phone/send-otp/` | Gửi mã OTP xác thực SĐT (gửi qua email tài khoản; cooldown 60s, hết hạn 10 phút) |
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
 | POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
@@ -67,7 +68,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/employer/company/documents/{id}/content/` | Mở private binary sau object-level authorization. Uploader/requester và company owner được phép; member khác, outsider hoặc URL website trả `404`. Response dùng `Cache-Control: private, no-store` và không phát storage key/signed URL trước authorization |
 | GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một `pending` trên mỗi `(company, requester)`; nhiều member được gửi song song. `scope=mine` trả yêu cầu của actor, `scope=company` trả lịch sử công ty và là mặc định tương thích. Response có `submitted_at`, `requested_by_summary {public_id, display_name}` không email; file/media của requester khác bị redacted. POST lại cập nhật request pending của chính actor, không đổi `requested_by`. `changes` dùng validation của form; đổi MST/tên bắt buộc `reason` + `proof_type` và đủ tài liệu trước khi admin duyệt |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
-| GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI job/application, activity 7 ngày, nhu cầu ưu tiên, tin và hồ sơ gần đây |
+| GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
 | GET | `/api/jobs/categories/` | Danh sách ngành nghề (taxonomy 3 cấp: nhóm nghề/nghề/vị trí chuyên môn), public, có phân trang mặc định |
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |
@@ -334,17 +335,17 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET | `/api/jobs/{slug}/` | Chi tiết job, public và **chỉ đọc** (không tăng `view_count`). Trả relation tối thiểu cùng view-model nhóm sẵn: `primary_specialization`, `domain_knowledge`, `workplace_groups`, `requirement_tags` (**không còn kèm kỹ năng**), `benefit_tags`, `required_skills`, `preferred_skills`, `benefit_groups` (quyền lợi gom theo danh mục, thứ tự theo `Benefit.Category`), `language_requirements[].proficiency_label`; không trả contact nhận hồ sơ hoặc trạng thái quản trị. |
 | POST | `/api/jobs/{slug}/views/` | Ghi nhận lượt xem riêng, chỉ khi Analytics consent hợp lệ; Redis dedupe 24 giờ, response `{counted, view_count, reason?}`. |
 | GET/POST | `/api/privacy/consent/` | Đọc/lưu lựa chọn cookie ký số (`preferences`, `analytics`, `marketing`); necessary luôn bật, rút Analytics sẽ xóa viewer cookie. |
-| GET/POST | `/api/jobs/mine/` | Workspace recruiter. `GET` chỉ trả tin có `posted_by` là caller; `POST ?as=draft` lưu nháp thiếu dữ liệu; `POST` thường kiểm tra 5 bước xác thực, dữ liệu và quota tin mới rồi tạo `pending` để admin duyệt. Form thủ công ghi đầy đủ `category_assignments` (một `primary_specialization`, nhiều `domain_knowledge`), `job_locations` (UI nhóm nhiều phường/xã theo tỉnh nhưng payload vẫn là danh sách địa điểm chuẩn hóa), `work_schedules`, `job_skills`, `job_benefits`, `language_requirements`, lương/học vấn/kinh nghiệm/độ tuổi, `work_schedule_note` và `application_contact {recipient_name, phone, emails[]}`. Khi gửi duyệt, mô tả/yêu cầu/quyền lợi, lịch làm việc và người nhận hồ sơ là bắt buộc; kỹ năng, ngoại ngữ, độ tuổi và quyền lợi dạng tag là tùy chọn. Hai luồng AI/import chưa thuộc contract này. |
-| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo đọc/sửa tin, xem `submitted_at`/`approved_at`/`rejected_reason`; chỉ xóa được nháp. Cập nhật tin `active` phải gửi lại review và chuyển về `pending`. |
-| GET | `/api/jobs/mine/posting-context/` | Số tin đã gửi duyệt lần đầu, quota miễn phí trọn đời còn lại, cờ `approval_required` và lý do chặn gửi tin mới. |
+| GET/POST | `/api/jobs/mine/` | Workspace recruiter owner-only và yêu cầu `job_workspace_ready=true`. `POST ?as=draft` lưu nháp thiếu dữ liệu; POST thường validate form/quota rồi tạo `pending`. Form giữ contract nested hiện hữu. Candidate preview chỉ gắn khi `candidate_data_access=true`. |
+| GET/PATCH/DELETE | `/api/jobs/mine/{public_id}/` | Chỉ người tạo và workspace-ready được đọc/sửa; chỉ xóa nháp. Cập nhật tin `active` quay lại `pending`. |
+| GET | `/api/jobs/mine/posting-context/` | Endpoint compliance không bị workspace guard để luôn trả quota + `job_workspace_ready`, `candidate_data_access`, `dpa_status`, `blockers[]`, `job_postable` và `block_reason`. |
 | POST | `/api/jobs/mine/{public_id}/submit/` | Gửi nháp/tin bị từ chối để duyệt lại; cập nhật tin pending giữ hàng chờ. |
 | POST | `/api/jobs/mine/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (trở về `pending`, body `{deadline}`), gia hạn tin active hoặc tạo nháp sao chép. |
 | GET | `/api/jobs/admin/moderation/?status=pending` | **Admin**: danh sách tin để kiểm duyệt, gồm người tạo, công ty, thời điểm gửi và lý do từ chối (nếu có). |
 | POST | `/api/jobs/admin/moderation/{public_id}/review/` | **Admin**: body `{"action":"approve"}` để thành `active`, hoặc `{"action":"reject","reason":"..."}`. Lý do từ chối bắt buộc và trả cho chủ tin. |
 | GET/POST | `/api/v2/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, tạo snapshot CV bất biến và trả `candidate_status` cùng timeline đã lọc. |
-| GET | `/api/v2/recruiter/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; filter theo tin, pipeline, chiến dịch hoặc tên/email ứng viên. |
-| PATCH | `/api/v2/recruiter/applications/{public_id}/` | Cập nhật pipeline, `employer_note` và `employer_rating` 1–5. Ghi chú/điểm là nội bộ. |
-| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV đã nộp (lần mở đầu đánh dấu `viewed`) và audit lịch sử pipeline, owner-only; không yêu cầu MFA. |
+| GET | `/api/v2/recruiter/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; yêu cầu `candidate_data_access=true`, filter theo tin/pipeline/chiến dịch/tên-email. |
+| PATCH | `/api/v2/recruiter/applications/{public_id}/` | Cập nhật pipeline/ghi chú/điểm nội bộ; owner-scope, candidate-data gate và canonical lock order được recheck trong transaction. |
+| GET | `/api/v2/recruiter/applications/{public_id}/cv/` | `history/` | Snapshot CV và lịch sử pipeline owner-only, yêu cầu candidate-data access. Asset URL của recruiter mang audience/actor/application/version và tải file recheck quyền live. |
 | GET | `/api/site/settings/` | Cấu hình site công khai dạng `{key: value}` (chỉ key `is_public=true`), public. **Cache 1h**, tự invalidate khi admin sửa qua API/Django admin |
 | GET | `/api/site/link-groups/?placement=footer_seo` | Cụm link SEO đang bật kèm items đã resolve, public |
 | GET | `/api/site/link-groups/?placement=footer_nav` | Các cột menu điều hướng footer, public |
@@ -352,6 +353,34 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET | `/api/site/admin/settings/` | **Admin**: toàn bộ cấu hình gộp theo 15 nhóm `{groups: [{key, label, settings: [...]}]}`, mỗi setting kèm metadata (`value_type`, `options`, `order`, `is_public`, `env_configured`) để frontend tự render form |
 | PATCH | `/api/site/admin/settings/` | **Admin**: bulk update, body `{"values": {key: value}}`, validate theo `value_type` (boolean/number/color hex/select choices), từ chối key kiểu `env` → `{"updated": [...], "errors": {...}}` |
 | POST | `/api/site/admin/settings/upload/` | **Admin**: upload ảnh cho setting kiểu image (multipart `file` + `key`) → `{"key", "value", "url"}`; ảnh favicon tự resize về tối đa 256×256 |
+
+### Employer readiness và mã lỗi ER-2
+
+`blockers[]` có đúng bốn field `code`, `capabilities[]`, `message`, `action`.
+Blocker code viết thường; capability ổn định là `job_workspace`,
+`verification`, `candidate_data`, `job_approval`. Client không được tự suy
+capability từ các checkbox onboarding.
+
+`dpa_status` có enum
+`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Schema hiện
+tại chỉ chứng minh được `missing|current`; các trạng thái version/grace/hold là
+contract dành cho ER-6, không được gán suy đoán cho dữ liệu cũ.
+
+- Job/campaign read hoặc write bị chặn trả HTTP 403,
+  `code=EMPLOYER_WORKSPACE_BLOCKED`.
+- Candidate list/detail/export/status/history/CV bị chặn trả HTTP 403,
+  `code=CANDIDATE_DATA_BLOCKED`; resource ngoài ownership trả `404`.
+- Admin approve bị chặn tiếp tục trả `JOB_APPROVAL_BLOCKED` theo moderation
+  contract. `verification_required` và `dpa_outdated` là blocker code, không
+  phải endpoint error code viết hoa riêng.
+
+`candidate_data_access` là tập con nghiêm ngặt của workspace, cần verification
+case approved đúng recruiter/company và DPA current; feature flag không thể bỏ
+qua. Verification chưa approved/đã yêu cầu bổ sung không tự khóa job workspace
+nếu các điều kiện workspace khác còn hợp lệ. Posting-context là ngoại lệ read
+để UI luôn lấy được blocker/action. Aggregate count hiện hữu chưa đổi trong
+ER-2 và không kèm candidate PII/deep-link; policy bỏ/giữ count chờ quyết định
+riêng.
 
 **Quy ước ảnh (media):** DB lưu **storage key** (vd `site/settings/logo.png`), không lưu URL tuyệt đối; API resolve ra URL công khai theo domain/CDN hiện tại tại thời điểm trả về. Đổi domain hoặc bật `MEDIA_PUBLIC_BASE_URL` không cần sửa dữ liệu. Chuyển dữ liệu URL cũ sang key bằng `python manage.py normalize_media_references --apply`.
 

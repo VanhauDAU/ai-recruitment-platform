@@ -4247,6 +4247,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedRecruitmentCampaignList'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
     post:
       operationId: employer_campaigns_create
       tags:
@@ -4292,6 +4298,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecruitmentCampaign'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
     put:
       operationId: employer_campaigns_update
       parameters:
@@ -4385,6 +4397,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedCampaignActivityList'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
   /api/employer/campaigns/{public_id}/job-performance/:
     get:
       operationId: employer_campaigns_job_performance_retrieve
@@ -4401,6 +4419,12 @@ paths:
       responses:
         '200':
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
   /api/employer/campaigns/{public_id}/pause-impact/:
     get:
       operationId: employer_campaigns_pause_impact_retrieve
@@ -4417,6 +4441,12 @@ paths:
       responses:
         '200':
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
   /api/employer/campaigns/{public_id}/report/:
     get:
       operationId: employer_campaigns_report_retrieve
@@ -4433,6 +4463,12 @@ paths:
       responses:
         '200':
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
   /api/employer/campaigns/{public_id}/status/:
     post:
       operationId: employer_campaigns_status_create
@@ -4449,6 +4485,12 @@ paths:
       responses:
         '200':
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
   /api/employer/campaigns/options/:
     get:
       operationId: employer_campaigns_options_retrieve
@@ -4459,6 +4501,12 @@ paths:
       responses:
         '200':
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
   /api/employer/company/:
     get:
       operationId: employer_company_retrieve
@@ -5695,6 +5743,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedEmployerJobListList'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
     post:
       operationId: jobs_mine_create
       tags:
@@ -5739,6 +5793,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmployerJobDetail'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer job workspace capability is blocked.
     put:
       operationId: jobs_mine_update
       parameters:
@@ -5903,7 +5963,11 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerJobPostingContext'
+          description: ''
   /api/jobs/recommendations/by-cv/{cv_public_id}/:
     get:
       operationId: jobs_recommendations_by_cv_retrieve
@@ -10903,6 +10967,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedApplicationList'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer candidate-data capability is blocked.
   /api/v2/recruiter/applications/{public_id}/:
     put:
       operationId: v2_recruiter_applications_update
@@ -10934,6 +11004,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApplicationStatusUpdate'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer candidate-data capability is blocked.
     patch:
       operationId: v2_recruiter_applications_partial_update
       parameters:
@@ -10964,6 +11040,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApplicationStatusUpdate'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer candidate-data capability is blocked.
   /api/v2/recruiter/applications/{public_id}/cv/:
     get:
       operationId: v2_recruiter_applications_cv_retrieve
@@ -10985,6 +11067,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecruiterApplicationSnapshot'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer candidate-data capability is blocked.
   /api/v2/recruiter/applications/{public_id}/history/:
     get:
       operationId: v2_recruiter_applications_history_list
@@ -11017,6 +11105,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedApplicationStatusHistoryList'
           description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer candidate-data capability is blocked.
   /api/v2/recruiter/applications/export/:
     get:
       operationId: v2_recruiter_applications_export_retrieve
@@ -11027,6 +11121,12 @@ paths:
       responses:
         '200':
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerCapabilityBlockedError'
+          description: Employer candidate-data capability is blocked.
 components:
   schemas:
     AccountResourceHoldChangeRequest:
@@ -15692,6 +15792,20 @@ components:
         gender:
           type: string
           maxLength: 20
+    CapabilitiesEnum:
+      enum:
+      - job_workspace
+      - verification
+      - candidate_data
+      - job_approval
+      type: string
+      description: |-
+        Stable employer capability identifiers.
+
+        * `job_workspace` - read or mutate recruiter jobs and campaigns
+        * `verification` - approved employer identity
+        * `candidate_data` - candidate PII, CV snapshots and application workflow
+        * `job_approval` - submit or approve a job
     CategoryTypeA75Enum:
       enum:
       - style
@@ -18062,6 +18176,19 @@ components:
         * `authorization_letter` - Giấy ủy quyền
         * `identity_document` - Giấy tờ định danh (CCCD/hộ chiếu)
         * `data_processing_agreement` - Thỏa thuận xử lý dữ liệu cá nhân
+    DpaStatusEnum:
+      enum:
+      - missing
+      - current
+      - legacy_unversioned
+      - outdated
+      - grace
+      - hold
+      - unknown
+      type: string
+      description: |-
+        Stable public DPA lifecycle. The current timestamp-only adapter emits only
+        `missing` or `current`; the remaining values are reserved for ER-6 evidence.
     DraftJobApplicationContact:
       type: object
       properties:
@@ -18106,6 +18233,130 @@ components:
         * `college` - Cao đẳng
         * `university` - Đại học
         * `postgraduate` - Cao học
+    EmployerCapabilityBlockedError:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/EmployerCapabilityErrorCodeEnum'
+        message:
+          type: string
+        action:
+          type: string
+          description: Stable action token; clients must map it through an internal allowlist.
+        blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerReadinessBlocker'
+      required:
+      - action
+      - blockers
+      - code
+      - message
+    EmployerCapabilityErrorCodeEnum:
+      enum:
+      - EMPLOYER_WORKSPACE_BLOCKED
+      - CANDIDATE_DATA_BLOCKED
+      - JOB_APPROVAL_BLOCKED
+      type: string
+      description: Uppercase endpoint error codes implemented by ER-2.
+    EmployerJobPostingContext:
+      type: object
+      properties:
+        verification_completed:
+          type: boolean
+        admin_approved:
+          type: boolean
+        account_level:
+          type: integer
+          minimum: 0
+        verified_job_quota_eligible:
+          type: boolean
+        job_workspace_ready:
+          type: boolean
+        candidate_data_access:
+          type: boolean
+        dpa_status:
+          $ref: '#/components/schemas/DpaStatusEnum'
+        blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerPostingBlocker'
+        published_jobs_count:
+          type: integer
+          minimum: 0
+        publish_limit:
+          type: integer
+          minimum: 0
+        publish_remain:
+          type: integer
+          minimum: 0
+        free_publish_limit:
+          type: integer
+          minimum: 0
+        free_publish_remain:
+          type: integer
+          minimum: 0
+        job_postable:
+          type: boolean
+        approval_required:
+          type: boolean
+        block_reason:
+          type: string
+      required:
+      - account_level
+      - admin_approved
+      - approval_required
+      - block_reason
+      - blockers
+      - candidate_data_access
+      - dpa_status
+      - free_publish_limit
+      - free_publish_remain
+      - job_postable
+      - job_workspace_ready
+      - publish_limit
+      - publish_remain
+      - published_jobs_count
+      - verification_completed
+      - verified_job_quota_eligible
+    EmployerPostingBlocker:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Stable lowercase blocker code.
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CapabilitiesEnum'
+        message:
+          type: string
+        action:
+          type: string
+      required:
+      - action
+      - capabilities
+      - code
+      - message
+    EmployerReadinessBlocker:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Stable lowercase blocker code.
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CapabilitiesEnum'
+        message:
+          type: string
+        action:
+          type: string
+      required:
+      - action
+      - capabilities
+      - code
+      - message
     EmployerDashboard:
       type: object
       properties:
@@ -23936,17 +24187,39 @@ components:
         verification_case:
           type: string
           readOnly: true
+        job_workspace_ready:
+          type: boolean
+          readOnly: true
+        verification_approved:
+          type: boolean
+          readOnly: true
+        candidate_data_access:
+          type: boolean
+          readOnly: true
+        dpa_status:
+          allOf:
+          - $ref: '#/components/schemas/DpaStatusEnum'
+          readOnly: true
+        blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerReadinessBlocker'
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - blockers
+      - candidate_data_access
       - company
       - company_role
       - contact_phone
       - created_at
       - dpa_accepted_at
+      - dpa_status
       - gender
+      - job_workspace_ready
       - marketing_decided_at
       - marketing_opt_in
       - onboarding
@@ -23955,6 +24228,7 @@ components:
       - registration_completed_at
       - terms_accepted_at
       - terms_policy_version
+      - verification_approved
       - verification_case
       - verified_phone
       - work_location
@@ -24782,7 +25056,10 @@ components:
           type: string
           readOnly: true
         employer_verification_completed:
-          type: string
+          type: boolean
+          readOnly: true
+        employer_job_workspace_ready:
+          type: boolean
           readOnly: true
         admin_access:
           type: string
@@ -24792,6 +25069,7 @@ components:
       - avatar_url
       - email
       - email_verified
+      - employer_job_workspace_ready
       - employer_onboarding_required
       - employer_onboarding_step
       - employer_verification_completed
