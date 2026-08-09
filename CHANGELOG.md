@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Security — Employer document access ER-1B
+
+- Tách quyền xem metadata và quyền mở binary giấy tờ: requester/uploader và
+  company owner được mở file; member khác chỉ nhận metadata đã che và direct
+  content trả `404`. Storage key, tên file, MIME, kích thước và preview media
+  không còn lộ qua lịch sử company cho actor không có quyền.
+- Yêu cầu cập nhật công ty nay giới hạn một `pending` trên mỗi
+  `(company, requester)` nên nhiều member có thể gửi song song mà không ghi đè
+  nhau. `requested_by` bất biến, có `submitted_at`, `scope=mine|company` và
+  requester summary không chứa email.
+
 #### Security — Employer hardening ER-1C
 
 - Job moderation nay fail-closed khi recruiter chưa có verification case đã

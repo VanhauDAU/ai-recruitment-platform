@@ -1,7 +1,7 @@
 # Audit luồng và bảo mật Nhà tuyển dụng — ER-0 (2026-08)
 
-> **Trạng thái:** Baseline trước remediation; các finding chưa được coi là đã
-> đóng cho tới khi có test đỏ → vá → retest và evidence trong phase tương ứng.  
+> **Trạng thái:** Baseline kèm remediation evidence; chỉ finding có test đỏ →
+> vá → retest và evidence trong phase tương ứng mới được đổi trạng thái.
 > **Kế hoạch canonical:**
 > [ke-hoach-ra-soat-va-khac-phuc-employer.md](../03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md)  
 > **Decision log:**
@@ -37,8 +37,8 @@ review DPA.
 | ID | Mức | Finding | Trạng thái | Phase |
 | --- | --- | --- | --- | --- |
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Open | ER-1A |
-| ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Open | ER-1B/ER-4 |
-| ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Open | ER-1B |
+| ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Mitigated ER-1B; lifecycle follow-up ER-4 | ER-1B/ER-4 |
+| ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
@@ -111,6 +111,28 @@ review DPA.
   test trên list/detail/preview/download.
 - Other member chỉ nhận redacted metadata; content path trả 404.
 - Response không chứa storage key/signed URL/hash/scan-engine detail.
+
+**ER-1B evidence (2026-08-10)**
+
+- Fixed in commit `609b3e47` trên nhánh
+  `fix/employer-document-access-control`; owner-metadata regression được bổ sung
+  sau self-review trên cùng nhánh.
+- Metadata queryset và binary-content queryset được tách. Uploader/requester và
+  company owner mở được private content; member khác nhận metadata redacted và
+  direct content trả `404` trước khi truy cập storage.
+- Company history che storage-backed `logo_url`, `cover_image_url`,
+  `gallery_additions`, `media_previews`, filename, MIME và kích thước với actor
+  không có quyền. Requester summary chỉ có public ID và display name an toàn.
+- Migration `employers.0030` backfill `submitted_at=created_at` và thay unique
+  pending/company bằng unique pending `(company, requested_by)`. POST/resubmit,
+  document attach và media mutation không thể đổi hoặc dùng request của actor
+  khác.
+- Targeted evidence: 108 employer API/admin/migration/query-budget tests trước
+  đồng bộ; post-merge suite gồm các module trên và job moderation đạt 127 test.
+  List update-request giữ budget 4 query; Ruff/format, import-linter, Django
+  check và migration drift đều đạt.
+- Residual risk: lifecycle revision/conflict/withdraw/cancel tiếp tục ở ER-4;
+  quarantine, malware scan và retention của file tiếp tục ở ER-3.
 
 ### ER-F04/ER-F05 — Upload trust boundary
 

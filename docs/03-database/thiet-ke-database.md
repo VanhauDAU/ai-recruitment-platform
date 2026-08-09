@@ -37,7 +37,7 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `company_industries` | `backend/apps/employers` | M2M công ty–lĩnh vực + `is_primary` (partial unique: đúng 1 lĩnh vực chính/công ty) |
 | `company_images` | `backend/apps/employers` | Ảnh giới thiệu công ty, khuyến nghị 3:2 |
 | `company_documents` | `backend/apps/employers` | Giấy tờ xác thực (ĐKDN, ủy quyền, định danh, DLCN) + luồng duyệt |
-| `company_update_requests` | `backend/apps/employers` | Cập nhật công ty chờ duyệt; đổi MST/tên bắt buộc lý do + giấy tờ; tối đa 1 request pending/công ty |
+| `company_update_requests` | `backend/apps/employers` | Cập nhật công ty chờ duyệt; đổi MST/tên bắt buộc lý do + giấy tờ; có `submitted_at` và partial unique một request `pending` trên mỗi `(company, requested_by)` |
 | `recruiter_profiles` | `backend/apps/employers` | 1-1 user, FK company (PROTECT, gán rồi không đổi); membership owner/member + trạng thái duyệt; `verified_phone` partial unique |
 | `phone_otps` | `backend/apps/employers` | OTP xác thực SĐT (hash, expires, attempts) — gửi qua email trước khi có SMS gateway |
 | `job_categories`, `job_category_localizations` | `backend/apps/jobs` | Taxonomy 3 cấp có public identity; localization/alias 4 ngôn ngữ cấu hình trong admin, picker CV chỉ đọc vị trí chuyên môn và `name_vi` |
@@ -66,6 +66,11 @@ Thiết kế onboarding và preference tìm việc cho ứng viên:
 | `blog_pinnedpost` | `backend/apps/blog` | Bài ghim theo `placement` (khối "Tài liệu hỗ trợ tìm việc"), FK trỏ thẳng bài viết |
 
 **Ghi chú triển khai khác PRD/DB doc:**
+- Migration `employers.0030` backfill `submitted_at=created_at`, bỏ constraint
+  pending theo company và thay bằng conditional unique
+  `(company_id, requested_by_id)` khi `status='pending'`. Vì vậy nhiều member
+  cùng company có thể gửi song song; identity `requested_by` bất biến qua
+  resubmit và được khóa read-only ở Django admin.
 - PRD mục 13.2 không liệt kê app riêng cho `job_categories`/`locations`/`skills`/`employer_profiles` — đã tách thành app Django riêng (`jobs` chứa job_categories, `locations`, `skills`, `employers`) để tránh phụ thuộc vòng và rõ trách nhiệm từng app.
 - `posted_by` là ranh giới quyền: chỉ người tạo tin nhìn/sửa tin và các ứng tuyển của tin, kể cả khi nhiều recruiter cùng company. Tin đi theo `draft → pending → active|rejected`; admin duyệt/từ chối tại API moderation, lý do từ chối lưu trên `jobs.rejected_reason` và audit tại `job_status_history`.
 - Các trường ảnh (`avatar_url`, `Company.logo_url`/`cover_image_url`, `CompanyImage.image_url`, `CompanyDocument.file_url`, `JobCategory.logo_url`, `Banner.image_url`, `SiteSetting` kiểu image, `UserCv.*_url`) lưu **storage key** chứ không phải URL tuyệt đối — URL công khai được resolve khi trả API theo domain/CDN hiện tại. Xem quy ước media ở [../04-api/tai-lieu-api.md](../04-api/tai-lieu-api.md).

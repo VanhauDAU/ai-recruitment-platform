@@ -108,6 +108,14 @@ Tính năng "chọn tin nổi bật" trong workspace NTD **thì có** đụng: o
 
 ### 1.5. Phân quyền thành viên công ty
 
+> **Superseded một phần bởi ER-D04–ER-D07 (2026-08-10):** member không còn bị
+> giới hạn chỉ đọc/toàn company dùng chung một pending. Mỗi requester được tạo
+> và sửa tối đa một pending riêng trên cùng company; nhiều requester chạy song
+> song. Mọi member xem lịch sử với requester summary, nhưng private binary chỉ
+> uploader/requester, company owner và admin được ủy quyền mở. Contract hiện
+> hành nằm tại
+> [kế hoạch hardening employer](./ke-hoach-ra-soat-va-khac-phuc-employer.md).
+
 Phần này đã được rà soát lại sau phản biện và **kết luận ban đầu bị bác bỏ một phần**. Ghi lại cả phần sai để không ai kết luận lại theo hướng cũ.
 
 #### Không phải lỗ hổng — giữ nguyên `JoinCompanyView`
