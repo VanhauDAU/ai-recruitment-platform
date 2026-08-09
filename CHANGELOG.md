@@ -8,6 +8,22 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Security — Employer company-update review safety ER-4
+
+- Chuẩn hóa lock order `Company → CompanyUpdateRequest → CompanyDocument` cho
+  create/upload/review/tax-refresh hiện hành và khóa mutation trực tiếp qua
+  Django admin.
+- Admin list/retrieve che filename, MIME, size, SHA, uploader email và source
+  URL nếu thiếu `account.sensitive.view`; binary vẫn yêu cầu đồng thời quyền
+  xem company update và quyền sensitive.
+
+#### Fixed — Exact company-update review ER-4
+
+- Admin queue/deep-link nay truyền exact request public ID và detail gọi
+  retrieve-by-ID; panel từ chối xử lý nếu company, requester hoặc trạng thái
+  không khớp. Không còn lấy `results[0]` từ danh sách company rồi có thể duyệt
+  nhầm yêu cầu của member khác.
+
 #### Security — Upload storage boundary ER-3 foundation
 
 - Tách storage public/private/quarantine cho local và Cloudflare R2; chỉ public
