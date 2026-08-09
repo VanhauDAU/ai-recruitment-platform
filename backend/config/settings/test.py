@@ -24,6 +24,14 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
         'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
     },
+    'private_media': {
+        'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': None},
+    },
+    'quarantine': {
+        'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+        'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
+    },
     'public_media': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
         'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},

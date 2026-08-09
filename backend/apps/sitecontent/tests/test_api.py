@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 from django.test import TestCase, override_settings
@@ -13,6 +12,7 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from apps.accounts.models import User
+from common.r2_storage import public_media_storage
 
 from ..api.serializers import AdminSiteSettingSerializer
 from ..models import Locale, SiteSetting
@@ -142,7 +142,9 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
             is_superuser=True,
         )
         self.client.force_authenticate(self.admin)
-        self.old_path = default_storage.save('site/settings/old-logo.png', ContentFile(PNG_BYTES))
+        self.old_path = public_media_storage().save(
+            'site/settings/old-logo.png', ContentFile(PNG_BYTES)
+        )
         self.setting = SiteSetting.objects.create(
             key='brand_logo_url',
             label='Logo đầy đủ',
@@ -166,7 +168,7 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
         self.assertIn('/media/site/settings/', response.data['display_values'][self.setting.key])
         self.setting.refresh_from_db()
         self.assertEqual(self.setting.value, saved_value)
-        self.assertFalse(default_storage.exists(self.old_path))
+        self.assertFalse(public_media_storage().exists(self.old_path))
 
     def test_legacy_upload_endpoint_no_longer_auto_saves_setting(self):
         upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')

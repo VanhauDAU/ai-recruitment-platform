@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     'apps.services',
     'apps.speech',
     'apps.knowledgebase',
+    'apps.uploads',
 ]
 
 MIDDLEWARE = [
@@ -183,18 +184,33 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media files are split deliberately: R2 public is only for published visual
-# assets; default/private storage is for documents and candidate data.
+# MEDIA_ROOT remains a compatibility alias for the public root. Sensitive and
+# untrusted files have independent roots that are never served by web routes.
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+LEGACY_MEDIA_ROOT = Path(
+    config('LEGACY_MEDIA_ROOT', default=str(BASE_DIR / 'media')).strip()
+).expanduser()
+PUBLIC_MEDIA_ROOT = Path(
+    config('PUBLIC_MEDIA_ROOT', default=str(BASE_DIR / 'media')).strip()
+).expanduser()
+MEDIA_ROOT = PUBLIC_MEDIA_ROOT
+PRIVATE_MEDIA_ROOT = Path(
+    config('PRIVATE_MEDIA_ROOT', default=str(BASE_DIR / 'private-media')).strip()
+).expanduser()
+UPLOAD_QUARANTINE_ROOT = Path(
+    config('UPLOAD_QUARANTINE_ROOT', default=str(BASE_DIR / 'quarantine')).strip()
+).expanduser()
 R2_ENDPOINT_URL = config('R2_ENDPOINT_URL', default='').strip()
 R2_REGION_NAME = config('R2_REGION_NAME', default='auto').strip() or 'auto'
 R2_PUBLIC_ACCESS_KEY_ID = config('R2_PUBLIC_ACCESS_KEY_ID', default='').strip()
 R2_PUBLIC_SECRET_ACCESS_KEY = config('R2_PUBLIC_SECRET_ACCESS_KEY', default='').strip()
 R2_PRIVATE_ACCESS_KEY_ID = config('R2_PRIVATE_ACCESS_KEY_ID', default='').strip()
 R2_PRIVATE_SECRET_ACCESS_KEY = config('R2_PRIVATE_SECRET_ACCESS_KEY', default='').strip()
+R2_QUARANTINE_ACCESS_KEY_ID = config('R2_QUARANTINE_ACCESS_KEY_ID', default='').strip()
+R2_QUARANTINE_SECRET_ACCESS_KEY = config('R2_QUARANTINE_SECRET_ACCESS_KEY', default='').strip()
 R2_PUBLIC_BUCKET = config('R2_PUBLIC_BUCKET', default='procv-public-media').strip()
 R2_PRIVATE_BUCKET = config('R2_PRIVATE_BUCKET', default='procv-private-files').strip()
+R2_QUARANTINE_BUCKET = config('R2_QUARANTINE_BUCKET', default='procv-upload-quarantine').strip()
 R2_PUBLIC_BASE_URL = config('R2_PUBLIC_BASE_URL', default='').strip().rstrip('/')
 R2_ENABLED = bool(
     R2_ENDPOINT_URL
@@ -203,6 +219,12 @@ R2_ENABLED = bool(
     and R2_PRIVATE_ACCESS_KEY_ID
     and R2_PRIVATE_SECRET_ACCESS_KEY
     and R2_PUBLIC_BASE_URL
+)
+R2_QUARANTINE_ENABLED = bool(
+    R2_ENABLED
+    and R2_QUARANTINE_ACCESS_KEY_ID
+    and R2_QUARANTINE_SECRET_ACCESS_KEY
+    and R2_QUARANTINE_BUCKET
 )
 
 # Kept as a compatibility setting for media helpers and deployments that still
@@ -214,8 +236,18 @@ _LOCAL_MEDIA_STORAGE = {
     'BACKEND': 'django.core.files.storage.FileSystemStorage',
     'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
 }
+_LOCAL_PRIVATE_MEDIA_STORAGE = {
+    'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+    'OPTIONS': {'location': MEDIA_ROOT, 'base_url': None},
+}
+_LOCAL_QUARANTINE_STORAGE = {
+    'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+    'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
+}
 STORAGES = {
     'default': _LOCAL_MEDIA_STORAGE,
+    'private_media': _LOCAL_PRIVATE_MEDIA_STORAGE,
+    'quarantine': _LOCAL_QUARANTINE_STORAGE,
     'public_media': _LOCAL_MEDIA_STORAGE,
     'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
 }
@@ -236,6 +268,18 @@ if R2_ENABLED:
             'querystring_auth': False,
         },
     }
+    STORAGES['private_media'] = STORAGES['default']
+    if R2_QUARANTINE_ENABLED:
+        STORAGES['quarantine'] = {
+            'BACKEND': 'common.private_storage.QuarantineS3Storage',
+            'OPTIONS': {
+                **_R2_COMMON_OPTIONS,
+                'bucket_name': R2_QUARANTINE_BUCKET,
+                'access_key': R2_QUARANTINE_ACCESS_KEY_ID,
+                'secret_key': R2_QUARANTINE_SECRET_ACCESS_KEY,
+                'querystring_auth': True,
+            },
+        }
     STORAGES['public_media'] = {
         'BACKEND': 'storages.backends.s3.S3Storage',
         'OPTIONS': {
