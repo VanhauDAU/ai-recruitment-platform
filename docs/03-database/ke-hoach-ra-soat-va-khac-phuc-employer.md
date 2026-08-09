@@ -1,7 +1,8 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** Chờ phê duyệt sản phẩm — chưa triển khai code
+> **Trạng thái:** Đã phê duyệt ER-0 — đang triển khai theo từng giai đoạn
 > **Ngày lập:** 2026-08-10
+> **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.0
 > **Phạm vi:** Employer portal, company workflow, verification, upload, job moderation, DPA, notification và security
 > **Nhánh tích hợp đề xuất:** `dev`
@@ -201,19 +202,19 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D27 | `CONFIRMED` | Chọn nhầm company xử lý qua yêu cầu admin unlink khi tài khoản còn sạch |
 | ER-D28 | `CONFIRMED` | Rollout hold cho dữ liệu hiện hữu phải dry-run, ops review rồi mới apply và notify |
 
-## 6. Quyết định còn chờ xác nhận
+## 6. Quyết định đã chốt tại gate ER-0
 
 | ID | Trạng thái | Đề xuất | Ảnh hưởng nếu chưa chốt |
 | --- | --- | --- | --- |
-| ER-O01 | `OPEN` | Cho nhiều requester active song song nhưng giới hạn một active request/requester/company | Chặn khóa unique, POST semantics và test concurrency của ER-4 |
-| ER-O02 | `OPEN` | Nếu request xung đột với company version mới, không partial apply; trả toàn bộ request về `changes_requested` | Chặn transaction apply và UI conflict của ER-4 |
-| ER-O03 | `OPEN` | DPA cũ được nhận diện `legacy_unversioned`; chặn candidate data/admin approval khi rollout, cho 30 ngày trước DPA hold | Chặn migration/backfill và rollout ER-6 |
-| ER-O04 | `OPEN` | Dùng `dev` làm integration branch và `dev → main` làm release PR | Chặn việc tạo nhánh thực thi |
-| ER-O05 | `OPEN` | Bật CI cho PR vào `dev`, hoặc giữ CI main-only và bắt buộc manual full gate | Chặn cách ghi Definition of Done cho từng PR |
+| ER-O01 | `CONFIRMED` | Cho nhiều requester active song song nhưng giới hạn một active request/requester/company | Khóa unique, POST semantics và test concurrency của ER-4 |
+| ER-O02 | `CONFIRMED` | Nếu request xung đột với company version mới, không partial apply; trả toàn bộ request về `changes_requested` | Transaction apply và UI conflict của ER-4 |
+| ER-O03 | `CONFIRMED` | DPA cũ được nhận diện `legacy_unversioned`; chặn candidate data/admin approval khi rollout, cho 30 ngày trước DPA hold | Migration/backfill và rollout ER-6 |
+| ER-O04 | `CONFIRMED` | Dùng `dev` làm integration branch và `dev → main` làm release PR | Branch/release flow của toàn epic |
+| ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
+| ER-O06 | `CONFIRMED` | Audit và sửa quyền xem/tải/export CV; chỉ mở rộng pipeline upload candidate nếu phát hiện dùng chung hạ tầng không an toàn | Giới hạn scope CV của ER-2/ER-3 |
 
-Không được ngầm hiểu giá trị đề xuất là quyết định. Khi được xác nhận, cập nhật
-trạng thái thành `CONFIRMED`, ghi ngày/người xác nhận trong decision log rồi mới
-tạo nhánh phụ thuộc.
+Các quyết định trên được người phụ trách sản phẩm xác nhận ngày 2026-08-10.
+Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
 ## 7. State machine mục tiêu
 
@@ -386,7 +387,7 @@ Không dùng tiền tố `codex/`. Tên nhánh chuẩn:
 ### ER-0 — Audit baseline và phê duyệt contract
 
 **Nhánh:** `docs/employer-audit-spec`
-**Trạng thái:** `Awaiting approval`
+**Trạng thái:** `Verified`
 **Phụ thuộc:** Không
 
 Deliverables:
@@ -400,7 +401,8 @@ Deliverables:
 
 Không ghi hành vi dự kiến vào `CHANGELOG.md` trong PR docs-only.
 
-**Gate ER-0:** xác nhận ER-O01 đến ER-O05 và toàn bộ scope.
+**Gate ER-0:** ER-O01 đến ER-O06 và toàn bộ scope đã được xác nhận ngày
+2026-08-10; Markdown link/whitespace gate đạt.
 
 ### ER-1 — Vá lỗi và lỗ hổng P0
 
@@ -810,8 +812,8 @@ Trạng thái khởi tạo của kế hoạch:
 
 | ID | Trạng thái ban đầu | Ghi chú |
 | --- | --- | --- |
-| ER-0 | Awaiting approval | Tài liệu được tạo, chờ khóa open decisions |
-| ER-1 | Planned | Không tạo branch trước ER-0 gate |
+| ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
+| ER-1 | Awaiting execution | ER-0 gate đã đạt; tách ba nhánh safety fix |
 | ER-2 | Planned | Phụ thuộc ER-1 |
 | ER-3 | Planned | Phụ thuộc readiness contract |
 | ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
@@ -912,13 +914,13 @@ Tạo `docs/06-deployment/employer-hardening-rollout-runbook.md` với:
 
 ## 22. Checklist phê duyệt kế hoạch
 
-- [ ] Xác nhận một active request/requester/company hay cho phép không giới hạn.
-- [ ] Xác nhận conflict xử lý nguyên tử hay cho admin partial apply.
-- [ ] Xác nhận chính sách DPA legacy và thời điểm block/hold.
-- [ ] Xác nhận `dev` là integration branch và `dev → main` là release flow.
-- [ ] Xác nhận bật CI cho PR vào `dev` hay bắt buộc manual full gate.
-- [ ] Xác nhận scope audit CV chỉ gồm quyền truy cập hay mở rộng upload pipeline.
-- [ ] Xác nhận ER-0 và cho phép tạo các nhánh ER-1.
+- [x] Giới hạn một active request/requester/company; các requester được song song.
+- [x] Conflict xử lý nguyên tử, không partial apply.
+- [x] DPA legacy, thời điểm block và grace 30 ngày trước hold.
+- [x] `dev` là integration branch và `dev → main` là release flow.
+- [x] Bật CI cho Pull Request vào `dev` và vẫn chạy gate theo phạm vi.
+- [x] Audit/sửa quyền CV; chỉ mở rộng candidate upload khi dùng chung hạ tầng không an toàn.
+- [x] Xác nhận ER-0 và cho phép tạo các nhánh ER-1.
 
 Sau khi checklist được duyệt, cập nhật decision log trước, sau đó mới tạo nhánh
 theo thứ tự và dependency trong tài liệu này.

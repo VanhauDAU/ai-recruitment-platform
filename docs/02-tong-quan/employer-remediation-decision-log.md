@@ -1,0 +1,108 @@
+# Biên bản quyết định — Rà soát và hardening Nhà tuyển dụng
+
+> **Tài liệu sống:** cập nhật trước khi triển khai một thay đổi mới về luồng,
+> quyền, dữ liệu hoặc rollout.  
+> **Đặc tả canonical:**
+> [Kế hoạch rà soát và khắc phục Employer](../03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md)  
+> **Ngày khóa gate ER-0:** 2026-08-10
+
+## Nguyên tắc
+
+1. Quyết định trong file này ưu tiên hơn mô tả cũ được liệt kê là superseded.
+2. Không thay đổi flow/permission/schema dựa trên suy đoán; phải có decision ID.
+3. Mỗi thay đổi quyết định ghi context, lựa chọn, hệ quả và tài liệu/code bị ảnh
+   hưởng.
+4. Quyết định kỹ thuật chi tiết được phép tối ưu trong phạm vi đã duyệt, nhưng
+   không được làm thay đổi quyền hoặc kết quả nghiệp vụ.
+
+## Session 2026-08-10 — Gate ER-0
+
+### Bối cảnh
+
+- Thành viên mới chọn company thấy “Ngày gửi gần nhất” dù chưa từng tạo yêu cầu.
+- Frontend đang trộn request của actor với lịch sử company; query lỗi bị coi là
+  empty state.
+- Backend đang upsert một request `pending` dùng chung theo company và có thể
+  thay `requested_by`.
+- File, verification, job moderation, phone OTP và DPA còn thiếu các boundary
+  bảo mật/lifecycle cần thiết.
+- Chủ dự án yêu cầu triển khai toàn bộ remediation theo từng phase, dùng nhánh
+  chuẩn và hỏi duyệt trước khi thay đổi flow.
+
+### Quyết định sản phẩm và quyền
+
+| ID | Quyết định đã xác nhận | Hệ quả triển khai chính |
+| --- | --- | --- |
+| ER-D01 | Thẻ chính là “Yêu cầu của tôi”; empty không có ngày/status giả | Actor-scoped query và bốn UI state |
+| ER-D02 | Fetch lỗi hiện retry và khóa write | Không dùng `data || []` để che lỗi |
+| ER-D03 | Ngày nghiệp vụ là `submitted_at` | Additive API/schema field và backfill |
+| ER-D04 | Member xem trạng thái/nội dung company history, có requester | Company-scoped response phải redacted |
+| ER-D05 | Member vẫn tạo request riêng khi member khác có active request | Bỏ unique active/company; giữ unique active/requester/company |
+| ER-D06 | Chỉ creator sửa/resubmit; requester bất biến | Object permission + immutable ownership |
+| ER-D07 | Binary file chỉ uploader, company owner và authorized admin | Tách metadata permission khỏi download permission |
+| ER-D08 | Không có persistent business draft | Upload session tạm, cancel/TTL cleanup |
+| ER-D09 | Creator withdraw; owner cancel trước review, có reason/audit | Action endpoints và append-only events |
+| ER-D10 | `in_review` khóa; `changes_requested` resubmit; `rejected` đóng lần xử lý | State machine V2 và revision |
+| ER-D14 | Document decision không tự approve case | Explicit final admin decision |
+| ER-D15 | Tax lookup chỉ advisory; override có reason | Audit + admin confirmation |
+| ER-D16 | Workspace mở sau basic/phone/company/clean docs/DPA submit | `job_workspace_ready` độc lập approval |
+| ER-D17 | Được tạo/gửi job trước admin approval; admin approve bị chặn | Backend authoritative blockers |
+| ER-D18 | Candidate data có access gate riêng | Applications/CV/export không dùng workspace guard |
+| ER-D19 | Recruiting data tiếp tục recruiter-owned | Company member không thấy jobs/campaigns/applications của nhau |
+| ER-D20 | Verification/DPA tạo hold theo source; chỉ gỡ đúng hold | Không dùng một boolean hold dùng chung |
+| ER-D21 | Approve recruiter đồng thời verify company | Admin UI hiển thị company-level impact |
+| ER-D27 | Chọn nhầm company xử lý qua admin unlink nếu account sạch | Impact preview + audited action |
+
+### Quyết định upload, dữ liệu và retention
+
+| ID | Quyết định đã xác nhận | Hệ quả triển khai chính |
+| --- | --- | --- |
+| ER-D11 | Upload mới quarantine, ClamAV, fail closed, explicit submit | Upload session + scan worker |
+| ER-D12 | File hợp lệ giữ 24 tháng; malicious xóa sớm sau evidence; legal hold ngoại lệ | Retention command và legal-hold guard |
+| ER-D13 | File hiện có là `legacy_trusted`, không background scan | Không bịa scan evidence |
+| ER-D22 | Phone cũ giữ nguyên, không legacy label/deadline/hold | Không phone backfill |
+| ER-D23 | Account mới và lần đổi/reverify dùng SMS thật | Provider-neutral adapter |
+| ER-D24 | DPA mới lưu version/hash/actor/time/IP/session append-only | Evidence table, không chỉ timestamp |
+| ER-D25 | Website bell/history/deep-link/read status; decision email luôn bật | Outbox + notification center |
+| ER-D26 | Business/security activity hiển thị 24 tháng | Retention + redaction contract |
+| ER-D28 | Existing holds rollout phải dry-run, ops review rồi apply/notify | Batch command + reconciliation evidence |
+
+### Các lựa chọn mở đã được khóa
+
+| ID | Quyết định đã xác nhận | Lý do |
+| --- | --- | --- |
+| ER-O01 | Tối đa một active request/requester/company; nhiều requester được active song song | Ngăn spam/race của cùng actor nhưng không khóa member khác |
+| ER-O02 | Conflict xử lý nguyên tử; không partial apply | Tránh company ở trạng thái nửa snapshot và review khó audit |
+| ER-O03 | DPA cũ là `legacy_unversioned`; block candidate data/admin approval khi rollout, grace 30 ngày trước hold | Không bịa evidence và vẫn có thời gian remediation vận hành |
+| ER-O04 | `dev` là integration branch; release bằng `dev → main` | Khớp flow repository hiện hành |
+| ER-O05 | CI chạy cho Pull Request vào `dev`; vẫn chạy gate theo phạm vi trước bàn giao | Không để nhánh tích hợp thiếu quality gate |
+| ER-O06 | Audit/sửa quyền xem, tải và export CV; chỉ mở rộng candidate upload khi dùng chung hạ tầng không an toàn | Giữ phạm vi nhưng không bỏ sót shared upload risk |
+
+### Accepted risks đã được ghi nhận
+
+| ID | Rủi ro được chấp nhận trong epic | Chốt chặn còn giữ |
+| --- | --- | --- |
+| ER-AR01 | Company search tiếp tục hỗ trợ kết quả đầy đủ, kể cả MST/địa chỉ theo contract hiện tại | Authentication, audit và rate limit hiện hữu |
+| ER-AR02 | Company payload cho member không bị thu hẹp ngoài file/storage secret | Serializer redaction và object permission |
+| ER-AR03 | MFA không bắt buộc toàn bộ recruiter | Step-up cho thao tác bảo mật nhạy cảm |
+
+## Tài liệu/mô tả bị thay thế
+
+| Tài liệu/mô tả cũ | Phần bị thay thế |
+| --- | --- |
+| `ke-hoach-thiet-ke-lai-cong-ty-nha-tuyen-dung.md` | `updated_at` làm ngày gửi; một pending/company; POST upsert cùng record; phone OTP qua email cho account mới |
+| `ke-hoach-trang-cong-ty.md` | Owner-only create request; member không được tạo request riêng |
+| `TIEN-DO-DU-AN.md` các ghi chú publish tức thì | Tin được tạo/gửi trước approval nhưng chỉ admin approval/publish khi blockers sạch |
+| Guard `verification_completed` tổng | Tách workspace readiness, verification approval, candidate-data access và DPA status |
+
+Các phần lịch sử khác của tài liệu cũ vẫn được giữ cho tới khi phase tương ứng
+cập nhật chúng; không xóa dấu vết quyết định cũ.
+
+## Quy trình thay đổi quyết định
+
+1. Ghi vấn đề và lựa chọn trong Pull Request hoặc cuộc trao đổi phê duyệt.
+2. Hỏi chủ dự án “Luồng này hợp lý chưa?”.
+3. Sau khi xác nhận, thêm một session mới vào file này.
+4. Cập nhật đặc tả canonical và tài liệu bị ảnh hưởng trong cùng commit.
+5. Chỉ sau đó mới thay đổi code/schema/feature flag.
+

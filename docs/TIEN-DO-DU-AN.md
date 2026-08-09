@@ -1,5 +1,40 @@
 # Tiến độ dự án
 
+## Epic rà soát và hardening cổng Nhà tuyển dụng (ER, 2026-08-10)
+
+Đặc tả canonical:
+[`ke-hoach-ra-soat-va-khac-phuc-employer.md`](03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md).
+Decision log:
+[`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
+
+| Phase | Nội dung | Trạng thái |
+| --- | --- | --- |
+| ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
+| ER-1 | Empty/error state, document IDOR và job approval guard | ⬜ Chưa làm |
+| ER-2 | Readiness/permission contract và frontend guards | ⬜ Chưa làm |
+| ER-3 | Upload session, quarantine, malware scan và retention | ⬜ Chưa làm |
+| ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
+| ER-5 | Verification final decision, blockers và compliance holds | ⬜ Chưa làm |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | ⬜ Chưa làm |
+| ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
+| ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
+
+<details>
+<summary>Ghi chú ER-0</summary>
+
+- Chủ dự án đã xác nhận ngày 2026-08-10: một active request/requester/company;
+  nhiều requester được gửi song song; conflict không partial apply; DPA cũ là
+  `legacy_unversioned` với block/grace đã mô tả trong đặc tả.
+- Xác nhận `dev` là integration branch, `dev → main` là release flow và CI cần
+  chạy cho Pull Request vào `dev`.
+- Account phone cũ giữ nguyên; account mới/change/reverify chuyển sang SMS.
+- Baseline audit ghi finding trước remediation; chưa có finding nào được đánh
+  dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
+- Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
+  `git diff --check` đều đạt.
+
+</details>
+
 ## Cập nhật 2026-08-07 — Tối ưu TTS production Giai đoạn 0–2
 
 - **Giai đoạn 0 hoàn thành về công cụ:** benchmark chính thức đo cache
