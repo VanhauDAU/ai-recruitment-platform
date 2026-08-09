@@ -8,8 +8,8 @@ Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
 > Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã hoàn tất foundation
-> tách storage/cutover ở scoped gate và đang tiếp tục upload session, scanner,
-> clean-only consume cùng retention.
+> tách storage/cutover và đang tiếp tục upload pipeline; ER-4 đã hoàn tất safety
+> slice cho lock order, exact-object review và redaction nhưng lifecycle V2 còn mở.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -17,9 +17,9 @@ Decision log:
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — storage boundary |
-| ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
-| ER-5 | Verification final decision, blockers và compliance holds | ⬜ Chưa làm |
-| ER-6 | SMS provider adapter và DPA evidence/version/grace | ⬜ Chưa làm |
+| ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
+| ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — gate đã khóa |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
@@ -36,6 +36,27 @@ Decision log:
   dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
 - Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
   `git diff --check` đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-4</summary>
+
+- Safety slice `fix/employer-company-request-review-safety` đã chuẩn hóa lock
+  order `Company → CompanyUpdateRequest → CompanyDocument` cho các mutation
+  hiện hành và khóa Django admin thành read-only cho ba model này.
+- Admin queue truyền exact `request.public_id`; detail gọi
+  `GET /api/admin/company-update-requests/{public_id}/` và fail-closed nếu
+  requester/company/status không khớp, không còn duyệt mù `results[0]`.
+- User chỉ có `company_update.view` nhận metadata tài liệu đã che; binary vẫn
+  cần thêm `account.sensitive.view`. Deep-link dùng query
+  `company_update=cur_*`, không suy request từ company.
+- Evidence: backend 108/108, frontend 10/10; scoped Ruff/format,
+  import-linter, layering, Django check, migration drift, lint và architecture
+  đạt. Merge `ddb8a47f` giữ nguyên thay đổi local của người dùng.
+- Residual: immutable revision snapshot, base-company version, transition
+  submitted/in-review/changes-requested, resubmit/withdraw/cancel và conflict
+  apply vẫn thuộc phần còn lại của ER-4; phase chưa được đánh dấu Verified.
 
 </details>
 

@@ -39,6 +39,7 @@ hoặc cấu trúc database.
 | Readiness nhà tuyển dụng | `GET /api/employer/me/` | `RecruiterProfileSerializer` + readiness selector | Năm field top-level `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers`; onboarding legacy chỉ để tương thích |
 | Thẻ yêu cầu cập nhật của tôi | `GET /api/employer/company/update-requests/?scope=mine` | `CompanyUpdateRequestSerializer` | request của actor, `submitted_at`, status/review note, revision và file/media actor được phép mở |
 | Lịch sử yêu cầu công ty | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | requester summary, thay đổi nghiệp vụ và metadata file đã redacted theo actor; mặc định không truyền scope vẫn là `company` |
+| Admin mở đúng yêu cầu cập nhật | `GET /api/admin/company-update-requests/{public_id}/` | `AdminCompanyUpdateRequestSerializer` | exact request, company/requester/status/revision/lock version; document metadata tùy `account.sensitive.view` |
 | Card blog / blog home | `GET /api/blog/`, `/api/blog/home/` | `PostListSerializer` | `public_id`, `title`, `slug`, `excerpt`, `thumbnail_url`, category link, `published_at` |
 | Chi tiết blog | `GET /api/blog/{slug}/` | `PostDetailSerializer` | list identity + `content`, tags, related job category, `seo_title` |
 
@@ -126,6 +127,30 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
 - Với private document không thuộc quyền binary của actor, `file_url=null`,
   `file_name=""`, `mime_type=""`, `file_size=0`; direct content trả `404`.
   Requester/uploader và company owner nhận content URL sau authorization.
+
+### Contract admin review yêu cầu cập nhật công ty
+
+- Queue phải truyền exact `request.public_id`; consumer gọi
+  `GET /api/admin/company-update-requests/{public_id}/` và dùng query key theo
+  request. Không lọc theo company rồi lấy phần tử đầu tiên.
+- Deep-link hiện hành là
+  `/admin/recruiters/{requester_public_id}?tab=verification&company_update={request_public_id}`.
+  Panel fail-closed nếu response không khớp company/requester đang mở hoặc
+  request không còn `pending`; actor phải quay lại queue thay vì review record
+  khác.
+- `company_update.view` cho list/retrieve nhưng không tự mở metadata nhạy cảm.
+  Khi thiếu `account.sensitive.view`, mỗi document trả `file_name=""`,
+  `mime_type=""`, `file_size=0`, `sha256=""`, `uploaded_by_email=""` và
+  `source_url=null`; tax code cũng bị mask.
+- Endpoint content
+  `GET /api/admin/company-update-requests/{request_public_id}/documents/{document_public_id}/content/`
+  bắt buộc đồng thời `company_update.view` và `account.sensitive.view`, đồng
+  thời document phải thuộc đúng request. Response là binary private/no-store;
+  không trả storage URL.
+- Mutation hiện hành khóa theo thứ tự
+  `Company → CompanyUpdateRequest → CompanyDocument` và luôn recheck ownership,
+  status cùng `lock_version` trong transaction. Django admin chỉ đọc, không có
+  đường mutation vượt service/API.
 
 ### Contract blocker duyệt tin
 

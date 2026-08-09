@@ -598,6 +598,14 @@ Migration dữ liệu cũ:
 **Gate ER-4:** concurrent create, concurrent review, stale revision, overlapping
 fields, non-overlapping fields, resubmit, withdraw và cancel.
 
+**Safety slice đã merge (2026-08-10):** `ddb8a47f` chuẩn hóa lock order hiện
+hành `Company → CompanyUpdateRequest → CompanyDocument`; admin mở và review
+đúng request `public_id`, không lấy `results[0]`; metadata nhạy cảm được che nếu
+thiếu `account.sensitive.view`, còn binary bắt buộc cả view và sensitive. Backend
+108/108 và frontend 10/10 regression đạt cùng scoped quality gates. Đây là
+evidence trung gian, không thay cho schema revision/base-version và toàn bộ gate
+lifecycle ở trên.
+
 ### ER-5 — Verification, final decision và compliance holds
 
 **Backend:** `feature/employer-verification-state-machine`
@@ -906,9 +914,9 @@ Trạng thái thực hiện hiện tại:
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
 | ER-3 | In progress | Storage boundary/cutover foundation đạt scoped gate; upload session, scanner và retention còn mở |
-| ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
-| ER-5 | Planned | Phụ thuộc readiness/upload |
-| ER-6 | Planned | DPA phụ thuộc ER-O03 |
+| ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
+| ER-5 | In progress | ER-D35–ER-D41 đã khóa; implementation bắt đầu sau ER-4 safety |
+| ER-6 | In progress | SMS adapter đang triển khai; DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 
