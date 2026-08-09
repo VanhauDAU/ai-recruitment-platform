@@ -44,7 +44,7 @@ review DPA.
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2; reconciliation follow-up ER-5 | ER-2/ER-5 |
-| ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Open | ER-6A |
+| ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | In remediation — adapter foundation merged; live workflow open | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
 | ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | In remediation | ER-0–ER-8 |
@@ -346,6 +346,24 @@ review DPA.
 - Account mới/change/reverify gọi SMS provider adapter.
 - TTL/attempt/rate-limit/replay/provider outage/phone uniqueness đều fail safe.
 - Account cũ không bị backfill, deadline hoặc hold.
+
+**ER-6A infrastructure evidence (2026-08-10)**
+
+- Provider-neutral HTTP/fake adapter, purpose-bound challenge/state, queue
+  `auth-sms`, bounded retry/recovery, retention, redacted event/metrics và
+  production readiness đã merge qua `03ac8640` (code commits `d58ad837`,
+  `78f12be2`, `72468831`, `201e2829`).
+- Production flag vẫn tắt và dispatch fail closed khi disabled, cấu hình sai
+  hoặc provider lỗi; không fallback email, không giả delivery. OpenAPI và live
+  OTP endpoint/frontend chưa đổi, provider production chưa được chọn.
+- Migration không tạo marker/deadline/hold và không thay đổi phone proof cũ.
+  Challenge PII/ciphertext được purge sau 30 ngày; event redacted giữ 730 ngày.
+- Branch evidence: 181 employer tests, gồm 22 SMS và 3 migration tests; root
+  post-merge retest SMS + migration đạt 25/25. Ruff, format, import-linter,
+  layering, Django check, migration drift, docs và rendered Compose đều đạt.
+
+Finding chưa đóng cho tới khi account mới/change/reverify thực sự dùng SMS và
+toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
 
 ### ER-F10 — DPA evidence
 

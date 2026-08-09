@@ -9,7 +9,8 @@ Decision log:
 
 > Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã hoàn tất foundation
 > tách storage/cutover và đang tiếp tục upload pipeline; ER-4 đã hoàn tất safety
-> slice cho lock order, exact-object review và redaction nhưng lifecycle V2 còn mở.
+> slice cho lock order, exact-object review và redaction nhưng lifecycle V2 còn
+> mở; ER-6A đã merge hạ tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -19,7 +20,7 @@ Decision log:
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — storage boundary |
 | ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
 | ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — gate đã khóa |
-| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
@@ -73,6 +74,30 @@ Decision log:
   employer preview/knowledgebase/site media đạt; scoped Ruff/format,
   import-linter, Django check, migration drift, dev/prod Compose render và 194
   internal Markdown destinations đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-6</summary>
+
+- ER-6A foundation đã merge provider-neutral adapter, challenge purpose/state,
+  queue `auth-sms`, bounded retry/recovery, retention, redacted event/metric và
+  production readiness validation. Runbook:
+  [`employer-sms-provider-adapter.md`](06-deployment/employer-sms-provider-adapter.md).
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False` và fail closed. Chưa chọn
+  provider/sender/template, chưa chuyển endpoint OTP hoặc frontend sang SMS;
+  vì vậy ER-F09 và toàn ER-6 vẫn chưa đóng. OpenAPI không đổi trong slice này.
+- Migration giữ nguyên phone proof hiện hữu: không marker, deadline, hold hay
+  backfill proof cho account cũ. ER-6B vẫn phải nhận diện DPA cũ mà không bịa
+  version/hash/IP/session.
+- Evidence code: `d58ad837`, `78f12be2`, `72468831`, `201e2829`; merge
+  `03ac8640`. Trên nhánh triển khai, 181 employer tests đạt, gồm 22 SMS tests và
+  3 migration tests; sau merge, ma trận SMS + migration đạt 25/25. Full Ruff,
+  format, import-linter, layering, Django check, migration drift, docs và
+  rendered Compose đều đạt.
+- Residual: PR workflow riêng cho account mới/change/reverify, endpoint/UI,
+  provider sandbox/production và gate outage/rate-limit/replay/uniqueness; toàn
+  bộ ER-6B DPA evidence/version/grace vẫn mở.
 
 </details>
 
