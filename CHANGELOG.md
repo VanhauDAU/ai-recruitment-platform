@@ -8,6 +8,32 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Shared upload quarantine core ER-3
+
+- Thêm shared app `uploads` với session/asset/scan-attempt state machine,
+  owner-scoped API, purpose/role capability map và transactional owner quota.
+  Quarantine/private byte còn tồn tại tiếp tục chiếm quota sau expiry/rejection
+  cho tới khi cleanup thực sự xóa storage key.
+- Thêm ClamAV INSTREAM adapter, bounded retry/lease/reconciliation, expiry,
+  cleanup và evidence purge trên queue `upload-scan`; status polling tách sang
+  `upload_status=120/min`, còn create/cancel/retry giữ `30/hour`.
+- Thêm clean-only claim bắt buộc owner và expected purpose, explicit release,
+  minimum retention 730 ngày, legal hold và privacy scrub metadata sau khi byte
+  cùng claim không còn giữ evidence.
+
+#### Security — Upload validation và rollout boundary ER-3
+
+- DOCX pre-scan validation nay kiểm bounded ZIP metadata, required parts,
+  encryption, traversal/symlink, duplicate entry, entry/uncompressed/ratio
+  limits và không extract Office content trước scan. PDF/image mới chỉ kiểm
+  MIME, dung lượng, magic signature và malware; chưa được tuyên bố hợp lệ ở cấp
+  parser.
+- Shared core đã merge tại `99b34781`, nhưng chưa nối vào employer/candidate
+  business workflow hoặc frontend. Candidate import/assets là integration bắt
+  buộc trong slice riêng qua shared core, không tạo coupling `cvs → employers`.
+  Production flag tiếp tục tắt cho tới khi real ClamAV
+  staging/readiness/EICAR và domain integration đạt gate; ER-3 vẫn `In progress`.
+
 #### Added — Employer SMS provider-neutral foundation ER-6A
 
 - Thêm challenge SMS theo purpose (`initial_verification`, `phone_change`,
@@ -59,8 +85,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   `gallerys/` và các prefix public hiện hành.
 - Raw DOC/DOCX employer preview trước upload trả `UPLOAD_SCAN_REQUIRED` và
   không gọi LibreOffice. Preview/download document đã lưu vẫn đi qua endpoint
-  có authorization. Upload session/malware scanner/retention tiếp tục ở slice
-  ER-3 kế tiếp.
+  có authorization. Shared upload session/scanner/retention core đã merge;
+  employer/candidate domain integration, frontend và real-scanner staging tiếp
+  tục ở các slice ER-3 kế tiếp.
 
 #### Changed — Employer readiness contract ER-2
 

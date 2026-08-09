@@ -39,8 +39,8 @@ review DPA.
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
 | ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester; admin có thể mở sai request cùng company | Safety closed ER-4; lifecycle follow-up | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
-| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Storage boundary in remediation; scanner open | ER-3 |
-| ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
+| ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | In remediation — shared core merged; domain/staging open | ER-3 |
+| ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open — domain/UI integration | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2; reconciliation follow-up ER-5 | ER-2/ER-5 |
@@ -211,8 +211,50 @@ review DPA.
 - Raw multipart DOC/DOCX preview trả machine code `UPLOAD_SCAN_REQUIRED` và
   không gọi LibreOffice; authorized preview/download của document đã lưu vẫn
   đọc private storage theo storage key cũ.
-- Finding chưa đóng: upload session, ClamAV, clean-only consume, retention và
-  candidate import quarantine tiếp tục ở các slice ER-3 sau.
+- Storage foundation không tự đóng finding; evidence shared core và residual
+  integration được ghi bên dưới.
+
+**ER-3 shared-core evidence (2026-08-10)**
+
+- Merge `99b34781` thêm state machine
+  `uploading → quarantined → scanning → clean|rejected|error|expired`. Chỉ
+  `clean` sinh private asset; API owner-scoped trả `404` cho owner khác, không
+  có generic claim/download và không lộ storage/scanner evidence nhạy cảm.
+- Session creation fail-closed theo purpose/role. Owner row được khóa trước khi
+  kiểm session/byte quota; expired/rejected session có quarantine byte hoặc
+  clean-unclaimed private byte vẫn chiếm quota cho tới cleanup thành công.
+- ClamAV INSTREAM, bounded retry/lease, reconciliation, expiry, cleanup và
+  evidence purge chạy trên `upload-scan`; khi bật pipeline, production config
+  fail nếu scanner, purpose, retention hoặc DOCX limit không an toàn. Worker
+  render giữ cả `auth-sms` và `upload-scan`.
+- Domain claim yêu cầu authenticated owner và `expected_purpose`; sai purpose
+  fail-closed. Claimed asset chỉ cleanup-eligible sau explicit release, hết
+  minimum retention 730 ngày và không có legal hold. Deleted clean asset được
+  privacy-scrub metadata khi byte/evidence/claim không còn phải giữ.
+- DOCX validation có bounded ZIP metadata, required parts
+  `[Content_Types].xml`/`word/document.xml`, encryption, traversal/symlink,
+  duplicate entry, entry/uncompressed/ratio limits và không extract nội dung
+  trước scan. PDF/image hiện chỉ có MIME/dung lượng/magic signature cộng malware
+  scan; verdict `clean` không phải parser validity.
+- Targeted suite đạt 83/83, gồm ba concurrency regression, trên PostgreSQL
+  Docker 16.14 của repo: `127.0.0.1:5433 → container:5432`, với
+  `DB_NAME=ai_recruitment_er3_docker_gate`. Ruff/format, import-linter, Django
+  check, migration drift, static OpenAPI refs và production Compose render đều
+  đạt trong phạm vi slice.
+
+**Residual/status**
+
+- ER-F04 đang được khắc phục một phần, chưa `Closed`: core chưa được nối vào
+  employer verification/company update, frontend hay candidate import/assets.
+  Audit ER-O06 đã xác nhận candidate CV dùng cùng unsafe default/private
+  storage, nên integration candidate là residual bắt buộc trong slice riêng qua
+  shared core, không tạo coupling `cvs → employers`. Real ClamAV
+  staging/readiness/EICAR và rollout flag vẫn mở.
+- ER-F05 vẫn `Open`: business record hiện hành chưa bị ràng buộc end-to-end vào
+  explicit clean claim, và UI partial-upload success chưa được thay thế bằng
+  upload-session workflow.
+- Parser-specific structural validation cho PDF/image vẫn là residual riêng;
+  không dùng malware-clean verdict để tuyên bố file hợp lệ ở cấp parser.
 
 ### ER-F06 — Verification auto-finalization
 

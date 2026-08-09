@@ -7,17 +7,18 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã hoàn tất foundation
-> tách storage/cutover và đang tiếp tục upload pipeline; ER-4 đã hoàn tất safety
-> slice cho lock order, exact-object review và redaction nhưng lifecycle V2 còn
-> mở; ER-6A đã merge hạ tầng SMS provider-neutral nhưng live workflow còn mở.
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã merge storage boundary
+> và shared quarantine/scan/retention core nhưng domain integration, frontend và
+> real ClamAV staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
+> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
+> tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
-| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — storage boundary |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — shared core đã merge |
 | ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
 | ER-5 | Verification final decision, blockers và compliance holds | 🟨 Đang làm — gate đã khóa |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
@@ -67,13 +68,22 @@ Decision log:
 - Slice `fix/media-storage-boundaries` tách public/private/quarantine cho local
   và R2, khóa direct URL/private media serving, thêm công cụ copy legacy
   idempotent batch/cursor và vô hiệu raw Office preview trước scan.
-- Đây là foundation P0, chưa phải completion ER-3: upload session, scanner,
-  retention, clean-only attach và candidate import quarantine vẫn phải đạt gate
-  trước khi đổi phase thành Verified.
-- Evidence foundation: 13/13 storage unit tests và 22/22 regression tests cho
-  employer preview/knowledgebase/site media đạt; scoped Ruff/format,
-  import-linter, Django check, migration drift, dev/prod Compose render và 194
-  internal Markdown destinations đều đạt.
+- Shared core merge `99b34781` thêm upload-session state machine, owner-scoped
+  API, purpose/role capability, owner-row transactional quota, ClamAV INSTREAM
+  adapter và queue `upload-scan`, clean-only expected-purpose claim, explicit
+  release, retention/legal hold, privacy scrub và bounded DOCX ZIP validation.
+- Evidence chạy trên PostgreSQL Docker 16.14 của repo tại
+  `127.0.0.1:5433 → container:5432`: 83/83 targeted test đạt, gồm ba concurrency
+  regression và regression Compose worker giữ cả `auth-sms` lẫn `upload-scan`.
+  Ruff/format, import-linter 2/2, Django check, migration drift, static OpenAPI
+  1.492 reference/0 unresolved và production Compose render đều đạt trong phạm
+  vi slice. Generated OpenAPI vẫn có baseline 416 warning/122 error ngoài ER-3.
+- Phase chưa hoàn tất: còn nối core vào employer verification/company update,
+  candidate import/assets bắt buộc theo ER-O06 trong slice riêng không coupling
+  `cvs → employers`, frontend session UI và real ClamAV
+  staging/readiness/EICAR trước khi bật flag. PDF/image mới chỉ được kiểm
+  MIME/dung lượng/magic signature và malware scan; parser-specific structural
+  validation còn là residual, không được suy diễn từ verdict `clean`.
 
 </details>
 
