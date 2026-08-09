@@ -35,6 +35,9 @@ hoặc cấu trúc database.
 | Chi tiết / quick view việc làm | `GET /api/jobs/{slug}/` | `JobDetailSerializer` | nội dung chi tiết, thông tin công ty tối thiểu, salary/deadline/view, location/schedule/language và các nhóm view-model |
 | Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `application_count`, timestamps cần hiển thị |
 | Form tin NTD | `POST/PATCH /api/jobs/mine/...` | `EmployerJobWriteSerializer`; response `EmployerJobDetailSerializer` | dữ liệu form và nested relation, gồm liên hệ nhận hồ sơ; endpoint có `IsEmployer` |
+| Admin duyệt tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions`, `blocked_reasons`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
+| Thẻ yêu cầu cập nhật của tôi | `GET /api/employer/company/update-requests/?scope=mine` | `CompanyUpdateRequestSerializer` | request của actor, `submitted_at`, status/review note, revision và file/media actor được phép mở |
+| Lịch sử yêu cầu công ty | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | requester summary, thay đổi nghiệp vụ và metadata file đã redacted theo actor; mặc định không truyền scope vẫn là `company` |
 | Card blog / blog home | `GET /api/blog/`, `/api/blog/home/` | `PostListSerializer` | `public_id`, `title`, `slug`, `excerpt`, `thumbnail_url`, category link, `published_at` |
 | Chi tiết blog | `GET /api/blog/{slug}/` | `PostDetailSerializer` | list identity + `content`, tags, related job category, `seo_title` |
 
@@ -42,6 +45,40 @@ Các catalog nhỏ (industry, benefit, language, skill), site settings/banner/li
 consent vốn đã dùng explicit field. Admin site settings cố ý trả metadata form
 (`value_type`, `options`, `order`, `is_public`, `env_configured`) nhưng chỉ qua
 permission admin.
+
+### Contract yêu cầu cập nhật công ty
+
+`CompanyUpdateRequestSerializer` trả các field chính: `public_id`,
+`requested_by_summary`, `changes`, `is_sensitive`, `reason`, `proof_type`,
+`status`, `review_note`, `documents`, `media_previews`, `submitted_at`,
+`created_at`, `updated_at`, `revision` và `lock_version`.
+
+- `requested_by_summary` có đúng view-model
+  `{public_id, display_name}`; không trả email. `display_name` dùng họ tên đã
+  trim hoặc nhãn an toàn `Thành viên công ty`.
+- `scope=mine` dùng cho thẻ cá nhân; `scope=company` dùng cho lịch sử chung và
+  là mặc định để giữ tương thích. Giá trị scope khác trả `400`.
+- Với request của member khác, `changes.logo_url`/`cover_image_url` là `null`,
+  `gallery_additions=[]` và `media_previews={}`. Client chỉ được biết field
+  media đã thay đổi, không nhận storage key hay preview URL.
+- Với private document không thuộc quyền binary của actor, `file_url=null`,
+  `file_name=""`, `mime_type=""`, `file_size=0`; direct content trả `404`.
+  Requester/uploader và company owner nhận content URL sau authorization.
+
+### Contract blocker duyệt tin
+
+`approve` chỉ xuất hiện trong `state_actions` khi `approve_blockers=[]`. Tối
+thiểu có hai blocker employer fail-closed:
+
+- `verification_required`: verification case chưa `approved`, không thuộc đúng
+  recruiter hoặc không khớp company của tin;
+- `dpa_outdated`: recruiter chưa có DPA hợp lệ theo nguồn trạng thái hiện hành.
+
+Khi blocker xuất hiện giữa preview và submit, backend trả HTTP 400 với
+`code=JOB_APPROVAL_BLOCKED` và `blocked_reasons[]`; frontend phải invalidate
+detail và không hiển thị toast thành công. `review_token` bảo vệ revision của
+job nhưng không thay thế việc backend đọc lại verification/DPA/campaign trong
+transaction.
 
 ## Query strategy
 

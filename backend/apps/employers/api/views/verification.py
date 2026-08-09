@@ -6,9 +6,10 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models import Prefetch
 from django.http import FileResponse, Http404, HttpResponse
-from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
+from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -18,7 +19,10 @@ from common.media_storage import delete_local_media_url
 from common.r2_storage import private_media_storage
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest
-from ...selectors import has_explicit_company_link
+from ...selectors import (
+    employer_document_content_queryset,
+    employer_document_metadata_queryset,
+)
 from ...services import (
     get_or_create_recruiter,
     queue_company_tax_lookup,
@@ -34,44 +38,6 @@ from .memberships import (
 from .onboarding import _require_company
 
 
-def employer_documents_queryset(user):
-    """Documents visible to the authenticated recruiter; never expose R2 URLs."""
-    recruiter = get_or_create_recruiter(user)
-    # Keep recruiter-owned legacy rows visible while migrations/backfill attach
-    # them to the account-specific verification case.
-    candidate_dpa = Q(verification_case__recruiter=recruiter) | Q(recruiter=recruiter)
-    if has_explicit_company_link(recruiter):
-        queryset = CompanyDocument.objects.filter(
-            candidate_dpa
-            | Q(
-                company=recruiter.company,
-                update_request__isnull=False,
-            )
-            | Q(
-                company=recruiter.company,
-                verification_case__isnull=True,
-                uploaded_by=user,
-            )
-        )
-    else:
-        queryset = CompanyDocument.objects.filter(candidate_dpa)
-    return queryset.annotate(
-        dpa_owner_priority=Case(
-            When(
-                doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-                recruiter=recruiter,
-                then=Value(0),
-            ),
-            When(
-                doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-                then=Value(1),
-            ),
-            default=Value(0),
-            output_field=IntegerField(),
-        ),
-    )
-
-
 class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     """Giấy tờ của công ty tôi, gồm file và URL chứng minh tên thương mại."""
 
@@ -82,15 +48,29 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     parser_classes = [parsers.MultiPartParser]
     pagination_class = None
 
+    def get_recruiter(self):
+        if not hasattr(self, '_recruiter'):
+            self._recruiter = get_or_create_recruiter(self.request.user)
+        return self._recruiter
+
     def get_queryset(self):
         # Văn bản DLCN mới gắn với recruiter thay thế bản lịch sử từng gắn với
         # company. API phải trả bản mới trước để consumer không vô tình mở tệp
         # công ty cũ khi cả hai cùng tồn tại.
-        return employer_documents_queryset(self.request.user).order_by(
+        return employer_document_metadata_queryset(
+            user=self.request.user,
+            recruiter=self.get_recruiter(),
+        ).order_by(
             'dpa_owner_priority',
             '-created_at',
             '-id',
         )
+
+    def get_serializer_context(self):
+        return {
+            **super().get_serializer_context(),
+            'recruiter': self.get_recruiter(),
+        }
 
     @extend_schema(
         summary='Tải giấy tờ công ty hoặc hồ sơ chứng minh cho yêu cầu cập nhật',
@@ -137,7 +117,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             raise ValidationError(
                 {'verification_method': 'Phương thức xác thực không khớp loại giấy tờ.'}
             )
-        recruiter = get_or_create_recruiter(request.user)
+        recruiter = self.get_recruiter()
         update_request = None
         update_request_id = request.data.get('update_request')
         if update_request_id:
@@ -145,6 +125,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             update_request = CompanyUpdateRequest.objects.filter(
                 public_id=update_request_id,
                 company=recruiter.company,
+                requested_by=request.user,
                 status=CompanyUpdateRequest.Status.PENDING,
             ).first()
             if update_request is None:
@@ -309,7 +290,15 @@ class CompanyDocumentContentView(generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def get(self, request, pk):
-        document = employer_documents_queryset(request.user).filter(pk=pk).first()
+        recruiter = get_or_create_recruiter(request.user)
+        document = (
+            employer_document_content_queryset(
+                user=request.user,
+                recruiter=recruiter,
+            )
+            .filter(pk=pk)
+            .first()
+        )
         if document is None or document.file_url.startswith(('http://', 'https://')):
             raise Http404
         try:
@@ -346,32 +335,67 @@ class CompanyDocumentContentView(generics.GenericAPIView):
 class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
     """Yêu cầu cập nhật công ty.
 
-    POST đầu tiên tạo yêu cầu; các POST tiếp theo trong lúc chờ duyệt cập nhật
-    chính record đó để người dùng luôn tiếp tục từ bản nháp gần nhất.
+    Mỗi requester có tối đa một yêu cầu pending trên một công ty. POST tiếp theo
+    của cùng requester cập nhật chính record đó; request của thành viên khác
+    luôn độc lập.
     """
 
     serializer_class = CompanyUpdateRequestSerializer
     permission_classes = [IsEmployer]
     pagination_class = None
 
+    def get_recruiter(self):
+        if not hasattr(self, '_recruiter'):
+            self._recruiter = _require_company(self.request.user)
+        return self._recruiter
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'scope',
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                enum=['mine', 'company'],
+                description='mine: yêu cầu của tôi; company: lịch sử toàn công ty (mặc định).',
+            )
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
-        return CompanyUpdateRequest.objects.filter(
-            company=_require_company(self.request.user).company
-        ).order_by('-created_at')
+        scope = self.request.query_params.get('scope', 'company')
+        if scope not in {'mine', 'company'}:
+            raise ValidationError({'scope': 'Phạm vi phải là mine hoặc company.'})
+        queryset = (
+            CompanyUpdateRequest.objects.filter(company=self.get_recruiter().company)
+            .select_related('requested_by')
+            .prefetch_related(
+                Prefetch(
+                    'documents',
+                    queryset=CompanyDocument.objects.select_related('verification_case'),
+                )
+            )
+        )
+        if scope == 'mine':
+            queryset = queryset.filter(requested_by=self.request.user)
+        return queryset.order_by('-submitted_at', '-created_at', '-id')
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['company'] = _require_company(self.request.user).company
+        context['company'] = self.get_recruiter().company
+        context['recruiter'] = self.get_recruiter()
         return context
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-        recruiter = _require_company(self.request.user)
+        recruiter = self.get_recruiter()
         company = Company.objects.select_for_update().get(pk=recruiter.company_id)
         pending = (
             CompanyUpdateRequest.objects.select_for_update()
             .filter(
                 company=company,
+                requested_by=self.request.user,
                 status=CompanyUpdateRequest.Status.PENDING,
             )
             .first()
@@ -397,14 +421,19 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
                 next_changes['cover_image_url'] = pending.changes['cover_image_url']
             if 'gallery_additions' in pending.changes:
                 next_changes['gallery_additions'] = pending.changes['gallery_additions']
+        save_kwargs = {
+            'company': company,
+            'submitted_at': timezone.now(),
+            'revision': pending.revision if pending is not None else 1,
+            'lock_version': pending.lock_version if pending is not None else 0,
+            'reviewed_by': None,
+            'reviewed_at': None,
+            'review_note': '',
+        }
+        if pending is None:
+            save_kwargs['requested_by'] = self.request.user
         update_request = serializer.save(
-            company=company,
-            requested_by=self.request.user,
-            revision=pending.revision if pending is not None else 1,
-            lock_version=pending.lock_version if pending is not None else 0,
-            reviewed_by=None,
-            reviewed_at=None,
-            review_note='',
+            **save_kwargs,
         )
         current = {
             'changes': update_request.changes,

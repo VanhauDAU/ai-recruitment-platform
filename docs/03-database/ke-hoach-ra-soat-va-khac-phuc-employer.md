@@ -422,11 +422,19 @@ Các nhánh sau có thể chạy song song sau ER-0:
 #### ER-1B — Document object access
 
 **Nhánh:** `fix/employer-document-access-control`
+**Trạng thái:** `Verified` (2026-08-10)
 
 - Khóa list/detail/preview/download theo permission matrix.
 - `requested_by` bất biến; POST không upsert vào request của actor khác.
 - Signed URL chỉ phát sau object-level authorization.
 - Test IDOR với public ID/storage reference của user khác.
+
+Evidence: commit `609b3e47`; migration `employers.0030` backfill
+`submitted_at` và đổi unique pending sang `(company, requested_by)`; 108 test
+employer trước đồng bộ và 127 test employer + moderation sau merge `dev` đạt,
+list budget 4 query và các gate Ruff/format/import-linter/Django/migration drift
+đều xanh. Residual lifecycle request thuộc ER-4; upload trust boundary thuộc
+ER-3.
 
 #### ER-1C — Admin job approval recheck
 

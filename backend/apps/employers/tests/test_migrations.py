@@ -1,10 +1,12 @@
 from django.contrib.auth import get_user_model
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
 
 BEFORE = [('employers', '0020_remove_campaign_insight_fields')]
 AFTER = [('employers', '0022_employer_verification_notification')]
+UPDATE_REQUEST_BEFORE = [('employers', '0029_campaign_policy_hold')]
+UPDATE_REQUEST_AFTER = [('employers', '0030_company_update_request_requester_scope')]
 
 
 class EmployerVerificationMigrationTests(TransactionTestCase):
@@ -63,6 +65,68 @@ class EmployerVerificationMigrationTests(TransactionTestCase):
         self.assertTrue(migrated_document.public_id.startswith('doc_'))
         self.assertTrue(migrated_document.is_current)
         self.assertEqual(migrated_document.version, 1)
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        self._migrate(executor.loader.graph.leaf_nodes())
+
+
+class CompanyUpdateRequestScopeMigrationTests(TransactionTestCase):
+    def _migrate(self, targets):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(targets)
+        return executor
+
+    def test_backfills_submission_time_and_scopes_pending_constraint_to_requester(self):
+        before_executor = self._migrate(UPDATE_REQUEST_BEFORE)
+        old_apps = before_executor.loader.project_state(UPDATE_REQUEST_BEFORE).apps
+        Company = old_apps.get_model('employers', 'Company')
+        UpdateRequest = old_apps.get_model('employers', 'CompanyUpdateRequest')
+        first_user = get_user_model().objects.create_user(
+            email='request-scope-first@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        second_user = get_user_model().objects.create_user(
+            email='request-scope-second@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        company = Company.objects.create(
+            public_id='co-request-scope-migration',
+            slug='request-scope-migration',
+            company_name='Request scope migration',
+            created_by_id=first_user.pk,
+        )
+        existing = UpdateRequest.objects.create(
+            public_id='cur-request-scope-existing',
+            company_id=company.pk,
+            requested_by_id=first_user.pk,
+            changes={'address': 'Hà Nội'},
+        )
+        created_at = existing.created_at
+
+        after_executor = self._migrate(UPDATE_REQUEST_AFTER)
+        new_apps = after_executor.loader.project_state(UPDATE_REQUEST_AFTER).apps
+        ScopedRequest = new_apps.get_model('employers', 'CompanyUpdateRequest')
+        migrated = ScopedRequest.objects.get(pk=existing.pk)
+
+        self.assertEqual(migrated.submitted_at, created_at)
+        ScopedRequest.objects.create(
+            public_id='cur-request-scope-second',
+            company_id=company.pk,
+            requested_by_id=second_user.pk,
+            changes={'address': 'Đà Nẵng'},
+        )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ScopedRequest.objects.create(
+                public_id='cur-request-scope-duplicate',
+                company_id=company.pk,
+                requested_by_id=first_user.pk,
+                changes={'address': 'Huế'},
+            )
 
     def tearDown(self):
         executor = MigrationExecutor(connection)

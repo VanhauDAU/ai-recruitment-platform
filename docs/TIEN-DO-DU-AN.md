@@ -10,7 +10,7 @@ Decision log:
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
-| ER-1 | Empty/error state, document IDOR và job approval guard | ⬜ Chưa làm |
+| ER-1 | Empty/error state, document IDOR và job approval guard | 🟡 ER-1B/ER-1C đã verified |
 | ER-2 | Readiness/permission contract và frontend guards | ⬜ Chưa làm |
 | ER-3 | Upload session, quarantine, malware scan và retention | ⬜ Chưa làm |
 | ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
@@ -32,6 +32,26 @@ Decision log:
   dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
 - Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
   `git diff --check` đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-1</summary>
+
+- **ER-1C verified:** backend chặn duyệt tin nếu verification case chưa
+  `approved` đúng company hoặc DPA chưa hợp lệ; canonical và compatibility API
+  cùng dùng một guard và recompute dưới transaction lock.
+- **ER-1B verified:** metadata và private binary giấy tờ dùng hai permission
+  scope riêng; member khác nhận metadata redacted và content `404`, còn
+  uploader/requester và company owner được mở file. Request công ty giới hạn
+  một pending/requester/company, giữ `requested_by` bất biến, có `submitted_at`
+  và hỗ trợ `scope=mine|company`.
+- Evidence ER-1B: commit `609b3e47`; 108 employer test trước đồng bộ và 127
+  employer + job-moderation test sau merge `dev`; list budget 4 query;
+  Ruff/format/import-linter/Django check/migration drift đạt.
+- Evidence ER-1C: 20 moderation/query-budget tests + 1 regression DPA/duplicate
+  blocker + 4 frontend tests; Ruff/format/import-linter/migration drift đạt.
+- ER-1 chỉ chuyển hoàn tất sau khi ER-1A empty/error state được verified.
 
 </details>
 

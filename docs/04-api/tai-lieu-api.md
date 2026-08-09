@@ -63,8 +63,9 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/employer/company/logo/` \| `cover/` \| `images/` | Upload logo/cover/ảnh giới thiệu công ty (owner; không yêu cầu MFA; JPG/PNG/WebP, tối đa 5 MB, multipart `file`). Gallery tối đa 10 ảnh; ảnh lớn được thu về trong 2400×1600, không ép tỉ lệ |
 | DELETE | `/api/employer/company/logo/` \| `cover/` | Xóa logo/cover (owner); xóa logo đồng thời đặt `has_no_logo=true` |
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner) |
-| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; mặc định POST multipart `doc_type` + `file`, có thể kèm `update_request` public id để gắn hồ sơ chứng minh vào request pending. Riêng `trade_name_proof` nhận thêm `source_type=website` + `website_url` (HTTP/HTTPS), không kèm file; response trả `source_type` để UI mở đúng link. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra MIME + chữ ký, tối đa 5 MB |
-| GET/POST | `/api/employer/company/update-requests/` | Mọi tài khoản employer đã liên kết công ty có thể tạo yêu cầu cập nhật (tối đa 1 pending/company, không yêu cầu MFA). `changes` dùng cùng validation với form; đổi MST/tên bắt buộc `reason` + `proof_type` và đủ tài liệu gắn request trước khi quản trị viên duyệt |
+| GET/POST | `/api/employer/company/documents/` | Giấy tờ công ty; mặc định POST multipart `doc_type` + `file`, có thể kèm `update_request` public id của chính actor để gắn hồ sơ chứng minh vào request pending. Metadata lịch sử company được phép hiển thị nhưng private `file_url`, tên file, MIME và kích thước bị che với member không phải uploader/requester/owner. Riêng `trade_name_proof` nhận thêm `source_type=website` + `website_url` (HTTP/HTTPS), không kèm file. ĐKDN/ủy quyền/định danh nhận JPG/PNG/PDF; `candidate_dpa` nhận PDF/DOC/DOCX. Backend kiểm tra MIME + chữ ký, tối đa 5 MB |
+| GET | `/api/employer/company/documents/{id}/content/` | Mở private binary sau object-level authorization. Uploader/requester và company owner được phép; member khác, outsider hoặc URL website trả `404`. Response dùng `Cache-Control: private, no-store` và không phát storage key/signed URL trước authorization |
+| GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một `pending` trên mỗi `(company, requester)`; nhiều member được gửi song song. `scope=mine` trả yêu cầu của actor, `scope=company` trả lịch sử công ty và là mặc định tương thích. Response có `submitted_at`, `requested_by_summary {public_id, display_name}` không email; file/media của requester khác bị redacted. POST lại cập nhật request pending của chính actor, không đổi `requested_by`. `changes` dùng validation của form; đổi MST/tên bắt buộc `reason` + `proof_type` và đủ tài liệu trước khi admin duyệt |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI job/application, activity 7 ngày, nhu cầu ưu tiên, tin và hồ sơ gần đây |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
@@ -252,6 +253,30 @@ Permission picker chỉ đọc `/permissions/?role=...`; JSON generated là cont
 build-time. Permission deprecated đang được role giữ vẫn xuất hiện với
 `is_active=false`, `is_granted_to_role=true` và không được gửi trong
 `permission_codes` active.
+
+### Admin job moderation — employer approval safety
+
+| Method | Endpoint | Contract |
+| --- | --- | --- |
+| GET | `/api/jobs/admin/moderation/{public_id}/` | Trả `review_token`, `state_actions`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
+| POST | `/api/jobs/admin/moderation/{public_id}/decisions/` | Canonical approve/reject/hide/restore; approve recompute account, campaign, verification và DPA trong transaction |
+| POST | `/api/jobs/admin/moderation/{public_id}/review/` | Endpoint compatibility; vẫn bắt buộc cùng backend approval guard |
+
+Approve bị từ chối với HTTP 400 và payload máy đọc được:
+
+```json
+{
+  "code": "JOB_APPROVAL_BLOCKED",
+  "detail": "Không thể duyệt tin.",
+  "blocked_reasons": [
+    {"code": "verification_required", "label": "Nhà tuyển dụng chưa được duyệt xác thực."},
+    {"code": "dpa_outdated", "label": "Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực."}
+  ]
+}
+```
+
+Client không được gửi hoặc tự suy eligibility. `review_token` chỉ khóa revision
+của job; backend vẫn đọc lại policy state ngay trước khi chuyển sang `active`.
 
 ### CV catalogue admin (admin-only)
 
