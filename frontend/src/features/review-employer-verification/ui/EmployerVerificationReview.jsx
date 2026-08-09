@@ -350,6 +350,8 @@ function DecisionModal({ open, title, lockVersion, onClose, onSubmit, loading })
 export default function EmployerVerificationReview({
   casePublicId,
   companyPublicId,
+  companyUpdateRequestPublicId,
+  companyUpdateRequesterPublicId,
   canViewVerification,
   canReviewVerification,
   canViewCompanyUpdates,
@@ -441,6 +443,8 @@ export default function EmployerVerificationReview({
         {canViewCompanyUpdates && (
           <CompanyUpdateReviewPanel
             companyPublicId={companyPublicId}
+            requestPublicId={companyUpdateRequestPublicId}
+            requesterPublicId={companyUpdateRequesterPublicId}
             canReview={canReviewCompanyUpdates}
             canViewSensitive={canViewSensitive}
           />
@@ -458,6 +462,8 @@ export default function EmployerVerificationReview({
         {canViewCompanyUpdates && (
           <CompanyUpdateReviewPanel
             companyPublicId={companyPublicId}
+            requestPublicId={companyUpdateRequestPublicId}
+            requesterPublicId={companyUpdateRequesterPublicId}
             canReview={canReviewCompanyUpdates}
             canViewSensitive={canViewSensitive}
           />
@@ -567,6 +573,8 @@ export default function EmployerVerificationReview({
       {canViewCompanyUpdates && (
         <CompanyUpdateReviewPanel
           companyPublicId={verificationCase.company?.public_id || companyPublicId}
+          requestPublicId={companyUpdateRequestPublicId}
+          requesterPublicId={companyUpdateRequesterPublicId}
           canReview={canReviewCompanyUpdates}
           canViewSensitive={canViewSensitive}
           onChanged={refresh}
