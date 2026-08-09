@@ -207,6 +207,13 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D32 | `CONFIRMED` | Employer phone mới chỉ nhận số di động Việt Nam canonical `+84`; bỏ availability oracle, compatibility endpoint chỉ trả kết quả generic |
 | ER-D33 | `CONFIRMED` | Challenge phone chứa PII/ciphertext xóa sau 30 ngày; audit redacted giữ 24 tháng; admin không sửa trực tiếp phone đã xác minh |
 | ER-D34 | `CONFIRMED` | SMS production giữ flag tắt tới khi chọn gateway/template/sender; provider lỗi phải fail closed, không fallback email |
+| ER-D35 | `CONFIRMED` | Recruiter verification bị revoke/expired không tự downgrade company; pháp nhân chỉ đổi bằng quyết định company riêng |
+| ER-D36 | `CONFIRMED` | Hồ sơ auto-approved lịch sử được grandfather với nguồn `legacy_auto/legacy_unknown` và đưa vào báo cáo ops; không reset/hold tự động |
+| ER-D37 | `CONFIRMED` | Revoke/expire khóa candidate-data và job approval, ẩn active job khỏi public ngay; vẫn cho workspace, tạo/sửa/gửi tin |
+| ER-D38 | `CONFIRMED` | Tax `pending` phải chờ; mismatch/not_found/unavailable/invalid/missing chỉ approve với quyền override và reason |
+| ER-D39 | `CONFIRMED` | Tách `review`, `revoke`, `tax_override`; revoke/override mặc định chỉ Super Admin hoặc Compliance Lead được gán rõ |
+| ER-D40 | `CONFIRMED` | Rejected dùng cùng case với `revision++`; revoked/expired xử lý lại về pending, recruiter resubmit rồi admin start review |
+| ER-D41 | `CONFIRMED` | Phase ER-5 chỉ hỗ trợ expired manual; chưa tự đặt TTL/scheduler trước chính sách thời hạn pháp lý riêng |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -219,7 +226,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit và sửa quyền xem/tải/export CV; chỉ mở rộng pipeline upload candidate nếu phát hiện dùng chung hạ tầng không an toàn | Giới hạn scope CV của ER-2/ER-3 |
 
-Các quyết định trên và ER-D29 đến ER-D34 được người phụ trách sản phẩm xác nhận
+Các quyết định trên và ER-D29 đến ER-D41 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
@@ -606,6 +613,18 @@ fields, non-overlapping fields, resubmit, withdraw và cancel.
 - Admin job UI render canonical blocker code và link xử lý nếu có quyền.
 - Hold có source/reason riêng; reconcile không gỡ business/moderation hold khác.
 - Existing active job/campaign dùng dry-run report, ops approval và batch apply.
+
+**Quyết định gate ER-5 đã khóa (ER-D35–ER-D41):**
+
+- Company verification độc lập với revoke/expire của một recruiter; không suy
+  diễn company downgrade.
+- Legacy auto-approved được grandfather và report ops, không tự reset/hold.
+- Revoke/expire ẩn active public jobs và khóa candidate-data/job approval,
+  nhưng không khóa workspace hoặc job draft/submit.
+- Tax pending phải chờ; trạng thái advisory còn lại cần permission override và
+  lý do audit. Review, revoke và tax override là ba quyền riêng.
+- Rejected dùng revision mới trên cùng case; revoked/expired quay về pending để
+  resubmit. Expired chỉ manual trong phase này, chưa có TTL/scheduler.
 
 **Gate ER-5:** review/revoke/reapprove, race với job approval, hold
 apply/release/reconcile và company-level impact đều có test.

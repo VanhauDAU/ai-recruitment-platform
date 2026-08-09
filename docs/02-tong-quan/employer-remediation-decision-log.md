@@ -110,6 +110,30 @@
 
 Người phụ trách sản phẩm xác nhận toàn bộ các quyết định trên ngày 2026-08-10.
 
+## Session 2026-08-10 — Gate ER-5
+
+### Bối cảnh
+
+- Document/prerequisite cuối hiện có thể tự approve case/company, trái ER-D14.
+- Final-decision UI chưa consume impact/decision API; revoke/expire chưa có
+  compliance hold đa nguồn và có race với job approval.
+- Tax advisory, legacy auto-approved và company effect sau recruiter revoke cần
+  contract sản phẩm rõ trước migration/backfill.
+
+### Quyết định đã xác nhận
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D35 | Recruiter revoked/expired không tự downgrade company verified | Company legal status chỉ đổi qua workflow company riêng; impact UI vẫn cảnh báo company scope |
+| ER-D36 | Grandfather case/company auto-approved lịch sử thành `legacy_auto/legacy_unknown`, report ops | Không bịa admin decision, không reset cohort hoặc apply hold tự động |
+| ER-D37 | Revoke/expire khóa candidate-data và job approval, ẩn active public jobs; workspace/create/edit/submit vẫn mở | Hold gắn source/reason riêng, không đổi business status của job/campaign |
+| ER-D38 | Tax `pending` bắt buộc chờ; mismatch/not_found/unavailable/invalid/missing cần `tax_override` + reason | Impact/confirm recompute evidence và audit override; không coi lookup là quyết định pháp lý |
+| ER-D39 | Tách permission review/revoke/tax_override; revoke/override chỉ Super Admin hoặc Compliance Lead được gán rõ | Không trao high-risk permission mặc định cho reviewer thường |
+| ER-D40 | Rejected dùng cùng case với `revision++`; revoked/expired xử lý lại về pending trước resubmit/start-review | Không tạo attempt model mới trong phase; transition guard tường minh |
+| ER-D41 | Expired chỉ có manual action trong ER-5, chưa có TTL/scheduler | Chính sách validity duration phải qua gate riêng trước automation |
+
+Người phụ trách sản phẩm xác nhận toàn bộ ER-D35 đến ER-D41 ngày 2026-08-10.
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |
