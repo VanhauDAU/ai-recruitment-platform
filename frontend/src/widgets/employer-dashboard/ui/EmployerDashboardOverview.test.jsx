@@ -125,7 +125,7 @@ describe('EmployerDashboardOverview', () => {
   it('keeps aggregates but never mounts cached recent candidate PII when access is denied', async () => {
     readinessState.readiness.candidateDataAccess = false
     readinessState.readiness.blockers = [{
-      code: 'candidate_data_held',
+      code: 'dpa_outdated',
       capabilities: ['candidate_data'],
       message: 'Dữ liệu ứng viên đang tạm giữ.',
       action: 'accept_current_dpa',

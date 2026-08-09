@@ -89,7 +89,7 @@ describe('announcement priority resolver', () => {
       employerReadiness: {
         candidateDataAccess: false,
         blockers: [{
-          code: 'candidate_dpa_outdated',
+          code: 'dpa_outdated',
           capabilities: ['candidate_data'],
           message: 'DPA cần được cập nhật theo phiên bản hiện hành.',
           action: 'accept_current_dpa',

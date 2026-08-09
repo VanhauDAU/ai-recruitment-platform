@@ -12,9 +12,9 @@ const mocks = vi.hoisted(() => ({
       jobWorkspaceReady: true,
       verificationApproved: true,
       candidateDataAccess: false,
-      dpaStatus: 'hold',
+      dpaStatus: 'outdated',
       blockers: [{
-        code: 'candidate_data_held',
+        code: 'dpa_outdated',
         capabilities: ['candidate_data'],
         message: 'Quyền xem hồ sơ ứng viên đang tạm giữ.',
         action: 'accept_current_dpa',

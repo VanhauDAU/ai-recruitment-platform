@@ -19,6 +19,120 @@ function canonical(overrides = {}) {
 }
 
 describe('employer readiness contract', () => {
+  it.each([
+    {
+      state: 'new',
+      profile: canonical({
+        job_workspace_ready: false,
+        verification_approved: false,
+        candidate_data_access: false,
+        dpa_status: 'missing',
+        blockers: [
+          {
+            code: 'initial_onboarding_required',
+            capabilities: ['job_workspace', 'candidate_data'],
+            message: 'Hoàn tất hồ sơ đăng ký.',
+            action: 'complete_onboarding',
+          },
+          {
+            code: 'verification_required',
+            capabilities: ['verification', 'candidate_data', 'job_approval'],
+            message: 'Hồ sơ đại diện doanh nghiệp chưa được duyệt.',
+            action: 'open_verification',
+          },
+          {
+            code: 'dpa_missing',
+            capabilities: ['job_workspace', 'candidate_data', 'job_approval'],
+            message: 'Chưa có chấp thuận DPA.',
+            action: 'accept_dpa',
+          },
+        ],
+      }),
+      expected: [false, false, false, 'missing'],
+    },
+    {
+      state: 'submitted',
+      profile: canonical({
+        verification_approved: false,
+        candidate_data_access: false,
+        blockers: [{
+          code: 'verification_required',
+          capabilities: ['verification', 'candidate_data', 'job_approval'],
+          message: 'Hồ sơ đại diện doanh nghiệp chưa được duyệt.',
+          action: 'open_verification',
+        }],
+      }),
+      expected: [true, false, false, 'current'],
+    },
+    {
+      state: 'approved',
+      profile: canonical(),
+      expected: [true, true, true, 'current'],
+    },
+    {
+      state: 'DPA outdated',
+      profile: canonical({
+        candidate_data_access: false,
+        dpa_status: 'outdated',
+        blockers: [{
+          code: 'dpa_outdated',
+          capabilities: ['candidate_data', 'job_approval'],
+          message: 'Chấp thuận DPA không còn là phiên bản hiện hành.',
+          action: 'accept_current_dpa',
+        }],
+      }),
+      expected: [true, true, false, 'outdated'],
+    },
+    {
+      state: 'verification revoked',
+      profile: canonical({
+        verification_approved: false,
+        candidate_data_access: false,
+        blockers: [{
+          code: 'verification_required',
+          capabilities: ['verification', 'candidate_data', 'job_approval'],
+          message: 'Hồ sơ đại diện doanh nghiệp không còn được duyệt.',
+          action: 'open_verification',
+        }],
+      }),
+      expected: [true, false, false, 'current'],
+    },
+    {
+      state: 'account hold',
+      profile: canonical({
+        job_workspace_ready: false,
+        verification_approved: false,
+        candidate_data_access: false,
+        blockers: [{
+          code: 'account_restricted',
+          capabilities: ['job_workspace', 'verification', 'candidate_data', 'job_approval'],
+          message: 'Tài khoản đang bị hạn chế.',
+          action: 'contact_support',
+        }],
+      }),
+      expected: [false, false, false, 'current'],
+    },
+  ])('accepts the canonical $state state and preserves its capability matrix', ({
+    expected,
+    profile,
+  }) => {
+    const readiness = resolveEmployerReadiness(profile)
+
+    expect(readiness).toMatchObject({ source: 'canonical', contractValid: true })
+    expect([
+      readiness.jobWorkspaceReady,
+      readiness.verificationApproved,
+      readiness.candidateDataAccess,
+      readiness.dpaStatus,
+    ]).toEqual(expected)
+    expect(readiness.blockers.every((blocker) => (
+      blocker.code === blocker.code.toLowerCase()
+      && blocker.capabilities.length > 0
+      && Boolean(blocker.message)
+      && Boolean(blocker.action)
+    ))).toBe(true)
+  })
+
   it('uses a complete canonical contract even when legacy fields disagree', () => {
     const readiness = resolveEmployerReadiness(canonical())
 

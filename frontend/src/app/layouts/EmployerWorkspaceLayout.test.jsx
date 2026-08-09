@@ -55,9 +55,9 @@ describe('EmployerWorkspaceLayout', () => {
         jobWorkspaceReady: true,
         verificationApproved: false,
         candidateDataAccess: false,
-        dpaStatus: 'missing',
+        dpaStatus: 'outdated',
         blockers: [{
-          code: 'candidate_dpa_missing',
+          code: 'dpa_outdated',
           capabilities: ['candidate_data'],
           message: 'Cần hoàn tất DPA.',
           action: 'accept_dpa',
