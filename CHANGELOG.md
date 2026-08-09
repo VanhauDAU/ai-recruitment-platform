@@ -6,6 +6,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-08-10
+
+#### Security — Employer hardening ER-1C
+
+- Job moderation nay fail-closed khi recruiter chưa có verification case đã
+  duyệt đúng company hoặc chưa chấp thuận DPA. Canonical decision,
+  compatibility review và Django-admin service path đều dùng cùng một backend
+  guard; frontend không thể tự bỏ blocker để duyệt.
+- Quyết định approve khóa và đọc lại recruiter, verification case và campaign
+  trong transaction; lỗi trả `JOB_APPROVAL_BLOCKED` cùng blocker code ổn định
+  `verification_required`/`dpa_outdated`.
+
 ### 2026-08-07
 
 #### Added — TTS production optimization Giai đoạn 0–2

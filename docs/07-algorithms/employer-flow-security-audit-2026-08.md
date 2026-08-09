@@ -42,7 +42,7 @@ review DPA.
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
-| ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Open | ER-1C/ER-5 |
+| ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Open | ER-2/ER-5 |
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Open | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
@@ -166,6 +166,19 @@ review DPA.
 - Backend recompute blocker trong transaction, không tin frontend payload.
 - Race approve-vs-revoke/DPA transition phải fail closed.
 - Mọi action approve/publish dùng cùng service invariant.
+
+**ER-1C evidence (2026-08-10)**
+
+- Fixed in local branch `fix/admin-job-approval-guard`.
+- Canonical và compatibility endpoint đều bị chặn bởi
+  `recruiter_job_approval_state`; response có `JOB_APPROVAL_BLOCKED`.
+- Verification case, recruiter/DPA và campaign được đọc lại dưới transaction
+  lock trước quyết định cuối.
+- Targeted evidence: 20 moderation/query-budget tests, 1 duplicate/DPA
+  regression và 4 frontend blocker tests; Ruff, format, import-linter và
+  migration drift đều đạt.
+- Residual risk: nếu approve hoàn tất trước rồi verification bị revoke, ER-5
+  phải lập tức tạo verification hold cho job/campaign đang active.
 
 ### ER-F08 — Candidate-data access
 

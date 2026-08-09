@@ -35,6 +35,21 @@ describe('JobSubmissionReviewActions', () => {
     expect(screen.getByRole('button', { name: 'Từ chối' })).toBeEnabled()
   })
 
+  it('renders canonical verification and DPA blockers from the backend', () => {
+    renderActions({
+      state_actions: ['reject'],
+      approve_blockers: [
+        { code: 'verification_required', label: 'Nhà tuyển dụng chưa được duyệt xác thực.' },
+        { code: 'dpa_outdated', label: 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.' },
+      ],
+      approve_requirements: [],
+    })
+
+    const approve = screen.getByRole('button', { name: 'Duyệt tin' })
+    expect(approve).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Từ chối' })).toBeEnabled()
+  })
+
   it('requires a new deadline before approving an expired submission', () => {
     renderActions({
       state_actions: ['approve', 'reject'],
