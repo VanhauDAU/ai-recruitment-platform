@@ -1,11 +1,18 @@
 import json
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.uploads.api.views import (
+    UploadSessionCancelView,
+    UploadSessionCreateView,
+    UploadSessionDetailView,
+    UploadSessionRetryView,
+)
 from apps.uploads.models import UploadSession, UploadState
 from apps.uploads.selectors import owned_upload_session
 from apps.uploads.tests.helpers import PDF_BYTES, TemporaryUploadStorageMixin, pdf_upload
@@ -115,6 +122,27 @@ class UploadSessionApiTests(TemporaryUploadStorageMixin, APITestCase):
 
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.data['code'], 'UPLOAD_PIPELINE_DISABLED')
+
+    def test_status_polling_has_a_separate_read_quota_from_write_actions(self):
+        self.assertEqual(UploadSessionDetailView.throttle_scope, 'upload_status')
+        self.assertEqual(
+            settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['upload_status'],
+            '120/min',
+        )
+        for write_view in (
+            UploadSessionCreateView,
+            UploadSessionCancelView,
+            UploadSessionRetryView,
+        ):
+            with self.subTest(view=write_view.__name__):
+                self.assertEqual(write_view.throttle_scope, 'upload_session')
+
+    def test_global_default_permission_keeps_upload_session_creation_authenticated(self):
+        self.client.force_authenticate(user=None)
+
+        response = self.create_session()
+
+        self.assertEqual(response.status_code, 401)
 
     def test_purpose_capability_is_role_bound_and_fails_closed(self):
         forbidden = self.client.post(

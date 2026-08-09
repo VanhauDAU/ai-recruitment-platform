@@ -107,7 +107,7 @@ class UploadSessionCreateView(APIView):
 
 class UploadSessionDetailView(APIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'upload_session'
+    throttle_scope = 'upload_status'
 
     @extend_schema(
         summary='Xem trạng thái upload session của chính mình',

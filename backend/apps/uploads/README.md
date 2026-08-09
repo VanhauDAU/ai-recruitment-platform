@@ -37,7 +37,10 @@ hold blocks both evidence purge and asset scrubbing.
 Public endpoints under `/api/uploads/sessions/` are owner-scoped and return 404
 for another owner. They expose state, safe result code and retryability, but no
 storage key, checksum, threat signature, scanner version or endpoint. There is
-intentionally no generic claim or download endpoint.
+intentionally no generic claim or download endpoint. Status polling has its own
+`upload_status` throttle (`120/min`); create/cancel/retry remain in the stricter
+`upload_session` write bucket (`30/hour`). Authentication intentionally comes
+from the global DRF `IsAuthenticated` default and has an API regression test.
 
 Session creation is fail-closed by a code-owned purpose/role capability map:
 employer purposes accept only employer accounts and `candidate_cv` accepts only
