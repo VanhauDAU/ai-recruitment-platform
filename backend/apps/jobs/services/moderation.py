@@ -16,6 +16,8 @@ from apps.accounts.services import (
     is_account_accessible,
     lock_account_for_write,
 )
+from apps.employers.models import RecruitmentCampaign
+from apps.employers.services import recruiter_job_approval_state
 
 from ..models import Job, JobModerationEvent, JobStatusHistory
 from .content_snapshot import build_job_content_snapshot
@@ -68,7 +70,7 @@ def _verify_review_token(job, review_token):
         raise JobModerationStale()
 
 
-def job_moderation_state(job):
+def job_moderation_state(job, *, employer_approval_state=None):
     blocked = []
     if not is_account_accessible(job.posted_by):
         blocked.append(
@@ -89,6 +91,13 @@ def job_moderation_state(job):
             blocked.append(
                 {'code': 'campaign_inactive', 'label': 'Chiến dịch hiện không hoạt động.'}
             )
+
+    if employer_approval_state is None:
+        employer_approval_state = recruiter_job_approval_state(
+            job.posted_by,
+            company_id=job.company_id,
+        )
+    blocked.extend(employer_approval_state['approve_blockers'])
 
     approve_blockers = [item for item in blocked if item['code'] not in FIXABLE_BLOCK_CODES]
     approve_requirements = [
@@ -174,10 +183,23 @@ def approve_job(*, job, user, review_token='', deadline=None):
     _verify_review_token(job, review_token)
     if job.status != Job.Status.PENDING:
         raise ValidationError('Chỉ có thể duyệt tin đang chờ duyệt.')
-    state = job_moderation_state(job)
+    employer_approval_state = recruiter_job_approval_state(
+        job.posted_by,
+        company_id=job.company_id,
+        lock=True,
+    )
+    if job.campaign_id:
+        job.campaign = RecruitmentCampaign.objects.select_for_update(of=('self',)).get(
+            pk=job.campaign_id
+        )
+    state = job_moderation_state(job, employer_approval_state=employer_approval_state)
     if state['approve_blockers']:
         raise ValidationError(
-            {'detail': 'Không thể duyệt tin.', 'blocked_reasons': state['approve_blockers']}
+            {
+                'code': 'JOB_APPROVAL_BLOCKED',
+                'detail': 'Không thể duyệt tin.',
+                'blocked_reasons': state['approve_blockers'],
+            }
         )
     new_deadline = _approval_deadline(deadline, required=bool(state['approve_requirements']))
 

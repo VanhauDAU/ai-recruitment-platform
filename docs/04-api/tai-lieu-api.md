@@ -253,6 +253,30 @@ build-time. Permission deprecated đang được role giữ vẫn xuất hiện 
 `is_active=false`, `is_granted_to_role=true` và không được gửi trong
 `permission_codes` active.
 
+### Admin job moderation — employer approval safety
+
+| Method | Endpoint | Contract |
+| --- | --- | --- |
+| GET | `/api/jobs/admin/moderation/{public_id}/` | Trả `review_token`, `state_actions`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
+| POST | `/api/jobs/admin/moderation/{public_id}/decisions/` | Canonical approve/reject/hide/restore; approve recompute account, campaign, verification và DPA trong transaction |
+| POST | `/api/jobs/admin/moderation/{public_id}/review/` | Endpoint compatibility; vẫn bắt buộc cùng backend approval guard |
+
+Approve bị từ chối với HTTP 400 và payload máy đọc được:
+
+```json
+{
+  "code": "JOB_APPROVAL_BLOCKED",
+  "detail": "Không thể duyệt tin.",
+  "blocked_reasons": [
+    {"code": "verification_required", "label": "Nhà tuyển dụng chưa được duyệt xác thực."},
+    {"code": "dpa_outdated", "label": "Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực."}
+  ]
+}
+```
+
+Client không được gửi hoặc tự suy eligibility. `review_token` chỉ khóa revision
+của job; backend vẫn đọc lại policy state ngay trước khi chuyển sang `active`.
+
 ### CV catalogue admin (admin-only)
 
 | Method | Endpoint | Mô tả |
