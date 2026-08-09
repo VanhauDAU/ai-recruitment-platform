@@ -394,6 +394,77 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expectNoHorizontalOverflow(page)
 })
 
+test('employer company settings: a new member keeps personal empty state separate from company history', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_new_member',
+        company_role: 'member',
+        onboarding: { company_linked: true },
+        company: {
+          public_id: 'co_shared',
+          company_name: 'Công ty dùng chung',
+          tax_code: '0101234567',
+          verification_status: 'unverified',
+          industries_detail: [],
+          images: [],
+        },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/industries/all/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: '[]' })
+  })
+  await page.route('http://localhost:8000/api/employer/company/catalogs/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ business_types: [], company_sizes: [], markets: [], target_customers: [] }),
+    })
+  })
+  const requestedScopes = new Set()
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/company\/update-requests\/(?:\?.*)?$/, async (route) => {
+    const scope = new URL(route.request().url()).searchParams.get('scope')
+    requestedScopes.add(scope)
+    const companyHistory = [{
+      public_id: 'cur_other_member',
+      status: 'pending',
+      submitted_at: '2026-08-10T08:30:00Z',
+      requested_by_summary: { public_id: 'usr_other_member', display_name: 'Trần Thành viên' },
+      changes: {
+        company_name: 'Giá trị công ty không hiển thị trong lịch sử',
+        logo_url: 'employers/private/internal-logo.png',
+      },
+      documents: [{ file_url: '/api/employer/company/documents/private/content/' }],
+    }]
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(scope === 'mine' ? [] : companyHistory),
+    })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/company')
+
+  const mineRequest = page.getByRole('region', { name: 'Yêu cầu của tôi' })
+  await expect(mineRequest.getByRole('button', { name: /Tạo yêu cầu/ })).toBeEnabled()
+  await expect(mineRequest.getByText(/Ngày gửi gần nhất/)).toHaveCount(0)
+  await expect(mineRequest.getByText('Đang xử lý', { exact: true })).toHaveCount(0)
+
+  const companyHistory = page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' })
+  await expect(companyHistory.getByText('Trần Thành viên')).toBeVisible()
+  await expect(companyHistory.getByText('Nội dung: Tên công ty, Logo công ty')).toBeVisible()
+  await expect(page.getByText('Giá trị công ty không hiển thị trong lịch sử')).toHaveCount(0)
+  await expect(page.getByText('employers/private/internal-logo.png')).toHaveCount(0)
+  await expect.poll(() => [...requestedScopes].sort()).toEqual(['company', 'mine'])
+  await expectNoHorizontalOverflow(page)
+})
+
 test('employer company settings: document revision request shows reason and replacement action', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
@@ -440,7 +511,7 @@ test('employer company settings: document revision request shows reason and repl
   await page.route('http://localhost:8000/api/employer/company/documents/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
-  await page.route('http://localhost:8000/api/employer/company/update-requests/', async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/company\/update-requests\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify([{
@@ -449,7 +520,8 @@ test('employer company settings: document revision request shows reason and repl
         proof_type: 'business_registration',
         reason: 'Đổi tên theo đăng ký mới',
         changes: { company_name: 'FPT Software 2' },
-        updated_at: '2026-07-27T00:00:00Z',
+        submitted_at: '2026-07-27T00:00:00Z',
+        requested_by_summary: { public_id: 'usr_revision', display_name: 'Nguyễn An' },
         documents: [{
           id: 12,
           public_id: 'doc_revision',
@@ -1572,35 +1644,35 @@ test('employer company settings: pending values remain editable without creating
       }),
     })
   })
-  await page.route('http://localhost:8000/api/employer/company/update-requests/', async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/company\/update-requests\/(?:\?.*)?$/, async (route) => {
+    const scope = new URL(route.request().url()).searchParams.get('scope')
+    const pendingRequest = {
+      public_id: 'cur_pending',
+      status: 'pending',
+      changes: {
+        website_url: 'https://fecredit.vn/abc',
+        gallery_additions: ['employers/co_pending/gallerys/office.png'],
+      },
+      media_previews: {
+        gallery_additions: ['http://localhost:8000/media/employers/co_pending/gallerys/office.png'],
+      },
+      revision: 1,
+      lock_version: 0,
+      documents: [],
+      submitted_at: '2026-07-25T10:00:00Z',
+      requested_by_summary: { public_id: 'usr_pending', display_name: 'Nguyễn An' },
+    }
+    const rejectedRequest = {
+      public_id: 'cur_rejected',
+      status: 'rejected',
+      changes: { trade_name: 'Tên cũ đã bị từ chối' },
+      review_note: 'Lý do từ chối của yêu cầu trước.',
+      submitted_at: '2026-07-24T10:00:00Z',
+      requested_by_summary: { public_id: 'usr_pending', display_name: 'Nguyễn An' },
+    }
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          public_id: 'cur_pending',
-          status: 'pending',
-          changes: {
-            website_url: 'https://fecredit.vn/abc',
-            gallery_additions: ['employers/co_pending/gallerys/office.png'],
-          },
-          media_previews: {
-            gallery_additions: ['http://localhost:8000/media/employers/co_pending/gallerys/office.png'],
-          },
-          revision: 1,
-          lock_version: 0,
-          documents: [],
-          created_at: '2026-07-25T10:00:00Z',
-          updated_at: '2026-07-26T10:00:00Z',
-        },
-        {
-          public_id: 'cur_rejected',
-          status: 'rejected',
-          changes: { trade_name: 'Tên cũ đã bị từ chối' },
-          review_note: 'Lý do từ chối của yêu cầu trước.',
-          created_at: '2026-07-24T10:00:00Z',
-          updated_at: '2026-07-24T11:00:00Z',
-        },
-      ]),
+      body: JSON.stringify(scope === 'mine' ? [pendingRequest] : [pendingRequest, rejectedRequest]),
     })
   })
   await page.route('http://localhost:8000/api/employer/company/documents/', async (route) => {
@@ -1608,8 +1680,10 @@ test('employer company settings: pending values remain editable without creating
   })
 
   await page.goto('/tuyendung/app/account/settings/company')
-  await expect(page.getByText('Đang xử lý', { exact: true })).toBeVisible()
-  await expect(page.getByText('Bị từ chối', { exact: true })).toHaveCount(0)
+  const mineRequest = page.getByRole('region', { name: 'Yêu cầu của tôi' })
+  await expect(mineRequest.getByText('Đang xử lý', { exact: true })).toBeVisible()
+  await expect(mineRequest.getByText('Bị từ chối', { exact: true })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Lịch sử yêu cầu chỉnh sửa công ty' }).getByText('Bị từ chối', { exact: true })).toBeVisible()
   await expect(page.getByText('Lý do từ chối của yêu cầu trước.')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Chỉnh sửa yêu cầu' })).toBeEnabled()
   await page.getByRole('button', { name: 'Chỉnh sửa yêu cầu' }).click()

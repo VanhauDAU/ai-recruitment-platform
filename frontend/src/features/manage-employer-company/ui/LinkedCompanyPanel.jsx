@@ -2,7 +2,10 @@ import { BankOutlined, CheckCircleFilled, EditOutlined, LinkOutlined, SafetyCert
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
-import { getEmployerCompanyUpdateRequests } from '@/entities/employer-profile'
+import {
+  employerProfileKeys,
+  getEmployerCompanyUpdateRequests,
+} from '@/entities/employer-profile'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import CompanyForm from './CompanyForm'
 
@@ -19,6 +22,32 @@ const UPDATE_REQUEST_STATUS = {
   rejected: ['error', 'Bị từ chối'],
 }
 
+const COMPANY_CHANGE_LABELS = {
+  address: 'Địa chỉ',
+  business_type: 'Loại hình kinh doanh',
+  company_name: 'Tên công ty',
+  company_size: 'Quy mô công ty',
+  description: 'Mô tả công ty',
+  email: 'Email công ty',
+  employee_benefits: 'Phúc lợi nhân viên',
+  founded_year: 'Năm thành lập',
+  gallery_additions: 'Hình ảnh công ty',
+  gallery_deletions: 'Hình ảnh công ty',
+  has_no_logo: 'Logo công ty',
+  has_no_website: 'Website',
+  industries: 'Lĩnh vực hoạt động',
+  logo_pending: 'Logo công ty',
+  logo_url: 'Logo công ty',
+  markets: 'Thị trường hoạt động',
+  phone: 'Số điện thoại',
+  primary_industry: 'Lĩnh vực chính',
+  target_customers: 'Khách hàng mục tiêu',
+  tax_code: 'Mã số thuế',
+  trade_name: 'Tên thương mại',
+  trade_name_same_as_registered: 'Tên thương mại',
+  website_url: 'Website',
+}
+
 const DOCUMENT_LABELS = {
   business_registration: 'Giấy đăng ký doanh nghiệp',
   trade_name_proof: 'Chứng minh tên thương mại',
@@ -31,14 +60,20 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const company = profile.company
   const owner = profile.company_role === 'owner'
   const canRequestUpdate = Boolean(company)
-  const requestsQuery = useQuery({
-    queryKey: ['employer', 'company', 'update-requests'],
-    queryFn: getEmployerCompanyUpdateRequests,
+  const mineQuery = useQuery({
+    queryKey: employerProfileKeys.companyUpdateRequestList('mine'),
+    queryFn: () => getEmployerCompanyUpdateRequests({ scope: 'mine' }),
     enabled: canRequestUpdate,
   })
-  const requests = requestsQuery.data || []
-  const latestRequest = requests[0]
-  const pendingRequest = requests.find((item) => item.status === 'pending')
+  const companyQuery = useQuery({
+    queryKey: employerProfileKeys.companyUpdateRequestList('company'),
+    queryFn: () => getEmployerCompanyUpdateRequests({ scope: 'company' }),
+    enabled: canRequestUpdate,
+  })
+  const mineRequests = mineQuery.data || []
+  const companyRequests = companyQuery.data || []
+  const latestRequest = mineRequests[0]
+  const pendingRequest = mineRequests.find((item) => item.status === 'pending')
   const documentsRequiringAction = (pendingRequest?.documents || []).filter((document) => (
     document.is_current && ['changes_requested', 'rejected'].includes(document.status)
   ))
@@ -46,30 +81,77 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const [defaultRequestStatusColor, defaultRequestStatusText] = UPDATE_REQUEST_STATUS[latestRequest?.status] || []
   const requestStatusColor = hasDocumentAction ? 'warning' : defaultRequestStatusColor
   const requestStatusText = hasDocumentAction ? 'Cần bổ sung giấy tờ' : defaultRequestStatusText
+  const requestQueriesHaveError = mineQuery.isError || companyQuery.isError
+  const requestQueriesFetching = mineQuery.isFetching || companyQuery.isFetching
+  const writeLocked = requestQueriesHaveError
+    || !mineQuery.isSuccess
+    || !companyQuery.isSuccess
+    || requestQueriesFetching
 
-  if (editing) return <CompanyForm company={company} pendingRequest={pendingRequest} catalogs={catalogs} industries={industries} canManageMedia={owner} onCompleted={async () => { setEditing(false); await onRefresh() }} onCancel={() => setEditing(false)} />
-  if (canRequestUpdate && requestsQuery.isLoading) return <Skeleton active paragraph={{ rows: 8 }} />
+  async function retryRequestQueries() {
+    await Promise.all([mineQuery.refetch(), companyQuery.refetch()])
+  }
+
+  const requestError = requestQueriesHaveError && (
+    <Alert
+      type="error"
+      showIcon
+      title="Không tải được dữ liệu yêu cầu chỉnh sửa"
+      description="Thao tác tạo hoặc chỉnh sửa tạm khóa để tránh ghi đè dữ liệu chưa được đồng bộ."
+      action={<Button loading={requestQueriesFetching} onClick={retryRequestQueries}>Thử lại</Button>}
+    />
+  )
+
+  if (editing) {
+    return (
+      <div className="linked-company-panel">
+        {requestError}
+        <CompanyForm
+          company={company}
+          pendingRequest={pendingRequest}
+          catalogs={catalogs}
+          industries={industries}
+          canManageMedia={owner}
+          disabled={writeLocked}
+          onCompleted={async () => { setEditing(false); await onRefresh() }}
+          onCancel={() => setEditing(false)}
+        />
+      </div>
+    )
+  }
+
   const [statusColor, statusText] = VERIFICATION_STATUS[company.verification_status] || VERIFICATION_STATUS.unverified
+  const latestSubmittedAt = formatDateTime(latestRequest?.submitted_at)
 
   return (
     <div className="linked-company-panel">
-      <section className="company-update-request" aria-label="Yêu cầu cập nhật thông tin công ty">
-        <div>
-          <h2>Yêu cầu cập nhật thông tin công ty</h2>
-          <p>Ngày gửi gần nhất: {latestRequest ? formatDateTime(latestRequest.updated_at || latestRequest.created_at) : '--:-- --/--/--'}</p>
-        </div>
-        {canRequestUpdate && (
-          <div className="company-update-request__actions">
-            {requestStatusText && <Tag color={requestStatusColor}>{requestStatusText}</Tag>}
-            <Button
-              type="link"
-              aria-label={hasDocumentAction ? 'Bổ sung giấy tờ' : undefined}
-              icon={hasDocumentAction ? <UploadOutlined /> : <EditOutlined />}
-              onClick={() => setEditing(true)}
-            >
-              {hasDocumentAction ? 'Bổ sung giấy tờ' : pendingRequest ? 'Chỉnh sửa yêu cầu' : 'Tạo yêu cầu'}
-            </Button>
-          </div>
+      {requestError}
+
+      <section className="company-update-request" aria-label="Yêu cầu của tôi" aria-busy={mineQuery.isLoading || undefined}>
+        {mineQuery.isLoading ? (
+          <Skeleton className="company-update-request__skeleton" active paragraph={{ rows: 1 }} />
+        ) : (
+          <>
+            <div>
+              <h2>Yêu cầu của tôi</h2>
+              {mineQuery.isError && <p>Không thể xác định trạng thái yêu cầu hiện tại.</p>}
+              {!mineQuery.isError && latestSubmittedAt && <p>Ngày gửi gần nhất: {latestSubmittedAt}</p>}
+            </div>
+            {!mineQuery.isError && canRequestUpdate && (
+              <div className="company-update-request__actions">
+                {requestStatusText && <Tag color={requestStatusColor}>{requestStatusText}</Tag>}
+                <Button
+                  type="link"
+                  disabled={writeLocked}
+                  aria-label={hasDocumentAction ? 'Bổ sung giấy tờ' : undefined}
+                  icon={hasDocumentAction ? <UploadOutlined /> : <EditOutlined />}
+                  onClick={() => setEditing(true)}
+                >
+                  {hasDocumentAction ? 'Bổ sung giấy tờ' : pendingRequest ? 'Chỉnh sửa yêu cầu' : 'Tạo yêu cầu'}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -89,13 +171,15 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
                   </li>
                 ))}
               </ul>
-              <Button type="primary" aria-label="Bổ sung giấy tờ ngay" icon={<UploadOutlined />} onClick={() => setEditing(true)}>
+              <Button type="primary" disabled={writeLocked} aria-label="Bổ sung giấy tờ ngay" icon={<UploadOutlined />} onClick={() => setEditing(true)}>
                 Bổ sung giấy tờ ngay
               </Button>
             </div>
           )}
         />
       )}
+
+      <CompanyUpdateRequestHistory query={companyQuery} requests={companyRequests} />
 
       <section className="linked-company-card">
         <header className="linked-company-card__header">
@@ -129,6 +213,35 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   )
 }
 
+function CompanyUpdateRequestHistory({ query, requests }) {
+  return (
+    <section className="company-update-history" aria-label="Lịch sử yêu cầu chỉnh sửa công ty" aria-busy={query.isLoading || undefined}>
+      <h2>Lịch sử yêu cầu của công ty</h2>
+      {query.isLoading && <Skeleton active paragraph={{ rows: 2 }} />}
+      {query.isError && <p>Không thể tải lịch sử yêu cầu của công ty.</p>}
+      {query.isSuccess && requests.length === 0 && <p>Chưa có yêu cầu chỉnh sửa nào.</p>}
+      {query.isSuccess && requests.length > 0 && (
+        <div className="company-update-history__list">
+          {requests.map((request) => {
+            const [statusColor, statusText] = UPDATE_REQUEST_STATUS[request.status] || ['default', 'Không xác định']
+            const submittedAt = formatDateTime(request.submitted_at)
+            return (
+              <article className="company-update-history__item" key={request.public_id}>
+                <div className="min-w-0">
+                  <strong>{request.requested_by_summary?.display_name || 'Thành viên công ty'}</strong>
+                  {submittedAt && <time dateTime={request.submitted_at}>{submittedAt}</time>}
+                  <p>{formatChangeSummary(request.changes)}</p>
+                </div>
+                <Tag color={statusColor}>{statusText}</Tag>
+              </article>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+}
+
 function Detail({ label, value, link = false, html, children }) {
   const content = children || (html
     ? <div className="company-rich-output" dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
@@ -142,6 +255,14 @@ function formatValue(value) {
   return value || '--'
 }
 
+function formatChangeSummary(changes) {
+  const labels = [...new Set(Object.keys(changes || {}).map((field) => COMPANY_CHANGE_LABELS[field]).filter(Boolean))]
+  return labels.length ? `Nội dung: ${labels.join(', ')}` : 'Nội dung thay đổi đã được giới hạn theo quyền truy cập.'
+}
+
 function formatDateTime(value) {
-  return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value))
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
 }
