@@ -3,6 +3,7 @@ from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import storages
 from django.core.management import call_command
@@ -45,6 +46,19 @@ def _local_storages(public_root, private_root, quarantine_root):
 
 
 class ProtectedStorageBackendTests(SimpleTestCase):
+    def test_active_local_roots_are_distinct_and_default_is_private(self):
+        roots = {
+            Path(settings.PUBLIC_MEDIA_ROOT).resolve(strict=False),
+            Path(settings.PRIVATE_MEDIA_ROOT).resolve(strict=False),
+            Path(settings.UPLOAD_QUARANTINE_ROOT).resolve(strict=False),
+        }
+
+        self.assertEqual(len(roots), 3)
+        self.assertIsInstance(storages['default'], PrivateFileSystemStorage)
+        self.assertIsInstance(storages['private_media'], PrivateFileSystemStorage)
+        with self.assertRaises(PrivateStorageUrlError):
+            storages['default'].url('cvs/imports/candidate.docx')
+
     def test_local_private_and_quarantine_urls_fail_closed(self):
         private = PrivateFileSystemStorage(location='/tmp/private-storage-test')
         quarantine = QuarantineFileSystemStorage(location='/tmp/quarantine-storage-test')
@@ -83,9 +97,49 @@ class ProtectedStorageBackendTests(SimpleTestCase):
             r2_enabled=True,
             r2_quarantine_enabled=True,
             r2_buckets=('public', 'private', 'private'),
+            r2_credential_pairs=(
+                ('public-key', 'a'),
+                ('private-key', 'b'),
+                ('quarantine-key', 'c'),
+            ),
         )
 
         self.assertEqual(len(errors), 2)
+
+    def test_reused_r2_credentials_are_rejected_without_exposing_values(self):
+        reused = ('shared-access-key', 'shared-secret')
+        errors = storage_boundary_configuration_errors(
+            public_root='/srv/public',
+            private_root='/srv/private',
+            quarantine_root='/srv/quarantine',
+            r2_enabled=True,
+            r2_quarantine_enabled=True,
+            r2_buckets=('public', 'private', 'quarantine'),
+            r2_credential_pairs=(reused, reused, ('quarantine-key', 'quarantine-secret')),
+        )
+
+        self.assertEqual(
+            errors,
+            ['R2 public/private/quarantine phải dùng ba credential pair khác nhau.'],
+        )
+        self.assertNotIn(reused[0], errors[0])
+        self.assertNotIn(reused[1], errors[0])
+
+    def test_legacy_root_must_not_overlap_an_active_root(self):
+        errors = storage_boundary_configuration_errors(
+            public_root='/srv/public',
+            private_root='/srv/private',
+            quarantine_root='/srv/quarantine',
+            legacy_root='/srv/public/legacy',
+            r2_enabled=False,
+            r2_quarantine_enabled=False,
+            r2_buckets=('public', 'private', 'quarantine'),
+        )
+
+        self.assertEqual(
+            errors,
+            ['LEGACY_MEDIA_ROOT và PUBLIC_MEDIA_ROOT phải tách biệt, không lồng nhau.'],
+        )
 
 
 class StorageLayoutClassificationTests(SimpleTestCase):

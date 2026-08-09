@@ -191,7 +191,7 @@ LEGACY_MEDIA_ROOT = Path(
     config('LEGACY_MEDIA_ROOT', default=str(BASE_DIR / 'media')).strip()
 ).expanduser()
 PUBLIC_MEDIA_ROOT = Path(
-    config('PUBLIC_MEDIA_ROOT', default=str(BASE_DIR / 'media')).strip()
+    config('PUBLIC_MEDIA_ROOT', default=str(BASE_DIR / 'public-media')).strip()
 ).expanduser()
 MEDIA_ROOT = PUBLIC_MEDIA_ROOT
 PRIVATE_MEDIA_ROOT = Path(
@@ -234,18 +234,18 @@ IMAGE_UPLOAD_MAX_SIZE = config('IMAGE_UPLOAD_MAX_SIZE', default=5 * 1024 * 1024,
 
 _LOCAL_MEDIA_STORAGE = {
     'BACKEND': 'django.core.files.storage.FileSystemStorage',
-    'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
+    'OPTIONS': {'location': PUBLIC_MEDIA_ROOT, 'base_url': MEDIA_URL},
 }
 _LOCAL_PRIVATE_MEDIA_STORAGE = {
     'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
-    'OPTIONS': {'location': MEDIA_ROOT, 'base_url': None},
+    'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
 }
 _LOCAL_QUARANTINE_STORAGE = {
     'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
     'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
 }
 STORAGES = {
-    'default': _LOCAL_MEDIA_STORAGE,
+    'default': _LOCAL_PRIVATE_MEDIA_STORAGE,
     'private_media': _LOCAL_PRIVATE_MEDIA_STORAGE,
     'quarantine': _LOCAL_QUARANTINE_STORAGE,
     'public_media': _LOCAL_MEDIA_STORAGE,
@@ -259,7 +259,7 @@ if R2_ENABLED:
         'file_overwrite': False,
     }
     STORAGES['default'] = {
-        'BACKEND': 'storages.backends.s3.S3Storage',
+        'BACKEND': 'common.private_storage.PrivateS3Storage',
         'OPTIONS': {
             **_R2_COMMON_OPTIONS,
             'bucket_name': R2_PRIVATE_BUCKET,
