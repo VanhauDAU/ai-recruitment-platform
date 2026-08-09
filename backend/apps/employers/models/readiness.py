@@ -83,6 +83,7 @@ def employer_readiness_queryset():
     """Recruiter rows annotated with every current workspace evidence predicate."""
     # Local imports keep Django model package initialisation acyclic.
     from .company import CompanyIndustry
+    from .compliance import EmployerComplianceHold
     from .membership import RecruiterProfile
     from .recruitment_need import RecruitmentNeed
     from .verification import CompanyDocument
@@ -130,6 +131,12 @@ def employer_readiness_queryset():
         readiness_has_company_industry=Exists(
             CompanyIndustry.objects.filter(company_id=OuterRef('company_id'))
         ),
+        readiness_has_active_compliance_hold=Exists(
+            EmployerComplianceHold.objects.filter(
+                recruiter_id=OuterRef('pk'),
+                status=EmployerComplianceHold.Status.ACTIVE,
+            )
+        ),
     )
 
 
@@ -144,6 +151,7 @@ def evaluate_employer_readiness(
     candidate_dpa_submitted,
     verification_case_status,
     dpa_status,
+    compliance_hold_active=False,
 ):
     """Evaluate employer capabilities without reading settings or the database."""
     try:
@@ -168,7 +176,10 @@ def evaluate_employer_readiness(
         and dpa_status in WORKSPACE_DPA_STATUSES
     )
     candidate_data_access = bool(
-        job_workspace_ready and verification_approved and dpa_status == DpaStatus.CURRENT
+        job_workspace_ready
+        and verification_approved
+        and dpa_status == DpaStatus.CURRENT
+        and not compliance_hold_active
     )
 
     blockers = []
@@ -254,6 +265,16 @@ def evaluate_employer_readiness(
             )
         )
 
+    if compliance_hold_active:
+        blockers.append(
+            _blocker(
+                'compliance_hold_active',
+                capabilities=(CANDIDATE_DATA_CAPABILITY, JOB_APPROVAL_CAPABILITY),
+                message='Tài khoản đang có một giới hạn tuân thủ còn hiệu lực.',
+                action='open_compliance',
+            )
+        )
+
     dpa_blockers = {
         DpaStatus.MISSING: (
             'dpa_missing',
@@ -307,6 +328,7 @@ def evaluate_employer_readiness(
         'job_workspace_ready': job_workspace_ready,
         'verification_approved': verification_approved,
         'candidate_data_access': candidate_data_access,
+        'compliance_hold_active': bool(compliance_hold_active),
         'dpa_status': dpa_status.value,
         'blockers': blockers,
     }
@@ -361,4 +383,9 @@ def build_annotated_employer_readiness(recruiter, *, dpa_status=None):
         candidate_dpa_submitted=recruiter.readiness_has_candidate_dpa,
         verification_case_status=verification_case_status,
         dpa_status=dpa_status if dpa_status is not None else current_dpa_status(recruiter),
+        compliance_hold_active=getattr(
+            recruiter,
+            'readiness_has_active_compliance_hold',
+            False,
+        ),
     )

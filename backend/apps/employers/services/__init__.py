@@ -18,6 +18,13 @@ from .companies import (
     verify_company,
 )
 from .company_update_locks import lock_company_update_request
+from .compliance import (
+    apply_verification_hold,
+    lock_or_create_verification_identity,
+    lock_verification_identity,
+    recruiter_has_active_compliance_hold,
+    release_verification_holds,
+)
 from .document_preview import render_office_document_preview
 from .onboarding import accept_recruiter_dpa, phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .profiles import (
@@ -45,6 +52,7 @@ from .tax_lookup import (
 )
 from .verification import (
     confirm_verification_decision,
+    confirm_verification_lifecycle_action,
     get_or_create_verification_case,
     reconcile_completed_verification_cases,
     reconcile_recruiter_verification,
@@ -56,6 +64,7 @@ from .verification import (
     start_verification_review,
     verification_checks,
     verification_decision_impact,
+    verification_lifecycle_impact,
 )
 
 __all__ = [
@@ -66,6 +75,7 @@ __all__ = [
     'SENSITIVE_FIELDS',
     'UPDATABLE_COMPANY_FIELDS',
     'accept_recruiter_dpa',
+    'apply_verification_hold',
     'apply_update_request',
     'change_campaign_status',
     'create_campaign',
@@ -74,9 +84,11 @@ __all__ = [
     'ensure_recruiter_candidate_data_access',
     'ensure_recruiter_job_workspace',
     'confirm_verification_decision',
+    'confirm_verification_lifecycle_action',
     'record_campaign_activity',
     'get_or_create_recruiter',
     'recruiter_candidate_data_access_allowed',
+    'recruiter_has_active_compliance_hold',
     'recruiter_job_approval_state',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
@@ -88,6 +100,8 @@ __all__ = [
     'latest_tax_lookup_evidence',
     'lookup_company_tax',
     'lock_company_update_request',
+    'lock_verification_identity',
+    'lock_or_create_verification_identity',
     'queue_company_tax_lookup',
     'refresh_company_update_tax_lookup',
     'refresh_verification_tax_lookup',
@@ -98,9 +112,11 @@ __all__ = [
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',
     'review_verification_document',
+    'release_verification_holds',
     'start_verification_review',
     'verification_checks',
     'verification_decision_impact',
+    'verification_lifecycle_impact',
     'phone_taken_by_other',
     'send_phone_otp',
     'set_company_industries',

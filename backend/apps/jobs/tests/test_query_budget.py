@@ -42,6 +42,11 @@ class JobListQueryBudgetTests(APITestCase):
             role=User.Role.EMPLOYER,
         )
         self.company = Company.objects.create(company_name='Acme', created_by=self.user)
+        make_employer_ready(
+            self.user,
+            company=self.company,
+            candidate_data=True,
+        )
         for index in range(5):
             Job.objects.create(
                 posted_by=self.user,
@@ -180,6 +185,11 @@ class SavedJobRecommendationQueryBudgetTests(APITestCase):
         self.company = Company.objects.create(
             company_name='Saved Budget Co',
             created_by=self.employer,
+        )
+        make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
         )
         self.category = JobCategory.objects.create(
             name='Budget Backend',

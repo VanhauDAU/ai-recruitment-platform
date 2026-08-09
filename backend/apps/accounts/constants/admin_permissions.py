@@ -246,6 +246,18 @@ ADMIN_PERMISSIONS = (
         'description': 'Duyệt, yêu cầu bổ sung hoặc từ chối hồ sơ xác thực nhà tuyển dụng.',
     },
     {
+        'code': 'employer_verification.revoke',
+        'module': 'employer_verification',
+        'label': 'Thu hồi xác thực nhà tuyển dụng',
+        'description': 'Quyền Compliance Lead được gán tường minh để thu hồi hoặc đánh dấu hết hiệu lực xác thực.',
+    },
+    {
+        'code': 'employer_verification.tax_override',
+        'module': 'employer_verification',
+        'label': 'Override bằng chứng tra cứu thuế',
+        'description': 'Quyền Compliance Lead được gán tường minh để override bằng chứng thuế advisory kèm lý do.',
+    },
+    {
         'code': 'employer_verification.view',
         'module': 'employer_verification',
         'label': 'Xem xác thực nhà tuyển dụng',
@@ -369,6 +381,11 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'cv_template.edit': ('cv_template.view',),
     'cv_template.publish': ('cv_template.view',),
     'employer_verification.review': ('employer_verification.view',),
+    'employer_verification.revoke': ('employer_verification.view',),
+    'employer_verification.tax_override': (
+        'employer_verification.view',
+        'employer_verification.review',
+    ),
     'job_moderation.approve': ('job_moderation.view',),
     'job_moderation.enforce_visibility': ('job_moderation.view',),
     'job_moderation.reject': ('job_moderation.view',),

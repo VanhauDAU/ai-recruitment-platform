@@ -2,6 +2,11 @@
 
 from .campaign import CampaignActivity, RecruitmentCampaign
 from .company import Company, CompanyImage, CompanyIndustry, Industry
+from .compliance import (
+    EmployerComplianceHold,
+    EmployerComplianceHoldCampaign,
+    EmployerComplianceHoldJob,
+)
 from .membership import RecruiterProfile
 from .otp import PhoneOtp
 from .readiness import DpaStatus
@@ -26,6 +31,9 @@ __all__ = [
     'EmployerVerificationCase',
     'EmployerVerificationEvent',
     'EmployerVerificationNotification',
+    'EmployerComplianceHold',
+    'EmployerComplianceHoldCampaign',
+    'EmployerComplianceHoldJob',
     'CampaignActivity',
     'Industry',
     'PhoneOtp',

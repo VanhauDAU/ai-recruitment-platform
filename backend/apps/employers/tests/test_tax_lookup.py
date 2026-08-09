@@ -169,7 +169,7 @@ class CompanyTaxLookupTests(TestCase):
         )
 
     @patch('apps.employers.tasks.tax_lookup.lookup_company_tax_evidence.delay')
-    def test_refresh_verification_tax_lookup_locks_only_the_case_row(self, delay):
+    def test_refresh_verification_tax_lookup_uses_canonical_identity_scope(self, delay):
         case = get_or_create_verification_case(self.recruiter)
         initial_lock_version = case.lock_version
 
