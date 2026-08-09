@@ -1324,16 +1324,10 @@ class CompanyUpdateRequestTests(APITestCase):
         member.company = self.company
         member.company_role = RecruiterProfile.CompanyRole.MEMBER
         member.save(update_fields=['company', 'company_role', 'updated_at'])
-        update_request = CompanyUpdateRequest.objects.create(
-            company=self.company,
-            requested_by=member_user,
-            changes={'address': 'Đà Nẵng'},
-        )
         document = CompanyDocument.objects.create(
             company=self.company,
             recruiter=member,
             uploaded_by=member_user,
-            update_request=update_request,
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url='employers/private/member-registration.pdf',
             file_name='member-registration.pdf',
@@ -1349,10 +1343,16 @@ class CompanyUpdateRequestTests(APITestCase):
             ),
         ):
             storage.return_value.open.return_value = BytesIO(PDF_BYTES)
+            listed = self.client.get(reverse('employer-company-documents'))
             response = self.client.get(
                 reverse('employer-company-document-content', kwargs={'pk': document.pk})
             )
 
+        owner_document = next(
+            item for item in listed.data if item['public_id'] == document.public_id
+        )
+        self.assertIsNotNone(owner_document['file_url'])
+        self.assertEqual(owner_document['file_name'], 'member-registration.pdf')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(b''.join(response.streaming_content), PDF_BYTES)
 

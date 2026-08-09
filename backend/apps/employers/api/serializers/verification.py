@@ -2,6 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import EmailValidator, URLValidator
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
 from common.media_storage import media_url_from_value
@@ -42,6 +43,7 @@ class CompanyDocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_file_url(self, obj):
         if obj.file_url.startswith(('http://', 'https://')):
             return obj.file_url
@@ -122,6 +124,15 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'lock_version',
         ]
 
+    @extend_schema_field(
+        inline_serializer(
+            name='CompanyUpdateRequesterSummary',
+            fields={
+                'public_id': serializers.CharField(),
+                'display_name': serializers.CharField(),
+            },
+        )
+    )
     def get_requested_by_summary(self, obj):
         display_name = (obj.requested_by.full_name or '').strip() or 'Thành viên công ty'
         return {
@@ -155,6 +166,19 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             )
         )
 
+    @extend_schema_field(
+        inline_serializer(
+            name='CompanyUpdateMediaPreviews',
+            fields={
+                'logo_url': serializers.URLField(required=False),
+                'cover_image_url': serializers.URLField(required=False),
+                'gallery_additions': serializers.ListField(
+                    child=serializers.URLField(),
+                    required=False,
+                ),
+            },
+        )
+    )
     def get_media_previews(self, obj):
         if not self._can_view_request_files(obj):
             return {}

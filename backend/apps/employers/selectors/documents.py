@@ -19,6 +19,8 @@ def employer_document_metadata_queryset(*, user, recruiter):
             verification_case__isnull=True,
             uploaded_by=user,
         )
+        if recruiter.company_role == RecruiterProfile.CompanyRole.OWNER:
+            visible |= Q(company=recruiter.company)
     return (
         CompanyDocument.objects.filter(visible)
         .select_related('verification_case')
