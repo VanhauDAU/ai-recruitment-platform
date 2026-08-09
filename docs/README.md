@@ -8,7 +8,9 @@
 | [02-tong-quan](02-tong-quan/)   | [tong-quan-he-thong.md](02-tong-quan/tong-quan-he-thong.md)      | Tổng quan hệ thống, kiến trúc, phạm vi MVP                              |
 | [02-tong-quan](02-tong-quan/)   | [quy-uoc-code.md](02-tong-quan/quy-uoc-code.md)                  | Quy ước cấu trúc module, DRY, trách nhiệm và kiểm tra chất lượng        |
 | [02-tong-quan](02-tong-quan/)   | [chatbot-local-decision-log.md](02-tong-quan/chatbot-local-decision-log.md) | Biên bản từng quyết định đã xác nhận cho chatbot AI chạy hoàn toàn local |
+| [02-tong-quan](02-tong-quan/)   | [employer-remediation-decision-log.md](02-tong-quan/employer-remediation-decision-log.md) | Biên bản quyết định canonical cho audit và hardening cổng Nhà tuyển dụng |
 | [03-database](03-database/)     | [thiet-ke-database.md](03-database/thiet-ke-database.md)         | Thiết kế database, ERD, quy ước đặt tên                                 |
+| [03-database](03-database/)     | [ke-hoach-ra-soat-va-khac-phuc-employer.md](03-database/ke-hoach-ra-soat-va-khac-phuc-employer.md) | Kế hoạch ER-0…ER-8 cho company, verification, upload, moderation, DPA và notification |
 | [03-database](03-database/)     | [cv-builder-architecture-foundation.md](03-database/cv-builder-architecture-foundation.md) | Canonical document, template/version, taxonomy màu và lifecycle CV V2 |
 | [03-database](03-database/)     | [ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md](03-database/ke-hoach-hoan-thien-cv-builder-theo-giai-doan.md) | Trạng thái và roadmap hoàn thiện CV Builder |
 | [03-database](03-database/)     | [ke-hoach-chien-dich-va-vong-doi-tin.md](03-database/ke-hoach-chien-dich-va-vong-doi-tin.md) | Ownership recruiter, chiến dịch, duyệt tin, quota và pipeline ứng viên |
@@ -31,6 +33,7 @@
 | [06-deployment](06-deployment/) | [announcement-rollout-runbook.md](06-deployment/announcement-rollout-runbook.md) | AN-P5: rollout tuần tự, kill switch, monitoring và rollback dải thông báo |
 | [06-deployment](06-deployment/) | [announcement-staging-evidence-2026-07-29.md](06-deployment/announcement-staging-evidence-2026-07-29.md) | AN-P5: bằng chứng rehearsal bốn surface, priority, kill switch và Redis failure |
 | [07-algorithms](07-algorithms/) | [thuat-toan-ai.md](07-algorithms/thuat-toan-ai.md)               | Thuật toán AI: trích xuất kỹ năng, matching CV-Job, chấm điểm phỏng vấn |
+| [07-algorithms](07-algorithms/) | [employer-flow-security-audit-2026-08.md](07-algorithms/employer-flow-security-audit-2026-08.md) | Baseline finding, evidence và retest criteria cho luồng Nhà tuyển dụng |
 | [08-frontend](08-frontend/)     | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md)         | Cấu trúc frontend, component, quy ước code                              |
 | [08-frontend](08-frontend/)     | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime strip đa cổng, priority, accessibility, rollout và rollback     |
 
