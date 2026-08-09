@@ -5,7 +5,7 @@ never serialized as object-store URLs; the application reads them only after
 the owning endpoint has performed its authorization checks.
 """
 
-from django.core.files.storage import default_storage, storages
+from django.core.files.storage import storages
 
 
 def public_media_storage():
@@ -15,7 +15,12 @@ def public_media_storage():
 
 def private_media_storage():
     """Storage for CVs, exports, identity documents and candidate assets."""
-    return default_storage
+    return storages['private_media']
+
+
+def quarantine_storage():
+    """Storage for untrusted uploads that have not passed malware scanning."""
+    return storages['quarantine']
 
 
 def cv_asset_storage(asset):

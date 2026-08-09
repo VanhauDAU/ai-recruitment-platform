@@ -202,6 +202,11 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D27 | `CONFIRMED` | Chọn nhầm company xử lý qua yêu cầu admin unlink khi tài khoản còn sạch |
 | ER-D28 | `CONFIRMED` | Rollout hold cho dữ liệu hiện hữu phải dry-run, ops review rồi mới apply và notify |
 | ER-D29 | `CONFIRMED` | Khi candidate-data bị khóa, vẫn hiển thị số tổng hợp không định danh; mọi PII, CV, link và activity nhạy cảm bị ẩn |
+| ER-D30 | `CONFIRMED` | Cutover storage bằng copy + checksum không phá hủy; legacy giữ ngoài serving path để rollback, private/quarantine không phát direct URL |
+| ER-D31 | `CONFIRMED` | Đổi phone giữ proof/readiness cũ tới khi SMS số mới thành công; reverify tự nguyện và không vô hiệu proof khi pending/thất bại |
+| ER-D32 | `CONFIRMED` | Employer phone mới chỉ nhận số di động Việt Nam canonical `+84`; bỏ availability oracle, compatibility endpoint chỉ trả kết quả generic |
+| ER-D33 | `CONFIRMED` | Challenge phone chứa PII/ciphertext xóa sau 30 ngày; audit redacted giữ 24 tháng; admin không sửa trực tiếp phone đã xác minh |
+| ER-D34 | `CONFIRMED` | SMS production giữ flag tắt tới khi chọn gateway/template/sender; provider lỗi phải fail closed, không fallback email |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -214,7 +219,8 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit và sửa quyền xem/tải/export CV; chỉ mở rộng pipeline upload candidate nếu phát hiện dùng chung hạ tầng không an toàn | Giới hạn scope CV của ER-2/ER-3 |
 
-Các quyết định trên được người phụ trách sản phẩm xác nhận ngày 2026-08-10.
+Các quyết định trên và ER-D29 đến ER-D34 được người phụ trách sản phẩm xác nhận
+ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
 ## 7. State machine mục tiêu
@@ -521,12 +527,19 @@ revoked và account hold trước khi merge frontend.
 
 ### ER-3 — Upload quarantine foundation
 
+**Storage foundation:** `fix/media-storage-boundaries` — In progress
 **Backend:** `feature/employer-upload-quarantine`
 **Frontend:** `feature/employer-upload-session-ui`
 **Phụ thuộc:** ER-2
 
 Backend:
 
+- Storage foundation tách root/bucket public, private, quarantine; old shared
+  root chỉ là unserved migration source. DEBUG/nginx chỉ serve public;
+  private/quarantine `.url()` fail-closed.
+- Backfill byte dùng command dry-run/apply copy+verify idempotent,
+  batch/cursor; không chạy storage I/O trong schema migration. Raw multipart
+  DOC/DOCX preview bị khóa bằng `UPLOAD_SCAN_REQUIRED` cho tới clean-session.
 - Additive upload-session và scan-metadata schema.
 - Temporary/quarantine/clean storage boundary.
 - ClamAV adapter, worker task, timeout, retry và idempotency.
@@ -873,7 +886,7 @@ Trạng thái thực hiện hiện tại:
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và 3-viewport E2E đều đạt |
-| ER-3 | Planned | Phụ thuộc readiness contract |
+| ER-3 | In progress | Storage boundary/cutover foundation đạt scoped gate; upload session, scanner và retention còn mở |
 | ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
 | ER-5 | Planned | Phụ thuộc readiness/upload |
 | ER-6 | Planned | DPA phụ thuộc ER-O03 |

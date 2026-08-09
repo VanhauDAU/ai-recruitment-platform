@@ -7,11 +7,11 @@
 services:
   db:
     restart: unless-stopped
-    ports: []          # không expose DB ra ngoài host ở production
+    ports: !reset []   # không expose DB ra ngoài host ở production
 
   redis:
     restart: unless-stopped
-    ports: []
+    ports: !reset []
 
   backend:
     restart: unless-stopped
@@ -23,10 +23,13 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.production
       FRONTEND_SHELL_URL: http://frontend/
       SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
-    volumes:
-      - backend_media:/app/media
+    volumes: !override
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
       - backend_static:/app/staticfiles
-    ports: []          # đi qua nginx, không expose trực tiếp
+    ports: !reset []   # đi qua nginx, không expose trực tiếp
 
   worker:
     restart: unless-stopped
@@ -36,8 +39,11 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
-    volumes:
-      - backend_media:/app/media
+    volumes: !override
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
 
   beat:
     restart: unless-stopped
@@ -47,7 +53,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       DJANGO_SETTINGS_MODULE: config.settings.production
       SPEECH_RUNTIME_ENABLED: ${SPEECH_RUNTIME_ENABLED:-false}
-    volumes: []
+    volumes: !reset []
 
   tts:
     restart: unless-stopped
@@ -85,9 +91,9 @@ services:
     command: !reset null
     working_dir: !reset null
     restart: unless-stopped
-    volumes: []
+    volumes: !reset []
     environment: {}
-    ports: []
+    ports: !reset []
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:80/']
       interval: 15s
@@ -104,7 +110,7 @@ services:
     volumes:
       - ./deploy/nginx/procv.conf:/etc/nginx/conf.d/default.conf:ro
       - backend_static:/srv/backend-static:ro
-      - backend_media:/srv/backend-media:ro
+      - backend_public_media:/srv/backend-public-media:ro
       # TLS cert mount tại đây khi có domain (letsencrypt/certbot)
     depends_on:
       - backend

@@ -8,6 +8,22 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Security — Upload storage boundary ER-3 foundation
+
+- Tách storage public/private/quarantine cho local và Cloudflare R2; chỉ public
+  được phép qua `/media`, private/quarantine không phát direct URL. Root shared
+  cũ trở thành nguồn migration không phục vụ trực tiếp.
+- Sửa production Compose override để không kế thừa bind-mount source hoặc các
+  cổng backend/PostgreSQL/Redis/Vite từ cấu hình development; chỉ nginx publish
+  cổng và chỉ mount public media.
+- Thêm lệnh kiểm kê/copy layout dry-run mặc định, idempotent, batch/cursor và
+  hash verify; unknown key fail-closed về private, đồng thời nhận đúng
+  `gallerys/` và các prefix public hiện hành.
+- Raw DOC/DOCX employer preview trước upload trả `UPLOAD_SCAN_REQUIRED` và
+  không gọi LibreOffice. Preview/download document đã lưu vẫn đi qua endpoint
+  có authorization. Upload session/malware scanner/retention tiếp tục ở slice
+  ER-3 kế tiếp.
+
 #### Changed — Employer readiness contract ER-2
 
 - `/api/employer/me/` nay trả năm field readiness canonical và `/api/auth/me/`

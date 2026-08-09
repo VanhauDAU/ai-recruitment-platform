@@ -86,13 +86,29 @@
 | ER-AR02 | Company payload cho member không bị thu hẹp ngoài file/storage secret | Serializer redaction và object permission |
 | ER-AR03 | MFA không bắt buộc toàn bộ recruiter | Step-up cho thao tác bảo mật nhạy cảm |
 
-## Session 2026-08-10 — Gate ER-2
+## Session 2026-08-10 — Gate ER-2/ER-3/ER-6
 
-| ID | Quyết định đã xác nhận | Hệ quả triển khai |
+### Bối cảnh
+
+- Readiness contract cần quyết định liệu aggregate không định danh có thuộc
+  candidate-data gate hay không.
+- Audit storage phát hiện public và private cùng nằm trong root được Django,
+  Vite và nginx phục vụ; cutover có thể làm hỏng consumer cũ gọi direct URL.
+- Audit phone OTP phát hiện resend/replay race, phone-enumeration oracle, đổi
+  phone không qua SMS và chưa có retention/recovery contract.
+
+### Quyết định đã xác nhận
+
+| ID | Quyết định | Hệ quả triển khai |
 | --- | --- | --- |
-| ER-D29 | Khi candidate-data bị khóa vẫn hiển thị aggregate không định danh; ẩn tên, email, avatar, CV, deep-link và activity có PII | Backend redact trước response; frontend không query/render surface nhạy cảm nhưng vẫn giữ count |
+| ER-D29 | Khi candidate-data bị khóa vẫn cho xem aggregate không định danh; ẩn tên, email, avatar, CV, deep-link và activity có PII | Backend redact trước response; frontend không mount/query surface nhạy cảm nhưng vẫn render count |
+| ER-D30 | Copy + SHA-256 verify dữ liệu sang public/private/quarantine trước traffic; giữ legacy ngoài serving path để rollback; private/default R2 `.url()` cố ý fail closed | Consumer direct URL chưa được phát hiện có thể ngừng hoạt động an toàn thay vì làm lộ file |
+| ER-D31 | Đổi số giữ phone/proof/readiness cũ tới khi challenge số mới thành công; reverify trước mắt là self-triggered và giữ proof khi pending/thất bại | Atomic claim sau OTP; admin-forced revoke là policy riêng, không được suy diễn |
+| ER-D32 | Phone employer mới chuẩn hóa số di động Việt Nam `+84[35789]xxxxxxxx`; bỏ availability precheck | Compatibility route chỉ validate format và trả generic trong cửa sổ chuyển đổi |
+| ER-D33 | Challenge có phone/ciphertext purge sau 30 ngày; event redacted giữ 24 tháng; admin không sửa trực tiếp verified phone | Recovery riêng cần reason, step-up và append-only audit |
+| ER-D34 | Production SMS flag tắt cho tới khi Ops/Product chọn gateway, sender và template | Outage/misconfiguration fail closed, không fallback email hoặc giả delivery |
 
-Người phụ trách sản phẩm xác nhận quyết định ER-D29 ngày 2026-08-10.
+Người phụ trách sản phẩm xác nhận toàn bộ các quyết định trên ngày 2026-08-10.
 
 ## Tài liệu/mô tả bị thay thế
 

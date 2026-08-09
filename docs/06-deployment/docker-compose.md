@@ -67,12 +67,16 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 - `nginx` (cổng 80/443) reverse proxy: `/` → frontend tĩnh, `/api` + `/admin` →
-  gunicorn, `/static` + `/media` serve trực tiếp từ volume. Django không đăng
+  gunicorn, `/static` và **public-only** `/media` serve trực tiếp từ volume.
+  Private, quarantine và legacy volumes không được mount vào nginx. Django không đăng
   ký `/admin/` trong production nên đường dẫn này luôn trả 404; production
   settings từ chối khởi động nếu `DJANGO_ADMIN_ENABLED=True`.
 - DB và Redis **không** expose ra ngoài host ở production.
 - Cấu hình nginx: `deploy/nginx/procv.conf`. TLS: thêm server block 443 +
   certbot khi trỏ domain.
+- Trước lần cutover storage ER-3, bắt buộc làm theo
+  [storage-boundary runbook](employer-upload-storage-boundary-runbook.md); không
+  bật traffic nếu copy report còn conflict hoặc chưa hết cursor.
 
 ## Seed dữ liệu (lần đầu — DB Docker khởi tạo rỗng)
 

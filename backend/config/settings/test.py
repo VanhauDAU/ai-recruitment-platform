@@ -21,12 +21,20 @@ SIMPLE_JWT = {**SIMPLE_JWT, 'SIGNING_KEY': SECRET_KEY}
 # same local media contract as before and must not require network credentials.
 STORAGES = {
     'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
+        'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+        'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
+    },
+    'private_media': {
+        'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+        'OPTIONS': {'location': PRIVATE_MEDIA_ROOT, 'base_url': None},
+    },
+    'quarantine': {
+        'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+        'OPTIONS': {'location': UPLOAD_QUARANTINE_ROOT, 'base_url': None},
     },
     'public_media': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'OPTIONS': {'location': MEDIA_ROOT, 'base_url': MEDIA_URL},
+        'OPTIONS': {'location': PUBLIC_MEDIA_ROOT, 'base_url': MEDIA_URL},
     },
     'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
 }

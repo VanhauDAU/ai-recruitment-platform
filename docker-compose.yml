@@ -16,6 +16,10 @@ x-service-hosts: &service-hosts
   SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS: ${SPEECH_ARTIFACT_POLL_INTERVAL_SECONDS:-2}
   SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS: ${SPEECH_ARTIFACT_DOWNLOAD_TIMEOUT_SECONDS:-120}
   SPEECH_ARTIFACT_RETENTION_DAYS: ${SPEECH_ARTIFACT_RETENTION_DAYS:-30}
+  LEGACY_MEDIA_ROOT: /app/legacy-media
+  PUBLIC_MEDIA_ROOT: /app/public-media
+  PRIVATE_MEDIA_ROOT: /app/private-media
+  UPLOAD_QUARANTINE_ROOT: /app/quarantine
 
 # json-file mặc định tăng vô hạn và thường là phần dung lượng khó phát hiện nhất
 # trên VPS. Mọi service đều dùng cùng chính sách xoay log, override được qua .env.
@@ -34,14 +38,16 @@ x-backend-image: &backend-image
 
 services:
   # Named volumes are initially owned by root, while Django deliberately runs
-  # as appuser. Initialise the private-media volume before any service tries
-  # to persist uploads (business documents, CV exports, and similar files).
+  # as appuser. Initialise only the active isolated roots. The retained legacy
+  # volume is mounted read-only by application services for copy/verification.
   media-init:
     <<: *backend-image
     user: '0:0'
-    command: sh -c 'mkdir -p /app/media && chown -R appuser:appuser /app/media'
+    command: sh -c 'chown -R appuser:appuser /app/public-media /app/private-media /app/quarantine'
     volumes:
-      - backend_media:/app/media
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
     logging: *default-logging
 
   db:
@@ -84,7 +90,10 @@ services:
       FRONTEND_SHELL_URL: http://frontend:5173/
     volumes:
       - ./backend:/app
-      - backend_media:/app/media
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
     ports:
       - '8000:8000'
     init: true
@@ -120,7 +129,10 @@ services:
       <<: *service-hosts
     volumes:
       - ./backend:/app
-      - backend_media:/app/media
+      - backend_media:/app/legacy-media:ro
+      - backend_public_media:/app/public-media
+      - backend_private_media:/app/private-media
+      - backend_quarantine:/app/quarantine
     init: true
     pids_limit: ${WORKER_PIDS_LIMIT:-256}
     stop_grace_period: 30s
@@ -222,7 +234,11 @@ services:
 
 volumes:
   pgdata:
+  # Existing shared media is retained as read-only migration/rollback input.
   backend_media:
+  backend_public_media:
+  backend_private_media:
+  backend_quarantine:
   frontend_node_modules:
   tts_huggingface_cache:
   tts_audio_cache:

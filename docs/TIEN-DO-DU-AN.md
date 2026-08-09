@@ -7,16 +7,16 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 verified sau khi canonical readiness,
-> backend capability enforcement, frontend fail-closed guards/redaction và
-> desktop/tablet/mobile E2E đều đạt quality gate.
+> Cập nhật lần cuối: 2026-08-10 — ER-2 verified; ER-3 đã hoàn tất foundation
+> tách storage/cutover ở scoped gate và đang tiếp tục upload session, scanner,
+> clean-only consume cùng retention.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
-| ER-3 | Upload session, quarantine, malware scan và retention | ⬜ Chưa làm |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — storage boundary |
 | ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
 | ER-5 | Verification final decision, blockers và compliance holds | ⬜ Chưa làm |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | ⬜ Chưa làm |
@@ -36,6 +36,22 @@ Decision log:
   dấu đóng và chưa tuyên bố test code đã đạt trong ER-0.
 - Gate ER-0: Markdown link check kiểm 189 internal destination trên 64 file và
   `git diff --check` đều đạt.
+
+</details>
+
+<details>
+<summary>Ghi chú ER-3</summary>
+
+- Slice `fix/media-storage-boundaries` tách public/private/quarantine cho local
+  và R2, khóa direct URL/private media serving, thêm công cụ copy legacy
+  idempotent batch/cursor và vô hiệu raw Office preview trước scan.
+- Đây là foundation P0, chưa phải completion ER-3: upload session, scanner,
+  retention, clean-only attach và candidate import quarantine vẫn phải đạt gate
+  trước khi đổi phase thành Verified.
+- Evidence foundation: 13/13 storage unit tests và 22/22 regression tests cho
+  employer preview/knowledgebase/site media đạt; scoped Ruff/format,
+  import-linter, Django check, migration drift, dev/prod Compose render và 194
+  internal Markdown destinations đều đạt.
 
 </details>
 

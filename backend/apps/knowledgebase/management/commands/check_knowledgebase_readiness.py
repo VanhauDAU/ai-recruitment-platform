@@ -3,12 +3,12 @@ from collections import Counter
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
-from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from common.media_storage import media_storage_path
 from common.metrics import record_metric
+from common.r2_storage import public_media_storage
 
 from ...models import (
     KnowledgeArticle,
@@ -147,7 +147,8 @@ def build_readiness_report():
             image_references.append((article, storage_key, source_is_safe, has_alt))
 
     referenced_keys = {key for _, key, _, _ in image_references if key}
-    available_keys = {key for key in referenced_keys if default_storage.exists(key)}
+    storage = public_media_storage()
+    available_keys = {key for key in referenced_keys if storage.exists(key)}
     for article, storage_key, source_is_safe, has_alt in image_references:
         asset_exists = not storage_key or storage_key in available_keys
         if not has_alt or not source_is_safe or not asset_exists:
