@@ -41,6 +41,7 @@ def _get_update_request(request, company):
     update_request = CompanyUpdateRequest.objects.filter(
         public_id=update_request_id,
         company=company,
+        requested_by=request.user,
         status=CompanyUpdateRequest.Status.PENDING,
     ).first()
     if update_request is None:

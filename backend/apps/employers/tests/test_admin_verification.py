@@ -2,6 +2,7 @@ from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
+from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import PermissionDenied
 from django.test import override_settings
 from django.urls import reverse
@@ -13,6 +14,7 @@ from apps.accounts.models import AdminPermission, AdminRole, Department, User
 from apps.accounts.services import assign_membership
 from apps.jobs.models import JobCategory
 
+from ..admin import CompanyUpdateRequestAdmin
 from ..models import (
     Company,
     CompanyDocument,
@@ -732,6 +734,70 @@ class EmployerAccountVerificationTests(APITestCase):
         self.assertEqual(accepted_review.status_code, 200, accepted_review.data)
         update_request.refresh_from_db()
         self.assertEqual(update_request.status, CompanyUpdateRequest.Status.REJECTED)
+
+    def test_company_update_viewer_cannot_open_sensitive_document(self):
+        reviewer = User.objects.create_user(
+            email='company-document-viewer@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+        )
+        view_permission, _ = AdminPermission.objects.get_or_create(
+            code='company_update.view',
+            defaults={'module': 'company_update', 'label': 'Xem yêu cầu sửa công ty'},
+        )
+        department = Department.objects.create(
+            code='company-document-view',
+            name='Xem yêu cầu sửa công ty',
+        )
+        role = AdminRole.objects.create(
+            department=department,
+            code='company-document-viewer',
+            name='Người xem yêu cầu sửa công ty',
+        )
+        role.permissions.add(view_permission)
+        assign_membership(reviewer, role, actor=self.admin)
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'address': 'Địa chỉ mới'},
+            submitted_at=timezone.now(),
+        )
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.first,
+            uploaded_by=self.first_user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/company-update.pdf',
+        )
+        self.client.force_authenticate(reviewer)
+
+        queue = self.client.get(reverse('admin-company-update-request-list'))
+        content = self.client.get(
+            reverse(
+                'admin-company-update-request-document-content',
+                kwargs={
+                    'public_id': update_request.public_id,
+                    'document_public_id': document.public_id,
+                },
+            )
+        )
+
+        self.assertEqual(queue.status_code, 200, queue.data)
+        self.assertEqual(content.status_code, 403, content.data)
+
+    def test_django_admin_keeps_existing_requester_read_only(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'address': 'Địa chỉ mới'},
+            submitted_at=timezone.now(),
+        )
+        model_admin = CompanyUpdateRequestAdmin(CompanyUpdateRequest, AdminSite())
+
+        readonly = model_admin.get_readonly_fields(None, update_request)
+
+        self.assertIn('requested_by', readonly)
 
     def test_document_content_infers_legacy_image_mime_for_inline_preview(self):
         self.client.force_authenticate(self.admin)

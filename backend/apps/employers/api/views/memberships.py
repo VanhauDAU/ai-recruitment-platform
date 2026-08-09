@@ -97,6 +97,12 @@ def _save_document(
     replace_document_public_id='',
 ):
     recruiter = recruiter or get_or_create_recruiter(request.user)
+    if update_request is not None and (
+        update_request.requested_by_id != request.user.id
+        or company is None
+        or update_request.company_id != company.id
+    ):
+        raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
     if company is None and recruiter.company_id:
         company = recruiter.company
     if company is not None:

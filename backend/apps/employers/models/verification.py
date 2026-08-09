@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from common.public_id import generate_public_id
 
@@ -191,6 +192,7 @@ class CompanyUpdateRequest(models.Model):
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
+    submitted_at = models.DateTimeField(default=timezone.now)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -199,9 +201,9 @@ class CompanyUpdateRequest(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['company'],
+                fields=['company', 'requested_by'],
                 condition=models.Q(status='pending'),
-                name='uniq_company_pending_update_request',
+                name='uniq_co_requester_pending_upd',
             ),
         ]
 

@@ -2,6 +2,7 @@ import re
 import shutil
 import tempfile
 from datetime import timedelta
+from io import BytesIO
 from unittest.mock import patch
 
 from django.core import mail
@@ -1204,6 +1205,192 @@ class CompanyUpdateRequestTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         self.assertEqual(response.data['status'], CompanyUpdateRequest.Status.PENDING)
 
+    def test_members_keep_independent_pending_requests_and_requester_is_immutable(self):
+        owner_response = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'website_url': 'https://owner.example.com'}},
+            format='json',
+        )
+        member_user, member = make_employer('independent-member@example.com')
+        member_user.full_name = 'Nguyễn Minh Anh'
+        member_user.save(update_fields=['full_name'])
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        member_response = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'address': 'Đà Nẵng'}},
+            format='json',
+        )
+        member_update = self.client.post(
+            reverse('employer-company-update-requests'),
+            {'changes': {'address': 'Huế'}},
+            format='json',
+        )
+        mine = self.client.get(reverse('employer-company-update-requests'), {'scope': 'mine'})
+        company = self.client.get(reverse('employer-company-update-requests'))
+
+        self.assertEqual(owner_response.status_code, status.HTTP_201_CREATED, owner_response.data)
+        self.assertEqual(member_response.status_code, status.HTTP_201_CREATED, member_response.data)
+        self.assertEqual(member_update.status_code, status.HTTP_200_OK, member_update.data)
+        self.assertNotEqual(owner_response.data['public_id'], member_response.data['public_id'])
+        self.assertEqual(member_update.data['public_id'], member_response.data['public_id'])
+        owner_request = CompanyUpdateRequest.objects.get(public_id=owner_response.data['public_id'])
+        member_request = CompanyUpdateRequest.objects.get(
+            public_id=member_response.data['public_id']
+        )
+        self.assertEqual(owner_request.requested_by, self.user)
+        self.assertEqual(owner_request.changes['website_url'], 'https://owner.example.com')
+        self.assertEqual(member_request.requested_by, member_user)
+        self.assertEqual(member_request.changes['address'], 'Huế')
+        self.assertIsNotNone(member_request.submitted_at)
+        self.assertEqual([item['public_id'] for item in mine.data], [member_request.public_id])
+        self.assertEqual(len(company.data), 2)
+        summary = mine.data[0]['requested_by_summary']
+        self.assertEqual(summary['public_id'], member_user.public_id)
+        self.assertEqual(summary['display_name'], 'Nguyễn Minh Anh')
+        self.assertNotIn('email', summary)
+        owner_summary = next(
+            item['requested_by_summary']
+            for item in company.data
+            if item['requested_by_summary']['public_id'] == self.user.public_id
+        )
+        self.assertEqual(owner_summary['display_name'], 'Thành viên công ty')
+
+    def test_company_history_redacts_other_members_private_files_and_media(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={
+                'logo_url': 'employers/private/staged-logo.png',
+                'gallery_additions': ['employers/private/staged-office.png'],
+            },
+            submitted_at=timezone.now(),
+        )
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.recruiter,
+            uploaded_by=self.user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/business-registration.pdf',
+            file_name='mst-0101234567.pdf',
+            mime_type='application/pdf',
+            file_size=1234,
+        )
+        member_user, member = make_employer('history-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        history = self.client.get(
+            reverse('employer-company-update-requests'),
+            {'scope': 'company'},
+        )
+        with patch('apps.employers.api.views.verification.private_media_storage') as storage:
+            content = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(history.status_code, status.HTTP_200_OK, history.data)
+        item = history.data[0]
+        self.assertIsNone(item['changes']['logo_url'])
+        self.assertEqual(item['changes']['gallery_additions'], [])
+        self.assertEqual(item['media_previews'], {})
+        self.assertIsNone(item['documents'][0]['file_url'])
+        self.assertEqual(item['documents'][0]['file_name'], '')
+        self.assertEqual(item['documents'][0]['mime_type'], '')
+        self.assertEqual(item['documents'][0]['file_size'], 0)
+        self.assertEqual(content.status_code, status.HTTP_404_NOT_FOUND)
+        storage.assert_not_called()
+
+        authenticate_employer(self.client, self.user)
+        owner_history = self.client.get(
+            reverse('employer-company-update-requests'),
+            {'scope': 'company'},
+        )
+        owner_item = owner_history.data[0]
+        self.assertEqual(owner_item['changes']['logo_url'], 'employers/private/staged-logo.png')
+        self.assertIn(
+            '/media/employers/private/staged-logo.png', owner_item['media_previews']['logo_url']
+        )
+        self.assertIsNotNone(owner_item['documents'][0]['file_url'])
+
+    def test_company_owner_can_open_a_members_private_document(self):
+        member_user, member = make_employer('owner-readable-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=member_user,
+            changes={'address': 'Đà Nẵng'},
+        )
+        document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=member,
+            uploaded_by=member_user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/member-registration.pdf',
+            file_name='member-registration.pdf',
+            mime_type='application/pdf',
+        )
+        authenticate_employer(self.client, self.user)
+
+        with (
+            patch('apps.employers.api.views.verification.private_media_storage') as storage,
+            patch(
+                'apps.employers.api.views.verification.render_office_document_preview',
+                return_value=None,
+            ),
+        ):
+            storage.return_value.open.return_value = BytesIO(PDF_BYTES)
+            response = self.client.get(
+                reverse('employer-company-document-content', kwargs={'pk': document.pk})
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(b''.join(response.streaming_content), PDF_BYTES)
+
+    def test_member_cannot_attach_document_to_another_request(self):
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.user,
+            changes={'company_name': 'Acme mới'},
+            submitted_at=timezone.now(),
+        )
+        member_user, member = make_employer('document-write-member@example.com')
+        member.company = self.company
+        member.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member.save(update_fields=['company', 'company_role', 'updated_at'])
+        authenticate_employer(self.client, member_user)
+
+        response = self.client.post(
+            reverse('employer-company-documents'),
+            {
+                'doc_type': CompanyDocument.DocType.BUSINESS_REGISTRATION,
+                'update_request': update_request.public_id,
+                'file': SimpleUploadedFile('proof.pdf', PDF_BYTES, content_type='application/pdf'),
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertFalse(CompanyDocument.objects.filter(update_request=update_request).exists())
+
+    def test_invalid_update_request_scope_is_rejected(self):
+        response = self.client.get(
+            reverse('employer-company-update-requests'),
+            {'scope': 'unknown'},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('scope', response.data)
+
     def test_admin_approval_applies_changes(self):
         self.client.post(
             reverse('employer-company-update-requests'),
@@ -1849,3 +2036,28 @@ class CompanyImageUploadTests(APITestCase):
             reverse('employer-company-logo-upload'), {'file': upload}, format='multipart'
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_owner_cannot_mutate_media_on_a_members_update_request(self):
+        member, member_recruiter = make_employer('media-request-owner@example.com')
+        member_recruiter.company = self.company
+        member_recruiter.company_role = RecruiterProfile.CompanyRole.MEMBER
+        member_recruiter.save(update_fields=['company', 'company_role', 'updated_at'])
+        update_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=member,
+            changes={'logo_pending': True},
+            submitted_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            reverse('employer-company-logo-upload'),
+            {
+                'file': SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png'),
+                'update_request': update_request.public_id,
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        update_request.refresh_from_db()
+        self.assertEqual(update_request.changes, {'logo_pending': True})

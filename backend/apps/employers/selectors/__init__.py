@@ -23,6 +23,11 @@ from .campaigns import (
 )
 from .companies import search_companies
 from .company_status import has_explicit_company_link, is_registration_placeholder_company
+from .documents import (
+    can_access_employer_document_content,
+    employer_document_content_queryset,
+    employer_document_metadata_queryset,
+)
 from .onboarding import (
     build_employer_initial_onboarding,
     build_employer_onboarding_steps,
@@ -50,5 +55,8 @@ __all__ = [
     'owned_campaign_queryset',
     'has_explicit_company_link',
     'is_registration_placeholder_company',
+    'can_access_employer_document_content',
+    'employer_document_content_queryset',
+    'employer_document_metadata_queryset',
     'search_companies',
 ]
