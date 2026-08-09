@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from PIL import Image
@@ -56,11 +57,9 @@ class AnnouncementVisualThemeTests(APITestCase):
         self.assertEqual(data['background_overlay'], 'none')
 
     def test_normalize_rejects_invalid_hex_and_url_background(self):
-        with self.assertRaises(Exception):
-            normalize_revision_data(
-                revision_payload(theme_mode='custom', color_accent='green')
-            )
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
+            normalize_revision_data(revision_payload(theme_mode='custom', color_accent='green'))
+        with self.assertRaises(ValidationError):
             normalize_revision_data(
                 revision_payload(
                     background_image='https://cdn.example.com/banner.png',
@@ -110,9 +109,7 @@ class AnnouncementVisualThemeTests(APITestCase):
             {'surface': 'candidate', 'path': '/'},
         )
         self.assertEqual(feed.status_code, status.HTTP_200_OK, feed.data)
-        item = next(
-            entry for entry in feed.data['items'] if entry['public_id'] == public_id
-        )
+        item = next(entry for entry in feed.data['items'] if entry['public_id'] == public_id)
         self.assertEqual(item['theme']['mode'], 'preset')
         self.assertEqual(item['theme']['preset'], 'ocean')
         self.assertIn('image_url', item['background'])
