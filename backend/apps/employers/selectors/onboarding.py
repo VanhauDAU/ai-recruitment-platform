@@ -65,6 +65,7 @@ def build_employer_onboarding_steps(recruiter):
         owned_documents |= Q(verification_case=case)
     case_documents = CompanyDocument.objects.filter(
         owned_documents,
+        company_id=recruiter.company_id,
         is_current=True,
     )
     business_types = {

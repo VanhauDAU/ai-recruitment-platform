@@ -36,6 +36,7 @@ from .readiness import (
     DpaStatus,
     build_employer_readiness,
     current_dpa_status,
+    employer_readiness_queryset,
     evaluate_employer_readiness,
 )
 from .recruitment_needs import first_recruitment_need
@@ -68,5 +69,6 @@ __all__ = [
     'DpaStatus',
     'build_employer_readiness',
     'current_dpa_status',
+    'employer_readiness_queryset',
     'evaluate_employer_readiness',
 ]

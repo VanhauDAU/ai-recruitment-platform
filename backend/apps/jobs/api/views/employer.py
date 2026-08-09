@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, serializers, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.permissions import IsEmployer
@@ -13,6 +12,7 @@ from ...selectors import (
 )
 from ...services import (
     close_job,
+    delete_job_draft,
     duplicate_job,
     employer_job_posting_context,
     extend_job_deadline,
@@ -110,9 +110,8 @@ class EmployerJobDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         job = self.get_object()
-        if job.status != job.Status.DRAFT:
-            raise ValidationError({'detail': 'Chỉ có thể xóa tin nháp.'})
-        return super().destroy(request, *args, **kwargs)
+        delete_job_draft(job, request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EmployerJobPostingContextView(generics.GenericAPIView):

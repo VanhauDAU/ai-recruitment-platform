@@ -121,6 +121,13 @@ class RecruitmentCampaignActivityView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = CampaignActivitySerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['candidate_data_access'] = recruiter_candidate_data_access_allowed(
+            self.request.user
+        )
+        return context
+
     def get_queryset(self):
         campaign = get_object_or_404(
             owned_campaign_queryset(self.request.user),

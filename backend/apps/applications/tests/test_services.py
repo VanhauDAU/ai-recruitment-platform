@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
@@ -9,13 +9,15 @@ from django.utils import timezone
 
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import Company
+from apps.employers.models import Company, RecruitmentCampaign
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 
 from ..api.serializers.employer import ApplicationStatusUpdateSerializer
 from ..models import Application, ApplicationStatusHistory
 from ..services import (
     InvalidApplicationStatusTransition,
+    RecruitmentResourceChanged,
     create_application,
     mark_application_viewed,
     update_application_status,
@@ -37,6 +39,7 @@ def create_status_application(suffix):
         company_name=f'Status Transition Company {suffix}',
         created_by=employer,
     )
+    make_employer_ready(employer, company=company, candidate_data=True)
     job = Job.objects.create(
         posted_by=employer,
         company=company,
@@ -173,6 +176,38 @@ class ApplicationStatusTransitionServiceTests(TestCase):
         self.assertEqual(application.status, Application.Status.ACCEPTED)
         self.assertIsNone(application.viewed_at)
         self.assertEqual(application.status_history.count(), 1)
+
+    def test_campaign_change_between_scope_read_and_job_lock_fails_closed(self):
+        recruiter = self.employer.recruiter_profile
+        previous_campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=recruiter.company,
+            name='Previous campaign',
+        )
+        replacement_campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=recruiter.company,
+            name='Replacement campaign',
+        )
+        self.application.job.campaign = replacement_campaign
+        self.application.job.save(update_fields=['campaign', 'updated_at'])
+        stale_relation = Mock()
+        stale_relation.values.return_value.get.return_value = {
+            'job_id': self.application.job_id,
+            'job__campaign_id': previous_campaign.pk,
+        }
+
+        with (
+            patch(
+                'apps.applications.services.applications.Application.objects.filter',
+                return_value=stale_relation,
+            ),
+            self.assertRaises(RecruitmentResourceChanged),
+        ):
+            update_application_status(
+                self.serializer(status=Application.Status.SHORTLISTED),
+                changed_by=self.employer,
+            )
 
 
 class ApplicationStatusTransitionConcurrencyTests(TransactionTestCase):

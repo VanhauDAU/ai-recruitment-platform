@@ -21,6 +21,7 @@ from .moderation import (
 from .posting import (
     close_job,
     create_pending_job,
+    delete_job_draft,
     duplicate_job,
     employer_job_posting_context,
     extend_job_deadline,
@@ -37,6 +38,7 @@ __all__ = [
     'build_job_content_snapshot',
     'create_job_review_token',
     'create_pending_job',
+    'delete_job_draft',
     'duplicate_job',
     'employer_job_posting_context',
     'extend_job_deadline',

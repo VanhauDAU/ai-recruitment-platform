@@ -1,10 +1,18 @@
 """Recruiter profile workflows."""
 
+from http import HTTPStatus
+
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from rest_framework.exceptions import APIException
+
+from apps.accounts.models import User
 
 from ..models import CompanyDocument, EmployerVerificationCase, RecruiterProfile
+from ..models.readiness import (
+    build_annotated_employer_readiness,
+    employer_readiness_queryset,
+    missing_employer_readiness,
+)
 
 JOB_APPROVAL_VERIFICATION_BLOCKER = {
     'code': 'verification_required',
@@ -16,58 +24,98 @@ JOB_APPROVAL_DPA_BLOCKER = {
 }
 
 
+class EmployerCapabilityBlocked(APIException):
+    """Base machine-readable capability failure returned by employer guards."""
+
+    status_code = HTTPStatus.FORBIDDEN
+    capability = ''
+    action = 'open_compliance'
+
+    def __init__(self, *, code, message, readiness):
+        blockers = [
+            blocker
+            for blocker in readiness['blockers']
+            if self.capability in blocker['capabilities']
+        ]
+        super().__init__(
+            detail={
+                'code': code,
+                'message': message,
+                'action': self.action,
+                'blockers': blockers,
+            },
+            code=code,
+        )
+
+
+class EmployerWorkspaceBlocked(EmployerCapabilityBlocked):
+    capability = 'job_workspace'
+
+    def __init__(self, readiness):
+        super().__init__(
+            code='EMPLOYER_WORKSPACE_BLOCKED',
+            message='Hoàn tất các điều kiện workspace trước khi thay đổi dữ liệu tuyển dụng.',
+            readiness=readiness,
+        )
+
+
+class CandidateDataBlocked(EmployerCapabilityBlocked):
+    capability = 'candidate_data'
+
+    def __init__(self, readiness):
+        super().__init__(
+            code='CANDIDATE_DATA_BLOCKED',
+            message='Tài khoản chưa đủ điều kiện truy cập dữ liệu ứng viên.',
+            readiness=readiness,
+        )
+
+
+def recruiter_readiness_state(user, *, lock=False):
+    """Return recruiter + canonical state, optionally locking U → R → V."""
+    resolved_user = user
+    if lock:
+        resolved_user = User.objects.select_for_update(of=('self',)).get(pk=user.pk)
+    recruiter_queryset = employer_readiness_queryset().filter(user_id=resolved_user.pk)
+    if lock:
+        recruiter_queryset = recruiter_queryset.select_for_update(of=('self',))
+    recruiter = recruiter_queryset.first()
+    if recruiter is None:
+        return None, missing_employer_readiness()
+    # ``select_related`` reads the case for non-locking presenters. A write
+    # boundary must explicitly lock that same row before Campaign/Job/Application.
+    if lock:
+        verification_case = (
+            EmployerVerificationCase.objects.select_for_update(of=('self',))
+            .filter(recruiter_id=recruiter.pk)
+            .first()
+        )
+        recruiter._state.fields_cache['verification_case'] = verification_case
+    return recruiter, build_annotated_employer_readiness(recruiter)
+
+
+def ensure_recruiter_job_workspace(user, *, lock=False):
+    recruiter, readiness = recruiter_readiness_state(user, lock=lock)
+    if not readiness['job_workspace_ready']:
+        raise EmployerWorkspaceBlocked(readiness)
+    return recruiter, readiness
+
+
 def get_or_create_recruiter(user):
     recruiter, _ = RecruiterProfile.objects.get_or_create(user=user)
     return recruiter
 
 
-def recruiter_posting_readiness(user):
-    """Return the write-safe predicate used before submitting a job for review.
-
-    This intentionally lives in ``services`` because publishing is a write
-    workflow. It mirrors the onboarding read model without importing a
-    selector, preserving the ``api → services/selectors → models`` boundary.
-    """
-    recruiter = RecruiterProfile.objects.select_related('company', 'user').filter(user=user).first()
-    if recruiter is None or not _has_explicit_company_link(recruiter):
-        return recruiter, False
+def _legacy_verification_completed(readiness):
+    completed = readiness['job_workspace_ready']
     if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
-        return recruiter, EmployerVerificationCase.objects.filter(
-            recruiter=recruiter,
-            company=recruiter.company,
-            status=EmployerVerificationCase.Status.APPROVED,
-        ).exists()
-    has_business_document = (
-        recruiter.company.documents.filter(
-            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
-        )
-        .exclude(status=CompanyDocument.Status.REJECTED)
-        .exists()
-    )
-    candidate_dpa = Q(
-        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        recruiter=recruiter,
-    ) | Q(
-        doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
-        company=recruiter.company,
-    )
-    has_candidate_dpa = (
-        CompanyDocument.objects.filter(candidate_dpa)
-        .exclude(status=CompanyDocument.Status.REJECTED)
-        .exists()
-    )
-    verified = all(
-        [
-            recruiter.user.email_verified,
-            recruiter.registration_completed_at is not None,
-            recruiter.recruitment_needs.exists(),
-            recruiter.phone_verified_at is not None,
-            has_business_document,
-            has_candidate_dpa,
-            recruiter.dpa_accepted_at is not None,
-        ]
-    )
-    return recruiter, verified
+        completed = completed and readiness['verification_approved']
+    return completed
+
+
+def recruiter_posting_readiness(user):
+    """Return the compatibility readiness bit from the canonical policy state."""
+    recruiter, readiness = recruiter_readiness_state(user)
+    return recruiter, _legacy_verification_completed(readiness)
 
 
 def recruiter_job_posting_entitlement(user):
@@ -77,7 +125,8 @@ def recruiter_job_posting_entitlement(user):
     separate introductory quota. The final job-posting service enforces the
     appropriate limit under a transaction.
     """
-    recruiter, verification_completed = recruiter_posting_readiness(user)
+    recruiter, readiness = recruiter_readiness_state(user)
+    verification_completed = _legacy_verification_completed(readiness)
     if recruiter is None or recruiter.company_id is None:
         return recruiter, {
             'verification_completed': False,
@@ -86,18 +135,16 @@ def recruiter_job_posting_entitlement(user):
             'verified_job_quota_eligible': False,
         }
 
-    verification_case = EmployerVerificationCase.objects.filter(
-        recruiter=recruiter,
-        company=recruiter.company,
-    ).first()
-    admin_approved = (
-        verification_case is not None
-        and verification_case.status == EmployerVerificationCase.Status.APPROVED
-    )
+    try:
+        verification_case = recruiter.verification_case
+    except EmployerVerificationCase.DoesNotExist:
+        verification_case = None
+    admin_approved = readiness['verification_approved']
     business_document_approved = False
     if verification_case is not None:
         business_documents = CompanyDocument.objects.filter(
             verification_case=verification_case,
+            company_id=recruiter.company_id,
             is_current=True,
             doc_type__in=[
                 CompanyDocument.DocType.AUTHORIZATION_LETTER,
@@ -128,7 +175,10 @@ def recruiter_job_posting_entitlement(user):
         'admin_approved': admin_approved,
         'account_level': account_level,
         'verified_job_quota_eligible': (
-            verification_completed and admin_approved and account_level >= 3
+            verification_completed
+            and admin_approved
+            and readiness['dpa_status'] == 'current'
+            and account_level >= 3
         ),
     }
 
@@ -142,25 +192,11 @@ def recruiter_job_approval_state(user, *, company_id, lock=False):
     is used by the write workflow so concurrent verification/DPA transitions
     are serialized with the final approval decision.
     """
-    recruiter_queryset = RecruiterProfile.objects.filter(user_id=user.pk)
-    if lock:
-        recruiter_queryset = recruiter_queryset.select_for_update(of=('self',))
-    recruiter = recruiter_queryset.first()
-
-    verification_case = None
-    if recruiter is not None:
-        case_queryset = EmployerVerificationCase.objects.filter(
-            recruiter_id=recruiter.pk,
-            company_id=company_id,
-        )
-        if lock:
-            case_queryset = case_queryset.select_for_update(of=('self',))
-        verification_case = case_queryset.first()
-
+    recruiter, readiness = recruiter_readiness_state(user, lock=lock)
     verification_approved = bool(
-        verification_case and verification_case.status == EmployerVerificationCase.Status.APPROVED
+        recruiter and recruiter.company_id == company_id and readiness['verification_approved']
     )
-    dpa_current = bool(recruiter and recruiter.dpa_accepted_at)
+    dpa_current = readiness['dpa_status'] == 'current'
     blockers = []
     if not verification_approved:
         blockers.append(dict(JOB_APPROVAL_VERIFICATION_BLOCKER))
@@ -174,39 +210,15 @@ def recruiter_job_approval_state(user, *, company_id, lock=False):
     }
 
 
-def ensure_recruiter_candidate_data_access(user):
+def ensure_recruiter_candidate_data_access(user, *, lock=False):
     """Enforce the rollout gate before exposing candidate personal data."""
-    if recruiter_candidate_data_access_allowed(user):
-        return
-    raise PermissionDenied(
-        'Tài khoản cần được xác thực quyền đại diện trước khi truy cập dữ liệu ứng viên.'
-    )
+    recruiter, readiness = recruiter_readiness_state(user, lock=lock)
+    if not readiness['candidate_data_access']:
+        raise CandidateDataBlocked(readiness)
+    return recruiter, readiness
 
 
 def recruiter_candidate_data_access_allowed(user):
     """Return whether personal candidate data may be included in a response."""
-    if not getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_CANDIDATE_ACCESS', False):
-        return True
-    recruiter = RecruiterProfile.objects.filter(user=user).first()
-    return (
-        recruiter is not None
-        and EmployerVerificationCase.objects.filter(
-            recruiter=recruiter,
-            company_id=recruiter.company_id,
-            status=EmployerVerificationCase.Status.APPROVED,
-        ).exists()
-    )
-
-
-def _has_explicit_company_link(recruiter):
-    if recruiter.company_id is None:
-        return False
-    company = recruiter.company
-    return not (
-        company.created_by_id == recruiter.user_id
-        and recruiter.company_role == recruiter.CompanyRole.OWNER
-        and company.tax_code is None
-        and company.has_no_logo
-        and company.has_no_website
-        and not company.company_industries.exists()
-    )
+    _, readiness = recruiter_readiness_state(user)
+    return readiness['candidate_data_access']

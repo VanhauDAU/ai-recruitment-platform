@@ -8,11 +8,12 @@ from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.services import lock_account_for_write
-from apps.employers.models import CampaignActivity, RecruiterProfile
+from apps.employers.models import CampaignActivity, RecruitmentCampaign
 from apps.employers.services import (
+    ensure_recruiter_job_workspace,
     record_campaign_activity,
     recruiter_job_posting_entitlement,
+    recruiter_readiness_state,
 )
 from apps.sitecontent.selectors.settings import get_int_setting
 
@@ -37,15 +38,79 @@ EXPIRED_JOB_RENEWAL_GRACE_DAYS = 30
 
 
 def _locked_recruiter(user):
-    user = lock_account_for_write(user)
-    recruiter = RecruiterProfile.objects.select_for_update().filter(user=user).first()
+    recruiter, _ = ensure_recruiter_job_workspace(user, lock=True)
     if recruiter is None or recruiter.company_id is None:
         raise ValidationError('Cập nhật thông tin công ty trước khi đăng tin.')
     return recruiter
 
 
-def _locked_job(job):
-    return Job.objects.select_for_update().get(pk=job.pk)
+def _lock_campaigns(*campaign_ids):
+    ids = sorted({campaign_id for campaign_id in campaign_ids if campaign_id is not None})
+    return {
+        campaign.pk: campaign
+        for campaign in RecruitmentCampaign.objects.select_for_update(of=('self',))
+        .filter(pk__in=ids)
+        .order_by('pk')
+    }
+
+
+def _locked_job(job, *, extra_campaign_ids=()):
+    current_campaign_id = Job.objects.filter(pk=job.pk).values_list('campaign_id', flat=True).get()
+    locked_campaigns = _lock_campaigns(current_campaign_id, *extra_campaign_ids)
+    locked_job = (
+        Job.objects.select_for_update(of=('self',)).select_related('campaign').get(pk=job.pk)
+    )
+    if locked_job.campaign_id != current_campaign_id:
+        raise ValidationError(
+            {
+                'code': 'RECRUITMENT_RESOURCE_CHANGED',
+                'detail': 'Chiến dịch của tin vừa thay đổi. Vui lòng tải lại.',
+            }
+        )
+    return locked_job, locked_campaigns
+
+
+def _locked_requested_campaign(requested_campaign, locked_campaigns):
+    if requested_campaign is None:
+        return None
+    locked_campaign = locked_campaigns.get(requested_campaign.pk)
+    if locked_campaign is None:
+        raise ValidationError(
+            {
+                'code': 'RECRUITMENT_RESOURCE_CHANGED',
+                'detail': 'Chiến dịch vừa thay đổi. Vui lòng tải lại.',
+            }
+        )
+    return locked_campaign
+
+
+def _validate_campaign_for_write(campaign, *, recruiter):
+    if campaign is None:
+        return
+    if campaign.owner_id != recruiter.pk:
+        raise ValidationError({'campaign': 'Bạn không có quyền dùng chiến dịch này.'})
+    if campaign.policy_hold:
+        raise ValidationError(
+            {
+                'code': 'RECRUITMENT_HOLD_ACTIVE',
+                'detail': 'Chiến dịch đang bị policy hold.',
+            }
+        )
+    if campaign.status in {
+        RecruitmentCampaign.Status.COMPLETED,
+        RecruitmentCampaign.Status.CANCELLED,
+    }:
+        raise ValidationError({'campaign': 'Chiến dịch này không còn nhận tin tuyển dụng.'})
+
+
+def _validate_job_for_write(job):
+    if job.policy_hold or job.moderation_hold:
+        raise ValidationError(
+            {
+                'code': 'RECRUITMENT_HOLD_ACTIVE',
+                'detail': 'Tin tuyển dụng đang bị hold.',
+            }
+        )
 
 
 def _free_job_quota():
@@ -245,10 +310,21 @@ def _validate_publishable(job):
 
 def employer_job_posting_context(user):
     recruiter, entitlement, limit = _posting_quota(user)
+    _, readiness = recruiter_readiness_state(user)
     count = Job.objects.filter(posted_by=user, submitted_at__isnull=False).count()
     reason = ''
     has_company = recruiter is not None and recruiter.company_id is not None
-    if not has_company:
+    if not readiness['job_workspace_ready']:
+        workspace_blocker = next(
+            (
+                blocker
+                for blocker in readiness['blockers']
+                if 'job_workspace' in blocker['capabilities']
+            ),
+            None,
+        )
+        reason = workspace_blocker['message'] if workspace_blocker else 'Workspace chưa sẵn sàng.'
+    elif not has_company:
         reason = 'Cập nhật thông tin công ty trước khi đăng tin.'
     elif count >= limit:
         reason = _quota_exhausted_message(
@@ -260,13 +336,17 @@ def employer_job_posting_context(user):
         'admin_approved': entitlement['admin_approved'],
         'account_level': entitlement['account_level'],
         'verified_job_quota_eligible': entitlement['verified_job_quota_eligible'],
+        'job_workspace_ready': readiness['job_workspace_ready'],
+        'candidate_data_access': readiness['candidate_data_access'],
+        'dpa_status': readiness['dpa_status'],
+        'blockers': readiness['blockers'],
         'published_jobs_count': count,
         'publish_limit': limit,
         'publish_remain': max(limit - count, 0),
         # Compatibility for clients deployed before the quota contract rename.
         'free_publish_limit': limit,
         'free_publish_remain': max(limit - count, 0),
-        'job_postable': has_company and count < limit,
+        'job_postable': readiness['job_workspace_ready'] and has_company and count < limit,
         'approval_required': True,
         'block_reason': reason,
     }
@@ -277,13 +357,32 @@ def save_job_draft(serializer, user):
     """Persist a partial job form; drafts never consume a publication credit."""
     recruiter = _locked_recruiter(user)
     if serializer.instance is None:
+        requested_campaign = serializer.validated_data.get('campaign')
+        locked_campaigns = _lock_campaigns(
+            requested_campaign.pk if requested_campaign is not None else None
+        )
+        locked_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
+        _validate_campaign_for_write(locked_campaign, recruiter=recruiter)
+        if requested_campaign is not None:
+            serializer.validated_data['campaign'] = locked_campaign
         job = serializer.save(posted_by=user, company=recruiter.company, status=Job.Status.DRAFT)
         _record_job_assignment(job, previous_campaign=None, user=user)
         _record_status(job, from_status='', to_status=Job.Status.DRAFT, user=user)
         return job
-    if serializer.instance.posted_by_id != user.id:
+    requested_campaign = serializer.validated_data.get('campaign', serializer.instance.campaign)
+    job, locked_campaigns = _locked_job(
+        serializer.instance,
+        extra_campaign_ids=(requested_campaign.pk if requested_campaign is not None else None,),
+    )
+    serializer.instance = job
+    if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền lưu nháp tin này.')
-    previous_campaign = serializer.instance.campaign
+    _validate_job_for_write(job)
+    previous_campaign = locked_campaigns.get(job.campaign_id)
+    locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
+    _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)
+    if 'campaign' in serializer.validated_data:
+        serializer.validated_data['campaign'] = locked_requested_campaign
     job = serializer.save()
     _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
     return job
@@ -292,10 +391,12 @@ def save_job_draft(serializer, user):
 @transaction.atomic
 def publish_job(job, user):
     """Submit a recruiter-owned job to the mandatory admin review queue."""
-    _locked_recruiter(user)
-    job = _locked_job(job)
+    recruiter = _locked_recruiter(user)
+    job, _ = _locked_job(job)
     if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền gửi duyệt tin này.')
+    _validate_job_for_write(job)
+    _validate_campaign_for_write(job.campaign, recruiter=recruiter)
     if job.status == Job.Status.CLOSED:
         raise ValidationError('Mở lại tin trước khi gửi duyệt lại.')
     _validate_publishable(job)
@@ -350,12 +451,21 @@ def create_pending_job(serializer, user):
 @transaction.atomic
 def update_employer_job(serializer, user):
     """Persist an employer's existing job through the domain mutation boundary."""
-    _locked_recruiter(user)
-    serializer.instance = _locked_job(serializer.instance)
+    recruiter = _locked_recruiter(user)
+    requested_campaign = serializer.validated_data.get('campaign', serializer.instance.campaign)
+    serializer.instance, locked_campaigns = _locked_job(
+        serializer.instance,
+        extra_campaign_ids=(requested_campaign.pk if requested_campaign is not None else None,),
+    )
     if serializer.instance.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
+    _validate_job_for_write(serializer.instance)
     previous_status = serializer.instance.status
-    previous_campaign = serializer.instance.campaign
+    previous_campaign = locked_campaigns.get(serializer.instance.campaign_id)
+    locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
+    _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)
+    if 'campaign' in serializer.validated_data:
+        serializer.validated_data['campaign'] = locked_requested_campaign
     job = serializer.save()
     _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
     if previous_status == Job.Status.ACTIVE:
@@ -370,7 +480,7 @@ def update_employer_job(serializer, user):
 @transaction.atomic
 def close_job(job, user):
     _locked_recruiter(user)
-    job = _locked_job(job)
+    job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể đóng tin đang tuyển của bạn.')
     job.status = Job.Status.CLOSED
@@ -382,10 +492,12 @@ def close_job(job, user):
 
 @transaction.atomic
 def reopen_job(job, user, deadline):
-    _locked_recruiter(user)
-    job = _locked_job(job)
+    recruiter = _locked_recruiter(user)
+    job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.CLOSED:
         raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
+    _validate_job_for_write(job)
+    _validate_campaign_for_write(job.campaign, recruiter=recruiter)
     if deadline < timezone.localdate():
         raise ValidationError({'deadline': 'Hạn nộp phải từ hôm nay trở đi.'})
     job.deadline = deadline
@@ -409,10 +521,12 @@ def reopen_job(job, user, deadline):
 
 @transaction.atomic
 def extend_job_deadline(job, user, deadline):
-    _locked_recruiter(user)
-    job = _locked_job(job)
+    recruiter = _locked_recruiter(user)
+    job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
         raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
+    _validate_job_for_write(job)
+    _validate_campaign_for_write(job.campaign, recruiter=recruiter)
     today = timezone.localdate()
     if job.deadline is None or deadline <= job.deadline:
         raise ValidationError({'deadline': 'Hạn gia hạn phải sau hạn nộp hiện tại.'})
@@ -473,9 +587,16 @@ def extend_job_deadline(job, user, deadline):
 @transaction.atomic
 def duplicate_job(job, user):
     _locked_recruiter(user)
-    job = _locked_job(job)
+    job, _ = _locked_job(job)
     if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền sao chép tin này.')
+    if job.policy_hold or job.moderation_hold or (job.campaign_id and job.campaign.policy_hold):
+        raise ValidationError(
+            {
+                'code': 'RECRUITMENT_HOLD_ACTIVE',
+                'detail': 'Không thể sao chép tin hoặc chiến dịch đang bị hold.',
+            }
+        )
     duplicate = copy(job)
     duplicate.pk = None
     duplicate.id = None
@@ -541,3 +662,13 @@ def duplicate_job(job, user):
         duplicate, from_status='', to_status=Job.Status.DRAFT, user=user, note='Sao chép tin'
     )
     return duplicate
+
+
+@transaction.atomic
+def delete_job_draft(job, user):
+    """Delete one recruiter-owned draft through the workspace write boundary."""
+    _locked_recruiter(user)
+    job, _ = _locked_job(job)
+    if job.posted_by_id != user.id or job.status != Job.Status.DRAFT:
+        raise ValidationError({'detail': 'Chỉ có thể xóa tin nháp của bạn.'})
+    job.delete()

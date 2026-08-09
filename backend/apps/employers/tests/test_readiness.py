@@ -227,6 +227,29 @@ class EmployerReadinessContractTests(APITestCase):
         self.assertTrue(response.data['candidate_data_access'])
         self.assertEqual(response.data['blockers'], [])
 
+    def test_documents_from_a_previous_company_cannot_unlock_a_new_company(self):
+        replacement = Company.objects.create(
+            company_name='Công ty mới',
+            tax_code='0108887799',
+            created_by=self.user,
+        )
+        self.recruiter.company = replacement
+        self.recruiter.save(update_fields=['company', 'updated_at'])
+
+        response = self.client.get(reverse('employer-me'))
+
+        self.assertFalse(response.data['job_workspace_ready'])
+        self.assertFalse(response.data['verification_approved'])
+        self.assertFalse(response.data['candidate_data_access'])
+        self.assertIn(
+            'business_document_required',
+            [blocker['code'] for blocker in response.data['blockers']],
+        )
+        self.assertIn(
+            'candidate_dpa_document_required',
+            [blocker['code'] for blocker in response.data['blockers']],
+        )
+
     def test_deleted_account_adapter_fails_closed_even_when_status_is_active(self):
         self.user.is_deleted = True
         self.user.save(update_fields=['is_deleted', 'updated_at'])

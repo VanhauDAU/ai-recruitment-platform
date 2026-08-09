@@ -3,6 +3,7 @@
 from .applications import (
     InvalidApplicationStatusTransition,
     InvalidReapplication,
+    RecruitmentResourceChanged,
     create_application,
     create_application_record,
     mark_application_viewed,
@@ -13,6 +14,7 @@ from .applications import (
 __all__ = [
     'InvalidApplicationStatusTransition',
     'InvalidReapplication',
+    'RecruitmentResourceChanged',
     'create_application',
     'create_application_record',
     'mark_application_viewed',

@@ -483,6 +483,7 @@ class CvVersionSerializer(serializers.ModelSerializer):
             owner=obj.cv.user if obj.cv_id else None,
             version=obj,
             signed=True,
+            token_context=self.context.get('asset_token_context'),
         )
 
 

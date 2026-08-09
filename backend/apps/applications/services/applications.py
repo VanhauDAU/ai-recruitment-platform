@@ -1,15 +1,21 @@
 """Write workflows for the applications domain."""
 
 from datetime import timedelta
+from http import HTTPStatus
 
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from rest_framework.exceptions import APIException
 
 from apps.accounts.services import is_account_accessible, lock_account_for_write
 from apps.cvs.services import create_application_snapshot
-from apps.employers.models import CampaignActivity
-from apps.employers.services import record_campaign_activity
+from apps.employers.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.services import (
+    ensure_recruiter_candidate_data_access,
+    record_campaign_activity,
+)
+from apps.jobs.models import Job
 
 from ..models import Application, ApplicationStatusHistory
 
@@ -69,6 +75,52 @@ class InvalidApplicationStatusTransition(ValueError):
 
 class InvalidReapplication(ValueError):
     """Raised when a candidate exceeds the retry limit or cooldown."""
+
+
+class RecruitmentResourceChanged(APIException):
+    status_code = HTTPStatus.CONFLICT
+    default_code = 'RECRUITMENT_RESOURCE_CHANGED'
+
+    def __init__(self):
+        super().__init__(
+            detail={
+                'code': self.default_code,
+                'message': 'Chiến dịch của hồ sơ vừa thay đổi. Vui lòng tải lại.',
+                'action': 'reload',
+            },
+            code=self.default_code,
+        )
+
+
+def _locked_recruiter_application(application, *, changed_by):
+    """Lock U → R → V → Campaign → Job → Application for recruiter writes."""
+    ensure_recruiter_candidate_data_access(changed_by, lock=True)
+    relation = (
+        Application.objects.filter(pk=application.pk)
+        .values(
+            'job_id',
+            'job__campaign_id',
+        )
+        .get()
+    )
+    if relation['job__campaign_id'] is not None:
+        try:
+            RecruitmentCampaign.objects.select_for_update(of=('self',)).get(
+                pk=relation['job__campaign_id']
+            )
+        except RecruitmentCampaign.DoesNotExist as error:
+            raise RecruitmentResourceChanged() from error
+    job = Job.objects.select_for_update(of=('self',)).get(pk=relation['job_id'])
+    if job.campaign_id != relation['job__campaign_id']:
+        raise RecruitmentResourceChanged()
+    locked_application = (
+        Application.objects.select_for_update(of=('self',))
+        .select_related('candidate', 'job', 'job__campaign')
+        .get(pk=application.pk)
+    )
+    if locked_application.job_id != job.pk or job.posted_by_id != changed_by.pk:
+        raise Application.DoesNotExist
+    return locked_application
 
 
 def reapplication_error(candidate, job, *, now=None):
@@ -186,13 +238,16 @@ def create_application(serializer, candidate):
 @transaction.atomic
 def update_application_status(serializer, *, changed_by=None):
     """Persist one valid status transition and its timestamp exactly once."""
-    if changed_by is not None:
-        lock_account_for_write(changed_by)
-    application = (
-        Application.objects.select_for_update()
-        .select_related('candidate', 'job')
-        .get(pk=serializer.instance.pk)
-    )
+    if changed_by is not None and changed_by.is_employer:
+        application = _locked_recruiter_application(serializer.instance, changed_by=changed_by)
+    else:
+        if changed_by is not None:
+            lock_account_for_write(changed_by)
+        application = (
+            Application.objects.select_for_update()
+            .select_related('candidate', 'job', 'job__campaign')
+            .get(pk=serializer.instance.pk)
+        )
     serializer.instance = application
     current_status = application.status
     next_status = serializer.validated_data.get('status', current_status)
@@ -249,12 +304,7 @@ def update_application_status(serializer, *, changed_by=None):
 
 @transaction.atomic
 def mark_application_viewed(application, *, changed_by):
-    lock_account_for_write(changed_by)
-    application = (
-        Application.objects.select_for_update()
-        .select_related('candidate', 'job')
-        .get(pk=application.pk)
-    )
+    application = _locked_recruiter_application(application, changed_by=changed_by)
     candidate = application.candidate.__class__.objects.select_for_update().get(
         pk=application.candidate_id
     )
