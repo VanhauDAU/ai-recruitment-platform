@@ -12,4 +12,5 @@ export const adminEmployerVerificationKeys = {
     documentPublicId,
   ],
   companyUpdates: (params = {}) => [...root, 'company-updates', params],
+  companyUpdate: (publicId) => [...root, 'company-update', publicId],
 }

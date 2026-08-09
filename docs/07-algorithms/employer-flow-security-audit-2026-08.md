@@ -37,7 +37,7 @@ review DPA.
 | ID | Mức | Finding | Trạng thái | Phase |
 | --- | --- | --- | --- | --- |
 | ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
-| ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Mitigated ER-1B; lifecycle follow-up ER-4 | ER-1B/ER-4 |
+| ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester; admin có thể mở sai request cùng company | Safety closed ER-4; lifecycle follow-up | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Storage boundary in remediation; scanner open | ER-3 |
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
@@ -110,6 +110,22 @@ review DPA.
 - Một member chỉ có tối đa một active request; concurrent POST không tạo trùng.
 - `requested_by` bất biến qua update/resubmit/upload.
 
+**ER-4 safety evidence (2026-08-10)**
+
+- Merge `ddb8a47f` dùng canonical lock order
+  `Company → CompanyUpdateRequest → CompanyDocument` trên create/upload/review/
+  tax-refresh hiện hành; regression bao phủ concurrent ownership/status recheck.
+- Admin queue/detail truyền exact request public ID và gọi retrieve-by-ID. Panel
+  fail-closed nếu company, requester hoặc pending status không khớp; không còn
+  chọn `results[0]` từ danh sách lọc theo company.
+- Django admin cho Company, CompanyDocument và CompanyUpdateRequest là read-only
+  để không có mutation path bỏ qua service lock/authorization.
+- Backend 108/108, frontend 10/10; scoped Ruff/format, import-linter, layering,
+  Django/migration checks, lint và architecture đạt.
+- Finding sai-object/lock path được đóng ở safety slice. Revision immutable,
+  resubmit/withdraw/cancel và base-company conflict vẫn là residual lifecycle
+  ER-4, không được suy thành phase Verified.
+
 ### ER-F03 — Binary document IDOR
 
 **Evidence**
@@ -151,6 +167,15 @@ review DPA.
   check và migration drift đều đạt.
 - Residual risk: lifecycle revision/conflict/withdraw/cancel tiếp tục ở ER-4;
   quarantine, malware scan và retention của file tiếp tục ở ER-3.
+
+**ER-4 admin metadata evidence (2026-08-10)**
+
+- Admin list/retrieve chỉ cần `company_update.view` nhưng serializer che
+  filename, MIME, size, SHA, uploader email và source URL nếu actor thiếu
+  `account.sensitive.view`; tax code được mask theo cùng boundary.
+- Binary endpoint tiếp tục bắt buộc cả `company_update.view` và
+  `account.sensitive.view`, kiểm document thuộc exact request và stream private
+  với `Cache-Control: private, no-store`.
 
 ### ER-F04/ER-F05 — Upload trust boundary
 

@@ -7,6 +7,7 @@ export {
   getAdminEmployerVerifications,
   getAdminEmployerVerificationSummary,
   getAdminCompanyUpdateDocumentContent,
+  getAdminCompanyUpdateRequest,
   getAdminCompanyUpdateRequests,
   reviewAdminEmployerDocument,
   refreshAdminEmployerTaxLookup,

@@ -13,7 +13,7 @@ from apps.accounts.models import AdminPermission, AdminRole, Department, User
 from apps.accounts.services import assign_membership
 from apps.jobs.models import JobCategory
 
-from ..admin import CompanyUpdateRequestAdmin
+from ..admin import CompanyAdmin, CompanyDocumentAdmin, CompanyUpdateRequestAdmin
 from ..models import (
     Company,
     CompanyDocument,
@@ -771,10 +771,29 @@ class EmployerAccountVerificationTests(APITestCase):
             update_request=update_request,
             doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
             file_url='employers/private/company-update.pdf',
+            file_name='dang-ky-kinh-doanh.pdf',
+            mime_type='application/pdf',
+            file_size=2048,
+            sha256='a' * 64,
+        )
+        website_document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.first,
+            uploaded_by=self.first_user,
+            update_request=update_request,
+            doc_type=CompanyDocument.DocType.TRADE_NAME_PROOF,
+            file_url='https://evidence.example/private-reference',
+            file_name='Website chứng minh tên thương mại',
         )
         self.client.force_authenticate(reviewer)
 
         queue = self.client.get(reverse('admin-company-update-request-list'))
+        detail = self.client.get(
+            reverse(
+                'admin-company-update-request-detail',
+                kwargs={'public_id': update_request.public_id},
+            )
+        )
         content = self.client.get(
             reverse(
                 'admin-company-update-request-document-content',
@@ -786,20 +805,110 @@ class EmployerAccountVerificationTests(APITestCase):
         )
 
         self.assertEqual(queue.status_code, 200, queue.data)
+        self.assertEqual(detail.status_code, 200, detail.data)
         self.assertEqual(content.status_code, 403, content.data)
+        redacted_documents = {item['public_id']: item for item in detail.data['documents']}
+        redacted = redacted_documents[document.public_id]
+        self.assertEqual(redacted['file_name'], '')
+        self.assertEqual(redacted['mime_type'], '')
+        self.assertEqual(redacted['file_size'], 0)
+        self.assertEqual(redacted['sha256'], '')
+        self.assertEqual(redacted['uploaded_by_email'], '')
+        self.assertIsNone(redacted_documents[website_document.public_id]['source_url'])
 
-    def test_django_admin_keeps_existing_requester_read_only(self):
+        sensitive_permission, _ = AdminPermission.objects.get_or_create(
+            code='account.sensitive.view',
+            defaults={'module': 'account', 'label': 'Xem dữ liệu nhạy cảm'},
+        )
+        role.permissions.add(sensitive_permission)
+        bust_admin_permission_cache({reviewer.pk})
+        revealed_detail = self.client.get(
+            reverse(
+                'admin-company-update-request-detail',
+                kwargs={'public_id': update_request.public_id},
+            )
+        )
+
+        self.assertEqual(revealed_detail.status_code, 200, revealed_detail.data)
+        revealed_documents = {item['public_id']: item for item in revealed_detail.data['documents']}
+        revealed = revealed_documents[document.public_id]
+        self.assertEqual(revealed['file_name'], 'dang-ky-kinh-doanh.pdf')
+        self.assertEqual(revealed['mime_type'], 'application/pdf')
+        self.assertEqual(revealed['file_size'], 2048)
+        self.assertEqual(revealed['sha256'], 'a' * 64)
+        self.assertEqual(revealed['uploaded_by_email'], self.first_user.email)
+        self.assertEqual(
+            revealed_documents[website_document.public_id]['source_url'],
+            'https://evidence.example/private-reference',
+        )
+
+    def test_company_update_document_action_is_scoped_to_exact_request(self):
+        other_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.second_user,
+            changes={'address': 'Địa chỉ của thành viên khác'},
+        )
+        other_document = CompanyDocument.objects.create(
+            company=self.company,
+            recruiter=self.second,
+            uploaded_by=self.second_user,
+            update_request=other_request,
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            file_url='employers/private/other-company-update.pdf',
+        )
+        first_request = CompanyUpdateRequest.objects.create(
+            company=self.company,
+            requested_by=self.first_user,
+            changes={'address': 'Địa chỉ của thành viên đầu tiên'},
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-company-update-request-review-document',
+                kwargs={
+                    'public_id': first_request.public_id,
+                    'document_public_id': other_document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.APPROVED,
+                'reason': '',
+                'lock_version': first_request.lock_version,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 404, response.data)
+        other_document.refresh_from_db()
+        self.assertEqual(other_document.status, CompanyDocument.Status.PENDING)
+
+    def test_django_admin_workflow_models_are_read_only(self):
         update_request = CompanyUpdateRequest.objects.create(
             company=self.company,
             requested_by=self.first_user,
             changes={'address': 'Địa chỉ mới'},
             submitted_at=timezone.now(),
         )
-        model_admin = CompanyUpdateRequestAdmin(CompanyUpdateRequest, AdminSite())
+        model_admins = [
+            CompanyAdmin(Company, AdminSite()),
+            CompanyDocumentAdmin(CompanyDocument, AdminSite()),
+            CompanyUpdateRequestAdmin(CompanyUpdateRequest, AdminSite()),
+        ]
 
-        readonly = model_admin.get_readonly_fields(None, update_request)
-
-        self.assertIn('requested_by', readonly)
+        for model_admin in model_admins:
+            self.assertIsNone(model_admin.actions)
+            self.assertFalse(model_admin.has_add_permission(None))
+            self.assertFalse(model_admin.has_change_permission(None))
+            self.assertFalse(model_admin.has_delete_permission(None))
+            self.assertEqual(
+                set(model_admin.get_readonly_fields(None)),
+                {field.name for field in model_admin.model._meta.fields},
+            )
+        self.assertIn(
+            'requested_by',
+            model_admins[-1].get_readonly_fields(None, update_request),
+        )
 
     def test_document_content_infers_legacy_image_mime_for_inline_preview(self):
         self.client.force_authenticate(self.admin)

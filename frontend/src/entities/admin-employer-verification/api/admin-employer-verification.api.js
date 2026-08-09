@@ -86,6 +86,10 @@ export function getAdminCompanyUpdateRequests(params = {}, { signal } = {}) {
   return data(client.get('/admin/company-update-requests/', { params, signal }))
 }
 
+export function getAdminCompanyUpdateRequest(publicId, { signal } = {}) {
+  return data(client.get(`/admin/company-update-requests/${publicId}/`, { signal }))
+}
+
 export function reviewAdminCompanyUpdateDocument(requestPublicId, documentPublicId, payload) {
   return data(client.post(
     `/admin/company-update-requests/${requestPublicId}/documents/${documentPublicId}/review/`,

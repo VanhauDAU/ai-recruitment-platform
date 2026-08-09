@@ -1053,7 +1053,10 @@ paths:
   /api/admin/company-update-requests/{public_id}/:
     get:
       operationId: admin_company_update_requests_retrieve
-      description: Admin review workflow for staged company-profile changes.
+      description: >-
+        Retrieve the exact staged company-profile request by public ID.
+        Document metadata is redacted unless the actor also has
+        account.sensitive.view.
       parameters:
       - in: path
         name: public_id
@@ -1074,7 +1077,10 @@ paths:
   /api/admin/company-update-requests/{public_id}/documents/{document_public_id}/content/:
     get:
       operationId: admin_company_update_requests_documents_content_retrieve
-      description: Admin review workflow for staged company-profile changes.
+      description: >-
+        Stream one private document belonging to the exact update request.
+        Requires both company_update.view and account.sensitive.view; no storage
+        URL is returned.
       parameters:
       - in: path
         name: document_public_id
@@ -1093,10 +1099,15 @@ paths:
       responses:
         '200':
           content:
-            application/json:
+            application/octet-stream:
               schema:
-                $ref: '#/components/schemas/AdminCompanyUpdateRequest'
-          description: ''
+                type: string
+                format: binary
+          description: Authorized private document stream with no-store caching.
+        '403':
+          description: Missing company-update view or sensitive-data permission.
+        '404':
+          description: Request or document not found, or document is not attached to this request.
   /api/admin/company-update-requests/{public_id}/documents/{document_public_id}/review/:
     post:
       operationId: admin_company_update_requests_documents_review_create

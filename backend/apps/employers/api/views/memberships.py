@@ -18,6 +18,7 @@ from ...selectors import has_explicit_company_link
 from ...services import (
     get_or_create_recruiter,
     get_or_create_verification_case,
+    lock_company_update_request,
     record_verification_upload,
 )
 from ..serializers import RecruiterProfileSerializer
@@ -97,10 +98,16 @@ def _save_document(
     replace_document_public_id='',
 ):
     recruiter = recruiter or get_or_create_recruiter(request.user)
+    if update_request is not None and company is not None:
+        company, update_request = lock_company_update_request(
+            company_id=company.pk,
+            update_request_id=update_request.pk,
+        )
     if update_request is not None and (
         update_request.requested_by_id != request.user.id
         or company is None
         or update_request.company_id != company.id
+        or update_request.status != update_request.Status.PENDING
     ):
         raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
     if company is None and recruiter.company_id:

@@ -10,6 +10,7 @@ from apps.accounts.permissions import IsEmployer
 from common.media_storage import delete_local_media_url, save_image_upload, validate_image_upload
 
 from ...models import Company, CompanyImage, CompanyUpdateRequest
+from ...services import lock_company_update_request
 from ..serializers import CompanyImageSerializer, CompanySerializer
 from .onboarding import _require_owner
 
@@ -97,8 +98,9 @@ class CompanyImageUploadView(APIView):
         try:
             if update_request is not None:
                 with transaction.atomic():
-                    update_request = CompanyUpdateRequest.objects.select_for_update().get(
-                        pk=update_request.pk
+                    company, update_request = lock_company_update_request(
+                        company_id=company.pk,
+                        update_request_id=update_request.pk,
                     )
                     if update_request.status != CompanyUpdateRequest.Status.PENDING:
                         raise ValidationError(
@@ -177,8 +179,9 @@ class CompanyImageUploadView(APIView):
         field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
         if update_request is not None:
             with transaction.atomic():
-                update_request = CompanyUpdateRequest.objects.select_for_update().get(
-                    pk=update_request.pk
+                company, update_request = lock_company_update_request(
+                    company_id=company.pk,
+                    update_request_id=update_request.pk,
                 )
                 if update_request.status != CompanyUpdateRequest.Status.PENDING:
                     raise ValidationError(

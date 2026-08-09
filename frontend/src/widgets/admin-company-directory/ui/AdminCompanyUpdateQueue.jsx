@@ -97,18 +97,24 @@ export default function AdminCompanyUpdateQueue() {
         loading={query.isLoading}
         ordering={ordering}
         page={page}
-        onOpen={(row) => navigate(
-          `${adminPath(`/recruiters/${row.requested_by_public_id}`)}?tab=verification`,
-          {
-            state: {
-              origin: {
-                pathname: location.pathname,
-                search: location.search,
-                label: 'Yêu cầu cập nhật công ty',
+        onOpen={(row) => {
+          const detailParams = new URLSearchParams({
+            tab: 'verification',
+            company_update: row.public_id,
+          })
+          navigate(
+            `${adminPath(`/recruiters/${row.requested_by_public_id}`)}?${detailParams}`,
+            {
+              state: {
+                origin: {
+                  pathname: location.pathname,
+                  search: location.search,
+                  label: 'Yêu cầu cập nhật công ty',
+                },
               },
             },
-          },
-        )}
+          )
+        }}
         onChange={(pagination, _, sorter, extra) => {
           if (extra.action === 'sort') {
             const nextOrdering = sorter.order

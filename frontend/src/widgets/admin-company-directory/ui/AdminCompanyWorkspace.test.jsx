@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminCompanyWorkspace from './AdminCompanyWorkspace'
 
@@ -26,6 +26,11 @@ vi.mock('@/entities/admin-employer-verification', async (importOriginal) => ({
 }))
 vi.mock('@/entities/session', () => ({ useSession }))
 
+function LocationProbe() {
+  const location = useLocation()
+  return <output data-testid="location">{`${location.pathname}${location.search}`}</output>
+}
+
 function renderWorkspace({ permissions = [], initialEntry = '/admin/app/companies' } = {}) {
   useSession.mockReturnValue({
     user: {
@@ -43,7 +48,11 @@ function renderWorkspace({ permissions = [], initialEntry = '/admin/app/companie
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
-        <AdminCompanyWorkspace />
+        <Routes>
+          <Route path="/admin/app/companies" element={<AdminCompanyWorkspace />} />
+          <Route path="*" element={null} />
+        </Routes>
+        <LocationProbe />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -162,5 +171,11 @@ describe('AdminCompanyWorkspace', () => {
     expect(screen.getByText('Thay đổi pháp lý')).toBeInTheDocument()
     expect(screen.getByText('1 tài liệu · Giấy đăng ký doanh nghiệp')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Mở yêu cầu/ })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /Mở yêu cầu/ }))
+
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/admin/app/recruiters/usr_owner?tab=verification&company_update=cur_alpha',
+    )
   }, 10000)
 })

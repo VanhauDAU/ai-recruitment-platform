@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import {
   adminEmployerVerificationKeys,
   getAdminCompanyUpdateDocumentContent,
-  getAdminCompanyUpdateRequests,
+  getAdminCompanyUpdateRequest,
   refreshAdminCompanyUpdateTaxLookup,
   reviewAdminCompanyUpdateDocument,
   reviewAdminCompanyUpdateRequest,
@@ -44,6 +44,8 @@ function ReviewReasonModal({ state, loading, onCancel, onSubmit }) {
 
 export default function CompanyUpdateReviewPanel({
   companyPublicId,
+  requestPublicId,
+  requesterPublicId,
   canReview,
   canViewSensitive,
   onChanged,
@@ -52,13 +54,12 @@ export default function CompanyUpdateReviewPanel({
   const [reasonState, setReasonState] = useState(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [requestConflict, setRequestConflict] = useState('')
-  const params = { company: companyPublicId, status: 'pending' }
   const query = useQuery({
-    queryKey: adminEmployerVerificationKeys.companyUpdates(params),
-    queryFn: ({ signal }) => getAdminCompanyUpdateRequests(params, { signal }),
-    enabled: Boolean(companyPublicId),
+    queryKey: adminEmployerVerificationKeys.companyUpdate(requestPublicId),
+    queryFn: ({ signal }) => getAdminCompanyUpdateRequest(requestPublicId, { signal }),
+    enabled: Boolean(requestPublicId),
   })
-  const updateRequest = query.data?.results?.[0]
+  const updateRequest = query.data
 
   useEffect(() => {
     setRequestConflict('')
@@ -66,7 +67,7 @@ export default function CompanyUpdateReviewPanel({
 
   const refresh = async () => {
     await queryClient.invalidateQueries({
-      queryKey: adminEmployerVerificationKeys.companyUpdates(params),
+      queryKey: adminEmployerVerificationKeys.companyUpdate(requestPublicId),
       exact: true,
     })
     await onChanged?.()
@@ -148,12 +149,35 @@ export default function CompanyUpdateReviewPanel({
     }
   }
 
-  if (!companyPublicId) return null
+  if (!requestPublicId) return null
   if (query.isLoading) return <Card size="small" title="Yêu cầu sửa thông tin công ty"><Skeleton active /></Card>
   if (query.isError) {
     return <Alert showIcon type="error" title="Không tải được yêu cầu sửa công ty" description={getApiErrorMessage(query.error)} />
   }
   if (!updateRequest) return null
+  if (
+    (companyPublicId && updateRequest.company?.public_id !== companyPublicId)
+    || (requesterPublicId && updateRequest.requested_by_public_id !== requesterPublicId)
+  ) {
+    return (
+      <Alert
+        showIcon
+        type="error"
+        title="Yêu cầu cập nhật không khớp tài khoản đang mở"
+        description="Quay lại hàng đợi và mở đúng yêu cầu để tránh xử lý nhầm hồ sơ."
+      />
+    )
+  }
+  if (updateRequest.status !== 'pending') {
+    return (
+      <Alert
+        showIcon
+        type="info"
+        title="Yêu cầu cập nhật đã được xử lý"
+        description={`Trạng thái hiện tại: ${updateRequest.status_label || updateRequest.status}.`}
+      />
+    )
+  }
 
   const currentDocuments = (updateRequest.documents || []).filter((document) => document.is_current)
   const approvedDocumentTypes = new Set(
