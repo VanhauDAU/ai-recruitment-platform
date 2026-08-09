@@ -20,6 +20,12 @@ from .companies import (
 from .company_update_locks import lock_company_update_request
 from .document_preview import render_office_document_preview
 from .onboarding import accept_recruiter_dpa, phone_taken_by_other, send_phone_otp, verify_phone_otp
+from .phone_challenges import (
+    challenge_code_matches,
+    create_sms_phone_challenge,
+    enqueue_sms_phone_challenge,
+    normalize_vietnamese_mobile,
+)
 from .profiles import (
     CandidateDataBlocked,
     EmployerWorkspaceBlocked,
@@ -68,11 +74,14 @@ __all__ = [
     'accept_recruiter_dpa',
     'apply_update_request',
     'change_campaign_status',
+    'challenge_code_matches',
     'create_campaign',
     'create_initial_recruitment_need',
+    'create_sms_phone_challenge',
     'render_office_document_preview',
     'ensure_recruiter_candidate_data_access',
     'ensure_recruiter_job_workspace',
+    'enqueue_sms_phone_challenge',
     'confirm_verification_decision',
     'record_campaign_activity',
     'get_or_create_recruiter',
@@ -94,6 +103,7 @@ __all__ = [
     'record_verification_upload',
     'ensure_company_tax_code_can_be_verified',
     'mark_company_verified',
+    'normalize_vietnamese_mobile',
     'review_company_update_document',
     'recruiter_is_approved',
     'recruiter_requires_approved_verification',

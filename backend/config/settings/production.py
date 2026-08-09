@@ -4,6 +4,9 @@ Fail-fast: gom TẤT CẢ lỗi cấu hình rồi raise một lần — vận h�
 trong một lượt deploy thay vì gặp từng lỗi một.
 """
 
+from urllib.parse import urlparse
+
+from cryptography.fernet import Fernet
 from decouple import config
 from django.core.exceptions import ImproperlyConfigured
 
@@ -80,6 +83,46 @@ if not TRUSTED_PROXY_IPS:
 
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     _errors.append('EMAIL_HOST_USER / EMAIL_HOST_PASSWORD là bắt buộc ở production.')
+
+if EMPLOYER_SMS_OTP_ENABLED:
+    if EMPLOYER_SMS_PROVIDER != 'http':
+        _errors.append('EMPLOYER_SMS_PROVIDER production phải là http khi bật SMS.')
+    if not EMPLOYER_SMS_ENDPOINT_URL:
+        _errors.append('EMPLOYER_SMS_ENDPOINT_URL là bắt buộc khi bật SMS.')
+    elif urlparse(EMPLOYER_SMS_ENDPOINT_URL).scheme != 'https':
+        _errors.append('EMPLOYER_SMS_ENDPOINT_URL production phải dùng HTTPS.')
+    if not EMPLOYER_SMS_API_TOKEN:
+        _errors.append('EMPLOYER_SMS_API_TOKEN là bắt buộc khi bật SMS.')
+    if not EMPLOYER_SMS_SENDER:
+        _errors.append('EMPLOYER_SMS_SENDER là bắt buộc khi bật SMS.')
+    if not EMPLOYER_SMS_TEMPLATE_ID:
+        _errors.append('EMPLOYER_SMS_TEMPLATE_ID là bắt buộc khi bật SMS.')
+    if not EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY:
+        _errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY là bắt buộc khi bật SMS.')
+    else:
+        try:
+            Fernet(EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY.encode())
+        except (TypeError, ValueError):
+            _errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không hợp lệ.')
+        if EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY in {
+            SECRET_KEY,
+            SIMPLE_JWT.get('SIGNING_KEY', ''),
+            TWO_FACTOR_TOTP_ENCRYPTION_KEY,
+        } - {''}:
+            _errors.append(
+                'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY không được dùng lại secret hệ thống khác.'
+            )
+    if len(EMPLOYER_SMS_CHALLENGE_HMAC_KEY) < 32:
+        _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY phải có ít nhất 32 ký tự.')
+    elif EMPLOYER_SMS_CHALLENGE_HMAC_KEY in {
+        SECRET_KEY,
+        SIMPLE_JWT.get('SIGNING_KEY', ''),
+        TWO_FACTOR_TOTP_ENCRYPTION_KEY,
+        EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY,
+    } - {''}:
+        _errors.append('EMPLOYER_SMS_CHALLENGE_HMAC_KEY không được dùng lại secret hệ thống khác.')
+    if EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS <= 0 or EMPLOYER_SMS_READ_TIMEOUT_SECONDS <= 0:
+        _errors.append('Timeout SMS phải lớn hơn 0.')
 
 if not R2_ENABLED:
     _errors.append(

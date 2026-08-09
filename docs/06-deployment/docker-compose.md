@@ -41,9 +41,10 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
 - `frontend_node_modules` được giữ trong named volume. Entrypoint chỉ chạy
   `npm ci` khi `package-lock.json` thay đổi hoặc volume còn trống, nên restart
   frontend không còn cài lại toàn bộ dependency.
-- **Queue Celery**: settings route task sang 4 queue (`default`, `auth-email`,
-  `cv-export`, `speech-artifacts`). Worker trong compose khai đủ cả bốn; bỏ
-  queue tương ứng thì email, export CV hoặc upload MP3 TTS có thể không chạy.
+- **Queue Celery**: settings route task sang 5 queue (`default`, `auth-email`,
+  `auth-sms`, `cv-export`, `speech-artifacts`). Worker trong compose khai đủ cả
+  năm; bỏ queue tương ứng thì email, SMS, export CV hoặc upload MP3 TTS có thể
+  không chạy.
 - **`CELERY_BROKER_URL` được override tường minh** trong compose: settings chỉ
   fallback về `REDIS_URL` khi biến vắng mặt, mà `.env` lại set sẵn `127.0.0.1`.
 
