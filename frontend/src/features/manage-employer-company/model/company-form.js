@@ -56,6 +56,15 @@ export function buildCompanyChanges(values, company, { pendingChanges = {} } = {
   }))
 }
 
+export function hasCompanyFormValueChanges(values = {}, initialValues = {}) {
+  return COMPANY_FORM_FIELDS.some((field) => {
+    const initial = initialValues[field]
+    const current = values[field] ?? (Array.isArray(initial) ? [] : '')
+    const previous = initial ?? (Array.isArray(current) ? [] : '')
+    return JSON.stringify(current) !== JSON.stringify(previous)
+  })
+}
+
 export function validateCompanyImage(file) {
   const allowed = ['image/jpeg', 'image/png', 'image/webp']
   if (!allowed.includes(file.type)) return 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'
