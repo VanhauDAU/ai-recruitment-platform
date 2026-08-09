@@ -7,10 +7,13 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
+> Cập nhật lần cuối: 2026-08-10 — ER-1 verified sau khi ER-1A, ER-1B và ER-1C
+> đều đạt quality gate và có remediation evidence.
+
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
-| ER-1 | Empty/error state, document IDOR và job approval guard | 🟡 ER-1B/ER-1C đã verified |
+| ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ⬜ Chưa làm |
 | ER-3 | Upload session, quarantine, malware scan và retention | ⬜ Chưa làm |
 | ER-4 | Company update request V2, revision và conflict handling | ⬜ Chưa làm |
@@ -38,6 +41,10 @@ Decision log:
 <details>
 <summary>Ghi chú ER-1</summary>
 
+- **ER-1A verified:** thẻ cá nhân chỉ đọc `scope=mine`, lịch sử công ty đọc
+  `scope=company`; không còn ngày/status giả hoặc request member khác trong thẻ
+  “Yêu cầu của tôi”. Lỗi initial/background query hiện retry và khóa
+  create/edit/upload/delete/submit cho tới khi cả hai scope đồng bộ.
 - **ER-1C verified:** backend chặn duyệt tin nếu verification case chưa
   `approved` đúng company hoặc DPA chưa hợp lệ; canonical và compatibility API
   cùng dùng một guard và recompute dưới transaction lock.
@@ -51,7 +58,11 @@ Decision log:
   Ruff/format/import-linter/Django check/migration drift đạt.
 - Evidence ER-1C: 20 moderation/query-budget tests + 1 regression DPA/duplicate
   blocker + 4 frontend tests; Ruff/format/import-linter/migration drift đạt.
-- ER-1 chỉ chuyển hoàn tất sau khi ER-1A empty/error state được verified.
+- Evidence ER-1A: commit `828a8d0e`; 24/24 unit/API/query-key regression, 9/9
+  E2E của ba workflow company settings trên desktop/tablet/mobile; Oxlint không
+  lỗi, architecture, production build, Markdown links và whitespace gate đạt.
+- ER-1 hoàn tất ở mức `Verified`; release/deploy smoke và audit production vẫn
+  thuộc rollout ER-8.
 
 </details>
 

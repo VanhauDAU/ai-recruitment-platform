@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Fixed — Employer request state ER-1A
+
+- Thẻ “Yêu cầu của tôi” nay chỉ đọc `scope=mine`, tách khỏi lịch sử
+  `scope=company`; member mới không còn thấy request hoặc ngày của member khác
+  như dữ liệu cá nhân. Ngày chỉ lấy từ `submitted_at` hợp lệ, không fallback
+  sang `created_at`/`updated_at` và không hiển thị placeholder giả.
+- Tách rõ loading/error/empty/has-data. Lỗi tải lần đầu hoặc refresh nền đều
+  hiện retry và khóa fail-closed toàn bộ thao tác tạo, sửa, upload, xóa media và
+  submit cho đến khi cả hai scope đồng bộ thành công.
+- Lịch sử công ty chỉ render requester summary và nhãn field theo allowlist;
+  không render raw change value, storage key, preview hoặc URL file nhạy cảm.
+
 #### Security — Employer document access ER-1B
 
 - Tách quyền xem metadata và quyền mở binary giấy tờ: requester/uploader và

@@ -36,7 +36,7 @@ review DPA.
 
 | ID | Mức | Finding | Trạng thái | Phase |
 | --- | --- | --- | --- | --- |
-| ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Open | ER-1A |
+| ER-F01 | Cao | Thẻ cá nhân dùng company-wide request, hiện ngày giả và che fetch error | Closed ER-1A | ER-1A |
 | ER-F02 | Cao | Shared pending request có thể bị member khác upsert/đổi requester | Mitigated ER-1B; lifecycle follow-up ER-4 | ER-1B/ER-4 |
 | ER-F03 | Nghiêm trọng | Document queryset/content permission cho member rộng hơn binary-file policy | Closed ER-1B | ER-1B |
 | ER-F04 | Cao | Upload đi thẳng storage, thiếu quarantine/malware scan/fail-closed submit | Open | ER-3 |
@@ -72,6 +72,24 @@ review DPA.
   hiện requester.
 - 500 → alert/retry; không có create/edit cho tới khi retry thành công.
 - Không render fallback `updated_at`, `created_at` hoặc ngày giả.
+
+**ER-1A evidence (2026-08-10)**
+
+- Fixed in local branch `fix/employer-request-empty-state`, code commit
+  `828a8d0e`.
+- Thẻ cá nhân và lịch sử dùng hai query key actor/company độc lập; request của
+  member khác không thể trở thành status, ngày hoặc nút sửa trong thẻ cá nhân.
+- Empty state không có ngày/status giả; ngày null hoặc không hợp lệ bị bỏ qua và
+  chỉ `submitted_at` được phép hiển thị.
+- Lỗi initial fetch hoặc background refresh hiện retry và fail-closed toàn bộ
+  form, upload, media delete và submit cho tới khi cả hai scope thành công.
+- Lịch sử chỉ render `requested_by_summary.display_name` và nhãn field theo
+  allowlist, không render raw value, storage reference, preview hoặc file URL.
+- Targeted evidence: 24/24 unit/API/query-key regression và 9/9 E2E cho ba
+  workflow trên desktop/tablet/mobile; Oxlint không lỗi, architecture và build
+  đều đạt.
+- Residual lifecycle edit/resubmit/withdraw và conflict handling thuộc ER-4;
+  backend actor/document authorization đã được đóng ở ER-1B.
 
 ### ER-F02 — Shared pending ownership overwrite
 

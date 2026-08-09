@@ -22,9 +22,10 @@ function EditorField(props) {
   return <RichTextEditor {...props} error={status === 'error'} />
 }
 
-function uploadProps(setFile) {
+function uploadProps(setFile, disabled) {
   return {
     maxCount: 1,
+    disabled,
     accept: '.jpg,.jpeg,.png,.pdf',
     beforeUpload: (file) => { setFile(file); return false },
     onRemove: () => setFile(null),
@@ -240,6 +241,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   function submitCompanyForm(values) {
+    if (disabled || saveMutation.isPending) return
     if (isSensitive) {
       setPendingSubmitValues(values)
       setSensitiveModalOpen(true)
@@ -249,6 +251,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   function openRequestedProofUpload() {
+    if (disabled || saveMutation.isPending) return
     if (replacementProofTypes.has('trade_name_proof')) {
       openTradeProofModal()
       return
@@ -258,6 +261,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   async function confirmSensitiveSubmit() {
+    if (disabled || saveMutation.isPending) return
     try {
       const proofValues = await form.validateFields(['update_reason', 'proof_type'])
       saveMutation.mutate({ ...pendingSubmitValues, ...proofValues })
@@ -267,6 +271,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   function openTradeProofModal() {
+    if (disabled || saveMutation.isPending) return
     const proof = currentTradeProof
     setTradeProofSource(proof?.source_type || 'file')
     setTradeProofDraftFile(pendingTradeProof?.source_type === 'file' ? pendingTradeProof.file : null)
@@ -275,6 +280,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   }
 
   function saveTradeProof() {
+    if (disabled || saveMutation.isPending) return
     if (tradeProofSource === 'file') {
       const error = validateTradeNameProof(tradeProofDraftFile)
       if (error) {
@@ -337,7 +343,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
                   {document.review_note || 'Vui lòng tải lên bản mới.'}
                 </p>
               ))}
-              <Button type="primary" aria-label="Chọn giấy tờ thay thế" icon={<UploadOutlined />} onClick={openRequestedProofUpload}>
+              <Button type="primary" disabled={disabled || saveMutation.isPending} aria-label="Chọn giấy tờ thay thế" icon={<UploadOutlined />} onClick={openRequestedProofUpload}>
                 Chọn giấy tờ thay thế
               </Button>
             </div>
@@ -388,9 +394,9 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
                   <a href={currentTradeProof.file_url} target="_blank" rel="noreferrer" className="company-setting-link" title={currentTradeProof.source_type === 'website' ? currentTradeProof.file_url : 'Mở giấy tờ thương mại'}>
                     <LinkOutlined /> {currentTradeProof.source_type === 'website' ? currentTradeProof.file_url : 'Giấy tờ thương mại'}
                   </a>
-                  <Button type="link" size="small" icon={<EditOutlined />} onClick={openTradeProofModal}>Chỉnh sửa</Button>
+                  <Button type="link" size="small" disabled={disabled || saveMutation.isPending} icon={<EditOutlined />} onClick={openTradeProofModal}>Chỉnh sửa</Button>
                 </div>
-              ) : <Button type="link" icon={<PlusOutlined />} className="company-trade-proof__add" onClick={openTradeProofModal}>Thêm giấy tờ chứng minh Tên thương mại</Button>}
+              ) : <Button type="link" disabled={disabled || saveMutation.isPending} icon={<PlusOutlined />} className="company-trade-proof__add" onClick={openTradeProofModal}>Thêm giấy tờ chứng minh Tên thương mại</Button>}
             </Form.Item>
           </Col>}
         </Row>
@@ -428,16 +434,16 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         <h2 className="company-form-section__title">Hình ảnh công ty</h2>
         <p className="company-form-section__description">Tối đa 10 ảnh JPG, PNG hoặc WebP; khuyến nghị 1200×800 px, tỉ lệ 3:2.</p>
         <div className="company-gallery">
-          {visibleCompanyImages.map((image) => <div key={image.id} className="company-gallery__item"><Image src={image.image_url} alt="Ảnh công ty" />{canManageMedia && <Button danger shape="circle" icon={<DeleteOutlined />} aria-label="Xóa ảnh" onClick={() => stageExistingImageDeletion(image.id)} />}</div>)}
+          {visibleCompanyImages.map((image) => <div key={image.id} className="company-gallery__item"><Image src={image.image_url} alt="Ảnh công ty" />{canManageMedia && <Button danger shape="circle" disabled={mediaDisabled} icon={<DeleteOutlined />} aria-label="Xóa ảnh" onClick={() => stageExistingImageDeletion(image.id)} />}</div>)}
           {pendingGalleryUrls.map((imageUrl, index) => <div key={imageUrl} className="company-gallery__item company-gallery__item--pending"><Image src={imageUrl} alt={`Ảnh công ty đang chờ duyệt ${index + 1}`} /><span className="company-gallery__pending-label">Chờ duyệt</span></div>)}
-          {galleryFiles.map((file, index) => <div key={`${file.name}-${index}`} className="company-gallery__item"><Image src={URL.createObjectURL(file)} alt={file.name} /><Button danger shape="circle" icon={<DeleteOutlined />} aria-label={`Xóa ${file.name}`} onClick={() => setGalleryFiles((files) => files.filter((_, itemIndex) => itemIndex !== index))} /><span title={file.name}>{file.name}</span><small>{(file.size / 1024 / 1024).toFixed(2)} MB</small></div>)}
+          {galleryFiles.map((file, index) => <div key={`${file.name}-${index}`} className="company-gallery__item"><Image src={URL.createObjectURL(file)} alt={file.name} /><Button danger shape="circle" disabled={mediaDisabled} icon={<DeleteOutlined />} aria-label={`Xóa ${file.name}`} onClick={() => setGalleryFiles((files) => files.filter((_, itemIndex) => itemIndex !== index))} /><span title={file.name}>{file.name}</span><small>{(file.size / 1024 / 1024).toFixed(2)} MB</small></div>)}
           {canManageMedia && galleryItemCount < 10 && <Upload disabled={mediaDisabled} multiple showUploadList={false} accept=".jpg,.jpeg,.png,.webp" beforeUpload={(file) => addGalleryFiles([file])}><button type="button" disabled={mediaDisabled} className="company-gallery__add"><PlusOutlined /><span>Thêm ảnh</span></button></Upload>}
         </div>
       </section>
 
       <div className="company-form-actions">
         {onCancel && <Button size="large" onClick={onCancel}>Hủy</Button>}
-        <Button type="primary" htmlType="submit" size="large" icon={<PlusOutlined />} loading={saveMutation.isPending}>{isEdit ? 'Gửi yêu cầu cập nhật' : 'Lưu và liên kết công ty'}</Button>
+        <Button type="primary" htmlType="submit" size="large" disabled={disabled} icon={<PlusOutlined />} loading={saveMutation.isPending}>{isEdit ? 'Gửi yêu cầu cập nhật' : 'Lưu và liên kết công ty'}</Button>
       </div>
 
       <Modal
@@ -447,7 +453,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         footer={(
           <>
             <Button onClick={() => setSensitiveModalOpen(false)}>Hủy</Button>
-            <Button type="primary" loading={saveMutation.isPending} onClick={confirmSensitiveSubmit}>
+            <Button type="primary" disabled={disabled} loading={saveMutation.isPending} onClick={confirmSensitiveSubmit}>
               Gửi yêu cầu duyệt
             </Button>
           </>
@@ -483,7 +489,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
             <Radio value="business_registration">Giấy đăng ký doanh nghiệp hoặc giấy tờ tương đương</Radio>
             {proofType === 'business_registration' && (
               <div className="company-proof-upload">
-                <Upload {...uploadProps(setBusinessProofFile)}><Button aria-label="Chọn giấy đăng ký doanh nghiệp" icon={<UploadOutlined />}>Chọn giấy đăng ký doanh nghiệp</Button></Upload>
+                <Upload {...uploadProps(setBusinessProofFile, disabled || saveMutation.isPending)}><Button aria-label="Chọn giấy đăng ký doanh nghiệp" icon={<UploadOutlined />}>Chọn giấy đăng ký doanh nghiệp</Button></Upload>
                 {!businessProofFile && retainedProofTypes.has('business_registration') && <small>Đang giữ giấy tờ đã nộp ở lần trước.</small>}
                 {replacementProofTypes.has('business_registration') && !businessProofFile && <small className="company-proof-upload__required">Cần chọn tệp mới theo yêu cầu của quản trị viên.</small>}
               </div>
@@ -491,8 +497,8 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
             <Radio value="authorization_and_id">Giấy ủy quyền và giấy tờ định danh</Radio>
             {proofType === 'authorization_and_id' && (
               <div className="company-proof-upload company-proof-upload--double">
-                <Upload {...uploadProps(setAuthorizationFile)}><Button aria-label="Chọn giấy ủy quyền" icon={<UploadOutlined />}>Chọn giấy ủy quyền</Button></Upload>
-                <Upload {...uploadProps(setIdentityFile)}><Button aria-label="Chọn CCCD hoặc Hộ chiếu" icon={<UploadOutlined />}>Chọn CCCD / Hộ chiếu</Button></Upload>
+                <Upload {...uploadProps(setAuthorizationFile, disabled || saveMutation.isPending)}><Button aria-label="Chọn giấy ủy quyền" icon={<UploadOutlined />}>Chọn giấy ủy quyền</Button></Upload>
+                <Upload {...uploadProps(setIdentityFile, disabled || saveMutation.isPending)}><Button aria-label="Chọn CCCD hoặc Hộ chiếu" icon={<UploadOutlined />}>Chọn CCCD / Hộ chiếu</Button></Upload>
                 {!authorizationFile && !identityFile && retainedProofTypes.has('authorization_letter') && retainedProofTypes.has('identity_document') && <small>Đang giữ bộ giấy tờ đã nộp ở lần trước.</small>}
                 {(replacementProofTypes.has('authorization_letter') || replacementProofTypes.has('identity_document')) && <small className="company-proof-upload__required">Chọn tệp mới cho từng giấy tờ được yêu cầu bổ sung.</small>}
               </div>
@@ -505,7 +511,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
         open={isTradeProofModalOpen}
         title="Giấy tờ chứng minh Tên thương mại"
         onCancel={() => setTradeProofModalOpen(false)}
-        footer={<><Button onClick={() => setTradeProofModalOpen(false)}>Hủy</Button><Button type="primary" onClick={saveTradeProof}>Lưu</Button></>}
+        footer={<><Button onClick={() => setTradeProofModalOpen(false)}>Hủy</Button><Button type="primary" disabled={disabled || saveMutation.isPending} onClick={saveTradeProof}>Lưu</Button></>}
         destroyOnHidden
       >
         <Radio.Group value={tradeProofSource} onChange={(event) => setTradeProofSource(event.target.value)} className="company-trade-proof-modal__sources">
@@ -516,6 +522,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           <div className="company-trade-proof-modal__field">
             <Upload
               maxCount={1}
+              disabled={disabled || saveMutation.isPending}
               accept=".jpeg,.jpg,.png,.pdf"
               beforeUpload={(file) => {
                 const error = validateTradeNameProof(file)

@@ -6,6 +6,7 @@ import {
   createEmployerCompany,
   getEmployerCompanyDocumentContent,
   getEmployerCompanyDocuments,
+  getEmployerCompanyUpdateRequests,
   getEmployerIndustries,
   getEmployerProfile,
   getEmployerRecruitmentNeed,
@@ -174,5 +175,33 @@ describe('employer profile API', () => {
     await expect(getEmployerCompanyDocumentContent({ file_url: '/employer/company/documents/12/content/' })).resolves.toBe(content)
 
     expect(get).toHaveBeenCalledWith('/employer/company/documents/12/content/', { responseType: 'blob' })
+  })
+
+  it('loads actor and company update-request scopes explicitly', async () => {
+    get
+      .mockResolvedValueOnce({ data: { results: [{ public_id: 'cur_mine' }] } })
+      .mockResolvedValueOnce({ data: [{ public_id: 'cur_company' }] })
+
+    await expect(getEmployerCompanyUpdateRequests({ scope: 'mine' })).resolves.toEqual([
+      { public_id: 'cur_mine' },
+    ])
+    await expect(getEmployerCompanyUpdateRequests({ scope: 'company' })).resolves.toEqual([
+      { public_id: 'cur_company' },
+    ])
+
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/company/update-requests/', {
+      params: { scope: 'mine' },
+    })
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/company/update-requests/', {
+      params: { scope: 'company' },
+    })
+  })
+
+  it('keeps the unscoped update-request request compatible', async () => {
+    get.mockResolvedValue({ data: [] })
+
+    await expect(getEmployerCompanyUpdateRequests()).resolves.toEqual([])
+
+    expect(get).toHaveBeenCalledWith('/employer/company/update-requests/')
   })
 })

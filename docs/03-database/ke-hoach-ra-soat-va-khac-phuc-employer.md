@@ -406,11 +406,14 @@ Không ghi hành vi dự kiến vào `CHANGELOG.md` trong PR docs-only.
 
 ### ER-1 — Vá lỗi và lỗ hổng P0
 
+**Trạng thái:** `Verified` (2026-08-10; ER-1A, ER-1B và ER-1C đều đạt gate)
+
 Các nhánh sau có thể chạy song song sau ER-0:
 
 #### ER-1A — Empty/error/personal request state
 
 **Nhánh:** `fix/employer-request-empty-state`
+**Trạng thái:** `Verified` (2026-08-10)
 
 - Tách loading, error, empty và has-data state.
 - Empty chỉ hiện nút tạo; không placeholder ngày/status.
@@ -418,6 +421,14 @@ Các nhánh sau có thể chạy song song sau ER-0:
 - Thẻ chính dùng `scope=mine`; history dùng `scope=company`.
 - Hiển thị ngày `submitted_at`.
 - Unit/regression/E2E cho member mới vừa chọn company.
+
+Evidence: commit `828a8d0e`; 24/24 unit/API/query-key regression đạt; 9/9 E2E
+cho ba workflow company settings trên desktop/tablet/mobile đạt; Oxlint không có
+lỗi, architecture và production build đều xanh. `scope=mine` và
+`scope=company` có query key độc lập nhưng cùng root để invalidate; lỗi lần đầu
+hoặc background refresh khóa toàn bộ write/upload/delete/submit cho tới khi cả
+hai query thành công. Markdown link và whitespace gate đạt sau cập nhật tài
+liệu.
 
 #### ER-1B — Document object access
 
@@ -439,10 +450,17 @@ ER-3.
 #### ER-1C — Admin job approval recheck
 
 **Nhánh:** `fix/admin-job-approval-guard`
+**Trạng thái:** `Verified` (2026-08-10)
 
 - Backend recompute blocker trong transaction.
 - Không tin blocker do frontend gửi lên.
 - Test race approve với revoke/account/DPA transition.
+
+Evidence: commit `7e04f6a3`; canonical và compatibility path dùng chung
+authoritative guard, recompute verification/DPA/campaign dưới transaction lock;
+20 moderation/query-budget test, một DPA/duplicate regression và bốn frontend
+blocker test đạt; Ruff/format/import-linter/migration drift đều xanh. Residual
+hold sau revoke thuộc ER-5.
 
 **Release:** ER-1 là safety fix, không đặt sau feature flag có thể bypass.
 
@@ -816,13 +834,13 @@ Quy tắc:
 - Cập nhật tiến độ ngay trong PR hoàn tất phase, không dồn cuối epic.
 - Dòng “Cập nhật lần cuối” phải đổi cùng commit cập nhật tiến độ.
 
-Trạng thái khởi tạo của kế hoạch:
+Trạng thái thực hiện hiện tại:
 
-| ID | Trạng thái ban đầu | Ghi chú |
+| ID | Trạng thái | Ghi chú |
 | --- | --- | --- |
 | ER-0 | Verified | Đã khóa quyết định; Markdown link và whitespace gate đạt |
-| ER-1 | Awaiting execution | ER-0 gate đã đạt; tách ba nhánh safety fix |
-| ER-2 | Planned | Phụ thuộc ER-1 |
+| ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate |
+| ER-2 | Planned | Gate ER-1 đã đạt; sẵn sàng triển khai |
 | ER-3 | Planned | Phụ thuộc readiness contract |
 | ER-4 | Planned | Phụ thuộc upload và concurrency decisions |
 | ER-5 | Planned | Phụ thuộc readiness/upload |
