@@ -23,6 +23,7 @@ from .profiles import (
     ensure_recruiter_candidate_data_access,
     get_or_create_recruiter,
     recruiter_candidate_data_access_allowed,
+    recruiter_job_approval_state,
     recruiter_job_posting_entitlement,
     recruiter_posting_readiness,
 )
@@ -69,6 +70,7 @@ __all__ = [
     'record_campaign_activity',
     'get_or_create_recruiter',
     'recruiter_candidate_data_access_allowed',
+    'recruiter_job_approval_state',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
     'reconcile_completed_verification_cases',

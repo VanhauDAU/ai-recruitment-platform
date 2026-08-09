@@ -1,9 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from threading import Barrier
+from threading import Barrier, Event
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.db import close_old_connections
+from django.db import close_old_connections, transaction
 from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -13,7 +14,13 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import AdminPermission, AdminRole, Department
 from apps.accounts.services import assign_membership
-from apps.employers.models import Company
+from apps.employers.models import (
+    Company,
+    EmployerVerificationCase,
+    RecruiterProfile,
+    RecruitmentCampaign,
+)
+from apps.employers.services import recruiter_job_approval_state
 
 from ..models import (
     Job,
@@ -23,6 +30,20 @@ from ..models import (
     JobStatusHistory,
 )
 from ..services import approve_job, reject_job
+
+
+def make_approvable_recruiter(*, employer, company):
+    recruiter = RecruiterProfile.objects.create(
+        user=employer,
+        company=company,
+        dpa_accepted_at=timezone.now(),
+    )
+    verification_case = EmployerVerificationCase.objects.create(
+        recruiter=recruiter,
+        company=company,
+        status=EmployerVerificationCase.Status.APPROVED,
+    )
+    return recruiter, verification_case
 
 
 class JobModerationFixture:
@@ -78,6 +99,11 @@ class JobModerationFixture:
         assign_membership(self.admin, role, actor=self.admin)
         assign_membership(self.restricted_admin, restricted_role, actor=self.admin)
         company = Company.objects.create(company_name='Moderation Co', created_by=self.employer)
+        self.company = company
+        self.recruiter, self.verification_case = make_approvable_recruiter(
+            employer=self.employer,
+            company=company,
+        )
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=company,
@@ -166,7 +192,11 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
             {'q': 'Backend', 'status': 'pending', 'ordering': 'title'},
         )
         summary = self.client.get(reverse('admin-job-moderation-summary'))
-        detail = self.client.get(self.detail_url())
+        with patch(
+            'apps.jobs.services.moderation.recruiter_job_approval_state',
+            wraps=recruiter_job_approval_state,
+        ) as approval_state:
+            detail = self.client.get(self.detail_url())
 
         self.assertEqual(listing.status_code, status.HTTP_200_OK, listing.data)
         self.assertEqual(listing.data['count'], 1)
@@ -180,6 +210,103 @@ class JobModerationApiTests(JobModerationFixture, APITestCase):
         self.assertIn('approve', detail.data['state_actions'])
         self.assertTrue(detail.data['review_token'])
         self.assertIn('moderation_events', detail.data)
+        self.assertEqual(approval_state.call_count, 1)
+
+    def test_unapproved_verification_blocks_canonical_and_compatibility_approval(self):
+        self.verification_case.status = EmployerVerificationCase.Status.IN_REVIEW
+        self.verification_case.save(update_fields=['status', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+
+        detail = self.client.get(self.detail_url())
+        canonical = self.client.post(
+            self.decision_url(),
+            {'action': 'approve', 'review_token': detail.data['review_token']},
+            format='json',
+        )
+        compatibility = self.client.post(
+            self.review_url(),
+            {'action': 'approve'},
+            format='json',
+        )
+
+        self.assertNotIn('approve', detail.data['state_actions'])
+        self.assertEqual(
+            [item['code'] for item in detail.data['approve_blockers']],
+            ['verification_required'],
+        )
+        for response in (canonical, compatibility):
+            with self.subTest(path=response.request['PATH_INFO']):
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+                self.assertEqual(response.data['code'], 'JOB_APPROVAL_BLOCKED')
+                self.assertEqual(
+                    [item['code'] for item in response.data['blocked_reasons']],
+                    ['verification_required'],
+                )
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.PENDING)
+        self.assertFalse(self.job.moderation_events.exists())
+
+    def test_missing_dpa_and_company_mismatch_are_fail_closed(self):
+        self.recruiter.dpa_accepted_at = None
+        self.recruiter.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        other_company = Company.objects.create(
+            company_name='Other Moderation Co',
+            created_by=self.employer,
+        )
+        self.verification_case.company = other_company
+        self.verification_case.save(update_fields=['company', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+
+        detail = self.client.get(self.detail_url())
+
+        self.assertNotIn('approve', detail.data['state_actions'])
+        self.assertEqual(
+            [item['code'] for item in detail.data['approve_blockers']],
+            ['verification_required', 'dpa_outdated'],
+        )
+        blocker_codes = [item['code'] for item in detail.data['blocked_reasons']]
+        self.assertEqual(len(blocker_codes), len(set(blocker_codes)))
+
+        response = self.client.post(
+            self.decision_url(),
+            {'action': 'approve', 'review_token': detail.data['review_token']},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertEqual(response.data['code'], 'JOB_APPROVAL_BLOCKED')
+        error_codes = [item['code'] for item in response.data['blocked_reasons']]
+        self.assertEqual(error_codes, ['verification_required', 'dpa_outdated'])
+        self.assertEqual(len(error_codes), len(set(error_codes)))
+
+    def test_campaign_change_after_preview_is_rechecked_without_relying_on_job_token(self):
+        campaign = RecruitmentCampaign.objects.create(
+            owner=self.recruiter,
+            company=self.company,
+            name='Backend hiring',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        self.job.campaign = campaign
+        self.job.save(update_fields=['campaign', 'updated_at'])
+        self.client.force_authenticate(self.admin)
+        detail = self.client.get(self.detail_url())
+        campaign.status = RecruitmentCampaign.Status.PAUSED
+        campaign.save(update_fields=['status', 'updated_at'])
+
+        response = self.client.post(
+            self.decision_url(),
+            {'action': 'approve', 'review_token': detail.data['review_token']},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
+        self.assertEqual(response.data['code'], 'JOB_APPROVAL_BLOCKED')
+        self.assertIn(
+            'campaign_inactive',
+            [item['code'] for item in response.data['blocked_reasons']],
+        )
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.PENDING)
 
     def test_decision_endpoint_rejects_a_stale_preview(self):
         self.client.force_authenticate(self.admin)
@@ -427,6 +554,10 @@ class JobModerationConcurrencyTests(TransactionTestCase):
             company_name='Concurrent Moderation Co',
             created_by=self.employer,
         )
+        self.recruiter, self.verification_case = make_approvable_recruiter(
+            employer=self.employer,
+            company=company,
+        )
         self.job = Job.objects.create(
             posted_by=self.employer,
             company=company,
@@ -459,3 +590,62 @@ class JobModerationConcurrencyTests(TransactionTestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, Job.Status.ACTIVE)
         self.assertEqual(self.job.status_history.count(), 1)
+
+    def test_approval_waits_for_verification_transition_and_rechecks_locked_state(self):
+        case_locked = Event()
+        allow_transition_commit = Event()
+        approval_recheck_started = Event()
+
+        def transition_verification():
+            close_old_connections()
+            try:
+                with transaction.atomic():
+                    verification_case = EmployerVerificationCase.objects.select_for_update().get(
+                        pk=self.verification_case.pk
+                    )
+                    verification_case.status = EmployerVerificationCase.Status.CHANGES_REQUESTED
+                    verification_case.save(update_fields=['status', 'updated_at'])
+                    case_locked.set()
+                    if not allow_transition_commit.wait(timeout=5):
+                        raise AssertionError('Timed out waiting to commit verification transition.')
+            finally:
+                close_old_connections()
+
+        def approve_after_transition_starts():
+            close_old_connections()
+            try:
+                stale_job = Job.objects.get(pk=self.job.pk)
+                try:
+                    approve_job(job=stale_job, user=self.admin)
+                except ValidationError as error:
+                    return error.detail
+                return None
+            finally:
+                close_old_connections()
+
+        def signal_recheck(*args, **kwargs):
+            approval_recheck_started.set()
+            return recruiter_job_approval_state(*args, **kwargs)
+
+        with patch(
+            'apps.jobs.services.moderation.recruiter_job_approval_state',
+            side_effect=signal_recheck,
+        ):
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                transition = pool.submit(transition_verification)
+                self.assertTrue(case_locked.wait(timeout=5))
+                approval = pool.submit(approve_after_transition_starts)
+                self.assertTrue(approval_recheck_started.wait(timeout=5))
+                allow_transition_commit.set()
+                transition.result(timeout=5)
+                approval_error = approval.result(timeout=5)
+
+        self.assertIsNotNone(approval_error)
+        self.assertEqual(str(approval_error['code']), 'JOB_APPROVAL_BLOCKED')
+        self.assertEqual(
+            [str(item['code']) for item in approval_error['blocked_reasons']],
+            ['verification_required'],
+        )
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.status, Job.Status.PENDING)
+        self.assertFalse(self.job.moderation_events.exists())

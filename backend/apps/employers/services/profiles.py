@@ -6,6 +6,15 @@ from django.db.models import Q
 
 from ..models import CompanyDocument, EmployerVerificationCase, RecruiterProfile
 
+JOB_APPROVAL_VERIFICATION_BLOCKER = {
+    'code': 'verification_required',
+    'label': 'Nhà tuyển dụng chưa được duyệt xác thực.',
+}
+JOB_APPROVAL_DPA_BLOCKER = {
+    'code': 'dpa_outdated',
+    'label': 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.',
+}
+
 
 def get_or_create_recruiter(user):
     recruiter, _ = RecruiterProfile.objects.get_or_create(user=user)
@@ -121,6 +130,47 @@ def recruiter_job_posting_entitlement(user):
         'verified_job_quota_eligible': (
             verification_completed and admin_approved and account_level >= 3
         ),
+    }
+
+
+def recruiter_job_approval_state(user, *, company_id, lock=False):
+    """Return the fail-closed policy state used by administrator job approval.
+
+    Job approval is intentionally stricter than job-workspace readiness: the
+    recruiter must have an approved, account-scoped verification case for the
+    company publishing the job and a current platform DPA acceptance. ``lock``
+    is used by the write workflow so concurrent verification/DPA transitions
+    are serialized with the final approval decision.
+    """
+    recruiter_queryset = RecruiterProfile.objects.filter(user_id=user.pk)
+    if lock:
+        recruiter_queryset = recruiter_queryset.select_for_update(of=('self',))
+    recruiter = recruiter_queryset.first()
+
+    verification_case = None
+    if recruiter is not None:
+        case_queryset = EmployerVerificationCase.objects.filter(
+            recruiter_id=recruiter.pk,
+            company_id=company_id,
+        )
+        if lock:
+            case_queryset = case_queryset.select_for_update(of=('self',))
+        verification_case = case_queryset.first()
+
+    verification_approved = bool(
+        verification_case and verification_case.status == EmployerVerificationCase.Status.APPROVED
+    )
+    dpa_current = bool(recruiter and recruiter.dpa_accepted_at)
+    blockers = []
+    if not verification_approved:
+        blockers.append(dict(JOB_APPROVAL_VERIFICATION_BLOCKER))
+    if not dpa_current:
+        blockers.append(dict(JOB_APPROVAL_DPA_BLOCKER))
+
+    return {
+        'verification_approved': verification_approved,
+        'dpa_current': dpa_current,
+        'approve_blockers': blockers,
     }
 
 
