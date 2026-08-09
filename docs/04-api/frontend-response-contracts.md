@@ -20,7 +20,7 @@ hoặc cấu trúc database.
 
 | Màn hình / use case | Endpoint | DTO đọc | Field chính frontend sử dụng |
 |---|---|---|---|
-| Header, guard, tài khoản | `GET /api/auth/me/` | `SessionUserSerializer` | `public_id`, `email`, `role`, `full_name`, `phone`, `avatar_url`, `email_verified`, `two_factor_enabled`, `job_preferences_configured` |
+| Header, guard, tài khoản | `GET /api/auth/me/` | `SessionUserSerializer` | `public_id`, `email`, `role`, `full_name`, `phone`, `avatar_url`, `email_verified`, `two_factor_enabled`, `job_preferences_configured`; employer có `employer_job_workspace_ready` canonical và field legacy trong compatibility window |
 | Sửa thông tin tài khoản | `PATCH /api/auth/me/` | `ProfileUpdateSerializer` → session DTO | request `full_name`, `phone`; response thống nhất như `/me` |
 | Onboarding / cài đặt gợi ý | `GET/PATCH /api/candidate/profile/` | `CandidateProfileReadSerializer` / `CandidateProfileUpdateSerializer` | `gender` |
 | Onboarding / cài đặt gợi ý | `GET/PUT /api/candidate/job-preferences/` | `CandidateJobPreferenceSerializer` | vị trí chuyên môn, vị trí khác, lương, kinh nghiệm, tỉnh, relocate và hai consent |
@@ -36,6 +36,7 @@ hoặc cấu trúc database.
 | Bảng quản lý tin NTD | `GET /api/jobs/mine/` | `EmployerJobListSerializer` | `public_id`, `title`, `company_name`, `locations_detail`, `employment_type`, `deadline`, `status`, `application_count`, timestamps cần hiển thị |
 | Form tin NTD | `POST/PATCH /api/jobs/mine/...` | `EmployerJobWriteSerializer`; response `EmployerJobDetailSerializer` | dữ liệu form và nested relation, gồm liên hệ nhận hồ sơ; endpoint có `IsEmployer` |
 | Admin duyệt tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions`, `blocked_reasons`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
+| Readiness nhà tuyển dụng | `GET /api/employer/me/` | `RecruiterProfileSerializer` + readiness selector | Năm field top-level `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers`; onboarding legacy chỉ để tương thích |
 | Thẻ yêu cầu cập nhật của tôi | `GET /api/employer/company/update-requests/?scope=mine` | `CompanyUpdateRequestSerializer` | request của actor, `submitted_at`, status/review note, revision và file/media actor được phép mở |
 | Lịch sử yêu cầu công ty | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | requester summary, thay đổi nghiệp vụ và metadata file đã redacted theo actor; mặc định không truyền scope vẫn là `company` |
 | Card blog / blog home | `GET /api/blog/`, `/api/blog/home/` | `PostListSerializer` | `public_id`, `title`, `slug`, `excerpt`, `thumbnail_url`, category link, `published_at` |
@@ -45,6 +46,55 @@ Các catalog nhỏ (industry, benefit, language, skill), site settings/banner/li
 consent vốn đã dùng explicit field. Admin site settings cố ý trả metadata form
 (`value_type`, `options`, `order`, `is_public`, `env_configured`) nhưng chỉ qua
 permission admin.
+
+### Contract canonical employer readiness
+
+`GET /api/employer/me/` trả năm field readiness ở top-level, không lồng trong
+`onboarding`:
+
+```json
+{
+  "job_workspace_ready": true,
+  "verification_approved": true,
+  "candidate_data_access": false,
+  "dpa_status": "outdated",
+  "blockers": [
+    {
+      "code": "dpa_outdated",
+      "capabilities": ["candidate_data", "job_approval"],
+      "message": "Chấp thuận DPA không còn là phiên bản hiện hành.",
+      "action": "accept_current_dpa"
+    }
+  ]
+}
+```
+
+- `capabilities[]` chỉ gồm `job_workspace`, `verification`, `candidate_data`,
+  `job_approval`; `code` và `action` là machine value chữ thường.
+- `dpa_status` thuộc `missing|current|legacy_unversioned|outdated|grace|hold|unknown`.
+  Adapter dữ liệu ER-2 hiện tính `missing|current`; các trạng thái version/grace/
+  hold được ER-6 bổ sung mà không đổi shape client.
+- Action hiện hành gồm `contact_support`, `complete_onboarding`, `verify_phone`,
+  `link_company`, `upload_business_document`, `upload_candidate_dpa`,
+  `open_verification`, `accept_dpa`, `accept_current_dpa`. Frontend map action
+  sang destination allowlist; backend không gửi URL điều hướng.
+- Nếu bất kỳ field canonical nào xuất hiện, client phải dùng canonical. Payload
+  partial, sai kiểu, blocker sai schema hoặc boolean `true` vẫn có blocker cho
+  capability đó đều fail closed. Chỉ khi cả năm field vắng mới fallback
+  workspace legacy; `candidate_data_access` không bao giờ fallback legacy.
+- `GET /api/auth/me/` dùng `employer_job_workspace_ready` cho login destination.
+  Canonical present thắng `employer_verification_completed`; canonical present
+  nhưng không phải boolean `true` được xử lý fail closed.
+- Error API ER-2 dùng code chữ hoa `CANDIDATE_DATA_BLOCKED`,
+  `EMPLOYER_WORKSPACE_BLOCKED`, `JOB_APPROVAL_BLOCKED`; không trộn với blocker
+  code chữ thường và không parse message để điều khiển UI. Các code mục tiêu
+  `VERIFICATION_REQUIRED`/`DPA_OUTDATED` trong canonical plan chưa được tuyên bố
+  là error response đã triển khai ở ER-2.
+
+Frontend dùng `JobWorkspaceGuard` cho jobs/campaigns và `CandidateDataGuard`
+cho applications. URL bị từ chối được giữ nguyên để hiển thị blocker/retry.
+Query candidate-data phải tắt khi checking/error/denied và UI phải bỏ cả PII đã
+cache; aggregate không chứa danh tính vẫn được hiển thị.
 
 ### Contract yêu cầu cập nhật công ty
 

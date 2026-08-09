@@ -43,7 +43,7 @@ review DPA.
 | ER-F05 | Cao | Partial upload có thể để request/file dở dang nhưng UI báo thành công | Open | ER-3 |
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Open | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Mitigated ER-1C; hold follow-up ER-5 | ER-1C/ER-5 |
-| ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Open | ER-2/ER-5 |
+| ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2; reconciliation follow-up ER-5 | ER-2/ER-5 |
 | ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Open | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Open | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
@@ -237,6 +237,30 @@ review DPA.
 - List/detail/CV snapshot/download/export/history/direct route dùng cùng
   `candidate_data_access` selector.
 - Member cùng company không xem resource recruiter khác.
+
+**ER-2 evidence (2026-08-10)**
+
+- Backend commits `b5a50c45`, `49f11065`, `f1408e43`, `916d2bfb`, merge-sync
+  `8e01389e`: canonical
+  selector cấp `job_workspace_ready`, `verification_approved`,
+  `candidate_data_access`, `dpa_status`, `blockers`; candidate policy bỏ
+  feature-flag bypass và được áp dụng cho list/export/status/history/snapshot,
+  dashboard/job/campaign preview, activity metadata/deep-link và recruiter CV
+  asset content. Asset token mới audience-bound và luôn live reauthorize actor,
+  application/version và capability.
+- Frontend commits `cc4e3085`, `59307148`, `7c97cc7c`, `44da5635`,
+  `ab1c003e`, `d84760ba`: jobs/campaigns dùng
+  `JobWorkspaceGuard`, applications dùng `CandidateDataGuard`; denied direct
+  route giữ URL và render blocker/retry. Job detail và campaign Apply CV/
+  Activity không phát sensitive request khi denied/error; cached name/avatar/
+  email/CV link biến mất ngay khi readiness chuyển `true → false`.
+- Retest đạt 206 backend integration test và direct/read/query matrix 31/31;
+  frontend coverage gate đạt 253 test file/953 test; ma trận sáu readiness
+  state; 9/9 E2E sensitive surface trên desktop/tablet/mobile. Aggregate không
+  định danh được giữ theo ER-D29, mọi candidate PII/link/activity bị redaction.
+- Residual không mở lại finding candidate-data: ER-5 vẫn phải reconcile
+  job/campaign đang active sau post-approval revoke/hold; ER-6 bổ sung DPA
+  evidence/version/grace/hold nhưng giữ nguyên capability contract.
 
 ### ER-F09 — Phone OTP transport
 

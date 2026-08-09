@@ -577,7 +577,11 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   sử dụng giữa đăng ký email và bổ sung hồ sơ sau OAuth. Hai workflow chỉ được
   compose ở page/widget, không import feature lẫn nhau.
 - `entities/employer-profile` sở hữu HTTP contract recruiter, nhu cầu ưu tiên,
-  tìm/tạo/liên kết công ty và giấy tờ xác minh.
+  tìm/tạo/liên kết công ty, giấy tờ xác minh và canonical readiness. Readiness
+  chỉ hợp lệ khi đủ năm field `job_workspace_ready`, `verification_approved`,
+  `candidate_data_access`, `dpa_status`, `blockers`; payload canonical partial,
+  sai kiểu hoặc tự mâu thuẫn phải fail closed. Chỉ khi cả năm field đều vắng
+  mới được fallback workspace legacy; candidate-data không fallback legacy.
   `widgets/employer-onboarding` chỉ hoàn thiện hồ sơ Google; widget
   `employer-consulting-need` compose form nhu cầu sau xác thực. Email/phone/DPA
   là workflow bảo mật riêng, không còn bị gộp thành checklist onboarding.
@@ -595,7 +599,15 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế
-  guard và backend permission.
+  guard và backend permission. Sau onboarding, `JobWorkspaceGuard` bảo vệ
+  jobs/campaigns và `CandidateDataGuard` bảo vệ applications. Direct URL bị từ
+  chối phải giữ nguyên để render blocker/retry, không redirect sang checklist.
+- Consumer candidate-data phải dùng `useEmployerReadiness`, tắt query nhạy cảm
+  bằng `enabled=false` khi checking/error/denied và đồng thời không render dữ
+  liệu đã cache. Aggregate không chứa danh tính được phép giữ; tên, avatar,
+  email, CV/link download, preview và activity/deep-link ứng viên phải bị bỏ.
+  Blocker chỉ điều hướng qua machine-action allowlist phía frontend, không dùng
+  URL do backend gửi hoặc parse message để quyết định quyền.
 - `/employer-verify` chỉ là checklist bảo mật sau khi consulting hoàn tất, không
   tạo thêm state onboarding bắt buộc. Checklist không lặp lại email đã xác thực;
   các action mở route account nội bộ và tin đầu tiên chỉ bật sau khi đủ năm điều

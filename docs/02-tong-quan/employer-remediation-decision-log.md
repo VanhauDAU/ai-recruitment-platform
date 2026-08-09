@@ -86,6 +86,14 @@
 | ER-AR02 | Company payload cho member không bị thu hẹp ngoài file/storage secret | Serializer redaction và object permission |
 | ER-AR03 | MFA không bắt buộc toàn bộ recruiter | Step-up cho thao tác bảo mật nhạy cảm |
 
+## Session 2026-08-10 — Gate ER-2
+
+| ID | Quyết định đã xác nhận | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D29 | Khi candidate-data bị khóa vẫn hiển thị aggregate không định danh; ẩn tên, email, avatar, CV, deep-link và activity có PII | Backend redact trước response; frontend không query/render surface nhạy cảm nhưng vẫn giữ count |
+
+Người phụ trách sản phẩm xác nhận quyết định ER-D29 ngày 2026-08-10.
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |
@@ -105,4 +113,3 @@ cập nhật chúng; không xóa dấu vết quyết định cũ.
 3. Sau khi xác nhận, thêm một session mới vào file này.
 4. Cập nhật đặc tả canonical và tài liệu bị ảnh hưởng trong cùng commit.
 5. Chỉ sau đó mới thay đổi code/schema/feature flag.
-
