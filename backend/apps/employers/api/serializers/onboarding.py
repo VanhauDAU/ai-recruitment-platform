@@ -1,9 +1,21 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ...models import RecruiterProfile
+from ...models import DpaStatus, RecruiterProfile
 from ...selectors import build_employer_onboarding_steps, build_employer_readiness
 from ...services import verification_checks
 from .companies import CompanySerializer
+
+
+class EmployerReadinessBlockerSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    capabilities = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=('job_workspace', 'verification', 'candidate_data', 'job_approval')
+        )
+    )
+    message = serializers.CharField()
+    action = serializers.CharField()
 
 
 class RecruiterProfileSerializer(serializers.ModelSerializer):
@@ -87,9 +99,13 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     def get_candidate_data_access(self, obj) -> bool:
         return self._readiness(obj)['candidate_data_access']
 
+    @extend_schema_field(
+        serializers.ChoiceField(choices=[(status.value, status.value) for status in DpaStatus])
+    )
     def get_dpa_status(self, obj) -> str:
         return self._readiness(obj)['dpa_status']
 
+    @extend_schema_field(EmployerReadinessBlockerSerializer(many=True))
     def get_blockers(self, obj) -> list[dict]:
         return self._readiness(obj)['blockers']
 

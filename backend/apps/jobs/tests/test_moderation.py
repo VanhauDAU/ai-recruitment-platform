@@ -17,10 +17,10 @@ from apps.accounts.services import assign_membership
 from apps.employers.models import (
     Company,
     EmployerVerificationCase,
-    RecruiterProfile,
     RecruitmentCampaign,
 )
 from apps.employers.services import recruiter_job_approval_state
+from apps.employers.tests.readiness_helpers import make_employer_ready
 
 from ..models import (
     Job,
@@ -33,17 +33,12 @@ from ..services import JobModerationStale, approve_job, reject_job
 
 
 def make_approvable_recruiter(*, employer, company):
-    recruiter = RecruiterProfile.objects.create(
-        user=employer,
+    recruiter = make_employer_ready(
+        employer,
         company=company,
-        dpa_accepted_at=timezone.now(),
+        candidate_data=True,
     )
-    verification_case = EmployerVerificationCase.objects.create(
-        recruiter=recruiter,
-        company=company,
-        status=EmployerVerificationCase.Status.APPROVED,
-    )
-    return recruiter, verification_case
+    return recruiter, recruiter.verification_case
 
 
 class JobModerationFixture:

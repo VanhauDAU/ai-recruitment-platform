@@ -215,7 +215,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             return 'consulting_need'
         return 'complete'
 
-    def get_employer_verification_completed(self, obj):
+    def get_employer_verification_completed(self, obj) -> bool:
         if not obj.is_employer:
             return False
         if self._employer_profile(obj) is None:

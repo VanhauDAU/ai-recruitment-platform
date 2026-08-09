@@ -8,7 +8,14 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
-from apps.employers.models import Company, RecruiterProfile, RecruitmentCampaign
+from apps.employers.models import (
+    Company,
+    DpaStatus,
+    EmployerVerificationCase,
+    RecruiterProfile,
+    RecruitmentCampaign,
+)
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup
 
@@ -352,6 +359,11 @@ class EmployerJobSerializerTests(APITestCase):
             role=User.Role.EMPLOYER,
         )
         self.company = Company.objects.create(company_name='Acme', created_by=self.user)
+        self.recruiter = make_employer_ready(
+            self.user,
+            company=self.company,
+            candidate_data=True,
+        )
         self.province = Location.objects.create(
             code='01-test',
             level=Location.Level.PROVINCE,
@@ -426,6 +438,64 @@ class EmployerJobSerializerTests(APITestCase):
         )
         self.assertEqual(item['candidate_count'], 0)
         self.assertEqual(item['candidate_previews'], [])
+
+    def test_new_or_dpa_held_employer_cannot_read_job_workspace_directly(self):
+        legacy_user = User.objects.create_user(
+            email='legacy-incomplete-job-reader@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        legacy_company = Company.objects.create(
+            company_name='Legacy incomplete job company',
+            created_by=legacy_user,
+        )
+        legacy_job = Job.objects.create(
+            posted_by=legacy_user,
+            company=legacy_company,
+            title='Legacy inaccessible job',
+        )
+        self.client.force_authenticate(legacy_user)
+
+        for url in (
+            reverse('employer-job-list-create'),
+            reverse('employer-job-detail', kwargs={'public_id': legacy_job.public_id}),
+        ):
+            with self.subTest(url=url, state='new'):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 403, response.data)
+                self.assertEqual(response.data['code'], 'EMPLOYER_WORKSPACE_BLOCKED')
+
+        posting_context = self.client.get(reverse('employer-job-posting-context'))
+        self.assertEqual(posting_context.status_code, 200, posting_context.data)
+        self.assertFalse(posting_context.data['job_workspace_ready'])
+
+        self.client.force_authenticate(self.user)
+        with patch(
+            'apps.employers.models.readiness.current_dpa_status',
+            return_value=DpaStatus.HOLD,
+        ):
+            response = self.client.get(reverse('employer-job-list-create'))
+        self.assertEqual(response.status_code, 403, response.data)
+        self.assertEqual(response.data['code'], 'EMPLOYER_WORKSPACE_BLOCKED')
+
+    def test_nonapproved_verification_keeps_job_workspace_reads_available(self):
+        verification_case = self.recruiter.verification_case
+        verification_case.status = EmployerVerificationCase.Status.CHANGES_REQUESTED
+        verification_case.save(update_fields=['status', 'updated_at'])
+        job = Job.objects.create(
+            posted_by=self.user,
+            company=self.company,
+            title='Workspace survives verification changes request',
+        )
+        self.client.force_authenticate(self.user)
+
+        listing = self.client.get(reverse('employer-job-list-create'))
+        detail = self.client.get(
+            reverse('employer-job-detail', kwargs={'public_id': job.public_id})
+        )
+
+        self.assertEqual(listing.status_code, 200, listing.data)
+        self.assertEqual(detail.status_code, 200, detail.data)
 
     def test_employer_list_groups_candidate_previews_and_uses_latest_application(self):
         job = Job.objects.create(
@@ -637,7 +707,7 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.application_contact.emails.count(), 0)
 
     def test_campaign_accepts_multiple_jobs(self):
-        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        recruiter = self.recruiter
         campaign = RecruitmentCampaign.objects.create(
             owner=recruiter,
             company=self.company,
@@ -660,7 +730,7 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(Job.objects.filter(campaign=campaign).count(), 2)
 
     def test_campaign_assignment_requires_ownership_and_an_open_campaign(self):
-        other_recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        other_recruiter = self.recruiter
         foreign_owner = User.objects.create_user(
             email='foreign-campaign@example.com', password='Password@123', role=User.Role.EMPLOYER
         )
@@ -698,7 +768,7 @@ class EmployerJobSerializerTests(APITestCase):
         )
 
     def test_job_can_move_between_campaigns_or_be_detached(self):
-        recruiter = RecruiterProfile.objects.create(user=self.user, company=self.company)
+        recruiter = self.recruiter
         first_campaign = RecruitmentCampaign.objects.create(
             owner=recruiter, company=self.company, name='Chiến dịch A'
         )

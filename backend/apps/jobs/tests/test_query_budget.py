@@ -14,6 +14,7 @@ from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.skills.models import Skill
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
@@ -28,7 +29,7 @@ from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 BADGE_QUERY_BUDGET = 4
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
-EMPLOYER_JOB_LIST_QUERY_BUDGET = 4
+EMPLOYER_JOB_LIST_QUERY_BUDGET = 5
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
 SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET
 
@@ -72,6 +73,11 @@ class EmployerJobListQueryBudgetTests(APITestCase):
             company_name='Employer List Budget Co',
             created_by=self.employer,
         )
+        make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
+        )
         candidate = User.objects.create_user(
             email='employer-list-candidate@example.com',
             password='Password@123',
@@ -110,8 +116,9 @@ class EmployerJobListQueryBudgetTests(APITestCase):
         self.client.force_authenticate(self.employer)
 
     def test_employer_job_list_query_count_is_flat_with_candidate_previews(self):
-        # 1 COUNT + 1 SELECT jobs (candidate_count is a correlated subquery)
-        # + 1 locations prefetch + 1 batched candidate-preview query.
+        # 1 canonical readiness query + 1 COUNT + 1 SELECT jobs
+        # (candidate_count is a correlated subquery) + 1 locations prefetch
+        # + 1 batched candidate-preview query.
         with self.assertNumQueries(EMPLOYER_JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('employer-job-list-create'))
 
