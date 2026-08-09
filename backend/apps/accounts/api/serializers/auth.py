@@ -95,6 +95,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
     employer_onboarding_required = serializers.SerializerMethodField()
     employer_onboarding_step = serializers.SerializerMethodField()
     employer_verification_completed = serializers.SerializerMethodField()
+    employer_job_workspace_ready = serializers.SerializerMethodField()
     has_usable_password = serializers.SerializerMethodField()
     two_factor_email_enabled = serializers.SerializerMethodField()
     two_factor_totp_enabled = serializers.SerializerMethodField()
@@ -120,6 +121,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             'employer_onboarding_required',
             'employer_onboarding_step',
             'employer_verification_completed',
+            'employer_job_workspace_ready',
             'admin_access',
         ]
         read_only_fields = fields
@@ -154,38 +156,78 @@ class SessionUserSerializer(serializers.ModelSerializer):
     def get_employer_onboarding_required(self, obj):
         return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False
 
+    def _employer_profile(self, obj):
+        cached = getattr(self, '_employer_profile_cache', None)
+        if cached is None:
+            cached = self._employer_profile_cache = {}
+        if obj.pk not in cached:
+            try:
+                cached[obj.pk] = obj.recruiter_profile
+            except ObjectDoesNotExist:
+                cached[obj.pk] = None
+        return cached[obj.pk]
+
+    def _employer_onboarding(self, obj):
+        cached = getattr(self, '_employer_onboarding_cache', None)
+        if cached is None:
+            cached = self._employer_onboarding_cache = {}
+        if obj.pk not in cached:
+            recruiter = self._employer_profile(obj)
+            if recruiter is None:
+                cached[obj.pk] = None
+            else:
+                from apps.employers.selectors import build_employer_onboarding_steps
+
+                cached[obj.pk] = build_employer_onboarding_steps(recruiter)
+        return cached[obj.pk]
+
+    def _employer_readiness(self, obj):
+        cached = getattr(self, '_employer_readiness_cache', None)
+        if cached is None:
+            cached = self._employer_readiness_cache = {}
+        if obj.pk not in cached:
+            recruiter = self._employer_profile(obj)
+            if recruiter is None:
+                cached[obj.pk] = None
+            else:
+                from apps.employers.selectors import build_employer_readiness
+
+                cached[obj.pk] = build_employer_readiness(
+                    recruiter,
+                    onboarding=self._employer_onboarding(obj),
+                )
+        return cached[obj.pk]
+
     def get_employer_onboarding_step(self, obj):
         if not obj.is_employer:
             return None
-        try:
-            recruiter = obj.recruiter_profile
-        except ObjectDoesNotExist:
+        recruiter = self._employer_profile(obj)
+        if recruiter is None:
             return 'registration'
         # Keep routing and the administrator read model on the same canonical
         # three-step definition.
-        from apps.employers.selectors import build_employer_initial_onboarding
-
-        onboarding = build_employer_initial_onboarding(recruiter)
-        if not onboarding['steps']['registration_completed']:
+        onboarding = self._employer_onboarding(obj)
+        if not onboarding['registration_completed']:
             return 'registration'
-        if not onboarding['steps']['email_verified']:
+        if not onboarding['email_verified']:
             return 'email_verification'
-        if not onboarding['steps']['consulting_need_completed']:
+        if not onboarding['consulting_need_completed']:
             return 'consulting_need'
         return 'complete'
 
     def get_employer_verification_completed(self, obj):
         if not obj.is_employer:
             return False
-        try:
-            recruiter = obj.recruiter_profile
-        except ObjectDoesNotExist:
+        if self._employer_profile(obj) is None:
             return False
-        # Local import keeps the accounts model layer independent while this
-        # session DTO exposes the employer read-model needed for routing.
-        from apps.employers.selectors import build_employer_onboarding_steps
+        return self._employer_onboarding(obj)['verification_completed']
 
-        return build_employer_onboarding_steps(recruiter)['verification_completed']
+    def get_employer_job_workspace_ready(self, obj) -> bool:
+        if not obj.is_employer:
+            return False
+        if self._employer_profile(obj) is None:
+            return False
+        return self._employer_readiness(obj)['job_workspace_ready']
 
     def get_admin_access(self, obj):
         return admin_access_snapshot(obj)

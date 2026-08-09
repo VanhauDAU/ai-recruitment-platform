@@ -91,6 +91,7 @@ class ProfileUpdateTests(APITestCase):
                 'employer_onboarding_required',
                 'employer_onboarding_step',
                 'employer_verification_completed',
+                'employer_job_workspace_ready',
                 'admin_access',
             },
         )
@@ -98,6 +99,7 @@ class ProfileUpdateTests(APITestCase):
         self.assertIs(response.data['job_preferences_configured'], False)
         self.assertIs(response.data['has_usable_password'], True)
         self.assertIs(response.data['employer_verification_completed'], False)
+        self.assertIs(response.data['employer_job_workspace_ready'], False)
         self.assertTrue(
             {
                 'id',

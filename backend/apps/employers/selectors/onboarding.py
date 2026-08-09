@@ -72,7 +72,11 @@ def build_employer_onboarding_steps(recruiter):
         CompanyDocument.DocType.BUSINESS_REGISTRATION,
         CompanyDocument.DocType.IDENTITY_DOCUMENT,
     }
-    has_business_doc = case_documents.filter(doc_type__in=business_types).exists()
+    has_business_doc = (
+        case_documents.filter(doc_type__in=business_types)
+        .exclude(status=CompanyDocument.Status.REJECTED)
+        .exists()
+    )
     has_approved_business_doc = (
         has_business_doc
         and not case_documents.filter(
