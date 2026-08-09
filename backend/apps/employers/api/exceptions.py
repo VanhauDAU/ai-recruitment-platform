@@ -23,3 +23,17 @@ class CompanyTaxCodeConflictResponse(APIException):
                 'message': message,
             }
         )
+
+
+class UploadPreviewScanRequiredResponse(APIException):
+    """Block raw Office conversion until upload-session trust exists."""
+
+    status_code = status.HTTP_409_CONFLICT
+    default_code = 'UPLOAD_SCAN_REQUIRED'
+    default_detail = {
+        'code': default_code,
+        'message': (
+            'Bản xem trước DOC/DOCX chỉ khả dụng sau khi tệp đã được quét an toàn. '
+            'Vui lòng tải tệp lên khi luồng quét được bật.'
+        ),
+    }
