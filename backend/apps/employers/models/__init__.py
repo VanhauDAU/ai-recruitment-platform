@@ -7,6 +7,7 @@ from .compliance import (
     EmployerComplianceHoldCampaign,
     EmployerComplianceHoldJob,
 )
+from .dpa import EmployerDpaAcceptance
 from .membership import RecruiterProfile
 from .otp import EmployerPhoneVerificationEvent, PhoneOtp
 from .readiness import DpaStatus
@@ -39,6 +40,7 @@ __all__ = [
     'EmployerComplianceHold',
     'EmployerComplianceHoldCampaign',
     'EmployerComplianceHoldJob',
+    'EmployerDpaAcceptance',
     'EmployerPhoneVerificationEvent',
     'CampaignActivity',
     'Industry',

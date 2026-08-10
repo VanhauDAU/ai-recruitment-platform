@@ -57,6 +57,9 @@ UPLOAD_SESSION_ALLOWED_PURPOSES = (
     'candidate_cv',
 )
 UPLOAD_SCAN_RETRY_BASE_SECONDS = 1
+EMPLOYER_DPA_POLICY_VERSION = 'test-dpa-v1'
+EMPLOYER_DPA_DOCUMENT_SHA256 = 'a' * 64
+EMPLOYER_DPA_DOCUMENT_URL = 'https://example.test/employer-dpa/test-dpa-v1'
 
 # Announcement tests exercise every surface by default. Individual kill-switch
 # tests override this setting explicitly.

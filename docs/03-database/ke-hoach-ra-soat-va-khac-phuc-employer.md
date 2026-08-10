@@ -890,6 +890,14 @@ thái `In progress`.
 - Re-consent và release đúng hold source.
 - Legacy row không được bịa hash/IP/session.
 
+**Evidence core 2026-08-10:** `EmployerDpaAcceptance` append-only và migration
+không backfill đã triển khai trên `feature/employer-dpa-evidence`; API/UI khóa
+exact version/hash, lưu IP/session + hash User-Agent, phân loại timestamp cũ là
+`legacy_unversioned` và bản khác current là `outdated`. PostgreSQL Docker đạt
+243/243 full employer; frontend 25/25; static/layering/migration gates đạt. ER-6B vẫn
+`In progress` vì grace timer, DPA hold rollout và release theo exact source chưa
+đóng gate.
+
 **Gate ER-6:** SMS outage/rate-limit/replay và DPA
 current/outdated/grace/expired/re-consent/legacy scenarios.
 
@@ -1143,7 +1151,7 @@ Trạng thái thực hiện hiện tại:
 | ER-3 | In progress | Employer/candidate Docker và real ClamAV local đạt; còn Chrome branch QA cùng production-like staging/strict rollout |
 | ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
-| ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
+| ER-6 | In progress | SMS foundation đã merge; DPA evidence core đã đạt, còn SMS live/provider và DPA grace/hold rollout |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 

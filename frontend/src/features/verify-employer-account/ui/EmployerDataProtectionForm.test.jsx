@@ -74,7 +74,15 @@ describe('EmployerDataProtectionForm', () => {
   })
 
   it('keeps both legal actions available before company information is updated', async () => {
-    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: false, candidate_dpa_submitted: false, dpa_accepted: false } })
+    getEmployerProfile.mockResolvedValue({
+      dpa_policy: {
+        available: true,
+        policy_version: 'test-dpa-v1',
+        document_sha256: 'a'.repeat(64),
+        document_url: 'https://example.test/dpa/test-dpa-v1',
+      },
+      onboarding: { company_linked: false, candidate_dpa_submitted: false, dpa_accepted: false },
+    })
     getEmployerCompanyDocuments.mockResolvedValue([])
     uploadEmployerDataProcessingAgreement.mockResolvedValue({ id: 1 })
     acceptEmployerDpa.mockResolvedValue({})
@@ -101,7 +109,34 @@ describe('EmployerDataProtectionForm', () => {
 
     await user.click(screen.getByRole('checkbox', { name: /Xác nhận đồng ý với các điều khoản/i }))
     await user.click(screen.getByRole('button', { name: 'Xác nhận' }))
-    await waitFor(() => expect(acceptEmployerDpa).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(acceptEmployerDpa).toHaveBeenCalledWith({
+      available: true,
+      policy_version: 'test-dpa-v1',
+      document_sha256: 'a'.repeat(64),
+      document_url: 'https://example.test/dpa/test-dpa-v1',
+    }))
+  })
+
+  it('fails closed when the current platform DPA is not versioned by the server', async () => {
+    getEmployerProfile.mockResolvedValue({
+      dpa_policy: {
+        available: false,
+        policy_version: '',
+        document_sha256: '',
+        document_url: '',
+      },
+      onboarding: { candidate_dpa_submitted: false, dpa_accepted: false },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([])
+    renderForm()
+
+    expect(await screen.findByText('Phiên bản thỏa thuận hiện hành chưa sẵn sàng')).toBeVisible()
+    const checkbox = screen.getByRole('checkbox', {
+      name: /Xác nhận đồng ý với các điều khoản/i,
+    })
+    expect(checkbox).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Xác nhận' })).toBeDisabled()
+    expect(acceptEmployerDpa).not.toHaveBeenCalled()
   })
 
   it('opens a public DOCX in Google Viewer and only opens replacement controls on edit', async () => {

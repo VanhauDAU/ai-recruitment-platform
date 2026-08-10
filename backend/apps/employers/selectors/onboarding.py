@@ -5,7 +5,8 @@ from django.db.models import Q
 
 from common.company_email import is_company_domain_email
 
-from ..models import CompanyDocument, EmployerVerificationCase
+from ..models import CompanyDocument, DpaStatus, EmployerVerificationCase
+from ..models.readiness import current_dpa_status
 from .company_status import has_explicit_company_link
 
 INITIAL_ONBOARDING_STEP_LABELS = {
@@ -112,7 +113,7 @@ def build_employer_onboarding_steps(recruiter):
         'no_report_history': True,
         'candidate_dpa_submitted': has_candidate_dpa,
         'candidate_dpa_approved': has_approved_candidate_dpa,
-        'dpa_accepted': recruiter.dpa_accepted_at is not None,
+        'dpa_accepted': current_dpa_status(recruiter) == DpaStatus.CURRENT,
         'representative_verified': case_approved,
         'first_job_posted': recruiter.user.posted_jobs.exists(),
     }

@@ -64,6 +64,8 @@ class RecruiterProfile(models.Model):
     verified_phone = models.CharField(max_length=20, null=True, blank=True, default=None)
     phone_verified_at = models.DateTimeField(null=True, blank=True)
     dpa_accepted_at = models.DateTimeField(null=True, blank=True)
+    dpa_policy_version = models.CharField(max_length=64, blank=True)
+    dpa_document_sha256 = models.CharField(max_length=64, blank=True)
     # Legacy compatibility only. Completion is derived from registration,
     # verified email and a RecruitmentNeed; new code must not read/write this.
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)

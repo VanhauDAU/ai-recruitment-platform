@@ -5,6 +5,7 @@ from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
+from django.conf import settings
 from django.core import mail
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -29,6 +30,7 @@ from ..models import (
     CompanyImage,
     CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
+    EmployerDpaAcceptance,
     EmployerVerificationCase,
     Industry,
     PhoneOtp,
@@ -1550,12 +1552,22 @@ class CompanyUpdateRequestTests(APITestCase):
         self.user.save(update_fields=['email_verified', 'updated_at'])
         self.recruiter.registration_completed_at = now
         self.recruiter.dpa_accepted_at = now
+        self.recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
+        self.recruiter.dpa_document_sha256 = settings.EMPLOYER_DPA_DOCUMENT_SHA256
         self.recruiter.save(
             update_fields=[
                 'registration_completed_at',
                 'dpa_accepted_at',
+                'dpa_policy_version',
+                'dpa_document_sha256',
                 'updated_at',
             ]
+        )
+        EmployerDpaAcceptance.objects.create(
+            recruiter=self.recruiter,
+            policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+            document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+            document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
         )
         category = JobCategory.objects.create(
             name='Chuyên viên tuyển dụng',

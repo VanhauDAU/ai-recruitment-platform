@@ -24,7 +24,7 @@ Decision log:
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — Docker/ClamAV local đạt; còn Chrome + staging/strict rollout |
 | ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
-| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — SMS foundation + DPA evidence core đã đạt |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
@@ -199,8 +199,8 @@ Decision log:
   format, import-linter, layering, Django check, migration drift, docs và
   rendered Compose đều đạt.
 - Residual: PR workflow riêng cho account mới/change/reverify, endpoint/UI,
-  provider sandbox/production và gate outage/rate-limit/replay/uniqueness; toàn
-  bộ ER-6B DPA evidence/version/grace vẫn mở.
+  provider sandbox/production và gate outage/rate-limit/replay/uniqueness. ER-6B
+  đã có evidence core; grace timer, hold rollout và exact-source release còn mở.
 
 </details>
 

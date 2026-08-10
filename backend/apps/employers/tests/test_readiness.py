@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import connection
 from django.test import SimpleTestCase
 from django.test.utils import CaptureQueriesContext
@@ -15,6 +16,7 @@ from apps.jobs.models import Job, JobCategory
 from ..models import (
     Company,
     CompanyDocument,
+    EmployerDpaAcceptance,
     EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentNeed,
@@ -158,6 +160,15 @@ class EmployerReadinessContractTests(APITestCase):
             phone_verified_at=timezone.now(),
             verified_phone='0911222333',
             dpa_accepted_at=timezone.now(),
+            dpa_policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+            dpa_document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+        )
+        EmployerDpaAcceptance.objects.create(
+            recruiter=self.recruiter,
+            policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+            document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+            document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
+            ip_address='127.0.0.1',
         )
         category = JobCategory.objects.create(
             name='Readiness backend',

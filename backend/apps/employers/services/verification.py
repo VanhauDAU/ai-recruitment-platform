@@ -24,6 +24,7 @@ from ..models import (
     Company,
     CompanyDocument,
     CompanyTaxLookupEvidence,
+    DpaStatus,
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
     EmployerComplianceHoldJob,
@@ -31,6 +32,7 @@ from ..models import (
     EmployerVerificationEvent,
     EmployerVerificationNotification,
 )
+from ..models.readiness import current_dpa_status
 from .companies import (
     CompanyTaxCodeConflict,
     ensure_company_tax_code_can_be_verified,
@@ -223,6 +225,11 @@ def _integrity_fingerprint(case, *, scope=None):
             _timestamp_marker(recruiter.phone_verified_at),
             _timestamp_marker(recruiter.dpa_accepted_at),
             _timestamp_marker(recruiter.updated_at),
+        ],
+        'dpa_acceptance_pointer': [
+            recruiter.dpa_policy_version,
+            recruiter.dpa_document_sha256,
+            _timestamp_marker(recruiter.dpa_accepted_at),
         ],
         'company': (
             [
@@ -563,7 +570,7 @@ def verification_checks(case):
                 for document in current_documents[CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT]
             )
         ),
-        'dpa_accepted': recruiter.dpa_accepted_at is not None,
+        'dpa_accepted': current_dpa_status(recruiter) == DpaStatus.CURRENT,
         'case_approved': case.status == EmployerVerificationCase.Status.APPROVED,
     }
 

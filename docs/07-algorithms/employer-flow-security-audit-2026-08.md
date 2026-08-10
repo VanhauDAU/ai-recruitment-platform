@@ -498,10 +498,15 @@ toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
 
 ### ER-F10 — DPA evidence
 
+**Trạng thái:** Evidence core closed; grace/hold rollout còn mở trong ER-6B.
+
 **Evidence**
 
 - `RecruiterProfile.dpa_accepted_at` là bằng chứng chính; thiếu content version,
   hash, actor, IP và session correlation.
+- Migration `employers.0039` thêm `EmployerDpaAcceptance` append-only, không có
+  data backfill. Acceptance mới khóa server-side version/hash/URL, IP, session
+  và hash User-Agent; API stale/misconfigured fail closed.
 
 **Impact**
 
@@ -512,6 +517,11 @@ toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
 - Acceptance mới append-only và chứa đủ evidence tối thiểu.
 - Không backfill giả dữ liệu cũ; legacy policy theo ER-O03.
 - Material update block candidate data/admin approval và áp hold đúng grace.
+
+**Retest 2026-08-10:** 243 backend test trên PostgreSQL Docker `127.0.0.1:5433`
+và 25 frontend test đạt; Ruff/format, import-linter, migration drift,
+lint/architecture đạt. Còn phải retest cohort grace/hold/re-consent release
+trước khi đóng toàn bộ ER-F10.
 
 ## 4. Accepted risks và residual-risk process
 

@@ -66,6 +66,26 @@ class UploadSessionRequiredResponse(APIException):
     }
 
 
+class DpaPolicyChangedResponse(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_code = 'DPA_POLICY_CHANGED'
+    default_detail = {
+        'code': default_code,
+        'message': 'DPA đã thay đổi. Vui lòng tải lại và đọc phiên bản mới nhất.',
+        'retryable': True,
+    }
+
+
+class DpaPolicyUnavailableResponse(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_code = 'DPA_POLICY_UNAVAILABLE'
+    default_detail = {
+        'code': default_code,
+        'message': 'DPA hiện hành chưa sẵn sàng. Vui lòng thử lại sau.',
+        'retryable': True,
+    }
+
+
 class EmployerUploadSessionResponse(APIException):
     """Preserve safe shared-upload codes at an employer business boundary."""
 

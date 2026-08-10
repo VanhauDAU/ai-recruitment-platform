@@ -5,19 +5,24 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsEmployer
+from common.client_ip import client_ip
 
 from ...models import (
     RecruiterProfile,
 )
 from ...selectors import has_explicit_company_link
 from ...services import (
+    DpaPolicyChanged,
+    DpaPolicyUnavailable,
     accept_recruiter_dpa,
     get_or_create_recruiter,
     phone_taken_by_other,
     send_phone_otp,
     verify_phone_otp,
 )
+from ..exceptions import DpaPolicyChangedResponse, DpaPolicyUnavailableResponse
 from ..serializers import (
+    EmployerDpaAcceptanceSerializer,
     RecruiterProfileSerializer,
 )
 
@@ -127,10 +132,26 @@ class AcceptDpaView(APIView):
 
     @extend_schema(
         summary='Chấp nhận thỏa thuận xử lý dữ liệu cá nhân với ứng viên',
-        request=None,
+        request=EmployerDpaAcceptanceSerializer,
         responses={200: RecruiterProfileSerializer},
         tags=['employer'],
     )
     def post(self, request):
-        recruiter = accept_recruiter_dpa(request.user)
+        serializer = EmployerDpaAcceptanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = request.auth
+        auth_session_id = token.get('sid') if hasattr(token, 'get') else None
+        try:
+            recruiter = accept_recruiter_dpa(
+                request.user,
+                expected_policy_version=serializer.validated_data['policy_version'],
+                expected_document_sha256=serializer.validated_data['document_sha256'],
+                ip_address=client_ip(request),
+                auth_session_id=auth_session_id,
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            )
+        except DpaPolicyChanged as error:
+            raise DpaPolicyChangedResponse() from error
+        except DpaPolicyUnavailable as error:
+            raise DpaPolicyUnavailableResponse() from error
         return Response(RecruiterProfileSerializer(recruiter, context={'request': request}).data)

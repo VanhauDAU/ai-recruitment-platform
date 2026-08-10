@@ -85,6 +85,15 @@ if not TRUSTED_PROXY_IPS:
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     _errors.append('EMAIL_HOST_USER / EMAIL_HOST_PASSWORD là bắt buộc ở production.')
 
+if not EMPLOYER_DPA_POLICY_VERSION:
+    _errors.append('EMPLOYER_DPA_POLICY_VERSION là bắt buộc ở production.')
+if len(EMPLOYER_DPA_DOCUMENT_SHA256) != 64 or any(
+    character not in '0123456789abcdef' for character in EMPLOYER_DPA_DOCUMENT_SHA256
+):
+    _errors.append('EMPLOYER_DPA_DOCUMENT_SHA256 phải là SHA-256 lowercase hợp lệ.')
+if urlparse(EMPLOYER_DPA_DOCUMENT_URL).scheme != 'https':
+    _errors.append('EMPLOYER_DPA_DOCUMENT_URL production phải dùng HTTPS.')
+
 if EMPLOYER_SMS_OTP_ENABLED:
     if EMPLOYER_SMS_PROVIDER != 'http':
         _errors.append('EMPLOYER_SMS_PROVIDER production phải là http khi bật SMS.')

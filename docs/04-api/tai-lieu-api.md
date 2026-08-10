@@ -57,7 +57,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | POST | `/api/uploads/sessions/{public_id}/content/` · `cancel/` · `retry/` | Gửi byte vào quarantine, hủy hoặc retry bounded. Chỉ owner và purpose/role hợp lệ; chỉ `clean` có thể attach vào nghiệp vụ. |
 | POST | `/api/employer/phone/send-otp/` | Gửi mã OTP xác thực SĐT (gửi qua email tài khoản; cooldown 60s, hết hạn 10 phút) |
 | POST | `/api/employer/phone/verify/` | Xác thực OTP — thành công thì `verified_phone` unique giữa các NTD |
-| POST | `/api/employer/dpa/accept/` | Chấp nhận thỏa thuận xử lý dữ liệu cá nhân giữa nền tảng và nhà tuyển dụng |
+| POST | `/api/employer/dpa/accept/` | Chấp nhận exact DPA hiện hành bằng `policy_version` + `document_sha256`; stale trả 409 |
 | GET | `/api/employer/company/` | Công ty của tôi (chỉ đọc — thay đổi thông tin qua update-requests) |
 | POST | `/api/employer/company/create/` | Tạo hồ sơ công ty mới, không phụ thuộc trạng thái xác thực SĐT hoặc MFA; người tạo là owner, hiệu lực ngay, trạng thái `unverified`. Bị từ chối nếu recruiter đã tạo/chọn một công ty |
 | GET | `/api/employer/company/search/?q=&page=` | Catalogue phân trang `{count,next,previous,results}`, cố định 6 bản ghi/trang. Không có `q`: công ty thật mới tạo, mới nhất trước; có `q`: tìm không dấu theo tên đăng ký / tên thương mại / MST. Không trả placeholder từ luồng đăng ký cũ |
@@ -402,9 +402,11 @@ Blocker code viết thường; capability ổn định là `job_workspace`,
 capability từ các checkbox onboarding.
 
 `dpa_status` có enum
-`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Schema hiện
-tại chỉ chứng minh được `missing|current`; các trạng thái version/grace/hold là
-contract dành cho ER-6, không được gán suy đoán cho dữ liệu cũ.
+`missing|current|legacy_unversioned|outdated|grace|hold|unknown`. Timestamp cũ
+không có evidence là `legacy_unversioned`; acceptance khác exact version/hash
+hiện hành là `outdated`. `GET /api/employer/me/::dpa_policy` công bố policy
+server; `POST /api/employer/dpa/accept/` bắt buộc gửi lại version/hash đó, stale
+trả `409 DPA_POLICY_CHANGED`, thiếu cấu hình trả `503 DPA_POLICY_UNAVAILABLE`.
 
 - Job/campaign read hoặc write bị chặn trả HTTP 403,
   `code=EMPLOYER_WORKSPACE_BLOCKED`.

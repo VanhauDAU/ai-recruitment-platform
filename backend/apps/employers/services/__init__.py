@@ -37,7 +37,13 @@ from .compliance import (
     release_verification_holds,
 )
 from .document_preview import render_office_document_preview
-from .onboarding import accept_recruiter_dpa, phone_taken_by_other, send_phone_otp, verify_phone_otp
+from .dpa import (
+    DpaPolicyChanged,
+    DpaPolicyUnavailable,
+    accept_recruiter_dpa,
+    current_dpa_policy,
+)
+from .onboarding import phone_taken_by_other, send_phone_otp, verify_phone_otp
 from .phone_challenges import (
     challenge_code_matches,
     create_sms_phone_challenge,
@@ -92,6 +98,8 @@ __all__ = [
     'CandidateDataBlocked',
     'EmployerWorkspaceBlocked',
     'EmployerUploadStructureError',
+    'DpaPolicyChanged',
+    'DpaPolicyUnavailable',
     'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'ACTIVE_COMPANY_UPDATE_STATUSES',
@@ -99,6 +107,7 @@ __all__ = [
     'REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES',
     'UPDATABLE_COMPANY_FIELDS',
     'accept_recruiter_dpa',
+    'current_dpa_policy',
     'apply_verification_hold',
     'apply_update_request',
     'capture_company_update_base_values',

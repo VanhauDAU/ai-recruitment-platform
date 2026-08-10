@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer DPA evidence core
+
+- Thêm bằng chứng DPA append-only theo exact version/SHA-256, thời điểm, IP,
+  phiên đăng nhập và hash User-Agent; không backfill giả dữ liệu lịch sử.
+- `GET /api/employer/me/` công bố `dpa_policy`; `POST /api/employer/dpa/accept/`
+  fail closed khi policy stale/misconfigured. Frontend khóa xác nhận khi chưa có
+  policy hiện hành và yêu cầu re-consent cho `legacy_unversioned|outdated`.
+
 #### Fixed — Employer verification và company settings UX
 
 - Route job/campaign/application bị chặn do chưa đủ readiness nay điều hướng về

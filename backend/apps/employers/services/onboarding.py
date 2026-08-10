@@ -114,14 +114,3 @@ def verify_phone_otp(user, code):
         user.save(update_fields=['phone', 'updated_at'])
     reconcile_recruiter_verification(recruiter, source='phone_verified')
     return recruiter
-
-
-@transaction.atomic
-def accept_recruiter_dpa(user):
-    """Persist platform DPA acceptance and reconcile a ready verification case."""
-    recruiter = get_or_create_recruiter(user)
-    if recruiter.dpa_accepted_at is None:
-        recruiter.dpa_accepted_at = timezone.now()
-        recruiter.save(update_fields=['dpa_accepted_at', 'updated_at'])
-    reconcile_recruiter_verification(recruiter, source='dpa_accepted')
-    return recruiter

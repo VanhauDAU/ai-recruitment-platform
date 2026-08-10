@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from ...models import DpaStatus, RecruiterProfile
 from ...selectors import build_employer_onboarding_steps, build_employer_readiness
-from ...services import verification_checks
+from ...services import DpaPolicyUnavailable, current_dpa_policy, verification_checks
 from .companies import CompanySerializer
 
 
@@ -18,6 +18,18 @@ class EmployerReadinessBlockerSerializer(serializers.Serializer):
     action = serializers.CharField()
 
 
+class EmployerDpaPolicySerializer(serializers.Serializer):
+    available = serializers.BooleanField()
+    policy_version = serializers.CharField(allow_blank=True)
+    document_sha256 = serializers.CharField(allow_blank=True)
+    document_url = serializers.URLField(allow_blank=True)
+
+
+class EmployerDpaAcceptanceSerializer(serializers.Serializer):
+    policy_version = serializers.CharField(max_length=64)
+    document_sha256 = serializers.RegexField(r'^[0-9a-f]{64}$')
+
+
 class RecruiterProfileSerializer(serializers.ModelSerializer):
     company = CompanySerializer(read_only=True)
     work_location = serializers.SerializerMethodField()
@@ -28,6 +40,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     candidate_data_access = serializers.SerializerMethodField()
     dpa_status = serializers.SerializerMethodField()
     blockers = serializers.SerializerMethodField()
+    dpa_policy = serializers.SerializerMethodField()
 
     class Meta:
         model = RecruiterProfile
@@ -53,6 +66,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'verification_approved',
             'candidate_data_access',
             'dpa_status',
+            'dpa_policy',
             'blockers',
             'created_at',
         ]
@@ -104,6 +118,18 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
     )
     def get_dpa_status(self, obj) -> str:
         return self._readiness(obj)['dpa_status']
+
+    @extend_schema_field(EmployerDpaPolicySerializer)
+    def get_dpa_policy(self, obj) -> dict:
+        try:
+            return {'available': True, **current_dpa_policy()}
+        except DpaPolicyUnavailable:
+            return {
+                'available': False,
+                'policy_version': '',
+                'document_sha256': '',
+                'document_url': '',
+            }
 
     @extend_schema_field(EmployerReadinessBlockerSerializer(many=True))
     def get_blockers(self, obj) -> list[dict]:

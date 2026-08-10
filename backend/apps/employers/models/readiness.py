@@ -7,6 +7,7 @@ authoritative capability decision table.
 
 from enum import StrEnum
 
+from django.conf import settings
 from django.db.models import Exists, OuterRef, Q
 
 from apps.accounts.models import User
@@ -49,8 +50,20 @@ def _blocker(code, *, capabilities, message, action):
 
 
 def current_dpa_status(recruiter):
-    """Adapt today's timestamp-only storage to the full DPA enum."""
-    return DpaStatus.CURRENT if recruiter and recruiter.dpa_accepted_at else DpaStatus.MISSING
+    """Resolve current evidence without fabricating proof for legacy timestamps."""
+    if not recruiter or not recruiter.dpa_accepted_at:
+        return DpaStatus.MISSING
+    policy_version = recruiter.dpa_policy_version
+    document_sha256 = recruiter.dpa_document_sha256
+    if not policy_version or not document_sha256:
+        return DpaStatus.LEGACY_UNVERSIONED
+    current_version = settings.EMPLOYER_DPA_POLICY_VERSION
+    current_hash = settings.EMPLOYER_DPA_DOCUMENT_SHA256
+    if not current_version or len(current_hash) != 64:
+        return DpaStatus.UNKNOWN
+    if policy_version == current_version and document_sha256 == current_hash:
+        return DpaStatus.CURRENT
+    return DpaStatus.OUTDATED
 
 
 def is_registration_placeholder_company(recruiter, *, has_company_industry=None):

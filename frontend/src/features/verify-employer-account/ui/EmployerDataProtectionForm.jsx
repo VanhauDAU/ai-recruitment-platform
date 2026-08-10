@@ -128,7 +128,7 @@ export default function EmployerDataProtectionForm() {
     },
   })
   const acceptMutation = useMutation({
-    mutationFn: acceptEmployerDpa,
+    mutationFn: (policy) => acceptEmployerDpa(policy),
     onSuccess: async () => {
       message.success(`Đã xác nhận thỏa thuận xử lý dữ liệu với ${siteName}.`)
       setPlatformAgreementAccepted(false)
@@ -150,6 +150,16 @@ export default function EmployerDataProtectionForm() {
   if (profileQuery.isLoading) return <Skeleton active paragraph={{ rows: 12 }} />
 
   const verification = profileQuery.data?.onboarding || {}
+  const dpaPolicy = profileQuery.data?.dpa_policy
+  const dpaPolicyAvailable = Boolean(
+    dpaPolicy?.available
+    && dpaPolicy.policy_version
+    && /^[0-9a-f]{64}$/.test(dpaPolicy.document_sha256 || ''),
+  )
+  const platformDpaUrl = dpaPolicyAvailable ? dpaPolicy.document_url : PLATFORM_DPA_URL
+  const currentDpaAccepted = profileQuery.data?.dpa_status
+    ? profileQuery.data.dpa_status === 'current'
+    : Boolean(verification.dpa_accepted)
   const documents = (Array.isArray(documentsQuery.data) ? documentsQuery.data : []).filter(
     (item) => (
       item.doc_type === 'data_processing_agreement'
@@ -235,20 +245,29 @@ export default function EmployerDataProtectionForm() {
       <section className="min-w-0 rounded-lg border border-slate-200 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-base font-semibold text-slate-800">Văn bản Thỏa thuận xử lý Dữ liệu cá nhân giữa {siteName} - Nhà tuyển dụng</h2>
-          <StatusTag completed={verification.dpa_accepted} completedLabel="Đã xác nhận" pendingLabel="Chưa xác nhận" />
+          <StatusTag completed={currentDpaAccepted} completedLabel="Đã xác nhận" pendingLabel="Chưa xác nhận" />
         </div>
         <p className="mt-5 text-sm leading-6 text-slate-600">Nhằm tuân thủ Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, {siteName} chính thức triển khai Thỏa thuận về xử lý dữ liệu cá nhân trên hệ thống. Thỏa thuận này làm rõ vai trò, trách nhiệm của Quý đơn vị và {siteName} đối với các hồ sơ ứng viên được chuyển vào Không gian làm việc (Workspace) của Quý đơn vị. Vui lòng đọc kỹ và xác nhận đồng ý để đảm bảo tiến trình tuyển dụng diễn ra hợp pháp, minh bạch và không bị gián đoạn.</p>
-        <a href={PLATFORM_DPA_URL} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">Xem nội dung đầy đủ của văn bản <LinkOutlined /></a>
+        <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">Xem nội dung đầy đủ của văn bản <LinkOutlined /></a>
 
-        {verification.dpa_accepted ? (
+        {currentDpaAccepted ? (
           <p className="mt-4 text-sm text-emerald-700">{agreementAcceptedAt ? `Bạn đã xác nhận vào ${agreementAcceptedAt}.` : 'Bạn đã xác nhận thỏa thuận này.'}</p>
         ) : (
           <>
+            {!dpaPolicyAvailable && (
+              <Alert
+                className="mt-4"
+                type="warning"
+                showIcon
+                title="Phiên bản thỏa thuận hiện hành chưa sẵn sàng"
+                description="Vui lòng tải lại sau. Hệ thống sẽ không ghi nhận xác nhận khi chưa khóa được phiên bản và nội dung văn bản."
+              />
+            )}
             <div className="mt-4">
-              <Checkbox checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">Xác nhận đồng ý với các điều khoản của <a href={PLATFORM_DPA_URL} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">Thỏa thuận về xử lý Dữ liệu cá nhân</a></Checkbox>
+              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">Xác nhận đồng ý với các điều khoản của <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">Thỏa thuận về xử lý Dữ liệu cá nhân</a></Checkbox>
             </div>
             <div className="mt-4 flex justify-stretch sm:justify-end">
-              <Button type="primary" size="large" disabled={!platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate()} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">Xác nhận</Button>
+              <Button type="primary" size="large" disabled={!dpaPolicyAvailable || !platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate(dpaPolicy)} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">Xác nhận</Button>
             </div>
           </>
         )}

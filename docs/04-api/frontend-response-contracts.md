@@ -59,6 +59,12 @@ permission admin.
   "verification_approved": true,
   "candidate_data_access": false,
   "dpa_status": "outdated",
+  "dpa_policy": {
+    "available": true,
+    "policy_version": "2026-08",
+    "document_sha256": "<64 lowercase hex>",
+    "document_url": "https://..."
+  },
   "blockers": [
     {
       "code": "dpa_outdated",
@@ -73,8 +79,10 @@ permission admin.
 - `capabilities[]` chỉ gồm `job_workspace`, `verification`, `candidate_data`,
   `job_approval`; `code` và `action` là machine value chữ thường.
 - `dpa_status` thuộc `missing|current|legacy_unversioned|outdated|grace|hold|unknown`.
-  Adapter dữ liệu ER-2 hiện tính `missing|current`; các trạng thái version/grace/
-  hold được ER-6 bổ sung mà không đổi shape client.
+  Timestamp cũ không có evidence luôn là `legacy_unversioned`; acceptance có
+  version/hash khác cấu hình hiện hành là `outdated`. Client chỉ gọi accept với
+  exact `dpa_policy.policy_version` + `document_sha256`; `available=false` phải
+  khóa checkbox/nút xác nhận.
 - Action hiện hành gồm `contact_support`, `complete_onboarding`, `verify_phone`,
   `link_company`, `upload_business_document`, `upload_candidate_dpa`,
   `open_verification`, `accept_dpa`, `accept_current_dpa`. Frontend map action

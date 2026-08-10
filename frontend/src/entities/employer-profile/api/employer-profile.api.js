@@ -43,8 +43,11 @@ export async function verifyEmployerPhoneOtp(code) {
   return data
 }
 
-export async function acceptEmployerDpa() {
-  const { data } = await api.post('/employer/dpa/accept/')
+export async function acceptEmployerDpa(policy) {
+  const { data } = await api.post('/employer/dpa/accept/', {
+    policy_version: policy.policy_version,
+    document_sha256: policy.document_sha256,
+  })
   return data
 }
 

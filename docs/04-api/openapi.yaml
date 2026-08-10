@@ -5357,6 +5357,12 @@ paths:
       - employer
       security:
       - jwtAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployerDpaAcceptanceRequest'
+        required: true
       responses:
         '200':
           content:
@@ -5364,6 +5370,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecruiterProfile'
           description: ''
+        '409':
+          description: Phiên bản/hash phía client không còn là DPA hiện hành (`DPA_POLICY_CHANGED`).
+        '503':
+          description: DPA hiện hành chưa được cấu hình đầy đủ (`DPA_POLICY_UNAVAILABLE`).
   /api/employer/industries/:
     get:
       operationId: employer_industries_list
@@ -19428,8 +19438,37 @@ components:
       - unknown
       type: string
       description: |-
-        Stable public DPA lifecycle. The current timestamp-only adapter emits only
-        `missing` or `current`; the remaining values are reserved for ER-6 evidence.
+        Stable public DPA lifecycle. Timestamp cũ không có evidence được phân loại
+        `legacy_unversioned`; evidence khác version/hash hiện hành là `outdated`.
+    EmployerDpaAcceptanceRequest:
+      type: object
+      required:
+      - policy_version
+      - document_sha256
+      properties:
+        policy_version:
+          type: string
+          maxLength: 64
+        document_sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+    EmployerDpaPolicy:
+      type: object
+      required:
+      - available
+      - policy_version
+      - document_sha256
+      - document_url
+      properties:
+        available:
+          type: boolean
+        policy_version:
+          type: string
+        document_sha256:
+          type: string
+        document_url:
+          type: string
+          format: uri
     DraftJobApplicationContact:
       type: object
       properties:
@@ -25441,6 +25480,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/DpaStatusEnum'
           readOnly: true
+        dpa_policy:
+          allOf:
+          - $ref: '#/components/schemas/EmployerDpaPolicy'
+          readOnly: true
         blockers:
           type: array
           items:
@@ -25459,6 +25502,7 @@ components:
       - created_at
       - dpa_accepted_at
       - dpa_status
+      - dpa_policy
       - gender
       - job_workspace_ready
       - marketing_decided_at

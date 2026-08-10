@@ -2,6 +2,7 @@ from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.admin.sites import AdminSite
 from django.test import override_settings
 from django.urls import reverse
@@ -25,6 +26,7 @@ from ..models import (
     CompanyIndustry,
     CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
+    EmployerDpaAcceptance,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
@@ -87,7 +89,7 @@ class EmployerAccountVerificationTests(APITestCase):
         )
 
     def _complete_recruiter(self, user):
-        return RecruiterProfile.objects.create(
+        recruiter = RecruiterProfile.objects.create(
             user=user,
             company=self.company,
             company_role=RecruiterProfile.CompanyRole.MEMBER,
@@ -95,7 +97,16 @@ class EmployerAccountVerificationTests(APITestCase):
             phone_verified_at=timezone.now(),
             registration_completed_at=timezone.now(),
             dpa_accepted_at=timezone.now(),
+            dpa_policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+            dpa_document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
         )
+        EmployerDpaAcceptance.objects.create(
+            recruiter=recruiter,
+            policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+            document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+            document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
+        )
+        return recruiter
 
     def _case_with_approved_documents(self, recruiter):
         case = get_or_create_verification_case(recruiter)
@@ -567,13 +578,21 @@ class EmployerAccountVerificationTests(APITestCase):
         )
 
     def test_accepting_dpa_last_does_not_approve_a_fully_reviewed_case(self):
+        self.first.dpa_acceptances.all().delete()
         self.first.dpa_accepted_at = None
         self.first.save(update_fields=['dpa_accepted_at', 'updated_at'])
         self.first_case.status = EmployerVerificationCase.Status.IN_REVIEW
         self.first_case.save(update_fields=['status', 'updated_at'])
         self.client.force_authenticate(self.first_user)
 
-        response = self.client.post(reverse('employer-dpa-accept'))
+        response = self.client.post(
+            reverse('employer-dpa-accept'),
+            {
+                'policy_version': settings.EMPLOYER_DPA_POLICY_VERSION,
+                'document_sha256': settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+            },
+            format='json',
+        )
 
         self.assertEqual(response.status_code, 200, response.data)
         self.first_case.refresh_from_db()

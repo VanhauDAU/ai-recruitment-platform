@@ -23,7 +23,7 @@ from .companies import (
     CompanySerializer,
     IndustrySerializer,
 )
-from .onboarding import RecruiterProfileSerializer
+from .onboarding import EmployerDpaAcceptanceSerializer, RecruiterProfileSerializer
 from .recruitment_need import RecruitmentNeedSerializer
 from .registration import EmployerRegisterSerializer, EmployerRegistrationProfileSerializer
 from .verification import (
@@ -51,6 +51,7 @@ __all__ = [
     'CampaignPerformanceQuerySerializer',
     'IndustrySerializer',
     'RecruiterProfileSerializer',
+    'EmployerDpaAcceptanceSerializer',
     'RecruitmentCampaignSerializer',
     'RecruitmentNeedSerializer',
     'EmployerRegisterSerializer',

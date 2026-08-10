@@ -65,13 +65,14 @@ describe('employer profile API', () => {
     await checkEmployerPhoneAvailability('0912345678')
     await sendEmployerPhoneOtp('0912345678', 'Password@123')
     await verifyEmployerPhoneOtp('123456')
-    await acceptEmployerDpa()
+    const dpaPolicy = { policy_version: '2026-08', document_sha256: 'a'.repeat(64) }
+    await acceptEmployerDpa(dpaPolicy)
 
     expect(post).toHaveBeenCalledWith('/employer/onboarding/registration/', profile)
     expect(get).toHaveBeenCalledWith('/employer/phone/check/', { params: { phone: '0912345678' } })
     expect(post).toHaveBeenCalledWith('/employer/phone/send-otp/', { phone: '0912345678', password: 'Password@123' })
     expect(post).toHaveBeenCalledWith('/employer/phone/verify/', { code: '123456' })
-    expect(post).toHaveBeenCalledWith('/employer/dpa/accept/')
+    expect(post).toHaveBeenCalledWith('/employer/dpa/accept/', dpaPolicy)
   })
 
   it('attaches a scanned business registration session as multipart data', async () => {

@@ -1,5 +1,6 @@
 """Test builders for canonical employer workspace/candidate capabilities."""
 
+from django.conf import settings
 from django.utils import timezone
 
 from apps.jobs.models import JobCategory
@@ -7,6 +8,7 @@ from apps.jobs.models import JobCategory
 from ..models import (
     Company,
     CompanyDocument,
+    EmployerDpaAcceptance,
     EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentNeed,
@@ -46,6 +48,8 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
     recruiter.verified_phone = f'09{user.pk:08d}'
     recruiter.phone_verified_at = timezone.now()
     recruiter.dpa_accepted_at = timezone.now()
+    recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
+    recruiter.dpa_document_sha256 = settings.EMPLOYER_DPA_DOCUMENT_SHA256
     recruiter.save(
         update_fields=[
             'company',
@@ -54,8 +58,19 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
             'verified_phone',
             'phone_verified_at',
             'dpa_accepted_at',
+            'dpa_policy_version',
+            'dpa_document_sha256',
             'updated_at',
         ]
+    )
+    EmployerDpaAcceptance.objects.get_or_create(
+        recruiter=recruiter,
+        policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
+        document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
+        defaults={
+            'document_url': settings.EMPLOYER_DPA_DOCUMENT_URL,
+            'ip_address': '127.0.0.1',
+        },
     )
     category, _ = JobCategory.objects.get_or_create(
         name=f'Readiness category {user.pk}',

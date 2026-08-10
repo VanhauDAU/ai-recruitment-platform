@@ -463,7 +463,11 @@ partial apply; field không overlap vẫn được áp dụng.
   `POST /api/employer/company/join/`: hai luồng liên kết công ty rõ ràng.
 - `GET|POST /api/employer/company/documents/`: ĐKDN chấp nhận JPG/PNG/PDF;
   `candidate_dpa` chấp nhận PDF/DOC/DOCX và được theo dõi riêng.
-- `POST /api/employer/dpa/accept/`: đồng ý thỏa thuận ProCV–nhà tuyển dụng.
+- `POST /api/employer/dpa/accept/`: gửi exact version/hash do
+  `GET /api/employer/me/::dpa_policy` công bố. Bằng chứng mới là append-only và
+  giữ thời điểm, IP, phiên đăng nhập cùng hash User-Agent. Timestamp lịch sử
+  không được backfill giả các trường này và hiển thị `legacy_unversioned` cho
+  tới khi nhà tuyển dụng đồng ý DPA hiện hành.
 - `POST /api/auth/password-reset/`, validate và confirm: recovery dùng chung
   backend nhưng URL email/route frontend tách theo role.
 
