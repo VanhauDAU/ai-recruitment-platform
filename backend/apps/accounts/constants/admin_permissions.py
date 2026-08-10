@@ -252,6 +252,12 @@ ADMIN_PERMISSIONS = (
         'description': 'Quyền Compliance Lead được gán tường minh để thu hồi hoặc đánh dấu hết hiệu lực xác thực.',
     },
     {
+        'code': 'employer_verification.resubmission_unlock',
+        'module': 'employer_verification',
+        'label': 'Mở khóa nộp lại xác thực nhà tuyển dụng',
+        'description': 'Cho phép mở khóa ngoại lệ sau khi hồ sơ đạt giới hạn từ chối cuối, bắt buộc kèm lý do audit.',
+    },
+    {
         'code': 'employer_verification.tax_override',
         'module': 'employer_verification',
         'label': 'Override bằng chứng tra cứu thuế',
@@ -382,6 +388,7 @@ ADMIN_PERMISSION_DEPENDENCIES = {
     'cv_template.publish': ('cv_template.view',),
     'employer_verification.review': ('employer_verification.view',),
     'employer_verification.revoke': ('employer_verification.view',),
+    'employer_verification.resubmission_unlock': ('employer_verification.view',),
     'employer_verification.tax_override': (
         'employer_verification.view',
         'employer_verification.review',

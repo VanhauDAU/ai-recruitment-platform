@@ -575,6 +575,8 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const canViewVerification = isSuperuser || has('employer_verification.view')
   const canReviewVerification = isSuperuser || has('employer_verification.review')
   const canRevokeVerification = isSuperuser || has('employer_verification.revoke')
+  const canUnlockVerificationResubmission = isSuperuser
+    || has('employer_verification.resubmission_unlock')
   const canOverrideVerificationTax = isSuperuser
     || has('employer_verification.tax_override')
   const canViewCompanyUpdates = isSuperuser || has('company_update.view')
@@ -637,6 +639,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
         ...((canViewVerification
           || canReviewVerification
           || canRevokeVerification
+          || canUnlockVerificationResubmission
           || canOverrideVerificationTax
           || canViewCompanyUpdates
           || canReviewCompanyUpdates) ? [{
@@ -651,6 +654,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
               canViewVerification={canViewVerification}
               canReviewVerification={canReviewVerification}
               canRevokeVerification={canRevokeVerification}
+              canUnlockVerificationResubmission={canUnlockVerificationResubmission}
               canOverrideVerificationTax={canOverrideVerificationTax}
               canViewCompanyUpdates={canViewCompanyUpdates}
               canReviewCompanyUpdates={canReviewCompanyUpdates}

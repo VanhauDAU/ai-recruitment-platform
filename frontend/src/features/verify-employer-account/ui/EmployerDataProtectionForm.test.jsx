@@ -16,6 +16,7 @@ const {
   acceptEmployerDpa: vi.fn(),
   employerProfileKeys: {
     companyDocuments: ['employer', 'company', 'documents'],
+    companyDocumentList: (scope) => ['employer', 'company', 'documents', { scope }],
   },
   getEmployerCompanyDocumentContent: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
@@ -81,6 +82,7 @@ describe('EmployerDataProtectionForm', () => {
     const { container } = renderForm()
 
     expect(await screen.findByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
     expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveClass('!text-emerald-600')
     expect(screen.getByText('Tải mẫu văn bản').closest('a')).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
     expect(screen.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveClass('!text-emerald-600')

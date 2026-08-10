@@ -16,6 +16,7 @@ const {
 } = vi.hoisted(() => ({
   employerProfileKeys: {
     companyDocuments: ['employer', 'company', 'documents'],
+    companyDocumentList: (scope) => ['employer', 'company', 'documents', { scope }],
   },
   getEmployerProfile: vi.fn(),
   getEmployerCompanyDocuments: vi.fn(),
@@ -63,6 +64,17 @@ describe('EmployerBusinessLicenseForm', () => {
     uploadEmployerBusinessDocument.mockReset()
     uploadEmployerCompanyDocument.mockReset()
     getEmployerCompanyDocuments.mockResolvedValue([])
+  })
+
+  it('loads only the current recruiter document scope', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+
+    renderForm()
+
+    await screen.findByRole('heading', {
+      name: /Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác/,
+    })
+    expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
   })
 
   it('keeps saving disabled until company information is updated', async () => {
@@ -360,6 +372,33 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(screen.getByText('Ảnh giấy tờ không rõ nét.')).toBeVisible()
   })
 
+  it('keeps documents viewable but blocks editing after three final rejections', async () => {
+    getEmployerProfile.mockResolvedValue({
+      onboarding: { company_linked: true },
+      verification_case: {
+        status: 'rejected',
+        final_rejection_count: 3,
+        rejection_limit: 3,
+        resubmission_locked: true,
+      },
+    })
+    getEmployerCompanyDocuments.mockResolvedValue([{
+      id: 1,
+      public_id: 'doc_locked',
+      doc_type: 'business_registration',
+      file_name: 'gpkd.pdf',
+      status: 'rejected',
+      review_note: 'Hồ sơ không chứng minh được tư cách đại diện.',
+    }])
+
+    renderForm()
+
+    expect(await screen.findByText('Hồ sơ đang bị khóa nộp lại')).toBeVisible()
+    expect(screen.getByText(/3\/3 quyết định từ chối cuối/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Chỉnh sửa giấy tờ' })).toBeDisabled()
+    expect(screen.getByText('Hồ sơ không chứng minh được tư cách đại diện.')).toBeVisible()
+  })
+
   it('replaces only the rejected identity file and keeps approved files', async () => {
     getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
     getEmployerCompanyDocuments.mockResolvedValue([
@@ -432,4 +471,60 @@ describe('EmployerBusinessLicenseForm', () => {
       },
     ))
   }, 15_000)
+
+  it('requires every rejected current document before enabling resubmit', async () => {
+    getEmployerProfile.mockResolvedValue({ onboarding: { company_linked: true } })
+    getEmployerCompanyDocuments.mockResolvedValue([
+      {
+        id: 1,
+        public_id: 'doc_auth',
+        doc_type: 'authorization_letter',
+        file_name: 'uy-quyen.pdf',
+        status: 'approved',
+      },
+      {
+        id: 2,
+        public_id: 'doc_front',
+        doc_type: 'identity_document',
+        file_name: 'cccd-truoc.png',
+        status: 'rejected',
+        review_note: 'Mặt trước bị mờ.',
+      },
+      {
+        id: 3,
+        public_id: 'doc_back',
+        doc_type: 'identity_document',
+        file_name: 'cccd-sau.png',
+        status: 'changes_requested',
+        review_note: 'Mặt sau bị thiếu góc.',
+      },
+    ])
+    const user = userEvent.setup()
+    renderForm()
+
+    await screen.findByText('Có file bị từ chối')
+    await user.click(screen.getByRole('button', { name: 'Chỉnh sửa giấy tờ' }))
+    const replacementHeadings = screen.getAllByRole('heading', {
+      name: /Tệp thay thế cho Giấy tờ định danh/,
+    })
+    const firstInput = replacementHeadings[0].parentElement.querySelector('input[type="file"]')
+    const secondInput = replacementHeadings[1].parentElement.querySelector('input[type="file"]')
+    const saveButton = screen.getByRole('button', { name: 'Lưu' })
+
+    await user.upload(
+      firstInput,
+      new File(['front'], 'cccd-truoc-moi.png', { type: 'image/png' }),
+    )
+    expect(saveButton).toBeDisabled()
+    expect(saveButton).toHaveAttribute(
+      'title',
+      'Thay toàn bộ giấy tờ đang bị yêu cầu bổ sung hoặc từ chối trước khi nộp lại',
+    )
+
+    await user.upload(
+      secondInput,
+      new File(['back'], 'cccd-sau-moi.png', { type: 'image/png' }),
+    )
+    expect(saveButton).toBeEnabled()
+  })
 })

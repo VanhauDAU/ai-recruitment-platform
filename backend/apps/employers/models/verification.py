@@ -50,6 +50,8 @@ class EmployerVerificationCase(models.Model):
     status = models.CharField(max_length=24, choices=Status.choices, default=Status.DRAFT)
     revision = models.PositiveIntegerField(default=1)
     lock_version = models.PositiveIntegerField(default=0)
+    final_rejection_count = models.PositiveSmallIntegerField(default=0)
+    resubmission_locked_at = models.DateTimeField(null=True, blank=True)
     reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -103,8 +105,10 @@ class EmployerVerificationEvent(models.Model):
         SUBMITTED = 'submitted', 'Đã nộp'
         REVIEW_STARTED = 'review_started', 'Bắt đầu xử lý'
         DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
+        DOCUMENT_REPLACED = 'document_replaced', 'Đã thay giấy tờ'
         CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu bổ sung'
         RESUBMITTED = 'resubmitted', 'Đã nộp lại'
+        RESUBMISSION_UNLOCKED = 'resubmission_unlocked', 'Đã mở khóa nộp lại'
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Đã từ chối'
         REVOKED = 'revoked', 'Đã thu hồi'

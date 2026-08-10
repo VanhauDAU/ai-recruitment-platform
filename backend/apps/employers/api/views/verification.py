@@ -54,13 +54,34 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             self._recruiter = get_or_create_recruiter(self.request.user)
         return self._recruiter
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'scope',
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                enum=['mine'],
+                description=(
+                    'mine: chỉ giấy tờ thuộc hồ sơ của recruiter hiện tại; '
+                    'bỏ trống để giữ phạm vi tài liệu mà actor có quyền xem.'
+                ),
+            )
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
+        scope = self.request.query_params.get('scope', '')
+        if scope not in {'', 'mine'}:
+            raise ValidationError({'scope': 'Phạm vi phải là mine hoặc để trống.'})
         # Văn bản DLCN mới gắn với recruiter thay thế bản lịch sử từng gắn với
         # company. API phải trả bản mới trước để consumer không vô tình mở tệp
         # công ty cũ khi cả hai cùng tồn tại.
         return employer_document_metadata_queryset(
             user=self.request.user,
             recruiter=self.get_recruiter(),
+            personal_only=scope == 'mine',
         ).order_by(
             'dpa_owner_priority',
             '-created_at',

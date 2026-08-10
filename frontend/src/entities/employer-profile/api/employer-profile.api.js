@@ -100,8 +100,11 @@ export async function saveEmployerCompanyTradeNameWebsite(websiteUrl, options = 
   return data
 }
 
-export async function getEmployerCompanyDocuments() {
-  const { data } = await api.get('/employer/company/documents/')
+export async function getEmployerCompanyDocuments({ scope } = {}) {
+  const options = scope ? { params: { scope } } : undefined
+  const { data } = options
+    ? await api.get('/employer/company/documents/', options)
+    : await api.get('/employer/company/documents/')
   return data?.results || data || []
 }
 

@@ -47,6 +47,7 @@ from ..services import (
     release_verification_holds,
     review_verification_document,
     start_verification_review,
+    unlock_verification_resubmission,
     verification_decision_impact,
     verification_lifecycle_impact,
 )
@@ -94,6 +95,7 @@ class EmployerVerificationStateMachineTests(APITestCase):
                 'employer_verification.view',
                 'employer_verification.review',
                 'employer_verification.revoke',
+                'employer_verification.resubmission_unlock',
                 'employer_verification.tax_override',
             )
         }
@@ -398,6 +400,172 @@ class EmployerVerificationStateMachineTests(APITestCase):
 
         self.assertEqual(self.case.revision, 2)
 
+    def test_rejected_resubmission_can_be_reviewed_and_approved_again(self):
+        self._decide_nonapproval(EmployerVerificationCase.Status.REJECTED)
+        replacement = self._replace_business_document_and_resubmit()
+        self._replace_tax_evidence(CompanyTaxLookupEvidence.Status.FOUND)
+
+        self.case = start_verification_review(self.case, actor=self.reviewer)
+        _, self.case = review_verification_document(
+            replacement,
+            actor=self.reviewer,
+            decision=CompanyDocument.Status.APPROVED,
+            reason='',
+            lock_version=self.case.lock_version,
+        )
+        self._approve(actor=self.reviewer)
+
+        self.assertEqual(self.case.status, EmployerVerificationCase.Status.APPROVED)
+        self.assertEqual(self.case.revision, 2)
+        self.assertTrue(
+            self.case.events.filter(
+                event_type=EmployerVerificationEvent.EventType.REVIEW_STARTED,
+            ).exists()
+        )
+
+    def test_only_final_rejection_counts_and_third_rejection_locks_resubmission(self):
+        self._decide_nonapproval(EmployerVerificationCase.Status.CHANGES_REQUESTED)
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.final_rejection_count, 0)
+
+        for expected_count in (1, 2, 3):
+            if self.case.status != EmployerVerificationCase.Status.IN_REVIEW:
+                replacement = self._replace_business_document_and_resubmit()
+                self._replace_tax_evidence(CompanyTaxLookupEvidence.Status.FOUND)
+                self.case = start_verification_review(self.case, actor=self.reviewer)
+                _, self.case = review_verification_document(
+                    replacement,
+                    actor=self.reviewer,
+                    decision=CompanyDocument.Status.APPROVED,
+                    reason='',
+                    lock_version=self.case.lock_version,
+                )
+            self._decide_nonapproval(EmployerVerificationCase.Status.REJECTED)
+            self.case.refresh_from_db()
+            self.assertEqual(self.case.final_rejection_count, expected_count)
+            self.assertEqual(
+                self.case.resubmission_locked_at is not None,
+                expected_count == 3,
+            )
+
+        current = self.case.documents.filter(is_current=True).first()
+        with self.assertRaisesMessage(ValidationError, 'hết lượt nộp lại'):
+            record_verification_upload(
+                recruiter=self.recruiter,
+                document=current,
+                verification_method=self.case.verification_method,
+            )
+
+    def test_document_rejection_never_increments_final_rejection_count(self):
+        document = self.case.documents.get(
+            doc_type=CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            is_current=True,
+        )
+        document.status = CompanyDocument.Status.PENDING
+        document.save(update_fields=['status', 'updated_at'])
+
+        _, self.case = review_verification_document(
+            document,
+            actor=self.reviewer,
+            decision=CompanyDocument.Status.REJECTED,
+            reason='Bản scan không đọc được.',
+            lock_version=self.case.lock_version,
+        )
+
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.final_rejection_count, 0)
+        self.assertIsNone(self.case.resubmission_locked_at)
+
+    def test_high_risk_unlock_preserves_rejection_history_and_is_audited(self):
+        self.case.status = EmployerVerificationCase.Status.REJECTED
+        self.case.final_rejection_count = 3
+        self.case.resubmission_locked_at = timezone.now()
+        self.case.save(
+            update_fields=[
+                'status',
+                'final_rejection_count',
+                'resubmission_locked_at',
+                'updated_at',
+            ]
+        )
+
+        with self.assertRaises(PermissionDenied):
+            unlock_verification_resubmission(
+                self.case,
+                actor=self.reviewer,
+                reason='Reviewer không có quyền rủi ro cao.',
+                lock_version=self.case.lock_version,
+            )
+
+        self.case = unlock_verification_resubmission(
+            self.case,
+            actor=self.compliance_lead,
+            reason='Đã chấp thuận khiếu nại và đối chiếu bản gốc.',
+            lock_version=self.case.lock_version,
+        )
+
+        self.assertEqual(self.case.final_rejection_count, 3)
+        self.assertIsNone(self.case.resubmission_locked_at)
+        self.assertTrue(
+            self.case.events.filter(
+                event_type=EmployerVerificationEvent.EventType.RESUBMISSION_UNLOCKED,
+                payload__final_rejection_count=3,
+            ).exists()
+        )
+        self.assertTrue(
+            AdminAccessAuditLog.objects.filter(
+                actor=self.compliance_lead,
+                action='unlock_employer_verification_resubmission',
+                target_public_id=self.case.public_id,
+            ).exists()
+        )
+
+    def test_resubmission_unlock_endpoint_enforces_permission_and_lock_version(self):
+        self.case.status = EmployerVerificationCase.Status.REJECTED
+        self.case.final_rejection_count = 3
+        self.case.resubmission_locked_at = timezone.now()
+        self.case.save(
+            update_fields=[
+                'status',
+                'final_rejection_count',
+                'resubmission_locked_at',
+                'updated_at',
+            ]
+        )
+        url = reverse(
+            'admin-employer-verification-unlock-resubmission',
+            kwargs={'public_id': self.case.public_id},
+        )
+
+        self.client.force_authenticate(self.reviewer)
+        denied = self.client.post(
+            url,
+            {'reason': 'Không đủ quyền.', 'lock_version': self.case.lock_version},
+            format='json',
+        )
+        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.client.force_authenticate(self.compliance_lead)
+        stale = self.client.post(
+            url,
+            {'reason': 'Đã đối chiếu khiếu nại.', 'lock_version': 999},
+            format='json',
+        )
+        self.assertEqual(stale.status_code, status.HTTP_409_CONFLICT)
+
+        unlocked = self.client.post(
+            url,
+            {
+                'reason': 'Đã đối chiếu khiếu nại.',
+                'lock_version': self.case.lock_version,
+            },
+            format='json',
+        )
+        self.assertEqual(unlocked.status_code, status.HTTP_200_OK, unlocked.data)
+        self.assertFalse(unlocked.data['resubmission_locked'])
+        self.assertEqual(unlocked.data['final_rejection_count'], 3)
+        self.assertEqual(unlocked.data['rejection_limit'], 3)
+
     def test_multiple_terminal_document_replacements_bump_one_revision_only(self):
         current_documents = list(self.case.documents.filter(is_current=True))
         for document in current_documents:
@@ -430,8 +598,18 @@ class EmployerVerificationStateMachineTests(APITestCase):
                     EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
                 ),
             )
-            self.assertEqual(self.case.status, EmployerVerificationCase.Status.PENDING)
-            self.assertEqual(self.case.revision, 2)
+            if index < len(current_documents):
+                self.assertEqual(self.case.status, EmployerVerificationCase.Status.REJECTED)
+                self.assertEqual(self.case.revision, 1)
+                self.assertTrue(
+                    self.case.events.filter(
+                        event_type=EmployerVerificationEvent.EventType.DOCUMENT_REPLACED,
+                        payload__document_public_id=replacement.public_id,
+                    ).exists()
+                )
+            else:
+                self.assertEqual(self.case.status, EmployerVerificationCase.Status.PENDING)
+                self.assertEqual(self.case.revision, 2)
 
         self.assertEqual(
             self.case.events.filter(

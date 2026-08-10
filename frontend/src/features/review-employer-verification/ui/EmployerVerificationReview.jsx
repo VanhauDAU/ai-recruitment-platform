@@ -356,6 +356,7 @@ export default function EmployerVerificationReview({
   canViewVerification,
   canReviewVerification,
   canRevokeVerification,
+  canUnlockVerificationResubmission,
   canOverrideVerificationTax,
   canViewCompanyUpdates,
   canReviewCompanyUpdates,
@@ -498,10 +499,13 @@ export default function EmployerVerificationReview({
         <div className="verification-case-heading">
           <div>
             <Space wrap>
+              <Tag color={caseMeta.color}>{caseMeta.label}</Tag>
+              {verificationCase.revision > 1 && (
+                <Tag color="blue">{`Phiên nộp lại ${verificationCase.revision}`}</Tag>
+              )}
               {pendingDocumentCount > 0 && (
                 <Tag color="gold">{`${pendingDocumentCount} file chờ duyệt`}</Tag>
               )}
-              <Tag color={caseMeta.color}>{caseMeta.label}</Tag>
               <Typography.Text code>{verificationCase.public_id}</Typography.Text>
             </Space>
             <Typography.Title level={4} className="!mb-1 !mt-3">
@@ -519,7 +523,7 @@ export default function EmployerVerificationReview({
                   loading={startMutation.isPending}
                   onClick={() => startMutation.mutate()}
                 >
-                  Nhận xử lý
+                  {verificationCase.revision > 1 ? 'Nhận xử lý lại' : 'Nhận xử lý'}
                 </Button>
               )}
             </Space>
@@ -558,30 +562,16 @@ export default function EmployerVerificationReview({
               : 'Các công ty trùng MST đều chưa xác thực. Admin vẫn có thể duyệt hồ sơ hiện tại; hệ thống không liên kết, gộp hoặc sửa hồ sơ còn lại.'}
           />
         )}
+        {verificationCase.status === 'pending' && verificationCase.revision > 1 && (
+          <Alert
+            className="mt-4"
+            showIcon
+            type="info"
+            title="Hồ sơ đã đủ điều kiện vào vòng duyệt mới"
+            description="Nhà tuyển dụng đã thay toàn bộ giấy tờ bị yêu cầu sửa hoặc từ chối. Chọn Nhận xử lý lại để đối chiếu và mở quyết định cuối."
+          />
+        )}
       </Card>
-
-      <TaxLookupEvidenceCard
-        evidence={verificationCase.tax_lookup_evidence}
-        recruiterCompanyRole={verificationCase.recruiter?.company_role}
-        canRefresh={canReviewVerification}
-        refreshing={taxLookupMutation.isPending}
-        onRefresh={() => taxLookupMutation.mutate()}
-      />
-
-      <Card
-        size="small"
-        className="account-detail-card verification-progress-card"
-      >
-        <VerificationJourney checks={verificationCase.checks} />
-      </Card>
-
-      <VerificationFinalDecisionPanel
-        verificationCase={verificationCase}
-        canReview={canReviewVerification}
-        canRevoke={canRevokeVerification}
-        canTaxOverride={canOverrideVerificationTax}
-        onChanged={refresh}
-      />
 
       {canViewCompanyUpdates && (
         <CompanyUpdateReviewPanel
@@ -594,7 +584,9 @@ export default function EmployerVerificationReview({
         />
       )}
 
-      <section className="verification-workbench">
+      <section className="verification-review-workspace">
+        <div className="verification-review-main">
+          <section className="verification-workbench">
         <Card
           size="small"
           title={`Bộ giấy tờ (${currentDocuments.length})`}
@@ -681,6 +673,34 @@ export default function EmployerVerificationReview({
             canViewSensitive={canViewSensitive}
           />
         </Card>
+          </section>
+
+          <TaxLookupEvidenceCard
+            evidence={verificationCase.tax_lookup_evidence}
+            recruiterCompanyRole={verificationCase.recruiter?.company_role}
+            canRefresh={canReviewVerification}
+            refreshing={taxLookupMutation.isPending}
+            onRefresh={() => taxLookupMutation.mutate()}
+          />
+        </div>
+
+        <aside className="verification-review-rail" aria-label="Điều kiện và quyết định hồ sơ">
+          <VerificationFinalDecisionPanel
+            verificationCase={verificationCase}
+            canReview={canReviewVerification}
+            canRevoke={canRevokeVerification}
+            canUnlockResubmission={canUnlockVerificationResubmission}
+            canTaxOverride={canOverrideVerificationTax}
+            onChanged={refresh}
+          />
+
+          <Card
+            size="small"
+            className="account-detail-card verification-progress-card"
+          >
+            <VerificationJourney checks={verificationCase.checks} />
+          </Card>
+        </aside>
       </section>
 
       <Card size="small" title="Lịch sử xử lý" className="account-detail-card verification-history-card">

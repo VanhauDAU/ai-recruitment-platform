@@ -28,7 +28,9 @@ export function currentDocumentSet(documents) {
   const business = verificationDocuments.filter(
     (document) => document.doc_type === 'business_registration',
   )
-  if (business.length) return { method: 'business_registration', documents: business }
+  if (business.length) {
+    return { method: 'business_registration', documents: business.slice(0, 1) }
+  }
 
   const authorization = verificationDocuments.filter(
     (document) => document.doc_type === 'authorization_letter',

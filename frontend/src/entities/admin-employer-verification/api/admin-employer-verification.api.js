@@ -39,6 +39,13 @@ export function decideAdminEmployerVerification(publicId, payload) {
   return data(client.post(`/admin/employer-verifications/${publicId}/decision/`, payload))
 }
 
+export function unlockAdminEmployerVerificationResubmission(publicId, payload) {
+  return data(client.post(
+    `/admin/employer-verifications/${publicId}/unlock-resubmission/`,
+    payload,
+  ))
+}
+
 const VERIFICATION_LIFECYCLE_PATHS = {
   revoked: 'revoke',
   expired: 'expire',

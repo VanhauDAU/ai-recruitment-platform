@@ -22,6 +22,7 @@ function companyImpactCopy(impact) {
 
 export default function VerificationDecisionImpactSummary({ impact, lifecycle }) {
   const resources = impact.resources || impact.verification_hold_impact || {}
+  const rejection = impact.rejection_impact
   return (
     <div className="space-y-3" data-testid="verification-impact-summary">
       <Alert
@@ -54,6 +55,20 @@ export default function VerificationDecisionImpactSummary({ impact, lifecycle })
           {Number.isInteger(resources.active_jobs_to_unhide)
             && ` · ${resources.active_jobs_to_unhide} tin có thể hiện lại`}
         </Descriptions.Item>
+        {rejection && impact.decision === 'rejected' && (
+          <Descriptions.Item label="Lượt từ chối cuối">
+            <Space wrap>
+              <Tag color={rejection.will_lock_resubmission ? 'red' : 'orange'}>
+                {`${rejection.next_count}/${rejection.limit}`}
+              </Tag>
+              <span>
+                {rejection.will_lock_resubmission
+                  ? 'Xác nhận sẽ khóa nộp lại; tài khoản vẫn xem lý do và gửi khiếu nại.'
+                  : 'Chỉ quyết định cuối Từ chối mới tăng bộ đếm.'}
+              </span>
+            </Space>
+          </Descriptions.Item>
+        )}
       </Descriptions>
     </div>
   )

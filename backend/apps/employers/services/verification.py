@@ -68,6 +68,8 @@ LIFECYCLE_ACTIONS = frozenset(
 )
 TAX_OVERRIDE_PERMISSION = 'employer_verification.tax_override'
 VERIFICATION_REVOKE_PERMISSION = 'employer_verification.revoke'
+VERIFICATION_RESUBMISSION_UNLOCK_PERMISSION = 'employer_verification.resubmission_unlock'
+MAX_FINAL_REJECTIONS = 3
 
 
 def _workflow_error(code, detail, **extra):
@@ -204,6 +206,8 @@ def _integrity_fingerprint(case, *, scope=None):
             case.status,
             case.revision,
             case.lock_version,
+            case.final_rejection_count,
+            _timestamp_marker(case.resubmission_locked_at),
             _timestamp_marker(case.updated_at),
         ],
         'user': [
@@ -648,6 +652,13 @@ def record_verification_upload(
     verification_method='',
 ):
     case = get_or_create_verification_case(recruiter)
+    if case.resubmission_locked_at is not None:
+        _workflow_error(
+            'VERIFICATION_RESUBMISSION_LOCKED',
+            'Hồ sơ đã hết lượt nộp lại. Vui lòng gửi khiếu nại để được quản trị viên xem xét.',
+            final_rejection_count=case.final_rejection_count,
+            rejection_limit=MAX_FINAL_REJECTIONS,
+        )
     locked_documents = tuple(
         CompanyDocument.objects.select_for_update(of=('self',))
         .filter(Q(verification_case_id=case.pk) | Q(pk=document.pk))
@@ -676,23 +687,20 @@ def record_verification_upload(
     ):
         case.verification_method = EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
 
-    resubmission = case.status in {
+    terminal_resubmission = case.status in {
         EmployerVerificationCase.Status.CHANGES_REQUESTED,
         EmployerVerificationCase.Status.REJECTED,
         EmployerVerificationCase.Status.REVOKED,
         EmployerVerificationCase.Status.EXPIRED,
     }
-    issue_status, issue_reason = _current_document_issue(
+    issue_status, _ = _current_document_issue(
         case,
         documents=locked_documents,
     )
-    case.status = (
-        EmployerVerificationCase.Status.PENDING
-        if resubmission
-        else issue_status or EmployerVerificationCase.Status.PENDING
-    )
-    case.submitted_at = timezone.now()
-    if issue_status is None or resubmission:
+    resubmission_ready = terminal_resubmission and issue_status is None
+    if not terminal_resubmission or resubmission_ready:
+        case.status = EmployerVerificationCase.Status.PENDING
+        case.submitted_at = timezone.now()
         case.review_started_at = None
         case.decided_at = None
         case.decision_reason = ''
@@ -701,10 +709,8 @@ def record_verification_upload(
         case.decision_snapshot = {}
         case.tax_override_reason = ''
         case.tax_override_by = None
-    else:
-        case.decision_reason = issue_reason
     case.lock_version += 1
-    if resubmission:
+    if resubmission_ready:
         case.revision += 1
     case.save(
         update_fields=[
@@ -733,13 +739,19 @@ def record_verification_upload(
         actor=recruiter.user,
         event_type=(
             EmployerVerificationEvent.EventType.RESUBMITTED
-            if resubmission
-            else EmployerVerificationEvent.EventType.SUBMITTED
+            if resubmission_ready
+            else (
+                EmployerVerificationEvent.EventType.DOCUMENT_REPLACED
+                if terminal_resubmission
+                else EmployerVerificationEvent.EventType.SUBMITTED
+            )
         ),
         payload={
             'document_public_id': document.public_id,
             'doc_type': document.doc_type,
             'revision': case.revision,
+            'resubmission_ready': resubmission_ready,
+            'remaining_document_issue': issue_status or '',
         },
     )
     if (
@@ -1122,6 +1134,19 @@ def _prepare_final_decision(
                 'active_jobs_to_unhide': 0,
             }
         ),
+        'rejection_impact': {
+            'current_count': case.final_rejection_count,
+            'next_count': (
+                case.final_rejection_count + 1
+                if decision == EmployerVerificationCase.Status.REJECTED
+                else case.final_rejection_count
+            ),
+            'limit': MAX_FINAL_REJECTIONS,
+            'will_lock_resubmission': bool(
+                decision == EmployerVerificationCase.Status.REJECTED
+                and case.final_rejection_count + 1 >= MAX_FINAL_REJECTIONS
+            ),
+        },
         'integrity_fingerprint': _integrity_fingerprint(case, scope=scope),
     }
     request_payload = {
@@ -1229,6 +1254,12 @@ def confirm_verification_decision(
     case.decision_snapshot = snapshot
     case.tax_override_reason = payload['tax_override_reason']
     case.tax_override_by = actor if payload['tax_override'] else None
+    if decision == EmployerVerificationCase.Status.REJECTED:
+        case.final_rejection_count += 1
+        if case.final_rejection_count >= MAX_FINAL_REJECTIONS:
+            case.resubmission_locked_at = timezone.now()
+    elif decision == EmployerVerificationCase.Status.APPROVED:
+        case.resubmission_locked_at = None
     case.lock_version += 1
     case.save(
         update_fields=[
@@ -1240,6 +1271,8 @@ def confirm_verification_decision(
             'decision_snapshot',
             'tax_override_reason',
             'tax_override_by',
+            'final_rejection_count',
+            'resubmission_locked_at',
             'lock_version',
             'updated_at',
         ]
@@ -1266,6 +1299,8 @@ def confirm_verification_decision(
             'tax_advisory_status': snapshot['tax_advisory']['status'],
             'tax_override': payload['tax_override'],
             'tax_override_reason': payload['tax_override_reason'],
+            'final_rejection_count': case.final_rejection_count,
+            'resubmission_locked': case.resubmission_locked_at is not None,
         },
     )
     for hold in released_holds:
@@ -1297,6 +1332,53 @@ def confirm_verification_decision(
         case,
         event_type=decision,
         reason=reason,
+    )
+    return case
+
+
+@transaction.atomic
+def unlock_verification_resubmission(case, *, actor, reason, lock_version):
+    require_admin_permission(actor, VERIFICATION_RESUBMISSION_UNLOCK_PERMISSION)
+    case = lock_verification_identity(case).case
+    reason = reason.strip()
+    if not reason:
+        _workflow_error(
+            'VERIFICATION_REASON_REQUIRED',
+            'Cần nhập lý do mở khóa nộp lại.',
+        )
+    if case.lock_version != lock_version:
+        raise StaleImpactToken('Hồ sơ đã thay đổi. Vui lòng tải lại.')
+    if (
+        case.status != EmployerVerificationCase.Status.REJECTED
+        or case.resubmission_locked_at is None
+    ):
+        _workflow_error(
+            'VERIFICATION_INVALID_TRANSITION',
+            'Chỉ hồ sơ bị từ chối và đang khóa nộp lại mới có thể được mở khóa.',
+            current_status=case.status,
+            allowed_statuses=[EmployerVerificationCase.Status.REJECTED],
+        )
+    case.resubmission_locked_at = None
+    case.lock_version += 1
+    case.save(update_fields=['resubmission_locked_at', 'lock_version', 'updated_at'])
+    EmployerVerificationEvent.objects.create(
+        verification_case=case,
+        actor=actor,
+        event_type=EmployerVerificationEvent.EventType.RESUBMISSION_UNLOCKED,
+        payload={
+            'reason': reason,
+            'final_rejection_count': case.final_rejection_count,
+        },
+    )
+    record_admin_action(
+        actor=actor,
+        action='unlock_employer_verification_resubmission',
+        target_type='employer_verification',
+        target_public_id=case.public_id,
+        payload={
+            'reason': reason,
+            'final_rejection_count': case.final_rejection_count,
+        },
     )
     return case
 

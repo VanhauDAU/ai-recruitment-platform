@@ -71,8 +71,8 @@ export default function EmployerDataProtectionForm() {
   const [uploadState, setUploadState] = useState(null)
   const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
   const documentsQuery = useQuery({
-    queryKey: employerProfileKeys.companyDocuments,
-    queryFn: getEmployerCompanyDocuments,
+    queryKey: employerProfileKeys.companyDocumentList('mine'),
+    queryFn: () => getEmployerCompanyDocuments({ scope: 'mine' }),
   })
 
   async function refresh() {

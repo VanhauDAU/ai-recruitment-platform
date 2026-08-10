@@ -46,6 +46,7 @@ from ...services import (
     review_company_update_document,
     review_verification_document,
     start_verification_review,
+    unlock_verification_resubmission,
     verification_decision_impact,
     verification_lifecycle_impact,
 )
@@ -67,6 +68,7 @@ from ..serializers.admin_verification import (
     AdminVerificationLifecyclePreviewSerializer,
     AdminVerificationLifecycleWorkflowErrorSerializer,
     AdminVerificationPermissionErrorSerializer,
+    AdminVerificationResubmissionUnlockSerializer,
     AdminVerificationStaleErrorSerializer,
     AdminVerificationTaxConflictErrorSerializer,
 )
@@ -304,6 +306,7 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
         'revoke': ['employer_verification.revoke'],
         'expire_impact': ['employer_verification.revoke'],
         'expire': ['employer_verification.revoke'],
+        'unlock_resubmission': ['employer_verification.resubmission_unlock'],
         'refresh_tax_lookup': ['employer_verification.review'],
         'document_content': [
             'employer_verification.view',
@@ -458,6 +461,42 @@ class AdminEmployerVerificationViewSet(viewsets.ReadOnlyModelViewSet):
                 error.tax_code,
                 claim_status=error.claim_status,
             ) from error
+        current = admin_verification_cases_queryset(include_detail=True).get(pk=case.pk)
+        return Response(
+            AdminVerificationCaseDetailSerializer(
+                current,
+                context=self.get_serializer_context(),
+            ).data
+        )
+
+    @extend_schema(
+        summary='Mở khóa ngoại lệ cho phép nộp lại hồ sơ xác thực',
+        description=(
+            'Chỉ áp dụng cho case `rejected` đã khóa sau khi đạt giới hạn từ chối '
+            'cuối. Yêu cầu permission `employer_verification.resubmission_unlock`, '
+            'lý do audit và `lock_version` hiện hành. Thao tác không xóa lịch sử '
+            'từ chối và không tự duyệt hồ sơ.'
+        ),
+        request=AdminVerificationResubmissionUnlockSerializer,
+        responses={
+            200: AdminVerificationCaseDetailSerializer,
+            400: ADMIN_VERIFICATION_DECISION_BAD_REQUEST_RESPONSE,
+            403: ADMIN_VERIFICATION_PERMISSION_RESPONSE,
+            409: ADMIN_VERIFICATION_DECISION_CONFLICT_RESPONSE,
+        },
+    )
+    @action(detail=True, methods=['post'], url_path='unlock-resubmission')
+    def unlock_resubmission(self, request, public_id=None):
+        serializer = AdminVerificationResubmissionUnlockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            case = unlock_verification_resubmission(
+                self.get_object(),
+                actor=request.user,
+                **serializer.validated_data,
+            )
+        except StaleImpactToken as error:
+            raise AdminResourceChanged() from error
         current = admin_verification_cases_queryset(include_detail=True).get(pk=case.pk)
         return Response(
             AdminVerificationCaseDetailSerializer(

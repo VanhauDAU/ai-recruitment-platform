@@ -4,6 +4,7 @@ import {
   decideAdminEmployerVerification,
   getAdminEmployerDecisionImpact,
   getAdminEmployerLifecycleImpact,
+  unlockAdminEmployerVerificationResubmission,
 } from './admin-employer-verification.api'
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }))
@@ -63,5 +64,17 @@ describe('admin employer verification API', () => {
       getAdminEmployerLifecycleImpact('evc_1', 'approved', { reason: 'No' })
     )).toThrow('Unsupported employer verification lifecycle action.')
     expect(post).not.toHaveBeenCalled()
+  })
+
+  it('posts a bounded audited resubmission unlock request', async () => {
+    post.mockResolvedValue({ data: { resubmission_locked: false } })
+    const payload = { reason: 'Đã đối chiếu khiếu nại', lock_version: 7 }
+
+    await unlockAdminEmployerVerificationResubmission('evc_1', payload)
+
+    expect(post).toHaveBeenCalledWith(
+      '/admin/employer-verifications/evc_1/unlock-resubmission/',
+      payload,
+    )
   })
 })

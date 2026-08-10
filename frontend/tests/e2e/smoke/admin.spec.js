@@ -472,6 +472,10 @@ test('admin employer detail: company media and compact verification comparison r
     reviewer_email: null,
     phone_verified: true,
     lock_version: 0,
+    final_rejection_count: 1,
+    rejection_limit: 3,
+    resubmission_locked: false,
+    resubmission_locked_at: null,
     recruiter: { company_role: 'member' },
     checks: {
       email_verified: true,
@@ -655,6 +659,12 @@ test('admin employer detail: company media and compact verification comparison r
         verification_hold_impact: {
           hold_count: 0, campaign_count: 1, job_count: 2, active_jobs_to_unhide: 0,
         },
+        rejection_impact: {
+          current_count: 1,
+          next_count: 1,
+          limit: 3,
+          will_lock_resubmission: false,
+        },
         unlocks_employer_capabilities: true,
         impact_token: 'e2e-verification-impact',
       }
@@ -704,6 +714,9 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page.getByText('Bảo vệ dữ liệu', { exact: true })).toBeVisible()
   await expect(page.getByText(/là thành viên của công ty/)).toBeVisible()
   await expect(page.getByText('Giấy tờ và hồ sơ là hai lớp quyết định độc lập')).toBeVisible()
+  await expect(page.locator('.verification-review-workspace')).toBeVisible()
+  await expect(page.locator('.verification-review-main')).toBeVisible()
+  await expect(page.locator('.verification-review-rail')).toBeVisible()
   await page.getByRole('button', { name: 'Xem 9 bước' }).click()
   await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)

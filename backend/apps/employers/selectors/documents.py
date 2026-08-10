@@ -10,10 +10,22 @@ def _owned_document_filter(*, user, recruiter):
     return Q(uploaded_by=user) | Q(recruiter=recruiter) | Q(verification_case__recruiter=recruiter)
 
 
-def employer_document_metadata_queryset(*, user, recruiter):
-    """Return documents whose redacted metadata may be shown to the actor."""
+def _personal_document_filter(*, user, recruiter):
     visible = Q(recruiter=recruiter) | Q(verification_case__recruiter=recruiter)
     if has_explicit_company_link(recruiter):
+        visible |= Q(
+            company=recruiter.company,
+            recruiter__isnull=True,
+            verification_case__isnull=True,
+            uploaded_by=user,
+        )
+    return visible
+
+
+def employer_document_metadata_queryset(*, user, recruiter, personal_only=False):
+    """Return documents whose redacted metadata may be shown to the actor."""
+    visible = _personal_document_filter(user=user, recruiter=recruiter)
+    if not personal_only and has_explicit_company_link(recruiter):
         visible |= Q(company=recruiter.company, update_request__isnull=False) | Q(
             company=recruiter.company,
             verification_case__isnull=True,

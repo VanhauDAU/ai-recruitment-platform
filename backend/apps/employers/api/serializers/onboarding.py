@@ -120,6 +120,10 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
                 'revision': 1,
                 'submitted_at': None,
                 'missing_steps': [],
+                'final_rejection_count': 0,
+                'rejection_limit': 3,
+                'resubmission_locked': False,
+                'resubmission_locked_at': None,
             }
         checks = verification_checks(case)
         return {
@@ -129,6 +133,10 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'decision_reason': case.decision_reason,
             'revision': case.revision,
             'submitted_at': case.submitted_at,
+            'final_rejection_count': case.final_rejection_count,
+            'rejection_limit': 3,
+            'resubmission_locked': case.resubmission_locked_at is not None,
+            'resubmission_locked_at': case.resubmission_locked_at,
             'missing_steps': [
                 key for key, complete in checks.items() if not complete and key != 'case_approved'
             ],

@@ -53,6 +53,7 @@ DECISION_SNAPSHOT_FIELDS = (
     'company_impact',
     'capability_impact',
     'verification_hold_impact',
+    'rejection_impact',
 )
 LIFECYCLE_SNAPSHOT_FIELDS = (
     'case_public_id',
@@ -116,6 +117,10 @@ def _public_decision_snapshot(value):
         snapshot['verification_hold_impact'] = _allowlisted_mapping(
             snapshot.get('verification_hold_impact'),
             ('hold_count', 'campaign_count', 'job_count', 'active_jobs_to_unhide'),
+        )
+        snapshot['rejection_impact'] = _allowlisted_mapping(
+            snapshot.get('rejection_impact'),
+            ('current_count', 'next_count', 'limit', 'will_lock_resubmission'),
         )
         return snapshot
     if value.get('action') in {
@@ -316,6 +321,8 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
     phone_verified = serializers.SerializerMethodField()
     company = serializers.SerializerMethodField()
     missing_steps = serializers.SerializerMethodField()
+    rejection_limit = serializers.SerializerMethodField()
+    resubmission_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = EmployerVerificationCase
@@ -336,6 +343,10 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
             'pending_document_count',
             'revision',
             'lock_version',
+            'final_rejection_count',
+            'rejection_limit',
+            'resubmission_locked',
+            'resubmission_locked_at',
             'submitted_at',
             'review_started_at',
             'decided_at',
@@ -345,6 +356,12 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
 
     def get_phone_verified(self, obj):
         return obj.recruiter.phone_verified_at is not None
+
+    def get_rejection_limit(self, obj):
+        return 3
+
+    def get_resubmission_locked(self, obj):
+        return obj.resubmission_locked_at is not None
 
     def get_company(self, obj):
         if obj.company_id is None:
@@ -528,6 +545,17 @@ class AdminVerificationLifecycleConfirmationSerializer(AdminVerificationLifecycl
     impact_token = serializers.CharField()
 
 
+class AdminVerificationResubmissionUnlockSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=2000)
+    lock_version = serializers.IntegerField(min_value=0)
+
+    def validate_reason(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Nhập lý do mở khóa nộp lại.')
+        return value
+
+
 class AdminVerificationChecksSerializer(serializers.Serializer):
     email_verified = serializers.BooleanField()
     registration_completed = serializers.BooleanField()
@@ -611,6 +639,13 @@ class AdminVerificationHoldImpactSerializer(serializers.Serializer):
     active_jobs_to_unhide = serializers.IntegerField(min_value=0)
 
 
+class AdminVerificationRejectionImpactSerializer(serializers.Serializer):
+    current_count = serializers.IntegerField(min_value=0)
+    next_count = serializers.IntegerField(min_value=0)
+    limit = serializers.IntegerField(min_value=1)
+    will_lock_resubmission = serializers.BooleanField()
+
+
 class AdminVerificationLifecycleResourcesSerializer(serializers.Serializer):
     campaign_count = serializers.IntegerField(min_value=0)
     job_count = serializers.IntegerField(min_value=0)
@@ -636,6 +671,7 @@ class AdminVerificationDecisionImpactSerializer(serializers.Serializer):
     company_impact = AdminVerificationDecisionCompanyImpactSerializer()
     capability_impact = AdminVerificationDecisionCapabilityImpactSerializer()
     verification_hold_impact = AdminVerificationHoldImpactSerializer()
+    rejection_impact = AdminVerificationRejectionImpactSerializer()
     unlocks_employer_capabilities = serializers.BooleanField()
     impact_token = serializers.CharField()
 
@@ -676,6 +712,7 @@ class AdminVerificationStoredDecisionSnapshotSerializer(serializers.Serializer):
     company_impact = AdminVerificationDecisionCompanyImpactSerializer()
     capability_impact = AdminVerificationDecisionCapabilityImpactSerializer()
     verification_hold_impact = AdminVerificationHoldImpactSerializer()
+    rejection_impact = AdminVerificationRejectionImpactSerializer()
 
 
 class AdminVerificationStoredLifecycleSnapshotSerializer(serializers.Serializer):
@@ -703,6 +740,7 @@ class AdminVerificationDecisionWorkflowErrorSerializer(serializers.Serializer):
             'TAX_LOOKUP_PENDING',
             'TAX_OVERRIDE_REQUIRED',
             'TAX_OVERRIDE_REASON_REQUIRED',
+            'VERIFICATION_RESUBMISSION_LOCKED',
         ]
     )
     detail = serializers.CharField()

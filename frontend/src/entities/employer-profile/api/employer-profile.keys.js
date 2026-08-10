@@ -7,6 +7,7 @@ export const employerProfileKeys = {
   profile: [...employerProfileRoot, 'profile'],
   company: employerCompanyRoot,
   companyDocuments: [...employerCompanyRoot, 'documents'],
+  companyDocumentList: (scope) => [...employerCompanyRoot, 'documents', { scope }],
   companyUpdateRequests: employerCompanyUpdateRequestsRoot,
   companyUpdateRequestList: (scope) => [...employerCompanyUpdateRequestsRoot, { scope }],
 }

@@ -2,6 +2,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   StopOutlined,
+  UnlockOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
@@ -23,6 +24,7 @@ import {
   decideAdminEmployerVerification,
   getAdminEmployerDecisionImpact,
   getAdminEmployerLifecycleImpact,
+  unlockAdminEmployerVerificationResubmission,
   verificationStatusMeta,
 } from '@/entities/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -41,6 +43,12 @@ const LIFECYCLE_ACTIONS = {
 }
 
 function workflowPayload(mode, values) {
+  if (mode.type === 'unlock') {
+    return {
+      reason: values.reason.trim(),
+      lock_version: mode.lockVersion,
+    }
+  }
   if (mode.type === 'lifecycle') return { reason: values.reason.trim() }
   return {
     decision: mode.action,
@@ -54,6 +62,7 @@ export default function VerificationFinalDecisionPanel({
   verificationCase,
   canReview,
   canRevoke,
+  canUnlockResubmission,
   canTaxOverride,
   onChanged,
 }) {
@@ -93,7 +102,12 @@ export default function VerificationFinalDecisionPanel({
 
   const confirmMutation = useMutation({
     mutationFn: ({ currentMode, payload }) => (
-      currentMode.type === 'decision'
+      currentMode.type === 'unlock'
+        ? unlockAdminEmployerVerificationResubmission(
+          verificationCase.public_id,
+          payload,
+        )
+        : currentMode.type === 'decision'
         ? decideAdminEmployerVerification(verificationCase.public_id, payload)
         : changeAdminEmployerVerificationLifecycle(
           verificationCase.public_id,
@@ -102,7 +116,9 @@ export default function VerificationFinalDecisionPanel({
         )
     ),
     onSuccess: async () => {
-      message.success('Đã ghi nhận quyết định xác thực nhà tuyển dụng.')
+      message.success(mode?.type === 'unlock'
+        ? 'Đã mở khóa để nhà tuyển dụng có thể nộp lại hồ sơ.'
+        : 'Đã ghi nhận quyết định xác thực nhà tuyển dụng.')
       setMode(null)
       setImpact(null)
       setErrorMessage('')
@@ -121,7 +137,7 @@ export default function VerificationFinalDecisionPanel({
   })
 
   const openWorkflow = (type, action) => {
-    setMode({ type, action })
+    setMode({ type, action, lockVersion: verificationCase.lock_version })
     setImpact(null)
     setErrorMessage('')
     form.setFieldsValue({
@@ -139,6 +155,10 @@ export default function VerificationFinalDecisionPanel({
       return
     }
     const payload = workflowPayload(mode, values)
+    if (mode.type === 'unlock') {
+      confirmMutation.mutate({ currentMode: mode, payload })
+      return
+    }
     if (!impact) {
       previewMutation.mutate({ currentMode: mode, payload })
       return
@@ -153,7 +173,17 @@ export default function VerificationFinalDecisionPanel({
   const isReviewing = verificationCase.status === 'in_review'
   const isApproved = verificationCase.status === 'approved'
   const isInactive = ['revoked', 'expired'].includes(verificationCase.status)
-  const modalMeta = mode?.type === 'lifecycle'
+  const isAwaitingResubmission = ['changes_requested', 'rejected'].includes(
+    verificationCase.status,
+  )
+  const isResubmittedPending = verificationCase.status === 'pending'
+    && verificationCase.revision > 1
+  const isResubmissionLocked = Boolean(verificationCase.resubmission_locked_at)
+  const rejectionCount = Number(verificationCase.final_rejection_count || 0)
+  const rejectionLimit = Number(verificationCase.rejection_limit || 3)
+  const modalMeta = mode?.type === 'unlock'
+    ? { label: 'Mở khóa nộp lại', icon: <UnlockOutlined /> }
+    : mode?.type === 'lifecycle'
     ? LIFECYCLE_ACTIONS[mode.action]
     : DECISION_ACTIONS[mode?.action]
 
@@ -190,7 +220,35 @@ export default function VerificationFinalDecisionPanel({
           description="Recruiter phải bổ sung và nộp lại; admin nhận xử lý trước khi có thể duyệt lại."
         />
       )}
-      {!isReviewing && !isApproved && !isInactive && (
+      {isAwaitingResubmission && (
+        <Alert
+          showIcon
+          type="warning"
+          icon={<WarningOutlined />}
+          title="Đang chờ nhà tuyển dụng nộp lại"
+          description={isResubmissionLocked
+            ? 'Hồ sơ đã đạt giới hạn từ chối cuối và đang khóa nộp lại. Nhà tuyển dụng vẫn đăng nhập, xem lý do và có thể gửi khiếu nại; chỉ người có quyền rủi ro cao mới được mở khóa.'
+            : 'Khi mọi giấy tờ bị yêu cầu sửa hoặc từ chối đã được thay, hồ sơ sẽ tự chuyển về Chờ xử lý với một phiên mới. Admin có thể nhận xử lý và ra quyết định cuối lần nữa.'}
+        />
+      )}
+      {rejectionCount > 0 && (
+        <div className="verification-rejection-meter">
+          <Typography.Text strong>Số quyết định từ chối cuối</Typography.Text>
+          <Tag color={isResubmissionLocked ? 'red' : 'orange'}>
+            {`${rejectionCount}/${rejectionLimit}`}
+          </Tag>
+        </div>
+      )}
+      {isResubmittedPending && (
+        <Alert
+          showIcon
+          type="info"
+          title={`Nhà tuyển dụng đã nộp lại hồ sơ lần ${verificationCase.revision}`}
+          description="Hãy nhận xử lý lại ở phần đầu trang. Sau khi đối chiếu giấy tờ, các quyết định cuối sẽ được mở lại."
+        />
+      )}
+      {!isReviewing && !isApproved && !isInactive && !isAwaitingResubmission
+        && !isResubmittedPending && (
         <Typography.Text type="secondary">
           Hồ sơ phải ở trạng thái Đang xử lý trước khi admin đưa ra quyết định cuối.
         </Typography.Text>
@@ -218,6 +276,14 @@ export default function VerificationFinalDecisionPanel({
             {meta.label}
           </Button>
         ))}
+        {isResubmissionLocked && canUnlockResubmission && (
+          <Button
+            icon={<UnlockOutlined />}
+            onClick={() => openWorkflow('unlock', 'unlock')}
+          >
+            Mở khóa nộp lại
+          </Button>
+        )}
       </Space>
 
       {verificationCase.decision_reason && (
@@ -230,7 +296,9 @@ export default function VerificationFinalDecisionPanel({
         className="verification-final-modal"
         open={Boolean(mode)}
         title={modalMeta?.label || 'Xử lý xác thực'}
-        okText={impact ? 'Xác nhận quyết định' : 'Xem tác động'}
+        okText={mode?.type === 'unlock'
+          ? 'Xác nhận mở khóa'
+          : impact ? 'Xác nhận quyết định' : 'Xem tác động'}
         cancelText="Hủy"
         okButtonProps={{ danger: Boolean(modalMeta?.danger) }}
         confirmLoading={previewMutation.isPending || confirmMutation.isPending}
@@ -254,7 +322,9 @@ export default function VerificationFinalDecisionPanel({
             rules={[
               {
                 validator: (_, value) => {
-                  const required = mode?.type === 'lifecycle' || mode?.action !== 'approved'
+                  const required = mode?.type === 'lifecycle'
+                    || mode?.type === 'unlock'
+                    || mode?.action !== 'approved'
                   if (!required || value?.trim()) return Promise.resolve()
                   return Promise.reject(new Error('Nhập lý do trước khi tiếp tục.'))
                 },

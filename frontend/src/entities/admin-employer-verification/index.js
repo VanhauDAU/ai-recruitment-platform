@@ -17,6 +17,7 @@ export {
   reviewAdminCompanyUpdateDocument,
   reviewAdminCompanyUpdateRequest,
   startAdminEmployerVerificationReview,
+  unlockAdminEmployerVerificationResubmission,
 } from './api/admin-employer-verification.api'
 export { adminEmployerVerificationKeys } from './api/admin-employer-verification.keys'
 export {

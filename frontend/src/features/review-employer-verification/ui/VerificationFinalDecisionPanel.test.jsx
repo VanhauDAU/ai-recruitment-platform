@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   decideAdminEmployerVerification: vi.fn(),
   getAdminEmployerDecisionImpact: vi.fn(),
   getAdminEmployerLifecycleImpact: vi.fn(),
+  unlockAdminEmployerVerificationResubmission: vi.fn(),
 }))
 
 vi.mock('@/entities/admin-employer-verification', () => ({
@@ -57,9 +58,13 @@ const lifecycleImpact = {
 
 function renderPanel({
   status = 'in_review',
+  revision = 1,
   canReview = true,
   canRevoke = false,
   canTaxOverride = false,
+  canUnlockResubmission = false,
+  finalRejectionCount = 0,
+  resubmissionLocked = false,
   onChanged = vi.fn(),
 } = {}) {
   const queryClient = new QueryClient({
@@ -69,10 +74,19 @@ function renderPanel({
     <QueryClientProvider client={queryClient}>
       <App>
         <VerificationFinalDecisionPanel
-          verificationCase={{ public_id: 'evc_1', status }}
+          verificationCase={{
+            public_id: 'evc_1',
+            status,
+            revision,
+            lock_version: 7,
+            final_rejection_count: finalRejectionCount,
+            rejection_limit: 3,
+            resubmission_locked_at: resubmissionLocked ? '2026-08-10T10:00:00Z' : null,
+          }}
           canReview={canReview}
           canRevoke={canRevoke}
           canTaxOverride={canTaxOverride}
+          canUnlockResubmission={canUnlockResubmission}
           onChanged={onChanged}
         />
       </App>
@@ -202,5 +216,78 @@ describe('VerificationFinalDecisionPanel', () => {
 
     expect(screen.queryByRole('button', { name: 'Duyệt hồ sơ' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Thu hồi xác thực' })).not.toBeInTheDocument()
+  })
+
+  it('explains that a rejected case can enter a new review after complete resubmission', () => {
+    renderPanel({ status: 'rejected' })
+
+    expect(screen.getByText('Đang chờ nhà tuyển dụng nộp lại')).toBeVisible()
+    expect(screen.getByText(/Admin có thể nhận xử lý và ra quyết định cuối lần nữa/))
+      .toBeVisible()
+  })
+
+  it('identifies a resubmitted pending case and directs admin to review it again', () => {
+    renderPanel({ status: 'pending', revision: 2 })
+
+    expect(screen.getByText('Nhà tuyển dụng đã nộp lại hồ sơ lần 2')).toBeVisible()
+    expect(screen.getByText(/Hãy nhận xử lý lại ở phần đầu trang/)).toBeVisible()
+  })
+
+  it('warns before the third final rejection locks resubmission', async () => {
+    const user = userEvent.setup()
+    api.getAdminEmployerDecisionImpact.mockResolvedValue({
+      ...approvedImpact,
+      decision: 'rejected',
+      rejection_impact: {
+        current_count: 2,
+        next_count: 3,
+        limit: 3,
+        will_lock_resubmission: true,
+      },
+    })
+    renderPanel({ finalRejectionCount: 2 })
+
+    await user.click(screen.getByRole('button', { name: 'Từ chối hồ sơ' }))
+    const dialog = screen.getByRole('dialog', { name: 'Từ chối hồ sơ' })
+    await user.type(within(dialog).getByLabelText('Lý do / ghi chú audit'), 'Bằng chứng không hợp lệ')
+    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
+
+    expect(await within(dialog).findByText('3/3')).toBeInTheDocument()
+    expect(within(dialog).getByText(/Xác nhận sẽ khóa nộp lại/)).toBeInTheDocument()
+  })
+
+  it('requires a reason and current lock version to unlock resubmission', async () => {
+    const user = userEvent.setup()
+    api.unlockAdminEmployerVerificationResubmission.mockResolvedValue({
+      status: 'rejected',
+      resubmission_locked: false,
+    })
+    const { onChanged } = renderPanel({
+      status: 'rejected',
+      canReview: false,
+      canUnlockResubmission: true,
+      finalRejectionCount: 3,
+      resubmissionLocked: true,
+    })
+
+    expect(screen.getByText('3/3')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: /Mở khóa nộp lại/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Mở khóa nộp lại' })
+    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận mở khóa' }))
+    expect(await within(dialog).findByText('Nhập lý do trước khi tiếp tục.'))
+      .toBeInTheDocument()
+
+    await user.type(
+      within(dialog).getByLabelText('Lý do / ghi chú audit'),
+      'Đã xác minh khiếu nại với bản gốc',
+    )
+    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận mở khóa' }))
+
+    expect(api.unlockAdminEmployerVerificationResubmission).toHaveBeenCalledWith('evc_1', {
+      reason: 'Đã xác minh khiếu nại với bản gốc',
+      lock_version: 7,
+    })
+    expect(api.getAdminEmployerDecisionImpact).not.toHaveBeenCalled()
+    expect(onChanged).toHaveBeenCalledTimes(1)
   })
 })
