@@ -28,6 +28,7 @@ from ..models import (
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
     EmployerComplianceHoldJob,
+    EmployerNotification,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
@@ -45,6 +46,7 @@ from .compliance import (
     lock_verification_identity,
     release_verification_holds,
 )
+from .notifications import emit_employer_event, intermediate_verification_email_enabled
 from .tax_lookup import queue_company_tax_lookup
 
 BUSINESS_DOCUMENT_TYPES = frozenset(
@@ -453,13 +455,39 @@ def _verification_hold_impact(case, *, scope=None):
 
 
 def _queue_verification_notification(case, *, event_type, reason=''):
-    job = EmployerVerificationNotification.objects.create(
-        verification_case=case,
+    dedupe_key = f'verification:{case.public_id}:{case.lock_version}:{event_type}'
+    website_event_type = {
+        'approved': EmployerNotification.EventType.VERIFICATION_APPROVED,
+        'changes_requested': EmployerNotification.EventType.VERIFICATION_CHANGES_REQUESTED,
+        'rejected': EmployerNotification.EventType.VERIFICATION_REJECTED,
+        'revoked': EmployerNotification.EventType.VERIFICATION_REVOKED,
+        'expired': EmployerNotification.EventType.VERIFICATION_EXPIRED,
+        'document_changes_requested': (EmployerNotification.EventType.DOCUMENT_CHANGES_REQUESTED),
+        'document_rejected': EmployerNotification.EventType.DOCUMENT_REJECTED,
+    }.get(event_type)
+    if website_event_type:
+        emit_employer_event(
+            recipient=case.recruiter.user,
+            event_type=website_event_type,
+            dedupe_key=dedupe_key,
+            message=reason,
+            subject_public_id=case.public_id,
+            metadata={'case_public_id': case.public_id, 'status': case.status},
+        )
+    if event_type.startswith('document_') and not intermediate_verification_email_enabled(
+        case.recruiter.user
+    ):
+        return None
+    job, _ = EmployerVerificationNotification.objects.get_or_create(
         recipient=case.recruiter.user,
-        event_type=event_type,
-        context={
-            'case_public_id': case.public_id,
-            'reason': reason.strip(),
+        dedupe_key=dedupe_key,
+        defaults={
+            'verification_case': case,
+            'event_type': event_type,
+            'context': {
+                'case_public_id': case.public_id,
+                'reason': reason.strip(),
+            },
         },
     )
 

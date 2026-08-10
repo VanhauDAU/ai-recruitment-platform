@@ -9,6 +9,7 @@ import RoleGuard from '../guards/RoleGuard'
 import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,
+  EmployerActivitiesPage,
   EmployerApplicationListPage,
   EmployerAccountInformationPage,
   EmployerBusinessLicensePage,
@@ -26,6 +27,7 @@ import {
   EmployerLegalPage,
   EmployerLoginPage,
   EmployerOnboardingPage,
+  EmployerNotificationsPage,
   EmployerPasswordLoginPage,
   EmployerPersonalDataProtectionPage,
   EmployerRecruitmentDemandPage,
@@ -107,6 +109,8 @@ export function employerRoutes() {
             <Route path={employerAppPath('/account/settings/recruitment-demand')} element={<EmployerRecruitmentDemandPage />} />
             <Route path={employerAppPath('/account/settings/general-setting')} element={<EmployerGeneralSettingsPage />} />
             <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
+            <Route path={employerAppPath('/notifications')} element={<EmployerNotificationsPage />} />
+            <Route path={employerAppPath('/activities')} element={<EmployerActivitiesPage />} />
             <Route element={<JobWorkspaceGuard />}>
               <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
               <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />

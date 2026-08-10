@@ -4612,6 +4612,128 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmployerDashboard'
           description: ''
+  /api/employer/activities/:
+    get:
+      operationId: employer_activities_list
+      summary: Nhật ký hoạt động nhà tuyển dụng đã redact
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1}
+      responses:
+        '200':
+          description: Danh sách hoạt động phân trang
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerActivityPage'
+  /api/employer/notification-preferences/:
+    get:
+      operationId: employer_notification_preferences_retrieve
+      summary: Đọc tùy chọn email notification employer
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Tùy chọn hiện tại
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EmployerNotificationPreference'}
+    patch:
+      operationId: employer_notification_preferences_update
+      summary: Cập nhật email trung gian; email quyết định quan trọng luôn bật
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/EmployerNotificationPreferenceRequest'}
+      responses:
+        '200':
+          description: Tùy chọn đã cập nhật
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EmployerNotificationPreference'}
+  /api/employer/notifications/:
+    get:
+      operationId: employer_notifications_list
+      summary: Danh sách thông báo website của nhà tuyển dụng
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, minimum: 1}
+      responses:
+        '200':
+          description: Danh sách thông báo phân trang
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerNotificationPage'
+  /api/employer/notifications/unread-count/:
+    get:
+      operationId: employer_notifications_unread_count
+      summary: Đếm thông báo chưa đọc
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Số thông báo chưa đọc
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count]
+                properties:
+                  count: {type: integer, minimum: 0}
+  /api/employer/notifications/read-all/:
+    post:
+      operationId: employer_notifications_read_all
+      summary: Đánh dấu toàn bộ thông báo của actor đã đọc
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Số bản ghi vừa cập nhật
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updated]
+                properties:
+                  updated: {type: integer, minimum: 0}
+  /api/employer/notifications/{public_id}/read/:
+    post:
+      operationId: employer_notifications_read
+      summary: Đánh dấu một thông báo của actor đã đọc
+      tags: [employer]
+      security:
+      - jwtAuth: []
+      parameters:
+      - name: public_id
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: Thông báo đã đọc
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerNotification'
+        '404': {description: Không thuộc actor hoặc không tồn tại}
   /api/employer/campaigns/:
     get:
       operationId: employer_campaigns_list
@@ -19543,6 +19665,65 @@ components:
       description: |-
         Stable public DPA lifecycle. Timestamp cũ không có evidence được phân loại
         `legacy_unversioned`; evidence khác version/hash hiện hành là `outdated`.
+    EmployerActivity:
+      type: object
+      required: [public_id, event_type, summary, subject_public_id, metadata, actor_name, occurred_at]
+      properties:
+        public_id: {type: string}
+        event_type: {type: string}
+        summary: {type: string}
+        subject_public_id: {type: string}
+        metadata: {type: object, additionalProperties: true}
+        actor_name:
+          type: string
+          enum: [Bạn, Quản trị viên, Hệ thống]
+        occurred_at: {type: string, format: date-time}
+    EmployerActivityPage:
+      type: object
+      required: [count, results]
+      properties:
+        count: {type: integer, minimum: 0}
+        next: {type: string, format: uri, nullable: true}
+        previous: {type: string, format: uri, nullable: true}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/EmployerActivity'}
+    EmployerNotification:
+      type: object
+      required: [public_id, event_type, title, message, action_path, metadata, is_read, created_at]
+      properties:
+        public_id: {type: string}
+        event_type: {type: string}
+        title: {type: string}
+        message: {type: string}
+        action_path:
+          type: string
+          pattern: ^/tuyendung/app/
+        metadata: {type: object, additionalProperties: true}
+        is_read: {type: boolean}
+        read_at: {type: string, format: date-time, nullable: true}
+        created_at: {type: string, format: date-time}
+    EmployerNotificationPage:
+      type: object
+      required: [count, results]
+      properties:
+        count: {type: integer, minimum: 0}
+        next: {type: string, format: uri, nullable: true}
+        previous: {type: string, format: uri, nullable: true}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/EmployerNotification'}
+    EmployerNotificationPreference:
+      type: object
+      required: [important_decision_email, intermediate_verification_email]
+      properties:
+        important_decision_email: {type: boolean, readOnly: true}
+        intermediate_verification_email: {type: boolean}
+    EmployerNotificationPreferenceRequest:
+      type: object
+      required: [intermediate_verification_email]
+      properties:
+        intermediate_verification_email: {type: boolean}
     EmployerCompanyUnlinkConfirmRequest:
       type: object
       properties:

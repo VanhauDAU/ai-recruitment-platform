@@ -8,7 +8,9 @@ from .models import (
     CompanyUpdateEvent,
     CompanyUpdateRequest,
     CompanyUpdateRevision,
+    EmployerActivity,
     EmployerCompanyLinkEvent,
+    EmployerNotification,
     EmployerPhoneVerificationEvent,
     Industry,
     RecruiterProfile,
@@ -120,6 +122,20 @@ class EmployerCompanyLinkEventAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
         'company__company_name',
         'actor__email',
     ]
+
+
+@admin.register(EmployerNotification)
+class EmployerNotificationAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
+    list_display = ['public_id', 'recipient', 'event_type', 'read_at', 'created_at']
+    list_filter = ['event_type', 'read_at']
+    search_fields = ['public_id', 'recipient__email', 'dedupe_key']
+
+
+@admin.register(EmployerActivity)
+class EmployerActivityAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
+    list_display = ['public_id', 'recipient', 'event_type', 'actor', 'occurred_at']
+    list_filter = ['event_type']
+    search_fields = ['public_id', 'recipient__email', 'dedupe_key']
 
 
 @admin.register(RecruiterProfile)

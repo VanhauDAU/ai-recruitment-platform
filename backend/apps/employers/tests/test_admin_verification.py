@@ -27,6 +27,8 @@ from ..models import (
     CompanyTaxLookupEvidence,
     CompanyUpdateRequest,
     EmployerDpaAcceptance,
+    EmployerNotification,
+    EmployerNotificationPreference,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
@@ -298,6 +300,45 @@ class EmployerAccountVerificationTests(APITestCase):
             EmployerVerificationNotification.objects.filter(
                 verification_case=self.first_case,
                 event_type=EmployerVerificationCase.Status.APPROVED,
+            ).exists()
+        )
+
+    def test_intermediate_email_preference_never_disables_website_notification(self):
+        EmployerNotificationPreference.objects.create(
+            recipient=self.first_user,
+            intermediate_verification_email=False,
+        )
+        self._put_in_review(self.first_case)
+        document = self.first_case.documents.filter(is_current=True).first()
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            reverse(
+                'admin-employer-verification-review-document',
+                kwargs={
+                    'public_id': self.first_case.public_id,
+                    'document_public_id': document.public_id,
+                },
+            ),
+            {
+                'decision': CompanyDocument.Status.CHANGES_REQUESTED,
+                'reason': 'Vui lòng tải bản rõ hơn.',
+                'lock_version': self.first_case.lock_version,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.first_user,
+                event_type=EmployerNotification.EventType.DOCUMENT_CHANGES_REQUESTED,
+            ).exists()
+        )
+        self.assertFalse(
+            EmployerVerificationNotification.objects.filter(
+                recipient=self.first_user,
+                event_type='document_changes_requested',
             ).exists()
         )
 

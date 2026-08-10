@@ -28,6 +28,11 @@ from .documents import (
     employer_document_content_queryset,
     employer_document_metadata_queryset,
 )
+from .notifications import (
+    employer_activity_queryset,
+    employer_notification_queryset,
+    employer_unread_notification_count,
+)
 from .onboarding import (
     build_employer_initial_onboarding,
     build_employer_onboarding_steps,
@@ -53,6 +58,9 @@ __all__ = [
     'attach_campaign_candidate_previews',
     'campaign_detail_queryset',
     'campaign_activity_queryset',
+    'employer_activity_queryset',
+    'employer_notification_queryset',
+    'employer_unread_notification_count',
     'campaign_list_queryset',
     'campaign_options',
     'campaign_pause_impact',

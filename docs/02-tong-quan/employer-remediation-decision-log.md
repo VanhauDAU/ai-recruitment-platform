@@ -65,6 +65,7 @@
 | ER-D24 | DPA mới lưu version/hash/actor/time/IP/session append-only | Evidence table, không chỉ timestamp |
 | ER-D25 | Website bell/history/deep-link/read status; decision email luôn bật | Outbox + notification center |
 | ER-D26 | Business/security activity hiển thị 24 tháng | Retention + redaction contract |
+| ER-D50 | Notification website ghi cùng transaction và dedupe theo recipient/event; email quyết định giữ outbox riêng có retry | Không mất event, không gửi email trùng do UI |
 | ER-D28 | Existing holds rollout phải dry-run, ops review rồi apply/notify | Batch command + reconciliation evidence |
 
 ### Các lựa chọn mở đã được khóa

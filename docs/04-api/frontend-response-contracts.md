@@ -148,6 +148,25 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   company/evidence và không tự liên kết company mới. UI refetch account context;
   lịch sử nằm trong append-only audit, không render raw snapshot cho recruiter.
 
+### Contract notification và activity employer
+
+- `GET /api/employer/notifications/?page=` trả envelope phân trang; item gồm
+  `public_id,event_type,title,message,action_path,metadata,is_read,read_at,created_at`.
+  `action_path` luôn là relative path thuộc `/tuyendung/app/`; frontend không
+  dựng URL từ metadata hoặc message.
+- `GET /api/employer/notifications/unread-count/` trả `{count}`. Sau
+  `POST /notifications/{public_id}/read/` hoặc `/read-all/`, consumer invalidate
+  root key `employerNotificationKeys.all` để list và badge nhất quán.
+- `GET/PATCH /api/employer/notification-preferences/` trả hai boolean:
+  `important_decision_email=true` read-only và
+  `intermediate_verification_email` configurable. Tắt email trung gian không
+  tắt website notification.
+- `GET /api/employer/activities/?page=` trả
+  `public_id,event_type,summary,subject_public_id,metadata,actor_name,occurred_at`.
+  `actor_name` chỉ là `Bạn|Quản trị viên|Hệ thống`, không lộ danh tính admin.
+- Loading/error/empty/unread/read/pagination đều là UI state tường minh; direct
+  route nằm dưới `AuthGuard → RoleGuard → EmployerOnboardingGuard`.
+
 ### Contract yêu cầu cập nhật công ty
 
 `CompanyUpdateRequestSerializer` trả các field chính: `public_id`,

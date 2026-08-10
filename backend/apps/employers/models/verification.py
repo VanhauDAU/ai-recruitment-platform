@@ -171,6 +171,7 @@ class EmployerVerificationNotification(models.Model):
         related_name='+',
     )
     event_type = models.CharField(max_length=32)
+    dedupe_key = models.CharField(max_length=160, null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     attempts = models.PositiveSmallIntegerField(default=0)
     context = models.JSONField(default=dict, blank=True)
@@ -181,6 +182,13 @@ class EmployerVerificationNotification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipient', 'dedupe_key'],
+                condition=models.Q(dedupe_key__isnull=False),
+                name='uniq_emp_verify_notice_dedupe',
+            ),
+        ]
         indexes = [
             models.Index(
                 fields=['status', 'created_at'],

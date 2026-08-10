@@ -599,6 +599,7 @@ CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_TASK_TIME_LIMIT = 60
 CELERY_TASK_SOFT_TIME_LIMIT = 50
+EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
 CELERY_BEAT_SCHEDULE = {
     'dispatch-pending-auth-email-jobs': {
         'task': 'apps.accounts.tasks.auth_email.dispatch_pending_auth_email_jobs',
@@ -638,6 +639,14 @@ CELERY_BEAT_SCHEDULE = {
     },
     'purge-employer-sms-verification-data': {
         'task': 'apps.employers.tasks.phone_sms.purge_employer_sms_verification_data',
+        'schedule': 86400.0,
+    },
+    'dispatch-pending-employer-verification-notifications': {
+        'task': 'apps.employers.tasks.verification_notification.dispatch_pending_employer_verification_notifications',
+        'schedule': 60.0,
+    },
+    'purge-expired-employer-event-history': {
+        'task': 'apps.employers.tasks.notifications.purge_expired_employer_event_history',
         'schedule': 86400.0,
     },
 }
