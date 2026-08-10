@@ -349,6 +349,11 @@ review DPA.
 - Admin final-decision UI consume đúng preview/confirm và stale refresh; action
   theo permission riêng. Job blocker deep-link dùng code allowlist, exact
   recruiter ID và chỉ hiện khi actor có quyền màn đích.
+- Corrective resubmit giữ cùng case/revision: chỉ final `rejected` tăng count;
+  document reject không làm tăng hoặc khóa. Lần thứ ba đặt resubmission lock,
+  không tự ban `User`; unlock là permission tách riêng, cần reason + optimistic
+  lock và không xóa lịch sử. Form recruiter chỉ lấy document `scope=mine` nên
+  member khác cùng company không thể làm sai bộ giấy tờ cần thay.
 - Frontend evidence: 17/17 targeted, full coverage 971/971 test và 6/6 admin
   smoke desktop/tablet/mobile; lint/architecture/build/bundle budget đều đạt.
 

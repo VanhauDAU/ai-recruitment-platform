@@ -40,6 +40,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   và lifecycle action bắt buộc quyền/lý do audit tương ứng.
 - Màn kiểm duyệt tin giữ nút duyệt disabled theo blocker backend và hiện link
   exact recruiter verification chỉ cho actor có quyền xem màn đích.
+- Thiết kế lại tab Xác thực thành bàn xử lý: giấy tờ/đối chiếu ở vùng chính,
+  quyết định cuối và hành trình ở rail, lịch sử ở cuối; hồ sơ nộp lại có action
+  **Nhận xử lý lại** thay vì mắc kẹt sau lần từ chối.
+
+#### Fixed — Employer verification resubmit và giới hạn từ chối
+
+- Case bị từ chối chỉ về `pending`/tăng revision sau khi recruiter thay toàn bộ
+  current document cần sửa; admin có thể duyệt giấy tờ và quyết định cuối lại.
+- Chỉ final decision `rejected` tăng bộ đếm. Document reject/changes-requested
+  không tính; final reject thứ ba khóa nộp lại nhưng không tự ban tài khoản.
+- Thêm permission riêng `employer_verification.resubmission_unlock`; mở khóa
+  yêu cầu lý do + lock version, giữ nguyên rejection count và audit history.
+- Employer document API hỗ trợ `scope=mine` để form chỉ đánh giá bộ giấy tờ của
+  actor, không trộn tài liệu của member khác cùng công ty.
 
 #### Security — Verification race, redaction và RBAC ER-5
 

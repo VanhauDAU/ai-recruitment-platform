@@ -184,13 +184,22 @@ Workflow bắt buộc hai bước và backend là nguồn quyết định cuối
 - `POST /api/admin/employer-verifications/{public_id}/decision-impact/` nhận
   `decision`, `reason`, `tax_override`, `tax_override_reason`; chỉ preview,
   không ghi dữ liệu. Response trả checks, tax advisory, company/capability/hold
-  impact và `impact_token`.
+  impact, `rejection_impact {current_count,next_count,limit,will_lock_resubmission}`
+  và `impact_token`.
 - `POST .../decision/` nhận lại cùng payload kèm `impact_token`. Backend khóa
   và tính lại hồ sơ, document, tax evidence, company, campaign, job và hold;
   `409 admin_resource_changed` bắt frontend reload detail rồi preview lại.
 - Duyệt từng document chỉ đổi document và tăng `lock_version`; không tự approve
   case/company. Final decision chỉ hợp lệ từ `in_review` sang
   `approved|changes_requested|rejected`.
+- List/detail case trả `final_rejection_count`, `rejection_limit`,
+  `resubmission_locked`, `resubmission_locked_at`. Chỉ final `rejected` tăng
+  count; document reject/changes-requested không tính. Case terminal chỉ trở về
+  `pending`/tăng revision sau khi toàn bộ current document cần sửa đã được thay.
+- `POST .../unlock-resubmission/` nhận `{reason,lock_version}` và yêu cầu
+  `employer_verification.resubmission_unlock`. Thành công chỉ xóa lock, tăng
+  lock version và ghi audit; không xóa count/lịch sử, không tự approve hoặc
+  ban/mở ban tài khoản. Stale trả `409 admin_resource_changed`.
 - Tax `pending` luôn chặn. `missing|mismatch|not_found|unavailable|invalid` chỉ
   cho approve khi actor có `employer_verification.tax_override` và gửi lý do.
 - `POST .../revoke-impact|expire-impact/` rồi `POST .../revoke|expire/` dùng
@@ -206,8 +215,10 @@ Workflow bắt buộc hai bước và backend là nguồn quyết định cuối
   `TAX_OVERRIDE_REASON_REQUIRED`; field validation vẫn theo tên field.
 
 Frontend admin ER-5 đã consume đủ impact, company warning, override reason và
-stale refresh. UI không gọi confirm trực tiếp hoặc tự suy trạng thái; mọi thay
-đổi payload sau preview xóa impact hiện tại và bắt preview lại.
+stale refresh. UI trình bày bộ đếm từ chối/cảnh báo lần thứ ba và chỉ hiện thao
+tác mở khóa cho actor có permission tương ứng. UI không gọi confirm trực tiếp
+hoặc tự suy trạng thái; mọi thay đổi payload sau preview xóa impact hiện tại và
+bắt preview lại.
 
 ### Contract blocker duyệt tin
 

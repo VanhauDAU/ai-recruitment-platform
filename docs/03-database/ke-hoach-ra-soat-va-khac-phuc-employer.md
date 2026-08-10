@@ -223,6 +223,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D44 | `SUPERSEDED` | Thiết kế hiển thị history `scope=company` đã bị ER-D46 thay thế sau khi review UI |
 | ER-D45 | `CONFIRMED` | Gửi một thay đổi công ty không được tự thêm `trade_name` hoặc bắt sửa tên thương mại legacy nếu người dùng không thay đổi trường liên quan |
 | ER-D46 | `CONFIRMED` | Trang company settings của recruiter không hiển thị/tải history `scope=company`; update form chỉ cho gửi khi có thay đổi thật và luôn có nút quay lại |
+| ER-D47 | `CONFIRMED` | Chỉ final decision `rejected` tăng lượt; lần thứ ba khóa nộp lại nhưng không tự ban tài khoản. Document reject/changes-requested không tính; mở khóa ngoại lệ cần quyền riêng, reason và audit, không xóa lịch sử |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -235,7 +236,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit đã xác nhận candidate CV dùng cùng unsafe default/private storage; tích hợp candidate upload/assets qua shared core trong slice riêng, không tạo coupling `cvs → employers` | Candidate upload integration bắt buộc trong ER-3; quyền xem/tải/export thuộc ER-2 |
 
-Các quyết định trên và ER-D29 đến ER-D46 được người phụ trách sản phẩm xác nhận
+Các quyết định trên và ER-D29 đến ER-D47 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
@@ -729,9 +730,17 @@ lifecycle ở trên.
   lý do audit. Review, revoke và tax override là ba quyền riêng.
 - Rejected dùng revision mới trên cùng case; revoked/expired quay về pending để
   resubmit. Expired chỉ manual trong phase này, chưa có TTL/scheduler.
+- Case bị `rejected` có thể thay toàn bộ document hiện hành đang bị
+  `rejected|changes_requested`, rồi resubmit revision mới để admin nhận xử lý
+  và đưa ra final decision khác. Chỉ final `rejected` tăng bộ đếm; lần thứ ba
+  khóa nộp lại. Document decision không tăng bộ đếm và không khóa case.
+- Khóa nộp lại không tự ban tài khoản. Permission
+  `employer_verification.resubmission_unlock` chỉ được gán tường minh; thao tác
+  mở khóa bắt buộc reason + lock version, giữ nguyên số lần từ chối và audit.
 
-**Gate ER-5:** review/revoke/reapprove, race với job approval, hold
-apply/release/reconcile và company-level impact đều có test.
+**Gate ER-5:** review/reject/resubmit/reapprove, giới hạn ba final rejection,
+unlock có RBAC/audit, race với job approval, hold apply/release/reconcile và
+company-level impact đều có test.
 
 **Backend verified (2026-08-10):** state machine, explicit final decision,
 tax override, revoke/expire/reapprove, source-scoped compliance hold, public-job
@@ -762,6 +771,19 @@ trên desktop/tablet/mobile. Oxlint không lỗi mới, architecture 1.146 modul
 CSS 34,4/35 KiB đều đạt. ER-5 tổng được đổi sang `Verified`; TTL expiry tự động
 vẫn là policy phase khác theo ER-D41, không phải residual của implementation
 manual đã chốt.
+
+**Corrective resubmit verified (2026-08-10):** nhánh
+`fix/employer-verification-resubmit` cho phép case final-rejected nộp lại sau
+khi thay đủ bộ current document cần sửa; admin nhận xử lý lại, review document
+và quyết định cuối mới. Chỉ final `rejected` tăng bộ đếm; lần thứ ba khóa
+resubmit nhưng không tự ban tài khoản. Permission unlock riêng bắt buộc reason
+và lock version, giữ nguyên count/history. Admin tab Xác thực được gom thành
+bàn xử lý main/rail/history, không còn chuỗi card rời rạc.
+
+Evidence: PostgreSQL Docker `127.0.0.1:5433` đạt 138/138 backend regression;
+frontend full coverage 256/256 file và 983/983 test; admin verification smoke
+3/3 desktop/tablet/mobile; lint/architecture/build đạt. Migration drift sạch,
+OpenAPI parse 1.544 local schema ref/0 unresolved và Markdown 196 link đạt.
 
 ### ER-6 — SMS và DPA evidence
 

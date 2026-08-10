@@ -1591,6 +1591,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminVerificationTaxConflictError'
           description: Mã số thuế đã thuộc company khác.
+  /api/admin/employer-verifications/{public_id}/unlock-resubmission/:
+    post:
+      operationId: admin_employer_verifications_unlock_resubmission_create
+      summary: Mở khóa ngoại lệ cho phép nộp lại hồ sơ xác thực
+      description: >-
+        Chỉ áp dụng cho case rejected đã khóa sau ba quyết định cuối từ chối.
+        Yêu cầu employer_verification.resubmission_unlock, lý do audit và
+        lock_version hiện hành. Không xóa rejection count/history, không tự
+        duyệt hồ sơ hoặc thay đổi trạng thái User.
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationResubmissionUnlockRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationCaseDetail'
+          description: Đã mở khóa nộp lại; rejection count/history được giữ nguyên.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationDecisionBadRequest'
+          description: Payload hoặc trạng thái case không hợp lệ.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPermissionError'
+          description: Thiếu employer_verification.resubmission_unlock.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationStaleError'
+          description: lock_version stale; phải tải lại case.
   /api/admin/employer-verifications/{public_id}/revoke-impact/:
     post:
       operationId: admin_employer_verifications_revoke_impact_create
@@ -12629,6 +12679,22 @@ components:
         lock_version:
           type: integer
           readOnly: true
+        final_rejection_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+        rejection_limit:
+          type: integer
+          minimum: 1
+          readOnly: true
+        resubmission_locked:
+          type: boolean
+          readOnly: true
+        resubmission_locked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -14636,6 +14702,7 @@ components:
       - email
       - events
       - full_name
+      - final_rejection_count
       - lock_version
       - missing_steps
       - pending_document_count
@@ -14645,7 +14712,10 @@ components:
       - recruiter_public_id
       - review_started_at
       - reviewer_email
+      - rejection_limit
       - revision
+      - resubmission_locked
+      - resubmission_locked_at
       - status
       - status_label
       - submitted_at
@@ -14710,6 +14780,13 @@ components:
         properties:
           impact_token: {type: string, minLength: 1}
         required: [impact_token]
+    AdminVerificationResubmissionUnlockRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason: {type: string, minLength: 1, maxLength: 2000}
+        lock_version: {type: integer, minimum: 0}
+      required: [reason, lock_version]
     AdminVerificationTaxComparison:
       type: object
       additionalProperties: false
@@ -14777,6 +14854,8 @@ components:
             job_count: {type: integer, minimum: 0}
             active_jobs_to_unhide: {type: integer, minimum: 0}
           required: [hold_count, campaign_count, job_count, active_jobs_to_unhide]
+        rejection_impact:
+          $ref: '#/components/schemas/AdminVerificationRejectionImpact'
         unlocks_employer_capabilities: {type: boolean}
         impact_token: {type: string}
       required:
@@ -14792,8 +14871,18 @@ components:
       - company_impact
       - capability_impact
       - verification_hold_impact
+      - rejection_impact
       - unlocks_employer_capabilities
       - impact_token
+    AdminVerificationRejectionImpact:
+      type: object
+      additionalProperties: false
+      properties:
+        current_count: {type: integer, minimum: 0}
+        next_count: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1}
+        will_lock_resubmission: {type: boolean}
+      required: [current_count, next_count, limit, will_lock_resubmission]
     AdminVerificationCaseList:
       type: object
       properties:
@@ -14848,6 +14937,22 @@ components:
         lock_version:
           type: integer
           readOnly: true
+        final_rejection_count:
+          type: integer
+          minimum: 0
+          readOnly: true
+        rejection_limit:
+          type: integer
+          minimum: 1
+          readOnly: true
+        resubmission_locked:
+          type: boolean
+          readOnly: true
+        resubmission_locked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         submitted_at:
           type: string
           format: date-time
@@ -14873,14 +14978,18 @@ components:
       - decided_at
       - email
       - full_name
+      - final_rejection_count
       - lock_version
       - missing_steps
       - pending_document_count
       - phone_verified
       - public_id
       - recruiter_public_id
+      - rejection_limit
       - review_started_at
       - revision
+      - resubmission_locked
+      - resubmission_locked_at
       - status
       - status_label
       - submitted_at
@@ -14968,6 +15077,8 @@ components:
         company_impact: {type: object}
         capability_impact: {type: object}
         verification_hold_impact: {type: object}
+        rejection_impact:
+          $ref: '#/components/schemas/AdminVerificationRejectionImpact'
         resources: {type: object}
     AdminVerificationDecisionWorkflowError:
       type: object

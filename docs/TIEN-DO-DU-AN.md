@@ -7,7 +7,8 @@
 Decision log:
 [`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
 
-> Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX guard/checklist đã đạt gate; ER-3 đã hoàn tất employer
+> Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX, luồng
+> resubmit/review lại và policy ba final rejection đã đạt gate; ER-3 đã hoàn tất employer
 > domain/frontend upload-session nhưng candidate import/assets và real ClamAV
 > staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
 > exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
@@ -105,6 +106,17 @@ Decision log:
   971/971 test; smoke 6/6 desktop/tablet/mobile; Oxlint, architecture 1.146
   module/2.301 dependency, build và bundle budget JS 299,9/320 KiB, CSS
   34,4/35 KiB đều đạt. ER-5 được đánh dấu `Verified`.
+- Corrective resubmit giữ cùng case: recruiter thay đủ bộ current document cần
+  sửa thì case về `pending`, `revision++`; admin có **Nhận xử lý lại**, document
+  review và final decision mới. Chỉ final `rejected` tăng count; lần thứ ba
+  khóa nộp lại, không tự ban tài khoản. Unlock là permission riêng, cần reason
+  + lock version và không xóa lịch sử.
+- Evidence corrective: PostgreSQL Docker `127.0.0.1:5433` đạt 138/138 backend
+  state/API regression; migration drift sạch và plan đúng
+  `accounts.0024`/`employers.0036`. Frontend full coverage 256/256 file,
+  983/983 test; smoke tab Xác thực 3/3 desktop/tablet/mobile; lint,
+  architecture 1.148 module/2.306 dependency và production build đạt. OpenAPI
+  parse 1.544 local schema reference/0 unresolved; Markdown 196 internal link.
 
 </details>
 

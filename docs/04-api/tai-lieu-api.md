@@ -290,6 +290,7 @@ của job; backend vẫn đọc lại policy state ngay trước khi chuyển sa
 | POST | `/api/admin/employer-verifications/{public_id}/decision/` | Confirm bằng `impact_token`; stale trả `409 admin_resource_changed` |
 | POST | `/api/admin/employer-verifications/{public_id}/revoke-impact/`, `/revoke/` | Preview/xác nhận thu hồi và áp verification hold |
 | POST | `/api/admin/employer-verifications/{public_id}/expire-impact/`, `/expire/` | Preview/xác nhận hết hiệu lực manual |
+| POST | `/api/admin/employer-verifications/{public_id}/unlock-resubmission/` | Mở khóa ngoại lệ sau ba final rejection; body `{reason, lock_version}`, giữ nguyên rejection count/history |
 
 `decision` yêu cầu `employer_verification.review`; revoke/expire yêu cầu
 `employer_verification.revoke`. Approve với tax advisory không matched cần thêm
@@ -301,6 +302,15 @@ Document review không phải final decision. Revoke/expire không downgrade
 company; compliance hold chỉ chặn candidate-data/job approval và public job,
 không khóa workspace hoặc tạo/sửa/gửi tin. Reapprove chỉ gỡ exact verification
 hold, không gỡ hold thuộc DPA/account/moderation.
+
+List/detail verification trả `final_rejection_count`, `rejection_limit`,
+`resubmission_locked`, `resubmission_locked_at`; preview decision trả thêm
+`rejection_impact`. Chỉ final `rejected` tăng count. Document reject/yêu cầu bổ
+sung không tính lượt; sau khi recruiter thay đủ bộ giấy tờ cần sửa, cùng case
+được resubmit với `revision++`. Lần final reject thứ ba khóa nộp lại nhưng không
+tự ban `User`. Endpoint unlock yêu cầu permission
+`employer_verification.resubmission_unlock`, reason và optimistic lock; stale
+trả `409 admin_resource_changed`.
 
 ### CV catalogue admin (admin-only)
 

@@ -212,15 +212,29 @@ chỉ mang tính bổ trợ; quyết định cuối cùng dựa trên giấy t�
 - Recruiter xử lý lại trên cùng case với `revision++`, resubmit về `pending`,
   admin nhận xử lý rồi có thể `reapproved`. Reapprove chỉ gỡ hold nguồn
   verification, không gỡ DPA/account/moderation hold khác.
+- Sau final decision `rejected`, recruiter phải thay toàn bộ giấy tờ hiện hành
+  đang bị `rejected` hoặc `changes_requested`. Thay một phần chỉ lưu phiên bản
+  giấy tờ mới; case chỉ về `pending` và tăng `revision` khi cả bộ cần sửa đã
+  được thay. Admin có thể **Nhận xử lý lại**, duyệt từng giấy tờ và đưa ra một
+  final decision mới.
+- Chỉ final decision `rejected` tăng số lần từ chối. Từ chối/yêu cầu bổ sung
+  một document không tính lượt. Lần final reject thứ ba khóa nộp lại và các
+  capability nhạy cảm, nhưng không tự ban tài khoản: recruiter vẫn đăng nhập,
+  xem lý do và liên hệ hỗ trợ/khiếu nại. Admin có quyền
+  `employer_verification.resubmission_unlock` có thể mở khóa ngoại lệ với lý do
+  và `lock_version`; lịch sử/số lần từ chối không bị xóa.
 - Hồ sơ auto-approved lịch sử được phân loại nguồn `legacy_auto` hoặc
   `legacy_unknown` bằng command dry-run/apply; không bịa actor/quyết định và
   không tự reset hoặc áp hold.
 
-Trên giao diện admin, khối **Quyết định cuối hồ sơ** chỉ hiện action mà actor
-có quyền. Mỗi action mở modal **Xem tác động** trước; nút xác nhận chỉ xuất hiện
-sau khi nhận `impact_token`. Nếu hồ sơ/tài nguyên thay đổi, modal xóa preview,
-tải lại detail và yêu cầu xem tác động lại. Từ màn kiểm duyệt tin, blocker xác
-thực/DPA chỉ tạo link tới đúng recruiter khi actor có quyền xem hồ sơ xác thực.
+Trên giao diện admin, trang Xác thực dùng một bàn xử lý: bộ giấy tờ/đối chiếu ở
+vùng chính, quyết định cuối và hành trình ở rail, lịch sử ở cuối trang. Khối
+**Quyết định cuối hồ sơ** chỉ hiện action mà actor có quyền và luôn hiển thị số
+lần từ chối. Mỗi action mở modal **Xem tác động** trước; nút xác nhận chỉ xuất
+hiện sau khi nhận `impact_token`. Final reject thứ ba phải cảnh báo tác động
+khóa nộp lại. Nếu hồ sơ/tài nguyên thay đổi, modal xóa preview, tải lại detail
+và yêu cầu xem tác động lại. Từ màn kiểm duyệt tin, blocker xác thực/DPA chỉ
+tạo link tới đúng recruiter khi actor có quyền xem hồ sơ xác thực.
 
 Mỗi action mở một route account nội bộ, không rời workspace. Tài khoản Google
 chưa có mật khẩu sẽ thấy hộp thoại an toàn và liên kết đặt mật khẩu trước khi

@@ -134,6 +134,17 @@ Người phụ trách sản phẩm xác nhận toàn bộ các quyết định t
 
 Người phụ trách sản phẩm xác nhận toàn bộ ER-D35 đến ER-D41 ngày 2026-08-10.
 
+## Session 2026-08-10 — Nộp lại hồ sơ và giới hạn từ chối
+
+### Quyết định đã xác nhận
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D47 | Chỉ quyết định cuối `rejected` tăng số lần từ chối; document bị từ chối/yêu cầu bổ sung không tính. Sau lần từ chối cuối thứ ba, case bị khóa nộp lại nhưng tài khoản vẫn đăng nhập, xem lý do và dùng kênh khiếu nại/hỗ trợ | Giữ cùng case và lịch sử `revision`; admin có permission rủi ro cao riêng để mở khóa bằng lý do audit. Không tự chuyển `User` sang banned; cấm tài khoản toàn phần chỉ thuộc workflow fraud/account-policy riêng |
+
+Người phụ trách sản phẩm xác nhận ER-D47 và yêu cầu tiếp tục triển khai không
+cần hỏi lại ngày 2026-08-10.
+
 ## Session 2026-08-10 — Corrective UX gate
 
 ### Bối cảnh
