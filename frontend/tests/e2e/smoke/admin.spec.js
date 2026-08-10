@@ -707,16 +707,18 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('region', {
     name: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
-  })).toBeVisible()
-  await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toHaveCount(0)
-  await expect(page.getByText('Quyền đại diện', { exact: true })).toBeVisible()
-  await expect(page.getByText('Pháp lý doanh nghiệp', { exact: true })).toBeVisible()
-  await expect(page.getByText('Bảo vệ dữ liệu', { exact: true })).toBeVisible()
-  await expect(page.getByText(/là thành viên của công ty/)).toBeVisible()
-  await expect(page.getByText('Giấy tờ và hồ sơ là hai lớp quyết định độc lập')).toBeVisible()
+  })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Bảng trạng thái giấy tờ' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Đã duyệt, 3 giấy tờ' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xem Giấy đăng ký doanh nghiệp' })).toBeVisible()
+  await expect(page.getByText('Duyệt từng giấy tờ trước, sau đó ra một quyết định chung cho hồ sơ.')).toBeVisible()
   await expect(page.locator('.verification-review-workspace')).toBeVisible()
   await expect(page.locator('.verification-review-main')).toBeVisible()
   await expect(page.locator('.verification-review-rail')).toBeVisible()
+  await page.getByText('Xem điều kiện xác thực', { exact: true }).click()
+  await expect(page.getByRole('region', {
+    name: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
+  })).toBeVisible()
   await page.getByRole('button', { name: 'Xem 9 bước' }).click()
   await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
@@ -729,13 +731,15 @@ test('admin employer detail: company media and compact verification comparison r
   await expect.poll(() => page.locator('.verification-review-layout').evaluate(
     (element) => getComputedStyle(element).gap,
   )).toBe('20px')
+  await expect(page.locator('.verification-final-actions')).toHaveCSS('display', 'grid')
+  await expect(page.getByRole('button', { name: 'Duyệt hồ sơ' })).toHaveCSS('white-space', 'nowrap')
 
   await page.getByRole('button', { name: 'Duyệt hồ sơ' }).click()
   const finalDecisionDialog = page.getByRole('dialog', { name: 'Duyệt hồ sơ' })
-  await finalDecisionDialog.getByRole('button', { name: 'Xem tác động' }).click()
+  await finalDecisionDialog.getByRole('button', { name: 'Kiểm tra trước khi duyệt' }).click()
   await expect(finalDecisionDialog.getByText('Trạng thái pháp lý của công ty không bị hạ.'))
     .toBeVisible()
-  await finalDecisionDialog.getByRole('button', { name: 'Xác nhận quyết định' }).click()
+  await finalDecisionDialog.getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }).click()
   await expect(page.getByText('Hồ sơ đang có hiệu lực')).toBeVisible()
   await expect(page.getByRole('button', { name: /Xem chi tiết và đối chiếu/ })).toBeVisible()
   await expect(page.getByText('FPT Digital')).toHaveCount(0)

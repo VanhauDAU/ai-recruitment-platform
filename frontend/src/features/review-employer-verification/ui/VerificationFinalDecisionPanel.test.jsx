@@ -63,6 +63,10 @@ function renderPanel({
   canRevoke = false,
   canTaxOverride = false,
   canUnlockResubmission = false,
+  taxEvidence = {
+    status: 'found',
+    comparison: { tax_code: 'match', company_name: 'match' },
+  },
   finalRejectionCount = 0,
   resubmissionLocked = false,
   onChanged = vi.fn(),
@@ -87,6 +91,7 @@ function renderPanel({
           canRevoke={canRevoke}
           canTaxOverride={canTaxOverride}
           canUnlockResubmission={canUnlockResubmission}
+          taxEvidence={taxEvidence}
           onChanged={onChanged}
         />
       </App>
@@ -110,7 +115,7 @@ describe('VerificationFinalDecisionPanel', () => {
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
     expect(within(dialog).queryByText(/override kết quả/)).not.toBeInTheDocument()
 
-    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
     expect(api.getAdminEmployerDecisionImpact).toHaveBeenCalledWith('evc_1', {
       decision: 'approved',
       reason: '',
@@ -120,7 +125,7 @@ describe('VerificationFinalDecisionPanel', () => {
     expect(await within(dialog).findByText('Công ty sẽ được đánh dấu đã xác thực khi xác nhận.'))
       .toBeInTheDocument()
 
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận quyết định' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }))
     expect(api.decideAdminEmployerVerification).toHaveBeenCalledWith('evc_1', {
       decision: 'approved',
       reason: '',
@@ -131,26 +136,26 @@ describe('VerificationFinalDecisionPanel', () => {
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 
-  it('requires an audit reason when an authorized actor enables tax override', async () => {
+  it('requires an audit reason when an authorized actor confirms manual tax review', async () => {
     const user = userEvent.setup()
     api.getAdminEmployerDecisionImpact.mockResolvedValue({
       ...approvedImpact,
       tax_advisory: { status: 'mismatch' },
       tax_override: true,
     })
-    renderPanel({ canTaxOverride: true })
+    renderPanel({ canTaxOverride: true, taxEvidence: { status: 'not_found' } })
 
     await user.click(screen.getByRole('button', { name: 'Duyệt hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
     await user.click(within(dialog).getByRole('checkbox', {
-      name: 'Cho phép override kết quả tra cứu thuế advisory',
+      name: 'Tôi đã đối chiếu giấy tờ gốc và muốn tiếp tục duyệt',
     }))
-    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
-    expect(await within(dialog).findByText('Nhập lý do override để lưu audit.'))
+    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
+    expect(await within(dialog).findByText('Nhập căn cứ duyệt thủ công để lưu audit.'))
       .toBeInTheDocument()
 
-    await user.type(within(dialog).getByLabelText('Lý do override mã số thuế'), 'Đã đối chiếu hồ sơ gốc')
-    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
+    await user.type(within(dialog).getByLabelText('Lý do duyệt thủ công'), 'Đã đối chiếu hồ sơ gốc')
+    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
 
     expect(api.getAdminEmployerDecisionImpact).toHaveBeenCalledWith('evc_1', {
       decision: 'approved',
@@ -158,6 +163,16 @@ describe('VerificationFinalDecisionPanel', () => {
       tax_override: true,
       tax_override_reason: 'Đã đối chiếu hồ sơ gốc',
     })
+  })
+
+  it('blocks final approval while tax lookup is pending', () => {
+    renderPanel({ taxEvidence: { status: 'pending' }, canTaxOverride: true })
+
+    expect(screen.getByRole('button', { name: 'Duyệt hồ sơ' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Duyệt hồ sơ' })).toHaveAttribute(
+      'title',
+      'Đang chờ kết quả tra cứu thuế. Chưa thể duyệt hồ sơ.',
+    )
   })
 
   it('shows lifecycle impact and keeps company status independent', async () => {
@@ -201,13 +216,14 @@ describe('VerificationFinalDecisionPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Duyệt hồ sơ' }))
     const dialog = screen.getByRole('dialog', { name: 'Duyệt hồ sơ' })
-    await user.click(within(dialog).getByRole('button', { name: 'Xem tác động' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
     await within(dialog).findByTestId('verification-impact-summary')
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận quyết định' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }))
 
     expect(await within(dialog).findByText(/Hồ sơ hoặc tài nguyên đã thay đổi/))
       .toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Xem tác động' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Kiểm tra trước khi duyệt' }))
+      .toBeInTheDocument()
     expect(onChanged).toHaveBeenCalledTimes(1)
   })
 

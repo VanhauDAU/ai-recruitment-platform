@@ -23,6 +23,10 @@ import {
   adminCompanyKeys,
   getAdminCompanySummary,
 } from '@/entities/admin-company'
+import {
+  adminEmployerVerificationKeys,
+  getAdminEmployerVerificationSummary,
+} from '@/entities/admin-employer-verification'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/announcement'
 import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
@@ -109,7 +113,6 @@ export default function DashboardLayout() {
     [adminAccess],
   )
   const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
-  const recruitersSummaryParams = useMemo(() => ({ scope: 'recruiters' }), [])
   const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations'])
   const needsRecruitersSummary = hasBadgeKey(
     navigation,
@@ -123,26 +126,29 @@ export default function DashboardLayout() {
     queryKey: adminAccountKeys.summary(usersSummaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(usersSummaryParams, { signal }),
     enabled: user?.role === 'admin' && needsUsersSummary,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 10_000,
   })
   const recruitersSummary = useQuery({
-    queryKey: adminAccountKeys.summary(recruitersSummaryParams),
-    queryFn: ({ signal }) => getAdminAccountSummary(recruitersSummaryParams, { signal }),
+    queryKey: adminEmployerVerificationKeys.summary,
+    queryFn: ({ signal }) => getAdminEmployerVerificationSummary({ signal }),
     enabled: user?.role === 'admin' && needsRecruitersSummary,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 10_000,
   })
   const companiesSummary = useQuery({
     queryKey: adminCompanyKeys.summary,
     queryFn: ({ signal }) => getAdminCompanySummary({ signal }),
     enabled: user?.role === 'admin' && needsCompaniesSummary,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: 'always',
+    staleTime: 10_000,
   })
   const navigationWithBadges = useMemo(() => attachBadgeCounts(navigation, {
     admin_invitations: usersSummary.data?.queues?.pending_admin_invitations,
-    recruiter_verification: recruitersSummary.data?.verification?.pending,
+    recruiter_verification: recruitersSummary.data?.pending,
     company_pending: companiesSummary.data?.verification?.pending,
     company_updates: companiesSummary.data?.pending_update_requests,
   }), [companiesSummary.data, navigation, recruitersSummary.data, usersSummary.data])

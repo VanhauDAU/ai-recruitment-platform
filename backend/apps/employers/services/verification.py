@@ -177,6 +177,15 @@ def _integrity_fingerprint(case, *, scope=None):
         if scope
         else tuple(EmployerComplianceHold.objects.filter(recruiter=recruiter).order_by('pk'))
     )
+    # Preview may reuse prefetched relations while confirm reloads and locks the
+    # same rows in canonical PK order. Normalize every collection before
+    # hashing so order alone never invalidates an otherwise unchanged impact.
+    needs = tuple(sorted(needs, key=lambda item: item.pk))
+    campaigns = tuple(sorted(campaigns, key=lambda item: item.pk))
+    jobs = tuple(sorted(jobs, key=lambda item: item.pk))
+    documents = tuple(sorted(documents, key=lambda item: item.pk))
+    tax_evidences = tuple(sorted(tax_evidences, key=lambda item: item.pk))
+    holds = tuple(sorted(holds, key=lambda item: item.pk))
     active_holds = [hold for hold in holds if hold.status == EmployerComplianceHold.Status.ACTIVE]
     campaign_ids = [campaign.pk for campaign in campaigns]
     job_ids = [job.pk for job in jobs]
@@ -204,6 +213,8 @@ def _integrity_fingerprint(case, *, scope=None):
                 .select_related('hold', 'job')
                 .order_by('pk')
             )
+    campaign_links = tuple(sorted(campaign_links, key=lambda item: item.pk))
+    job_links = tuple(sorted(job_links, key=lambda item: item.pk))
     context = {
         'case': [
             case.public_id,

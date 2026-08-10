@@ -39,7 +39,7 @@ export default function VerificationDecisionImpactSummary({ impact, lifecycle })
                 {TAX_STATUS_LABELS[impact.tax_advisory.status]
                   || impact.tax_advisory.status}
               </Tag>
-              {impact.tax_override && <Tag color="volcano">Sử dụng override</Tag>}
+              {impact.tax_override && <Tag color="orange">Duyệt thủ công</Tag>}
             </Space>
           </Descriptions.Item>
         )}

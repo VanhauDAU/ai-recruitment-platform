@@ -45,7 +45,7 @@ function ComingSoon() {
 function NavigationCount({ count }) {
   const value = Number(count || 0)
   if (value <= 0) return null
-  const label = value > 99 ? '99+' : String(value).padStart(2, '0')
+  const label = value > 99 ? '99+' : String(value)
   return (
     <span
       className="admin-nav__count"
