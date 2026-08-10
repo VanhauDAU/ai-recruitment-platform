@@ -1,7 +1,6 @@
 import {
   ArrowLeftOutlined,
   BarChartOutlined,
-  BellOutlined,
   CustomerServiceOutlined,
   DoubleRightOutlined,
   FileTextOutlined,
@@ -28,6 +27,7 @@ import { useSession } from '@/entities/session'
 import { BrandLogo } from '@/entities/site-settings'
 import { getEmployerAccountVerificationLevel } from '@/features/verify-employer-account'
 import { AnnouncementStrip } from '@/widgets/announcement-strip'
+import { EmployerNotificationBell } from '@/widgets/employer-notification-center'
 import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   EMPLOYER_GENERAL_SETTINGS_URL,
@@ -186,9 +186,7 @@ export default function EmployerWorkspaceLayout() {
           <TopbarAction icon={<FileTextOutlined />} label="Đăng tin" to={employerAppPath('/jobs/new')} />
           <TopbarAction icon={<SearchOutlined />} label="Tìm CV" />
           <TopbarAction icon={<MessageOutlined />} label="Connect" />
-          <Tooltip title="Thông báo hệ thống">
-            <Button type="text" shape="circle" aria-label="Thông báo hệ thống" icon={<BellOutlined />} className="!text-slate-200 hover:!bg-white/10 hover:!text-white" />
-          </Tooltip>
+          <EmployerNotificationBell />
           <Dropdown menu={accountMenu} trigger={['click']} placement="bottomRight">
             <button type="button" className="flex cursor-pointer items-center gap-2 rounded-full border-0 bg-white/10 p-1 pr-2 text-white transition hover:bg-white/15" aria-label="Mở menu tài khoản">
               <Avatar size={28} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-700">{initials}</Avatar>

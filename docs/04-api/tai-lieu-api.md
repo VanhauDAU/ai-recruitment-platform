@@ -78,6 +78,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field và không partial apply. |
 | GET | `/api/employer/industries/all/` | Toàn bộ lĩnh vực cho dropdown tạo hồ sơ công ty |
 | GET | `/api/dashboard/employer/` | Read-model dashboard employer: account/verification, KPI tổng hợp, activity 7 ngày, nhu cầu và tin gần đây. `recent_applications` chỉ có khi `candidate_data_access=true`. |
+| GET | `/api/employer/notifications/?page=` | Danh sách thông báo website của employer hiện tại, mới nhất trước; có `is_read`, internal `action_path` và metadata đã redact. |
+| GET | `/api/employer/notifications/unread-count/` | Số thông báo chưa đọc của employer hiện tại. |
+| GET/PATCH | `/api/employer/notification-preferences/` | Email quyết định xác thực quan trọng luôn bật; employer chỉ cấu hình email cập nhật từng giấy tờ. |
+| POST | `/api/employer/notifications/{public_id}/read/`, `/api/employer/notifications/read-all/` | Đánh dấu một hoặc toàn bộ notification của chính actor; resource actor khác trả `404`. |
+| GET | `/api/employer/activities/?page=` | Activity business/security đã redact, retention 730 ngày. |
 | GET | `/api/locations/?level=&parent=&search=` | Tra cứu địa điểm (cascading tỉnh -> xã/phường), public — không phân trang (trả tối đa 500 bản ghi/lần) |
 | GET | `/api/jobs/categories/` | Danh sách ngành nghề (taxonomy 3 cấp: nhóm nghề/nghề/vị trí chuyên môn), public, có phân trang mặc định |
 | GET | `/api/jobs/benefits/` | Danh mục quyền lợi chuẩn hóa (đang active), public, không phân trang |

@@ -1,7 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** ER-0, ER-1, ER-2, ER-4, ER-5 và ER-6 đã Verified;
-> ER-3 còn gate staging/Chrome, ER-7–ER-8 vẫn đang triển khai
+> **Trạng thái:** ER-0, ER-1, ER-2, ER-4, ER-5, ER-6 và ER-7 đã Verified;
+> ER-3 còn gate staging/Chrome, ER-8 đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.1
@@ -919,9 +919,7 @@ current/outdated/grace/expired/re-consent/legacy scenarios.
 ### ER-7 — Unlink, notification và activity
 
 **Company recovery:** `feature/employer-company-unlink-request`
-**Notification API:** `feature/employer-notification-api`
-**Notification UI:** `feature/employer-notification-center`
-**Activity:** `feature/employer-activity-log`
+**Notification + activity:** `feature/employer-notification-center`
 **Phụ thuộc:** stable events từ ER-4, ER-5 và ER-6
 
 - Unlink chỉ qua admin khi account/company relation còn clean; impact preview
@@ -940,7 +938,18 @@ history, recruitment need, campaign, job hoặc compliance hold. Action giữ c�
 ty, ghi `EmployerCompanyLinkEvent` append-only cùng admin audit và tách case
 draft sạch khỏi company cũ; không chuyển proof/evidence sang company mới.
 PostgreSQL Docker đạt 4/4 backend và frontend đạt 8/8 targeted; migration drift
-sạch. Notification/activity vẫn là phần tiếp theo của ER-7.
+sạch.
+
+**Notification/activity Verified (2026-08-10):** website event được ghi
+idempotent cùng transaction nghiệp vụ bằng unique recipient/dedupe key; metadata
+chỉ nhận allowlist và deep-link được map server-side. Employer có list phân
+trang, unread count, mark-one/read-all, activity feed 24 tháng; topbar bell có
+badge/popover và hai nav item không còn “Sắp mở”. Quyết định xác thực vẫn gửi
+email qua outbox; Celery sweep 60 giây phục hồi pending/stale và retention task
+hàng ngày xóa notification/activity cùng outbox terminal quá 730 ngày.
+PostgreSQL Docker đạt 40/40 regression liên quan notification, final decision
+và company recovery; frontend targeted đạt 16/16, smoke desktop/tablet/mobile
+đạt 3/3; full coverage đạt 264/264 file, 1009/1009 test.
 
 **Gate ER-7:** duplicate event, outbox retry, unread consistency, inaccessible
 deep link, retention và permission scenarios.
@@ -997,9 +1006,7 @@ docs/employer-audit-spec
                 ├── feature/employer-sms-verification
                 └── feature/employer-dpa-evidence
                     ├── feature/employer-company-unlink-request
-                    ├── feature/employer-notification-api
-                    │   └── feature/employer-notification-center
-                    └── feature/employer-activity-log
+                    └── feature/employer-notification-center
                         └── chore/employer-workflow-rollout
                             └── refactor/employer-workflow-compat-cleanup
 ```
@@ -1177,7 +1184,7 @@ Trạng thái thực hiện hiện tại:
 | ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | Verified | ER-6A live SMS và ER-6B DPA evidence/grace/hold đã đạt code gate; production SMS activation thuộc ER-8 |
-| ER-7 | In progress | Company recovery Verified; notification API/UI và activity còn triển khai |
+| ER-7 | Verified | Company recovery, notification center, email outbox sweep và activity retention đã đạt code gate |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 
 ## 17. Changelog

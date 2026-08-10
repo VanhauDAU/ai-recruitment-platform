@@ -14,6 +14,8 @@ const { useSession, profileQueryState, useEmployerReadiness } = vi.hoisted(() =>
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => profileQueryState,
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  useMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 vi.mock('@/entities/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),

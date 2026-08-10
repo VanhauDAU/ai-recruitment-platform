@@ -557,11 +557,13 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
     + pages/employer/app/account/PhoneVerify|PasswordLogin|CompanySettings
       |BusinessLicense|PersonalDataProtection
     → widgets/employer-onboarding, employer-consulting-need,
-      employer-verification, employer-dashboard, employer-account-settings
+      employer-verification, employer-dashboard, employer-account-settings,
+      employer-notification-center
       → features/auth, complete-employer-registration,
         capture-employer-recruitment-need, verify-employer-account,
         change-password, manage-employer-company
-          → entities/session, employer-profile, employer-dashboard, job, location
+          → entities/session, employer-profile, employer-dashboard,
+            employer-notification, job, location
             → shared/api, shared/config/portals
 ```
 
@@ -596,6 +598,11 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   dashboard chỉ sở hữu nội dung bảng tin bên trong shell. Menu/action chưa có
   workflow thật phải ở trạng thái disabled rõ ràng, không đăng ký route hoặc
   toast thành công giả.
+- `entities/employer-notification` sở hữu API/query key và presentation model
+  cho notification/activity. `widgets/employer-notification-center` sở hữu
+  bell badge/popover, list phân trang, mark-read và activity timeline; page
+  `/notifications|/activities` chỉ compose widget. Layout được phép compose
+  bell qua public index của widget nhưng không gọi API notification trực tiếp.
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế

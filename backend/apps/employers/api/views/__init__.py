@@ -19,6 +19,14 @@ from .media import (
     CompanyLogoUploadView,
 )
 from .memberships import JoinCompanyView
+from .notifications import (
+    EmployerActivityListView,
+    EmployerNotificationListView,
+    EmployerNotificationPreferenceView,
+    EmployerNotificationReadAllView,
+    EmployerNotificationReadView,
+    EmployerNotificationUnreadCountView,
+)
 from .onboarding import (
     AcceptDpaView,
     PhoneAvailabilityView,
@@ -58,6 +66,12 @@ __all__ = [
     'IndustryListView',
     'JoinCompanyView',
     'MyCompanyView',
+    'EmployerActivityListView',
+    'EmployerNotificationListView',
+    'EmployerNotificationPreferenceView',
+    'EmployerNotificationReadAllView',
+    'EmployerNotificationReadView',
+    'EmployerNotificationUnreadCountView',
     'PhoneAvailabilityView',
     'PhoneChallengeView',
     'RecruiterMeView',

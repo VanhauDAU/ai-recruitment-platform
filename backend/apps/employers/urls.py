@@ -15,6 +15,12 @@ from .api.views import (
     CompanyUpdateRequestLifecycleView,
     CompanyUpdateRequestListCreateView,
     CreateCompanyView,
+    EmployerActivityListView,
+    EmployerNotificationListView,
+    EmployerNotificationPreferenceView,
+    EmployerNotificationReadAllView,
+    EmployerNotificationReadView,
+    EmployerNotificationUnreadCountView,
     IndustryListView,
     JoinCompanyView,
     MyCompanyView,
@@ -38,6 +44,32 @@ from .api.views import (
 from .api.views.registration import CompleteEmployerRegistrationView, EmployerRegisterView
 
 urlpatterns = [
+    path(
+        'notifications/',
+        EmployerNotificationListView.as_view(),
+        name='employer-notification-list',
+    ),
+    path(
+        'notification-preferences/',
+        EmployerNotificationPreferenceView.as_view(),
+        name='employer-notification-preferences',
+    ),
+    path(
+        'notifications/unread-count/',
+        EmployerNotificationUnreadCountView.as_view(),
+        name='employer-notification-unread-count',
+    ),
+    path(
+        'notifications/read-all/',
+        EmployerNotificationReadAllView.as_view(),
+        name='employer-notification-read-all',
+    ),
+    path(
+        'notifications/<str:public_id>/read/',
+        EmployerNotificationReadView.as_view(),
+        name='employer-notification-read',
+    ),
+    path('activities/', EmployerActivityListView.as_view(), name='employer-activity-list'),
     path('campaigns/', RecruitmentCampaignListCreateView.as_view(), name='employer-campaign-list'),
     path(
         'campaigns/options/',

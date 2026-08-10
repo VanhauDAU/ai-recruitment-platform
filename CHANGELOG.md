@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer notification center và activity log
+
+- Bật chuông topbar có unread badge, popover, trang thông báo phân trang, trạng
+  thái đã đọc/đọc tất cả và deep-link nội bộ về đúng workflow xác thực/công ty.
+- Thêm activity log riêng cho sự kiện nghiệp vụ quan trọng; event được ghi
+  idempotent cùng transaction, chỉ giữ metadata allowlist và không lộ file,
+  storage key, hash hoặc danh tính quản trị viên.
+- Email quyết định xác thực tiếp tục qua outbox có retry; bổ sung sweep 60 giây
+  và retention 730 ngày cho notification/activity/outbox đã kết thúc.
+
 #### Added — Employer company link recovery
 
 - Thêm admin impact-preview và confirm có signed token để gỡ liên kết công ty

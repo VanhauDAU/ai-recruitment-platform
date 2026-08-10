@@ -24,11 +24,13 @@ from ..models import (
     CompanyUpdateRequest,
     EmployerCompanyLinkEvent,
     EmployerComplianceHold,
+    EmployerNotification,
     EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentCampaign,
     RecruitmentNeed,
 )
+from .notifications import emit_employer_event
 
 COMPANY_UNLINK_PERMISSION = 'employer_verification.unlink_company'
 COMPANY_UNLINK_OPERATION = 'employer.company.unlink'
@@ -221,6 +223,18 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
         event_type=EmployerCompanyLinkEvent.EventType.ADMIN_UNLINKED,
         reason=normalized_reason,
         impact_snapshot=event_snapshot,
+    )
+    emit_employer_event(
+        recipient=user,
+        actor=actor,
+        event_type=EmployerNotification.EventType.COMPANY_LINK_REMOVED,
+        dedupe_key=f'company-link-event:{event.public_id}',
+        message='Quản trị viên đã gỡ liên kết công ty theo yêu cầu hỗ trợ.',
+        subject_public_id=company.public_id,
+        metadata={
+            'company_public_id': company.public_id,
+            'event_public_id': event.public_id,
+        },
     )
     recruiter.company = None
     recruiter.company_role = ''

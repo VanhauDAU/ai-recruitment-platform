@@ -26,7 +26,7 @@ Decision log:
 | ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | ✅ Hoàn tất code — production SMS activation thuộc ER-8 |
-| ER-7 | Company unlink, notification center và activity | 🟨 Đang làm — company recovery Verified |
+| ER-7 | Company unlink, notification center và activity | ✅ Hoàn tất code |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
 ### Corrective UX 2026-08-10
@@ -72,8 +72,12 @@ Decision log:
 - Impact preview/confirm ký số và fail stale; chỉ member chưa phát sinh dữ liệu
   nghiệp vụ được unlink. Company/proof/history không bị xóa hoặc chuyển sang
   company mới; action có link event append-only và admin audit.
-- PostgreSQL Docker đạt 4/4 backend, frontend API/UI đạt 8/8, migration drift
-  sạch. Notification center và activity log là slice kế tiếp.
+- Company recovery đạt 4/4 backend trên PostgreSQL Docker và frontend 8/8.
+  Notification/activity có event idempotent + metadata allowlist, list/unread/
+  read-one/read-all, deep-link, bell/popover, hai trang responsive, email outbox
+  sweep và retention 730 ngày. Regression tích hợp backend 40/40, frontend
+  targeted 16/16, smoke desktop/tablet/mobile 3/3 và full coverage 1009/1009;
+  migration drift sạch.
 
 </details>
 
