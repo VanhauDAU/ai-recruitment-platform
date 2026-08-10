@@ -18,11 +18,13 @@ from common.r2_storage import private_media_storage
 from ...models import Company, CompanyDocument, RecruiterProfile
 from ...selectors import has_explicit_company_link
 from ...services import (
+    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
     get_or_create_recruiter,
     get_or_create_verification_case,
     lock_company_update_request,
     record_verification_upload,
+    snapshot_company_update_request,
     validate_employer_upload_structure,
 )
 from ..exceptions import EmployerUploadSessionResponse
@@ -122,7 +124,7 @@ def _save_document(
         update_request.requested_by_id != request.user.id
         or company is None
         or update_request.company_id != company.id
-        or update_request.status != update_request.Status.PENDING
+        or update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
     ):
         raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
     if company is None and recruiter.company_id:
@@ -273,6 +275,11 @@ def _save_document(
             recruiter=recruiter,
             document=document,
             verification_method=verification_method,
+        )
+    elif update_request is not None:
+        snapshot_company_update_request(
+            update_request,
+            actor=request.user,
         )
     return document
 

@@ -91,12 +91,21 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
     documents = CompanyDocumentSerializer(many=True, read_only=True)
     media_previews = serializers.SerializerMethodField()
     requested_by_summary = serializers.SerializerMethodField()
+    current_revision_public_id = serializers.CharField(
+        source='current_revision.public_id',
+        read_only=True,
+        allow_null=True,
+    )
+    allowed_actions = serializers.SerializerMethodField()
+    base_company_updated_at = serializers.DateTimeField(required=False)
 
     class Meta:
         model = CompanyUpdateRequest
         fields = [
             'public_id',
             'requested_by_summary',
+            'current_revision_public_id',
+            'allowed_actions',
             'changes',
             'is_sensitive',
             'reason',
@@ -110,10 +119,13 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'updated_at',
             'revision',
             'lock_version',
+            'base_company_updated_at',
         ]
         read_only_fields = [
             'public_id',
             'requested_by_summary',
+            'current_revision_public_id',
+            'allowed_actions',
             'is_sensitive',
             'status',
             'review_note',
@@ -123,6 +135,26 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'revision',
             'lock_version',
         ]
+
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    def get_allowed_actions(self, obj):
+        request = self.context.get('request')
+        recruiter = self.context.get('recruiter')
+        if request is None or recruiter is None:
+            return []
+        actions = []
+        if obj.status in {
+            CompanyUpdateRequest.Status.PENDING,
+            CompanyUpdateRequest.Status.SUBMITTED,
+            CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+        }:
+            if obj.requested_by_id == request.user.id:
+                actions.extend(['edit', 'withdraw'])
+                if obj.status == CompanyUpdateRequest.Status.CHANGES_REQUESTED:
+                    actions.append('resubmit')
+            if recruiter.company_role == RecruiterProfile.CompanyRole.OWNER:
+                actions.append('cancel')
+        return actions
 
     @extend_schema_field(
         inline_serializer(
@@ -369,9 +401,10 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'trade_name_same_as_registered',
             getattr(company, 'trade_name_same_as_registered', False),
         )
-        if same_name:
+        name_fields = {'company_name', 'trade_name', 'trade_name_same_as_registered'}
+        if same_name and name_fields & set(cleaned):
             cleaned['trade_name'] = name
-        elif {'company_name', 'trade_name', 'trade_name_same_as_registered'} & set(cleaned):
+        elif name_fields & set(cleaned):
             trade_name = cleaned.get('trade_name', getattr(company, 'trade_name', ''))
             if not str(trade_name or '').strip():
                 # Hồ sơ legacy có thể chưa có tên thương mại. Khi đổi tên đăng
@@ -379,3 +412,8 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 cleaned['trade_name'] = name
                 cleaned['trade_name_same_as_registered'] = True
         return cleaned
+
+
+class CompanyUpdateRequestCloseSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=2000, required=False, allow_blank=True)
+    lock_version = serializers.IntegerField(min_value=0)

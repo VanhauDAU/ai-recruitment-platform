@@ -215,6 +215,13 @@ class CompanyMediaUpload(models.Model):
         blank=True,
         related_name='media_upload_records',
     )
+    update_revision = models.ForeignKey(
+        'CompanyUpdateRevision',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='attached_media_uploads',
+    )
     upload_asset = models.OneToOneField(
         'uploads.UploadAsset',
         on_delete=models.PROTECT,

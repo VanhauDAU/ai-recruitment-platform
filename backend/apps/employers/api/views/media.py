@@ -16,8 +16,10 @@ from common.r2_storage import private_media_storage
 
 from ...models import Company, CompanyImage, CompanyMediaUpload, CompanyUpdateRequest
 from ...services import (
+    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     EmployerUploadStructureError,
     lock_company_update_request,
+    snapshot_company_update_request,
     validate_employer_upload_structure,
 )
 from ..exceptions import EmployerUploadSessionResponse, UploadSessionRequiredResponse
@@ -56,7 +58,7 @@ def _get_update_request(request, company):
         public_id=update_request_id,
         company=company,
         requested_by=request.user,
-        status=CompanyUpdateRequest.Status.PENDING,
+        status__in=REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     ).first()
     if update_request is None:
         raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
@@ -179,7 +181,7 @@ class CompanyImageUploadView(APIView):
                         company_id=company.pk,
                         update_request_id=update_request.pk,
                     )
-                    if update_request.status != CompanyUpdateRequest.Status.PENDING:
+                    if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
                         raise ValidationError(
                             {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
                         )
@@ -208,8 +210,11 @@ class CompanyImageUploadView(APIView):
                         changes['cover_image_url'] = saved['path']
                         changes.pop('cover_pending', None)
                     update_request.changes = changes
-                    update_request.lock_version += 1
-                    update_request.save(update_fields=['changes', 'lock_version', 'updated_at'])
+                    update_request.save(update_fields=['changes', 'updated_at'])
+                    snapshot_company_update_request(
+                        update_request,
+                        actor=request.user,
+                    )
                     if replaced_path:
                         transaction.on_commit(lambda: delete_local_media_url(replaced_path))
                 elif self.kind == 'gallery':
@@ -261,7 +266,7 @@ class CompanyImageUploadView(APIView):
                     company_id=company.pk,
                     update_request_id=update_request.pk,
                 )
-                if update_request.status != CompanyUpdateRequest.Status.PENDING:
+                if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
                     raise ValidationError(
                         {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
                     )
@@ -273,8 +278,11 @@ class CompanyImageUploadView(APIView):
                 else:
                     changes['cover_image_url'] = ''
                 update_request.changes = changes
-                update_request.lock_version += 1
-                update_request.save(update_fields=['changes', 'lock_version', 'updated_at'])
+                update_request.save(update_fields=['changes', 'updated_at'])
+                snapshot_company_update_request(
+                    update_request,
+                    actor=request.user,
+                )
                 if staged_path:
                     transaction.on_commit(lambda: delete_local_media_url(staged_path))
             return Response(

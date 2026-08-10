@@ -12,6 +12,8 @@ UPDATE_REQUEST_BEFORE = [('employers', '0029_campaign_policy_hold')]
 UPDATE_REQUEST_AFTER = [('employers', '0030_company_update_request_requester_scope')]
 SMS_FOUNDATION_BEFORE = [('employers', '0030_company_update_request_requester_scope')]
 SMS_FOUNDATION_AFTER = [('employers', '0033_finalize_employer_sms_challenge_id')]
+COMPANY_UPDATE_V2_BEFORE = [('employers', '0036_verification_document_replaced_event')]
+COMPANY_UPDATE_V2_AFTER = [('employers', '0038_backfill_company_update_lifecycle_v2')]
 
 
 class EmployerVerificationMigrationTests(TransactionTestCase):
@@ -132,6 +134,82 @@ class CompanyUpdateRequestScopeMigrationTests(TransactionTestCase):
                 requested_by_id=first_user.pk,
                 changes={'address': 'Huế'},
             )
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        self._migrate(executor.loader.graph.leaf_nodes())
+
+
+class CompanyUpdateLifecycleV2MigrationTests(TransactionTestCase):
+    def _migrate(self, targets):
+        executor = MigrationExecutor(connection)
+        executor.loader.build_graph()
+        executor.migrate(targets)
+        return executor
+
+    def test_backfills_submitted_snapshot_attachments_and_event(self):
+        before_executor = self._migrate(COMPANY_UPDATE_V2_BEFORE)
+        old_apps = before_executor.loader.project_state(COMPANY_UPDATE_V2_BEFORE).apps
+        Company = old_apps.get_model('employers', 'Company')
+        CompanyDocument = old_apps.get_model('employers', 'CompanyDocument')
+        CompanyUpdateRequest = old_apps.get_model('employers', 'CompanyUpdateRequest')
+        RecruiterProfile = old_apps.get_model('employers', 'RecruiterProfile')
+        user = get_user_model().objects.create_user(
+            email='company-update-v2-migration@example.com',
+            password='Password@123',
+            role='employer',
+        )
+        company = Company.objects.create(
+            public_id='co-company-update-v2',
+            slug='company-update-v2',
+            company_name='Company update V2',
+            address='Hà Nội',
+            created_by_id=user.pk,
+        )
+        recruiter = RecruiterProfile.objects.create(
+            public_id='rec-company-update-v2',
+            user_id=user.pk,
+            company_id=company.pk,
+            company_role='owner',
+        )
+        update_request = CompanyUpdateRequest.objects.create(
+            public_id='cur-company-update-v2',
+            company_id=company.pk,
+            requested_by_id=user.pk,
+            changes={'address': 'Đà Nẵng'},
+            status='pending',
+        )
+        document = CompanyDocument.objects.create(
+            public_id='doc-company-update-v2',
+            company_id=company.pk,
+            recruiter_id=recruiter.pk,
+            uploaded_by_id=user.pk,
+            update_request_id=update_request.pk,
+            doc_type='business_registration',
+            file_url='employers/migrations/company-update-v2.pdf',
+        )
+
+        after_executor = self._migrate(COMPANY_UPDATE_V2_AFTER)
+        new_apps = after_executor.loader.project_state(COMPANY_UPDATE_V2_AFTER).apps
+        V2Request = new_apps.get_model('employers', 'CompanyUpdateRequest')
+        V2Document = new_apps.get_model('employers', 'CompanyDocument')
+        V2Event = new_apps.get_model('employers', 'CompanyUpdateEvent')
+        migrated = V2Request.objects.get(pk=update_request.pk)
+        migrated_document = V2Document.objects.get(pk=document.pk)
+
+        self.assertEqual(migrated.status, 'submitted')
+        self.assertEqual(migrated.revision, 1)
+        self.assertEqual(migrated.base_values, {'address': 'Hà Nội'})
+        self.assertIsNotNone(migrated.current_revision_id)
+        self.assertEqual(migrated_document.update_revision_id, migrated.current_revision_id)
+        self.assertTrue(
+            V2Event.objects.filter(
+                update_request_id=migrated.pk,
+                event_type='submitted',
+                revision_number=1,
+            ).exists()
+        )
 
     def tearDown(self):
         executor = MigrationExecutor(connection)

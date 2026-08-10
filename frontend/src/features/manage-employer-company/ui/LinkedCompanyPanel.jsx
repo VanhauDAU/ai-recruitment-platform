@@ -1,12 +1,15 @@
 import { BankOutlined, CheckCircleFilled, EditOutlined, LinkOutlined, SafetyCertificateOutlined, UploadOutlined } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Alert, Avatar, Button, Image, Skeleton, Tag } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Alert, Avatar, Button, Image, Modal, Skeleton, Tag } from 'antd'
 import { useState } from 'react'
 import {
+  changeEmployerCompanyUpdateRequestLifecycle,
   employerProfileKeys,
   getEmployerCompanyUpdateRequests,
 } from '@/entities/employer-profile'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import { message } from '@/shared/lib/toast'
 import CompanyForm from './CompanyForm'
 
 const VERIFICATION_STATUS = {
@@ -18,6 +21,7 @@ const VERIFICATION_STATUS = {
 
 const UPDATE_REQUEST_STATUS = {
   pending: ['processing', 'Đang xử lý'],
+  submitted: ['processing', 'Đã gửi'],
   in_review: ['processing', 'Đang thẩm định'],
   changes_requested: ['warning', 'Cần chỉnh sửa'],
   approved: ['success', 'Đã duyệt'],
@@ -35,6 +39,7 @@ const DOCUMENT_LABELS = {
 
 export default function LinkedCompanyPanel({ profile, catalogs, industries, onRefresh }) {
   const [editing, setEditing] = useState(false)
+  const queryClient = useQueryClient()
   const company = profile.company
   const owner = profile.company_role === 'owner'
   const canRequestUpdate = Boolean(company)
@@ -45,8 +50,13 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   })
   const mineRequests = mineQuery.data || []
   const latestRequest = mineRequests[0]
-  const pendingRequest = mineRequests.find((item) => item.status === 'pending')
-  const documentsRequiringAction = (pendingRequest?.documents || []).filter((document) => (
+  const activeRequest = mineRequests.find((item) => (
+    ['pending', 'submitted', 'in_review', 'changes_requested'].includes(item.status)
+  ))
+  const editableRequest = activeRequest && activeRequest.status !== 'in_review'
+    ? activeRequest
+    : null
+  const documentsRequiringAction = (editableRequest?.documents || []).filter((document) => (
     document.is_current && ['changes_requested', 'rejected'].includes(document.status)
   ))
   const hasDocumentAction = documentsRequiringAction.length > 0
@@ -55,9 +65,28 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
   const requestStatusText = hasDocumentAction ? 'Cần bổ sung giấy tờ' : defaultRequestStatusText
   const requestQueryHasError = mineQuery.isError
   const requestQueryFetching = mineQuery.isFetching
+  const closeMutation = useMutation({
+    mutationFn: ({ request, action }) => changeEmployerCompanyUpdateRequestLifecycle(
+      request.public_id,
+      action,
+      { lock_version: request.lock_version },
+    ),
+    onSuccess: async () => {
+      message.success('Đã rút yêu cầu cập nhật công ty.')
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: employerProfileKeys.companyUpdateRequestList('mine'),
+          exact: true,
+        }),
+        onRefresh?.(),
+      ])
+    },
+    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể rút yêu cầu.')),
+  })
   const writeLocked = requestQueryHasError
     || !mineQuery.isSuccess
     || requestQueryFetching
+    || closeMutation.isPending
 
   const retryRequestQuery = () => mineQuery.refetch()
 
@@ -77,7 +106,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
         {requestError}
         <CompanyForm
           company={company}
-          pendingRequest={pendingRequest}
+          pendingRequest={editableRequest}
           catalogs={catalogs}
           industries={industries}
           canManageMedia={owner}
@@ -111,13 +140,47 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
                 {requestStatusText && <Tag color={requestStatusColor}>{requestStatusText}</Tag>}
                 <Button
                   type="link"
-                  disabled={writeLocked}
-                  aria-label={hasDocumentAction ? 'Bổ sung giấy tờ' : undefined}
+                  disabled={writeLocked || activeRequest?.status === 'in_review'}
+                  aria-label={
+                    hasDocumentAction
+                      ? 'Bổ sung giấy tờ'
+                      : activeRequest?.status === 'in_review'
+                        ? 'Đang thẩm định'
+                        : undefined
+                  }
                   icon={hasDocumentAction ? <UploadOutlined /> : <EditOutlined />}
                   onClick={() => setEditing(true)}
                 >
-                  {hasDocumentAction ? 'Bổ sung giấy tờ' : pendingRequest ? 'Chỉnh sửa yêu cầu' : 'Tạo yêu cầu'}
+                  {hasDocumentAction
+                    ? 'Bổ sung giấy tờ'
+                    : editableRequest
+                      ? activeRequest.status === 'changes_requested'
+                        ? 'Chỉnh sửa và gửi lại'
+                        : 'Chỉnh sửa yêu cầu'
+                      : activeRequest?.status === 'in_review'
+                        ? 'Đang thẩm định'
+                        : 'Tạo yêu cầu'}
                 </Button>
+                {activeRequest?.allowed_actions?.includes('withdraw') && (
+                  <Button
+                    type="link"
+                    danger
+                    disabled={writeLocked}
+                    onClick={() => Modal.confirm({
+                      title: 'Rút yêu cầu cập nhật?',
+                      content: 'Yêu cầu sẽ dừng xử lý. Bạn có thể tạo yêu cầu mới sau đó.',
+                      okText: 'Rút yêu cầu',
+                      okButtonProps: { danger: true },
+                      cancelText: 'Quay lại',
+                      onOk: () => closeMutation.mutateAsync({
+                        request: activeRequest,
+                        action: 'withdraw',
+                      }),
+                    })}
+                  >
+                    Rút yêu cầu
+                  </Button>
+                )}
               </div>
             )}
           </>

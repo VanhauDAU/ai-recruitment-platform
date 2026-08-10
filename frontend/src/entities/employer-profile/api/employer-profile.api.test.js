@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   acceptEmployerDpa,
   checkEmployerPhoneAvailability,
+  changeEmployerCompanyUpdateRequestLifecycle,
   completeEmployerRegistration,
   createEmployerCompany,
   getEmployerCompanyDocumentContent,
@@ -139,13 +140,21 @@ describe('employer profile API', () => {
   it('saves a trade-name proof website as multipart data', async () => {
     post.mockResolvedValue({ data: { id: 9, source_type: 'website' } })
 
-    await expect(saveEmployerCompanyTradeNameWebsite('https://example.com/thuong-hieu')).resolves.toMatchObject({ source_type: 'website' })
+    await expect(saveEmployerCompanyTradeNameWebsite(
+      'https://example.com/thuong-hieu',
+      {
+        updateRequest: 'cur_trade_name',
+        replaceDocument: 'doc_trade_name_old',
+      },
+    )).resolves.toMatchObject({ source_type: 'website' })
 
     const [url, formData] = post.mock.calls[0]
     expect(url).toBe('/employer/company/documents/')
     expect(formData.get('doc_type')).toBe('trade_name_proof')
     expect(formData.get('source_type')).toBe('website')
     expect(formData.get('website_url')).toBe('https://example.com/thuong-hieu')
+    expect(formData.get('update_request')).toBe('cur_trade_name')
+    expect(formData.get('replaces')).toBe('doc_trade_name_old')
     expect(formData.get('file')).toBeNull()
   })
 
@@ -224,5 +233,20 @@ describe('employer profile API', () => {
     await expect(getEmployerCompanyUpdateRequests()).resolves.toEqual([])
 
     expect(get).toHaveBeenCalledWith('/employer/company/update-requests/')
+  })
+
+  it('uses the explicit lifecycle endpoint to withdraw an update request', async () => {
+    post.mockResolvedValue({ data: { public_id: 'cur_1', status: 'withdrawn' } })
+
+    await expect(changeEmployerCompanyUpdateRequestLifecycle(
+      'cur_1',
+      'withdraw',
+      { lock_version: 4 },
+    )).resolves.toMatchObject({ status: 'withdrawn' })
+
+    expect(post).toHaveBeenCalledWith(
+      '/employer/company/update-requests/cur_1/withdraw/',
+      { lock_version: 4 },
+    )
   })
 })

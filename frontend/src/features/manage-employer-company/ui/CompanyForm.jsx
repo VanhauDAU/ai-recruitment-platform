@@ -138,6 +138,12 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       .map((document) => document.doc_type)),
     [pendingRequest?.documents],
   )
+  const replacementDocumentByType = useMemo(
+    () => Object.fromEntries(
+      documentsRequiringReplacement.map((document) => [document.doc_type, document]),
+    ),
+    [documentsRequiringReplacement],
+  )
 
   function hasEditDraftChanges(values) {
     const galleryDeletionsChanged = JSON.stringify([...galleryDeletionIds].sort())
@@ -225,6 +231,9 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           changes,
           reason: isSensitive ? reason : '',
           proof_type: isSensitive ? sensitiveProofType : '',
+          ...(company.updated_at
+            ? { base_company_updated_at: company.updated_at }
+            : {}),
         })
       }
     } else {
@@ -234,9 +243,10 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       })
     }
 
-    const requestOptions = (file) => ({
+    const requestOptions = (file, docType = '') => ({
       updateRequest: updateRequest?.public_id,
       uploadSession: uploadSessions.get(file),
+      replaceDocument: replacementDocumentByType[docType]?.public_id,
     })
     if (logoFile) await uploadEmployerCompanyLogo(logoFile, requestOptions(logoFile))
     for (const file of galleryFiles) {
@@ -246,13 +256,16 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
       await uploadEmployerCompanyDocument(
         'trade_name_proof',
         pendingTradeProof.file,
-        requestOptions(pendingTradeProof.file),
+        requestOptions(pendingTradeProof.file, 'trade_name_proof'),
       )
     }
     if (pendingTradeProof?.source_type === 'website') {
       await saveEmployerCompanyTradeNameWebsite(
         pendingTradeProof.file_url,
-        { updateRequest: updateRequest?.public_id },
+        {
+          updateRequest: updateRequest?.public_id,
+          replaceDocument: replacementDocumentByType.trade_name_proof?.public_id,
+        },
       )
     }
     if (isSensitive && updateRequest) {
@@ -261,7 +274,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           await uploadEmployerCompanyDocument(
             'business_registration',
             businessProofFile,
-            requestOptions(businessProofFile),
+            requestOptions(businessProofFile, 'business_registration'),
           )
         }
       } else {
@@ -269,14 +282,14 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
           await uploadEmployerCompanyDocument(
             'authorization_letter',
             authorizationFile,
-            requestOptions(authorizationFile),
+            requestOptions(authorizationFile, 'authorization_letter'),
           )
         }
         if (identityFile) {
           await uploadEmployerCompanyDocument(
             'identity_document',
             identityFile,
-            requestOptions(identityFile),
+            requestOptions(identityFile, 'identity_document'),
           )
         }
       }

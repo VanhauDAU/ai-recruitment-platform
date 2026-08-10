@@ -10,6 +10,7 @@ from common.media_storage import media_url_from_value
 from ...models import (
     CompanyDocument,
     CompanyTaxLookupEvidence,
+    CompanyUpdateEvent,
     CompanyUpdateRequest,
     EmployerVerificationCase,
     EmployerVerificationEvent,
@@ -154,7 +155,7 @@ def _latest_revision_evidence(obj):
         (
             evidence
             for evidence in obj.tax_lookup_evidences.all()
-            if evidence.workflow_revision == obj.revision
+            if evidence.workflow_revision <= obj.revision
         ),
         None,
     )
@@ -480,6 +481,7 @@ class AdminVerificationDocumentReviewSerializer(serializers.Serializer):
     )
     reason = serializers.CharField(max_length=2000, required=False, allow_blank=True)
     lock_version = serializers.IntegerField(min_value=0)
+    revision_public_id = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         if (
@@ -802,6 +804,24 @@ class AdminVerificationTaxConflictErrorSerializer(serializers.Serializer):
     message = serializers.CharField()
 
 
+class AdminCompanyUpdateEventSerializer(serializers.ModelSerializer):
+    event_type_label = serializers.CharField(source='get_event_type_display', read_only=True)
+    actor_email = serializers.EmailField(source='actor.email', read_only=True, allow_null=True)
+
+    class Meta:
+        model = CompanyUpdateEvent
+        fields = [
+            'public_id',
+            'event_type',
+            'event_type_label',
+            'revision_number',
+            'actor_email',
+            'payload',
+            'created_at',
+        ]
+        read_only_fields = fields
+
+
 class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
     proof_type_label = serializers.CharField(source='get_proof_type_display', read_only=True)
@@ -817,6 +837,12 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
     media_previews = serializers.SerializerMethodField()
     documents = AdminVerificationDocumentSerializer(many=True, read_only=True)
     tax_lookup_evidence = serializers.SerializerMethodField()
+    current_revision_public_id = serializers.CharField(
+        source='current_revision.public_id',
+        read_only=True,
+        allow_null=True,
+    )
+    events = AdminCompanyUpdateEventSerializer(many=True, read_only=True)
 
     class Meta:
         model = CompanyUpdateRequest
@@ -841,7 +867,10 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             'documents',
             'tax_lookup_evidence',
             'revision',
+            'current_revision_public_id',
             'lock_version',
+            'base_company_updated_at',
+            'events',
             'submitted_at',
             'created_at',
             'updated_at',
@@ -917,16 +946,29 @@ class AdminCompanyUpdateReviewSerializer(serializers.Serializer):
     decision = serializers.ChoiceField(
         choices=[
             CompanyUpdateRequest.Status.APPROVED,
+            CompanyUpdateRequest.Status.CHANGES_REQUESTED,
             CompanyUpdateRequest.Status.REJECTED,
         ]
     )
     note = serializers.CharField(max_length=2000, required=False, allow_blank=True)
     lock_version = serializers.IntegerField(min_value=0)
+    revision_public_id = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         if (
-            attrs['decision'] == CompanyUpdateRequest.Status.REJECTED
+            attrs['decision']
+            in {
+                CompanyUpdateRequest.Status.CHANGES_REQUESTED,
+                CompanyUpdateRequest.Status.REJECTED,
+            }
             and not attrs.get('note', '').strip()
         ):
-            raise serializers.ValidationError({'note': 'Nhập lý do khi từ chối yêu cầu.'})
+            raise serializers.ValidationError(
+                {'note': 'Nhập lý do khi yêu cầu chỉnh sửa hoặc từ chối.'}
+            )
         return attrs
+
+
+class AdminCompanyUpdateStartReviewSerializer(serializers.Serializer):
+    lock_version = serializers.IntegerField(min_value=0)
+    revision_public_id = serializers.CharField(required=False, allow_blank=True)

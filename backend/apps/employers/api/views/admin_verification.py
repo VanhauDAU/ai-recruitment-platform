@@ -37,6 +37,7 @@ from ...models import (
 from ...selectors import admin_verification_cases_queryset, admin_verification_summary
 from ...services import (
     CompanyTaxCodeConflict,
+    CompanyUpdateConflict,
     apply_update_request,
     confirm_verification_decision,
     confirm_verification_lifecycle_action,
@@ -45,15 +46,17 @@ from ...services import (
     render_office_document_preview,
     review_company_update_document,
     review_verification_document,
+    start_company_update_review,
     start_verification_review,
     unlock_verification_resubmission,
     verification_decision_impact,
     verification_lifecycle_impact,
 )
-from ..exceptions import CompanyTaxCodeConflictResponse
+from ..exceptions import CompanyTaxCodeConflictResponse, CompanyUpdateConflictResponse
 from ..serializers.admin_verification import (
     AdminCompanyUpdateRequestSerializer,
     AdminCompanyUpdateReviewSerializer,
+    AdminCompanyUpdateStartReviewSerializer,
     AdminVerificationCaseDetailSerializer,
     AdminVerificationCaseListSerializer,
     AdminVerificationDecisionConfirmationSerializer,
@@ -705,6 +708,7 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
         'list': ['company_update.view'],
         'retrieve': ['company_update.view'],
         'review_document': ['company_update.review'],
+        'start_review': ['company_update.review'],
         'review': ['company_update.review'],
         'refresh_tax_lookup': ['company_update.review'],
         'document_content': [
@@ -718,9 +722,11 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
             'company',
             'requested_by',
             'reviewed_by',
+            'current_revision',
         ).prefetch_related(
             'documents__uploaded_by',
             'documents__reviewed_by',
+            'events__actor',
             'company__company_industries__industry',
             Prefetch(
                 'tax_lookup_evidences',
@@ -773,6 +779,11 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
             'industry_labels': dict(Industry.objects.values_list('id', 'name')),
         }
 
+    @extend_schema(
+        summary='Duyệt tài liệu của phiên bản yêu cầu cập nhật công ty hiện tại',
+        request=AdminVerificationDocumentReviewSerializer,
+        responses={200: AdminCompanyUpdateRequestSerializer},
+    )
     @action(
         detail=True,
         methods=['post'],
@@ -780,6 +791,10 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
     )
     def review_document(self, request, public_id=None, document_public_id=None):
         update_request = self.get_object()
+        if update_request.status != CompanyUpdateRequest.Status.IN_REVIEW:
+            raise ValidationError(
+                {'detail': 'Phải nhận thẩm định yêu cầu trước khi xử lý giấy tờ.'}
+            )
         document = update_request.documents.filter(
             public_id=document_public_id,
             is_current=True,
@@ -796,24 +811,58 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
                 decision=values['decision'],
                 note=values.get('reason', ''),
                 lock_version=values['lock_version'],
+                revision_public_id=values.get('revision_public_id', ''),
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
         current = self.get_queryset().get(pk=update_request.pk)
         return Response(self.get_serializer(current).data)
 
+    @extend_schema(
+        summary='Nhận thẩm định yêu cầu cập nhật công ty',
+        request=AdminCompanyUpdateStartReviewSerializer,
+        responses={200: AdminCompanyUpdateRequestSerializer},
+    )
+    @action(detail=True, methods=['post'], url_path='start-review')
+    def start_review(self, request, public_id=None):
+        serializer = AdminCompanyUpdateStartReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        try:
+            update_request = start_company_update_review(
+                self.get_object(),
+                actor=request.user,
+                lock_version=values['lock_version'],
+                revision_public_id=values.get('revision_public_id', ''),
+            )
+        except StaleImpactToken as error:
+            raise AdminResourceChanged() from error
+        current = self.get_queryset().get(pk=update_request.pk)
+        return Response(self.get_serializer(current).data)
+
+    @extend_schema(
+        summary='Ra quyết định cuối cho yêu cầu cập nhật công ty',
+        request=AdminCompanyUpdateReviewSerializer,
+        responses={200: AdminCompanyUpdateRequestSerializer},
+    )
     @action(detail=True, methods=['post'])
     def review(self, request, public_id=None):
         serializer = AdminCompanyUpdateReviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
+        update_request = self.get_object()
+        if update_request.status != CompanyUpdateRequest.Status.IN_REVIEW:
+            raise ValidationError(
+                {'detail': 'Phải nhận thẩm định yêu cầu trước khi ra quyết định.'}
+            )
         try:
             update_request = apply_update_request(
-                self.get_object(),
+                update_request,
                 request.user,
-                approve=values['decision'] == CompanyUpdateRequest.Status.APPROVED,
+                decision=values['decision'],
                 note=values.get('note', ''),
                 lock_version=values['lock_version'],
+                revision_public_id=values.get('revision_public_id', ''),
             )
         except StaleImpactToken as error:
             raise AdminResourceChanged() from error
@@ -822,6 +871,8 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
                 error.tax_code,
                 claim_status=error.claim_status,
             ) from error
+        except CompanyUpdateConflict as error:
+            raise CompanyUpdateConflictResponse(error.fields) from error
         current = self.get_queryset().get(pk=update_request.pk)
         return Response(self.get_serializer(current).data)
 

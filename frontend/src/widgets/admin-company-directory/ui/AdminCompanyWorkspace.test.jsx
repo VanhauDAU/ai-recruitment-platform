@@ -96,7 +96,7 @@ describe('AdminCompanyWorkspace', () => {
     await waitFor(() => expect(updateApi.getAdminCompanyUpdateRequests).toHaveBeenCalledWith(
       {
         page: 1,
-        status: 'pending',
+        status: 'submitted',
         company: 'co_alpha',
         ordering: '-updated_at',
       },

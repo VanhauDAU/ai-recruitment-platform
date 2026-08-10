@@ -9,6 +9,7 @@ import {
   refreshAdminCompanyUpdateTaxLookup,
   reviewAdminCompanyUpdateDocument,
   reviewAdminCompanyUpdateRequest,
+  startAdminCompanyUpdateReview,
 } from '@/entities/admin-employer-verification'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
@@ -80,6 +81,7 @@ export default function CompanyUpdateReviewPanel({
         decision,
         reason,
         lock_version: updateRequest.lock_version,
+        revision_public_id: updateRequest.current_revision_public_id,
       },
     ),
     onSuccess: async (_, variables) => {
@@ -102,11 +104,18 @@ export default function CompanyUpdateReviewPanel({
         decision,
         note,
         lock_version: updateRequest.lock_version,
+        revision_public_id: updateRequest.current_revision_public_id,
       },
     ),
     onSuccess: async (_, variables) => {
       setRequestConflict('')
-      message.success(variables.decision === 'approved' ? 'Đã áp dụng thay đổi công ty.' : 'Đã từ chối yêu cầu cập nhật.')
+      message.success(
+        variables.decision === 'approved'
+          ? 'Đã áp dụng thay đổi công ty.'
+          : variables.decision === 'changes_requested'
+            ? 'Đã yêu cầu nhà tuyển dụng chỉnh sửa và nộp lại.'
+            : 'Đã từ chối yêu cầu cập nhật.',
+      )
       setReasonState(null)
       setDetailsOpen(false)
       await refresh()
@@ -115,12 +124,24 @@ export default function CompanyUpdateReviewPanel({
       const errorMessage = getApiErrorMessage(error)
       if (
         error.response?.status === 409
-        && error.response?.data?.code === 'company_tax_code_conflict'
+        && ['company_tax_code_conflict', 'company_update_base_conflict']
+          .includes(error.response?.data?.code)
       ) {
         setRequestConflict(errorMessage)
       }
       message.error(errorMessage)
     },
+  })
+  const startReviewMutation = useMutation({
+    mutationFn: () => startAdminCompanyUpdateReview(updateRequest.public_id, {
+      lock_version: updateRequest.lock_version,
+      revision_public_id: updateRequest.current_revision_public_id,
+    }),
+    onSuccess: async () => {
+      message.success('Đã nhận thẩm định đúng revision hiện hành.')
+      await refresh()
+    },
+    onError: (error) => message.error(getApiErrorMessage(error)),
   })
   const taxLookupMutation = useMutation({
     mutationFn: () => refreshAdminCompanyUpdateTaxLookup(updateRequest.public_id),
@@ -168,7 +189,7 @@ export default function CompanyUpdateReviewPanel({
       />
     )
   }
-  if (updateRequest.status !== 'pending') {
+  if (['approved', 'rejected', 'withdrawn', 'cancelled'].includes(updateRequest.status)) {
     return (
       <Alert
         showIcon
@@ -178,6 +199,9 @@ export default function CompanyUpdateReviewPanel({
       />
     )
   }
+
+  const isInReview = updateRequest.status === 'in_review'
+  const isSubmitted = ['pending', 'submitted'].includes(updateRequest.status)
 
   const currentDocuments = (updateRequest.documents || []).filter((document) => document.is_current)
   const approvedDocumentTypes = new Set(
@@ -217,7 +241,9 @@ export default function CompanyUpdateReviewPanel({
               {`${Object.keys(updateRequest.changes || {}).length} mục thay đổi · gửi bởi ${updateRequest.requested_by_email}`}
             </Typography.Text>
             <Space wrap size={[6, 6]} className="mt-2">
-              <Tag color="gold">Chờ duyệt</Tag>
+              <Tag color={isInReview ? 'blue' : updateRequest.status === 'changes_requested' ? 'orange' : 'gold'}>
+                {updateRequest.status_label || updateRequest.status}
+              </Tag>
               <Tag>{`Lần gửi ${updateRequest.revision}`}</Tag>
               {updateRequest.is_sensitive && <Tag color="orange">Có thay đổi pháp lý</Tag>}
             </Space>
@@ -225,12 +251,21 @@ export default function CompanyUpdateReviewPanel({
           <Button icon={<EyeOutlined />} onClick={() => setDetailsOpen(true)}>
             Xem chi tiết và đối chiếu
           </Button>
+          {canReview && isSubmitted && (
+            <Button
+              type="primary"
+              loading={startReviewMutation.isPending}
+              onClick={() => startReviewMutation.mutate()}
+            >
+              Nhận thẩm định
+            </Button>
+          )}
         </div>
       </Card>
       <CompanyUpdateComparisonModal
         open={detailsOpen}
         updateRequest={updateRequest}
-        canReview={canReview}
+        canReview={canReview && isInReview}
         canViewSensitive={canViewSensitive}
         canApply={canApply}
         requestConflict={requestConflict}
@@ -241,6 +276,7 @@ export default function CompanyUpdateReviewPanel({
         onOpenDocument={openDocument}
         onReviewDocument={reviewDocument}
         onRejectRequest={() => setReasonState({ kind: 'request', decision: 'rejected', title: 'Từ chối yêu cầu sửa công ty' })}
+        onRequestChanges={() => setReasonState({ kind: 'request', decision: 'changes_requested', title: 'Yêu cầu chỉnh sửa và nộp lại' })}
         onApproveRequest={() => requestMutation.mutate({ decision: 'approved' })}
         onRefreshTaxLookup={() => taxLookupMutation.mutate()}
       />

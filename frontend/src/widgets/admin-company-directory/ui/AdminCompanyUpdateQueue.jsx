@@ -19,15 +19,16 @@ export default function AdminCompanyUpdateQueue() {
   const requestedPage = Number(searchParams.get('update_page') || 1)
   const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const ordering = searchParams.get('update_ordering') || '-updated_at'
+  const status = searchParams.get('update_status') || 'submitted'
   const [queryText, setQueryText] = useState(searchParams.get('update_q') || '')
   const search = useDeferredValue(queryText.trim())
   const params = useMemo(() => ({
     page,
-    status: 'pending',
+    status,
     ordering,
     ...(searchParams.get('company') ? { company: searchParams.get('company') } : {}),
     ...(search ? { q: search } : {}),
-  }), [ordering, page, search, searchParams])
+  }), [ordering, page, search, searchParams, status])
   const query = useQuery({
     queryKey: adminEmployerVerificationKeys.companyUpdates(params),
     queryFn: ({ signal }) => getAdminCompanyUpdateRequests(params, { signal }),
@@ -64,10 +65,12 @@ export default function AdminCompanyUpdateQueue() {
         companyFilter={companyFilter}
         loading={query.isLoading}
         ordering={ordering}
+        status={status}
         queryText={queryText}
         total={data.count}
         onClearCompany={() => updateQuery('company', '')}
         onOrderingChange={(value) => updateQuery('update_ordering', value)}
+        onStatusChange={(value) => updateQuery('update_status', value)}
         onSearchChange={changeSearch}
       />
 

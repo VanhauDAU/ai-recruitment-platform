@@ -131,6 +131,13 @@ export function reviewAdminCompanyUpdateDocument(requestPublicId, documentPublic
   ))
 }
 
+export function startAdminCompanyUpdateReview(requestPublicId, payload) {
+  return data(client.post(
+    `/admin/company-update-requests/${requestPublicId}/start-review/`,
+    payload,
+  ))
+}
+
 export function reviewAdminCompanyUpdateRequest(requestPublicId, payload) {
   return data(client.post(
     `/admin/company-update-requests/${requestPublicId}/review/`,

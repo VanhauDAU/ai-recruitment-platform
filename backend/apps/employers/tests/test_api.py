@@ -1195,7 +1195,7 @@ class CompanyUpdateRequestTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
-        self.assertEqual(response.data['status'], CompanyUpdateRequest.Status.PENDING)
+        self.assertEqual(response.data['status'], CompanyUpdateRequest.Status.SUBMITTED)
 
     def test_members_keep_independent_pending_requests_and_requester_is_immutable(self):
         owner_response = self.client.post(
@@ -1457,6 +1457,12 @@ class CompanyUpdateRequestTests(APITestCase):
             file_name='update-proof.pdf',
             status=CompanyDocument.Status.APPROVED,
         )
+        services.start_company_update_review(
+            update_request,
+            actor=admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
+        )
         services.apply_update_request(update_request, admin, approve=True)
 
         self.company.refresh_from_db()
@@ -1484,6 +1490,12 @@ class CompanyUpdateRequestTests(APITestCase):
         admin = User.objects.create_superuser(
             email='approval-admin@example.com',
             password='Password@123',
+        )
+        services.start_company_update_review(
+            update_request,
+            actor=admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
         )
 
         with self.assertRaisesMessage(
@@ -2010,11 +2022,18 @@ class CompanyImageUploadTests(APITestCase):
             email='media-reviewer@example.com',
             password='Password@123',
         )
+        update_request = services.start_company_update_review(
+            update_request,
+            actor=admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
+        )
         services.apply_update_request(
             update_request,
             admin,
             approve=True,
             lock_version=update_request.lock_version,
+            revision_public_id=update_request.current_revision.public_id,
         )
         self.company.refresh_from_db()
         self.assertEqual(self.company.logo_url, update_request.changes['logo_url'])

@@ -41,6 +41,7 @@ from ..services import (
     reconcile_recruiter_verification,
     recruiter_is_approved,
     recruiter_posting_readiness,
+    start_company_update_review,
     verification_decision_impact,
 )
 
@@ -140,6 +141,19 @@ class EmployerAccountVerificationTests(APITestCase):
         case.review_started_at = timezone.now()
         case.save(update_fields=['status', 'reviewer', 'review_started_at', 'updated_at'])
         return case
+
+    def _put_company_update_in_review(self, update_request, *, actor=None):
+        update_request.refresh_from_db()
+        return start_company_update_review(
+            update_request,
+            actor=actor or self.admin,
+            lock_version=update_request.lock_version,
+            revision_public_id=(
+                update_request.current_revision.public_id
+                if update_request.current_revision_id
+                else ''
+            ),
+        )
 
     def test_recruiters_in_same_company_have_independent_cases(self):
         self._put_in_review(self.first_case)
@@ -808,6 +822,15 @@ class EmployerAccountVerificationTests(APITestCase):
 
         role.permissions.add(review_permission)
         bust_admin_permission_cache({reviewer.pk})
+        started = self.client.post(
+            reverse(
+                'admin-company-update-request-start-review',
+                kwargs={'public_id': update_request.public_id},
+            ),
+            {'lock_version': update_request.lock_version},
+            format='json',
+        )
+        self.assertEqual(started.status_code, 200, started.data)
         accepted_review = self.client.post(
             reverse(
                 'admin-company-update-request-review',
@@ -816,7 +839,8 @@ class EmployerAccountVerificationTests(APITestCase):
             {
                 'decision': CompanyUpdateRequest.Status.REJECTED,
                 'note': 'Chưa đủ thông tin.',
-                'lock_version': 0,
+                'lock_version': started.data['lock_version'],
+                'revision_public_id': started.data['current_revision_public_id'],
             },
             format='json',
         )
@@ -949,6 +973,7 @@ class EmployerAccountVerificationTests(APITestCase):
             requested_by=self.first_user,
             changes={'address': 'Địa chỉ của thành viên đầu tiên'},
         )
+        first_request = self._put_company_update_in_review(first_request)
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -963,6 +988,7 @@ class EmployerAccountVerificationTests(APITestCase):
                 'decision': CompanyDocument.Status.APPROVED,
                 'reason': '',
                 'lock_version': first_request.lock_version,
+                'revision_public_id': first_request.current_revision.public_id,
             },
             format='json',
         )
@@ -1101,6 +1127,7 @@ class EmployerAccountVerificationTests(APITestCase):
             file_name='business-registration.pdf',
             mime_type='application/pdf',
         )
+        update_request = self._put_company_update_in_review(update_request)
         self.client.force_authenticate(self.admin)
 
         document_response = self.client.post(
@@ -1114,12 +1141,16 @@ class EmployerAccountVerificationTests(APITestCase):
             {
                 'decision': CompanyDocument.Status.APPROVED,
                 'reason': '',
-                'lock_version': 0,
+                'lock_version': update_request.lock_version,
+                'revision_public_id': update_request.current_revision.public_id,
             },
             format='json',
         )
         self.assertEqual(document_response.status_code, 200, document_response.data)
-        self.assertEqual(document_response.data['lock_version'], 1)
+        self.assertEqual(
+            document_response.data['lock_version'],
+            update_request.lock_version + 1,
+        )
 
         review_response = self.client.post(
             reverse(
@@ -1129,7 +1160,8 @@ class EmployerAccountVerificationTests(APITestCase):
             {
                 'decision': CompanyUpdateRequest.Status.APPROVED,
                 'note': '',
-                'lock_version': 1,
+                'lock_version': document_response.data['lock_version'],
+                'revision_public_id': document_response.data['current_revision_public_id'],
             },
             format='json',
         )
@@ -1167,6 +1199,7 @@ class EmployerAccountVerificationTests(APITestCase):
             mime_type='application/pdf',
             status=CompanyDocument.Status.APPROVED,
         )
+        update_request = self._put_company_update_in_review(update_request)
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -1177,7 +1210,8 @@ class EmployerAccountVerificationTests(APITestCase):
             {
                 'decision': CompanyUpdateRequest.Status.APPROVED,
                 'note': '',
-                'lock_version': 0,
+                'lock_version': update_request.lock_version,
+                'revision_public_id': update_request.current_revision.public_id,
             },
             format='json',
         )
@@ -1188,7 +1222,7 @@ class EmployerAccountVerificationTests(APITestCase):
         self.company.refresh_from_db()
         update_request.refresh_from_db()
         self.assertEqual(self.company.tax_code, '0109999999')
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.PENDING)
+        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)
 
     def test_unverified_companies_keep_duplicate_tax_codes_when_update_is_approved(self):
         existing_company = Company.objects.create(
@@ -1216,6 +1250,7 @@ class EmployerAccountVerificationTests(APITestCase):
             mime_type='application/pdf',
             status=CompanyDocument.Status.APPROVED,
         )
+        update_request = self._put_company_update_in_review(update_request)
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -1226,7 +1261,8 @@ class EmployerAccountVerificationTests(APITestCase):
             {
                 'decision': CompanyUpdateRequest.Status.APPROVED,
                 'note': '',
-                'lock_version': 0,
+                'lock_version': update_request.lock_version,
+                'revision_public_id': update_request.current_revision.public_id,
             },
             format='json',
         )
@@ -1284,6 +1320,7 @@ class EmployerAccountVerificationTests(APITestCase):
             file_name='business-registration.pdf',
             mime_type='application/pdf',
         )
+        update_request = self._put_company_update_in_review(update_request)
         self.client.force_authenticate(self.admin)
 
         response = self.client.post(
@@ -1297,7 +1334,8 @@ class EmployerAccountVerificationTests(APITestCase):
             {
                 'decision': CompanyDocument.Status.CHANGES_REQUESTED,
                 'reason': 'Ảnh chụp bị mờ, vui lòng tải bản rõ đủ bốn góc.',
-                'lock_version': 0,
+                'lock_version': update_request.lock_version,
+                'revision_public_id': update_request.current_revision.public_id,
             },
             format='json',
         )
@@ -1358,6 +1396,7 @@ class EmployerAccountVerificationTests(APITestCase):
             company=self.company,
             requested_by=self.first_user,
             changes={'website_url': 'https://example.com/new'},
+            status=CompanyUpdateRequest.Status.IN_REVIEW,
             lock_version=2,
         )
         self.client.force_authenticate(self.admin)
@@ -1377,4 +1416,4 @@ class EmployerAccountVerificationTests(APITestCase):
 
         self.assertEqual(response.status_code, 409, response.data)
         update_request.refresh_from_db()
-        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.PENDING)
+        self.assertEqual(update_request.status, CompanyUpdateRequest.Status.IN_REVIEW)

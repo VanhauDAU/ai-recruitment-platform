@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   refreshAdminCompanyUpdateTaxLookup: vi.fn(),
   reviewAdminCompanyUpdateDocument: vi.fn(),
   reviewAdminCompanyUpdateRequest: vi.fn(),
+  startAdminCompanyUpdateReview: vi.fn(),
 }))
 
 vi.mock('@/entities/admin-employer-verification', () => ({
@@ -44,7 +45,7 @@ describe('CompanyUpdateReviewPanel', () => {
       company: { public_id: 'co_1', name: 'FPT Software', tax_code: '0101234567' },
       requested_by_email: 'hr@example.com',
       requested_by_public_id: 'usr_owner',
-      status: 'pending',
+      status: 'submitted',
       revision: 2,
       lock_version: 0,
       created_at: '2026-07-25T10:00:00Z',
@@ -138,7 +139,7 @@ describe('CompanyUpdateReviewPanel', () => {
       company: { public_id: 'co_1', name: 'FPT Software', tax_code: '0101234567' },
       requested_by_email: 'hr@example.com',
       requested_by_public_id: 'usr_owner',
-      status: 'pending',
+      status: 'changes_requested',
       revision: 1,
       lock_version: 1,
       created_at: '2026-07-26T10:00:00Z',
@@ -186,7 +187,9 @@ describe('CompanyUpdateReviewPanel', () => {
     expect(within(dialog).getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeInTheDocument()
     expect(within(dialog).getByText('VietQR.io')).toBeInTheDocument()
     expect(within(dialog).getAllByText('Khớp')).toHaveLength(2)
-    expect(within(dialog).getByRole('button', { name: 'Đã yêu cầu bổ sung' })).toBeDisabled()
+    expect(within(dialog).getByText('Cần bổ sung')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Đã yêu cầu bổ sung' }))
+      .not.toBeInTheDocument()
   })
 
   it('keeps a tax-code conflict visible and prevents repeated approval attempts', async () => {
@@ -195,8 +198,9 @@ describe('CompanyUpdateReviewPanel', () => {
       company: { public_id: 'co_1', name: 'FPT Software', tax_code: '0101234567' },
       requested_by_email: 'hr@example.com',
       requested_by_public_id: 'usr_owner',
-      status: 'pending',
+      status: 'in_review',
       revision: 3,
+      current_revision_public_id: 'cuv_tax_conflict',
       lock_version: 28,
       created_at: '2026-07-26T10:00:00Z',
       updated_at: '2026-07-28T09:53:42Z',
@@ -247,6 +251,7 @@ describe('CompanyUpdateReviewPanel', () => {
         decision: 'approved',
         note: '',
         lock_version: 28,
+        revision_public_id: 'cuv_tax_conflict',
       },
     )
   })

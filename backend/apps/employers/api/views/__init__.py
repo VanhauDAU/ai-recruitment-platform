@@ -35,6 +35,7 @@ from .verification import (
     CompanyDocumentContentView,
     CompanyDocumentListCreateView,
     CompanyDocumentUploadPreviewView,
+    CompanyUpdateRequestLifecycleView,
     CompanyUpdateRequestListCreateView,
 )
 
@@ -51,6 +52,7 @@ __all__ = [
     'CompanyLogoUploadView',
     'CompanySearchView',
     'CompanyUpdateRequestListCreateView',
+    'CompanyUpdateRequestLifecycleView',
     'CreateCompanyView',
     'IndustryListView',
     'JoinCompanyView',

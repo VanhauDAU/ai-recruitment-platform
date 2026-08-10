@@ -14,7 +14,9 @@ from .recruitment_need import RecruitmentNeed
 from .verification import (
     CompanyDocument,
     CompanyTaxLookupEvidence,
+    CompanyUpdateEvent,
     CompanyUpdateRequest,
+    CompanyUpdateRevision,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
@@ -28,6 +30,8 @@ __all__ = [
     'CompanyIndustry',
     'CompanyMediaUpload',
     'CompanyUpdateRequest',
+    'CompanyUpdateRevision',
+    'CompanyUpdateEvent',
     'DpaStatus',
     'EmployerVerificationCase',
     'EmployerVerificationEvent',

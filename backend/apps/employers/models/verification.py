@@ -202,9 +202,16 @@ class CompanyUpdateRequest(models.Model):
         AUTHORIZATION_AND_ID = 'authorization_and_id', 'Giấy ủy quyền + giấy tờ định danh'
 
     class Status(models.TextChoices):
+        # ``pending`` chỉ giữ để đọc dữ liệu/consumer cũ trong cửa sổ rollout.
+        # Migration V2 chuyển toàn bộ record hiện hữu sang ``submitted``.
         PENDING = 'pending', 'Chờ duyệt'
+        SUBMITTED = 'submitted', 'Đã gửi'
+        IN_REVIEW = 'in_review', 'Đang thẩm định'
+        CHANGES_REQUESTED = 'changes_requested', 'Cần chỉnh sửa'
         APPROVED = 'approved', 'Đã duyệt'
         REJECTED = 'rejected', 'Từ chối'
+        WITHDRAWN = 'withdrawn', 'Đã rút'
+        CANCELLED = 'cancelled', 'Đã hủy'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='update_requests')
@@ -216,9 +223,18 @@ class CompanyUpdateRequest(models.Model):
     is_sensitive = models.BooleanField(default=False)
     reason = models.TextField(blank=True)
     proof_type = models.CharField(max_length=30, choices=ProofType.choices, blank=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     revision = models.PositiveIntegerField(default=1)
     lock_version = models.PositiveIntegerField(default=0)
+    current_revision = models.ForeignKey(
+        'CompanyUpdateRevision',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    base_company_updated_at = models.DateTimeField(null=True, blank=True)
+    base_values = models.JSONField(default=dict, blank=True)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
     )
@@ -232,7 +248,9 @@ class CompanyUpdateRequest(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['company', 'requested_by'],
-                condition=models.Q(status='pending'),
+                condition=models.Q(
+                    status__in=['pending', 'submitted', 'in_review', 'changes_requested']
+                ),
                 name='uniq_co_requester_pending_upd',
             ),
         ]
@@ -244,6 +262,109 @@ class CompanyUpdateRequest(models.Model):
 
     def __str__(self):
         return f'{self.company_id}:{self.status}'
+
+
+class CompanyUpdateRevision(models.Model):
+    """Immutable requester snapshot for one company-update workflow revision."""
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    update_request = models.ForeignKey(
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        related_name='revisions',
+    )
+    number = models.PositiveIntegerField()
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='+',
+    )
+    changes = models.JSONField(default=dict)
+    reason = models.TextField(blank=True)
+    proof_type = models.CharField(
+        max_length=30,
+        choices=CompanyUpdateRequest.ProofType.choices,
+        blank=True,
+    )
+    base_company_updated_at = models.DateTimeField()
+    base_values = models.JSONField(default=dict)
+    documents = models.ManyToManyField(
+        'CompanyDocument',
+        blank=True,
+        related_name='company_update_revisions',
+    )
+    media_uploads = models.ManyToManyField(
+        'CompanyMediaUpload',
+        blank=True,
+        related_name='company_update_revisions',
+    )
+    submitted_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['update_request', 'number'],
+                name='uniq_company_update_revision_number',
+            ),
+        ]
+        ordering = ['number', 'id']
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError('CompanyUpdateRevision là snapshot bất biến.')
+        if not self.public_id:
+            self.public_id = generate_public_id('cuv')
+        super().save(*args, **kwargs)
+
+
+class CompanyUpdateEvent(models.Model):
+    """Append-only audit trail for request lifecycle and attachment decisions."""
+
+    class EventType(models.TextChoices):
+        SUBMITTED = 'submitted', 'Đã gửi'
+        RESUBMITTED = 'resubmitted', 'Đã gửi lại'
+        REVISION_CREATED = 'revision_created', 'Đã tạo phiên bản'
+        REVIEW_STARTED = 'review_started', 'Bắt đầu thẩm định'
+        DOCUMENT_REVIEWED = 'document_reviewed', 'Đã xử lý giấy tờ'
+        CHANGES_REQUESTED = 'changes_requested', 'Yêu cầu chỉnh sửa'
+        APPROVED = 'approved', 'Đã duyệt'
+        REJECTED = 'rejected', 'Đã từ chối'
+        WITHDRAWN = 'withdrawn', 'Đã rút'
+        CANCELLED = 'cancelled', 'Đã hủy'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    update_request = models.ForeignKey(
+        CompanyUpdateRequest,
+        on_delete=models.CASCADE,
+        related_name='events',
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='+',
+    )
+    event_type = models.CharField(max_length=32, choices=EventType.choices)
+    revision_number = models.PositiveIntegerField()
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        indexes = [
+            models.Index(
+                fields=['update_request', 'created_at'],
+                name='emp_co_update_event_idx',
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError('CompanyUpdateEvent là nhật ký bất biến.')
+        if not self.public_id:
+            self.public_id = generate_public_id('cue')
+        super().save(*args, **kwargs)
 
 
 class CompanyTaxLookupEvidence(models.Model):
@@ -373,6 +494,13 @@ class CompanyDocument(models.Model):
         null=True,
         blank=True,
         related_name='documents',
+    )
+    update_revision = models.ForeignKey(
+        CompanyUpdateRevision,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='attached_documents',
     )
     verification_case = models.ForeignKey(
         EmployerVerificationCase,

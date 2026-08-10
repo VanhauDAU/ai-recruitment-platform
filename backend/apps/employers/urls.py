@@ -12,6 +12,7 @@ from .api.views import (
     CompanyGalleryUploadView,
     CompanyLogoUploadView,
     CompanySearchView,
+    CompanyUpdateRequestLifecycleView,
     CompanyUpdateRequestListCreateView,
     CreateCompanyView,
     IndustryListView,
@@ -130,6 +131,11 @@ urlpatterns = [
         'company/update-requests/',
         CompanyUpdateRequestListCreateView.as_view(),
         name='employer-company-update-requests',
+    ),
+    path(
+        'company/update-requests/<str:public_id>/<str:action>/',
+        CompanyUpdateRequestLifecycleView.as_view(),
+        name='employer-company-update-request-lifecycle',
     ),
     # Danh mục lĩnh vực
     path('industries/', IndustryListView.as_view(), name='employer-industries'),

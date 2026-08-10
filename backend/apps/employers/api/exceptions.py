@@ -25,6 +25,23 @@ class CompanyTaxCodeConflictResponse(APIException):
         )
 
 
+class CompanyUpdateConflictResponse(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_code = 'company_update_base_conflict'
+
+    def __init__(self, fields):
+        super().__init__(
+            detail={
+                'code': self.default_code,
+                'message': (
+                    'Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật. '
+                    'Vui lòng tải lại và tạo revision mới.'
+                ),
+                'conflicting_fields': list(fields),
+            }
+        )
+
+
 class UploadPreviewScanRequiredResponse(APIException):
     """Block raw Office conversion until upload-session trust exists."""
 

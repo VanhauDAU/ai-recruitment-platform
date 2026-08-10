@@ -5,7 +5,9 @@ from .models import (
     CompanyDocument,
     CompanyImage,
     CompanyIndustry,
+    CompanyUpdateEvent,
     CompanyUpdateRequest,
+    CompanyUpdateRevision,
     EmployerPhoneVerificationEvent,
     Industry,
     RecruiterProfile,
@@ -92,6 +94,19 @@ class CompanyUpdateRequestAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
     list_display = ['company', 'requested_by', 'is_sensitive', 'status', 'created_at']
     list_filter = ['status', 'is_sensitive']
     search_fields = ['company__company_name', 'requested_by__email']
+
+
+@admin.register(CompanyUpdateRevision)
+class CompanyUpdateRevisionAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
+    list_display = ['public_id', 'update_request', 'number', 'submitted_by', 'submitted_at']
+    search_fields = ['public_id', 'update_request__public_id', 'submitted_by__email']
+
+
+@admin.register(CompanyUpdateEvent)
+class CompanyUpdateEventAdmin(WorkflowReadOnlyAdmin, admin.ModelAdmin):
+    list_display = ['public_id', 'update_request', 'event_type', 'revision_number', 'created_at']
+    list_filter = ['event_type']
+    search_fields = ['public_id', 'update_request__public_id', 'actor__email']
 
 
 @admin.register(RecruiterProfile)

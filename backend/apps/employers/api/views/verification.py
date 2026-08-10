@@ -18,19 +18,33 @@ from apps.accounts.permissions import IsEmployer
 from common.media_storage import delete_local_media_url
 from common.r2_storage import private_media_storage
 
-from ...models import Company, CompanyDocument, CompanyUpdateRequest
+from ...models import Company, CompanyDocument, CompanyUpdateEvent, CompanyUpdateRequest
 from ...selectors import (
     employer_document_content_queryset,
     employer_document_metadata_queryset,
 )
 from ...services import (
+    ACTIVE_COMPANY_UPDATE_STATUSES,
+    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
+    CompanyUpdateConflict,
+    capture_company_update_base_values,
+    close_company_update_before_review,
     get_or_create_recruiter,
     lock_company_update_request,
     queue_company_tax_lookup,
     render_office_document_preview,
+    snapshot_company_update_request,
 )
-from ..exceptions import UploadPreviewScanRequiredResponse, UploadSessionRequiredResponse
-from ..serializers import CompanyDocumentSerializer, CompanyUpdateRequestSerializer
+from ..exceptions import (
+    CompanyUpdateConflictResponse,
+    UploadPreviewScanRequiredResponse,
+    UploadSessionRequiredResponse,
+)
+from ..serializers import (
+    CompanyDocumentSerializer,
+    CompanyUpdateRequestCloseSerializer,
+    CompanyUpdateRequestSerializer,
+)
 from .memberships import (
     VERIFICATION_METHOD_DOCUMENT_TYPES,
     _save_document,
@@ -160,7 +174,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 public_id=update_request_id,
                 company=recruiter.company,
                 requested_by=request.user,
-                status=CompanyUpdateRequest.Status.PENDING,
+                status__in=REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
             ).first()
             if update_request is None:
                 raise ValidationError(
@@ -189,10 +203,6 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             raise ValidationError(
                 {'replaces': 'Không thể vừa thêm tệp mới vừa thay thế một tệp hiện hành.'}
             )
-        if replace_document_public_id and update_request is not None:
-            raise ValidationError(
-                {'replaces': 'Yêu cầu cập nhật công ty chưa hỗ trợ thay thế tệp theo mã.'}
-            )
         if source_type == 'website':
             website_url = (request.data.get('website_url') or '').strip()
             try:
@@ -210,7 +220,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     )
                     if (
                         update_request.requested_by_id != request.user.id
-                        or update_request.status != CompanyUpdateRequest.Status.PENDING
+                        or update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
                     ):
                         raise ValidationError(
                             {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
@@ -240,6 +250,11 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                     file_url=website_url,
                     file_name='Website chứng minh tên thương mại',
                 )
+                if update_request is not None:
+                    snapshot_company_update_request(
+                        update_request,
+                        actor=request.user,
+                    )
         elif doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
             document = _save_document(
                 request,
@@ -384,7 +399,7 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
             raise ValidationError({'scope': 'Phạm vi phải là mine hoặc company.'})
         queryset = (
             CompanyUpdateRequest.objects.filter(company=self.get_recruiter().company)
-            .select_related('requested_by')
+            .select_related('requested_by', 'current_revision')
             .prefetch_related(
                 Prefetch(
                     'documents',
@@ -406,46 +421,64 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         recruiter = self.get_recruiter()
         company = Company.objects.select_for_update().get(pk=recruiter.company_id)
-        pending = (
+        active_request = (
             CompanyUpdateRequest.objects.select_for_update()
             .filter(
                 company=company,
                 requested_by=self.request.user,
-                status=CompanyUpdateRequest.Status.PENDING,
+                status__in=ACTIVE_COMPANY_UPDATE_STATUSES,
             )
             .first()
         )
-        serializer = self.get_serializer(pending, data=request.data)
+        if (
+            active_request is not None
+            and active_request.status == CompanyUpdateRequest.Status.IN_REVIEW
+        ):
+            raise ValidationError(
+                {
+                    'code': 'COMPANY_UPDATE_IN_REVIEW',
+                    'detail': 'Yêu cầu đang được thẩm định và không thể chỉnh sửa.',
+                }
+            )
+        serializer = self.get_serializer(active_request, data=request.data)
         serializer.is_valid(raise_exception=True)
+        expected_base_updated_at = serializer.validated_data.pop(
+            'base_company_updated_at',
+            None,
+        )
+        if expected_base_updated_at and company.updated_at != expected_base_updated_at:
+            raise CompanyUpdateConflictResponse(['company_version'])
         previous = None
         staged_paths_to_delete = []
-        if pending is not None:
+        previous_status = active_request.status if active_request is not None else None
+        if active_request is not None:
             previous = {
-                'changes': pending.changes,
-                'reason': pending.reason,
-                'proof_type': pending.proof_type,
+                'changes': active_request.changes,
+                'reason': active_request.reason,
+                'proof_type': active_request.proof_type,
             }
-            pending.revision += 1
-            pending.lock_version += 1
             next_changes = serializer.validated_data['changes']
-            if 'logo_url' in pending.changes and not next_changes.get('has_no_logo'):
-                next_changes['logo_url'] = pending.changes['logo_url']
-            elif 'logo_url' in pending.changes:
-                staged_paths_to_delete.append(pending.changes['logo_url'])
-            if 'cover_image_url' in pending.changes:
-                next_changes['cover_image_url'] = pending.changes['cover_image_url']
-            if 'gallery_additions' in pending.changes:
-                next_changes['gallery_additions'] = pending.changes['gallery_additions']
+            if 'logo_url' in active_request.changes and not next_changes.get('has_no_logo'):
+                next_changes['logo_url'] = active_request.changes['logo_url']
+            elif 'logo_url' in active_request.changes:
+                staged_paths_to_delete.append(active_request.changes['logo_url'])
+            if 'cover_image_url' in active_request.changes:
+                next_changes['cover_image_url'] = active_request.changes['cover_image_url']
+            if 'gallery_additions' in active_request.changes:
+                next_changes['gallery_additions'] = active_request.changes['gallery_additions']
+        next_changes = serializer.validated_data['changes']
+        base_values = capture_company_update_base_values(company, next_changes)
         save_kwargs = {
             'company': company,
             'submitted_at': timezone.now(),
-            'revision': pending.revision if pending is not None else 1,
-            'lock_version': pending.lock_version if pending is not None else 0,
+            'status': CompanyUpdateRequest.Status.SUBMITTED,
+            'base_company_updated_at': company.updated_at,
+            'base_values': base_values,
             'reviewed_by': None,
             'reviewed_at': None,
             'review_note': '',
         }
-        if pending is None:
+        if active_request is None:
             save_kwargs['requested_by'] = self.request.user
         update_request = serializer.save(
             **save_kwargs,
@@ -462,6 +495,22 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
                 reviewed_at=None,
                 review_note='',
             )
+        event_type = (
+            CompanyUpdateEvent.EventType.SUBMITTED
+            if active_request is None
+            else (
+                CompanyUpdateEvent.EventType.RESUBMITTED
+                if previous_status == CompanyUpdateRequest.Status.CHANGES_REQUESTED
+                else CompanyUpdateEvent.EventType.REVISION_CREATED
+            )
+        )
+        snapshot_company_update_request(
+            update_request,
+            actor=request.user,
+            event_type=event_type,
+            base_company_updated_at=company.updated_at,
+            base_values=base_values,
+        )
         if staged_paths_to_delete:
 
             def delete_discarded_media():
@@ -491,5 +540,58 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
         response = self.get_serializer(update_request)
         return Response(
             response.data,
-            status=status.HTTP_200_OK if pending is not None else status.HTTP_201_CREATED,
+            status=status.HTTP_200_OK if active_request is not None else status.HTTP_201_CREATED,
+        )
+
+
+class CompanyUpdateRequestLifecycleView(generics.GenericAPIView):
+    permission_classes = [IsEmployer]
+    serializer_class = CompanyUpdateRequestCloseSerializer
+
+    @extend_schema(
+        operation_id='employer_company_update_request_lifecycle',
+        summary='Rút hoặc hủy yêu cầu cập nhật công ty trước khi thẩm định',
+        request=CompanyUpdateRequestCloseSerializer,
+        responses={200: CompanyUpdateRequestSerializer},
+    )
+    def post(self, request, public_id, action):
+        recruiter = _require_company(request.user)
+        update_request = (
+            CompanyUpdateRequest.objects.filter(
+                public_id=public_id,
+                company=recruiter.company,
+            )
+            .select_related('requested_by', 'current_revision')
+            .first()
+        )
+        if update_request is None:
+            raise Http404
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        action_status = {
+            'withdraw': CompanyUpdateRequest.Status.WITHDRAWN,
+            'cancel': CompanyUpdateRequest.Status.CANCELLED,
+        }.get(action)
+        if action_status is None:
+            raise Http404
+        try:
+            update_request = close_company_update_before_review(
+                update_request,
+                actor=request.user,
+                action=action_status,
+                reason=serializer.validated_data.get('reason', ''),
+                lock_version=serializer.validated_data['lock_version'],
+                actor_is_owner=(recruiter.company_role == recruiter.CompanyRole.OWNER),
+            )
+        except CompanyUpdateConflict as error:
+            raise CompanyUpdateConflictResponse(error.fields) from error
+        return Response(
+            CompanyUpdateRequestSerializer(
+                update_request,
+                context={
+                    **self.get_serializer_context(),
+                    'company': recruiter.company,
+                    'recruiter': recruiter,
+                },
+            ).data
         )

@@ -96,6 +96,7 @@ export async function saveEmployerCompanyTradeNameWebsite(websiteUrl, options = 
   formData.append('source_type', 'website')
   formData.append('website_url', websiteUrl)
   if (options.updateRequest) formData.append('update_request', options.updateRequest)
+  if (options.replaceDocument) formData.append('replaces', options.replaceDocument)
   const { data } = await api.post('/employer/company/documents/', formData)
   return data
 }
@@ -182,6 +183,21 @@ export async function getEmployerCompanyUpdateRequests({ scope } = {}) {
 
 export async function createEmployerCompanyUpdateRequest(payload) {
   const { data } = await api.post('/employer/company/update-requests/', payload)
+  return data
+}
+
+export async function changeEmployerCompanyUpdateRequestLifecycle(
+  publicId,
+  action,
+  payload,
+) {
+  if (!['withdraw', 'cancel'].includes(action)) {
+    throw new Error('Unsupported company update lifecycle action.')
+  }
+  const { data } = await api.post(
+    `/employer/company/update-requests/${publicId}/${action}/`,
+    payload,
+  )
   return data
 }
 
