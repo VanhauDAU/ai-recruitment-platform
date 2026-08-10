@@ -638,6 +638,38 @@ class EmployerVerificationStateMachineTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
         self.assertEqual(str(response.data['code']), 'TAX_LOOKUP_PENDING')
 
+    def test_rejection_impact_stays_valid_with_multiple_tax_evidence_rows(self):
+        CompanyTaxLookupEvidence.objects.create(
+            company=self.company,
+            verification_case=self.case,
+            requested_by=self.employer,
+            workflow_revision=self.case.revision,
+            tax_code=self.company.tax_code,
+            submitted_company_name=self.company.company_name,
+            status=CompanyTaxLookupEvidence.Status.UNAVAILABLE,
+            response_hash='b' * 64,
+            completed_at=timezone.now(),
+        )
+        payload = {
+            'decision': EmployerVerificationCase.Status.REJECTED,
+            'reason': 'Giấy tờ không đủ căn cứ xác minh.',
+        }
+        preview = verification_decision_impact(
+            self.case,
+            actor=self.reviewer,
+            **payload,
+        )
+
+        decided = confirm_verification_decision(
+            self.case,
+            actor=self.reviewer,
+            impact_token=preview['impact_token'],
+            **payload,
+        )
+
+        self.assertEqual(decided.status, EmployerVerificationCase.Status.REJECTED)
+        self.assertEqual(decided.final_rejection_count, 1)
+
     def test_tax_override_is_denied_to_reviewer_and_audited_for_compliance_lead(self):
         self._replace_tax_evidence(CompanyTaxLookupEvidence.Status.FOUND, mismatch=True)
         url = reverse(
