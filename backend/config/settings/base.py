@@ -240,6 +240,11 @@ EMPLOYER_UPLOAD_SESSION_REQUIRED = config(
     default=False,
     cast=bool,
 )
+CANDIDATE_UPLOAD_SESSION_REQUIRED = config(
+    'CANDIDATE_UPLOAD_SESSION_REQUIRED',
+    default=False,
+    cast=bool,
+)
 UPLOAD_SCANNER_BACKEND = config(
     'UPLOAD_SCANNER_BACKEND',
     default='apps.uploads.services.scanners.ClamAVStreamScanner',

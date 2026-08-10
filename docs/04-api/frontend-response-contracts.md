@@ -163,6 +163,26 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   chưa scan để backend/LibreOffice parse. Có thể cho người dùng tải tệp local đã
   chọn để tự kiểm tra trước khi nộp.
 
+### Contract upload session cho candidate CV
+
+- Library import, import từ template, CV tải trực tiếp khi ứng tuyển và avatar
+  đều tạo purpose `candidate_cv`, gửi byte vào quarantine và poll tới
+  `ready_for_submit=true`. Business API chỉ nhận `upload_session` clean; frontend
+  không gửi raw byte cùng lúc.
+- `POST /api/v2/cvs/imports/` giữ các field `title`, `template_public_id`,
+  `language`, `theme_color` và `Idempotency-Key`; nguồn file thay bằng
+  `upload_session`. `POST /api/v2/cvs/assets/` dùng cùng field cho avatar.
+- Backend claim exact owner/purpose một lần trước structural validation. PDF/DOCX
+  được kiểm contract riêng của app `cvs`; avatar được Pillow verify/re-encode.
+  Failure rollback claim và không tạo CV/asset.
+- Client map machine state bằng presentation chung; library/template/application
+  khóa action trong lúc scan. Chỉ exact `UPLOAD_PIPELINE_DISABLED` được fallback
+  multipart trong compatibility window; `UPLOAD_NOT_CLEAN`, rejection, timeout,
+  scanner error và `UPLOAD_ALREADY_SUBMITTED` đều fail closed.
+- Sau staging, bật `CANDIDATE_UPLOAD_SESSION_REQUIRED=true`; raw multipart trả
+  `409 UPLOAD_SESSION_REQUIRED`. Delete/expiry chỉ release business claim, không
+  trực tiếp xóa clean evidence trước minimum retention.
+
 ### Contract admin review yêu cầu cập nhật công ty
 
 - Queue phải truyền exact `request.public_id`; consumer gọi

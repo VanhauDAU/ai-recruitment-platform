@@ -9,8 +9,9 @@ Decision log:
 
 > Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX, luồng
 > resubmit/review lại và policy ba final rejection đã đạt gate; ER-3 đã hoàn tất employer
-> domain/frontend upload-session nhưng candidate import/assets và real ClamAV
-> staging còn mở; ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
+> domain/frontend upload-session; candidate import/assets đã code-complete và
+> đạt frontend/static gate, còn backend Docker rerun cùng real ClamAV staging;
+> ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
 > exact-object final review và conflict handling; ER-6A đã merge hạ
 > tầng SMS provider-neutral nhưng live workflow còn mở.
 
@@ -19,7 +20,7 @@ Decision log:
 | ER-0 | Audit baseline, permission/state matrix và khóa quyết định | ✅ Hoàn tất |
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
-| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — employer domain/UI đã đạt gate |
+| ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — candidate code xong, còn Docker backend + real ClamAV staging |
 | ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
@@ -160,9 +161,17 @@ Decision log:
   283/283; frontend targeted 48/48, full coverage 256 file/974 test, upload smoke
   3/3 desktop/tablet/mobile. Ruff/format, import-linter 2/2, Django check,
   migration drift, Oxlint, architecture, build và bundle budget đều xanh.
-- Phase chưa hoàn tất: candidate import/assets bắt buộc theo ER-O06 trong slice
-  riêng không coupling `cvs → employers`, cùng real ClamAV
-  staging/readiness/EICAR/outage/cleanup trước khi bật strict rollout.
+- Slice `feature/candidate-upload-quarantine` đã nối import PDF/DOCX có/không
+  template và avatar vào purpose `candidate_cv`. Parser/Pillow chỉ chạy sau
+  clean claim; delete/expiry release claim nhưng giữ evidence 730 ngày; frontend
+  library/template/application/avatar chờ scan và chỉ fallback raw khi pipeline
+  tắt bằng exact machine code.
+- Candidate frontend/static gate: targeted 23/23, full coverage 256 file/988
+  test, lint, architecture 1.148 module/2.312 dependency, build, bundle budget,
+  Ruff/format, compile, Django check, migration drift và import-linter đều đạt.
+- Phase chưa hoàn tất: backend candidate suite phải rerun trên PostgreSQL Docker
+  `127.0.0.1:5433` sau khi phiên cấp quyền desktop được đăng nhập lại; real
+  ClamAV staging/readiness/EICAR/outage/cleanup vẫn bắt buộc trước strict rollout.
 
 </details>
 

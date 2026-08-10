@@ -27,6 +27,11 @@ export function getUploadStatePresentation(session) {
   return session?.state ? UPLOAD_STATE_PRESENTATION[session.state] : null
 }
 
+export function forgetPreparedUpload(file, purpose) {
+  const cached = cleanSessionsByFile.get(file)
+  if (!cached || cached.purpose === purpose) cleanSessionsByFile.delete(file)
+}
+
 function fileContentType(file) {
   if (file.type) return file.type
   const extension = file.name?.split('.').pop()?.toLowerCase()

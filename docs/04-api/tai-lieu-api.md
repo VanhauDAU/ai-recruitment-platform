@@ -338,10 +338,15 @@ thumbnail + preview.
 
 ### AI CV import
 
-`POST /api/v2/cvs/imports/` multipart giữ `file`, `title` cũ và nhận thêm
-`template_public_id`, `language`, `theme_color`. Khi có template, client nên gửi
+`POST /api/v2/cvs/imports/` multipart giữ `title`, `template_public_id`,
+`language`, `theme_color`; client mới gửi `upload_session` purpose
+`candidate_cv` đã clean thay vì raw `file`. Khi có template, client nên gửi
 `Idempotency-Key`; response `202` chứa `processing_status=queued` và
 `import_job`. Gửi lại cùng key/user trả cùng CV với `200`, không tạo job/file mới.
+Raw `file` chỉ còn trong compatibility window và trả
+`409 UPLOAD_SESSION_REQUIRED` khi strict flag được bật. Backend claim session
+trước khi parser PDF/DOCX; avatar `/api/v2/cvs/assets/` cũng chỉ decode/re-encode
+sau clean verdict.
 
 `GET /api/v2/cvs/{public_id}/` dùng để poll: `queued|processing|analyzed|failed`.
 Khi failed, `import_job.failure_code` chỉ là mã an toàn, không chứa raw text.
@@ -355,7 +360,7 @@ nghĩa là PDF scan chưa có text layer; OCR không được giả lập trong 
 | GET/POST | `/api/v2/cvs/` | Candidate lifecycle V2. POST nhận template, language, optional sample/position/`source_cv_public_id` và optional màu; các source loại trừ nhau. |
 | GET | `/api/v2/cvs/latest-recoverable-draft/` | Trả đúng một server draft dirty mới nhất của candidate hoặc `204`; dirty xác định bằng document hash so với base version. |
 | GET/PATCH/DELETE | `/api/v2/cvs/{public_id}/` | Candidate metadata/detail: PATCH chỉ nhận `title`, `is_default`; DELETE xóa vĩnh viễn CV và library artifacts. Snapshot của application đã nộp được giữ detached cho recruiter. |
-| POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart file`, optional `title`). Response không có storage key/URL, chỉ có `file_name`, `file_type`, `source=imported`. |
+| POST | `/api/v2/cvs/imports/` | Candidate import PDF/DOCX (`multipart upload_session`, optional `title`/template fields). Response không có storage key/URL; raw `file` chỉ compatibility. |
 | POST | `/api/v2/cvs/{public_id}/duplicate/` | Clone builder CV từ latest immutable version thành CV/draft/version độc lập. Optional `title`; không hỗ trợ uploaded CV để tránh dùng chung file storage. |
 | GET/PUT | `/api/v2/cvs/{public_id}/draft/` | Đọc/autosave canonical draft; PUT bắt buộc `If-Match: "lock-version-N"`. |
 | PUT | `/api/v2/cvs/{public_id}/template/` | Đổi template của mutable draft, giữ canonical content và optimistic lock. |

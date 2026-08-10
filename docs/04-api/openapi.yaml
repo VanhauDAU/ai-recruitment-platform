@@ -8934,7 +8934,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UploadError'
+                $ref: '#/components/schemas/CvUploadValidationError'
           description: Metadata hoặc purpose không hợp lệ.
         '403':
           content:
@@ -9051,7 +9051,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UploadError'
+                $ref: '#/components/schemas/CvUploadValidationError'
           description: MIME/signature/size hoặc DOCX container không hợp lệ.
         '404':
           content:
@@ -11442,6 +11442,11 @@ paths:
   /api/v2/cvs/assets/:
     post:
       operationId: v2_cvs_assets_create
+      description: >-
+        Candidate gửi `upload_session` purpose `candidate_cv` đã clean. Multipart
+        `file` chỉ còn trong compatibility window; khi strict rollout bật sẽ trả
+        `409 UPLOAD_SESSION_REQUIRED`. Backend chỉ decode/re-encode ảnh sau clean
+        verdict và claim đúng owner một lần.
       summary: Tải ảnh đại diện dùng trong CV
       tags:
       - cvs-v2
@@ -11463,6 +11468,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvAsset'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Ảnh clean nhưng hỏng cấu trúc hoặc sai định dạng.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Upload session không thuộc candidate hiện tại.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session chưa clean, sai purpose, đã claim hoặc raw bị khóa.
   /api/v2/cvs/assets/{asset_public_id}/content/:
     get:
       operationId: v2_cvs_assets_content_retrieve
@@ -11511,7 +11534,12 @@ paths:
   /api/v2/cvs/imports/:
     post:
       operationId: v2_cvs_imports_create
-      description: Import a user-owned PDF/DOCX without exposing a storage URL.
+      description: >-
+        Import PDF/DOCX owner-scoped mà không lộ storage URL. Client mới gửi
+        `upload_session` purpose `candidate_cv` đã clean; backend claim một lần
+        rồi mới kiểm cấu trúc PDF/DOCX hoặc khởi chạy parser. Multipart `file`
+        chỉ còn trong compatibility window và bị khóa bằng
+        `CANDIDATE_UPLOAD_SESSION_REQUIRED` sau staging gate.
       summary: Import CV từ tệp PDF/DOCX
       tags:
       - cvs-v2
@@ -11542,6 +11570,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/CvV2'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: File clean nhưng không phải PDF/DOCX hợp lệ.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Upload session không thuộc candidate hiện tại.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadError'
+          description: Session chưa clean, sai purpose, đã claim hoặc raw bị khóa.
   /api/v2/cvs/latest-recoverable-draft/:
     get:
       operationId: v2_cvs_latest_recoverable_draft_retrieve
@@ -17760,8 +17806,24 @@ components:
         file:
           type: string
           format: binary
-      required:
-      - file
+          description: Compatibility only; không dùng khi strict rollout bật.
+        upload_session:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: public_id UploadSession clean, owner hiện tại, purpose candidate_cv.
+      oneOf:
+      - required: [file]
+      - required: [upload_session]
+    CvUploadValidationError:
+      type: object
+      description: Lỗi cấu trúc file hoặc field multipart trước khi tạo/claim tài nguyên CV.
+      additionalProperties:
+        oneOf:
+        - type: string
+        - type: array
+          items:
+            type: string
     CvBackgroundAdmin:
       type: object
       description: Protect public lifecycle transitions independently from edit access.
@@ -19102,6 +19164,12 @@ components:
         file:
           type: string
           format: binary
+          description: Compatibility only; không dùng khi strict rollout bật.
+        upload_session:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: public_id UploadSession clean, owner hiện tại, purpose candidate_cv.
         title:
           type: string
           minLength: 1
@@ -19119,8 +19187,9 @@ components:
           type: string
           minLength: 1
           pattern: ^#[0-9A-Fa-f]{6}$
-      required:
-      - file
+      oneOf:
+      - required: [file]
+      - required: [upload_session]
     CvV2SourceEnum:
       enum:
       - builder

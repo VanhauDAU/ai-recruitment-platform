@@ -177,6 +177,12 @@ if EMPLOYER_UPLOAD_SESSION_REQUIRED and not UPLOAD_QUARANTINE_ENABLED:
     _errors.append(
         'EMPLOYER_UPLOAD_SESSION_REQUIRED chỉ được bật khi upload quarantine đã sẵn sàng.'
     )
+if CANDIDATE_UPLOAD_SESSION_REQUIRED and not UPLOAD_QUARANTINE_ENABLED:
+    _errors.append(
+        'CANDIDATE_UPLOAD_SESSION_REQUIRED chỉ được bật khi upload quarantine đã sẵn sàng.'
+    )
+if CANDIDATE_UPLOAD_SESSION_REQUIRED and 'candidate_cv' not in UPLOAD_SESSION_ALLOWED_PURPOSES:
+    _errors.append('CANDIDATE_UPLOAD_SESSION_REQUIRED cần allowlist purpose candidate_cv.')
 if not AUTH_REFRESH_COOKIE_SECURE:
     _errors.append('AUTH_REFRESH_COOKIE_SECURE phải bật ở production.')
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:

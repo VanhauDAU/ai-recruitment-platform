@@ -283,19 +283,34 @@ review DPA.
   E2E upload 3/3 desktop/tablet/mobile. Các gate architecture/layering,
   migration drift, build và bundle budget đều đạt.
 
+**ER-3 candidate-domain evidence (2026-08-10)**
+
+- Slice `feature/candidate-upload-quarantine` nối import CV có/không template và
+  avatar vào shared purpose `candidate_cv`, không import hoặc phụ thuộc app
+  `employers`. Owner/purpose/clean/one-time claim được recheck trong transaction
+  trước khi parser PDF/DOCX hoặc Pillow đọc byte.
+- Import template giữ idempotency. Avatar chỉ sinh derivative private sau
+  verify/re-encode; structural failure rollback claim. Delete/expiry release
+  exact source claim và giữ clean evidence tối thiểu 730 ngày.
+- Frontend candidate tạo/poll session trước business submit và chỉ fallback raw
+  cho exact `UPLOAD_PIPELINE_DISABLED`; strict production flag fail nếu
+  quarantine hoặc purpose allowlist chưa sẵn sàng.
+- Frontend targeted 23/23, full coverage 256 file/988 test, lint, architecture,
+  build và bundle budget đạt; backend static/layering/migration gate đạt. Backend
+  integration trên Docker `127.0.0.1:5433` còn phải rerun vì sandbox desktop chặn
+  TCP và refresh token cấp quyền của công cụ đã bị thu hồi; không coi lần chạy
+  bị chặn là test failure hoặc evidence pass.
+
 **Residual/status**
 
-- ER-F04 chưa `Closed` toàn hệ thống: employer workflow đã đóng nhưng candidate
-  import/assets chưa nối shared core. Audit ER-O06 xác nhận candidate CV dùng
-  cùng unsafe default/private
-  storage, nên integration candidate là residual bắt buộc trong slice riêng qua
-  shared core, không tạo coupling `cvs → employers`. Real ClamAV
-  staging/readiness/EICAR và rollout flag vẫn mở.
+- ER-F04 chưa `Closed` toàn hệ thống: employer workflow đã đóng và candidate
+  integration code đã nối shared core, nhưng backend Docker rerun cùng real
+  ClamAV staging/readiness/EICAR/outage/cleanup và strict rollout vẫn mở.
 - ER-F05 đã `Closed` cho employer: business request không được tạo trước khi tập
   file clean, attach lỗi không có success toast. Candidate workflow sẽ có finding
   riêng trong slice ER-O06, không làm reopen closure theo domain này.
-- Candidate parser-specific validation vẫn là residual; không suy diễn employer
-  parser boundary cho app `cvs`.
+- Candidate parser boundary đã tách riêng trong app `cvs`; real-scanner staging
+  vẫn là điều kiện bắt buộc trước khi đổi finding thành `Closed`.
 
 ### ER-F06 — Verification auto-finalization
 

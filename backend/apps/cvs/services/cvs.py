@@ -7,6 +7,13 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 
 from ..models import CvAccessLog, CvExport, CvSharedLink, CvVersion, UserCv
+from .upload_claims import (
+    CV_SOURCE_CLAIM_SCOPE,
+    claim_candidate_upload,
+    claimed_candidate_upload,
+    open_clean_candidate_upload,
+    release_candidate_cv_source,
+)
 from .versions import create_initial_document, create_version, sync_legacy_builder_draft
 
 ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
@@ -59,7 +66,13 @@ def permanently_delete_cv(*, cv, actor):
     ).exists():
         raise ValueError('Cannot delete a CV with an invalid application snapshot.')
 
-    storage_keys = [locked_cv.file_url, locked_cv.pdf_url, locked_cv.thumbnail_url]
+    source_asset = claimed_candidate_upload(
+        claim_scope=CV_SOURCE_CLAIM_SCOPE,
+        claim_reference=locked_cv.public_id,
+    )
+    storage_keys = [locked_cv.pdf_url, locked_cv.thumbnail_url]
+    if source_asset is None:
+        storage_keys.append(locked_cv.file_url)
     exports = CvExport.objects.filter(cv=locked_cv)
     storage_keys.extend(exports.values_list('storage_key', flat=True))
 
@@ -73,7 +86,10 @@ def permanently_delete_cv(*, cv, actor):
     # CV. `CvVersion.cv` is SET_NULL for exactly this retention boundary.
     applications.update(cv=None)
     CvVersion.objects.filter(cv=locked_cv).exclude(pk__in=snapshot_ids).delete()
+    cv_public_id = locked_cv.public_id
     locked_cv.delete()
+    if source_asset is not None:
+        release_candidate_cv_source(owner=actor, cv_public_id=cv_public_id)
     transaction.on_commit(lambda: _delete_storage_keys(storage_keys))
 
 
@@ -105,6 +121,36 @@ def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):
 def import_v2_cv(actor, upload, title=''):
     """Create an uploaded CV through the explicit V2 import contract."""
     return upload_cv(actor, upload, title, source=UserCv.Source.IMPORTED)
+
+
+@transaction.atomic
+def import_v2_cv_from_session(*, actor, upload_session_public_id, title=''):
+    """Create an uploaded CV from a scanner-approved private object."""
+    cv = UserCv.objects.create(
+        user=actor,
+        cv_type=UserCv.CvType.UPLOADED,
+        source=UserCv.Source.IMPORTED,
+        title=title or 'CV đã tải lên',
+        status=UserCv.Status.UPLOADED,
+    )
+    asset = claim_candidate_upload(
+        owner=actor,
+        session_public_id=upload_session_public_id,
+        claim_scope=CV_SOURCE_CLAIM_SCOPE,
+        claim_reference=cv.public_id,
+    )
+    with open_clean_candidate_upload(asset) as upload:
+        file_type = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
+        if file_type not in ALLOWED_UPLOAD_TYPES:
+            raise UnsupportedCvUpload('Only PDF or DOCX files are supported.')
+
+    cv.title = title or asset.original_filename
+    cv.file_url = asset.storage_key
+    cv.file_name = asset.original_filename[:255]
+    cv.file_type = file_type
+    cv.save(update_fields=['title', 'file_url', 'file_name', 'file_type', 'updated_at'])
+    create_initial_document(cv, actor, version_kind='imported')
+    return cv
 
 
 @transaction.atomic

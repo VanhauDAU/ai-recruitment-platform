@@ -1,11 +1,10 @@
 # ER-3 storage-boundary rollout runbook
 
 This runbook activates the P0 public/private/quarantine boundary and the
-employer upload-session consumer. Raw DOC/DOCX pre-submit preview remains
-disabled with `UPLOAD_SCAN_REQUIRED`; Office bytes are never parsed before a
-clean verdict. Candidate CV integration and real-scanner staging are separate
-remaining gates, so ER-3 is not complete merely because employer strict mode is
-enabled.
+employer/candidate upload-session consumers. Raw DOC/DOCX pre-submit preview
+remains disabled with `UPLOAD_SCAN_REQUIRED`; Office bytes are never parsed
+before a clean verdict. Real-scanner staging remains a separate gate, so ER-3
+is not complete merely because strict application flags are enabled.
 
 ## Invariants
 
@@ -84,8 +83,8 @@ retains both objects for manual reconciliation.
 - DOCX receives bounded container checks before scan. At the employer business
   boundary, clean PDF is parsed strict with pypdf and clean image is verified
   with Pillow against declared format before claim is committed. Candidate CV
-  paths need their own parser gate; a scanner verdict alone is never structural
-  validity.
+  paths use their own PDF/DOCX structural gate and Pillow verify/re-encode after
+  clean claim; a scanner verdict alone is never structural validity.
 - Render production Compose and assert the worker consumes `upload-scan`; both
   the direct scan task and Beat reconciliation/expiry tasks are routed there:
 
@@ -120,14 +119,31 @@ retains both objects for manual reconciliation.
    `EMPLOYER_UPLOAD_SESSION_REQUIRED=true`. Production startup intentionally
    fails if strict is true while quarantine is false. Probe raw document and
    media requests for `409 UPLOAD_SESSION_REQUIRED`.
-5. Do not mark ER-3 verified until candidate imports/assets use the shared core
-   and the staging evidence has been approved.
+5. Do not mark ER-3 verified until candidate backend/Chrome gates and real
+   scanner staging evidence have been approved.
 
-Strict-mode rollback may set `EMPLOYER_UPLOAD_SESSION_REQUIRED=false` while the
-pipeline remains enabled. Do not disable quarantine as a response to scanner
-errors and do not expose private/direct URLs. A frontend fallback is permitted
-only when the entire pipeline is deliberately disabled during the additive
-compatibility window.
+## Candidate CV activation sequence
+
+1. Deploy backend/frontend with `CANDIDATE_UPLOAD_SESSION_REQUIRED=false`.
+   Candidate library, template import, application upload and avatar attempt the
+   session path first; exact `UPLOAD_PIPELINE_DISABLED` is the only raw fallback.
+2. With quarantine enabled, verify clean PDF/DOCX import with and without a
+   template, idempotent template retry, clean avatar derivative, malformed clean
+   file rollback, cross-owner `404`, one-time claim and delete/expiry release.
+3. Run the candidate suite against the repository PostgreSQL Docker mapping
+   `127.0.0.1:5433 → container:5432`; do not substitute SQLite or a local
+   PostgreSQL on `5432`. Use Chrome with a real candidate session for library,
+   template, application and avatar states.
+4. Confirm `candidate_cv` remains in `UPLOAD_SESSION_ALLOWED_PURPOSES`, worker
+   consumes `upload-scan`, and clean/EICAR/outage/retry/cleanup telemetry is
+   healthy. Then set `CANDIDATE_UPLOAD_SESSION_REQUIRED=true` and probe raw CV
+   import/avatar for `409 UPLOAD_SESSION_REQUIRED`.
+
+Strict-mode rollback may set `EMPLOYER_UPLOAD_SESSION_REQUIRED=false` and/or
+`CANDIDATE_UPLOAD_SESSION_REQUIRED=false` while the pipeline remains enabled.
+Do not disable quarantine as a response to scanner errors and do not expose
+private/direct URLs. A frontend fallback is permitted only when the entire
+pipeline is deliberately disabled during the additive compatibility window.
 
 ## Rollback
 

@@ -2,6 +2,7 @@
 
 import re
 
+from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import FileResponse, Http404
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
@@ -16,6 +17,7 @@ from apps.applications.models import Application
 from apps.cv_templates.models import CvTemplate
 from apps.cv_templates.services import PositionContentUnavailable
 from apps.employers.services import ensure_recruiter_candidate_data_access
+from apps.uploads.services import UploadServiceError
 from common.metrics import record_metric
 from common.r2_storage import cv_asset_storage, private_media_storage
 
@@ -38,15 +40,18 @@ from ...services import (
     UnsupportedCvUpload,
     apply_sample_to_draft,
     create_avatar_asset,
+    create_avatar_asset_from_session,
     create_shared_link,
     create_v2_cv,
     duplicate_cv,
     export_download_ready,
     import_v2_cv,
+    import_v2_cv_from_session,
     owner_cv_export,
     owner_view_version,
     permanently_delete_cv,
     queue_cv_import,
+    queue_cv_import_from_session,
     request_current_cv_thumbnail,
     request_cv_export,
     resolve_shared_link,
@@ -57,9 +62,11 @@ from ...services import (
     switch_draft_template,
     update_cv_metadata,
     update_draft,
+    validate_import_upload,
 )
 from ...services.assets import resolve_asset_token
 from ...services.composition import CvCompositionError, compose_cv_document
+from ..exceptions import CandidateUploadSessionRequiredResponse, CandidateUploadSessionResponse
 from ..serializers.v2 import (
     CvApplySampleSerializer,
     CvAssetSerializer,
@@ -248,32 +255,65 @@ class CvV2ImportView(APIView):
     def post(self, request):
         serializer = CvV2ImportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        upload = serializer.validated_data.get('file')
+        upload_session_public_id = serializer.validated_data.get('upload_session', '')
+        if upload and settings.CANDIDATE_UPLOAD_SESSION_REQUIRED:
+            raise CandidateUploadSessionRequiredResponse()
+        if upload:
+            try:
+                validate_import_upload(upload)
+            except InvalidCvImport as error:
+                raise ValidationError({'file': str(error)}) from error
         template = serializer.validated_data.get('template_public_id')
         if template is not None:
             try:
-                cv, _job, created = queue_cv_import(
-                    actor=request.user,
-                    upload=serializer.validated_data['file'],
-                    title=serializer.validated_data.get('title', ''),
-                    template=template,
-                    language=serializer.validated_data['language'],
-                    theme_color=serializer.validated_data.get('theme_color'),
-                    idempotency_key=request.headers.get('Idempotency-Key', ''),
-                )
+                if upload_session_public_id:
+                    cv, _job, created = queue_cv_import_from_session(
+                        actor=request.user,
+                        upload_session_public_id=upload_session_public_id,
+                        title=serializer.validated_data.get('title', ''),
+                        template=template,
+                        language=serializer.validated_data['language'],
+                        theme_color=serializer.validated_data.get('theme_color'),
+                        idempotency_key=request.headers.get('Idempotency-Key', ''),
+                    )
+                else:
+                    cv, _job, created = queue_cv_import(
+                        actor=request.user,
+                        upload=upload,
+                        title=serializer.validated_data.get('title', ''),
+                        template=template,
+                        language=serializer.validated_data['language'],
+                        theme_color=serializer.validated_data.get('theme_color'),
+                        idempotency_key=request.headers.get('Idempotency-Key', ''),
+                    )
+            except UploadServiceError as error:
+                raise CandidateUploadSessionResponse(error) from error
             except InvalidCvImport as error:
-                raise ValidationError({'file': str(error)}) from error
+                field = 'upload_session' if upload_session_public_id else 'file'
+                raise ValidationError({field: str(error)}) from error
             return Response(
                 CvV2Serializer(cv).data,
                 status=status.HTTP_202_ACCEPTED if created else status.HTTP_200_OK,
             )
         try:
-            cv = import_v2_cv(
-                actor=request.user,
-                upload=serializer.validated_data['file'],
-                title=serializer.validated_data.get('title', ''),
-            )
+            if upload_session_public_id:
+                cv = import_v2_cv_from_session(
+                    actor=request.user,
+                    upload_session_public_id=upload_session_public_id,
+                    title=serializer.validated_data.get('title', ''),
+                )
+            else:
+                cv = import_v2_cv(
+                    actor=request.user,
+                    upload=upload,
+                    title=serializer.validated_data.get('title', ''),
+                )
+        except UploadServiceError as error:
+            raise CandidateUploadSessionResponse(error) from error
         except UnsupportedCvUpload as error:
-            raise ValidationError({'file': str(error)}) from error
+            field = 'upload_session' if upload_session_public_id else 'file'
+            raise ValidationError({field: str(error)}) from error
         return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
 
 
@@ -799,7 +839,20 @@ class CvV2AssetUploadView(APIView):
     def post(self, request):
         serializer = CvAssetUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        asset = create_avatar_asset(actor=request.user, upload=serializer.validated_data['file'])
+        upload = serializer.validated_data.get('file')
+        upload_session_public_id = serializer.validated_data.get('upload_session', '')
+        if upload and settings.CANDIDATE_UPLOAD_SESSION_REQUIRED:
+            raise CandidateUploadSessionRequiredResponse()
+        try:
+            if upload_session_public_id:
+                asset = create_avatar_asset_from_session(
+                    actor=request.user,
+                    upload_session_public_id=upload_session_public_id,
+                )
+            else:
+                asset = create_avatar_asset(actor=request.user, upload=upload)
+        except UploadServiceError as error:
+            raise CandidateUploadSessionResponse(error) from error
         return Response(
             CvAssetSerializer(asset, context={'request': request}).data,
             status=status.HTTP_201_CREATED,

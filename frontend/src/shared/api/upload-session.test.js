@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  forgetPreparedUpload,
   getUploadStatePresentation,
   prepareCleanUpload,
 } from './upload-session'
@@ -74,5 +75,11 @@ describe('upload session API', () => {
       text: 'Tệp đã vượt qua kiểm tra an toàn.',
     })
     expect(getUploadStatePresentation(null)).toBeNull()
+  })
+
+  it('can forget a prepared file after the business endpoint claims it', () => {
+    const file = new File(['safe'], 'candidate.pdf', { type: 'application/pdf' })
+
+    expect(() => forgetPreparedUpload(file, 'candidate_cv')).not.toThrow()
   })
 })

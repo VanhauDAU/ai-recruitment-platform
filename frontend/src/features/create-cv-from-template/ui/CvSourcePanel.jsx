@@ -2,6 +2,7 @@ import { InboxOutlined } from '@ant-design/icons'
 import { Select, Spin, Upload } from 'antd'
 import { Link } from 'react-router'
 import { useSiteSettings } from '@/entities/site-settings'
+import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { useCvSource } from '../model/use-cv-source'
 
 function SourceOption({ value, current, onSelect, title, note, disabled, children }) {
@@ -61,11 +62,13 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
     setUploadFile,
     importCvId,
     importError,
+    uploadState,
     setImportError,
     canSubmit,
     retryUpload,
     submit,
   } = useCvSource({ template, locale, themeColor, onCreated, onPreviewChange, onRequireLogin })
+  const uploadStateMeta = getUploadStatePresentation(uploadState)
 
   return (
     <>
@@ -164,6 +167,7 @@ export default function CvSourcePanel({ template, locale = 'vi-VN', themeColor, 
               <p className="px-2 text-xs text-slate-500">Hỗ trợ .pdf hoặc .docx, tối đa 5MB và 20 trang</p>
             </Upload.Dragger>
             {submitting && <p className="mt-2 text-xs leading-5 text-slate-500">Đang trích xuất và chuẩn hóa nội dung CV…</p>}
+            {uploadStateMeta && <p role="status" className={`mt-2 text-xs leading-5 ${uploadStateMeta.tone}`}>{uploadStateMeta.text}</p>}
             {importError && <p className="mt-2 text-xs leading-5 text-amber-600">{importError}</p>}
             {importCvId && importError && (
               <div className="mt-2 flex gap-3">
