@@ -1,24 +1,26 @@
-# Employer SMS provider adapter — hạ tầng ER-6A
+# Employer SMS verification — adapter và live workflow ER-6A
 
 ## 1. Phạm vi và trạng thái
 
-Tài liệu này mô tả **hạ tầng provider-neutral**, chưa chuyển hai endpoint OTP
-đang hoạt động sang SMS. Ở phase này:
+Tài liệu này mô tả hạ tầng provider-neutral và live workflow SMS. Code đã chuyển
+endpoint/UI phone verification sang exact challenge; production vẫn tắt cho tới
+khi hoàn tất gateway sandbox và rollout gate. Cụ thể:
 
 - không chọn hoặc khóa cứng một nhà cung cấp trả phí;
-- không đổi request/response của onboarding, account PATCH hoặc frontend;
+- endpoint/UI dùng challenge ID; employer account PATCH không được đổi phone;
 - production giữ `EMPLOYER_SMS_OTP_ENABLED=False` cho tới khi Product/Ops duyệt
   gateway, sender và template;
 - khi flag tắt, dispatch SMS fail closed và không fallback email;
 - account cũ không bị gắn marker, deadline, hold hoặc thay đổi phone proof;
-- SMS challenge mới phục vụ phase workflow kế tiếp: account mới, đổi số và
-  self-reverify.
+- account mới, đổi số và self-reverify đều dùng SMS challenge; không còn email
+  OTP fallback.
 
 ## 2. Boundary dữ liệu
 
 `PhoneOtp` được mở rộng thành challenge có `public_id`, `purpose` và state
 dispatch. Ba purpose SMS là `initial_verification`, `phone_change`, `reverify`;
-`legacy_email` chỉ giữ tương thích trong thời gian chuyển đổi.
+`legacy_email` chỉ còn là enum đọc dữ liệu lịch sử; endpoint/task tạo OTP email
+đã bị xóa và không được dùng làm fallback.
 
 Challenge SMS mới:
 
@@ -42,6 +44,19 @@ OTP, ciphertext, hash hoặc provider response. Event giữ 730 ngày (xấp x�
 tháng), sau đó retention task mới được phép xóa.
 
 ## 3. Hợp đồng HTTP trung lập
+
+Live API contract:
+
+- `POST /api/employer/phone/send-otp/` nhận `phone,password`, trả `202` với
+  trạng thái challenge redacted;
+- `GET /api/employer/phone/challenges/{public_id}/` chỉ actor sở hữu được poll;
+- `POST /api/employer/phone/verify/` nhận exact `challenge_id,code`;
+- cooldown 60 giây, TTL 10 phút, tối đa năm lần sai; resend vô hiệu challenge
+  active cũ;
+- `/api/employer/phone/check/` chỉ validate format và luôn trả generic;
+  uniqueness được recheck sau khi mã đúng trong transaction.
+
+Adapter `http` gửi request provider như sau:
 
 Adapter `http` gửi `POST` tới `EMPLOYER_SMS_ENDPOINT_URL`:
 
@@ -140,8 +155,10 @@ phone, OTP, ciphertext, authorization header và provider response.
    ở secret manager.
 5. Chạy readiness command và smoke bằng provider `fake` ở non-production, sau đó
    gateway sandbox/staging.
-6. Workflow PR riêng mới chuyển account mới/change/reverify sang challenge ID.
-7. Chỉ bật production sau gate outage/retry/replay/throttle/uniqueness đạt.
+6. Xác nhận live endpoint/UI đã deploy trong khi flag vẫn tắt và response
+   `PHONE_SMS_DISABLED` hiển thị fail-closed.
+7. Chỉ bật production sau gate outage/retry/replay/throttle/uniqueness và smoke
+   sandbox đạt.
 
 Rollback: tắt `EMPLOYER_SMS_OTP_ENABLED`; không reverse migration và không xóa
 event/challenge. Dispatch mới dừng fail closed, không giả thành công và không

@@ -14,7 +14,8 @@ Decision log:
 > production-like staging/strict rollout;
 > ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
 > exact-object final review và conflict handling; ER-6B evidence/grace/hold đã
-> Verified; ER-6A đã merge hạ tầng SMS provider-neutral nhưng live workflow còn mở.
+> Verified; ER-6A live SMS đã code-complete và đạt targeted gate, activation
+> gateway production thuộc ER-8.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -24,7 +25,7 @@ Decision log:
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — Docker/ClamAV local đạt; còn Chrome + staging/strict rollout |
 | ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
-| ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — ER-6B Verified; SMS live/provider còn mở |
+| ER-6 | SMS provider adapter và DPA evidence/version/grace | ✅ Hoàn tất code — production SMS activation thuộc ER-8 |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
 | ER-8 | Rollout, reconciliation, compatibility cleanup và audit closure | ⬜ Chưa làm |
 
@@ -187,9 +188,9 @@ Decision log:
   queue `auth-sms`, bounded retry/recovery, retention, redacted event/metric và
   production readiness validation. Runbook:
   [`employer-sms-provider-adapter.md`](06-deployment/employer-sms-provider-adapter.md).
-- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False` và fail closed. Chưa chọn
-  provider/sender/template, chưa chuyển endpoint OTP hoặc frontend sang SMS;
-  vì vậy ER-F09 và toàn ER-6 vẫn chưa đóng. OpenAPI không đổi trong slice này.
+- Production vẫn giữ `EMPLOYER_SMS_OTP_ENABLED=False` và fail closed cho tới khi
+  chọn provider/sender/template. Live endpoint, frontend và OpenAPI đã chuyển
+  sang exact SMS challenge; không còn email fallback hoặc availability oracle.
 - Migration giữ nguyên phone proof hiện hữu: không marker, deadline, hold hay
   backfill proof cho account cũ. ER-6B vẫn phải nhận diện DPA cũ mà không bịa
   version/hash/IP/session.
@@ -204,8 +205,12 @@ Decision log:
 - Evidence ER-6B cuối: PostgreSQL Docker `127.0.0.1:5433` đạt 248/248 employer;
   frontend 257/257 file và 994/994 test; Ruff/format, import-linter, layering,
   Django check, migration drift, architecture, build và bundle budget đạt.
-- Residual ER-6 chỉ còn workflow SMS live cho account mới/change/reverify,
-  provider sandbox/production và gate outage/rate-limit/replay/uniqueness.
+- Live workflow account mới/change/reverify đã hoàn tất: challenge actor-bound,
+  poll redacted, cooldown, TTL, năm lần sai, replay protection và employer
+  profile PATCH bypass đều có regression. PostgreSQL Docker đạt 85/85 targeted
+  backend; frontend 21/21 targeted; static gate đạt.
+- Residual vận hành chỉ còn chọn provider/sender/template, sandbox smoke và bật
+  flag production có giám sát; được theo dõi tại ER-8.
 
 </details>
 

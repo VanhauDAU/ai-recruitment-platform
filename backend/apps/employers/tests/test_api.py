@@ -1,4 +1,3 @@
-import re
 import shutil
 import tempfile
 from datetime import timedelta
@@ -6,7 +5,6 @@ from io import BytesIO
 from unittest.mock import patch
 
 from django.conf import settings
-from django.core import mail
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -37,6 +35,8 @@ from ..models import (
     RecruiterProfile,
     RecruitmentNeed,
 )
+from ..services.phone_challenges import dispatch_sms_phone_challenge
+from ..services.sms_provider import FakeSmsProvider
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
@@ -472,32 +472,46 @@ class RecruitmentNeedTests(APITestCase):
         self.assertIsNone(response.data['target_date'])
 
 
+@override_settings(
+    EMPLOYER_SMS_OTP_ENABLED=True,
+    EMPLOYER_SMS_PROVIDER='fake',
+    EMPLOYER_SMS_SENDER='ProCV',
+    EMPLOYER_SMS_TEMPLATE_ID='employer-phone-otp-v1',
+    IS_PRODUCTION=False,
+)
 class PhoneOtpTests(APITestCase):
     def setUp(self):
         self.user, self.recruiter = make_employer(phone_verified=False)
         self.client.force_authenticate(user=self.user)
 
     def _send_otp(self, phone='0912345678', password='Password@123'):
-        # Email OTP được enqueue trong transaction.on_commit; TestCase không bao
-        # giờ commit nên phải chạy callback thủ công (CELERY_TASK_ALWAYS_EAGER
-        # khiến task chạy ngay và email rơi vào mail.outbox).
-        with self.captureOnCommitCallbacks(execute=True):
-            return self.client.post(
-                reverse('employer-phone-send-otp'), {'phone': phone, 'password': password}
+        with (
+            patch(
+                'apps.employers.services.phone_challenges.secrets.randbelow', return_value=123456
+            ),
+            patch('apps.employers.services.phone_challenges.current_app.send_task'),
+            self.captureOnCommitCallbacks(execute=True),
+        ):
+            response = self.client.post(
+                reverse('employer-phone-send-otp'),
+                {'phone': phone, 'password': password},
             )
+        if response.status_code == status.HTTP_202_ACCEPTED:
+            self.challenge_id = response.data['public_id']
+            dispatch_sms_phone_challenge(self.challenge_id, provider=FakeSmsProvider())
+        return response
 
     def test_send_and_verify_otp_marks_phone_verified(self):
         response = self._send_otp()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(mail.outbox), 1)
-
-        # Lấy mã từ nội dung email (đúng 6 chữ số liền nhau — SĐT dài 10 số nên không khớp nhầm).
-        code = re.search(r'\b(\d{6})\b', mail.outbox[0].body).group(1)
-        response = self.client.post(reverse('employer-phone-verify'), {'code': code})
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '123456'},
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
 
         self.recruiter.refresh_from_db()
-        self.assertEqual(self.recruiter.verified_phone, '0912345678')
+        self.assertEqual(self.recruiter.verified_phone, '+84912345678')
         self.assertIsNotNone(self.recruiter.phone_verified_at)
 
     def test_verifying_phone_last_does_not_approve_a_fully_reviewed_case(self):
@@ -566,8 +580,10 @@ class PhoneOtpTests(APITestCase):
             )
 
         self._send_otp()
-        code = re.search(r'\b(\d{6})\b', mail.outbox[0].body).group(1)
-        response = self.client.post(reverse('employer-phone-verify'), {'code': code})
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '123456'},
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         verification_case.refresh_from_db()
@@ -575,21 +591,22 @@ class PhoneOtpTests(APITestCase):
         self.assertEqual(verification_case.status, EmployerVerificationCase.Status.IN_REVIEW)
         self.assertNotEqual(company.verification_status, Company.VerificationStatus.VERIFIED)
 
-    def test_otp_email_is_deferred_until_commit(self):
-        """Mã chỉ được gửi sau khi hàng PhoneOtp thực sự commit, không sớm hơn."""
+    def test_sms_dispatch_is_deferred_until_commit(self):
+        """Challenge ID only enters the broker after the database commit."""
         with self.captureOnCommitCallbacks(execute=False) as callbacks:
             response = self.client.post(
                 reverse('employer-phone-send-otp'),
                 {'phone': '0912345678', 'password': 'Password@123'},
             )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Response đã trả về nhưng email chưa gửi -> SMTP không nằm trong request.
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(len(callbacks), 1)
 
     def test_wrong_otp_rejected_and_attempts_counted(self):
         self._send_otp()
-        response = self.client.post(reverse('employer-phone-verify'), {'code': '000000'})
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '000000'},
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(PhoneOtp.objects.get(user=self.user).attempts, 1)
 
@@ -599,22 +616,25 @@ class PhoneOtpTests(APITestCase):
         other.phone_verified_at = timezone.now()
         other.save()
 
-        response = self._send_otp()
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('nhà tuyển dụng khác', str(response.data['phone']))
+        self._send_otp()
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': self.challenge_id, 'code': '123456'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['code'], 'PHONE_UNAVAILABLE')
 
     def test_send_otp_rejects_wrong_password(self):
         response = self._send_otp(password='Wrong@123')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(response.data['code'], 'PHONE_REAUTH_FAILED')
 
     def test_send_otp_requires_password(self):
         response = self.client.post(reverse('employer-phone-send-otp'), {'phone': '0912345678'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertEqual(response.data['code'], 'PHONE_REAUTH_FAILED')
 
-    def test_phone_availability_flags_taken_and_free_numbers(self):
+    def test_phone_availability_does_not_disclose_taken_numbers(self):
         other_user, other = make_employer('other@example.com', phone_verified=False)
         other.verified_phone = '0912345678'
         other.phone_verified_at = timezone.now()
@@ -622,7 +642,7 @@ class PhoneOtpTests(APITestCase):
 
         taken = self.client.get(reverse('employer-phone-check'), {'phone': '0912345678'})
         self.assertEqual(taken.status_code, status.HTTP_200_OK)
-        self.assertFalse(taken.data['available'])
+        self.assertTrue(taken.data['available'])
 
         free = self.client.get(reverse('employer-phone-check'), {'phone': '0987654321'})
         self.assertEqual(free.status_code, status.HTTP_200_OK)
@@ -635,7 +655,7 @@ class PhoneOtpTests(APITestCase):
         response = self._send_otp()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertEqual(response.data['code'], 'PHONE_REAUTH_REQUIRED')
 
 
 class CompanyCreateTests(APITestCase):

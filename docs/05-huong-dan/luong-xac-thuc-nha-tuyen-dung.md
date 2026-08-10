@@ -460,7 +460,19 @@ partial apply; field không overlap vẫn được áp dụng.
   này, không phải điều kiện lọc danh sách.
 - `GET /api/dashboard/employer/`: summary, activity 7 ngày, nhu cầu, tin và hồ sơ gần đây.
 - `POST /api/auth/verify/send/`, `POST /api/auth/verify/confirm/`: email.
-- `POST /api/employer/phone/send-otp/`, `POST /api/employer/phone/verify/`: OTP.
+- `POST /api/employer/phone/send-otp/`: re-auth bằng mật khẩu, tạo challenge
+  actor-bound và enqueue SMS; không gửi OTP qua email.
+- `GET /api/employer/phone/challenges/<public_id>/`: poll trạng thái
+  `queued|dispatching|retry_pending|sent|failed|disabled|verified|expired` của
+  chính actor.
+- `POST /api/employer/phone/verify/`: gửi exact `{challenge_id, code}`. Gửi mã
+  mới vô hiệu mã cũ; mã đã dùng không replay được; năm lần sai khóa challenge.
+- Account mới xác thực lần đầu; account đã có proof có thể đổi số hoặc tự xác
+  minh lại. Đổi số giữ proof/readiness cũ cho tới khi số mới thành công.
+- `GET /api/employer/phone/check/` chỉ kiểm format và luôn trả kết quả generic;
+  uniqueness được recheck trong transaction sau khi actor chứng minh sở hữu số.
+- `PATCH /api/auth/me/` không cho employer đổi phone trực tiếp; candidate vẫn
+  dùng contract profile hiện hành.
 - `GET /api/employer/company/search/`, `POST /api/employer/company/create/`,
   `POST /api/employer/company/join/`: hai luồng liên kết công ty rõ ràng.
 - `GET|POST /api/employer/company/documents/`: ĐKDN chấp nhận JPG/PNG/PDF;

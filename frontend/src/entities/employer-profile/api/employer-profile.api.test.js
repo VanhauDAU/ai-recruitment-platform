@@ -9,6 +9,7 @@ import {
   getEmployerCompanyDocuments,
   getEmployerCompanyUpdateRequests,
   getEmployerIndustries,
+  getEmployerPhoneChallenge,
   getEmployerProfile,
   getEmployerRecruitmentNeed,
   joinEmployerCompany,
@@ -64,14 +65,19 @@ describe('employer profile API', () => {
     await completeEmployerRegistration(profile)
     await checkEmployerPhoneAvailability('0912345678')
     await sendEmployerPhoneOtp('0912345678', 'Password@123')
-    await verifyEmployerPhoneOtp('123456')
+    await getEmployerPhoneChallenge('poc_sms')
+    await verifyEmployerPhoneOtp('poc_sms', '123456')
     const dpaPolicy = { policy_version: '2026-08', document_sha256: 'a'.repeat(64) }
     await acceptEmployerDpa(dpaPolicy)
 
     expect(post).toHaveBeenCalledWith('/employer/onboarding/registration/', profile)
     expect(get).toHaveBeenCalledWith('/employer/phone/check/', { params: { phone: '0912345678' } })
     expect(post).toHaveBeenCalledWith('/employer/phone/send-otp/', { phone: '0912345678', password: 'Password@123' })
-    expect(post).toHaveBeenCalledWith('/employer/phone/verify/', { code: '123456' })
+    expect(get).toHaveBeenCalledWith('/employer/phone/challenges/poc_sms/')
+    expect(post).toHaveBeenCalledWith('/employer/phone/verify/', {
+      challenge_id: 'poc_sms',
+      code: '123456',
+    })
     expect(post).toHaveBeenCalledWith('/employer/dpa/accept/', dpaPolicy)
   })
 

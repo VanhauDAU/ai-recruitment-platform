@@ -38,8 +38,16 @@ export async function sendEmployerPhoneOtp(phone, password) {
   return data
 }
 
-export async function verifyEmployerPhoneOtp(code) {
-  const { data } = await api.post('/employer/phone/verify/', { code })
+export async function getEmployerPhoneChallenge(publicId) {
+  const { data } = await api.get('/employer/phone/challenges/' + publicId + '/')
+  return data
+}
+
+export async function verifyEmployerPhoneOtp(challengeId, code) {
+  const { data } = await api.post('/employer/phone/verify/', {
+    challenge_id: challengeId,
+    code,
+  })
   return data
 }
 

@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-08-10
 
+#### Added — Employer SMS verification live workflow
+
+- Chuyển endpoint xác thực phone từ OTP email legacy sang challenge SMS có
+  public ID, trạng thái poll, cooldown, attempt budget và replay protection.
+- Hỗ trợ xác thực lần đầu, đổi số giữ proof cũ tới khi thành công và self-
+  reverify; UI không còn gọi availability oracle hoặc thông báo gửi mã qua email.
+- Chặn employer đổi phone trực tiếp qua `/api/auth/me/`; xóa task/service OTP
+  email legacy và không còn đưa raw phone/OTP vào Celery broker.
+
 #### Added — Employer DPA evidence core
 
 - Thêm bằng chứng DPA append-only theo exact version/SHA-256, thời điểm, IP,

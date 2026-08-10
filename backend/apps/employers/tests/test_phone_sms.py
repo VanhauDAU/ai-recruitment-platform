@@ -8,7 +8,10 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 
@@ -329,6 +332,158 @@ class SmsChallengeLifecycleTests(TestCase):
         profile = RecruiterProfile.objects.create(user=self.user)
         self.assertIsNone(profile.verified_phone)
         self.assertIsNone(profile.phone_verified_at)
+
+
+@override_settings(**SMS_SETTINGS)
+class SmsLiveWorkflowApiTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='sms-live@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.profile = RecruiterProfile.objects.create(user=self.user)
+        self.client.force_authenticate(user=self.user)
+
+    def _start(self, phone='0912345678'):
+        with (
+            patch(
+                'apps.employers.services.phone_challenges.secrets.randbelow', return_value=123456
+            ),
+            patch('apps.employers.services.phone_challenges.current_app.send_task') as send_task,
+            self.captureOnCommitCallbacks(execute=True),
+        ):
+            response = self.client.post(
+                reverse('employer-phone-send-otp'),
+                {'phone': phone, 'password': 'Password@123'},
+                format='json',
+            )
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED, response.data)
+        send_task.assert_called_once()
+        challenge = PhoneOtp.objects.get(public_id=response.data['public_id'])
+        dispatch_sms_phone_challenge(challenge.public_id, provider=FakeSmsProvider())
+        return challenge
+
+    def test_initial_sms_is_actor_bound_and_verifies_exact_challenge(self):
+        challenge = self._start()
+
+        status_response = self.client.get(
+            reverse('employer-phone-challenge', args=[challenge.public_id])
+        )
+        self.assertEqual(status_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(status_response.data['status'], PhoneOtp.DispatchStatus.SENT)
+        self.assertTrue(status_response.data['can_verify'])
+        self.assertNotIn('phone', status_response.data)
+
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': challenge.public_id, 'code': '123456'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.profile.refresh_from_db()
+        self.user.refresh_from_db()
+        self.assertEqual(self.profile.verified_phone, '+84912345678')
+        self.assertEqual(self.user.phone, '+84912345678')
+        challenge.refresh_from_db()
+        self.assertEqual(challenge.dispatch_status, PhoneOtp.DispatchStatus.VERIFIED)
+        self.assertTrue(
+            EmployerPhoneVerificationEvent.objects.filter(
+                challenge_public_id=challenge.public_id,
+                event_type=EmployerPhoneVerificationEvent.EventType.VERIFIED,
+            ).exists()
+        )
+        replay = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': challenge.public_id, 'code': '123456'},
+            format='json',
+        )
+        self.assertEqual(replay.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(replay.data['code'], 'PHONE_CHALLENGE_USED')
+
+    def test_phone_change_preserves_old_proof_until_new_code_succeeds(self):
+        self.profile.verified_phone = '+84911111111'
+        self.profile.contact_phone = '+84911111111'
+        self.profile.phone_verified_at = timezone.now()
+        self.profile.save(
+            update_fields=['verified_phone', 'contact_phone', 'phone_verified_at', 'updated_at']
+        )
+        self.user.phone = '+84911111111'
+        self.user.save(update_fields=['phone', 'updated_at'])
+
+        challenge = self._start('0987654321')
+        self.profile.refresh_from_db()
+        self.assertEqual(challenge.purpose, PhoneOtp.Purpose.PHONE_CHANGE)
+        self.assertEqual(self.profile.verified_phone, '+84911111111')
+
+        response = self.client.post(
+            reverse('employer-phone-verify'),
+            {'challenge_id': challenge.public_id, 'code': '123456'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.verified_phone, '+84987654321')
+
+    def test_availability_is_generic_and_challenge_is_not_visible_to_other_actor(self):
+        other = User.objects.create_user(
+            email='sms-other@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        RecruiterProfile.objects.create(
+            user=other,
+            verified_phone='+84912345678',
+            phone_verified_at=timezone.now(),
+        )
+        availability = self.client.get(
+            reverse('employer-phone-check'),
+            {'phone': '0912345678'},
+        )
+        self.assertEqual(availability.status_code, status.HTTP_200_OK)
+        self.assertEqual(availability.data, {'available': True})
+
+        challenge = self._start('0987654321')
+        self.client.force_authenticate(user=other)
+        response = self.client.get(reverse('employer-phone-challenge', args=[challenge.public_id]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_disabled_sms_fails_closed_without_creating_legacy_email_otp(self):
+        with override_settings(EMPLOYER_SMS_OTP_ENABLED=False):
+            response = self.client.post(
+                reverse('employer-phone-send-otp'),
+                {'phone': '0912345678', 'password': 'Password@123'},
+                format='json',
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertEqual(response.data['code'], 'PHONE_SMS_DISABLED')
+        self.assertFalse(PhoneOtp.objects.filter(user=self.user).exists())
+
+    def test_resend_cooldown_and_verify_attempt_budget_are_enforced(self):
+        challenge = self._start()
+        with patch('apps.employers.services.phone_challenges.current_app.send_task'):
+            resend = self.client.post(
+                reverse('employer-phone-send-otp'),
+                {'phone': '0912345678', 'password': 'Password@123'},
+                format='json',
+            )
+        self.assertEqual(resend.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(resend.data['code'], 'PHONE_OTP_COOLDOWN')
+        self.assertGreater(resend.data['retry_after_seconds'], 0)
+
+        for _ in range(5):
+            invalid = self.client.post(
+                reverse('employer-phone-verify'),
+                {'challenge_id': challenge.public_id, 'code': '000000'},
+                format='json',
+            )
+            self.assertEqual(invalid.status_code, status.HTTP_400_BAD_REQUEST)
+        challenge.refresh_from_db()
+        self.assertEqual(challenge.attempts, 5)
+        self.assertEqual(challenge.invalidation_reason, 'verify_attempts_exhausted')
 
 
 class HttpSmsProviderTests(TestCase):

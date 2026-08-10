@@ -5507,9 +5507,9 @@ paths:
   /api/employer/phone/check/:
     get:
       operationId: employer_phone_check_retrieve
-      description: Kiểm tra nhanh (debounce) xem số điện thoại đã bị NTD khác dùng
-        chưa.
-      summary: Kiểm tra số điện thoại đã được nhà tuyển dụng khác sử dụng chưa
+      description: Compatibility endpoint chỉ kiểm tra định dạng và luôn trả kết
+        quả generic, không tiết lộ số đã thuộc tài khoản khác.
+      summary: Kiểm tra định dạng số điện thoại nhà tuyển dụng
       parameters:
       - in: query
         name: phone
@@ -5527,10 +5527,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/PhoneAvailability'
           description: ''
+  /api/employer/phone/challenges/{public_id}/:
+    get:
+      operationId: employer_phone_challenges_retrieve
+      summary: Đọc trạng thái challenge SMS của chính nhà tuyển dụng
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerPhoneChallenge'
+          description: ''
+        '404':
+          description: Challenge không thuộc actor hoặc không tồn tại.
   /api/employer/phone/send-otp/:
     post:
       operationId: employer_phone_send_otp_create
-      summary: Gửi mã OTP xác thực số điện thoại (qua email tài khoản)
+      summary: Tạo challenge và gửi mã OTP xác thực qua SMS
       tags:
       - employer
       requestBody:
@@ -5548,11 +5571,11 @@ paths:
       security:
       - jwtAuth: []
       responses:
-        '200':
+        '202':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SendPhoneOtpResponse'
+                $ref: '#/components/schemas/EmployerPhoneChallenge'
           description: ''
   /api/employer/phone/verify/:
     post:
@@ -12965,6 +12988,22 @@ components:
       required:
       - decision
       - lock_version
+    AdminVerificationDocumentReviewRequest:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        reason:
+          type: string
+          maxLength: 2000
+        lock_version:
+          type: integer
+          minimum: 0
+        revision_public_id:
+          type: string
+      required:
+      - decision
+      - lock_version
     AdminCompanyUpdateStartReviewRequest:
       type: object
       properties:
@@ -19300,6 +19339,12 @@ components:
       - template_renderer_version
       - version_kind
       - version_number
+    DecisionEnum:
+      type: string
+      enum:
+      - approved
+      - changes_requested
+      - rejected
     DepartmentCreate:
       type: object
       properties:
@@ -24147,6 +24192,49 @@ components:
           type: string
       required:
       - available
+    EmployerPhoneChallenge:
+      type: object
+      properties:
+        public_id:
+          type: string
+        purpose:
+          type: string
+          enum:
+          - initial_verification
+          - phone_change
+          - reverify
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - retry_pending
+          - sent
+          - failed
+          - disabled
+          - verified
+          - expired
+        failure_code:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        attempts_remaining:
+          type: integer
+          minimum: 0
+        can_verify:
+          type: boolean
+        can_retry:
+          type: boolean
+      required:
+      - attempts_remaining
+      - can_retry
+      - can_verify
+      - expires_at
+      - failure_code
+      - public_id
+      - purpose
+      - status
     PinnedPost:
       type: object
       description: Item khối "Tài liệu hỗ trợ tìm việc" — lấy tiêu đề/slug từ bài
@@ -26278,13 +26366,6 @@ components:
           minLength: 1
       required:
       - password
-    SendPhoneOtpResponse:
-      type: object
-      properties:
-        detail:
-          type: string
-      required:
-      - detail
     SessionRevokeOthers:
       type: object
       properties:
@@ -27021,10 +27102,14 @@ components:
     VerifyPhoneOtpRequest:
       type: object
       properties:
+        challenge_id:
+          type: string
+          minLength: 1
         code:
           type: string
           minLength: 1
       required:
+      - challenge_id
       - code
     VerifyResend:
       type: object

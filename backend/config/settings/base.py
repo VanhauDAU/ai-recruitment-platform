@@ -408,6 +408,9 @@ REST_FRAMEWORK = {
         'upload_session': '30/hour',
         'upload_status': '120/min',
         'upload_content': '20/hour',
+        'employer_phone_send': '5/min',
+        'employer_phone_verify': '10/min',
+        'employer_phone_status': '120/min',
     },
 }
 
@@ -586,7 +589,6 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
-    'apps.employers.tasks.phone_otp.*': {'queue': 'auth-email'},
     'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},

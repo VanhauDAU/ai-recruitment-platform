@@ -270,6 +270,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Họ và tên cần ít nhất 2 ký tự.')
         return value.strip()
 
+    def validate_phone(self, value):
+        user = self.context['request'].user
+        if user.is_employer and value != user.phone:
+            raise serializers.ValidationError(
+                'Nhà tuyển dụng phải đổi số điện thoại qua luồng xác thực SMS.'
+            )
+        return value
+
 
 class ChangeEmailSerializer(serializers.Serializer):
     """Đổi email khi tài khoản chưa xác thực (reset email_verified và gửi lại link).

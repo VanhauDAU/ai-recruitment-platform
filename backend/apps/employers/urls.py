@@ -19,6 +19,7 @@ from .api.views import (
     JoinCompanyView,
     MyCompanyView,
     PhoneAvailabilityView,
+    PhoneChallengeView,
     RecruiterMeView,
     RecruitmentCampaignActivityView,
     RecruitmentCampaignDetailView,
@@ -94,6 +95,11 @@ urlpatterns = [
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
     path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
     path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),
+    path(
+        'phone/challenges/<str:public_id>/',
+        PhoneChallengeView.as_view(),
+        name='employer-phone-challenge',
+    ),
     path('phone/verify/', VerifyPhoneOtpView.as_view(), name='employer-phone-verify'),
     path('dpa/accept/', AcceptDpaView.as_view(), name='employer-dpa-accept'),
     # Công ty

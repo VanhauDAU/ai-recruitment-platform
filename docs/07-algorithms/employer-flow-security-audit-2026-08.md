@@ -44,7 +44,7 @@ review DPA.
 | ER-F06 | Cao | Document/prerequisite reconciliation có thể tự approve verification/company | Closed ER-5 | ER-5 |
 | ER-F07 | Nghiêm trọng | Job approval chưa có đầy đủ authoritative verification/DPA blocker ở mọi đường | Closed ER-1C/ER-5 backend | ER-1C/ER-5 |
 | ER-F08 | Nghiêm trọng | Candidate data access chưa tách nhất quán khỏi workspace/feature flag | Closed ER-2/ER-5 backend | ER-2/ER-5 |
-| ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | In remediation — adapter foundation merged; live workflow open | ER-6A |
+| ER-F09 | Cao | Phone OTP nghiệp vụ được gửi qua email, không phải possession proof của phone | Closed — live actor-bound SMS challenge; production activation qua ER-8 | ER-6A |
 | ER-F10 | Cao | DPA chỉ có timestamp, thiếu version/hash/actor/IP/session | Closed ER-6B | ER-6B |
 | ER-F11 | Trung bình | Notification/activity workspace chưa có outbox/read/deep-link/audit contract | Open | ER-7 |
 | ER-F12 | Trung bình | Tài liệu canonical cũ mâu thuẫn quyền, ngày gửi và publish blocker | In remediation | ER-0–ER-8 |
@@ -493,8 +493,14 @@ review DPA.
   post-merge retest SMS + migration đạt 25/25. Ruff, format, import-linter,
   layering, Django check, migration drift, docs và rendered Compose đều đạt.
 
-Finding chưa đóng cho tới khi account mới/change/reverify thực sự dùng SMS và
-toàn bộ retest criteria outage/rate-limit/replay/uniqueness đạt.
+**Live retest (2026-08-10):** account mới/change/reverify đã dùng exact
+actor-bound SMS challenge; status poll được redaction, availability không còn
+tiết lộ uniqueness, năm lần sai khóa challenge và challenge verified không thể
+replay. Employer profile PATCH không thể bypass SMS; task/service email OTP cũ
+đã xóa. PostgreSQL Docker `127.0.0.1:5433` đạt 85/85 targeted backend và
+frontend đạt 21/21. Provider disabled/outage tiếp tục fail closed, không gửi
+email. ER-F09 đóng ở code boundary; chọn gateway/sender/template, sandbox smoke
+và bật flag production là deployment gate ER-8.
 
 ### ER-F10 — DPA evidence
 

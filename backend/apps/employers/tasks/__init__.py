@@ -1,4 +1,3 @@
-from .phone_otp import send_phone_otp_email
 from .phone_sms import (
     dispatch_employer_sms_challenge,
     purge_employer_sms_verification_data,
@@ -17,5 +16,4 @@ __all__ = [
     'dispatch_employer_sms_challenge',
     'purge_employer_sms_verification_data',
     'recover_stale_employer_sms_dispatches',
-    'send_phone_otp_email',
 ]

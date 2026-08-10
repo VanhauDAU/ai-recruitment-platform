@@ -1,7 +1,7 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** ER-0, ER-1, ER-2, ER-4 và ER-5 đã Verified;
-> ER-6B đã Verified; ER-3, ER-6A live và ER-7–ER-8 vẫn đang triển khai
+> **Trạng thái:** ER-0, ER-1, ER-2, ER-4, ER-5 và ER-6 đã Verified;
+> ER-3 còn gate staging/Chrome, ER-7–ER-8 vẫn đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
 > **Phiên bản kế hoạch:** 1.1
@@ -846,7 +846,7 @@ OpenAPI parse 1.544 local schema ref/0 unresolved và Markdown 196 link đạt.
 #### ER-6A — SMS adapter
 
 **Foundation:** `feature/employer-sms-provider-adapter` — đã merge
-**Live workflow:** `feature/employer-sms-verification` — chưa triển khai
+**Live workflow:** `feature/employer-sms-verification` — code complete, chờ merge
 **Phụ thuộc:** ER-2
 
 - Provider-neutral interface.
@@ -878,6 +878,16 @@ OpenAPI parse 1.544 local schema ref/0 unresolved và Markdown 196 link đạt.
 Foundation này chưa hoàn tất ER-6A: live endpoint/UI, provider production và
 gate outage/rate-limit/replay/phone uniqueness vẫn là residual. ER-6 giữ trạng
 thái `In progress`.
+
+**Evidence live workflow (2026-08-10):** endpoint cũ đã chuyển sang exact SMS
+challenge actor-bound; thêm endpoint poll redacted, cooldown 60 giây, TTL 10
+phút, budget năm lần nhập sai và replay protection. Initial/change/reverify đều
+dùng cùng state machine; đổi số giữ proof cũ cho tới khi mã số mới đúng. Employer
+không còn sửa phone qua `/api/auth/me/`, UI không gọi availability oracle và
+task/service OTP email legacy đã bị xóa. PostgreSQL Docker `127.0.0.1:5433`
+đạt 85/85 targeted backend; frontend 21/21 targeted; Ruff/format/Oxlint đạt.
+Production vẫn giữ flag tắt cho tới khi Ops chọn gateway/sender/template và qua
+sandbox smoke; đây là rollout gate ER-8, không phải fallback email.
 
 #### ER-6B — DPA evidence
 
@@ -1156,7 +1166,7 @@ Trạng thái thực hiện hiện tại:
 | ER-3 | In progress | Employer/candidate Docker và real ClamAV local đạt; còn Chrome branch QA cùng production-like staging/strict rollout |
 | ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
-| ER-6 | In progress | ER-6B DPA evidence/grace/hold Verified; ER-6A còn SMS live/provider |
+| ER-6 | Verified | ER-6A live SMS và ER-6B DPA evidence/grace/hold đã đạt code gate; production SMS activation thuộc ER-8 |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
 | ER-8 | Planned | Chỉ bắt đầu khi các phase chức năng verified |
 
