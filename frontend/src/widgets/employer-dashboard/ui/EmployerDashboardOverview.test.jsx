@@ -108,18 +108,20 @@ describe('EmployerDashboardOverview', () => {
     )
 
     expect(await screen.findByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeInTheDocument()
-    expect(document.querySelector('img[src="/images/employer/topcv-v-brand.svg"]')).toHaveAttribute('aria-hidden', 'true')
-    expect(screen.getByRole('heading', { name: 'Đọc dữ liệu, tuyển đúng người' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Khám phá ProCV dành cho nhà tuyển dụng/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Xu hướng hồ sơ ứng tuyển' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Trạng thái hồ sơ' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày/ })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Biểu đồ pipeline gồm 12 hồ sơ' })).toBeInTheDocument()
     expect(screen.getByText('Xác thực số điện thoại', { exact: true })).toBeInTheDocument()
     expect(screen.queryByText('Xác thực địa chỉ email')).not.toBeInTheDocument()
-    expect(screen.getByText('Đăng tin tuyển dụng đầu tiên', { exact: true })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Hoàn thiện workspace tuyển dụng' })).toBeInTheDocument()
     expect(screen.getByText('Công ty Acme')).toBeInTheDocument()
     expect(screen.getByText('Kinh doanh phần mềm')).toBeInTheDocument()
     expect(screen.getByText('240')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Xác thực số điện thoại/ })).toHaveAttribute('target', '_blank')
     expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
-    expect(screen.getByRole('link', { name: 'Tạo tin' })).toHaveAttribute('href', '/tuyendung/app/jobs/new')
+    expect(screen.getAllByRole('link', { name: /Đăng tin mới/ })[0]).toHaveAttribute('href', '/tuyendung/app/jobs/new')
+    expect(screen.getByRole('link', { name: /Quản lý hồ sơ/ })).toHaveAttribute('href', '/tuyendung/app/applications')
   })
 
   it('keeps aggregates but never mounts cached recent candidate PII when access is denied', async () => {
@@ -152,7 +154,7 @@ describe('EmployerDashboardOverview', () => {
       </QueryClientProvider>,
     )
 
-    expect(await screen.findByText('12')).toBeInTheDocument()
+    expect((await screen.findAllByText('12')).length).toBeGreaterThan(0)
     expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ứng viên mới nhất' })).not.toBeInTheDocument()
     expect(screen.getAllByText('Chấp thuận DPA không còn là phiên bản hiện hành.').length)

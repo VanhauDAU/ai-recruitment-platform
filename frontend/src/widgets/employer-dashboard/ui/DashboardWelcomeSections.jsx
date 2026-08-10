@@ -1,28 +1,19 @@
 import {
   ArrowRightOutlined,
-  BarChartOutlined,
   CheckCircleFilled,
-  CheckOutlined,
-  FileSearchOutlined,
-  FileTextOutlined,
   InfoCircleOutlined,
-  LeftOutlined,
-  RightOutlined,
-  RobotOutlined,
-  SearchOutlined,
-  ShoppingCartOutlined,
-  SafetyCertificateOutlined,
+  LockOutlined,
+  RocketOutlined,
 } from '@ant-design/icons'
-import { Button, Progress } from 'antd'
-import { useRef } from 'react'
+import { Progress } from 'antd'
 import { Link } from 'react-router'
 import {
   EMPLOYER_CAPABILITIES,
   employerReadinessAction,
   employerReadinessBlockersFor,
 } from '@/entities/employer-profile'
-import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
+import { getEmployerVerificationProgress } from '@/features/verify-employer-account'
 import {
   EMPLOYER_BUSINESS_LICENSE_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
@@ -34,10 +25,10 @@ import {
 
 const VERIFICATION_STEPS = [
   { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
-  { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
+  { key: 'company_linked', label: 'Cập nhật công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
   { key: 'business_doc_submitted', label: 'Nộp giấy tờ đại diện', to: EMPLOYER_BUSINESS_LICENSE_URL },
-  { key: 'candidate_dpa_submitted', label: 'Nộp văn bản xử lý dữ liệu ứng viên', to: EMPLOYER_DATA_PROTECTION_URL },
-  { key: 'dpa_accepted', label: 'Đồng ý Thỏa thuận xử lý DLCN với hệ thống', to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'candidate_dpa_submitted', label: 'Nộp văn bản DLCN', to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'dpa_accepted', label: 'Đồng ý thỏa thuận DPA', to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 
 export function DashboardComplianceNotice({ readiness }) {
@@ -47,180 +38,82 @@ export function DashboardComplianceNotice({ readiness }) {
     EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
   )[0]
   const action = employerReadinessAction(blocker?.action)
+
   return (
-    <section className="flex flex-wrap items-center gap-3 rounded-lg border-l-4 border-blue-500 bg-white px-4 py-3 shadow-sm" aria-label="Thông báo quan trọng">
-      <InfoCircleOutlined className="text-lg text-blue-600" />
+    <section className="flex flex-col gap-3 rounded-2xl border border-blue-200/70 bg-blue-50/80 px-4 py-4 sm:flex-row sm:items-center" aria-label="Thông báo quan trọng">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm"><InfoCircleOutlined /></span>
       <div className="min-w-0 flex-1">
-        <strong className="text-sm text-blue-700">Thông báo quan trọng</strong>
-        <p className="mt-0.5 text-xs leading-5 text-slate-500">{blocker?.message || 'Dữ liệu ứng viên đang được bảo vệ cho tới khi trạng thái được xác minh.'}</p>
+        <strong className="text-sm text-slate-800">Dữ liệu ứng viên đang được bảo vệ</strong>
+        <p className="mt-0.5 text-xs leading-5 text-slate-500">{blocker?.message || 'Hoàn tất xác minh để mở quyền truy cập dữ liệu ứng viên.'}</p>
       </div>
-      <Link to={action.to} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">{action.label}</Link>
+      <Link to={action.to} className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-blue-600 !bg-blue-600 px-4 text-xs font-bold !text-white shadow-sm transition hover:border-blue-700 hover:!bg-blue-700">
+        {action.label} <ArrowRightOutlined />
+      </Link>
     </section>
-  )
-}
-
-export function DashboardPromotionGrid() {
-  return (
-    <section className="grid gap-3 md:grid-cols-2" aria-label="Thông tin nổi bật">
-      <article className="relative min-h-40 overflow-hidden rounded-xl bg-[linear-gradient(125deg,#064e3b_0%,#047857_55%,#10b981_120%)] p-5 text-white shadow-sm sm:p-6">
-        <span className="absolute -right-12 -top-16 h-52 w-52 rounded-full border-[28px] border-white/10" />
-        <span className="absolute bottom-4 right-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 text-4xl backdrop-blur"><BarChartOutlined /></span>
-        <div className="relative max-w-[70%]">
-          <span className="rounded-full bg-amber-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-950">Báo cáo tuyển dụng</span>
-          <h2 className="mt-4 text-xl font-black leading-tight">Đọc dữ liệu, tuyển đúng người</h2>
-          <p className="mt-2 text-xs leading-5 text-emerald-100">Theo dõi hiệu quả tuyển dụng từ dữ liệu thật trong workspace.</p>
-        </div>
-      </article>
-      <article className="relative min-h-40 overflow-hidden rounded-xl bg-[linear-gradient(125deg,#102a43_0%,#0c4a3c_58%,#059669_130%)] p-5 text-white shadow-sm sm:p-6">
-        <span className="absolute -bottom-14 -right-8 h-48 w-48 rounded-full bg-emerald-300/15 blur-sm" />
-        <RobotOutlined className="absolute bottom-5 right-8 text-7xl text-emerald-200/60" />
-        <div className="relative max-w-[72%]">
-          <span className="text-[10px] font-black uppercase tracking-[.18em] text-emerald-300">ProCV AI</span>
-          <h2 className="mt-3 text-xl font-black leading-tight">Tăng hiệu suất tuyển dụng</h2>
-          <p className="mt-2 text-xs leading-5 text-slate-200">Gợi ý ứng viên và tự động hóa quy trình đang được phát triển.</p>
-          <span className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold text-emerald-100">Sắp mở</span>
-        </div>
-      </article>
-    </section>
-  )
-}
-
-function VerificationStatusDot({ done }) {
-  if (done) return <CheckCircleFilled className="text-lg text-[var(--brand-primary)]" />
-  return <span className="block h-4 w-4 rounded-full border-[1.5px] border-slate-300" />
-}
-
-function VerificationStepCard({ step, done, isCurrent, target }) {
-  return (
-    <a
-      href={target}
-      target="_blank"
-      rel="noreferrer"
-      className={`group flex w-52 shrink-0 items-center gap-3 rounded-xl border px-3.5 py-3 transition sm:w-56 ${isCurrent ? 'border-[var(--brand-primary)]' : 'border-slate-200 hover:border-[var(--brand-primary)]'}`}
-    >
-      <VerificationStatusDot done={done} />
-      <span className={`min-w-0 flex-1 text-xs font-semibold leading-4 ${done ? 'text-slate-400' : isCurrent ? 'text-[var(--brand-primary)]' : 'text-slate-700'}`}>{step.label}</span>
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] transition ${isCurrent ? 'bg-[var(--brand-primary)] text-white' : done ? 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]' : 'bg-slate-100 text-slate-400 group-hover:bg-[var(--brand-primary-soft)] group-hover:text-[var(--brand-primary)]'}`}>
-        {done ? <CheckOutlined /> : <ArrowRightOutlined className="-rotate-45" />}
-      </span>
-    </a>
   )
 }
 
 export function DashboardVerificationJourney({
   verification = {},
-  displayName,
   hasPassword,
   jobWorkspaceReady = false,
 }) {
   const { settings } = useSiteSettings()
   const primaryColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
   const progress = getEmployerVerificationProgress(verification)
+  const completedCount = VERIFICATION_STEPS.filter((step) => verification[step.key]).length
   const activeIndex = VERIFICATION_STEPS.findIndex((step) => !verification[step.key])
-  const stepsViewportRef = useRef(null)
-
-  const scrollSteps = (direction) => {
-    stepsViewportRef.current?.scrollBy({ left: direction * 236, behavior: 'smooth' })
-  }
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-5 shadow-sm sm:px-6" aria-labelledby="verification-journey-title">
-      <img
-        src="/images/employer/topcv-v-brand.svg"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-[5%] top-[-250px] w-auto select-none"
-      />
-      <div className="relative flex items-center gap-4">
-        <Progress
-          type="circle"
-          percent={progress.percent}
-          size={52}
-          strokeWidth={9}
-          strokeColor={primaryColor}
-          railColor="#e8edf2"
-          format={(percent) => <span className="text-xs font-bold text-[var(--brand-primary)]">{percent}%</span>}
-        />
-        <div className="min-w-0 flex-1">
-          <h2 id="verification-journey-title" className="text-base font-bold text-slate-800">Xin chào, <span className="font-extrabold text-slate-900">{displayName}</span></h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">Hãy thực hiện các bước sau để gia tăng tính bảo mật và độ tin cậy cho tài khoản của bạn.</p>
-        </div>
-        <div className="hidden shrink-0 items-center gap-2 sm:flex" aria-label="Điều hướng các bước xác thực">
-          <button type="button" onClick={() => scrollSteps(-1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]" aria-label="Xem các bước trước"><LeftOutlined /></button>
-          <button type="button" onClick={() => scrollSteps(1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]" aria-label="Xem các bước tiếp theo"><RightOutlined /></button>
-        </div>
-      </div>
-
-      <div className="relative mt-4 flex items-stretch gap-3 sm:gap-4">
-        <div ref={stepsViewportRef} className="min-w-0 flex-1 overflow-x-auto scroll-smooth pb-1" aria-label="Các bước xác thực">
-          <div className="flex gap-3 sm:gap-4">
-            {VERIFICATION_STEPS.map((step, index) => (
-              <VerificationStepCard
-                key={step.key}
-                step={step}
-                done={Boolean(verification[step.key])}
-                isCurrent={!verification[step.key] && index === activeIndex}
-                target={step.key === 'phone_verified' && !hasPassword ? EMPLOYER_VERIFY_URL : step.to}
-              />
-            ))}
+    <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6" aria-labelledby="verification-journey-title">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-lg text-emerald-600"><LockOutlined /></span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="verification-journey-title" className="text-base font-black text-slate-900">Hoàn thiện workspace tuyển dụng</h2>
+              {completedCount === VERIFICATION_STEPS.length && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Đã hoàn tất</span>}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">{completedCount}/{VERIFICATION_STEPS.length} bước xác thực · Bảo vệ tài khoản và dữ liệu ứng viên</p>
           </div>
         </div>
-
-        <Link
-          to={jobWorkspaceReady ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
-          className="group flex w-40 shrink-0 items-center gap-3 self-stretch rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-3 transition hover:border-emerald-500 sm:w-56"
-          aria-label="Đăng tin tuyển dụng đầu tiên"
-        >
-          <span className="block h-4 w-4 shrink-0 rounded-full border-[1.5px] border-emerald-500" />
-          <span className="min-w-0 flex-1 text-xs font-semibold leading-4 text-emerald-700">Đăng tin tuyển dụng đầu tiên</span>
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"><FileTextOutlined className="text-[11px]" /></span>
-        </Link>
+        <div className="flex items-center gap-3 sm:min-w-52">
+          <Progress percent={progress.percent} showInfo={false} strokeColor={primaryColor} railColor="#e2e8f0" className="!mb-0" />
+          <strong className="w-10 text-right text-xs text-emerald-700">{progress.percent}%</strong>
+        </div>
       </div>
-    </section>
-  )
-}
 
-const DISCOVERY_ITEMS = [
-  { label: 'Đăng tin tuyển dụng', description: 'Tạo tin thủ công và gửi duyệt', icon: FileTextOutlined, tone: 'bg-emerald-50 text-emerald-600', to: employerAppPath('/jobs/new') },
-  { label: 'Tìm kiếm CV', description: 'Tiếp cận hồ sơ ứng viên phù hợp', icon: SearchOutlined, tone: 'bg-blue-50 text-blue-600' },
-  { label: 'Mua dịch vụ', description: 'Khám phá giải pháp tăng hiệu quả', icon: ShoppingCartOutlined, tone: 'bg-violet-50 text-violet-600' },
-]
-
-export function DashboardDiscovery() {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="employer-discovery-title">
-      <h2 id="employer-discovery-title" className="flex items-center gap-2 text-sm font-extrabold text-slate-800"><SafetyCertificateOutlined className="text-emerald-600" /> Khám phá ProCV dành cho nhà tuyển dụng</h2>
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        {DISCOVERY_ITEMS.map((item) => {
-          const Icon = item.icon
+      <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-5" aria-label="Các bước xác thực">
+        {VERIFICATION_STEPS.map((step, index) => {
+          const done = Boolean(verification[step.key])
+          const target = step.key === 'phone_verified' && !hasPassword ? EMPLOYER_VERIFY_URL : step.to
           return (
-            <article key={item.label} className="flex min-h-28 items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
-              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${item.tone}`}><Icon /></span>
-              <div className="min-w-0 flex-1"><h3 className="text-sm font-extrabold text-slate-800">{item.label}</h3><p className="mt-1 text-[11px] leading-4 text-slate-400">{item.description}</p>{item.to ? <Button size="small" type="link" className="!mt-3 !h-auto !p-0"><Link to={item.to}>Tạo tin</Link></Button> : <Button disabled size="small" className="!mt-3">Sắp mở</Button>}</div>
-            </article>
+            <a
+              key={step.key}
+              href={target}
+              target="_blank"
+              rel="noreferrer"
+              className={`group flex min-w-0 items-center gap-2.5 rounded-xl border px-3 py-3 transition ${done ? 'border-emerald-100 bg-emerald-50/60' : index === activeIndex ? 'border-emerald-300 bg-white ring-2 ring-emerald-100' : 'border-slate-200 bg-slate-50/70 hover:border-emerald-200'}`}
+            >
+              {done
+                ? <CheckCircleFilled className="shrink-0 text-emerald-500" />
+                : <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${index === activeIndex ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}>{index + 1}</span>}
+              <span className={`min-w-0 flex-1 text-[11px] font-bold leading-4 ${done ? 'text-emerald-800' : 'text-slate-600'}`}>{step.label}</span>
+              <ArrowRightOutlined className="shrink-0 text-[10px] text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-500" />
+            </a>
           )
         })}
       </div>
-    </section>
-  )
-}
 
-export function RecommendedCandidatesPromo() {
-  return (
-    <section className="grid overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[minmax(280px,.9fr)_minmax(0,1.1fr)]" aria-labelledby="recommended-candidates-title">
-      <div className="relative flex min-h-56 items-center justify-center overflow-hidden bg-[linear-gradient(145deg,#ecfdf5,#d1fae5)] p-6">
-        <span className="absolute left-8 top-8 h-12 w-12 rounded-full bg-white/70" />
-        <span className="absolute bottom-8 right-10 h-16 w-16 rounded-full border-[10px] border-white/60" />
-        <div className="relative flex h-36 w-36 items-center justify-center rounded-full bg-[#153448] text-7xl text-emerald-300 shadow-xl"><RobotOutlined /></div>
-      </div>
-      <div className="p-5 sm:p-7">
-        <div className="flex items-center gap-2"><FileSearchOutlined className="text-emerald-600" /><h2 id="recommended-candidates-title" className="text-base font-extrabold text-slate-800">CV đề xuất</h2></div>
-        <p className="mt-4 text-sm font-bold text-slate-700">Kích hoạt CV đề xuất bởi ProCV AI để:</p>
-        <ul className="mt-4 space-y-3 text-xs text-slate-500">
-          {['Gợi ý ứng viên tiềm năng', 'Lọc sẵn các thông tin nổi bật', 'Tự động sắp xếp theo mức độ phù hợp'].map((item) => <li key={item} className="flex items-center gap-2"><CheckCircleFilled className="text-emerald-500" /> {item}</li>)}
-        </ul>
-        <Button disabled type="primary" className="!mt-5">Sắp mở trong workspace</Button>
-      </div>
+      <Link
+        to={jobWorkspaceReady ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
+        aria-label="Đăng tin tuyển dụng đầu tiên"
+        className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-300 !bg-slate-50/80 px-3 py-3 text-xs font-bold !text-slate-600 transition hover:border-emerald-300 hover:!bg-emerald-50 hover:!text-emerald-700"
+      >
+        <RocketOutlined className="text-emerald-600" />
+        <span className="min-w-0 flex-1">Sẵn sàng tuyển dụng? Đăng tin đầu tiên để bắt đầu nhận hồ sơ.</span>
+        <ArrowRightOutlined />
+      </Link>
     </section>
   )
 }

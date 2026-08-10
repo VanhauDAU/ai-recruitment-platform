@@ -9,6 +9,14 @@ async function expectNoHorizontalOverflow(page) {
   })).toBeLessThanOrEqual(1)
 }
 
+async function expectVisibleActionBackground(locator) {
+  await expect(locator).toBeVisible()
+  await expect.poll(() => locator.evaluate((element) => {
+    const color = getComputedStyle(element).backgroundColor
+    return color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)'
+  })).toBe(true)
+}
+
 const READY_EMPLOYER_READINESS = Object.freeze({
   job_workspace_ready: true,
   verification_approved: true,
@@ -463,6 +471,54 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('heading', { name: 'Thông tin tài khoản', exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
   await expect(page.getByRole('button', { name: 'Cập nhật' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
+test('employer dashboard: charts and action buttons stay visible and responsive', async ({ page }) => {
+  await mockPublicApi(page)
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('http://localhost:8000/api/employer/me/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        public_id: 'rec_dashboard',
+        ...READY_EMPLOYER_READINESS,
+        onboarding: {
+          phone_verified: true,
+          company_linked: true,
+          business_doc_submitted: true,
+          candidate_dpa_submitted: true,
+          dpa_accepted: true,
+          verification_completed: true,
+          first_job_posted: false,
+        },
+      }),
+    })
+  })
+
+  await page.goto('/tuyendung/app/dashboard')
+
+  await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Xu hướng hồ sơ ứng tuyển' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Trạng thái hồ sơ' })).toBeVisible()
+  await expect(page.getByRole('img', { name: /Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /Biểu đồ pipeline/ })).toBeVisible()
+
+  const dashboardPrimaryAction = page.getByRole('link', { name: /Đăng tin mới/ }).first()
+  const dashboardSecondaryAction = page.getByRole('link', { name: /Quản lý hồ sơ/ })
+  await expectVisibleActionBackground(dashboardPrimaryAction)
+  await expectVisibleActionBackground(dashboardSecondaryAction)
+  if (page.viewportSize().width >= 1024) {
+    await dashboardPrimaryAction.hover()
+    await expectVisibleActionBackground(dashboardPrimaryAction)
+    await dashboardSecondaryAction.hover()
+    await expectVisibleActionBackground(dashboardSecondaryAction)
+  }
   await expectNoHorizontalOverflow(page)
 })
 
