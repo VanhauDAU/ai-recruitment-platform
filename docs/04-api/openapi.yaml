@@ -1112,6 +1112,7 @@ paths:
     post:
       operationId: admin_company_update_requests_documents_review_create
       description: Admin review workflow for staged company-profile changes.
+      summary: Duyệt tài liệu của phiên bản yêu cầu cập nhật công ty hiện tại
       parameters:
       - in: path
         name: document_public_id
@@ -1125,6 +1126,18 @@ paths:
         required: true
       tags:
       - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationDocumentReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationDocumentReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationDocumentReviewRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -1159,6 +1172,7 @@ paths:
     post:
       operationId: admin_company_update_requests_review_create
       description: Admin review workflow for staged company-profile changes.
+      summary: Ra quyết định cuối cho yêu cầu cập nhật công ty
       parameters:
       - in: path
         name: public_id
@@ -1167,6 +1181,52 @@ paths:
         required: true
       tags:
       - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyUpdateReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyUpdateReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyUpdateReviewRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyUpdateRequest'
+          description: ''
+  /api/admin/company-update-requests/{public_id}/start-review/:
+    post:
+      operationId: admin_company_update_requests_start_review_create
+      description: Admin review workflow for staged company-profile changes.
+      summary: Nhận thẩm định yêu cầu cập nhật công ty
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyUpdateStartReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyUpdateStartReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyUpdateStartReviewRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -5202,6 +5262,47 @@ paths:
       - jwtAuth: []
       responses:
         '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyUpdateRequest'
+          description: ''
+  /api/employer/company/update-requests/{public_id}/{action}/:
+    post:
+      operationId: employer_company_update_request_lifecycle
+      summary: Rút hoặc hủy yêu cầu cập nhật công ty trước khi thẩm định
+      parameters:
+      - in: path
+        name: action
+        schema:
+          type: string
+          enum:
+          - withdraw
+          - cancel
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - employer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdateRequestCloseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdateRequestCloseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdateRequestCloseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
           content:
             application/json:
               schema:
@@ -12606,6 +12707,65 @@ components:
       - tax_code
       - updated_at
       - verification_status_label
+    AdminCompanyUpdateEvent:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/AdminCompanyUpdateEventEventTypeEnum'
+          readOnly: true
+        event_type_label:
+          type: string
+          readOnly: true
+        revision_number:
+          type: integer
+          readOnly: true
+        actor_email:
+          type: string
+          format: email
+          readOnly: true
+          nullable: true
+        payload:
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor_email
+      - created_at
+      - event_type
+      - event_type_label
+      - payload
+      - public_id
+      - revision_number
+    AdminCompanyUpdateEventEventTypeEnum:
+      enum:
+      - submitted
+      - resubmitted
+      - revision_created
+      - review_started
+      - document_reviewed
+      - changes_requested
+      - approved
+      - rejected
+      - withdrawn
+      - cancelled
+      type: string
+      description: |-
+        * `submitted` - Đã gửi
+        * `resubmitted` - Đã gửi lại
+        * `revision_created` - Đã tạo phiên bản
+        * `review_started` - Bắt đầu thẩm định
+        * `document_reviewed` - Đã xử lý giấy tờ
+        * `changes_requested` - Yêu cầu chỉnh sửa
+        * `approved` - Đã duyệt
+        * `rejected` - Đã từ chối
+        * `withdrawn` - Đã rút
+        * `cancelled` - Đã hủy
     AdminCompanyUpdateRequest:
       type: object
       properties:
@@ -12648,7 +12808,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/Status9ffEnum'
+          - $ref: '#/components/schemas/Status79eEnum'
           readOnly: true
         status_label:
           type: string
@@ -12676,25 +12836,27 @@ components:
         revision:
           type: integer
           readOnly: true
+        current_revision_public_id:
+          type: string
+          readOnly: true
+          nullable: true
         lock_version:
           type: integer
           readOnly: true
-        final_rejection_count:
-          type: integer
-          minimum: 0
-          readOnly: true
-        rejection_limit:
-          type: integer
-          minimum: 1
-          readOnly: true
-        resubmission_locked:
-          type: boolean
-          readOnly: true
-        resubmission_locked_at:
+        base_company_updated_at:
           type: string
           format: date-time
           readOnly: true
           nullable: true
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompanyUpdateEvent'
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -12704,11 +12866,14 @@ components:
           format: date-time
           readOnly: true
       required:
+      - base_company_updated_at
       - changes
       - company
       - created_at
+      - current_revision_public_id
       - current_values
       - documents
+      - events
       - industry_labels
       - is_sensitive
       - lock_version
@@ -12725,8 +12890,35 @@ components:
       - revision
       - status
       - status_label
+      - submitted_at
       - tax_lookup_evidence
       - updated_at
+    AdminCompanyUpdateReviewRequest:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        note:
+          type: string
+          maxLength: 2000
+        lock_version:
+          type: integer
+          minimum: 0
+        revision_public_id:
+          type: string
+      required:
+      - decision
+      - lock_version
+    AdminCompanyUpdateStartReviewRequest:
+      type: object
+      properties:
+        lock_version:
+          type: integer
+          minimum: 0
+        revision_public_id:
+          type: string
+      required:
+      - lock_version
     AdminConsultationLead:
       type: object
       properties:
@@ -17259,6 +17451,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyUpdateRequesterSummary'
           readOnly: true
+        current_revision_public_id:
+          type: string
+          readOnly: true
+          nullable: true
+        allowed_actions:
+          type: array
+          items:
+            type: string
+          readOnly: true
         changes: {}
         is_sensitive:
           type: boolean
@@ -17271,7 +17472,7 @@ components:
           - $ref: '#/components/schemas/BlankEnum'
         status:
           allOf:
-          - $ref: '#/components/schemas/Status9ffEnum'
+          - $ref: '#/components/schemas/Status79eEnum'
           readOnly: true
         review_note:
           type: string
@@ -17303,8 +17504,13 @@ components:
         lock_version:
           type: integer
           readOnly: true
+        base_company_updated_at:
+          type: string
+          format: date-time
       required:
+      - allowed_actions
       - created_at
+      - current_revision_public_id
       - documents
       - is_sensitive
       - lock_version
@@ -17316,6 +17522,17 @@ components:
       - status
       - submitted_at
       - updated_at
+    CompanyUpdateRequestCloseRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 2000
+        lock_version:
+          type: integer
+          minimum: 0
+      required:
+      - lock_version
     CompanyUpdateRequestRequest:
       type: object
       properties:
@@ -17326,6 +17543,9 @@ components:
           oneOf:
           - $ref: '#/components/schemas/ProofTypeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        base_company_updated_at:
+          type: string
+          format: date-time
     CompanyUpdateRequesterSummary:
       type: object
       properties:
@@ -26241,6 +26461,26 @@ components:
         * `inactive` - Inactive
         * `banned` - Banned
         * `pending` - Pending
+    Status79eEnum:
+      enum:
+      - pending
+      - submitted
+      - in_review
+      - changes_requested
+      - approved
+      - rejected
+      - withdrawn
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Chờ duyệt
+        * `submitted` - Đã gửi
+        * `in_review` - Đang thẩm định
+        * `changes_requested` - Cần chỉnh sửa
+        * `approved` - Đã duyệt
+        * `rejected` - Từ chối
+        * `withdrawn` - Đã rút
+        * `cancelled` - Đã hủy
     Status9adEnum:
       enum:
       - pending

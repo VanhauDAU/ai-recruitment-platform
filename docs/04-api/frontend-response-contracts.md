@@ -38,7 +38,7 @@ hoặc cấu trúc database.
 | Admin duyệt tin | `GET /api/jobs/admin/moderation/{public_id}/`, `POST .../decisions/` | `AdminJobDetailSerializer` / `AdminJobDecisionSerializer` | `review_token`, `state_actions`, `blocked_reasons`, `approve_blockers`, `approve_requirements`; eligibility do backend tính |
 | Readiness nhà tuyển dụng | `GET /api/employer/me/` | `RecruiterProfileSerializer` + readiness selector | Năm field top-level `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers`; onboarding legacy chỉ để tương thích |
 | Thẻ yêu cầu cập nhật của tôi | `GET /api/employer/company/update-requests/?scope=mine` | `CompanyUpdateRequestSerializer` | request của actor, `submitted_at`, status/review note, revision và file/media actor được phép mở |
-| Lịch sử yêu cầu công ty | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | requester summary, thay đổi nghiệp vụ và metadata file đã redacted theo actor; mặc định không truyền scope vẫn là `company` |
+| Compatibility/audit company scope | `GET /api/employer/company/update-requests/?scope=company` | `CompanyUpdateRequestSerializer` | backend compatibility có redaction; recruiter company settings không gọi/render contract này |
 | Admin mở đúng yêu cầu cập nhật | `GET /api/admin/company-update-requests/{public_id}/` | `AdminCompanyUpdateRequestSerializer` | exact request, company/requester/status/revision/lock version; document metadata tùy `account.sensitive.view` |
 | Card blog / blog home | `GET /api/blog/`, `/api/blog/home/` | `PostListSerializer` | `public_id`, `title`, `slug`, `excerpt`, `thumbnail_url`, category link, `published_at` |
 | Chi tiết blog | `GET /api/blog/{slug}/` | `PostDetailSerializer` | list identity + `content`, tags, related job category, `seo_title` |
@@ -101,9 +101,10 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
 ### Contract yêu cầu cập nhật công ty
 
 `CompanyUpdateRequestSerializer` trả các field chính: `public_id`,
-`requested_by_summary`, `changes`, `is_sensitive`, `reason`, `proof_type`,
-`status`, `review_note`, `documents`, `media_previews`, `submitted_at`,
-`created_at`, `updated_at`, `revision` và `lock_version`.
+`requested_by_summary`, `current_revision_public_id`, `allowed_actions`,
+`changes`, `is_sensitive`, `reason`, `proof_type`, `status`, `review_note`,
+`documents`, `media_previews`, `submitted_at`, `created_at`, `updated_at`,
+`revision`, `lock_version` và `base_company_updated_at`.
 
 - `requested_by_summary` có đúng view-model
   `{public_id, display_name}`; không trả email. `display_name` dùng họ tên đã
@@ -118,9 +119,18 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   create/edit/upload/delete/submit cho tới khi cả hai query thành công; không
   chuyển error thành mảng rỗng.
 - Ngày trên thẻ cá nhân chỉ dùng `submitted_at` hợp lệ. Không fallback sang
-  `created_at`, `updated_at` hoặc placeholder. Lịch sử chỉ render
-  `requested_by_summary.display_name` và nhãn field theo allowlist, không render
-  raw change value, storage key, preview hay file URL.
+  `created_at`, `updated_at` hoặc placeholder. Recruiter UI không có section
+  lịch sử công ty và không gọi `scope=company`.
+- State active gồm `pending|submitted|in_review|changes_requested` để giữ
+  compatibility; `in_review` luôn read-only. `allowed_actions` là nguồn cho
+  `edit|resubmit|withdraw|cancel`; backend vẫn recheck actor, role, status,
+  revision và lock version.
+- POST gửi `base_company_updated_at` và chỉ chứa field thực sự đổi. Diff rỗng
+  trả validation error; thay đổi field không liên quan không được tự thêm
+  `trade_name`. Mỗi submit/resubmit tạo revision bất biến mới.
+- `POST /api/employer/company/update-requests/{public_id}/{action}/` chỉ nhận
+  `action=withdraw|cancel`, payload `{lock_version, reason?}`; `withdraw` dành
+  requester, `cancel` dành owner và cả hai chỉ hợp lệ trước review.
 - Với request của member khác, `changes.logo_url`/`cover_image_url` là `null`,
   `gallery_additions=[]` và `media_previews={}`. Client chỉ được biết field
   media đã thay đổi, không nhận storage key hay preview URL.
@@ -161,8 +171,16 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
 - Deep-link hiện hành là
   `/admin/recruiters/{requester_public_id}?tab=verification&company_update={request_public_id}`.
   Panel fail-closed nếu response không khớp company/requester đang mở hoặc
-  request không còn `pending`; actor phải quay lại queue thay vì review record
-  khác.
+  request không nằm trong lifecycle được hỗ trợ; actor phải quay lại queue thay
+  vì review record khác.
+- Admin gọi `POST .../{public_id}/start-review/` với `lock_version` và
+  `revision_public_id` trước mọi document/final decision. Chỉ request
+  `in_review` mới được duyệt tài liệu hoặc quyết định cuối.
+- Document decision chỉ đổi tài liệu của exact revision, không tự approve hoặc
+  reject toàn request. `POST .../{public_id}/review/` là quyết định cuối tường
+  minh `approved|changes_requested|rejected`, luôn kèm lock/revision hiện hành.
+- Khi company đã đổi sau base snapshot, backend so theo từng field. Overlap trả
+  `409` và đưa request về `changes_requested`; non-overlap được apply atomically.
 - `company_update.view` cho list/retrieve nhưng không tự mở metadata nhạy cảm.
   Khi thiếu `account.sensitive.view`, mỗi document trả `file_name=""`,
   `mime_type=""`, `file_size=0`, `sha256=""`, `uploaded_by_email=""` và
@@ -172,7 +190,7 @@ cache; aggregate không chứa danh tính vẫn được hiển thị.
   bắt buộc đồng thời `company_update.view` và `account.sensitive.view`, đồng
   thời document phải thuộc đúng request. Response là binary private/no-store;
   không trả storage URL.
-- Mutation hiện hành khóa theo thứ tự
+- Mutation khóa theo thứ tự
   `Company → CompanyUpdateRequest → CompanyDocument` và luôn recheck ownership,
   status cùng `lock_version` trong transaction. Django admin chỉ đọc, không có
   đường mutation vượt service/API.

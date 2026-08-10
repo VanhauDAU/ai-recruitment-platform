@@ -10,8 +10,8 @@ Decision log:
 > Cập nhật lần cuối: 2026-08-10 — ER-2 và ER-5 verified; corrective UX, luồng
 > resubmit/review lại và policy ba final rejection đã đạt gate; ER-3 đã hoàn tất employer
 > domain/frontend upload-session nhưng candidate import/assets và real ClamAV
-> staging còn mở; ER-4 đã hoàn tất safety slice cho lock order,
-> exact-object review và redaction nhưng lifecycle V2 còn mở; ER-6A đã merge hạ
+> staging còn mở; ER-4 đã hoàn tất lifecycle V2, revision/event bất biến,
+> exact-object final review và conflict handling; ER-6A đã merge hạ
 > tầng SMS provider-neutral nhưng live workflow còn mở.
 
 | Phase | Nội dung | Trạng thái |
@@ -20,7 +20,7 @@ Decision log:
 | ER-1 | Empty/error state, document IDOR và job approval guard | ✅ Hoàn tất |
 | ER-2 | Readiness/permission contract và frontend guards | ✅ Hoàn tất |
 | ER-3 | Upload session, quarantine, malware scan và retention | 🟨 Đang làm — employer domain/UI đã đạt gate |
-| ER-4 | Company update request V2, revision và conflict handling | 🟨 Đang làm — review safety |
+| ER-4 | Company update request V2, revision và conflict handling | ✅ Hoàn tất |
 | ER-5 | Verification final decision, blockers và compliance holds | ✅ Hoàn tất |
 | ER-6 | SMS provider adapter và DPA evidence/version/grace | 🟨 Đang làm — adapter foundation đã merge |
 | ER-7 | Company unlink, notification center và activity | ⬜ Chưa làm |
@@ -74,9 +74,23 @@ Decision log:
 - Evidence: backend 108/108, frontend 10/10; scoped Ruff/format,
   import-linter, layering, Django check, migration drift, lint và architecture
   đạt. Merge `ddb8a47f` giữ nguyên thay đổi local của người dùng.
-- Residual: immutable revision snapshot, base-company version, transition
-  submitted/in-review/changes-requested, resubmit/withdraw/cancel và conflict
-  apply vẫn thuộc phần còn lại của ER-4; phase chưa được đánh dấu Verified.
+- Lifecycle V2 bổ sung revision snapshot bất biến, event append-only, base field
+  snapshot, exact current revision và state
+  `submitted/in_review/changes_requested/approved/rejected/withdrawn/cancelled`.
+- Admin phải nhận review trước khi duyệt tài liệu/quyết định cuối; recruiter
+  sửa/gửi lại/rút trước review, owner hủy trước review. Apply chỉ conflict các
+  field thay đổi đồng thời và không ghi partial.
+- Employer page chỉ tải `scope=mine`, không hiển thị lịch sử công ty; diff rỗng
+  không được gửi, tên thương mại legacy không bị thêm ngoài ý muốn và form luôn
+  có nút quay lại.
+- Migrations `employers.0037` (schema) và `0038` (backfill) chạy riêng; backfill
+  giữ requester, tạo revision 1/event migrated và không gọi storage/provider/
+  Celery. Gate chạy trên PostgreSQL Docker `127.0.0.1:5433`.
+- Evidence cuối: backend employer 237/237; Ruff/format, import-linter 863 file/
+  1622 dependency, layering, Django/migration drift đạt. Frontend 256/256 file,
+  985/985 test; lint/architecture 1148 module/2308 dependency/build/bundle
+  budget đạt; company/admin smoke 15/15 trên ba viewport. OpenAPI contract,
+  198 Markdown links và Chrome visual QA tab Xác thực admin đều đạt.
 
 </details>
 

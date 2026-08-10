@@ -169,6 +169,16 @@ cần hỏi lại ngày 2026-08-10.
 Người phụ trách sản phẩm xác nhận trực tiếp ER-D42 đến ER-D45 và thay ER-D44
 bằng ER-D46 ngày 2026-08-10.
 
+## Session 2026-08-10 — Company update lifecycle V2
+
+| ID | Quyết định | Hệ quả triển khai |
+| --- | --- | --- |
+| ER-D48 | Mỗi requester có tối đa một request active trên một company, nhưng nhiều member vẫn được gửi song song; mỗi submit/resubmit tạo revision bất biến. Creator được sửa/gửi lại/rút trước review, owner được hủy trước review; khi `in_review` thì read-only. Duyệt tài liệu không tự quyết định toàn request và admin phải ra quyết định cuối tường minh | Employer UI chỉ đọc `scope=mine`, không hiển thị company history; admin nhận review exact request/revision. Conflict so theo field trên base snapshot và không partial apply; schema migration không gọi provider/storage/Celery |
+
+Người phụ trách sản phẩm đã xác nhận toàn bộ kế hoạch và yêu cầu tiếp tục không
+cần hỏi lại; ER-D48 tổng hợp các quyết định ER-O01/ER-O02 cùng phản hồi UX trực
+tiếp ngày 2026-08-10.
+
 ## Tài liệu/mô tả bị thay thế
 
 | Tài liệu/mô tả cũ | Phần bị thay thế |

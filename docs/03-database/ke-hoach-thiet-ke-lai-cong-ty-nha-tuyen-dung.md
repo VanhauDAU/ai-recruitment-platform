@@ -1,5 +1,13 @@
 # Kế hoạch thiết kế lại: Công ty & Nhà tuyển dụng
 
+> **Superseded cho company-update workflow (2026-08-10):** các mô tả
+> `pending/approved/rejected`, owner-only/member-read-only và một pending trên
+> toàn company trong tài liệu lịch sử này không còn là contract triển khai.
+> Nguồn canonical là ER-D46/ER-D48 và mục ER-4 tại
+> [kế hoạch rà soát employer](./ke-hoach-ra-soat-va-khac-phuc-employer.md): mỗi
+> requester có một active request, nhiều member gửi song song, revision/event
+> bất biến, exact final review và recruiter UI không hiển thị company history.
+
 Nguồn yêu cầu: `document_project_ai/Công ty và nhà tuyển dụng.docx` (tham khảo luồng TopCV).
 
 > **Trạng thái (2026-07-11): đã triển khai xong cả 3 giai đoạn A + B + C** — schema + data migration, jobs chuyển sang company, API `/api/employer/*` + admin duyệt, frontend cổng NTD chuyển sang API mới và bảng `employer_profiles` đã xóa (migration `employers.0008`).

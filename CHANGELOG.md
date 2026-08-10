@@ -148,6 +148,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   không khớp. Không còn lấy `results[0]` từ danh sách company rồi có thể duyệt
   nhầm yêu cầu của member khác.
 
+#### Added — Employer company-update lifecycle V2 ER-4
+
+- Thêm revision snapshot bất biến, event append-only và state
+  `submitted/in_review/changes_requested/approved/rejected/withdrawn/cancelled`.
+  Nhiều member được gửi request riêng; mỗi requester chỉ có một active request
+  trên company.
+- Recruiter được sửa/gửi lại/rút trước review, owner được hủy trước review;
+  admin phải nhận review exact revision rồi mới duyệt tài liệu hoặc ra quyết
+  định cuối tường minh.
+- Apply dùng field-level base conflict và không partial write. Form company chỉ
+  gửi diff thật, không tự thêm tên thương mại legacy, không hiển thị company
+  request history và luôn có nút quay lại.
+- Tách migration schema `employers.0037` khỏi backfill `0038`; dữ liệu cũ giữ
+  requester, tạo revision 1 và migrated event mà không gọi dịch vụ ngoài.
+
 #### Security — Upload storage boundary ER-3 foundation
 
 - Tách storage public/private/quarantine cho local và Cloudflare R2; chỉ public

@@ -1,5 +1,13 @@
 # Kế hoạch Trang công ty và thương hiệu tuyển dụng
 
+> **Superseded cho employer company-update workflow (2026-08-10):** các đoạn
+> lịch sử yêu cầu owner-only, member xem company history hoặc unique pending
+> toàn company được giữ lại chỉ làm bằng chứng audit. Contract hiện hành theo
+> ER-D46/ER-D48 tại
+> [kế hoạch rà soát employer](./ke-hoach-ra-soat-va-khac-phuc-employer.md): UI
+> recruiter chỉ đọc request của mình; nhiều member được gửi request riêng và
+> admin review exact immutable revision.
+
 > Trạng thái: **đã chốt toàn bộ, triển khai được ngay.** Không còn quyết định treo (§5.0).
 > Thay thế bản nháp trước đó.
 > Ngày chốt hiện trạng: 2026-07-29.

@@ -128,6 +128,27 @@ review DPA.
   resubmit/withdraw/cancel và base-company conflict vẫn là residual lifecycle
   ER-4, không được suy thành phase Verified.
 
+**ER-4 lifecycle closure (2026-08-10)**
+
+- `CompanyUpdateRevision` là snapshot bất biến; `CompanyUpdateEvent` là log
+  append-only. Document/media/tax evidence được gắn exact revision hiện hành.
+- Unique active scope là `(company, requested_by)`, vì vậy các member gửi song
+  song nhưng không overwrite actor. Employer UI chỉ đọc `scope=mine` và không
+  lộ company history.
+- Mọi document/final review bắt buộc request `in_review`, exact revision public
+  ID và lock version. Duyệt document không tự apply request; final decision là
+  thao tác riêng.
+- Apply conflict so base value theo field và không partial write. Regression
+  bao phủ overlap/non-overlap, stale revision, requester resubmit, owner cancel,
+  withdraw, immutable records và trade-name payload tối thiểu.
+- Migration `0037` chỉ tạo schema; `0038` backfill revision/event riêng trên
+  PostgreSQL để tránh pending trigger event khi tạo FK/index sau data write.
+  Không migration nào gọi storage/provider/Celery.
+- Retest cuối trên Docker PostgreSQL đạt 237/237 employer tests; frontend
+  985/985 tests và 15/15 smoke company/admin trên ba viewport. Static layering,
+  migration drift, OpenAPI contract và Chrome visual QA đều đạt; ER-F02
+  lifecycle residual được đóng.
+
 ### ER-F03 — Binary document IDOR
 
 **Evidence**

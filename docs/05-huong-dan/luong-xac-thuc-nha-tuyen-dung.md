@@ -398,6 +398,27 @@ trên response phân trang. Workspace chiếm đúng `100dvh`, chỉ vùng nội
 được hiển thị disabled “Sắp mở”, không điều hướng sang landing marketing và
 không mô phỏng thao tác thành công khi backend chưa tồn tại.
 
+### Luồng yêu cầu cập nhật thông tin công ty
+
+Mỗi recruiter đã liên kết công ty được có tối đa một yêu cầu active của chính
+mình; các member khác vẫn được gửi yêu cầu riêng song song. Trang recruiter chỉ
+gọi `scope=mine`, không hiển thị hoặc tải lịch sử yêu cầu của toàn công ty.
+
+State machine chuẩn là `submitted → in_review →
+approved|changes_requested|rejected`; từ `changes_requested`, recruiter thay
+tài liệu/field cần thiết rồi resubmit thành revision mới. Trước khi admin nhận
+review, requester được sửa hoặc rút và owner được hủy; khi `in_review`, request
+read-only. Form không cho gửi nếu diff rỗng, luôn có nút quay lại và chỉ gửi
+field thực sự thay đổi, nên tên thương mại legacy không bị kéo vào request khi
+người dùng không sửa.
+
+Mỗi submit/resubmit tạo snapshot `CompanyUpdateRevision` bất biến và event
+append-only. Admin mở exact request public ID, bấm **Nhận thẩm định**, rồi duyệt
+tài liệu của exact revision. Quyết định tài liệu không tự quyết định toàn yêu
+cầu; admin phải ra quyết định cuối tường minh. Apply chạy transaction, so
+base snapshot theo từng field: field bị thay đồng thời trả conflict và không
+partial apply; field không overlap vẫn được áp dụng.
+
 ## Route frontend
 
 | Route | Mục đích | Guard/layout |

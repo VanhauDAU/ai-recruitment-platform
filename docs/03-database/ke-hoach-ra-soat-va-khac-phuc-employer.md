@@ -1,10 +1,10 @@
 # Kế hoạch rà soát và khắc phục toàn bộ luồng Nhà tuyển dụng
 
-> **Trạng thái:** ER-0, ER-1, ER-2 và ER-5 đã Verified;
-> ER-3/ER-4/ER-6–ER-8 vẫn đang triển khai
+> **Trạng thái:** ER-0, ER-1, ER-2, ER-4 và ER-5 đã Verified;
+> ER-3/ER-6–ER-8 vẫn đang triển khai
 > **Ngày lập:** 2026-08-10
 > **Ngày phê duyệt:** 2026-08-10
-> **Phiên bản kế hoạch:** 1.0
+> **Phiên bản kế hoạch:** 1.1
 > **Phạm vi:** Employer portal, company workflow, verification, upload, job moderation, DPA, notification và security
 > **Nhánh tích hợp đề xuất:** `dev`
 > **Quy tắc:** Không tạo nhánh triển khai trước khi gate tương ứng được phê duyệt.
@@ -224,6 +224,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-D45 | `CONFIRMED` | Gửi một thay đổi công ty không được tự thêm `trade_name` hoặc bắt sửa tên thương mại legacy nếu người dùng không thay đổi trường liên quan |
 | ER-D46 | `CONFIRMED` | Trang company settings của recruiter không hiển thị/tải history `scope=company`; update form chỉ cho gửi khi có thay đổi thật và luôn có nút quay lại |
 | ER-D47 | `CONFIRMED` | Chỉ final decision `rejected` tăng lượt; lần thứ ba khóa nộp lại nhưng không tự ban tài khoản. Document reject/changes-requested không tính; mở khóa ngoại lệ cần quyền riêng, reason và audit, không xóa lịch sử |
+| ER-D48 | `CONFIRMED` | Company update dùng revision bất biến và quyết định cuối tường minh; recruiter chỉ thấy request của mình, được sửa/gửi lại trước review, rút trước review; owner được hủy trước review. Apply xung đột theo field, không partial apply |
 
 ## 6. Quyết định đã chốt tại gate ER-0
 
@@ -236,7 +237,7 @@ Lỗi có nhiều nguyên nhân đồng thời:
 | ER-O05 | `CONFIRMED` | Bật CI cho Pull Request vào `dev`, đồng thời vẫn chạy gate theo phạm vi trước khi bàn giao | Definition of Done cho từng PR |
 | ER-O06 | `CONFIRMED` | Audit đã xác nhận candidate CV dùng cùng unsafe default/private storage; tích hợp candidate upload/assets qua shared core trong slice riêng, không tạo coupling `cvs → employers` | Candidate upload integration bắt buộc trong ER-3; quyền xem/tải/export thuộc ER-2 |
 
-Các quyết định trên và ER-D29 đến ER-D47 được người phụ trách sản phẩm xác nhận
+Các quyết định trên và ER-D29 đến ER-D48 được người phụ trách sản phẩm xác nhận
 ngày 2026-08-10.
 Mọi thay đổi về sau phải được ghi vào decision log trước khi triển khai.
 
@@ -703,6 +704,28 @@ thiếu `account.sensitive.view`, còn binary bắt buộc cả view và sensiti
 evidence trung gian, không thay cho schema revision/base-version và toàn bộ gate
 lifecycle ở trên.
 
+**Lifecycle V2 đã hoàn tất (2026-08-10):** schema được tách thành migration
+`0037` chỉ tạo cấu trúc và `0038` backfill dữ liệu, tránh vừa ghi dữ liệu vừa
+tạo FK/index trong cùng PostgreSQL migration. Mỗi lần submit/resubmit tạo
+`CompanyUpdateRevision` bất biến và `CompanyUpdateEvent` append-only; document,
+media và tax evidence gắn đúng revision. State machine là
+`submitted → in_review → approved|changes_requested|rejected`, với
+`changes_requested → submitted`; `withdrawn/cancelled` chỉ trước review.
+Admin phải nhận thẩm định và gửi exact revision/lock version trước khi duyệt
+tài liệu hoặc ra quyết định cuối. Conflict chỉ chặn field thực sự bị thay đổi
+đồng thời, không ghi partial; thay đổi không liên quan không tự kéo
+`trade_name` legacy vào payload. Employer UI chỉ tải `scope=mine`, không có
+company history, không submit diff rỗng và luôn có nút quay lại.
+
+**Evidence ER-4:** PostgreSQL Docker `127.0.0.1:5433` đạt 237/237 test
+`apps/employers`; Ruff toàn backend, format 678 file, import-linter 863 file/
+1622 dependency, DRF layering, Django check và migration drift đều xanh.
+Frontend đạt 256/256 file, 985/985 test coverage; lint không lỗi,
+architecture 1148 module/2308 dependency, production build và bundle budget
+đạt. Smoke company/admin đạt 15/15 trên desktop/tablet/mobile. OpenAPI YAML và
+contract assertion, 198 Markdown links cùng `git diff --check` đạt. Chrome thật
+được dùng để kiểm tra hierarchy tab Xác thực admin và exact recruiter detail.
+
 ### ER-5 — Verification, final decision và compliance holds
 
 **Backend:** `feature/employer-verification-state-machine`
@@ -1085,7 +1108,7 @@ Trạng thái thực hiện hiện tại:
 | ER-1 | Verified | ER-1A, ER-1B và ER-1C đã đạt quality gate; follow-up lịch sử/tên thương mại đã có regression |
 | ER-2 | Verified | Canonical readiness, backend capability enforcement, frontend guards/redaction và corrective redirect 3-viewport đều đạt |
 | ER-3 | In progress | Employer domain/frontend và PDF/image structural validation đã đạt gate; candidate import/assets cùng real ClamAV staging còn mở |
-| ER-4 | In progress | Safety slice exact-object/lock/redaction đạt; lifecycle V2 còn mở |
+| ER-4 | Verified | Revision/event bất biến, lifecycle/resubmit/withdraw/cancel, exact admin review và field-level conflict đã đạt gate Docker/FE |
 | ER-5 | Verified | Backend state/hold/race và admin final-decision/job blocker UI đã đạt gate |
 | ER-6 | In progress | Provider-neutral SMS foundation đã merge; live endpoint/UI/provider và toàn bộ DPA evidence vẫn mở |
 | ER-7 | Planned | Phụ thuộc event catalog ổn định |
